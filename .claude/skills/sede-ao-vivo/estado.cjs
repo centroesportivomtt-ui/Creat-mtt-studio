@@ -82,6 +82,8 @@ function lerFluxo(dir) {
   for (const a of agentes.values()) {
     let meta = {}; try { meta = JSON.parse(fs.readFileSync(path.join(dir, `agent-${a.id}.meta.json`), 'utf8')); } catch {}
     const u = ultimaAcao(path.join(dir, `agent-${a.id}.jsonl`));
+    // Sem resultado e sem sinal de vida há 10 min: foi interrompido (cota, erro), não está trabalhando.
+    if (a.status === 'trabalhando' && (u.fim ? agora - u.fim : agora - (u.inicio || 0)) > 10 * 60 * 1000) a.status = 'interrompido';
     lista.push({
       id: a.id, label: a.label, fase: a.fase, status: a.status, personagem: paraPersonagem(a.label, meta), tipo: meta.agentType || null,
       acao: a.status === 'trabalhando' ? (u.acao || 'pensando') : null,
