@@ -49,6 +49,10 @@
       memoria[k] = String(v);
       if (lsFalhou) return;
       try { W.localStorage.setItem(k, String(v)); } catch (e) { lsFalhou = true; }
+    },
+    remover: function (k) {
+      delete memoria[k];
+      try { W.localStorage.removeItem(k); } catch (e) {}
     }
   };
 
@@ -344,11 +348,18 @@
     try {
       var arr = JSON.parse(bruto);
       if (!Array.isArray(arr)) return [];
-      return arr.filter(function (a) {
-        return a && typeof a.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.data) && !isNaN(hm(a.inicio));
+      /* LGPD: reserva passada há mais de 90 dias não serve nem para o "de sempre"; sai do aparelho */
+      var limite = chaveData(somarDias(agora(), -DIAS_GUARDA));
+      var validos = arr.filter(function (a) {
+        return a && typeof a.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.data) && !isNaN(hm(a.inicio)) && a.data >= limite;
       });
+      if (validos.length !== arr.length) {
+        if (validos.length) gravarAgendamentos(validos); else armazem.remover(CHAVE_AG);
+      }
+      return validos;
     } catch (e) { return []; }
   }
+  var DIAS_GUARDA = 90;
   function gravarAgendamentos(arr) { armazem.gravar(CHAVE_AG, JSON.stringify(arr)); }
 
   function servicoPorId(id) { return (cfg.servicos || []).filter(function (s) { return s.id === id; })[0] || null; }
@@ -545,14 +556,9 @@
     if (!b) return;
     var t = temaAtual();
     b.setAttribute('aria-pressed', t === 'claro' ? 'true' : 'false');
-    var rotulo = t === 'claro' ? T('secoes.temaEscuro', 'Usar tema escuro') : T('secoes.temaClaro', 'Usar tema claro');
-    /* com aria-pressed o nome acessível fica fixo (o HTML traz "Tema claro");
-       o rótulo da ação vai no title e no texto visível, se houver */
-    var alvo = b.querySelector('[data-rotulo], .rotulo');
-    if (alvo) alvo.textContent = rotulo;
-    else if (!b.children.length && !b.hasAttribute('aria-label')) b.textContent = rotulo;
-    if (!b.hasAttribute('aria-label') && b.children.length && !alvo) b.setAttribute('aria-label', 'Tema claro');
-    b.title = rotulo;
+    /* com aria-pressed o nome acessível fica fixo (aria-label "Tema claro" no HTML);
+       a ação vai só no title */
+    b.title = t === 'claro' ? T('secoes.temaEscuro', 'Usar tema escuro') : T('secoes.temaClaro', 'Usar tema claro');
   }
   function iniciarTema() {
     var salvo = armazem.ler(CHAVE_TEMA);
@@ -676,6 +682,7 @@
       anexarItem(lista, b);
     });
     if (!horaAindaValida) estado.hora = null;
+    tabindexHorarios();
 
     if (r.livres === 0 && aviso) {
       var prox = proximoDiaComVaga(cfg, somarDias(r.data, 1), hoje, ags);
@@ -699,6 +706,24 @@
     }
   }
 
+  /* tabindex móvel: só um horário na ordem do Tab (o escolhido ou o primeiro livre);
+     ocupados nunca recebem foco pelo Tab, mas seguem visíveis com "ocupado" */
+  function botoesHora() {
+    return Array.prototype.slice.call(($('lista-horarios') || DOC).querySelectorAll('.horario'));
+  }
+  function tabindexHorarios() {
+    var bs = botoesHora();
+    var livres = bs.filter(function (b) { return b.getAttribute('aria-disabled') !== 'true'; });
+    var alvo = livres.filter(function (b) { return b.getAttribute('aria-pressed') === 'true'; })[0] || livres[0];
+    bs.forEach(function (b) { b.tabIndex = b === alvo ? 0 : -1; });
+  }
+  function colunasHorarios(bs) {
+    if (!bs.length) return 1;
+    var topo = bs[0].offsetTop, n = 0;
+    while (n < bs.length && bs[n].offsetTop === topo) n++;
+    return Math.max(1, n);
+  }
+
   function intervalosDiaSelecionado() {
     return intervalosDoDia(cfg, estado.dia, lerAgendamentos());
   }
@@ -708,6 +733,7 @@
     Array.prototype.forEach.call(($('lista-horarios') || DOC).querySelectorAll('.horario'), function (b) {
       b.setAttribute('aria-pressed', hm(b.getAttribute('data-hora')) === t && !b.classList.contains('is-ocupado') ? 'true' : 'false');
     });
+    tabindexHorarios();
     if (estado.servicoPendente) {
       var sp = estado.servicoPendente;
       estado.servicoPendente = null;
@@ -725,14 +751,6 @@
     return lista.some(function (x) { return x.servico.id === servicoId && x.cabe; });
   }
 
-  function containerEm(passoId, ids, cls) {
-    for (var i = 0; i < ids.length; i++) { var e = $(ids[i]); if (e) return e; }
-    var passo = $(passoId);
-    if (!passo) return null;
-    var c = passo.querySelector('.' + cls);
-    if (!c) { c = criar('div', cls); passo.appendChild(c); }
-    return c;
-  }
   function tituloDoPasso(passo) {
     if (!passo) return null;
     var h = passo.querySelector('h2, h3, legend, .passo-titulo');
@@ -743,7 +761,7 @@
 
   function renderServicos() {
     var passo = $('passo-servico');
-    var c = containerEm('passo-servico', ['lista-servicos-cabem', 'servicos-cabem', 'lista-servicos'], 'servicos-cabem');
+    var c = $('lista-servicos');
     if (!c) return;
     var focoDentro = DOC.activeElement && c.contains(DOC.activeElement);
     limpar(c);
@@ -789,7 +807,7 @@
   }
 
   function renderChips() {
-    var c = containerEm('passo-profissional', ['chips-profissionais', 'lista-chips', 'chips-profissional'], 'chips');
+    var c = $('chips-profissionais');
     if (!c) return;
     limpar(c);
     var tid = tituloDoPasso($('passo-profissional'));
@@ -866,19 +884,6 @@
 
   /* dados do cliente */
   var inputNome = null, inputWhats = null;
-  function acharInput(tipo) {
-    var ids = tipo === 'nome'
-      ? ['nome-cliente', 'input-nome', 'campo-nome', 'cliente-nome', 'nome']
-      : ['whats-cliente', 'input-whats', 'campo-whats', 'cliente-whats', 'whats', 'whatsapp'];
-    for (var i = 0; i < ids.length; i++) {
-      var e = $(ids[i]);
-      if (e && e.tagName === 'INPUT') return e;
-    }
-    var raiz = $('passo-dados') || DOC;
-    return raiz.querySelector(tipo === 'nome'
-      ? 'input[name="nome"], input[autocomplete="name"], input[type="text"]'
-      : 'input[type="tel"], input[name="whats"], input[name="whatsapp"]');
-  }
   function ligarDescricao(input, idErro) {
     if (!input || !$(idErro)) return;
     var atual = (input.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
@@ -910,8 +915,8 @@
     return e;
   }
   function iniciarDados() {
-    inputNome = acharInput('nome');
-    inputWhats = acharInput('whats');
+    inputNome = $('cliente-nome');
+    inputWhats = $('cliente-whats');
     var ult = ultimoAgendamento();
     if (inputNome) {
       inputNome.setAttribute('autocomplete', inputNome.getAttribute('autocomplete') || 'name');
@@ -1055,6 +1060,31 @@
         if (!b || !lh.contains(b) || b.getAttribute('aria-disabled') === 'true') return;
         selecionarHora(hm(b.getAttribute('data-hora')));
       });
+      /* setas andam pela grade (pulando os ocupados), Home/End nas pontas; Tab sai do grupo */
+      lh.addEventListener('keydown', function (ev) {
+        var bs = botoesHora();
+        var i = bs.indexOf(DOC.activeElement);
+        if (i === -1) return;
+        var livre = function (b) { return b.getAttribute('aria-disabled') !== 'true'; };
+        var cols = colunasHorarios(bs);
+        var passo = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols }[ev.key];
+        var j = -1;
+        if (ev.key === 'Home' || ev.key === 'End') {
+          var ls = bs.filter(livre);
+          if (ls.length) j = bs.indexOf(ev.key === 'Home' ? ls[0] : ls[ls.length - 1]);
+        } else if (passo) {
+          var dir = passo > 0 ? 1 : -1;
+          for (var k = i + passo; k >= 0 && k < bs.length; k += dir) { if (livre(bs[k])) { j = k; break; } }
+        } else return;
+        ev.preventDefault();
+        if (j === -1) return;
+        bs.forEach(function (b, n) { b.tabIndex = n === j ? 0 : -1; });
+        bs[j].focus();
+      });
+      lh.addEventListener('focusout', function (ev) {
+        if (ev.relatedTarget && lh.contains(ev.relatedTarget)) return;
+        tabindexHorarios();
+      });
     }
 
     DOC.addEventListener('click', function (ev) {
@@ -1094,7 +1124,7 @@
     if (!cabe(id)) return;
     estado.servicoId = id;
     estado.servicoPendente = null;
-    var c = containerEm('passo-servico', ['lista-servicos-cabem', 'servicos-cabem', 'lista-servicos'], 'servicos-cabem');
+    var c = $('lista-servicos');
     if (c) {
       Array.prototype.forEach.call(c.querySelectorAll('.servico-opcao'), function (b) {
         var sel = b.getAttribute('data-servico') === id;
@@ -1235,29 +1265,11 @@
     renderAtalho();
   }
 
-  function blocosDoFormulario(espelho) {
-    var form = $('form-agenda') || $('form-agendamento') || $('form-agendar') ||
-      ($('fita-dias') && $('fita-dias').closest('form')) ||
-      DOC.querySelector('#agendar .agendar-grade');
-    if (!form) return [];
-    if (!espelho || !form.contains(espelho)) return [form];
-    /* o espelho mora dentro do form: esconde só os irmãos que não o contêm */
-    var out = [];
-    var no = espelho;
-    while (no && no !== form) {
-      var pai = no.parentNode;
-      Array.prototype.forEach.call(pai.children, function (irmao) {
-        if (irmao !== no && !irmao.contains(espelho)) out.push(irmao);
-      });
-      no = pai;
-    }
-    return out;
-  }
   var escondidos = [];
   function mostrarEspelho(reg, url) {
     var esp = $('espelho');
     if (!esp) return;
-    escondidos = blocosDoFormulario(esp).filter(function (el) { return !el.hidden; });
+    escondidos = [$('form-agenda')].filter(function (el) { return el; }).filter(function (el) { return !el.hidden; });
     escondidos.forEach(function (el) { el.hidden = true; });
     var dados = $('espelho-dados');
     if (dados) {
@@ -1276,7 +1288,7 @@
       link.href = url;
       link.target = '_blank';
       link.rel = 'noopener';
-      if (!link.textContent.trim()) link.textContent = T('espelho.abrirWhats', 'Abrir WhatsApp de novo');
+      if (!link.textContent.trim()) link.textContent = T('espelho.abrirWhats', 'Enviar no WhatsApp');
     }
     mostrar(esp, true);
     if (!esp.hasAttribute('tabindex')) esp.setAttribute('tabindex', '-1');
@@ -1368,6 +1380,38 @@
     alvos.forEach(function (el) { io.observe(el); });
   }
 
+  /* o "Agendar horário" na zona do polegar leva para #agendar: com a agenda na tela
+     ele não tem para onde levar e só tapa o "Confirmar sem arrastar", os campos e o espelho */
+  function vigiarPolegar() {
+    var btn = $('btn-agendar'), agenda = $('agendar');
+    if (!btn || !agenda || !('IntersectionObserver' in W)) return;
+    new W.IntersectionObserver(function (ents) {
+      btn.classList.toggle('is-na-agenda', ents[ents.length - 1].isIntersecting);
+    }).observe(agenda);
+  }
+
+  /* LGPD: o cliente apaga do aparelho o que a página guardou para o "de sempre" */
+  function ligarEsquecer() {
+    var b = $('esquecer-dados');
+    if (!b) return;
+    b.addEventListener('click', function () {
+      armazem.remover(CHAVE_AG);
+      if (inputNome) inputNome.value = '';
+      if (inputWhats) inputWhats.value = '';
+      estado.nome = ''; estado.whats = '';
+      estado.ultimaReserva = null;
+      estado.tocado.nome = false; estado.tocado.whats = false;
+      mostrarErros(false);
+      renderAtalho();
+      renderFita();
+      renderHorarios();
+      atualizarTudoDepoisDeEscolha();
+      atualizarLetreiro();
+      var n = $('nota-esquecer');
+      if (n) n.textContent = 'Pronto: seu nome, seu WhatsApp e suas reservas saíram deste aparelho.';
+    });
+  }
+
   function boot() {
     cfg = W.FIO_CONFIG;
     if (!cfg || typeof cfg !== 'object' || !cfg.funcionamento || !Array.isArray(cfg.servicos)) {
@@ -1400,6 +1444,8 @@
     ligarConfirmacao();
 
     vigiarWhatsFlutuante();
+    vigiarPolegar();
+    ligarEsquecer();
     iniciarTira();
     if (!tiraCriada && !reduzMovimento) {
       /* efeito.js pode publicar o FioEfeito só no DOMContentLoaded */
@@ -1442,8 +1488,8 @@
         hora: estado.hora == null ? null : minParaHHMM(estado.hora),
         servicoId: estado.servicoId,
         profissionalId: estado.profissionalId,
-        nome: estado.nome,
-        whats: estado.whats,
+        temNome: !!String(estado.nome || '').trim(),
+        temWhats: !!estado.whats,
         enviando: estado.enviando,
         ultimaReserva: estado.ultimaReserva ? Object.freeze(Object.assign({}, estado.ultimaReserva)) : null,
         armazenamento: lsFalhou ? 'memoria' : 'localStorage'

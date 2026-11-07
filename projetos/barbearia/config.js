@@ -231,7 +231,7 @@ window.FIO_CONFIG = {
 
     espelho: {
       titulo: 'Confere atrás?',
-      abrirWhats: 'Abrir WhatsApp de novo',
+      abrirWhats: 'Enviar no WhatsApp',
       novo: 'Marcar outro horário'
     },
 

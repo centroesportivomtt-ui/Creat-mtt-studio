@@ -38,7 +38,7 @@
     <p class="hero-bordao" data-config="bordao">Toda cadeira começa no couro.</p>
     <p class="hero-dica"><span class="seta-giz" aria-hidden="true"></span><span data-texto="hero.dica">Dá o fio.</span></p>
     <div id="medidor-fio" role="progressbar" aria-label="Fio da navalha" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25"></div>
-    <p class="hero-afiada" aria-live="polite" data-texto="hero.afiada"></p>
+    <p class="hero-afiada" aria-live="polite"></p>
     <p id="couro-instrucao" class="sr-only" data-texto="hero.instrucaoTeclado">Use as setas ou a barra de espaço para afiar.</p>
     <div id="navalha-slot"></div>
   </section>
@@ -95,6 +95,11 @@
               <input id="cliente-whats" name="whats" type="tel" inputmode="tel" autocomplete="tel" required placeholder="(11) 91234-5678" aria-describedby="erro-whats">
               <p class="erro" id="erro-whats" aria-live="polite"></p>
             </div>
+            <div class="privacidade">
+              <p class="nota" id="nota-privacidade">Seu nome e WhatsApp ficam só neste aparelho para lembrar o seu de sempre.</p>
+              <button type="button" id="esquecer-dados" class="btn-esquecer" aria-describedby="nota-privacidade">Esquecer meus dados</button>
+              <p class="nota" id="nota-esquecer" aria-live="polite"></p>
+            </div>
           </fieldset>
         </div>
 
@@ -111,7 +116,7 @@
       <section id="espelho" class="espelho" hidden tabindex="-1" aria-labelledby="espelho-titulo">
         <h3 id="espelho-titulo" data-texto="espelho.titulo">Confere atrás?</h3>
         <dl id="espelho-dados"></dl>
-        <a id="espelho-whats" class="link-whats" href="https://wa.me/5511987654321" target="_blank" rel="noopener" data-texto="espelho.abrirWhats">Abrir WhatsApp de novo</a>
+        <a id="espelho-whats" class="link-whats" href="https://wa.me/5511987654321" target="_blank" rel="noopener" data-texto="espelho.abrirWhats">Enviar no WhatsApp</a>
         <button type="button" id="espelho-novo" class="btn" data-texto="espelho.novo">Marcar outro horário</button>
       </section>
     </section>

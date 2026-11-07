@@ -246,10 +246,14 @@
     svg('path', { d: 'M164 16 L298 13', stroke: 'rgba(40,44,48,0.5)', 'stroke-width': 1.2, fill: 'none' }, s);   // lombo
     // "FIO & COURO" gravado e apagado (sombra escura + realce claro deslocado)
     var fonte = "'Big Shoulders Display','Arial Narrow',sans-serif";
+    var neg = W.FIO_CONFIG && W.FIO_CONFIG.negocio;
+    var gravacao = String((neg && (neg.nomeCurto || neg.nome)) || 'Fio & Couro').trim().toUpperCase() || 'FIO & COURO';
     var t1 = svg('text', { x: 238, y: 36.6, 'text-anchor': 'middle', 'font-family': fonte, 'font-weight': 800, 'font-size': 12, 'letter-spacing': 2, fill: 'rgba(255,255,255,0.32)' }, s);
-    t1.textContent = 'FIO & COURO';
+    t1.textContent = gravacao;
     var t2 = svg('text', { x: 238, y: 36, 'text-anchor': 'middle', 'font-family': fonte, 'font-weight': 800, 'font-size': 12, 'letter-spacing': 2, fill: 'rgba(28,30,33,0.34)' }, s);
-    t2.textContent = 'FIO & COURO';
+    t2.textContent = gravacao;
+    // nome longo: comprime para caber entre o espigão e a ponta da lâmina
+    if (gravacao.length > 11) [t1, t2].forEach(function (t) { t.setAttribute('textLength', 118); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); });
     // brilho recortado na forma da lâmina
     var gk = svg('g', { 'clip-path': 'url(#' + id + 'k)' }, s);
     var faixa = svg('g', { transform: 'translate(120 0)' }, gk);
@@ -303,6 +307,8 @@
     }
     function move(e) {
       if (e.pointerId !== id) return;
+      // mouse sem botão: o up aconteceu fora e se perdeu; encerra em vez de arrastar só passando o cursor
+      if (e.pointerType === 'mouse' && e.buttons === 0) { var era = estado === 2; soltar(); if (era) cb.fim(e, true); return; }
       if (estado === 1) {
         var dx = e.clientX - x0, dy = e.clientY - y0;
         if (Math.abs(dy) > 10 && Math.abs(dy) >= Math.abs(dx)) { soltar(); return; }   // vertical: deixa a página rolar
@@ -316,9 +322,10 @@
     }
     function up(e) {
       if (e.pointerId !== id) return;
+      if (e.type === 'lostpointercapture' && e.target !== el) return;   // captura implícita de um filho passou para o el: o gesto continua
       var era = estado === 2;
       soltar();
-      if (era) cb.fim(e, e.type === 'pointercancel');
+      if (era) cb.fim(e, e.type !== 'pointerup');   // só pointerup é gesto do usuário
     }
     var pares = [['pointerdown', down], ['pointermove', move], ['pointerup', up], ['pointercancel', up], ['lostpointercapture', up]];
     pares.forEach(function (p) { el.addEventListener(p[0], p[1]); });
@@ -416,7 +423,7 @@
       else return;
       e.preventDefault();
       var t = agora();
-      if (t - h.ultimaTecla < 180) return;              // segurar a tecla não vira metralhadora
+      if (e.repeat && t - h.ultimaTecla < 180) return;  // segurar a tecla não vira metralhadora; toques novos sempre contam
       h.ultimaTecla = t; h.sentidoTecla = s;
       h.intro = null;
       h.mx.alvo = h.repouso.x + s * h.w * 0.26;
@@ -590,7 +597,8 @@
     if (!h || h.afiada) return;
     h.afiada = true; h.passadas = 4;
     atualizarMedidor(1);
-    if (h.frase && !h.frase.textContent.trim()) h.frase.textContent = texto('hero.afiada', 'Afiada. Sua cadeira está esperando.');
+    // o texto entra só agora: a mudança de conteúdo é o que faz a região aria-live anunciar
+    if (h.frase) h.frase.textContent = texto('hero.afiada', 'Afiada. Sua cadeira está esperando.');
     var anima = comEfeito && !reduzido();
     if (anima) {
       // lampejo de 120 ms (--dur-rapida), uma piscada só (fotossensibilidade); a classe sai aos 220 ms, depois do fim da animação
@@ -736,11 +744,17 @@
           st.ultimaEmissao = t; st.xEmissao = st.mx.alvo;
           emitir('fio:passada', { origem: 'tira', sentido: sentido, velocidade: lim(Math.abs(st.vel) / 1.6, 0, 1), progresso: lim(p, 0, 1) });
         }
-        if (p > 0.85) confirmar();
+        // passou de 85%: trava no fim e fica pronta; a confirmação (e o window.open) sai no pointerup
+        st.pronta = p >= 0.85;
+        if (st.pronta) st.mx.alvo = st.x1;
+        el.classList.toggle('is-pronta', st.pronta);
         agendar();
       },
-      fim: function () {
-        el.classList.remove('is-arrastando');
+      fim: function (e, cancelado) {
+        var pronta = st.pronta;
+        st.pronta = false;
+        el.classList.remove('is-arrastando', 'is-pronta');
+        if (pronta && !cancelado && !st.travada) { confirmar(); return; }   // pointerup conta como gesto: o WhatsApp abre
         if (!st.travada) { st.mx.alvo = st.x0; st.mr.alvo = 0; }   // soltou antes: a navalha volta
         agendar();
       }

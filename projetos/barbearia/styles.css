@@ -347,6 +347,14 @@ p { max-width: var(--largura-texto); }
   animation: sobe-polegar var(--dur-lenta) var(--curva-mola) both;
 }
 .btn-agendar.is-polegar:active { transform: translateX(-50%) translateY(1px); }
+/* com a agenda na tela ele sai de cena: não tapa confirmar, campos nem espelho.
+   animation: none solta o fill do sobe-polegar; ao sair da agenda ele sobe de novo */
+.btn-agendar.is-polegar.is-na-agenda {
+  opacity: 0;
+  visibility: hidden;   /* fora da ordem do Tab */
+  pointer-events: none;
+  animation: none;
+}
 @keyframes sobe-polegar {
   from { transform: translate(-50%, 140%); opacity: 0; }
   to   { transform: translate(-50%, 0); opacity: 1; }
@@ -1115,6 +1123,22 @@ main { display: block; }
   text-decoration: none;
 }
 
+/* aviso de privacidade + "Esquecer meus dados" */
+.privacidade { display: grid; gap: var(--esp-2); justify-items: start; margin-top: var(--esp-3); }
+.privacidade .nota:empty { display: none; }
+.btn-esquecer {
+  min-height: var(--alvo);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--t-menor);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
 /* atalho "O de sempre" (só aparece com histórico) */
 .atalho-sempre {
   margin-bottom: var(--esp-5);
@@ -1309,14 +1333,20 @@ main { display: block; }
 .espelho .preco { font-family: var(--fonte-mono); font-weight: 600; font-size: var(--t-lead); color: var(--destaque); }
 .espelho .hora, .espelho time { font-family: var(--fonte-mono); }
 .link-whats {
+  /* ação principal do espelho: com 'noopener' não dá para saber se o pop-up abriu, então o envio fica à mão */
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: var(--alvo);
-  padding-inline: var(--esp-2);
-  font-weight: 600;
-  color: var(--destaque);
-  text-decoration: underline;
+  padding-inline: var(--esp-4);
+  border-radius: 999px;
+  font-weight: 700;
+  background: var(--destaque);
+  color: var(--fundo);
+  text-decoration: none;
 }
+.link-whats:hover { background: color-mix(in oklab, var(--destaque) 88%, var(--tinta)); }
+.link-whats:focus-visible { outline: 2px solid var(--destaque); outline-offset: 3px; }
 
 /* ---------------------------------------------------------------------
    8. WHATSAPP FLUTUANTE + RODAPÉ

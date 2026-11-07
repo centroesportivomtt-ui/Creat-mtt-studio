@@ -49,6 +49,8 @@
 }
 .tira.is-arrastando { cursor: grabbing; }
 .tira.is-confirmada .texto-tira { opacity: 0.35; }
+/* passou de 85%: a navalha trava no fim e espera o dedo soltar */
+.tira.is-pronta .navalha svg { filter: drop-shadow(0 0 6px color-mix(in oklab, var(--destaque, #c9a227) 70%, transparent)); }
 .tira.is-confirmada[aria-disabled="true"] { opacity: 1; cursor: default; }
 
 /* movimento reduzido: nada desliza (o efeito.js também esconde a tira) */
