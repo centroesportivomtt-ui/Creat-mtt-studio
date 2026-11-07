@@ -25,7 +25,8 @@
      borda-forte #757170 / fundo .........  3,70:1   / fundo-2 3,26:1 (AA borda de controle)
      foco (latão) / fundo ................  5,76:1   (AA foco >= 3:1)
      ocupado #7f7b7b / fundo-2 ...........  3,76:1   (desabilitado; ainda legível)
-     gravado #706b6a / fundo .............  3,39:1   (texto grande >= 3:1)
+     gravado #706b6a / fundo .............  3,39:1   / veio-escuro #140e0b 3,77 (texto grande >= 3:1)
+     tinta-hero = tinta-suave / veio-escuro 7,88:1   / veio-claro 5,62
      fundo / tinta (botão aço) ........... 13,01:1
      fundo / destaque (WhatsApp) .........  5,76:1
      giz #e9efe6 / quadro #1e231f ........ 13,61:1
@@ -36,7 +37,10 @@
      erro #8a1c0b / fundo ................  5,02:1   / fundo-2 5,46:1
      borda-forte #645c51 / fundo .........  3,53:1   / fundo-2 3,84:1
      foco (latão escuro) / fundo .........  5,10:1
-     gravado #675f53 / fundo .............  3,37:1   (texto grande)
+     O hero claro escurece até --veio-escuro #b39877 embaixo, onde ficam
+     o nome e o bordão; os dois são medidos contra ele (pior caso):
+     gravado #4c4944 / veio-escuro .......  3,29:1   / fundo 4,82 / veio-claro #e0c6a3 5,44 (texto grande)
+     tinta-hero = tinta / veio-escuro ....  5,33:1   (bordão, texto normal; tinta-suave daria 3,59)
      fundo / tinta (botão aço) ...........  7,81:1
      fundo / destaque (WhatsApp) .........  5,10:1
      giz / quadro (a lousa é escura nos dois temas) 13,6:1
@@ -145,6 +149,7 @@
   --borda-forte: color-mix(in oklab, var(--cor-aco) 50%, var(--cor-couro));
   --ocupado: color-mix(in oklab, var(--cor-aco) 55%, var(--cor-couro));
   --gravado: color-mix(in oklab, var(--cor-aco) 47%, var(--cor-couro));
+  --tinta-hero: var(--tinta-suave);  /* texto miúdo sobre o couro do hero */
   --erro:    var(--ancora-erro-e);
   --foco:    var(--cor-latao);
   --quadro:  color-mix(in oklab, var(--cor-couro) 42%, var(--ancora-ardosia));
@@ -152,7 +157,7 @@
   --veio-claro: color-mix(in oklab, var(--cor-couro) 82%, var(--cor-latao));
   --veio-escuro: color-mix(in oklab, var(--cor-couro) 70%, black);
   --vidro: color-mix(in oklab, var(--cor-giz) 14%, transparent);
-  --topo-fundo: color-mix(in oklab, var(--cor-couro) 94%, transparent);
+  --topo-fundo: var(--cor-couro);
 }
 
 /* ---- TEMA CLARO: couro caramelo cru, aço escurecido ----
@@ -171,7 +176,8 @@
   --borda:   color-mix(in oklab, var(--tinta) 25%, var(--fundo));
   --borda-forte: color-mix(in oklab, var(--tinta) 62%, var(--fundo));
   --ocupado: color-mix(in oklab, var(--tinta) 62%, var(--fundo));
-  --gravado: color-mix(in oklab, var(--tinta) 60%, var(--fundo));
+  --gravado: color-mix(in oklab, var(--tinta) 76%, var(--fundo));
+  --tinta-hero: var(--tinta);  /* o hero escurece até o veio: suave não passa */
   --erro:    var(--ancora-erro-c);
   --foco:    var(--destaque);
   --quadro:  color-mix(in oklab, var(--cor-couro) 42%, var(--ancora-ardosia));
@@ -179,7 +185,7 @@
   --veio-claro: color-mix(in oklab, var(--fundo) 80%, #fff8ec);
   --veio-escuro: color-mix(in oklab, var(--fundo) 82%, var(--cor-couro));
   --vidro: color-mix(in oklab, white 30%, transparent);
-  --topo-fundo: color-mix(in oklab, var(--fundo) 94%, transparent);
+  --topo-fundo: var(--fundo);
   --sombra-2: 0 6px 18px -10px color-mix(in oklab, var(--cor-couro) 55%, transparent);
 }
 @media (prefers-color-scheme: light) {
@@ -197,7 +203,8 @@
     --borda:   color-mix(in oklab, var(--tinta) 25%, var(--fundo));
     --borda-forte: color-mix(in oklab, var(--tinta) 62%, var(--fundo));
     --ocupado: color-mix(in oklab, var(--tinta) 62%, var(--fundo));
-    --gravado: color-mix(in oklab, var(--tinta) 60%, var(--fundo));
+    --gravado: color-mix(in oklab, var(--tinta) 76%, var(--fundo));
+    --tinta-hero: var(--tinta);
     --erro:    var(--ancora-erro-c);
     --foco:    var(--destaque);
     --quadro:  color-mix(in oklab, var(--cor-couro) 42%, var(--ancora-ardosia));
@@ -205,7 +212,7 @@
     --veio-claro: color-mix(in oklab, var(--fundo) 80%, #fff8ec);
     --veio-escuro: color-mix(in oklab, var(--fundo) 82%, var(--cor-couro));
     --vidro: color-mix(in oklab, white 30%, transparent);
-    --topo-fundo: color-mix(in oklab, var(--fundo) 94%, transparent);
+    --topo-fundo: var(--fundo);
     --sombra-2: 0 6px 18px -10px color-mix(in oklab, var(--cor-couro) 55%, transparent);
   }
 }
@@ -552,7 +559,7 @@ p { max-width: var(--largura-texto); }
 .hero-bordao {
   font-family: var(--fonte-texto);
   font-size: var(--t-lead);
-  color: var(--tinta-suave);
+  color: var(--tinta-hero);
   max-width: 28ch;
 }
 
@@ -703,6 +710,28 @@ main { display: block; }
   max-width: 52ch;
 }
 .manifesto em { font-style: normal; color: var(--destaque); }
+/* fecho do manifesto: o bordão volta como placa, curto e em latão */
+.manifesto .manifesto-bordao {
+  margin-top: var(--esp-7);
+  max-width: 18ch;
+  font-family: var(--fonte-display);
+  font-size: var(--t-h3);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--destaque);
+}
+/* filete de latão curto, do tamanho de uma lâmina, não da coluna */
+.manifesto .manifesto-bordao::before {
+  content: "";
+  display: block;
+  width: 3rem;
+  height: 2px;
+  margin-bottom: var(--esp-4);
+  background: currentColor;
+}
 
 /* lista de preços: nome ..... duração preço */
 .precos { max-width: 44rem; }
@@ -752,6 +781,19 @@ main { display: block; }
   color: var(--tinta-suave);
 }
 .precos li.is-destaque .preco { color: var(--destaque); }
+/* celular: nome, fio pontilhado e preço sempre na mesma linha; duração embaixo */
+@media (max-width: 559px) {
+  .precos li {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(1rem, 1fr) auto;
+    column-gap: var(--esp-2);
+  }
+  .precos .nome { grid-column: 1; grid-row: 1; }
+  .precos li::after { grid-column: 2; grid-row: 1; align-self: baseline; }
+  .precos .preco { grid-column: 3; grid-row: 1; }
+  .precos .duracao { grid-column: 1 / -1; grid-row: 2; }
+  .precos .descricao { grid-column: 1 / -1; grid-row: 3; }
+}
 
 /* profissionais: lista, nome grande, especialidade */
 .profissionais { display: grid; gap: 0; }
@@ -795,7 +837,14 @@ main { display: block; }
   border-radius: var(--raio-2);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, black 40%, transparent), var(--sombra-2);
 }
-.quadro > h2, .quadro .quadro-titulo { color: var(--cor-giz); }
+.quadro > h2, .quadro .quadro-titulo {
+  color: var(--cor-giz);
+  font-family: var(--fonte-display);
+  font-weight: 800;
+  font-size: var(--t-h2);
+  text-transform: uppercase;
+  margin-bottom: var(--esp-6);
+}
 .quadro ul, .quadro ol {
   display: grid;
   gap: var(--esp-6);
@@ -985,7 +1034,9 @@ main { display: block; }
   line-height: 1.1;
   transition: background-color var(--dur-rapida), color var(--dur-rapida), border-color var(--dur-rapida);
 }
-.horario:hover:not(.is-ocupado):not([aria-disabled="true"]) { border-color: var(--tinta); background: var(--fundo-3); }
+@media (hover: hover) {
+  .horario:hover:not(.is-ocupado):not([aria-disabled="true"]):not([aria-pressed="true"]) { border-color: var(--tinta); background: var(--fundo-3); }
+}
 .horario[aria-pressed="true"] {
   background: var(--tinta);
   color: var(--fundo);
@@ -1074,6 +1125,10 @@ main { display: block; }
   background: transparent;
   white-space: normal;
   text-align: left;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding-block: var(--esp-2);
 }
 .atalho-sempre:hover { background: var(--fundo-2); border-style: solid; }
 .atalho-sempre .detalhe { font-family: var(--fonte-mono); font-size: var(--t-nota); font-weight: 400; color: var(--tinta-suave); }
@@ -1153,7 +1208,8 @@ main { display: block; }
   place-items: center;
   width: 100%;
   height: var(--altura-tira);
-  padding-inline: var(--esp-7);
+  --fio: 0; /* não herda o medidor do hero */
+  padding-inline: var(--esp-5);
   border: 1px solid var(--borda-forte);
   border-radius: var(--raio-2);
   background-color: var(--fundo-3);
@@ -1162,9 +1218,10 @@ main { display: block; }
     linear-gradient(180deg, color-mix(in oklab, var(--veio-claro) 60%, transparent), transparent 60%);
   color: var(--tinta);
   font-family: var(--fonte-mono);
-  font-size: var(--t-menor);
+  font-size: var(--t-nota);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
   text-align: center;
   touch-action: pan-y;
   user-select: none;
@@ -1200,7 +1257,7 @@ main { display: block; }
   width: min(100%, 340px);
   min-height: 420px;
   margin: var(--esp-6) auto calc(var(--esp-8) + 24px);
-  padding: var(--esp-8) var(--esp-6) var(--esp-7);
+  padding: var(--esp-8) 2.75rem var(--esp-7);
   display: grid;
   align-content: center;
   justify-items: center;
@@ -1234,9 +1291,10 @@ main { display: block; }
 .espelho h3, .espelho .espelho-titulo {
   font-family: var(--fonte-display);
   font-weight: 700;
-  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.25rem);
+  font-size: clamp(1.5rem, 1.25rem + 1.2vw, 2rem);
   text-transform: uppercase;
   line-height: 1;
+  max-width: 9ch;
 }
 .espelho dl, .espelho ul { display: grid; gap: var(--esp-1); margin: 0; padding: 0; list-style: none; width: 100%; }
 .espelho dt {
@@ -1277,12 +1335,20 @@ main { display: block; }
   color: var(--fundo);
   box-shadow: var(--sombra-2);
   text-decoration: none;
-  transition: transform var(--dur-rapida) var(--curva-entrada);
+  transition: transform var(--dur-rapida) var(--curva-entrada),
+              opacity var(--dur-rapida) var(--curva-entrada),
+              visibility 0s linear 0s;
 }
 .whats-flutuante svg { width: 26px; height: 26px; fill: currentColor; }
 .whats-flutuante:hover { transform: translateY(-2px); }
 /* enquanto o couro está na tela, o JS pode esconder o botão */
-.whats-flutuante.is-sobre-couro { opacity: 0; pointer-events: none; transform: translateY(12px); }
+.whats-flutuante.is-sobre-couro {
+  opacity: 0;
+  visibility: hidden;   /* sai da ordem do Tab: sem foco invisível (2.4.7) */
+  pointer-events: none;
+  transform: translateY(12px);
+  transition-delay: 0s, 0s, var(--dur-rapida);  /* some depois do fade */
+}
 
 .rodape {
   padding: var(--esp-7) var(--calha) calc(var(--esp-8) + var(--whats) + env(safe-area-inset-bottom, 0px));
@@ -1325,7 +1391,28 @@ main { display: block; }
   :root {
     --fundo-2: #2a211e; --fundo-3: #352d2a; --couro-2: #2a211e; --couro-3: #352d2a;
     --tinta-suave: #a4a3a4; --borda: #403835; --borda-forte: #757170; --ocupado: #7f7b7b;
-    --gravado: #706b6a; --quadro: #1e231f; --quadro-moldura: #4a3624;
+    --gravado: #706b6a; --tinta-hero: #a4a3a4; --quadro: #1e231f; --quadro-moldura: #4a3624;
     --veio-claro: #3a2a1e; --veio-escuro: #140e0b; --vidro: rgba(233,239,230,.14); --topo-fundo: #1f1612;
   }
 }
+
+/* ---------------------------------------------------------------------
+   10. AJUSTES DE MARCAÇÃO (Pixel)
+   O index.html usa address.endereco e table.funcionamento direto (contrato
+   com o agendamento.js); os seletores de cima esperavam um invólucro.
+   --------------------------------------------------------------------- */
+address.endereco { font-style: normal; font-size: var(--t-lead); line-height: 1.45; margin-bottom: var(--esp-3); }
+.contato-local > p { margin-top: var(--esp-2); }
+.contato-horario > h3 { margin-bottom: var(--esp-3); }
+.link-mapa:hover, .instagram:hover { color: var(--destaque); }
+.instagram { display: inline-flex; align-items: center; min-height: var(--alvo); font-weight: 600; color: var(--tinta); overflow-wrap: anywhere; }
+table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; }
+@media (max-width: 959px) { .contato-horario { margin-top: var(--esp-7); } }
+.rodape p + p { margin-top: var(--esp-2); }
+#rodape-whats { gap: 0.3em; } /* inline-flex descarta o espaço antes do número */
+#espelho-novo { margin-top: var(--esp-4); }
+/* o <small> do navegador reduz 12px para 10px; trava o piso de 12px */
+.dia small, .dia .nota-dia, .chip small, .horario small { font-size: var(--t-micro); }
+#bloco-confirmar { display: grid; gap: var(--esp-3); }
+#bloco-confirmar[hidden] { display: none !important; }
+.resumo-escolha:empty { display: none; }

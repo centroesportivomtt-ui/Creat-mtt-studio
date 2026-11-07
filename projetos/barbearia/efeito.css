@@ -1,0 +1,57 @@
+/*
+ * efeito.css · só a navalha, o lampejo e a tira.
+ * Tokens (--cor-couro, --cor-aco, --cor-latao, --cor-giz, --fio) vêm do styles.css.
+ * O lampejo (.is-lampejo, 120 ms, uma piscada) já está desenhado no styles.css;
+ * aqui fica só o que o efeito.js monta.
+ */
+
+/* palco da navalha do hero: cobre o couro, não pega toque (o gesto é no #couro) */
+#navalha-slot {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: clip;
+}
+
+/* a navalha (mesma peça no hero e na tira) */
+.navalha {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  contain: layout style;
+}
+.navalha svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  /* sombra curta, como peça de aço deitada no couro */
+  filter: drop-shadow(0 5px 6px color-mix(in oklab, var(--cor-couro, #1f1612) 55%, black));
+}
+
+/* mouse no desktop: mão de pegar */
+@media (hover: hover) and (pointer: fine) {
+  #couro { cursor: grab; }
+  #couro.is-arrastando { cursor: grabbing; }
+}
+
+/* ---- tira de confirmação ---- */
+.tira .navalha svg { filter: drop-shadow(0 2px 3px color-mix(in oklab, var(--cor-couro, #1f1612) 60%, black)); }
+.tira .texto-tira {
+  /* o rótulo se apaga conforme a navalha avança */
+  opacity: calc(1 - var(--fio, 0) * 0.7);
+  padding-left: 30%;
+  padding-right: 4px;
+}
+.tira.is-arrastando { cursor: grabbing; }
+.tira.is-confirmada .texto-tira { opacity: 0.35; }
+.tira.is-confirmada[aria-disabled="true"] { opacity: 1; cursor: default; }
+
+/* movimento reduzido: nada desliza (o efeito.js também esconde a tira) */
+@media (prefers-reduced-motion: reduce) {
+  .navalha { will-change: auto; }
+}
