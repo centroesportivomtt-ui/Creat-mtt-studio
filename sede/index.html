@@ -120,6 +120,8 @@ button{font:inherit;color:inherit}
 .card-body li::before{content:"";flex:none;width:9px;height:9px;border-radius:3px;border:2px solid var(--line);background:var(--c);transform:translateY(1px) rotate(12deg)}
 .tools{display:flex;flex-wrap:wrap;gap:6px}
 .tools span{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--chip);border:2px solid var(--line)}
+.tools span.casa{background:var(--sun);color:var(--sun-ink)}
+.tools span.mcp{background:transparent;border-style:dashed}
 .cmd{display:flex;flex-direction:column;gap:8px;background:var(--chip);border:2px solid var(--line);border-radius:12px;padding:10px 12px}
 .cmd code{font-family:var(--f-mono);font-size:12.5px;line-height:1.5;word-break:break-word;user-select:all}
 .cmd .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -188,13 +190,13 @@ button{font:inherit;color:inherit}
 </head>
 <body>
 <div id="app">
-  <canvas id="scene" aria-label="Sede 3D da Creat Nuvem: uma ilha flutuante com doze agentes trabalhando"></canvas>
+  <canvas id="scene" aria-label="Sede 3D da Creat Nuvem: uma ilha flutuante com quinze agentes trabalhando"></canvas>
   <div id="labels"></div>
 
   <header class="top">
     <div class="brand panel">
       <svg viewBox="0 0 48 36" aria-hidden="true"><path d="M12 31h25a9 9 0 0 0 1.4-17.9A12.5 12.5 0 0 0 14.6 10 10.5 10.5 0 0 0 12 31z" fill="#fff" stroke="var(--line)" stroke-width="3" stroke-linejoin="round"/><circle cx="20" cy="21" r="2.2" fill="#1E1B2E"/><circle cx="29" cy="21" r="2.2" fill="#1E1B2E"/><path d="M21.5 25.5q3 2.6 6 0" fill="none" stroke="#1E1B2E" stroke-width="2.2" stroke-linecap="round"/><path d="M40 4l1.3 3.2L44.5 8.5l-3.2 1.3L40 13l-1.3-3.2L35.5 8.5l3.2-1.3z" fill="var(--sun)" stroke="var(--line)" stroke-width="1.6" stroke-linejoin="round"/></svg>
-      <div><h1>Creat Nuvem</h1><p>Agência de agentes<span id="online"> · 12 na sede</span></p></div>
+      <div><h1>Creat Nuvem</h1><p>Agência de agentes<span id="online"> · 15 na sede</span></p></div>
     </div>
     <button id="runBtn" class="btn btn-sun" type="button"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg>Rodar projeto</button>
   </header>
@@ -252,70 +254,86 @@ const AGENTS = [
   { id:'diretor', nick:'Nimbus', role:'Diretor de Operações', color:'#FFD23F', acc:'crown',
     quote:'Transformo seu briefing em plano e distribuo o trabalho para a equipe certa.',
     does:['Plano em ondas, com um responsável por tarefa','Critérios de aceite que dá para conferir','Relatório final do projeto'],
-    tools:['Read','Grep','Glob','Bash'], task:'monta o plano',
+    tools:['Read','Grep','Glob','Bash','Skill'], kit:['padrao-de-entrega','ideacao'], mcp:[], task:'monta o plano',
     ex:'Use o agente diretor para planejar um site de vendas para minha marca de camisetas', hi:'Oi! Eu coordeno a casa.' },
+  { id:'criativo', nick:'Faísca', role:'Diretor Criativo', color:'#B8E04A', acc:'bulb',
+    quote:'A primeira ideia é a de todo mundo. Eu trago a terceira.',
+    does:['Três conceitos por ângulos diferentes','Momento-assinatura roteirizado segundo a segundo','Referências e esboços visuais'],
+    tools:null, kit:['ideacao','direcao-de-arte','algorithmic-art','taste-skill'], mcp:['Figma','Adobe Firefly','Canva','TinyFish'], task:'cria 3 conceitos',
+    ex:'Use o agente criativo para criar 3 conceitos fora da caixa para o site da barbearia', hi:'Tive uma ideia. Três, na verdade.' },
   { id:'arquiteto', nick:'Cirro', role:'Arquiteto de Software', color:'#2EC4B6', acc:'glasses',
     quote:'Deixo o caminho óbvio antes de alguém digitar a primeira linha.',
     does:['Stack e estrutura de pastas','Contratos de API e tipos compartilhados','Registro das decisões técnicas'],
-    tools:['Read','Grep','Glob','Bash','Write'], task:'define a estrutura',
+    tools:['Read','Grep','Glob','Bash','Write','WebSearch','WebFetch','Skill'], kit:['padrao-de-entrega','claude-api'], mcp:[], task:'define a estrutura',
     ex:'Use o agente arquiteto para definir a estrutura de um app de agendamento', hi:'Planta pronta em 5 min.' },
   { id:'frontend', nick:'Pixel', role:'Engenheiro Frontend', color:'#FF6B6B', acc:'cap',
     quote:'Telas rápidas, responsivas e sem nenhum erro no console.',
     does:['Páginas e componentes','Layout pensado primeiro para o celular','Acessibilidade e performance'],
-    tools:['Read','Write','Edit','Bash','Glob','Grep'], task:'constrói as páginas',
+    tools:null, kit:['direcao-de-arte','verificacao-visual','frontend-design','impeccable','taste-skill','break-ui'], mcp:['Figma','Playwright'], task:'constrói as páginas',
     ex:'Use o agente frontend para construir a página de preços responsiva', hi:'Bora codar essa tela!' },
   { id:'backend', nick:'Forja', role:'Engenheira Backend', color:'#4D7CFE', acc:'beanie',
     quote:'APIs, banco de dados e integrações que aguentam o tranco.',
     does:['Rotas de API com validação','Banco de dados e migrações','Integrações, pagamentos e webhooks'],
-    tools:['Read','Write','Edit','Bash','Glob','Grep'], task:'cria a API e o banco',
+    tools:null, kit:['padrao-de-entrega','security-review','claude-api'], mcp:['Base44','GitHub'], task:'cria a API e o banco',
     ex:'Use o agente backend para criar a API de agendamentos com banco SQLite', hi:'Servidor no ar, chefe.' },
   { id:'designer', nick:'Paleta', role:'Designer de Interface', color:'#FF8FD1', acc:'beret',
     quote:'Identidade com ponto de vista. Nada com cara de template.',
     does:['Design system em tokens','Layout de cada seção, do celular ao desktop','Revisão visual com correções exatas'],
-    tools:['Read','Write','Edit','Glob','Grep','Bash'], task:'desenha a identidade',
+    tools:null, kit:['direcao-de-arte','verificacao-visual','impeccable','taste-skill','design-system','apple-design'], mcp:['Figma','Adobe Fonts','Canva'], task:'desenha a identidade',
     ex:'Use o agente designer para criar a identidade visual da landing page', hi:'Que cor é essa? Amei.' },
   { id:'motion-3d', nick:'Órbita', role:'Animação & 3D', color:'#9B6BFF', acc:'antenna',
     quote:'Movimento com motivo: guiar o olhar, responder ao toque, dar vida.',
     does:['Cenas 3D em Three.js','Microinterações e transições','Versão para quem prefere menos movimento'],
-    tools:['Read','Write','Edit','Bash','Glob','Grep'], task:'anima o hero em 3D',
+    tools:null, kit:['toon-3d','verificacao-visual','animate','choreograph','animation-performance'], mcp:['Figma'], task:'anima o hero em 3D',
     ex:'Use o agente motion-3d para criar um hero 3D com o produto girando', hi:'Isso aqui vai girar!' },
+  { id:'shader', nick:'Prisma', role:'Creative Coder', color:'#D63AF9', acc:'prism',
+    quote:'Shader, partícula e arte generativa. A mágica que componente pronto não faz.',
+    does:['Shaders GLSL e efeitos WebGL','Partículas e fundos vivos','Arte generativa com semente reproduzível'],
+    tools:null, kit:['toon-3d','verificacao-visual','algorithmic-art','animation-performance'], mcp:['Figma Shaders'], task:'escreve o shader',
+    ex:'Use o agente shader para criar um fundo de fumaça que reage ao mouse', hi:'Olha essas cores!' },
+  { id:'som', nick:'Eco', role:'Designer de Som', color:'#FFB4A2', acc:'headphones',
+    quote:'Som é a camada que quase ninguém usa. Por isso marca.',
+    does:['Microssons de clique e transição','Trilha ambiente sintetizada no navegador','Botão de som acessível, nunca toca sozinho'],
+    tools:null, kit:['verificacao-visual'], mcp:[], task:'compõe os microssons',
+    ex:'Use o agente som para criar os sons de clique e de sucesso do agendamento', hi:'Ouviu isso? Fui eu.' },
   { id:'copywriter', nick:'Verbo', role:'Redator & Conteúdo', color:'#FF9F1C', acc:'fedora',
     quote:'Texto que vende sem enrolar, em bom português.',
     does:['Textos de páginas, posts e e-mails','Tom de voz da marca','SEO na página'],
-    tools:['Read','Write','Edit','Glob','Grep','WebSearch'], task:'escreve os textos',
+    tools:null, kit:['direcao-de-arte','ux-copy','content-creation','seo-audit','seo-ai-visibility'], mcp:[], task:'escreve os textos',
     ex:'Use o agente copywriter para escrever a página Sobre da barbearia', hi:'Título novo saindo.' },
   { id:'pesquisador', nick:'Radar', role:'Pesquisador', color:'#6CC08B', acc:'safari',
     quote:'Trago fatos com fonte antes de qualquer decisão.',
     does:['Análise de concorrentes e preços','Referências e documentação técnica','Resumo curto, sempre com links'],
-    tools:['Read','Grep','Glob','WebSearch','WebFetch'], task:'levanta concorrentes',
+    tools:null, kit:['deep-research','competitive-brief','user-research'], mcp:['TinyFish','Google Drive'], task:'levanta concorrentes',
     ex:'Use o agente pesquisador para levantar 5 concorrentes e seus preços', hi:'Achei uma coisa…' },
   { id:'revisor', nick:'Crivo', role:'Revisor de Código', color:'#B5838D', acc:'tophat',
     quote:'Leio cada linha. Aponto o que quebra e o que sobra.',
     does:['Bugs com cenário concreto','Código duplicado ou complicado demais','Veredito: aprovado ou reprovado'],
-    tools:['Read','Grep','Glob','Bash'], task:'revisa o código',
+    tools:['Read','Grep','Glob','Bash','Skill'], kit:['code-review','simplify','padrao-de-entrega'], mcp:[], task:'revisa o código',
     ex:'Use o agente revisor para revisar o diff desta branch', hi:'Hum. Linha 42.' },
   { id:'qa', nick:'Lupa', role:'Qualidade & Testes', color:'#EEF2F7', acc:'magnifier',
     quote:'Só acredito no que vi funcionar, no celular e no desktop.',
     does:['Testes no navegador com Playwright','Bugs com passos para reproduzir','Testes automatizados'],
-    tools:['Read','Write','Edit','Bash','Glob','Grep'], task:'testa no celular',
+    tools:null, kit:['verificacao-visual','padrao-de-entrega','break-ui','accessibility-review'], mcp:['Playwright'], task:'testa no celular',
     ex:'Use o agente qa para testar o agendamento no celular e no desktop', hi:'Achei um bug. Brincadeira.' },
   { id:'seguranca', nick:'Muralha', role:'Segurança', color:'#3D4A7A', acc:'visor',
     quote:'Ninguém passa sem crachá. Nem senha esquecida no código.',
     does:['Auditoria de segredos e dependências','Validação, XSS e injeção','Checagem de LGPD'],
-    tools:['Read','Grep','Glob','Bash'], task:'audita a segurança',
+    tools:['Read','Grep','Glob','Bash','Skill'], kit:['security-review'], mcp:[], task:'audita a segurança',
     ex:'Use o agente seguranca para auditar o login e os formulários', hi:'Tudo trancado.' },
   { id:'devops', nick:'Trilho', role:'DevOps & Deploy', color:'#8D6E63', acc:'hardhat',
     quote:'Se não roda com um comando, não está pronto.',
     does:['Build e scripts do projeto','CI no GitHub Actions','Deploy e variáveis de ambiente'],
-    tools:['Read','Write','Edit','Bash','Glob','Grep'], task:'publica o site',
+    tools:null, kit:['padrao-de-entrega','session-start-hook'], mcp:['GitHub'], task:'publica o site',
     ex:'Use o agente devops para publicar o site na Vercel', hi:'Pipeline verdinho.' },
 ];
-const TOOL_PT = { Read:'Ler arquivos', Write:'Criar arquivos', Edit:'Editar', Bash:'Terminal', Glob:'Achar arquivos', Grep:'Buscar no código', WebSearch:'Pesquisar na web', WebFetch:'Ler páginas' };
+const TOOL_PT = { Read:'Ler arquivos', Write:'Criar arquivos', Edit:'Editar', Bash:'Terminal', Glob:'Achar arquivos', Grep:'Buscar no código', WebSearch:'Pesquisar na web', WebFetch:'Ler páginas', Skill:'Skills' };
+const CASA = new Set(['ideacao','direcao-de-arte','toon-3d','verificacao-visual','padrao-de-entrega']);
 const FLOW = [
   { title:'Briefing', who:['diretor'], dur:2600 },
-  { title:'Pesquisa & arquitetura', who:['pesquisador','arquiteto'], dur:3400 },
-  { title:'Design & conteúdo', who:['designer','copywriter'], dur:3400 },
-  { title:'Construção', who:['frontend','backend','motion-3d'], dur:4600 },
+  { title:'Conceito & pesquisa', who:['criativo','pesquisador'], dur:3400 },
+  { title:'Arquitetura & design', who:['arquiteto','designer','copywriter'], dur:3600 },
+  { title:'Construção', who:['frontend','backend','motion-3d','shader','som'], dur:5000 },
   { title:'Revisão', who:['revisor'], dur:2600 },
   { title:'QA & segurança', who:['qa','seguranca'], dur:3200 },
   { title:'Deploy', who:['devops'], dur:2400 },
@@ -608,6 +626,24 @@ function accessory(kind, head, a){
       const shine = new THREE.Mesh(new THREE.PlaneGeometry(.16, .04), basic('#7FE7FF')); shine.rotation.z = .3; add(shine, -.12, .09, .456);
       add(sph(.06, '#101225', .012), .44, -.02, 0);
       const badge = mk(new THREE.CylinderGeometry(.09, .09, .03, 6), '#FFC93C', { ol: .012 }); badge.rotation.x = Math.PI/2; a.rig.add(badge); badge.position.set(.12, .78, .34); break; }
+    case 'bulb': {
+      const b = new THREE.Group(); b.position.set(0, .82, 0); g.add(b);
+      const glass = sph(.17, new THREE.MeshBasicMaterial({ color:'#FFF3A6' }), .02, false); glass.scale.y *= 1.12; b.add(glass);
+      const screw = mk(new THREE.CylinderGeometry(.08, .07, .12, 12), '#9AA3B5', { ol: .012 }); screw.position.y = -.2; b.add(screw);
+      const fil = new THREE.Mesh(new THREE.TorusGeometry(.05, .012, 6, 16, Math.PI), basic('#FF9F1C')); fil.position.y = -.02; b.add(fil);
+      a._bulb = b; a._bulbGlass = glass; break; }
+    case 'prism': {
+      const pr = new THREE.Group(); g.add(pr);
+      const mat = new THREE.MeshToonMaterial({ color:'#7FE7FF', gradientMap: gradient });
+      const cr = mk(new THREE.OctahedronGeometry(.14, 0), mat, { ol: .015 }); cr.scale.y = 1.5; pr.add(cr);
+      a._prism = cr; a._prismMat = mat;
+      const vis = mk(new RoundedBoxGeometry(.56, .1, .1, 2, .04), toon('#2B2D42'), { ol: .012 }); add(vis, 0, .19, .36); vis.rotation.x = -.35;
+      break; }
+    case 'headphones': {
+      const band = mk(new THREE.TorusGeometry(.47, .045, 8, 28, Math.PI), '#2B2D42', { ol: .012 }); add(band, 0, .02, 0);
+      [-1, 1].forEach(s => { const cup = mk(new THREE.CylinderGeometry(.13, .13, .12, 18), '#2B2D42', { ol: .015 }); cup.rotation.z = Math.PI/2; add(cup, s*.47, 0, 0);
+        const pad = new THREE.Mesh(new THREE.CircleGeometry(.09, 18), basic('#FF6B6B')); pad.rotation.y = s*Math.PI/2; add(pad, s*.535, 0, 0); });
+      break; }
     case 'hardhat': {
       const d = dome(.48, '#FFC300'); d.scale.y = .85; add(d, 0, .05, 0);
       add(mk(new THREE.CylinderGeometry(.58, .58, .04, 30), '#FFC300', { ol: .015 }), 0, .09, .05);
@@ -670,8 +706,8 @@ TEAM.forEach((a, i) => {
     a.root = char; a.station = st; a.angle = 0; a.out = new V3(0, 0, 1);
     a.screen = null;
   } else {
-    const k = i - 1, ang = (k + .5) / 11 * Math.PI * 2;
-    const st = new THREE.Group(); st.position.set(Math.sin(ang)*4.65, .12, Math.cos(ang)*4.65); st.rotation.y = ang; island.add(st);
+    const k = i - 1, ang = (k + .5) / (AGENTS.length - 1) * Math.PI * 2;
+    const st = new THREE.Group(); st.position.set(Math.sin(ang)*5.05, .12, Math.cos(ang)*5.05); st.rotation.y = ang; island.add(st);
     const rugO = new THREE.Mesh(new THREE.CircleGeometry(.7, 36), basic('#1E1B2E')); rugO.rotation.x = -Math.PI/2; rugO.position.y = .004; st.add(rugO); a._rugO = rugO;
     const rug = new THREE.Mesh(new THREE.CircleGeometry(.66, 36), toon(mix(a.color, '#FFFFFF', .35))); rug.rotation.x = -Math.PI/2; rug.position.y = .008; rug.receiveShadow = true; st.add(rug);
     const top = mk(new RoundedBoxGeometry(1.4, .1, .64, 2, .035), '#F1C27D', { ol: .02, recv:true }); top.position.set(0, .95, .7); st.add(top);
@@ -802,7 +838,9 @@ function renderCard(a){
     <div class="card-body">
       <p class="quote">“${a.quote}”</p>
       <div><h3>O que entrega</h3><ul>${a.does.map(d => `<li>${d}</li>`).join('')}</ul></div>
-      <div><h3>Acesso</h3><div class="tools">${a.tools.map(t => `<span>${TOOL_PT[t] || t}</span>`).join('')}</div></div>
+      <div><h3>Arsenal</h3><div class="tools">${a.kit.map(k => `<span class="${CASA.has(k) ? 'casa' : ''}">${k}</span>`).join('')}</div></div>
+      ${a.mcp.length ? `<div><h3>Conexões</h3><div class="tools">${a.mcp.map(m => `<span class="mcp">${m}</span>`).join('')}</div></div>` : ''}
+      <div><h3>Acesso</h3><div class="tools">${a.tools ? a.tools.map(t => `<span>${TOOL_PT[t] || t}</span>`).join('') : '<span>Todas as ferramentas da sessão</span>'}</div></div>
       <div><h3>Como chamar no Claude Code</h3>
         <div class="cmd"><code id="cmd-${a.id}">${a.ex}</code>
           <div class="row"><span class="file">.claude/agents/${a.id}.md</span><button class="mini" type="button" data-copy>Copiar</button></div></div></div>
@@ -1028,6 +1066,8 @@ function animateAgent(a, t, dt){
   }
   const sx = 1 / Math.sqrt(sy);
   a.rig.position.y = y; a.rig.scale.set(sx, sy, sx);
+  if (a._bulb){ const on = a.state === 'working' || a.state === 'think' || a.state === 'celebrate'; a._bulb.position.y = .82 + Math.sin(ts * 3) * .05; a._bulbGlass.material.color.set(on ? (Math.sin(t*14) > 0 ? '#FFFFFF' : '#FFE45E') : '#FFF3A6'); a._bulb.scale.setScalar(on ? 1.15 : 1); }
+  if (a._prism){ const sp = a.state === 'working' ? 3.2 : 1.1; a._prism.position.set(Math.sin(t*sp) * .62, .62 + Math.sin(t*sp*1.7) * .08, Math.cos(t*sp) * .62); a._prism.rotation.y = t * 2; a._prismMat.color.setHSL((t * .12) % 1, .85, .65); }
   if (a._ant){ a._ant.rotation.z = Math.sin(t * 6 + a.phase) * .18 + (a.hop ? Math.sin(t*20)*.2 : 0); a._ant.rotation.x = Math.cos(t * 5) * .1; }
   if (a.screen) a.screen.offset.y -= dt * (a.state === 'working' ? 1.4 : .12);
 }
