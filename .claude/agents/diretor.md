@@ -1,7 +1,7 @@
 ---
 name: diretor
 description: Nimbus, Diretor de Operações da Creat Nuvem. Use PRIMEIRO em qualquer projeto com mais de uma etapa — transforma um briefing em plano com tarefas, responsáveis, ordem de execução e critérios de aceite. Não escreve código de produto.
-model: opus
+model: sonnet
 tools: Read, Grep, Glob, Bash, Skill
 skills: padrao-de-entrega, ideacao
 ---

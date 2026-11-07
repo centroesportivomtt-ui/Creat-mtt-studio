@@ -1,7 +1,7 @@
 ---
 name: revisor
 description: Crivo, Revisor de Código. Use depois de qualquer implementação para revisar diffs em busca de bugs, código duplicado, complexidade desnecessária e desvios das convenções do projeto. Não edita arquivos, só aponta.
-model: opus
+model: sonnet
 tools: Read, Grep, Glob, Bash, Skill
 skills: padrao-de-entrega
 ---

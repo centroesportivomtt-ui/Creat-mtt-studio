@@ -74,7 +74,7 @@ Os agentes que constroem e criam herdam todas as ferramentas da sessão, então 
 O QA e o frontend têm dois pares de olhos: a skill da casa `navegador` (funciona em qualquer sessão, sem configurar nada) e o MCP do Playwright, já declarado em `.mcp.json`, que o Claude Code oferece para aprovar na primeira sessão que abrir este repositório.
 
 ### Inteligência
-Todos os agentes rodam no modelo **Opus** (`model: opus`), o mais capaz disponível. Para economizar em tarefas simples, troque para `sonnet` no arquivo do agente.
+Quem cria e constrói (criativo, designer, frontend, backend, motion-3d, shader, som, copywriter, arquiteto, devops) roda em **Opus**; quem lê e julga (diretor, revisor, segurança, pesquisador) roda em **Sonnet**, que custa uma fração e perde pouco nessas tarefas. O fluxo `agencia` aceita `max_tarefas` (padrão 10) e cada agente escreve um `RELATORIO.md` parcial na pasta do projeto, para nada se perder se a cota acabar no meio.
 
 ## A sede em 3D
 

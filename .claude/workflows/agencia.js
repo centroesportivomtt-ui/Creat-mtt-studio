@@ -16,6 +16,8 @@ const ESPECIALISTAS = ['arquiteto', 'frontend', 'backend', 'designer', 'motion-3
 
 const briefing = typeof args === 'string' ? args : (args && args.briefing) || ''
 const comConceito = !(args && typeof args === 'object' && args.conceito === false)
+const maxTarefas = (args && typeof args === 'object' && args.max_tarefas) || 10
+const RELATORIO = 'Ao terminar, acrescente (sem apagar o que já existe) uma seção curta ao arquivo RELATORIO.md na pasta do projeto, com: o que você fez, arquivos tocados, como verificar e o que ficou pendente. Esse arquivo é o relatório parcial do projeto e precisa existir mesmo que o fluxo seja interrompido.'
 if (!briefing) throw new Error('Passe o briefing do projeto em args, por exemplo: "Landing page para minha barbearia com agendamento".')
 
 const PLANO = {
@@ -137,7 +139,7 @@ if (comConceito) {
 // ── Briefing ────────────────────────────────────────────────────────────────
 phase('Briefing')
 const plano = await agent(
-  `Briefing do cliente:\n\n${briefing}\n\n${conceito ? `Conceito criativo aprovado (todas as tarefas devem servir a ele, inclusive o momento-assinatura):\n${conceito}\n\n` : ''}Leia o repositório e monte o plano em ondas. Tarefas da mesma onda não podem tocar os mesmos arquivos.`,
+  `Briefing do cliente:\n\n${briefing}\n\n${conceito ? `Conceito criativo aprovado (todas as tarefas devem servir a ele, inclusive o momento-assinatura):\n${conceito}\n\n` : ''}Leia o repositório e monte o plano em ondas. Tarefas da mesma onda não podem tocar os mesmos arquivos. Limite: ${maxTarefas} tarefas no total; prefira menos tarefas maiores a muitas pequenas.`,
   { label: 'nimbus:plano', agentType: 'diretor', schema: PLANO },
 )
 if (!plano) throw new Error('O Diretor não conseguiu montar o plano.')
@@ -152,17 +154,17 @@ for (const onda of plano.ondas) {
   const resultados = await pipeline(
     onda.tarefas,
     t => agent(
-      `Projeto: ${plano.resumo}\n${conceito ? `Conceito: ${conceito}\n` : ''}\nSua tarefa (${t.id}): ${t.titulo}\n\n${t.instrucoes}\n\nArquivos sob sua responsabilidade: ${t.arquivos.join(', ') || 'a definir'}. Não edite arquivos de outras tarefas.\n\nAo terminar, relate em poucas linhas o que fez e como verificar.`,
+      `Projeto: ${plano.resumo}\n${conceito ? `Conceito: ${conceito}\n` : ''}\nSua tarefa (${t.id}): ${t.titulo}\n\n${t.instrucoes}\n\nArquivos sob sua responsabilidade: ${t.arquivos.join(', ') || 'a definir'}. Não edite arquivos de outras tarefas.\n\n${RELATORIO}\n\nAo terminar, relate em poucas linhas o que fez e como verificar.`,
       { label: `${t.responsavel}:${t.id}`, phase: 'Construção', agentType: t.responsavel },
     ),
     (relato, t) => agent(
       `Revise a entrega da tarefa ${t.id} ("${t.titulo}") feita por ${t.responsavel}.\nArquivos: ${t.arquivos.join(', ')}\nRelato do especialista:\n${relato}\n\nAprove se está correta e completa. Caso contrário, liste ajustes objetivos.`,
-      { label: `crivo:${t.id}`, phase: 'Construção', agentType: 'revisor', schema: VEREDITO },
+      { label: `crivo:${t.id}`, phase: 'Construção', agentType: 'revisor', schema: VEREDITO, effort: 'medium' },
     ).then(v => ({ t, relato, v })),
     async ({ t, relato, v }) => {
       if (!v || v.aprovado || !v.ajustes.length) return { t, relato, aprovado: true }
       const ajuste = await agent(
-        `O revisor pediu ajustes na sua tarefa ${t.id} ("${t.titulo}"):\n- ${v.ajustes.join('\n- ')}\n\nAplique os ajustes e relate o que mudou.`,
+        `O revisor pediu ajustes na sua tarefa ${t.id} ("${t.titulo}"):\n- ${v.ajustes.join('\n- ')}\n\nAplique os ajustes e relate o que mudou. ${RELATORIO}`,
         { label: `${t.responsavel}:${t.id}:ajuste`, phase: 'Construção', agentType: t.responsavel },
       )
       return { t, relato: `${relato}\n\nAjustes: ${ajuste}`, aprovado: true }
@@ -201,7 +203,7 @@ const porResponsavel = {}
 for (const a of confirmados) (porResponsavel[a.responsavel] = porResponsavel[a.responsavel] || []).push(a)
 const correcoes = await parallel(Object.entries(porResponsavel).map(([quem, lista]) => () =>
   agent(
-    `Corrija estes problemas confirmados pelo QA:\n\n${lista.map((a, i) => `${i + 1}. [${a.severidade}] ${a.titulo} — ${a.arquivo}\n   Cenário: ${a.cenario}\n   Correção sugerida: ${a.correcao}`).join('\n')}\n\nRelate o que foi corrigido e como verificar.`,
+    `Corrija estes problemas confirmados pelo QA:\n\n${lista.map((a, i) => `${i + 1}. [${a.severidade}] ${a.titulo} — ${a.arquivo}\n   Cenário: ${a.cenario}\n   Correção sugerida: ${a.correcao}`).join('\n')}\n\nRelate o que foi corrigido e como verificar. ${RELATORIO}`,
     { label: `${quem}:correcoes`, phase: 'Correções', agentType: quem },
   ).then(r => ({ quem, r })),
 ))
@@ -209,7 +211,7 @@ const correcoes = await parallel(Object.entries(porResponsavel).map(([quem, list
 // ── Entrega ─────────────────────────────────────────────────────────────────
 phase('Entrega')
 const relatorio = await agent(
-  `Feche o projeto "${plano.resumo}".\n\nEntregas:\n${entregas.map(e => `### ${e.t.id} · ${e.t.responsavel}\n${e.relato}`).join('\n\n')}\n\nCorreções do QA:\n${correcoes.filter(Boolean).map(c => `### ${c.quem}\n${c.r}`).join('\n\n') || 'nenhuma'}\n\nConfira cada critério de aceite no repositório (rode os comandos necessários):\n- ${plano.criterios_aceite.join('\n- ')}\n\nEscreva o relatório final em português: o que foi feito, status de cada critério (ok / falhou / não verificado), como rodar, e próximos passos.`,
+  `Feche o projeto "${plano.resumo}".\n\nEntregas:\n${entregas.map(e => `### ${e.t.id} · ${e.t.responsavel}\n${e.relato}`).join('\n\n')}\n\nCorreções do QA:\n${correcoes.filter(Boolean).map(c => `### ${c.quem}\n${c.r}`).join('\n\n') || 'nenhuma'}\n\nConfira cada critério de aceite no repositório (rode os comandos necessários):\n- ${plano.criterios_aceite.join('\n- ')}\n\nLeia também o RELATORIO.md parcial na pasta do projeto, se existir. Escreva o relatório final em português no próprio RELATORIO.md (substituindo o parcial) e devolva o mesmo texto: o que foi feito, status de cada critério (ok / falhou / não verificado), como rodar, e próximos passos.`,
   { label: 'nimbus:entrega', agentType: 'diretor' },
 )
 
