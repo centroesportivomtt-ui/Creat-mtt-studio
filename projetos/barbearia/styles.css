@@ -457,7 +457,7 @@ p { max-width: var(--largura-texto); }
   background-image:
     radial-gradient(120% 70% at 18% 12%, color-mix(in oklab, var(--veio-claro) 70%, transparent) 0%, transparent 60%),
     radial-gradient(90% 60% at 85% 80%, color-mix(in oklab, var(--veio-escuro) 85%, transparent) 0%, transparent 65%),
-    repeating-linear-gradient(104deg, transparent 0 7px, color-mix(in oklab, var(--veio-escuro) 35%, transparent) 7px 8px, transparent 8px 19px),
+    repeating-linear-gradient(104deg, transparent 0 7px, color-mix(in oklab, var(--veio-escuro) 22%, transparent) 7px 8px, transparent 8px 19px),
     repeating-linear-gradient(-12deg, transparent 0 23px, color-mix(in oklab, var(--veio-claro) 22%, transparent) 23px 24px, transparent 24px 41px),
     linear-gradient(180deg, var(--veio-claro), var(--fundo) 55%, var(--veio-escuro));
   user-select: none;
