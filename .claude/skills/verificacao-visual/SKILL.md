@@ -22,4 +22,4 @@ node .claude/skills/verificacao-visual/olhar.cjs sede/index.html --hash frontend
 2. Corrija o que o relatório apontou. Código de saída 1 = tem problema.
 3. Repita só a configuração que falhou com `--so`.
 
-Para navegar interativamente (clicar, digitar, inspecionar), use o MCP `playwright` se ele estiver conectado (instruções no README).
+Para navegar interativamente (clicar, digitar, inspecionar), use a skill da casa `navegador`.

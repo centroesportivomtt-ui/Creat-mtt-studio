@@ -57,6 +57,7 @@ Cada agente é um arquivo em `.claude/agents/`. Para mudar o jeito de um deles t
 | `direcao-de-arte` | ficha de direção, regras de identidade, clichês proibidos |
 | `toon-3d` | 3D com cara de desenho; kit pronto em `toon-3d/toon-kit.js` |
 | `verificacao-visual` | prints em celular/desktop, claro/escuro + erros de console, rolagem lateral, texto pequeno |
+| `navegador` | Chromium que fica aberto entre comandos: `abrir`, `ver`, `clicar`, `digitar`, `ler`, `print`, `console` |
 | `padrao-de-entrega` | definição de pronto e relatório final |
 
 ```
@@ -70,11 +71,7 @@ Os agentes já sabem quando usar cada uma (seção **Arsenal** de cada arquivo e
 ### Conexões (MCP)
 Os agentes que constroem e criam herdam todas as ferramentas da sessão, então usam os conectores da sua conta quando estão ligados: **Figma** (ler designs, gerar imagens e shaders), **Adobe** (fontes, Firefly), **Canva**, **TinyFish** (pesquisa e extração na web), **Base44** (apps com banco pronto), **Google Drive** e **GitHub**. Revisor, segurança e diretor ficam só com leitura, de propósito.
 
-Para dar ao QA e ao frontend um navegador que eles controlam clicando e digitando, adicione o MCP do Playwright ao projeto (cria o `.mcp.json`):
-
-```
-claude mcp add --scope project playwright -- npx -y @playwright/mcp@0.0.83 --headless --isolated
-```
+O QA e o frontend têm dois pares de olhos: a skill da casa `navegador` (funciona em qualquer sessão, sem configurar nada) e o MCP do Playwright, já declarado em `.mcp.json`, que o Claude Code oferece para aprovar na primeira sessão que abrir este repositório.
 
 ### Inteligência
 Todos os agentes rodam no modelo **Opus** (`model: opus`), o mais capaz disponível. Para economizar em tarefas simples, troque para `sonnet` no arquivo do agente.
