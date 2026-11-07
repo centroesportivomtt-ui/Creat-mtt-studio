@@ -1,0 +1,1331 @@
+/* =====================================================================
+   Barbearia Fio & Couro · styles.css (Paleta)
+
+   Conceito: FIO NO COURO. O polegar passa a navalha na tira de couro,
+   o site ganha fio e o mesmo gesto confirma a reserva.
+   Momento-assinatura: hero #couro em tela cheia (390px, 0 a 5 s), quatro
+   passadas, medidor de 25% a 100%, nome gravado vira cromado.
+   Layout: uma coluna de bancada no celular, alinhada à esquerda como
+   a tabela de preços pregada na parede; no desktop, leitura em ~72ch
+   e agendamento em duas colunas (escolhas | resumo).
+   Ousadia: só o hero (couro, navalha, cromo). O resto é calmo, prova.
+
+   Fontes (o index.html carrega pelo Google Fonts):
+   Big Shoulders Display 700/800 · Instrument Sans 400/500/600 · JetBrains Mono 400/600
+
+   ---------------------------------------------------------------------
+   CONTRASTE (WCAG 2.x, calculado com a mistura em oklab sobre os
+   valores padrão do config; se o cliente trocar as cores, rever):
+   TEMA ESCURO (fundo #1f1612)
+     tinta #d9dde0 / fundo ............... 13,01:1   (AA texto)
+     tinta / fundo-3 #352d2a .............  9,81:1
+     tinta-suave #a4a3a4 / fundo .........  7,09:1   / fundo-2 6,26:1 / fundo-3 5,34:1
+     destaque #b98a4e / fundo ............  5,76:1   / fundo-2 5,09:1 / fundo-3 4,35:1 (só texto >= 18,66px bold)
+     erro #ff9f8a / fundo ................  8,95:1   / fundo-2 7,90:1
+     borda-forte #757170 / fundo .........  3,70:1   / fundo-2 3,26:1 (AA borda de controle)
+     foco (latão) / fundo ................  5,76:1   (AA foco >= 3:1)
+     ocupado #7f7b7b / fundo-2 ...........  3,76:1   (desabilitado; ainda legível)
+     gravado #706b6a / fundo .............  3,39:1   (texto grande >= 3:1)
+     fundo / tinta (botão aço) ........... 13,01:1
+     fundo / destaque (WhatsApp) .........  5,76:1
+     giz #e9efe6 / quadro #1e231f ........ 13,61:1
+   TEMA CLARO (couro caramelo cru #d8b990)
+     tinta #262a2d / fundo ...............  7,81:1   / fundo-3 #cbae89 6,88:1
+     tinta-suave #454440 / fundo .........  5,26:1   / fundo-2 5,73:1 / fundo-3 4,64:1
+     destaque #5d401f / fundo ............  5,10:1   / fundo-2 5,56:1 / fundo-3 4,50:1
+     erro #8a1c0b / fundo ................  5,02:1   / fundo-2 5,46:1
+     borda-forte #645c51 / fundo .........  3,53:1   / fundo-2 3,84:1
+     foco (latão escuro) / fundo .........  5,10:1
+     gravado #675f53 / fundo .............  3,37:1   (texto grande)
+     fundo / tinta (botão aço) ...........  7,81:1
+     fundo / destaque (WhatsApp) .........  5,10:1
+     giz / quadro (a lousa é escura nos dois temas) 13,6:1
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. TOKENS
+   As quatro cores-mãe (--cor-*) vêm de config.js e são sobrescritas
+   pelo JS em document.documentElement.style. Tudo o mais é derivado
+   delas com color-mix(in oklab). Hex só aparece aqui nos tokens.
+   --------------------------------------------------------------------- */
+:root {
+  /* cores-mãe (padrão; o JS sobrescreve) */
+  --cor-couro: #1f1612;   /* couro tabaco */
+  --cor-aco:   #d9dde0;   /* aço fosco */
+  --cor-latao: #b98a4e;   /* latão envelhecido, puxado pro cobre */
+  --cor-giz:   #e9efe6;   /* giz levemente frio */
+
+  /* âncoras usadas só nas derivações */
+  --ancora-ardosia: #1b2d28;  /* lousa */
+  --ancora-cru:     #efdcc0;  /* couro cru, sem tingir */
+  --ancora-carvao:  #121619;  /* aço escurecido */
+  --ancora-oxido:   #2b1806;  /* latão oxidado */
+  --ancora-erro-e:  #ff9f8a;
+  --ancora-erro-c:  #8a1c0b;
+
+  /* tipografia */
+  --fonte-display: 'Big Shoulders Display', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+  --fonte-texto:   'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fonte-mono:    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --fonte-dado: var(--fonte-mono);
+
+  /* escala fluida (nada abaixo de 12px; corpo >= 16px) */
+  --t-micro: 0.75rem;                                   /* 12px: só rótulos mono */
+  --t-nota:  0.8125rem;                                 /* 13px */
+  --t-menor: 0.875rem;                                  /* 14px */
+  --t-corpo: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);   /* 16-17px */
+  --t-lead:  clamp(1.125rem, 1.05rem + 0.4vw, 1.3125rem);
+  --t-h3:    clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem);
+  --t-h2:    clamp(2.25rem, 1.7rem + 2.6vw, 3.75rem);
+  --t-manifesto: clamp(1.75rem, 1.3rem + 2.2vw, 3rem);
+  --t-hero:  clamp(4.5rem, 1rem + 19vw, 13.5rem);
+  --entrelinha: 1.55;
+
+  /* ritmo (base 4px) */
+  --esp-1: 0.25rem;
+  --esp-2: 0.5rem;
+  --esp-3: 0.75rem;
+  --esp-4: 1rem;
+  --esp-5: 1.5rem;
+  --esp-6: 2rem;
+  --esp-7: 3rem;
+  --esp-8: 4.5rem;
+  --esp-9: clamp(4.5rem, 3rem + 6vw, 8rem);
+  --calha: clamp(1rem, 0.6rem + 2vw, 2rem);   /* 16px a 390 */
+
+  /* medidas */
+  --largura-texto: 72ch;
+  --largura-conteudo: 1100px;
+  --alvo: 44px;          /* alvo de toque mínimo */
+  --altura-campo: 52px;
+  --altura-tira: 56px;
+  --whats: 56px;
+  --altura-topo: 64px;   /* o JS pode ajustar se o topo quebrar em 2 linhas */
+
+  /* raios: couro tem raio pequeno; só o espelho é oval */
+  --raio-1: 2px;
+  --raio-2: 4px;
+  --raio-espelho: 50% / 40%;
+
+  /* sombras discretas, tingidas de couro */
+  --sombra-1: 0 1px 0 color-mix(in oklab, var(--cor-couro) 60%, black);
+  --sombra-2: 0 6px 18px -8px color-mix(in oklab, var(--cor-couro) 70%, black);
+
+  /* movimento */
+  --dur-rapida: 120ms;
+  --dur-media: 240ms;
+  --dur-lenta: 480ms;
+  --curva-entrada: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --curva-saida: cubic-bezier(0.4, 0, 1, 1);
+  --curva-mola: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /* medidor de fio (o efeito.js atualiza de 0.25 a 1) */
+  --fio: 0.25;
+
+  /* camadas */
+  --z-whats: 40;
+  --z-polegar: 45;
+  --z-topo: 50;
+  --z-pular: 60;
+}
+
+/* ---- TEMA ESCURO (padrão): couro tabaco, tinta de aço ---- */
+:root {
+  color-scheme: dark;
+  --fundo:   var(--cor-couro);
+  --fundo-2: color-mix(in oklab, var(--cor-couro) 93%, var(--cor-aco));
+  --fundo-3: color-mix(in oklab, var(--cor-couro) 86%, var(--cor-aco));
+  --couro-2: var(--fundo-2);
+  --couro-3: var(--fundo-3);
+  --tinta:   var(--cor-aco);
+  --tinta-suave: color-mix(in oklab, var(--cor-aco) 74%, var(--cor-couro));
+  --destaque: var(--cor-latao);
+  --apoio:   var(--cor-giz);
+  --borda:   color-mix(in oklab, var(--cor-aco) 20%, var(--cor-couro));
+  --borda-forte: color-mix(in oklab, var(--cor-aco) 50%, var(--cor-couro));
+  --ocupado: color-mix(in oklab, var(--cor-aco) 55%, var(--cor-couro));
+  --gravado: color-mix(in oklab, var(--cor-aco) 47%, var(--cor-couro));
+  --erro:    var(--ancora-erro-e);
+  --foco:    var(--cor-latao);
+  --quadro:  color-mix(in oklab, var(--cor-couro) 42%, var(--ancora-ardosia));
+  --quadro-moldura: color-mix(in oklab, var(--cor-couro) 70%, var(--cor-latao));
+  --veio-claro: color-mix(in oklab, var(--cor-couro) 82%, var(--cor-latao));
+  --veio-escuro: color-mix(in oklab, var(--cor-couro) 70%, black);
+  --vidro: color-mix(in oklab, var(--cor-giz) 14%, transparent);
+  --topo-fundo: color-mix(in oklab, var(--cor-couro) 94%, transparent);
+}
+
+/* ---- TEMA CLARO: couro caramelo cru, aço escurecido ----
+   Mantido em dois blocos iguais (atributo e preferência do sistema). */
+:root[data-tema="claro"] {
+  color-scheme: light;
+  --fundo:   var(--cor-couro-cru, color-mix(in oklab, var(--cor-latao) 42%, var(--ancora-cru)));
+  --fundo-2: color-mix(in oklab, var(--fundo) 86%, #fff8ec);
+  --fundo-3: color-mix(in oklab, var(--fundo) 93%, var(--tinta));
+  --couro-2: var(--fundo-2);
+  --couro-3: var(--fundo-3);
+  --tinta:   color-mix(in oklab, var(--cor-aco) 12%, var(--ancora-carvao));
+  --tinta-suave: color-mix(in oklab, var(--tinta) 80%, var(--fundo));
+  --destaque: color-mix(in oklab, var(--cor-latao) 38%, var(--ancora-oxido));
+  --apoio:   var(--cor-giz);
+  --borda:   color-mix(in oklab, var(--tinta) 25%, var(--fundo));
+  --borda-forte: color-mix(in oklab, var(--tinta) 62%, var(--fundo));
+  --ocupado: color-mix(in oklab, var(--tinta) 62%, var(--fundo));
+  --gravado: color-mix(in oklab, var(--tinta) 60%, var(--fundo));
+  --erro:    var(--ancora-erro-c);
+  --foco:    var(--destaque);
+  --quadro:  color-mix(in oklab, var(--cor-couro) 42%, var(--ancora-ardosia));
+  --quadro-moldura: color-mix(in oklab, var(--cor-couro) 55%, var(--cor-latao));
+  --veio-claro: color-mix(in oklab, var(--fundo) 80%, #fff8ec);
+  --veio-escuro: color-mix(in oklab, var(--fundo) 82%, var(--cor-couro));
+  --vidro: color-mix(in oklab, white 30%, transparent);
+  --topo-fundo: color-mix(in oklab, var(--fundo) 94%, transparent);
+  --sombra-2: 0 6px 18px -10px color-mix(in oklab, var(--cor-couro) 55%, transparent);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-tema="escuro"]) {
+    color-scheme: light;
+    --fundo:   var(--cor-couro-cru, color-mix(in oklab, var(--cor-latao) 42%, var(--ancora-cru)));
+    --fundo-2: color-mix(in oklab, var(--fundo) 86%, #fff8ec);
+    --fundo-3: color-mix(in oklab, var(--fundo) 93%, var(--tinta));
+    --couro-2: var(--fundo-2);
+    --couro-3: var(--fundo-3);
+    --tinta:   color-mix(in oklab, var(--cor-aco) 12%, var(--ancora-carvao));
+    --tinta-suave: color-mix(in oklab, var(--tinta) 80%, var(--fundo));
+    --destaque: color-mix(in oklab, var(--cor-latao) 38%, var(--ancora-oxido));
+    --apoio:   var(--cor-giz);
+    --borda:   color-mix(in oklab, var(--tinta) 25%, var(--fundo));
+    --borda-forte: color-mix(in oklab, var(--tinta) 62%, var(--fundo));
+    --ocupado: color-mix(in oklab, var(--tinta) 62%, var(--fundo));
+    --gravado: color-mix(in oklab, var(--tinta) 60%, var(--fundo));
+    --erro:    var(--ancora-erro-c);
+    --foco:    var(--destaque);
+    --quadro:  color-mix(in oklab, var(--cor-couro) 42%, var(--ancora-ardosia));
+    --quadro-moldura: color-mix(in oklab, var(--cor-couro) 55%, var(--cor-latao));
+    --veio-claro: color-mix(in oklab, var(--fundo) 80%, #fff8ec);
+    --veio-escuro: color-mix(in oklab, var(--fundo) 82%, var(--cor-couro));
+    --vidro: color-mix(in oklab, white 30%, transparent);
+    --topo-fundo: color-mix(in oklab, var(--fundo) 94%, transparent);
+    --sombra-2: 0 6px 18px -10px color-mix(in oklab, var(--cor-couro) 55%, transparent);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   2. BASE
+   --------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+
+html, body { overflow-x: clip; }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--altura-topo) + var(--esp-4));
+  background: var(--fundo);
+}
+body {
+  min-height: 100svh;
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: var(--fonte-texto);
+  font-size: var(--t-corpo);
+  line-height: var(--entrelinha);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+img, svg, canvas, video { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+ul[role="list"], ol[role="list"], .precos, .profissionais, .quadro ul, .quadro ol,
+.servicos-cabem, .chips, .horarios, .fita-dias { list-style: none; padding: 0; }
+h1, h2, h3, h4 { line-height: 1.05; text-wrap: balance; font-weight: 700; }
+p, li, dd { text-wrap: pretty; }
+p { max-width: var(--largura-texto); }
+::selection { background: var(--destaque); color: var(--fundo); }
+
+/* foco: sempre visível, 3px de latão */
+:focus { outline: none; }
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 3px;
+  border-radius: var(--raio-1);
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pular-link {
+  position: fixed;
+  top: var(--esp-2);
+  left: var(--esp-2);
+  z-index: var(--z-pular);
+  padding: var(--esp-3) var(--esp-4);
+  min-height: var(--alvo);
+  background: var(--tinta);
+  color: var(--fundo);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--raio-2);
+  transform: translateY(calc(-100% - var(--esp-4)));
+}
+.pular-link:focus, .pular-link:focus-visible { transform: none; }
+
+.is-oculto, [hidden] { display: none !important; }
+
+/* números que se alinham: preços, horários, durações */
+.mono, .preco, .duracao, .horario, .dia, .letreiro, time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------
+   3. BOTÕES
+   --------------------------------------------------------------------- */
+.btn, .btn-agendar, .btn-sem-arrastar, .atalho-sempre {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-2);
+  min-height: var(--alvo);
+  padding: var(--esp-2) var(--esp-4);
+  border-radius: var(--raio-2);
+  font-family: var(--fonte-texto);
+  font-weight: 600;
+  line-height: 1.1;
+  text-decoration: none;
+  white-space: nowrap;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color var(--dur-rapida) var(--curva-entrada),
+              color var(--dur-rapida) var(--curva-entrada),
+              transform var(--dur-rapida) var(--curva-entrada);
+}
+.btn:active, .btn-agendar:active, .btn-sem-arrastar:active, .atalho-sempre:active {
+  transform: translateY(1px);
+}
+
+/* Agendar horário: aço sobre couro, a peça mais clara da tela */
+.btn-agendar {
+  background: var(--tinta);
+  color: var(--fundo);
+  box-shadow: var(--sombra-1);
+}
+.btn-agendar:hover { background: color-mix(in oklab, var(--tinta) 88%, var(--destaque)); }
+
+/* o botão que sobe até a zona do polegar depois do 100% */
+.btn-agendar.is-polegar {
+  position: fixed;
+  z-index: var(--z-polegar);
+  left: 50%;
+  bottom: calc(var(--esp-4) + env(safe-area-inset-bottom, 0px));
+  min-height: 56px;
+  padding-inline: var(--esp-6);
+  font-size: 1.0625rem;
+  /* não encosta no WhatsApp flutuante dos dois lados */
+  max-width: calc(100vw - 2 * (var(--whats) + var(--esp-4) + var(--esp-3)));
+  box-shadow: var(--sombra-2), 0 0 0 1px var(--destaque);
+  transform: translateX(-50%);
+  animation: sobe-polegar var(--dur-lenta) var(--curva-mola) both;
+}
+.btn-agendar.is-polegar:active { transform: translateX(-50%) translateY(1px); }
+@keyframes sobe-polegar {
+  from { transform: translate(-50%, 140%); opacity: 0; }
+  to   { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.btn-sem-arrastar {
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--esp-3);
+  background: transparent;
+  color: var(--tinta);
+  border: 1px solid var(--borda-forte);
+}
+.btn-sem-arrastar:hover { background: var(--fundo-2); }
+
+.btn-icone, #alternar-tema, #alternar-som {
+  display: inline-grid;
+  place-items: center;
+  width: var(--alvo);
+  height: var(--alvo);
+  flex: 0 0 auto;
+  border-radius: var(--raio-2);
+  border: 1px solid var(--borda);
+  color: var(--tinta);
+  font-family: var(--fonte-mono);
+  font-size: var(--t-menor);
+}
+.btn-icone:hover, #alternar-tema:hover, #alternar-som:hover { border-color: var(--borda-forte); }
+#alternar-som[aria-pressed="true"], #alternar-som.is-ligado { border-color: var(--destaque); color: var(--destaque); }
+.btn-icone svg, #alternar-tema svg, #alternar-som svg { width: 20px; height: 20px; }
+
+/* ---------------------------------------------------------------------
+   4. TOPO + LETREIRO
+   Sem backdrop-filter de propósito: ele vira bloco de contenção e
+   prenderia o .btn-agendar.is-polegar (position: fixed) dentro do topo.
+   --------------------------------------------------------------------- */
+.topo {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: var(--z-topo);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-2) var(--esp-3);
+  min-height: var(--altura-topo);
+  padding: calc(var(--esp-2) + env(safe-area-inset-top, 0px)) max(var(--calha), env(safe-area-inset-right, 0px)) var(--esp-2) max(var(--calha), env(safe-area-inset-left, 0px));
+  background: var(--topo-fundo);
+  border-bottom: 1px solid var(--borda);
+}
+.topo > .btn-agendar { margin-left: auto; }
+
+.letreiro, #letreiro {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-2);
+  flex: 1 1 14rem;
+  min-width: 0;
+  min-height: var(--alvo);
+  font-family: var(--fonte-mono);
+  font-size: var(--t-menor);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--tinta);
+  line-height: 1.3;
+}
+.letreiro strong, #letreiro strong { font-weight: 600; }
+/* ponto indicador */
+.letreiro::before, #letreiro::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--tinta-suave);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--tinta-suave) 22%, transparent);
+}
+.letreiro[data-estado="aberto"]::before, #letreiro[data-estado="aberto"]::before {
+  background: var(--destaque);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--destaque) 30%, transparent);
+  animation: pulso-letreiro 2.4s ease-in-out infinite;
+}
+.letreiro[data-estado="fechado"]::before, #letreiro[data-estado="fechado"]::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--tinta-suave);
+}
+.letreiro[data-estado="lotado"]::before, #letreiro[data-estado="lotado"]::before {
+  background: var(--erro);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--erro) 25%, transparent);
+}
+@keyframes pulso-letreiro { 50% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--destaque) 0%, transparent); } }
+
+/* celular: letreiro na linha 1, botões na linha 2 */
+@media (max-width: 559px) {
+  .letreiro, #letreiro { flex-basis: 100%; min-height: 0; font-size: var(--t-nota); }
+  .topo > .btn-agendar { margin-left: 0; margin-right: auto; }
+  :root { --altura-topo: 104px; }
+}
+
+/* ---------------------------------------------------------------------
+   5. HERO: O COURO
+   --------------------------------------------------------------------- */
+.couro, #couro {
+  position: relative;
+  overflow: clip;
+  isolation: isolate;
+  touch-action: pan-y;
+  min-height: 100svh;
+  display: grid;
+  align-content: end;
+  gap: var(--esp-4);
+  padding: calc(var(--altura-topo) + var(--esp-6)) var(--calha) calc(var(--esp-8) + env(safe-area-inset-bottom, 0px));
+  color: var(--tinta);
+  /* fallback sem canvas: couro com veio em CSS puro */
+  background-color: var(--fundo);
+  background-image:
+    radial-gradient(120% 70% at 18% 12%, color-mix(in oklab, var(--veio-claro) 70%, transparent) 0%, transparent 60%),
+    radial-gradient(90% 60% at 85% 80%, color-mix(in oklab, var(--veio-escuro) 85%, transparent) 0%, transparent 65%),
+    repeating-linear-gradient(104deg, transparent 0 7px, color-mix(in oklab, var(--veio-escuro) 35%, transparent) 7px 8px, transparent 8px 19px),
+    repeating-linear-gradient(-12deg, transparent 0 23px, color-mix(in oklab, var(--veio-claro) 22%, transparent) 23px 24px, transparent 24px 41px),
+    linear-gradient(180deg, var(--veio-claro), var(--fundo) 55%, var(--veio-escuro));
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.couro:focus-visible, #couro:focus-visible { outline-offset: -6px; }
+
+#couro-canvas, .couro-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* a navalha DOM, se o efeito.js usar uma (opcional) */
+.navalha {
+  position: absolute;
+  top: 0; left: 0;
+  pointer-events: none;
+  will-change: transform;
+  transform-origin: 50% 50%;
+}
+
+/* nome gravado em baixo-relevo */
+.hero-nome {
+  font-family: var(--fonte-display);
+  font-weight: 800;
+  font-size: var(--t-hero);
+  line-height: 0.82;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--gravado);
+  text-shadow:
+    0 -1px 0 color-mix(in oklab, var(--veio-escuro) 90%, black),
+    0 1px 0 color-mix(in oklab, var(--veio-claro) 80%, transparent);
+  transition: color var(--dur-media) var(--curva-entrada);
+}
+.hero-nome .e-comercial { font-weight: 700; color: inherit; }
+
+/* afiada: cromo legível, gradiente no próprio texto */
+.is-afiada .hero-nome, .hero-nome.is-afiada {
+  color: var(--tinta);
+  text-shadow: none;
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .is-afiada .hero-nome, .hero-nome.is-afiada {
+    background-image: linear-gradient(176deg,
+      color-mix(in oklab, var(--cor-giz) 96%, white) 0%,
+      var(--cor-aco) 34%,
+      color-mix(in oklab, var(--cor-aco) 45%, var(--cor-couro)) 49%,
+      color-mix(in oklab, var(--cor-aco) 80%, var(--cor-couro)) 52%,
+      color-mix(in oklab, var(--cor-giz) 90%, white) 72%,
+      var(--cor-aco) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 1px 0 color-mix(in oklab, var(--cor-couro) 80%, black));
+  }
+  /* no claro o couro é caramelo: o cromo escurece pra manter >= 3:1 */
+  :root[data-tema="claro"] .is-afiada .hero-nome,
+  :root[data-tema="claro"] .hero-nome.is-afiada {
+    background-image: linear-gradient(176deg,
+      color-mix(in oklab, var(--cor-aco) 40%, var(--ancora-carvao)) 0%,
+      var(--tinta) 40%,
+      color-mix(in oklab, var(--cor-aco) 55%, var(--ancora-carvao)) 52%,
+      var(--tinta) 70%,
+      color-mix(in oklab, var(--cor-aco) 30%, var(--ancora-carvao)) 100%);
+    filter: drop-shadow(0 1px 0 color-mix(in oklab, var(--fundo) 60%, white));
+  }
+}
+@media (prefers-color-scheme: light) {
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    :root:not([data-tema="escuro"]) .is-afiada .hero-nome,
+    :root:not([data-tema="escuro"]) .hero-nome.is-afiada {
+      background-image: linear-gradient(176deg,
+        color-mix(in oklab, var(--cor-aco) 40%, var(--ancora-carvao)) 0%,
+        var(--tinta) 40%,
+        color-mix(in oklab, var(--cor-aco) 55%, var(--ancora-carvao)) 52%,
+        var(--tinta) 70%,
+        color-mix(in oklab, var(--cor-aco) 30%, var(--ancora-carvao)) 100%);
+      filter: drop-shadow(0 1px 0 color-mix(in oklab, var(--fundo) 60%, white));
+    }
+  }
+}
+
+.hero-bordao {
+  font-family: var(--fonte-texto);
+  font-size: var(--t-lead);
+  color: var(--tinta-suave);
+  max-width: 28ch;
+}
+
+/* "Dá o fio." + seta de giz */
+.hero-dica {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-3);
+  font-family: var(--fonte-mono);
+  font-size: var(--t-menor);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--apoio);
+}
+:root[data-tema="claro"] .hero-dica { color: var(--tinta); }
+@media (prefers-color-scheme: light) { :root:not([data-tema="escuro"]) .hero-dica { color: var(--tinta); } }
+
+.seta-giz {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 72px;
+  height: 28px;
+  background-color: currentColor;
+  /* traço de giz desenhado uma vez (máscara SVG inline, sem raster) */
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 28'%3E%3Cpath d='M3 18c12-7 30-10 52-5' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M48 5l11 8-12 7' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 28'%3E%3Cpath d='M3 18c12-7 30-10 52-5' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M48 5l11 8-12 7' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0.9;
+  clip-path: inset(0 100% 0 0);
+  animation: risca-giz 700ms 400ms var(--curva-entrada) 1 forwards;
+}
+@keyframes risca-giz { to { clip-path: inset(0 0 0 0); } }
+.is-afiada .seta-giz, .is-afiada .hero-dica { opacity: 0; transition: opacity var(--dur-media); }
+
+/* medidor de fio: --fio de 0.25 a 1 */
+#medidor-fio, .medidor-fio {
+  position: relative;
+  width: min(320px, 72%);
+  height: 4px;
+  border-radius: var(--raio-1);
+  background: var(--borda);
+  overflow: hidden;
+}
+#medidor-fio::before, .medidor-fio::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--destaque);
+  transform-origin: 0 50%;
+  transform: scaleX(var(--fio, 0.25));
+  transition: transform var(--dur-media) var(--curva-entrada);
+}
+.is-afiada #medidor-fio::before, .is-afiada .medidor-fio::before {
+  background: linear-gradient(90deg, var(--destaque), var(--tinta));
+}
+.medidor-rotulo {
+  font-family: var(--fonte-mono);
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+
+/* frase de fechamento do ritual */
+.hero-afiada {
+  font-family: var(--fonte-texto);
+  font-size: var(--t-lead);
+  font-weight: 500;
+  max-width: 24ch;
+  color: var(--tinta);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity var(--dur-media) var(--curva-entrada),
+              transform var(--dur-media) var(--curva-entrada),
+              visibility 0s linear var(--dur-media);
+}
+.is-afiada .hero-afiada {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+
+/* lampejo de 120 ms (o efeito.js liga .is-lampejo) */
+.couro::after, #couro::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(60% 40% at 50% 40%, color-mix(in oklab, var(--cor-giz) 70%, transparent), transparent 70%);
+  opacity: 0;
+}
+.couro.is-lampejo::after, #couro.is-lampejo::after { animation: lampejo var(--dur-rapida) linear 1; }
+@keyframes lampejo { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+
+/* desktop: o nome ganha a largura, o resto alinha numa coluna estreita */
+@media (min-width: 960px) {
+  .couro, #couro { padding-inline: max(var(--calha), calc((100vw - var(--largura-conteudo)) / 2)); }
+}
+
+/* ---------------------------------------------------------------------
+   6. SEÇÕES CALMAS (prova)
+   --------------------------------------------------------------------- */
+main { display: block; }
+.secao {
+  width: 100%;
+  max-width: calc(var(--largura-conteudo) + 2 * var(--calha));
+  margin-inline: auto;
+  padding: var(--esp-9) var(--calha);
+}
+.secao + .secao { border-top: 1px solid var(--borda); }
+.secao > h2, .secao-titulo {
+  font-family: var(--fonte-display);
+  font-weight: 800;
+  font-size: var(--t-h2);
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  margin-bottom: var(--esp-6);
+}
+.secao h3 { font-family: var(--fonte-texto); font-size: var(--t-h3); font-weight: 600; line-height: 1.2; }
+.secao-rotulo, .sobretitulo {
+  display: block;
+  font-family: var(--fonte-mono);
+  font-size: var(--t-micro);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+  margin-bottom: var(--esp-3);
+}
+
+/* manifesto: tipográfico, sem enfeite */
+.manifesto p {
+  font-family: var(--fonte-texto);
+  font-size: var(--t-manifesto);
+  font-weight: 500;
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+  max-width: 22ch;
+}
+.manifesto p + p {
+  margin-top: var(--esp-5);
+  font-size: var(--t-lead);
+  font-weight: 400;
+  line-height: var(--entrelinha);
+  letter-spacing: 0;
+  color: var(--tinta-suave);
+  max-width: 52ch;
+}
+.manifesto em { font-style: normal; color: var(--destaque); }
+
+/* lista de preços: nome ..... duração preço */
+.precos { max-width: 44rem; }
+.precos li, .preco-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--esp-3);
+  padding-block: var(--esp-4);
+  border-bottom: 1px solid var(--borda);
+}
+.precos li::after, .preco-linha::after {
+  /* o fio pontilhado entre o nome e o número */
+  content: "";
+  order: 1;
+  flex: 1 1 1.5rem;
+  min-width: 1.5rem;
+  border-bottom: 2px dotted var(--borda-forte);
+  transform: translateY(-0.3em);
+}
+.precos .nome {
+  order: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-weight: 500;
+  font-size: var(--t-lead);
+}
+.precos .duracao {
+  order: 2;
+  font-family: var(--fonte-mono);
+  font-size: var(--t-menor);
+  color: var(--tinta-suave);
+}
+.precos .preco {
+  order: 3;
+  font-family: var(--fonte-mono);
+  font-weight: 600;
+  font-size: var(--t-lead);
+  min-width: 5.5ch;
+  text-align: right;
+}
+.precos .descricao {
+  order: 4;
+  flex-basis: 100%;
+  margin-top: var(--esp-1);
+  font-size: var(--t-menor);
+  color: var(--tinta-suave);
+}
+.precos li.is-destaque .preco { color: var(--destaque); }
+
+/* profissionais: lista, nome grande, especialidade */
+.profissionais { display: grid; gap: 0; }
+.profissionais li {
+  display: grid;
+  gap: var(--esp-1) var(--esp-5);
+  padding-block: var(--esp-5);
+  border-top: 1px solid var(--borda);
+}
+.profissionais li:last-child { border-bottom: 1px solid var(--borda); }
+.profissionais .nome, .profissionais h3 {
+  font-family: var(--fonte-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 1.4rem + 3vw, 3.25rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+.profissionais .especialidade {
+  font-family: var(--fonte-mono);
+  font-size: var(--t-menor);
+  color: var(--destaque);
+  letter-spacing: 0.04em;
+}
+.profissionais .bio { color: var(--tinta-suave); max-width: 46ch; }
+@media (min-width: 720px) {
+  .profissionais li { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: baseline; }
+  .profissionais .especialidade, .profissionais .bio { grid-column: 2; }
+  .profissionais .nome, .profissionais h3 { grid-row: span 2; }
+}
+
+/* quadro de giz: recados do bairro */
+.quadro {
+  position: relative;
+  padding: var(--esp-6) var(--esp-5);
+  background-color: var(--quadro);
+  background-image:
+    radial-gradient(80% 60% at 30% 20%, color-mix(in oklab, var(--cor-giz) 7%, transparent), transparent 70%),
+    radial-gradient(60% 50% at 80% 90%, color-mix(in oklab, var(--cor-giz) 5%, transparent), transparent 70%);
+  color: var(--cor-giz);
+  border: 10px solid var(--quadro-moldura);
+  border-radius: var(--raio-2);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, black 40%, transparent), var(--sombra-2);
+}
+.quadro > h2, .quadro .quadro-titulo { color: var(--cor-giz); }
+.quadro ul, .quadro ol {
+  display: grid;
+  gap: var(--esp-6);
+}
+.quadro li {
+  position: relative;
+  max-width: 34ch;
+  font-size: var(--t-lead);
+  line-height: 1.4;
+  color: var(--cor-giz);
+  transform: rotate(-1.1deg);
+}
+.quadro li:nth-child(2n) { transform: rotate(0.8deg); justify-self: end; }
+.quadro li:nth-child(3n) { transform: rotate(-0.4deg); }
+.quadro blockquote, .quadro p { margin: 0; }
+.quadro cite, .quadro .assinatura {
+  display: block;
+  margin-top: var(--esp-2);
+  font-family: var(--fonte-mono);
+  font-style: normal;
+  font-size: var(--t-menor);
+  color: color-mix(in oklab, var(--cor-giz) 82%, var(--quadro));
+}
+.quadro cite::before, .quadro .assinatura::before { content: "— "; }
+@media (min-width: 760px) {
+  .quadro { padding: var(--esp-7); }
+  .quadro ul, .quadro ol { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--esp-7) var(--esp-8); }
+  .quadro li:nth-child(2n) { justify-self: start; }
+}
+
+/* endereço, funcionamento, instagram */
+.endereco address { font-style: normal; font-size: var(--t-lead); line-height: 1.45; }
+.endereco a, .instagram a, .link-mapa {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alvo);
+  font-weight: 600;
+  color: var(--tinta);
+}
+.endereco a:hover, .instagram a:hover { color: var(--destaque); }
+
+.funcionamento table { width: 100%; max-width: 28rem; border-collapse: collapse; }
+.funcionamento th, .funcionamento td {
+  padding: var(--esp-3) 0;
+  border-bottom: 1px solid var(--borda);
+  text-align: left;
+  font-weight: 400;
+}
+.funcionamento td {
+  font-family: var(--fonte-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.funcionamento tr.is-folga td, .funcionamento td.is-folga { color: var(--tinta-suave); }
+.funcionamento tr.is-hoje th, .funcionamento tr.is-hoje td { color: var(--destaque); font-weight: 600; }
+
+.instagram { font-family: var(--fonte-mono); }
+
+/* desktop: endereço, funcionamento e instagram lado a lado (blocos de texto, não cards) */
+@media (min-width: 960px) {
+  .contato, .secao.contato {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: var(--esp-6) var(--esp-8);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   7. AGENDAMENTO
+   Markup esperado (opcional): #agendar > .agendar-grade > .agendar-escolhas + .agendar-resumo
+   --------------------------------------------------------------------- */
+#agendar { counter-reset: passo; }
+.agendar-grade { display: grid; gap: var(--esp-7); min-width: 0; }
+.agendar-escolhas, .agendar-resumo { min-width: 0; }
+@media (min-width: 960px) {
+  .agendar-grade { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); align-items: start; gap: var(--esp-8); }
+  .agendar-resumo { position: sticky; top: calc(var(--altura-topo) + var(--esp-5)); }
+}
+
+.passo {
+  counter-increment: passo;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  margin: 0 0 var(--esp-7);
+}
+.passo > :is(h3, legend, .passo-titulo) {
+  display: flex;
+  align-items: baseline;
+  gap: var(--esp-3);
+  padding: 0;
+  margin-bottom: var(--esp-4);
+  font-family: var(--fonte-texto);
+  font-size: var(--t-h3);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.passo > :is(h3, legend, .passo-titulo)::before {
+  content: counter(passo);
+  font-family: var(--fonte-mono);
+  font-size: var(--t-menor);
+  font-weight: 600;
+  color: var(--destaque);
+  min-width: 1.5ch;
+}
+.passo.is-bloqueado { opacity: 0.55; }
+.passo-ajuda { color: var(--tinta-suave); font-size: var(--t-menor); margin: calc(-1 * var(--esp-2)) 0 var(--esp-4); }
+
+/* 1) fita de 7 dias: rola dentro dela, nunca a página */
+.fita-dias {
+  display: flex;
+  gap: var(--esp-2);
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--esp-1);
+  padding: var(--esp-1) var(--esp-1) var(--esp-3);
+  scrollbar-width: thin;
+  scrollbar-color: var(--borda-forte) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+.fita-dias > li { flex: 0 0 auto; }
+.dia {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-width: 68px;
+  min-height: 72px;
+  padding: var(--esp-2) var(--esp-3);
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-2);
+  background: var(--fundo-2);
+  color: var(--tinta);
+  font-family: var(--fonte-mono);
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: background-color var(--dur-rapida), color var(--dur-rapida), border-color var(--dur-rapida);
+}
+.dia .num, .dia strong {
+  font-family: var(--fonte-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.dia:hover:not([aria-disabled="true"]) { border-color: var(--tinta); }
+.dia[aria-pressed="true"] {
+  background: var(--tinta);
+  color: var(--fundo);
+  border-color: var(--tinta);
+  box-shadow: inset 0 -3px 0 var(--destaque);
+}
+.dia[aria-disabled="true"], .dia:disabled {
+  cursor: not-allowed;
+  color: var(--ocupado);
+  border-style: dashed;
+  border-color: var(--borda);
+  background: transparent;
+}
+
+/* 2) horários: botões grandes em mono */
+.horarios {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: var(--esp-2);
+}
+.horario {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 52px;
+  padding: var(--esp-2);
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-2);
+  background: var(--fundo-2);
+  color: var(--tinta);
+  font-family: var(--fonte-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.1;
+  transition: background-color var(--dur-rapida), color var(--dur-rapida), border-color var(--dur-rapida);
+}
+.horario:hover:not(.is-ocupado):not([aria-disabled="true"]) { border-color: var(--tinta); background: var(--fundo-3); }
+.horario[aria-pressed="true"] {
+  background: var(--tinta);
+  color: var(--fundo);
+  border-color: var(--tinta);
+  box-shadow: inset 0 -3px 0 var(--destaque);
+}
+.horario .estado, .horario small {
+  font-size: var(--t-micro);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+/* ocupado: couro marcado pela lâmina */
+.horario.is-ocupado, .horario[aria-disabled="true"] {
+  cursor: not-allowed;
+  color: var(--ocupado);
+  border-color: var(--borda);
+  background-color: color-mix(in oklab, var(--fundo) 70%, var(--veio-escuro));
+  background-image:
+    linear-gradient(162deg, transparent 46%, color-mix(in oklab, var(--ocupado) 70%, transparent) 47%, color-mix(in oklab, var(--ocupado) 70%, transparent) 50%, transparent 51%);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+.horario.is-ocupado:active, .horario[aria-disabled="true"]:active { transform: none; }
+
+.vazio, .aviso-dia {
+  padding: var(--esp-4);
+  border: 1px dashed var(--borda-forte);
+  border-radius: var(--raio-2);
+  color: var(--tinta-suave);
+}
+.aviso-dia button, .vazio button { color: var(--tinta); text-decoration: underline; min-height: var(--alvo); }
+
+/* 3) serviços que cabem */
+.servicos-cabem { display: grid; gap: var(--esp-2); }
+.servico-opcao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--esp-1) var(--esp-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--esp-3) var(--esp-4);
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-2);
+  background: var(--fundo-2);
+  color: var(--tinta);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-rapida), background-color var(--dur-rapida);
+}
+.servico-opcao input { accent-color: var(--destaque); width: 20px; height: 20px; align-self: center; }
+.servico-opcao .nome { flex: 1 1 10rem; min-width: 0; font-weight: 500; }
+.servico-opcao .duracao { font-family: var(--fonte-mono); font-size: var(--t-menor); color: var(--tinta-suave); }
+.servico-opcao .preco { font-family: var(--fonte-mono); font-weight: 600; min-width: 5.5ch; text-align: right; }
+.servico-opcao:hover:not(.is-nao-cabe) { border-color: var(--tinta); }
+.servico-opcao[aria-pressed="true"], .servico-opcao[aria-checked="true"], .servico-opcao:has(input:checked) {
+  border-color: var(--destaque);
+  background: var(--fundo-3);
+  box-shadow: inset 3px 0 0 var(--destaque);
+}
+.servico-opcao.is-nao-cabe {
+  cursor: not-allowed;
+  color: var(--ocupado);
+  border-color: var(--borda);
+  border-style: dashed;
+  background: transparent;
+}
+.servico-opcao.is-nao-cabe .nome,
+.servico-opcao.is-nao-cabe .preco,
+.servico-opcao.is-nao-cabe .duracao { text-decoration: line-through; color: var(--ocupado); }
+.nota, .servico-opcao .nota {
+  flex-basis: 100%;
+  font-family: var(--fonte-mono);
+  font-size: var(--t-nota);
+  color: var(--tinta-suave);
+  text-decoration: none;
+}
+
+/* atalho "O de sempre" (só aparece com histórico) */
+.atalho-sempre {
+  margin-bottom: var(--esp-5);
+  padding-inline: var(--esp-4);
+  min-height: 48px;
+  border: 1px dashed var(--destaque);
+  color: var(--tinta);
+  background: transparent;
+  white-space: normal;
+  text-align: left;
+}
+.atalho-sempre:hover { background: var(--fundo-2); border-style: solid; }
+.atalho-sempre .detalhe { font-family: var(--fonte-mono); font-size: var(--t-nota); font-weight: 400; color: var(--tinta-suave); }
+
+/* 4) profissionais em chips */
+.chips { display: flex; flex-wrap: wrap; gap: var(--esp-2); }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-2);
+  min-height: var(--alvo);
+  padding: var(--esp-2) var(--esp-4);
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-2);
+  background: var(--fundo-2);
+  color: var(--tinta);
+  font-weight: 500;
+  transition: background-color var(--dur-rapida), color var(--dur-rapida), border-color var(--dur-rapida);
+}
+.chip:hover { border-color: var(--tinta); }
+.chip[aria-pressed="true"] { background: var(--tinta); color: var(--fundo); border-color: var(--tinta); }
+.chip small { font-family: var(--fonte-mono); font-size: var(--t-micro); opacity: 0.85; }
+
+/* 5) campos */
+.campo { display: grid; gap: var(--esp-2); margin-bottom: var(--esp-5); max-width: 28rem; }
+.campo label { font-weight: 600; font-size: 1rem; }
+.campo .dica { font-size: var(--t-nota); color: var(--tinta-suave); }
+.campo input, .campo select, .campo textarea {
+  width: 100%;
+  min-height: var(--altura-campo);
+  padding: var(--esp-3) var(--esp-4);
+  font-size: 16px; /* evita zoom no iOS */
+  line-height: 1.3;
+  background: var(--fundo-2);
+  color: var(--tinta);
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-2);
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color var(--dur-rapida);
+}
+.campo input::placeholder { color: var(--tinta-suave); opacity: 1; }
+.campo input:hover { border-color: var(--tinta-suave); }
+.campo input:focus-visible { outline-offset: 1px; border-color: var(--foco); }
+.campo input[type="tel"] { font-family: var(--fonte-mono); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.campo.is-erro input, .campo input[aria-invalid="true"] {
+  border-color: var(--erro);
+  box-shadow: inset 0 0 0 1px var(--erro);
+}
+.erro, .campo .erro {
+  font-size: var(--t-menor);
+  font-weight: 500;
+  color: var(--erro);
+}
+.erro:empty { display: none; }
+
+/* resumo da escolha */
+.resumo-escolha {
+  padding: var(--esp-5);
+  background: var(--fundo-2);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-2);
+}
+.resumo-escolha h3 { font-size: var(--t-menor); font-family: var(--fonte-mono); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-suave); margin-bottom: var(--esp-4); }
+.resumo-escolha dl { display: grid; grid-template-columns: auto 1fr; gap: var(--esp-2) var(--esp-4); margin: 0 0 var(--esp-5); }
+.resumo-escolha dt { color: var(--tinta-suave); font-size: var(--t-menor); }
+.resumo-escolha dd { margin: 0; text-align: right; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+.resumo-escolha .preco, .resumo-escolha .total { font-family: var(--fonte-mono); font-weight: 600; color: var(--destaque); }
+.resumo-escolha .vazio-resumo { color: var(--tinta-suave); font-size: var(--t-menor); }
+
+/* 6) a tira de couro de confirmação */
+.tira {
+  position: relative;
+  overflow: clip;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: var(--altura-tira);
+  padding-inline: var(--esp-7);
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio-2);
+  background-color: var(--fundo-3);
+  background-image:
+    repeating-linear-gradient(100deg, transparent 0 6px, color-mix(in oklab, var(--veio-escuro) 40%, transparent) 6px 7px, transparent 7px 15px),
+    linear-gradient(180deg, color-mix(in oklab, var(--veio-claro) 60%, transparent), transparent 60%);
+  color: var(--tinta);
+  font-family: var(--fonte-mono);
+  font-size: var(--t-menor);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+.tira:active { cursor: grabbing; }
+.tira:focus-visible { outline-offset: 3px; }
+.tira .texto-tira, .tira > span { position: relative; z-index: 1; pointer-events: none; }
+.tira canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.tira .navalha { z-index: 2; }
+/* progresso do gesto na tira (efeito.js pode atualizar --fio no elemento) */
+.tira::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: var(--destaque);
+  transform-origin: 0 50%;
+  transform: scaleX(var(--fio, 0));
+  z-index: 1;
+}
+.tira.is-confirmada {
+  border-color: var(--destaque);
+  background-color: color-mix(in oklab, var(--fundo-3) 75%, var(--destaque));
+  cursor: default;
+}
+.tira[aria-disabled="true"] { cursor: not-allowed; opacity: 0.6; }
+
+/* o espelho de mão: "Confere atrás?" */
+.espelho {
+  position: relative;
+  width: min(100%, 340px);
+  min-height: 420px;
+  margin: var(--esp-6) auto calc(var(--esp-8) + 24px);
+  padding: var(--esp-8) var(--esp-6) var(--esp-7);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--esp-3);
+  text-align: center;
+  border-radius: var(--raio-espelho);
+  border: 2px solid var(--destaque);
+  box-shadow:
+    inset 0 0 0 6px var(--fundo-3),
+    inset 0 0 0 7px color-mix(in oklab, var(--destaque) 60%, transparent),
+    var(--sombra-2);
+  background:
+    linear-gradient(135deg, var(--vidro) 0%, transparent 38%),
+    radial-gradient(70% 45% at 30% 18%, color-mix(in oklab, var(--cor-giz) 16%, transparent), transparent 70%),
+    var(--fundo-2);
+}
+/* cabo do espelho */
+.espelho::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -64px;
+  width: 30px;
+  height: 66px;
+  transform: translateX(-50%);
+  border: 2px solid var(--destaque);
+  border-top: 0;
+  border-radius: 0 0 var(--raio-2) var(--raio-2);
+  background: linear-gradient(90deg, var(--fundo-3), var(--fundo-2) 50%, var(--fundo-3));
+}
+.espelho h3, .espelho .espelho-titulo {
+  font-family: var(--fonte-display);
+  font-weight: 700;
+  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.25rem);
+  text-transform: uppercase;
+  line-height: 1;
+}
+.espelho dl, .espelho ul { display: grid; gap: var(--esp-1); margin: 0; padding: 0; list-style: none; width: 100%; }
+.espelho dt {
+  font-family: var(--fonte-mono);
+  font-size: var(--t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+  margin-top: var(--esp-2);
+}
+.espelho dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+.espelho .preco { font-family: var(--fonte-mono); font-weight: 600; font-size: var(--t-lead); color: var(--destaque); }
+.espelho .hora, .espelho time { font-family: var(--fonte-mono); }
+.link-whats {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alvo);
+  padding-inline: var(--esp-2);
+  font-weight: 600;
+  color: var(--destaque);
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------------
+   8. WHATSAPP FLUTUANTE + RODAPÉ
+   --------------------------------------------------------------------- */
+.whats-flutuante {
+  position: fixed;
+  z-index: var(--z-whats);
+  right: max(var(--esp-4), env(safe-area-inset-right, 0px));
+  bottom: calc(var(--esp-4) + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  place-items: center;
+  width: var(--whats);
+  height: var(--whats);
+  border-radius: 50%;
+  background: var(--destaque);
+  color: var(--fundo);
+  box-shadow: var(--sombra-2);
+  text-decoration: none;
+  transition: transform var(--dur-rapida) var(--curva-entrada);
+}
+.whats-flutuante svg { width: 26px; height: 26px; fill: currentColor; }
+.whats-flutuante:hover { transform: translateY(-2px); }
+/* enquanto o couro está na tela, o JS pode esconder o botão */
+.whats-flutuante.is-sobre-couro { opacity: 0; pointer-events: none; transform: translateY(12px); }
+
+.rodape {
+  padding: var(--esp-7) var(--calha) calc(var(--esp-8) + var(--whats) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--borda);
+  color: var(--tinta-suave);
+  font-size: var(--t-menor);
+}
+.rodape > * { max-width: var(--largura-conteudo); margin-inline: auto; }
+.rodape a { color: var(--tinta); display: inline-flex; align-items: center; min-height: var(--alvo); }
+.rodape .mono, .rodape small { font-family: var(--fonte-mono); font-size: var(--t-micro); }
+
+/* ---------------------------------------------------------------------
+   9. MOVIMENTO REDUZIDO
+   A navalha já nasce afiada, sem lampejo, sem pulso; a tira dá lugar
+   ao botão comum (o efeito.js também deve tratar isso).
+   --------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+  .letreiro::before, #letreiro::before { animation: none !important; }
+  .couro::after, #couro::after { display: none; }
+  .seta-giz { clip-path: none; animation: none !important; }
+  .btn-agendar.is-polegar { animation: none !important; }
+  .couro .hero-afiada, #couro .hero-afiada { opacity: 1; visibility: visible; transform: none; }
+  #medidor-fio::before, .medidor-fio::before { transform: scaleX(1); }
+  .tira { display: none; }
+  .btn-sem-arrastar { background: var(--tinta); color: var(--fundo); border-color: var(--tinta); min-height: 56px; }
+  .quadro li { transition: none; }
+}
+
+/* sem suporte a color-mix (navegador antigo): valores fixos de reserva */
+@supports not (color: color-mix(in oklab, red, blue)) {
+  :root {
+    --fundo-2: #2a211e; --fundo-3: #352d2a; --couro-2: #2a211e; --couro-3: #352d2a;
+    --tinta-suave: #a4a3a4; --borda: #403835; --borda-forte: #757170; --ocupado: #7f7b7b;
+    --gravado: #706b6a; --quadro: #1e231f; --quadro-moldura: #4a3624;
+    --veio-claro: #3a2a1e; --veio-escuro: #140e0b; --vidro: rgba(233,239,230,.14); --topo-fundo: #1f1612;
+  }
+}
