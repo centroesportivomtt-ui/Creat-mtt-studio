@@ -61,3 +61,11 @@ O dono delegou a escolha dos modos. O Claude decide sozinho e registra, sem perg
 - Todo código novo passa pelo `revisor`; nada é publicado sem `qa` e `seguranca`.
 - Textos em português do Brasil, a não ser que o cliente peça outro idioma.
 - Segredos nunca entram no repositório.
+
+## Vídeo (creat.MTT)
+
+- Todo vídeo precisa ter um "pulo do gato": edição premium, pegada de cinema. A reação esperada de quem assiste é "como eles conseguiram fazer isso?". Isso vale para legendas animadas, tipografia cinematográfica, transições criativas, cor profissional, sound design diferenciado e música com ducking sob a fala.
+- Áudio gravado sem microfone passa por limpeza de voz com IA, sem artefatos.
+- **Nunca** colocar vídeos ou arquivos pesados no computador do dono. Tudo é processado na nuvem, e a entrega é feita por link do Google Drive, nunca como anexo.
+- Gravações do celular: Dropbox `/Marcos/Envio da câmera` (nome do arquivo = data e hora da gravação). Pasta da equipe: `/Pasta da equipe Mttcreatt`.
+- Antes de usar qualquer serviço pago, avisar o dono e pedir autorização.
