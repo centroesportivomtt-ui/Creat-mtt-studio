@@ -41,9 +41,13 @@ Agentes em `.claude/agents/`, skills da casa em `.claude/skills/`, fluxo que coo
 - **Segunda, 05:47 (Bahia):** revisão do stack de ferramentas → `docs/stack-ferramentas-2026.md`.
 - **Quinta, 05:53 (Bahia):** inteligência de mercado e redes sociais → `docs/inteligencia/semana-<data>.md`, com 10 "pulos do gato" para adotar.
 
-## Modo de trabalho (regra para o Claude que atende o dono)
+## Modo de trabalho (governança automática dos modos)
 
-Ao iniciar qualquer tarefa ou comando, a primeira linha da resposta declara o modo recomendado, no formato: **Modo: <modelo> · esforço <nível> · Ultracode <sim/não>**, e o motivo em meia linha. O Claude não consegue trocar o modelo do chat; troca o dos agentes nos arquivos de `.claude/agents/`. Guia: conversa e decisão → Sonnet 5.5, esforço médio, sem Ultracode; construir, desenhar, escrever para vender → Fable 5.1 ou Opus 5.5, esforço alto; projeto inteiro com a agência → Fable 5.1 ou Opus 5.5, esforço máximo, Ultracode sim.
+O dono delegou a escolha dos modos. O Claude decide sozinho e registra, sem perguntar:
+- **Dentro da agência (automático de verdade):** modelo e esforço de cada agente são escolhidos por tarefa. Criar, desenhar, construir e escrever para vender → Opus, esforço alto ou máximo. Ler, revisar, auditar, pesquisar e sintetizar → Sonnet, esforço médio/alto. Verificação adversarial → esforço alto. Isso está nos arquivos de `.claude/agents/` e nos workflows e não depende do dono.
+- **Orquestração:** qualquer trabalho com mais de uma etapa roda pela agência (workflow), por autorização permanente do dono ("execute tudo da forma que verificar ser melhor"). Conversa, decisão e ajustes pequenos rodam direto, sem agentes, para poupar cota.
+- **O que o Claude não consegue trocar:** o modelo e o esforço do chat principal e o botão Ultracode são controles do app. Configuração recomendada para deixar fixa e esquecer: **Fable 5.1 · esforço alto · Ultracode ligado**. O Claude avisa na primeira linha da resposta só quando valer a pena mudar (ex.: "pode baixar para Sonnet agora, é só conversa").
+- Toda resposta que inicia trabalho começa com a linha **Modo: ...** dizendo o que está sendo usado por dentro.
 
 ## Regras da casa
 

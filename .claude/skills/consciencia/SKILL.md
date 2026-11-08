@@ -28,6 +28,9 @@ Regras de coerência que derivam disso:
 4. **Mostramos o processo.** A sede ao vivo é prova, não enfeite. Use-a em todo ponto de contato: página, anúncio, WhatsApp, entrega.
 5. **Recorrência por padrão.** Toda oferta tem um plano mensal honesto (hospedagem, alterações, conteúdo, suporte) com valor claro.
 
+## Governança dos modos
+O dono não escolhe modelo, esforço nem orquestração: a casa escolhe por tarefa (ver CLAUDE.md, "Modo de trabalho"). Trabalho com mais de uma etapa vai para a agência por autorização permanente; conversa e ajuste pequeno rodam direto.
+
 ## Como aplicar sem ser pedido
 - No **planejamento** (diretor, arquiteto): recuse briefings incoerentes com a tese; proponha o ajuste antes de distribuir tarefas.
 - Na **criação** (criativo, designer, copywriter): cada peça responde a "para quem, qual dor, qual prova, qual próximo passo". Texto de venda em português do Brasil, concreto, sem promessa de ganho financeiro e sem jargão.
