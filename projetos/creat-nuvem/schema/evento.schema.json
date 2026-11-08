@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creatnuvem.com.br/schema/evento.schema.json",
+  "title": "Eventos: analytics da vitrine e Evento de pedido",
+  "description": "EventoAnalytics é o que a vitrine passa para posthog.capture(evento, propriedades), depois do filtro before_send. Só existem as propriedades listadas; nome do negócio, WhatsApp, e-mail, endereço, cidade e URL com fragmento nunca entram. EventoPedido é a linha de histórico que a Fase 2 grava a cada mudança de estado.",
+  "oneOf": [
+    { "$ref": "#/$defs/EventoAnalytics" },
+    { "$ref": "#/$defs/EventoPedido" }
+  ],
+  "$defs": {
+    "EventoAnalytics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evento", "propriedades"],
+      "properties": {
+        "evento": { "enum": ["placa_vista", "nicho_escolhido", "nome_digitado", "previa_gerada", "reserva_teste", "plano_visto", "checkout_iniciado", "pago_pagina", "sede_aberta", "lista_espera_enviada"] },
+        "propriedades": { "type": "object" }
+      },
+      "allOf": [
+        { "if": { "properties": { "evento": { "enum": ["placa_vista", "sede_aberta"] } } },
+          "then": { "properties": { "propriedades": { "$ref": "#/$defs/propsBase" } } } },
+        { "if": { "properties": { "evento": { "enum": ["nicho_escolhido", "nome_digitado", "previa_gerada", "reserva_teste"] } } },
+          "then": { "properties": { "propriedades": { "$ref": "#/$defs/propsNicho" } } } },
+        { "if": { "properties": { "evento": { "enum": ["plano_visto", "checkout_iniciado", "pago_pagina"] } } },
+          "then": { "properties": { "propriedades": { "$ref": "#/$defs/propsPlano" } } } },
+        { "if": { "properties": { "evento": { "const": "lista_espera_enviada" } } },
+          "then": { "properties": { "propriedades": { "$ref": "#/$defs/propsEspera" } } } }
+      ]
+    },
+    "propsBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dispositivo"],
+      "properties": {
+        "dispositivo": { "$ref": "#/$defs/dispositivo" },
+        "utm_source": { "$ref": "#/$defs/utm" },
+        "utm_medium": { "$ref": "#/$defs/utm" },
+        "utm_campaign": { "$ref": "#/$defs/utm" },
+        "utm_content": { "$ref": "#/$defs/utm" },
+        "utm_term": { "$ref": "#/$defs/utm" }
+      }
+    },
+    "propsNicho": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dispositivo", "nicho"],
+      "properties": {
+        "dispositivo": { "$ref": "#/$defs/dispositivo" },
+        "nicho": { "$ref": "#/$defs/nichoAtivo" },
+        "utm_source": { "$ref": "#/$defs/utm" },
+        "utm_medium": { "$ref": "#/$defs/utm" },
+        "utm_campaign": { "$ref": "#/$defs/utm" },
+        "utm_content": { "$ref": "#/$defs/utm" },
+        "utm_term": { "$ref": "#/$defs/utm" }
+      }
+    },
+    "propsPlano": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dispositivo", "plano"],
+      "properties": {
+        "dispositivo": { "$ref": "#/$defs/dispositivo" },
+        "nicho": { "$ref": "#/$defs/nichoAtivo" },
+        "plano": { "enum": ["aberto", "vitrine", "aberto_anual", "vitrine_anual"] },
+        "utm_source": { "$ref": "#/$defs/utm" },
+        "utm_medium": { "$ref": "#/$defs/utm" },
+        "utm_campaign": { "$ref": "#/$defs/utm" },
+        "utm_content": { "$ref": "#/$defs/utm" },
+        "utm_term": { "$ref": "#/$defs/utm" }
+      }
+    },
+    "propsEspera": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dispositivo", "nicho"],
+      "properties": {
+        "dispositivo": { "$ref": "#/$defs/dispositivo" },
+        "nicho": { "enum": ["pet", "restaurante", "oficina", "tatuagem", "outro"] },
+        "utm_source": { "$ref": "#/$defs/utm" },
+        "utm_medium": { "$ref": "#/$defs/utm" },
+        "utm_campaign": { "$ref": "#/$defs/utm" },
+        "utm_content": { "$ref": "#/$defs/utm" },
+        "utm_term": { "$ref": "#/$defs/utm" }
+      }
+    },
+    "EventoPedido": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pedido", "estado", "etapa", "ts"],
+      "properties": {
+        "pedido": { "type": "string", "pattern": "^PA-[0-9A-HJKMNP-TV-Z]{8}$" },
+        "estado": { "enum": ["previa_gerada", "checkout_iniciado", "pago", "em_producao", "aguardando_aprovacao", "no_ar", "inadimplente_d1", "inadimplente_d7", "pausado", "cancelado", "cancelado_pelo_cliente", "reembolsado_art49"] },
+        "etapa": {
+          "description": "Vocabulário fechado, o mesmo da sede pública. null quando o estado não tem etapa.",
+          "oneOf": [
+            { "type": "null" },
+            { "enum": ["organizando_fila", "conferindo_dados", "escrevendo_textos", "escolhendo_cores", "montando_pagina", "testando_celular", "conferindo_seguranca", "publicando", "aguardando_dono"] }
+          ]
+        },
+        "ts": { "type": "string", "format": "date-time" }
+      }
+    },
+    "dispositivo": { "enum": ["movel", "tablet", "desktop"] },
+    "nichoAtivo": { "enum": ["barbearia", "salao", "academia"] },
+    "utm": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" }
+  }
+}
