@@ -41,6 +41,10 @@ Agentes em `.claude/agents/`, skills da casa em `.claude/skills/`, fluxo que coo
 - **Segunda, 05:47 (Bahia):** revisão do stack de ferramentas → `docs/stack-ferramentas-2026.md`.
 - **Quinta, 05:53 (Bahia):** inteligência de mercado e redes sociais → `docs/inteligencia/semana-<data>.md`, com 10 "pulos do gato" para adotar.
 
+## Modo de trabalho (regra para o Claude que atende o dono)
+
+Ao iniciar qualquer tarefa ou comando, a primeira linha da resposta declara o modo recomendado, no formato: **Modo: <modelo> · esforço <nível> · Ultracode <sim/não>**, e o motivo em meia linha. O Claude não consegue trocar o modelo do chat; troca o dos agentes nos arquivos de `.claude/agents/`. Guia: conversa e decisão → Sonnet 5.5, esforço médio, sem Ultracode; construir, desenhar, escrever para vender → Fable 5.1 ou Opus 5.5, esforço alto; projeto inteiro com a agência → Fable 5.1 ou Opus 5.5, esforço máximo, Ultracode sim.
+
 ## Regras da casa
 
 - A tese é uma só: resultado para o negócio local, produzido pela agência de agentes, com o cliente assistindo a equipe na sede 3D. Produto que não conversa com a tese não entra na vitrine.
