@@ -1,0 +1,77 @@
+/* previa/previa.css · só o estado de carregamento, o noscript e o aviso de nicho da prévia.
+   Usa os tokens do motor (motor/v1/styles.css); as reservas de lá são as da paleta barbearia-1. */
+.carregando {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--esp-5);
+  min-height: 100svh;
+  padding: var(--esp-6) var(--calha);
+  background: var(--pe-fundo);
+  color: var(--pe-texto);
+  text-align: center;
+}
+/* quatro passadas de navalha no couro, em loop curto */
+.carregando-couro {
+  position: relative;
+  width: min(240px, 70vw);
+  height: 48px;
+  border-radius: var(--raio-2);
+  background:
+    repeating-linear-gradient(104deg, transparent 0 7px, color-mix(in oklab, black 30%, transparent) 7px 8px, transparent 8px 19px),
+    linear-gradient(180deg, color-mix(in oklab, var(--pe-fundo) 80%, var(--pe-destaque)), var(--pe-fundo));
+  border: 1px solid color-mix(in oklab, var(--pe-texto) 25%, var(--pe-fundo));
+  overflow: hidden;
+}
+.carregando-couro span {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 30%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+  background: var(--pe-destaque);
+  opacity: 0;
+  animation: passada 1.2s var(--curva-entrada) infinite;
+}
+.carregando-couro span:nth-child(2) { animation-delay: 0.3s; top: 35%; }
+.carregando-couro span:nth-child(3) { animation-delay: 0.6s; top: 65%; }
+.carregando-couro span:nth-child(4) { animation-delay: 0.9s; }
+@keyframes passada {
+  0% { transform: translateX(-100%); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateX(340%); opacity: 0; }
+}
+.carregando-texto {
+  font-family: var(--fonte-dado);
+  font-size: var(--t-menor);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pe-apoio);
+}
+.previa-noscript {
+  padding: var(--esp-8) var(--calha);
+  background: var(--pc-fundo);
+  color: var(--pc-texto);
+  font-size: var(--t-lead);
+}
+.previa-noscript p { max-width: 40ch; }
+
+/* link sem nicho: a prévia mostra a barbearia e convida a escolher na home */
+.aviso-nicho {
+  display: grid;
+  gap: var(--esp-2);
+  justify-items: start;
+  padding: var(--esp-4) var(--calha);
+  background: var(--fundo-2);
+  border-bottom: 1px solid var(--borda);
+}
+.aviso-nicho strong { font-size: var(--t-lead); }
+.aviso-nicho p { color: var(--tinta-suave); font-size: var(--t-menor); }
+.aviso-nicho a { display: inline-flex; align-items: center; min-height: var(--alvo); font-weight: 600; color: var(--tinta); }
+
+@media (prefers-reduced-motion: reduce) {
+  .carregando-couro span { animation: none; opacity: 1; transform: none; width: 100%; }
+  .carregando-couro span:nth-child(n+2) { display: none; }
+}

@@ -213,6 +213,8 @@
         planos: base ? { aberto: base.planos.aberto, vitrine: base.planos.vitrine } : pad.planos,
         anualMesesPagos: base ? base.anualMesesPagos : pad.anualMesesPagos,
         bastidores: base && num(base.bastidores) && base.bastidores > 0 ? base.bastidores : pad.bastidores,
+        // Só para o texto dos termos (descreve a regra): o preço de inauguração como está no arquivo, mesmo velho.
+        inauguracaoTermos: base && base.abertura.inauguracao && num(base.abertura.inauguracao.preco) && base.abertura.inauguracao.preco > 0 ? base.abertura.inauguracao.preco : null,
         vagasHoje: frescoV ? { vagas_hoje: v.vagas_hoje, capacidade_dia: v.capacidade_dia } : null,
         linkChave: chave,
         linkAbertura: links[chave]
@@ -1087,7 +1089,8 @@
       $$('[data-carregando-doc]').forEach(function (x) { x.hidden = true; });
       if (!md) { alvo.appendChild(el('p', null, 'O texto não carregou. Recarregue a página ou peça o texto pelo e-mail ' + emailSuporte() + '.')); return; }
       var v = valoresDe(pr);
-      v['precos.abertura.inauguracao.preco'] = milhar((CK && pr.inauguracao) ? pr.inauguracao.preco : 297);
+      var pi = pr.inauguracao ? pr.inauguracao.preco : pr.inauguracaoTermos;
+      v['precos.abertura.inauguracao.preco'] = pi ? milhar(pi) : '(valor da página /abrir/)';
       renderMarkdown(md, alvo, v);
     });
   }

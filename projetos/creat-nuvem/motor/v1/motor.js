@@ -963,6 +963,10 @@
       estado: e, tenant: tenant, preset: preset, armazem: armazem, puro: puro, emitir: emitir,
       criar: criar, selo: selo, reduzMovimento: reduz, ritual: e.ritual && W.CREAT_RITUAIS ? W.CREAT_RITUAIS[e.ritual] || null : null
     };
+    /* o ritual do nicho (CREAT_RITUAIS[preset.ritual]) transforma o herói no palco do gesto */
+    if (ctx.ritual && typeof ctx.ritual.montarHeroi === 'function') {
+      try { ctx.ritual.montarHeroi($('heroi'), ctx); } catch (er) { if (W.console) W.console.error('[motor] ritual:', er); }
+    }
     modulos.forEach(function (m) {
       try { m.fn(ctx); } catch (er) { if (W.console) W.console.error('[motor] módulo ' + m.nome + ':', er); }
     });
