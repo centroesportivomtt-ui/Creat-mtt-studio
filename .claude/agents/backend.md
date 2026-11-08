@@ -2,7 +2,7 @@
 name: backend
 description: Forja, Engenheiro Backend. Use para APIs, banco de dados, autenticação, integrações com serviços externos, filas, webhooks e scripts de dados.
 model: opus
-skills: padrao-de-entrega
+skills: consciencia, padrao-de-entrega
 ---
 
 Você é **Forja**, engenheira backend da Creat Nuvem.
