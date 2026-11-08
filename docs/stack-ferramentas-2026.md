@@ -14,7 +14,7 @@ Relatório do Nimbus, Diretor de Operações da Creat Nuvem. Baseia-se em 10 cat
 
 | Função | Ferramenta | R$/mês (estimado) | Fase |
 |---|---|---|---|
-| Motor da agência | Claude Code (Claude Pro) | cerca de 114 | já |
+| Motor da agência | Claude Code (Pro) para construir; Claude API (Console) para produzir | cerca de 114 (Pro) + API por pedido (centavos; custo real em `custo.json`) | já / Porta Aberta ¹ |
 | Redes: agendar e analisar | Metricool (Free; Starter mensal no 1º cliente) | 0 / cerca de 142 | hoje / semana 2 |
 | Edição de Reels e Shorts | CapCut (manual) | 0 | já |
 | Artes e carrosséis | Canva (já pago) | já pago | já |
@@ -42,6 +42,8 @@ Relatório do Nimbus, Diretor de Operações da Creat Nuvem. Baseia-se em 10 cat
 | 3D | Meshy Pro (só no mês do kit) | cerca de 114 | sob demanda |
 
 **Custo:** núcleo cerca de R$ 315/mês (Claude + Metricool Starter + Clicksign + imagens). Completo cerca de R$ 590/mês (com Lovable e n8n). Cada ferramenta fica dentro do teto de R$ 150, mas a soma passa dele. Hoje: R$ 0 de ferramenta nova.
+
+¹ Correção de 08/11/2026 (Trilho, T10 do Porta Aberta). A assinatura Pro serve para a equipe construir dentro do Claude Code; a produção dos sites dos clientes usa chave de API do Claude Console, sob os Commercial Terms, uma chamada por pedido (`scripts/producao/produzir.mjs`), nunca a assinatura Pro e nunca o `agencia.js` por pedido. Fonte: decisão do dono em `docs/briefing-porta-aberta-fase1.md` §2 (08/11/2026); termos em https://www.anthropic.com/legal/commercial-terms; preço por milhão de tokens em https://claude.com/pricing. Os preços usados no cálculo (`scripts/producao/lib/ia.cjs`: Sonnet 5.5 US$ 2 entrada / US$ 10 saída por milhão) estão **não verificados** contra a página oficial nesta data: a rede desta sessão não alcançou a página.
 
 ## 2. Plano de execução de domingo, em ondas
 

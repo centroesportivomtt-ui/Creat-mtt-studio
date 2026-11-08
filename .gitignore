@@ -3,3 +3,13 @@ node_modules/
 .impeccable/
 sede/estado.json
 sede/estado-publico.json
+
+# Porta Aberta (T10): dados de cliente e saídas de build nunca entram no repositório
+sites/
+pedidos/
+dist/
+# segredos locais e estado do wrangler
+.env
+.env.*
+!.env.example
+.wrangler/

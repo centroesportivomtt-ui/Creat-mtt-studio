@@ -5,7 +5,7 @@
 # Publicar (a partir de projetos/creat-nuvem/):
 #   CLOUDFLARE_API_TOKEN=<token> npx --yes wrangler@4.158.0 deploy
 # O [build] abaixo roda antes do deploy:
-#   1. checar-placeholders.cjs  -> FALHA o deploy enquanto houver [LINK_...] ou [WHATSAPP_SUPORTE...]
+#   1. checar-placeholders.cjs  -> FALHA o deploy enquanto houver marcador de link ou de WhatsApp do suporte
 #   2. montar-publico.cjs       -> monta dist/publico/ só com o que é público (+ sede/index.html)
 #
 # Portável: dist/publico/ é HTML/CSS/JS estático. Também pode ser enviado como

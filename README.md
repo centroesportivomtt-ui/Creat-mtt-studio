@@ -86,3 +86,61 @@ Para abrir localmente:
 cd sede && python3 -m http.server 8000
 # abra http://localhost:8000
 ```
+
+Novos arquivos da sede (Porta Aberta, T6):
+
+| arquivo | para quê |
+|---|---|
+| `sede/index.html` | aceita `?marca=<nome do negócio>` (placa da fachada) e `?modo=demo\|publico\|local` |
+| `sede/publicar-estado.cjs` | gera `sede/estado-publico.json` (vocabulário fechado, sem caminho nem rótulo interno) a partir do `estado.json` |
+| `sede/estado-publico.exemplo.json` | exemplo do formato público |
+| `sede/estado.json` | estado interno da agência: **nunca vai ao ar** (ignorado pelo git e excluído do build público) |
+
+## Porta Aberta (`projetos/creat-nuvem/`)
+
+Produto único da Creat Nuvem para o negócio local: o visitante vira a placa de FECHADO para ABERTO, vê o site dele gerado no navegador, paga pelo link do Asaas e manda o pedido pelo WhatsApp. Briefing: `docs/briefing-porta-aberta-fase1.md`. Relatório consolidado: `projetos/creat-nuvem/RELATORIO.md`.
+
+```
+projetos/creat-nuvem/
+  index.html  abrir/  obrigado/  bastidores/  termos/  privacidade/  404.html   vitrine (T5)
+  previa/                     prévia gerada no navegador, estado no fragmento # (T4)
+  motor/v1/  motor/nichos/    motor congelado + presets barbearia, salão, academia (T4, T8)
+  ritual/                     placa FECHADO/ABERTO (T6)
+  assets/                     tokens, CSS, SVG, imagens, som (T2, T5, T7)
+  conteudo/  marketing/       textos públicos, kit de anúncios, scripts de WhatsApp (T3)
+  dados/                      precos.json, vagas.json, depoimentos.json, nichos.json
+  checkout.config.js          ÚNICO lugar dos 4 placeholders de link
+  schema/                     TenantConfig v1, Pedido, Evento (T1)
+  scripts/                    checar, checar-placeholders, atualizar-vagas, montar-publico, producao/, testes/
+  docs/                       ARQUITETURA, ADRs 001-004, DIRECAO, CHECKLIST-REPOSITORIO-PRIVADO, relatorio/
+  wrangler.toml  _headers  .env.example   deploy (T10)
+  sites/  pedidos/  dist/     gerados, com dado de cliente: fora do git
+```
+
+### Rodar e verificar (Node 22, a partir de `projetos/creat-nuvem/`)
+
+```
+npm ci                                  # dependências fixadas no package-lock
+node scripts/checar.cjs                 # schemas, presets, dados, sem emoji, sem "agenda"
+node scripts/checar-placeholders.cjs    # FALHA (código 1) enquanto houver [LINK_...] ou [WHATSAPP_SUPORTE...]
+npm test                                # produção v0 com fixture, sem rede e sem chave
+node scripts/montar-publico.cjs         # monta dist/publico/ (só o que é público + sede/index.html)
+npx --yes wrangler@4.158.0 dev          # serve com os cabeçalhos do _headers (roda o [build], que exige os placeholders trocados)
+python3 -m http.server 8080 -d dist/publico   # alternativa sem wrangler (sem os cabeçalhos)
+node ../../.claude/skills/verificacao-visual/olhar.cjs http://127.0.0.1:8787/
+```
+
+Produção de um pedido (chave do Claude Console no `.env`, nunca no repositório):
+
+```
+cp .env.example .env    # preencha ANTHROPIC_API_KEY e CREAT_CAMBIO
+node --env-file=.env scripts/producao/produzir.mjs --pedido <arquivo do pedido>
+```
+
+### Publicar (Cloudflare Workers Static Assets)
+
+```
+CLOUDFLARE_API_TOKEN=<token> npx --yes wrangler@4.158.0 deploy
+```
+
+O `[build]` do `wrangler.toml` roda `checar-placeholders.cjs` (trava o deploy enquanto faltar link) e `montar-publico.cjs`. O token fica no ambiente ou no `wrangler login`, nunca no repositório. Deploy em produção só com o ok do Marcos. A mesma pasta `dist/publico/` pode ir como arquivos estáticos para o Base44 ou outro host; nesse caso, configure lá os cabeçalhos do `_headers`.

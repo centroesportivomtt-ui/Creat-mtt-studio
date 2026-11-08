@@ -191,6 +191,75 @@ test('IA: recusa do modelo e falta de chave param o fluxo com mensagem clara (c�
   assert.match(r3.saida, /CREAT_CAMBIO/);
 });
 
+test('custo nunca se perde: resposta cortada (max_tokens) grava custo, resposta-ia.json e producao.json; próxima rodada exige decisão', () => {
+  const s = pasta('maxtokens');
+  const site = path.join(s, 'sites', SLUG);
+  const base = ['--pedido', path.join(FIX, 'pedido-valido.txt'), '--saida', s, '--sem-navegador', '--sem-sair'];
+  const r = rodar('produzir.mjs', [...base, '--fixture-ia', path.join(FIX, 'resposta-modelo-max-tokens.json')]);
+  assert.equal(r.codigo, 2, r.saida);
+  assert.match(r.saida, /max_tokens/);
+  assert.match(r.saida, /custo está gravado/);
+  const resp = C.lerJson(path.join(site, 'resposta-ia.json'));
+  assert.equal(resp.stop_reason, 'max_tokens');
+  assert.equal(resp.usage.input_tokens, 3412);
+  assert.ok(!JSON.stringify(resp).includes('sk-ant'), 'sem chave na resposta gravada');
+  const custo = C.lerJson(path.join(site, 'custo.json'));
+  assert.equal(custo.chamadas.length, 1);
+  assert.equal(custo.chamadas[0].status, 'falhou');
+  assert.equal(custo.chamadas[0].custo_ia.brl, 0.1028);
+  assert.equal(custo.total.brl, 0.1028);
+  const prod = C.lerJson(path.join(site, 'producao.json'));
+  assert.equal(prod.status, 'ia_falhou');
+  assert.match(prod.hashPedido, /^[0-9a-f]{64}$/);
+  assert.ok(!fs.existsSync(path.join(site, 'textos-ia.json')));
+  // rodada seguinte, mesmo pedido, sem flag: para sem chamar a IA e manda escolher
+  const r2 = rodar('produzir.mjs', [...base, '--fixture-ia', FIXTURE_IA]);
+  assert.equal(r2.codigo, 2, r2.saida);
+  assert.match(r2.saida, /--refazer-textos/);
+  assert.equal(C.lerJson(path.join(site, 'custo.json')).chamadas.length, 1, 'nenhuma nova chamada sem decisão explícita');
+  // decisão explícita: refaz, e o histórico soma as duas chamadas pagas
+  const r3 = rodar('produzir.mjs', [...base, '--fixture-ia', FIXTURE_IA, '--refazer-textos']);
+  assert.equal(r3.codigo, 0, r3.saida);
+  const c3 = C.lerJson(path.join(site, 'custo.json'));
+  assert.equal(c3.chamadas.length, 2);
+  assert.equal(c3.total.brl, 0.2056);
+  assert.equal(C.lerJson(path.join(site, 'producao.json')).status, 'pronto_para_aprovacao');
+  // e a quarta rodada reaproveita, sem cobrar
+  const r4 = rodar('produzir.mjs', base);
+  assert.equal(r4.codigo, 0, r4.saida);
+  assert.equal(C.lerJson(path.join(site, 'custo.json')).chamadas.length, 2);
+});
+
+test('custo nunca se perde: JSON inválido e recusa também gravam o custo', () => {
+  for (const [nome, fx] of [['jsoninv', 'resposta-modelo-json-invalido.json'], ['recusa2', 'resposta-modelo-recusa.json']]) {
+    const s = pasta(nome);
+    const r = rodar('produzir.mjs', ['--pedido', path.join(FIX, 'pedido-valido.txt'), '--saida', s, '--fixture-ia', path.join(FIX, fx), '--sem-navegador', '--sem-sair']);
+    assert.equal(r.codigo, 2, r.saida);
+    const c = C.lerJson(path.join(s, 'sites', SLUG, 'custo.json'));
+    assert.equal(c.chamadas.length, 1, nome);
+    assert.ok(c.chamadas[0].custo_ia.brl > 0, nome);
+    assert.equal(C.lerJson(path.join(s, 'sites', SLUG, 'producao.json')).status, 'ia_falhou', nome);
+  }
+});
+
+test('custo nunca se perde: modelo cobrado fora de PRECOS (fallback) não derruba o site e grava os tokens', () => {
+  const s = pasta('desconhecido');
+  const site = path.join(s, 'sites', SLUG);
+  const r = rodar('produzir.mjs', ['--pedido', path.join(FIX, 'pedido-valido.txt'), '--saida', s, '--fixture-ia', path.join(FIX, 'resposta-modelo-desconhecido.json'), '--sem-navegador', '--sem-sair']);
+  assert.equal(r.codigo, 0, r.saida);
+  const c = C.lerJson(path.join(site, 'custo.json'));
+  assert.equal(c.custo_ia, null, 'sem preço: custo_ia null (schema aceita), nada inventado');
+  assert.equal(c.chamadas[0].modeloCobrado, 'claude-modelo-desconhecido-9');
+  assert.deepEqual(c.chamadas[0].tokens, { entrada: 3412, saida: 1186 });
+  assert.match(c.chamadas[0].falha_custo, /sem preço cadastrado/);
+  assert.equal(c.total.sem_preco, 1);
+  assert.ok(fs.existsSync(path.join(site, 'resposta-ia.json')));
+  assert.match(fs.readFileSync(path.join(site, 'RELATORIO.md'), 'utf8'), /não foi calculado/);
+  const r2 = IA.custo({ model: 'claude-x', usage: { input_tokens: 10 } }, 5.5);
+  assert.equal(r2.custo_ia, null);
+  assert.equal(r2.tokens.entrada, 10);
+});
+
 test('idempotência: o mesmo pedido não chama a IA de novo; outro pedido no mesmo slug é recusado', () => {
   const s = pasta('idem');
   const a = ['--pedido', path.join(FIX, 'pedido-valido.txt'), '--saida', s, '--fixture-ia', FIXTURE_IA, '--sem-navegador', '--sem-sair'];
