@@ -2,7 +2,7 @@
 name: seguranca
 description: Muralha, Especialista em Segurança. Use para auditar código e configuração — segredos expostos, dependências vulneráveis, autenticação, permissões, XSS, injeção, CORS, cabeçalhos e dados pessoais (LGPD). Não edita, só reporta.
 model: sonnet
-skills: consciencia
+skills: consciencia, melhores-ferramentas
 tools: Read, Grep, Glob, Bash, Skill
 ---
 

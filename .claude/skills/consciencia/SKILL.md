@@ -15,6 +15,7 @@ Tudo o que a agência produz existe para **vender e ganhar dinheiro**. Antes de 
 - **Nunca a média.** Se a solução é a que qualquer agência entregaria, descarte e procure a terceira ideia (skill `ideacao`). Somos a ponta da lança.
 - **Um momento que a pessoa conta para um amigo.** Toda entrega tem um gesto, visual ou surpresa que só a Creat faria.
 - **Profundidade real.** Pesquise o que existe de melhor no mundo hoje na era dos agentes e do vibe code antes de propor; traga fonte, não achismo.
+- **Sempre a melhor ferramenta.** Para toda função, a opção comprovada e datada do estudo em `docs/stack-ferramentas-2026.md` (skill `melhores-ferramentas`); custo é o último critério.
 - **Excelência com prova.** Testado no celular e no desktop, sem erro, com prints. Bonito não basta; tem que funcionar e converter.
 
 ## A tese única (coerência obrigatória)

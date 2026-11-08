@@ -27,6 +27,7 @@ Agentes em `.claude/agents/`, skills da casa em `.claude/skills/`, fluxo que coo
 ## Skills da casa (`.claude/skills/`)
 
 - `consciencia`: quem é o dono, o que é 12 de 10, a tese única e o foco em venda. **Leitura obrigatória antes de qualquer tarefa.**
+- `melhores-ferramentas`: antes de usar ou recomendar qualquer ferramenta, consulte `docs/stack-ferramentas-2026.md` e use a melhor comprovada; se houver algo superior, verifique com fonte e atualize o estudo. Revisado por automação toda segunda.
 
 - `ideacao`: método para sair da primeira ideia (metáfora, inversão, ritual) e escolher com critério.
 - `direcao-de-arte`: ficha de direção, regras de identidade e clichês proibidos.
@@ -39,6 +40,7 @@ Agentes em `.claude/agents/`, skills da casa em `.claude/skills/`, fluxo que coo
 
 - A tese é uma só: resultado para o negócio local, produzido pela agência de agentes, com o cliente assistindo a equipe na sede 3D. Produto que não conversa com a tese não entra na vitrine.
 - O cliente final nunca precisa de assinatura externa; a venda roda sem o dono; toda oferta tem plano mensal.
+- Sempre a melhor ferramenta comprovada para cada função, custo por último; registrar o porquê.
 
 - Tarefa com mais de uma etapa começa pelo `diretor`, que devolve o plano em ondas.
 - Projeto que precisa ser memorável passa pelo `criativo` antes do design.
