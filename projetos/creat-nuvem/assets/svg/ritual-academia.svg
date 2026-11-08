@@ -10,21 +10,21 @@
 </style><style>.ra-anilha-2{fill:var(--tinta,#1E1B2E)}.ra-giz{fill:#FFFFFF}.ra-recartilhado{fill:none;stroke:#8C909B;stroke-width:1.5}</style>
 <path id="chao" class="ra-lf" stroke-width="4" d="M8 176 H192"/>
 <g id="conjunto-barra">
-<g id="barra"><rect class="ra-sombra" x="18" y="112" width="168" height="12" rx="4"/><rect class="ra-aco ra-l" x="14" y="108" width="168" height="12" rx="4" stroke-width="3.5"/>
+<g id="barra"><rect class="ra-sombra" x="8" y="112" width="188" height="12" rx="4"/><rect class="ra-aco ra-l" x="4" y="108" width="190" height="12" rx="4" stroke-width="3.5"/>
 <path id="barra-recartilhado" class="ra-recartilhado" d="M76 110 l6 8 M84 110 l6 8 M92 110 l6 8 M100 110 l6 8 M108 110 l6 8 M116 110 l6 8"/></g>
 <g id="anilha-esq">
-<rect class="ra-sombra" x="20" y="68" width="24" height="100" rx="8"/>
-<rect id="anilha-esq-25" class="ra-destaque ra-l" x="16" y="64" width="24" height="100" rx="8"/>
-<rect id="anilha-esq-10" class="ra-anilha-2 ra-l" stroke-width="3" x="37" y="86" width="14" height="56" rx="5"/>
-<path class="ra-brilho" d="M23 74 V96"/>
+<rect class="ra-sombra" x="38" y="68" width="24" height="100" rx="8"/>
+<rect id="anilha-esq-25" class="ra-destaque ra-l" x="34" y="64" width="24" height="100" rx="8"/>
+<path class="ra-brilho" d="M41 74 V96"/>
+<rect id="anilha-esq-10" class="ra-anilha-2 ra-l" stroke-width="3" x="18" y="86" width="14" height="56" rx="5"/>
 </g>
-<rect id="presilha-esq" class="ra-aco-escuro ra-l" stroke-width="3" x="53" y="102" width="10" height="24" rx="3"/><g id="anilha-dir">
-<rect class="ra-sombra" x="164" y="68" width="24" height="100" rx="8"/>
-<rect id="anilha-dir-25" class="ra-destaque ra-l" x="160" y="64" width="24" height="100" rx="8"/>
-<rect id="anilha-dir-10" class="ra-anilha-2 ra-l" stroke-width="3" x="149" y="86" width="14" height="56" rx="5"/>
-<path class="ra-brilho" d="M167 74 V96"/>
+<rect id="presilha-esq" class="ra-aco-escuro ra-l" stroke-width="3" x="8" y="102" width="8" height="24" rx="3"/><g id="anilha-dir">
+<rect class="ra-sombra" x="146" y="68" width="24" height="100" rx="8"/>
+<rect id="anilha-dir-25" class="ra-destaque ra-l" x="142" y="64" width="24" height="100" rx="8"/>
+<path class="ra-brilho" d="M149 74 V96"/>
+<rect id="anilha-dir-10" class="ra-anilha-2 ra-l" stroke-width="3" x="168" y="86" width="14" height="56" rx="5"/>
 </g>
-<rect id="presilha-dir" class="ra-aco-escuro ra-l" stroke-width="3" x="137" y="102" width="10" height="24" rx="3"/>
+<rect id="presilha-dir" class="ra-aco-escuro ra-l" stroke-width="3" x="184" y="102" width="8" height="24" rx="3"/>
 </g>
 <g id="poeira"><circle id="poeira-1" class="ra-giz ra-l" stroke-width="2.5" cx="92" cy="160" r="6"/><circle id="poeira-2" class="ra-giz ra-l" stroke-width="2.5" cx="108" cy="166" r="4"/><circle id="poeira-3" class="ra-giz ra-l" stroke-width="2.5" cx="80" cy="168" r="3.5"/></g>
 </svg>

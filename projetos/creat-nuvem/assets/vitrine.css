@@ -68,7 +68,7 @@ p{margin:0;text-wrap:pretty}
 .palco-placa{grid-area:placa;position:relative;display:grid;place-items:start center;height:clamp(250px, 68vw, 320px);margin-inline:auto;width:min(100%, 440px)}
 .palco-placa > :not(.porta){width:min(72%, 320px);margin-top:10px}
 /* quadro de vidro de noite atrás da placa: a porta */
-.porta{position:absolute;inset:0 6% 18px;border:var(--borda-g) solid var(--linha);border-bottom:0;border-radius:28px 28px 0 0;background:linear-gradient(160deg, var(--vidro-reflexo) 0 18%, transparent 18% 32%, var(--vidro-reflexo) 32% 36%, transparent 36%) , var(--vidro);z-index:0}
+.porta{position:absolute;inset:0 6% 0;border:var(--borda-g) solid var(--linha);border-bottom-width:8px;border-radius:28px 28px 0 0;background:linear-gradient(160deg, var(--vidro-reflexo) 0 18%, transparent 18% 32%, var(--vidro-reflexo) 32% 36%, transparent 36%) , var(--vidro);z-index:0}
 .porta::after{content:"";position:absolute;left:50%;top:-2px;width:14px;height:14px;transform:translate(-50%,-50%);border-radius:50%;background:var(--corrente);border:3px solid var(--linha)}
 .palco-placa > :not(.porta){position:relative;z-index:1}
 
@@ -90,7 +90,7 @@ p{margin:0;text-wrap:pretty}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;border:0}
 .chips legend{font-weight:800;font-size:var(--t-menor);margin-bottom:8px;padding:0}
 .chip{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:var(--alvo);padding:0 16px;border:var(--borda) solid var(--linha);border-radius:var(--raio-pilula);background:var(--papel);font-weight:700;font-size:15px;cursor:pointer;user-select:none;transition:transform var(--duracao-curta) var(--curva-saida),background-color var(--duracao-curta)}
-.chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;-webkit-appearance:none;appearance:none;margin:0;cursor:pointer}
 .chip svg{width:22px;height:22px}
 .chip:has(input:checked),.chip[aria-pressed="true"]{background:var(--sol);color:var(--sol-tinta);box-shadow:var(--sombra-p)}
 .chip:has(input:focus-visible){outline:3px solid var(--sol);outline-offset:3px;box-shadow:0 0 0 6px var(--linha)}
