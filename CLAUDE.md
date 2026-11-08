@@ -36,6 +36,11 @@ Agentes em `.claude/agents/`, skills da casa em `.claude/skills/`, fluxo que coo
 - `navegador`: Chromium persistente controlado por comandos (`node .claude/skills/navegador/navegar.cjs abrir|ver|clicar|digitar|ler|print|console`) para testar fluxos como uma pessoa.
 - `padrao-de-entrega`: definição de pronto e formato do relatório.
 
+## Automações recorrentes
+
+- **Segunda, 05:47 (Bahia):** revisão do stack de ferramentas → `docs/stack-ferramentas-2026.md`.
+- **Quinta, 05:53 (Bahia):** inteligência de mercado e redes sociais → `docs/inteligencia/semana-<data>.md`, com 10 "pulos do gato" para adotar.
+
 ## Regras da casa
 
 - A tese é uma só: resultado para o negócio local, produzido pela agência de agentes, com o cliente assistindo a equipe na sede 3D. Produto que não conversa com a tese não entra na vitrine.
