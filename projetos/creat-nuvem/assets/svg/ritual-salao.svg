@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-labelledby="ritual-salao-titulo ritual-salao-desc">
+<title id="ritual-salao-titulo">Pincel e unha</title>
+<desc id="ritual-salao-desc">Unha desenhada num expositor sendo pintada pelo pincel do esmalte, com o vidrinho de esmalte ao lado.</desc>
+<style>
+.rs-l{stroke:var(--linha,#1E1B2E);stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
+.rs-lf{fill:none;stroke:var(--linha,#1E1B2E);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.rs-sombra{fill:var(--linha,#1E1B2E)}
+.rs-aco{fill:#D9DDE0}.rs-aco-escuro{fill:#A9AFB6}.rs-brilho{fill:none;stroke:#FFFFFF;stroke-width:2.5;stroke-linecap:round}
+.rs-destaque{fill:var(--n-destaque,#A8123A)}.rs-tinta{fill:var(--tinta,#1E1B2E)}.rs-papel{fill:var(--papel,#FFFDF6)}
+</style><style>.rs-unha-base{fill:#F6E7DF}.rs-vidro{fill:#FFFFFF;fill-opacity:.55}</style>
+<defs><clipPath id="rs-clip-unha"><path d="M60 170 V92 Q60 52 92 52 Q124 52 124 92 V170 Z"/></clipPath></defs>
+<g id="expositor"><rect class="rs-sombra" x="52" y="166" width="88" height="22" rx="6"/><rect class="rs-tinta rs-l" x="48" y="162" width="88" height="22" rx="6"/></g>
+<g id="unha">
+<path class="rs-sombra" d="M60 170 V92 Q60 52 92 52 Q124 52 124 92 V170 Z" transform="translate(4 4)"/>
+<path id="unha-base" class="rs-unha-base rs-l" d="M60 170 V92 Q60 52 92 52 Q124 52 124 92 V170 Z"/>
+<g id="esmalte" clip-path="url(#rs-clip-unha)"><rect id="esmalte-preenchimento" class="rs-destaque" x="56" y="48" width="72" height="126"/><path id="esmalte-reflexo" class="rs-brilho" d="M74 78 Q76 66 86 62"/></g>
+<path fill="none" class="rs-l" d="M60 170 V92 Q60 52 92 52 Q124 52 124 92 V170"/>
+<path id="unha-cuticula" class="rs-lf" d="M66 160 Q92 150 118 160"/>
+</g>
+<g id="pincel" transform="rotate(32 150 70)">
+<rect class="rs-sombra" x="142" y="10" width="20" height="70" rx="6" transform="translate(3 3)"/>
+<rect id="pincel-cabo" class="rs-tinta rs-l" x="142" y="10" width="20" height="70" rx="6"/>
+<path id="pincel-haste" class="rs-lf" d="M152 80 V96"/>
+<path id="pincel-cerdas" class="rs-destaque rs-l" stroke-width="3" d="M144 94 H160 L158 116 Q152 124 146 116 Z"/>
+<circle id="pincel-gota" class="rs-destaque rs-l" stroke-width="2.5" cx="152" cy="132" r="4.5"/>
+</g>
+<g id="frasco">
+<rect class="rs-sombra" x="150" y="124" width="40" height="56" rx="12" transform="translate(3 3)"/>
+<rect id="frasco-vidro" class="rs-papel rs-l" x="150" y="124" width="40" height="56" rx="12"/>
+<rect id="frasco-liquido" class="rs-destaque" x="154" y="140" width="32" height="36" rx="9"/>
+<path class="rs-brilho" d="M158 132 V140"/>
+<rect id="frasco-tampa" class="rs-tinta rs-l" x="160" y="104" width="20" height="22" rx="4"/>
+</g>
+</svg>

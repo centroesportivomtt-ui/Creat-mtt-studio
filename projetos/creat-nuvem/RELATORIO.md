@@ -1,0 +1,6 @@
+
+## T1 · Cirro · Arquitetura e contratos
+- **O que fiz:** escrevi os contratos entre os módulos em 1 página com diagrama: placa, som, fragmento da prévia, dados com a regra das 48 h, CREAT_CHECKOUT, chaves de localStorage, PEDIDO v1, motor, sede e analytics. Registrei 3 ADRs (motor congelado, estado no fragmento, dado velho fail-closed) e criei 3 JSON Schemas estritos (draft 2020-12) com exemplos válidos e inválidos.
+- **Arquivos:** `docs/ARQUITETURA.md`, `docs/ADR-001-motor-congelado.md`, `docs/ADR-002-estado-no-fragmento.md`, `docs/ADR-003-dados-velhos-fail-closed.md`, `schema/tenant.schema.json`, `schema/pedido.schema.json`, `schema/evento.schema.json`, `schema/exemplos/*` (com `validar.cjs`), `docs/relatorio/T1.md`.
+- **Como verificar:** instale `ajv@8.20.0` e `ajv-formats@3.0.1` numa pasta fora do repositório e rode `AJV_DIR=<pasta> node schema/exemplos/validar.cjs`. Resultado esperado: 18 `ok`, saída 0. Os válidos passam; `ocupacaoFicticia`, WhatsApp 5500000000000, avaliação sem origem, CPF e propriedade pessoal em evento são rejeitados.
+- **Pendências:** regras fora do schema vão para `validar-tenant.mjs` (T9). `before_send` do PostHog cortando o `#` é obrigatório (T5, risco 1). Quinto nicho da lista de espera sem nome (usei `outro`). Ajv entra no `package.json` do projeto (T5/T10). Detalhes em `docs/relatorio/T1.md`.

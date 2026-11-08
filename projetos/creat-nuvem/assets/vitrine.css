@@ -57,13 +57,16 @@ p{margin:0;text-wrap:pretty}
 
 /* ---------------------------------------------------------------- hero */
 .heroi{background:var(--ceu);border-bottom:var(--borda) solid var(--linha);padding:var(--r5) 0 var(--r7);position:relative;overflow:hidden}
-.heroi .cx{display:grid;gap:var(--r5)}
+/* ordem no celular: título, placa, subtítulo e formulário (a placa aparece na 1ª tela)
+   marcação esperada: .heroi > .cx > .heroi-cabeca + .palco-placa + .heroi-corpo */
+.heroi .cx{display:grid;gap:var(--r4);grid-template-areas:"cabeca" "placa" "corpo"}
+.heroi-cabeca{grid-area:cabeca}
+.heroi-corpo{grid-area:corpo}
 .heroi h1{font-size:var(--t-h1);max-width:14ch}
-.heroi .sub{margin-top:var(--r4);font-size:var(--t-lead);max-width:46ch}
-/* palco da placa: reserva o espaço antes do JS (sem salto de layout) */
-.palco-placa{position:relative;display:grid;place-items:start center;min-height:clamp(250px, 64vw, 420px);margin-inline:auto;width:min(100%, 440px)}
-.palco-placa > svg,.palco-placa > img{width:min(88%, 380px)}
-.palco-placa .dica{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font:500 var(--t-micro)/1.3 var(--f-dado);color:var(--apagado);white-space:nowrap}
+.heroi .sub{font-size:var(--t-lead);max-width:46ch}
+/* palco da placa: reserva o espaço antes do JS (sem salto de layout); T6 monta dentro */
+.palco-placa{grid-area:placa;position:relative;display:grid;place-items:start center;height:clamp(250px, 68vw, 320px);margin-inline:auto;width:min(100%, 440px)}
+.palco-placa > :not(.porta){width:min(72%, 320px);margin-top:10px}
 /* quadro de vidro de noite atrás da placa: a porta */
 .porta{position:absolute;inset:0 6% 18px;border:var(--borda-g) solid var(--linha);border-bottom:0;border-radius:28px 28px 0 0;background:linear-gradient(160deg, var(--vidro-reflexo) 0 18%, transparent 18% 32%, var(--vidro-reflexo) 32% 36%, transparent 36%) , var(--vidro);z-index:0}
 .porta::after{content:"";position:absolute;left:50%;top:-2px;width:14px;height:14px;transform:translate(-50%,-50%);border-radius:50%;background:var(--corrente);border:3px solid var(--linha)}
@@ -87,7 +90,7 @@ p{margin:0;text-wrap:pretty}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;border:0}
 .chips legend{font-weight:800;font-size:var(--t-menor);margin-bottom:8px;padding:0}
 .chip{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:var(--alvo);padding:0 16px;border:var(--borda) solid var(--linha);border-radius:var(--raio-pilula);background:var(--papel);font-weight:700;font-size:15px;cursor:pointer;user-select:none;transition:transform var(--duracao-curta) var(--curva-saida),background-color var(--duracao-curta)}
-.chip input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
 .chip svg{width:22px;height:22px}
 .chip:has(input:checked),.chip[aria-pressed="true"]{background:var(--sol);color:var(--sol-tinta);box-shadow:var(--sombra-p)}
 .chip:has(input:focus-visible){outline:3px solid var(--sol);outline-offset:3px;box-shadow:0 0 0 6px var(--linha)}
@@ -185,7 +188,7 @@ p{margin:0;text-wrap:pretty}
 .rodape nav ul{display:flex;flex-wrap:wrap;gap:4px 18px;margin:0;padding:0;list-style:none}
 .rodape nav a{display:inline-flex;align-items:center;min-height:var(--alvo);font-weight:700}
 .rodape .discreto{font-size:var(--t-nota);color:var(--apagado)}
-.rodape .discreto a{color:var(--apagado)}
+.rodape .discreto a{color:var(--apagado);display:inline-flex;align-items:center;min-height:var(--alvo)}
 
 /* ---------------------------------------------------------------- WhatsApp flutuante */
 .zap-flutuante{position:fixed;right:var(--gut-d);bottom:calc(16px + env(safe-area-inset-bottom, 0px));z-index:var(--z-flutuante);min-height:52px;padding:8px 18px 8px 14px;font-size:15px;background:var(--papel)}
@@ -193,10 +196,10 @@ p{margin:0;text-wrap:pretty}
 body.com-previa .zap-flutuante,body.com-consentimento .zap-flutuante{display:none}
 
 /* ---------------------------------------------------------------- consentimento: aceitar e recusar com o MESMO peso */
-.consentimento{position:fixed;left:var(--gut);right:var(--gut-d);bottom:calc(12px + env(safe-area-inset-bottom, 0px));z-index:var(--z-consentimento);display:grid;gap:var(--r3);max-width:560px;margin-inline:auto;padding:var(--r4);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra)}
+.consentimento{position:fixed;left:var(--gut);right:var(--gut-d);bottom:calc(8px + env(safe-area-inset-bottom, 0px));z-index:var(--z-consentimento);display:grid;gap:var(--r2);max-width:560px;margin-inline:auto;padding:var(--r3) var(--r4);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra)}
 .consentimento p{font-size:var(--t-menor)}
 .consentimento .botoes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.consentimento .btn{min-height:48px;background:var(--papel);color:var(--tinta)} /* nenhum dos dois é amarelo: escolha livre */
+.consentimento .btn{min-height:var(--alvo);padding:6px 16px;background:var(--papel);color:var(--tinta)} /* nenhum dos dois é amarelo: escolha livre */
 
 /* ---------------------------------------------------------------- carregamento desenhado (nunca tela branca) */
 .carregando{display:grid;place-items:center;gap:var(--r4);min-height:60vh;padding:var(--r6) var(--gut);background:var(--fundo);color:var(--tinta);text-align:center}
@@ -236,10 +239,10 @@ body.com-previa .aviso{bottom:calc(var(--barra-previa) + 16px + env(safe-area-in
 @media (min-width:1000px){
   .barra-links a{font-size:var(--t-corpo)}
   .heroi{padding:var(--r6) 0 calc(var(--r7) + 16px)}
-  .heroi .cx{grid-template-columns:1.05fr .95fr;grid-template-areas:"texto placa";align-items:start;column-gap:var(--r7)}
-  .heroi-texto{grid-area:texto;padding-top:var(--r5)}
-  .palco-placa{grid-area:placa;min-height:520px;width:100%}
-  .palco-placa > svg,.palco-placa > img{width:min(82%, 420px)}
+  .heroi .cx{grid-template-columns:1.05fr .95fr;grid-template-areas:"cabeca placa" "corpo placa";grid-template-rows:auto 1fr;align-items:start;column-gap:var(--r7);row-gap:var(--r4)}
+  .heroi-cabeca{padding-top:var(--r5)}
+  .palco-placa{height:520px;width:100%}
+  .palco-placa > :not(.porta){width:min(82%, 420px);margin-top:16px}
   .passos{grid-template-columns:repeat(4,1fr)}
   .passos li{padding:80px var(--r5) var(--r5)}
   .precos-grade{grid-template-columns:1fr 1fr 1fr;align-items:stretch}
