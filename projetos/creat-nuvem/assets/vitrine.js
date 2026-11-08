@@ -733,8 +733,9 @@
       ];
       if (ok.indexOf(false) !== -1) { var inv = tForm.querySelector('[aria-invalid="true"]'); if (inv) inv.focus(); return; }
       var s = estado();
-      var msg = t('Teste do Porta Aberta. Assim chega um pedido de horário no site da {negocio}: "Olá! Quero pedir um horário: {servico}, {dia} às {hora}. Meu nome é (nome do cliente)." No site de verdade, o dono confirma pelo WhatsApp.',
-        { negocio: s.n || 'seu negócio', servico: tServ.value, dia: tDia.value, hora: tHora.value });
+      var modelo = 'Teste do Porta Aberta. Assim chega um pedido de horário no site da {negocio}: "Olá! Quero pedir um horário: {servico}, {dia} às {hora}. Meu nome é (nome do cliente)." No site de verdade, o dono confirma pelo WhatsApp.';
+      if (!s.n) modelo = modelo.replace('no site da {negocio}', 'no seu site');
+      var msg = t(modelo, { negocio: s.n, servico: tServ.value, dia: tDia.value, hora: tHora.value });
       $('#celular-msg').textContent = msg;
       abrirExterno(linkWhats(numero, msg));   // o número só existe aqui, na memória, e no link do próprio WhatsApp
       somFn('plim');
@@ -745,7 +746,7 @@
       var s = estado();
       var msg = t('Olá! Quero pedir um horário: {servico}, {dia} às {hora}. Meu nome é (nome do cliente).', { servico: tServ.value || 'Corte', dia: tDia.value || 'amanhã', hora: tHora.value || '10:00' });
       $('#celular-msg').textContent = msg;
-      $('#celular-de').textContent = 'Pedido pelo site da ' + (s.n || 'seu negócio');
+      $('#celular-de').textContent = s.n ? 'Pedido pelo site da ' + s.n : 'Pedido pelo seu site';
       var cel = $('#celular'); cel.hidden = false; cel.classList.remove('chegou'); void cel.offsetWidth; cel.classList.add('chegou');
       somFn('plim');
     });

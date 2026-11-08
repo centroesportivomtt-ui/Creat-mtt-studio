@@ -65,11 +65,14 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 .celular-vazio{color:var(--apagado);font-size:var(--t-nota);text-align:center;padding:12px}
 .janela-sede{min-height:0}
 .sede-palco{position:relative}
+.sede-grade .cab{margin-bottom:var(--r5)}
+@media (min-width:1000px){.sede-grade .janela-sede{order:-1}.sede-grade .cab{margin-bottom:0}}
 .janela-sede iframe{display:block;width:100%;aspect-ratio:16/10;border:0;background:var(--vidro)}
 .janela-sede .sede-carregando{position:absolute;inset:0;min-height:0;background:var(--vidro);color:var(--giz)}
 .janela-sede .selo-demo{z-index:2}
 .janela-sede .ver-ao-vivo{z-index:2}
 .sede-nota{margin-top:var(--r3);font-size:var(--t-nota);color:var(--apagado)}
+.preco strong span,.preco s span{font:inherit;color:inherit}
 .cartao-preco .anual{font-size:var(--t-nota)}
 .cartao-preco .anual a{font-weight:700;display:inline-flex;align-items:center;min-height:var(--alvo)}
 .precos-extra{display:grid;gap:var(--r5);margin-top:var(--r6)}
@@ -415,6 +418,11 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
   <!-- 7 · SEDE AO VIVO -->
   <section class="secao secao-ceu" id="sede" aria-labelledby="sede-titulo">
     <div class="cx sede-grade">
+      <div class="cab">
+        <span class="olho">Sede ao vivo</span>
+        <h2 id="sede-titulo">Veja quem monta o seu site</h2>
+        <p>Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um escreve os textos, outro escolhe as cores, outro testa no celular. Depois do pagamento, a fachada mostra o nome do seu negócio.</p>
+      </div>
       <figure class="janela-sede" id="janela-sede">
         <span class="selo-demo">Demonstração</span>
         <div class="sede-palco"><picture data-poster>
@@ -424,11 +432,6 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
         <button class="btn btn-sol ver-ao-vivo" type="button" data-ver-ao-vivo>Ver ao vivo</button></div>
         <figcaption>Quando não há pedido em andamento, a sede mostra uma demonstração, sempre com este aviso.</figcaption>
       </figure>
-      <div class="cab">
-        <span class="olho">Sede ao vivo</span>
-        <h2 id="sede-titulo">Veja quem monta o seu site</h2>
-        <p>Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um escreve os textos, outro escolhe as cores, outro testa no celular. Depois do pagamento, a fachada mostra o nome do seu negócio.</p>
-      </div>
     </div>
   </section>
 

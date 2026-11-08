@@ -86,3 +86,26 @@ Os prazos são sugestão do Verbo para caber antes de 16/11; o Nimbus confirma o
   - **T5:** iframe com `allow-popups`.
   - **T8:** salao.js e academia.js, mais o ritual de cada um; até lá, `k=salao` cai em barbearia com o aviso "Escolha o seu nicho".
   - Revisor, QA e Muralha.
+
+## T5 · Pixel · Vitrine, checkout, dados e scripts
+- **O que fiz:**
+  - Home "A Porta" com as 10 seções da 5.1, integrada à placa real da T6 e à prévia da T4 por iframe.
+  - `/abrir/` com plano trocável, TOTAL antes de pagar, 5 campos, aceite e Pix ou cartão pelo mesmo link.
+  - `/obrigado/` sem afirmar pagamento, com o PEDIDO v1 completo e a origem utm, a sede com o letreiro e o relógio.
+  - Bastidores com o aviso antes do preço; termos e privacidade com `REVISAO_JURIDICA_PENDENTE`; página 404.
+  - `assets/vitrine.js` com leitura fail-closed, PostHog sem cookie e com `before_send`, e Pixel e Clarity só depois do aceite.
+  - `checkout.config.js` com os 4 marcadores só nele; `dados/*.json`; os scripts `checar.cjs` (sem dependência, 18/18 fixtures), `checar-placeholders.cjs` e `atualizar-vagas.cjs`.
+  
+  Decidi adiar o banner de consentimento até o visitante passar do hero, para ele não cobrir o campo do nome. Detalhes em `docs/relatorio/T5.md`.
+- **Arquivos:** `index.html`, `abrir/index.html`, `abrir/pedido.css`, `obrigado/index.html`, `bastidores/index.html`, `termos/index.html`, `privacidade/index.html`, `404.html`, `assets/vitrine.js`, `checkout.config.js`, `dados/{precos,vagas,depoimentos}.json`, `scripts/{checar,checar-placeholders,atualizar-vagas}.cjs`, `docs/relatorio/T5.md`.
+- **Como verificar:**
+  - `node scripts/checar.cjs` dá código 0.
+  - `node scripts/checar-placeholders.cjs` dá código 1 enquanto houver marcador; numa cópia com os links trocados, dá 0.
+  - Suba um servidor na raiz do repositório e abra `/projetos/creat-nuvem/?nicho=barbearia&utm_source=meta`. Prints em `.verificacao/t5-*`.
+- **Pendente:**
+  - `assets/som/creat-som.js` (T7) ainda dá 404; os sons ficaram não verificados.
+  - Nichos salão e academia na prévia dependem da T8.
+  - O gesto de arrastar a placa fica com a T6 e a Lupa.
+  - A chamada real ao PostHog não foi verificada na rede: a chave é de exemplo e o CDN está bloqueado no sandbox.
+  - T10: CSP com `style-src 'unsafe-inline'` (por causa dos SVGs embutidos), jsdelivr e PostHog liberados, Meta e Clarity só depois do aceite; `sede/` publicada em `/sede/`; site na raiz do domínio.
+  - Marcos: trocar os 4 marcadores, pôr as chaves públicas de medição em `CREAT_MEDICAO` e rodar `atualizar-vagas.cjs --confirmar` todo dia, de preferência numa tarefa agendada; sem isso, depois de 48 h a página cai no preço padrão.
