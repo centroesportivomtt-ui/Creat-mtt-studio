@@ -1,22 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-labelledby="ritual-salao-titulo ritual-salao-desc">
 <title id="ritual-salao-titulo">Pincel e unha</title>
-<desc id="ritual-salao-desc">Unha desenhada num palito de amostra sendo pintada pelo pincel do esmalte, com o vidrinho de esmalte ao lado.</desc>
+<desc id="ritual-salao-desc">Ponta de um dedo com a unha sendo pintada pelo pincel do esmalte, com o vidrinho de esmalte ao lado.</desc>
 <style>
 .rs-l{stroke:var(--linha,#1E1B2E);stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
 .rs-lf{fill:none;stroke:var(--linha,#1E1B2E);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .rs-sombra{fill:var(--linha,#1E1B2E)}
 .rs-aco{fill:#D9DDE0}.rs-aco-escuro{fill:#A9AFB6}.rs-brilho{fill:none;stroke:#FFFFFF;stroke-width:2.5;stroke-linecap:round}
-.rs-destaque{fill:var(--n-destaque,#A8123A)}.rs-tinta{fill:var(--tinta,#1E1B2E)}.rs-papel{fill:var(--papel,#FFFDF6)}
-</style><style>.rs-unha-base{fill:#F6E7DF}.rs-palito{fill:#E6B67B}</style>
-<defs><clipPath id="rs-clip-unha"><path d="M62 150 V92 Q62 56 94 56 Q126 56 126 92 V150 Q94 162 62 150 Z"/></clipPath></defs>
-<g id="palito"><rect class="rs-sombra" x="91" y="150" width="14" height="42" rx="5"/><rect class="rs-palito rs-l" stroke-width="3" x="87" y="146" width="14" height="42" rx="5"/></g>
+.rs-destaque{fill:var(--n-destaque,#A8123A)}.rs-tinta{fill:var(--linha,#1E1B2E)}.rs-papel{fill:var(--papel,#FFFDF6)}
+</style><style>.rs-unha-base{fill:#FBEFE8}.rs-pele{fill:var(--pele,#F2C7A5)}</style>
+<defs><clipPath id="rs-clip-unha"><path d="M74 118 V84 Q74 58 95 58 Q116 58 116 84 V118 Q95 126 74 118 Z"/></clipPath></defs>
+<g id="dedo">
+<path class="rs-sombra" d="M58 204 V78 Q58 36 95 36 Q132 36 132 78 V204 Z" transform="translate(5 4)"/>
+<path id="dedo-pele" class="rs-pele rs-l" d="M58 204 V78 Q58 36 95 36 Q132 36 132 78 V204 Z"/>
+<path id="dedo-dobra" class="rs-lf" d="M74 166 Q95 172 116 166 M78 178 Q95 183 112 178"/>
+</g>
 <g id="unha">
-<path class="rs-sombra" d="M62 150 V92 Q62 56 94 56 Q126 56 126 92 V150 Q94 162 62 150 Z" transform="translate(5 5)"/>
-<path id="unha-base" class="rs-unha-base" d="M62 150 V92 Q62 56 94 56 Q126 56 126 92 V150 Q94 162 62 150 Z"/>
-<g id="esmalte" clip-path="url(#rs-clip-unha)"><rect id="esmalte-preenchimento" class="rs-destaque" x="58" y="52" width="72" height="112"/></g>
-<path id="esmalte-reflexo" class="rs-brilho" stroke-width="4" d="M76 104 V90 Q76 74 88 70"/>
-<path fill="none" class="rs-l" d="M62 150 V92 Q62 56 94 56 Q126 56 126 92 V150 Q94 162 62 150 Z"/>
-<path id="unha-cuticula" class="rs-lf" d="M70 140 Q94 132 118 140"/>
+<path id="unha-base" class="rs-unha-base rs-l" stroke-width="3" d="M74 118 V84 Q74 58 95 58 Q116 58 116 84 V118 Q95 126 74 118 Z"/>
+<g id="esmalte" clip-path="url(#rs-clip-unha)"><rect id="esmalte-preenchimento" class="rs-destaque" x="70" y="54" width="50" height="76"/></g>
+<path id="esmalte-reflexo" class="rs-brilho" stroke-width="3.5" d="M84 98 V86 Q84 74 92 70"/>
+<path fill="none" class="rs-l" stroke-width="3.5" d="M74 118 V84 Q74 58 95 58 Q116 58 116 84 V118 Q95 126 74 118 Z"/>
 </g>
 <g id="pincel" transform="rotate(30 150 70)">
 <rect class="rs-sombra" x="142" y="8" width="20" height="66" rx="6" transform="translate(3 3)"/>

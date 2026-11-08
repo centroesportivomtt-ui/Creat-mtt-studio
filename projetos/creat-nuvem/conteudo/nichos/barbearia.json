@@ -1,0 +1,104 @@
+{
+  "_sobre": "Textos do preset barbearia para motor/nichos/barbearia.js (T4). Chaves de 'textos' = lista branca do schema (textosPermitidos). Marcadores do motor: {nome} = nome do cliente final, {cidade}, {dia}, {hora}, {servico}, {profissional}. Preços dos serviços são EXEMPLO e a prévia mostra o rótulo 'exemplo'. Sem equipe e sem avaliação na prévia (regra dura 1).",
+  "id": "barbearia",
+  "rotulo": "Barbearia",
+  "ritual": "navalha",
+
+  "paletas": [
+    { "id": "barbearia-1", "nome": "Fio no Couro", "descricao": "Couro cru, latão e aço fosco." },
+    { "id": "barbearia-2", "nome": "Poste", "descricao": "O poste listrado: vermelho, branco e azul-marinho." },
+    { "id": "barbearia-3", "nome": "Lousa", "descricao": "A lousa da tabela de preços, giz e latão." }
+  ],
+
+  "negocio": {
+    "bordao": "Corte no capricho, horário pedido pelo WhatsApp."
+  },
+
+  "pagina": {
+    "titulo": "{negocio} · barbearia em {cidade}",
+    "_regraTitulo": "Se o título com cidade passar de 70 caracteres, use tituloSemCidade.",
+    "tituloSemCidade": "{negocio} · barbearia",
+    "descricao": "Corte, degradê e barba em {cidade}. Escolha o serviço, o dia e o horário no site e mande o pedido pelo WhatsApp. O dono confirma por lá."
+  },
+
+  "funcionamentoSugerido": {
+    "_uso": "Pré-preenche o horário em /abrir/ e na prévia. 0 = domingo.",
+    "passoMin": 20,
+    "antecedenciaMin": 30,
+    "diasNaFita": 7,
+    "semana": {
+      "0": null,
+      "1": null,
+      "2": { "abre": "09:00", "fecha": "20:00" },
+      "3": { "abre": "09:00", "fecha": "20:00" },
+      "4": { "abre": "09:00", "fecha": "20:00" },
+      "5": { "abre": "09:00", "fecha": "20:00" },
+      "6": { "abre": "09:00", "fecha": "18:00" }
+    }
+  },
+
+  "servicos": [
+    { "id": "corte", "nome": "Corte", "preco": 45, "duracaoMin": 40, "descricao": "Tesoura e máquina, com acabamento na nuca e no pezinho." },
+    { "id": "degrade", "nome": "Degradê", "preco": 55, "duracaoMin": 50, "descricao": "Degradê do zero, com a transição fechada na navalha." },
+    { "id": "barba", "nome": "Barba", "preco": 40, "duracaoMin": 30, "descricao": "Toalha quente, espuma no pincel e navalha." },
+    { "id": "corte-barba", "nome": "Corte + barba", "preco": 85, "duracaoMin": 80, "descricao": "O serviço completo numa passada só." },
+    { "id": "pezinho", "nome": "Pezinho", "preco": 20, "duracaoMin": 15, "descricao": "Manutenção rápida do contorno entre um corte e outro." },
+    { "id": "pigmentacao", "nome": "Pigmentação", "preco": 35, "duracaoMin": 30, "descricao": "Preenche falha na barba ou no desenho do corte." }
+  ],
+
+  "agendamento": {
+    "modo": "whatsapp",
+    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}. Pode confirmar por aqui?"
+  },
+
+  "textos": {
+    "heroTitulo": "Cadeira de bairro, corte no capricho.",
+    "heroSubtitulo": "Escolha o serviço, o dia e o horário. O pedido chega no WhatsApp da casa e o dono confirma pelo WhatsApp.",
+    "manifesto": "Aqui a navalha passa no couro antes de cada cliente. Você escolhe o corte, o dia e o horário pelo celular, sem ligar e sem esperar alguém atender. O pedido chega no WhatsApp da casa, e a confirmação vem por lá, de gente para gente. Chegou, sentou, saiu alinhado.",
+    "servicosTitulo": "Tabela da casa",
+    "servicosNota": "Preços de exemplo. O dono troca pelos preços da casa antes de o site entrar no ar.",
+    "equipeTitulo": "Quem está na cadeira",
+    "avaliacoesTitulo": "Recado no quadro",
+    "pedidoTitulo": "Peça o seu horário",
+    "pedidoNota": "O pedido vai para o WhatsApp da barbearia e o dono confirma pelo WhatsApp.",
+    "ritualDica": "Passe a navalha no couro para enviar",
+    "confirmacaoTitulo": "Pedido pronto para enviar",
+    "confirmacaoTexto": "Toque em enviar no WhatsApp. O horário vale depois que o dono confirma pelo WhatsApp.",
+    "letreiroAberto": "Aberto agora · peça o seu horário",
+    "letreiroFechado": "Fechado agora · abre {dia} às {hora}",
+    "localTitulo": "Onde fica",
+    "faqTitulo": "Antes de pedir",
+    "faq": [
+      {
+        "pergunta": "Pedir pelo site já marca o horário?",
+        "resposta": "Ainda não. O pedido chega no WhatsApp da barbearia e o dono confirma pelo WhatsApp. O horário vale depois da confirmação."
+      },
+      {
+        "pergunta": "Posso pedir corte e barba juntos?",
+        "resposta": "Pode. Escolha Corte + barba na lista de serviços."
+      },
+      {
+        "pergunta": "Como eu pago?",
+        "resposta": "O pagamento é na barbearia. Pergunte no WhatsApp quais formas a casa aceita."
+      },
+      {
+        "pergunta": "Meu nome e meu WhatsApp ficam salvos?",
+        "resposta": "Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar."
+      }
+    ],
+    "rodapeFrase": "Navalha afiada, cadeira limpa, horário combinado."
+  },
+
+  "listaBranca": [
+    "heroTitulo", "heroSubtitulo", "manifesto", "servicosTitulo", "servicosNota", "equipeTitulo", "avaliacoesTitulo",
+    "pedidoTitulo", "pedidoNota", "ritualDica", "confirmacaoTitulo", "confirmacaoTexto", "letreiroAberto",
+    "letreiroFechado", "localTitulo", "faqTitulo", "faq", "rodapeFrase"
+  ],
+
+  "ritualTextos": {
+    "instrucao": "Arraste o polegar sobre o couro para afiar a navalha e enviar.",
+    "instrucaoTeclado": "Use as setas ou a barra de espaço para afiar e enviar.",
+    "semArrastar": "Enviar sem arrastar",
+    "pronto": "Afiada. O pedido está pronto."
+  }
+}

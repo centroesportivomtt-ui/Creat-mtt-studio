@@ -2,7 +2,7 @@
 <title id="corrente-titulo">Correntinha</title>
 <desc id="corrente-desc">Prego com duas correntinhas que descem até as argolas da placa.</desc>
 <style>
-.pl-tinta{fill:var(--tinta,#1E1B2E)}
+.pl-tinta{fill:var(--sol-tinta,#1E1B2E)}
 .pl-sombra{fill:var(--linha,#1E1B2E)}
 .pl-contorno{stroke:var(--linha,#1E1B2E);stroke-linejoin:round;stroke-linecap:round}
 .pl-madeira{fill:var(--madeira,#D39A5B)}

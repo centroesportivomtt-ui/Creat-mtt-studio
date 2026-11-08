@@ -1,0 +1,52 @@
+{
+  "_sobre": "Textos de /obrigado/. A página NÃO afirma pagamento confirmado. A mensagem PEDIDO v1 é montada por código (docs/ARQUITETURA.md, item g); aqui ficam só os textos em volta dela.",
+
+  "seo": {
+    "titulo": "Envie o seu pedido | Creat",
+    "descricao": "Envie o pedido pelo WhatsApp. A equipe confere o pagamento e começa."
+  },
+
+  "titulo": "Agora é com a equipe.",
+  "texto": "Se você acabou de pagar, envie o pedido abaixo; a equipe confere o pagamento e começa.",
+  "botao": "Enviar pedido no WhatsApp",
+  "botaoNota": "O WhatsApp abre com o pedido escrito. É só tocar em enviar.",
+  "semWhatsappSuporte": "Envie o pedido para {{contato.email}}. Copie o texto abaixo e cole no e-mail.",
+  "copiarPedido": "Copiar o texto do pedido",
+  "pedidoCopiado": "Pedido copiado.",
+  "previaPedidoRotulo": "Este é o texto que vai no WhatsApp",
+
+  "sede": {
+    "titulo": "A sua fachada na sede",
+    "legenda": "A placa mostra o nome do seu negócio. Os personagens acendem quando trabalham no seu pedido.",
+    "botao": "Abrir a sede",
+    "semPedidoAtivo": "A equipe espera o próximo pedido."
+  },
+
+  "relogio": {
+    "rotulo": "Relógio de {{precos.prazoHoras}} h",
+    "texto": "O relógio começa quando a equipe confirma o pagamento. Você recebe essa confirmação no seu WhatsApp.",
+    "aguardando": "aguardando confirmação do pagamento"
+  },
+
+  "esperar": {
+    "titulo": "O que esperar",
+    "itens": [
+      "Resposta da equipe no seu WhatsApp, confirmando o pagamento.",
+      "Um link da sede para acompanhar o trabalho.",
+      "O site pronto para você conferir e aprovar, em até {{precos.prazoHoras}} h.",
+      "A mensalidade só começa no dia em que o site entrar no ar."
+    ]
+  },
+
+  "naoPagou": "Ainda não pagou? Volte para o plano e pague por lá.",
+  "voltarPlano": "Voltar para o plano",
+
+  "semDados": {
+    "titulo": "Não achamos os dados do pedido neste aparelho.",
+    "texto": "Isso acontece se você pagou em outro aparelho, usou uma aba anônima ou apagou os dados. Preencha os campos de novo para montar o pedido.",
+    "botao": "Preencher os dados"
+  },
+
+  "esquecer": "Esquecer meus dados neste aparelho",
+  "esquecido": "Pronto. Os dados do pedido saíram deste aparelho."
+}

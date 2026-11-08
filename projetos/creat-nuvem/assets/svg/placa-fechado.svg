@@ -2,7 +2,7 @@
 <title id="placa-fechado-titulo">FECHADO</title>
 <desc id="placa-fechado-desc">Placa de madeira pendurada por uma correntinha num prego, com a palavra FECHADO pintada em tinta escura.</desc>
 <style>
-.pl-tinta{fill:var(--tinta,#1E1B2E)}
+.pl-tinta{fill:var(--sol-tinta,#1E1B2E)}
 .pl-sombra{fill:var(--linha,#1E1B2E)}
 .pl-contorno{stroke:var(--linha,#1E1B2E);stroke-linejoin:round;stroke-linecap:round}
 .pl-madeira{fill:var(--madeira,#D39A5B)}

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://creatnuvem.com.br/schema/evento.schema.json",
+  "$id": "urn:creat-nuvem:schema:evento:v1",
   "title": "Eventos: analytics da vitrine e Evento de pedido",
   "description": "EventoAnalytics é o que a vitrine passa para posthog.capture(evento, propriedades), depois do filtro before_send. Só existem as propriedades listadas; nome do negócio, WhatsApp, e-mail, endereço, cidade e URL com fragmento nunca entram. EventoPedido é a linha de histórico que a Fase 2 grava a cada mudança de estado.",
   "oneOf": [

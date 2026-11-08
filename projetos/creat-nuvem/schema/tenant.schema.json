@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://creatnuvem.com.br/schema/tenant.schema.json",
+  "$id": "urn:creat-nuvem:schema:tenant:v1",
   "title": "TenantConfig v1",
   "description": "Dados de um site do Porta Aberta. O motor v1 lê window.TENANT com este formato (ADR-001). Qualquer chave fora desta lista é rejeitada, inclusive demo.ocupacaoFicticia. Regras que o JSON Schema não expressa (fecha > abre, termos proibidos, chaves de textos fora da lista do preset, frase 'o dono confirma pelo WhatsApp') ficam em scripts/producao/validar-tenant.mjs.",
   "type": "object",

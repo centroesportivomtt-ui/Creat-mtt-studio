@@ -2,7 +2,7 @@
 <title id="placa-aberto-titulo">ABERTO</title>
 <desc id="placa-aberto-desc">Face ABERTO da placa: moldura de madeira com lousa, a palavra ABERTO em amarelo e o nome do negócio escrito em giz.</desc>
 <style>
-.pl-tinta{fill:var(--tinta,#1E1B2E)}
+.pl-tinta{fill:var(--sol-tinta,#1E1B2E)}
 .pl-sombra{fill:var(--linha,#1E1B2E)}
 .pl-contorno{stroke:var(--linha,#1E1B2E);stroke-linejoin:round;stroke-linecap:round}
 .pl-madeira{fill:var(--madeira,#D39A5B)}

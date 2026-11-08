@@ -2,7 +2,7 @@
 <title id="placa-titulo">Placa FECHADO</title>
 <desc id="placa-desc">Placa de madeira presa por correntinha num prego, mostrando FECHADO. Ao virar, mostra ABERTO com o nome do negócio em giz.</desc>
 <style>
-.pl-tinta{fill:var(--tinta,#1E1B2E)}
+.pl-tinta{fill:var(--sol-tinta,#1E1B2E)}
 .pl-sombra{fill:var(--linha,#1E1B2E)}
 .pl-contorno{stroke:var(--linha,#1E1B2E);stroke-linejoin:round;stroke-linecap:round}
 .pl-madeira{fill:var(--madeira,#D39A5B)}

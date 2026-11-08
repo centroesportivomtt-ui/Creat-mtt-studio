@@ -1,0 +1,86 @@
+# conteudo/ · chaves para o Pixel
+
+Verbo (T3), 08/11/2026. Todo texto público do Porta Aberta mora aqui. O HTML não escreve texto solto: lê destes arquivos (ou copia deles no build, se for mais simples).
+
+## Arquivos
+
+| arquivo | página | observação |
+|---|---|---|
+| `home.json` | `/` | seções 1 a 10 da 5.1, na ordem: `seo`, `barra`, `hero`, `previa`, `testeDeVerdade`, `comoFunciona`, `precos`, `sede`, `prova`, `perguntas`, `chamadaFinal`, `rodape` |
+| `faq.json` | `/` seção 9 | `itens[]` com `id`, `pergunta`, `resposta`; 14 perguntas, as 10 do briefing primeiro |
+| `abrir.json` | `/abrir/` | plano, total, 5 campos, aceite, pagamento, garantia, "o que acontece depois", erros dos campos |
+| `obrigado.json` | `/obrigado/` | não afirma pagamento confirmado; o PEDIDO v1 é montado por código |
+| `bastidores.json` | `/bastidores/` | `aviso` é a primeira linha visível, antes do preço |
+| `termos.md` | `/termos/` | primeira linha `REVISAO_JURIDICA_PENDENTE`; mostrar a linha na página até o Marcos aprovar |
+| `privacidade.md` | `/privacidade/` | idem |
+| `comum.json` | várias | banner de consentimento, `pagina404`, runtime da prévia, mensagens de WhatsApp da vitrine, lista de espera, erros gerais, estados vazios, carregamento, rótulos de ações |
+| `nichos/barbearia.json`, `nichos/salao.json`, `nichos/academia.json` | presets do motor | `bordao`, `pagina`, `servicos`, `agendamento.mensagem`, `textos` (só chaves da lista branca do schema), `paletas` com nome, `funcionamentoSugerido`, `ritualTextos` |
+
+Chaves que começam com `_` são notas para quem implementa; não vão para a tela.
+
+## Dois tipos de marcador
+
+**`{{caminho}}`: dado de `dados/*.json`, preenchido pela vitrine.** Números de preço, prazo e vagas nunca aparecem escritos no texto.
+
+| marcador | fonte | valor de referência (08/11/2026) |
+|---|---|---|
+| `{{precos.prazoHoras}}` | `precos.json` `prazoHoras` | 72 |
+| `{{precos.abertura.padrao}}` | `abertura.padrao` | 497 |
+| `{{precos.abertura.inauguracao.preco}}` | `abertura.inauguracao.preco` | 297 |
+| `{{precos.abertura.inauguracao.vagasTotal}}` | `abertura.inauguracao.vagasTotal` | 20 |
+| `{{precos.abertura.inauguracao.vagasRestantes}}` | `abertura.inauguracao.vagasRestantes` | 20 |
+| `{{precos.abertura.atual}}` | derivado: inauguração se ela vale (ADR-003), senão padrão | 297 ou 497 |
+| `{{precos.planos.aberto}}` | `planos.aberto` | 147 |
+| `{{precos.planos.vitrine}}` | `planos.vitrine` | 297 |
+| `{{precos.anualMesesPagos}}` | `anualMesesPagos` | 10 |
+| `{{precos.anual.aberto}}` | derivado: `planos.aberto × anualMesesPagos` | 1.470 |
+| `{{precos.anual.vitrine}}` | derivado: `planos.vitrine × anualMesesPagos` | 2.970 |
+| `{{vagas.vagas_hoje}}` | `vagas.json` `vagas_hoje` | 3 |
+| `{{vagas.capacidade_dia}}` | `vagas.json` `capacidade_dia` | 3 |
+| `{{plano.preco}}` | `/abrir/`: preço do plano escolhido (mensal ou anual) | |
+| `{{precos.bastidores}}` | **chave nova** a acrescentar em `precos.json` e em `CREAT_CHECKOUT.precosPadrao` (T5) | 67 |
+| `{{contato.email}}` | e-mail de suporte (o mesmo da loja) | mttcreatt@gmail.com |
+| `{{site.url}}` | só em `marketing/`: endereço da home publicada | a definir no deploy |
+| `{{empresa.documento}}`, `{{empresa.endereco}}` | só em `termos.md` e `privacidade.md`: CNPJ (ou CPF) e endereço da Creat.MTT Studio | **o Marcos informa** (Decreto 7.962/2013 pede na página) |
+
+Formato dos números: inteiro com ponto de milhar (`1.470`), sem "R$" (o texto já traz "R$ "). Horas sem "h" (o texto já traz).
+
+**`{x}`: valor de tempo de execução, preenchido pela página ou pelo motor.** `{negocio}` (nome digitado), `{nicho}` (rótulo do nicho), `{dia}`, `{hora}`, `{servico}`, `{id}` (id do pedido), `{plano}`, `{n}` (contagem). Nos presets, só os marcadores aceitos pelo `schema/tenant.schema.json`: `{nome}` (nome do cliente final, como no Fio no Couro), `{cidade}`, `{dia}`, `{hora}`, `{servico}`, `{profissional}`. Exceção: `pagina.titulo`, `pagina.tituloSemCidade` e `pagina.descricao` dos presets usam `{negocio}` e `{cidade}` e são resolvidos **na montagem do tenant** (prévia e `produzir.mjs`), antes de chegar ao motor. Sem cidade, ou se o título com cidade passar de 70 caracteres, use `tituloSemCidade` e retire " em {cidade}" da descrição.
+
+Inserir sempre com `textContent`. Nenhum destes textos precisa de HTML.
+
+## Exibição condicional (regra dura 2, ADR-003)
+
+| chave | só aparece quando |
+|---|---|
+| `home.precos.abertura.precoInauguracao`, `deInauguracao`, `seloInauguracao`, `contadorInauguracao` | `precos.json` fresco (até 48 h), `inauguracao.ativa`, `vagasRestantes > 0`. Com `vagasRestantes = 1`, use `contadorUltima` |
+| `home.precos.abertura.precoPadrao` | em todos os outros casos |
+| `home.precos.vagasHoje` | `vagas.json` fresco e `vagas_hoje > 0` |
+| `home.precos.vagasHojeEsgotadas` | `vagas.json` fresco e `vagas_hoje = 0` |
+| `abrir.total.inauguracao` | mesma regra da inauguração |
+| `abrir.total.mensal` / `anual` | conforme `#plano=` (anual = `aberto_anual` ou `vitrine_anual`) |
+| `home.prova` | `depoimentos.json` com pelo menos 1 item com `autorizadoEm`; senão a seção some inteira |
+| `home.sede.legendaDemonstracao` | sempre que a sede estiver em `?modo=demo` |
+| `comum.listaEspera` | `nichos.json` presente; senão os chips "avise-me" somem |
+
+Dado velho ou ausente: nenhuma mensagem de erro sobre preço; a página só mostra o padrão.
+
+## A palavra "agenda"
+
+Proibida em todo texto público, com duas exceções do próprio briefing, que falam da ferramenta que o cliente **já usa** (nunca do nosso produto):
+
+- `home.precos.agendaExterna.titulo`: "Já tem agenda (Trinks, Booksy...)? O botão do seu site pode apontar para ela."
+- `faq.itens[id=app-de-horarios].pergunta`: "E se eu já uso agenda?"
+
+O `checar.cjs` (T5) precisa ter essas duas strings numa lista de permissão. Trinks e Booksy aparecem só nessas duas chaves e na resposta `app-de-horarios`, como exemplo de ferramenta, com a nota de que a Creat não tem vínculo.
+
+## Botões e WhatsApp
+
+- Botões dizem o que acontece. Não troque por "Clique aqui".
+- `comum.whatsapp.*` e `comum.listaEspera.nichos.*.mensagem` vão em `wa.me/<whatsappSuporte>?text=` com `encodeURIComponent`. Nunca acrescente o WhatsApp, e-mail ou endereço do visitante a essas mensagens.
+- `home.testeDeVerdade.mensagem` vai em `wa.me/<número digitado>?text=`; o número não é gravado.
+- Os presets dos 3 nichos trazem "o dono confirma pelo WhatsApp" em `pedidoNota` e `confirmacaoTexto` (o `validar-tenant.mjs` confere a frase).
+
+## Limites conferidos
+
+Os presets respeitam os limites do `schema/tenant.schema.json`: `bordao` até 90, `pagina.titulo` até 70 (com nome de 40 letras), `pagina.descricao` até 160, `servicos[].nome` até 50 e `descricao` até 140, textos curtos até 60, médios até 200, `manifesto` até 600, `faq` até 8 itens (pergunta até 120, resposta até 400), `agendamento.mensagem` até 400. SEO da home: `<title>` até 60 e descrição até 155. Conferência em `docs/relatorio/T3.md`.

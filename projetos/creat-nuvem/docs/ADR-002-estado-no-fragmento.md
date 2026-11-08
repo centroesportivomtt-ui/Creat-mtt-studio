@@ -12,7 +12,7 @@ A Fase 1 não tem servidor, banco nem conta (decisão do briefing). A prévia pr
 4. **Fragmento (`#k=&n=&c=&p=&utm_*`)**: o navegador não envia o fragmento ao servidor nem no Referer.
 
 ## Decisão
-Opção 4, com o formato e os limites de `ARQUITETURA.md` (c). Query string só para `?nicho=` e `utm_*` vindos de anúncio; a home os copia para o fragmento. Dados de contato (responsável, WhatsApp, endereço, e-mail) nunca vão para a URL: ficam em `localStorage['creat:pedido:v1']` entre `/abrir/` e `/obrigado/` e saem do aparelho só quando o próprio dono envia o PEDIDO v1 pelo WhatsApp.
+Opção 4, com o formato de `ARQUITETURA.md` (c) e os limites de `CONTRATOS-DETALHE.md` (c). Query string só para `?nicho=` e `utm_*` vindos de anúncio; a home os copia para o fragmento. Dados de contato (responsável, WhatsApp, endereço, e-mail) nunca vão para a URL: ficam em `localStorage['creat:pedido:v1']` entre `/abrir/` e `/obrigado/` e saem do aparelho só quando o próprio dono envia o PEDIDO v1 pelo WhatsApp.
 
 ## Consequências
 - Zero infraestrutura; a vitrine pode ser publicada como arquivos estáticos (Cloudflare ou Base44).

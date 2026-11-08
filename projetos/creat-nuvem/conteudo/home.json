@@ -1,0 +1,274 @@
+{
+  "_sobre": "Textos da home / (A Porta), na ordem da seção 5.1 do briefing. Marcadores {{...}} vêm de dados/*.json; {x} é preenchido pela página em tempo de execução. Regras de exibição condicional no README.md desta pasta.",
+
+  "seo": {
+    "titulo": "Porta Aberta: seu negócio aberto na internet | Creat",
+    "tituloAlternativo": "Site pronto com pedido de horário no WhatsApp | Creat",
+    "descricao": "Digite o nome do seu negócio e veja o seu site pronto em segundos, com pedido de horário no seu WhatsApp. Sem fidelidade. Só paga se gostar.",
+    "ogTitulo": "Seu negócio aberto na internet.",
+    "ogDescricao": "Digite o nome do seu negócio, vire a placa para ABERTO e veja o seu site pronto. Grátis para ver.",
+    "ogImagemAlt": "Placa de madeira presa por uma correntinha, virada para o lado ABERTO, com o nome de um negócio escrito a giz."
+  },
+
+  "barra": {
+    "marca": "Creat Nuvem",
+    "marcaAlt": "Creat Nuvem, início",
+    "links": {
+      "comoFunciona": "Como funciona",
+      "precos": "Preços",
+      "sede": "Sede ao vivo"
+    },
+    "whatsapp": "Chamar no WhatsApp",
+    "whatsappFlutuante": "Chamar no WhatsApp",
+    "whatsappFlutuanteAria": "Chamar o Suporte Creat no WhatsApp",
+    "pular": "Pular para o campo do nome"
+  },
+
+  "hero": {
+    "olho": "Porta Aberta",
+    "h1": "Seu negócio aberto na internet.",
+    "subtitulo": "Digite o nome do seu negócio. Em segundos você vê o seu site pronto, testa o pedido no seu próprio WhatsApp e só paga se gostar.",
+    "campoRotulo": "Nome do seu negócio",
+    "campoExemplo": "Exemplo: Barbearia do Zé",
+    "campoAjuda": "O nome fica só neste aparelho até você decidir pedir o site.",
+    "cidadeRotulo": "Cidade (opcional)",
+    "cidadeExemplo": "Exemplo: Campinas",
+    "nichosRotulo": "Que tipo de negócio?",
+    "nichos": {
+      "barbearia": "Barbearia",
+      "salao": "Salão e estética",
+      "academia": "Academia e studio"
+    },
+    "nichosEmBreveRotulo": "Chegam depois. Toque para ser avisado:",
+    "nichosEmBreve": {
+      "pet": "Pet",
+      "restaurante": "Restaurante",
+      "oficina": "Oficina",
+      "tatuagem": "Tatuagem",
+      "outro": "Outro"
+    },
+    "chipAvisemeSufixo": "avise-me",
+    "botao": "Abrir meu negócio",
+    "dica": "ou arraste a placa",
+    "placaFechado": "FECHADO",
+    "placaAberto": "ABERTO",
+    "placaAria": "Placa FECHADO. Arraste para baixo ou pressione Enter para virar para ABERTO.",
+    "placaAriaAberta": "Placa ABERTO com o nome {negocio}.",
+    "placaSemNome": "Escreva o nome do seu negócio para a placa virar.",
+    "abrindo": "Abrindo a porta..."
+  },
+
+  "previa": {
+    "barraSuperior": "Prévia do seu site",
+    "copiarLink": "copiar link",
+    "linkCopiado": "Link copiado. Mande para quem você quiser.",
+    "linkNaoCopiado": "Não deu para copiar. Toque e segure o endereço do navegador para copiar.",
+    "fechar": "Fechar a prévia",
+    "testar": "Testar no meu WhatsApp",
+    "quero": "Quero este site no ar",
+    "selo": "Prévia · os serviços e preços são exemplo",
+    "carregando": "Montando o site da {negocio}...",
+    "erroCarregar": "A prévia não abriu. Recarregue a página. Se continuar, chame o Suporte Creat no WhatsApp.",
+    "iframeTitulo": "Prévia do site da {negocio}"
+  },
+
+  "testeDeVerdade": {
+    "olho": "Teste de verdade",
+    "titulo": "Peça um horário para você mesmo.",
+    "texto": "Escolha um serviço e um horário. O pedido abre no seu WhatsApp do jeito que vai chegar para você quando um cliente pedir.",
+    "campoWhatsapp": "Seu WhatsApp, com DDD",
+    "campoWhatsappExemplo": "(11) 9XXXX-XXXX",
+    "campoServico": "Serviço",
+    "campoDia": "Dia",
+    "campoHora": "Horário",
+    "nota": "Seu número fica só neste aparelho. Ele não é salvo nem enviado para a Creat.",
+    "botao": "Enviar o teste para o meu WhatsApp",
+    "mensagem": "Teste do Porta Aberta. Assim chega um pedido de horário no site da {negocio}: \"Olá! Quero pedir um horário: {servico}, {dia} às {hora}. Meu nome é (nome do cliente).\" No site de verdade, o dono confirma pelo WhatsApp.",
+    "abriu": "Abrimos o WhatsApp com o teste. Volte aqui quando quiser escolher o plano.",
+    "alternativaLink": "Não abriu? Veja como o pedido chega",
+    "alternativaTitulo": "É assim que o pedido chega",
+    "alternativaRotulo": "Exemplo de mensagem",
+    "alternativaFechar": "Fechar o exemplo"
+  },
+
+  "comoFunciona": {
+    "olho": "Como funciona",
+    "titulo": "Do nome na placa ao site no ar, em 4 passos.",
+    "passos": [
+      {
+        "titulo": "Veja pronto",
+        "texto": "Digite o nome e veja o seu site na hora. Teste o pedido de horário no seu WhatsApp. Ver é grátis."
+      },
+      {
+        "titulo": "Pague por Pix",
+        "texto": "Escolha o plano e pague a Abertura por Pix ou cartão. Você vê o total antes de pagar. Sem criar conta."
+      },
+      {
+        "titulo": "Acompanhe na sede",
+        "texto": "Abra a sede da Creat e veja a equipe montando o seu site, com o nome do seu negócio na fachada."
+      },
+      {
+        "titulo": "No ar, você aprova",
+        "texto": "Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade."
+      }
+    ],
+    "deVerdade": {
+      "titulo": "Como funciona de verdade",
+      "texto": "A equipe de agentes de IA da Creat criou o modelo de cada nicho e as regras de qualidade. No seu pedido, o texto é escrito por IA, conferido por regras automáticas e por uma pessoa da equipe antes de chegar até você.",
+      "itens": [
+        "As regras automáticas conferem o número do WhatsApp, os horários, os preços e as palavras que não podem aparecer.",
+        "Uma pessoa da equipe lê o site antes de mandar para você aprovar.",
+        "Nada vai ao ar sem a sua aprovação."
+      ]
+    }
+  },
+
+  "precos": {
+    "olho": "Preços",
+    "titulo": "Um preço para abrir, um plano para manter aberto.",
+    "texto": "Você paga a Abertura uma vez. A mensalidade só começa no dia em que o site entra no ar.",
+
+    "abertura": {
+      "nome": "Abertura",
+      "precoPadrao": "R$ {{precos.abertura.padrao}}",
+      "precoInauguracao": "R$ {{precos.abertura.inauguracao.preco}}",
+      "deInauguracao": "de R$ {{precos.abertura.padrao}}",
+      "seloInauguracao": "Inauguração: preço das {{precos.abertura.inauguracao.vagasTotal}} primeiras vagas",
+      "contadorInauguracao": "Restam {{precos.abertura.inauguracao.vagasRestantes}} vagas com este preço.",
+      "contadorUltima": "Resta 1 vaga com este preço.",
+      "periodo": "uma vez",
+      "inclui": [
+        "Site montado a partir do modelo do seu nicho, com o nome, a cidade e as cores que você escolheu",
+        "Textos escritos para o seu negócio e conferidos por uma pessoa da equipe",
+        "Pedido de horário que chega no seu WhatsApp",
+        "Endereço do site na Creat, pronto para usar",
+        "Passo a passo para ligar o seu domínio e o seu Perfil da Empresa no Google",
+        "Site no ar em até {{precos.prazoHoras}} h ou o 1º mês do plano grátis"
+      ]
+    },
+
+    "vagasHoje": "Vagas de produção hoje: {{vagas.vagas_hoje}} de {{vagas.capacidade_dia}}.",
+    "vagasHojeEsgotadas": "As vagas de produção de hoje acabaram. Pedido pago agora entra na fila, e o prazo de {{precos.prazoHoras}} h conta do mesmo jeito.",
+
+    "planos": {
+      "aberto": {
+        "nome": "Aberto",
+        "preco": "R$ {{precos.planos.aberto}}",
+        "periodo": "por mês, a partir do dia em que o site entra no ar",
+        "resumo": "O site no ar, cuidado todo mês.",
+        "inclui": [
+          "Hospedagem do site",
+          "Pedido de horário no seu WhatsApp",
+          "Alterações sem limite de quantidade em texto, preço, serviço, horário, foto, promoção e equipe",
+          "Pedido especial respondido em até 1 dia útil",
+          "Suporte pelo WhatsApp",
+          "Ajuda para ligar o seu domínio e o Perfil da Empresa no Google"
+        ],
+        "naoInclui": [
+          "Posts para o Instagram",
+          "Página nova, seção nova ou loja virtual (viram orçamento à parte)",
+          "Anúncios pagos",
+          "A anuidade do domínio, paga no seu nome ao Registro.br"
+        ],
+        "botao": "Escolher o Aberto",
+        "anual": "Ou R$ {{precos.anual.aberto}} por 12 meses no Pix: você paga {{precos.anualMesesPagos}}."
+      },
+      "vitrine": {
+        "nome": "Vitrine",
+        "selo": "recomendado",
+        "preco": "R$ {{precos.planos.vitrine}}",
+        "periodo": "por mês, a partir do dia em que o site entra no ar",
+        "resumo": "O site no ar e posts prontos todo mês.",
+        "inclui": [
+          "Tudo do plano Aberto",
+          "Posts prontos todo mês para o seu Instagram, aprovados por você",
+          "Pedido especial respondido em até 4 h úteis, de segunda a sábado, das 9h às 19h",
+          "Link do Instagram no site"
+        ],
+        "naoInclui": [
+          "Gestão de anúncios pagos e verba de anúncio",
+          "Responder as mensagens dos seus clientes",
+          "Página nova, seção nova ou loja virtual (viram orçamento à parte)",
+          "A anuidade do domínio, paga no seu nome ao Registro.br"
+        ],
+        "botao": "Escolher o Vitrine",
+        "anual": "Ou R$ {{precos.anual.vitrine}} por 12 meses no Pix: você paga {{precos.anualMesesPagos}}."
+      }
+    },
+    "rotuloInclui": "Inclui",
+    "rotuloNaoInclui": "Não inclui",
+
+    "precisaTer": {
+      "titulo": "O que você precisa ter",
+      "itens": [
+        "WhatsApp Business no celular. O app é grátis.",
+        "CPF ou CNPJ para registrar o domínio .com.br no seu nome, se quiser um.",
+        "Instagram, só no plano Vitrine.",
+        "Logo e fotos, se tiver. Sem eles, o site sai com a tipografia do modelo e você manda depois."
+      ],
+      "nota": "A Creat nunca pede a sua senha de nenhuma conta."
+    },
+
+    "contrato": {
+      "titulo": "O contrato em 6 linhas",
+      "linhas": [
+        "Sem fidelidade.",
+        "Sem multa para sair.",
+        "O domínio fica no seu nome.",
+        "Se sair, você leva o site, o domínio e os arquivos.",
+        "7 dias para se arrepender, com o dinheiro de volta.",
+        "Mensalidade só com o site no ar."
+      ],
+      "link": "Ler os termos completos"
+    },
+
+    "agendaExterna": {
+      "titulo": "Já tem agenda (Trinks, Booksy...)? O botão do seu site pode apontar para ela.",
+      "texto": "Se você já marca horários por um aplicativo, o botão do site abre esse aplicativo em vez do WhatsApp. É só mandar o link quando fizer o pedido.",
+      "nota": "Trinks e Booksy são só exemplos de ferramentas. A Creat não tem vínculo com elas."
+    }
+  },
+
+  "sede": {
+    "olho": "Sede ao vivo",
+    "titulo": "Veja quem monta o seu site",
+    "texto": "Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um escreve os textos, outro escolhe as cores, outro testa no celular. Depois do pagamento, a fachada mostra o nome do seu negócio.",
+    "posterAlt": "Ilha da sede da Creat Nuvem desenhada em 3D, com a equipe de personagens trabalhando nas mesas.",
+    "botao": "Ver ao vivo",
+    "carregando": "Carregando a sede...",
+    "erro": "A sede não carregou. Verifique a conexão e toque em Ver ao vivo de novo.",
+    "legendaDemonstracao": "Demonstração",
+    "notaDemonstracao": "Quando não há pedido em andamento, a sede mostra uma demonstração, sempre com este aviso.",
+    "semFluxo": "A equipe espera o próximo pedido."
+  },
+
+  "prova": {
+    "_regra": "Seção inteira some se dados/depoimentos.json não tiver item com autorizadoEm. Sem texto de 'em breve'.",
+    "olho": "Quem já abriu",
+    "titulo": "Negócios que já abriram com a Creat",
+    "notaAutorizacao": "Publicado com autorização por escrito de cada dono."
+  },
+
+  "perguntas": {
+    "olho": "Perguntas",
+    "titulo": "Perguntas diretas, respostas diretas",
+    "_fonte": "Itens em conteudo/faq.json"
+  },
+
+  "chamadaFinal": {
+    "titulo": "Seu nome na placa leva segundos.",
+    "texto": "Veja o seu site pronto antes de decidir qualquer coisa.",
+    "botao": "Abrir meu negócio",
+    "secundario": "Prefere conversar? Chamar no WhatsApp"
+  },
+
+  "rodape": {
+    "titular": "Creat Nuvem é um serviço da Creat.MTT Studio.",
+    "suporte": "Suporte: {{contato.email}}",
+    "termos": "Termos de uso",
+    "privacidade": "Privacidade",
+    "consentimento": "Preferências de medição",
+    "bastidores": "Bastidores: como a equipe funciona por dentro",
+    "aviso": "A Creat Nuvem é independente e não tem vínculo com a Anthropic, a Meta ou o Google."
+  }
+}
