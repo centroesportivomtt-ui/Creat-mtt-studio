@@ -1,0 +1,29 @@
+{
+  "id": "PA-7K3QX2MD",
+  "token_publico": "abc123",
+  "nicho": "barbearia",
+  "slug": "barbearia-exemplo-campinas",
+  "status": "em_producao",
+  "plano": "vitrine",
+  "previa_config": {
+    "k": "barbearia",
+    "n": "Barbearia Exemplo",
+    "c": "Campinas",
+    "p": 2
+  },
+  "materiais_recebidos_em": "2026-11-08T15:00:00-03:00",
+  "prazo_garantia_em": "2026-11-11T15:00:00-03:00",
+  "url_subdominio": null,
+  "dominio_proprio": null,
+  "dominio_vence_em": null,
+  "google_status": "nao_iniciado",
+  "custo_ia": {
+    "modelo": "claude-sonnet-exemplo",
+    "tokens_entrada": 4200,
+    "tokens_saida": 1800,
+    "usd": 0.04,
+    "brl": 0.23,
+    "cambio": 5.5
+  },
+  "versao_motor": "v1"
+}

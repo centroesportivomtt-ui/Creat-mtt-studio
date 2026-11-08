@@ -1,0 +1,14 @@
+PEDIDO v1
+id: PA-7K3QX2MD
+plano: vitrine
+nicho: barbearia
+negocio: Barbearia Exemplo
+cidade: Campinas
+responsavel: Responsável Exemplo
+whatsapp_negocio: 5500000000000
+endereco: Rua Exemplo, 100, Centro, Campinas-SP, 13010-000
+horarios: seg=fechado;ter=09:00-20:00;qua=09:00-20:00;qui=09:00-20:00;sex=09:00-20:00;sab=09:00-18:00;dom=fechado
+email: contato@exemplo.com.br
+origem: utm_source=meta;utm_medium=pago;utm_campaign=cal-nov26;utm_content=A1-barbearia-v1
+previa: https://creatnuvem.com.br/previa/#k=barbearia&n=Barbearia%20Exemplo&c=Campinas&p=2
+aceite_termos: 2026-11-08T14:03:00-03:00 termos-v1
