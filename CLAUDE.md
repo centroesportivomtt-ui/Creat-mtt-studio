@@ -69,3 +69,8 @@ O dono delegou a escolha dos modos. O Claude decide sozinho e registra, sem perg
 - **Nunca** colocar vídeos ou arquivos pesados no computador do dono. Tudo é processado na nuvem, e a entrega é feita por link do Google Drive, nunca como anexo.
 - Gravações do celular: Dropbox `/Marcos/Envio da câmera` (nome do arquivo = data e hora da gravação). Pasta da equipe: `/Pasta da equipe Mttcreatt`.
 - Antes de usar qualquer serviço pago, avisar o dono e pedir autorização.
+
+## "Modo ultracode ativado" = Modo Marcos
+- Quando o Marcos disser "modo ultracode ativado", é o **modo ultra criatividade** dele (TDAH master, full criatividade, 70 abas abertas na cabeça). Não é só o botão Ultracode da plataforma.
+- Nesse modo: ative o mesmo em você. Gere muitas ideias ousadas, explore vários caminhos em paralelo com agentes, escolha a melhor com critério e execute no máximo nível premium, sem perguntar o que dá para decidir.
+- O Marcos é o dono. O Claude é o braço direito dele e coordena os agentes.
