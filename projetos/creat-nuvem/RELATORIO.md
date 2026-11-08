@@ -109,3 +109,45 @@ Os prazos são sugestão do Verbo para caber antes de 16/11; o Nimbus confirma o
   - A chamada real ao PostHog não foi verificada na rede: a chave é de exemplo e o CDN está bloqueado no sandbox.
   - T10: CSP com `style-src 'unsafe-inline'` (por causa dos SVGs embutidos), jsdelivr e PostHog liberados, Meta e Clarity só depois do aceite; `sede/` publicada em `/sede/`; site na raiz do domínio.
   - Marcos: trocar os 4 marcadores, pôr as chaves públicas de medição em `CREAT_MEDICAO` e rodar `atualizar-vagas.cjs --confirmar` todo dia, de preferência numa tarefa agendada; sem isso, depois de 48 h a página cai no preço padrão.
+
+## T7 · Eco · Som da vitrine
+- **O que fiz:** `window.CreatSom` 100% sintetizado em Web Audio, sem arquivos de áudio nem dependências.
+  - Sininho de porta com parciais inarmônicos, badalo que quica e reverb gerado em código. Giz por letra, com limite de 60 ms. Plim de notificação. Clique.
+  - Nada toca antes do gesto. O mudo fica em `localStorage['creat:som']` e avisa a página pelo evento `creat:som`.
+  - Ganho mestre de 0,22 com limitador. Silêncio com a aba oculta e com `prefers-reduced-motion`. Sem Web Audio, tudo vira no-op.
+- **Arquivos:** `assets/som/creat-som.js`, `docs/relatorio/T7.md`.
+- **Como verificar:** abra a home, escolha o nicho, digite o nome e toque em "Abrir meu negócio". O sino toca junto com a virada da placa.
+  - No console, `CreatSom.estado` mostra `contexto: "nenhum"` antes do primeiro toque.
+  - O botão de som persiste após recarregar.
+  - A tabela de casos testados está em `docs/relatorio/T7.md`.
+- **Pendente:**
+  - Ouvir em celular real (o sandbox não tem saída de áudio).
+  - `plim` no fluxo "Teste de verdade" (T5).
+  - No celular, o banner de consentimento cobriu o botão "Abrir meu negócio" no teste (T5 e Lupa).
+  - Revisor, QA e Muralha.
+
+## T6 · Órbita · Placa e sede com a marca do cliente
+- **O que fiz:** placa interativa (`CreatPlaca`, contrato T1) com os SVGs da T2: arrastar mais de 40% (Pointer Events, `touch-action:none` só na placa), toque, Enter ou Espaço, ou `CreatPlaca.abrir('botao')` giram com mola em 600 ms (antecipação, compressão 4%, esticada 3%, verso com a nuvem queimada) até ABERTO com o nome em giz. Depois tocam sino, vibração e `onAberto`. Giz letra a letra na borda e balanço de 2°. Com reduced-motion: crossfade sem giro e sem som. Na sede: `?marca=` (fillText, até 28 caracteres, marcação ignorada), `?modo=demo|publico|local` (publico lê só `estado-publico.json`; demo tem a legenda "Demonstração" fixa e não faz requisição) e `?lite=1`. Também criei `sede/publicar-estado.cjs`, que traduz o estado interno para um vocabulário fechado, com conferência e `--autoteste`.
+- **Arquivos:** `ritual/placa.js`, `ritual/placa.css`, `../../sede/index.html`, `../../sede/publicar-estado.cjs`, `../../sede/estado-publico.exemplo.json`, `docs/relatorio/T6.md`.
+- **Como verificar:** `node sede/publicar-estado.cjs --autoteste` (código 0). `node sede/servidor.cjs` e abra `/?marca=Barbearia%20do%20Ze&modo=demo`, `/?modo=publico` e `/` (local). Tabela de resultados do Playwright (toque em 390 px, reduced-motion, XSS, rede) em `docs/relatorio/T6.md`.
+- **Decisão registrada:** sem `?modo`, a sede fica em `local` em localhost, arquivo e artefato do Claude (preserva o ao vivo de hoje) e em `publico` em qualquer outro host (T1).
+- **Pendente:** T5 deve chamar `placa.definirNome(...)` depois de `placa.reiniciar()` em `aoAbrirPlaca`; sem isso, o giz some quando falta escolher o nicho. T7: `creat-som.js` ainda não existe (404 na home). T10: `.gitignore` para `sede/estado-publico.json` e não publicar `sede/estado.json`. Revisor, QA e Muralha.
+
+## T5 · Pixel · Ajustes do revisor (08/11/2026)
+- **O que fiz:**
+  - Renomeei o evento `pago_pagina` para `pedido_enviado_pagina`. No `schema/evento.schema.json` (`$comment`) ficou documentado que ele é um indicador aproximado: o pedido é gravado ao clicar em Pagar, antes do Pix, então não é pagamento confirmado. Não use esse número como compra para otimizar anúncio.
+  - Tirei o disparo do ramo sem pedido, que contava como compra do plano Vitrine quem abria `/obrigado/` sem ter pago. Agora o evento só sai com pedido real e no máximo 1 vez por carga (flag `pedidoContado`).
+  - Refiz a verificação com `assets/som/creat-som.js` presente e corrigi o relatório da T5, que ainda dizia que o arquivo dava 404.
+- **Arquivos:** `assets/vitrine.js`, `schema/evento.schema.json`, `docs/CONTRATOS-DETALHE.md`, `docs/relatorio/T5.md`, `RELATORIO.md`.
+- **Como verificar:**
+  - `node scripts/checar.cjs` dá código 0.
+  - `verificacao-visual` em `/`, `/abrir/` e `/obrigado/` (servidor na pasta do projeto) dá "Tudo limpo" nas 4 configurações. Prints em `.verificacao/t5b-*`.
+  - Em `/obrigado/`, `window.__creatEventos` mostra:
+    - sem pedido: 0 eventos;
+    - depois de enviar o formulário 2 vezes: 1 `pedido_enviado_pagina`;
+    - ao recarregar: 1.
+  - Som: o botão alterna `aria-pressed` e o texto. Trocar de nicho toca `clique`, e o Teste de verdade toca `plim`. Em mudo, nada toca.
+- **Pendente:**
+  - Até 08/11/2026 continuam sem teste o aceite 4 da T6 (arrastar a placa) e a chamada real ao PostHog na rede. Os dois precisam da verificação da Lupa (qa) antes de publicar.
+  - Ponto fora do escopo: em `/obrigado/` sem número de suporte configurado, a frase "O WhatsApp abre com o pedido escrito" fica acima da caixa que manda enviar por e-mail. Vale o Verbo ajustar esse texto no modo e-mail.
+  - `checar-placeholders.cjs` segue em código 1 até o Marcos trocar os marcadores (esperado).

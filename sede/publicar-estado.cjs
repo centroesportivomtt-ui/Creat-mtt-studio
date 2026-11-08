@@ -8,6 +8,15 @@
 //   node sede/publicar-estado.cjs --saida y.json   outro destino
 //   node sede/publicar-estado.cjs --exemplo        regrava sede/estado-publico.exemplo.json (fixo, sem rede)
 //   node sede/publicar-estado.cjs --autoteste      teste sem rede; código 1 se algo vazar
+//
+// Regras para quem opera:
+// - Nome do fluxo: o rótulo público "Pedido da Creat" só aparece quando o nome do fluxo interno
+//   começa por "pedido" ou "producao"/"produção" (ex.: pedido-barbearia-ze). Qualquer outro nome,
+//   inclusive o fluxo "agencia", sai como "Projeto interno". Fluxo de cliente deve seguir esse padrão.
+// - Validade: a sede trata como vencido (sem selo "Ao vivo", "A equipe espera o próximo pedido.")
+//   todo estado público com mais de 10 min. Este script precisa rodar de forma recorrente
+//   (ex.: a cada 1-2 min) e enviar só sede/estado-publico.json ao host. Pendente (T10).
+// - Deploy: publicar estado-publico.json, nunca estado.json (estado interno, ignorado no git).
 'use strict';
 const fs = require('fs'), path = require('path'), cp = require('child_process');
 

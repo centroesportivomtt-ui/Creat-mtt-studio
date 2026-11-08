@@ -1073,7 +1073,9 @@ function aplicarEstado(e){
   live.prev = new Set(ativos.keys());
   const n = e.total_trabalhando || 0;
   $('#online').textContent = n ? ` · ${n} trabalhando agora` : ' · equipe em pausa';
-  if (!runBtn.querySelector('.live-badge')) runBtn.insertAdjacentHTML('beforeend', e.demo ? '<span class="live-badge"><i></i>Demonstração</span>' : '<span class="live-badge"><i></i>Ao vivo</span>');
+  const seloBtn = runBtn.querySelector('.live-badge');
+  if (e.velho){ if (seloBtn) seloBtn.remove(); } // estado vencido não é "ao vivo"
+  else if (!e.demo && !seloBtn) runBtn.insertAdjacentHTML('beforeend', '<span class="live-badge"><i></i>Ao vivo</span>'); // demo já tem a legenda fixa
   $('#opsTitle').textContent = 'Operações';
   $('#opsSub').textContent = e.demo ? 'Demonstração: é assim que a equipe aparece quando há um pedido em produção.'
     : n ? `${n} agente${n > 1 ? 's' : ''} trabalhando de verdade agora.` : e.publico ? (e.mensagem || 'A equipe espera o próximo pedido.') : 'Nenhum fluxo em andamento neste momento.';
@@ -1112,6 +1114,7 @@ setInterval(() => {
    A frase é refeita aqui pela tabela, por personagem e status; texto livre do arquivo é ignorado. */
 const FRASE = { diretor:'organizando a fila', criativo:'pensando o conceito', arquiteto:'desenhando a estrutura', frontend:'montando a página', backend:'ligando os sistemas', designer:'escolhendo as cores', 'motion-3d':'animando os detalhes', shader:'criando os efeitos', som:'afinando os sons', copywriter:'escrevendo os textos', pesquisador:'conferindo os dados', revisor:'revisando o código', qa:'testando no celular', seguranca:'conferindo segurança', devops:'publicando' };
 const STATUS_PUB = { trabalhando:'trabalhando', feito:'terminou a parte dele', esperando:'na fila' };
+const VALIDADE_PUB = 10 * 60 * 1000;
 function dePublico(p, demo){
   if (!p || p.versao !== 1) return null;
   const quando = Date.parse(p.atualizado_em); if (!quando) return null;
@@ -1123,13 +1126,16 @@ function dePublico(p, demo){
     agentes.forEach(a => { if (a.status === 'trabalhando') (personagens[a.personagem] = personagens[a.personagem] || []).push({ acao:a.frase, label:a.frase }); });
     fluxos.push({ nome, em_andamento: agentes.some(a => a.status === 'trabalhando'), agentes });
   });
+  // Prazo de validade: estado público com mais de 10 min (ou do futuro) não é "ao vivo"; vira sem fluxo.
+  const velho = !demo && (Date.now() - quando > VALIDADE_PUB || quando - Date.now() > 120000);
+  if (velho) return { publico:true, demo:false, velho:true, atualizado:new Date(quando).toISOString(), total_trabalhando:0, personagens:{}, fluxos:[], mensagem:'A equipe espera o próximo pedido.' };
   return { publico:true, demo:!!demo, atualizado:new Date(quando).toISOString(), total_trabalhando:Object.values(personagens).reduce((n, l) => n + l.length, 0), personagens, fluxos,
     mensagem: fluxos.some(f => f.em_andamento) ? 'A equipe está trabalhando agora.' : 'A equipe espera o próximo pedido.' };
 }
 function renderPublico(e){
   liveEl.hidden = false;
-  const selo = e.demo ? 'Demonstração' : 'Ao vivo';
-  let html = `<div class="live-head"><span class="live-badge"><i></i>${selo}</span><span class="count">${e.demo ? 'dados de exemplo' : 'atualizado há ' + fmtS((Date.now() - Date.parse(e.atualizado)) / 1000)}</span></div>`;
+  const selo = e.demo ? 'Demonstração' : e.velho ? '' : 'Ao vivo';
+  let html = selo ? `<div class="live-head"><span class="live-badge"><i></i>${selo}</span><span class="count">${e.demo ? 'dados de exemplo' : 'atualizado há ' + fmtS((Date.now() - Date.parse(e.atualizado)) / 1000)}</span></div>` : '';
   if (!e.fluxos.length) html += `<p class="live-off">${esc(e.mensagem)}</p>`;
   html += e.fluxos.map(f => {
     const linha = a => { const p = byId[a.personagem] || byId.diretor; const st = a.status === 'trabalhando' ? 'run' : a.status === 'feito' ? 'done' : 'wait'; return `<li><i class="d" style="--c:${p.color}"></i><span class="t"><b>${esc(p.nick)}</b><span>${esc(a.frase)}</span></span><span class="st ${st}">${esc(a.status === 'feito' ? 'feito' : a.status)}</span></li>`; };
@@ -1147,12 +1153,15 @@ function estadoDemo(i){
 }
 function ligarModoPorta(){
   // Simulação com briefing escondida para o cliente: só o estado (demo ou público) movimenta a equipe.
-  $('#opsForm').hidden = true; $('#flow').hidden = true;
+  $('#opsForm').style.display = 'none'; $('#flow').style.display = 'none';
+  runBtn.childNodes.forEach(n => { if (n.nodeType === 3 && n.textContent.trim()) n.textContent = 'Ver a equipe'; });
   $('#opsTitle').textContent = 'A equipe';
   $('#opsNote').textContent = MODO === 'demo' ? 'Demonstração com dados de exemplo. Quando o seu pedido estiver em produção, você vê aqui a equipe de verdade.' : 'Mostramos só o que a equipe está fazendo agora, sem dados de nenhum cliente.';
   if (MODO === 'demo'){ let i = 0; const passo = () => aplicarEstado(dePublico(estadoDemo(i++), true)); setTimeout(passo, 1500); setInterval(passo, RM ? 9000 : 6000); return; } // 1º passo depois da cena montar
+  let ultimo = null; // último JSON público recebido: reavaliado a cada ciclo, para vencer mesmo se a rede cair
   const puxar = async () => {
-    try { const r = await fetch('estado-publico.json', { cache:'no-store' }); if (!r.ok) return; const e = dePublico(await r.json(), false); if (e){ live.fonte = 'publico'; aplicarEstado(e); } } catch {}
+    try { const r = await fetch('estado-publico.json', { cache:'no-store' }); if (r.ok) ultimo = await r.json(); } catch {}
+    const e = ultimo && dePublico(ultimo, false); if (e){ live.fonte = 'publico'; aplicarEstado(e); }
   };
   puxar(); setInterval(puxar, 15000);
 }

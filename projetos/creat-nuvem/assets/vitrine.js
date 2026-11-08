@@ -287,10 +287,10 @@
   var PROPS_EVENTO = {
     placa_vista: ['dispositivo'], sede_aberta: ['dispositivo'],
     nicho_escolhido: ['dispositivo', 'nicho'], nome_digitado: ['dispositivo', 'nicho'], previa_gerada: ['dispositivo', 'nicho'], reserva_teste: ['dispositivo', 'nicho'],
-    plano_visto: ['dispositivo', 'plano', 'nicho'], checkout_iniciado: ['dispositivo', 'plano', 'nicho'], pago_pagina: ['dispositivo', 'plano', 'nicho'],
+    plano_visto: ['dispositivo', 'plano', 'nicho'], checkout_iniciado: ['dispositivo', 'plano', 'nicho'], pedido_enviado_pagina: ['dispositivo', 'plano', 'nicho'],
     lista_espera_enviada: ['dispositivo', 'nicho']
   };
-  var EXIGIDAS = { nicho_escolhido: 'nicho', nome_digitado: 'nicho', previa_gerada: 'nicho', reserva_teste: 'nicho', plano_visto: 'plano', checkout_iniciado: 'plano', pago_pagina: 'plano', lista_espera_enviada: 'nicho' };
+  var EXIGIDAS = { nicho_escolhido: 'nicho', nome_digitado: 'nicho', previa_gerada: 'nicho', reserva_teste: 'nicho', plano_visto: 'plano', checkout_iniciado: 'plano', pedido_enviado_pagina: 'plano', lista_espera_enviada: 'nicho' };
   // Internas que o PostHog precisa para aceitar o evento; nenhuma carrega URL com # nem texto digitado.
   var PH_INTERNAS = ['token', 'distinct_id', '$lib', '$lib_version', '$insert_id', '$time', '$session_id', '$window_id', '$device_type', '$browser', '$os', '$process_person_profile', '$is_identified', '$configured_session_timeout_ms'];
   function valorPermitido(evento, k, v) {
@@ -597,7 +597,7 @@
 
     function aoAbrirPlaca(via) {
       if (abrindo) return;
-      if (!validarNome() || !validarNicho() || !validarCidade()) { if (placa) { try { placa.reiniciar(); } catch (e) {} } return; }
+      if (!validarNome() || !validarNicho() || !validarCidade()) { if (placa) { try { placa.reiniciar(); placa.definirNome(limparNome(campoNome.value)); } catch (e) {} } return; }
       abrindo = true;
       setTimeout(function () { abrindo = false; abrirPrevia(); }, MOV_REDUZIDO.matches ? 220 : 680);
     }
@@ -1001,6 +1001,9 @@
     var precos = null;
     lerPrecos().then(function (pr) { precos = pr; aplicarPrecos(pr, D); });
     var sem = $('#obrigado-sem-dados'), com = $('#obrigado-pedido');
+    // pedido_enviado_pagina: no máximo um por carga, e só com pedido real.
+    // Indicador aproximado: o pedido é gravado ao clicar em Pagar, antes do Pix; não é pagamento confirmado.
+    var pedidoContado = false;
     function renderizar(p) {
       utmAtual = origemParaUtm(p.origem);
       sem.hidden = true; com.hidden = false;
@@ -1018,7 +1021,7 @@
       $('#voltar-plano').href = RAIZ + 'abrir/#' + montarFragmento({ plano: p.plano, k: p.nicho, n: p.negocio, c: p.cidade, p: p.paleta || 1, utm: utmAtual }, true);
       var janela = $('#janela-sede');
       if (janela && !janela.getAttribute('data-montada')) { janela.setAttribute('data-montada', '1'); montarJanelaSede(janela, function () { return p.negocio; }); }
-      evento('pago_pagina', { plano: p.plano, nicho: p.nicho });
+      if (!pedidoContado) { pedidoContado = true; evento('pedido_enviado_pagina', { plano: p.plano, nicho: p.nicho }); }
     }
     $('#copiar-pedido').addEventListener('click', function () {
       var txt = $('#pedido-texto').textContent;
@@ -1046,7 +1049,6 @@
       renderizar(s.registro);
       W.scrollTo(0, 0); var h = $('#obrigado-titulo'); if (h) h.focus();
     });
-    evento('pago_pagina', { plano: 'vitrine' });
   }
 
   /* ======================================================================
