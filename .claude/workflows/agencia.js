@@ -1,7 +1,7 @@
 export const meta = {
   name: 'agencia',
   description: 'Creat Nuvem: Faísca cria 3 conceitos e o júri escolhe, Nimbus planeja, os especialistas constroem em ondas, Crivo revisa, Lupa e Muralha testam, Nimbus entrega',
-  whenToUse: 'Projetos com várias etapas (site, app, landing page, feature grande). Passe o briefing como args (texto), ou { briefing, conceito: false } para pular a etapa de conceito.',
+  whenToUse: 'Projetos com várias etapas (site, app, landing page, feature grande). Passe o briefing como args (texto), ou { briefing, conceito: false } para pular a etapa de conceito; ou { briefing_arquivo: 'docs/x.md' } para um briefing longo em arquivo.',
   phases: [
     { title: 'Conceito', detail: 'três Faíscas criam conceitos por ângulos diferentes; o júri escolhe e enxerta' },
     { title: 'Briefing', detail: 'Nimbus lê o repositório e monta o plano em ondas' },
@@ -14,7 +14,7 @@ export const meta = {
 
 const ESPECIALISTAS = ['arquiteto', 'frontend', 'backend', 'designer', 'motion-3d', 'shader', 'som', 'copywriter', 'pesquisador', 'criativo', 'devops']
 
-const briefing = typeof args === 'string' ? args : (args && args.briefing) || ''
+const briefing = typeof args === 'string' ? args : (args && args.briefing) || (args && args.briefing_arquivo ? `BRIEFING COMPLETO NO ARQUIVO ${args.briefing_arquivo}. Leia o arquivo inteiro antes de qualquer coisa; ele manda em tudo e já contém pasta do projeto, tarefas sugeridas, ondas, critérios de aceite e leituras obrigatórias.` : '')
 const comConceito = !(args && typeof args === 'object' && args.conceito === false)
 const maxTarefas = (args && typeof args === 'object' && args.max_tarefas) || 10
 const RELATORIO = 'Ao terminar, acrescente (sem apagar o que já existe) uma seção curta ao arquivo RELATORIO.md na pasta do projeto, com: o que você fez, arquivos tocados, como verificar e o que ficou pendente. Esse arquivo é o relatório parcial do projeto e precisa existir mesmo que o fluxo seja interrompido.'
