@@ -7,7 +7,9 @@
  *   responsável, WhatsApp, rua, número ou CEP (minimização LGPD).
  * - aplicarSaida(): copia SOMENTE negocio.bordao, pagina.*, servicos[].descricao e as chaves de
  *   textos da lista branca do preset. Tudo o mais que o modelo devolver é ignorado e listado.
- * - custo(): tokens -> US$ -> R$ (câmbio CREAT_CAMBIO), no formato Pedido.custo_ia (schema).
+ * - custo(): tokens -> US$ -> R$ (câmbio CREAT_CAMBIO), no formato Pedido.custo_ia (schema). Não lança:
+ *   modelo sem preço devolve custo_ia null + tokens + falha.
+ * - PRECOS e MODELO_PADRAO: NÃO VERIFICADOS contra uma chamada real (vêm do cache da skill claude-api).
  * A chamada em si (SDK oficial @anthropic-ai/sdk) fica em produzir.mjs.
  */
 'use strict';
@@ -142,8 +144,8 @@ function corpoRequisicao(ped, modelo, opc) {
 /* resposta da API (ou da fixture, no mesmo formato) -> objeto JSON da saída */
 function lerResposta(resp) {
   if (!resp || typeof resp !== 'object') throw new Error('resposta da IA vazia');
-  if (resp.stop_reason === 'refusal') throw new Error('a IA recusou o pedido (stop_reason refusal); nada foi gravado. Revise o pedido e rode de novo.');
-  if (resp.stop_reason === 'max_tokens') throw new Error('a resposta da IA foi cortada (max_tokens); rode de novo.');
+  if (resp.stop_reason === 'refusal') throw new Error('a IA recusou o pedido (stop_reason refusal). Revise o pedido.');
+  if (resp.stop_reason === 'max_tokens') throw new Error('a resposta da IA foi cortada (stop_reason max_tokens).');
   const texto = (resp.content || []).filter((b) => b && b.type === 'text').map((b) => b.text).join('');
   try { return JSON.parse(texto); }
   catch (e) { throw new Error(`a IA não devolveu JSON válido (${e.message})`); }
@@ -186,16 +188,32 @@ function aplicarSaida(tenant, saida, preset) {
 
 function arred(n, c) { const f = 10 ** c; return Math.round(n * f) / f; }
 
-/* usage da API -> Pedido.custo_ia; cambio = R$ por US$ */
+/*
+ * usage da API -> { custo_ia, falha }. NUNCA lança: a API já cobrou quando a resposta chega, e o
+ * custo tem de ser gravado mesmo que o preço do modelo devolvido não esteja cadastrado (o fallback
+ * do servidor pode responder com outro modelo). Sem preço: custo_ia null, tokens em `tokens` e o
+ * motivo em `falha`, para o RELATORIO avisar e alguém cadastrar o preço. cambio = R$ por US$.
+ */
 function custo(resp, cambio) {
   const u = (resp && resp.usage) || {};
-  const modelo = String(resp && resp.model || '');
+  const modelo = String((resp && resp.model) || '');
+  const n = (x) => (Number.isInteger(x) && x >= 0 ? x : 0);
+  const tokens = {
+    entrada: n(u.input_tokens) + n(u.cache_creation_input_tokens) + n(u.cache_read_input_tokens),
+    saida: n(u.output_tokens)
+  };
   const p = PRECOS[modelo];
-  if (!p) throw new Error(`sem preço cadastrado para o modelo ${modelo} em scripts/producao/lib/ia.cjs (PRECOS); confira claude.com/pricing e acrescente`);
-  const entrada = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
-  const usd = ((u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) * 1.25) * p.entrada / 1e6 +
-    (u.cache_read_input_tokens || 0) * p.cacheLeitura / 1e6 + (u.output_tokens || 0) * p.saida / 1e6;
-  return { modelo, tokens_entrada: entrada, tokens_saida: u.output_tokens || 0, usd: arred(usd, 6), brl: arred(usd * cambio, 4), cambio };
+  if (!p) return { custo_ia: null, tokens, falha: `sem preço cadastrado para o modelo "${modelo || '(vazio)'}" em scripts/producao/lib/ia.cjs (PRECOS); a chamada foi cobrada, os tokens estão gravados; confira claude.com/pricing e acrescente` };
+  if (!(cambio > 0)) return { custo_ia: null, tokens, falha: 'câmbio inválido' };
+  const usd = (n(u.input_tokens) + n(u.cache_creation_input_tokens) * 1.25) * p.entrada / 1e6 +
+    n(u.cache_read_input_tokens) * p.cacheLeitura / 1e6 + n(u.output_tokens) * p.saida / 1e6;
+  return { custo_ia: { modelo, tokens_entrada: tokens.entrada, tokens_saida: tokens.saida, usd: arred(usd, 6), brl: arred(usd * cambio, 4), cambio }, tokens, falha: null };
 }
 
-module.exports = { MODELO_PADRAO, PRECOS, COM_FALLBACK, FORA_DA_IA, SYSTEM, chavesIA, schemaSaida, montarPedidoIA, corpoRequisicao, lerResposta, aplicarSaida, custo };
+/* o que se grava da resposta bruta (sites/<slug>/resposta-ia.json): sem chave, sem cabeçalho */
+function resumoResposta(resp) {
+  const r = resp && typeof resp === 'object' ? resp : {};
+  return { id: r.id || null, model: r.model || null, stop_reason: r.stop_reason || null, stop_details: r.stop_details || null, usage: r.usage || null, content: Array.isArray(r.content) ? r.content : [] };
+}
+
+module.exports = { MODELO_PADRAO, PRECOS, COM_FALLBACK, FORA_DA_IA, SYSTEM, chavesIA, schemaSaida, montarPedidoIA, corpoRequisicao, lerResposta, aplicarSaida, custo, resumoResposta };

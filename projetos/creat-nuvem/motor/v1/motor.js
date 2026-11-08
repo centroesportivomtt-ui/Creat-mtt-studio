@@ -544,7 +544,16 @@
       '<!--{{CANONICAL}}-->': canonical,
       '<!--{{NOSCRIPT}}-->': nos
     };
-    return String(texto).replace(/\{\{[A-Z_]+\}\}|<!--\{\{[A-Z_]+\}\}-->/g, function (m) { return tem(trocas, m) ? trocas[m] : m; });
+    var html = String(texto).replace(/\{\{[A-Z_]+\}\}|<!--\{\{[A-Z_]+\}\}-->/g, function (m) { return tem(trocas, m) ? trocas[m] : m; });
+    return comRitual(html, opc.preset, opc.caminhoMotor || 'motor/');
+  }
+  /* T8 (aditivo): o ritual do nicho que mora em motor/v1/rituais/ entra como <link> + <script defer> antes de </head> */
+  function comRitual(html, preset, caminho) {
+    var a = preset && preset.ritualArquivos, ok = /^v1\/rituais\/[a-z][a-z0-9-]{0,30}\.(js|css)$/, tags = '';
+    if (!a || typeof a !== 'object') return html;
+    if (ok.test(String(a.css || '')) && /\.css$/.test(a.css)) tags += '<link rel="stylesheet" href="' + escaparHtml(caminho + a.css) + '" data-rituais-css>\n';
+    (Array.isArray(a.js) ? a.js : []).forEach(function (c) { if (ok.test(String(c)) && /\.js$/.test(c)) tags += '<script src="' + escaparHtml(caminho + c) + '" defer></script>\n'; });
+    return tags && html.indexOf('</head>') !== -1 ? html.replace('</head>', tags + '</head>') : html;
   }
   /* conteúdo do tenant.js que o template carrega (o site abre do disco: file:// não faz fetch de JSON) */
   function scriptTenant(tenant, site) {

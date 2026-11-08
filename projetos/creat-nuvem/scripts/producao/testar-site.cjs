@@ -12,7 +12,8 @@
  *   - nenhum texto visível abaixo de 11 px;
  *   - JSON-LD presente e válido no site entregue; meta robots noindex na prévia;
  *   - rede: as fontes do Google são respondidas com CSS vazio (teste determinístico, sem rede);
- *     qualquer outra requisição http(s) é anotada e bloqueada; host proibido = falha.
+ *     qualquer outra requisição http(s) é anotada e bloqueada; host proibido = falha;
+ *   - opc.semRodapeViral (pacote SAIR): nenhum link utm_source=rodape nem o texto "Aberto pela Creat".
  * Código 0 = passou, 3 = falhou, 2 = Playwright ausente.
  */
 'use strict';
@@ -65,7 +66,9 @@ async function testarSite(pasta, opc) {
       }
       const ld = [...document.querySelectorAll('script[type="application/ld+json"]')].map((s) => s.textContent);
       const robots = (document.querySelector('meta[name="robots"]') || {}).content || '';
-      return { scrollW: de.scrollWidth, larg: window.innerWidth, was, menor, onde, ld, robots, titulo: document.title };
+      const rodape = [...document.querySelectorAll('a[href]')].map((a) => a.href).filter((h) => /utm_source=rodape/.test(h));
+      const creatTexto = /Aberto pela Creat/i.test(document.body.innerText);
+      return { scrollW: de.scrollWidth, larg: window.innerWidth, was, menor, onde, ld, robots, titulo: document.title, rodape, creatTexto };
     });
     if (m.scrollW > m.larg + 1) falhas.push(`rolagem horizontal: scrollWidth ${m.scrollW} > ${m.larg}`);
     if (m.menor < 11) falhas.push(`texto de ${m.menor}px (mínimo 11): ${m.onde}`);
@@ -82,13 +85,15 @@ async function testarSite(pasta, opc) {
       if (!m.ld.length) falhas.push('site entregue sem JSON-LD');
       for (const t of m.ld) { try { const o = JSON.parse(t); if (!o['@type']) falhas.push('JSON-LD sem @type'); } catch (e) { falhas.push(`JSON-LD inválido: ${e.message}`); } }
     }
+    if (opc.semRodapeViral && (m.rodape.length || m.creatTexto)) falhas.push(`rodapé da Creat presente (${m.rodape.join(' ') || 'texto'})`);
+    if (opc.exigirRodape && !m.rodape.length) falhas.push('rodapé "Aberto pela Creat · veja o seu" sem link');
     for (const u of externas) {
       const host = new URL(u).host;
       if ((opc.hostsProibidos || []).some((h) => host === h || host.endsWith('.' + h))) falhas.push(`requisição a host proibido: ${u}`);
     }
     falhas.push(...erros);
     if (opc.print) { fs.mkdirSync(path.dirname(opc.print), { recursive: true }); await page.screenshot({ path: opc.print, fullPage: true }); }
-    return { ok: falhas.length === 0, falhas, medidas: { scrollWidth: m.scrollW, largura: m.larg, menorFontePx: m.menor, waMe: m.was, robots: m.robots, titulo: m.titulo, jsonLd: m.ld.length }, rede: { fontes: fontes.length, externasBloqueadas: externas } };
+    return { ok: falhas.length === 0, falhas, medidas: { rodapeLinks: m.rodape.length, scrollWidth: m.scrollW, largura: m.larg, menorFontePx: m.menor, waMe: m.was, robots: m.robots, titulo: m.titulo, jsonLd: m.ld.length }, rede: { fontes: fontes.length, externasBloqueadas: externas } };
   } finally { await browser.close(); }
 }
 

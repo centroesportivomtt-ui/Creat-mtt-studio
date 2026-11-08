@@ -60,7 +60,9 @@ function buildSite(opc) {
   C.copiarPasta(path.join(C.MOTOR, 'v1'), path.join(destino, 'motor', 'v1'), (a, st) => st.isDirectory() || path.basename(a) !== 'template.html');
   C.copiarPasta(path.join(C.MOTOR, 'nichos'), path.join(destino, 'motor', 'nichos'), (a, st) => st.isDirectory() || /\.(js|css|svg)$/.test(a));
 
-  const template = fs.readFileSync(path.join(C.MOTOR, 'v1', 'template.html'), 'utf8');
+  // o comentário de documentação do template cita os marcadores; sem tirá-lo, eles seriam
+  // preenchidos ali dentro também (título e descrição repetidos num comentário do HTML entregue)
+  const template = fs.readFileSync(path.join(C.MOTOR, 'v1', 'template.html'), 'utf8').replace(/[ \t]*<!--(?:(?!-->)[\s\S])*?Marcadores:[\s\S]*?-->\n?/, '');
   const html = M.preencherTemplate(template, tenant, { preset, site, caminhoMotor: 'motor/' });
   const sobra = html.match(/\{\{[A-Z_]+\}\}/g);
   if (sobra) throw new Error(`template com marcador sem valor: ${sobra.join(', ')}`);

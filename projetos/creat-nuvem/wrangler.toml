@@ -1,0 +1,30 @@
+# Porta Aberta · Cloudflare Workers Static Assets (T10 · Trilho)
+# Sem segredo aqui. O token vai na variável CLOUDFLARE_API_TOKEN (ver .env.example)
+# ou no login interativo (`npx wrangler@4.158.0 login`), nunca neste arquivo.
+#
+# Publicar (a partir de projetos/creat-nuvem/):
+#   CLOUDFLARE_API_TOKEN=<token> npx --yes wrangler@4.158.0 deploy
+# O [build] abaixo roda antes do deploy:
+#   1. checar-placeholders.cjs  -> FALHA o deploy enquanto houver [LINK_...] ou [WHATSAPP_SUPORTE...]
+#   2. montar-publico.cjs       -> monta dist/publico/ só com o que é público (+ sede/index.html)
+#
+# Portável: dist/publico/ é HTML/CSS/JS estático. Também pode ser enviado como
+# arquivos estáticos para o Base44 ou qualquer host; nesse caso aplique os
+# cabeçalhos de _headers na configuração do host.
+
+name = "creat-porta-aberta"
+compatibility_date = "2026-11-05"
+workers_dev = true
+preview_urls = false
+
+[assets]
+directory = "./dist/publico"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"
+
+[build]
+command = "node scripts/checar-placeholders.cjs && node scripts/montar-publico.cjs"
+watch_dir = ["index.html", "assets", "abrir", "previa", "motor", "dados", "conteudo"]
+
+[observability]
+enabled = true

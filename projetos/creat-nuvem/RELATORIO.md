@@ -172,3 +172,50 @@ Os prazos são sugestão do Verbo para caber antes de 16/11; o Nimbus confirma o
   - **Deploy (T10):** o repositório ainda não tem configuração de deploy. A T10 precisa garantir que `sede/estado.json` nunca vá para o site: copiar `sede/` excluindo esse arquivo ou bloquear a rota.
   - **Nome dos fluxos:** fluxos de cliente precisam ter nome começando por `pedido` ou `producao` (ex.: `pedido-barbearia-ze`) para aparecer como "Pedido da Creat". Hoje o fluxo real `agencia` sempre sai como "Projeto interno". Quem cria os fluxos de produção (Nimbus/Trilho) deve seguir esse padrão.
   - Revisor, QA (Lupa) e Muralha.
+
+## T8 · Pixel · Nichos salão e academia (08/11/2026)
+- **O que foi feito:** presets `salao` (ritual `esmalte`: tirar o pincel do vidrinho e pintar a unha com o dedo) e `academia` (ritual `barra`: levantar a barra que pesa, enverga e solta pó), com textos da T3, 3 paletas AA da T2, preços "exemplo" no salão e "sob consulta" na academia, sem equipe, avaliação ou horário inventado. Os rituais ficam em `motor/v1/rituais/` e têm teclado, toque, tira de confirmar e `prefers-reduced-motion`. Os dois nichos foram registrados no `index.js`. `dados/nichos.json` traz 3 ativos e 4 "avise-me", sem clínica.
+- **Arquivos tocados:**
+  - `motor/nichos/{salao,academia,index}.js`
+  - `motor/v1/rituais/{comum,esmalte,barra}.js` e `rituais.css`
+  - `dados/nichos.json`
+  - `docs/relatorio/T8.md`
+  - gancho aditivo de 10 linhas em `motor/v1/motor.js` (`comRitual` no `preencherTemplate`, para o site entregue carregar o ritual)
+- **Como verificar:**
+  - `node scripts/checar.cjs` (tudo certo);
+  - `previa/#k=salao&n=...` e `#k=academia&n=...` a 390 e 1280, claro e escuro;
+  - `build-site.cjs` com tenant de salão ou academia abre por `file://`.
+  - Detalhes em `docs/relatorio/T8.md`.
+- **Pendente:**
+  - Revisor, QA (gesto em celular real) e Muralha;
+  - a home (T5) ainda não lê `dados/nichos.json`.
+
+## T9 · Forja · Produção v0 (CLI, validador, build e SAIR)
+- **O que fiz:** `scripts/producao/produzir.mjs --pedido <arquivo>` aceita PEDIDO v1 em texto ou em JSON e roda os 7 passos da seção 15:
+  1. valida o pedido e monta o tenant parcial a partir do preset de `motor/nichos/`;
+  2. faz UMA chamada ao Claude, pelo SDK oficial, com `ANTHROPIC_API_KEY` do Console e `claude-sonnet-5-5` como padrão. A saída é estruturada, não há ferramentas e o pedido entra como dado delimitado e mínimo;
+  3. valida de novo;
+  4. build do `dist/<slug>/`;
+  5. teste no Playwright a 390 px;
+  6. grava `custo.json` em R$ e o RELATORIO do pedido;
+  7. gera o zip do SAIR com varredura de domínio.
+  - É idempotente: rodar de novo o mesmo pedido não cobra outra vez.
+  - Junto foram `validar-tenant.mjs`, `build-site.cjs`, `testar-site.cjs` e `exportar-sair.cjs`, além de 38 testes sem rede e sem chave.
+- **Decisões:**
+  - No SAIR, o rodapé "Aberto pela Creat" é **removido**, não vira texto.
+  - O pedido não traz preço, então no site entregue todo preço sai "sob consulta". A nota de preço é escrita pelo código, fora da IA.
+  - Sem `CREAT_CAMBIO`, o fluxo para antes de cobrar.
+  - As fontes do Google ficam no SAIR. São de terceiro e o site funciona offline sem elas.
+- **Arquivos:** `scripts/producao/**`, `scripts/testes/**`, `package.json` e `docs/relatorio/T9.md`.
+- **Como verificar:**
+  - `cd projetos/creat-nuvem && npm install && npm test`: 38 de 38 passam.
+  - Ponta a ponta com a fixture: `CREAT_CAMBIO=5.5 node scripts/producao/produzir.mjs --pedido scripts/testes/fixtures/pedido-valido.txt --fixture-ia scripts/testes/fixtures/resposta-modelo.json --saida <tmp>`.
+  - `node scripts/producao/validar-tenant.mjs schema/exemplos/tenant.whatsapp-zerado.invalido.json` sai com código 1 e cita `negocio.whatsapp`.
+  - A saída completa está em `docs/relatorio/T9.md`.
+- **Variáveis usadas (para o `.env.example` da T10):** `ANTHROPIC_API_KEY`, `CREAT_MODELO`, `CREAT_CAMBIO`, `CREAT_HOME`, `CREAT_URL_SITES`, `CREAT_DOMINIOS`, `CREAT_SAIDA`, `CREAT_FALLBACK` e `CREAT_IA_FIXTURE` (só teste).
+- **Pendente:**
+  - Primeira chamada real à API: não há chave no ambiente. O formato da requisição foi provado contra um servidor local.
+  - Definir `CREAT_URL_SITES` e `CREAT_DOMINIOS`.
+  - T10: `.gitignore` de `sites/`, `pedidos/` e `dist/`, `.env.example` e lockfile.
+  - T4: o comentário do `template.html` é preenchido junto com os marcadores (o build já o remove).
+  - Revisor, QA e Muralha.

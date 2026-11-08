@@ -36,7 +36,7 @@ const PROIBIDOS = [
   [/https?:|www\.|<|>|javascript:/, 'link ou marcação HTML dentro de texto'],
   [/\b(sua|seu) (barbearia|salao|academia|negocio|studio) (esta|anda) (fechad|vazi|parad|morr)/, 'afirma estado negativo do leitor']
 ];
-const PROCEDIMENTO_SAUDE = /\b(botox|toxina botulinica|preenchimento|harmonizacao|bioestimulador|peeling (quimico|de fenol)|microagulhamento|laser|depilacao a laser|lipo\w*|criolipolise|fio de pdo|fios de sustentacao|skinbooster|intradermoterapia|mesoterapia|carboxiterapia|enzima|fisioterapia|nutricionista|dieta|emagrecimento|procedimento (estetico|medico)|consulta medica|odontolog\w*|clareamento dental)\b/;
+const PROCEDIMENTO_SAUDE = /\b(toxina botulinica|botox (facial|na testa|no rosto)|preenchimento (labial|facial|com acido)|acido hialuronico|harmonizacao (facial|orofacial)|bioestimulador\w*|peeling (quimico|de fenol)|microagulhamento|depilacao a laser|laser (facial|co2)|lipo\w*|criolipolise|fios? de pdo|fios de sustentacao|skinbooster|intradermoterapia|mesoterapia|carboxiterapia|fisioterapia|consulta (medica|nutricional)|nutricionista|odontolog\w*|clareamento dental)\b/;
 const EMOJI = /\p{Extended_Pictographic}/u;
 
 /* todos os textos livres do tenant, com o caminho do campo */

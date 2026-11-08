@@ -319,7 +319,7 @@
         larguraAlca: function (w, h) { dims.w = w; dims.h = h; dims.la = 40; return dims.la; },
         posar: function (p, v, x, h) {
           var inclina = lim(-v / 40, -14, 14) - 28 + p * 10;
-          alca.style.transform = 'translate(' + (x - 20).toFixed(1) + 'px, 0) rotate(' + inclina.toFixed(1) + 'deg)';
+          alca.style.transform = 'translate(' + (x - 15).toFixed(1) + 'px, 0) rotate(' + inclina.toFixed(1) + 'deg)';
           tinta.style.width = Math.max(0, x - 8).toFixed(1) + 'px';
         },
         resetar: function () {}

@@ -8,7 +8,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "test": "node --test scripts/testes/",
+    "test": "node --test scripts/testes/*.test.mjs",
     "produzir": "node scripts/producao/produzir.mjs",
     "validar-tenant": "node scripts/producao/validar-tenant.mjs",
     "build-site": "node scripts/producao/build-site.cjs",

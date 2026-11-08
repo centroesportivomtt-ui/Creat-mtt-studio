@@ -1,0 +1,75 @@
+{
+  "_sobre": "Perguntas da home (seção 9). Ordem de exibição = ordem da lista. 'id' estável para âncora (/#faq-<id>).",
+  "itens": [
+    {
+      "id": "e-ia",
+      "pergunta": "É IA?",
+      "resposta": "É, e a gente diz como. A equipe de agentes de IA da Creat criou o modelo de cada nicho e as regras de qualidade. No seu pedido, a IA escreve os textos, regras automáticas conferem número, horários, preços e palavras proibidas, e uma pessoa da equipe lê o site antes de mandar para você aprovar."
+    },
+    {
+      "id": "quem-confere",
+      "pergunta": "Quem confere o meu site?",
+      "resposta": "Duas camadas. Primeiro, regras automáticas: o WhatsApp precisa estar no formato certo, o horário precisa fechar depois de abrir, o site é testado num celular de 390 px sem rolagem lateral. Depois, uma pessoa da equipe lê tudo. Por último, você: nada vai ao ar sem a sua aprovação."
+    },
+    {
+      "id": "assinatura",
+      "pergunta": "Preciso de outra assinatura?",
+      "resposta": "Não. Hospedagem, IA e ferramentas ficam por conta da Creat. Você só precisa do app WhatsApp Business, que é grátis. Se quiser um domínio .com.br, a anuidade é paga ao Registro.br no seu nome, e a gente mostra o passo a passo."
+    },
+    {
+      "id": "app-de-horarios",
+      "pergunta": "E se eu já uso agenda?",
+      "resposta": "Pode continuar usando. Se você já marca horários por um aplicativo (Trinks, Booksy ou outro), o botão do seu site abre esse aplicativo em vez do WhatsApp. Basta mandar o link no pedido. Os nomes são só exemplos de ferramenta; a Creat não tem vínculo com nenhuma."
+    },
+    {
+      "id": "dominio",
+      "pergunta": "O domínio é meu?",
+      "resposta": "É. O domínio é registrado no seu nome e no seu CPF ou CNPJ, no Registro.br. A Creat nunca guarda a sua senha. Enquanto você não tiver domínio, o site funciona num endereço da Creat."
+    },
+    {
+      "id": "cancelar",
+      "pergunta": "E se eu cancelar?",
+      "resposta": "Sem multa e sem fidelidade. Você pede pelo WhatsApp e recebe o SAIR: o site num arquivo que abre direto no computador, com o botão do WhatsApp funcionando, mais os seus textos, fotos e logo. O domínio já é seu. O endereço da Creat redireciona por 30 dias e depois sai."
+    },
+    {
+      "id": "prazo",
+      "pergunta": "E se passar do prazo?",
+      "resposta": "O prazo é de {{precos.prazoHoras}} h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. Se passar, o 1º mês do plano é grátis. Domínio próprio e verificação do Google ficam fora do relógio, porque dependem de você e de terceiros."
+    },
+    {
+      "id": "instagram",
+      "pergunta": "Preciso de Instagram?",
+      "resposta": "Não. O plano Aberto funciona só com o WhatsApp. O Instagram entra no plano Vitrine, que traz posts prontos todo mês para você aprovar."
+    },
+    {
+      "id": "clinica",
+      "pergunta": "Serve para clínica?",
+      "resposta": "Não. Hoje o Porta Aberta não atende esse segmento. Os modelos prontos são para barbearia, salão e estética, academia e studio."
+    },
+    {
+      "id": "meus-dados",
+      "pergunta": "E os meus dados?",
+      "resposta": "Antes de você aceitar os termos, a página não guarda nada pessoal: o nome do negócio e o seu WhatsApp de teste ficam só no seu aparelho. Os dados do pedido vão pelo seu próprio WhatsApp para o Suporte Creat. O pagamento e o CPF ou CNPJ ficam com o Asaas. Detalhes na página de privacidade."
+    },
+    {
+      "id": "pedido-confirmado",
+      "pergunta": "O cliente marca o horário sozinho?",
+      "resposta": "Ele escolhe dia, horário e serviço no site, e o pedido chega pronto no seu WhatsApp. Quem confirma é você, pelo WhatsApp. Assim o site nunca promete um horário que você não pode atender."
+    },
+    {
+      "id": "alteracoes",
+      "pergunta": "Posso mudar preço e horário depois?",
+      "resposta": "Pode, sem limite de quantidade, pelo WhatsApp: texto, preço, serviço, horário, foto, promoção e equipe. Página nova, seção nova ou loja virtual viram orçamento à parte."
+    },
+    {
+      "id": "resultado",
+      "pergunta": "Vou ter mais clientes?",
+      "resposta": "Não prometemos número de clientes nem faturamento. O que entregamos é o seu negócio aberto na internet, com um caminho curto para o cliente pedir horário no seu WhatsApp. O resultado depende do seu negócio, da sua região e de como você divulga."
+    },
+    {
+      "id": "gostar",
+      "pergunta": "E se eu não gostar do site pronto?",
+      "resposta": "Você pede os ajustes antes de aprovar. E tem 7 dias de arrependimento depois do pagamento: o valor volta para você e o site sai do ar."
+    }
+  ]
+}
