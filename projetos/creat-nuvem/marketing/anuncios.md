@@ -20,7 +20,7 @@ Verbo (T3), 08/11/2026. Para o Marcos subir sem pensar: copie, cole, publique.
 1. **Atributos pessoais** (dentro de "Privacy Violations and Personal Attributes"): o anúncio não pode afirmar ou insinuar "race, ethnicity, religion, beliefs, age, sexual orientation or practices, gender identity, disability, physical or mental health (including medical conditions), vulnerable financial status, voting status, membership in a trade union, criminal record, or name". Aplicação aqui: nenhum texto pergunta "você é...?", nenhum fala da situação financeira de quem vê, nenhum usa o nome de quem vê. Os textos falam do produto ("digite o nome do seu negócio"), não de quem lê.
 2. **Práticas comerciais proibidas** (29/10/2026): a Meta age contra "misleading or unreasonable pricing", "deceptive subscription practices: enrolling customers in recurring payment plans or subscription services without clear disclosure of terms", "non-delivery", "violation of return or refund policies" e "get rich quick". Aplicação aqui: nenhum texto promete ganho; a mensalidade aparece nos ângulos B e na página antes do pagamento (total visível em /abrir/); o arrependimento de 7 dias e o SAIR estão nos termos; o ângulo A diz "só paga se gostar" e a página mostra Abertura + mensalidade antes de qualquer pagamento.
 3. **Relevância**: "The products and services promoted in an ad must match those promoted on the landing page." Aplicação aqui: todo link vai para a home com `?nicho=`, que abre o nicho do anúncio.
-4. **Saúde e bem-estar** (22/07/2026): proíbe, em serviço de corpo ou estética, "statements of inferiority about physical appearance" e "promises of specific outcomes within a set timeframe". Academia ("fitness services, health clubs") e beleza não permanente ("makeup, hair products") ficam fora da restrição de idade. Aplicação aqui: nenhum texto de academia fala de corpo, peso ou prazo de resultado; nenhum texto de salão fala de aparência de quem vê; "pigmentação" (que a Meta trata como procedimento cosmético, 18+) não aparece em anúncio.
+4. **Saúde e bem-estar** (22/07/2026): proíbe, em serviço de corpo ou estética, "statements of inferiority about physical appearance" e "promises of specific outcomes within a set timeframe". Academia ("fitness services, health clubs") e beleza não permanente ("makeup, hair products") ficam fora da restrição de idade. Aplicação aqui: nenhum texto de academia fala de corpo, peso ou prazo de resultado; nenhum texto de salão fala de aparência de quem vê; "pigmentação" (que a Meta trata como procedimento cosmético, 18+) não aparece em anúncio nem na tabela de serviços que o vídeo R1 grava (saiu do preset da barbearia em 08/11/2026).
 5. **Vídeo**: "Videos ... must not use overly disruptive tactics, such as flashing screens." Aplicação: os roteiros não usam tela piscando.
 6. **Transparência (DSA)**: só vale para quem vê na União Europeia. Se a segmentação for só Brasil, não se aplica; ainda assim, preencha Beneficiário e Pagador com "Creat.MTT Studio" se o Gerenciador pedir.
 7. **WhatsApp Business**: só falar com quem deu o número e pediu contato; respeitar pedido para parar; sem disparo em massa. Aplicação: Click-to-WhatsApp de janeiro só responde quem chamou; scripts em `whatsapp-scripts.md`.
@@ -104,19 +104,19 @@ Observação de política (academia): nenhum texto fala de corpo, peso ou result
 ## Ângulo B · Sem amarra
 
 Base do briefing: "Site, pedido de horário no WhatsApp e posts todo mês por um preço fechado. Sem fidelidade e sem multa. Se sair, você leva tudo." Título base: "Seu site pronto. Sem amarra."
-Observação de política: "posts todo mês" é do plano Vitrine; o texto diz "no plano Vitrine" quando cita posts, para não ser lido como incluído em todos os planos (prática de assinatura enganosa). "Preço fechado" é verdadeiro: o preço fica travado por 12 meses (termos, cláusula 4).
+Observação de política: o domínio não está incluído (o cliente paga a anuidade ao Registro.br, e sem domínio o site fica no endereço da Creat). Por isso nenhum texto diz "com o domínio no seu nome" para todos; o B2 diz "se tiver domínio próprio, ele fica no seu nome" (prática comercial da Meta e CDC art. 37). "Posts todo mês" é do plano Vitrine; o texto diz "no plano Vitrine" quando cita posts, para não ser lido como incluído em todos os planos (prática de assinatura enganosa). "Preço fechado" é verdadeiro: o preço fica travado por 12 meses (termos, cláusula 4).
 
 ### B · barbearia
 
 Textos principais
 - **B1**: Site da barbearia, pedido de horário no WhatsApp e, no plano Vitrine, posts todo mês, por um preço fechado. Sem fidelidade e sem multa. Se sair, você leva tudo.
-- **B2**: Sem fidelidade, sem multa e com o domínio no seu nome. Se um dia quiser sair, você leva o site, o domínio e os arquivos. Veja o site da sua barbearia pronto antes de decidir.
+- **B2**: Sem fidelidade e sem multa. Se um dia quiser sair, você leva o site e os arquivos. Se tiver domínio próprio, ele fica no seu nome. Veja o site da sua barbearia pronto antes de decidir.
 - **B3**: A mensalidade só começa no dia em que o site da barbearia entra no ar. Antes disso, você vê pronto, testa o pedido no seu WhatsApp e aprova.
 
 Títulos
 - Seu site pronto. Sem amarra.
 - Sem fidelidade. Se sair, leva tudo.
-- O domínio fica no seu nome
+- Saiu? Leva o site e os arquivos
 
 Descrições
 - Sem fidelidade e sem multa
@@ -126,13 +126,13 @@ Descrições
 
 Textos principais
 - **B1**: Site do salão, pedido de horário no WhatsApp e, no plano Vitrine, posts todo mês, por um preço fechado. Sem fidelidade e sem multa. Se sair, você leva tudo.
-- **B2**: Sem fidelidade, sem multa e com o domínio no seu nome. Se um dia quiser sair, você leva o site, o domínio e os arquivos. Veja o site do seu salão pronto antes de decidir.
+- **B2**: Sem fidelidade e sem multa. Se um dia quiser sair, você leva o site e os arquivos. Se tiver domínio próprio, ele fica no seu nome. Veja o site do seu salão pronto antes de decidir.
 - **B3**: A mensalidade só começa no dia em que o site do salão entra no ar. Antes disso, você vê pronto, testa o pedido no seu WhatsApp e aprova.
 
 Títulos
 - Seu site pronto. Sem amarra.
 - Sem fidelidade. Se sair, leva tudo.
-- O domínio fica no seu nome
+- Saiu? Leva o site e os arquivos
 
 Descrições
 - Sem fidelidade e sem multa
@@ -142,13 +142,13 @@ Descrições
 
 Textos principais
 - **B1**: Site da academia, pedido de aula experimental no WhatsApp e, no plano Vitrine, posts todo mês, por um preço fechado. Sem fidelidade e sem multa. Se sair, você leva tudo.
-- **B2**: Sem fidelidade, sem multa e com o domínio no seu nome. Se um dia quiser sair, você leva o site, o domínio e os arquivos. Veja o site do seu studio pronto antes de decidir.
+- **B2**: Sem fidelidade e sem multa. Se um dia quiser sair, você leva o site e os arquivos. Se tiver domínio próprio, ele fica no seu nome. Veja o site do seu studio pronto antes de decidir.
 - **B3**: A mensalidade só começa no dia em que o site da academia entra no ar. Antes disso, você vê pronto, testa o pedido de aula no seu WhatsApp e aprova.
 
 Títulos
 - Seu site pronto. Sem amarra.
 - Sem fidelidade. Se sair, leva tudo.
-- O domínio fica no seu nome
+- Saiu? Leva o site e os arquivos
 
 Descrições
 - Sem fidelidade e sem multa

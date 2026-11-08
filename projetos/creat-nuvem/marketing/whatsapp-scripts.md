@@ -94,8 +94,10 @@ Se a inauguração estiver valendo, troque a primeira linha por: "Abertura: R$ {
 > Só publico se você escrever, nesta conversa: "Autorizo a Creat a publicar este texto com o meu nome e o nome do meu negócio." Você pode retirar a autorização quando quiser.
 
 **R13 · Indicação** (`/indica`)
-> Se conhece outro negócio que precisa de site, mande este link para ele: {{site.url}}/?utm_source=indicacao&utm_medium=ref&utm_campaign=indica-v1&utm_content={id}
-> Quando ele pagar a Abertura, o seu próximo mês do plano é grátis.
+> Se conhece outro negócio que precisa de site, mande este link para ele: {{site.url}}/?utm_source=indicacao&utm_medium=ref&utm_campaign=indica-v1
+> Obrigado por lembrar da gente.
+
+Nota (08/11/2026): o R13 não promete recompensa. Nenhuma cláusula de `conteudo/termos.md` cobre indicação. A recompensa só entra neste texto depois que o Marcos decidir a regra (quando vale, quem recebe, quantas vezes) e ela for escrita nos termos. O `utm_content={id}` leva o id curto do pedido (`PA-` + 8 caracteres) e aguarda o aval da Muralha para uso no analytics; até lá, o link acima sai sem o parâmetro. Com o aval, acrescente `&utm_content={id}` ao fim.
 
 **R14 · Objeções**
 

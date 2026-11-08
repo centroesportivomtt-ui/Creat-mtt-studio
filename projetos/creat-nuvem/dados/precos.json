@@ -1,0 +1,11 @@
+{
+  "prazoHoras": 72,
+  "abertura": {
+    "padrao": 497,
+    "inauguracao": { "ativa": true, "preco": 297, "vagasTotal": 20, "vagasRestantes": 20 }
+  },
+  "planos": { "aberto": 147, "vitrine": 297 },
+  "anualMesesPagos": 10,
+  "bastidores": 67,
+  "atualizado_em": "2026-11-08T16:53:00Z"
+}

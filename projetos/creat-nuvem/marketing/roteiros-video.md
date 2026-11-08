@@ -54,7 +54,7 @@ Grave a home com `?nicho=barbearia` (uma versão por nicho).
 | 5,0 a 11,0 s | A prévia sobe em tela cheia. Rolar devagar: letreiro, tabela de serviços com o rótulo "exemplo", botão de pedido. Tocar "Testar no meu WhatsApp", escolher serviço e horário, enviar. O WhatsApp abre com o pedido e apita. | Rolar, tocar, enviar. Corte seco no apito. | O site pronto em segundos. · O pedido de horário chega no seu WhatsApp. |
 | 11,0 a 15,0 s | Quadro final fixo: fundo `--ceu`, a placa ABERTO no centro, o botão "Abrir meu negócio" desenhado embaixo. | Nenhuma. | Veja o seu grátis. Só paga se gostar. |
 
-Cuidados: a faixa "Prévia · os serviços e preços são exemplo" precisa aparecer em pelo menos 1 s do trecho 5 a 11 s. O número de WhatsApp na tela do WhatsApp fica coberto pela faixa "número de teste".
+Cuidados: grave com o preset atual da barbearia (corte, degradê, barba, corte + barba, pezinho). Pigmentação saiu do preset em 08/11/2026 porque a Meta a trata como procedimento cosmético 18+; se ela voltar à tabela da casa, não grave o R1 desse nicho até tirar a linha da prévia. A faixa "Prévia · os serviços e preços são exemplo" precisa aparecer em pelo menos 1 s do trecho 5 a 11 s. O número de WhatsApp na tela do WhatsApp fica coberto pela faixa "número de teste".
 
 ---
 
@@ -66,7 +66,7 @@ Três cartões de texto e depois a prévia. Grave a prévia com `?nicho=salao` (
 |---|---|---|---|
 | 0,0 a 3,0 s | Cartão 1: fundo `--papel`, borda de nanquim, sombra dura. | O cartão entra empurrado da direita (sem piscar). | Site e pedido de horário no seu WhatsApp. |
 | 3,0 a 6,0 s | Cartão 2, mesmo estilo, fundo `--sol`. | Entra por cima do 1. | Sem fidelidade. Sem multa. |
-| 6,0 a 9,0 s | Cartão 3, fundo `--ceu`. | Entra por cima do 2. | Se sair, você leva o site, o domínio e os arquivos. |
+| 6,0 a 9,0 s | Cartão 3, fundo `--ceu`. | Entra por cima do 2. | Se sair, você leva o site e os arquivos. |
 | 9,0 a 13,0 s | A prévia do "Salão Esmalte Fictício" rolando devagar, com a faixa "exemplo" visível. | Rolar da abertura até o botão de pedido. | Veja o seu pronto antes de decidir. · selo "nome fictício" |
 | 13,0 a 15,0 s | Quadro final: fundo `--ceu`, "Abrir meu negócio" desenhado. | Nenhuma. | Mensalidade só com o site no ar. |
 
@@ -92,7 +92,7 @@ Cuidados: a legenda "Cena de demonstração" fica na tela de 7 a 11 s, além do 
 ## Texto para acompanhar os vídeos no orgânico (Instagram e Facebook da Creat)
 
 - **R1**: Digite o nome do seu negócio, vire a placa e veja o site pronto, com pedido de horário no seu WhatsApp. Grátis para ver. Link na bio.
-- **R2**: Sem fidelidade, sem multa, domínio no seu nome. Se sair, você leva tudo. Veja o seu site pronto antes de decidir. Link na bio.
+- **R2**: Sem fidelidade, sem multa. Se sair, você leva o site e os arquivos; se tiver domínio próprio, ele fica no seu nome. Veja o seu site pronto antes de decidir. Link na bio.
 - **R3**: Esta é a sede da Creat. Cada personagem é uma etapa do seu site. Cena de demonstração com nome fictício. Link na bio.
 
 Link da bio: `{{site.url}}/?utm_source=instagram&utm_medium=organico&utm_campaign=bio` (ver `utm.md`).

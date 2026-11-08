@@ -42,8 +42,7 @@
     { "id": "degrade", "nome": "Degradê", "preco": 55, "duracaoMin": 50, "descricao": "Degradê do zero, com a transição fechada na navalha." },
     { "id": "barba", "nome": "Barba", "preco": 40, "duracaoMin": 30, "descricao": "Toalha quente, espuma no pincel e navalha." },
     { "id": "corte-barba", "nome": "Corte + barba", "preco": 85, "duracaoMin": 80, "descricao": "O serviço completo numa passada só." },
-    { "id": "pezinho", "nome": "Pezinho", "preco": 20, "duracaoMin": 15, "descricao": "Manutenção rápida do contorno entre um corte e outro." },
-    { "id": "pigmentacao", "nome": "Pigmentação", "preco": 35, "duracaoMin": 30, "descricao": "Preenche falha na barba ou no desenho do corte." }
+    { "id": "pezinho", "nome": "Pezinho", "preco": 20, "duracaoMin": 15, "descricao": "Manutenção rápida do contorno entre um corte e outro." }
   ],
 
   "agendamento": {

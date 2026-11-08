@@ -39,3 +39,32 @@ Antes de ligar o PostHog na vitrine, configure um `before_send` que **corte o `#
   - A T5 precisa acrescentar `bastidores` em `precos.json` e liberar no `checar.cjs` as 2 strings com "agenda" que o briefing exige.
   - O ângulo E só sobe depois de alguém reabrir a fonte de 2024. O ângulo D só sobe com capacidade real em `vagas.json`.
   - Termos e privacidade aguardam revisão jurídica; a lista de pontos está no T3.md.
+
+## T3 (ajustes do revisor) · Verbo
+- **O que fiz:**
+  - Tirei a Pigmentação do preset da barbearia. O vídeo R1 rola a tabela de serviços da prévia, e a Meta trata pigmentação como procedimento cosmético 18+. O preset ficou com 5 serviços. O roteiro R1 agora diz qual tabela gravar e proíbe gravar se a pigmentação voltar. Corrigi a frase do `docs/relatorio/T3.md` e a nota de política do `anuncios.md`.
+  - R13 (indicação) não promete mais "próximo mês grátis". Nenhuma cláusula dos termos cobre indicação. O link sai sem `utm_content={id}` até a Muralha aprovar o uso do id do pedido no analytics. Ajustei `utm.md` para a mesma regra.
+  - Ângulo B: o domínio não está incluído, então nenhum anúncio promete "domínio no seu nome" para todos. B2 (3 nichos) virou "Se tiver domínio próprio, ele fica no seu nome". O título "O domínio fica no seu nome" virou "Saiu? Leva o site e os arquivos" (31 caracteres). Mesmo ajuste no cartão 3 do vídeo R2 e no texto orgânico do R2.
+- **Arquivos:** `conteudo/nichos/barbearia.json`, `marketing/anuncios.md`, `marketing/roteiros-video.md`, `marketing/whatsapp-scripts.md`, `marketing/utm.md`, `docs/relatorio/T3.md`, `RELATORIO.md`.
+- **Como verificar:** `grep -rn -i pigment conteudo/nichos marketing` só acha as notas de regra. `grep -n "domínio no seu nome\|O domínio fica" marketing/anuncios.md marketing/roteiros-video.md` volta vazio. `grep -n "grátis\|utm_content" marketing/whatsapp-scripts.md` mostra que o R13 não tem recompensa nem `utm_content` no link. `python3 -c "import json;json.load(open('conteudo/nichos/barbearia.json'))"` passa.
+- **Pendente:**
+  - **Marcos:** decidir se existe recompensa por indicação. Se existir, definir quando vale, quem recebe e quantas vezes. Depois disso, a regra entra em `termos.md` e volta ao R13.
+  - **Muralha:** aprovar ou recusar o id curto do pedido (`PA-` + 8 caracteres) no `utm_content` do R13.
+  - Os exemplos de `schema/exemplos/*.json` ainda trazem `pigmentacao`. Não vão para anúncio; o Cirro decide se troca.
+  - O `checar_t3.py` acusa `pagina.titulo` acima de 70 nos 3 presets (40 + 20 do nome). Não veio desta rodada; fica com a T4/T5 conferir o limite real no motor.
+
+## BLOQUEIO DE PUBLICAÇÃO · calibragem de 16/11/2026
+A calibragem de 16 a 22/11 **não sobe** enquanto faltar qualquer item abaixo. Não é bug de texto; é dado que falta.
+
+| item | onde | dono | prazo |
+|---|---|---|---|
+| CNPJ ou CPF da Creat.MTT Studio (`{{empresa.documento}}`) | `conteudo/termos.md`, `conteudo/privacidade.md` | Marcos | 12/11/2026 |
+| Endereço da Creat.MTT Studio (`{{empresa.endereco}}`) | `conteudo/termos.md` | Marcos | 12/11/2026 |
+| Domínio final (`{{site.url}}`) | termos, privacidade, anúncios, scripts, UTM | Marcos | 12/11/2026 |
+| Metas e regra de parada da calibragem | `marketing/anuncios.md`, seção da calibragem | Marcos | 13/11/2026 |
+| Revisão jurídica de termos e privacidade (tirar `REVISAO_JURIDICA_PENDENTE`) | `conteudo/termos.md`, `conteudo/privacidade.md` | Marcos (advogado) | 14/11/2026 |
+| Segunda leitura dos anúncios e roteiros | `marketing/` | Lupa | 14/11/2026 |
+| Preço de bastidores em `precos.json` | `precos.json` | Pixel (T5) | antes do build |
+| Liberar no `checar.cjs` as 2 strings com "agenda" que o briefing exige | `checar.cjs`, lista em `conteudo/README.md` | Pixel (T5) | antes do build |
+
+Os prazos são sugestão do Verbo para caber antes de 16/11; o Nimbus confirma ou troca.

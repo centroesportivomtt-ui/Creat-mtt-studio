@@ -42,14 +42,14 @@ Exemplos: `A1-barbearia-v1`, `B1-salao-v1`, `C1-barbearia-v1`, `W2-geral-v1`.
 | Resposta rápida R1 | `{{site.url}}/?utm_source=whatsapp&utm_medium=organico&utm_campaign=r1` |
 | Bio do Instagram da Creat | `{{site.url}}/?utm_source=instagram&utm_medium=organico&utm_campaign=bio` |
 | Post orgânico com vídeo | `{{site.url}}/?utm_source=instagram&utm_medium=organico&utm_campaign=post&utm_content=R1-barbearia-v1` |
-| Indicação de cliente (R13) | `{{site.url}}/?utm_source=indicacao&utm_medium=ref&utm_campaign=indica-v1&utm_content=<id do pedido, PA-XXXXXXXX>` |
+| Indicação de cliente (R13) | `{{site.url}}/?utm_source=indicacao&utm_medium=ref&utm_campaign=indica-v1` (com aval da Muralha: `&utm_content=<id do pedido, PA-XXXXXXXX>`) |
 | Parceiro (fase 3) | `{{site.url}}/?utm_source=parceiro&utm_medium=ref&utm_campaign=parceiro-v1&utm_content=<código do parceiro, sem nome>` |
 | Botão "voltar para o Porta Aberta" em /bastidores/ | `{{site.url}}/?utm_source=bastidores&utm_medium=ref&utm_campaign=bastidores-v1` |
 | Rodapé "Aberto pela Creat · veja o seu" de cada site entregue | `{{site.url}}/?utm_source=rodape&utm_medium=ref&utm_campaign=rodape-v1&utm_content=<nicho>` |
 
 Sobre o rodapé: o briefing (7.2) fala em "UTM origem=rodape". Padronizei como `utm_source=rodape` para caber na mesma régua. O `utm_content` leva só o nicho, nunca o slug do cliente, porque o slug é o nome do negócio.
 
-Sobre a indicação: o `utm_content` leva o id curto do pedido de quem indicou (`PA-` + 8 caracteres, sem dado pessoal). É assim que o Marcos sabe a quem dar o mês grátis do R13.
+Sobre a indicação: o `utm_content` leva o id curto do pedido de quem indicou (`PA-` + 8 caracteres, sem dado pessoal). Serve para saber de onde veio a indicação. Não há recompensa prometida até o Marcos definir a regra nos termos. Uso do id no analytics pendente de aval da Muralha; até lá, o link do R13 sai sem `utm_content`.
 
 ## Como a UTM chega até o PEDIDO v1
 
