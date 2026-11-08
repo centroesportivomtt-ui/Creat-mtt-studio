@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barbearia Fio &amp; Couro · agende pelo celular</title>
+  <meta name="description" content="Barbearia na Vila Mariana, em São Paulo. Corte, degradê e barba na navalha. Agende online pelo celular e confirme no WhatsApp.">
+  <meta name="theme-color" content="#1f1612">
+  <script>
+    try {
+      var t = localStorage.getItem('fio:tema');
+      if (t === 'claro' || t === 'escuro') document.documentElement.dataset.tema = t;
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&amp;family=Instrument+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="efeito.css">
+</head>
+<body>
+  <a class="pular-link" href="#agendar" data-texto="pular">Pular para agendar</a>
+
+  <header class="topo">
+    <p id="letreiro" class="letreiro" role="status" aria-live="polite">Conferindo a agenda…</p>
+    <a class="btn-agendar" id="btn-agendar" href="#agendar" data-texto="agendar">Agendar horário</a>
+    <button id="alternar-tema" type="button" aria-pressed="false" aria-label="Tema claro">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>
+    </button>
+    <button id="alternar-som" type="button" aria-pressed="false" aria-label="Som">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="som-onda" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+    </button>
+  </header>
+
+  <section id="couro" class="couro" tabindex="0" role="group" aria-roledescription="tira de couro" aria-label="Afiar a navalha: use as setas ou espaço" aria-describedby="couro-instrucao">
+    <canvas id="couro-canvas" aria-hidden="true"></canvas>
+    <h1 class="hero-nome" data-config="nomeCurto">FIO <span class="e-comercial">&amp;</span> COURO</h1>
+    <p class="hero-bordao" data-config="bordao">Toda cadeira começa no couro.</p>
+    <p class="hero-dica"><span class="seta-giz" aria-hidden="true"></span><span data-texto="hero.dica">Dá o fio.</span></p>
+    <div id="medidor-fio" role="progressbar" aria-label="Fio da navalha" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25"></div>
+    <p class="hero-afiada" aria-live="polite"></p>
+    <p id="couro-instrucao" class="sr-only" data-texto="hero.instrucaoTeclado">Use as setas ou a barra de espaço para afiar.</p>
+    <div id="navalha-slot"></div>
+  </section>
+
+  <main id="conteudo">
+
+    <section id="manifesto" class="secao manifesto" aria-labelledby="manifesto-titulo">
+      <h2 id="manifesto-titulo">Cadeira de bairro, navalha no fio</h2>
+      <p>Aqui a navalha passa no couro antes de cada cliente. Toda vez.</p>
+      <p>A gente sabe seu nome e lembra do seu corte.</p>
+      <p>Pediu o de sempre, sai o de sempre, sem ficar explicando.</p>
+      <p>Seu horário é seu. Você chega, senta e sai na hora que combinou.</p>
+      <p class="manifesto-bordao">Toda cadeira começa no couro.</p>
+    </section>
+
+    <section id="agendar" class="secao agenda" aria-labelledby="agendar-titulo">
+      <h2 id="agendar-titulo" data-texto="agenda.titulo">Marque sua cadeira</h2>
+      <noscript>
+        <p class="nota">A agenda online precisa de JavaScript. Ative o JavaScript no navegador ou marque pelo WhatsApp da barbearia.</p>
+      </noscript>
+      <form id="form-agenda" class="agendar-grade" novalidate>
+        <div class="agendar-escolhas">
+          <button type="button" id="atalho-sempre" class="atalho-sempre" hidden>O de sempre</button>
+          <fieldset class="passo" id="passo-dia">
+            <legend data-texto="agenda.passoDia">Escolha o dia</legend>
+            <div id="fita-dias" class="fita-dias" role="group" aria-label="Próximos 7 dias"></div>
+          </fieldset>
+
+          <fieldset class="passo" id="passo-hora">
+            <legend data-texto="agenda.passoHora">Quando você tá livre?</legend>
+            <div id="lista-horarios" class="horarios"></div>
+            <p id="aviso-dia" class="nota" aria-live="polite"></p>
+          </fieldset>
+
+          <fieldset class="passo" id="passo-servico" hidden>
+            <legend data-texto="agenda.passoServico">O que cabe nessa passada</legend>
+            <div id="lista-servicos" class="servicos-cabem"></div>
+          </fieldset>
+
+          <fieldset class="passo" id="passo-profissional" hidden>
+            <legend data-texto="agenda.passoProfissional">Com quem?</legend>
+            <div id="chips-profissionais" class="chips"></div>
+          </fieldset>
+
+          <fieldset class="passo" id="passo-dados" hidden>
+            <legend data-texto="agenda.passoDados">Seus dados</legend>
+            <div class="campo">
+              <label for="cliente-nome" data-texto="agenda.nome">Seu nome</label>
+              <input id="cliente-nome" name="nome" type="text" autocomplete="name" required aria-describedby="erro-nome">
+              <p class="erro" id="erro-nome" aria-live="polite"></p>
+            </div>
+            <div class="campo">
+              <label for="cliente-whats" data-texto="agenda.whats">Seu WhatsApp</label>
+              <input id="cliente-whats" name="whats" type="tel" inputmode="tel" autocomplete="tel" required placeholder="(11) 91234-5678" aria-describedby="erro-whats">
+              <p class="erro" id="erro-whats" aria-live="polite"></p>
+            </div>
+            <div class="privacidade">
+              <p class="nota" id="nota-privacidade" data-texto="agenda.privacidade">Seu nome e WhatsApp ficam só neste aparelho para lembrar o seu de sempre.</p>
+              <button type="button" id="esquecer-dados" class="btn-esquecer" aria-describedby="nota-privacidade" data-texto="agenda.esquecer">Esquecer meus dados</button>
+              <p class="nota" id="nota-esquecer" aria-live="polite"></p>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="agendar-resumo">
+          <div class="resumo-escolha" id="resumo-escolha" aria-live="polite"></div>
+          <div id="bloco-confirmar" hidden>
+            <div id="tira-confirmar" class="tira"></div>
+            <button type="submit" id="confirmar-sem-arrastar" class="btn-sem-arrastar" data-texto="agenda.semArrastar">Confirmar sem arrastar</button>
+            <p class="erro" id="erro-geral" aria-live="assertive"></p>
+          </div>
+        </div>
+      </form>
+
+      <section id="espelho" class="espelho" hidden tabindex="-1" aria-labelledby="espelho-titulo">
+        <h3 id="espelho-titulo" data-texto="espelho.titulo">Confere atrás?</h3>
+        <dl id="espelho-dados"></dl>
+        <a id="espelho-whats" class="link-whats" href="https://wa.me/5500000000000" target="_blank" rel="noopener" data-texto="espelho.abrirWhats">Enviar no WhatsApp</a>
+        <button type="button" id="espelho-novo" class="btn" data-texto="espelho.novo">Marcar outro horário</button>
+      </section>
+    </section>
+
+    <section id="servicos" class="secao" aria-labelledby="servicos-titulo">
+      <h2 id="servicos-titulo" data-texto="secoes.servicosTitulo">Tabela da casa</h2>
+      <ul id="lista-precos" class="precos">
+        <li><span class="nome">Corte na régua</span> <span class="duracao">40 min</span> <span class="preco">R$ 45</span></li>
+        <li><span class="nome">Degradê navalhado</span> <span class="duracao">50 min</span> <span class="preco">R$ 55</span></li>
+        <li><span class="nome">Barba toalha quente</span> <span class="duracao">30 min</span> <span class="preco">R$ 40</span></li>
+        <li><span class="nome">Corte + barba</span> <span class="duracao">80 min</span> <span class="preco">R$ 85</span></li>
+        <li><span class="nome">Pezinho e sobrancelha</span> <span class="duracao">15 min</span> <span class="preco">R$ 20</span></li>
+        <li><span class="nome">Pigmentação</span> <span class="duracao">30 min</span> <span class="preco">R$ 35</span></li>
+      </ul>
+    </section>
+
+    <section id="profissionais" class="secao" aria-labelledby="profissionais-titulo">
+      <h2 id="profissionais-titulo" data-texto="secoes.profissionaisTitulo">Quem está na cadeira</h2>
+      <ul id="lista-profissionais" class="profissionais">
+        <li><h3 class="nome">Seu Dirceu</h3> <p class="especialidade">Navalha</p></li>
+        <li><h3 class="nome">Tati Moraes</h3> <p class="especialidade">Degradê</p></li>
+        <li><h3 class="nome">Wesley "Régua"</h3> <p class="especialidade">Barba</p></li>
+      </ul>
+    </section>
+
+    <section id="avaliacoes" class="secao quadro" aria-labelledby="avaliacoes-titulo">
+      <h2 id="avaliacoes-titulo" data-texto="secoes.avaliacoesTitulo">Recado no quadro</h2>
+      <ul id="lista-avaliacoes">
+        <li><blockquote><p>Sentei, pedi o de sempre e o Dirceu nem perguntou. Doze anos assim.</p></blockquote><cite>Márcio, cliente desde 2014</cite></li>
+        <li><blockquote><p>Marquei às 18h40 pelo celular, cheguei 18h38 e já tinha cadeira.</p></blockquote><cite>Rafa, Vila Clementino</cite></li>
+      </ul>
+    </section>
+
+    <section id="onde" class="secao contato" aria-labelledby="onde-titulo">
+      <div class="contato-local">
+        <h2 id="onde-titulo" data-texto="secoes.enderecoTitulo">Onde fica</h2>
+        <address class="endereco" id="endereco">Rua Domingos de Morais, 1418<br>Vila Mariana, São Paulo · SP<br>CEP 04010-200</address>
+        <p><a id="link-mapa" class="link-mapa" href="https://www.google.com/maps/search/?api=1&amp;query=Rua%20Domingos%20de%20Morais%2C%201418%2C%20Vila%20Mariana%2C%20S%C3%A3o%20Paulo%20-%20SP" target="_blank" rel="noopener" data-texto="secoes.comoChegar">Como chegar no Google Maps</a></p>
+        <p><a id="link-instagram" class="instagram" href="https://www.instagram.com/fioecouro" rel="noopener" target="_blank">Ver cortes no Instagram · @fioecouro</a></p>
+      </div>
+      <div class="contato-horario">
+        <h3 data-texto="secoes.funcionamentoTitulo">Horário da casa</h3>
+        <table class="funcionamento" id="tabela-funcionamento">
+          <caption class="sr-only">Horário de funcionamento</caption>
+          <tbody>
+            <tr><th scope="row">Terça a sábado</th><td>9h às 20h</td></tr>
+            <tr class="is-folga"><th scope="row">Domingo e segunda</th><td>folga</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <a id="whats-flutuante" class="whats-flutuante" hidden href="https://wa.me/5500000000000" target="_blank" rel="noopener" aria-label="Chamar no WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.23 8.23 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.42h-.48c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28Z"/></svg>
+  </a>
+
+  <footer class="rodape">
+    <p><strong data-config="nome">Barbearia Fio &amp; Couro</strong> · <span data-texto="secoes.rodape">Navalha afiada, cadeira limpa e horário cumprido.</span></p>
+    <p><span id="rodape-horario">Terça a Sábado, 9h às 20h</span><span id="rodape-contato" hidden> · <a id="rodape-whats" href="https://wa.me/5500000000000" target="_blank" rel="noopener">WhatsApp <span data-config="telefoneExibicao">(00) 00000-0000</span></a></span></p>
+  </footer>
+
+  <script src="config.js" defer></script>
+  <script src="efeito.js" defer></script>
+  <script src="som.js" defer></script>
+  <script src="agendamento.js" defer></script>
+</body>
+</html>

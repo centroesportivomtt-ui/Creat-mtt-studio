@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia da Agência Creat Nuvem para Claude Code</title>
+<meta name="description" content="Guia de uso dos 15 agentes da Creat Nuvem no Claude Code: quando chamar cada um, exemplos de prompt, skills, fluxo em ondas, custos de tokens e boas práticas.">
+<style>
+/* Conceito: Caderno de estúdio — o guia é a pasta de briefing que fica na mesa da sede 3D.
+   Momento-assinatura: a capa com a nuvem de contorno grosso e o carimbo amarelo "15 agentes".
+   Layout: folhas A4 com cartões de contorno de nanquim e sombra dura, uma ideia por cartão. */
+:root{
+  --cor-fundo:#FFF6E3;      /* creme de papel */
+  --cor-tinta:#1E1B2E;      /* nanquim, mesmo tom do contorno da sede */
+  --cor-destaque:#FFC93C;   /* amarelo sol */
+  --cor-apoio:#FFE7A8;      /* amarelo claro para faixas */
+  --cor-papel:#FFFDF7;      /* cartão */
+  --cor-suave:#5A5266;      /* texto secundário puxado para o nanquim */
+  --fonte-display: "Arial Black", "Helvetica Neue", Helvetica, system-ui, sans-serif;
+  --fonte-texto: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fonte-dado: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --ritmo-1:1.5mm; --ritmo-2:3mm; --ritmo-3:5mm; --ritmo-4:8mm;
+  --traco:0.9mm;            /* contorno grosso */
+  --sombra:1.4mm 1.4mm 0 var(--cor-tinta);
+}
+@page{ size:A4; margin:0; }
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  background:#E9E1CF; color:var(--cor-tinta);
+  font-family:var(--fonte-texto); font-size:10pt; line-height:1.42;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+.pagina{
+  width:210mm; height:297mm; margin:8mm auto; padding:14mm 15mm 12mm;
+  background:var(--cor-fundo); position:relative; overflow:hidden;
+  page-break-after:always; break-after:page;
+  display:flex; flex-direction:column;
+}
+.pagina:last-child{ page-break-after:auto; break-after:auto; }
+@media print{
+  body{ background:var(--cor-fundo); }
+  .pagina{ margin:0; box-shadow:none; }
+}
+@media screen{ .pagina{ box-shadow:0 2mm 6mm rgba(30,27,46,.18); } }
+
+h1,h2,h3{ font-family:var(--fonte-display); line-height:1.08; margin:0; text-wrap:balance; }
+h2{ font-size:20pt; margin-bottom:var(--ritmo-2); }
+h3{ font-size:11.5pt; margin-bottom:var(--ritmo-1); }
+p{ margin:0 0 var(--ritmo-2); }
+.lead{ font-size:11pt; max-width:160mm; }
+code,.cmd{ font-family:var(--fonte-dado); font-size:8.6pt; }
+code{ background:var(--cor-apoio); padding:0 .8mm; border-radius:.8mm; }
+ul,ol{ margin:0 0 var(--ritmo-2); padding-left:5mm; }
+li{ margin-bottom:1mm; }
+
+.cabeca{ display:flex; align-items:baseline; justify-content:space-between; gap:var(--ritmo-2);
+  border-bottom:var(--traco) solid var(--cor-tinta); padding-bottom:var(--ritmo-1); margin-bottom:var(--ritmo-3); }
+.cabeca .sec{ font-family:var(--fonte-display); font-size:8pt; letter-spacing:.06em; text-transform:uppercase;
+  background:var(--cor-destaque); border:.6mm solid var(--cor-tinta); padding:.6mm 2mm; }
+.rodape{ margin-top:auto; padding-top:var(--ritmo-2); display:flex; justify-content:space-between;
+  font-size:7.8pt; color:var(--cor-suave); border-top:.4mm solid var(--cor-tinta); }
+
+.cartao{ background:var(--cor-papel); border:var(--traco) solid var(--cor-tinta); border-radius:2.5mm;
+  box-shadow:var(--sombra); padding:var(--ritmo-2) var(--ritmo-3); margin-bottom:var(--ritmo-3); }
+.cartao p:last-child,.cartao ul:last-child{ margin-bottom:0; }
+.grade{ display:grid; grid-template-columns:1fr 1fr; gap:var(--ritmo-3); }
+.grade .cartao{ margin-bottom:0; }
+.faixa{ background:var(--cor-destaque); border:var(--traco) solid var(--cor-tinta); border-radius:2.5mm;
+  padding:var(--ritmo-2) var(--ritmo-3); margin-bottom:var(--ritmo-3); box-shadow:var(--sombra); }
+.faixa p:last-child{ margin-bottom:0; }
+
+/* Cartão de agente */
+.agente{ display:flex; flex-direction:column; padding:var(--ritmo-2) var(--ritmo-3) var(--ritmo-2); }
+.agente .topo{ display:flex; align-items:center; gap:var(--ritmo-2); margin-bottom:var(--ritmo-1); }
+.agente .nome{ font-family:var(--fonte-display); font-size:12.5pt; }
+.agente .id{ font-family:var(--fonte-dado); font-size:8pt; background:var(--cor-destaque);
+  border:.5mm solid var(--cor-tinta); padding:.2mm 1.5mm; border-radius:1mm; }
+.agente .cargo{ font-size:8.4pt; color:var(--cor-suave); margin-left:auto; text-align:right; }
+.agente dl{ margin:0 0 var(--ritmo-1); display:grid; grid-template-columns:19mm 1fr; gap:.6mm var(--ritmo-1); font-size:9pt; }
+.agente dt{ font-weight:700; }
+.agente dd{ margin:0; }
+.prompt{ font-family:var(--fonte-dado); font-size:8pt; line-height:1.35; background:var(--cor-fundo);
+  border:.45mm dashed var(--cor-tinta); border-radius:1.5mm; padding:1.3mm 2mm; margin-top:1.3mm; }
+
+/* Nuvem da capa, em SVG inline */
+.capa{ background:var(--cor-destaque); justify-content:space-between; }
+.capa .marca{ font-family:var(--fonte-display); font-size:10pt; letter-spacing:.08em; text-transform:uppercase; }
+.capa h1{ font-size:40pt; margin:var(--ritmo-3) 0 var(--ritmo-3); max-width:170mm; }
+.capa .sub{ font-size:13pt; max-width:150mm; margin-bottom:var(--ritmo-4); }
+.capa svg{ display:block; width:150mm; height:auto; margin:0 auto; }
+.carimbo{ display:inline-block; background:var(--cor-papel); border:var(--traco) solid var(--cor-tinta);
+  box-shadow:var(--sombra); border-radius:2mm; padding:var(--ritmo-1) var(--ritmo-3);
+  font-family:var(--fonte-display); font-size:11pt; transform:rotate(-3deg); }
+.aviso{ background:var(--cor-papel); border:var(--traco) solid var(--cor-tinta); border-radius:2.5mm;
+  padding:var(--ritmo-2) var(--ritmo-3); font-size:9pt; box-shadow:var(--sombra); }
+.aviso p{ margin:0 0 1mm; }
+
+/* Tabelas */
+table{ width:100%; border-collapse:separate; border-spacing:0; font-size:9pt;
+  border:var(--traco) solid var(--cor-tinta); border-radius:2.5mm; overflow:hidden; background:var(--cor-papel);
+  box-shadow:var(--sombra); margin-bottom:var(--ritmo-3); }
+th,td{ text-align:left; vertical-align:top; padding:1.6mm 2.4mm; border-bottom:.35mm solid var(--cor-tinta); }
+tr:last-child td{ border-bottom:0; }
+th{ background:var(--cor-destaque); font-family:var(--fonte-display); font-size:8.6pt; }
+
+/* Ondas */
+.ondas{ display:grid; grid-template-columns:repeat(6,1fr); gap:2mm; margin-bottom:var(--ritmo-3); }
+.onda{ background:var(--cor-papel); border:var(--traco) solid var(--cor-tinta); border-radius:2.5mm; padding:2mm;
+  box-shadow:var(--sombra); font-size:8.2pt; line-height:1.3; }
+.onda b{ display:block; font-family:var(--fonte-display); font-size:9pt; margin-bottom:1mm; }
+.onda .n{ display:inline-block; background:var(--cor-destaque); border:.5mm solid var(--cor-tinta); border-radius:50%;
+  width:6mm; height:6mm; text-align:center; line-height:5mm; font-family:var(--fonte-display); font-size:8pt; margin-bottom:1mm; }
+
+.glossario dt{ font-family:var(--fonte-display); font-size:9.6pt; margin-top:var(--ritmo-2); }
+.glossario dd{ margin:0.6mm 0 0; }
+.duas{ columns:2; column-gap:var(--ritmo-4); }
+.duas > *{ break-inside:avoid; }
+.ok{ font-weight:700; }
+</style>
+</head>
+<body>
+
+<!-- 1. CAPA -->
+<section class="pagina capa" aria-label="Capa">
+  <div>
+    <div class="marca">Creat Nuvem · guia do cliente</div>
+    <h1>Sua agência de 15 agentes dentro do Claude Code</h1>
+    <p class="sub">Quem faz o quê, quando chamar cada um, como pedir, quanto custa em tokens e os erros que fazem perder tempo.</p>
+    <span class="carimbo">15 agentes · 6 skills · 1 fluxo em ondas</span>
+  </div>
+  <svg viewBox="0 0 300 170" role="img" aria-label="Desenho de uma nuvem sorridente com contorno preto grosso">
+    <g fill="#FFFDF7" stroke="#1E1B2E" stroke-width="7" stroke-linejoin="round">
+      <path d="M62 140 C28 140 18 104 44 90 C38 58 76 42 98 60 C108 26 160 18 178 52 C204 34 244 50 240 86 C272 92 274 140 236 140 Z"/>
+    </g>
+    <ellipse cx="128" cy="96" rx="8" ry="11" fill="#1E1B2E"/>
+    <ellipse cx="172" cy="96" rx="8" ry="11" fill="#1E1B2E"/>
+    <circle cx="131" cy="92" r="2.6" fill="#FFFDF7"/>
+    <circle cx="175" cy="92" r="2.6" fill="#FFFDF7"/>
+    <path d="M136 116 Q150 128 164 116" fill="none" stroke="#1E1B2E" stroke-width="6" stroke-linecap="round"/>
+    <ellipse cx="110" cy="114" rx="9" ry="5" fill="#FF8FA3"/>
+    <ellipse cx="190" cy="114" rx="9" ry="5" fill="#FF8FA3"/>
+    <path d="M20 160 H280" stroke="#1E1B2E" stroke-width="5" stroke-linecap="round"/>
+  </svg>
+  <div class="aviso">
+    <p><b>Compatível com o Claude Code.</b> A Creat Nuvem não é um produto oficial da Anthropic e não tem vínculo com ela.</p>
+    <p>Para usar, você precisa de uma assinatura ou conta do Claude Code ativa. Cada agente consome tokens da sua conta.</p>
+    <p>Suporte do pacote: mttcreatt@gmail.com</p>
+  </div>
+</section>
+
+<!-- 2. O QUE É -->
+<section class="pagina" aria-label="O que é a agência">
+  <div class="cabeca"><h2>O que é a agência</h2><span class="sec">Comece aqui</span></div>
+  <p class="lead">O Claude Code faz quase tudo sozinho, mas faz melhor quando cada tarefa tem um dono com instruções claras. A Creat Nuvem é isso: 15 arquivos de agente, cada um com cargo, regras de qualidade e as ferramentas que deve usar. Você pede o trabalho pelo nome de quem faz.</p>
+
+  <div class="grade">
+    <div class="cartao">
+      <h3>O que vem no pacote</h3>
+      <ul>
+        <li><code>.claude/agents/</code>: os 15 agentes</li>
+        <li><code>.claude/skills/</code>: 6 skills da casa e o gerador da sede ao vivo</li>
+        <li><code>.claude/workflows/agencia.js</code>: o fluxo que coordena a equipe</li>
+        <li><code>CLAUDE.md</code>: as regras da casa</li>
+        <li><code>sede/</code>: a ilha 3D com os personagens</li>
+      </ul>
+    </div>
+    <div class="cartao">
+      <h3>Instalar em 2 minutos</h3>
+      <ol>
+        <li>Copie <code>.claude/</code> e <code>CLAUDE.md</code> para a raiz do seu repositório. Se já existirem, mescle (veja o README).</li>
+        <li>Rode <code>npm install -D playwright</code> e <code>npx playwright install chromium</code>.</li>
+        <li>Abra o Claude Code e peça: <code>Liste os agentes disponíveis</code>.</li>
+      </ol>
+    </div>
+  </div>
+
+  <h3 style="margin-top:var(--ritmo-4)">Três jeitos de trabalhar</h3>
+  <table>
+    <tr><th style="width:28%">jeito</th><th>como pedir</th><th style="width:30%">quando usar</th></tr>
+    <tr><td><b>Um agente só</b></td><td><code>Use o agente frontend para construir a página de preços</code></td><td>tarefa de uma etapa, com dono óbvio</td></tr>
+    <tr><td><b>Uma dupla em sequência</b></td><td>chame o construtor e, quando terminar, o <code>revisor</code> ou o <code>qa</code> sobre o mesmo trabalho</td><td>mudança pequena que precisa de segunda opinião</td></tr>
+    <tr><td><b>A agência inteira</b></td><td><code>rode o workflow agencia com o briefing: ...</code></td><td>projeto com várias etapas: site, app, landing page, funcionalidade grande</td></tr>
+  </table>
+
+  <div class="faixa">
+    <p><b>Regra de ouro:</b> quanto mais concreto o pedido, menos voltas. Diga o que é, para quem, o que conta como pronto e o que fica de fora. "Página de preços com 3 planos, celular primeiro, sem animação" rende mais que "faz uma página bonita".</p>
+  </div>
+
+  <h3>A sede 3D</h3>
+  <p>Rode <code>node sede/servidor.cjs</code> na raiz do repositório e abra <code>http://localhost:8000</code>. Você vê a ilha com os 15 personagens, cada um na sua mesa. Toque num agente para ler a ficha e copiar o comando de chamada. No modo ao vivo, a sede lê os diários dos fluxos do Claude Code na sua máquina e mostra quem está trabalhando, em quê e quantos tokens já usou.</p>
+  <div class="rodape"><span>Creat Nuvem · guia do cliente</span><span>2</span></div>
+</section>
+
+<!-- 3. AGENTES: PLANEJAR E PENSAR -->
+<section class="pagina" aria-label="Agentes que planejam e pensam">
+  <div class="cabeca"><h2>Quem planeja e pensa</h2><span class="sec">Os 15 agentes · 1 de 4</span></div>
+  <p>Chame estes antes de construir. Um plano ruim custa mais tokens depois do que custa agora.</p>
+  <div class="grade">
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Nimbus</span><span class="id">diretor</span><span class="cargo">Diretor de Operações<br>Sonnet · só lê</span></div>
+      <dl><dt>Faz</dt><dd>transforma o briefing num plano em ondas: tarefas, um responsável por tarefa, arquivos e critérios de aceite. Não escreve código.</dd>
+      <dt>Quando</dt><dd>primeiro, em todo projeto com mais de uma etapa.</dd></dl>
+      <div class="prompt">Use o agente diretor para planejar um site de cardápio para uma pizzaria, com pedido pelo WhatsApp, em no máximo 6 tarefas.</div>
+      <div class="prompt">Use o agente diretor para ler este repositório e dizer em que ordem eu devo atacar as issues abertas.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Faísca</span><span class="id">criativo</span><span class="cargo">Diretor Criativo<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>gera 3 conceitos por metáfora, inversão e ritual, pontua e recomenda um, com o momento-assinatura escrito segundo a segundo.</dd>
+      <dt>Quando</dt><dd>antes do design, quando o projeto precisa ser lembrado; ou quando algo pronto está "correto mas sem graça".</dd></dl>
+      <div class="prompt">Use o agente criativo para propor 3 conceitos para a landing page de um estúdio de tatuagem em Curitiba.</div>
+      <div class="prompt">Use o agente criativo para dizer por que a home atual parece template e sugerir um momento-assinatura.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Cirro</span><span class="id">arquiteto</span><span class="cargo">Arquiteto de Software<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>escolhe a stack mais simples que aguenta o requisito, define pastas, modelo de dados e contratos de API. Registra decisões em ADR.</dd>
+      <dt>Quando</dt><dd>antes de frontend e backend trabalharem em paralelo, ou numa mudança que atravessa o sistema.</dd></dl>
+      <div class="prompt">Use o agente arquiteto para definir a estrutura e o contrato da API de um app de lista de compras com login.</div>
+      <div class="prompt">Use o agente arquiteto para escrever um ADR comparando SQLite e Postgres para este projeto.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Radar</span><span class="id">pesquisador</span><span class="cargo">Pesquisador<br>Sonnet</span></div>
+      <dl><dt>Faz</dt><dd>traz fatos com fonte: concorrentes, referências, documentação, preços. Cruza duas fontes e diz a data de cada informação.</dd>
+      <dt>Quando</dt><dd>antes de decidir algo que depende de um fato que você não confirmou.</dd></dl>
+      <div class="prompt">Use o agente pesquisador para listar 5 barbearias de São Paulo com agendamento online e o que cada site faz na primeira tela.</div>
+      <div class="prompt">Use o agente pesquisador para confirmar na documentação oficial a versão atual do Three.js e o que mudou nos addons.</div>
+    </article>
+  </div>
+  <div class="rodape"><span>Creat Nuvem · guia do cliente</span><span>3</span></div>
+</section>
+
+<!-- 4. AGENTES: CONSTRUIR -->
+<section class="pagina" aria-label="Agentes que constroem">
+  <div class="cabeca"><h2>Quem constrói</h2><span class="sec">Os 15 agentes · 2 de 4</span></div>
+  <p>O núcleo da equipe. Todos rodam em Opus e editam arquivos. Dê a cada um a lista de arquivos que ele pode tocar.</p>
+  <div class="grade">
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Pixel</span><span class="id">frontend</span><span class="cargo">Engenheiro Frontend<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>páginas, componentes e formulários, celular primeiro, com foco visível, contraste AA e tokens do projeto. Abre a página no navegador antes de entregar.</dd>
+      <dt>Quando</dt><dd>para criar ou mudar qualquer tela.</dd></dl>
+      <div class="prompt">Use o agente frontend para construir a página de preços com 3 planos, responsiva em 375, 768 e 1440 px.</div>
+      <div class="prompt">Use o agente frontend para corrigir a rolagem horizontal que aparece no menu em 390 px.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Forja</span><span class="id">backend</span><span class="cargo">Engenheira Backend<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>APIs, banco, autenticação, webhooks. Valida entrada, usa consulta parametrizada, segredo só em variável de ambiente, escreve testes.</dd>
+      <dt>Quando</dt><dd>sempre que há dado que sai do navegador.</dd></dl>
+      <div class="prompt">Use o agente backend para criar a rota POST /reservas com validação, teste de sucesso e teste de erro.</div>
+      <div class="prompt">Use o agente backend para receber o webhook de pagamento de forma idempotente e documentar as variáveis no .env.example.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Paleta</span><span class="id">designer</span><span class="cargo">Designer de Interface<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>identidade visual, tokens de cor, tipografia e espaçamento, layout por seção, tema claro e escuro desenhados. Revisa UX com prints.</dd>
+      <dt>Quando</dt><dd>antes do frontend, ou depois dele para revisar.</dd></dl>
+      <div class="prompt">Use o agente designer para criar o tokens.css de uma padaria de bairro, com tema claro e escuro.</div>
+      <div class="prompt">Use o agente designer para revisar a página de contato e listar os problemas visuais por ordem de impacto.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Verbo</span><span class="id">copywriter</span><span class="cargo">Redator e Conteúdo<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>textos de site, microcopy, e-mails, roteiros e SEO em PT-BR. Botão diz o que acontece; falta de dado vira um aviso de PREENCHER bem visível, nunca texto de enchimento.</dd>
+      <dt>Quando</dt><dd>junto com o design, antes do frontend fechar a página.</dd></dl>
+      <div class="prompt">Use o agente copywriter para escrever os textos da home de uma clínica veterinária, com 2 opções de título.</div>
+      <div class="prompt">Use o agente copywriter para reescrever as mensagens de erro do formulário dizendo o que houve e como resolver.</div>
+    </article>
+  </div>
+  <div class="rodape"><span>Creat Nuvem · guia do cliente</span><span>4</span></div>
+</section>
+
+<!-- 5. AGENTES: MOVIMENTO, IMAGEM E SOM -->
+<section class="pagina" aria-label="Agentes de movimento, imagem e som">
+  <div class="cabeca"><h2>Quem dá vida</h2><span class="sec">Os 15 agentes · 3 de 4</span></div>
+  <p>A camada que diferencia um site comum. Use com moderação: a direção de arte da casa pede uma ousadia só por projeto.</p>
+  <div class="grade">
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Órbita</span><span class="id">motion-3d</span><span class="cargo">Animação e 3D<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>cenas Three.js em estilo desenho, animações CSS e GSAP, transições e microinterações. Anima só transform e opacity; sempre com versão para movimento reduzido.</dd>
+      <dt>Quando</dt><dd>3D, mascote, transição de página, efeito de rolagem.</dd></dl>
+      <div class="prompt">Use o agente motion-3d para criar um mascote 3D com a skill toon-3d que pula ao ser tocado.</div>
+      <div class="prompt">Use o agente motion-3d para animar a entrada dos cartões em sequência, com 200 ms e prefers-reduced-motion.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Prisma</span><span class="id">shader</span><span class="cargo">Creative Coder<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>shaders GLSL, partículas, ruído, pós-processamento e arte generativa com semente. Mede o custo e tem plano B se o WebGL falhar.</dd>
+      <dt>Quando</dt><dd>o efeito que um componente comum não faz.</dd></dl>
+      <div class="prompt">Use o agente shader para criar um fundo de ruído animado em amarelo que rode a 60 fps num celular médio.</div>
+      <div class="prompt">Use o agente shader para trocar o vídeo do hero por partículas e manter um gradiente CSS como alternativa.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Eco</span><span class="id">som</span><span class="cargo">Designer de Som<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>microssons e trilha ambiente sintetizados em Web Audio, sem arquivos de áudio. Nunca toca sozinho; volume baixo; botão de mudo que lembra a escolha.</dd>
+      <dt>Quando</dt><dd>quando o som reforça um gesto da interface.</dd></dl>
+      <div class="prompt">Use o agente som para criar o som de clique e de sucesso do formulário, com botão de som visível.</div>
+      <div class="prompt">Use o agente som para fazer o tom subir conforme a barra de progresso do cadastro avança.</div>
+    </article>
+    <div class="cartao">
+      <h3>Antes de chamar estes três</h3>
+      <ul>
+        <li>Defina com o <code>criativo</code> qual é o momento-assinatura. Efeito sem motivo é peso sem retorno.</li>
+        <li>Diga o aparelho-alvo: "celular médio, 60 fps" muda as escolhas técnicas.</li>
+        <li>Peça a versão para <code>prefers-reduced-motion</code> no próprio prompt.</li>
+        <li>Para 3D em estilo desenho, cite a skill <code>toon-3d</code>: o kit já resolve material de 3 tons, contorno e pulo com comprimir e esticar.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="rodape"><span>Creat Nuvem · guia do cliente</span><span>5</span></div>
+</section>
+
+<!-- 6. AGENTES: QUALIDADE E ENTREGA -->
+<section class="pagina" aria-label="Agentes de qualidade e entrega">
+  <div class="cabeca"><h2>Quem confere e publica</h2><span class="sec">Os 15 agentes · 4 de 4</span></div>
+  <p>Revisor e segurança só leem e apontam; não editam, de propósito. Quem corrige é o agente que construiu.</p>
+  <div class="grade">
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Crivo</span><span class="id">revisor</span><span class="cargo">Revisor de Código<br>Sonnet · só lê</span></div>
+      <dl><dt>Faz</dt><dd>lê o diff atrás de bugs, casos de borda, duplicação e desvios das convenções. Cada achado com arquivo, linha e o cenário que quebra. Termina com veredito.</dd>
+      <dt>Quando</dt><dd>depois de toda implementação.</dd></dl>
+      <div class="prompt">Use o agente revisor para revisar o diff desta branch contra a main.</div>
+      <div class="prompt">Use o agente revisor para procurar código duplicado em src/components e sugerir o que unificar.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Lupa</span><span class="id">qa</span><span class="cargo">Qualidade e Testes<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>roda build e testes, percorre os fluxos no navegador em 390 e 1440 px, testa casos de borda e escreve o relatório de bug com passos para reproduzir.</dd>
+      <dt>Quando</dt><dd>antes de dizer que algo está pronto.</dd></dl>
+      <div class="prompt">Use o agente qa para testar o fluxo de cadastro no celular e no tema escuro, incluindo campo vazio e clique duplo.</div>
+      <div class="prompt">Use o agente qa para reproduzir o bug "o botão Enviar não responde no iPhone" e dizer o arquivo provável.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Muralha</span><span class="id">seguranca</span><span class="cargo">Segurança<br>Sonnet · só lê</span></div>
+      <dl><dt>Faz</dt><dd>procura segredos no código e no histórico, dependências vulneráveis, XSS, injeção, CORS aberto, cookies frouxos e dados pessoais em log (LGPD).</dd>
+      <dt>Quando</dt><dd>antes de publicar qualquer coisa com formulário, login ou API.</dd></dl>
+      <div class="prompt">Use o agente seguranca para auditar o formulário de contato e a rota que recebe os dados antes de publicar.</div>
+      <div class="prompt">Use o agente seguranca para checar se algum token foi commitado no histórico do git.</div>
+    </article>
+    <article class="cartao agente">
+      <div class="topo"><span class="nome">Trilho</span><span class="id">devops</span><span class="cargo">DevOps e Deploy<br>Opus</span></div>
+      <dl><dt>Faz</dt><dd>scripts de build, CI no GitHub Actions com versões fixadas, deploy reproduzível e variáveis de ambiente. Não publica em produção sem a sua confirmação.</dd>
+      <dt>Quando</dt><dd>para rodar com um comando e publicar.</dd></dl>
+      <div class="prompt">Use o agente devops para configurar o GitHub Actions com lint, teste e build em cada pull request.</div>
+      <div class="prompt">Use o agente devops para descobrir por que o build falha na Vercel e listar o que eu preciso configurar no painel.</div>
+    </article>
+  </div>
+  <div class="rodape"><span>Creat Nuvem · guia do cliente</span><span>6</span></div>
+</section>
+
+<!-- 7. SKILLS -->
+<section class="pagina" aria-label="Skills da casa">
+  <div class="cabeca"><h2>As skills da casa</h2><span class="sec">Ferramentas</span></div>
+  <p class="lead">Uma skill é um manual que o agente carrega quando a tarefa pede. Os agentes já sabem quais usar, porque elas estão no cabeçalho de cada arquivo. Você também pode citar uma pelo nome no pedido.</p>
+  <table>
+    <tr><th style="width:23%">skill</th><th>para quê</th><th style="width:33%">como usar</th></tr>
+    <tr><td><code>ideacao</code></td><td>sair da primeira ideia: mapear o mundo do cliente, gerar conceitos por metáfora, inversão e ritual, pontuar e enxertar</td><td>o <code>criativo</code> e o <code>diretor</code> usam sozinhos</td></tr>
+    <tr><td><code>direcao-de-arte</code></td><td>ficha de direção (conceito, momento-assinatura, tokens), regras de identidade e a lista de clichês proibidos</td><td>citada por designer, frontend, criativo e copywriter</td></tr>
+    <tr><td><code>toon-3d</code></td><td>3D com cara de desenho: sombra em 3 tons, contorno de nanquim, pulo com comprimir e esticar, animação a 12 poses por segundo</td><td>kit pronto em <code>.claude/skills/toon-3d/toon-kit.js</code></td></tr>
+    <tr><td><code>verificacao-visual</code></td><td>prints em celular e desktop, claro e escuro, com erro de console, requisição quebrada, rolagem lateral e texto pequeno</td><td><span class="cmd">node .claude/skills/verificacao-visual/olhar.cjs index.html</span></td></tr>
+    <tr><td><code>navegador</code></td><td>Chromium que fica aberto entre comandos para abrir, ver, clicar, digitar, ler, tirar print e checar o console</td><td><span class="cmd">node .claude/skills/navegador/navegar.cjs abrir &lt;url&gt; --celular</span></td></tr>
+    <tr><td><code>padrao-de-entrega</code></td><td>definição de pronto: cada item marcado como ok, falhou ou não verificado, e o formato do relatório</td><td>peça: "confira com o padrao-de-entrega"</td></tr>
+    <tr><td><code>sede-ao-vivo</code></td><td>não é skill de agente: é o script que lê os diários dos fluxos e gera o estado da sede 3D</td><td>roda sozinho com <span class="cmd">node sede/servidor.cjs</span></td></tr>
+  </table>
+
+  <div class="grade">
+    <div class="cartao">
+      <h3>Skills de plugins</h3>
+      <p>Os arquivos dos agentes citam skills de plugins (por exemplo <code>frontend-design</code>, <code>impeccable</code>, <code>code-review</code>, <code>security-review</code>). Elas só funcionam se o plugin estiver instalado na sua conta. Sem ele, o agente segue as próprias regras e ignora a referência.</p>
+    </div>
+    <div class="cartao">
+      <h3>Conectores (MCP)</h3>
+      <p>Quem constrói herda as ferramentas da sessão: se você tem Figma, GitHub ou outro conector ligado, o agente pode usar. O pacote não traz <code>.mcp.json</code>; o README mostra como criar o do Playwright, se quiser.</p>
+    </div>
+  </div>
+  <div class="faixa" style="margin-top:var(--ritmo-3)">
+    <p><b>Os prints são a prova.</b> A regra da casa é: nenhuma interface está pronta sem percorrer o fluxo no <code>navegador</code>, rodar a <code>verificacao-visual</code> e olhar os prints. Peça isso explicitamente quando chamar um agente fora do fluxo.</p>
+  </div>
+  <div class="rodape"><span>Creat Nuvem · guia do cliente</span><span>7</span></div>
+</section>
+
+<!-- 8. FLUXO EM ONDAS -->
+<section class="pagina" aria-label="O fluxo em ondas">
+  <div class="cabeca"><h2>O fluxo em ondas</h2><span class="sec">A agência inteira</span></div>
+  <p class="lead">O arquivo <code>.claude/workflows/agencia.js</code> passa o trabalho de agente em agente, sem você copiar e colar entre eles. Peça: <code>rode o workflow agencia com o briefing: landing page para uma barbearia com agendamento online</code>.</p>
+  <div class="ondas">
+    <div class="onda"><span class="n">1</span><b>Conceito</b>três Faíscas criam conceitos por ângulos diferentes; um júri pontua e escolhe, enxertando a melhor ideia dos outros</div>
+    <div class="onda"><span class="n">2</span><b>Briefing</b>Nimbus lê o repositório e monta o plano em ondas, a serviço do conceito</div>
+    <div class="onda"><span class="n">3</span><b>Construção</b>os especialistas de cada onda trabalham em paralelo; Crivo revisa cada entrega</div>
+    <div class="onda"><span class="n">4</span><b>QA</b>Lupa, Muralha e Crivo procuram problemas; outro agente confere cada achado</div>
+    <div class="onda"><span class="n">5</span><b>Correções</b>o responsável corrige só o que foi confirmado</div>
+    <div class="onda"><span class="n">6</span><b>Entrega</b>Nimbus confere os critérios de aceite e escreve o relatório</div>
+  </div>
+  <div class="grade">
+    <div class="cartao">
+      <h3>Por que ondas</h3>
+      <p>Tarefas da mesma onda rodam ao mesmo tempo, então não podem editar os mesmos arquivos. Uma onda só começa quando a anterior termina. Assim o designer entrega os tokens antes de o frontend precisar deles, e ninguém sobrescreve o trabalho do outro.</p>
+    </div>
+    <div class="cartao">
+      <h3>Opções do fluxo</h3>
+      <ul>
+        <li><code>conceito: false</code> pula a etapa 1. Use em tarefa técnica, sem parte visual.</li>
+        <li><code>max_tarefas</code> limita o plano (padrão 10).</li>
+        <li>Exemplo: <span class="cmd">{ briefing: "API de reservas", conceito: false, max_tarefas: 4 }</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="cartao" style="margin-top:var(--ritmo-3)">
+    <h3>O RELATORIO.md</h3>
+    <p>Cada agente acrescenta uma seção curta ao <code>RELATORIO.md</code> da pasta do projeto: o que fez, arquivos tocados, como verificar e o que ficou pendente. Se a sua cota acabar no meio, abra esse arquivo para saber onde o trabalho parou e retome chamando o agente certo.</p>
+  </div>
+  <div class="cartao">
+    <h3>Um bom briefing para o fluxo</h3>
+    <p>Tem cinco partes: <b>o que é</b> (landing page, app, rota), <b>para quem</b> (barbearia de bairro, clientes no celular), <b>o que precisa fazer</b> (agendar pelo WhatsApp), <b>o que fica de fora</b> (sem login, sem pagamento) e <b>onde fica</b> (<code>projetos/barbearia/</code>). Projetos para clientes ficam em <code>projetos/&lt;nome&gt;/</code>, um por pasta.</p>
+  </div>
+  <p style="font-size:8.8pt;color:var(--cor-suave)">O fluxo só roda numa versão do Claude Code que tenha a ferramenta de workflows. Sem ela, chame o <code>diretor</code> para ter o plano e depois chame cada agente na ordem das ondas.</p>
+  <div class="rodape"><span>Creat Nuvem · guia do cliente</span><span>8</span></div>
+</section>
+
+<!-- 9. CUSTOS -->
+<section class="pagina" aria-label="Custos de tokens">
+  <div class="cabeca"><h2>Custos de tokens</h2><span class="sec">Antes do primeiro fluxo grande</span></div>
+  <p class="lead">O pacote é pago uma vez. O trabalho dos agentes sai da sua conta do Claude Code, em tokens, toda vez que você usa. Este guia não traz valores em reais ou dólares, porque eles dependem do seu plano e mudam com o tempo. Ele mostra o que pesa e como medir.</p>
+  <div class="grade">
+    <div class="cartao">
+      <h3>O que consome tokens</h3>
+      <ul>
+        <li><b>Ler.</b> Cada agente começa com contexto próprio e lê de novo o que precisa: o <code>CLAUDE.md</code>, o arquivo dele, as skills e os arquivos do projeto.</li>
+        <li><b>Escrever.</b> Código, textos e relatórios gerados.</li>
+        <li><b>Olhar.</b> Prints lidos como imagem e saídas longas de comandos.</li>
+        <li><b>Repetir.</b> Rodadas de revisão e correção.</li>
+      </ul>
+    </div>
+    <div class="cartao">
+      <h3>Do mais leve ao mais pesado</h3>
+      <ol>
+        <li>Um agente de leitura (revisor, pesquisador) sobre um diff pequeno.</li>
+        <li>Um agente construtor numa tarefa de uma tela.</li>
+        <li>Uma dupla construtor e QA, com prints.</li>
+        <li>O fluxo <code>agencia</code> completo: três conceitos, júri, plano, várias tarefas em paralelo, revisão, QA e correções.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="cartao" style="margin-top:var(--ritmo-3)">
+    <h3>Opus e Sonnet</h3>
+    <p>Quem cria e constrói roda em Opus, o modelo mais capaz e o mais caro por token. Diretor, revisor, segurança e pesquisador rodam em Sonnet, que custa uma fração e perde pouco em tarefas de ler e julgar. Para gastar menos, troque <code>model: opus</code> por <code>model: sonnet</code> no arquivo de um agente e compare o resultado numa tarefa sua.</p>
+  </div>
+  <div class="grade">
+    <div class="cartao">
+      <h3>Como medir</h3>
+      <ul>
+        <li>No Claude Code, o comando <code>/cost</code> mostra o gasto da sessão para quem usa a API; o <code>/usage</code> mostra o uso do plano para quem assina. Os nomes podem mudar entre versões: rode <code>/help</code> para ver os da sua.</li>
+        <li>Na sede ao vivo (<code>node sede/servidor.cjs</code>), cada agente em trabalho mostra os tokens já usados.</li>
+        <li>Quem usa chave de API vê o consumo por dia no painel do console da Anthropic.</li>
+      </ul>
+    </div>
+    <div class="cartao">
+      <h3>Como gastar menos</h3>
+      <ul>
+        <li>Chame um agente só quando a tarefa tem um dono óbvio.</li>
+        <li>Use <code>conceito: false</code> e um <code>max_tarefas</code> baixo.</li>
+        <li>Diga quais arquivos o agente pode ler.</li>
+        <li>Rode o primeiro fluxo num projeto pequeno e meça antes de rodar num grande.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="rodape"><span>Creat Nuvem · guia do cliente</span><span>9</span></div>
+</section>
+
+<!-- 10. BOAS PRÁTICAS E ERROS -->
+<section class="pagina" aria-label="Boas práticas e erros comuns">
+  <div class="cabeca"><h2>Boas práticas e erros comuns</h2><span class="sec">Para não perder tempo</span></div>
+  <div class="grade">
+    <div class="cartao">
+      <h3>Boas práticas</h3>
+      <ul>
+        <li><b>Comece pelo diretor</b> em tudo que tem mais de uma etapa. O plano dele diz quem faz o quê e o que conta como pronto.</li>
+        <li><b>Um dono por arquivo.</b> Dois agentes editando o mesmo arquivo ao mesmo tempo é o jeito mais rápido de perder trabalho.</li>
+        <li><b>Critério de aceite que dá para checar:</b> "abre sem erro no console em 390 px", não "fica bom".</li>
+        <li><b>Revisor e QA sempre</b> depois de construir. São os agentes mais baratos da equipe.</li>
+        <li><b>Commit antes de cada fluxo.</b> Se algo sair errado, <code>git diff</code> mostra o que mudou e <code>git restore</code> desfaz.</li>
+        <li><b>Leia o RELATORIO.md</b> no fim. Ele lista o que ficou pendente.</li>
+        <li><b>Olhe os prints</b> da verificação visual com os próprios olhos.</li>
+        <li><b>Edite os agentes.</b> Se um deles erra sempre do mesmo jeito, acrescente uma regra no arquivo dele.</li>
+      </ul>
+    </div>
+    <div class="cartao">
+      <h3>Erros comuns</h3>
+      <ul>
+        <li><b>Briefing vago.</b> "Faz um site" vira um plano genérico. Diga público, objetivo e o que fica de fora.</li>
+        <li><b>Pular a revisão</b> para economizar. O bug aparece depois, quando custa mais corrigir.</li>
+        <li><b>Rodar o fluxo completo para um ajuste de texto.</b> Chame o <code>copywriter</code> direto.</li>
+        <li><b>Esquecer o Playwright.</b> Sem ele, <code>navegador</code> e <code>verificacao-visual</code> param com a mensagem "Playwright não encontrado".</li>
+        <li><b>Sobrescrever o próprio CLAUDE.md</b> ao instalar. Mescle; não substitua.</li>
+        <li><b>Abrir a sede sem internet.</b> A cena carrega o Three.js do CDN.</li>
+        <li><b>Segredo no repositório.</b> Chave e token vão em variável de ambiente; o <code>seguranca</code> procura isso.</li>
+        <li><b>Achar que o agente lembra da conversa anterior.</b> Cada chamada começa do zero; o que importa precisa estar no pedido ou num arquivo.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="faixa" style="margin-top:var(--ritmo-3)">
+    <p><b>Quando um agente travar:</b> pare, leia o que ele já fez (<code>git diff</code> e <code>RELATORIO.md</code>), corte a tarefa em duas menores e chame de novo com os arquivos exatos. Repetir o mesmo pedido raramente muda o resultado.</p>
+  </div>
+  <div class="cartao">
+    <h3>O que a agência não faz por você</h3>
+    <p>Não publica em produção sem a sua confirmação, não cria conta em serviços externos, não paga nada e não aprova o próprio trabalho. Decisão de negócio, revisão final e publicação continuam com você.</p>
+  </div>
+  <div class="rodape"><span>Creat Nuvem · guia do cliente</span><span>10</span></div>
+</section>
+
+<!-- 11. GLOSSÁRIO -->
+<section class="pagina" aria-label="Glossário">
+  <div class="cabeca"><h2>Glossário</h2><span class="sec">Palavras do guia</span></div>
+  <dl class="glossario duas">
+    <div><dt>Agente (subagente)</dt><dd>Um arquivo em <code>.claude/agents/</code> com nome, descrição, modelo e instruções. O Claude Code o chama para uma tarefa com contexto próprio.</dd></div>
+    <div><dt>Skill</dt><dd>Manual de uma tarefa (com scripts, às vezes) em <code>.claude/skills/&lt;nome&gt;/SKILL.md</code>. O agente carrega quando precisa.</dd></div>
+    <div><dt>Workflow (fluxo)</dt><dd>Script que coordena vários agentes. O da casa é <code>agencia.js</code>.</dd></div>
+    <div><dt>Onda</dt><dd>Grupo de tarefas que roda em paralelo, sem tocar os mesmos arquivos.</dd></div>
+    <div><dt>Briefing</dt><dd>O pedido do projeto: o que é, para quem, o que precisa fazer e o que fica de fora.</dd></div>
+    <div><dt>Conceito</dt><dd>A ideia central de um projeto em uma frase, que orienta design, texto e código.</dd></div>
+    <div><dt>Momento-assinatura</dt><dd>A única coisa que alguém vai contar para um amigo depois de usar o site.</dd></div>
+    <div><dt>Critério de aceite</dt><dd>Condição que um agente consegue checar para dizer que a tarefa terminou.</dd></div>
+    <div><dt>Token</dt><dd>Pedaço de texto que o modelo lê ou escreve. É a unidade de consumo da sua conta.</dd></div>
+    <div><dt>Contexto</dt><dd>Tudo o que o modelo tem diante de si numa chamada: instruções, arquivos lidos, conversa.</dd></div>
+    <div><dt>Opus e Sonnet</dt><dd>Modelos do Claude. Opus é o mais capaz e mais caro por token; Sonnet custa menos.</dd></div>
+    <div><dt>CLAUDE.md</dt><dd>Arquivo de regras que o Claude Code lê no início de cada sessão naquele repositório.</dd></div>
+    <div><dt>MCP</dt><dd>Protocolo que liga o Claude Code a ferramentas externas, como Figma, GitHub ou Playwright.</dd></div>
+    <div><dt>Playwright</dt><dd>Biblioteca que controla um navegador por código. Dá os olhos ao QA.</dd></div>
+    <div><dt>Diff</dt><dd>A diferença entre duas versões dos arquivos. O revisor lê o diff, não o projeto inteiro.</dd></div>
+    <div><dt>RELATORIO.md</dt><dd>Registro parcial do projeto, escrito por cada agente ao terminar a sua parte.</dd></div>
+    <div><dt>Sede</dt><dd>A página 3D com os personagens da agência. Em modo ao vivo, mostra os fluxos reais.</dd></div>
+    <div><dt>Tokens de design</dt><dd>Variáveis de cor, fonte e espaçamento (<code>--cor-fundo</code>). Não confundir com tokens de consumo.</dd></div>
+  </dl>
+  <div class="aviso" style="margin-top:auto">
+    <p><b>Licença:</b> uso pessoal e comercial permitido, inclusive em projetos de clientes. Proibido revender, redistribuir ou publicar o pacote em si. Sem garantia. Texto completo no arquivo <code>LICENSE</code>.</p>
+    <p><b>Suporte do pacote:</b> mttcreatt@gmail.com. Conta, cobrança e limites do Claude Code são com a Anthropic.</p>
+    <p>A Creat Nuvem é compatível com o Claude Code e não é um produto oficial da Anthropic.</p>
+  </div>
+  <div class="rodape"><span>Creat Nuvem · guia do cliente</span><span>11</span></div>
+</section>
+
+</body>
+</html>
