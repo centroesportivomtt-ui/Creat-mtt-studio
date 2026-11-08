@@ -1,0 +1,58 @@
+LICENÇA DE USO - Kit Toon 3D para Three.js
+Copyright (c) 2026 [NOME_TITULAR]. Todos os direitos reservados.
+Contato: [EMAIL_SUPORTE]
+
+Ao baixar, comprar ou usar este pacote ("Kit Toon 3D para Three.js"),
+doravante "o Pacote", você concorda com os termos abaixo.
+
+1. O QUE VOCÊ PODE FAZER
+   a) Usar o Pacote em projetos pessoais e comerciais, sem limite de projetos.
+   b) Usar o Pacote em projetos de clientes, inclusive cobrando por esse trabalho.
+   c) Modificar, adaptar e combinar o Pacote com outros materiais.
+   d) Entregar ao cliente o resultado final (site, app, código do projeto) que
+      contenha partes do Pacote, desde que o Pacote não seja o produto entregue.
+   e) Usar personagens e cenas criados com o kit em qualquer mídia.
+
+2. O QUE VOCÊ NÃO PODE FAZER
+   a) Revender, sublicenciar, alugar ou dar o Pacote, no todo ou em parte,
+      como produto próprio (modificado ou não).
+   b) Redistribuir ou publicar o Pacote em si: repositórios públicos, sites de
+      download, marketplaces, cursos, templates ou bancos de recursos.
+   c) Remover este aviso de licença das cópias do Pacote.
+
+3. LICENÇA POR COMPRADOR
+   Esta licença é pessoal e intransferível. Cada pessoa ou empresa que for usar
+   o Pacote precisa da própria licença. Uma equipe da mesma empresa pode usar a
+   mesma licença dentro da empresa.
+
+4. SEM GARANTIA
+   O Pacote é fornecido "no estado em que se encontra", sem garantia de qualquer
+   tipo, expressa ou implícita, inclusive de adequação a um fim específico. Em
+   nenhum caso o titular será responsável por danos, perdas de dados, lucros
+   cessantes ou qualquer prejuízo decorrente do uso ou da impossibilidade de uso
+   do Pacote.
+   Three.js é de terceiros e segue a própria licença (MIT).
+
+5. ENCERRAMENTO
+   O descumprimento destes termos encerra a licença automaticamente.
+
+6. LEI APLICÁVEL
+   Estes termos seguem a legislação brasileira (Lei 9.610/98 e Lei 9.609/98).
+
+Dúvidas: [EMAIL_SUPORTE]
+
+-------------------------------------------------------------------------------
+SUMMARY IN ENGLISH (the Portuguese text above prevails)
+
+- You MAY use this package in personal and commercial projects, including client
+  work you are paid for, and you may modify it.
+- You MAY deliver end products (sites, apps, project code) that include parts of
+  this package, as long as the package itself is not what you deliver.
+- You MAY NOT resell, sublicense, share, redistribute or publish the package
+  itself (as is or modified) on repositories, marketplaces, courses or template
+  sites.
+- One license per buyer (person or company). Keep this notice in copies.
+- Provided "AS IS", WITHOUT WARRANTY of any kind. The holder is not liable for
+  any damages arising from its use.
+
+Copyright (c) 2026 [NOME_TITULAR] - [EMAIL_SUPORTE]

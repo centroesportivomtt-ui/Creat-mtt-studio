@@ -406,6 +406,31 @@
     });
   }
 
+  /* aba, Google e cor da barra do navegador vêm do config */
+  function aplicarPagina() {
+    var pg = cfg.pagina || {};
+    if (pg.titulo) DOC.title = pg.titulo;
+    var meta = DOC.querySelector('meta[name="description"]');
+    if (meta && pg.descricao) meta.setAttribute('content', pg.descricao);
+    var tc = DOC.querySelector('meta[name="theme-color"]');
+    var couro = cfg.cores && cfg.cores.couro;
+    if (tc && typeof couro === 'string' && /^#[0-9a-f]{3,8}$/i.test(couro.trim())) tc.setAttribute('content', couro.trim());
+    var link = $('espelho-whats');
+    if (link && cfg.negocio && cfg.negocio.whatsapp) link.href = 'https://wa.me/' + soDigitos(cfg.negocio.whatsapp);
+  }
+
+  function renderManifesto() {
+    var m = cfg.textos && cfg.textos.manifesto;
+    var sec = $('manifesto');
+    if (!sec || !m) return;
+    var h = $('manifesto-titulo');
+    if (h && m.titulo) definirTexto(h, m.titulo);
+    if (!Array.isArray(m.frases) || !m.frases.length) return;
+    Array.prototype.slice.call(sec.querySelectorAll('p')).forEach(function (p) { sec.removeChild(p); });
+    m.frases.forEach(function (f) { sec.appendChild(criar('p', null, f)); });
+    if (m.bordao) sec.appendChild(criar('p', 'manifesto-bordao', m.bordao));
+  }
+
   function renderPrecos() {
     var ul = $('lista-precos');
     if (!ul) return;
@@ -487,6 +512,10 @@
       a.href = 'https://wa.me/' + soDigitos(neg.whatsapp);
       a.target = '_blank';
       a.rel = 'noopener';
+      /* no HTML eles nascem hidden: sem JS não sobra link para o número-marcador */
+      a.hidden = false;
+      var contato = a.closest('#rodape-contato');
+      if (contato) contato.hidden = false;
     });
   }
 
@@ -689,11 +718,11 @@
       var diaTxt = prox ? diaRelativo(prox.data, hoje) : '';
       var semNada = r.slots.length === 0;
       var frase = semNada
-        ? (diferencaDias(hoje, r.data) === 0 ? 'Hoje não tem mais horário.' : 'Sem horário nesse dia.') + (prox ? ' ' + diaTxt.charAt(0).toUpperCase() + diaTxt.slice(1) + ' tem vaga.' : '')
+        ? (diferencaDias(hoje, r.data) === 0 ? T('agenda.semHorarioHoje', 'Hoje não tem mais horário.') : T('agenda.semHorarioDia', 'Sem horário nesse dia.')) + (prox ? ' ' + diaTxt.charAt(0).toUpperCase() + diaTxt.slice(1) + ' tem vaga.' : '')
         : fmt(T('agenda.diaLotado', 'Esse dia lotou. {dia} tem vaga.'), { dia: diaTxt.charAt(0).toUpperCase() + diaTxt.slice(1) });
-      aviso.appendChild(criar('p', null, prox ? frase : 'Agenda cheia nos próximos dias. Chame no WhatsApp.'));
+      aviso.appendChild(criar('p', null, prox ? frase : T('agenda.agendaCheia', 'Agenda cheia nos próximos dias. Chame no WhatsApp.')));
       if (prox) {
-        var irBtn = criar('button', 'btn-link', 'Ver horários de ' + diaRelativo(prox.data, hoje));
+        var irBtn = criar('button', 'btn-link', fmt(T('agenda.verHorarios', 'Ver horários de {dia}'), { dia: diaRelativo(prox.data, hoje) }));
         irBtn.type = 'button';
         irBtn.addEventListener('click', function () {
           var naFita = botoesDia().some(function (b) { return b.getAttribute('data-dia') === prox.chave; });
@@ -992,7 +1021,7 @@
       limpar(corpo);
       var linhas = linhasEscolha().filter(function (l) { return l[1]; });
       if (!linhas.length) {
-        corpo.appendChild(criar('p', 'vazio-resumo', 'Escolha o dia e o horário. O resto aparece aqui.'));
+        corpo.appendChild(criar('p', 'vazio-resumo', T('agenda.resumoVazio', 'Escolha o dia e o horário. O resto aparece aqui.')));
       } else {
         var dl = criar('dl');
         preencherDl(dl, linhas);
@@ -1198,7 +1227,7 @@
       return;
     }
     if (erros.nome || erros.whats) {
-      erroGeral(erros.nome && erros.whats ? 'Confira seu nome e seu WhatsApp.' : (erros.nome || erros.whats));
+      erroGeral(erros.nome && erros.whats ? T('agenda.erroAmbos', 'Confira seu nome e seu WhatsApp.') : (erros.nome || erros.whats));
       focarPrimeiraFalta();
       resetarTira();
       return;
@@ -1217,7 +1246,7 @@
       renderHorarios();
       atualizarTudoDepoisDeEscolha();
       atualizarLetreiro();
-      erroGeral('Esse horário acabou de ser ocupado. Escolha outro, por favor.');
+      erroGeral(T('agenda.horarioOcupado', 'Esse horário acabou de ser ocupado. Escolha outro, por favor.'));
       focarPrimeiraFalta();
       resetarTira();
       return;
@@ -1276,11 +1305,11 @@
       var dl = dados.tagName === 'DL' ? dados : (dados.querySelector('dl') || dados.appendChild(criar('dl')));
       var s = servicoPorId(reg.servicoId), p = profPorId(reg.profissionalId);
       preencherDl(dl, [
-        ['Serviço', s ? s.nome : '', null],
-        ['Profissional', p ? p.nome : '', null],
-        ['Dia', rotuloDia(reg.data), null],
-        ['Hora', horaTexto(hm(reg.inicio)), 'hora'],
-        ['Valor', s ? moeda(s.preco) : '', 'preco']
+        [T('espelho.servico', 'Serviço'), s ? s.nome : '', null],
+        [T('espelho.profissional', 'Profissional'), p ? p.nome : '', null],
+        [T('espelho.dia', 'Dia'), rotuloDia(reg.data), null],
+        [T('espelho.hora', 'Hora'), horaTexto(hm(reg.inicio)), 'hora'],
+        [T('espelho.valor', 'Valor'), s ? moeda(s.preco) : '', 'preco']
       ]);
     }
     var link = $('espelho-whats');
@@ -1293,7 +1322,7 @@
     mostrar(esp, true);
     if (!esp.hasAttribute('tabindex')) esp.setAttribute('tabindex', '-1');
     try { esp.focus({ preventScroll: false }); } catch (e) { esp.focus(); }
-    try { esp.scrollIntoView({ block: 'center', behavior: reduzMovimento ? 'auto' : 'smooth' }); } catch (e) {}
+    try { esp.scrollIntoView({ block: 'start', behavior: reduzMovimento ? 'auto' : 'smooth' }); } catch (e) {}
   }
 
   function novoAgendamento() {
@@ -1335,7 +1364,7 @@
     var b = $('confirmar-sem-arrastar');
     if (b) {
       if (!b.textContent.trim()) b.textContent = T('agenda.semArrastar', 'Confirmar sem arrastar');
-      b.addEventListener('click', function (ev) { ev.preventDefault(); confirmar('botao'); });
+      /* type="submit": clique, Enter nos campos e a tecla "Ir" do celular caem todos no submit abaixo */
     }
     var form = $('fita-dias') && $('fita-dias').closest('form');
     if (form) form.addEventListener('submit', function (ev) { ev.preventDefault(); confirmar('botao'); });
@@ -1408,7 +1437,7 @@
       atualizarTudoDepoisDeEscolha();
       atualizarLetreiro();
       var n = $('nota-esquecer');
-      if (n) n.textContent = 'Pronto: seu nome, seu WhatsApp e suas reservas saíram deste aparelho.';
+      if (n) n.textContent = T('agenda.esquecido', 'Pronto: seu nome, seu WhatsApp e suas reservas saíram deste aparelho.');
     });
   }
 
@@ -1423,6 +1452,8 @@
 
     aplicarCores();
     preencherTextos();
+    aplicarPagina();
+    renderManifesto();
     iniciarTema();
     renderPrecos();
     renderProfissionais();

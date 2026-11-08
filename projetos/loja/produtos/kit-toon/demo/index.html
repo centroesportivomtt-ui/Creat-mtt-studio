@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kit Toon 3D · Demo</title>
+<meta name="description" content="Demo do Kit Toon 3D para Three.js: um mascote nuvem com sombra em 3 tons, contorno de nanquim e pulo com comprimir e esticar.">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root {
+    --fundo: #CFEAFF;
+    --texto: #1E1B2E;
+    --texto-suave: #4A4560;
+    --painel: rgba(255, 255, 255, .78);
+    --borda: #1E1B2E;
+    --destaque: #FF8A3D;
+    --destaque-texto: #1E1B2E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fundo: #1A2045;
+      --texto: #F3F0FF;
+      --texto-suave: #C9C3E6;
+      --painel: rgba(20, 18, 40, .72);
+      --borda: #F3F0FF;
+      --destaque: #FFB067;
+      --destaque-texto: #1A1630;
+    }
+  }
+  :root[data-theme="dark"] {
+    --fundo: #1A2045;
+    --texto: #F3F0FF;
+    --texto-suave: #C9C3E6;
+    --painel: rgba(20, 18, 40, .72);
+    --borda: #F3F0FF;
+    --destaque: #FFB067;
+    --destaque-texto: #1A1630;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--fundo);
+    color: var(--texto);
+    font: 16px/1.4 ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #palco { position: fixed; inset: 0; }
+  #palco canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: pointer; }
+
+  .topo {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: max(16px, env(safe-area-inset-top)) 16px 0;
+    pointer-events: none;
+  }
+  .marca { pointer-events: auto; }
+  .marca h1 { margin: 0; font-size: 20px; letter-spacing: -.01em; font-weight: 800; }
+  .marca p { margin: 2px 0 0; font-size: 14px; color: var(--texto-suave); }
+
+  .botao {
+    pointer-events: auto;
+    min-width: 44px; min-height: 44px;
+    padding: 0 16px;
+    border: 2px solid var(--borda);
+    border-radius: 999px;
+    background: var(--painel);
+    color: var(--texto);
+    font: inherit; font-weight: 700; font-size: 15px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--borda);
+    transition: transform .16s cubic-bezier(.2, .8, .2, 1), box-shadow .16s cubic-bezier(.2, .8, .2, 1);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  }
+  .botao:active { transform: translateY(3px); box-shadow: 0 0 0 var(--borda); transition-duration: .08s; }
+  .botao:focus-visible { outline: 3px solid var(--destaque); outline-offset: 3px; }
+  .botao svg { width: 20px; height: 20px; }
+  .botao.primario { background: var(--destaque); color: var(--destaque-texto); border-color: #1E1B2E; box-shadow: 0 3px 0 #1E1B2E; }
+
+  .base {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 0 16px max(20px, env(safe-area-inset-bottom));
+    pointer-events: none; text-align: center;
+  }
+  .dica { margin: 0; font-size: 15px; color: var(--texto-suave); }
+  .contador { font-variant-numeric: tabular-nums; }
+
+  .icone-sol { display: none; }
+  :root[data-theme="dark"] .icone-sol { display: block; }
+  :root[data-theme="dark"] .icone-lua { display: none; }
+
+  #aviso {
+    position: fixed; inset: auto 16px 50% 16px; transform: translateY(50%);
+    max-width: 440px; margin: 0 auto; padding: 18px 20px;
+    border: 2px solid var(--borda); border-radius: 18px;
+    background: var(--painel); color: var(--texto);
+  }
+  #aviso h2 { margin: 0 0 6px; font-size: 18px; }
+  #aviso p { margin: 6px 0 0; font-size: 15px; }
+  #aviso code { font-size: 14px; background: rgba(127,127,127,.18); padding: 1px 6px; border-radius: 6px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .botao, .botao:active { transition: none; }
+  }
+</style>
+
+<!--
+  Three.js com versão fixa, servido da pasta vendor/ (funciona sem internet).
+  Para usar a CDN em vez da cópia local, troque o bloco abaixo por:
+  {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+              "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+-->
+<script type="importmap">
+{
+  "imports": {
+    "three": "../vendor/three.module.min.js",
+    "three/addons/": "../vendor/addons/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="palco" aria-hidden="true"></div>
+
+<header class="topo">
+  <div class="marca">
+    <h1>Kit Toon 3D</h1>
+    <p>Mascote feito só com o kit</p>
+  </div>
+  <button class="botao" id="tema" type="button" aria-label="Alternar tema claro e escuro" aria-pressed="false">
+    <svg class="icone-lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+    <svg class="icone-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    <span id="temaRotulo">Escuro</span>
+  </button>
+</header>
+
+<footer class="base">
+  <p class="dica">Toque ou clique na cena para a nuvem pular. Arraste para girar.</p>
+  <button class="botao primario" id="pular" type="button">Pular <span class="contador" id="contador" aria-hidden="true">0</span></button>
+</footer>
+
+<div id="aviso" hidden role="alert">
+  <h2>A demo não carregou</h2>
+  <p id="avisoTexto">Alguns navegadores bloqueiam módulos JavaScript abertos direto do disco (file://).</p>
+  <p>Na pasta do kit, rode <code>npx serve .</code> ou <code>python3 -m http.server</code> e abra <code>/demo/</code>.</p>
+</div>
+
+<script>
+  // Sem módulo carregado em 4 s (ex.: Chrome abrindo por file://), mostra como servir a pasta.
+  setTimeout(function () { if (!window.kitDemo) document.getElementById('aviso').hidden = false; }, 4000);
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { createToonKit } from '../toon-kit.js';
+
+// ---------------------------------------------------------------- tema
+const raiz = document.documentElement;
+const mqEscuro = matchMedia('(prefers-color-scheme: dark)');
+const mqReduzir = matchMedia('(prefers-reduced-motion: reduce)');
+let preferido = null;
+try { preferido = localStorage.getItem('kit-toon-tema'); } catch (e) { /* armazenamento bloqueado */ }
+
+const PALETAS = {
+  claro: {
+    ceu: ['#8FD0FF', '#D7EEFF', '#FFF1DA'], ink: '#1E1B2E',
+    nuvem: '#FFFFFF', chao: '#8ED98A', pedra: '#C9A27A', fundo: '#FFFFFF', pes: '#FF8A3D',
+    bochecha: '#FF8FA8', hemiCeu: '#FFFFFF', hemiChao: '#D6E6FF', hemiI: 1.35, sol: '#FFF4E0', solI: 2.1,
+  },
+  escuro: {
+    ceu: ['#0F1433', '#26306B', '#4B3B7A'], ink: '#0B0918',
+    nuvem: '#E6E9FF', chao: '#4C7A8C', pedra: '#6B5A86', fundo: '#7C83C9', pes: '#FF9F5A',
+    bochecha: '#FF7FA0', hemiCeu: '#9AA6FF', hemiChao: '#2B2F55', hemiI: 1.0, sol: '#C8D2FF', solI: 1.7,
+  },
+};
+const temaAtual = () => raiz.dataset.theme || (mqEscuro.matches ? 'dark' : 'light');
+
+// ---------------------------------------------------------------- renderer
+const palco = document.getElementById('palco');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+} catch (e) {
+  document.getElementById('avisoTexto').textContent = 'Este navegador não conseguiu iniciar o WebGL.';
+  document.getElementById('aviso').hidden = false;
+  throw e;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+palco.appendChild(renderer.domElement);
+
+const kit = createToonKit(THREE);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 60);
+camera.position.set(0, 1.7, 5.4);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.75, 0);
+controls.enableDamping = true;
+controls.enablePan = false;
+controls.minDistance = 3.6;
+controls.maxDistance = 9;
+controls.minPolarAngle = 0.5;
+controls.maxPolarAngle = 1.5;
+
+// ---------------------------------------------------------------- céu (CanvasTexture)
+const ceuCanvas = document.createElement('canvas');
+ceuCanvas.width = 4; ceuCanvas.height = 256;
+const ceu = new THREE.CanvasTexture(ceuCanvas);
+ceu.colorSpace = THREE.SRGBColorSpace;
+scene.background = ceu;
+function pintarCeu(cores) {
+  const g = ceuCanvas.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0, cores[0]); grad.addColorStop(.55, cores[1]); grad.addColorStop(1, cores[2]);
+  g.fillStyle = grad; g.fillRect(0, 0, 4, 256);
+  ceu.needsUpdate = true;
+}
+
+// ---------------------------------------------------------------- luz
+const hemi = new THREE.HemisphereLight('#FFFFFF', '#D6E6FF', 1.3);
+scene.add(hemi);
+const sol = new THREE.DirectionalLight('#FFF4E0', 2);
+sol.position.set(2.6, 5, 3.2);
+sol.castShadow = true;
+const celular = matchMedia('(max-width: 700px), (pointer: coarse)').matches;
+sol.shadow.mapSize.set(celular ? 1024 : 2048, celular ? 1024 : 2048);
+Object.assign(sol.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 1, far: 14 });
+sol.shadow.bias = -0.0008;
+scene.add(sol);
+
+// ---------------------------------------------------------------- materiais (um por papel, cor trocada no tema)
+const M = {
+  nuvem: kit.toon('#FFFFFF'),
+  chao: kit.toon('#8ED98A'),
+  pedra: kit.toon('#C9A27A'),
+  fundo: kit.toon('#FFFFFF', { transparent: true, opacity: .96 }),
+  pes: kit.toon('#FF8A3D'),
+  pupila: kit.toon('#1E1B2E'),
+  olho: new THREE.MeshBasicMaterial({ color: '#FFFFFF' }),
+  brilho: new THREE.MeshBasicMaterial({ color: '#FFFFFF' }),
+  bochecha: new THREE.MeshBasicMaterial({ color: '#FF8FA8' }),
+  boca: new THREE.MeshBasicMaterial({ color: '#1E1B2E' }),
+};
+
+// ---------------------------------------------------------------- ilha
+const ilha = new THREE.Group();
+const ILHA = new THREE.SphereGeometry(1, 72, 24); // malha mais fina: a borda da ilha fica redonda
+const grama = kit.mk(ILHA, M.chao, { ol: 0.012, cast: false, recv: true });
+grama.scale.set(2.3, 0.32, 2.3); grama.position.y = -0.3;
+const terra = kit.mk(ILHA, M.pedra, { ol: 0.016, cast: false });
+terra.scale.set(1.95, 0.6, 1.95); terra.position.y = -0.78;
+ilha.add(terra, grama);
+scene.add(ilha);
+
+// ---------------------------------------------------------------- mascote: nuvem sorridente
+// Hierarquia: rig (pivô nos pés: pulo e comprimir/esticar) > giro (rotação) > corpo (respiração) > peças.
+const rig = new THREE.Group();
+const giro = new THREE.Group();
+const corpo = new THREE.Group();
+rig.add(giro); giro.add(corpo); scene.add(rig);
+
+const PUFES = [ // [x, y, z, raio]
+  [0, 0.68, 0, 0.5], [-0.5, 0.55, 0.04, 0.36], [0.5, 0.55, 0.04, 0.36],
+  [-0.2, 1.05, -0.02, 0.33], [0.24, 1.0, 0.0, 0.29], [0, 0.72, -0.28, 0.42],
+];
+for (const [x, y, z, r] of PUFES) {
+  const p = kit.sph(r, M.nuvem, 0.024);
+  p.position.set(x, y, z);
+  corpo.add(p);
+}
+// Topete: um pufe pequeno numa mola, para a sobreposição (chega atrasado no pulo).
+const topete = new THREE.Group();
+topete.position.set(0.02, 1.26, 0);
+const pufeTopo = kit.sph(0.15, M.nuvem, 0.02);
+pufeTopo.position.y = 0.06;
+topete.add(pufeTopo);
+corpo.add(topete);
+
+// Rosto
+const rosto = new THREE.Group();
+rosto.position.set(0, 0.72, 0.46);
+corpo.add(rosto);
+const olhos = new THREE.Group();
+olhos.position.y = 0.06;
+rosto.add(olhos);
+for (const lado of [-1, 1]) {
+  const olho = kit.mk(kit.SPH, M.olho, { ol: 0.09, cast: false });
+  olho.scale.set(0.095, 0.12, 0.05);
+  olho.position.set(lado * 0.15, 0, 0.02);
+  const pupila = kit.mk(kit.SPH, M.pupila, { ol: 0, cast: false });
+  pupila.scale.set(0.06, 0.075, 0.03);
+  pupila.position.set(lado * 0.15 + 0.008, -0.01, 0.055);
+  const brilho = kit.mk(kit.SPH, M.brilho, { ol: 0, cast: false });
+  brilho.scale.setScalar(0.022);
+  brilho.position.set(lado * 0.15 + 0.03, 0.03, 0.085);
+  olhos.add(olho, pupila, brilho);
+}
+const boca = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.018, 8, 20, Math.PI), M.boca);
+boca.rotation.z = Math.PI; // meio toro de cabeça para baixo = sorriso
+boca.position.set(0, -0.11, 0.05);
+rosto.add(boca);
+for (const lado of [-1, 1]) {
+  const b = new THREE.Mesh(kit.SPH, M.bochecha);
+  b.scale.set(0.075, 0.045, 0.02);
+  b.position.set(lado * 0.3, -0.07, 0.0);
+  b.rotation.y = lado * 0.35;
+  rosto.add(b);
+}
+
+// Braços em pivôs nos "ombros"
+const bracos = [];
+for (const lado of [-1, 1]) {
+  const pivo = new THREE.Group();
+  pivo.position.set(lado * 0.78, 0.58, 0.05);
+  const braco = kit.sph(0.1, M.nuvem, 0.02);
+  braco.scale.set(0.1, 0.17, 0.1);
+  braco.position.set(lado * 0.06, -0.08, 0);
+  pivo.add(braco);
+  pivo.userData.lado = lado;
+  corpo.add(pivo);
+  bracos.push(pivo);
+}
+// Pés: sapatinhos laranja (a cor única do personagem)
+for (const lado of [-1, 1]) {
+  const pe = kit.sph(0.12, M.pes, 0.02);
+  pe.scale.set(0.13, 0.09, 0.16);
+  pe.position.set(lado * 0.2, 0.09, 0.06);
+  giro.add(pe);
+}
+
+// ---------------------------------------------------------------- nuvens de fundo (4 a 7 esferas achatadas)
+const nuvensFundo = [];
+function nuvemFundo(x, y, z, s) {
+  const g = new THREE.Group();
+  const n = 4 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    const r = 0.35 + Math.random() * 0.25;
+    const p = kit.mk(kit.SPH, M.fundo, { ol: 0.035, cast: false });
+    p.scale.set(r * 1.3, r * 0.75, r);
+    p.position.set((i - (n - 1) / 2) * 0.42, Math.sin(i * 1.7) * 0.12 + (i % 2) * 0.1, (i % 3) * 0.05);
+    g.add(p);
+  }
+  g.position.set(x, y, z); g.scale.setScalar(s);
+  g.userData.vel = 0.06 + Math.random() * 0.05;
+  scene.add(g); nuvensFundo.push(g);
+}
+nuvemFundo(-4.5, 2.6, -6, 1.1);
+nuvemFundo(3.8, 3.4, -8, 1.3);
+nuvemFundo(-1.6, 4.4, -12, 1.0);
+
+// ---------------------------------------------------------------- tema aplicado na cena
+function aplicarTema() {
+  const escuro = temaAtual() === 'dark';
+  const P = escuro ? PALETAS.escuro : PALETAS.claro;
+  pintarCeu(P.ceu);
+  kit.INK.value.set(P.ink);
+  M.nuvem.color.set(P.nuvem); M.chao.color.set(P.chao); M.pedra.color.set(P.pedra);
+  M.fundo.color.set(P.fundo); M.pes.color.set(P.pes); M.bochecha.color.set(P.bochecha);
+  M.pupila.color.set(P.ink); M.boca.color.set(P.ink);
+  hemi.color.set(P.hemiCeu); hemi.groundColor.set(P.hemiChao); hemi.intensity = P.hemiI;
+  sol.color.set(P.sol); sol.intensity = P.solI;
+  const btn = document.getElementById('tema');
+  btn.setAttribute('aria-pressed', String(escuro));
+  document.getElementById('temaRotulo').textContent = escuro ? 'Claro' : 'Escuro';
+}
+if (preferido === 'dark' || preferido === 'light') raiz.dataset.theme = preferido;
+else raiz.dataset.theme = mqEscuro.matches ? 'dark' : 'light';
+aplicarTema();
+mqEscuro.addEventListener('change', () => {
+  if (preferido) return; // a pessoa já escolheu no botão
+  raiz.dataset.theme = mqEscuro.matches ? 'dark' : 'light';
+  aplicarTema();
+});
+document.getElementById('tema').addEventListener('click', () => {
+  preferido = temaAtual() === 'dark' ? 'light' : 'dark';
+  raiz.dataset.theme = preferido;
+  try { localStorage.setItem('kit-toon-tema', preferido); } catch (e) { /* ok sem armazenamento */ }
+  aplicarTema();
+});
+
+// ---------------------------------------------------------------- pulo
+const DUR_PULO = 0.72, DUR_POUSO = 0.26;
+let reduzir = mqReduzir.matches;
+mqReduzir.addEventListener('change', () => { reduzir = mqReduzir.matches; proximoPuloOcioso = relogio + intervaloOcioso(); });
+let relogio = 0;
+let puloT = -1;        // progresso do pulo em segundos (-1 = parado)
+let pousoT = -1;       // assentamento depois do pouso
+let pulosNaFila = 0;
+let pulos = 0;
+const intervaloOcioso = () => 3.2 + Math.random() * 2.3;
+let proximoPuloOcioso = 2.2;
+const contador = document.getElementById('contador');
+
+function pular() {
+  if (puloT >= 0) { pulosNaFila = Math.min(pulosNaFila + 1, 1); return; } // no ar: guarda um
+  puloT = 0; pousoT = -1;
+  pulos++;
+  contador.textContent = String(pulos);
+  proximoPuloOcioso = relogio + intervaloOcioso();
+}
+
+// Toque curto (sem arrastar) pula; arrastar é para girar a câmera.
+let toque = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { toque = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!toque) return;
+  const moveu = Math.hypot(e.clientX - toque.x, e.clientY - toque.y);
+  if (moveu < 8 && performance.now() - toque.t < 450) pular();
+  toque = null;
+});
+document.getElementById('pular').addEventListener('click', pular);
+addEventListener('keydown', (e) => {
+  if ((e.code === 'Space' || e.key === 'j') && e.target === document.body) { e.preventDefault(); pular(); }
+});
+
+// ---------------------------------------------------------------- tamanho
+function ajustar() {
+  const w = palco.clientWidth, h = palco.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  // Retrato: afasta a câmera para o mascote caber inteiro.
+  camera.zoom = Math.min(1, Math.max(0.62, camera.aspect * 0.95));
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(ajustar).observe(palco);
+ajustar();
+
+// ---------------------------------------------------------------- loop
+const clock = new THREE.Clock();
+let molaY = 0, molaV = 0;      // mola do topete
+let alturaAnterior = 0;
+let piscarAte = -1, proximaPiscada = 2 + Math.random() * 3;
+
+function quadro() {
+  const dt = Math.min(clock.getDelta(), 1 / 20);
+  relogio += dt;
+  const t = relogio;
+  const t2 = kit.onTwos(t); // poses a 12 desenhos/s
+
+  // Giro (lento e só um balanço quando o movimento é reduzido)
+  if (reduzir) giro.rotation.y = Math.sin(t * 0.15) * 0.25;
+  else giro.rotation.y += dt * 0.55;
+
+  // Pulo ocioso
+  if (!reduzir && puloT < 0 && t >= proximoPuloOcioso) pular();
+
+  // Pulo + pouso, com volume constante
+  const altura = reduzir ? 0.18 : 0.75;
+  let y = 0, sx = 1, sy = 1;
+  if (puloT >= 0) {
+    puloT += dt;
+    const p = Math.min(puloT / DUR_PULO, 1);
+    ({ y, sx, sy } = kit.hopPose(p, altura));
+    if (reduzir) { sy = 1 + (sy - 1) * 0.35; sx = 1 / Math.sqrt(sy); }
+    if (p >= 1) { puloT = -1; pousoT = 0; }
+  } else if (pousoT >= 0) {
+    // assenta: termina o estique da queda, achata um pouco e volta ao normal
+    pousoT += dt;
+    const s = Math.min(pousoT / DUR_POUSO, 1);
+    const forca = reduzir ? 0.06 : 0.16;
+    sy = 1 + forca * (1 - s) * Math.cos(s * Math.PI * 1.5);
+    sx = 1 / Math.sqrt(sy);
+    if (s >= 1) { pousoT = -1; if (pulosNaFila) { pulosNaFila = 0; pular(); } }
+  } else {
+    // respiração em dois
+    sy = 1 + Math.sin(t2 * 2.4) * (reduzir ? 0.008 : 0.02);
+    sx = 1 / Math.sqrt(sy);
+  }
+  rig.position.y = y;
+  rig.scale.set(sx, sy, sx);
+
+  // Sobreposição: o topete segue a velocidade vertical com atraso
+  const vy = (y - alturaAnterior) / Math.max(dt, 1e-4);
+  alturaAnterior = y;
+  const alvo = -vy * 0.05;
+  molaV += ((alvo - molaY) * 140 - molaV * 12) * dt;
+  molaY += molaV * dt;
+  topete.position.y = 1.26 + THREE.MathUtils.clamp(molaY, -0.12, 0.12);
+  topete.rotation.z = THREE.MathUtils.clamp(molaY * 2, -0.4, 0.4);
+
+  // Braços: acenam em dois; no ar, abrem
+  const noAr = puloT >= 0 ? Math.sin(Math.min(puloT / DUR_PULO, 1) * Math.PI) : 0;
+  for (const b of bracos) {
+    const balanco = reduzir ? 0 : Math.sin(t2 * 3 + b.userData.lado) * 0.12;
+    b.rotation.z = b.userData.lado * (0.25 + noAr * 0.9 + balanco);
+  }
+
+  // Piscar a cada 2 a 5 s por 120 ms
+  if (t >= proximaPiscada) { piscarAte = t + 0.12; proximaPiscada = t + 2 + Math.random() * 3; }
+  olhos.scale.y = t < piscarAte ? 0.1 : 1;
+
+  // Nuvens de fundo a 60 fps
+  for (const n of nuvensFundo) {
+    n.position.x += dt * n.userData.vel * (reduzir ? 0.4 : 1);
+    if (n.position.x > 7) n.position.x = -7;
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// Pausa com a aba oculta
+function ligar() { clock.getDelta(); renderer.setAnimationLoop(quadro); }
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) renderer.setAnimationLoop(null); else ligar();
+});
+ligar();
+
+window.kitDemo = {
+  get pulos() { return pulos; },
+  get noAr() { return puloT >= 0; },
+  pular,
+  get tema() { return temaAtual(); },
+};
+</script>
+</body>
+</html>

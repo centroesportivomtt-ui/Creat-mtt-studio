@@ -57,7 +57,7 @@
     <section id="agendar" class="secao agenda" aria-labelledby="agendar-titulo">
       <h2 id="agendar-titulo" data-texto="agenda.titulo">Marque sua cadeira</h2>
       <noscript>
-        <p class="nota">A agenda online precisa de JavaScript. Marque pelo WhatsApp ou telefone: <a href="https://wa.me/5511987654321">(11) 98765-4321</a>.</p>
+        <p class="nota">A agenda online precisa de JavaScript. Ative o JavaScript no navegador ou marque pelo WhatsApp da barbearia.</p>
       </noscript>
       <form id="form-agenda" class="agendar-grade" novalidate>
         <div class="agendar-escolhas">
@@ -96,8 +96,8 @@
               <p class="erro" id="erro-whats" aria-live="polite"></p>
             </div>
             <div class="privacidade">
-              <p class="nota" id="nota-privacidade">Seu nome e WhatsApp ficam só neste aparelho para lembrar o seu de sempre.</p>
-              <button type="button" id="esquecer-dados" class="btn-esquecer" aria-describedby="nota-privacidade">Esquecer meus dados</button>
+              <p class="nota" id="nota-privacidade" data-texto="agenda.privacidade">Seu nome e WhatsApp ficam só neste aparelho para lembrar o seu de sempre.</p>
+              <button type="button" id="esquecer-dados" class="btn-esquecer" aria-describedby="nota-privacidade" data-texto="agenda.esquecer">Esquecer meus dados</button>
               <p class="nota" id="nota-esquecer" aria-live="polite"></p>
             </div>
           </fieldset>
@@ -107,7 +107,7 @@
           <div class="resumo-escolha" id="resumo-escolha" aria-live="polite"></div>
           <div id="bloco-confirmar" hidden>
             <div id="tira-confirmar" class="tira"></div>
-            <button type="button" id="confirmar-sem-arrastar" class="btn-sem-arrastar" data-texto="agenda.semArrastar">Confirmar sem arrastar</button>
+            <button type="submit" id="confirmar-sem-arrastar" class="btn-sem-arrastar" data-texto="agenda.semArrastar">Confirmar sem arrastar</button>
             <p class="erro" id="erro-geral" aria-live="assertive"></p>
           </div>
         </div>
@@ -116,7 +116,7 @@
       <section id="espelho" class="espelho" hidden tabindex="-1" aria-labelledby="espelho-titulo">
         <h3 id="espelho-titulo" data-texto="espelho.titulo">Confere atrás?</h3>
         <dl id="espelho-dados"></dl>
-        <a id="espelho-whats" class="link-whats" href="https://wa.me/5511987654321" target="_blank" rel="noopener" data-texto="espelho.abrirWhats">Enviar no WhatsApp</a>
+        <a id="espelho-whats" class="link-whats" href="https://wa.me/5500000000000" target="_blank" rel="noopener" data-texto="espelho.abrirWhats">Enviar no WhatsApp</a>
         <button type="button" id="espelho-novo" class="btn" data-texto="espelho.novo">Marcar outro horário</button>
       </section>
     </section>
@@ -171,15 +171,13 @@
 
   </main>
 
-  <a id="whats-flutuante" class="whats-flutuante" href="https://wa.me/5511987654321" target="_blank" rel="noopener" aria-label="Chamar no WhatsApp">
+  <a id="whats-flutuante" class="whats-flutuante" hidden href="https://wa.me/5500000000000" target="_blank" rel="noopener" aria-label="Chamar no WhatsApp">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.23 8.23 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.42h-.48c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28Z"/></svg>
   </a>
 
   <footer class="rodape">
     <p><strong data-config="nome">Barbearia Fio &amp; Couro</strong> · <span data-texto="secoes.rodape">Navalha afiada, cadeira limpa e horário cumprido.</span></p>
-    <p><span id="rodape-horario">Terça a Sábado, 9h às 20h</span> · <a id="rodape-whats" href="https://wa.me/5511987654321" target="_blank" rel="noopener">WhatsApp <span data-config="telefoneExibicao">(11) 98765-4321</span></a></p>
-    <!-- sem JavaScript nada lê o config.js: ao revender, edite este número à mão -->
-    <noscript><p>Telefone e WhatsApp: (11) 98765-4321</p></noscript>
+    <p><span id="rodape-horario">Terça a Sábado, 9h às 20h</span><span id="rodape-contato" hidden> · <a id="rodape-whats" href="https://wa.me/5500000000000" target="_blank" rel="noopener">WhatsApp <span data-config="telefoneExibicao">(00) 00000-0000</span></a></span></p>
   </footer>
 
   <script src="config.js" defer></script>

@@ -15,7 +15,8 @@
 window.FIO_CONFIG = {
 
   /* NEGÓCIO
-   * whatsapp: só dígitos, com DDI 55 e DDD. É o número que recebe as reservas.
+   * whatsapp: só dígitos, com DDI 55 e DDD (ex.: 5511912345678). É o número
+   *   que recebe as reservas. O 5500000000000 abaixo é um marcador: TROQUE.
    * telefoneExibicao: o mesmo número, do jeito que aparece na tela.
    * endereco: usado no rodapé e no link do Google Maps.
    * instagram: usuário com @ e o link completo do perfil. */
@@ -23,8 +24,8 @@ window.FIO_CONFIG = {
     nome: 'Barbearia Fio & Couro',
     nomeCurto: 'Fio & Couro',
     bordao: 'Toda cadeira começa no couro.',
-    whatsapp: '5511987654321',
-    telefoneExibicao: '(11) 98765-4321',
+    whatsapp: '5500000000000',
+    telefoneExibicao: '(00) 00000-0000',
     endereco: {
       rua: 'Rua Domingos de Morais',
       numero: '1418',
@@ -37,6 +38,14 @@ window.FIO_CONFIG = {
       usuario: '@fioecouro',
       url: 'https://www.instagram.com/fioecouro'
     }
+  },
+
+  /* PÁGINA (o que aparece na aba do navegador e no Google)
+   * titulo: texto da aba. descricao: resumo de até ~155 caracteres
+   * que o Google mostra abaixo do link. */
+  pagina: {
+    titulo: 'Barbearia Fio & Couro · agende pelo celular',
+    descricao: 'Barbearia na Vila Mariana, em São Paulo. Corte, degradê e barba na navalha. Agende online pelo celular e confirme no WhatsApp.'
   },
 
   /* FUNCIONAMENTO
@@ -194,6 +203,19 @@ window.FIO_CONFIG = {
     pular: 'Pular para agendar',
     agendar: 'Agendar horário',
 
+    /* Manifesto logo abaixo da abertura: um título, de 2 a 5 frases curtas
+     * e o bordão de fecho. */
+    manifesto: {
+      titulo: 'Cadeira de bairro, navalha no fio',
+      frases: [
+        'Aqui a navalha passa no couro antes de cada cliente. Toda vez.',
+        'A gente sabe seu nome e lembra do seu corte.',
+        'Pediu o de sempre, sai o de sempre, sem ficar explicando.',
+        'Seu horário é seu. Você chega, senta e sai na hora que combinou.'
+      ],
+      bordao: 'Toda cadeira começa no couro.'
+    },
+
     hero: {
       dica: 'Dá o fio.',
       afiada: 'Afiada. Sua cadeira está esperando.',
@@ -226,11 +248,26 @@ window.FIO_CONFIG = {
       tira: 'Passe a navalha para confirmar',
       semArrastar: 'Confirmar sem arrastar',
       diaLotado: 'Esse dia lotou. {dia} tem vaga.',
+      privacidade: 'Seu nome e WhatsApp ficam só neste aparelho para lembrar o seu de sempre.',
+      esquecer: 'Esquecer meus dados',
+      esquecido: 'Pronto: seu nome, seu WhatsApp e suas reservas saíram deste aparelho.',
+      erroAmbos: 'Confira seu nome e seu WhatsApp.',
+      horarioOcupado: 'Esse horário acabou de ser ocupado. Escolha outro, por favor.',
+      semHorarioHoje: 'Hoje não tem mais horário.',
+      semHorarioDia: 'Sem horário nesse dia.',
+      agendaCheia: 'Agenda cheia nos próximos dias. Chame no WhatsApp.',
+      verHorarios: 'Ver horários de {dia}',
+      resumoVazio: 'Escolha o dia e o horário. O resto aparece aqui.',
       folga: 'folga'
     },
 
     espelho: {
       titulo: 'Confere atrás?',
+      servico: 'Serviço',
+      profissional: 'Profissional',
+      dia: 'Dia',
+      hora: 'Hora',
+      valor: 'Valor',
       abrirWhats: 'Enviar no WhatsApp',
       novo: 'Marcar outro horário'
     },
