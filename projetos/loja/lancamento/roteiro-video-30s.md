@@ -26,6 +26,6 @@
 
 ## Texto para acompanhar o vídeo
 
-**PT:** Minha agência de 15 agentes no Claude Code, em 3D. Toque num agente para ver o cargo e o comando; no modo ao vivo, a sede mostra quem está trabalhando de verdade e quantos tokens usou. Versão grátis com 3 agentes: [LINK_LITE_REPO]
+**PT:** Minha agência de 15 agentes no Claude Code, em 3D. Toque num agente para ver o cargo e o comando; no modo ao vivo, a sede mostra quem está trabalhando de verdade e quantos tokens usou. Versão grátis com 3 agentes: https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip
 
-**EN:** My 15-agent studio for Claude Code, in 3D. Tap an agent to see its role and the command to call it; in live mode the HQ shows who's actually working and how many tokens they used. Free 3-agent version: [LINK_LITE_REPO]
+**EN:** My 15-agent studio for Claude Code, in 3D. Tap an agent to see its role and the command to call it; in live mode the HQ shows who's actually working and how many tokens they used. Free 3-agent version: https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip

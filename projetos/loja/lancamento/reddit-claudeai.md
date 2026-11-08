@@ -4,7 +4,7 @@
 **Onde publicar:** https://www.reddit.com/r/ClaudeAI > Create post > Text. Escolha a flair que as regras pedirem para projetos ou ferramentas.
 **Antes de publicar:** leia as regras atuais do subreddit (barra lateral e post fixado). Siga a regra de autopromoção:
 - diga que você é o autor (já está no texto);
-- nada de link de venda direto: só o repositório grátis [LINK_LITE_REPO];
+- nada de link de venda direto: só o repositório grátis https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip;
 - responda aos comentários durante as primeiras horas;
 - não publique o mesmo texto em vários subreddits no mesmo dia.
 
@@ -47,6 +47,6 @@ It opens the page in four setups (phone/desktop × light/dark), saves screenshot
 - The agent files and the skill are written in Brazilian Portuguese. Claude follows them fine; replies come in Portuguese unless you tell it otherwise in your `CLAUDE.md`.
 - Needs Claude Code (your own subscription) and Playwright. Not affiliated with Anthropic.
 
-Repo: [LINK_LITE_REPO]
+Repo: https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip
 
 How do you handle review and testing for code that comes from Claude? Do you keep it in one session or split it up?

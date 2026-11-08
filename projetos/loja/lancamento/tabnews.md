@@ -1,7 +1,7 @@
 # TabNews · post técnico (PT)
 
 **Horário sugerido:** terça ou quarta, 9h30 (horário de Brasília). Publique num dia diferente dos outros posts.
-**Onde publicar:** https://www.tabnews.com.br > Publicar novo conteúdo. Cole o título no campo de título e o corpo no editor (aceita Markdown). No campo "Fonte", deixe [LINK_LITE_REPO].
+**Onde publicar:** https://www.tabnews.com.br > Publicar novo conteúdo. Cole o título no campo de título e o corpo no editor (aceita Markdown). No campo "Fonte", deixe https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip.
 **Regra:** este post é só técnico. Não cite a versão paga, não ponha link de loja. Se alguém perguntar, responda nos comentários com transparência.
 
 ---
@@ -80,6 +80,6 @@ Depois, no Claude Code: `Use o agente qa para testar a página de contato no cel
 
 Precisa de uma conta do Claude Code. Não é projeto da Anthropic, é só compatível.
 
-Repositório: [LINK_LITE_REPO]
+Repositório: https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip
 
 Curioso para saber como vocês organizam revisão e teste quando o código vem de IA. Alguém já separou papéis assim?

@@ -57,7 +57,7 @@ A seção "Arsenal" de cada agente cita skills de plugins (como `frontend-design
 
 ## Versão completa
 
-A agência completa tem 15 agentes (direção, conceito criativo, arquitetura, backend, design, 3D, shaders, som, texto, pesquisa, segurança, deploy), 6 skills da casa, o fluxo que coordena a equipe em ondas, a sede 3D e um guia em PDF com exemplos de prompt para cada agente: [LINK_LOJA]
+A agência completa tem 15 agentes (direção, conceito criativo, arquitetura, backend, design, 3D, shaders, som, texto, pesquisa, segurança, deploy), 6 skills da casa, o fluxo que coordena a equipe em ondas, a sede 3D e um guia em PDF com exemplos de prompt para cada agente: https://creat-nuvem-404b1994.base44.app
 
 ## Licença
 

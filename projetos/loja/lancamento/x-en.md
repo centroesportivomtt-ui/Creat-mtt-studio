@@ -36,6 +36,6 @@ None of this is official Anthropic stuff. It's plain .md files any Claude Code a
 
 I open-sourced the minimal version: 3 agents + the visual-check skill, MIT license. Agent files are in Portuguese; Claude handles them fine.
 
-[LINK_LITE_REPO]
+https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip
 
-The 15-agent version with the wave workflow and a 3D HQ is paid, and lives here: [LINK_LOJA]
+The 15-agent version with the wave workflow and a 3D HQ is paid, and lives here: https://creat-nuvem-404b1994.base44.app

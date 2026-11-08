@@ -17,8 +17,8 @@ Faça na ordem. Cada passo diz onde clicar e quanto tempo leva. Os nomes de menu
 
 - o nome do titular que vai nas licenças (`[NOME_TITULAR]`);
 - o e-mail de suporte (`[EMAIL_SUPORTE]`), de preferência um e-mail só para a loja;
-- o endereço da página de vendas (`[LINK_LOJA]`), por exemplo `https://creat-nuvem-loja.pages.dev`;
-- o endereço do repositório do Lite (`[LINK_LITE_REPO]`), por exemplo `https://github.com/SEU_USUARIO/creat-nuvem-lite-gratis`. Use esse nome de repositório: os comandos do README do Lite e do post do TabNews esperam a pasta `creat-nuvem-lite-gratis`.
+- o endereço da página de vendas (`https://creat-nuvem-404b1994.base44.app`), por exemplo `https://creat-nuvem-loja.pages.dev`;
+- o endereço do repositório do Lite (`https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip`), por exemplo `https://github.com/SEU_USUARIO/creat-nuvem-lite-gratis`. Use esse nome de repositório: os comandos do README do Lite e do post do TabNews esperam a pasta `creat-nuvem-lite-gratis`.
 
 ---
 
@@ -67,7 +67,7 @@ A publicação de cada post (etapa 9) acontece depois, em dias separados, e leva
 
 As licenças, o guia e o README do Lite vão **dentro** dos zips. Preencha esses marcadores antes de gerar, ou o comprador recebe `[NOME_TITULAR]` no arquivo.
 
-- [ ] **4.1** Troque `[NOME_TITULAR]` e `[EMAIL_SUPORTE]` nestes arquivos: `projetos/loja/produtos/LICENSE-creat-nuvem.txt`, `LICENSE-kit-toon.txt`, `LICENSE-barbearia.txt`, `LICENSE-lite.txt`, `produtos/kit-toon/LICENSE`, `produtos/agencia/GUIA.html` e `produtos/agencia/README.md`. Troque `[LINK_LOJA]` em `produtos/lite/README.md`. *(5 min)*
+- [ ] **4.1** Troque `[NOME_TITULAR]` e `[EMAIL_SUPORTE]` nestes arquivos: `projetos/loja/produtos/LICENSE-creat-nuvem.txt`, `LICENSE-kit-toon.txt`, `LICENSE-barbearia.txt`, `LICENSE-lite.txt`, `produtos/kit-toon/LICENSE`, `produtos/agencia/GUIA.html` e `produtos/agencia/README.md`. Troque `https://creat-nuvem-404b1994.base44.app` em `produtos/lite/README.md`. *(5 min)*
 - [ ] **4.2** Gere o PDF de novo e depois os zips, na raiz do repositório: *(2 min)*
   ```sh
   node projetos/loja/gerar-guia.cjs
@@ -107,10 +107,10 @@ Publique os produtos nas plataformas, mas ainda não divulgue nada.
 - [ ] **6.2** Em `projetos/loja/index.html`, troque: *(5 min)*
   - `[LINK_PAYHIP_PRODUTO_1]`, `[LINK_PAYHIP_PRODUTO_2]`, `[LINK_PAYHIP_PRODUTO_3]` pelos links dos produtos no Payhip (em reais);
   - `[LINK_PAYHIP_PRODUTO_1_USD]`, `_2_USD`, `_3_USD` pelos links em dólar. Como o Payhip cobra em BRL, use aqui os links do itch.io (ou do Ko-fi). Quem lê a página em inglês vê US$ e precisa pagar em US$;
-  - `[LINK_LITE_REPO]` pelo endereço do repositório do Lite;
+  - `https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip` pelo endereço do repositório do Lite;
   - `[EMAIL_SUPORTE]` no `href` e no texto visível do link do rodapé;
   - `[POLITICA_REEMBOLSO]` na FAQ por uma política real e apague o selo "preencher" ao lado. Um texto possível: "Reembolso integral em até 7 dias após a compra. Escreva para o e-mail de suporte com o número do pedido." Esse prazo segue o direito de arrependimento do Código de Defesa do Consumidor (art. 49).
-- [ ] **6.3** Nos textos de `projetos/loja/listagens/` e `projetos/loja/lancamento/`, troque `[EMAIL_SUPORTE]`, `[LINK_LITE_REPO]` e `[LINK_LOJA]`. Nas plataformas onde você já colou o texto, edite lá também. *(2 min)*
+- [ ] **6.3** Nos textos de `projetos/loja/listagens/` e `projetos/loja/lancamento/`, troque `[EMAIL_SUPORTE]`, `https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip` e `https://creat-nuvem-404b1994.base44.app`. Nas plataformas onde você já colou o texto, edite lá também. *(2 min)*
 
 ## 7. Publicar a página de vendas e o Lite (10 min)
 

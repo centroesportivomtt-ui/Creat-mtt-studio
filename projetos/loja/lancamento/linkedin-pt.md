@@ -38,9 +38,9 @@ Como você organiza revisão e teste quando o código vem de IA?
 
 ## Primeiro comentário
 
-Versão grátis (MIT), com 3 agentes e a verificação visual: [LINK_LITE_REPO]
+Versão grátis (MIT), com 3 agentes e a verificação visual: https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip
 
-Loja, com a agência de 15 agentes (R$ 47), o Kit Toon 3D para Three.js (R$ 39) e o site de barbearia com agendamento pelo WhatsApp (R$ 67): [LINK_LOJA]
+Loja, com a agência de 15 agentes (R$ 47), o Kit Toon 3D para Three.js (R$ 39) e o site de barbearia com agendamento pelo WhatsApp (R$ 67): https://creat-nuvem-404b1994.base44.app
 
 Os arquivos estão em português. Precisa de uma conta do Claude Code e do Playwright.
 

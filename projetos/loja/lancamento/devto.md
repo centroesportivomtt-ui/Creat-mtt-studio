@@ -74,8 +74,8 @@ Mais agentes, mais tokens. Cada agente começa com contexto próprio e relê o q
 
 ## Para testar
 
-Abri a versão mínima, com frontend, revisor, QA e a skill de verificação visual, sob licença MIT: [LINK_LITE_REPO]. Os arquivos estão em português.
+Abri a versão mínima, com frontend, revisor, QA e a skill de verificação visual, sob licença MIT: https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip. Os arquivos estão em português.
 
-Precisa de uma conta do Claude Code e do Playwright. Não é um projeto da Anthropic, só é compatível. Transparência: eu vendo a versão com os 15 agentes, o fluxo e uma sede 3D em [LINK_LOJA].
+Precisa de uma conta do Claude Code e do Playwright. Não é um projeto da Anthropic, só é compatível. Transparência: eu vendo a versão com os 15 agentes, o fluxo e uma sede 3D em https://creat-nuvem-404b1994.base44.app.
 
 Como vocês organizam revisão e teste quando o código vem de IA?

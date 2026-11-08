@@ -1,7 +1,7 @@
 # Show HN (EN)
 
 **Horário sugerido:** terça a quinta, entre 8h e 10h ET (9h a 12h em Brasília, conforme o horário de verão dos EUA). Fique online nas 3 horas seguintes para responder.
-**Onde publicar:** https://news.ycombinator.com/submit. Título no campo "title", [LINK_LITE_REPO] no campo "url", deixe "text" vazio. Logo depois de publicar, poste o primeiro comentário abaixo no próprio item.
+**Onde publicar:** https://news.ycombinator.com/submit. Título no campo "title", https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip no campo "url", deixe "text" vazio. Logo depois de publicar, poste o primeiro comentário abaixo no próprio item.
 **Regras do Show HN:** precisa ser algo que as pessoas possam testar agora (o repositório grátis cumpre isso). Nada de link de venda, nada de pedir votos.
 
 ---

@@ -36,6 +36,6 @@ E nada disso é oficial da Anthropic: são arquivos .md que qualquer conta do Cl
 
 Abri a versão mínima: 3 agentes + a skill de verificação visual, licença MIT.
 
-[LINK_LITE_REPO]
+https://media.base44.com/files/public/6aefffe66b684db9404b1994/c6dd61607_creat-nuvem-lite-gratis.zip
 
-A versão com 15 agentes, fluxo em ondas e sede 3D é paga, e está aqui: [LINK_LOJA]
+A versão com 15 agentes, fluxo em ondas e sede 3D é paga, e está aqui: https://creat-nuvem-404b1994.base44.app
