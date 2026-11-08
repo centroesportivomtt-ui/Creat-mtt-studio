@@ -151,3 +151,24 @@ Os prazos são sugestão do Verbo para caber antes de 16/11; o Nimbus confirma o
   - Até 08/11/2026 continuam sem teste o aceite 4 da T6 (arrastar a placa) e a chamada real ao PostHog na rede. Os dois precisam da verificação da Lupa (qa) antes de publicar.
   - Ponto fora do escopo: em `/obrigado/` sem número de suporte configurado, a frase "O WhatsApp abre com o pedido escrito" fica acima da caixa que manda enviar por e-mail. Vale o Verbo ajustar esse texto no modo e-mail.
   - `checar-placeholders.cjs` segue em código 1 até o Marcos trocar os marcadores (esperado).
+
+## T6 · Órbita · Ajustes do revisor (08/11/2026)
+- **O que fiz:**
+  - **Placa (T5, uma linha):** em `aoAbrirPlaca`, quando a validação falha, a vitrine agora chama `placa.reiniciar(); placa.definirNome(limparNome(campoNome.value))`. Assim o nome escrito em giz continua na placa quando falta escolher o nicho.
+  - **Prazo de validade do estado público:** na sede, `dePublico` trata como vencido o estado com mais de 10 min (ou mais de 2 min no futuro). Nesse caso a sede some com o selo "Ao vivo" do painel e do botão, mostra "equipe em pausa" e a frase "A equipe espera o próximo pedido.". O último JSON recebido é reavaliado a cada 15 s, então o estado vence mesmo se ninguém publicar de novo ou se a rede cair.
+  - **`.gitignore`:** incluí `sede/estado-publico.json`, além de `sede/estado.json`.
+  - **`publicar-estado.cjs`:** o cabeçalho agora documenta três regras: o padrão de nome do fluxo, o prazo de validade e o que pode ir para o deploy.
+- **Decisão registrada:** quando a URL não traz `?modo`, a sede escolhe o modo pelo host. Em `localhost`, arquivo e artefato do Claude ela fica em `local`; em qualquer outro host fica em `publico`. Motivo: no site público, um link sem parâmetro nunca deve ler `estado.json` (o estado interno, com rótulos e nomes de fluxo). Por padrão ele lê só o vocabulário fechado. Quem opera a sede na máquina continua vendo o ao vivo completo.
+- **Arquivos:** `assets/vitrine.js`, `../../sede/index.html`, `../../sede/publicar-estado.cjs`, `../../.gitignore`, `docs/relatorio/T6.md`, `RELATORIO.md`.
+- **Como verificar:**
+  - `node sede/publicar-estado.cjs --autoteste` → 20 verificações ok, código 0.
+  - **Estado novo:** grave `sede/estado-publico.json` com a hora atual, rode `node sede/servidor.cjs 8123` e abra `/?modo=publico`. Aparecem o selo "Ao vivo", "3 trabalhando agora" e o selo no botão.
+  - **Estado vencido:** com o mesmo arquivo 3 h mais velho, aparecem "A equipe espera o próximo pedido." e "equipe em pausa", sem selo.
+  - **Vencimento na mesma sessão:** adiante o relógio da página em 11 min. No ciclo seguinte de 15 s a sede passa sozinha de ao vivo para pausa.
+  - Testei os três casos no navegador da casa, com console limpo (print em `.verificacao/print-3.png`).
+  - **Home:** escreva o nome e chame `CreatPlaca.abrir('toque')` sem nicho. O giz mantém "Barbearia do Ze". `CreatSom` carrega e não há mais 404.
+- **Pendente:**
+  - **Publicação recorrente do estado (T10, Trilho):** nada roda `publicar-estado.cjs` sozinho. Não há cron, loop nem CI no repositório. Para "a venda rodar sem o dono", o script precisa rodar a cada 1 ou 2 min, dentro do prazo de 10 min, onde a agência roda, e enviar **só** `sede/estado-publico.json` ao host. Sem isso, o site público mostra sempre "A equipe espera o próximo pedido.", o que é honesto, mas não prova nada.
+  - **Deploy (T10):** o repositório ainda não tem configuração de deploy. A T10 precisa garantir que `sede/estado.json` nunca vá para o site: copiar `sede/` excluindo esse arquivo ou bloquear a rota.
+  - **Nome dos fluxos:** fluxos de cliente precisam ter nome começando por `pedido` ou `producao` (ex.: `pedido-barbearia-ze`) para aparecer como "Pedido da Creat". Hoje o fluxo real `agencia` sempre sai como "Projeto interno". Quem cria os fluxos de produção (Nimbus/Trilho) deve seguir esse padrão.
+  - Revisor, QA (Lupa) e Muralha.

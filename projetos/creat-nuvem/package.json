@@ -1,0 +1,29 @@
+{
+  "name": "creat-nuvem-porta-aberta",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Porta Aberta (Creat Nuvem): vitrine estática e produção v0 dos sites dos clientes.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "test": "node --test scripts/testes/",
+    "produzir": "node scripts/producao/produzir.mjs",
+    "validar-tenant": "node scripts/producao/validar-tenant.mjs",
+    "build-site": "node scripts/producao/build-site.cjs",
+    "testar-site": "node scripts/producao/testar-site.cjs",
+    "exportar-sair": "node scripts/producao/exportar-sair.cjs",
+    "checar": "node scripts/checar.cjs",
+    "checar-placeholders": "node scripts/checar-placeholders.cjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.1.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "fflate": "0.8.3"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

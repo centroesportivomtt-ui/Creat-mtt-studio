@@ -1,0 +1,268 @@
+/*
+ * motor/v1/rituais/barra.js · ritual 'barra' do nicho academia, studio e personal (T8)
+ *
+ * O gesto: levantar a barra. A barra carregada com anilhas está no chão; a pessoa pega e puxa
+ * para cima. Ela pesa: sobe atrasada em relação ao dedo, a barra enverga e as anilhas balançam.
+ * Soltou antes do topo, a barra cai, quica e levanta pó de magnésio. Chegou no topo, trava
+ * lá em cima e o nome da academia ganha a faixa da anilha.
+ * Desenho: assets/svg/ritual-academia.svg (Paleta, T2), refeito aqui em nós SVG (o site entregue
+ * abre por file:// e não pode buscar o arquivo). As anilhas usam a cor de destaque da paleta
+ * (academia-1 vermelha 25 kg, academia-2 azul 20 kg, academia-3 amarela 15 kg).
+ *
+ * Interface (a mesma do 'navalha', docs/relatorio/T4.md):
+ *   CREAT_RITUAIS.barra = { montarHeroi(el, ctx), criarTira(el, {rotulo}), resetarTira(el) }
+ * Herói: arrasto só dentro do palco (touch-action: none só nele; fora dele a página rola).
+ *   Teclado: seta para cima, Espaço ou Enter sobem a barra um terço por vez (3 toques = topo).
+ * Tira: arrasto horizontal; a barra sobe a rampa até o alto. Enter/Espaço confirmam.
+ * prefers-reduced-motion: barra já no alto, sem gesto, sem tira (fica "Enviar sem arrastar").
+ * Eventos: motor:ritual-pronto {ritual:'barra'} · ritual:confirmar {origem:'tira', el}.
+ * Precisa de rituais/comum.js antes.
+ */
+(function () {
+  'use strict';
+  var W = typeof window !== 'undefined' ? window : null;
+  if (!W || !W.document || !W.CreatRitualComum) return;
+  var D = W.document, C = W.CreatRitualComum, svg = C.svg, no = C.no, lim = C.lim;
+
+  var SUBIDA = 128;          // unidades do viewBox entre o chão e o alto
+  var BASE_Y = 60;           // desloca o desenho da T2 (anilhas tocando o chão em y = 224)
+  var TRAVA = 0.92;          // chegou aqui puxando: trava no alto
+  var TRAVA_SOLTANDO = 0.75; // soltou acima disto: termina de subir e trava
+
+  function desenharBarra(pai) {
+    var g = svg('g', null, pai);
+    var barra = svg('g', null, g);
+    var sombraBarra = svg('path', { 'class': 'ra-sombra-traco', d: 'M8 118 Q100 118 196 118' }, barra);
+    var contorno = svg('path', { 'class': 'ra-barra-contorno', d: 'M4 114 Q100 114 194 114' }, barra);
+    var aco = svg('path', { 'class': 'ra-barra-aco', d: 'M4 114 Q100 114 194 114' }, barra);
+    svg('path', { 'class': 'ra-recartilhado', d: 'M76 110 l6 8 M84 110 l6 8 M92 110 l6 8 M100 110 l6 8 M108 110 l6 8 M116 110 l6 8' }, barra);
+    function anilha(lado) {
+      var a = svg('g', { 'class': 'ra-anilha' }, g);
+      var x = lado < 0 ? 34 : 142, xp = lado < 0 ? 18 : 168, xs = lado < 0 ? 8 : 184;
+      svg('rect', { 'class': 'ra-sombra', x: x + 4, y: 68, width: 24, height: 100, rx: 8 }, a);
+      svg('rect', { 'class': 'ra-destaque ra-l', x: x, y: 64, width: 24, height: 100, rx: 8 }, a);
+      svg('path', { 'class': 'ra-brilho', d: 'M' + (x + 7) + ' 74 V96' }, a);
+      svg('rect', { 'class': 'ra-anilha-2 ra-l', 'stroke-width': 3, x: xp, y: 86, width: 14, height: 56, rx: 5 }, a);
+      svg('rect', { 'class': 'ra-aco-escuro ra-l', 'stroke-width': 3, x: xs, y: 102, width: 8, height: 24, rx: 3 }, a);
+      return a;
+    }
+    return { g: g, esq: anilha(-1), dir: anilha(1), caminhos: [sombraBarra, contorno, aco] };
+  }
+
+  /* =====================================================================
+     HERÓI
+     ===================================================================== */
+  var heroi = null;
+
+  function montarHeroi(el) {
+    if (!el || heroi) return;
+    el.classList.add('ritual-heroi', 'barra');
+    var palco = no('div', 'palco-ritual palco-barra');
+    palco.id = 'palco-barra';
+    palco.setAttribute('tabindex', '0');
+    palco.setAttribute('role', 'group');
+    palco.setAttribute('aria-roledescription', 'barra para levantar');
+    palco.setAttribute('aria-label', C.texto('heroiInstrucao', 'Levantar a barra: arraste a barra para cima, ou use a seta para cima e a barra de espaço.'));
+    palco.setAttribute('aria-describedby', 'barra-instrucao');
+
+    var s = svg('svg', { viewBox: '0 0 200 240', 'class': 'ra-svg', 'aria-hidden': 'true', focusable: 'false' }, palco);
+    svg('path', { 'class': 'ra-lf ra-chao', 'stroke-width': 4, d: 'M6 226 H194' }, s);
+    var marca = svg('path', { 'class': 'ra-marca-topo', d: 'M10 30 H24 M176 30 H190' }, s);
+    var subir = svg('g', null, s);
+    var escala = svg('g', { transform: 'translate(100 164) scale(0.78) translate(-100 -164)' }, subir);
+    var barra = desenharBarra(escala);
+    var poeira = svg('g', { 'class': 'ra-poeira' }, s);
+    [[86, 222, 6], [112, 224, 4.5], [72, 224, 3.5], [126, 221, 3], [100, 225, 5]].forEach(function (c, i) {
+      svg('circle', { 'class': 'ra-giz ra-l', 'stroke-width': 2.5, cx: c[0], cy: c[1], r: c[2], style: '--i:' + i }, poeira);
+    });
+    marca.setAttribute('aria-hidden', 'true');
+
+    var dica = no('p', 'ritual-dica');
+    var seta = no('span', 'seta-giz seta-cima', dica);
+    seta.setAttribute('aria-hidden', 'true');
+    var dt = no('span', null, dica);
+    dt.textContent = C.texto('heroiDica', 'Levante a barra.');
+    var med = no('div', 'ritual-medidor');
+    med.setAttribute('role', 'progressbar');
+    med.setAttribute('aria-label', 'Altura da barra');
+    med.setAttribute('aria-valuemin', '0'); med.setAttribute('aria-valuemax', '100'); med.setAttribute('aria-valuenow', '0');
+    var pronto = no('p', 'ritual-pronto');
+    pronto.setAttribute('aria-live', 'polite');
+    var ins = no('p', 'so-leitor');
+    ins.id = 'barra-instrucao';
+    ins.textContent = C.texto('instrucaoTeclado', 'Use a seta para cima ou a barra de espaço para levantar.');
+    [dica, med, pronto, ins].forEach(function (n) { palco.appendChild(n); });
+    el.insertBefore(palco, el.firstChild);
+
+    var h = heroi = {
+      el: el, palco: palco, svg: s, subir: subir, barra: barra, poeira: poeira, medidor: med, frase: pronto,
+      my: new C.Mola(0, 120, 0.72), alturaMax: 0, levantada: false, rodando: false, tAnt: 0,
+      y0: 0, l0: 0, teclas: 0, caindo: false, flexAnt: 0
+    };
+
+    if (C.reduzido()) estadoFinal();
+    posar(0);
+
+    h.arrasto = C.ponteiro(palco, {
+      pode: function () { return !C.reduzido() && !h.levantada; },
+      inicio: function (e) {
+        h.y0 = e.clientY; h.l0 = h.my.x;
+        h.my.k = 120; h.my.z = 0.72;
+        h.caindo = false;
+        palco.classList.add('is-segurando');
+        agendar();
+      },
+      mover: function (e) {
+        var alt = Math.max(120, palco.getBoundingClientRect().height);
+        var puxada = (h.y0 - e.clientY) / (alt * 0.62);
+        h.my.alvo = lim(h.l0 + puxada, 0, 1.02);
+        agendar();
+      },
+      fim: function (e, cancelado) {
+        palco.classList.remove('is-segurando');
+        if (h.levantada) return;
+        if (!cancelado && Math.max(h.my.x, h.my.alvo) >= TRAVA_SOLTANDO) { travar(true); return; }
+        h.my.k = 210; h.my.z = 0.42;             // cai pesada e quica
+        h.my.alvo = 0; h.caindo = true;
+        agendar();
+      }
+    });
+
+    palco.addEventListener('keydown', function (e) {
+      if (e.target !== palco || C.reduzido() || h.levantada || e.altKey || e.ctrlKey || e.metaKey) return;
+      var k = e.key;
+      if (['ArrowUp', 'ArrowRight', ' ', 'Spacebar', 'Enter'].indexOf(k) === -1) return;
+      e.preventDefault();
+      if (e.repeat) return;
+      h.teclas = Math.min(3, h.teclas + 1);
+      h.my.k = 150; h.my.z = 0.7; h.caindo = false;
+      if (h.teclas >= 3) travar(true);
+      else { h.my.alvo = h.teclas / 3; C.vibrar(6); agendar(); }
+    });
+
+    C.aoMudarMovimento(function (reduz) { if (reduz) estadoFinal(); });
+  }
+
+  function poeira(forte) {
+    var h = heroi;
+    if (C.reduzido()) return;
+    h.poeira.classList.remove('is-subindo', 'is-forte');
+    void h.poeira.getBoundingClientRect();
+    h.poeira.classList.add('is-subindo');
+    if (forte) h.poeira.classList.add('is-forte');
+  }
+
+  function travar(comEfeito) {
+    var h = heroi;
+    if (!h || h.levantada) return;
+    h.levantada = true;
+    h.teclas = 3;
+    if (h.arrasto) h.arrasto.soltar();
+    h.palco.classList.remove('is-segurando');
+    h.my.k = 260; h.my.z = 0.5; h.my.alvo = 1;
+    if (C.reduzido() || !comEfeito) h.my.fixar(1);
+    h.alturaMax = 1;
+    atualizarMedidor(1);
+    h.frase.textContent = C.texto('heroiPronto', 'Levantou.');
+    h.el.classList.add('is-levantada');
+    h.palco.classList.add('is-levantada');
+    h.palco.setAttribute('aria-disabled', 'true');
+    if (comEfeito && !C.reduzido()) { poeira(true); C.som('trava'); C.vibrar(20); }
+    posar(0);
+    agendar();
+    C.emitir('motor:ritual-pronto', { ritual: 'barra' });
+  }
+
+  function estadoFinal() {
+    var h = heroi;
+    if (!h) return;
+    travar(false);
+    h.my.fixar(1);
+    posar(0);
+  }
+
+  function atualizarMedidor(v) {
+    var h = heroi;
+    h.palco.style.setProperty('--prog', v.toFixed(3));
+    h.medidor.setAttribute('aria-valuenow', String(Math.round(v * 100)));
+    h.medidor.setAttribute('aria-valuetext', Math.round(v * 100) + '% da subida');
+  }
+
+  /* flex > 0: a barra subindo rápido, o meio vai na frente e as pontas (as anilhas) ficam atrás */
+  function posar(flex) {
+    var h = heroi, l = lim(h.my.x, -0.05, 1.04);
+    var y = BASE_Y - l * SUBIDA;
+    var sy = 1 - lim(flex * 0.05, -0.05, 0.06), sx = 1 + lim(flex * 0.025, -0.03, 0.03);
+    h.subir.setAttribute('transform', 'translate(0 ' + y.toFixed(2) + ') translate(100 164) scale(' + sx.toFixed(3) + ' ' + sy.toFixed(3) + ') translate(-100 -164)');
+    var curva = lim(flex * 9, -10, 12);
+    var d = function (ox, oy) { return 'M' + (4 + ox) + ' ' + (114 + oy + curva) + ' Q100 ' + (114 + oy - curva) + ' ' + (194 + ox) + ' ' + (114 + oy + curva); };
+    h.barra.caminhos[0].setAttribute('d', d(4, 4));
+    h.barra.caminhos[1].setAttribute('d', d(0, 0));
+    h.barra.caminhos[2].setAttribute('d', d(0, 0));
+    var giro = lim(flex * 4, -6, 6);
+    h.barra.esq.setAttribute('transform', 'translate(0 ' + curva.toFixed(2) + ') rotate(' + (-giro).toFixed(2) + ' 46 114)');
+    h.barra.dir.setAttribute('transform', 'translate(0 ' + curva.toFixed(2) + ') rotate(' + giro.toFixed(2) + ' 154 114)');
+  }
+
+  function agendar() {
+    var h = heroi;
+    if (h.rodando) return;
+    h.rodando = true;
+    W.requestAnimationFrame(quadro);
+  }
+  function quadro(t) {
+    var h = heroi;
+    h.rodando = false;
+    var dt = h.tAnt ? lim((t - h.tAnt) / 1000, 0, 1 / 30) : 1 / 60;
+    h.tAnt = t;
+    var vAnt = h.my.v;
+    h.my.passo(dt);
+    var flex = h.flexAnt * 0.7 + lim(h.my.v / 3, -2, 2) * 0.3;
+    h.flexAnt = flex;
+    posar(flex);
+    if (!h.levantada) {
+      if (h.my.x > h.alturaMax) { h.alturaMax = Math.min(1, h.my.x); atualizarMedidor(Math.min(1, h.alturaMax / TRAVA)); }
+      if (h.arrasto && h.arrasto.ativo() && h.my.x >= TRAVA) { travar(true); return; }
+      // bateu no chão descendo: pó e quique
+      if (h.caindo && vAnt < -0.6 && h.my.x <= 0.02) { poeira(false); C.vibrar(10); h.caindo = vAnt < -1.4; }
+    }
+    var parado = h.my.parada(0.002) && Math.abs(flex) < 0.01;
+    if (!parado || (h.arrasto && h.arrasto.ativo())) agendar();
+    else { h.tAnt = 0; h.flexAnt = 0; posar(0); }
+  }
+
+  /* =====================================================================
+     TIRA DE CONFIRMAR: a barra sobe a rampa da esquerda (chão) para a direita (alto)
+     ===================================================================== */
+  var DESENHO_TIRA = {
+    nome: 'barra',
+    classe: 'tira-barra',
+    montar: function (el) {
+      no('span', 'tb-chao', el);
+      var alca = no('span', 'tb-barra', el);
+      var s = svg('svg', { viewBox: '0 0 64 30', 'aria-hidden': 'true', focusable: 'false' }, alca);
+      svg('rect', { 'class': 'ra-barra-mini', x: 1, y: 13, width: 62, height: 4, rx: 2 }, s);
+      [[11, 2, 8, 26, 'ra-destaque'], [45, 2, 8, 26, 'ra-destaque'], [4, 7, 6, 16, 'ra-anilha-2'], [54, 7, 6, 16, 'ra-anilha-2']].forEach(function (r) {
+        svg('rect', { 'class': r[4] + ' ra-l-mini', x: r[0], y: r[1], width: r[2], height: r[3], rx: 2 }, s);
+      });
+      return {
+        larguraAlca: function () { return 64; },
+        posar: function (p, v, x, h) {
+          var sobe = (1 - p) * 7 - p * 9;
+          var torce = lim(v / 60, -6, 6);
+          alca.style.transform = 'translate(' + (x - 32).toFixed(1) + 'px, ' + sobe.toFixed(1) + 'px) rotate(' + (-torce).toFixed(1) + 'deg)';
+        },
+        resetar: function () {}
+      };
+    }
+  };
+
+  W.CREAT_RITUAIS = W.CREAT_RITUAIS || {};
+  W.CREAT_RITUAIS.barra = {
+    nome: 'barra',
+    montarHeroi: montarHeroi,
+    criarTira: function (el, opc) { return C.tira(el, { rotulo: (opc && opc.rotulo) || C.texto('ritualDica', 'Levante a barra para enviar') }, DESENHO_TIRA); },
+    resetarTira: C.resetarTira,
+    levantar: function () { if (heroi) travar(true); }
+  };
+})();
