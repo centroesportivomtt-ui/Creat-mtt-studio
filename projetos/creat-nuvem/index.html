@@ -178,16 +178,6 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
           </fieldset>
           <span class="erro" id="nicho-erro" role="alert" hidden>Escolha o tipo do seu negócio para montar o site certo.</span>
 
-          <div class="espera">
-            <p id="espera-rotulo">Chegam depois. Toque para ser avisado:</p>
-            <div class="chips" role="group" aria-labelledby="espera-rotulo">
-              <button type="button" class="chip chip-avise" data-espera="pet" aria-label="Pet, avise-me quando chegar" data-msg="Olá! Tenho um pet shop ou banho e tosa. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Pet</button>
-              <button type="button" class="chip chip-avise" data-espera="restaurante" aria-label="Restaurante, avise-me quando chegar" data-msg="Olá! Tenho um restaurante, marmitaria ou lanchonete. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Restaurante</button>
-              <button type="button" class="chip chip-avise" data-espera="oficina" aria-label="Oficina, avise-me quando chegar" data-msg="Olá! Tenho uma oficina. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Oficina</button>
-              <button type="button" class="chip chip-avise" data-espera="tatuagem" aria-label="Tatuagem, avise-me quando chegar" data-msg="Olá! Tenho um estúdio de tatuagem. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Tatuagem</button>
-            </div>
-          </div>
-
           <div class="campo">
             <label for="cidade">Cidade (opcional)</label>
             <input id="cidade" name="cidade" type="text" autocomplete="address-level2" maxlength="60" placeholder="Exemplo: Campinas" aria-describedby="cidade-erro">
@@ -198,6 +188,16 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
             <button class="btn btn-sol btn-g" type="submit" data-cta>Abrir meu negócio</button>
             <span class="dica-arrastar" hidden>ou arraste a placa</span>
           </div>
+          <div class="espera">
+            <p id="espera-rotulo">Chegam depois. Toque para ser avisado:</p>
+            <div class="chips" role="group" aria-labelledby="espera-rotulo">
+              <button type="button" class="chip chip-avise" data-espera="pet" aria-label="Pet, avise-me quando chegar" data-msg="Olá! Tenho um pet shop ou banho e tosa. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Pet</button>
+              <button type="button" class="chip chip-avise" data-espera="restaurante" aria-label="Restaurante, avise-me quando chegar" data-msg="Olá! Tenho um restaurante, marmitaria ou lanchonete. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Restaurante</button>
+              <button type="button" class="chip chip-avise" data-espera="oficina" aria-label="Oficina, avise-me quando chegar" data-msg="Olá! Tenho uma oficina. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Oficina</button>
+              <button type="button" class="chip chip-avise" data-espera="tatuagem" aria-label="Tatuagem, avise-me quando chegar" data-msg="Olá! Tenho um estúdio de tatuagem. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Tatuagem</button>
+            </div>
+          </div>
+
         </form>
         <noscript><p class="ajuda">Para ver a prévia do seu site, ative o JavaScript no navegador.</p></noscript>
       </div>

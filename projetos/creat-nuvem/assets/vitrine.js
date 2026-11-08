@@ -401,7 +401,19 @@
     };
     $$('[data-consentir]', caixa).forEach(function (b) { b.addEventListener('click', function () { decidir(b.getAttribute('data-consentir') === 'sim'); }); });
     $$('[data-preferencias]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); mostrar(); var p = $('[data-consentir]', caixa); if (p) p.focus(); }); });
-    if (!consentimento()) mostrar(); else carregarTerceiros();
+    if (consentimento()) { carregarTerceiros(); return; }
+    // O banner não cobre a primeira tela: aparece quando o visitante passa do hero, fecha a prévia
+    // ou depois de 25 s. Até lá nada de Pixel nem Clarity (só carregam com o Aceitar).
+    var heroi = $('#porta'), mostrado = false;
+    var talvez = function () {
+      if (mostrado) return;
+      var limite = heroi ? heroi.offsetTop + heroi.offsetHeight * 0.6 : W.innerHeight * 0.6;
+      if ((W.scrollY || 0) + W.innerHeight * 0.4 > limite) disparar();
+    };
+    var disparar = function () { if (mostrado) return; mostrado = true; W.removeEventListener('scroll', talvez); mostrar(); };
+    W.addEventListener('scroll', talvez, { passive: true });
+    W.addEventListener('creat:previa-fechada', disparar);
+    setTimeout(disparar, 25000);
   }
 
   /* ------------------------------------------------------------ suporte, barra e som */
@@ -633,6 +645,7 @@
       if (placa) { try { placa.reiniciar(); placa.definirNome(limparNome(campoNome.value)); } catch (e) {} }
       if (!deHistorico && history.state && history.state.previa) history.back();
       if (focoAntes && focoAntes.focus) focoAntes.focus();
+      try { W.dispatchEvent(new CustomEvent('creat:previa-fechada')); } catch (e) {}
     }
     $('#previa-fechar').addEventListener('click', function () { fecharPrevia(false); });
     W.addEventListener('popstate', function () { if (!previa.hidden) fecharPrevia(true); });
