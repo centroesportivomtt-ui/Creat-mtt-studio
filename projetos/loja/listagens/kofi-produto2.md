@@ -50,7 +50,7 @@ Developers who already write Three.js and want a cartoon look without building g
 
 Personal and commercial use allowed, including client work. Reselling or redistributing the kit itself is not allowed.
 
-Questions: [EMAIL_SUPORTE]
+Questions: mttcreatt@gmail.com
 
 ## Tags
 
@@ -64,4 +64,4 @@ Thanks for buying the Toon 3D Kit.
 2. Copy `toon-kit.js` into your project and import it: `import { createToonKit } from './toon-kit.js'`.
 3. The README has the mascot recipe and the full API.
 
-Something not working? Email [EMAIL_SUPORTE] with your browser and the console message (F12).
+Something not working? Email mttcreatt@gmail.com with your browser and the console message (F12).

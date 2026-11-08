@@ -132,7 +132,7 @@ Seu acesso está liberado. Comece pela lição 1 na área de membros; cada liç�
 
 O material de apoio, `kit-toon-3d-threejs.zip`, traz o `toon-kit.js`, a demo do mascote e o README com a API completa. Abra a demo antes da lição 2 para ter algo para mexer enquanto lê.
 
-Dúvidas: [EMAIL_SUPORTE]
+Dúvidas: mttcreatt@gmail.com
 
 Bons estudos!
 Creat Nuvem

@@ -1,6 +1,6 @@
 LICENÇA DE USO - Creat Nuvem - Agência de 15 agentes para Claude Code
-Copyright (c) 2026 [NOME_TITULAR]. Todos os direitos reservados.
-Contato: [EMAIL_SUPORTE]
+Copyright (c) 2026 Creat.MTT Studio. Todos os direitos reservados.
+Contato: mttcreatt@gmail.com
 
 Ao baixar, comprar ou usar este pacote ("Creat Nuvem - Agência de 15 agentes para Claude Code"),
 doravante "o Pacote", você concorda com os termos abaixo.
@@ -42,7 +42,7 @@ doravante "o Pacote", você concorda com os termos abaixo.
 6. LEI APLICÁVEL
    Estes termos seguem a legislação brasileira (Lei 9.610/98 e Lei 9.609/98).
 
-Dúvidas: [EMAIL_SUPORTE]
+Dúvidas: mttcreatt@gmail.com
 
 -------------------------------------------------------------------------------
 SUMMARY IN ENGLISH (the Portuguese text above prevails)
@@ -58,4 +58,4 @@ SUMMARY IN ENGLISH (the Portuguese text above prevails)
 - Provided "AS IS", WITHOUT WARRANTY of any kind. The holder is not liable for
   any damages arising from its use.
 
-Copyright (c) 2026 [NOME_TITULAR] - [EMAIL_SUPORTE]
+Copyright (c) 2026 Creat.MTT Studio - mttcreatt@gmail.com

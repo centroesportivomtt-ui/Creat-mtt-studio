@@ -151,7 +151,7 @@ Fixe a versão do pacote (o exemplo usa a que testamos). Na próxima sessão o C
 
 ## Suporte
 
-Dúvidas sobre o pacote: [EMAIL_SUPORTE]. Dúvidas sobre conta, cobrança ou limites do Claude Code são com a Anthropic, não com a gente.
+Dúvidas sobre o pacote: mttcreatt@gmail.com. Dúvidas sobre conta, cobrança ou limites do Claude Code são com a Anthropic, não com a gente.
 
 ## Licença
 

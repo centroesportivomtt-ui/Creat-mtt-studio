@@ -51,7 +51,7 @@ Creat Nuvem turns Claude Code into a small studio with fixed roles. Instead of a
 
 Personal and commercial use allowed, including client work. Reselling or redistributing the pack is not allowed.
 
-Questions: [EMAIL_SUPORTE]
+Questions: mttcreatt@gmail.com
 
 ## Tags
 
@@ -67,4 +67,4 @@ Thanks for buying Creat Nuvem.
 
 Reminder: the pack runs on your own Claude Code subscription, and agents use tokens from your account.
 
-Something not working? Email [EMAIL_SUPORTE] with what you asked, what you saw and your Claude Code version.
+Something not working? Email mttcreatt@gmail.com with what you asked, what you saw and your Claude Code version.

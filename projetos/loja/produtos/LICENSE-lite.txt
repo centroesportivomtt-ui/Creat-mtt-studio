@@ -1,6 +1,6 @@
 MIT License (Licença MIT)
 
-Copyright (c) 2026 [NOME_TITULAR]
+Copyright (c) 2026 Creat.MTT Studio
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,4 +27,4 @@ Creat Nuvem Lite é grátis e livre: você pode usar, copiar, modificar, publica
 distribuir e até vender, em projetos pessoais e comerciais, desde que mantenha
 este aviso de copyright e de licença. Sem garantia de nenhum tipo.
 
-Contato: [EMAIL_SUPORTE]
+Contato: mttcreatt@gmail.com

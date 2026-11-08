@@ -45,7 +45,7 @@ Para quem já escreve Three.js e quer um visual de desenho sem montar shader, gr
 
 Uso pessoal e comercial permitido, inclusive em projetos de clientes. Não é permitido revender ou redistribuir o kit como produto.
 
-Dúvidas antes de comprar: [EMAIL_SUPORTE]
+Dúvidas antes de comprar: mttcreatt@gmail.com
 
 ## Tags
 
@@ -65,7 +65,7 @@ Para começar:
 2. Copie `toon-kit.js` para o seu projeto e importe: `import { createToonKit } from './toon-kit.js'`.
 3. O README traz a receita do mascote e a API de cada função.
 
-Se algo não funcionar, escreva para [EMAIL_SUPORTE] com o navegador que você usou e a mensagem do console (F12).
+Se algo não funcionar, escreva para mttcreatt@gmail.com com o navegador que você usou e a mensagem do console (F12).
 
 Bom trabalho!
 Creat Nuvem

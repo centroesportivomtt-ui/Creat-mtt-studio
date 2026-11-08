@@ -71,7 +71,7 @@ Depois baixe o material de apoio, `creat-nuvem-agencia-15-agentes.zip`, e siga o
 
 Lembrete: o material funciona com a sua assinatura do Claude Code e o uso dos agentes consome tokens da sua conta.
 
-Dúvidas: [EMAIL_SUPORTE]
+Dúvidas: mttcreatt@gmail.com
 
 Bons estudos!
 Creat Nuvem

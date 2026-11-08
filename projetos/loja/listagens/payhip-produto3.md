@@ -48,7 +48,7 @@ Para quem faz sites para pequenos negócios e quer uma base pronta para barbeari
 
 Uso pessoal e comercial permitido, inclusive para montar o site de barbearias clientes suas. Não é permitido revender ou redistribuir o modelo em si como produto.
 
-Dúvidas antes de comprar: [EMAIL_SUPORTE]
+Dúvidas antes de comprar: mttcreatt@gmail.com
 
 ## Tags
 
@@ -69,7 +69,7 @@ Para começar:
 3. Faça uma reserva de teste e confira se a mensagem chega no WhatsApp certo.
 4. Publique de graça seguindo o passo a passo do README.
 
-Se algo não funcionar, escreva para [EMAIL_SUPORTE] dizendo o que você trocou no `config.js` e o que apareceu na tela.
+Se algo não funcionar, escreva para mttcreatt@gmail.com dizendo o que você trocou no `config.js` e o que apareceu na tela.
 
 Bom trabalho!
 Creat Nuvem

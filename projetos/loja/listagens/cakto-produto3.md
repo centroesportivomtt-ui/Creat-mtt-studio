@@ -116,7 +116,7 @@ Olá!
 
 Seu acesso está liberado. Baixe o material de apoio, `site-barbearia-whatsapp.zip`, na lição 1, e siga as lições na ordem. Ao final da lição 2 você já tem o site com os dados da sua barbearia; ao final da lição 5, publicado.
 
-Dúvidas: [EMAIL_SUPORTE]
+Dúvidas: mttcreatt@gmail.com
 
 Bons estudos!
 Creat Nuvem

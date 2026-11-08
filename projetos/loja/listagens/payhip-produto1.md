@@ -50,7 +50,7 @@ Para quem já usa o Claude Code e quer separar o trabalho por especialidade, com
 
 Uso pessoal e comercial permitido, inclusive em projetos que você entrega a clientes. Não é permitido revender ou redistribuir o pacote.
 
-Dúvidas antes de comprar: [EMAIL_SUPORTE]
+Dúvidas antes de comprar: mttcreatt@gmail.com
 
 ## Tags
 
@@ -72,7 +72,7 @@ Para começar:
 
 Lembrete: o pacote funciona com a sua assinatura do Claude Code e o uso dos agentes consome tokens da sua conta.
 
-Se algo não funcionar, responda este e-mail ou escreva para [EMAIL_SUPORTE] com o que você pediu, o que apareceu na tela e a versão do Claude Code.
+Se algo não funcionar, responda este e-mail ou escreva para mttcreatt@gmail.com com o que você pediu, o que apareceu na tela e a versão do Claude Code.
 
 Bom trabalho!
 Creat Nuvem

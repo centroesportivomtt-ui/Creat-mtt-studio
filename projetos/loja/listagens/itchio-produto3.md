@@ -56,7 +56,7 @@ A single-page website for a barbershop, ready to customize and publish for free.
 
 Personal and commercial use allowed, including building sites for your barbershop clients. Reselling or redistributing the template itself is not allowed.
 
-Questions: [EMAIL_SUPORTE]
+Questions: mttcreatt@gmail.com
 
 ## Tags
 
@@ -71,4 +71,4 @@ Thanks for buying the barbershop website.
 3. Make a test booking and check that the message reaches the right WhatsApp.
 4. Publish it for free following the README.
 
-Something not working? Email [EMAIL_SUPORTE] with what you changed in `config.js` and what you saw.
+Something not working? Email mttcreatt@gmail.com with what you changed in `config.js` and what you saw.
