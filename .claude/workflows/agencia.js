@@ -1,7 +1,7 @@
 export const meta = {
   name: 'agencia',
   description: 'Creat Nuvem: Faísca cria 3 conceitos e o júri escolhe, Nimbus planeja, os especialistas constroem em ondas, Crivo revisa, Lupa e Muralha testam, Nimbus entrega',
-  whenToUse: 'Projetos com várias etapas (site, app, landing page, feature grande). Passe o briefing como args (texto), ou { briefing, conceito: false } para pular a etapa de conceito; ou { briefing_arquivo: 'docs/x.md' } para um briefing longo em arquivo.',
+  whenToUse: 'Projetos com várias etapas (site, app, landing page, feature grande). Passe o briefing como args (texto), ou { briefing, conceito: false } para pular a etapa de conceito; ou { briefing_arquivo: "docs/x.md" } para um briefing longo em arquivo.',
   phases: [
     { title: 'Conceito', detail: 'três Faíscas criam conceitos por ângulos diferentes; o júri escolhe e enxerta' },
     { title: 'Briefing', detail: 'Nimbus lê o repositório e monta o plano em ondas' },
