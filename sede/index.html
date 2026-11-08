@@ -184,6 +184,8 @@ button{font:inherit;color:inherit}
 @media (max-width:719px){ .tag{font-size:11px;padding:1px 7px 1px 2px} .tag i{width:11px;height:11px} }
 
 /* carregando */
+/* Porta Aberta (T6): legenda fixa do modo demo; nunca parece pedido real */
+#demoTag{position:absolute;left:50%;top:calc(var(--safe-t) + 74px);transform:translateX(-50%);z-index:6;margin:0;padding:4px 14px;border:2.5px solid var(--line);border-radius:999px;background:var(--sun);color:var(--sun-ink);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;box-shadow:3px 3px 0 var(--line);pointer-events:none;white-space:nowrap}
 #loader{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:var(--bg);transition:opacity .5s}
 #loader.out{opacity:0;pointer-events:none}
 #loader div{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:0 24px}
@@ -230,6 +232,7 @@ button{font:inherit;color:inherit}
     <p class="note" id="opsNote">O formulário acima é uma simulação. Quando a agência está trabalhando de verdade no Claude Code, o bloco <b>Ao vivo</b> aparece aqui com os fluxos, agentes e tempos reais (<code>node sede/servidor.cjs</code> na sua máquina, ou a publicação atualizada por mim).</p>
   </aside>
 
+  <p id="demoTag" hidden>Demonstração</p>
   <p id="hint">Arraste para girar · toque num agente</p>
   <nav id="roster" aria-label="Equipe da agência"></nav>
 
@@ -250,6 +253,7 @@ button{font:inherit;color:inherit}
     }
   },15000);
 </script>
+<!-- Three.js fixo em 0.160.0 (r160), do jsDelivr (npm "three"); addons da mesma versão. Trocar só os dois números juntos. -->
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
 </script>
@@ -352,6 +356,26 @@ const YES = ['Deixa comigo!','Já vou!','Bora!','Recebido!','Pode mandar!','Na h
 
 const $ = s => document.querySelector(s);
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ── Porta Aberta (T6): ?marca= ?modo= ?lite= ──
+   marca: só letras, números, espaço e & . - ' (o resto é removido), até 28; desenhada só por fillText.
+   modo: demo (estado fictício embutido, legenda "Demonstração"), publico (só estado-publico.json),
+         local (comportamento de antes: estado.json + banco do artefato). Sem ?modo: local no
+         localhost/arquivo/artefato do Claude (uso do Marcos); publico em qualquer outro host. */
+const QS = new URLSearchParams(location.search);
+const MARCA = (() => {
+  const v = QS.get('marca'); if (v == null || /[<>]/.test(v)) return null; // marcação não é nome de negócio: placa atual
+  let m = v.normalize('NFC').replace(/[^\p{L}\p{N} &.'-]/gu, '').replace(/\s+/g, ' ').trim();
+  if (m.length > 28){ m = m.slice(0, 28); const i = m.lastIndexOf(' '); m = (i > 10 ? m.slice(0, i) : m).trim(); }
+  return m || null;
+})();
+const MODO = (() => {
+  const v = QS.get('modo'); if (v === 'demo' || v === 'publico' || v === 'local') return v;
+  const h = location.hostname;
+  return location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(h) || /(^|\.)(claude\.ai|claudeusercontent\.com)$/.test(h) ? 'local' : 'publico';
+})();
+const LITE = QS.get('lite') === '1';
+if (MARCA){ document.title = 'Sede · ' + MARCA; const lm = document.getElementById('loadMsg'); if (lm) lm.textContent = 'Pendurando a placa de ' + MARCA + '.'; }
+if (MODO === 'demo') document.getElementById('demoTag').hidden = false;
 const isDark = () => { const t = document.documentElement.getAttribute('data-theme'); return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; };
 const lum = hex => { const c = new THREE.Color(hex); return 0.2126*c.r + 0.7152*c.g + 0.0722*c.b; };
 const mix = (hex, to, k) => '#' + new THREE.Color(hex).lerp(new THREE.Color(to), k).getHexString();
@@ -368,8 +392,8 @@ try {
   $('#loadMsg').textContent = 'Seu navegador não liberou o WebGL. A equipe continua disponível na barra de baixo.';
 }
 const small = Math.min(innerWidth, innerHeight) < 700;
-renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.75 : 2));
-renderer.shadowMap.enabled = true;
+renderer.setPixelRatio(LITE ? 1 : Math.min(devicePixelRatio, small ? 1.75 : 2));
+renderer.shadowMap.enabled = !LITE;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
@@ -520,6 +544,10 @@ const signTex = (() => {
   const c = document.createElement('canvas'); c.width = 1024; c.height = 300;
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   const draw = () => { const g = c.getContext('2d'); g.clearRect(0,0,1024,300); g.textAlign = 'center'; g.fillStyle = '#1E1B2E';
+    if (MARCA){ // nome do cliente: só fillText, nunca HTML; encolhe até caber
+      let px = 150; do { g.font = `${px}px "Lilita One", "Arial Rounded MT Bold", sans-serif`; px -= 6; } while (g.measureText(MARCA).width > 950 && px > 48);
+      g.fillText(MARCA, 512, 175);
+      g.font = '700 46px Figtree, system-ui, sans-serif'; g.fillText('ABERTO PELA CREAT NUVEM', 512, 255); t.needsUpdate = true; return; }
     g.font = '150px "Lilita One", "Arial Rounded MT Bold", sans-serif'; g.fillText('CREAT NUVEM', 512, 170);
     g.font = '700 46px Figtree, system-ui, sans-serif'; g.fillText('AGÊNCIA DE AGENTES · DESDE 2026', 512, 250); t.needsUpdate = true; };
   draw(); document.fonts && document.fonts.ready.then(draw); return t;
@@ -1045,13 +1073,15 @@ function aplicarEstado(e){
   live.prev = new Set(ativos.keys());
   const n = e.total_trabalhando || 0;
   $('#online').textContent = n ? ` · ${n} trabalhando agora` : ' · equipe em pausa';
-  if (!runBtn.querySelector('.live-badge')) runBtn.insertAdjacentHTML('beforeend', '<span class="live-badge"><i></i>Ao vivo</span>');
+  if (!runBtn.querySelector('.live-badge')) runBtn.insertAdjacentHTML('beforeend', e.demo ? '<span class="live-badge"><i></i>Demonstração</span>' : '<span class="live-badge"><i></i>Ao vivo</span>');
   $('#opsTitle').textContent = 'Operações';
-  $('#opsSub').textContent = n ? `${n} agente${n > 1 ? 's' : ''} trabalhando de verdade agora.` : 'Nenhum fluxo em andamento neste momento.';
+  $('#opsSub').textContent = e.demo ? 'Demonstração: é assim que a equipe aparece quando há um pedido em produção.'
+    : n ? `${n} agente${n > 1 ? 's' : ''} trabalhando de verdade agora.` : e.publico ? (e.mensagem || 'A equipe espera o próximo pedido.') : 'Nenhum fluxo em andamento neste momento.';
   renderLive(e);
   if (!live.abriu && n && innerWidth >= 720 && card.hidden){ live.abriu = true; openOps(); }
 }
 function renderLive(e){
+  if (e.publico) return renderPublico(e);
   const agora = Date.now();
   const fluxos = (e.fluxos || []).filter(f => f.em_andamento || agora - (f.ultimo_evento || 0) < 6 * 3600e3);
   liveEl.hidden = false;
@@ -1078,7 +1108,56 @@ setInterval(() => {
   const t = l[0]; say(a, curto(t.acao || t.label), 2600);
   if (a.laptop) spawnBit(a);
 }, 6000);
+/* Porta Aberta (T6): estado público com vocabulário fechado (sede/publicar-estado.cjs).
+   A frase é refeita aqui pela tabela, por personagem e status; texto livre do arquivo é ignorado. */
+const FRASE = { diretor:'organizando a fila', criativo:'pensando o conceito', arquiteto:'desenhando a estrutura', frontend:'montando a página', backend:'ligando os sistemas', designer:'escolhendo as cores', 'motion-3d':'animando os detalhes', shader:'criando os efeitos', som:'afinando os sons', copywriter:'escrevendo os textos', pesquisador:'conferindo os dados', revisor:'revisando o código', qa:'testando no celular', seguranca:'conferindo segurança', devops:'publicando' };
+const STATUS_PUB = { trabalhando:'trabalhando', feito:'terminou a parte dele', esperando:'na fila' };
+function dePublico(p, demo){
+  if (!p || p.versao !== 1) return null;
+  const quando = Date.parse(p.atualizado_em); if (!quando) return null;
+  const personagens = {}, fluxos = [];
+  (Array.isArray(p.fluxos) ? p.fluxos : []).slice(0, 4).forEach(f => {
+    const nome = demo ? 'Demonstração · exemplo de pedido' : f && f.nome === 'Projeto interno' ? 'Projeto interno' : 'Pedido da Creat';
+    const agentes = (Array.isArray(f && f.agentes) ? f.agentes : []).filter(a => a && FRASE[a.personagem] && STATUS_PUB[a.status]).slice(0, 15)
+      .map(a => ({ personagem:a.personagem, status:a.status, frase: a.status === 'trabalhando' ? FRASE[a.personagem] : STATUS_PUB[a.status] }));
+    agentes.forEach(a => { if (a.status === 'trabalhando') (personagens[a.personagem] = personagens[a.personagem] || []).push({ acao:a.frase, label:a.frase }); });
+    fluxos.push({ nome, em_andamento: agentes.some(a => a.status === 'trabalhando'), agentes });
+  });
+  return { publico:true, demo:!!demo, atualizado:new Date(quando).toISOString(), total_trabalhando:Object.values(personagens).reduce((n, l) => n + l.length, 0), personagens, fluxos,
+    mensagem: fluxos.some(f => f.em_andamento) ? 'A equipe está trabalhando agora.' : 'A equipe espera o próximo pedido.' };
+}
+function renderPublico(e){
+  liveEl.hidden = false;
+  const selo = e.demo ? 'Demonstração' : 'Ao vivo';
+  let html = `<div class="live-head"><span class="live-badge"><i></i>${selo}</span><span class="count">${e.demo ? 'dados de exemplo' : 'atualizado há ' + fmtS((Date.now() - Date.parse(e.atualizado)) / 1000)}</span></div>`;
+  if (!e.fluxos.length) html += `<p class="live-off">${esc(e.mensagem)}</p>`;
+  html += e.fluxos.map(f => {
+    const linha = a => { const p = byId[a.personagem] || byId.diretor; const st = a.status === 'trabalhando' ? 'run' : a.status === 'feito' ? 'done' : 'wait'; return `<li><i class="d" style="--c:${p.color}"></i><span class="t"><b>${esc(p.nick)}</b><span>${esc(a.frase)}</span></span><span class="st ${st}">${esc(a.status === 'feito' ? 'feito' : a.status)}</span></li>`; };
+    const ord = f.agentes.filter(a => a.status === 'trabalhando').concat(f.agentes.filter(a => a.status !== 'trabalhando'));
+    return `<section class="phase" data-s="${f.em_andamento ? 'run' : 'done'}"><header><h4>${esc(f.nome)}</h4><span class="count">${f.agentes.filter(a => a.status === 'feito').length}/${f.agentes.length}</span></header><ul>${ord.map(linha).join('')}</ul></section>`;
+  }).join('');
+  liveEl.innerHTML = html;
+}
+// Demonstração: estado fictício embutido; o pedido passa de mão em mão em ciclo e nunca é apresentado como real.
+const DEMO_ETAPAS = [['diretor'], ['copywriter','designer'], ['frontend'], ['qa','seguranca'], ['devops']];
+function estadoDemo(i){
+  const k = i % (DEMO_ETAPAS.length + 1), agentes = [];
+  DEMO_ETAPAS.forEach((ids, j) => ids.forEach(id => agentes.push({ personagem:id, status: j < k ? 'feito' : j === k ? 'trabalhando' : 'esperando' })));
+  return { versao:1, atualizado_em:new Date().toISOString(), fluxos:[{ nome:'Demonstração', agentes }] };
+}
+function ligarModoPorta(){
+  // Simulação com briefing escondida para o cliente: só o estado (demo ou público) movimenta a equipe.
+  $('#opsForm').hidden = true; $('#flow').hidden = true;
+  $('#opsTitle').textContent = 'A equipe';
+  $('#opsNote').textContent = MODO === 'demo' ? 'Demonstração com dados de exemplo. Quando o seu pedido estiver em produção, você vê aqui a equipe de verdade.' : 'Mostramos só o que a equipe está fazendo agora, sem dados de nenhum cliente.';
+  if (MODO === 'demo'){ let i = 0; const passo = () => aplicarEstado(dePublico(estadoDemo(i++), true)); setTimeout(passo, 1500); setInterval(passo, RM ? 9000 : 6000); return; } // 1º passo depois da cena montar
+  const puxar = async () => {
+    try { const r = await fetch('estado-publico.json', { cache:'no-store' }); if (!r.ok) return; const e = dePublico(await r.json(), false); if (e){ live.fonte = 'publico'; aplicarEstado(e); } } catch {}
+  };
+  puxar(); setInterval(puxar, 15000);
+}
 async function ligarAoVivo(){
+  if (MODO !== 'local') return ligarModoPorta();
   // 1) banco de dados do artefato publicado (atualizado pelo Claude)
   try {
     const db = window.claude && window.claude.use ? await window.claude.use('db') : null;
@@ -1159,7 +1238,9 @@ function animateAgent(a, t, dt){
 }
 
 let frames = 0, last = 0;
-function frame(){
+let liteUlt = 0;
+function frame(now){
+  if (LITE){ if (now - liteUlt < 1000/30 - 2) return; liteUlt = now; } // ?lite=1: no máximo 30 quadros por segundo
   const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
   if (document.hidden) return;
 
