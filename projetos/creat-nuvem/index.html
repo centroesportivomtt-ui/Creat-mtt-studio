@@ -35,6 +35,15 @@
 .previa-corpo iframe{position:absolute;inset:0}
 .previa-corpo .carregando{position:absolute;inset:0;min-height:0}
 .previa-topo .acoes{display:flex;gap:8px;flex:none}
+.previa{grid-template-columns:minmax(0,1fr)}
+.previa-topo{min-width:0}
+.previa-topo .rotulo-previa{display:block;flex:1 1 auto;min-width:0}
+.previa-topo .rotulo-previa::before{display:inline-block;vertical-align:middle;margin-right:8px}
+.previa-topo .btn{padding:6px 12px}
+body.com-previa .consentimento{display:none}
+body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
+.consentimento p{font-size:var(--t-nota)}
+@media (max-width:719px){.previa-topo .acoes .btn{font-size:13px;padding:6px 10px}}
 .previa{transform:translateY(0)}
 @media (prefers-reduced-motion:no-preference){.previa{transform:translateY(24px);opacity:0;transition:transform var(--duracao-longa) var(--curva-entrada),opacity var(--duracao-media) var(--curva-entrada)}.previa.aberta{transform:none;opacity:1}}
 .teste .painel form{padding:var(--r5)}
@@ -55,6 +64,7 @@
 @keyframes chega{0%{opacity:0;transform:translateY(18px) scale(.96)}100%{opacity:1;transform:none}}
 .celular-vazio{color:var(--apagado);font-size:var(--t-nota);text-align:center;padding:12px}
 .janela-sede{min-height:0}
+.sede-palco{position:relative}
 .janela-sede iframe{display:block;width:100%;aspect-ratio:16/10;border:0;background:var(--vidro)}
 .janela-sede .sede-carregando{position:absolute;inset:0;min-height:0;background:var(--vidro);color:var(--giz)}
 .janela-sede .selo-demo{z-index:2}
@@ -407,11 +417,11 @@
     <div class="cx sede-grade">
       <figure class="janela-sede" id="janela-sede">
         <span class="selo-demo">Demonstração</span>
-        <picture data-poster>
+        <div class="sede-palco"><picture data-poster>
           <source media="(max-width: 719px)" srcset="assets/img/sede-ilha-640.webp" width="640" height="400">
           <img src="assets/img/sede-ilha.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Ilha da sede da Creat Nuvem desenhada em 3D, com a equipe de personagens trabalhando nas mesas.">
         </picture>
-        <button class="btn btn-sol ver-ao-vivo" type="button" data-ver-ao-vivo>Ver ao vivo</button>
+        <button class="btn btn-sol ver-ao-vivo" type="button" data-ver-ao-vivo>Ver ao vivo</button></div>
         <figcaption>Quando não há pedido em andamento, a sede mostra uma demonstração, sempre com este aviso.</figcaption>
       </figure>
       <div class="cab">
@@ -522,7 +532,7 @@
 </a>
 
 <div class="consentimento" id="consentimento" role="region" aria-label="Medição desta página" data-salvo="Preferência salva. Você muda quando quiser no rodapé, em Preferências de medição." hidden>
-  <p><strong>Medição desta página.</strong> Esta página mede visitas sem cookie e sem dado pessoal. Com a sua permissão, também usamos o Pixel da Meta e o Clarity da Microsoft para medir os anúncios e ver onde a página confunde. <a href="privacidade/">Ver a política de privacidade</a></p>
+  <p><strong>Medição desta página.</strong> Medimos visitas sem cookie e sem dado pessoal. Com a sua permissão, usamos também o Pixel da Meta e o Clarity para medir anúncios. <a href="privacidade/">Privacidade</a></p>
   <div class="botoes">
     <button class="btn" type="button" data-consentir="sim">Aceitar</button>
     <button class="btn" type="button" data-consentir="nao">Recusar</button>

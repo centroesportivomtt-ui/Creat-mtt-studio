@@ -391,7 +391,8 @@
   function pixelEvento(nome) { try { if (terceirosCarregados && W.fbq) W.fbq('track', nome); } catch (e) {} }
   function montarConsentimento() {
     var caixa = $('#consentimento'); if (!caixa) return;
-    var mostrar = function () { caixa.hidden = false; D.body.classList.add('com-consentimento'); };
+    // O banner reserva o próprio espaço no fim da página: nada fica escondido atrás dele.
+    var mostrar = function () { caixa.hidden = false; D.body.classList.add('com-consentimento'); D.body.style.setProperty('--altura-consentimento', (caixa.offsetHeight + 24) + 'px'); };
     var esconder = function () { caixa.hidden = true; D.body.classList.remove('com-consentimento'); };
     var decidir = function (sim) {
       guarda.gravar(CHAVE_CONSENT, JSON.stringify({ versao: 1, analytics: true, pixel: sim, clarity: sim, em: new Date().toISOString() }));
@@ -498,7 +499,9 @@
     var q = new URLSearchParams(location.search);
     var hashIni = lerFragmento(location.hash);
     utmAtual = lerUtm(q); if (!Object.keys(utmAtual).length) utmAtual = hashIni.utm;
-    if (location.hash === '#previa') history.replaceState(null, '', location.pathname + location.search);
+    // A home nunca guarda nome ou cidade no endereço (Pixel e Clarity podem ler a URL depois do aceite):
+    // lê o fragmento vindo de /abrir/ ou /previa/ e limpa o endereço na hora.
+    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
 
     var form = $('#form-abrir'), campoNome = $('#nome'), campoCidade = $('#cidade');
     var caixaNome = campoNome.closest('.campo'), erroNome = $('#nome-erro'), erroNicho = $('#nicho-erro');
@@ -920,7 +923,7 @@
       resumo.hidden = false;
       $('#abrir-negocio-nome').textContent = est.n;
       $('#abrir-negocio-detalhe').textContent = ROTULO_NICHO[est.k] + (est.c ? ' · ' + est.c : '');
-      $('#abrir-voltar').href = RAIZ + '#porta';
+      $('#abrir-voltar').href = RAIZ + '#' + montarFragmento(est, false);   // a home lê, preenche e limpa o endereço
     }
     var radios = $$('input[name="plano"]', f);
     radios.forEach(function (r) { r.checked = r.value === est.plano; });

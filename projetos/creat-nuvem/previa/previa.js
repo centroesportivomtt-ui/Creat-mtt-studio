@@ -5,7 +5,7 @@
  * window.CREAT_SITE.manual para o motor não iniciar sozinho e espera o DOM.
  * Fragmento: #k=barbearia&n=Barbearia%20do%20Ze&c=Campinas&p=2 (CONTRATOS-DETALHE.md, item c).
  *  - k ausente ou inválido: barbearia, paleta 1, com o aviso "Escolha o seu nicho" e link para a home;
- *  - k válido mas sem preset publicado (nicho da T8 ainda não registrado): barbearia, sem erro;
+ *  - k sem preset publicado (ex.: nicho da T8 antes do registro): barbearia, com o mesmo aviso, sem erro;
  *  - n inválido: "Seu negócio" com o selo "exemplo"; c inválido some; p inválido = 1.
  * Só textContent: nome e cidade nunca passam por innerHTML.
  * Avisa a página-mãe (home) por postMessage {tipo:'creat:previa', evento:'pronta'|'reserva_teste', nicho}
@@ -61,7 +61,7 @@
     var M = W.CreatMotor, N = W.CreatNichos;
     if (!M || !N || typeof M.iniciar !== 'function') { falhar(); return; }
     var f = M.lerFragmento(W.location.hash);
-    var semNicho = !f.k;
+    var semNicho = !f.k || !N.disponivel(f.k);
     var pedido = f.k && N.disponivel(f.k) ? f.k : N.PADRAO;
     N.carregar(pedido, BASE_NICHOS, function (preset) {
       if (!preset) { falhar(); return; }

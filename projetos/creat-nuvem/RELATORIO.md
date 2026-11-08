@@ -68,3 +68,21 @@ A calibragem de 16 a 22/11 **não sobe** enquanto faltar qualquer item abaixo. N
 | Liberar no `checar.cjs` as 2 strings com "agenda" que o briefing exige | `checar.cjs`, lista em `conteudo/README.md` | Pixel (T5) | antes do build |
 
 Os prazos são sugestão do Verbo para caber antes de 16/11; o Nimbus confirma ou troca.
+
+## T4 · Pixel · Motor v1 e prévia
+- **O que fiz:** generalizei o Fio no Couro no motor v1 em script clássico, que lê `window.TENANT`.
+  - Letreiro, fita de dias, horários, ritual da navalha, tema claro e escuro, som opcional.
+  - Pedido de horário sem "ocupado" e sem promessa de confirmação. Na prévia vai para o WhatsApp de teste; no site entregue, para `wa.me/<negocio>`; com `link_externo`, vira o botão "Agendar".
+  - JSON-LD, rodapé "Aberto pela Creat · veja o seu" com UTM, "Esquecer meus dados".
+  - Registro de nichos tolerante, preset barbearia com 3 paletas AA e a prévia `/previa/#k&n&c&p` com noindex, noscript e carregamento desenhado.
+- **Arquivos:** `motor/v1/{motor,agendamento,efeito,som}.js`, `motor/v1/styles.css`, `motor/v1/template.html`, `motor/nichos/index.js`, `motor/nichos/barbearia.js`, `previa/{index.html,previa.js,previa.css}`, `docs/relatorio/T4.md`.
+- **Como verificar:**
+  - Suba o servidor com `python3 -m http.server` na pasta do projeto e abra `/previa/#k=barbearia&n=Barbearia%20do%20Ze&c=Campinas&p=2`.
+  - Peça um horário: o link do wa.me sai com serviço, dia e hora.
+  - Rode `node .claude/skills/verificacao-visual/olhar.cjs "<url>"`: "Tudo limpo".
+  - `grep -rn ocupacaoFicticia motor previa` volta vazio.
+  - O contrato do `build-site.cjs` (T9) e da T8 está em `docs/relatorio/T4.md`.
+- **Pendente:**
+  - **T5:** iframe com `allow-popups`.
+  - **T8:** salao.js e academia.js, mais o ritual de cada um; até lá, `k=salao` cai em barbearia com o aviso "Escolha o seu nicho".
+  - Revisor, QA e Muralha.
