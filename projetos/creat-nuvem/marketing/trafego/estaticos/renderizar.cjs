@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-// Renderiza os estáticos em PNG no tamanho exato. node renderizar.cjs [--guia]
+// Renderiza os estáticos em PNG no tamanho exato. node renderizar.cjs [--guia] [--nicho salao]
 const fs = require('fs'), path = require('path'), http = require('http');
 const { chromium } = require('playwright');
 const RAIZ = path.resolve(__dirname, '../../..'), SAIDA = path.resolve(__dirname, '../saida');
 const MIME = { '.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp' };
-const PECAS = [['feed-1080x1080.html','S1-placa-porta-1080x1080.png',1080,1080],['stories-1080x1920.html','S2-placa-porta-1080x1920.png',1080,1920]];
+const nichoIdx = process.argv.indexOf('--nicho'), nicho = nichoIdx > -1 ? String(process.argv[nichoIdx + 1] || '').replace(/[^a-z]/g, '') : '';
+const sufHtml = nicho ? '-' + nicho : '', sufPng = nicho ? '-' + nicho : '';
+const PECAS = [['feed-1080x1080' + sufHtml + '.html','S1-placa-porta' + sufPng + '-1080x1080.png',1080,1080],['stories-1080x1920' + sufHtml + '.html','S2-placa-porta' + sufPng + '-1080x1920.png',1080,1920]];
 const guia = process.argv.includes('--guia');
 const srv = http.createServer((q, r) => { const f = path.join(RAIZ, decodeURIComponent(new URL(q.url,'http://x').pathname)); if (!f.startsWith(RAIZ) || !fs.existsSync(f)) { r.writeHead(404); return r.end(); } r.writeHead(200, {'content-type': MIME[path.extname(f)] || 'application/octet-stream'}); fs.createReadStream(f).pipe(r); });
 (async () => {

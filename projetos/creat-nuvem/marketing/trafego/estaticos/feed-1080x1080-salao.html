@@ -1,0 +1,35 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&family=JetBrains+Mono:wght@500&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="base.css">
+<title>S1 Placa feed</title>
+<style>.peca{width:1080px;height:1080px}</style></head><body>
+<div class="peca" id="peca">
+  <div class="nuvem" style="width:200px;height:100px;left:860px;top:-30px"></div>
+  <div class="marca" style="position:absolute;left:64px;top:52px"><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M14 40a10 10 0 0 1-1-20 14 14 0 0 1 27-6 11 11 0 0 1 13 11 8 8 0 0 1-1 15z" fill="#FFC93C" stroke="#1E1B2E" stroke-width="4" stroke-linejoin="round"/><circle cx="26" cy="28" r="2.6" fill="#1E1B2E"/><circle cx="38" cy="28" r="2.6" fill="#1E1B2E"/><path d="M28 34q4 3 8 0" fill="none" stroke="#1E1B2E" stroke-width="3" stroke-linecap="round"/></svg><span>Creat Nuvem</span><span class="olho" style="margin-left:10px;align-self:flex-end;padding-bottom:6px">· Porta Aberta</span></div>
+  <h1 class="titulo" style="--t:94px;position:absolute;left:64px;top:140px;width:700px">Digite o nome.<br>Vire a <em>placa.</em></h1>
+
+  <div class="mini" data-placa="fechado" style="left:790px;top:118px;width:230px;transform:rotate(7deg)"></div>
+  <svg class="seta" style="left:0;top:0" width="1080" height="1080" viewBox="0 0 1080 1080" aria-hidden="true">
+    <path d="M880 300 Q 690 300 548 418" fill="none" stroke="#1E1B2E" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 16"/>
+    <path d="M548 418 l30 -6 M548 418 l4 -30" fill="none" stroke="#1E1B2E" stroke-width="7" stroke-linecap="round"/>
+  </svg>
+  <span class="selo" style="left:648px;top:250px;transform:rotate(-5deg)">1 toque</span>
+
+  <div class="porta" style="left:64px;top:372px;width:560px;height:530px">
+    <div class="vidro"><img src="../../../assets/img/sede-ilha.webp" alt="" style="object-position:50% 100%"></div>
+    <div class="macaneta" style="right:-4px;top:260px;display:none"></div>
+  </div>
+  <div class="placa" data-placa="aberto" data-corrente data-nome="Salão Esmalte Fictício" style="left:184px;top:330px;width:320px"></div>
+  <span class="selo" style="left:396px;top:628px;transform:rotate(4deg)">nome fictício</span>
+  <span class="legenda-vidro" style="left:112px;top:822px">sede da Creat · demonstração</span>
+
+  <div class="celular" style="left:676px;top:392px;width:340px;height:510px;transform:rotate(3deg)"><img src="../saida/prints/previa-salao-topo.png" alt=""></div>
+  <span class="selo" style="left:740px;top:368px;transform:rotate(-4deg);background:#FFC93C">prévia real</span>
+
+  <div style="position:absolute;left:64px;top:950px;right:64px;display:flex;align-items:center;justify-content:space-between;gap:28px">
+    <span class="chip" style="font-size:30px;padding:18px 26px">Grátis para ver · Sem cadastro</span>
+    <p class="texto" style="font-size:28px;max-width:430px">O site pronto, com pedido de horário no seu WhatsApp.</p>
+  </div>
+</div>
+<script src="montar.js"></script></body></html>
