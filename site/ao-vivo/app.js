@@ -92,7 +92,8 @@ function render(){
   const ordem = { trabalhando:0, parado:1, pausa:2, feito:3 };
   const todos = E.agentes.filter(a => agora - a.ultimo < JANELA_MS).sort((a, b) => ordem[a.status] - ordem[b.status] || b.ultimo - a.ultimo);
   $('#outrosNote').textContent = todos.length ? `${vivos.length} trabalhando · ${todos.length} nas últimas 12 h` : '';
-  if (todos.length) pinta('#mesa', todos.slice(0, 36).map(a => {
+  if (!todos.length) pinta('#mesa', '<li class="chip"><span class="cn"><b>Ninguém trabalhando nas últimas 12 horas</b></span></li>');
+  else pinta('#mesa', todos.slice(0, 36).map(a => {
     const s = SC[a.status], rot = { trabalhando:'trabalhando', parado:'sem sinal', feito:'entregou', pausa:'esperando você' }[a.status];
     return `<li class="chip" data-s="${s}" style="--c:${a.pessoa.color}"><span class="dot"></span><span class="cn"><b>${esc(a.pessoa.nick)} · ${esc(curto(a.sessaoNome, 30))}</b><small>${esc(rot)}${a.acao ? ' · ' + esc(curto(a.acao, 70)) : ''}</small></span>${a.status === 'trabalhando' ? `<time>${dur(agora - a.inicio)}</time>` : `<time>${esc(ha(a.ultimo))}</time>`}</li>`;
   }).join(''));
@@ -100,7 +101,8 @@ function render(){
   // sessões
   const ses = E.sessoes.filter(s => agora - s.ultimo < JANELA_MS);
   const B = { trabalhando:['WORKING','Trabalhando'], esperando:['BLOCKED','Esperando você'], parada:['IDLE','Parada'], encerrada:['COMPLETED','Encerrada'] };
-  if (ses.length) pinta('#sess', ses.slice(0, 10).map(s => `<li class="row"><span class="b" data-b="${B[s.status][0]}">${B[s.status][1]}</span><div style="min-width:0"><b>${esc(curto(s.nomeExib, 70))}</b><p>${s.trabalhando ? s.trabalhando + (s.trabalhando > 1 ? ' agentes trabalhando' : ' agente trabalhando') : 'último sinal ' + esc(ha(s.ultimo))}${s.pasta && s.nome ? ' · ' + esc(s.pasta) : ''}</p></div><time>${esc(ha(s.ultimo))}</time></li>`).join(''));
+  if (!ses.length) pinta('#sess', '<li class="row"><span></span><p class="empty">Nenhuma sessão ativa nas últimas 12 horas.</p><span></span></li>');
+  else pinta('#sess', ses.slice(0, 10).map(s => `<li class="row"><span class="b" data-b="${B[s.status][0]}">${B[s.status][1]}</span><div style="min-width:0"><b>${esc(curto(s.nomeExib, 70))}</b><p>${s.trabalhando ? s.trabalhando + (s.trabalhando > 1 ? ' agentes trabalhando' : ' agente trabalhando') : 'último sinal ' + esc(ha(s.ultimo))}${s.pasta && s.nome ? ' · ' + esc(s.pasta) : ''}</p></div><time>${esc(ha(s.ultimo))}</time></li>`).join(''));
 
   // registro
   const novos = E.log.slice(0, 50);

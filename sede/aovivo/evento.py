@@ -8,6 +8,7 @@ comando bruto); de arquivos, só o nome. Todo texto passa por máscara de segred
 URLs com credencial) e de dados pessoais (e-mail, CPF, CNPJ, telefone).
 """
 import json, os, re, sys
+from urllib.parse import urlsplit
 from datetime import datetime, timezone
 
 MAX = 140
@@ -62,7 +63,11 @@ def resumo(ferramenta, ent):
     if ferramenta == 'WebSearch':
         return limpa(ent.get('query'), 100)
     if ferramenta == 'WebFetch':
-        return re.sub(r'^https?://', '', str(ent.get('url', ''))).split('/')[0]
+        try:
+            host = urlsplit(str(ent.get('url', ''))).hostname or ''   # hostname descarta usuario:senha@
+        except ValueError:
+            host = ''
+        return limpa(host, 80)
     if ferramenta in ('Agent', 'Task'):
         return limpa(ent.get('description') or ent.get('subagent_type'), 100)
     if ferramenta == 'Skill':
@@ -87,7 +92,7 @@ def main():
         'ts': datetime.now(timezone.utc).isoformat(timespec='milliseconds'),   # hora do evento, não da chegada (gancho é assíncrono)
         'sessao': str(p.get('session_id') or '')[:80],
         'sessao_nome': limpa(p.get('session_title'), 90) or None,
-        'pasta': nome_arquivo(p.get('cwd'))[:60] or None,
+        'pasta': limpa(nome_arquivo(p.get('cwd')), 60) or None,
         'agente': str(p.get('agent_id') or '')[:80] or None,
         'tipo': limpa(p.get('agent_type'), 60) or None,
         'evento': ev,
