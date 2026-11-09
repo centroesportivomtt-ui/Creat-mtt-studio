@@ -682,12 +682,15 @@ let rodando = false;
 async function lerSessoes(){
   const p = parse(await st.mcp.callTool(SRV, 'list_sessions', { limit: 20 }, { cache: false }));
   if (!p || !Array.isArray(p.data)) return;
-  for (const s of p.data){
+  trocarSessoes(p.data);
+}
+function trocarSessoes(lista){
+  for (const s of lista){
     const b = bucket(s), antes = st.bucketPrev.get(s.id);
     if (antes && antes !== b && b === 'BLOCKED') evento({ who:'diretor', whoName:'Sessão', kind:'warn', text:`"${curto(s.title, 40)}" precisa de você`, t: Date.parse(s.updated_at) || Date.now(), id: s.id + '|blk|' + s.updated_at });
     st.bucketPrev.set(s.id, b);
   }
-  st.sessions = p.data;
+  st.sessions = lista;
 }
 async function lerEventos(s){
   // primeira leitura: os eventos mais recentes; depois, só o que chegou desde a última (cursor)
@@ -730,15 +733,36 @@ $('#bannerBtn').addEventListener('click', () => { aviso('Pedindo permissão…')
 /* relógio e contadores andam a cada segundo entre as leituras */
 setInterval(() => {
   $('#clock').textContent = new Date().toLocaleTimeString('pt-BR');
-  $('#sync').textContent = st.lastRead ? 'lido ' + ha(st.lastRead) : '';
+  $('#sync').textContent = st.lastRead ? 'dados de ' + ha(st.lastRead) : '';
   if (st.ok) renderTeam(Date.now());
 }, 1000);
 /* o palco alterna entre quem está trabalhando */
 setInterval(() => { st.stageI++; if (st.ok){ const agora = Date.now(); renderTeam(agora); renderStage(agora, agentes().filter(a => vivo(a, agora)).length); } }, 7000);
 
+function aplicarDoc(d){
+  if (!d || !d.atualizado) return;
+  trocarSessoes(Array.isArray(d.sessions) ? d.sessions : []);
+  for (const f of (Array.isArray(d.fluxos) ? d.fluxos : [])){
+    if (!f || !Array.isArray(f.wp)) continue;
+    aplicarWP({ id: f.sessionId, title: f.sessao }, { task_id: f.task_id, description: f.description, usage: f.usage, workflow_progress: f.wp }, f.t || Date.parse(d.atualizado));
+  }
+  if (d.quota){ st.quota = d.quota; st.quotaAt = d.quotaAt || Date.parse(d.atualizado); }
+  st.ok = true; st.lastRead = Date.parse(d.atualizado) || Date.now(); aviso('');
+  render();
+}
+function ligarDb(db){
+  aviso('Conectado. Esperando a primeira leitura das suas sessões.');
+  const vazio = setTimeout(() => { if (!st.ok) aviso('Ainda não chegou nenhuma leitura. Ela aparece aqui sozinha assim que a sessão que alimenta a sede enviar.'); }, 10000);
+  db.doc('sede/estado').onSnapshot(snap => {
+    clearTimeout(vazio);
+    if (snap.exists) aplicarDoc(snap.data());
+  }, e => { clearTimeout(vazio); aviso('A leitura ao vivo caiu. Recarregue a página para reconectar.', false, e); });
+}
 async function iniciar(){
   teamBase(); render();
   $('#clock').textContent = new Date().toLocaleTimeString('pt-BR');
+  const db = window.claude && window.claude.use ? await window.claude.use('db').catch(() => null) : null;
+  if (db){ ligarDb(db); return; }
   const mcp = window.claude && window.claude.use ? await window.claude.use('mcp').catch(() => null) : null;
   if (!mcp){ aviso('Abra esta página no claude.ai, com a sua conta, para ver a equipe ao vivo. Aqui ela mostra só a sede em repouso.'); $('#recTxt').textContent = 'Desconectado'; return; }
   st.mcp = mcp;
