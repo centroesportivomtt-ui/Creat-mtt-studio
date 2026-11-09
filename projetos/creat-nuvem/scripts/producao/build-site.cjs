@@ -3,7 +3,7 @@
  * scripts/producao/build-site.cjs · tenant.json -> dist/<slug>/ (T9 · Forja)
  *
  * Uso:
- *   node scripts/producao/build-site.cjs --slug <slug> [--saida <pasta>] [--home <url>] [--url <url>] [--sem-rodape]
+ *   node scripts/producao/build-site.cjs --slug <slug> [--saida <pasta>] [--home <url>] [--url <url>] [--sem-rodape] [--demonstracao]
  *   node scripts/producao/build-site.cjs --tenant <arquivo tenant.json> [--destino <pasta>] ...
  *
  * Gera, com o motor congelado (ADR-001) e nenhum dado de cliente fora do tenant:
@@ -12,9 +12,14 @@
  *   tenant.json  o TenantConfig validado; tenant.js = window.TENANT (file:// não faz fetch de JSON)
  *   motor/v1/*   e motor/nichos/*  copiados (scripts clássicos: abre com duplo clique)
  *   robots.txt   prévia (meta.previa): Disallow e meta noindex; entregue: Allow + Sitemap
- *   sitemap.xml  só com URL absoluta do site (--url, ou CREAT_URL_SITES com {slug})
+ *   sitemap.xml  só com URL absoluta do site (--url, ou CREAT_URL_SITES com {slug}; padrão
+ *                https://creat-nuvem-404b1994.base44.app/sites/{slug}/; CREAT_URL_SITES=0 desliga)
+ * Home da vitrine (rodapé): --home, ou CREAT_HOME, ou https://creat-nuvem-404b1994.base44.app/ (CREAT_HOME=0 desliga).
  * Antes de gravar, valida com validar-tenant (schema + regras da casa). Erro cita o campo.
  * --sem-rodape tira "Aberto pela Creat · veja o seu": decisão só do Marcos, fica no RELATORIO do pedido.
+ * --demonstracao (motor v1.1): site-demonstração com nome fictício. Faixa "demonstração · nome fictício"
+ *   no topo, meta noindex, sem JSON-LD, robots.txt Disallow e sem sitemap. Opção do site (CREAT_SITE),
+ *   nunca campo do tenant: o validador continua proibindo bloco "demo" no tenant (ADR-001).
  * --destino é apagado e recriado. Por isso só aceita pasta inexistente, vazia ou que já seja
  * um build anterior (marcador: tenant.json + index.html + motor/v1/). Nunca a raiz do disco, a home,
  * a raiz do projeto, o cwd ou um pai deles (ver checarDestino).
@@ -29,8 +34,11 @@ const { validarTenant } = require('./lib/validacao.cjs');
 
 function escXml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
+/* url === false: sem URL nenhuma, nem a padrão (pacote SAIR) */
 function urlDoSite(slug, url) {
-  const u = url || (process.env.CREAT_URL_SITES ? process.env.CREAT_URL_SITES.replace('{slug}', slug) : '');
+  if (url === false) return '';
+  const modelo = C.modeloUrlSites();
+  const u = url || (modelo ? modelo.split('{slug}').join(slug) : '');
   if (!u) return '';
   let x;
   try { x = new URL(u); } catch (e) { throw new C.ErroCampo('--url', `URL inválida: ${u}`); }
@@ -91,8 +99,9 @@ function buildSite(opc) {
     url: previa ? '' : urlDoSite(tenant.slug, opc.site && opc.site.url),
     rodape: !(opc.site && opc.site.rodape === false)
   };
-  if (!previa && !site.url) avisos.push('sem URL do site (--url ou CREAT_URL_SITES): sem canonical, sem sitemap.xml e sem "url" no JSON-LD');
-  if (site.rodape && !site.home) avisos.push('sem home da vitrine (--home ou CREAT_HOME): o rodapé "Aberto pela Creat" sai sem link');
+  if (!previa && opc.site && opc.site.demonstracao) site.demonstracao = true;
+  if (!previa && !site.url) avisos.push('sem URL do site (--url, ou CREAT_URL_SITES diferente de "0"): sem canonical, sem sitemap.xml e sem "url" no JSON-LD');
+  if (site.rodape && !site.home) avisos.push('sem home da vitrine (--home, ou CREAT_HOME diferente de "0"): o rodapé "Aberto pela Creat" sai sem link');
 
   const destino = checarDestino(opc.destino, opc.saida);
   fs.rmSync(destino, { recursive: true, force: true });
@@ -110,7 +119,7 @@ function buildSite(opc) {
   fs.writeFileSync(path.join(destino, 'tenant.js'), M.scriptTenant(tenant, site));
   C.gravarJson(path.join(destino, 'tenant.json'), tenant);
 
-  if (previa) fs.writeFileSync(path.join(destino, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
+  if (previa || site.demonstracao) fs.writeFileSync(path.join(destino, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
   else {
     fs.writeFileSync(path.join(destino, 'robots.txt'), 'User-agent: *\nAllow: /\n' + (site.url ? `Sitemap: ${site.url}sitemap.xml\n` : ''));
     if (site.url) {
@@ -131,7 +140,7 @@ function main(argv) {
   const tenant = C.lerJson(arqTenant);
   if (a.destino === true || a.destino === '') throw new C.ErroCampo('--destino', 'informe a pasta de saída (ex.: --destino dist/meu-slug)');
   const destino = a.destino || path.join(C.pastaSaida(a), 'dist', String(tenant.slug));
-  const r = buildSite({ tenant, destino, saida: C.pastaSaida(a), site: { home: a.home || process.env.CREAT_HOME || '', url: a.url, rodape: !a['sem-rodape'] } });
+  const r = buildSite({ tenant, destino, saida: C.pastaSaida(a), site: { home: typeof a.home === 'string' ? a.home : C.homePadrao(), url: a.url, rodape: !a['sem-rodape'], demonstracao: !!a.demonstracao } });
   r.avisos.forEach((x) => console.log(`aviso: ${x}`));
   console.log(`ok: ${r.destino} (${r.arquivos.length} arquivos)`);
   return 0;

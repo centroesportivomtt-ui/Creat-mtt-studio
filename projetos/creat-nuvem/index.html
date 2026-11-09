@@ -92,6 +92,15 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 .rodape .linha-rodape{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
 .rodape button.link-texto{font-size:inherit}
 @media (min-width:720px){.precos-extra{grid-template-columns:1fr 1fr}.precos-extra .agenda-externa{grid-column:1 / -1}}
+/* sites-demonstração: três cartões, um por nicho (tokens de assets/tokens.css) */
+.demos{margin:0;padding:0;list-style:none;display:grid;gap:var(--r4)}
+.demo-cartao{display:flex;flex-direction:column;gap:var(--r2);padding:var(--r5);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio)}
+.demo-cartao .olho{margin-bottom:0}
+.demo-cartao h3{font-size:var(--t-h3)}
+.demo-cartao p{color:var(--apagado)}
+.demo-cartao .btn{margin-top:auto;align-self:flex-start}
+.demos-nota{margin-top:var(--r4);font-size:var(--t-nota);color:var(--apagado)}
+@media (min-width:860px){.demos{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 <script defer src="checkout.config.js"></script>
 <script defer src="assets/som/creat-som.js"></script>
@@ -288,6 +297,38 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
           <li>Nada vai ao ar sem a sua aprovação.</li>
         </ul>
       </div>
+    </div>
+  </section>
+
+  <!-- 5b · SITES-DEMONSTRAÇÃO (conteudo/home.json sitesDemo; feitos pela esteira real, nome fictício) -->
+  <section class="secao" id="sites-demo" aria-labelledby="demo-titulo">
+    <div class="cx">
+      <div class="cab">
+        <span class="olho">Sites prontos</span>
+        <h2 id="demo-titulo">Veja um site entregue</h2>
+        <p>Três sites feitos pela esteira real, a mesma que monta o seu. Nome fictício, cidade de verdade: Riachão do Jacuípe, na Bahia. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat.</p>
+      </div>
+      <ul class="demos">
+        <li class="demo-cartao">
+          <span class="olho">Barbearia</span>
+          <h3>Barbearia Navalha Fictícia</h3>
+          <p>Afie a navalha no couro para mandar o pedido.</p>
+          <a class="btn" href="sites/demo-barbearia/">Abrir a barbearia<span class="so-leitor"> (site-demonstração, nome fictício)</span></a>
+        </li>
+        <li class="demo-cartao">
+          <span class="olho">Salão e estética</span>
+          <h3>Salão Esmalte Fictício</h3>
+          <p>Pinte a unha com o dedo para mandar o pedido.</p>
+          <a class="btn" href="sites/demo-salao/">Abrir o salão<span class="so-leitor"> (site-demonstração, nome fictício)</span></a>
+        </li>
+        <li class="demo-cartao">
+          <span class="olho">Academia e studio</span>
+          <h3>Studio Barra Fictícia</h3>
+          <p>Levante a barra para pedir a aula experimental.</p>
+          <a class="btn" href="sites/demo-academia/">Abrir o studio<span class="so-leitor"> (site-demonstração, nome fictício)</span></a>
+        </li>
+      </ul>
+      <p class="demos-nota">Feito pela esteira real, nome fictício. Nenhum desses negócios existe.</p>
     </div>
   </section>
 

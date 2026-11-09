@@ -1,0 +1,21 @@
+{
+  "_nota": "Resposta da IA escrita pelo Verbo (Creat Nuvem) no formato exato da API, para a esteira real rodar sem chave (--fixture-ia). Nenhuma chamada paga: usage zerado.",
+  "id": "msg_fixture_demo_salao",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-5-5",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"bordao\": \"Unha, fio e sobrancelha no Centro de Riachão, com o horário pedido pelo WhatsApp.\", \"pagina\": {\"titulo\": \"Salão Esmalte Fictício · salão em Riachão do Jacuípe\", \"descricao\": \"Corte, escova, coloração, unhas e sobrancelha no Centro de Riachão do Jacuípe. Escolha serviço, dia e hora e mande o pedido pelo WhatsApp.\"}, \"servicos\": [{\"id\": \"corte\", \"descricao\": \"Lavagem, corte e finalização no comprimento que você pedir, conversado antes da primeira tesourada.\"}, {\"id\": \"escova\", \"descricao\": \"Lavagem e escova lisa ou modelada, para um compromisso ou para começar a semana.\"}, {\"id\": \"coloracao\", \"descricao\": \"Cor do fio inteiro ou retoque de raiz. O tom é escolhido junto com você, olhando o seu fio na hora.\"}, {\"id\": \"manicure\", \"descricao\": \"Cutícula, lixa e esmalte da sua escolha, com a última camada passada sem pressa.\"}, {\"id\": \"pedicure\", \"descricao\": \"Cuidado dos pés com cutícula, lixa e esmalte, para sair do salão já de sandália.\"}, {\"id\": \"sobrancelha\", \"descricao\": \"Desenho e acabamento com pinça e linha, respeitando o formato do seu rosto.\"}, {\"id\": \"hidratacao\", \"descricao\": \"Máscara de tratamento aplicada mecha a mecha, com escova no final.\"}], \"textos\": {\"heroTitulo\": \"Cadeira pronta e esmalte aberto no Centro de Riachão.\", \"heroSubtitulo\": \"Escolha o serviço, o dia e a hora. O pedido chega no WhatsApp do Esmalte já escrito e o dono confirma pelo WhatsApp. Sem ligação e sem fila de mensagem.\", \"manifesto\": \"No Esmalte, cada horário é pensado para você sair do jeito que pediu, e não do jeito que deu tempo. Por isso o pedido começa aqui: você escolhe o serviço, o dia e a hora no celular, sem ligar e sem ficar esperando resposta para saber se tem vaga. O pedido chega no WhatsApp do salão com tudo escrito, e a confirmação vem por lá. No dia, é só chegar no Centro, sentar e escolher a cor.\", \"servicosTitulo\": \"Serviços da casa\", \"equipeTitulo\": \"Quem atende\", \"avaliacoesTitulo\": \"Recados de quem vem\", \"pedidoTitulo\": \"Peça o seu horário\", \"pedidoNota\": \"O pedido vai para o WhatsApp do salão com serviço, dia e hora. O dono confirma pelo WhatsApp.\", \"ritualDica\": \"Passe o pincel na unha para enviar\", \"confirmacaoTitulo\": \"Esmalte passado, pedido pronto\", \"confirmacaoTexto\": \"Toque em enviar no WhatsApp. O horário vale depois que o dono confirma pelo WhatsApp.\", \"letreiroAberto\": \"Aberto agora · peça o seu horário\", \"letreiroFechado\": \"Fechado agora · abre {dia} às {hora}\", \"localTitulo\": \"Onde fica no Centro\", \"faqTitulo\": \"Antes de pedir\", \"faq\": [{\"pergunta\": \"Pedir pelo site já marca o horário?\", \"resposta\": \"Ainda não. O pedido chega no WhatsApp do salão e o dono confirma pelo WhatsApp. O horário vale depois da confirmação.\"}, {\"pergunta\": \"Posso pedir mais de um serviço?\", \"resposta\": \"Pode. Escolha o primeiro serviço no site e escreva os outros na mensagem do WhatsApp antes de enviar, como mão e pé no mesmo horário.\"}, {\"pergunta\": \"A coloração tem valor fixo?\", \"resposta\": \"O valor da coloração depende do comprimento e do tom. O salão passa o valor pelo WhatsApp antes de você confirmar.\"}, {\"pergunta\": \"Meu nome e meu WhatsApp ficam salvos?\", \"resposta\": \"Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar.\"}], \"rodapeFrase\": \"Toalha limpa, esmalte aberto, horário combinado pelo WhatsApp.\"}}"
+    }
+  ],
+  "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  }
+}

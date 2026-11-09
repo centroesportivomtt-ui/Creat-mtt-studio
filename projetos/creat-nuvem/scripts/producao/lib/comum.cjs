@@ -13,6 +13,25 @@ const RAIZ = path.resolve(__dirname, '..', '..', '..');           // projetos/cr
 const SCHEMA = path.join(RAIZ, 'schema');
 const MOTOR = path.join(RAIZ, 'motor');
 
+/*
+ * Onde os sites moram (app Base44 "Creat Nuvem", 6aefffe66b684db9404b1994): a vitrine na raiz e
+ * cada site entregue em public/sites/<slug>/. Sem domínio próprio, este é o padrão.
+ * Variável vazia ou ausente = padrão; "0" desliga (sem canonical/sitemap; rodapé sem link).
+ */
+const HOME_PADRAO = 'https://creat-nuvem-404b1994.base44.app/';
+const URL_SITES_PADRAO = 'https://creat-nuvem-404b1994.base44.app/sites/{slug}/';
+const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])$/;          // o mesmo $defs/slug do tenant.schema.json
+
+function envOuPadrao(nome, padrao) {
+  const v = process.env[nome];
+  if (v === undefined || !String(v).trim()) return padrao;
+  return String(v).trim() === '0' ? '' : String(v).trim();
+}
+/* home da vitrine (link do rodapé "Aberto pela Creat") */
+function homePadrao() { return envOuPadrao('CREAT_HOME', HOME_PADRAO); }
+/* modelo da URL dos sites entregues, com {slug} */
+function modeloUrlSites() { return envOuPadrao('CREAT_URL_SITES', URL_SITES_PADRAO); }
+
 class ErroCampo extends Error {
   /* erro de entrada: sempre cita o campo; o CLI imprime e sai com código 1 */
   constructor(campo, mensagem) {
@@ -155,6 +174,6 @@ function listarArquivos(dir) {
 }
 
 module.exports = {
-  RAIZ, SCHEMA, MOTOR, ErroCampo, ErroLista, lerArgs, pastaSaida, lerJson, gravarJson,
+  RAIZ, SCHEMA, MOTOR, HOME_PADRAO, URL_SITES_PADRAO, SLUG_RE, homePadrao, modeloUrlSites, ErroCampo, ErroLista, lerArgs, pastaSaida, lerJson, gravarJson,
   ajv, validador, REF, errosAjv, carregarPreset, motor, copiarPasta, listarArquivos
 };

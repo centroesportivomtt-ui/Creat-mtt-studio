@@ -1,0 +1,21 @@
+{
+  "_nota": "Resposta da IA escrita pelo Verbo (Creat Nuvem) no formato exato da API, para a esteira real rodar sem chave (--fixture-ia). Nenhuma chamada paga: usage zerado.",
+  "id": "msg_fixture_demo_academia",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-5-5",
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"bordao\": \"Treino com professor no Centro de Riachão, primeira aula pedida pelo WhatsApp.\", \"pagina\": {\"titulo\": \"Studio Barra Fictícia · academia em Riachão do Jacuípe\", \"descricao\": \"Musculação, funcional, pilates e personal no Centro de Riachão do Jacuípe. Peça a aula experimental pelo site e combine o horário no WhatsApp.\"}, \"servicos\": [{\"id\": \"aula-experimental\", \"descricao\": \"Uma aula para conhecer o espaço, o professor e o ritmo da casa antes de decidir qualquer plano.\"}, {\"id\": \"avaliacao\", \"descricao\": \"Conversa com o professor sobre a sua rotina, o seu objetivo e algum limite do corpo, para montar o primeiro treino.\"}, {\"id\": \"musculacao\", \"descricao\": \"Aparelhos e pesos livres com professor na sala, ajustando carga e postura série por série.\"}, {\"id\": \"funcional\", \"descricao\": \"Aula em grupo com circuito de exercícios, no ritmo da turma, com versão mais leve para quem está começando.\"}, {\"id\": \"pilates\", \"descricao\": \"Turma pequena, no solo ou nos aparelhos, com atenção à respiração e ao controle de cada movimento.\"}, {\"id\": \"personal\", \"descricao\": \"Treino individual, montado para você, com o horário combinado direto com o professor.\"}], \"textos\": {\"heroTitulo\": \"A barra está montada. Falta a sua primeira aula.\", \"heroSubtitulo\": \"Escolha a aula experimental ou a avaliação, o dia e a hora. O pedido chega no WhatsApp do Studio Barra e o dono confirma pelo WhatsApp.\", \"manifesto\": \"No Studio Barra, a primeira aula serve para você conhecer a casa sem compromisso: o espaço, o professor e o ritmo do treino. Ninguém começa pelo plano; começa pela conversa. Você escolhe a modalidade, o dia e a hora pelo celular, e o pedido chega no WhatsApp do studio já escrito. A confirmação vem por lá, com o nome de quem vai te receber. Traga roupa confortável, tênis e uma garrafa de água.\", \"servicosTitulo\": \"Modalidades\", \"equipeTitulo\": \"Professores\", \"avaliacoesTitulo\": \"Recados de quem treina\", \"pedidoTitulo\": \"Peça a sua aula experimental\", \"pedidoNota\": \"O pedido vai para o WhatsApp do studio com modalidade, dia e hora. O dono confirma pelo WhatsApp.\", \"ritualDica\": \"Levante a barra para enviar\", \"confirmacaoTitulo\": \"Barra no alto, pedido pronto\", \"confirmacaoTexto\": \"Toque em enviar no WhatsApp. A aula vale depois que o dono confirma pelo WhatsApp.\", \"letreiroAberto\": \"Aberto agora · peça a sua aula\", \"letreiroFechado\": \"Fechado agora · abre {dia} às {hora}\", \"localTitulo\": \"Onde fica no Centro\", \"faqTitulo\": \"Antes do primeiro treino\", \"faq\": [{\"pergunta\": \"Pedir pelo site já marca a aula?\", \"resposta\": \"Ainda não. O pedido chega no WhatsApp do studio e o dono confirma pelo WhatsApp. A aula vale depois da confirmação.\"}, {\"pergunta\": \"Quanto custa?\", \"resposta\": \"Os valores e os planos são passados pelo WhatsApp, de acordo com a modalidade e a frequência que você quer.\"}, {\"pergunta\": \"Nunca treinei. Posso começar?\", \"resposta\": \"Pode. Peça a avaliação para começar: o professor conversa sobre a sua rotina e monta o primeiro treino a partir dela.\"}, {\"pergunta\": \"Preciso levar alguma coisa?\", \"resposta\": \"Roupa confortável, tênis e uma garrafa de água. Se tiver dúvida sobre a aula, pergunte no WhatsApp antes de vir.\"}, {\"pergunta\": \"Meu nome e meu WhatsApp ficam salvos?\", \"resposta\": \"Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar.\"}], \"rodapeFrase\": \"Barra montada, sala aberta, horário combinado pelo WhatsApp.\"}}"
+    }
+  ],
+  "usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0
+  }
+}

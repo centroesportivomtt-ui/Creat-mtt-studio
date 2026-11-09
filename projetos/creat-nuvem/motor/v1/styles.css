@@ -221,6 +221,16 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
   font-size: var(--t-nota);
   line-height: 1.35;
 }
+/* v1.1 · demonstração: o link volta para a vitrine (alvo de toque de 44 px) */
+.faixa-demo a {
+  display: inline-flex; align-items: center;
+  min-height: var(--alvo);
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+.faixa-demo a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
 /* ---------------------------------------------------------------------
    BOTÕES

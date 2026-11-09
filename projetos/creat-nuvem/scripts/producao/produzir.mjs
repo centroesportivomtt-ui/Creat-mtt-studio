@@ -14,6 +14,8 @@
  *   --refazer-textos     chama a IA de novo mesmo se este pedido já tem textos (cobra de novo)
  *   --sem-rodape         tira "Aberto pela Creat" (só com decisão do Marcos; vai para o RELATORIO)
  *   --sem-navegador      pula o teste headless (o RELATORIO marca "não verificado")
+ *   --demonstracao       site-demonstração com nome fictício (motor v1.1): faixa "demonstração · nome
+ *                        fictício", noindex, sem JSON-LD; o teste headless exige a faixa
  *   --sem-sair           não gera o zip do SAIR
  *   --home <url> --url <url>   home da vitrine (rodapé) e URL do site (canonical, sitemap)
  *
@@ -22,8 +24,9 @@
  *                       nunca o fluxo agencia.js por pedido.
  *   CREAT_MODELO        modelo (padrão claude-sonnet-5-5, o Sonnet vigente)
  *   CREAT_CAMBIO        R$ por US$ para o custo.json (obrigatória quando a IA roda)
- *   CREAT_HOME          home da vitrine (padrão: origem do link da prévia do pedido)
- *   CREAT_URL_SITES     URL dos sites com {slug}, ex.: https://{slug}.exemplo.com.br/
+ *   CREAT_HOME          home da vitrine (padrão https://creat-nuvem-404b1994.base44.app/; "0" = rodapé sem link)
+ *   CREAT_URL_SITES     URL dos sites com {slug} (padrão https://creat-nuvem-404b1994.base44.app/sites/{slug}/,
+ *                       onde publicar-site.cjs os coloca; "0" = sem canonical nem sitemap)
  *   CREAT_DOMINIOS      domínios da Creat, separados por vírgula (varredura do SAIR)
  *   CREAT_SAIDA         pasta de saída
  *
@@ -87,10 +90,9 @@ function semRede() {
   globalThis.fetch = () => { throw new Error('rede proibida no modo teste (fixture da IA)'); };
 }
 
-function homeDoPedido(pedido) {
-  if (process.env.CREAT_HOME) return process.env.CREAT_HOME;
-  try { return new URL(pedido.previa).origin + '/'; } catch (e) { return ''; }
-}
+/* home da vitrine: CREAT_HOME ou a da Creat. Não usa mais a origem do link da prévia do pedido:
+   esse campo vem do formulário e não pode decidir para onde aponta o rodapé do site entregue */
+function homeDoPedido() { return C.homePadrao(); }
 
 function relatorioPedido(r) {
   const st = (s) => ({ ok: 'ok', falhou: 'FALHOU', pulado: 'não verificado' }[s] || s);
@@ -110,6 +112,7 @@ function relatorioPedido(r) {
   L.push('- Equipe e avaliações: vazias. Só entram com dado real e autorização (avaliação com origem e aprovadoEm).');
   L.push(`- Rodapé "Aberto pela Creat · veja o seu": ${r.site.rodape ? `ligado, link para ${r.site.home || '(sem home: só texto)'}` : 'DESLIGADO com --sem-rodape (decisão do Marcos)'}.`);
   L.push('- Pacote SAIR: rodapé removido, sem home e sem subdomínio da Creat; wa.me puro.');
+  if (r.site.demonstracao) L.push('- Site-demonstração (--demonstracao): faixa "demonstração · nome fictício" no topo, noindex, sem JSON-LD. Nome do negócio fictício; o WhatsApp é o do Suporte Creat.');
   if (r.ignorados.length) L.push(`- A IA devolveu campos fora da lista branca, ignorados: ${r.ignorados.join(', ')}.`);
   L.push('', '## Saídas', '');
   for (const [k, v] of Object.entries(r.saidas)) L.push(`- ${k}: \`${v}\``);
@@ -223,7 +226,7 @@ export async function produzir(argv) {
   etapa(3, 'validar-tenant', 'ok', 'schema + regras da casa');
 
   // 4. build
-  const site = { home: a.home || homeDoPedido(pedido), url: a.url, rodape: !a['sem-rodape'] };
+  const site = { home: typeof a.home === 'string' ? a.home : homeDoPedido(), url: a.url, rodape: !a['sem-rodape'], demonstracao: !!a.demonstracao };
   const pastaDist = path.join(saida, 'dist', tenant.slug);
   const b = buildSite({ tenant, destino: pastaDist, saida, site });
   avisos.push(...b.avisos);
@@ -235,7 +238,7 @@ export async function produzir(argv) {
   if (a['sem-navegador']) etapa(5, 'teste headless 390 px', 'pulado', '--sem-navegador');
   else {
     try {
-      const t = await testarSite(pastaDist, { whatsapp: pedido.whatsapp_negocio, print, exigirRodape: site.rodape && !!site.home });
+      const t = await testarSite(pastaDist, { whatsapp: pedido.whatsapp_negocio, print, exigirRodape: site.rodape && !!site.home, exigirFaixaDemo: site.demonstracao });
       C.gravarJson(path.join(pastaSite, 'teste-site.json'), t);
       if (t.ok) etapa(5, 'teste headless 390 px', 'ok', `sem rolagem lateral, menor texto ${t.medidas.menorFontePx}px, ${t.medidas.waMe.length} links wa.me/${pedido.whatsapp_negocio}, console limpo`);
       else { etapa(5, 'teste headless 390 px', 'falhou', t.falhas.join(' | ')); codigo = 3; }

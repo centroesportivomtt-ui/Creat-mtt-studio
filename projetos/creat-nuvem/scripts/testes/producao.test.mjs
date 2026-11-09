@@ -398,4 +398,58 @@ test('critério 12 de ponta a ponta: fixture -> dist/<slug> que abre de file:// 
   }
 });
 
+/* rodar() apaga CREAT_URL_SITES e CREAT_HOME depois do extra; este liga as duas de propósito */
+function rodarCom(script, args, vars) {
+  const r = spawnSync(process.execPath, [path.join(PROD, script), ...args], { cwd: RAIZ, env: Object.assign(env(), vars), encoding: 'utf8', timeout: 120000 });
+  return { codigo: r.status, saida: (r.stdout || '') + (r.stderr || '') };
+}
+
+test('endereço padrão: sem variável, o site entregue aponta para o app Base44 em /sites/<slug>/; "0" desliga', () => {
+  const arq = path.join(pasta('padrao-tenant'), 't.json');
+  C.gravarJson(arq, base);
+  const d = pasta('padrao-dist');
+  assert.equal(rodar('build-site.cjs', ['--tenant', arq, '--destino', d]).codigo, 0);
+  const url = `https://creat-nuvem-404b1994.base44.app/sites/${base.slug}/`;
+  const html = fs.readFileSync(path.join(d, 'index.html'), 'utf8');
+  assert.ok(html.includes(`<link rel="canonical" href="${url}">`), 'canonical no endereço padrão');
+  assert.match(fs.readFileSync(path.join(d, 'sitemap.xml'), 'utf8'), new RegExp(`<loc>${url.replace(/[.\/]/g, '\\$&')}</loc>`));
+  assert.ok(fs.readFileSync(path.join(d, 'tenant.js'), 'utf8').includes('"home":"https://creat-nuvem-404b1994.base44.app/"'), 'rodapé com a home padrão');
+  const d0 = pasta('padrao-dist-0');
+  const r0 = rodarCom('build-site.cjs', ['--tenant', arq, '--destino', d0], { CREAT_URL_SITES: '0', CREAT_HOME: '0' });
+  assert.equal(r0.codigo, 0, r0.saida);
+  assert.match(r0.saida, /sem URL do site/);
+  assert.ok(!fs.existsSync(path.join(d0, 'sitemap.xml')));
+  assert.doesNotMatch(fs.readFileSync(path.join(d0, 'tenant.js'), 'utf8'), /base44\.app/, 'CREAT_HOME=0 e CREAT_URL_SITES=0: nada aponta para o app');
+  const dx = pasta('padrao-dist-x');
+  assert.equal(rodarCom('build-site.cjs', ['--tenant', arq, '--destino', dx], { CREAT_URL_SITES: 'https://{slug}.exemplo.com.br/' }).codigo, 0);
+  assert.ok(fs.readFileSync(path.join(dx, 'index.html'), 'utf8').includes(`href="https://${base.slug}.exemplo.com.br/"`));
+});
+
+test('publicar-site: confere dist, testa, gera zip sites/<slug>/ reprodutível e o passo a passo; recusa slug ruim e demo fora da regra', { skip: SEM_PW }, () => {
+  const s = pasta('publicar');
+  assert.equal(rodar('produzir.mjs', ['--pedido', path.join(FIX, 'pedido-valido.txt'), '--saida', s, '--fixture-ia', FIXTURE_IA, '--sem-sair', '--sem-navegador']).codigo, 0);
+  const r = rodar('publicar-site.cjs', ['--slug', SLUG, '--saida', s, '--destino', path.join(s, 'z1'), '--json']);
+  assert.equal(r.codigo, 0, r.saida);
+  const o = JSON.parse(r.saida);
+  assert.match(o.sha256, /^[0-9a-f]{64}$/);
+  assert.equal(o.url, `https://creat-nuvem-404b1994.base44.app/sites/${SLUG}/`);
+  const { unzipSync } = require(require.resolve('fflate', { paths: [RAIZ] }));
+  const nomes = Object.keys(unzipSync(new Uint8Array(fs.readFileSync(o.zip))));
+  assert.ok(nomes.includes(`sites/${SLUG}/index.html`) && nomes.includes(`sites/${SLUG}/motor/v1/motor.js`));
+  assert.ok(nomes.every((n) => n.startsWith(`sites/${SLUG}/`)));
+  const passos = o.passos.join('\n');
+  assert.ok(passos.includes(`sha256:${o.sha256}:${o.zip}`) && passos.includes('1C5Msox1Q-zVEDMfneH2yU9GUrNbPW1zN') && passos.includes('anyoneWithLink'));
+  assert.ok(passos.includes(`rm -rf public/sites/${SLUG} && cp -r /tmp/s/sites/${SLUG} public/sites/`) && passos.includes('sha256sum -c'));
+  assert.doesNotMatch(passos, /rm -rf public\/sites( |&|$)|rm -rf public\/?( |&|$)/, 'nunca apaga public/sites inteiro');
+  const r2 = JSON.parse(rodar('publicar-site.cjs', ['--slug', SLUG, '--saida', s, '--destino', path.join(s, 'z2'), '--json']).saida);
+  assert.equal(r2.sha256, o.sha256, 'mesmo build, mesmo sha256');
+  const ruim = rodar('publicar-site.cjs', ['--slug', 'a;rm -rf', '--saida', s]);
+  assert.equal(ruim.codigo, 1); assert.match(ruim.saida, /slug inválido/);
+  const demo = rodar('publicar-site.cjs', ['--slug', SLUG, '--saida', s, '--demo']);
+  assert.equal(demo.codigo, 1); assert.match(demo.saida, /demonstração · nome fictício/); assert.match(demo.saida, /5575981151202/);
+  fs.writeFileSync(path.join(s, 'dist', SLUG, 'custo.json'), '{}');
+  const lixo = rodar('publicar-site.cjs', ['--slug', SLUG, '--saida', s]);
+  assert.equal(lixo.codigo, 1); assert.match(lixo.saida, /custo\.json: fora da lista branca/);
+});
+
 test.after(() => { if (!process.env.CREAT_TESTE_MANTER) fs.rmSync(TMP, { recursive: true, force: true }); });

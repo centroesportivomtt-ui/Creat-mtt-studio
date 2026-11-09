@@ -100,4 +100,9 @@ const proibidos = copiados.filter((r) => /(^|\/)(estado\.json|servidor\.cjs|publ
 if (proibidos.length) { console.log('FALHA  arquivo interno na pasta pública: ' + proibidos.join(', ')); process.exit(1); }
 
 const bytes = copiados.reduce((s, r) => s + fs.statSync(path.join(DESTINO, r)).size, 0);
+// caminhos de topo da vitrine: os ÚNICOS que a publicação no Base44 apaga em public/ antes do
+// cp -r dist/publico/. public/ (docs/PUBLICACAO.md). public/sites/ (sites de cliente) nunca entra aqui.
+const topo = [...new Set(copiados.map((r) => r.split('/')[0]))].sort();
+if (topo.includes('sites')) { console.log('FALHA  a vitrine não pode ter sites/ na raiz: apagaria os sites dos clientes'); process.exit(1); }
+console.log('vitrine (topo de public/): ' + topo.join(' '));
 console.log(`ok     dist/publico/ montado: ${copiados.length} arquivos, ${(bytes / 1024).toFixed(0)} KB`);

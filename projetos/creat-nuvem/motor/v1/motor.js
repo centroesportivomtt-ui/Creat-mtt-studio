@@ -17,13 +17,16 @@
  * window.CREAT_SITE (opções do site, escritas pelo build; não é campo do tenant):
  *   { home: 'https://.../', rodape: true|false, url: 'https://site-do-cliente/', manual, nomeExemplo }
  *   rodape:false só sai do build-site.cjs --sem-rodape (decisão do Marcos).
+ *   demonstracao:true (v1.1, aditivo; só build-site.cjs/produzir.mjs --demonstracao): site-demonstração
+ *   com nome fictício. Mostra a faixa "demonstração · nome fictício" no topo, sai com noindex e sem
+ *   JSON-LD (negócio fictício não vira LocalBusiness no Google). Não é campo do tenant (ADR-001).
  *
  * Segurança: nenhum innerHTML com dado. Tudo por createElement/textContent.
  */
 (function (raiz) {
   'use strict';
 
-  var VERSAO = 'v1.0.0';
+  var VERSAO = 'v1.1.0';
   var W = typeof window !== 'undefined' ? window : null;
   var DOC = W && W.document ? W.document : null;
 
@@ -66,6 +69,9 @@
     somLigar: 'Ligar o som',
     somDesligar: 'Desligar o som',
     faixaPrevia: 'Prévia. Serviços, preços e textos são exemplo até o dono aprovar.',
+    faixaDemo: 'demonstração · nome fictício',
+    faixaDemoTexto: 'Site feito pela esteira real da Creat Nuvem. O pedido de horário vai para o WhatsApp da Creat, não para um negócio.',
+    faixaDemoLink: 'Quero um assim',
     exemplo: 'exemplo',
     sobConsulta: 'sob consulta',
     min: 'min',
@@ -379,10 +385,19 @@
     return base + sep + 'utm_source=rodape&utm_medium=ref&utm_campaign=rodape-v1&utm_content=' + encodeURIComponent(nicho || 'site');
   }
 
-  /* JSON-LD LocalBusiness do site entregue (prévia não tem) */
+  /* link "Quero um assim" da faixa de demonstração (mesma regra do rodapé, outra origem) */
+  function hrefDemo(home, nicho) {
+    var base = String(home).split('#')[0];
+    if (!/^https:\/\//.test(base)) return '';
+    var sep = base.indexOf('?') === -1 ? '?' : '&';
+    return base + sep + 'utm_source=demo&utm_medium=ref&utm_campaign=demo-v1&utm_content=' + encodeURIComponent(nicho || 'site');
+  }
+
+  /* JSON-LD LocalBusiness do site entregue (prévia e demonstração não têm) */
   function jsonLd(tenant, opc) {
     opc = opc || {};
     if (!tenant || !tenant.meta || tenant.meta.previa) return null;
+    if (opc.site && opc.site.demonstracao) return null;
     var preset = opc.preset || null, neg = tenant.negocio || {}, e = neg.endereco || {};
     var o = {
       '@context': 'https://schema.org',
@@ -443,12 +458,15 @@
     var fontes = (preset && preset.fontes) || FONTES_PADRAO;
     var rodapeMostrar = site.rodape !== false;
     var rotulo = (preset && preset.rotulo) || '';
+    var demonstracao = !previa && !!site.demonstracao;
     return {
       versao: VERSAO,
       slug: String(tenant.slug || 'site'),
       nicho: String(tenant.nicho || ''),
       rotuloNicho: rotulo,
       previa: previa,
+      demonstracao: demonstracao,
+      demoHref: demonstracao && site.home ? hrefDemo(site.home, tenant.nicho) : '',
       nomeExemplo: !!(previa && site.nomeExemplo),
       nome: neg.nome || '',
       nomeCurto: neg.nomeCurto || neg.nome || '',
@@ -456,7 +474,7 @@
       cidade: end.cidade || '',
       titulo: (tenant.pagina && tenant.pagina.titulo) || neg.nome || '',
       descricao: (tenant.pagina && tenant.pagina.descricao) || '',
-      robots: previa ? 'noindex, nofollow' : 'index, follow',
+      robots: previa || demonstracao ? 'noindex, nofollow' : 'index, follow',
       paleta: paletaDoTenant(tenant, preset),
       fontes: fontes,
       fontesHref: fontes.google ? 'https://fonts.googleapis.com/css2?' + fontes.google + '&display=swap' : '',
@@ -530,6 +548,7 @@
     var ld = e.jsonLd ? '<script type="application/ld+json">' + jsonSeguro(e.jsonLd) + '</script>' : '';
     var canonical = opc.site && opc.site.url ? '<link rel="canonical" href="' + escaparHtml(opc.site.url) + '">' : '';
     var nos = '<p>' + escaparHtml(e.nome) + (e.bordao ? ' · ' + escaparHtml(e.bordao) : '') + '</p>';
+    if (e.demonstracao) nos = '<p>' + escaparHtml(UI.faixaDemo) + '. ' + escaparHtml(UI.faixaDemoTexto) + '</p>' + nos;
     if (e.contato.waBase) nos += '<p>Para pedir horário sem JavaScript, chame no WhatsApp: <a href="' + escaparHtml(e.contato.waBase) + '">' + escaparHtml(e.contato.telefone) + '</a></p>';
     if (e.contato.enderecoLinhas.length) nos += '<p>' + e.contato.enderecoLinhas.map(escaparHtml).join('<br>') + '</p>';
     var trocas = {
@@ -559,6 +578,7 @@
   function scriptTenant(tenant, site) {
     var s = { home: site && site.home ? String(site.home) : '', rodape: !(site && site.rodape === false) };
     if (site && site.url) s.url = String(site.url);
+    if (site && site.demonstracao) s.demonstracao = true;
     return '/* gerado pelo build-site.cjs a partir de tenant.json; não editar à mão */\n' +
       'window.TENANT = ' + jsonSeguro(tenant) + ';\n' +
       'window.CREAT_SITE = ' + jsonSeguro(s) + ';\n';
@@ -674,7 +694,7 @@
   function aplicarCabeca(e) {
     if (e.titulo) DOC.title = e.titulo;
     if (e.descricao) meta('description', e.descricao);
-    if (e.previa) meta('robots', e.robots);
+    if (e.previa || e.demonstracao) meta('robots', e.robots);
     meta('theme-color', e.temaCor);
     if (e.fontesHref && !DOC.querySelector('link[data-motor-fontes]')) {
       if (!DOC.querySelector('link[rel="preconnect"][href="https://fonts.gstatic.com"]')) {
@@ -908,6 +928,11 @@
     while (alvo.firstChild) alvo.removeChild(alvo.firstChild);
     alvo.appendChild(criar('a', { classe: 'pular-link', href: e.pedido.modo === 'link_externo' ? '#pedir' : '#pedir', texto: UI.pular }));
     if (e.previa) alvo.appendChild(criar('p', { classe: 'faixa-previa', role: 'note' }, [selo('prévia'), ' ' + UI.faixaPrevia.replace(/^Prévia\.\s*/, '')]));
+    else if (e.demonstracao) {
+      var fd = [selo(UI.faixaDemo), ' ' + UI.faixaDemoTexto];
+      if (e.demoHref) fd.push(' ', criar('a', { href: e.demoHref, rel: 'noopener', texto: UI.faixaDemoLink }));
+      alvo.appendChild(criar('p', { classe: 'faixa-previa faixa-demo', role: 'note', 'data-demonstracao': '' }, fd));
+    }
     alvo.appendChild(renderTopo(e));
     alvo.appendChild(renderHeroi(e));
     var main = criar('main', { id: 'conteudo' });

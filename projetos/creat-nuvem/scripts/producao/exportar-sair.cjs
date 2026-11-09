@@ -40,8 +40,12 @@ function hostDe(u) { try { return new URL(String(u).replace('{slug}', 'x')).host
 /* hosts que pertencem à Creat (configurados + derivados) */
 function hostsCreat(extra) {
   const hs = new Set((process.env.CREAT_DOMINIOS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean));
-  for (const u of [process.env.CREAT_HOME, ...(extra || [])]) { const h = hostDe(u); if (h) hs.add(h); }
-  if (process.env.CREAT_URL_SITES) { const h = hostDe(process.env.CREAT_URL_SITES); if (h) hs.add(h.replace(/^x\./, '')); }
+  for (const u of [C.HOME_PADRAO, C.homePadrao(), ...(extra || [])]) { const h = hostDe(u); if (h) hs.add(h); }
+  for (const u of [C.URL_SITES_PADRAO, C.modeloUrlSites()]) {
+    const h = hostDe(u);
+    // subdomínio por cliente ({slug}.dominio): proíbe o domínio inteiro; caminho (/sites/{slug}/): o host
+    if (h) hs.add(/^\{slug\}\./.test(String(u).replace(/^https?:\/\//, '')) ? h.replace(/^x\./, '') : h);
+  }
   return [...hs];
 }
 
@@ -94,11 +98,8 @@ function exportarSair(opc) {
   if (dominio && hc.some((h) => dominio === h || dominio.endsWith('.' + h))) throw new C.ErroCampo('--dominio', 'o domínio do SAIR não pode ser da Creat');
   const base = path.join(path.resolve(opc.pastaDist), `${tenant.slug}-sair`);
   const pasta = path.join(base, tenant.slug);
-  const prevUrl = process.env.CREAT_URL_SITES;
-  delete process.env.CREAT_URL_SITES;                       // nunca herda o subdomínio da Creat
-  let r;
-  try { r = buildSite({ tenant, destino: pasta, site: { home: '', url: dominio ? `https://${dominio}/` : '', rodape: false } }); }
-  finally { if (prevUrl !== undefined) process.env.CREAT_URL_SITES = prevUrl; }
+  // url false: nunca herda a URL padrão nem CREAT_URL_SITES (endereço da Creat)
+  const r = buildSite({ tenant, destino: pasta, site: { home: '', url: dominio ? `https://${dominio}/` : false, rodape: false } });
   fs.writeFileSync(path.join(pasta, 'LEIA-ME.txt'), LEIA_ME(tenant.negocio.nome, dominio));
 
   const ler = (d) => C.listarArquivos(d).map((f) => ({ nome: path.relative(d, f), texto: fs.readFileSync(f, 'utf8') }));
