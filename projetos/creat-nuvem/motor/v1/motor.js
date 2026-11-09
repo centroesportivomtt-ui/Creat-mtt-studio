@@ -74,6 +74,8 @@
     demoLocalNota: 'Endereço e horário de exemplo: este negócio não existe.',
     demoHorarioRodape: 'Horário de exemplo',
     faixaDemoLink: 'Quero um assim',
+    demoSede: 'Veja a equipe que montou este site',
+    demoSedeLeitor: ' (sede 3D da Creat Nuvem, demonstração)',
     exemplo: 'exemplo',
     sobConsulta: 'sob consulta',
     min: 'min',
@@ -395,6 +397,20 @@
     return base + sep + 'utm_source=demo&utm_medium=ref&utm_campaign=demo-v1&utm_content=' + encodeURIComponent(nicho || 'site');
   }
 
+  /* link "Veja a equipe que montou este site" (só na demonstração): <home>/sede/?modo=demo&marca=<nome>.
+     Só https; a marca passa pela mesma limpeza da sede (letras, números, espaço e & . - ', até 28)
+     e vai codificada; o href entra por setAttribute, nunca por HTML. */
+  function hrefSede(home, nome) {
+    var base = String(home || '').split('#')[0].split('?')[0];
+    if (!/^https:\/\/[^\s"'<>\\]+$/.test(base)) return '';
+    if (base.charAt(base.length - 1) !== '/') base += '/';
+    var m = '';
+    try { m = String(nome || '').normalize('NFC').replace(/[^\p{L}\p{N} &.'-]/gu, ''); } catch (e) { m = String(nome || '').replace(/[^A-Za-zÀ-ÿ0-9 &.'-]/g, ''); }
+    m = m.replace(/\s+/g, ' ').trim();
+    if (m.length > 28) { m = m.slice(0, 28); var i = m.lastIndexOf(' '); m = (i > 10 ? m.slice(0, i) : m).trim(); }
+    return base + 'sede/?modo=demo' + (m ? '&marca=' + encodeURIComponent(m) : '');
+  }
+
   /* JSON-LD LocalBusiness do site entregue (prévia e demonstração não têm) */
   function jsonLd(tenant, opc) {
     opc = opc || {};
@@ -469,6 +485,7 @@
       previa: previa,
       demonstracao: demonstracao,
       demoHref: demonstracao && site.home ? hrefDemo(site.home, tenant.nicho) : '',
+      sedeHref: demonstracao && site.home ? hrefSede(site.home, neg.nome) : '',
       nomeExemplo: !!(previa && site.nomeExemplo),
       nome: neg.nome || '',
       nomeCurto: neg.nomeCurto || neg.nome || '',
@@ -923,6 +940,11 @@
       l2.appendChild(criar('a', { href: e.contato.waBase, target: '_blank', rel: 'noopener', texto: UI.whatsRodape + ' ' + e.contato.telefone }));
     }
     if (l2.childNodes.length) r.appendChild(l2);
+    if (e.demonstracao && e.sedeHref) {
+      r.appendChild(criar('p', { classe: 'rodape-sede' }, [
+        criar('a', { href: e.sedeHref, rel: 'noopener' }, [criar('span', { classe: 'rodape-sede-pontos', 'aria-hidden': 'true' }), DOC.createTextNode(UI.demoSede), criar('span', { classe: 'so-leitor', texto: UI.demoSedeLeitor })])
+      ]));
+    }
     if (e.rodape.mostrar) {
       var txt = e.rodape.texto + ' · ' + e.rodape.chamada;
       r.appendChild(criar('p', { classe: 'creat' }, [

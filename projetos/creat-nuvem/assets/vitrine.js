@@ -470,9 +470,11 @@
   }
   // O nome vai só no fragmento (#marca=), que o navegador não envia ao servidor, à CDN nem no Referer
   // (ADR-002). A query leva só parâmetros sem dado pessoal. O atributo src do iframe fica limpo.
-  function carregarSede(janela, nome, lite, aoCarregar) {
-    if (janela.querySelector('iframe')) return;
+  // marcaFicticia: nome dos sites-demonstração (fictício, público), que pode ir na query (?marca=).
+  function carregarSede(janela, nome, lite, aoCarregar, marcaFicticia) {
+    var ja = janela.querySelector('iframe'); if (ja) return ja;
     var q = ['modo=demo']; if (lite) q.push('lite=1');
+    if (marcaFicticia && !nome) q.push('marca=' + encodeURIComponent(cortar28(marcaFicticia)));
     var url = urlSede() + '?' + q.join('&') + (nome ? '#marca=' + encodeURIComponent(cortar28(nome)) : '');
     var carregando = el('div', { class: 'carregando sede-carregando', role: 'status' });
     carregando.appendChild(el('img', { class: 'placa-mini', src: RAIZ + 'assets/svg/placa.svg', alt: '', width: '120', height: '109' }));
@@ -486,6 +488,7 @@
     janela.insertBefore(fr, janela.firstChild);
     try { fr.setAttribute('data-alvo', '1'); fr.contentWindow.location.replace(url); } catch (e) { fr.src = url; }
     evento('sede_aberta', {});
+    return fr;
   }
   function montarJanelaSede(janela, nomeFn) {
     if (!janela) return;
@@ -496,6 +499,126 @@
       var io = new IntersectionObserver(function (ents) { if (ents.some(function (e) { return e.isIntersecting; })) { io.disconnect(); abrir(); } }, { rootMargin: '300px 0px' });
       io.observe(janela);
     }
+  }
+
+  /* ------------------------------------------------------------ sede viva (home): janela + comanda
+     A sede embutida (sede/?modo=demo) avisa por postMessage a etapa do ciclo de demonstração
+     ({creatSede:1, tipo:'etapa', etapa:0..5}); a comanda acende o mesmo passo. Antes de a sede
+     carregar (no celular, só sob toque), a comanda segue o mesmo relógio da sede (6 s; 9 s com
+     movimento reduzido). A página manda à sede só {tipo:'marca'} (nome fictício ou o do próprio
+     visitante, nunca para a rede) e {tipo:'visivel'} para pausar o desenho fora da tela. */
+  var ESTEIRA_AGORA = ['Nimbus organiza o pedido', 'Verbo escreve os textos e Paleta escolhe as cores', 'Pixel monta o site',
+    'Lupa testa no celular e Muralha confere a segurança', 'Trilho publica o site', 'Site no ar. Pode abrir.'];
+  var ESTEIRA_ULTIMA = ESTEIRA_AGORA.length - 1;     // = DEMO_ETAPAS.length da sede (5 etapas + tudo feito)
+  function montarSedeViva(sec, opc) {
+    opc = opc || {};
+    var janela = sec && $('#janela-sede', sec), est = sec && $('#esteira', sec), grupo = sec && $('[data-sede-marcas]', sec);
+    if (!janela || !est || !grupo) return;
+    var link = $('[data-esteira-abrir]', est), linkSr = $('[data-esteira-abrir-sr]', est);
+    var nomeEl = $('[data-esteira-nome]', est), agoraEl = $('[data-esteira-agora]', est), barra = $('[data-esteira-barra]', est);
+    var itens = $$('.esteira-lista li', est), botao = $('[data-ver-ao-vivo]', janela);
+    var fr = null, viaSede = false, visivel = false, relogio = 0, etapa = 0, manual = false, seuNome = '';
+    var PASSO = MOV_REDUZIDO.matches ? 9000 : 6000;
+    var ALVO = location.origin && location.origin !== 'null' ? location.origin : '*';
+    var atual = { marca: '', seu: false };
+
+    function pintar(k) {
+      etapa = k; est.setAttribute('data-etapa', String(k));
+      itens.forEach(function (li) {
+        var j = +li.getAttribute('data-passo'), st = j < k ? 'feito' : j === k ? 'agora' : 'fila';
+        li.setAttribute('data-estado', st);
+        if (st === 'agora') li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+        var t = $('[data-st]', li); if (t) t.textContent = st === 'fila' ? 'na fila' : st;
+      });
+      agoraEl.textContent = ESTEIRA_AGORA[k] || '';
+      barra.style.setProperty('--progresso', Math.round(k / ESTEIRA_ULTIMA * 100) + '%');
+    }
+    function parar() { clearInterval(relogio); relogio = 0; }
+    function andar() {
+      parar();
+      if (viaSede || !visivel || D.hidden) return;
+      relogio = setInterval(function () { pintar((etapa + 1) % (ESTEIRA_ULTIMA + 1)); }, PASSO);
+    }
+    function pronta() { return !!(fr && fr.contentWindow && fr.getAttribute('data-pronta') === '1'); }
+    function paraSede(msg) {
+      if (!pronta()) return;
+      msg.creatSede = 1;
+      try { fr.contentWindow.postMessage(msg, ALVO); } catch (e) {}
+    }
+    function escolher(btn) {
+      if (!btn) return;
+      $$('.chip', grupo).forEach(function (b) { b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
+      var seu = btn.hasAttribute('data-seu');
+      atual = { marca: seu ? seuNome : btn.getAttribute('data-marca') || '', seu: seu };
+      nomeEl.textContent = atual.marca;
+      var legMarca = $('[data-legenda-marca]', janela);
+      if (legMarca) legMarca.textContent = seu ? 'O nome do seu negócio na fachada, só neste aparelho.' : 'Nome fictício na fachada.';
+      est.classList.remove('trocou'); void est.offsetWidth; est.classList.add('trocou');
+      if (seu) { link.firstChild.textContent = 'Ver a prévia do seu site'; link.setAttribute('href', '#porta'); linkSr.textContent = ''; }
+      else {
+        link.firstChild.textContent = 'Abrir o site pronto';
+        link.setAttribute('href', btn.getAttribute('data-site'));
+        linkSr.textContent = ': ' + atual.marca + ' (site-demonstração, nome fictício)';
+      }
+      pintar(0);
+      if (pronta()) { viaSede = true; parar(); paraSede({ tipo: 'marca', marca: atual.marca, reiniciar: true }); }
+      else andar();
+    }
+    $$('.chip', grupo).forEach(function (b) { b.addEventListener('click', function () { manual = true; escolher(b); }); });
+    link.addEventListener('click', function (e) {
+      if (atual.seu && opc.abrirSeu) { e.preventDefault(); opc.abrirSeu(); }
+    });
+
+    // chip com o nome do próprio visitante (digitado no hero; fica só neste aparelho e só vai à sede por postMessage/fragmento)
+    function conferirSeu() {
+      var s = opc.seu ? opc.seu() : null, chip = $('[data-seu]', grupo);
+      var n = s && s.n && s.k ? cortar28(s.n) : '';
+      if (!n) {
+        if (chip) { var era = chip.getAttribute('aria-pressed') === 'true'; grupo.removeChild(chip); if (era) escolher($('.chip', grupo)); }
+        seuNome = ''; return;
+      }
+      var mudou = n !== seuNome; seuNome = n;
+      if (!chip) {
+        chip = el('button', { class: 'chip chip-seu', type: 'button', 'aria-pressed': 'false', 'data-seu': '' });
+        chip.addEventListener('click', function () { manual = true; escolher(chip); });
+        grupo.insertBefore(chip, grupo.firstChild);
+      }
+      chip.textContent = n;
+      chip.appendChild(el('span', { class: 'so-leitor' }, ' (o seu negócio)'));
+      if (!manual || (mudou && chip.getAttribute('aria-pressed') === 'true')) escolher(chip);
+    }
+
+    function abrir() {
+      if (fr) return;
+      var carregada = atual.marca;
+      fr = carregarSede(janela, atual.seu ? seuNome : '', true, function () {
+        fr.setAttribute('data-pronta', '1');
+        var dica = $('[data-legenda-dica]', janela); if (dica) { dica.className = ''; dica.textContent = ' Arraste para girar a ilha e toque num personagem.'; }
+        paraSede({ tipo: 'visivel', visivel: visivel });
+        if (atual.marca !== carregada) { viaSede = true; parar(); paraSede({ tipo: 'marca', marca: atual.marca, reiniciar: true }); }
+      }, atual.seu ? '' : atual.marca);
+    }
+    if (botao) botao.addEventListener('click', abrir);
+    W.addEventListener('message', function (ev) {
+      if (!fr || ev.source !== fr.contentWindow || !(ev.origin === location.origin || ev.origin === 'null')) return;
+      var d = ev.data;
+      if (!d || d.creatSede !== 1 || d.tipo !== 'etapa' || typeof d.etapa !== 'number' || d.etapa % 1 || d.etapa < 0 || d.etapa > ESTEIRA_ULTIMA) return;
+      viaSede = true; parar(); pintar(d.etapa);
+    });
+    if ('IntersectionObserver' in W) {
+      var vio = new IntersectionObserver(function (ents) {
+        var v = ents.some(function (e) { return e.isIntersecting; });
+        if (v === visivel) return;
+        visivel = v;
+        if (v) conferirSeu();
+        if (v && ehDesktop()) abrir();
+        paraSede({ tipo: 'visivel', visivel: v });
+        andar();
+      }, { rootMargin: '200px 0px' });
+      vio.observe(sec);
+    } else { visivel = true; }
+    D.addEventListener('visibilitychange', andar);
+    escolher($('.chip[aria-pressed="true"]', grupo) || $('.chip', grupo));
   }
 
   /* ------------------------------------------------------------ id do pedido */
@@ -535,7 +658,6 @@
       var n = limparNome(campoNome.value), c = limparNome(campoCidade.value);
       return { k: nichoAtual(), n: nomeValido(n) ? n : null, c: c && cidadeValida(c) ? c : null, p: 1, utm: utmAtual };
     }
-    function nomeParaSede() { var s = estado(); return s.n || ''; }
 
     /* placa (T6) */
     var placa = W.CreatPlaca && typeof W.CreatPlaca.montar === 'function' ? W.CreatPlaca : null;
@@ -778,7 +900,10 @@
       });
       sec.hidden = false;
     });
-    montarJanelaSede($('#janela-sede'), nomeParaSede);
+    montarSedeViva($('#sede'), {
+      seu: function () { var s = estado(); return s.n && s.k ? { n: s.n, k: s.k } : null; },
+      abrirSeu: function () { var s = estado(); if (s.n && s.k) abrirPrevia(); else { var c = $('#nome'); if (c) c.focus(); } }
+    });
 
     /* WhatsApp flutuante: some quando um botão principal está na faixa de baixo da tela */
     var zap = $('.zap-flutuante');

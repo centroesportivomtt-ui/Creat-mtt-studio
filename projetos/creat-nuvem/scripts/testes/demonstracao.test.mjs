@@ -83,6 +83,22 @@ test('demonstração: endereço sem link do Maps; site entregue continua com o l
   assert.equal(d.contato.mapaUrl, '', 'demo não leva a um imóvel de terceiros pelo Maps');
 });
 
+test('demonstração: link "Veja a equipe que montou este site" vai para a sede da home, saneado; site entregue não tem', () => {
+  const motor = require(path.join(RAIZ, 'motor', 'v1', 'motor.js'));
+  const t = JSON.parse(fs.readFileSync(path.join(RAIZ, 'schema', 'exemplos', 'tenant.entregue.valido.json'), 'utf8'));
+  const home = 'https://creat-nuvem-404b1994.base44.app';
+  assert.equal(motor.construirEstado(t, { site: { home } }).sedeHref, '', 'site entregue não leva à sede de demonstração');
+  const d = motor.construirEstado(t, { site: { home, demonstracao: true } });
+  assert.match(d.sedeHref, /^https:\/\/creat-nuvem-404b1994\.base44\.app\/sede\/\?modo=demo&marca=[^&#\s"'<>]+$/);
+  assert.equal(new URL(d.sedeHref).searchParams.get('marca').length <= 28, true);
+  const sujo = JSON.parse(JSON.stringify(t)); sujo.negocio.nome = 'Bar"><script>alert(1)</script> & Cia';
+  const h = motor.construirEstado(sujo, { site: { home: home + '/?x=1#y', demonstracao: true } }).sedeHref;
+  assert.ok(!/[<>"]/.test(decodeURIComponent(h)), h);
+  assert.equal(new URL(h).pathname, '/sede/');
+  assert.equal(motor.construirEstado(t, { site: { home: 'javascript:alert(1)', demonstracao: true } }).sedeHref, '');
+  assert.equal(motor.construirEstado(t, { site: { home: 'http://exemplo.com', demonstracao: true } }).sedeHref, '');
+});
+
 test('pedidos dos demos: endereço s/n de rua de exemplo, sem número de imóvel real', () => {
   for (const k of ['barbearia', 'salao', 'academia']) {
     const linha = fs.readFileSync(path.join(DEMOS, `pedido-${k}.txt`), 'utf8').split('\n').find((l) => l.startsWith('endereco:'));

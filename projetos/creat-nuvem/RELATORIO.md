@@ -147,3 +147,80 @@ Para que serve na venda: quem chega pela vitrine vê, antes de pagar, um site en
 **Pendências:**
 - (1) Publicar os 3 zips novos em `public/sites/demo-*/`, rodar `conferir-sites-no-ar.cjs` até sair com 0 e só então publicar a vitrine (`PUBLICACAO.md`, seção 0).
 - (2) O CEP 44640-000 é o geral de Riachão, não aponta para imóvel. Mantido porque o formato do pedido exige CEP.
+
+## Rituais vivos e quem monta, 09/11/2026
+
+### Pixel · "Veja quem monta o seu site" virou a empresa em funcionamento
+Para que serve na venda: a seção da home deixou de ser uma foto parada. Quem rola até ela vê o pedido de um negócio passar de mão em mão na sede 3D e, ao lado, a comanda acender cada passo. Quando Trilho publica, o carimbo NO AR bate e o botão "Abrir o site pronto" fica amarelo e leva ao site-demonstração daquele negócio. Se o visitante já digitou o nome no hero, a fachada mostra o nome dele: é a prova da tese (o cliente assiste a equipe com a marca dele) antes de pagar, e o botão vira "Ver a prévia do seu site".
+
+**Home (`index.html` #sede, `assets/vitrine.js`, `assets/tokens.css`, `conteudo/home.json`)**
+- Três chips (Barbearia Navalha Fictícia, Salão Esmalte Fictício, Studio Barra Fictícia) trocam o nome na fachada da sede, o título da comanda e o link "Abrir o site pronto" (`sites/demo-<k>/`). No celular os chips ficam numa grade de 3 colunas (56 px de altura).
+- Sede embutida: no desktop (≥1000 px, ponteiro fino), o iframe `sede/index.html?modo=demo&lite=1&marca=<nome fictício>` carrega sozinho quando a seção chega perto. No celular, mostra o poster até a pessoa tocar em "Ver ao vivo", para poupar dados (como antes). O nome digitado pelo visitante nunca vai na query: entra pelo fragmento `#marca=` (ADR-002) ou por postMessage.
+- Comanda "Pedido de demonstração" com 7 passos: Nimbus organiza · Verbo escreve · Paleta escolhe as cores · Pixel monta · Lupa testa no celular · Muralha confere a segurança · Trilho publica. Cada passo mostra o ponto na cor do personagem, o estado (feito / agora / na fila, em texto) e `aria-current="step"` no passo ativo. Uma barra de progresso acompanha. A nota diz: "Demonstração: é assim que a equipe aparece quando há um pedido em produção. Os nomes são fictícios e nenhum desses negócios existe." Não há tempo prometido nem dado real.
+- Sincronia: a sede avisa a etapa por postMessage, e a comanda acende o mesmo passo. Antes de a sede carregar, a comanda usa o mesmo relógio da sede (6 s; 9 s com movimento reduzido). O relógio para fora da tela e com `document.hidden`, e a sede embutida para de desenhar quando a janela sai da tela.
+- A legenda da janela é honesta: diz "Nome fictício na fachada." ou "O nome do seu negócio na fachada, só neste aparelho.". Depois de carregar, troca a dica do celular por "Arraste para girar a ilha e toque num personagem.".
+- Tokens novos `--agente-*` (figurino da sede, iguais nos dois temas, sempre com contorno). Nenhuma cor solta. Movimento (pulo do ponto ativo, carimbo com mola, barra) só com `prefers-reduced-motion: no-preference`.
+- Nenhum evento novo de analytics (contrato j inalterado).
+
+**Sede (`sede/index.html`, na raiz do repositório)**
+- `limparMarca()` virou função (mesma regra de antes), e a placa desenha `marcaAtual`.
+- Protocolo com a página que embute, só no modo demo e só aceito do `window.parent` de mesma origem (ou `null` em arquivo):
+  - entrada `{creatSede:1, tipo:'marca', marca, reiniciar}`: troca a fachada (limparMarca + fillText) e reinicia o ciclo;
+  - entrada `{tipo:'visivel', visivel}`: pausa o `frame()`;
+  - saída `{creatSede:1, tipo:'etapa', etapa:0..5, total:5}`: vai para `location.origin`, ou `*` em `file:`, e só leva o número da etapa.
+- Embutida em modo demo, a sede ganha a classe `html.embutida`: saem a marca, o elenco e a dica, e o selo DEMONSTRAÇÃO vai para o canto. Abaixo de 560 px, os botões do topo também saem. Aberta direto, nada muda.
+
+**Sites-demonstração (`motor/v1/motor.js`, `motor/v1/styles.css`)**
+- Só com `CREAT_SITE.demonstracao`: no rodapé entra uma linha discreta "Veja a equipe que montou este site", que leva a `<home>/sede/?modo=demo&marca=<nome>`. A função `hrefSede` só aceita home `https://`, descarta query e fragmento e limpa o nome com a mesma regra da sede (até 28 caracteres, `encodeURIComponent`). O href entra por `setAttribute`. O alvo de toque tem 44 px, e há texto para leitor de tela "(sede 3D da Creat Nuvem, demonstração)". O site entregue não muda. Não mexi em `VERSAO` (v1.1.1) porque os rituais estão sendo mexidos em paralelo; quem fechar a rodada sobe a versão uma vez só.
+- Os 3 demos foram refeitos pela esteira real (`produzir.mjs --fixture-ia --demonstracao`, o comando da seção "Entrega e demos"). Os três saíram com código 0.
+
+**Verificado**
+- `CREAT_TESTE_TMP=/tmp npm test`: 57 de 57. O teste novo em `demonstracao.test.mjs` confere o link da sede na demo, a ausência dele no site entregue, a recusa de `javascript:` e `http:` e a limpeza de `"><script>`.
+- `node scripts/checar.cjs`: tudo certo, com os 3 avisos `[PREENCHER]` já conhecidos.
+- `olhar.cjs --cdn-local` em `dist/local` (home) e nos 3 demos: "Tudo limpo" nos quatro.
+- No `navegador` (`dist/local`, `--cdn-local`):
+  - desktop claro e escuro: o iframe carrega sozinho, a comanda segue a sede (0→5), aparece o carimbo NO AR e o botão amarelo fica legível no escuro;
+  - celular: o poster aparece até o toque em "Ver ao vivo". Depois do toque, a ilha mostra a placa "Barbearia Navalha Fictícia · Aberto pela Creat Nuvem". O chip do salão troca a placa ao vivo (título do iframe "Sede · Salão Esmalte Fictício"), reinicia na etapa 0 e aponta o link para `sites/demo-salao/`;
+  - nome digitado no hero ("Barbearia do Zezinho Cabeleireiro e Cia", cortado em 28): aparece o chip "Barbearia do Zezinho" já marcado, a fachada usa `#marca=` e "Ver a prévia do seu site" abre a prévia;
+  - rodapé dos demos de academia (desktop) e salão (celular escuro): o link aparece, e `/sede/?modo=demo&marca=Studio%20Barra%20Fict%C3%ADcia` abre a sede com o nome na placa.
+  - Console limpo em todos.
+- Prints olhados: `.verificacao/print-*.png`, `.verificacao/home/`, `.verificacao/demo-*/`.
+
+**Pendências**
+- (1) Nada publicado. Os zips dos demos com o link novo foram refeitos (`publicar-site --demo`, exit 0, 17 arquivos cada; sha256 barbearia `de7926f2…`, salão `fd106a20…`, academia `9306e976…`) no destino `CREAT_PUBLICAR_DESTINO` desta sessão. Se a frente dos rituais refizer os demos depois, os zips dela é que valem. Eles sobem antes da vitrine, como manda `docs/PUBLICACAO.md`; a vitrine leva junto a `sede/` nova.
+- (2) No sandbox, a sede embutida roda WebGL por software e as transições da comanda ficam lentas. Em aparelho real não deve acontecer, mas vale conferir num celular de entrada.
+- (3) O iframe da sede segue com `lite=1` (30 quadros por segundo). Os rituais animados (esmalte, barra) são de outra frente e não entraram aqui.
+
+## Rituais vivos e quem monta, 09/11/2026
+
+**Órbita.** Pedido do Marcos: "faltaram as animações da apresentação do site dos clientes: o supino/a barra, o esmalte". Diagnóstico: os 3 rituais montavam parados até alguém arrastar. Agora cada herói chega em cena, mostra o gesto sozinho e passa a vez para quem visita. Para que serve na venda: quem abre o site do cliente (ou a demo pela vitrine) vê, nos primeiros 2 s, o objeto do ofício se mexendo, entende o gesto sem ler instrução e tem um momento para contar ("a barra caiu no chão e levantou pó"). A seção "Veja quem monta o seu site" da home **não foi mexida por mim**: esta tarefa cobriu só os rituais.
+
+**O que mudou, por arquivo** (só `motor/v1/rituais/*.js`, `rituais.css` e `efeito.js`; interface `CREAT_RITUAIS` e o gesto de arrastar intactos):
+- `rituais/comum.js`: peças novas do ritual vivo. `emDois` (12 poses/s), `curva`, `trecho`, `cena` (laço rAF cujo relógio não salta quando a aba some ou o palco sai da tela), `diretor` (demonstração a cada 6 a 9 s só com o palco ≥35% na tela, aba visível, ninguém mexendo e sem movimento reduzido; `parar()` é definitivo na visita), `dicaVez` (empilha "Arraste você" sobre a dica do palco por 2,6 s) e `nomeNegocio`.
+- `rituais/barra.js` (academia): **entrada em dois**: a barra aparece no alto, sobe um fio (antecipação), cai esticada, bate comprimida, quica, enverga e as anilhas vibram pose sim, pose não, no pó de magnésio. **Demonstração**: agacha, sobe devagar com o meio na frente, segura tremendo, solta e quica. **Celebração**: a faixa de cada anilha ganha o nome do negócio em carimbo (a segunda chega um tique depois). Pegar a barra no meio da cena continua da pose atual; pegar durante a queda não conta como levantar (fica abaixo da trava).
+- `rituais/esmalte.js` (salão): **entrada em dois**: a mão sobe, o vidrinho entra girando em arco e assenta comprimido, e o pincel sai, sacode e volta (cada parte começa antes da outra acabar). **Demonstração**: o pincel sai do vidrinho, voa em arco até a cutícula, pinta a faixa do meio, uma gota escorre pelo dedo enquanto o pincel volta e a tinta da demonstração se apaga (ela não conta na cobertura). **Celebração**: um reflexo atravessa a unha e uma estrela de brilho estala.
+- `efeito.js` (barbearia): a lâmina virou um grupo que gira no rebite e é desenhada atrás do cabo, então a navalha pode estar **fechada**. **Entrada em dois**: aparece fechada, arma para trás, a lâmina estala para fora passando do ponto e, ainda assentando, já desce no couro numa passada longa que deixa marca. **Demonstração**: duas passadas virando a lâmina no eixo longo, e o nome gravado vira cromo por um instante (uma varredura). A demonstração não emite `ritual:passada`, então não tem som nem conta fio. **Celebração**: o risco de luz varre a lâmina, uma estrela estala na ponta e um raio atravessa o couro, sem piscar (fotossensibilidade). O CSS entra por `<style data-ritual-vivo>`, porque a barbearia não carrega `rituais.css`; a CSP do `_headers` permite `style-src 'unsafe-inline'`. A tira de confirmar usa a mesma fábrica de navalha, sempre aberta.
+- `rituais/rituais.css`: a dica "Arraste você" (entra em 260 ms, sai em 160 ms, anel de toque pulsando), a faixa da anilha e o carimbo, o pó com deriva lateral (4 grãos a mais só na batida forte), o reflexo e a estrela da unha. Tudo anima só `transform` e `opacity`.
+- **Regras:** a demonstração para no primeiro toque, tecla ou arrasto no palco (na barbearia, que rola a página, conta o arrasto ou um toque parado, não a rolagem) e não volta na visita. Com `prefers-reduced-motion` não há entrada, loop nem dica: só o estado final, como antes (a faixa da anilha já aparece com o nome). Textos novos: só "Arraste você" (chave `dicaVez` em `ritualTextos`, com reserva no código).
+
+**Verificado:**
+- Demos refeitos com `produzir.mjs --fixture-ia --demonstracao` (código 0, 6 etapas ok nos 3).
+- `olhar.cjs --cdn-local` nos 3 `dist/demo-*`: "Tudo limpo" (celular e desktop, claro e escuro).
+- Script Playwright próprio (`<scratchpad>/vivo/capturar.cjs`): prints a 0,5 s e a 4 s, na demonstração, na dica e na celebração, em 390 px e 1440 px, sem erro de console. Olhei os prints: a 0,5 s, a barra está caindo esticada, o vidrinho está girando no ar e a navalha está fechada; a 4 s, os três estão em repouso. Também olhei as folhas de quadros com relógio controlado (entrada e demonstração dos 3) e a celebração dos 3.
+- Interromper no meio da entrada com arrasto real: os 3 concluem o gesto, não sobra resto de cena e a demonstração não volta em 10 s.
+- Movimento reduzido: os 3 abrem no estado final, sem demonstração.
+- Desempenho (rAF por segundo, 0 a 12 s, desktop headless): 60 qps estáveis depois do 1º segundo, inclusive durante as demonstrações. O 1º segundo da barbearia fica igual ao original (27 a 34 contra 29), por causa da geração do couro.
+- Prévia (`previa/#k=<nicho>`): os 3 nichos montam com a entrada e o console limpo; a faixa da anilha usa o nome digitado.
+- `CREAT_TESTE_TMP=/tmp npm test`: 57 de 57. `node scripts/checar.cjs`: tudo certo, com os 3 avisos `[PREENCHER]` já conhecidos.
+- `publicar-site --demo` nos 3. **Os zips mudaram**, então descarte os anteriores. Novos em `<scratchpad>/zips/`: barbearia `de7926f2…`, salão `fd106a20…`, academia `9306e976…`.
+
+**Pendências:** (1) Publicar os 3 zips novos (chat principal, `docs/PUBLICACAO.md`). (2) A seção "Veja quem monta o seu site" da home (foto parada + "Ver ao vivo") continua como estava; fica para quem cuida da home/sede. (3) Os FPS foram medidos em Chromium headless com renderização por software; falta conferir num celular médio de verdade.
+
+### Pixel · rodada final de demos e zips (rituais vivos + quem monta juntos)
+- Os 3 demos foram refeitos pela esteira real (`produzir.mjs --fixture-ia --slug demo-* --sem-sair --demonstracao`, URLs padrão). Saiu código 0 com as 6 etapas ok e o headless de 390 px ok. `dist/demo-*/motor/v1/rituais/` (comum, barra, esmalte, rituais.css) e `efeito.js` são idênticos à fonte, e o `motor.js` traz o link "Veja a equipe que montou este site".
+- `CREAT_TESTE_TMP=/tmp npm test`: 57 de 57. `node scripts/checar.cjs`: tudo certo, com os 3 avisos `[PREENCHER]` já conhecidos. `montar-publico.cjs`: 67 arquivos.
+- O `montar-publico` avisou que o hash CSP do script inline da sede tinha mudado, porque a sede foi alterada. Copiei o hash novo (`sha256-INEh5a/…`) para o `_headers` da fonte, e a fonte agora bate com `dist/publico/_headers`.
+- **Zips finais.** Estes substituem os sha256 citados acima (`de7926f2…`, `fd106a20…`, `9306e976…`). Estão no scratchpad, em `site-demo-<k>.zip`:
+  - barbearia: `7c678dd64f68880f64ce3a9ecab712094860f6ef1caeb7089a136642aa9c1c17`
+  - salão: `ec765895053fd376d8c19e76c9154d4c41321d8f0fa271e22f2ae087c6b3b08f`
+  - academia: `50c436526e8c83f738c01bb1b622def13fb002baf3bc787a44ce85a61c5a5aea`

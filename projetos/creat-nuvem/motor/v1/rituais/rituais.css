@@ -221,3 +221,104 @@
   .ra-poeira circle { animation: none !important; opacity: 0; }
   .tira-ritual { display: none; }
 }
+
+/* =====================================================================
+   RITUAL VIVO (09/11/2026)
+   Conceito: o objeto do ofício chega em cena como personagem e, enquanto ninguém mexe,
+   mostra sozinho o gesto inteiro em versão curta; no fim passa a vez: "Arraste você".
+   Momento-assinatura: a barra despenca no chão e as anilhas tremem no pó de magnésio;
+   o vidrinho entra girando e o pincel sai para escorrer o excesso.
+   Movimento: a entrada é EM DOIS (12 poses/s, no JS) com antecipação e sobreposição;
+   a demonstração roda a 60 qps com peso; a dica entra em 260 ms e sai em 160 ms.
+   Só transform e opacity. Movimento reduzido: nada disso nasce (só o estado final).
+   ===================================================================== */
+
+/* ---------- a dica passa a vez: "Arraste você" empilhada sobre a dica do palco ---------- */
+.ritual-dica.tem-vez { position: relative; }
+.ritual-dica .dica-orig {
+  display: inline-flex; align-items: center; gap: var(--esp-2);
+  transition: opacity 160ms var(--curva-saida), transform 160ms var(--curva-saida);
+}
+.ritual-dica .dica-vez {
+  position: absolute; left: 0; top: 50%;
+  display: inline-flex; align-items: center; gap: var(--esp-2);
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; transform: translateY(calc(-50% + 8px));
+  transition: opacity 160ms var(--curva-saida), transform 160ms var(--curva-saida);
+}
+.ritual-dica.is-sua-vez .dica-orig { opacity: 0; transform: translateY(-8px); }
+.ritual-dica.is-sua-vez .dica-vez {
+  opacity: 1; transform: translateY(-50%);
+  transition: opacity 260ms var(--curva-entrada) 60ms, transform 260ms var(--curva-entrada) 60ms;
+}
+.ritual-dica .vez-texto {
+  font-weight: 700;
+  text-decoration: underline; text-decoration-color: var(--destaque);
+  text-decoration-thickness: 2px; text-underline-offset: 4px;
+}
+.ritual-dica .vez-dedo { position: relative; width: 14px; height: 14px; flex: 0 0 auto; border-radius: 50%; border: 2px solid currentColor; }
+.ritual-dica .vez-dedo::after {
+  content: ""; position: absolute; inset: -2px; border-radius: 50%;
+  border: 2px solid var(--destaque); opacity: 0;
+}
+.ritual-dica.is-sua-vez .vez-dedo::after { animation: vez-pulso 1100ms var(--curva-entrada) 300ms infinite; }
+@keyframes vez-pulso {
+  0% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2.4); }
+}
+
+/* ---------- barra: a faixa da anilha ganha o nome ---------- */
+.ra-faixa { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; transform: scaleY(0.2); }
+.ra-faixa-fundo { fill: var(--ritual-vidro); stroke: var(--ritual-linha); stroke-width: 2.5; }
+.ra-faixa-nome {
+  fill: var(--ritual-linha);
+  font-family: var(--fonte-display, sans-serif); font-weight: 800; font-size: 11px; letter-spacing: 0.04em;
+}
+.palco-barra.is-levantada .ra-faixa {
+  opacity: 1; transform: none;
+  transition: opacity var(--dur-media) var(--curva-entrada) 120ms, transform var(--dur-lenta) var(--curva-mola) 120ms;
+}
+.palco-barra.is-carimbo .ra-faixa { animation: ra-carimbo 560ms var(--curva-entrada) 140ms both; }
+.palco-barra.is-carimbo .ra-anilha:last-of-type .ra-faixa { animation-delay: 200ms; }   /* a segunda anilha chega um tique depois */
+@keyframes ra-carimbo {
+  0% { opacity: 0; transform: scale(1.6, 0.3); }
+  45% { opacity: 1; transform: scale(0.9, 1.08); }
+  70% { transform: scale(1.04, 0.97); }
+  100% { opacity: 1; transform: none; }
+}
+/* pó de magnésio: cada grão sobe com a sua deriva; os 4 de fora só saem na batida forte */
+.ra-poeira.is-subindo circle { animation-name: ra-po; }
+.ra-poeira .ra-giz-forte { visibility: hidden; }
+.ra-poeira.is-forte .ra-giz-forte { visibility: visible; }
+@keyframes ra-po {
+  0% { opacity: 0.95; transform: translate(0, 0) scale(0.6); }
+  100% { opacity: 0; transform: translate(var(--dx, 0px), var(--sobe, -16px)) scale(1.35); }
+}
+
+/* ---------- esmalte: a demonstração, a gota e o brilho da unha ---------- */
+.re-demo { stroke-width: 15; }
+.re-gota { pointer-events: none; }
+.re-gota path { stroke-width: 2.5; }
+.re-lampejo { fill: #FFFFFF; opacity: 0; transform: translateX(-30px); }
+.palco-esmalte.is-brilho .re-lampejo { animation: re-lampejo 760ms var(--curva-entrada) 420ms both; }
+@keyframes re-lampejo {
+  0% { opacity: 0; transform: translateX(-30px); }
+  20% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateX(78px); }
+}
+.re-estrela { fill: #FFFFFF; stroke: var(--ritual-linha); stroke-width: 1.6; stroke-linejoin: round; transform-box: fill-box; transform-origin: 50% 50%; transform: scale(0); }
+.palco-esmalte.is-brilho .re-estrela { animation: re-estrela 900ms var(--curva-mola) 760ms both; }
+@keyframes re-estrela {
+  0% { transform: scale(0) rotate(-45deg); opacity: 1; }
+  45% { transform: scale(1.15) rotate(0deg); opacity: 1; }
+  75% { transform: scale(0.95) rotate(8deg); opacity: 1; }
+  100% { transform: scale(0) rotate(30deg); opacity: 0; }
+}
+
+/* ---------- movimento reduzido: só o estado final ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .ritual-dica .dica-vez { display: none; }
+  .ritual-dica .dica-orig { opacity: 1 !important; transform: none !important; }
+  .palco-barra.is-levantada .ra-faixa { transition: none; }
+  .ra-faixa, .re-lampejo, .re-estrela, .ritual-dica .vez-dedo::after { animation: none !important; }
+}

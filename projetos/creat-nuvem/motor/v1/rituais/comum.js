@@ -14,6 +14,8 @@
  *   no(tag, classe, pai)       cria nó HTML
  *   ponteiro(el, cb)           arrasto 2D com Pointer Events (o el tem touch-action: none no CSS)
  *   tira(el, opc, desenho)     a tira de confirmar com arrasto HORIZONTAL (a página continua rolando)
+ *   emDois, curva, trecho, cena, diretor, dicaVez, nomeNegocio   ritual vivo (09/11/2026): entrada em dois,
+ *                              demonstração em loop a cada 6 a 9 s e a dica "Arraste você" (ver o bloco no meio)
  *
  * Regras que todo ritual da T8 segue (iguais às do 'navalha' do efeito.js):
  *   - o gesto confirma só no pointerup (o window.open do WhatsApp precisa de gesto do usuário);
@@ -311,6 +313,123 @@
     else if (mqReduz.addListener) mqReduz.addListener(aoMudarMovimento);
   }
 
+
+  /* =====================================================================
+     RITUAL VIVO (09/11/2026): entrada, demonstração em loop e a dica "Arraste você"
+     Cada ritual desenha a própria cena; aqui ficam só o relógio e as regras:
+       - emDois(ms): tempo da pose "em dois" (12 poses por segundo, como desenho animado);
+       - cena(passo, fim): laço de requestAnimationFrame com tempo que NÃO salta quando a aba
+         some (o rAF para e o relógio é empurrado); passo(T, dt) devolve false para encerrar;
+       - diretor(el, opc): a cada 6 a 9 s, com o palco na tela, a aba visível e ninguém mexendo,
+         chama opc.tocar(fim). Para de vez no primeiro toque ou tecla (parar()) e não volta
+         nesta visita. Nunca roda com movimento reduzido;
+       - dicaVez(dica): troca a dica do palco por "Arraste você" por 2,6 s no fim da demonstração.
+     ===================================================================== */
+  var QUADRO_EM_DOIS = 1000 / 12;
+  function emDois(ms) { return Math.floor(ms / QUADRO_EM_DOIS) * QUADRO_EM_DOIS; }
+  var curva = {
+    saida: function (p) { return 1 - Math.pow(1 - p, 3); },
+    entrada: function (p) { return p * p; },
+    meio: function (p) { return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; },
+    seno: function (p) { return 0.5 - Math.cos(Math.PI * p) / 2; },
+    voltaAtras: function (p) { var c = 1.9; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); }
+  };
+  function trecho(T, a, b) { return lim((T - a) / (b - a), 0, 1); }
+
+  function cena(passo, fim) {
+    var t0 = 0, tAnt = 0, viva = true;
+    function quadro(t) {
+      if (!viva) return;
+      if (!t0) { t0 = t; tAnt = t; }
+      var bruto = t - tAnt;
+      if (bruto > 100) t0 += bruto - 16;            // a aba voltou: continua de onde parou
+      var dt = lim((t - tAnt) / 1000, 0, 1 / 30);
+      tAnt = t;
+      var segue = false;
+      try { segue = passo(t - t0, dt) !== false; } catch (e) { segue = false; }
+      if (segue && viva) W.requestAnimationFrame(quadro);
+      else if (viva) { viva = false; if (fim) fim(true); }
+    }
+    W.requestAnimationFrame(quadro);
+    return { parar: function () { if (!viva) return; viva = false; if (fim) fim(false); }, viva: function () { return viva; } };
+  }
+
+  function diretor(el, opc) {
+    var st = { parado: false, visivel: true, timer: 0, tocando: false };
+    function sortear() { return (opc.min || 6000) + Math.random() * ((opc.max || 9000) - (opc.min || 6000)); }
+    function agendar() {
+      clearTimeout(st.timer); st.timer = 0;
+      if (st.parado || st.tocando || !st.visivel || D.hidden || reduzido()) return;
+      st.timer = setTimeout(disparar, sortear());
+    }
+    function disparar() {
+      st.timer = 0;
+      if (st.parado || st.tocando || !st.visivel || D.hidden || reduzido()) return;
+      if (opc.pode && !opc.pode()) { agendar(); return; }
+      st.tocando = true;
+      opc.tocar(function () {
+        st.tocando = false;
+        if (st.parado) return;
+        if (opc.aoFim) opc.aoFim();
+        agendar();
+      });
+    }
+    var io = null;
+    if ('IntersectionObserver' in W) {
+      io = new IntersectionObserver(function (ents) {
+        st.visivel = ents[ents.length - 1].isIntersecting;
+        if (st.visivel) { if (!st.timer) agendar(); } else { clearTimeout(st.timer); st.timer = 0; }
+      }, { threshold: 0.35 });
+      io.observe(el);
+    }
+    function aoVer() { if (D.hidden) { clearTimeout(st.timer); st.timer = 0; } else if (!st.timer) agendar(); }
+    D.addEventListener('visibilitychange', aoVer);
+    return {
+      iniciar: agendar,
+      parar: function () {
+        if (st.parado) return;
+        st.parado = true;
+        clearTimeout(st.timer); st.timer = 0;
+        if (io) io.disconnect();
+        D.removeEventListener('visibilitychange', aoVer);
+        if (opc.aoParar) opc.aoParar(st.tocando);
+        st.tocando = false;
+      },
+      parado: function () { return st.parado; },
+      tocando: function () { return st.tocando; }
+    };
+  }
+
+  /* a dica do palco ganha uma segunda linha empilhada ("Arraste você") que entra no fim da demonstração */
+  function dicaVez(dica) {
+    if (!dica) return null;
+    var orig = no('span', 'dica-orig');
+    while (dica.firstChild) orig.appendChild(dica.firstChild);
+    dica.appendChild(orig);
+    var vez = no('span', 'dica-vez', dica);
+    vez.setAttribute('aria-hidden', 'true');
+    no('span', 'vez-dedo', vez).setAttribute('aria-hidden', 'true');
+    var tx = no('span', 'vez-texto', vez);
+    tx.textContent = texto('dicaVez', 'Arraste você');
+    dica.classList.add('tem-vez');
+    var timer = 0;
+    return {
+      mostrar: function (ms) {
+        if (reduzido()) return;
+        clearTimeout(timer);
+        dica.classList.add('is-sua-vez');
+        timer = setTimeout(function () { dica.classList.remove('is-sua-vez'); }, ms || 2600);
+      },
+      esconder: function () { clearTimeout(timer); dica.classList.remove('is-sua-vez'); }
+    };
+  }
+
+  /* nome curto do negócio, para gravar no objeto do ritual (anilha, frasco) */
+  function nomeNegocio(max) {
+    var e = W.CreatMotor && W.CreatMotor.estado;
+    return String((e && (e.nomeCurto || e.nome)) || '').trim().slice(0, max || 28);
+  }
+
   /* a folha de estilo dos rituais: se a página não trouxe o <link>, ele entra ao lado deste script */
   function garantirCss() {
     if (D.querySelector('link[data-rituais-css]')) return;
@@ -328,6 +447,7 @@
   W.CreatRitualComum = {
     reduzido: reduzido, lim: lim, agora: agora, emitir: emitir, vibrar: vibrar, som: som, texto: texto,
     svg: svg, no: no, Mola: Mola, ponteiro: ponteiro, tira: tira, resetarTira: resetarTira,
-    aoMudarMovimento: function (f) { ouvintesReduz.push(f); }
+    aoMudarMovimento: function (f) { ouvintesReduz.push(f); },
+    emDois: emDois, curva: curva, trecho: trecho, cena: cena, diretor: diretor, dicaVez: dicaVez, nomeNegocio: nomeNegocio
   };
 })();

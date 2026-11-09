@@ -15,6 +15,10 @@
  *   Toque sem arrastar deixa uma gota de esmalte onde tocou.
  * Tira: arrasto horizontal do pincel pintando uma unha comprida; Enter/Espaço confirmam.
  * prefers-reduced-motion: unha já pintada, sem gesto, sem tira (fica "Enviar sem arrastar").
+ * Ritual vivo (09/11/2026): ao carregar, a mão sobe e o vidrinho entra girando (em dois), assenta comprimido
+ *   e o pincel sai, sacode e volta; parado, a cada 6 a 9 s o pincel pinta uma faixa da unha, uma gota escorre
+ *   pelo dedo e a tinta da demonstração some (não conta na cobertura); o primeiro toque encerra.
+ *   Unha pronta: um reflexo atravessa a unha e uma estrela de brilho estala.
  * Eventos: motor:ritual-pronto {ritual:'esmalte'} · ritual:confirmar {origem:'tira', el}.
  * Precisa de rituais/comum.js antes.
  */
@@ -71,22 +75,35 @@
     var defs = svg('defs', null, s);
     var cp = svg('clipPath', { id: 're-clip-unha' }, defs);
     svg('path', { d: UNHA }, cp);
+    // a mão (dedo + unha) e a garrafa (pincel em repouso + vidrinho) são grupos: a entrada move cada um
+    var mao = svg('g', { 'class': 're-mao' }, s);
     // dedo
-    var dedo = svg('g', null, s);
+    var dedo = svg('g', null, mao);
     svg('path', { 'class': 're-sombra', d: 'M58 204 V78 Q58 36 95 36 Q132 36 132 78 V204 Z', transform: 'translate(5 4)' }, dedo);
     svg('path', { 'class': 're-pele re-l', d: 'M58 204 V78 Q58 36 95 36 Q132 36 132 78 V204 Z' }, dedo);
     svg('path', { 'class': 're-lf', d: 'M74 166 Q95 172 116 166 M78 178 Q95 183 112 178' }, dedo);
     // unha
-    var unha = svg('g', null, s);
+    var unha = svg('g', null, mao);
     svg('path', { 'class': 're-unha-base re-l', 'stroke-width': 3, d: UNHA }, unha);
     var tinta = svg('g', { 'clip-path': 'url(#re-clip-unha)' }, unha);
     var pinceladas = svg('g', { 'class': 're-pinceladas' }, tinta);
+    var demoTraco = svg('path', { 'class': 're-pincelada re-demo', d: 'M95 62 l0 0', opacity: 0 }, tinta);   // a pincelada da demonstração (não conta)
     var assentar = svg('rect', { 'class': 're-destaque re-assentar', x: 70, y: 54, width: 50, height: 76 }, tinta);
+    // celebração: o reflexo que atravessa a unha pintada
+    var lampejo = svg('g', { 'class': 're-lampejo' }, tinta);
+    svg('rect', { x: 60, y: 40, width: 12, height: 100, transform: 'skewX(-18)' }, lampejo);
     svg('path', { 'class': 're-brilho re-reflexo', 'stroke-width': 3.5, d: 'M84 98 V86 Q84 74 92 70' }, unha);
     svg('path', { fill: 'none', 'class': 're-l', 'stroke-width': 3.5, d: UNHA }, unha);
+    // a gota que escorre na demonstração (sai da ponta da unha e desce pelo dedo)
+    var gota = svg('g', { 'class': 're-gota', opacity: 0 }, unha);
+    svg('path', { 'class': 're-destaque re-l', 'stroke-width': 2.5, d: 'M0 -7 Q4.5 0 4.5 3 A4.5 4.5 0 0 1 -4.5 3 Q-4.5 0 0 -7 Z' }, gota);
+    // o brilho de quatro pontas que estala quando a unha fica pronta
+    var estrelaLugar = svg('g', { transform: 'translate(113 66)' }, unha);
+    svg('path', { 'class': 're-estrela', d: 'M0 -10 Q1.6 -1.6 10 0 Q1.6 1.6 0 10 Q-1.6 1.6 -10 0 Q-1.6 -1.6 0 -10 Z' }, estrelaLugar);
     // pincel em repouso: atrás do vidro (só a tampa aparece); pego: acima de tudo
-    var camadaAtras = svg('g', null, s);
-    var frasco = svg('g', null, s);
+    var garrafa = svg('g', { 'class': 're-garrafa' }, s);
+    var camadaAtras = svg('g', null, garrafa);
+    var frasco = svg('g', null, garrafa);
     svg('rect', { 'class': 're-sombra', x: 150, y: 128, width: 40, height: 56, rx: 12, transform: 'translate(3 3)' }, frasco);
     svg('rect', { 'class': 're-papel re-l', x: 150, y: 128, width: 40, height: 56, rx: 12 }, frasco);
     svg('rect', { 'class': 're-destaque', x: 155, y: 144, width: 30, height: 35, rx: 8 }, frasco);
@@ -115,11 +132,28 @@
       mx: new C.Mola(REPOUSO.x, 320, 0.78), my: new C.Mola(REPOUSO.y, 320, 0.78), mr: new C.Mola(REPOUSO.rot, 200, 0.7),
       cobertas: new Array(AMOSTRAS.length), nCobertas: 0, pintada: false,
       traco: null, pontos: 0, ultimo: null, rodando: false, tAnt: 0, pego: false, desvio: 0,
-      teclas: 0, animando: false, ultimoSom: 0
+      teclas: 0, animando: false, ultimoSom: 0,
+      mao: mao, garrafa: garrafa, demoTraco: demoTraco, gota: gota,
+      cena: null, vez: C.dicaVez(dica), diretor: null
     };
 
     if (C.reduzido()) estadoFinal();
     posar();
+
+    // ritual vivo: entrada ao carregar e demonstração em loop até o primeiro toque
+    h.diretor = C.diretor(palco, {
+      pode: function () { return !h.pintada && !h.cena && !h.animando && !h.pego && !(h.arrasto && h.arrasto.ativo()) && h.nCobertas === 0; },
+      tocar: function (fim) { rodarCena(demoCena, fim); },
+      aoFim: function () { if (h.vez) h.vez.mostrar(); },
+      aoParar: function () { if (h.vez) h.vez.esconder(); }
+    });
+    if (h.pintada) h.diretor.parar();
+    else if (!C.reduzido()) {
+      mao.setAttribute('opacity', 0); garrafa.setAttribute('opacity', 0);   // só aparecem no primeiro quadro da entrada
+      rodarCena(entradaCena, function () { if (h.diretor) h.diretor.iniciar(); });
+    }
+    palco.addEventListener('pointerdown', primeiroToque, true);
+    palco.addEventListener('keydown', primeiroToque, true);
 
     h.arrasto = C.ponteiro(palco, {
       pode: function () { return !C.reduzido() && !h.pintada && !h.animando; },
@@ -158,6 +192,122 @@
     });
 
     C.aoMudarMovimento(function (reduz) { if (reduz) estadoFinal(); });
+  }
+
+  /* =====================================================================
+     RITUAL VIVO
+     A cena escreve a pose do pincel direto nas molas (fixar) a cada quadro: se alguém pega
+     no meio, o arrasto começa de onde o pincel está.
+     ===================================================================== */
+  function primeiroToque() {
+    var h = heroi;
+    if (!h) return;
+    if (h.diretor) h.diretor.parar();
+    pararCena();
+  }
+
+  function limparCena() {
+    var h = heroi;
+    h.mao.removeAttribute('transform'); h.mao.removeAttribute('opacity');
+    h.garrafa.removeAttribute('transform'); h.garrafa.removeAttribute('opacity');
+    h.demoTraco.setAttribute('opacity', 0); h.demoTraco.setAttribute('d', 'M95 62 l0 0');
+    h.gota.setAttribute('opacity', 0);
+    h.palco.classList.remove('is-em-cena');
+  }
+
+  function rodarCena(fn, fim) {
+    var h = heroi;
+    pararCena();
+    h.palco.classList.add('is-em-cena');
+    var c = h.cena = {
+      ctrl: C.cena(function (T) {
+        if (h.cena !== c) return false;
+        if (!fn(T, c)) return false;
+        posar();
+        return true;
+      }, function () {
+        if (h.cena !== c) return;
+        h.cena = null;
+        limparCena();
+        h.mx.fixar(REPOUSO.x); h.my.fixar(REPOUSO.y); h.mr.fixar(REPOUSO.rot);
+        if (h.pincel.parentNode !== h.atras) h.atras.appendChild(h.pincel);
+        posar();
+        if (fim) fim();
+      })
+    };
+  }
+  function pararCena() {
+    var h = heroi;
+    if (!h || !h.cena) return;
+    var c = h.cena;
+    h.cena = null;
+    c.ctrl.parar();
+    limparCena();
+    if (!h.pego) soltar();                 // o pincel volta para o vidrinho pela mola, de onde estava
+    agendar();
+  }
+
+  function garrafaPose(dx, dy, rot, sq, op) {
+    var h = heroi;
+    h.garrafa.setAttribute('transform', 'translate(' + dx.toFixed(1) + ' ' + dy.toFixed(1) + ') rotate(' + rot.toFixed(1) + ' 170 156)' +
+      ' translate(170 184) scale(' + (1 / (1 - sq)).toFixed(3) + ' ' + (1 - sq).toFixed(3) + ') translate(-170 -184)');
+    h.garrafa.setAttribute('opacity', op.toFixed(2));
+  }
+  function bezier(a, b, c, p) { var q = 1 - p; return q * q * a + 2 * q * p * b + p * p * c; }
+
+  /* entrada, EM DOIS: a mão sobe, o vidrinho entra girando no ar e assenta comprimido,
+     e o pincel sai da garrafa, sacode e volta (cada um começa antes do outro terminar) */
+  function entradaCena(t) {
+    var h = heroi, T = C.emDois(t), cv = C.curva, tr = C.trecho;
+    if (T > 1500) return false;
+    var m = tr(T, 0, 380);
+    h.mao.setAttribute('transform', 'translate(0 ' + (34 * (1 - cv.saida(m))).toFixed(1) + ')');
+    h.mao.setAttribute('opacity', Math.min(1, m * 2).toFixed(2));
+    var g = tr(T, 140, 580), sq = 0;
+    if (T >= 580) { var tau = T - 580; sq = 0.2 * Math.exp(-tau / 110) * Math.cos(2 * Math.PI * tau / 200); }
+    if (T >= 1240) { var tb = T - 1240; sq += 0.07 * Math.exp(-tb / 80) * Math.cos(2 * Math.PI * tb / 170); }   // o pincel entra e a garrafa sente
+    garrafaPose(84 * (1 - g), -64 * (1 - g) - 40 * Math.sin(Math.PI * g), -330 * (1 - cv.saida(g)), sq, tr(T, 140, 230));
+    var y = REPOUSO.y, r = 0;
+    if (T >= 720 && T < 920) y = REPOUSO.y - 70 * cv.saida(tr(T, 720, 920));
+    else if (T >= 920 && T < 1060) { y = REPOUSO.y - 70; r = (Math.floor(T / (1000 / 12)) % 2 ? 9 : -9); }   // sacode: escorre o excesso
+    else if (T >= 1060 && T < 1240) y = REPOUSO.y - 70 * (1 - cv.entrada(tr(T, 1060, 1240)));
+    h.mx.fixar(REPOUSO.x); h.my.fixar(y); h.mr.fixar(r);
+    return true;
+  }
+
+  /* demonstração curta: tira o pincel, voa em arco até a cutícula, pinta a faixa do meio,
+     uma gota escorre pelo dedo enquanto o pincel volta, e a tinta da demonstração se apaga */
+  function demoCena(T) {
+    var h = heroi, cv = C.curva, tr = C.trecho;
+    if (T > 2150) return false;
+    var x = REPOUSO.x, y = REPOUSO.y, r = 0;
+    if (T < 260) {
+      var a = cv.saida(tr(T, 0, 260));
+      x = REPOUSO.x + 2 * a; y = REPOUSO.y - 64 * a; r = -8 * a;
+    } else if (T < 680) {
+      if (h.pincel.parentNode !== h.frente) h.frente.appendChild(h.pincel);
+      var b = cv.meio(tr(T, 260, 680));
+      x = bezier(172, 150, 95, b); y = bezier(108, 28, 62, b); r = -8 - 16 * b;
+    } else if (T < 1180) {
+      var c = cv.meio(tr(T, 680, 1180));
+      x = 95 + 1.5 * Math.sin(c * Math.PI * 3); y = 62 + 54 * c; r = -24 + 4 * Math.sin(c * Math.PI * 2);
+      h.demoTraco.setAttribute('d', 'M95 62 L' + x.toFixed(1) + ' ' + y.toFixed(1));
+      h.demoTraco.setAttribute('opacity', 1);
+    } else if (T < 1580) {
+      var d = cv.meio(tr(T, 1180, 1580));
+      x = bezier(95, 146, 170, d); y = bezier(116, 64, 172, d); r = -24 + 24 * d;
+      if (d > 0.82 && h.pincel.parentNode !== h.atras) h.atras.appendChild(h.pincel);   // entra no gargalo por trás do vidro
+    }
+    h.mx.fixar(x); h.my.fixar(y); h.mr.fixar(r);
+    // a gota: nasce na ponta da unha, escorre pelo dedo esticando e some
+    if (T >= 1150) {
+      var nasce = cv.saida(tr(T, 1150, 1320)), desce = cv.entrada(tr(T, 1320, 1820));
+      var gy = 121 + 24 * desce, gs = 0.2 + 0.8 * nasce;
+      h.gota.setAttribute('transform', 'translate(95 ' + gy.toFixed(1) + ') scale(' + gs.toFixed(3) + ' ' + (gs * (1 + 0.4 * desce)).toFixed(3) + ')');
+      h.gota.setAttribute('opacity', (1 - tr(T, 1800, 2050)).toFixed(2));
+    }
+    if (T >= 1720) h.demoTraco.setAttribute('opacity', (1 - cv.saida(tr(T, 1720, 2120))).toFixed(2));
+    return true;
   }
 
   function paraSvg(e) {
@@ -248,6 +398,8 @@
   function pintar(comEfeito) {
     var h = heroi;
     if (!h || h.pintada) return;
+    if (h.diretor) h.diretor.parar();
+    if (h.cena) { var c = h.cena; h.cena = null; c.ctrl.parar(); limparCena(); }
     h.pintada = true;
     h.traco = null;
     if (h.arrasto) h.arrasto.soltar();
@@ -259,7 +411,13 @@
     h.palco.classList.add('is-pintada');
     h.palco.setAttribute('aria-disabled', 'true');
     soltar();
-    if (comEfeito && !C.reduzido()) { C.som('clique'); C.vibrar(14); }
+    if (comEfeito && !C.reduzido()) {
+      C.som('clique'); C.vibrar(14);
+      // celebração: o reflexo atravessa a unha e a estrela de brilho estala
+      h.palco.classList.remove('is-brilho');
+      void h.palco.getBoundingClientRect();
+      h.palco.classList.add('is-brilho');
+    }
     agendar();
     C.emitir('motor:ritual-pronto', { ritual: 'esmalte' });
   }
@@ -282,7 +440,7 @@
   }
   function agendar() {
     var h = heroi;
-    if (h.rodando) return;
+    if (h.rodando || h.cena) return;
     h.rodando = true;
     W.requestAnimationFrame(quadro);
   }

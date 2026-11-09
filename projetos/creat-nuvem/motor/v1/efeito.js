@@ -13,6 +13,11 @@
  *   ritual:afiada    {origem:'heroi'}           (uma vez, nunca com movimento reduzido)
  *   ritual:confirmar {origem:'tira', el}        (uma vez até resetarTira)
  *   motor:ritual-pronto                         (o motor leva o "Pedir horário" para o polegar)
+ * Ritual vivo (09/11/2026): a navalha entra fechada, arma, a lâmina estala para fora do cabo (gira no rebite)
+ * e passa no couro, tudo em dois; parada, a cada 6 a 9 s faz duas passadas virando a lâmina e o nome vira
+ * cromo por um instante; a dica vira "Arraste você"; o primeiro toque ou arrasto encerra. Afiada: o risco de
+ * luz varre a lâmina, uma estrela estala na ponta e um raio atravessa o couro. A demonstração não emite
+ * ritual:passada (sem som, sem contar fio). O CSS disso entra por <style data-ritual-vivo> (CSS_VIVO).
  */
 (function () {
   'use strict';
@@ -52,6 +57,105 @@
   };
   Mola.prototype.parada = function (eps) { return Math.abs(this.alvo - this.x) < eps && Math.abs(this.v) < eps * 8; };
   Mola.prototype.fixar = function (v) { this.x = this.alvo = v; this.v = 0; };
+
+  /* ---------- ritual vivo (09/11/2026): relógio em dois, curvas, diretor da demonstração e a dica ----------
+     (cópia enxuta do que rituais/comum.js tem; a barbearia não carrega o comum.js) */
+  var QUADRO_EM_DOIS = 1000 / 12;
+  function emDois(ms) { return Math.floor(ms / QUADRO_EM_DOIS) * QUADRO_EM_DOIS; }
+  function trecho(T, a, b) { return lim((T - a) / (b - a), 0, 1); }
+  var curva = {
+    saida: function (p) { return 1 - Math.pow(1 - p, 3); },
+    meio: function (p) { return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; },
+    voltaAtras: function (p) { var c = 1.9; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); }
+  };
+  /* a cada 6 a 9 s, com o herói na tela, a aba visível e ninguém mexendo: opc.tocar(fim).
+     parar() é para sempre nesta visita (primeiro toque, tecla ou arrasto) */
+  function criarDiretor(el, opc) {
+    var st = { parado: false, visivel: true, timer: 0, tocando: false };
+    function agendar() {
+      clearTimeout(st.timer); st.timer = 0;
+      if (st.parado || st.tocando || !st.visivel || D.hidden || reduzido()) return;
+      st.timer = setTimeout(disparar, 6000 + Math.random() * 3000);
+    }
+    function disparar() {
+      st.timer = 0;
+      if (st.parado || st.tocando || !st.visivel || D.hidden || reduzido()) return;
+      if (opc.pode && !opc.pode()) { agendar(); return; }
+      st.tocando = true;
+      opc.tocar(function () { st.tocando = false; if (st.parado) return; if (opc.aoFim) opc.aoFim(); agendar(); });
+    }
+    var io = null;
+    if ('IntersectionObserver' in W) {
+      io = new IntersectionObserver(function (ents) {
+        st.visivel = ents[ents.length - 1].isIntersecting;
+        if (st.visivel) { if (!st.timer) agendar(); } else { clearTimeout(st.timer); st.timer = 0; }
+      }, { threshold: 0.35 });
+      io.observe(el);
+    }
+    function aoVer() { if (D.hidden) { clearTimeout(st.timer); st.timer = 0; } else if (!st.timer) agendar(); }
+    D.addEventListener('visibilitychange', aoVer);
+    return {
+      iniciar: agendar,
+      parar: function () {
+        if (st.parado) return;
+        st.parado = true; clearTimeout(st.timer); st.timer = 0;
+        if (io) io.disconnect();
+        D.removeEventListener('visibilitychange', aoVer);
+        if (opc.aoParar) opc.aoParar();
+        st.tocando = false;
+      },
+      parado: function () { return st.parado; }
+    };
+  }
+  function criarDicaVez(dica) {
+    if (!dica) return null;
+    var orig = D.createElement('span'); orig.className = 'dica-orig';
+    while (dica.firstChild) orig.appendChild(dica.firstChild);
+    dica.appendChild(orig);
+    var vez = D.createElement('span'); vez.className = 'dica-vez'; vez.setAttribute('aria-hidden', 'true');
+    var dedo = D.createElement('span'); dedo.className = 'vez-dedo';
+    var tx = D.createElement('span'); tx.className = 'vez-texto'; tx.textContent = texto('dicaVez', 'Arraste você');
+    vez.appendChild(dedo); vez.appendChild(tx); dica.appendChild(vez);
+    dica.classList.add('tem-vez');
+    var timer = 0;
+    return {
+      mostrar: function () {
+        if (reduzido()) return;
+        clearTimeout(timer); dica.classList.add('is-sua-vez');
+        timer = setTimeout(function () { dica.classList.remove('is-sua-vez'); }, 2600);
+      },
+      esconder: function () { clearTimeout(timer); dica.classList.remove('is-sua-vez'); }
+    };
+  }
+  /* o CSS do ritual vivo da navalha entra uma vez (a barbearia só carrega o styles.css do motor) */
+  var CSS_VIVO = [
+    '.hero-dica.tem-vez{position:relative}',
+    '.hero-dica .dica-orig{display:inline-flex;align-items:center;gap:var(--esp-3);transition:opacity 160ms var(--curva-saida),transform 160ms var(--curva-saida)}',
+    '.hero-dica .dica-vez{position:absolute;left:0;top:50%;display:inline-flex;align-items:center;gap:var(--esp-2);white-space:nowrap;pointer-events:none;opacity:0;transform:translateY(calc(-50% + 8px));transition:opacity 160ms var(--curva-saida),transform 160ms var(--curva-saida)}',
+    '.hero-dica.is-sua-vez .dica-orig{opacity:0;transform:translateY(-8px)}',
+    '.hero-dica.is-sua-vez .dica-vez{opacity:1;transform:translateY(-50%);transition:opacity 260ms var(--curva-entrada) 60ms,transform 260ms var(--curva-entrada) 60ms}',
+    '.hero-dica .vez-texto{font-weight:700;text-decoration:underline;text-decoration-color:var(--couro-latao);text-decoration-thickness:2px;text-underline-offset:4px}',
+    '.hero-dica .vez-dedo{position:relative;width:14px;height:14px;flex:0 0 auto;border-radius:50%;border:2px solid currentColor}',
+    '.hero-dica .vez-dedo::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--couro-latao);opacity:0}',
+    '.hero-dica.is-sua-vez .vez-dedo::after{animation:vez-pulso 1100ms var(--curva-entrada) 300ms infinite}',
+    '@keyframes vez-pulso{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}',
+    '.navalha .nv-estrela{transform-box:fill-box;transform-origin:50% 50%;transform:scale(0)}',
+    '.navalha.is-reflexo .nv-estrela{animation:nv-estrela 1000ms var(--curva-mola) 60ms both}',
+    '@keyframes nv-estrela{0%{transform:scale(0) rotate(-45deg);opacity:1}45%{transform:scale(1.2) rotate(0);opacity:1}75%{transform:scale(.95) rotate(10deg);opacity:1}100%{transform:scale(0) rotate(35deg);opacity:0}}',
+    '.couro-raio{position:absolute;top:-10%;bottom:-10%;left:0;width:34%;pointer-events:none;opacity:0;background:linear-gradient(90deg,transparent,color-mix(in oklab,var(--couro-tinta) 38%,transparent) 50%,transparent);transform:translateX(-110%) skewX(-16deg)}',
+    '.couro-raio.is-passando{animation:couro-raio 760ms var(--curva-entrada) both}',
+    '@keyframes couro-raio{0%{opacity:0;transform:translateX(-110%) skewX(-16deg)}25%{opacity:1}100%{opacity:0;transform:translateX(310%) skewX(-16deg)}}',
+    '.heroi.couro.is-relance:not(.is-afiada) .heroi-nome{background-image:linear-gradient(100deg,var(--gravado) 0%,var(--gravado) 40%,color-mix(in oklab,var(--couro-tinta) 80%,white) 47%,var(--couro-tinta) 50%,color-mix(in oklab,var(--couro-tinta) 60%,var(--couro-fundo)) 53%,var(--gravado) 60%,var(--gravado) 100%);background-size:320% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;animation:relance-cromo 950ms var(--curva-entrada) both}',
+    '@keyframes relance-cromo{from{background-position:100% 0}to{background-position:0 0}}',
+    '@media (prefers-reduced-motion:reduce){.hero-dica .dica-vez{display:none}.hero-dica .dica-orig{opacity:1!important;transform:none!important}.couro-raio,.navalha .nv-estrela{animation:none!important;opacity:0}.heroi.couro.is-relance .heroi-nome{animation:none}}'
+  ].join('\n');
+  function garantirCssVivo() {
+    if (D.querySelector('style[data-ritual-vivo]')) return;
+    var st = D.createElement('style');
+    st.setAttribute('data-ritual-vivo', '');
+    st.textContent = CSS_VIVO;
+    (D.head || D.documentElement).appendChild(st);
+  }
 
   /* ---------- cores lidas do CSS (resolve var() e color-mix via elemento-sonda) ---------- */
   var sondaCtx = null;
@@ -238,37 +342,52 @@
     var clip = svg('clipPath', { id: id + 'k' }, defs);
     svg('path', { d: pLamina }, clip);
 
-    // cabo + rebites
-    svg('path', { d: 'M12 21 Q3 32 12 43 L140 46 Q151 32 140 18 Z', fill: 'url(#' + id + 'c)', stroke: 'rgba(255,255,255,0.10)', 'stroke-width': 1 }, s);
-    svg('path', { d: 'M18 24 L136 21', stroke: 'rgba(255,255,255,0.08)', 'stroke-width': 1.5, fill: 'none' }, s);
-    svg('circle', { cx: 24, cy: 32, r: 3.6, fill: 'url(#' + id + 'r)' }, s);
-    svg('circle', { cx: 133, cy: 32, r: 3.6, fill: 'url(#' + id + 'r)' }, s);
+    // lâmina + espiga num grupo que gira no rebite (133, 32): a navalha abre do cabo na entrada do herói.
+    // Fica ANTES do cabo no desenho: fechada, ela dorme atrás dele, como na navalha de verdade.
+    var gLam = svg('g', {}, s);
     // espiga com ranhuras (jimps)
-    svg('path', { d: 'M138 24 L168 22 L168 42 L138 40 Z', fill: '#8a9096' }, s);
-    for (var j = 0; j < 4; j++) svg('path', { d: 'M' + (146 + j * 5) + ' 23.5 v3', stroke: '#5d6268', 'stroke-width': 1.4 }, s);
+    svg('path', { d: 'M138 24 L168 22 L168 42 L138 40 Z', fill: '#8a9096' }, gLam);
+    for (var j = 0; j < 4; j++) svg('path', { d: 'M' + (146 + j * 5) + ' 23.5 v3', stroke: '#5d6268', 'stroke-width': 1.4 }, gLam);
     // lâmina
-    svg('path', { d: pLamina, fill: 'url(#' + id + 'l)' }, s);
-    svg('path', { d: 'M168 41 L296 45', stroke: 'rgba(255,255,255,0.45)', 'stroke-width': 1, fill: 'none' }, s);   // linha do bisel
-    svg('path', { d: 'M178 48 L296 50', stroke: '#f7f8f9', 'stroke-width': 0.8, fill: 'none' }, s);              // fio
-    svg('path', { d: 'M164 16 L298 13', stroke: 'rgba(40,44,48,0.5)', 'stroke-width': 1.2, fill: 'none' }, s);   // lombo
+    svg('path', { d: pLamina, fill: 'url(#' + id + 'l)' }, gLam);
+    svg('path', { d: 'M168 41 L296 45', stroke: 'rgba(255,255,255,0.45)', 'stroke-width': 1, fill: 'none' }, gLam);   // linha do bisel
+    svg('path', { d: 'M178 48 L296 50', stroke: '#f7f8f9', 'stroke-width': 0.8, fill: 'none' }, gLam);              // fio
+    svg('path', { d: 'M164 16 L298 13', stroke: 'rgba(40,44,48,0.5)', 'stroke-width': 1.2, fill: 'none' }, gLam);   // lombo
     // "FIO & COURO" gravado e apagado (sombra escura + realce claro deslocado)
     var fonte = "'Big Shoulders Display','Arial Narrow',sans-serif";
     var est = W.CreatMotor && W.CreatMotor.estado;
     var gravacao = String((est && (est.nomeCurto || est.nome)) || '').trim().toUpperCase().slice(0, 28);
-    var t1 = svg('text', { x: 238, y: 36.6, 'text-anchor': 'middle', 'font-family': fonte, 'font-weight': 800, 'font-size': 12, 'letter-spacing': 2, fill: 'rgba(255,255,255,0.32)' }, s);
+    var t1 = svg('text', { x: 238, y: 36.6, 'text-anchor': 'middle', 'font-family': fonte, 'font-weight': 800, 'font-size': 12, 'letter-spacing': 2, fill: 'rgba(255,255,255,0.32)' }, gLam);
     t1.textContent = gravacao;
-    var t2 = svg('text', { x: 238, y: 36, 'text-anchor': 'middle', 'font-family': fonte, 'font-weight': 800, 'font-size': 12, 'letter-spacing': 2, fill: 'rgba(28,30,33,0.34)' }, s);
+    var t2 = svg('text', { x: 238, y: 36, 'text-anchor': 'middle', 'font-family': fonte, 'font-weight': 800, 'font-size': 12, 'letter-spacing': 2, fill: 'rgba(28,30,33,0.34)' }, gLam);
     t2.textContent = gravacao;
     // nome longo: comprime para caber entre o espigão e a ponta da lâmina
     if (gravacao.length > 11) [t1, t2].forEach(function (t) { t.setAttribute('textLength', 118); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); });
     // brilho recortado na forma da lâmina
-    var gk = svg('g', { 'clip-path': 'url(#' + id + 'k)' }, s);
+    var gk = svg('g', { 'clip-path': 'url(#' + id + 'k)' }, gLam);
     var faixa = svg('g', { transform: 'translate(120 0)' }, gk);
     svg('rect', { x: 0, y: -10, width: 44, height: 84, fill: 'url(#' + id + 'b)', transform: 'skewX(-22)' }, faixa);
+    // a estrela de luz que estala na ponta quando a navalha fica afiada (celebração)
+    var gEst = svg('g', { transform: 'translate(304 24)' }, gLam);
+    svg('path', { 'class': 'nv-estrela', d: 'M0 -19 Q2.6 -2.6 19 0 Q2.6 2.6 0 19 Q-2.6 2.6 -19 0 Q-2.6 -2.6 0 -19 Z', fill: '#ffffff' }, gEst);
+    // cabo + rebites (por cima da espiga)
+    svg('path', { d: 'M12 21 Q3 32 12 43 L140 46 Q151 32 140 18 Z', fill: 'url(#' + id + 'c)', stroke: 'rgba(255,255,255,0.10)', 'stroke-width': 1 }, s);
+    svg('path', { d: 'M18 24 L136 21', stroke: 'rgba(255,255,255,0.08)', 'stroke-width': 1.5, fill: 'none' }, s);
+    svg('circle', { cx: 24, cy: 32, r: 3.6, fill: 'url(#' + id + 'r)' }, s);
+    svg('circle', { cx: 133, cy: 32, r: 3.6, fill: 'url(#' + id + 'r)' }, s);
 
-    var L = 0, A = 0, ultimoBrilho = -1;
+    var L = 0, A = 0, ultimoBrilho = -1, ultimaAbertura = 1;
     var nav = {
       el: raiz,
+      // a de 0 (fechada, atrás do cabo) a 1 (aberta); passa de 1 no estalo. Encurta no meio do giro
+      // (a lâmina sai do plano, como no gesto de verdade) e volta ao tamanho cheio aberta.
+      abrir: function (a) {
+        if (Math.abs(a - ultimaAbertura) < 0.002) return;
+        ultimaAbertura = a;
+        if (a >= 1 && a < 1.002) { gLam.removeAttribute('transform'); return; }
+        var ang = 180 * (1 - a), sx = 0.72 + 0.28 * lim(a, 0, 1);
+        gLam.setAttribute('transform', 'translate(133 32) rotate(' + ang.toFixed(2) + ') scale(' + sx.toFixed(3) + ' 1) translate(-133 -32)');
+      },
       tamanho: function (c) {
         L = c; A = c * VB_H / VB_W;
         raiz.style.width = L + 'px'; raiz.style.height = A + 'px';
@@ -391,23 +510,46 @@
       mx: new Mola(0), my: new Mola(0), mr: new Mola(-4, 140, 0.85), mf: new Mola(1, 320, 0.72),
       repouso: { x: 0, y: 0 }, passadas: 0, afiada: false,
       visivel: true, rodando: false, tAnt: 0,
-      intro: null, teclado: 0, ultimaTecla: 0, sentidoTecla: -1,
-      ant: null, vel: 0, arrasto: null, desvioY: 0
+      teclado: 0, ultimaTecla: 0, sentidoTecla: -1,
+      ant: null, vel: 0, arrasto: null, desvioY: 0,
+      cena: null, diretor: null, vez: null, reflexo: null, raio: null
     };
+    garantirCssVivo();
+    h.raio = D.createElement('div'); h.raio.className = 'couro-raio'; h.raio.setAttribute('aria-hidden', 'true');
+    slot.appendChild(h.raio);
     slot.appendChild(h.nav.el);
+    h.vez = criarDicaVez(couro.querySelector('.hero-dica'));
 
     medirHero();
+    // ritual vivo: a navalha abre do cabo e passa no couro; depois, demonstração em loop até o primeiro toque
+    h.diretor = criarDiretor(couro, {
+      pode: function () { return !h.afiada && !h.cena && !h.teclado && !(h.arrasto && h.arrasto.ativo()) && h.passadas === 0; },
+      tocar: function (fim) { rodarCena(demoCena, fim); },
+      aoFim: function () { if (h.vez) h.vez.mostrar(); },
+      aoParar: function () { if (h.vez) h.vez.esconder(); }
+    });
     if (reduzido()) estadoFinalHero();
-    else h.intro = { t0: 0 };                           // atravessa na diagonal no primeiro quadro
+    else {
+      h.nav.abrir(0); h.nav.el.style.opacity = '0';        // nada aparece aberto antes do primeiro quadro da entrada
+      rodarCena(entradaCena, function () { if (h.diretor) h.diretor.iniciar(); });
+    }
     desenharHero();
     agendarHero();
+
+    // um toque no couro (sem arrastar) também passa a vez: a demonstração não volta nesta visita
+    var tq = null;
+    couro.addEventListener('pointerdown', function (e) { tq = { x: e.clientX, y: e.clientY, t: agora() }; }, true);
+    couro.addEventListener('pointerup', function (e) {
+      if (tq && Math.abs(e.clientX - tq.x) < 10 && Math.abs(e.clientY - tq.y) < 10 && agora() - tq.t < 600) primeiroToque();
+      tq = null;
+    }, true);
 
     // gesto
     var seg = { dir: 0, x: 0, y: 0, ext: 0, extY: 0, contou: false, lx: 0, lt: 0 };
     h.arrasto = ligarArrasto(couro, {
       pode: function () { return !reduzido(); },
       inicio: function (e, x0, y0) {
-        h.intro = null;
+        primeiroToque();
         couro.classList.add('is-arrastando');
         var r = couro.getBoundingClientRect();
         h.desvioY = e.pointerType === 'touch' ? -42 : 0;   // a navalha fica acima do polegar, à vista
@@ -456,7 +598,7 @@
       var t = agora();
       if (e.repeat && t - h.ultimaTecla < 180) return;  // segurar a tecla não vira metralhadora; toques novos sempre contam
       h.ultimaTecla = t; h.sentidoTecla = s;
-      h.intro = null;
+      primeiroToque();
       h.mx.alvo = h.repouso.x + s * h.w * 0.26;
       h.mr.alvo = -4 + s * 6;
       h.mf.alvo = s;
@@ -561,6 +703,84 @@
 
   function easeSaida(p) { return 1 - Math.pow(1 - p, 3); }
 
+  /* =====================================================================
+     RITUAL VIVO DO HERÓI
+     A cena devolve a pose inteira por quadro ({x, y, r, f, a, op, marca, alfa}) e o quadro a
+     escreve nas molas (fixar): pegou no meio, a física segue dali.
+     ===================================================================== */
+  function primeiroToque() {
+    var h = hero;
+    if (!h) return;
+    if (h.diretor) h.diretor.parar();
+    pararCena();
+  }
+  function rodarCena(fn, fim) {
+    var h = hero;
+    pararCena();
+    h.cena = { fn: fn, fim: fim, t0: 0, tAnt: 0, relance: 0 };
+    h.tAnt = 0;
+    agendarHero();
+  }
+  function encerrarVisual() {
+    var h = hero;
+    h.nav.abrir(1);
+    h.nav.el.style.opacity = '';
+  }
+  function pararCena() {
+    var h = hero;
+    if (!h || !h.cena) return;
+    h.cena = null;
+    encerrarVisual();
+  }
+  function relanceCromo() {
+    var c = hero.couro;
+    c.classList.remove('is-relance');
+    void c.offsetWidth;
+    c.classList.add('is-relance');
+    setTimeout(function () { c.classList.remove('is-relance'); }, 1100);
+  }
+
+  /* entrada, EM DOIS (12 poses/s): a navalha aparece fechada, arma para trás (antecipação),
+     a lâmina estala para fora do cabo passando do ponto, e ainda assentando já desce no couro
+     numa passada longa, deixando a marca, até o repouso (sobreposição) */
+  function entradaCena(t) {
+    var h = hero, T = emDois(t), R = h.repouso, w = h.w;
+    if (T >= 1580) return null;
+    var sx = R.x - w * 0.16, sy = R.y - Math.min(36, h.hgt * 0.05);
+    var o = { x: sx, y: sy, r: -14, f: 1, a: 0, op: trecho(T, 0, 170), marca: false, alfa: 0 };
+    if (T >= 170) { var p = curva.saida(trecho(T, 170, 340)); o.r = -14 + 10 * p; o.x = sx - 12 * p; }
+    if (T >= 340) {
+      o.a = curva.voltaAtras(trecho(T, 340, 640));
+      o.r = -4 - 16 * curva.saida(trecho(T, 340, 520));   // o estalo empurra o cabo (ação e reação)
+    }
+    if (T >= 560 && T < 1240) {
+      var q = curva.meio(trecho(T, 560, 1240)), x0 = sx - 12, x1 = R.x + w * 0.2;
+      o.x = x0 + (x1 - x0) * q; o.y = sy + (R.y + 4 - sy) * q; o.r = -20 + 18 * q;
+      o.marca = true; o.alfa = 0.05 + 0.1 * Math.sin(Math.PI * q);
+    } else if (T >= 1240) {
+      var b = curva.saida(trecho(T, 1240, 1580)), xa = R.x + w * 0.2;
+      o.x = xa + (R.x - xa) * b; o.y = R.y + 4 - 4 * b; o.r = -2 - 2 * b; o.a = 1;
+    }
+    return o;
+  }
+
+  /* demonstração curta (60 qps): arma, passa para a direita, vira a lâmina no eixo longo,
+     volta para a esquerda, vira de novo e assenta; no meio, o nome vira cromo por um instante */
+  function demoCena(T, c) {
+    var h = hero, R = h.repouso, w = h.w;
+    if (T >= 1580) return null;
+    var dir = R.x + w * 0.22, esq = R.x - w * 0.2;
+    var o = { x: R.x, y: R.y, r: -4, f: 1, a: 1, op: 1, marca: false, alfa: 0 };
+    if (T < 160) { var p = Math.sin(Math.PI * trecho(T, 0, 160)); o.x = R.x - w * 0.03 * p; o.r = -4 + 5 * p; }
+    else if (T < 560) { var q = curva.meio(trecho(T, 160, 560)); o.x = R.x + (dir - R.x) * q; o.r = -4 + 7 * Math.sin(Math.PI * q); o.marca = true; o.alfa = 0.06 + 0.12 * Math.sin(Math.PI * q); }
+    else if (T < 700) { o.x = dir; o.f = Math.cos(Math.PI * trecho(T, 560, 700)); }
+    else if (T < 1100) { var q2 = curva.meio(trecho(T, 700, 1100)); o.x = dir + (esq - dir) * q2; o.f = -1; o.r = -4 - 7 * Math.sin(Math.PI * q2); o.marca = true; o.alfa = 0.06 + 0.12 * Math.sin(Math.PI * q2); }
+    else if (T < 1240) { o.x = esq; o.f = -Math.cos(Math.PI * trecho(T, 1100, 1240)); }
+    else { var b = curva.saida(trecho(T, 1240, 1580)); o.x = esq + (R.x - esq) * b; }
+    if (T >= 1040 && !c.relance) { c.relance = 1; relanceCromo(); }
+    return o;
+  }
+
   function quadroHero(t) {
     var h = hero;
     h.rodando = false;
@@ -569,17 +789,26 @@
     var reduz = reduzido();
     var marcando = false, alfa = 0.1;
 
-    if (h.intro && !reduz) {
-      // 0 a 0,8 s: a navalha atravessa o couro na diagonal até o repouso
-      if (!h.intro.t0) h.intro.t0 = t;
-      var p = lim((t - h.intro.t0) / 800, 0, 1), e = easeSaida(p);
-      var sx = -h.nav.L * 0.55, sy = h.repouso.y - h.hgt * 0.22;
-      h.mx.fixar(sx + (h.repouso.x - sx) * e);
-      h.my.fixar(sy + (h.repouso.y - sy) * e);
-      h.mr.fixar(-26 + 22 * e);
-      marcando = true; alfa = 0.05 * (1 - p);
-      if (p >= 1) h.intro = null;
-    } else {
+    var o = null;
+    if (h.cena && !reduz) {
+      var c = h.cena;
+      if (!c.t0) { c.t0 = t; c.tAnt = t; }
+      if (t - c.tAnt > 100) c.t0 += (t - c.tAnt) - 16;      // ficou fora da tela ou a aba sumiu: continua de onde parou
+      c.tAnt = t;
+      o = c.fn(t - c.t0, c);
+      if (o) {
+        h.mx.fixar(o.x); h.my.fixar(o.y); h.mr.fixar(o.r); h.mf.fixar(o.f);
+        h.nav.abrir(o.a);
+        h.nav.el.style.opacity = o.op >= 1 ? '' : o.op.toFixed(2);
+        marcando = o.marca; alfa = o.alfa;
+      } else {
+        h.cena = null;
+        encerrarVisual();
+        voltarAoRepouso();
+        if (c.fim) c.fim();
+      }
+    }
+    if (!o) {
       if (h.teclado && t > h.teclado) { h.teclado = 0; voltarAoRepouso(); }
       h.mx.passo(dt); h.my.passo(dt); h.mr.passo(dt); h.mf.passo(dt);
       var ativo = h.arrasto && h.arrasto.ativo();
@@ -587,6 +816,13 @@
       alfa = 0.09 + 0.14 * lim(Math.abs(h.mx.v) / 1500, 0, 1);
     }
     posarHero();
+    // celebração: o risco de luz varre a lâmina inteira de uma vez
+    if (h.reflexo) {
+      if (!h.reflexo.t0) h.reflexo.t0 = t;
+      var pr = (t - h.reflexo.t0) / 560;
+      h.nav.brilho(easeSaida(lim(pr, 0, 1)));
+      if (pr >= 1) h.reflexo = null;
+    }
 
     // marca no couro onde a lâmina passou
     var rr = h.mr.x * Math.PI / 180;
@@ -599,7 +835,7 @@
     desenharHero();
 
     var parado = h.mx.parada(0.3) && h.my.parada(0.3) && h.mr.parada(0.05) && h.mf.parada(0.002);
-    if (h.intro || !parado || h.marcas.suja || (h.arrasto && h.arrasto.ativo()) || h.teclado) agendarHero();
+    if (h.cena || h.reflexo || !parado || h.marcas.suja || (h.arrasto && h.arrasto.ativo()) || h.teclado) agendarHero();
     else h.tAnt = 0;
   }
 
@@ -626,6 +862,8 @@
   function afiarHero(comEfeito) {
     var h = hero;
     if (!h || h.afiada) return;
+    if (h.diretor) h.diretor.parar();
+    pararCena();
     h.afiada = true; h.passadas = 4;
     atualizarMedidor(1);
     // o texto entra só agora: a mudança de conteúdo é o que faz a região aria-live anunciar
@@ -635,6 +873,13 @@
       // lampejo de 120 ms (--dur-rapida), uma piscada só (fotossensibilidade); a classe sai aos 220 ms, depois do fim da animação
       h.couro.classList.add('is-lampejo');
       setTimeout(function () { h.couro.classList.remove('is-lampejo'); }, 220);
+      // a navalha reflete a luz: o risco varre a lâmina, a estrela estala na ponta e um raio atravessa o couro
+      h.reflexo = { t0: 0 };
+      [[h.nav.el, 'is-reflexo'], [h.raio, 'is-passando']].forEach(function (par) {
+        if (!par[0]) return;
+        par[0].classList.remove(par[1]); void par[0].offsetWidth; par[0].classList.add(par[1]);
+      });
+      agendarHero();
     }
     h.couro.classList.add('is-afiada');
     emitir('motor:ritual-pronto', { ritual: 'navalha' });
@@ -645,7 +890,9 @@
   function estadoFinalHero() {
     var h = hero;
     if (!h) return;
-    h.intro = null; h.teclado = 0;
+    if (h.diretor) h.diretor.parar();
+    pararCena();
+    h.teclado = 0;
     if (h.arrasto) h.arrasto.soltar();
     h.couro.classList.remove('is-arrastando', 'is-lampejo');
     h.mf.fixar(1);

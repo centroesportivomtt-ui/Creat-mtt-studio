@@ -243,15 +243,50 @@
   },
 
   "sede": {
+    "_regra": "Demonstração com nome fictício, sempre marcada. A comanda acende o passo que a sede embutida (sede/?modo=demo) avisa por postMessage; sem a sede carregada, segue o mesmo relógio (6 s; 9 s com movimento reduzido). Sem dado real, sem tempo prometido.",
     "olho": "Sede ao vivo",
     "titulo": "Veja quem monta o seu site",
-    "texto": "Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um escreve os textos, outro escolhe as cores, outro testa no celular. Depois do pagamento, a fachada mostra o nome do seu negócio.",
+    "texto": "Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um organiza, um escreve, outro escolhe as cores, outro testa no celular. Escolha um negócio e veja o pedido passar de mão em mão até o site ir para o ar.",
+    "marcasRotulo": "Negócio na fachada da sede",
+    "marcas": [
+      { "nome": "Barbearia Navalha Fictícia", "site": "sites/demo-barbearia/" },
+      { "nome": "Salão Esmalte Fictício", "site": "sites/demo-salao/" },
+      { "nome": "Studio Barra Fictícia", "site": "sites/demo-academia/" }
+    ],
+    "marcaSeuLeitor": " (o seu negócio)",
     "posterAlt": "Ilha da sede da Creat Nuvem desenhada em 3D, com a equipe de personagens trabalhando nas mesas.",
     "botao": "Ver ao vivo",
     "carregando": "Carregando a sede...",
     "erro": "A sede não carregou. Verifique a conexão e toque em Ver ao vivo de novo.",
     "legendaDemonstracao": "Demonstração",
-    "notaDemonstracao": "Quando não há pedido em andamento, a sede mostra uma demonstração, sempre com este aviso.",
+    "legenda": "Nome fictício na fachada.",
+    "legendaCelular": " A sede 3D só carrega quando você toca em Ver ao vivo, para poupar dados.",
+    "legendaCarregada": " Arraste para girar a ilha e toque num personagem.",
+    "legendaSeu": "O nome do seu negócio na fachada, só neste aparelho.",
+    "comandaOlho": "Pedido de demonstração",
+    "passos": [
+      "Nimbus organiza o pedido",
+      "Verbo escreve os textos",
+      "Paleta escolhe as cores",
+      "Pixel monta o site",
+      "Lupa testa no celular",
+      "Muralha confere a segurança",
+      "Trilho publica"
+    ],
+    "agora": [
+      "Nimbus organiza o pedido",
+      "Verbo escreve os textos e Paleta escolhe as cores",
+      "Pixel monta o site",
+      "Lupa testa no celular e Muralha confere a segurança",
+      "Trilho publica o site",
+      "Site no ar. Pode abrir."
+    ],
+    "status": { "feito": "feito", "agora": "agora", "fila": "na fila" },
+    "carimbo": "No ar",
+    "abrirSite": "Abrir o site pronto",
+    "abrirSiteLeitor": ": {marca} (site-demonstração, nome fictício)",
+    "abrirSeu": "Ver a prévia do seu site",
+    "notaDemonstracao": "Demonstração: é assim que a equipe aparece quando há um pedido em produção. Os nomes são fictícios e nenhum desses negócios existe.",
     "semFluxo": "A equipe espera o próximo pedido."
   },
 

@@ -847,6 +847,11 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
 .rodape strong { color: var(--tinta); }
 .rodape a { color: var(--tinta); display: inline-flex; align-items: center; min-height: var(--alvo); }
 .rodape .creat { margin-top: var(--esp-5); font-family: var(--fonte-dado); font-size: var(--t-nota); }
+/* v1.1.x · só na demonstração: faixa discreta que leva à sede 3D com o nome do site na fachada */
+.rodape .rodape-sede { margin-top: var(--esp-5); padding-top: var(--esp-3); border-top: 1px dashed var(--borda); font-family: var(--fonte-dado); font-size: var(--t-nota); }
+.rodape .rodape-sede a { gap: var(--esp-2); text-decoration: underline; text-underline-offset: 0.18em; }
+.rodape .rodape-sede a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.rodape-sede-pontos { flex: none; width: 26px; height: 8px; background: radial-gradient(circle at 4px 50%, var(--destaque) 3px, transparent 3.5px), radial-gradient(circle at 13px 50%, var(--destaque) 3px, transparent 3.5px), radial-gradient(circle at 22px 50%, var(--destaque) 3px, transparent 3.5px); }
 
 .sem-tenant { padding: var(--esp-8) var(--calha); }
 
