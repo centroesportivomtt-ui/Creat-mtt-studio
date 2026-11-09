@@ -53,6 +53,7 @@ O dono delegou a escolha dos modos. O Claude decide sozinho e registra, sem perg
 
 - A tese é uma só: resultado para o negócio local, produzido pela agência de agentes, com o cliente assistindo a equipe na sede 3D. Produto que não conversa com a tese não entra na vitrine.
 - O cliente final nunca precisa de assinatura externa; a venda roda sem o dono; toda oferta tem plano mensal.
+- **Escala para fora:** o cliente-padrão é um desconhecido de outra cidade que chegou por anúncio pago. Nada depende de alcance orgânico, de seguidores nem de conversa 1:1; o WhatsApp fecha, não prospecta (skill `consciencia`, "A direção de escala").
 - Sempre a melhor ferramenta comprovada para cada função, custo por último; registrar o porquê.
 
 - Tarefa com mais de uma etapa começa pelo `diretor`, que devolve o plano em ondas.
