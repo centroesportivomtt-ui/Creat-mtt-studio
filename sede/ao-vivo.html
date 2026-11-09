@@ -669,7 +669,11 @@ function erroTxt(e){
 }
 const PARA = ['needs_reauth','server_not_connected','blocked_by_policy','approval_required','not_in_manifest','consent_required','not_granted','capability_disabled','capability_removed','selection_required'];
 const PEDE = ['approval_required','consent_required','not_in_manifest'];
-function aviso(txt, botao){ $('#banner').hidden = !txt; $('#bannerTxt').textContent = txt || ''; $('#bannerBtn').hidden = !botao; }
+let diag = '';
+function aviso(txt, botao, e){
+  if (e) diag = 'código: ' + (e.code || '?') + (e.server ? ' · servidor: ' + e.server : '') + (e.message ? ' · ' + String(e.message).slice(0, 300) : '');
+  $('#banner').hidden = !txt; $('#bannerTxt').textContent = txt ? txt + (e && diag ? '  [' + diag + ']' : '') : ''; $('#bannerBtn').hidden = !botao;
+}
 
 const espera = ms => new Promise(r => setTimeout(r, ms));
 const visivel = () => document.visibilityState !== 'hidden';
@@ -714,9 +718,9 @@ async function laco(){
       const code = e && e.code;
       if (PARA.includes(code)){
         rodando = false; st.ok = false; st.sessions = []; st.flows.clear(); render();
-        aviso(erroTxt(e), PEDE.includes(code)); return;
+        aviso(erroTxt(e), PEDE.includes(code), e); return;
       }
-      falhas++; if (falhas > 1) aviso(erroTxt(e));
+      falhas++; if (falhas > 1) aviso(erroTxt(e), false, e);
       await espera(Math.min(30000, (e && e.retryAfterMs) || 2000 * falhas) + Math.random() * 1000);
     }
   }
@@ -738,6 +742,15 @@ async function iniciar(){
   const mcp = window.claude && window.claude.use ? await window.claude.use('mcp').catch(() => null) : null;
   if (!mcp){ aviso('Abra esta página no claude.ai, com a sua conta, para ver a equipe ao vivo. Aqui ela mostra só a sede em repouso.'); $('#recTxt').textContent = 'Desconectado'; return; }
   st.mcp = mcp;
+  try {
+    const lt = await mcp.listTools(SRV);
+    const srv = (lt.servers || []).find(x => x.server === SRV);
+    const nomes = srv ? srv.tools.map(t => t.name) : [];
+    if (srv && nomes.length && !(nomes.includes('list_sessions') && nomes.includes('list_events'))) {
+      aviso('O conector Claude Code Remote desta conta não libera a leitura das sessões para páginas.', false, { code:'tools_ausentes', message:'liberadas: ' + nomes.join(', ') });
+      return;
+    }
+  } catch (e) { /* listar é só diagnóstico; segue para a leitura */ }
   laco();
 }
 iniciar();
