@@ -11,7 +11,7 @@
   --deck:#171C45;       /* superfícies */
   --deck-2:#20265A;     /* superfícies elevadas */
   --ink:#05061A;        /* contorno de nanquim */
-  --fg:#F4F1FF; --muted:#B3AFDB; --dim:#9591C6;
+  --fg:#F4F1FF; --muted:#BDB9E3; --dim:#A6A2D4;
   --sun:#FFD25E;        /* acento: luz de estúdio */
   --rec:#FF4D5E;        /* ponto de gravação */
   --ok:#5BD69A; --work:#FF9A4D; --warn:#FF7A70;
@@ -61,7 +61,7 @@ button,a{font:inherit;color:inherit}
 .stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 4px)}
 .stage .who-big{display:grid;justify-items:center;padding-bottom:14px}
 .stage-txt{display:grid;gap:10px;min-width:0}
-.stage-txt .lbl{color:var(--sun)}
+.stage-txt .ctx{color:var(--sun);font-weight:800;font-size:14px}
 .headline{font-family:var(--f-display);font-size:clamp(28px,4.4vw,54px);line-height:1.03}
 .headline em{font-style:normal;color:var(--c,var(--sun))}
 .typed{font-family:var(--f-mono);font-size:clamp(13px,1.4vw,15px);color:var(--muted);min-height:1.5em;overflow-wrap:anywhere}
@@ -136,7 +136,7 @@ button,a{font:inherit;color:inherit}
 .log .toon .mouth{border-width:2px;border-top:0}
 .log p{margin:0;font-size:13.5px;overflow-wrap:anywhere}
 .log p b{font-weight:800}
-.log .k{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:6px;padding:1px 6px;margin-right:6px;vertical-align:1px;background:var(--deck-2);color:var(--muted)}
+.log .k{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:6px;padding:3px 8px;margin-right:6px;vertical-align:1px;background:var(--deck-2);color:var(--muted)}
 .log .k[data-k="done"]{background:var(--ok);color:var(--on)}
 .log .k[data-k="start"]{background:var(--work);color:var(--on)}
 .log .k[data-k="warn"]{background:var(--warn);color:var(--on)}
@@ -170,7 +170,7 @@ button,a{font:inherit;color:inherit}
 .row a.ttl:hover{text-decoration:underline}
 .row p{margin:2px 0 0;color:var(--muted);font-size:13.5px;overflow-wrap:anywhere}
 .row time{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap;font-family:var(--f-mono)}
-.b{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;border:2px solid var(--ink);border-radius:8px;padding:2px 7px;white-space:nowrap;background:var(--deck-2);color:var(--muted)}
+.b{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;border:2px solid var(--ink);border-radius:8px;padding:4px 9px;white-space:nowrap;background:var(--deck-2);color:var(--muted)}
 .b[data-b="WORKING"]{background:var(--work);color:var(--on)}
 .b[data-b="BLOCKED"]{background:var(--warn);color:var(--on)}
 .b[data-b="COMPLETED"]{background:var(--ok);color:var(--on)}
@@ -227,9 +227,9 @@ body.tv .lower{display:none}
   <section class="panel stage" id="stage" data-s="idle" aria-live="polite">
     <div class="who-big" id="stageToon" data-s="idle"></div>
     <div class="stage-txt">
-      <span class="lbl" id="stageLbl">Agora na sede</span>
       <h1 class="headline" id="headline">A equipe está na sede</h1>
       <div class="typed" id="typed">esperando a primeira leitura das suas sessões</div>
+      <span class="ctx" id="stageLbl">Agora na sede</span>
       <div class="stage-meta" id="stageMeta"></div>
       <div class="dots" id="dots"></div>
     </div>
