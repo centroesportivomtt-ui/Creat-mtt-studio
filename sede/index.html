@@ -1976,7 +1976,8 @@ function tema(){
 function tick4(){   // 4 Hz, chamado pelo telaTick (pausa com a aba escondida)
   if (!S.ligado || !S.ambOk || S.ctx.state !== 'running') return;
   const t = S.ctx.currentTime;
-  const n = TEAM.filter(a => a.state === 'working' || a.state === 'think').length;
+  const vivo = !running && live.estado && !live.estado.velho ? +live.estado.total_trabalhando || 0 : 0;   // total_trabalhando do estado real conta subagentes também
+  const n = Math.max(vivo, TEAM.filter(a => a.state === 'working' || a.state === 'think').length);
   if (n !== S.n){ S.n = n; aplicarN(.5); }
   if (!RM && t >= S.proxAcorde){ S.acorde = (S.acorde + 1) % ACORDES.length; S.proxAcorde = t + 16; montarAcorde(S.acorde, 1); }
   _pv.set(0, island.position.y - 1, -10); const pc = posPonto(_pv);
@@ -2014,9 +2015,10 @@ function teclasTick(){
     const ch = canal(a), f = a === foco;
     alvo(ch.p.pan, f ? 0 : v.pan, .06); alvo(ch.gM.gain, f ? 0 : v.g, .06); alvo(ch.gP.gain, f ? 3.2 : 0, .06);   // .063 → ~.2 (-14 dBFS) no barramento PERTO
     const k = a._tec || (a._tec = { t:0, resto:0, esp:-1 });
-    if (k.t < now - .2){ k.t = now + .05 + Math.random() * .4; k.resto = 0; }
+    if (!k.t){ k.t = now + .05 + Math.random() * .4; k.resto = 0; }   // começou a trabalhar agora
+    else if (k.t < now + .02) k.t = now + .02;                          // aba travada ou celular lento: retoma sem perder o ritmo
     let guarda = 4;
-    while (k.t < now + .08 && guarda--){
+    while (k.t < now + .12 && guarda--){
       if (k.resto <= 0){ k.resto = 3 + Math.floor(Math.random() * 7); k.esp = Math.floor(Math.random() * k.resto); }
       if (S.vozes < 10) tecla(Math.max(k.t, now + .02), a, k.resto - 1 === k.esp);
       k.resto--;
@@ -2096,7 +2098,7 @@ function foco(a, silencioso){   // "Encosta na mesa": a ilha fica do outro lado 
 function aoRodar(){
   if (S.ligado || !S.querLigado) return;
   S.ligado = true; S.pend = false; clearTimeout(S.tSusp);
-  alvo(S.master.gain, .7, .04);
+  alvo(S.master.gain, .7, .15);   // ~0,6 s até o volume cheio
   ambiente(); alvo(S.amb.gain, RM ? .5 : 1, .35);   // ambiente entra em ~1,2 s; movimento reduzido: -6 dB, sem bichos, acorde fixo
   tema(); S.n = -1; foco(S.foco, true);
   clique(1);
@@ -2143,7 +2145,7 @@ if (SUPORTE_SOM){
   somBtn.hidden = false;
   if (lerPref() === '1'){ S.querLigado = true; S.pend = true; }   // ligado-pendente: o primeiro gesto na página cria o som
   somUI();
-  somBtn.addEventListener('click', () => { if (S.querLigado){ desligarSom(); gravarPref(false); } else { gravarPref(true); ligarSom(); } });
+  somBtn.addEventListener('click', () => { if (S.querLigado && !S.pend){ desligarSom(); gravarPref(false); } else { gravarPref(true); ligarSom(); } });   // pendente: o toque no botão é o gesto que libera o som
   const gesto = e => { if (!S.pend || !S.querLigado || (e.target && e.target.closest && e.target.closest('#somBtn'))) return; if (e.type === 'keydown' && e.key === 'Escape') return; ligarSom(); };
   ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, gesto, true));
   document.addEventListener('visibilitychange', () => {
