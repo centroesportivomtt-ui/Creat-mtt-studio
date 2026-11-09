@@ -53,6 +53,8 @@
         if (e.evento === 'SessionEnd') for (const m of ags.values()) if (m.sessao === e.sessao && !m.fim) { m.fim = t; m.ultimo = t; }
         if (e.evento !== 'UserPromptSubmit') continue;
       }
+      // início/fim de subagente sem identificação não pertence a ninguém: ignora
+      if ((e.evento === 'SubagentStart' || e.evento === 'SubagentStop') && !e.agente) continue;
       const principal = !e.agente;
       const k = e.sessao + '|' + (e.agente || '');
       let a = ags.get(k);
