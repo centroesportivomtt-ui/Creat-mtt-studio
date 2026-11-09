@@ -43,6 +43,19 @@ A chave **secret** não é usada em lugar nenhum. Os ganchos só têm o token, q
 
 Sem `CREAT_AOVIVO_URL` e `CREAT_AOVIVO_PUB`, o gancho sai na hora e não faz nada.
 
+## Sessões antigas (abertas antes dos ganchos)
+
+Uma sessão que começou antes de os ganchos existirem não envia nada. Para ela aparecer sem recomeçar, rode a ponte dentro dela:
+
+```
+mkdir -p /tmp/sede-ponte && cd /tmp/sede-ponte
+B=https://raw.githubusercontent.com/centroesportivomtt-ui/Creat-mtt-studio/main/sede/aovivo
+curl -fsSLO $B/ponte.py && curl -fsSLO $B/evento.py
+(setsid nohup python3 -I ponte.py --titulo "Nome da sessão" >/dev/null 2>&1 &)
+```
+
+`ponte.py` lê o registro local da sessão conforme ele cresce e envia os mesmos eventos dos ganchos. Não usa IA nem gasta cota. Para sozinha em 12 horas e se recusa a rodar onde os ganchos já estão instalados, para não duplicar.
+
 ## O que sai de cada sessão (LGPD)
 
 `evento.py` funciona por lista branca e envia só isto:

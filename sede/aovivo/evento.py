@@ -77,19 +77,16 @@ def resumo(ferramenta, ent):
     return ''
 
 
-def main():
-    try:
-        p = json.load(sys.stdin)
-    except Exception:
-        return
+def montar(p):
+    """Recebe o payload de um gancho (dict) e devolve a linha da tabela `eventos`, ou None."""
     if not isinstance(p, dict):
-        return
+        return None
     ev = p.get('hook_event_name') or ''
     if ev not in ('SessionStart', 'SessionEnd', 'UserPromptSubmit', 'PreToolUse', 'SubagentStart', 'SubagentStop', 'Stop'):
-        return
+        return None
     ferr = p.get('tool_name') or ''
     linha = {
-        'ts': datetime.now(timezone.utc).isoformat(timespec='milliseconds'),   # hora do evento, não da chegada (gancho é assíncrono)
+        'ts': p.get('_ts') or datetime.now(timezone.utc).isoformat(timespec='milliseconds'),   # hora do evento, não da chegada
         'sessao': str(p.get('session_id') or '')[:80],
         'sessao_nome': limpa(p.get('session_title'), 90) or None,
         'pasta': limpa(nome_arquivo(p.get('cwd')), 60) or None,
@@ -101,9 +98,17 @@ def main():
     }
     if ev == 'UserPromptSubmit':
         linha['resumo'] = 'nova mensagem do dono'   # o texto do pedido nunca sai da sessão
-    if not linha['sessao']:
+    return linha if linha['sessao'] else None
+
+
+def main():
+    try:
+        p = json.load(sys.stdin)
+    except Exception:
         return
-    sys.stdout.write(json.dumps(linha))
+    linha = montar(p)
+    if linha:
+        sys.stdout.write(json.dumps(linha))
 
 
 if __name__ == '__main__':
