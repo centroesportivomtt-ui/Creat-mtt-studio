@@ -34,4 +34,8 @@ assert.equal(E.agentes.find(a => a.tipo === 'frontend').status, 'feito');
 E = N.estado([...base, ev(9, null, null, 'SessionEnd')], T0 + 20e3);
 assert.ok(E.agentes.every(a => a.status !== 'trabalhando'));
 assert.equal(E.sessoes[0].status, 'encerrada');
-console.log('núcleo: 16 verificações ok');
+// fim de subagente sem identificação não cria agente fantasma
+E = N.estado([...base, ev(7, null, null, 'Stop'), ev(8, null, null, 'SubagentStop')], T0 + 20e3);
+assert.ok(!E.agentes.some(a => a.pessoa.nick === 'Agente'));
+assert.equal(E.agentes.find(a => a.principal).status, 'pausa');
+console.log('núcleo: 18 verificações ok');
