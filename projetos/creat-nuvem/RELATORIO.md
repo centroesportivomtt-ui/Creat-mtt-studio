@@ -157,10 +157,10 @@ Para que serve na venda: a seção da home deixou de ser uma foto parada. Quem r
 - Três chips (Barbearia Navalha Fictícia, Salão Esmalte Fictício, Studio Barra Fictícia) trocam o nome na fachada da sede, o título da comanda e o link "Abrir o site pronto" (`sites/demo-<k>/`). No celular os chips ficam numa grade de 3 colunas (56 px de altura).
 - Sede embutida: no desktop (≥1000 px, ponteiro fino), o iframe `sede/index.html?modo=demo&lite=1&marca=<nome fictício>` carrega sozinho quando a seção chega perto. No celular, mostra o poster até a pessoa tocar em "Ver ao vivo", para poupar dados (como antes). O nome digitado pelo visitante nunca vai na query: entra pelo fragmento `#marca=` (ADR-002) ou por postMessage.
 - Comanda "Pedido de demonstração" com 7 passos: Nimbus organiza · Verbo escreve · Paleta escolhe as cores · Pixel monta · Lupa testa no celular · Muralha confere a segurança · Trilho publica. Cada passo mostra o ponto na cor do personagem, o estado (feito / agora / na fila, em texto) e `aria-current="step"` no passo ativo. Uma barra de progresso acompanha. A nota diz: "Demonstração: é assim que a equipe aparece quando há um pedido em produção. Os nomes são fictícios e nenhum desses negócios existe." Não há tempo prometido nem dado real.
-- Sincronia: a sede avisa a etapa por postMessage, e a comanda acende o mesmo passo. Antes de a sede carregar, a comanda usa o mesmo relógio da sede (6 s; 9 s com movimento reduzido). O relógio para fora da tela e com `document.hidden`, e a sede embutida para de desenhar quando a janela sai da tela.
+- Sincronia: a sede avisa a etapa por postMessage, e a comanda acende o mesmo passo. Antes de a sede carregar, a comanda usa o mesmo relógio da sede (6 s; 9 s com movimento reduzido). O relógio local para fora da tela e com `document.hidden`; a sede embutida para de desenhar e, desde a rodada de correções abaixo, também para o ciclo de etapas quando a janela sai da tela (antes, o `setInterval` dela seguia e a comanda andava fora da tela).
 - A legenda da janela é honesta: diz "Nome fictício na fachada." ou "O nome do seu negócio na fachada, só neste aparelho.". Depois de carregar, troca a dica do celular por "Arraste para girar a ilha e toque num personagem.".
 - Tokens novos `--agente-*` (figurino da sede, iguais nos dois temas, sempre com contorno). Nenhuma cor solta. Movimento (pulo do ponto ativo, carimbo com mola, barra) só com `prefers-reduced-motion: no-preference`.
-- Nenhum evento novo de analytics (contrato j inalterado).
+- Nenhum evento novo de analytics (contrato inalterado).
 
 **Sede (`sede/index.html`, na raiz do repositório)**
 - `limparMarca()` virou função (mesma regra de antes), e a placa desenha `marcaAtual`.
@@ -191,7 +191,7 @@ Para que serve na venda: a seção da home deixou de ser uma foto parada. Quem r
 - (2) No sandbox, a sede embutida roda WebGL por software e as transições da comanda ficam lentas. Em aparelho real não deve acontecer, mas vale conferir num celular de entrada.
 - (3) O iframe da sede segue com `lite=1` (30 quadros por segundo). Os rituais animados (esmalte, barra) são de outra frente e não entraram aqui.
 
-## Rituais vivos e quem monta, 09/11/2026
+### Órbita · os rituais da apresentação (barra, esmalte, navalha) ganharam vida
 
 **Órbita.** Pedido do Marcos: "faltaram as animações da apresentação do site dos clientes: o supino/a barra, o esmalte". Diagnóstico: os 3 rituais montavam parados até alguém arrastar. Agora cada herói chega em cena, mostra o gesto sozinho e passa a vez para quem visita. Para que serve na venda: quem abre o site do cliente (ou a demo pela vitrine) vê, nos primeiros 2 s, o objeto do ofício se mexendo, entende o gesto sem ler instrução e tem um momento para contar ("a barra caiu no chão e levantou pó"). A seção "Veja quem monta o seu site" da home **não foi mexida por mim**: esta tarefa cobriu só os rituais.
 
@@ -214,7 +214,7 @@ Para que serve na venda: a seção da home deixou de ser uma foto parada. Quem r
 - `CREAT_TESTE_TMP=/tmp npm test`: 57 de 57. `node scripts/checar.cjs`: tudo certo, com os 3 avisos `[PREENCHER]` já conhecidos.
 - `publicar-site --demo` nos 3. **Os zips mudaram**, então descarte os anteriores. Novos em `<scratchpad>/zips/`: barbearia `de7926f2…`, salão `fd106a20…`, academia `9306e976…`.
 
-**Pendências:** (1) Publicar os 3 zips novos (chat principal, `docs/PUBLICACAO.md`). (2) A seção "Veja quem monta o seu site" da home (foto parada + "Ver ao vivo") continua como estava; fica para quem cuida da home/sede. (3) Os FPS foram medidos em Chromium headless com renderização por software; falta conferir num celular médio de verdade.
+**Pendências:** (1) Publicar os 3 zips novos (chat principal, `docs/PUBLICACAO.md`). (2) A seção "Veja quem monta o seu site" ficou com a frente da home (subseção Pixel acima). (3) Os FPS foram medidos em Chromium headless com renderização por software; falta conferir num celular médio de verdade.
 
 ### Pixel · rodada final de demos e zips (rituais vivos + quem monta juntos)
 - Os 3 demos foram refeitos pela esteira real (`produzir.mjs --fixture-ia --slug demo-* --sem-sair --demonstracao`, URLs padrão). Saiu código 0 com as 6 etapas ok e o headless de 390 px ok. `dist/demo-*/motor/v1/rituais/` (comum, barra, esmalte, rituais.css) e `efeito.js` são idênticos à fonte, e o `motor.js` traz o link "Veja a equipe que montou este site".
@@ -224,3 +224,46 @@ Para que serve na venda: a seção da home deixou de ser uma foto parada. Quem r
   - barbearia: `7c678dd64f68880f64ce3a9ecab712094860f6ef1caeb7089a136642aa9c1c17`
   - salão: `ec765895053fd376d8c19e76c9154d4c41321d8f0fa271e22f2ae087c6b3b08f`
   - academia: `50c436526e8c83f738c01bb1b622def13fb002baf3bc787a44ce85a61c5a5aea`
+
+### Órbita (com chapéu de Pixel na home) · correções da revisão, rituais e "quem monta"
+Para que serve na venda: quem abre a demo vê o objeto do ofício se mexer em menos de 4 s e, logo depois, um convite "Arraste você" ao lado dele, já na primeira tela do celular. Na home, a comanda nunca volta atrás e o banner de medição sai da frente da placa com o nome do negócio, que é a prova da tese.
+
+**Média**
+- **1ª demonstração logo depois da entrada.** O diretor agora dispara a 1ª demonstração 1,8 a 2,6 s depois da entrada; as seguintes continuam a cada 6 a 9 s (`rituais/comum.js`, `PRIMEIRA_DEMO`; a mesma regra na cópia de `efeito.js`). Medido (Playwright, 3 demos × 390×844, 375×667 e 1440×900 × claro e escuro): a entrada termina entre 1,6 e 2,4 s e a 1ª demonstração começa entre 3,5 e 4,6 s (antes, entre 8,4 e 10,9 s).
+- **"Arraste você" da barbearia visível no celular.** A dica deixou de ficar empilhada no texto do herói, que no celular fica abaixo da dobra. Agora é um selo que flutua logo acima da navalha parada (ou abaixo dela, se não couber), dentro do couro, com o ponto indo e voltando como o gesto (`efeito.js`, `criarDicaVez(couro, navalha)` e `CSS_VIVO .couro-vez`; entra em 260 ms e sai em 160 ms; some com movimento reduzido). Medido: em 390×844 o selo fica em 300–338 px; em 375×667, em 370–408 px; no desktop, em 150–188 px.
+
+**Baixa**
+- **A comanda não volta atrás** quando a sede carrega no celular. Ao tocar em "Ver ao vivo", a comanda segura o passo atual, e a sede é embutida com `?etapa=<passo>` (0 a 5, só no modo demo) e começa dali. Trocar de negócio continua recomeçando do zero, de propósito. Medido: comanda 0,1,2,3 → toque → 3,4,5,0,1, sem regressão (`assets/vitrine.js` `abrir`/`carregarSede`; `sede/index.html` `ETAPA0`).
+- **Fora da tela, o ciclo da sede para.** Com `pausadaPeloPai`, a sede para o `setInterval` do ciclo, e não só o desenho, e retoma 2,5 s depois de voltar. Medido: 16 s fora da tela com a comanda parada na etapa 2; ao voltar, 2,3,4.
+- **O protocolo da sede só existe no modo demo.** O ouvinte de `message` é registrado só com `MODO === 'demo'`, como a documentação dizia.
+- **O banner de medição sai da frente da sede.** Com a janela da sede ≥60% na tela, o banner desce (200 ms) e volta quando ela sai (260 ms). Não recua se o foco do teclado estiver dentro dele, e Pixel/Clarity continuam só depois do Aceitar (`vitrine.js` `montarConsentimento`, `vitrine.css .consentimento.is-recuado`). Conferido no celular e no desktop: com a janela na tela, a placa "Barbearia Navalha Fictícia" fica à vista; longe dela, o banner volta.
+- **Âncora "Sede ao vivo" no celular.** O `scroll-padding-top` acompanha a altura real do cabeçalho (ResizeObserver; 156 px no celular de 2 linhas, 80 px de reserva no CSS). Medido: cabeçalho até y=140 e o olho "SEDE AO VIVO" em y=214.
+- **Selo "Demonstração" da janela:** sai só quando a sede manda a 1ª etapa (`data-sede-pronta`), e não mais quando o iframe é inserido. Se a sede falhar, o selo fica.
+- **Palco do salão e da academia no celular:** passou de `min(50vw, 210px)` para `min(70vw, 280px)` (273 px em 390, contra 195). Ocupa o vazio acima do título, continua alinhado à direita, e no desktop nada muda.
+- **A navalha não sai do couro:** as passadas da entrada e da demonstração ficam dentro da folga real (`h.folga`), e no celular a navalha ficou um pouco menor (66% da largura, contra 74%) para sobrar couro para a passada. Medido: 0 px para fora do couro em todas as amostras.
+- **Texto do herói na demonstração:** o parágrafo ganha a frase "Nesta demonstração, o pedido vai para o WhatsApp da Creat." (`motor.js`, `UI.demoHeroiNota`, só com `CREAT_SITE.demonstracao`). O site entregue não muda.
+- **Textos da seção #sede em 3 lugares:** `checar.cjs` ganhou a regra 6. Cada texto de `conteudo/home.json` `sede.*` tem de aparecer igual no `index.html`, no `vitrine.js` ou na `sede/index.html`, `sede.agora` tem de ser idêntico a `ESTEIRA_AGORA` e os passos da comanda iguais a `sede.passos`. A regra achou um texto morto, `sede.erro`, que nenhum arquivo usava, e ele saiu do `home.json`.
+- **Cópias que mudam juntas:** os cabeçalhos do diretor em `rituais/comum.js` e em `efeito.js` dizem "MUDA JUNTO". Não extraí um arquivo comum, porque isso mudaria o carregamento da barbearia (um script a mais) na mesma rodada que mexe no ritual.
+- **CSS morto:** os dois `@keyframes ra-po` viraram um só (com `--dx`), a regra repetida saiu e a classe `is-em-cena`, sem CSS, saiu de `barra.js` e `esmalte.js`.
+- **`dist/local`** foi remontado depois dos demos novos (`montar-publico` + `montar-local`).
+- **Relatório:** havia duas seções com este título. A segunda virou a subseção "Órbita · os rituais da apresentação" e o "contrato j" foi corrigido.
+- Motor **v1.2.0** (subi uma vez só, fechando a rodada dos rituais vivos + quem monta). O hash CSP do script inline da sede mudou e foi copiado para o `_headers` da fonte (`sha256-bb5Xh+…`), que agora bate com `dist/publico/_headers`.
+
+**Verificado**
+- Os 3 demos foram refeitos pela esteira real (`produzir.mjs --fixture-ia --demonstracao`): código 0, 6 etapas ok e headless de 390 px ok. `dist/demo-*/motor/v1/` é idêntico à fonte.
+- `CREAT_TESTE_TMP=/tmp npm test`: 57 de 57. `node scripts/checar.cjs`: tudo certo, com a nova regra da sede e os 3 avisos `[PREENCHER]` já conhecidos. `montar-publico.cjs`: 67 arquivos.
+- `olhar.cjs --cdn-local` nos 3 `dist/demo-*` e em `dist/local` (home): "Tudo limpo" nos quatro.
+- Playwright próprio (`<scratchpad>/orb/`): tempos e posição da dica nas 18 combinações, sem erro de console e sem rolagem lateral. Movimento reduzido: os 3 ficam parados e sem dica. Um toque durante a 1ª demonstração para tudo, e nada volta em 10 s. Quadros por segundo no celular emulado: 60 do 2º ao 4º segundo, inclusive durante a 1ª demonstração (no 1º segundo, 33 na barbearia por causa da geração do couro, como antes). Na home: âncora, banner, comanda sem regressão, pausa fora da tela e selo, no celular e no desktop, com console limpo.
+- Prints olhados: a dica da barbearia em 390 claro e em 1440 escuro, a academia em 390 escuro e o salão em 375 claro; na home, a âncora em 390 e a sede viva em 390, com o banner recuado e a placa à vista.
+
+**Zips finais** (`publicar-site --demo`, exit 0; substituem todos os sha256 citados acima). Estão no scratchpad, em `site-demo-<k>.zip`:
+- barbearia: `485a04732dbb1a461e3a96c12f85a135e0c194d5aa8d873a5d504fa2ff8e2adc`
+- salão: `1e66f5ba425583ff332435fb28a439fabc55e5a336bfe9f62c4bf152aff270ec`
+- academia: `193fbbfed74b6469c190df27fe9e2d8915d4554883de0217dc10aac3f90603d5`
+
+**Decidi não mudar**
+- Não troquei os textos de IA dos demos ("chega no WhatsApp do Studio Barra"). Eles mostram o que o site do cliente vai dizer, e a frase de demonstração no herói desfaz a contradição sem inventar outro texto.
+- Não extraí o diretor para um arquivo comum (ver "Cópias que mudam juntas").
+- O ponto "não verificado" da revisão continua aberto: fluidez num aparelho real, som dos rituais e celular físico de entrada. No sandbox só há WebGL e Chromium por software.
+
+**Pendências:** (1) Publicar os 3 zips novos antes da vitrine (`docs/PUBLICACAO.md`, seção 0) e depois a vitrine com a `sede/` nova e o `_headers` atualizado. (2) Conferir num celular médio de verdade.

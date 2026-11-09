@@ -34,7 +34,7 @@
 /sede/*
   ! Content-Security-Policy
   ! Referrer-Policy
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-tbOH5Dc3NowsPgjSEedl2cUkeIqtZuxfU0o/6pUzdYk=' 'sha256-Q9fLdLsvIn4wiD9iVLMmvP5tuxKqIptIj6To2hlH1G0=' 'sha256-INEh5a/ItPwufOSV+rqkLM1RWK9nzg2g2naTekibCOs=' https://cdn.jsdelivr.net/npm/three@0.160.0/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net/npm/three@0.160.0/; frame-ancestors 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-tbOH5Dc3NowsPgjSEedl2cUkeIqtZuxfU0o/6pUzdYk=' 'sha256-Q9fLdLsvIn4wiD9iVLMmvP5tuxKqIptIj6To2hlH1G0=' 'sha256-bb5Xh+XIdQKWM5hOL1JDxb5TsRLPBa+CiZVPfQSabk8=' https://cdn.jsdelivr.net/npm/three@0.160.0/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net/npm/three@0.160.0/; frame-ancestors 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
   Referrer-Policy: no-referrer
   X-Robots-Tag: noindex
 
