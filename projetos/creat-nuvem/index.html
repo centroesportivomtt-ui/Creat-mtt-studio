@@ -111,7 +111,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 .esteira-lista li[data-estado="agora"] i{box-shadow:0 0 0 3px var(--papel)}
 .esteira-lista [data-agente="verbo"]{--ag:var(--agente-verbo)}.esteira-lista [data-agente="paleta"]{--ag:var(--agente-paleta)}.esteira-lista [data-agente="pixel"]{--ag:var(--agente-pixel)}
 .esteira-lista [data-agente="lupa"]{--ag:var(--agente-lupa)}.esteira-lista [data-agente="muralha"]{--ag:var(--agente-muralha)}.esteira-lista [data-agente="trilho"]{--ag:var(--agente-trilho)}
-.janela-sede:has(iframe) > .selo-demo{display:none} /* a sede embutida já mostra o próprio selo DEMONSTRAÇÃO */
+.janela-sede[data-sede-pronta] > .selo-demo{display:none} /* só quando a sede já mandou a 1ª etapa: aí o selo DEMONSTRAÇÃO dela está na tela */
 .esteira-fim{display:flex;flex-wrap:wrap;align-items:center;gap:var(--r3) var(--r4);margin-top:auto}
 .esteira-carimbo{order:2;font:400 22px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04em;color:var(--ok);border:3px solid currentColor;border-radius:8px;padding:6px 10px 4px;transform:rotate(-7deg);visibility:hidden}
 .esteira[data-etapa="5"] .esteira-carimbo{visibility:visible}

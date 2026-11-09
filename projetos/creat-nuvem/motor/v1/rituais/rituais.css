@@ -49,7 +49,8 @@
   justify-self: end;
   display: grid;
   gap: var(--esp-2);
-  width: min(50vw, 210px);
+  /* celular: o palco é o momento do herói, então cresce (antes 50vw/210px) e ocupa o vazio acima do título */
+  width: min(70vw, 280px);
   margin-bottom: var(--esp-2);
   border-radius: var(--raio-2);
   touch-action: none;
@@ -146,9 +147,10 @@
 .ra-poeira circle { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
 .ra-poeira.is-subindo circle { animation: ra-po 620ms var(--curva-entrada) both; animation-delay: calc(var(--i, 0) * 35ms); }
 .ra-poeira.is-forte circle { animation-duration: 900ms; --sobe: -30px; }
+/* cada grão sobe com a sua deriva lateral (--dx); os 4 de fora (.ra-giz-forte) só saem na batida forte */
 @keyframes ra-po {
-  0% { opacity: 0.95; transform: translateY(0) scale(0.6); }
-  100% { opacity: 0; transform: translateY(var(--sobe, -16px)) scale(1.35); }
+  0% { opacity: 0.95; transform: translate(0, 0) scale(0.6); }
+  100% { opacity: 0; transform: translate(var(--dx, 0px), var(--sobe, -16px)) scale(1.35); }
 }
 .seta-cima {
   display: inline-block; width: 18px; height: 22px; flex: 0 0 auto;
@@ -286,14 +288,9 @@
   70% { transform: scale(1.04, 0.97); }
   100% { opacity: 1; transform: none; }
 }
-/* pó de magnésio: cada grão sobe com a sua deriva; os 4 de fora só saem na batida forte */
-.ra-poeira.is-subindo circle { animation-name: ra-po; }
+/* pó de magnésio: os 4 grãos de fora só saem na batida forte (keyframes ra-po lá em cima) */
 .ra-poeira .ra-giz-forte { visibility: hidden; }
 .ra-poeira.is-forte .ra-giz-forte { visibility: visible; }
-@keyframes ra-po {
-  0% { opacity: 0.95; transform: translate(0, 0) scale(0.6); }
-  100% { opacity: 0; transform: translate(var(--dx, 0px), var(--sobe, -16px)) scale(1.35); }
-}
 
 /* ---------- esmalte: a demonstração, a gota e o brilho da unha ---------- */
 .re-demo { stroke-width: 15; }

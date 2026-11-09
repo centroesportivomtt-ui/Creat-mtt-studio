@@ -26,7 +26,7 @@
 (function (raiz) {
   'use strict';
 
-  var VERSAO = 'v1.1.1';
+  var VERSAO = 'v1.2.0';
   var W = typeof window !== 'undefined' ? window : null;
   var DOC = W && W.document ? W.document : null;
 
@@ -72,6 +72,7 @@
     faixaDemo: 'demonstração · nome fictício',
     faixaDemoTexto: 'Site feito pela esteira real da Creat Nuvem. Endereço e horários são de exemplo. O pedido de horário vai para o WhatsApp da Creat, não para um negócio.',
     demoLocalNota: 'Endereço e horário de exemplo: este negócio não existe.',
+    demoHeroiNota: 'Nesta demonstração, o pedido vai para o WhatsApp da Creat.',
     demoHorarioRodape: 'Horário de exemplo',
     faixaDemoLink: 'Quero um assim',
     demoSede: 'Veja a equipe que montou este site',
@@ -825,7 +826,12 @@
     h.appendChild(nome);
     if (e.nomeExemplo) h.appendChild(criar('p', { classe: 'heroi-exemplo' }, [selo(UI.exemplo)]));
     if (e.bordao) h.appendChild(criar('p', { classe: 'heroi-bordao', texto: e.bordao }));
-    if (e.textos.heroSubtitulo) h.appendChild(criar('p', { classe: 'heroi-sub', texto: e.textos.heroSubtitulo }));
+    if (e.textos.heroSubtitulo) {
+      // demonstração: o texto do herói fala do WhatsApp do negócio; a frase extra desfaz a contradição com a faixa
+      h.appendChild(criar('p', { classe: 'heroi-sub' }, e.demonstracao
+        ? [e.textos.heroSubtitulo + ' ', criar('span', { classe: 'heroi-sub-demo', texto: UI.demoHeroiNota })]
+        : [e.textos.heroSubtitulo]));
+    }
     return h;
   }
 

@@ -320,8 +320,8 @@
        - emDois(ms): tempo da pose "em dois" (12 poses por segundo, como desenho animado);
        - cena(passo, fim): laço de requestAnimationFrame com tempo que NÃO salta quando a aba
          some (o rAF para e o relógio é empurrado); passo(T, dt) devolve false para encerrar;
-       - diretor(el, opc): a cada 6 a 9 s, com o palco na tela, a aba visível e ninguém mexendo,
-         chama opc.tocar(fim). Para de vez no primeiro toque ou tecla (parar()) e não volta
+       - diretor(el, opc): 1,8 a 2,6 s depois da entrada e, dali em diante, a cada 6 a 9 s, com o palco
+         na tela, a aba visível e ninguém mexendo, chama opc.tocar(fim). Para de vez no primeiro toque ou tecla (parar()) e não volta
          nesta visita. Nunca roda com movimento reduzido;
        - dicaVez(dica): troca a dica do palco por "Arraste você" por 2,6 s no fim da demonstração.
      ===================================================================== */
@@ -354,9 +354,15 @@
     return { parar: function () { if (!viva) return; viva = false; if (fim) fim(false); }, viva: function () { return viva; } };
   }
 
+  /* MUDA JUNTO: efeito.js (criarDiretor/criarDicaVez) tem a cópia da barbearia, que não carrega este arquivo.
+     Mesmas regras e mesmos tempos nos dois (PRIMEIRA_DEMO e o intervalo de 6 a 9 s). */
+  var PRIMEIRA_DEMO = [1800, 2600];   // a 1ª demonstração vem logo depois da entrada; as seguintes, a cada 6 a 9 s
   function diretor(el, opc) {
-    var st = { parado: false, visivel: true, timer: 0, tocando: false };
-    function sortear() { return (opc.min || 6000) + Math.random() * ((opc.max || 9000) - (opc.min || 6000)); }
+    var st = { parado: false, visivel: true, timer: 0, tocando: false, primeira: false };
+    function sortear() {
+      if (st.primeira) return PRIMEIRA_DEMO[0] + Math.random() * (PRIMEIRA_DEMO[1] - PRIMEIRA_DEMO[0]);
+      return (opc.min || 6000) + Math.random() * ((opc.max || 9000) - (opc.min || 6000));
+    }
     function agendar() {
       clearTimeout(st.timer); st.timer = 0;
       if (st.parado || st.tocando || !st.visivel || D.hidden || reduzido()) return;
@@ -366,7 +372,7 @@
       st.timer = 0;
       if (st.parado || st.tocando || !st.visivel || D.hidden || reduzido()) return;
       if (opc.pode && !opc.pode()) { agendar(); return; }
-      st.tocando = true;
+      st.tocando = true; st.primeira = false;
       opc.tocar(function () {
         st.tocando = false;
         if (st.parado) return;
@@ -385,7 +391,8 @@
     function aoVer() { if (D.hidden) { clearTimeout(st.timer); st.timer = 0; } else if (!st.timer) agendar(); }
     D.addEventListener('visibilitychange', aoVer);
     return {
-      iniciar: agendar,
+      // iniciar(): chamado no fim da entrada; o primeiro gesto vem em 1,8 a 2,6 s (se o palco estiver na tela)
+      iniciar: function () { st.primeira = true; agendar(); },
       parar: function () {
         if (st.parado) return;
         st.parado = true;

@@ -1,6 +1,5 @@
 {
   "_sobre": "Textos da home / (A Porta), na ordem da seção 5.1 do briefing. Marcadores {{...}} vêm de dados/*.json; {x} é preenchido pela página em tempo de execução. Regras de exibição condicional no README.md desta pasta.",
-
   "seo": {
     "titulo": "Porta Aberta: seu negócio aberto na internet | Creat",
     "tituloAlternativo": "Site pronto com pedido de horário no WhatsApp | Creat",
@@ -9,7 +8,6 @@
     "ogDescricao": "Digite o nome do seu negócio, vire a placa para ABERTO e veja o seu site pronto. Grátis para ver.",
     "ogImagemAlt": "Placa de madeira presa por uma correntinha, virada para o lado ABERTO, com o nome de um negócio escrito a giz."
   },
-
   "barra": {
     "marca": "Creat Nuvem",
     "marcaAlt": "Creat Nuvem, início",
@@ -23,7 +21,6 @@
     "whatsappFlutuanteAria": "Chamar o Suporte Creat no WhatsApp",
     "pular": "Pular para o campo do nome"
   },
-
   "hero": {
     "olho": "Porta Aberta",
     "h1": "Seu negócio aberto na internet.",
@@ -57,7 +54,6 @@
     "placaSemNome": "Escreva o nome do seu negócio para a placa virar.",
     "abrindo": "Abrindo a porta..."
   },
-
   "previa": {
     "barraSuperior": "Prévia do seu site",
     "copiarLink": "copiar link",
@@ -71,7 +67,6 @@
     "erroCarregar": "A prévia não abriu. Recarregue a página. Se continuar, chame o Suporte Creat no WhatsApp.",
     "iframeTitulo": "Prévia do site da {negocio}"
   },
-
   "testeDeVerdade": {
     "olho": "Teste de verdade",
     "titulo": "Peça um horário para você mesmo.",
@@ -90,7 +85,6 @@
     "alternativaRotulo": "Exemplo de mensagem",
     "alternativaFechar": "Fechar o exemplo"
   },
-
   "comoFunciona": {
     "olho": "Como funciona",
     "titulo": "Do nome na placa ao site no ar, em 4 passos.",
@@ -122,7 +116,6 @@
       ]
     }
   },
-
   "sitesDemo": {
     "_regra": "Sites-demonstração feitos pela esteira real (scripts/producao/produzir.mjs --demonstracao), com nome fictício e o WhatsApp do Suporte Creat. Não é prova social: nunca dizer que são clientes. Cada site abre com a faixa 'demonstração · nome fictício'.",
     "olho": "Sites-demonstração",
@@ -130,17 +123,33 @@
     "texto": "Três sites feitos pela esteira real, a mesma que monta o seu. Nome fictício, cidade de verdade: Riachão do Jacuípe, na Bahia. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat.",
     "nota": "Feito pela esteira real, nome fictício. Nenhum desses negócios existe.",
     "itens": [
-      { "href": "sites/demo-barbearia/", "nicho": "Barbearia", "nome": "Barbearia Navalha Fictícia", "gesto": "Afie a navalha no couro para mandar o pedido.", "botao": "Abrir a barbearia" },
-      { "href": "sites/demo-salao/", "nicho": "Salão e estética", "nome": "Salão Esmalte Fictício", "gesto": "Pinte a unha com o dedo para mandar o pedido.", "botao": "Abrir o salão" },
-      { "href": "sites/demo-academia/", "nicho": "Academia e studio", "nome": "Studio Barra Fictícia", "gesto": "Levante a barra para pedir a aula experimental.", "botao": "Abrir o studio" }
+      {
+        "href": "sites/demo-barbearia/",
+        "nicho": "Barbearia",
+        "nome": "Barbearia Navalha Fictícia",
+        "gesto": "Afie a navalha no couro para mandar o pedido.",
+        "botao": "Abrir a barbearia"
+      },
+      {
+        "href": "sites/demo-salao/",
+        "nicho": "Salão e estética",
+        "nome": "Salão Esmalte Fictício",
+        "gesto": "Pinte a unha com o dedo para mandar o pedido.",
+        "botao": "Abrir o salão"
+      },
+      {
+        "href": "sites/demo-academia/",
+        "nicho": "Academia e studio",
+        "nome": "Studio Barra Fictícia",
+        "gesto": "Levante a barra para pedir a aula experimental.",
+        "botao": "Abrir o studio"
+      }
     ]
   },
-
   "precos": {
     "olho": "Preços",
     "titulo": "Um preço para abrir, um plano para manter aberto.",
     "texto": "Você paga a Abertura uma vez. A mensalidade só começa no dia em que o site entra no ar.",
-
     "abertura": {
       "nome": "Abertura",
       "precoPadrao": "R$ {{precos.abertura.padrao}}",
@@ -159,10 +168,8 @@
         "Site no ar em até {{precos.prazoHoras}} h ou o 1º mês do plano grátis"
       ]
     },
-
     "vagasHoje": "Vagas de produção hoje: {{vagas.vagas_hoje}} de {{vagas.capacidade_dia}}.",
     "vagasHojeEsgotadas": "As vagas de produção de hoje acabaram. Pedido pago agora entra na fila, e o prazo de {{precos.prazoHoras}} h conta do mesmo jeito.",
-
     "planos": {
       "aberto": {
         "nome": "Aberto",
@@ -210,7 +217,6 @@
     },
     "rotuloInclui": "Inclui",
     "rotuloNaoInclui": "Não inclui",
-
     "precisaTer": {
       "titulo": "O que você precisa ter",
       "itens": [
@@ -221,7 +227,6 @@
       ],
       "nota": "A Creat nunca pede a sua senha de nenhuma conta."
     },
-
     "contrato": {
       "titulo": "O contrato em 6 linhas",
       "linhas": [
@@ -234,14 +239,12 @@
       ],
       "link": "Ler os termos completos"
     },
-
     "agendaExterna": {
       "titulo": "Já tem agenda (Trinks, Booksy...)? O botão do seu site pode apontar para ela.",
       "texto": "Se você já marca horários por um aplicativo, o botão do site abre esse aplicativo em vez do WhatsApp. É só mandar o link quando fizer o pedido.",
       "nota": "Trinks e Booksy são só exemplos de ferramentas. A Creat não tem vínculo com elas."
     }
   },
-
   "sede": {
     "_regra": "Demonstração com nome fictício, sempre marcada. A comanda acende o passo que a sede embutida (sede/?modo=demo) avisa por postMessage; sem a sede carregada, segue o mesmo relógio (6 s; 9 s com movimento reduzido). Sem dado real, sem tempo prometido.",
     "olho": "Sede ao vivo",
@@ -249,15 +252,23 @@
     "texto": "Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um organiza, um escreve, outro escolhe as cores, outro testa no celular. Escolha um negócio e veja o pedido passar de mão em mão até o site ir para o ar.",
     "marcasRotulo": "Negócio na fachada da sede",
     "marcas": [
-      { "nome": "Barbearia Navalha Fictícia", "site": "sites/demo-barbearia/" },
-      { "nome": "Salão Esmalte Fictício", "site": "sites/demo-salao/" },
-      { "nome": "Studio Barra Fictícia", "site": "sites/demo-academia/" }
+      {
+        "nome": "Barbearia Navalha Fictícia",
+        "site": "sites/demo-barbearia/"
+      },
+      {
+        "nome": "Salão Esmalte Fictício",
+        "site": "sites/demo-salao/"
+      },
+      {
+        "nome": "Studio Barra Fictícia",
+        "site": "sites/demo-academia/"
+      }
     ],
     "marcaSeuLeitor": " (o seu negócio)",
     "posterAlt": "Ilha da sede da Creat Nuvem desenhada em 3D, com a equipe de personagens trabalhando nas mesas.",
     "botao": "Ver ao vivo",
     "carregando": "Carregando a sede...",
-    "erro": "A sede não carregou. Verifique a conexão e toque em Ver ao vivo de novo.",
     "legendaDemonstracao": "Demonstração",
     "legenda": "Nome fictício na fachada.",
     "legendaCelular": " A sede 3D só carrega quando você toca em Ver ao vivo, para poupar dados.",
@@ -281,7 +292,11 @@
       "Trilho publica o site",
       "Site no ar. Pode abrir."
     ],
-    "status": { "feito": "feito", "agora": "agora", "fila": "na fila" },
+    "status": {
+      "feito": "feito",
+      "agora": "agora",
+      "fila": "na fila"
+    },
     "carimbo": "No ar",
     "abrirSite": "Abrir o site pronto",
     "abrirSiteLeitor": ": {marca} (site-demonstração, nome fictício)",
@@ -289,27 +304,23 @@
     "notaDemonstracao": "Demonstração: é assim que a equipe aparece quando há um pedido em produção. Os nomes são fictícios e nenhum desses negócios existe.",
     "semFluxo": "A equipe espera o próximo pedido."
   },
-
   "prova": {
     "_regra": "Seção inteira some se dados/depoimentos.json não tiver item com autorizadoEm. Sem texto de 'em breve'.",
     "olho": "Quem já abriu",
     "titulo": "Negócios que já abriram com a Creat",
     "notaAutorizacao": "Publicado com autorização por escrito de cada dono."
   },
-
   "perguntas": {
     "olho": "Perguntas",
     "titulo": "Perguntas diretas, respostas diretas",
     "_fonte": "Itens em conteudo/faq.json"
   },
-
   "chamadaFinal": {
     "titulo": "Seu nome na placa leva segundos.",
     "texto": "Veja o seu site pronto antes de decidir qualquer coisa.",
     "botao": "Abrir meu negócio",
     "secundario": "Prefere conversar? Chamar no WhatsApp"
   },
-
   "rodape": {
     "titular": "Creat Nuvem é um serviço da Creat.MTT Studio.",
     "suporte": "Suporte: {{contato.email}}",

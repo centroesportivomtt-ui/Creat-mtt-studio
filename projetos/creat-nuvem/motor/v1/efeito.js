@@ -59,7 +59,9 @@
   Mola.prototype.fixar = function (v) { this.x = this.alvo = v; this.v = 0; };
 
   /* ---------- ritual vivo (09/11/2026): relógio em dois, curvas, diretor da demonstração e a dica ----------
-     (cópia enxuta do que rituais/comum.js tem; a barbearia não carrega o comum.js) */
+     MUDA JUNTO: cópia enxuta de rituais/comum.js (emDois, trecho, curva, diretor), porque a barbearia não
+     carrega o comum.js. Corrigiu o ciclo de vida ou os tempos num, corrija no outro. A dica "Arraste você"
+     daqui é diferente de propósito: flutua junto da navalha (o texto do herói fica abaixo da dobra no celular). */
   var QUADRO_EM_DOIS = 1000 / 12;
   function emDois(ms) { return Math.floor(ms / QUADRO_EM_DOIS) * QUADRO_EM_DOIS; }
   function trecho(T, a, b) { return lim((T - a) / (b - a), 0, 1); }
@@ -68,20 +70,21 @@
     meio: function (p) { return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; },
     voltaAtras: function (p) { var c = 1.9; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); }
   };
-  /* a cada 6 a 9 s, com o herói na tela, a aba visível e ninguém mexendo: opc.tocar(fim).
-     parar() é para sempre nesta visita (primeiro toque, tecla ou arrasto) */
+  /* 1,8 a 2,6 s depois da entrada e, dali em diante, a cada 6 a 9 s, com o herói na tela, a aba visível e
+     ninguém mexendo: opc.tocar(fim). parar() é para sempre nesta visita (primeiro toque, tecla ou arrasto) */
+  var PRIMEIRA_DEMO = [1800, 2600];
   function criarDiretor(el, opc) {
-    var st = { parado: false, visivel: true, timer: 0, tocando: false };
+    var st = { parado: false, visivel: true, timer: 0, tocando: false, primeira: false };
     function agendar() {
       clearTimeout(st.timer); st.timer = 0;
       if (st.parado || st.tocando || !st.visivel || D.hidden || reduzido()) return;
-      st.timer = setTimeout(disparar, 6000 + Math.random() * 3000);
+      st.timer = setTimeout(disparar, st.primeira ? PRIMEIRA_DEMO[0] + Math.random() * (PRIMEIRA_DEMO[1] - PRIMEIRA_DEMO[0]) : 6000 + Math.random() * 3000);
     }
     function disparar() {
       st.timer = 0;
       if (st.parado || st.tocando || !st.visivel || D.hidden || reduzido()) return;
       if (opc.pode && !opc.pode()) { agendar(); return; }
-      st.tocando = true;
+      st.tocando = true; st.primeira = false;
       opc.tocar(function () { st.tocando = false; if (st.parado) return; if (opc.aoFim) opc.aoFim(); agendar(); });
     }
     var io = null;
@@ -95,7 +98,7 @@
     function aoVer() { if (D.hidden) { clearTimeout(st.timer); st.timer = 0; } else if (!st.timer) agendar(); }
     D.addEventListener('visibilitychange', aoVer);
     return {
-      iniciar: agendar,
+      iniciar: function () { st.primeira = true; agendar(); },
       parar: function () {
         if (st.parado) return;
         st.parado = true; clearTimeout(st.timer); st.timer = 0;
@@ -107,37 +110,41 @@
       parado: function () { return st.parado; }
     };
   }
-  function criarDicaVez(dica) {
-    if (!dica) return null;
-    var orig = D.createElement('span'); orig.className = 'dica-orig';
-    while (dica.firstChild) orig.appendChild(dica.firstChild);
-    dica.appendChild(orig);
-    var vez = D.createElement('span'); vez.className = 'dica-vez'; vez.setAttribute('aria-hidden', 'true');
+  /* "Arraste você": um selo que flutua logo acima da navalha parada (ou abaixo, se não couber), dentro do
+     couro. Assim o convite aparece na primeira dobra também no celular, onde a dica do texto fica lá embaixo. */
+  function criarDicaVez(couro, navEl) {
+    if (!couro || !navEl) return null;
+    var vez = D.createElement('p'); vez.className = 'couro-vez'; vez.setAttribute('aria-hidden', 'true');
     var dedo = D.createElement('span'); dedo.className = 'vez-dedo';
     var tx = D.createElement('span'); tx.className = 'vez-texto'; tx.textContent = texto('dicaVez', 'Arraste você');
-    vez.appendChild(dedo); vez.appendChild(tx); dica.appendChild(vez);
-    dica.classList.add('tem-vez');
+    vez.appendChild(dedo); vez.appendChild(tx); couro.appendChild(vez);
     var timer = 0;
+    function posicionar() {
+      var rc = couro.getBoundingClientRect(), rn = navEl.getBoundingClientRect();
+      var lv = vez.offsetWidth || 150, av = vez.offsetHeight || 32, folga = 10;
+      var x = lim(rn.left + rn.width / 2 - rc.left - lv / 2, 12, Math.max(12, rc.width - lv - 12));
+      var y = rn.top - rc.top - av - folga;
+      if (y < 8) y = rn.bottom - rc.top + folga;            // sem espaço em cima: vai para baixo da lâmina
+      vez.style.left = Math.round(x) + 'px'; vez.style.top = Math.round(y) + 'px';
+    }
     return {
       mostrar: function () {
         if (reduzido()) return;
-        clearTimeout(timer); dica.classList.add('is-sua-vez');
-        timer = setTimeout(function () { dica.classList.remove('is-sua-vez'); }, 2600);
+        clearTimeout(timer); posicionar(); vez.classList.add('is-visivel');
+        timer = setTimeout(function () { vez.classList.remove('is-visivel'); }, 2600);
       },
-      esconder: function () { clearTimeout(timer); dica.classList.remove('is-sua-vez'); }
+      esconder: function () { clearTimeout(timer); vez.classList.remove('is-visivel'); }
     };
   }
   /* o CSS do ritual vivo da navalha entra uma vez (a barbearia só carrega o styles.css do motor) */
   var CSS_VIVO = [
-    '.hero-dica.tem-vez{position:relative}',
-    '.hero-dica .dica-orig{display:inline-flex;align-items:center;gap:var(--esp-3);transition:opacity 160ms var(--curva-saida),transform 160ms var(--curva-saida)}',
-    '.hero-dica .dica-vez{position:absolute;left:0;top:50%;display:inline-flex;align-items:center;gap:var(--esp-2);white-space:nowrap;pointer-events:none;opacity:0;transform:translateY(calc(-50% + 8px));transition:opacity 160ms var(--curva-saida),transform 160ms var(--curva-saida)}',
-    '.hero-dica.is-sua-vez .dica-orig{opacity:0;transform:translateY(-8px)}',
-    '.hero-dica.is-sua-vez .dica-vez{opacity:1;transform:translateY(-50%);transition:opacity 260ms var(--curva-entrada) 60ms,transform 260ms var(--curva-entrada) 60ms}',
-    '.hero-dica .vez-texto{font-weight:700;text-decoration:underline;text-decoration-color:var(--couro-latao);text-decoration-thickness:2px;text-underline-offset:4px}',
-    '.hero-dica .vez-dedo{position:relative;width:14px;height:14px;flex:0 0 auto;border-radius:50%;border:2px solid currentColor}',
-    '.hero-dica .vez-dedo::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--couro-latao);opacity:0}',
-    '.hero-dica.is-sua-vez .vez-dedo::after{animation:vez-pulso 1100ms var(--curva-entrada) 300ms infinite}',
+    '.couro-vez{position:absolute;left:0;top:0;z-index:2;margin:0;display:inline-flex;align-items:center;gap:var(--esp-2);padding:7px 14px 7px 10px;white-space:nowrap;pointer-events:none;font-family:var(--fonte-dado);font-size:var(--t-menor);font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--couro-tinta);background:color-mix(in oklab,var(--couro-fundo) 78%,black);border:1.5px solid var(--couro-latao);border-radius:999px;box-shadow:0 6px 14px color-mix(in oklab,var(--couro-fundo) 50%,transparent);opacity:0;transform:translateY(6px) scale(.96);transition:opacity 160ms var(--curva-saida),transform 160ms var(--curva-saida)}',
+    '.couro-vez.is-visivel{opacity:1;transform:none;transition:opacity 260ms var(--curva-entrada),transform 260ms var(--curva-entrada)}',
+    '.couro-vez .vez-dedo{position:relative;width:12px;height:12px;flex:0 0 auto;border-radius:50%;background:var(--couro-latao)}',
+    '.couro-vez .vez-dedo::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--couro-latao);opacity:0}',
+    '.couro-vez.is-visivel .vez-dedo{animation:vez-vai 1100ms ease-in-out 200ms infinite alternate}',
+    '.couro-vez.is-visivel .vez-dedo::after{animation:vez-pulso 1100ms var(--curva-entrada) 300ms infinite}',
+    '@keyframes vez-vai{from{transform:translateX(-3px)}to{transform:translateX(3px)}}',
     '@keyframes vez-pulso{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}',
     '.navalha .nv-estrela{transform-box:fill-box;transform-origin:50% 50%;transform:scale(0)}',
     '.navalha.is-reflexo .nv-estrela{animation:nv-estrela 1000ms var(--curva-mola) 60ms both}',
@@ -147,7 +154,7 @@
     '@keyframes couro-raio{0%{opacity:0;transform:translateX(-110%) skewX(-16deg)}25%{opacity:1}100%{opacity:0;transform:translateX(310%) skewX(-16deg)}}',
     '.heroi.couro.is-relance:not(.is-afiada) .heroi-nome{background-image:linear-gradient(100deg,var(--gravado) 0%,var(--gravado) 40%,color-mix(in oklab,var(--couro-tinta) 80%,white) 47%,var(--couro-tinta) 50%,color-mix(in oklab,var(--couro-tinta) 60%,var(--couro-fundo)) 53%,var(--gravado) 60%,var(--gravado) 100%);background-size:320% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;animation:relance-cromo 950ms var(--curva-entrada) both}',
     '@keyframes relance-cromo{from{background-position:100% 0}to{background-position:0 0}}',
-    '@media (prefers-reduced-motion:reduce){.hero-dica .dica-vez{display:none}.hero-dica .dica-orig{opacity:1!important;transform:none!important}.couro-raio,.navalha .nv-estrela{animation:none!important;opacity:0}.heroi.couro.is-relance .heroi-nome{animation:none}}'
+    '@media (prefers-reduced-motion:reduce){.couro-vez{display:none}.couro-raio,.navalha .nv-estrela{animation:none!important;opacity:0}.heroi.couro.is-relance .heroi-nome{animation:none}}'
   ].join('\n');
   function garantirCssVivo() {
     if (D.querySelector('style[data-ritual-vivo]')) return;
@@ -508,7 +515,7 @@
       w: 0, hgt: 0, d: 1,
       nav: criarNavalha(300),
       mx: new Mola(0), my: new Mola(0), mr: new Mola(-4, 140, 0.85), mf: new Mola(1, 320, 0.72),
-      repouso: { x: 0, y: 0 }, passadas: 0, afiada: false,
+      repouso: { x: 0, y: 0 }, folga: 0, passadas: 0, afiada: false,
       visivel: true, rodando: false, tAnt: 0,
       teclado: 0, ultimaTecla: 0, sentidoTecla: -1,
       ant: null, vel: 0, arrasto: null, desvioY: 0,
@@ -518,7 +525,7 @@
     h.raio = D.createElement('div'); h.raio.className = 'couro-raio'; h.raio.setAttribute('aria-hidden', 'true');
     slot.appendChild(h.raio);
     slot.appendChild(h.nav.el);
-    h.vez = criarDicaVez(couro.querySelector('.hero-dica'));
+    h.vez = criarDicaVez(couro, h.nav.el);
 
     medirHero();
     // ritual vivo: a navalha abre do cabo e passa no couro; depois, demonstração em loop até o primeiro toque
@@ -661,6 +668,8 @@
     var inicioTexto = nome ? nome.offsetTop : h.hgt * 0.6;
     h.repouso.x = h.w / 2;
     h.repouso.y = lim((topo * 0.75 + inicioTexto) / 2, h.nav.A + 8, Math.max(h.nav.A + 8, h.hgt - h.nav.A));
+    // quanto a navalha pode andar para os lados nas cenas sem a ponta sair do couro (no celular, pouco)
+    h.folga = Math.max(0, Math.min(h.repouso.x, h.w - h.repouso.x) - h.nav.L / 2 - 8);
   }
 
   function medirHero() {
@@ -669,7 +678,7 @@
     h.canvas.width = Math.round(h.w * h.d); h.canvas.height = Math.round(h.hgt * h.d);
     h.base = gerarBase();
     h.marcas.tamanho(h.w, h.hgt, 1);                    // marcas em 1x: borradas de propósito, 4x mais baratas
-    h.nav.tamanho(lim(h.w * 0.74, 180, 380));
+    h.nav.tamanho(lim(h.w * (h.w < 600 ? 0.66 : 0.74), 180, 380));   // no celular, menor: sobra couro para a passada
     calcularRepouso();
     if (!h.arrasto || !h.arrasto.ativo()) voltarAoRepouso(true);
   }
@@ -746,7 +755,7 @@
   function entradaCena(t) {
     var h = hero, T = emDois(t), R = h.repouso, w = h.w;
     if (T >= 1580) return null;
-    var sx = R.x - w * 0.16, sy = R.y - Math.min(36, h.hgt * 0.05);
+    var amp = Math.min(w * 0.2, h.folga), sx = R.x - Math.min(w * 0.16, Math.max(0, h.folga - 12)), sy = R.y - Math.min(36, h.hgt * 0.05);
     var o = { x: sx, y: sy, r: -14, f: 1, a: 0, op: trecho(T, 0, 170), marca: false, alfa: 0 };
     if (T >= 170) { var p = curva.saida(trecho(T, 170, 340)); o.r = -14 + 10 * p; o.x = sx - 12 * p; }
     if (T >= 340) {
@@ -754,11 +763,11 @@
       o.r = -4 - 16 * curva.saida(trecho(T, 340, 520));   // o estalo empurra o cabo (ação e reação)
     }
     if (T >= 560 && T < 1240) {
-      var q = curva.meio(trecho(T, 560, 1240)), x0 = sx - 12, x1 = R.x + w * 0.2;
+      var q = curva.meio(trecho(T, 560, 1240)), x0 = sx - 12, x1 = R.x + amp;
       o.x = x0 + (x1 - x0) * q; o.y = sy + (R.y + 4 - sy) * q; o.r = -20 + 18 * q;
       o.marca = true; o.alfa = 0.05 + 0.1 * Math.sin(Math.PI * q);
     } else if (T >= 1240) {
-      var b = curva.saida(trecho(T, 1240, 1580)), xa = R.x + w * 0.2;
+      var b = curva.saida(trecho(T, 1240, 1580)), xa = R.x + amp;
       o.x = xa + (R.x - xa) * b; o.y = R.y + 4 - 4 * b; o.r = -2 - 2 * b; o.a = 1;
     }
     return o;
@@ -769,7 +778,7 @@
   function demoCena(T, c) {
     var h = hero, R = h.repouso, w = h.w;
     if (T >= 1580) return null;
-    var dir = R.x + w * 0.22, esq = R.x - w * 0.2;
+    var dir = R.x + Math.min(w * 0.22, h.folga), esq = R.x - Math.min(w * 0.2, h.folga);
     var o = { x: R.x, y: R.y, r: -4, f: 1, a: 1, op: 1, marca: false, alfa: 0 };
     if (T < 160) { var p = Math.sin(Math.PI * trecho(T, 0, 160)); o.x = R.x - w * 0.03 * p; o.r = -4 + 5 * p; }
     else if (T < 560) { var q = curva.meio(trecho(T, 160, 560)); o.x = R.x + (dir - R.x) * q; o.r = -4 + 7 * Math.sin(Math.PI * q); o.marca = true; o.alfa = 0.06 + 0.12 * Math.sin(Math.PI * q); }

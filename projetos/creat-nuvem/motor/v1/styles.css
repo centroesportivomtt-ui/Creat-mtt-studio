@@ -380,6 +380,8 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
 .heroi-exemplo { margin-top: calc(-1 * var(--esp-2)); color: var(--tinta-suave); }
 .heroi-bordao { font-size: var(--t-lead); max-width: 30ch; color: var(--tinta); }
 .heroi-sub { font-size: var(--t-corpo); max-width: 44ch; color: var(--tinta-suave); }
+.heroi-sub-demo { font-weight: 600; color: var(--tinta); }   /* só na demonstração: o pedido vai para a Creat */
+.heroi.couro .heroi-sub-demo { color: var(--couro-tinta); }
 
 /* couro: só quando o ritual montou o palco */
 .heroi.couro {

@@ -422,6 +422,16 @@
     W.addEventListener('scroll', talvez, { passive: true });
     W.addEventListener('creat:previa-fechada', disparar);
     setTimeout(disparar, 25000);
+    // Com a janela da sede na tela, o banner desce e sai da frente: a placa com o nome do negócio fica
+    // na parte de baixo da janela. Volta assim que a janela sai. Nada de Pixel/Clarity até a escolha.
+    var janela = $('#janela-sede');
+    if (janela && 'IntersectionObserver' in W) {
+      new IntersectionObserver(function (ents) {
+        var naTela = ents.some(function (e) { return e.isIntersecting; });
+        if (naTela && caixa.contains(D.activeElement)) return;     // quem está no banner pelo teclado não perde o foco
+        caixa.classList.toggle('is-recuado', naTela);
+      }, { threshold: 0.6 }).observe(janela);
+    }
   }
 
   /* ------------------------------------------------------------ suporte, barra e som */
@@ -471,9 +481,10 @@
   // O nome vai só no fragmento (#marca=), que o navegador não envia ao servidor, à CDN nem no Referer
   // (ADR-002). A query leva só parâmetros sem dado pessoal. O atributo src do iframe fica limpo.
   // marcaFicticia: nome dos sites-demonstração (fictício, público), que pode ir na query (?marca=).
-  function carregarSede(janela, nome, lite, aoCarregar, marcaFicticia) {
+  function carregarSede(janela, nome, lite, aoCarregar, marcaFicticia, etapa) {
     var ja = janela.querySelector('iframe'); if (ja) return ja;
     var q = ['modo=demo']; if (lite) q.push('lite=1');
+    if (typeof etapa === 'number' && etapa > 0 && etapa <= 5 && etapa % 1 === 0) q.push('etapa=' + etapa);   // a sede começa no passo da comanda
     if (marcaFicticia && !nome) q.push('marca=' + encodeURIComponent(cortar28(marcaFicticia)));
     var url = urlSede() + '?' + q.join('&') + (nome ? '#marca=' + encodeURIComponent(cortar28(nome)) : '');
     var carregando = el('div', { class: 'carregando sede-carregando', role: 'status' });
@@ -517,7 +528,7 @@
     var link = $('[data-esteira-abrir]', est), linkSr = $('[data-esteira-abrir-sr]', est);
     var nomeEl = $('[data-esteira-nome]', est), agoraEl = $('[data-esteira-agora]', est), barra = $('[data-esteira-barra]', est);
     var itens = $$('.esteira-lista li', est), botao = $('[data-ver-ao-vivo]', janela);
-    var fr = null, viaSede = false, visivel = false, relogio = 0, etapa = 0, manual = false, seuNome = '';
+    var fr = null, viaSede = false, esperandoSede = false, visivel = false, relogio = 0, etapa = 0, manual = false, seuNome = '';
     var PASSO = MOV_REDUZIDO.matches ? 9000 : 6000;
     var ALVO = location.origin && location.origin !== 'null' ? location.origin : '*';
     var atual = { marca: '', seu: false };
@@ -536,7 +547,7 @@
     function parar() { clearInterval(relogio); relogio = 0; }
     function andar() {
       parar();
-      if (viaSede || !visivel || D.hidden) return;
+      if (viaSede || esperandoSede || !visivel || D.hidden) return;
       relogio = setInterval(function () { pintar((etapa + 1) % (ESTEIRA_ULTIMA + 1)); }, PASSO);
     }
     function pronta() { return !!(fr && fr.contentWindow && fr.getAttribute('data-pronta') === '1'); }
@@ -591,12 +602,16 @@
     function abrir() {
       if (fr) return;
       var carregada = atual.marca;
+      // enquanto a sede carrega, a comanda segura o passo atual; a sede começa nesse mesmo passo (?etapa=),
+      // então a comanda nunca volta atrás. Trocar de negócio continua recomeçando do zero, de propósito.
+      esperandoSede = true; parar();
       fr = carregarSede(janela, atual.seu ? seuNome : '', true, function () {
+        esperandoSede = false; viaSede = true; parar();   // daqui em diante quem dita o passo é a sede
         fr.setAttribute('data-pronta', '1');
         var dica = $('[data-legenda-dica]', janela); if (dica) { dica.className = ''; dica.textContent = ' Arraste para girar a ilha e toque num personagem.'; }
         paraSede({ tipo: 'visivel', visivel: visivel });
         if (atual.marca !== carregada) { viaSede = true; parar(); paraSede({ tipo: 'marca', marca: atual.marca, reiniciar: true }); }
-      }, atual.seu ? '' : atual.marca);
+      }, atual.seu ? '' : atual.marca, etapa);
     }
     if (botao) botao.addEventListener('click', abrir);
     W.addEventListener('message', function (ev) {
@@ -604,6 +619,7 @@
       var d = ev.data;
       if (!d || d.creatSede !== 1 || d.tipo !== 'etapa' || typeof d.etapa !== 'number' || d.etapa % 1 || d.etapa < 0 || d.etapa > ESTEIRA_ULTIMA) return;
       viaSede = true; parar(); pintar(d.etapa);
+      janela.setAttribute('data-sede-pronta', '');   // a sede respondeu: o selo DEMONSTRAÇÃO dela está na tela, o da janela sai
     });
     if ('IntersectionObserver' in W) {
       var vio = new IntersectionObserver(function (ents) {
@@ -1249,8 +1265,21 @@
     });
   }
 
+  /* ------------------------------------------------------------ âncoras abaixo do cabeçalho fixo
+     O cabeçalho tem 1 linha no desktop (~64 px) e 2 no celular (~140 px). O CSS fixa 80 px como reserva;
+     aqui o scroll-padding acompanha a altura real, para o olho da seção (ex.: "Sede ao vivo") não ficar
+     debaixo dele quando alguém toca num link do menu. */
+  function ajustarAncoras() {
+    var barra = $('header.barra'); if (!barra) return;
+    var ajustar = function () { D.documentElement.style.scrollPaddingTop = Math.ceil(barra.getBoundingClientRect().height + 16) + 'px'; };
+    ajustar();
+    if ('ResizeObserver' in W) new ResizeObserver(ajustar).observe(barra);
+    else W.addEventListener('resize', ajustar);
+  }
+
   /* ------------------------------------------------------------ partida */
   function iniciar() {
+    ajustarAncoras();
     montarSuporte();
     montarSom();
     try {

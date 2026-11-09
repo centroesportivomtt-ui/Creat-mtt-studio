@@ -34,6 +34,8 @@
    O verbo "agendar" (botão "Agendar" do modo link_externo, briefing 7.2) não é
    alvo da regra; "agendamento" é (briefing seção 2: nunca "agendamento garantido").
    Chaves JSON (ex.: "agendamento", "agendaExterna") não são texto público.
+   6. Seção #sede da home: os textos de conteudo/home.json (sede.*) iguais no index.html, no
+      assets/vitrine.js (ESTEIRA_AGORA na mesma ordem) ou na sede/index.html.
    ===================================================================== */
 'use strict';
 const fs = require('fs');
@@ -389,6 +391,43 @@ function conferirTexto(onde, texto, opcoes) {
     if (existe(html) && ler(html).indexOf('REVISAO_JURIDICA_PENDENTE') === -1) falha(rel(html), 'falta a linha REVISAO_JURIDICA_PENDENTE no topo');
   }
   ok(`textos públicos: ${htmls.length} HTML e ${cont.length} arquivos de conteudo/ conferidos`);
+})();
+
+/* 6. "Veja quem monta o seu site" (#sede): o mesmo texto mora em três lugares — conteudo/home.json (fonte),
+      o HTML estático do index.html (antes do JS) e as strings do assets/vitrine.js (ESTEIRA_AGORA, legendas,
+      botões). Aqui eles não podem se afastar: cada texto de sede.* tem de aparecer igual no index.html ou no
+      vitrine.js (ou na sede/index.html, para os textos que a própria sede mostra), e "agora" tem de ser
+      idêntico a ESTEIRA_AGORA, na mesma ordem. */
+(function sedeTextos() {
+  const pj = path.join(RAIZ, 'conteudo', 'home.json'), ph = path.join(RAIZ, 'index.html'), pv = path.join(RAIZ, 'assets', 'vitrine.js');
+  if (!existe(pj) || !existe(ph) || !existe(pv)) return;
+  let sede; try { sede = JSON.parse(ler(pj)).sede; } catch (e) { return; }
+  if (!sede) { aviso('conteudo/home.json', 'sem o bloco sede'); return; }
+  const norm = (t) => t.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
+  const html = norm(ler(ph)), js = ler(pv);
+  const ps = path.join(RAIZ, '..', '..', 'sede', 'index.html'), sedeHtml = existe(ps) ? ler(ps) : '';
+  const m = /var ESTEIRA_AGORA = (\[[\s\S]*?\]);/.exec(js);
+  let agoraJs = null; try { agoraJs = m && vm.runInNewContext(m[1]); } catch (e) {}
+  if (!agoraJs) falha(rel(pv), 'não achei ESTEIRA_AGORA');
+  else if (JSON.stringify(agoraJs) !== JSON.stringify(sede.agora)) falha(rel(pv), 'ESTEIRA_AGORA diferente de conteudo/home.json sede.agora');
+  const nomes = [];
+  const conferir = (chave, v) => {
+    if (typeof v !== 'string' || !v.trim() || chave.charAt(0) === '_') return;
+    if (/\{\w+\}/.test(v)) { const [a, b] = v.split(/\{\w+\}/); if ((a && !js.includes(a)) || (b && !js.includes(b))) falha(rel(pj), `sede.${chave} ("${v}") não bate com o vitrine.js`); return; }
+    const t = v.trim();
+    if (!html.includes(norm(t)) && !js.includes(t) && !sedeHtml.includes(t)) falha(rel(pj), `sede.${chave} ("${t}") não aparece igual no index.html, no vitrine.js nem na sede`);
+    nomes.push(chave);
+  };
+  Object.keys(sede).forEach((k) => {
+    const v = sede[k];
+    if (Array.isArray(v)) v.forEach((x, i) => { if (typeof x === 'string') conferir(`${k}[${i}]`, x); else if (x && typeof x === 'object') Object.keys(x).forEach((kk) => conferir(`${k}[${i}].${kk}`, x[kk])); });
+    else if (v && typeof v === 'object') Object.keys(v).forEach((kk) => conferir(`${k}.${kk}`, v[kk]));
+    else conferir(k, v);
+  });
+  // os passos do index.html vêm em "<b>Nimbus</b> organiza o pedido": sem as tags, um por item de sede.passos
+  const lis = (ler(ph).match(/<span class="esteira-quem">([\s\S]*?)<\/span>/g) || []).map((x) => norm(x.replace(/<[^>]+>/g, '')).trim());
+  if (JSON.stringify(lis) !== JSON.stringify(sede.passos)) falha(rel(ph), 'passos da comanda (#esteira) diferentes de conteudo/home.json sede.passos');
+  ok(`sede viva: ${nomes.length} textos de conteudo/home.json iguais no index.html / vitrine.js / sede`);
 })();
 
 console.log(`\n${falhas ? falhas + ' falha(s)' : 'tudo certo'}${avisos ? ', ' + avisos + ' aviso(s)' : ''}`);

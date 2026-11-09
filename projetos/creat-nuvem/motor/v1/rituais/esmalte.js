@@ -212,13 +212,11 @@
     h.garrafa.removeAttribute('transform'); h.garrafa.removeAttribute('opacity');
     h.demoTraco.setAttribute('opacity', 0); h.demoTraco.setAttribute('d', 'M95 62 l0 0');
     h.gota.setAttribute('opacity', 0);
-    h.palco.classList.remove('is-em-cena');
   }
 
   function rodarCena(fn, fim) {
     var h = heroi;
     pararCena();
-    h.palco.classList.add('is-em-cena');
     var c = h.cena = {
       ctrl: C.cena(function (T) {
         if (h.cena !== c) return false;

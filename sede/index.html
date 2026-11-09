@@ -440,6 +440,8 @@ const MODO = (() => {
   return location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(h) || /(^|\.)(claude\.ai|claudeusercontent\.com)$/.test(h) ? 'local' : 'publico';
 })();
 const LITE = QS.get('lite') === '1';
+/* ?etapa=0..5 (só modo demo): a vitrine embute a sede no passo em que a comanda dela já está, para não voltar atrás */
+const ETAPA0 = (() => { const v = QS.get('etapa'); return /^[0-5]$/.test(v || '') ? +v : 0; })();
 if (MARCA){ document.title = 'Sede · ' + MARCA; const lm = document.getElementById('loadMsg'); if (lm) lm.textContent = 'Pendurando a placa de ' + MARCA + '.'; }
 if (MODO === 'demo') document.getElementById('demoTag').hidden = false;
 if (MODO === 'demo' && window.parent !== window) document.documentElement.classList.add('embutida');   // janela pequena na vitrine: menos painel, mais ilha
@@ -1857,18 +1859,26 @@ function estadoDemo(i){
    (sempre por limparMarca + fillText), reiniciar o ciclo e pausar o desenho quando a janela sai da tela. */
 const EMBUTIDA = window.parent !== window;
 const ALVO_PAI = location.origin && location.origin !== 'null' ? location.origin : '*';   // payload é só o número da etapa
-let pausadaPeloPai = false, demoI = 0, demoT = 0;
+let pausadaPeloPai = false, demoI = ETAPA0, demoT = 0, demoEspera = false;
 function avisarPai(msg){ if (EMBUTIDA) try { window.parent.postMessage(Object.assign({ creatSede:1 }, msg), ALVO_PAI); } catch {} }
 function demoPasso(){ const k = demoI++ % (DEMO_ETAPAS.length + 1); aplicarEstado(dePublico(estadoDemo(k), true)); avisarPai({ tipo:'etapa', etapa:k, total:DEMO_ETAPAS.length }); }
-function demoLigar(atraso){ clearTimeout(demoT); clearInterval(demoT); demoT = setTimeout(() => { demoPasso(); demoT = setInterval(demoPasso, RM ? 9000 : 6000); }, atraso == null ? 1500 : atraso); } // 1º passo depois da cena montar
-if (EMBUTIDA) window.addEventListener('message', ev => {
+function demoParar(){ clearTimeout(demoT); clearInterval(demoT); demoT = 0; }
+// janela fora da tela (pausadaPeloPai): o ciclo também para, e retoma quando ela volta (a comanda de fora para junto)
+function demoLigar(atraso){ demoParar(); if (pausadaPeloPai){ demoEspera = true; return; } demoEspera = false; demoT = setTimeout(() => { demoPasso(); demoT = setInterval(demoPasso, RM ? 9000 : 6000); }, atraso == null ? 1500 : atraso); } // 1º passo depois da cena montar
+// o protocolo com a página que embute só existe no modo demo (dado fictício); nos outros modos a sede não ouve ninguém
+if (EMBUTIDA && MODO === 'demo') window.addEventListener('message', ev => {
   if (ev.source !== window.parent || !(ev.origin === location.origin || location.origin === 'null')) return;
   const d = ev.data; if (!d || d.creatSede !== 1) return;
-  if (d.tipo === 'visivel') pausadaPeloPai = d.visivel === false;
+  if (d.tipo === 'visivel'){
+    const p = d.visivel === false; if (p === pausadaPeloPai) return;
+    pausadaPeloPai = p;
+    if (p){ if (demoT){ demoParar(); demoEspera = true; } }
+    else if (demoEspera) demoLigar(2500);
+  }
   else if (d.tipo === 'marca'){
     marcaAtual = limparMarca(d.marca); signTex.userData.redesenhar();
     document.title = marcaAtual ? 'Sede · ' + marcaAtual : 'Creat Nuvem HQ';
-    if (MODO === 'demo' && d.reiniciar){ demoI = 0; demoLigar(250); }
+    if (d.reiniciar){ demoI = 0; demoLigar(250); }
   }
 });
 function ligarModoPorta(){

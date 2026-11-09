@@ -197,7 +197,6 @@
     var h = heroi;
     pararCena();
     var lAnt = h.my.x;
-    h.palco.classList.add('is-em-cena');
     var c = h.cena = {
       fn: fn, fim: fim, poeira: 0,
       ctrl: C.cena(function (T, dt) {
@@ -213,7 +212,6 @@
       }, function () {
         if (h.cena !== c) return;
         h.cena = null;
-        h.palco.classList.remove('is-em-cena');
         h.my.fixar(0); h.flexAnt = 0;
         posar(0);
         if (c.fim) c.fim();
@@ -226,7 +224,6 @@
     var c = h.cena;
     h.cena = null;
     c.ctrl.parar();
-    h.palco.classList.remove('is-em-cena');
     // a mola segue da pose em que a cena parou (abaixo da trava: pegar na queda não vale como levantar)
     h.my.x = Math.min(h.my.x, 0.8); h.my.v = lim(h.my.v, -3, 3); h.my.alvo = h.my.x;
     if (h.my.x > 0.02) { h.my.k = 210; h.my.z = 0.42; h.my.alvo = 0; h.caindo = true; }
@@ -302,7 +299,7 @@
     var h = heroi;
     if (!h || h.levantada) return;
     if (h.diretor) h.diretor.parar();
-    if (h.cena) { var c = h.cena; h.cena = null; c.ctrl.parar(); h.palco.classList.remove('is-em-cena'); }
+    if (h.cena) { var c = h.cena; h.cena = null; c.ctrl.parar(); }
     h.levantada = true;
     h.teclas = 3;
     if (h.arrasto) h.arrasto.soltar();
