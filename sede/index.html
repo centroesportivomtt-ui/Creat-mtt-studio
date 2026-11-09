@@ -1956,7 +1956,7 @@ function frame(now){
 
 resize();
 if (DEBUG) window.__sede = { camera, controls, scene, byId, TEAM, entrarNaTela, sairDaTela, select, live, telas, telaEvento,
-  desenharTodas: () => telas.forEach(a => desenharTela(a.tela.ctx, a, 1)) };   // só com ?debug=1 (testes)
+  pickParte, desenharTodas: () => telas.forEach(a => desenharTela(a.tela.ctx, a, 1)) };   // só com ?debug=1 (testes)
 const o0 = overview();
 camera.position.copy(o0.pos).add(new V3(0, 6, 10)); controls.target.copy(o0.target);
 flyTo(o0.pos, o0.target, 2.2);
