@@ -943,7 +943,7 @@ const OF = {
       if (!ecoBuf.t || ecoBuf.t.length !== an.fftSize){ ecoBuf.t = new Uint8Array(an.fftSize); ecoBuf.f = new Uint8Array(an.frequencyBinCount); }
       an.getByteTimeDomainData(ecoBuf.t); an.getByteFrequencyData(ecoBuf.f);
       const n = ecoBuf.t.length; g.beginPath();
-      for (let i = 0; i < n; i++){ const x = 12 + i / (n - 1) * 188, y = 45 + (ecoBuf.t[i] - 128) / 128 * 34; i ? g.lineTo(x, y) : g.moveTo(x, y); }
+      for (let i = 0; i < n; i++){ const x = 12 + i / (n - 1) * 188, y = 45 + Math.max(-34, Math.min(34, (ecoBuf.t[i] - 128) / 128 * 34 * 8)); i ? g.lineTo(x, y) : g.moveTo(x, y); }   // ganho de tela ×8: o mix fica em torno de -30 dBFS
       g.lineJoin = 'round'; g.lineWidth = 4; g.strokeStyle = T.ink; g.stroke(); g.lineWidth = 2; g.strokeStyle = a.color; g.stroke();
       const B = ecoBuf.f.length, per = Math.max(1, Math.floor(B / 8 / 2));
       for (let b = 0; b < 8; b++){ let m = 0; for (let j = 0; j < per; j++) m = Math.max(m, ecoBuf.f[b*per + j] || 0); const h = 4 + m / 255 * 62;
@@ -1852,6 +1852,7 @@ const gravarPref = v => { try { localStorage.setItem(SOM_KEY, v ? '1' : '0'); } 
 const clampS = (v, a, b) => Math.max(a, Math.min(b, v));
 const f0De = a => a._f0 || (a._f0 = PENTA[Math.max(0, TEAM.indexOf(a)) % PENTA.length]);
 const K_VENTO = 9, K_CACH = 2.4, NOTA_PAD = .016;   // compensação do ruído filtrado (medida no analyser) e ganho de cada nota do pad
+const AMB_G = .7;   // ambiente inteiro ≈ -35 dBFS RMS (pico ≈ -23), sempre abaixo dos microssons; movimento reduzido: metade (-6 dB)
 
 function alvo(param, v, tau = .05, t){ const c = S.ctx; t = t == null ? c.currentTime : t; param.cancelScheduledValues(t); param.setValueAtTime(param.value, t); param.setTargetAtTime(v, t, tau); }
 function nGanho(v){ const g = S.ctx.createGain(); g.gain.value = v; return g; }
@@ -1875,7 +1876,10 @@ function criarSom(){
   const len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
   for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
   S.ruido = buf;
-  c.onstatechange = () => { if (c.state === 'running' && S.querLigado && !S.ligado && !document.hidden) aoRodar(); };
+  c.onstatechange = () => {
+    if (c.state === 'running' && S.querLigado && !S.ligado && !document.hidden) aoRodar();
+    else if (c.state === 'suspended' && S.querLigado && S.ligado && !document.hidden) c.resume().catch(() => {});   // ligou de novo enquanto um suspend antigo terminava
+  };
   return true;
 }
 
@@ -2013,7 +2017,7 @@ function teclasTick(){
   trab.sort((x, y) => (y.a === foco) - (x.a === foco) || x.v.dist - y.v.dist);
   trab.slice(0, 5).forEach(({ a, v }) => {   // só os 5 mais perto soam (o focado sempre)
     const ch = canal(a), f = a === foco;
-    alvo(ch.p.pan, f ? 0 : v.pan, .06); alvo(ch.gM.gain, f ? 0 : v.g, .06); alvo(ch.gP.gain, f ? 3.2 : 0, .06);   // .063 → ~.2 (-14 dBFS) no barramento PERTO
+    alvo(ch.p.pan, f ? 0 : v.pan, .06); alvo(ch.gM.gain, f ? 0 : v.g, .06); alvo(ch.gP.gain, f ? 2.4 : 0, .06);   // o focado sobe ~+8 dB no barramento PERTO (pico medido ≈ -19 dBFS, abaixo do teto de -18)
     const k = a._tec || (a._tec = { t:0, resto:0, esp:-1 });
     if (!k.t){ k.t = now + .05 + Math.random() * .4; k.resto = 0; }   // começou a trabalhar agora
     else if (k.t < now + .02) k.t = now + .02;                          // aba travada ou celular lento: retoma sem perder o ritmo
@@ -2067,14 +2071,14 @@ function acorde(){   // celebrate: Fmaj9 dedilhado no mesmo tick em que as telas
   const c = S.ctx, t = c.currentTime + .02, d = RM ? 1 : 2;
   [349.23, 440, 523.25, 659.25, 783.99].forEach((f, i) => {
     const p = nPanTemp(-.5 + i * .25, d + .3), ti = t + i * .04;
-    tom(ti, f, { tipo:'triangle', a:.006, d, pico:.016, dest:p }); tom(ti, f, { a:.006, d, pico:.016, dest:p, det:4 });
+    tom(ti, f, { tipo:'triangle', a:.006, d, pico:.013, dest:p }); tom(ti, f, { a:.006, d, pico:.013, dest:p, det:4 });   // pico medido ≈ -19,5 dBFS
   });
   if (!RM) for (let i = 0; i < 3; i++) sopro(t + Math.random() * .4, .015, { tipo:'highpass', f:3000, q:.7, pico:.07, dest: nPanTemp(Math.random() * 1.6 - .8, .6) });
 }
 function clique(dir = 1){
   const t = S.ctx.currentTime + .005;
-  sopro(t, .002, { tipo:'highpass', f:2500, q:.7, pico:.03, dest:S.mundo });
-  tom(t, dir > 0 ? 900 : 1300, { a:.002, d:.028, pico:.05, dest:S.mundo, f1: dir > 0 ? 1300 : 800, tf:.025 });
+  sopro(t, .002, { tipo:'highpass', f:2500, q:.7, pico:.02, dest:S.mundo });
+  tom(t, dir > 0 ? 900 : 1300, { a:.002, d:.028, pico:.04, dest:S.mundo, f1: dir > 0 ? 1300 : 800, tf:.025 });
 }
 function fala(a, texto){   // murmúrio de sílabas, só de quem está na tela (senão vira barulho a cada 6 s)
   if (a !== S.foco) return;
@@ -2083,7 +2087,7 @@ function fala(a, texto){   // murmúrio de sílabas, só de quem está na tela (
   o.type = 'square'; g.gain.setValueAtTime(.0001, t);
   for (let i = 0; i < n; i++){
     const ti = t + i * .075; o.frequency.setValueAtTime(f0 * Math.pow(2, (Math.random() * 6 - 3) / 12), ti);
-    g.gain.setValueAtTime(.0001, ti); g.gain.linearRampToValueAtTime(.05, ti + .008); g.gain.exponentialRampToValueAtTime(.0001, ti + .055);
+    g.gain.setValueAtTime(.0001, ti); g.gain.linearRampToValueAtTime(.035, ti + .008); g.gain.exponentialRampToValueAtTime(.0001, ti + .055);
   }
   o.connect(lp).connect(g).connect(S.perto); o.start(t); o.stop(t + n * .075 + .05); soltar(o, [lp, g]);
 }
@@ -2099,7 +2103,7 @@ function aoRodar(){
   if (S.ligado || !S.querLigado) return;
   S.ligado = true; S.pend = false; clearTimeout(S.tSusp);
   alvo(S.master.gain, .7, .15);   // ~0,6 s até o volume cheio
-  ambiente(); alvo(S.amb.gain, RM ? .5 : 1, .35);   // ambiente entra em ~1,2 s; movimento reduzido: -6 dB, sem bichos, acorde fixo
+  ambiente(); alvo(S.amb.gain, RM ? AMB_G / 2 : AMB_G, .35);   // ambiente entra em ~1,2 s; movimento reduzido: -6 dB, sem bichos, acorde fixo
   tema(); S.n = -1; foco(S.foco, true);
   clique(1);
   if (!S.iv) S.iv = setInterval(teclasTick, 40);
@@ -2318,18 +2322,19 @@ renderer.setAnimationLoop(frame);
 const startId = location.hash.includes('=') ? '' : location.hash.slice(1);
 if (byId[startId]) setTimeout(() => select(startId, true), 900);
 </script>
-<!-- som da sede (Eco): tabela evento → som → duração. Tudo sintetizado (Web Audio), nada antes de um gesto; pico ≤ -18 dBFS nos microssons.
-  evento (gancho)                         | som                                                                  | duração        | pico
-  teclas (state 'working', teclasTick 40ms)| rajadas de 3-9 toques: ruído passa-banda (1700+i·110 Hz) + "toc" na nota do agente; 1 "espaço" grave | 10-30 ms/toque | -24 dBFS (focado -14)
-  pacote (sendPacket)                     | ruído passa-banda 300›2200›500 Hz, panorama do remetente ao destino   | 0,95 s (0,35 RM)| -20 dBFS
-  chegada do pacote (callback)            | "plim": seno na nota do agente ×2                                    | 0,15 s         | -22 dBFS
-  Feito! (aplicarEstado / startRun)       | sino: nota ×2 + parcial 2,76 + oitava; feitos em sequência = melodia | 1,2 s          | -18 dBFS
-  pulo de evento (hop {som:true})         | boing 220›440›330 Hz com vibrato 18 Hz (mudo em movimento reduzido)  | 0,18 s         | -21 dBFS
-  celebrate (telas viram "Entregue")      | Fmaj9 dedilhado (F4 A4 C5 E5 G5) + 3 pops de confete                | 2,2 s (1 s RM) | -16 dBFS no total
-  clique de UI (botões, toque na cena)    | ruído 2 ms + seno 900›1300 Hz (fechar: 1300›800)                     | 30 ms          | -26 dBFS
-  entrar/sair da tela (foco)              | "porta": passa-baixa do mundo 18 k›900 Hz e -8 dB, teclas do agente no centro + sopro | 0,6 s | -30 dBFS
-  fala de quem está na tela (say)         | murmúrio: 1 sílaba a cada 2 letras (máx. 12), quadrada em passa-baixa | até 0,9 s      | -26 dBFS
-  ambiente (contínuo)                     | vento (ruído filtrado + LFO), cachoeira pela distância, pad Fmaj9›Dm9›Bbmaj7›Csus2 a cada 16 s que abre com a equipe trabalhando, pássaros (FM curta) de dia, grilos à noite; RM: -6 dB, sem bichos, acorde fixo | contínuo | ≈ -30 dBFS
+<!-- som da sede (Eco): tabela evento → som → duração. Tudo sintetizado (Web Audio), nada antes de um gesto, teto de -18 dBFS nos microssons.
+  Picos medidos na saída com um AudioWorkletNode (Chromium, câmera na visão geral; o ganho cai com a distância).
+  evento (gancho)                          | som                                                                   | duração          | pico medido
+  teclas (state 'working', teclasTick 40ms)| rajadas de 3-9 toques: ruído passa-banda (1700+i·110 Hz) + "toc" na nota do agente; 1 "espaço" grave; só os 5 mais perto, máx. 10 vozes | 10-30 ms/toque | -33 dBFS (na tela: -20)
+  pacote (sendPacket)                      | ruído passa-banda 300›2200›500 Hz, panorama do remetente ao destino    | 0,95 s (0,35 RM) | -25 dBFS
+  chegada do pacote (callback)             | "plim": seno na nota do agente ×2                                     | 0,15 s           | -31 dBFS
+  Feito! (aplicarEstado / startRun)        | sino: nota ×2 + parcial 2,76 + oitava; feitos em sequência = melodia  | 1,2 s            | -24 dBFS
+  pulo de evento (hop {som:true})          | boing 220›440›330 Hz com vibrato 18 Hz (mudo em movimento reduzido)   | 0,18 s           | -28 dBFS
+  celebrate (telas viram "Entregue")       | Fmaj9 dedilhado (F4 A4 C5 E5 G5) + 3 pops de confete                 | 2,2 s (1 s RM)   | -19,5 dBFS
+  clique de UI (botões, chips, etiquetas, toque na cena) | ruído 2 ms + seno 900›1300 Hz (fechar: 1300›800)       | 30 ms            | -26 dBFS
+  entrar/sair da tela (foco)               | "porta": passa-baixa do mundo 18 k›900 Hz e -8 dB, teclas do agente no centro + sopro | 0,6 s | -30 dBFS
+  fala de quem está na tela (say)          | murmúrio: 1 sílaba a cada 2 letras (máx. 12), quadrada em passa-baixa | até 0,9 s        | -26 dBFS
+  ambiente (contínuo)                      | vento (ruído filtrado + LFO), cachoeira pela distância, pad Fmaj9›Dm9›Bbmaj7›Csus2 a cada 16 s que abre com a equipe trabalhando (total_trabalhando), pássaros (FM curta) de dia, grilos à noite; RM: -6 dB, sem bichos, sem LFO, acorde fixo | contínuo | -35 dBFS RMS (RM -40)
 -->
 </body>
 </html>
