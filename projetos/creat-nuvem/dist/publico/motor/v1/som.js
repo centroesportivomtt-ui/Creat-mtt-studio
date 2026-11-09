@@ -6,8 +6,10 @@
  *  - Silêncio total até um gesto que ativa áudio (pointerup/touchend/click/keydown);
  *    ouvintes só saem quando o AudioContext está 'running'.
  *  - Microssons < 150 ms, ganho mestre ~0,25, rampas sem estalo.
- *  - Mudo guardado no aparelho em 'site:<slug>:som' = 'on' | 'off' (padrão 'on');
- *    na prévia só em memória. Com prefers-reduced-motion o ritual não emite passadas.
+ *  - Mudo guardado no aparelho em 'site:<slug>:som' = 'on' | 'off' (padrão 'on').
+ *    Na prévia (iframe da vitrine) vale a escolha da vitrine: lê e grava
+ *    localStorage['creat:som'], acompanha o evento 'storage' e o CustomEvent
+ *    'creat:som' da janela-mãe. Com prefers-reduced-motion o ritual não emite passadas.
  *  - Aba oculta: o contexto é suspenso; nada é enfileirado.
  *  - Sem AudioContext: no-op silencioso.
  *
@@ -33,14 +35,69 @@
   var ultimoChhk = 0;
 
   /* ---------- estado de mudo ---------- */
+  // Prévia: previa.js define CREAT_SITE.manual antes deste arquivo; o motor confirma
+  // com estado.previa no registrarModulo. Ali a chave é a da vitrine, 'creat:som'.
+  var CHAVE_VITRINE = 'creat:som';
+  var previa = !!(W.CREAT_SITE && W.CREAT_SITE.manual);
+  function mae() {
+    try { return W.parent && W.parent !== W && W.parent.document ? W.parent : null; } catch (e) { return null; }
+  }
+  function lerVitrine() {
+    // 1) a vitrine aberta em volta (mesma origem): o estado dela é a verdade, inclusive em memória
+    var m = mae();
+    try { if (m && m.CreatSom && typeof m.CreatSom.mudo === 'boolean') return m.CreatSom.mudo ? 'off' : 'on'; } catch (e) {}
+    // 2) a preferência gravada no aparelho (prévia aberta direto pelo link copiado)
+    try { return W.localStorage.getItem(CHAVE_VITRINE) === 'off' ? 'off' : 'on'; } catch (e) {}
+    return null;
+  }
   function lerEstado() {
+    if (previa) { var v = lerVitrine(); if (v) return v; return estado; }
     try { return armazem && armazem.ler('som') === 'off' ? 'off' : 'on'; } catch (e) { return 'on'; }
   }
   function gravarEstado(v) {
+    if (previa) {
+      var gravou = false;
+      try { W.localStorage.setItem(CHAVE_VITRINE, v); gravou = true; } catch (e) {}
+      // sem localStorage o evento 'storage' não chega à mãe: avisa direto
+      if (!gravou) { var m = mae(); try { if (m && m.CreatSom && m.CreatSom.silenciar) m.CreatSom.silenciar(v === 'off'); } catch (e) {} }
+      return;
+    }
     try { if (armazem) armazem.gravar('som', v); } catch (e) {}
   }
   var estado = 'on';
+  if (previa) estado = lerVitrine() || 'on';
   function ligado() { return estado === 'on'; }
+
+  function aplicarExterno(v) {
+    if (v !== 'on' && v !== 'off') return;
+    if (v === estado) return;
+    estado = v;
+    pintarBotao(D.getElementById('alternar-som'));
+    if (!ligado() && ctx && ctx.state === 'running' && ctx.suspend) ctx.suspend().catch(function () {});
+  }
+  // outra aba ou a própria vitrine gravou 'creat:som'
+  W.addEventListener('storage', function (e) {
+    if (!previa || e.key !== CHAVE_VITRINE) return;
+    aplicarExterno(e.newValue === 'off' ? 'off' : 'on');
+  });
+  // a vitrine em volta trocou o som (cobre também o caso sem localStorage)
+  function ouvirMae(e) {
+    var d = e && e.detail;
+    if (d && typeof d.mudo === 'boolean') aplicarExterno(d.mudo ? 'off' : 'on');
+  }
+  var maeOuvida = null;
+  function ligarMae() {
+    if (!previa || maeOuvida) return;
+    var m = mae(); if (!m) return;
+    try { m.addEventListener('creat:som', ouvirMae); maeOuvida = m; } catch (e) {}
+  }
+  // a prévia remonta (recarrega) a cada fragmento novo: não deixa ouvinte órfão na mãe
+  W.addEventListener('pagehide', function () {
+    if (!maeOuvida) return;
+    try { maeOuvida.removeEventListener('creat:som', ouvirMae); } catch (e) {}
+    maeOuvida = null;
+  });
+  ligarMae();
 
   /* ---------- contexto (só depois do gesto) ---------- */
   function garantirContexto() {
@@ -267,6 +324,8 @@
   if (W.CreatMotor && W.CreatMotor.registrarModulo) {
     W.CreatMotor.registrarModulo('som', function (ctx) {
       armazem = ctx.armazem;
+      if (ctx.estado && ctx.estado.previa) previa = true;
+      ligarMae();
       estado = lerEstado();
       iniciarBotao();
     });

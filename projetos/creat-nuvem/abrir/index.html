@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Escolha o plano e abra o seu negócio | Creat</title>
-<meta name="description" content="Veja o total antes de pagar, preencha 5 dados e pague a Abertura por Pix ou cartão. Mensalidade só com o site no ar. Sem fidelidade.">
+<meta name="description" content="Veja o total antes de pagar, informe WhatsApp, endereço e horário e pague a Abertura por Pix ou cartão. Mensalidade só com o site no ar.">
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light dark">
@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="pedido.css">
 <script defer src="../checkout.config.js"></script>
 <script defer src="../assets/som/creat-som.js"></script>
+<script defer src="../assets/endereco.js"></script>
 <script defer src="../assets/vitrine.js"></script>
 </head>
 <body data-pagina="abrir">
@@ -66,11 +67,11 @@
 
         <section class="bloco mt-5" aria-labelledby="campos-titulo">
           <h2 id="campos-titulo">Os dados do seu negócio</h2>
-          <p class="notas mb-4">O nome do negócio veio da prévia. Com o WhatsApp, o endereço e o horário, a equipe tem os 4 dados que fazem o relógio do prazo começar.</p>
+          <p class="notas mb-4">O relógio do prazo começa com 4 dados do pedido: o nome do negócio, que veio da prévia, o WhatsApp, o endereço e o horário. Seu nome e seu e-mail servem para a equipe falar com você e mandar o recibo. Eles não mudam o prazo.</p>
           <div class="campos">
             <div class="campo" data-se-falta="n">
               <label for="p-negocio">Nome do seu negócio</label>
-              <input id="p-negocio" type="text" autocomplete="organization" maxlength="60" placeholder="Exemplo: Barbearia do Zé">
+              <input id="p-negocio" type="text" autocomplete="organization" maxlength="40" placeholder="Exemplo: Barbearia do Zé">
               <span class="erro" role="alert" hidden></span>
             </div>
             <div class="campo" data-se-falta="k">
@@ -85,7 +86,7 @@
             </div>
             <div class="campo" data-se-falta="c">
               <label for="p-cidade">Cidade do negócio</label>
-              <input id="p-cidade" type="text" autocomplete="address-level2" maxlength="60" placeholder="Exemplo: Campinas">
+              <input id="p-cidade" type="text" autocomplete="address-level2" maxlength="40" placeholder="Exemplo: Campinas">
               <span class="erro" role="alert" hidden></span>
             </div>
             <div class="campo">
@@ -102,8 +103,8 @@
             </div>
             <div class="campo">
               <label for="p-endereco">Endereço completo</label>
-              <input id="p-endereco" type="text" autocomplete="street-address" maxlength="160" placeholder="Rua, número, bairro, cidade, UF e CEP" required aria-describedby="p-endereco-ajuda">
-              <span class="ajuda" id="p-endereco-ajuda">Aparece no site e no link de como chegar.</span>
+              <input id="p-endereco" type="text" autocomplete="street-address" maxlength="160" placeholder="Rua, número, bairro, cidade-UF, CEP" required aria-describedby="p-endereco-ajuda">
+              <span class="ajuda" id="p-endereco-ajuda">Exemplo: Rua das Flores, 120, Centro, Campinas-SP, 13010-000. Aparece no site e no link de como chegar.</span>
               <span class="erro" role="alert" hidden></span>
             </div>
             <div class="campo">
@@ -148,7 +149,7 @@
       <aside class="lateral" aria-label="Garantia e próximos passos">
         <section class="bloco-tracejado" aria-labelledby="garantia-titulo">
           <h2 id="garantia-titulo">Garantia de prazo</h2>
-          <p>Seu site fica pronto em até <span data-v="precos.prazoHoras" class="num-carregando"></span> h, contadas da confirmação do pagamento com os 4 dados preenchidos aqui. Passou do prazo, o 1º mês do plano é grátis.</p>
+          <p>Seu site fica pronto em até <span data-v="precos.prazoHoras" class="num-carregando"></span> h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp, endereço e horário. Passou do prazo, o 1º mês do plano é grátis.</p>
           <p class="notas mt-3">Ficam fora do relógio o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros. Logo e fotos enviados depois entram como melhoria em até 24 h.</p>
         </section>
         <section class="bloco" aria-labelledby="depois-titulo">
@@ -157,7 +158,7 @@
             <li>Você volta para a página do pedido e envia o pedido pronto no WhatsApp do Suporte Creat.</li>
             <li>A equipe confere o pagamento e responde no seu WhatsApp.</li>
             <li>O relógio de <span data-v="precos.prazoHoras"></span> h começa a contar.</li>
-            <li>Você acompanha a equipe na sede, com o nome do seu negócio na fachada.</li>
+            <li>Você recebe o andamento do pedido no WhatsApp. Na sede, vê uma demonstração de como a equipe trabalha, com o nome do seu negócio na fachada.</li>
             <li>Você recebe o site pronto, pede ajustes se quiser e aprova.</li>
             <li>O site entra no ar. A mensalidade começa neste dia.</li>
             <li>A equipe manda o passo a passo do domínio e do Perfil da Empresa no Google.</li>

@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Porta Aberta: a URL da sede carrega #marca= (nome do negócio; ?marca= só em link feito à mão). Sem referrer, o nome não sai para o jsDelivr nem para o Google Fonts. -->
+<meta name="referrer" content="no-referrer">
 <title>Creat Nuvem HQ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Sede 3D da Creat Nuvem, a agência de agentes do Claude Code.">
@@ -253,9 +255,16 @@ button{font:inherit;color:inherit}
     }
   },15000);
 </script>
-<!-- Three.js fixo em 0.160.0 (r160), do jsDelivr (npm "three"); addons da mesma versão. Trocar só os dois números juntos. -->
+<!-- Three.js fixo em 0.160.0 (r160), do jsDelivr (npm "three"); addons da mesma versão. Trocar só os dois números juntos.
+     "integrity" (SRI): sha384 de cada arquivo do tarball oficial three@0.160.0 do npm, que o jsDelivr serve sem alterar.
+     Trocou a versão ou passou a importar outro addon? Recalcule: openssl dgst -sha384 -binary <arquivo> | base64 -->
 <script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"},
+"integrity":{
+"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js":"sha384-61S/Nu32S3E5+n+KpCOTb2eRYps6fVKm+9Gz1QBvSePFthb46f063Aa/qe/lykFZ",
+"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js":"sha384-qlO/ZugKPxAQUAvTlQoo0QECzxJIJySZmCF/DHdb2Xn/hHndFwX/vfUAC9Hbk6LP",
+"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js":"sha384-oxPlnJSeUCYU9W3RMQswb4S/vFd4Bhxuy1Ffx0V2KJakWeb6n1gaqUtSE9Ic/F72",
+"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/geometries/RoundedBoxGeometry.js":"sha384-S52/WAm3DaIIFna675h5dmavqea/akLlPFtPdnzgWWhnz+/nMqR6PPsSXPOd8Gpw"}}
 </script>
 <script type="module">
 import * as THREE from 'three';
@@ -362,8 +371,11 @@ const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
          local (comportamento de antes: estado.json + banco do artefato). Sem ?modo: local no
          localhost/arquivo/artefato do Claude (uso do Marcos); publico em qualquer outro host. */
 const QS = new URLSearchParams(location.search);
+/* marca no fragmento (#marca=, usado pela vitrine: não vai ao servidor nem no Referer, ADR-002);
+   ?marca= continua valendo só para links feitos à mão. O fragmento #<agente> segue igual. */
+const HS = new URLSearchParams(location.hash.includes('=') ? location.hash.slice(1) : '');
 const MARCA = (() => {
-  const v = QS.get('marca'); if (v == null || /[<>]/.test(v)) return null; // marcação não é nome de negócio: placa atual
+  const v = HS.has('marca') ? HS.get('marca') : QS.get('marca'); if (v == null || /[<>]/.test(v)) return null; // marcação não é nome de negócio: placa atual
   let m = v.normalize('NFC').replace(/[^\p{L}\p{N} &.'-]/gu, '').replace(/\s+/g, ' ').trim();
   if (m.length > 28){ m = m.slice(0, 28); const i = m.lastIndexOf(' '); m = (i > 10 ? m.slice(0, i) : m).trim(); }
   return m || null;
@@ -1316,7 +1328,7 @@ const o0 = overview();
 camera.position.copy(o0.pos).add(new V3(0, 6, 10)); controls.target.copy(o0.target);
 flyTo(o0.pos, o0.target, 2.2);
 renderer.setAnimationLoop(frame);
-const startId = location.hash.slice(1);
+const startId = location.hash.includes('=') ? '' : location.hash.slice(1);
 if (byId[startId]) setTimeout(() => select(startId, true), 900);
 </script>
 </body>

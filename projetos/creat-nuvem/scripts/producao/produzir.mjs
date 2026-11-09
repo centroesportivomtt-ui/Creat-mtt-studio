@@ -225,7 +225,7 @@ export async function produzir(argv) {
   // 4. build
   const site = { home: a.home || homeDoPedido(pedido), url: a.url, rodape: !a['sem-rodape'] };
   const pastaDist = path.join(saida, 'dist', tenant.slug);
-  const b = buildSite({ tenant, destino: pastaDist, site });
+  const b = buildSite({ tenant, destino: pastaDist, saida, site });
   avisos.push(...b.avisos);
   etapa(4, 'build-site', 'ok', `${b.arquivos.length} arquivos em dist/${tenant.slug}/`);
 

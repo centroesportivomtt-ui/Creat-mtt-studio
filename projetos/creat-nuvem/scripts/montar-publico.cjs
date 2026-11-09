@@ -13,7 +13,8 @@
      /sede/index.html do site publicado (assets/vitrine.js, urlSede);
    - sede/estado.json (estado interno da agência) NUNCA pode ir ao ar
      (pendência da T6). Só vai sede/index.html e, se existir,
-     sede/estado-publico.json (vocabulário fechado, gerado por publicar-estado.cjs).
+     sede/estado-publico.json (vocabulário fechado, gerado por publicar-estado.cjs);
+     sem ele, grava um estado de espera válido, para a sede nunca pedir um arquivo que dá 404.
 
    Lista branca: só entra o que está em ENTRA. Qualquer pasta nova precisa
    ser acrescentada aqui de propósito. Sem dependências; Node 22.
@@ -59,7 +60,17 @@ for (const item of ENTRA) {
 }
 for (const n of SEDE) {
   const o = path.join(RAIZ_REPO, 'sede', n);
-  if (!fs.existsSync(o)) { if (n === 'estado-publico.json') console.log('aviso  sede/estado-publico.json ausente: a sede pública mostra o estado de espera'); continue; }
+  if (!fs.existsSync(o)) {
+    if (n !== 'estado-publico.json') continue;
+    // Sem o estado real, grava um estado de espera válido (sem fluxo, vocabulário fechado), para
+    // /sede/estado-publico.json nunca dar 404 no ar. Vence em 10 min na sede, o que dá o mesmo texto.
+    const espera = { versao: 1, atualizado_em: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'), mensagem: 'A equipe espera o próximo pedido.', fluxos: [] };
+    fs.mkdirSync(path.join(DESTINO, 'sede'), { recursive: true });
+    fs.writeFileSync(path.join(DESTINO, 'sede', n), JSON.stringify(espera, null, 2) + '\n');
+    copiados.push('sede/' + n);
+    console.log('aviso  sede/estado-publico.json ausente: gravei o estado de espera em dist/publico/sede/');
+    continue;
+  }
   copiar(o, path.join(DESTINO, 'sede', n), 'sede/' + n, copiados);
 }
 

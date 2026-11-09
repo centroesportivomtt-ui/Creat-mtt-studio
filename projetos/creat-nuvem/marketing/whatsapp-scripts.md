@@ -44,7 +44,7 @@ Atalho entre parênteses: é o que se digita depois da barra `/` no app.
 Se a inauguração estiver valendo, troque a primeira linha por: "Abertura: R$ {{precos.abertura.inauguracao.preco}} nas {{precos.abertura.inauguracao.vagasTotal}} primeiras vagas (depois R$ {{precos.abertura.padrao}}), uma vez." Confira as vagas restantes no `precos.json` antes de mandar.
 
 **R3 · Prazo e garantia** (`/prazo`)
-> O site fica pronto para você aprovar em até {{precos.prazoHoras}} h, contadas do pagamento confirmado com os 4 dados: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário.
+> O site fica pronto para você aprovar em até {{precos.prazoHoras}} h, contadas do pagamento confirmado com os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário.
 > Se a gente passar do prazo, o 1º mês do plano é grátis.
 > Domínio próprio e Google ficam fora do relógio, porque dependem de você e de terceiros.
 
@@ -54,9 +54,9 @@ Se a inauguração estiver valendo, troque a primeira linha por: "Abertura: R$ {
 > Logo e fotos, se tiver. Se não tiver, o site sai com a tipografia do modelo e você manda depois.
 
 **R5 · Pós-pagamento** (`/recebi`)
-> Recebi o seu pedido {id}, {nome}. Seu relógio de {{precos.prazoHoras}} h começa quando tiver os 4 dados: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário.
+> Recebi o seu pedido {id}, {nome}. Seu relógio de {{precos.prazoHoras}} h começa quando tiver os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. Seu nome e seu e-mail são para contato e recibo e não mudam o prazo.
 > Vou conferir o pagamento e te aviso por aqui quando o relógio começar.
-> Para acompanhar a equipe trabalhando: {link da sede}
+> Para ver como a equipe trabalha (demonstração, com o nome do seu negócio na fachada): {link da sede}
 
 **R6 · Pedido de materiais** (`/materiais`)
 > Para deixar o site com a cara do seu negócio, mande por aqui, se tiver: o logo, até 6 fotos (fachada, espaço, trabalho pronto) e a lista de serviços com preço e duração.

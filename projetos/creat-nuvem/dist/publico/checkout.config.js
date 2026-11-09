@@ -10,6 +10,13 @@
    "Link de pagamento em configuração" e scripts/checar-placeholders.cjs
    falha o deploy. Para liberar, o Marcos troca cada marcador pelo valor
    real (link do Asaas, link da Cakto, número 55 + DDD + número).
+
+   Link da inauguração: este arquivo é público, então quem guardar o link
+   pode pagar o preço de inauguração depois do fim. No Asaas, crie o link com
+   limite (Cobranças > Links de pagamento > Novo link > "Quantidade máxima de
+   pagamentos" = vagas restantes, e data de encerramento). Quando a inauguração
+   acabar, desative o link no Asaas e volte aberturaInauguracao para o marcador:
+   scripts/atualizar-vagas.cjs avisa e a rotina diária falha até isso ser feito.
    ===================================================================== */
 (function () {
   'use strict';
@@ -62,6 +69,9 @@
     posthogChave: 'phc_CHAVE_PUBLICA_DO_PROJETO',
     posthogHost: 'https://eu.i.posthog.com',
     posthogScript: 'https://cdn.jsdelivr.net/npm/posthog-js@1.447.3/dist/array.no-external.js',
+    // SRI do arquivo acima (sha384 do tarball oficial posthog-js@1.447.3 no npm). Trocou a versão? Recalcule:
+    // npm pack posthog-js@<versão> && tar xzf posthog-js-*.tgz && openssl dgst -sha384 -binary package/dist/array.no-external.js | base64
+    posthogIntegridade: 'sha384-YmnhYWsqUnLKK4nAaNG2wrvyUx1fnHXxTyfegNDVC4MaQhFVdiAv6WtuHY27jb5F',
     metaPixel: 'ID_DO_PIXEL_META',
     clarity: 'ID_DO_PROJETO_CLARITY',
     posthogValida: function (v) { return typeof v === 'string' && /^phc_[A-Za-z0-9]{20,}$/.test(v); },

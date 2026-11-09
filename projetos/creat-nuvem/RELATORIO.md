@@ -1045,3 +1045,136 @@ Também em formato de exemplo, mas sem travar: `posthogChave`, `metaPixel`, `cla
 - **T6:** sem `?modo`, a sede assume `local` em localhost, `file:` e no artefato do Claude, para não quebrar o modo ao vivo de hoje. Nos outros hosts assume `publico`.
 - **T10:** criei `scripts/montar-publico.cjs`, arquivo fora da lista da T10. O motivo: a sede mora fora da pasta do projeto, e `sede/estado.json` não pode ir ao ar. Publicar a pasta inteira levaria `docs/`, `marketing/`, `node_modules/` e `RELATORIO.md`. O `wrangler.toml` aponta para `dist/publico/` (montado a partir da pasta), não para a pasta crua. No `.gitignore` acrescentei também `.env*` e `.wrangler/`.
 - **T10 × T9:** o `.gitignore` da T9 mantém `dist/publico/` versionado. A decisão da T10 é que `dist/` fica fora do git (ver pendências da T10).
+
+## Correções do QA · Trilho · 09/11/2026 (rotina de vagas, sede, link da inauguração, referrer)
+- **O que fiz:**
+  1. **[alto] Preço de inauguração caía em 48 h.** Criei a rotina diária `.github/workflows/rotina-vagas.yml`, que roda às 00:07 de Salvador e também por botão (`workflow_dispatch`). Ela faz quatro passos em ordem: roda `atualizar-vagas.cjs --rotina` (novo dia + carimbo), roda `checar.cjs`, faz commit dos dois JSON e publica com `wrangler@4.158.0 deploy`. Se algum passo falha, abre ou comenta a issue "Rotina de vagas falhou", e o GitHub manda e-mail. As actions estão fixadas por SHA e o Node em 22.12.0. A rotina nasce **desligada** e só roda com a variável `ROTINA_VAGAS_ATIVA=true`. Nada foi publicado. O commit diário também evita que o GitHub desligue o agendamento depois de 60 dias sem atividade.
+  2. **[alto] Promessa de acompanhar o próprio pedido na sede.** Fui pela opção 2 do QA (texto honesto), porque o estado ao vivo depende da sessão local da agência e não roda em CI. Mudei três textos. `/obrigado/`: a legenda e o item "O que esperar" agora dizem que a sede é demonstração e que o andamento chega no WhatsApp. `/abrir/` passo 4: idem. `conteudo/termos.md`: tirei o "link de acompanhamento". As cópias em `conteudo/abrir.json`, `conteudo/obrigado.json` e `marketing/whatsapp-scripts.md` acompanharam.
+  3. **[médio] 404 do `estado-publico.json`.** Quando o estado real não existe, `montar-publico.cjs` grava um estado de espera válido em `dist/publico/sede/`: `versao 1`, sem fluxo, com a mensagem "A equipe espera o próximo pedido.".
+  4. **[médio] Link da inauguração pagável depois do fim.** `atualizar-vagas.cjs` avisa sempre que a inauguração acaba (0 vaga ou `off`) e mostra o caminho para desativar o link no Asaas. Com `--rotina`, sai com código 2 se o link real continuar em `checkout.config.js`. Nesse caso a rotina publica do mesmo jeito (a página já mostra o preço padrão) e falha no fim, para gerar o alerta. O comentário de `checkout.config.js` explica como criar o link com limite de pagamentos e data de encerramento.
+  5. **[médio] Nome do negócio vazava no Referer.** `sede/index.html` ganhou `<meta name="referrer" content="no-referrer">`. No `_headers`, o global passou a `strict-origin-when-cross-origin` e `/sede/*` desliga o global (`! Referrer-Policy`) e aplica `no-referrer`. Os hashes da CSP da sede não mudaram, porque a meta não é script.
+- **Arquivos:** `.github/workflows/rotina-vagas.yml` (novo), `scripts/atualizar-vagas.cjs`, `scripts/montar-publico.cjs`, `checkout.config.js` (só comentário), `_headers`, `obrigado/index.html`, `abrir/index.html`, `conteudo/termos.md`, `conteudo/abrir.json`, `conteudo/obrigado.json`, `marketing/whatsapp-scripts.md`, `../../sede/index.html`.
+- **Como verificar:**
+  - `node scripts/checar.cjs` e `npm test` dão 0, os dois verificados.
+  - `node scripts/montar-publico.cjs`: depois dele, `dist/publico/sede/estado-publico.json` existe.
+  - Sirva `dist/publico` e abra `/sede/index.html?marca=Barbearia%20do%20Ze&modo=publico`. Com o three.js servido pelo `node_modules`, porque o jsDelivr é bloqueado no sandbox, deu zero erro de console, `estado-publico.json` com 200, o texto do estado de espera, e as requisições ao jsDelivr saíram sem Referer.
+  - Rotina numa cópia: `node scripts/atualizar-vagas.cjs --raiz <cópia> --rotina` dá 0. Com a inauguração desligada e um link `https://www.asaas.com/...` em `aberturaInauguracao`, dá 2 com o aviso.
+  - `vendeu` na última vaga desliga a inauguração e avisa.
+- **Pendente (Marcos):**
+  - Ligar a rotina. Em GitHub > repositório > Settings > Secrets and variables > Actions, crie dois segredos (`CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID`) e a variável `ROTINA_VAGAS_ATIVA=true`. Depois teste uma vez em Actions > Rotina de vagas > Run workflow.
+  - Enquanto houver marcador no `checkout.config.js`, o deploy falha de propósito e a rotina abre a issue.
+  - Com proteção de branch na `main`, libere o push do `github-actions`.
+  - O contador da inauguração só desce com `--vendeu`. A cada pedido pago: `git pull`, `node scripts/atualizar-vagas.cjs --vendeu`, depois commit e push. Próximo passo sugerido: o `produzir.mjs` chamar `--vendeu` sozinho, ou um webhook do Asaas.
+  - Criar o link da inauguração no Asaas com quantidade máxima de pagamentos e data de encerramento, e desativá-lo quando a inauguração acabar.
+  - Publicar o estado ao vivo da sede (`publicar-estado.cjs` a cada 1 a 2 min, com o id do pedido) continua pendente. Quando existir, os textos de `/obrigado/` e `/abrir/` podem voltar a prometer acompanhamento na sede.
+  - Não verificado: a rotina rodando de verdade no GitHub, porque não há segredos e nada foi publicado; o `_headers` aplicado pela Cloudflare, porque só foi conferido o arquivo.
+
+---
+
+## Correções do QA (Pixel, 09/11/2026)
+
+**O que foi feito**
+1. **[alto] Rolagem horizontal em /abrir/ no celular.** As colunas do grid agora são `minmax(0,1fr)` (`.grade-pedido`, `.horarios`, `.dia`, `.dia-horas`, `.dia-hora`), os `input[type=time]` têm `min-width:0` e abaixo de 360 px "Abre" e "Fecha" empilham. Resultado medido com emulação mobile (isMobile): Galaxy S9+ e iPhone SE 320/320, iPhone 13 390/390, Pixel 7 412/412 (scrollWidth/viewport), sem erro de console.
+2. **[baixo] Nome com 60 caracteres e limite de 40.** `maxlength="40"` no `#nome` e no `#cidade` da home e no `#p-negocio` e `#p-cidade` de /abrir/ (a regra do JS já era 40). Contador agora para em "40 de 40".
+3. **[baixo] SRI e CSP.** PostHog carrega com `integrity` sha384 (`posthogIntegridade` em `checkout.config.js`, passado em `carregarScript`). Importmap da sede com chave `integrity` para three.module.js e os 3 addons usados. CSP: `script-src` só libera `cdn.jsdelivr.net/npm/posthog-js@1.447.3/` e `/npm/three@0.160.0/`, nunca o CDN inteiro; hashes dos scripts inline da sede recalculados no `_headers` da fonte. Hashes tirados do tarball oficial do npm (o jsDelivr serve esses arquivos sem alterar).
+4. **[alto] Endereço aceito na vitrine e recusado pela produção.** Criei `assets/endereco.js` (UMD), a **regra única** do endereço: a vitrine valida com ela antes do pagamento e `scripts/producao/lib/pedido.cjs#partesEndereco` passou a usar a mesma função. Exige CEP e UF; aceita o prefixo "CEP"/"CEP:" e "cidade/UF" (também UF minúscula grudada na cidade). Mensagens dizem o que falta ("Falta o CEP…", "Falta a sigla do estado…") e o campo mostra o exemplo `Rua das Flores, 120, Centro, Campinas-SP, 13010-000`. Testes novos em `producao.test.mjs`.
+
+**Arquivos tocados**
+- `abrir/pedido.css`, `abrir/index.html`, `index.html`, `assets/endereco.js` (novo), `assets/vitrine.js`, `checkout.config.js`, `_headers`, `conteudo/abrir.json`, `scripts/producao/lib/pedido.cjs`, `scripts/testes/producao.test.mjs`
+- fora do projeto: `sede/index.html` (importmap com SRI)
+
+**Como verificar**
+- `npm test` em `projetos/creat-nuvem`: 42 de 42 passando. `npm run checar`: tudo certo.
+- Celular: abrir `/abrir/#plano=vitrine&k=barbearia&n=Barbearia%20do%20Z%C3%A9&c=Campinas` em Playwright com `devices['Galaxy S9+']`, `['iPhone 13']`, `['Pixel 7']` e conferir `document.documentElement.scrollWidth === innerWidth`.
+- Endereço: em /abrir/, "Rua das Flores, 120, Centro, Campinas" bloqueia com "Falta o CEP"; "…, Campinas/SP, CEP 13010-000" passa.
+- Sede: `node .claude/skills/verificacao-visual/olhar.cjs sede/index.html --cdn-local` sem erro (SRI conferido contra o pacote do npm).
+
+**Pendente**
+- Conferir os hashes SRI contra o jsDelivr de verdade antes do deploy (o sandbox não alcança o CDN): `curl -s https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js | openssl dgst -sha384 -binary | base64` deve dar o valor do importmap (idem para os addons e o posthog). Se algum divergir, a sede não carrega o 3D: avaliar copiar o three para o próprio domínio (self-host), que elimina o CDN de vez.
+- Rodar `scripts/montar-publico.cjs` de novo para o `dist/publico` levar `assets/endereco.js` e o `_headers` novo.
+- `checar-placeholders` segue bloqueando o deploy pelos marcadores de link Cakto e WhatsApp do Suporte (dados do dono, anterior a esta tarefa).
+- Detalhe visual visto nos prints, não corrigido aqui: a caixinha "Aberto" de cada dia tem uma sombra em L deslocada que parece um traço solto; vale o designer olhar.
+
+## Correção QA · nome do negócio fora da query string da sede (Órbita, 2026-11-09)
+
+**O que foi feito.** A vitrine (home e `/obrigado/`) passava o nome digitado em `?marca=` ao carregar a sede no iframe, e o nome ia para o servidor/CDN antes de qualquer consentimento (contra a ADR-002). Agora o nome vai no fragmento: `sede/index.html?modo=demo&lite=1#marca=...`. O fragmento não é enviado ao servidor nem no Referer. A sede lê `#marca=` primeiro e mantém `?marca=` só para links feitos à mão. O deep link de agente (`#frontend`) continua igual: hash com `=` não é tratado como id de agente.
+
+**Arquivos tocados.**
+- `assets/vitrine.js` (`carregarSede`): `marca` sai da query e vai para `#marca=`.
+- `/sede/index.html` (raiz do repo): lê `#marca=` (`HS`) antes de `?marca=`; `startId` ignora hash com `=`; comentário do topo atualizado.
+- `_headers`: hash CSP do script inline da sede atualizado (copiado do que `montar-publico.cjs` gerou).
+- `dist/publico/` remontado com `node scripts/montar-publico.cjs`.
+
+**Como verificar.** `npm test` (0 falhas). Playwright em 1440x900 servindo `dist/publico/`: digitar "José Pereira Cabeleireiro" em `#nome` e rolar até a sede → a única requisição da sede é `GET /sede/index.html?modo=demo&lite=1`. Nenhuma requisição contém o nome. O iframe fica em `...#marca=Jos%C3%A9%20Pereira%20Cabeleireiro`, o título é "Sede · José Pereira Cabeleireiro", a placa 3D mostra o nome e o console não tem erros. `/sede/index.html?modo=demo&marca=Teste%20Manual#frontend` continua aplicando a marca e abrindo a ficha do Pixel.
+
+**Pendente.** Depois que a pessoa seleciona um agente, a sede troca o hash por `#<agente>` e o `#marca=` sai da URL do iframe. A placa continua certa na sessão, mas um recarregamento manual do iframe voltaria à placa padrão. Isso tem impacto baixo, porque o iframe não é recarregado no fluxo normal. O `/obrigado/` usa a mesma função e não foi percorrido separadamente no navegador.
+
+---
+
+## Correção do QA: mudo da vitrine vale na prévia (Eco, 09/11/2026)
+
+**O que foi feito**
+- **[médio] A prévia tocava o som do ritual com "Som desligado".** Em `motor/v1/som.js`, quando o site roda como prévia (`CREAT_SITE.manual`, confirmado por `estado.previa`), o mudo deixa de ficar só em memória e passa a seguir a escolha da vitrine:
+  - ao abrir, lê `CreatSom.mudo` da janela-mãe (mesma origem; vale até sem localStorage) e, sem mãe, `localStorage['creat:som']`;
+  - acompanha o evento `storage` da chave `creat:som` e o `CustomEvent('creat:som')` da janela-mãe. Ao silenciar, suspende o AudioContext; o ouvinte na mãe sai no `pagehide`, para não ficar órfão quando a prévia recarrega;
+  - o botão de som da prévia grava em `creat:som`, e a vitrine atualiza o rótulo pelo `storage`. Sem localStorage, chama `parent.CreatSom.silenciar()` direto.
+- Sites de cliente publicados não mudam: continuam em `site:<slug>:som`, e o mudo da vitrine não vaza para eles.
+- `dist/publico` montado de novo (`scripts/montar-publico.cjs`).
+
+**Arquivos tocados**
+- `motor/v1/som.js` (e a cópia em `dist/publico/motor/v1/som.js`)
+
+**Como verificar**
+- Na home, tocar em "Som ligado" para ficar "Som desligado". Depois abrir a prévia de Barbearia: no iframe, `CreatMotorSom.mudo === true` e `#alternar-som` com `aria-pressed="false"`. Gesto + `ritual:afiada`/`ritual:passada` não criam fonte de som; só conta a amostra muda de destrave, que é sempre silenciosa.
+- Com a prévia aberta, `CreatSom.silenciar(false)` na mãe faz a prévia passar a `mudo === false`, e o `tiiing` toca (8 fontes). O botão da prévia grava `creat:som=off`, e a vitrine passa a "Som desligado".
+- Link direto `previa/#k=barbearia&n=Teste` no mesmo navegador, com `creat:som=off`, abre mudo.
+- Teste automatizado com Playwright (servidor local, contagem de `createOscillator`/`createBufferSource`): todos os passos acima passaram, sem erro de console. `npm test`: 42 de 42.
+
+**Pendente**
+- Não testei em Safari/iOS de verdade. O caminho com localStorage bloqueado (modo privado antigo) só foi conferido por leitura do código.
+
+## Correção QA · servidor da sede e trava do --destino (Forja, 2026-11-09)
+
+**O que foi feito.**
+- `sede/servidor.cjs`: escuta só em `127.0.0.1` por padrão (`HOST=0.0.0.0` abre para a rede de propósito e imprime um aviso). Serve só uma lista branca: `/`, `/index.html`, `/estado.json` (da memória) e `/estado-publico.json` se existir. O resto dá 404, inclusive `servidor.cjs` e `publicar-estado.cjs`. URL malformada (`/%E0%A4%A`) devolve 400 e o processo continua no ar. A checagem de pasta usa `path.relative` em vez de `startsWith`. Só aceita GET e HEAD (os outros dão 405) e manda `nosniff`.
+- `scripts/producao/build-site.cjs`: nova `checarDestino` roda antes do `rm -rf`. Recusa `--destino` sem valor e recusa a raiz do disco, a home, o cwd, a raiz do projeto, a pasta de saída (`--saida`/`CREAT_SAIDA`), `sites/` ou um pai de qualquer uma delas. Também recusa qualquer coisa dentro de `sites/`, um symlink ou arquivo e uma pasta com arquivos que não seja um build anterior (o marcador é `tenant.json` + `index.html` + `motor/v1/`). Pasta nova, pasta vazia e rebuild por cima de um build continuam funcionando. A recusa sai com código 1 e cita `--destino`.
+
+**Arquivos tocados.** `/sede/servidor.cjs` (raiz do repo), `scripts/producao/build-site.cjs`, `scripts/producao/produzir.mjs` (passa `saida` ao `buildSite`), `scripts/testes/producao.test.mjs` (novo teste "build-site recusa --destino perigoso e não apaga nada").
+
+**Como verificar.**
+- `npm test` em `projetos/creat-nuvem`: 43 de 43 passando.
+- Para a sede, rode `node sede/servidor.cjs 8123` e depois `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8123<rota>`. Resultado esperado: `/` e `/estado.json` dão 200, `/servidor.cjs` dá 404, `/%E0%A4%A` dá 400 (e uma requisição seguinte para `/` ainda dá 200) e `/../CLAUDE.md` dá 404. O log mostra `http://127.0.0.1:8123`.
+- `node scripts/producao/build-site.cjs --tenant <t.json> --destino .` termina com código 1 e a mensagem "recusado". Nada é apagado.
+
+**Pendente.**
+- `projetos/loja/produtos/agencia/sede/servidor.cjs` (cópia do pacote à venda) já escuta em loopback e trata URL malformada. Mas ainda serve qualquer arquivo de dentro de `sede/`, e dá para aplicar a mesma lista branca se o pacote só precisar da página e do estado.
+- `exportar-sair.cjs` passa pela mesma trava, mas não passa `saida`. A pasta `<slug>-sair/<slug>` fica protegida pelo marcador.
+
+---
+
+## Correção do QA: contagem de dados do pedido unificada (Verbo, 09/11/2026)
+
+**O que foi feito**
+- **[baixo] "5 dados" e "4 dados" no mesmo formulário.** Agora a regra é uma só em todo texto público: o relógio do prazo começa com **4 dados do pedido** (nome do negócio, WhatsApp que recebe os pedidos, endereço e horário). O nome do responsável e o e-mail aparecem como campos de contato e recibo que **não mudam o prazo**.
+- A meta description de `/abrir/` deixou de contar campos: "Veja o total antes de pagar, informe WhatsApp, endereço e horário e pague a Abertura por Pix ou cartão. Mensalidade só com o site no ar." (136 caracteres). "Sem fidelidade" saiu para caber em 155; a informação continua na página e nos termos.
+- O texto de abertura dos campos e o bloco do prazo em `/abrir/` agora listam os 4 dados e explicam o papel de nome e e-mail.
+- O FAQ "E se passar do prazo?" (home e `faq.json`), os termos (seção de prazo) e as respostas R3 e R5 do WhatsApp foram alinhados com a mesma redação.
+- `dist/publico/` remontado com `node scripts/montar-publico.cjs`.
+
+**Arquivos tocados**
+- `conteudo/abrir.json`, `abrir/index.html`
+- `conteudo/faq.json`, `index.html` (FAQ estático)
+- `conteudo/termos.md`
+- `marketing/whatsapp-scripts.md`
+- `dist/publico/` (cópia montada)
+
+**Como verificar**
+- `grep -rn "5 dados" --include=*.html --include=*.json --include=*.md . | grep -v node_modules` não acha nada em texto público.
+- Abrir `/abrir/`: a nota abaixo de "Os dados do seu negócio" e o bloco do prazo citam os mesmos 4 dados; a meta description não fala em número de campos.
+- Home, FAQ "E se passar do prazo?", e `/termos/`: mesma lista de 4 dados e a frase sobre nome e e-mail.
+- `npm test`: 43 de 43. `node scripts/checar.cjs`: tudo certo.
+
+**Pendente**
+- O texto dos termos mudou só para esclarecer (nenhuma obrigação nova). Mesmo assim, ele precisa de revisão jurídica antes de publicar. O jurídico também precisa decidir se a mudança pede `termos-v2` ou se pode continuar como `termos-v1`.
+- As respostas rápidas já cadastradas no WhatsApp Business precisam ser trocadas à mão pelas novas R3 e R5.
+- Não percorri `/abrir/` no navegador nem rodei `verificacao-visual`. Só mudou texto, sem alterar layout; o QA deve confirmar se o parágrafo maior dos campos quebra bem no celular.

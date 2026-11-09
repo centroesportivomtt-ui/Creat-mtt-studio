@@ -10,7 +10,8 @@
 .barra-simples .cx{flex-wrap:nowrap}
 .barra-simples .voltar{min-height:var(--alvo);padding:8px 12px;font-size:14px;white-space:nowrap}
 @media (max-width:400px){.barra-simples .marca span{font-size:19px}}
-.grade-pedido{display:grid;gap:var(--r5);margin-top:var(--r6)}
+.grade-pedido{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--r5);margin-top:var(--r6)}
+.grade-pedido > *,.horarios > *{min-width:0}
 .bloco{padding:var(--r5);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio)}
 .bloco + .bloco{margin-top:0}
 .bloco-tracejado{padding:var(--r5);border:var(--borda) dashed var(--linha);border-radius:var(--raio)}
@@ -49,16 +50,18 @@
 .resumo-erros{padding:12px 16px;border:var(--borda) solid var(--alerta);border-radius:var(--raio-p);color:var(--alerta);font-weight:700}
 
 /* horário de funcionamento */
-.horarios{display:grid;gap:8px}
-.dia{display:grid;gap:8px;padding:10px 12px;border:var(--borda) solid var(--linha);border-radius:var(--raio-p);background:var(--fundo)}
+.horarios{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.dia{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0;padding:10px 12px;border:var(--borda) solid var(--linha);border-radius:var(--raio-p);background:var(--fundo)}
 .dia.fechado{background:transparent;border-style:dashed}
 .dia-cab{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .dia-nome{font-weight:800}
 .dia-aberto{display:inline-flex;align-items:center;gap:8px;min-height:var(--alvo);padding:0 4px;font-weight:700;cursor:pointer}
 .dia-aberto input,.aceite input{width:24px;height:24px;margin:0;accent-color:var(--sol-tinta);flex:none}
-.dia-horas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.dia-hora{display:grid;gap:4px;font-size:var(--t-nota);font-weight:700}
-.dia-hora input{min-height:var(--alvo);width:100%;padding:0 10px;border:var(--borda) solid var(--linha);border-radius:10px;background:var(--papel);color:var(--tinta);font-size:16px}
+.dia-horas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.dia-hora{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0;font-size:var(--t-nota);font-weight:700}
+.dia-hora input{min-height:var(--alvo);width:100%;min-width:0;max-width:100%;box-sizing:border-box;padding:0 10px;border:var(--borda) solid var(--linha);border-radius:10px;background:var(--papel);color:var(--tinta);font-size:16px}
+/* abaixo de 360 px, Abre e Fecha empilham para o input[type=time] caber inteiro */
+@media (max-width:359px){.dia-horas{grid-template-columns:minmax(0,1fr)}}
 
 /* aceite e pagamento */
 .aceite{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;min-height:var(--alvo);border:var(--borda) solid var(--linha);border-radius:var(--raio-p);background:var(--papel);font-weight:600;cursor:pointer}
@@ -109,11 +112,11 @@
   .planos{grid-template-columns:1fr 1fr}
   .linha-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--r4)}
   .pagar{grid-template-columns:1fr 1fr}
-  .horarios{grid-template-columns:1fr 1fr}
+  .horarios{grid-template-columns:repeat(2,minmax(0,1fr))}
   .duas-colunas{grid-template-columns:1fr 1fr}
 }
 @media (min-width:1000px){
-  .grade-pedido{grid-template-columns:1.25fr .9fr;align-items:start}
+  .grade-pedido{grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr);align-items:start}
   .lateral{position:sticky;top:88px;display:grid;gap:var(--r5)}
 }
 .mt-3{margin-top:var(--r3)} .mt-4{margin-top:var(--r4)} .mt-5{margin-top:var(--r5)} .mb-4{margin-bottom:var(--r4)}

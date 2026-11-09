@@ -19,7 +19,16 @@
      node scripts/atualizar-vagas.cjs --inauguracao-restantes 12
      node scripts/atualizar-vagas.cjs --inauguracao on|off
      node scripts/atualizar-vagas.cjs --prazo-horas 48      (só depois de medido; briefing seção 2)
+     node scripts/atualizar-vagas.cjs --rotina              o que a rotina diária automática roda
+                                                            (.github/workflows/rotina-vagas.yml): --novo-dia
+                                                            + --confirmar, e FALHA (código 2) se a inauguração
+                                                            acabou e o link dela ainda está no checkout.config.js
    Opções: --raiz <pasta do projeto> · --simular (mostra o resultado sem gravar)
+
+   Link da inauguração (passo obrigatório): quando a inauguração acaba (0 vaga ou --inauguracao off),
+   o link do Asaas dela continua pagável por quem o guardou. Desative o link no Asaas e volte
+   aberturaInauguracao do checkout.config.js para o marcador. Este script avisa sempre e, com
+   --rotina, falha até isso ser feito.
 
    Regras: inteiros >= 0; vagas_hoje <= capacidade_dia; vagasRestantes <= vagasTotal;
    inauguração chega a 0 vaga = desligada sozinha; preço de inauguração < padrão.
@@ -37,7 +46,7 @@ const RAIZ = path.resolve(valor('--raiz') || path.join(__dirname, '..'));
 const ARQ_VAGAS = path.join(RAIZ, 'dados', 'vagas.json');
 const ARQ_PRECOS = path.join(RAIZ, 'dados', 'precos.json');
 
-const CONHECIDAS = ['--raiz', '--simular', '--confirmar', '--vagas-hoje', '--em-producao', '--capacidade', '--novo-dia', '--vendeu', '--entregou', '--inauguracao-restantes', '--inauguracao', '--prazo-horas', '--ajuda'];
+const CONHECIDAS = ['--raiz', '--simular', '--confirmar', '--vagas-hoje', '--em-producao', '--capacidade', '--novo-dia', '--vendeu', '--entregou', '--inauguracao-restantes', '--inauguracao', '--prazo-horas', '--rotina', '--ajuda'];
 const desconhecida = args.find((a, i) => a.startsWith('--') && CONHECIDAS.indexOf(a) === -1);
 if (desconhecida) sair(`opção desconhecida: ${desconhecida}. Use --ajuda.`);
 if (tem('--ajuda')) { console.log(fs.readFileSync(__filename, 'utf8').split('*/')[0].replace(/^\/\*|^ {3}/gm, '')); process.exit(0); }
@@ -66,7 +75,9 @@ const mudou = [];
 const cap = inteiro('--capacidade'); if (cap !== undefined) { vagas.capacidade_dia = cap; mudou.push('capacidade_dia'); }
 const vh = inteiro('--vagas-hoje'); if (vh !== undefined) { vagas.vagas_hoje = vh; mudou.push('vagas_hoje'); }
 const ep = inteiro('--em-producao'); if (ep !== undefined) { vagas.em_producao = ep; mudou.push('em_producao'); }
-if (tem('--novo-dia')) { vagas.vagas_hoje = vagas.capacidade_dia; mudou.push('vagas_hoje (novo dia)'); }
+const ROTINA = tem('--rotina');
+const inaugAntes = !!(inaug.ativa && inaug.vagasRestantes > 0);
+if (tem('--novo-dia') || ROTINA) { vagas.vagas_hoje = vagas.capacidade_dia; mudou.push('vagas_hoje (novo dia)'); }
 if (tem('--vendeu')) {
   if (vagas.vagas_hoje > 0) vagas.vagas_hoje -= 1;
   vagas.em_producao += 1;
@@ -97,13 +108,32 @@ if (!pos(precos.planos.aberto) || !pos(precos.planos.vitrine)) erros.push('plano
 if (!Number.isInteger(precos.anualMesesPagos) || precos.anualMesesPagos < 1 || precos.anualMesesPagos > 12) erros.push('anualMesesPagos');
 if (erros.length) sair('valores inválidos: ' + erros.join('; '));
 
+// Link da inauguração ainda publicado com a inauguração encerrada = R$ 297 pagável depois do fim.
+function linkInauguracaoPublicado() {
+  let txt = '';
+  try { txt = fs.readFileSync(path.join(RAIZ, 'checkout.config.js'), 'utf8'); } catch (e) { return false; }
+  const m = txt.match(/aberturaInauguracao\s*:\s*(['"])([^'"]*)\1/);
+  return !!(m && /^https:\/\//i.test(m[2]) && m[2].indexOf('[') === -1);
+}
+function checarLinkInauguracao() {
+  if (inaug.ativa && inaug.vagasRestantes > 0) return true;
+  const publicado = linkInauguracaoPublicado();
+  if (inaugAntes || publicado) {
+    console.error('ATENÇÃO  inauguração encerrada. Passo obrigatório do Marcos:\n' +
+      '  1. Asaas > Cobranças > Links de pagamento > link "Abertura inauguração" > Desativar.\n' +
+      '  2. Em checkout.config.js, volte links.aberturaInauguracao para o marcador e publique.');
+  }
+  return !publicado;
+}
+
 function resumo() {
   return `vagas hoje ${vagas.vagas_hoje} de ${vagas.capacidade_dia}, em produção ${vagas.em_producao} · ` +
     `inauguração ${inaug.ativa ? 'ativa' : 'desligada'} (${inaug.vagasRestantes} de ${inaug.vagasTotal}) · prazo ${precos.prazoHoras} h`;
 }
 const idade = (o) => { const t = Date.parse(o && o.atualizado_em); return isNaN(t) ? 'sem data' : Math.round((Date.now() - t) / 360000) / 10 + ' h atrás'; };
 
-if (!mudou.length && !tem('--confirmar')) {
+const linkOk = checarLinkInauguracao();
+if (!mudou.length && !tem('--confirmar') && !ROTINA) {
   console.log('estado atual: ' + resumo());
   console.log(`vagas.json carimbado ${idade(vagas)}; precos.json carimbado ${idade(precos)}. Use --confirmar para carimbar agora, ou --ajuda.`);
   process.exit(0);
@@ -116,3 +146,4 @@ if (tem('--simular')) { console.log('simulação (nada gravado): ' + resumo()); 
 gravar(ARQ_VAGAS, ordemVagas);
 gravar(ARQ_PRECOS, precos);
 console.log(`gravado em ${agora}: ${resumo()}${mudou.length ? ' · mudou: ' + mudou.join(', ') : ' · só carimbo'}`);
+if (ROTINA && !linkOk) { console.error('erro: link da inauguração ainda publicado com a inauguração encerrada (ver ATENÇÃO acima).'); process.exit(2); }

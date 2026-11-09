@@ -14,7 +14,6 @@ const { ErroCampo, ErroLista, validador, REF, errosAjv } = require('./comum.cjs'
 const ORDEM = ['id', 'plano', 'nicho', 'negocio', 'cidade', 'responsavel', 'whatsapp_negocio', 'endereco',
   'horarios', 'email', 'origem', 'previa', 'aceite_termos'];
 const DIAS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];     // índice = funcionamento.semana do tenant
-const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
 function lerPedidoTexto(txt) {
   const linhas = String(txt).replace(/^﻿/, '').replace(/\r/g, '').split('\n').map((l) => l.trim()).filter(Boolean);
@@ -80,45 +79,12 @@ function semAcento(s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, ''
  * endereco (uma linha livre, "Rua, número, bairro, cidade, UF e CEP") -> partes do tenant.
  * Determinístico: se não der para separar sem chutar, rejeita citando o campo.
  */
+// Regra única do endereço: a mesma que a vitrine (/abrir/) usa antes do pagamento.
+const ENDERECO = require('../../../assets/endereco.js');
 function partesEndereco(endereco, cidade) {
-  const formato = 'use "Rua, número, bairro, cidade-UF, CEP" (ex.: Rua das Flores, 120, Centro, Campinas-SP, 13010-000)';
-  let s = ' ' + String(endereco).replace(/\s+/g, ' ').trim() + ' ';
-  const mCep = s.match(/\b(\d{5})-?(\d{3})\b/);
-  if (!mCep) throw new ErroCampo('endereco', `não achei o CEP; ${formato}`);
-  const cep = `${mCep[1]}-${mCep[2]}`;
-  s = s.replace(mCep[0], ' ');
-  const reUf = new RegExp(`(?:^|[\\s,/-])(${UFS.join('|')})(?=[\\s,/.-]*$|[\\s,/.-]+\\s*$)`);
-  let mUf = s.replace(/[\s,./-]+$/, '').match(new RegExp(`(?:^|[\\s,/-])(${UFS.join('|')})$`));
-  if (!mUf) mUf = s.match(reUf);
-  if (!mUf) throw new ErroCampo('endereco', `não achei a UF (sigla do estado em maiúsculas); ${formato}`);
-  const uf = mUf[1];
-  let resto = s.replace(/[\s,./-]+$/, '');
-  resto = resto.slice(0, resto.lastIndexOf(uf)) + resto.slice(resto.lastIndexOf(uf) + 2);
-  // tira a cidade do pedido (sem acento, sem caixa) do fim
-  const cid = semAcento(cidade).toLowerCase();
-  const restoCmp = semAcento(resto).toLowerCase();
-  const iCid = restoCmp.lastIndexOf(cid);
-  if (cid && iCid !== -1) resto = resto.slice(0, iCid) + resto.slice(iCid + cid.length);
-  const partes = resto.split(/\s*[,;]\s*|\s+[-–]\s+/).map((p) => p.replace(/^[\s./-]+|[\s./-]+$/g, '').trim()).filter(Boolean);
-  const ehNumero = (p) => /^(n[ºo°.]?\s*)?\d{1,6}[A-Za-z]?$|^s\/?n$/i.test(p);
-  let i = partes.findIndex(ehNumero);
-  if (i === -1) {
-    // "Rua das Flores 120, Centro"
-    const j = partes.findIndex((p) => /^\D.*\s\d{1,6}[A-Za-z]?$/.test(p));
-    if (j !== -1) {
-      const m = partes[j].match(/^(.*\D)\s(\d{1,6}[A-Za-z]?)$/);
-      partes.splice(j, 1, m[1].trim(), m[2]);
-      i = j + 1;
-    }
-  }
-  if (i < 1) throw new ErroCampo('endereco', `não consegui separar a rua do número; ${formato}`);
-  const rua = partes.slice(0, i).join(', ');
-  const numero = partes[i].replace(/^n[ºo°.]?\s*/i, '').toUpperCase() === 'SN' ? 's/n' : partes[i].replace(/^n[ºo°.]?\s*/i, '');
-  const bairro = partes.slice(i + 1).join(', ');
-  if (!bairro) throw new ErroCampo('endereco', `não achei o bairro; ${formato}`);
-  const lim = { rua: 80, numero: 12, bairro: 60 };
-  for (const [k, v] of Object.entries({ rua, numero, bairro })) if (v.length > lim[k]) throw new ErroCampo(`endereco (${k})`, `acima do limite de ${lim[k]} caracteres`);
-  return { rua, numero, bairro, cidade: String(cidade), uf, cep };
+  const r = ENDERECO.analisar(endereco, cidade);
+  if (!r.ok) throw new ErroCampo(r.campo ? `endereco (${r.campo})` : 'endereco', r.campo ? r.erro.replace(/^\w+ /, '') : r.erro);
+  return r.valor;
 }
 
 /* estado do fragmento da prévia (#k=&n=&c=&p=) que vem no campo previa */

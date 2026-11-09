@@ -17,7 +17,7 @@
 
   "sede": {
     "titulo": "A sua fachada na sede",
-    "legenda": "A placa mostra o nome do seu negócio. Os personagens acendem quando trabalham no seu pedido.",
+    "legenda": "A placa mostra o nome do seu negócio. A sede mostra uma demonstração de como a equipe trabalha; o andamento do seu pedido chega no seu WhatsApp.",
     "botao": "Abrir a sede",
     "semPedidoAtivo": "A equipe espera o próximo pedido."
   },
@@ -32,7 +32,7 @@
     "titulo": "O que esperar",
     "itens": [
       "Resposta da equipe no seu WhatsApp, confirmando o pagamento.",
-      "Um link da sede para acompanhar o trabalho.",
+      "O andamento do seu pedido no seu WhatsApp, enquanto a equipe trabalha.",
       "O site pronto para você conferir e aprovar, em até {{precos.prazoHoras}} h.",
       "A mensalidade só começa no dia em que o site entrar no ar."
     ]

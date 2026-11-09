@@ -337,8 +337,9 @@
     else if (posthogPedido) fila.push([nome, limpo]);
   }
   W.__creatEventos = W.__creatEventos || [];
-  function carregarScript(src, aoCarregar) {
+  function carregarScript(src, aoCarregar, integridade) {
     var s = el('script', { src: src, async: true, crossorigin: 'anonymous', referrerpolicy: 'no-referrer' });
+    if (integridade) s.integrity = integridade; // SRI: arquivo alterado no CDN = navegador recusa, nada roda na nossa origem
     s.onload = aoCarregar || null; s.onerror = function () { fila = []; };
     D.head.appendChild(s);
   }
@@ -361,7 +362,7 @@
         });
         posthogPronto = true;
         fila.splice(0).forEach(function (e) { try { W.posthog.capture(e[0], e[1]); } catch (x) {} });
-      });
+      }, MED.posthogIntegridade);
     };
     if ('requestIdleCallback' in W) W.requestIdleCallback(iniciar, { timeout: 4000 }); else setTimeout(iniciar, 1500);
   }
@@ -460,13 +461,12 @@
     var i = RAIZ.indexOf('/projetos/creat-nuvem/');
     return i !== -1 ? RAIZ.slice(0, i) + '/sede/index.html' : RAIZ + 'sede/index.html';
   }
-  // O nome vai só para a sede (mesma origem), pelo location do iframe; o atributo src fica limpo.
+  // O nome vai só no fragmento (#marca=), que o navegador não envia ao servidor, à CDN nem no Referer
+  // (ADR-002). A query leva só parâmetros sem dado pessoal. O atributo src do iframe fica limpo.
   function carregarSede(janela, nome, lite, aoCarregar) {
     if (janela.querySelector('iframe')) return;
-    var q = [];
-    if (nome) q.push('marca=' + encodeURIComponent(cortar28(nome)));
-    q.push('modo=demo'); if (lite) q.push('lite=1');
-    var url = urlSede() + '?' + q.join('&');
+    var q = ['modo=demo']; if (lite) q.push('lite=1');
+    var url = urlSede() + '?' + q.join('&') + (nome ? '#marca=' + encodeURIComponent(cortar28(nome)) : '');
     var carregando = el('div', { class: 'carregando sede-carregando', role: 'status' });
     carregando.appendChild(el('img', { class: 'placa-mini', src: RAIZ + 'assets/svg/placa.svg', alt: '', width: '120', height: '109' }));
     carregando.appendChild(el('p', null, 'Carregando a sede...'));
@@ -863,7 +863,10 @@
     var zapBruto = v('p-whatsapp'), zap = normalizarWhats(zapBruto);
     conferir('p-whatsapp', !soDigitos(zapBruto) ? 'Digite o WhatsApp que recebe os pedidos, com DDD.' : !zap ? 'Esse número não parece um celular com DDD. Confira e digite de novo, por exemplo (11) 9XXXX-XXXX.' : '');
     var end = limparNome(v('p-endereco'));
-    conferir('p-endereco', end.length < 8 || end.length > 160 || !/\d/.test(end) ? 'Escreva o endereço completo, com número, bairro e cidade.' : '');
+    // mesma regra da produção (assets/endereco.js): endereço aceito aqui nunca trava depois do pagamento
+    var END = window.CreatEndereco;
+    conferir('p-endereco', end.length < 8 || end.length > 160 ? 'Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.'
+      : END ? END.mensagem(end, cidade) : (!/\d/.test(end) ? 'Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.' : ''));
     var hCaixa = f.querySelector('#p-horarios'), h = lerHorarios(hCaixa), hErro = f.querySelector('#p-horarios-erro');
     if (h.erro) { hErro.textContent = h.erro; hErro.hidden = false; faltam++; } else hErro.hidden = true;
     var email = String(v('p-email')).trim();

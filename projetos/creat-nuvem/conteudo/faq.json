@@ -34,7 +34,7 @@
     {
       "id": "prazo",
       "pergunta": "E se passar do prazo?",
-      "resposta": "O prazo é de {{precos.prazoHoras}} h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. Se passar, o 1º mês do plano é grátis. Domínio próprio e verificação do Google ficam fora do relógio, porque dependem de você e de terceiros."
+      "resposta": "O prazo é de {{precos.prazoHoras}} h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. O formulário também pede seu nome e seu e-mail, para contato e recibo. Eles não mudam o prazo. Se passar, o 1º mês do plano é grátis. Domínio próprio e verificação do Google ficam fora do relógio, porque dependem de você e de terceiros."
     },
     {
       "id": "instagram",

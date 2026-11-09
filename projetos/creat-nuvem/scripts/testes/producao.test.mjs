@@ -57,6 +57,23 @@ test('pedido: texto PEDIDO v1 e JSON viram o mesmo objeto e passam no schema', (
   P.validarPedido(P.lerPedidoArquivo(path.join(RAIZ, 'schema', 'exemplos', 'pedido.texto.valido.txt')));
 });
 
+test('endereço: vitrine e produção usam a mesma regra (CEP, UF, prefixo "CEP", cidade/UF)', () => {
+  const E = require(path.join(RAIZ, 'assets', 'endereco.js'));
+  // aceitos: formato pedido, "cidade/UF, CEP 00000-000", UF minúscula grudada na cidade, CEP sem hífen
+  assert.deepEqual(P.partesEndereco('Av. Paulista, 1000, Bela Vista, São Paulo/SP, CEP 04000-000', 'São Paulo'),
+    { rua: 'Av. Paulista', numero: '1000', bairro: 'Bela Vista', cidade: 'São Paulo', uf: 'SP', cep: '04000-000' });
+  assert.deepEqual(P.partesEndereco('Rua das Flores 120, Centro, Campinas/sp, cep: 13010000', 'Campinas'),
+    { rua: 'Rua das Flores', numero: '120', bairro: 'Centro', cidade: 'Campinas', uf: 'SP', cep: '13010-000' });
+  assert.equal(E.mensagem('Rua das Flores, 120, Centro, Campinas-SP, 13010-000', 'Campinas'), '');
+  // recusados: a vitrine bloqueia ANTES do pagamento, com a mesma razão que a produção daria
+  assert.throws(() => P.partesEndereco('Rua das Flores, 120, Centro, Campinas', 'Campinas'), /endereco: não achei o CEP/);
+  assert.match(E.mensagem('Rua das Flores, 120, Centro, Campinas', 'Campinas'), /Falta o CEP/);
+  assert.throws(() => P.partesEndereco('Rua das Flores, 120, Centro, Campinas, 13010-000', 'Campinas'), /endereco: não achei a UF/);
+  assert.match(E.mensagem('Rua das Flores, 120, Centro, Campinas, 13010-000', 'Campinas'), /sigla do estado/);
+  for (const end of ['Rua das Flores, 120, Centro, Campinas', 'Rua das Flores, 120, Centro, Campinas, 13010-000', 'Rua das Flores, Centro, Campinas-SP, 13010-000', 'Rua das Flores, 120, Campinas-SP, 13010-000'])
+    assert.equal(E.analisar(end, 'Campinas').ok, false, end);
+});
+
 const INVALIDOS = [
   ['pedido-whatsapp-zerado.txt', /whatsapp_negocio/],
   ['pedido-linha-extra.txt', /cpf: campo desconhecido/],
@@ -305,6 +322,30 @@ test('build-site recusa tenant inválido citando o campo', () => {
   const r = rodar('build-site.cjs', ['--tenant', arq, '--destino', path.join(TMP, 'ruim-dist')]);
   assert.equal(r.codigo, 1, r.saida);
   assert.match(r.saida, /negocio\.whatsapp: número de mentira/);
+});
+
+test('build-site recusa --destino perigoso e não apaga nada', () => {
+  const arq = path.join(pasta('destino-tenant'), 't.json');
+  C.gravarJson(arq, base);
+  const recusa = (args, re) => { const r = rodar('build-site.cjs', ['--tenant', arq, ...args]); assert.equal(r.codigo, 1, r.saida); assert.match(r.saida, re); };
+  recusa(['--destino'], /--destino: informe a pasta/);
+  recusa(['--destino', '.'], /--destino: recusado: .* é \(ou contém\)/);
+  recusa(['--destino', '..'], /--destino: recusado/);
+  recusa(['--destino', 'sites'], /--destino: recusado/);
+  recusa(['--destino', 'sites/qualquer'], /dentro de sites\//);
+  recusa(['--destino', '/'], /--destino: recusado/);
+  assert.ok(fs.existsSync(path.join(RAIZ, 'package.json')), 'a raiz do projeto continua intacta');
+  const cheia = pasta('destino-alheio');
+  fs.mkdirSync(cheia, { recursive: true });
+  fs.writeFileSync(path.join(cheia, 'dados-do-cliente.txt'), 'não apague');
+  recusa(['--destino', cheia], /não é um build anterior/);
+  assert.equal(fs.readFileSync(path.join(cheia, 'dados-do-cliente.txt'), 'utf8'), 'não apague');
+  const d = pasta('destino-rebuild');
+  assert.equal(rodar('build-site.cjs', ['--tenant', arq, '--destino', d]).codigo, 0);
+  assert.equal(rodar('build-site.cjs', ['--tenant', arq, '--destino', d]).codigo, 0, 'refazer por cima de um build anterior continua valendo');
+  const vazia = pasta('destino-vazia');
+  fs.mkdirSync(vazia, { recursive: true });
+  assert.equal(rodar('build-site.cjs', ['--tenant', arq, '--destino', vazia]).codigo, 0);
 });
 
 test('varredura do SAIR acha domínio da Creat, rodapé viral e host desconhecido', () => {
