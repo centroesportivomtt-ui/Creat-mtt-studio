@@ -65,7 +65,10 @@ test('checar-placeholders passa com links do Mercado Pago e do Stripe no lugar d
     const ok = spawnSync(process.execPath, [path.join(RAIZ, 'scripts', 'checar-placeholders.cjs'), '--raiz', tmp], { encoding: 'utf8' });
     assert.equal(ok.status, 0, ok.stdout + ok.stderr);
 
-    fs.writeFileSync(path.join(tmp, 'checkout.config.js'), fonte.replace('https://mpago.la/1padrao497', 'https://mpago.la.golpe.com/1'));
+    // O arquivo real pode já ter links de verdade no lugar dos marcadores: o link ruim entra no valor atual de aberturaPadrao.
+    const padraoAtual = (fonte.match(/aberturaPadrao:\s*'([^']+)'/) || [])[1];
+    assert.ok(padraoAtual, 'aberturaPadrao não encontrado no checkout.config.js');
+    fs.writeFileSync(path.join(tmp, 'checkout.config.js'), fonte.replace(padraoAtual, 'https://mpago.la.golpe.com/1'));
     const ruim = spawnSync(process.execPath, [path.join(RAIZ, 'scripts', 'checar-placeholders.cjs'), '--raiz', tmp], { encoding: 'utf8' });
     assert.equal(ruim.status, 1);
     assert.match(ruim.stdout, /links\.aberturaPadrao não é um link https aceito/);

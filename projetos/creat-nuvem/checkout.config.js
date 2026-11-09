@@ -60,9 +60,9 @@
     whatsappSuporte: '5575981151202',
     emailSuporte: 'mttcreatt@gmail.com',
     links: {
-      aberturaInauguracao: '[LINK_ASAAS_ABERTURA_INAUGURACAO]',
-      aberturaPadrao: '[LINK_ASAAS_ABERTURA_PADRAO]',
-      bastidores: '[LINK_CAKTO_BASTIDORES]'
+      aberturaInauguracao: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-388377b3-87f4-43db-b88c-af75b6ce6526',
+      aberturaPadrao: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-fc609d62-006f-49e5-ae5a-93e73f762a68',
+      bastidores: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-ff658538-9778-4e95-9b68-f167334aea7a'
     },
     // Reserva quando dados/precos.json não parseia. scripts/checar.cjs confere que bate com o JSON.
     precosPadrao: { prazoHoras: 72, abertura: 497, planos: { aberto: 147, vitrine: 297 }, anualMesesPagos: 10, bastidores: 67 },

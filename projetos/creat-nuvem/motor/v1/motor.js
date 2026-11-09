@@ -26,7 +26,7 @@
 (function (raiz) {
   'use strict';
 
-  var VERSAO = 'v1.1.0';
+  var VERSAO = 'v1.1.1';
   var W = typeof window !== 'undefined' ? window : null;
   var DOC = W && W.document ? W.document : null;
 
@@ -70,7 +70,9 @@
     somDesligar: 'Desligar o som',
     faixaPrevia: 'Prévia. Serviços, preços e textos são exemplo até o dono aprovar.',
     faixaDemo: 'demonstração · nome fictício',
-    faixaDemoTexto: 'Site feito pela esteira real da Creat Nuvem. O pedido de horário vai para o WhatsApp da Creat, não para um negócio.',
+    faixaDemoTexto: 'Site feito pela esteira real da Creat Nuvem. Endereço e horários são de exemplo. O pedido de horário vai para o WhatsApp da Creat, não para um negócio.',
+    demoLocalNota: 'Endereço e horário de exemplo: este negócio não existe.',
+    demoHorarioRodape: 'Horário de exemplo',
     faixaDemoLink: 'Quero um assim',
     exemplo: 'exemplo',
     sobConsulta: 'sob consulta',
@@ -493,7 +495,8 @@
         telefone: neg.telefoneExibicao || (whats ? mascararWhats(whats.slice(2)) : ''),
         enderecoLinhas: enderecoLinhas(end),
         enderecoCompleto: !!(end.rua && end.cidade),
-        mapaUrl: end.rua ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([enderecoTexto(end), neg.nome].filter(Boolean).join(', ')) : '',
+        // demonstração: sem link do Maps (o endereço é de exemplo e não pode levar a um imóvel de terceiros)
+        mapaUrl: end.rua && !demonstracao ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([enderecoTexto(end), neg.nome].filter(Boolean).join(', ')) : '',
         instagram: neg.instagram && /^https:\/\//.test(String(neg.instagram.url || '')) ? { usuario: neg.instagram.usuario || '', url: neg.instagram.url } : null
       },
       pedido: {
@@ -782,7 +785,8 @@
 
   function renderTopo(e) {
     var topo = criar('header', { classe: 'topo' });
-    topo.appendChild(criar('p', { id: 'letreiro', classe: 'letreiro', role: 'status', 'aria-live': 'polite' }, [criar('span', { classe: 'letreiro-texto' })]));
+    // demonstração: o "aberto/fechado agora" sai de um horário de exemplo, e o selo diz isso
+    topo.appendChild(criar('p', { id: 'letreiro', classe: 'letreiro', role: 'status', 'aria-live': 'polite' }, [e.demonstracao ? selo(UI.exemplo) : null, criar('span', { classe: 'letreiro-texto' })]));
     var pedir = e.pedido.modo === 'link_externo'
       ? criar('a', { classe: 'btn btn-pedir', id: 'btn-pedir', href: e.pedido.urlExterna, target: '_blank', rel: 'noopener', texto: UI.agendarExterno })
       : criar('a', { classe: 'btn btn-pedir', id: 'btn-pedir', href: '#pedir', texto: UI.pedir });
@@ -875,10 +879,13 @@
       local.appendChild(ad);
     }
     if (!e.contato.enderecoCompleto && e.previa) local.appendChild(criar('p', { classe: 'nota' }, [selo(UI.exemplo), ' ' + UI.enderecoPrevia]));
+    if (e.demonstracao) local.appendChild(criar('p', { classe: 'nota nota-demo' }, [selo(UI.exemplo), ' ' + UI.demoLocalNota]));
     if (e.contato.mapaUrl) local.appendChild(criar('p', null, [criar('a', { classe: 'link-forte', href: e.contato.mapaUrl, target: '_blank', rel: 'noopener', texto: UI.comoChegar })]));
     if (e.contato.instagram) local.appendChild(criar('p', null, [criar('a', { classe: 'link-forte', href: e.contato.instagram.url, target: '_blank', rel: 'noopener', texto: UI.instagram + (e.contato.instagram.usuario ? ' · ' + e.contato.instagram.usuario : '') })]));
     s.appendChild(local);
-    var hor = criar('div', { classe: 'contato-horario' }, [criar('h3', { texto: UI.horarioTitulo })]);
+    var h3hor = criar('h3', { texto: UI.horarioTitulo });
+    if (e.demonstracao) { h3hor.appendChild(DOC.createTextNode(' ')); h3hor.appendChild(selo(UI.exemplo)); }
+    var hor = criar('div', { classe: 'contato-horario' }, [h3hor]);
     var tab = criar('table', { classe: 'funcionamento' }, [criar('caption', { classe: 'so-leitor', texto: UI.horarioTitulo })]);
     var tb = criar('tbody');
     var hoje = new Date().getDay();
@@ -909,6 +916,7 @@
     if (e.textos.rodapeFrase) l1.appendChild(DOC.createTextNode(' · ' + e.textos.rodapeFrase));
     r.appendChild(l1);
     var resumo = e.linhasHorario.filter(function (l) { return !l.folga; }).map(function (l) { return l.rotulo + ', ' + l.valor; }).join(' · ');
+    if (resumo && e.demonstracao) resumo = UI.demoHorarioRodape + ': ' + resumo;
     var l2 = criar('p', null, resumo ? [criar('span', { texto: resumo })] : []);
     if (e.contato.waBase) {
       if (resumo) l2.appendChild(DOC.createTextNode(' · '));

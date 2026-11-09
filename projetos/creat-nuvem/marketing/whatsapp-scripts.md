@@ -80,7 +80,7 @@ Mande as duas primeiras linhas do F4 (Abertura e mensalidade) e, em seguida, est
 > Depois do seu aceite, eu mando aqui o link do Mercado Pago, por Pix ou cartão, com o valor certo.
 > Depois de pagar, você tem 7 dias para desistir com o dinheiro de volta.
 
-O link de pagamento só sai depois do "LI E ACEITO". [PREENCHER: os 2 links de pagamento do Mercado Pago, R$ 297 e R$ 497, criados no painel pelo Marcos.] Sem o `/abrir/`, os 4 dados do pedido vêm por esta conversa, depois do pagamento (F5).
+O link de pagamento só sai depois do "LI E ACEITO". Abertura inauguração (R$ 297): https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-388377b3-87f4-43db-b88c-af75b6ce6526 · Abertura (R$ 497): https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-fc609d62-006f-49e5-ae5a-93e73f762a68 · Plano Aberto R$ 147/mês (cartão): https://buy.stripe.com/7sYbIV5JIe7nfvR09r2cg00 · Plano Vitrine R$ 297/mês (cartão): https://buy.stripe.com/28EcMZ7RQbZf2J56xP2cg01 · portal do assinante (cancelar, trocar cartão): https://billing.stripe.com/p/login/7sYbIV5JIe7nfvR09r2cg00 Sem o `/abrir/`, os 4 dados do pedido vêm por esta conversa, depois do pagamento (F5).
 
 **F5 · Confirmação e próximos passos** (`/recebi`, o mesmo atalho do antigo R5) · só depois de ver o pagamento aprovado no Mercado Pago
 > Pagamento confirmado, {nome}. Pedido {id}.

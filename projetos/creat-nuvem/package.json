@@ -16,7 +16,8 @@
     "exportar-sair": "node scripts/producao/exportar-sair.cjs",
     "publicar-site": "node scripts/producao/publicar-site.cjs",
     "checar": "node scripts/checar.cjs",
-    "checar-placeholders": "node scripts/checar-placeholders.cjs"
+    "checar-placeholders": "node scripts/checar-placeholders.cjs",
+    "conferir-sites-no-ar": "node scripts/conferir-sites-no-ar.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.1.0",

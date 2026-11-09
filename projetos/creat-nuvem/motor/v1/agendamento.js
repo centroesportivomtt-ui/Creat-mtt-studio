@@ -40,7 +40,7 @@
     nome: 'Seu nome',
     whats: 'Seu WhatsApp',
     whatsTeste: 'Seu WhatsApp para receber o teste',
-    whatsExemplo: '(11) 91234-5678',
+    whatsExemplo: '({ddd}) 91234-5678',     // {ddd} = DDD do WhatsApp do negócio (11 se não houver)
     privacidade: 'Seu nome e seu WhatsApp ficam só neste aparelho, para preencher mais rápido da próxima vez.',
     privacidadePrevia: 'Na prévia, o pedido vai para o seu próprio WhatsApp. No site no ar, vai para o WhatsApp do negócio. Seu número não é salvo nem enviado para ninguém.',
     esquecer: 'Esquecer meus dados',
@@ -51,7 +51,7 @@
     dia: 'Dia', hora: 'Horário', servico: 'Serviço', profissional: 'Profissional', valor: 'Valor',
     semArrastar: 'Enviar sem arrastar',
     erroNome: 'Escreva seu nome.',
-    erroWhats: 'Digite o WhatsApp com DDD, por exemplo (11) 91234-5678.',
+    erroWhats: 'Digite o WhatsApp com DDD, por exemplo {exemplo}.',
     erroAmbos: 'Confira seu nome e seu WhatsApp.',
     erroEscolha: 'Falta escolher {falta}.',
     erroHorario: 'Esse horário já passou. Escolha outro, por favor.',
@@ -73,6 +73,10 @@
     if (e.pedido.modo === 'link_externo') { montarExterno(); return; }
 
     var previa = e.previa;
+    // exemplo de WhatsApp com o DDD do negócio (75 na Bahia, não 11 de São Paulo)
+    var dddNegocio = (/^55(\d{2})\d{8,9}$/.exec(String((e.contato && e.contato.whatsapp) || '')) || [])[1] || '11';
+    var whatsExemplo = T.whatsExemplo.replace('{ddd}', dddNegocio);
+    var erroWhats = T.erroWhats.replace('{exemplo}', whatsExemplo);
     var servicos = e.servicos;
     var profs = e.profissionais;
     var temProf = profs.length > 0;
@@ -139,7 +143,7 @@
     ], true));
     escolhas.appendChild(passo('passo-dados', T.passoDados, [
       campo('cliente-nome', T.nome, { name: 'nome', type: 'text', autocomplete: previa ? 'off' : 'name', maxlength: '60', required: true }),
-      campo('cliente-whats', previa ? T.whatsTeste : T.whats, { name: 'whats', type: 'tel', inputmode: 'tel', autocomplete: previa ? 'off' : 'tel-national', placeholder: T.whatsExemplo, required: true }),
+      campo('cliente-whats', previa ? T.whatsTeste : T.whats, { name: 'whats', type: 'tel', inputmode: 'tel', autocomplete: previa ? 'off' : 'tel-national', placeholder: whatsExemplo, required: true }),
       criar('div', { classe: 'privacidade' }, [
         criar('p', { classe: 'nota', id: 'nota-privacidade', texto: previa ? T.privacidadePrevia : T.privacidade }),
         criar('button', { type: 'button', id: 'esquecer-dados', classe: 'btn-esquecer', 'aria-describedby': 'nota-privacidade', texto: T.esquecer }),
@@ -390,7 +394,7 @@
     function erros() {
       return {
         nome: P.nomeValido(est.nome) ? '' : T.erroNome,
-        whats: P.whatsValido(est.whats) ? '' : T.erroWhats
+        whats: P.whatsValido(est.whats) ? '' : erroWhats
       };
     }
     function mostrarErros(forcar) {

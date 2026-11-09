@@ -6,7 +6,7 @@ negocio: Barbearia Navalha Fictícia
 cidade: Riachão do Jacuípe
 responsavel: Responsável Fictício
 whatsapp_negocio: 5575981151202
-endereco: Rua Rui Barbosa, 214, Centro, Riachão do Jacuípe-BA, 44640-000
+endereco: Rua do Exemplo, s/n, Centro, Riachão do Jacuípe-BA, 44640-000
 horarios: seg=fechado;ter=08:30-19:30;qua=08:30-19:30;qui=08:30-19:30;sex=08:30-20:00;sab=08:00-17:00;dom=fechado
 email: demonstracao@exemplo.com.br
 origem: utm_source=demo;utm_medium=interno;utm_campaign=demos-nov26;utm_content=barbearia

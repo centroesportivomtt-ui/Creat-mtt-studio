@@ -5,6 +5,7 @@
  * numa pasta temporária (CREAT_TESTE_TMP ou TMPDIR), sem rede e sem chave, e confere:
  * faixa "demonstração · nome fictício" (no HTML sem JS e na página montada), noindex, sem JSON-LD,
  * robots.txt Disallow, WhatsApp do Suporte Creat e que o bloco "demo" continua proibido no tenant.
+ * A pasta temporária é apagada no fim (CREAT_TESTE_MANTER=1 guarda, como em producao.test.mjs).
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -64,8 +65,38 @@ for (const k of ['barbearia', 'salao', 'academia']) {
 }
 
 test('o validador continua proibindo bloco "demo" no tenant', () => {
-  const t = JSON.parse(fs.readFileSync(path.join(TMP, 'dist', 'demo-barbearia', 'tenant.json'), 'utf8'));
+  // fixture própria: não depende do primeiro teste ter rodado (--test-name-pattern ou falha anterior)
+  const t = JSON.parse(fs.readFileSync(path.join(RAIZ, 'schema', 'exemplos', 'tenant.entregue.valido.json'), 'utf8'));
+  assert.equal(validarTenant(t).ok, true, 'a fixture base precisa ser válida');
   const r = validarTenant(Object.assign({}, t, { demo: { faixa: true } }));
   assert.equal(r.ok, false);
   assert.ok(r.erros.some((e) => e.campo === 'demo'));
 });
+
+test('demonstração: endereço sem link do Maps; site entregue continua com o link', () => {
+  const motor = require(path.join(RAIZ, 'motor', 'v1', 'motor.js'));
+  const t = JSON.parse(fs.readFileSync(path.join(RAIZ, 'schema', 'exemplos', 'tenant.entregue.valido.json'), 'utf8'));
+  assert.ok(t.negocio.endereco && t.negocio.endereco.rua, 'a fixture precisa ter rua');
+  assert.match(motor.construirEstado(t, { site: {} }).contato.mapaUrl, /^https:\/\/www\.google\.com\/maps\//);
+  const d = motor.construirEstado(t, { site: { demonstracao: true } });
+  assert.equal(d.demonstracao, true);
+  assert.equal(d.contato.mapaUrl, '', 'demo não leva a um imóvel de terceiros pelo Maps');
+});
+
+test('pedidos dos demos: endereço s/n de rua de exemplo, sem número de imóvel real', () => {
+  for (const k of ['barbearia', 'salao', 'academia']) {
+    const linha = fs.readFileSync(path.join(DEMOS, `pedido-${k}.txt`), 'utf8').split('\n').find((l) => l.startsWith('endereco:'));
+    assert.match(linha, /^endereco: \S+ do Exemplo, s\/n, /, `pedido-${k}.txt: ${linha}`);
+  }
+});
+
+test('conferir-sites-no-ar: acha os sites/<slug>/ que a vitrine linka', () => {
+  const { slugsDaVitrine } = require(path.join(RAIZ, 'scripts', 'conferir-sites-no-ar.cjs'));
+  const d = path.join(TMP, 'vitrine-falsa');
+  fs.mkdirSync(path.join(d, 'abrir'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'index.html'), '<a href="sites/demo-salao/">a</a><a href="./sites/demo-barbearia/">b</a><a href="https://x/sites/fora/">c</a>');
+  fs.writeFileSync(path.join(d, 'abrir', 'index.html'), '<a href="../sites/demo-academia/">c</a>');
+  assert.deepEqual(slugsDaVitrine(d), ['demo-academia', 'demo-barbearia', 'demo-salao']);
+});
+
+test.after(() => { if (!process.env.CREAT_TESTE_MANTER) fs.rmSync(TMP, { recursive: true, force: true }); });

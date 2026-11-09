@@ -106,3 +106,9 @@ const topo = [...new Set(copiados.map((r) => r.split('/')[0]))].sort();
 if (topo.includes('sites')) { console.log('FALHA  a vitrine não pode ter sites/ na raiz: apagaria os sites dos clientes'); process.exit(1); }
 console.log('vitrine (topo de public/): ' + topo.join(' '));
 console.log(`ok     dist/publico/ montado: ${copiados.length} arquivos, ${(bytes / 1024).toFixed(0)} KB`);
+// ordem do deploy: a vitrine linka sites/<slug>/; eles precisam estar no ar ANTES dela (docs/PUBLICACAO.md, seção 0)
+const linkados = require('./conferir-sites-no-ar.cjs').slugsDaVitrine(DESTINO);
+if (linkados.length) {
+  console.log('sites que a vitrine linka: ' + linkados.join(' '));
+  console.log('aviso  publique esses sites ANTES da vitrine e confira com: node scripts/conferir-sites-no-ar.cjs');
+}

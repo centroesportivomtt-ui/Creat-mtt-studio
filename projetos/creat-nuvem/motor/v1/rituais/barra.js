@@ -67,7 +67,11 @@
 
     var s = svg('svg', { viewBox: '0 0 200 240', 'class': 'ra-svg', 'aria-hidden': 'true', focusable: 'false' }, palco);
     svg('path', { 'class': 'ra-lf ra-chao', 'stroke-width': 4, d: 'M6 226 H194' }, s);
-    var marca = svg('path', { 'class': 'ra-marca-topo', d: 'M10 30 H24 M176 30 H190' }, s);
+    // marca do alto: linha tracejada de ponta a ponta com as pontas fechadas (v1.1.1; antes eram dois
+    // tracinhos soltos que liam como "-- --"); quando a barra trava no alto, fica cheia no destaque
+    var marca = svg('g', { 'class': 'ra-marca' }, s);
+    svg('path', { 'class': 'ra-marca-topo', d: 'M16 30 H184' }, marca);
+    svg('path', { 'class': 'ra-marca-ponta', d: 'M10 22 V38 M190 22 V38' }, marca);
     var subir = svg('g', null, s);
     var escala = svg('g', { transform: 'translate(100 164) scale(0.78) translate(-100 -164)' }, subir);
     var barra = desenharBarra(escala);

@@ -120,6 +120,9 @@
 .re-reflexo { opacity: 0; transition: opacity var(--dur-media) var(--curva-entrada) var(--dur-lenta); }
 .palco-esmalte.is-pintada .re-assentar { transform: scaleY(1); }
 .palco-esmalte.is-pintada .re-reflexo { opacity: 0.9; }
+/* v1.1.1: o dedo desce até y=204 (+ sombra) num viewBox de 200 e sai do svg (overflow visível para o
+   pincel); a folga de 5% da largura (= ~10 unidades) impede que o rótulo encoste no desenho no desktop */
+.palco-esmalte > .re-svg { margin-bottom: 5%; }
 .heroi.esmalte .heroi-nome { transition: color var(--dur-lenta) var(--curva-entrada); }
 .heroi.esmalte.is-pintada .heroi-nome { color: var(--destaque); }
 
@@ -136,8 +139,10 @@
 .ra-aco-escuro { fill: var(--ritual-aco-escuro); }
 .ra-brilho { fill: none; stroke: #FFFFFF; stroke-width: 2.5; stroke-linecap: round; }
 .ra-giz { fill: #FFFFFF; }
-.ra-marca-topo { fill: none; stroke: var(--tinta-suave); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 2 5; }
-.palco-barra.is-levantada .ra-marca-topo { stroke: var(--destaque); stroke-dasharray: none; }
+.ra-marca-topo { fill: none; stroke: var(--tinta-suave); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 3 7; opacity: 0.8; }
+.ra-marca-ponta { fill: none; stroke: var(--tinta-suave); stroke-width: 3; stroke-linecap: round; }
+.palco-barra.is-levantada .ra-marca-topo { stroke: var(--destaque); stroke-dasharray: none; opacity: 1; }
+.palco-barra.is-levantada .ra-marca-ponta { stroke: var(--destaque); }
 .ra-poeira circle { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
 .ra-poeira.is-subindo circle { animation: ra-po 620ms var(--curva-entrada) both; animation-delay: calc(var(--i, 0) * 35ms); }
 .ra-poeira.is-forte circle { animation-duration: 900ms; --sobe: -30px; }

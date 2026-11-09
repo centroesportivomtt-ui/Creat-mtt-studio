@@ -460,3 +460,28 @@ export const PA_SUB_TERMS = "termos-v1";
 - CORS ao vivo: `curl -X OPTIONS` com `Access-Control-Request-Headers: content-type` em `https://creatmtt.com.br/functions/createMercadoPagoCheckout` respondeu `200` com `access-control-allow-origin: *` e `access-control-allow-headers: content-type`. Um `GET` respondeu `405` com `access-control-allow-origin: *`.
 - Mercado Pago: https://www.mercadopago.com.br/ferramentas-para-vender/link-de-pagamento (taxas) e https://www.mercadopago.com.br/developers/pt/docs/checkout-pro-orders/resources/notifications/webhooks (x-signature, 22 s, reenvio a cada 15 min). Os dois foram lidos na pesquisa da equipe em 09/11/2026; não reabri.
 - Stripe: https://stripe.com/br/pricing e https://support.stripe.com/questions/how-to-enable-pix-as-a-payment-method-in-brazil?locale=pt-BR (Pix só avulso no Brasil, sem Pix Automático). Também vêm da pesquisa da equipe, em 09/11/2026.
+
+
+## Links criados em 09/11/2026 (função isolada `portaAbertaLinks`, executada pela automação do Base44 e apagada em seguida)
+
+Conta Mercado Pago (collector 2189692475, MLB, Pix ativo). Preferências permanentes do Checkout Pro (Pix e cartão até 2x; boleto e caixa eletrônico excluídos; retorno a `/obrigado/?pago=mp&produto=<id>`):
+
+| item | valor | link |
+|---|---|---|
+| Abertura (inauguração) · `pa-abertura-inauguracao-2026-11` | R$ 297 | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-388377b3-87f4-43db-b88c-af75b6ce6526 |
+| Abertura · `pa-abertura-2026-11` | R$ 497 | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-fc609d62-006f-49e5-ae5a-93e73f762a68 |
+| Bastidores · `pa-bastidores-2026-11` | R$ 67 | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-ff658538-9778-4e95-9b68-f167334aea7a |
+| Teste (compra real de R$ 1, estornar depois) · vale até 12/11/2026 17:27 UTC | R$ 1 | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-b1f51c8f-b3f3-4f5f-a9d8-12052accfebc |
+
+Observação: a função rodou duas vezes (a primeira sem registrar a saída). As preferências da primeira rodada existem na conta e não estão em uso; não movimentam nada.
+
+Stripe (ao vivo), assinaturas mensais no cartão, com retorno a `/obrigado/?assinatura=ok&plano=<id>`:
+
+| plano | preço | Payment Link | ids |
+|---|---|---|---|
+| Plano Aberto | R$ 147/mês | https://buy.stripe.com/7sYbIV5JIe7nfvR09r2cg00 | prod_Vb8Av7Zjgt0r9x · price_1UZvuS9f9VS5QiOdfqoVjVeM · plink_1UZvuT9f9VS5QiOdlnfzdQFX |
+| Plano Vitrine | R$ 297/mês | https://buy.stripe.com/28EcMZ7RQbZf2J56xP2cg01 | prod_Vb8AePk1jhaPaj · price_1UZvuT9f9VS5QiOdciA6kHiB · plink_1UZvuT9f9VS5QiOdUIcWTUPt |
+
+Portal do assinante (cancelar ao fim do período, trocar cartão, faturas), configuração `bpc_1UZvuT9f9VS5QiOdCO4l5tkY`: https://billing.stripe.com/p/login/7sYbIV5JIe7nfvR09r2cg00
+
+Pendências que continuam: o webhook do AutoCreatFlux ignora estes pagamentos (sem Order), então a confirmação é pela conciliação do painel do Mercado Pago e pelas etiquetas do WhatsApp até o Plano A (funções `portaAberta*` isoladas) entrar.

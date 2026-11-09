@@ -104,3 +104,46 @@ Para que serve na venda: quem chega pela vitrine vê, antes de pagar, um site en
 - **Home:** a nova seção `#sites-demo` "Veja um site entregue" fica entre "Como funciona" e "Preços". São 3 cartões com links relativos `sites/demo-*/` (com barra final), o gesto de cada ritual e a nota "Feito pela esteira real, nome fictício. Nenhum desses negócios existe.". O texto mora em `conteudo/home.json` (`sitesDemo`, com `_regra`: não é prova social). A seção "Quem já abriu" continua escondida.
 - **Verificado:** `olhar.cjs --cdn-local` nos três demos (celular e desktop, claro e escuro) deu "Tudo limpo", e olhei os prints. No `navegador`, a home montada (`dist/publico` + `sites/demo-*`) foi aberta no celular. Rolei até a seção, cliquei em "Abrir o salão" e o demo abriu com a faixa e console limpo. Também olhei o desktop escuro: 3 colunas, sem rolagem lateral. Fluxo completo na barbearia: dia → hora → Corte + barba → nome e WhatsApp → "Enviar sem arrastar" → o cartão de confirmação mostra "sob consulta" e o link `wa.me/5575981151202?text=…Corte + barba, quinta, 12/11 às 10h30…`. Console limpo. `node scripts/checar.cjs`: tudo certo, 3 avisos já conhecidos. `CREAT_TESTE_TMP=/tmp npm test`: 53 de 53, com o novo `scripts/testes/demonstracao.test.mjs`, que roda a esteira real nos 3 demos.
 - **Pendências:** (1) Publicar os 3 zips em `public/sites/demo-*/` (chat principal, `docs/PUBLICACAO.md`). Antes disso, os links da home dão 404 no ar. (2) As fontes do Google não carregaram no sandbox, então os prints usam as fontes de reserva; no ar elas carregam. (3) Os endereços são plausíveis, mas os nomes de rua existem em muitas cidades. A faixa e a nota dizem que o negócio não existe. Se o Marcos preferir, troque por "s/n". (4) Quando a IA real rodar com chave, a regra 4 do SYSTEM continua exigindo "o dono confirma pelo WhatsApp". No salão, "a dona" soaria mais natural, mas mudar isso exige ajustar o prompt e o validador juntos.
+
+## Entrega e demos, 09/11/2026
+
+**Pixel.** Rodada de correções da revisão dos 3 sites-demonstração e da seção da home. Nada foi publicado: deploy, checkpoint, commit e push ficam com o chat principal.
+
+**Alta: ordem do deploy (sites primeiro, vitrine depois).**
+- `docs/PUBLICACAO.md` ganhou a **seção 0, "Ordem obrigatória"**: publique `demo-barbearia`, `demo-salao` e `demo-academia` (seção 1) antes da vitrine ou no mesmo deploy, e confira os 3 URLs com 200 antes e depois. A seção 2 agora tem esse pré-requisito e a conferência pós-deploy.
+- Trava nova, `scripts/conferir-sites-no-ar.cjs` (`npm run conferir-sites-no-ar`). Ela lê os links `sites/<slug>/` de `dist/publico/` e faz `curl -L` em cada `/sites/<slug>/` no ar. Exige 200, pelo menos um `wa.me` e, nos demos, a faixa. Sai com 0 para liberar e 1 para bloquear. Usa curl porque o fetch do Node 22 não passa pelo proxy. Hoje, rodada às 17h20, ela dá **1: os 3 demos voltam 404 no ar**, então a vitrine nova ainda não pode subir. Contra um servidor local com `dist/local/`, deu 0.
+- `montar-publico.cjs` agora imprime `sites que a vitrine linka: demo-academia demo-barbearia demo-salao` e o aviso de ordem.
+
+**Média.**
+- **Endereços:** os pedidos passaram a usar `Rua do Exemplo, s/n` (barbearia), `Travessa do Exemplo, s/n` (salão) e `Avenida do Exemplo, s/n` (academia), todos em Centro, Riachão do Jacuípe-BA, com o CEP geral da cidade, 44640-000. Nenhum número leva a um imóvel. No motor, quando `CREAT_SITE.demonstracao` está ligado, `mapaUrl` fica vazio: a demo não tem o botão "Como chegar no Google Maps". O site entregue continua com o link, e um teste cobre os dois casos.
+- **Horário inventado. Decisão:** o horário fica, marcado como exemplo. Sem `funcionamento` o fluxo de pedir horário (fita de dias e horas), que é o que a demo vende, deixa de existir. Para não parecer fato, a faixa agora diz "Endereço e horários são de exemplo". O letreiro leva o selo `EXEMPLO` antes de "Aberto agora" ou "Fechado agora". "Horário da casa" ganhou o selo `EXEMPLO`, e "Onde fica" ganhou a nota "Endereço e horário de exemplo: este negócio não existe.". O rodapé começa com "Horário de exemplo:". Se o Marcos preferir tirar o horário de vez, a demo perde o pedido de horário.
+- **Título da home:** "Veja um site entregue" virou **"Veja um site pronto"**, com o olho "Sites-demonstração", em `index.html` e em `conteudo/home.json`. O título antigo soava como cliente entregue.
+- **Fatos inventados nas respostas de IA** (`demos/resposta-ia-*.json`): saíram "professor na sala", "turma pequena", "o nome de quem vai te receber", "garrafa de água", "toalha limpa", "cadeira limpa", "toalha quente/espuma no pincel", "o pagamento é feito na barbearia" e "o valor depende do comprimento e do tom". Ficaram só descrições do serviço e perguntas encaminhadas ao WhatsApp. As três respostas passaram no `validar-tenant`.
+
+**Baixa.**
+- Salão e academia não dizem mais "o dono confirma". Agora é "o salão confirma pelo WhatsApp" e "o studio confirma pelo WhatsApp". A regra 4 do SYSTEM (`scripts/producao/lib/ia.cjs`) passou a pedir o sujeito natural do nicho. O validador já aceitava qualquer "confirma pelo WhatsApp".
+- Mensagem da academia (`motor/nichos/academia.js`): agora sai "Quero pedir um horário no studio: Aula experimental, quinta, 12/11 às 10h30. Pode confirmar por aqui?". Conferi no navegador.
+- O placeholder e o erro do WhatsApp usam o DDD do negócio, `(75) 91234-5678`, com 11 só como reserva (`motor/v1/agendamento.js`).
+- No salão, o rótulo "PINTE A UNHA." não encosta mais no dedo: `.palco-esmalte > .re-svg { margin-bottom: 5% }`, porque o dedo vai até y=204 num viewBox de 200.
+- No herói da barbearia, `--gravado` passou de 52% para 62%. O contraste sobre o couro liso ficou acima de 5:1 (Poste 5,9, Selaria 5,9 e Lousa 5,4; antes, cerca de 4,4 no liso e 3,8 nos veios). O efeito continua "aço antes de afiar".
+- No escuro, a faixa da demo fica sobre `--fundo-3`, com a tinta clara e um fio do destaque embaixo. Deixou de ser um bloco claro.
+- Na academia, os "-- --" eram a marca do alto do ritual. Viraram uma linha tracejada de ponta a ponta com as pontas fechadas, que fica cheia no destaque quando a barra trava (`motor/v1/rituais/barra.js` e `rituais.css`).
+- Teste local da home: `scripts/montar-local.cjs` monta `dist/local/` com a vitrine e os 3 demos em `sites/` (não vai para o git nem para o ar). Com ele, o clique em "Abrir o studio" abriu o demo.
+- `publicar-site.cjs`: saiu o caminho fixo do scratchpad desta sessão. O destino padrão agora é `CREAT_PUBLICAR_DESTINO` ou `mkdtemp(<tmp>/creat-publicar-)`. `--demo` passa `exigirFaixaDemo` ao `testarSite`, que confere a faixa no topo e o noindex na página renderizada, e confere também `"demonstracao":true` e o noindex no HTML.
+- `demonstracao.test.mjs`: apaga a pasta temporária no `test.after` (`CREAT_TESTE_MANTER` guarda). O teste do validador usa fixture própria. Ganhou 3 testes: Maps fora da demo, endereço `s/n` nos pedidos e a leitura dos links da trava.
+- Motor: **v1.1.1**. Todas as mudanças são aditivas e, sem `--demonstracao`, o site entregue só muda o placeholder do DDD, o `--gravado` e os dois ajustes dos rituais.
+
+**Verificado:**
+- Os 3 demos foram refeitos pela esteira real (`produzir.mjs --fixture-ia --demonstracao`): código 0, 6 etapas ok, teste headless de 390 px ok.
+- `CREAT_TESTE_TMP=/tmp npm test`: 56 de 56, com os 3 testes novos de `demonstracao.test.mjs`.
+- `node scripts/checar.cjs`: tudo certo, com os 3 avisos `[PREENCHER]` já conhecidos.
+- `olhar.cjs --cdn-local` nos 3 demos: "Tudo limpo" nos três. Olhei os prints do salão no desktop claro, da academia no celular claro e no desktop escuro e da barbearia no celular escuro.
+- No navegador: home (`dist/local`) → "Abrir o studio" → quinta → 10h30 → Aula experimental → nome e WhatsApp → Enter. O wa.me sai certo e o console fica limpo. "Onde fica" aparece sem o link do Maps e com os selos.
+- `publicar-site --demo` passou nos 3 com `exigirFaixaDemo`. **Os zips mudaram**, então descarte os antigos. Os novos estão em `<scratchpad>/zips/`:
+  - barbearia `f3c09c28…`
+  - salão `6ab2f243…`
+  - academia `35c40d78…`
+
+**Pendências:**
+- (1) Publicar os 3 zips novos em `public/sites/demo-*/`, rodar `conferir-sites-no-ar.cjs` até sair com 0 e só então publicar a vitrine (`PUBLICACAO.md`, seção 0).
+- (2) O CEP 44640-000 é o geral de Riachão, não aponta para imóvel. Mantido porque o formato do pedido exige CEP.

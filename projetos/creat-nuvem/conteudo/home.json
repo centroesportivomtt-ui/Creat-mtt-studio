@@ -125,8 +125,8 @@
 
   "sitesDemo": {
     "_regra": "Sites-demonstração feitos pela esteira real (scripts/producao/produzir.mjs --demonstracao), com nome fictício e o WhatsApp do Suporte Creat. Não é prova social: nunca dizer que são clientes. Cada site abre com a faixa 'demonstração · nome fictício'.",
-    "olho": "Sites prontos",
-    "titulo": "Veja um site entregue",
+    "olho": "Sites-demonstração",
+    "titulo": "Veja um site pronto",
     "texto": "Três sites feitos pela esteira real, a mesma que monta o seu. Nome fictício, cidade de verdade: Riachão do Jacuípe, na Bahia. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat.",
     "nota": "Feito pela esteira real, nome fictício. Nenhum desses negócios existe.",
     "itens": [

@@ -15,7 +15,11 @@
  *   4. imprime o sha256 e o passo a passo que o chat principal executa pelos MCPs (Drive + Base44).
  *      Este script NUNCA faz upload, checkpoint ou deploy. Procedimento completo: docs/PUBLICACAO.md.
  *
- * --destino padrão: CREAT_PUBLICAR_DESTINO, ou o scratchpad da sessão (se existir), ou <tmp>/creat-publicar.
+ * --destino padrão: CREAT_PUBLICAR_DESTINO, ou uma pasta nova e exclusiva criada por mkdtemp em <tmp>/creat-publicar-XXXXXX
+ *   (nunca um caminho fixo e previsível no tmp, que outro usuário poderia pré-criar como link simbólico).
+ *   A sessão que publica informa o scratchpad dela pela variável.
+ * --demo confere também, na página renderizada, que a faixa é a primeira coisa visível e que a meta robots
+ *   é noindex (testar-site exigirFaixaDemo), além de tenant.js com "demonstracao":true.
  * Código: 0 ok · 1 entrada ou dist inválido · 2 ambiente (Playwright, fflate) · 3 teste do site falhou.
  */
 'use strict';
@@ -29,7 +33,6 @@ const { testarSite } = require('./testar-site.cjs');
 
 const APP_BASE44 = '6aefffe66b684db9404b1994';
 const PASTA_DRIVE = '1C5Msox1Q-zVEDMfneH2yU9GUrNbPW1zN';            // "Creat Nuvem"
-const SCRATCHPAD = '/tmp/claude-0/-home-user/481145aa-44c7-587c-be27-bbadde2428c0/scratchpad';
 const WHATSAPP_DEMO = '5575981151202';                                // Suporte Creat
 const FAIXA_DEMO = /demonstra[çc][ãa]o\s*·\s*nome fict[íi]cio/i;
 const MTIME = new Date('2026-01-01T00:00:00Z');
@@ -38,8 +41,7 @@ const LISTA_BRANCA = [/^index\.html$/, /^tenant\.js$/, /^tenant\.json$/, /^robot
 
 function destinoPadrao() {
   if (process.env.CREAT_PUBLICAR_DESTINO) return process.env.CREAT_PUBLICAR_DESTINO;
-  try { if (fs.statSync(SCRATCHPAD).isDirectory()) return SCRATCHPAD; } catch (e) { /* fora desta sessão */ }
-  return path.join(os.tmpdir(), 'creat-publicar');
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'creat-publicar-'));
 }
 
 function listar(raiz) {
@@ -78,6 +80,8 @@ function conferir(pasta, slug, opc) {
     const txt = html + fs.readFileSync(path.join(pasta, 'tenant.js'), 'utf8');
     const erros = [];
     if (!FAIXA_DEMO.test(txt)) erros.push({ campo: 'faixa', mensagem: 'demo sem a faixa "demonstração · nome fictício"' });
+    if (!/"demonstracao"\s*:\s*true/.test(fs.readFileSync(path.join(pasta, 'tenant.js'), 'utf8'))) erros.push({ campo: 'CREAT_SITE.demonstracao', mensagem: 'tenant.js sem "demonstracao":true: refaça o build com --demonstracao' });
+    if (!/<meta name="robots" content="noindex/.test(html)) erros.push({ campo: 'robots', mensagem: 'demo sem meta robots noindex: refaça o build com --demonstracao' });
     if (String(tenant.negocio && tenant.negocio.whatsapp) !== WHATSAPP_DEMO) erros.push({ campo: 'negocio.whatsapp', mensagem: `demo precisa do WhatsApp do Suporte Creat ${WHATSAPP_DEMO} (está ${tenant.negocio && tenant.negocio.whatsapp})` });
     if (erros.length) throw new C.ErroLista(`demo ${slug} fora das regras:`, erros);
   }
@@ -126,7 +130,7 @@ async function main(argv) {
   const saida = C.pastaSaida(a);
   const pasta = path.join(saida, 'dist', slug);
   const c = conferir(pasta, slug, { demo: !!a.demo });
-  const t = await testarSite(pasta, { whatsapp: c.tenant.negocio.whatsapp });
+  const t = await testarSite(pasta, { whatsapp: c.tenant.negocio.whatsapp, exigirFaixaDemo: !!a.demo });
   if (!t.ok) { console.error(`FALHOU testar-site em dist/${slug}/:\n  - ${t.falhas.join('\n  - ')}`); return 3; }
   const z = zipar(pasta, slug, c.arquivos, typeof a.destino === 'string' ? a.destino : destinoPadrao());
   const r = { slug, url: urlDoSite(slug), zip: z.zip, sha256: z.sha256, bytes: z.bytes, arquivos: z.entradas, teste: { ok: true, menorFontePx: t.medidas.menorFontePx, waMe: t.medidas.waMe.length }, avisos: c.avisos, passos: passos(slug, z) };

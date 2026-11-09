@@ -120,7 +120,7 @@
       cores: { fundo: '#F1F0EC', texto: '#161616', destaque: '#B8141E', apoio: '#4D4B47' },
       agendamento: {
         modo: 'whatsapp',
-        mensagem: 'Olá! Meu nome é {nome}. Quero pedir {servico} para {dia} às {hora}. Pode confirmar por aqui?'
+        mensagem: 'Olá! Meu nome é {nome}. Quero pedir um horário no studio: {servico}, {dia} às {hora}. Pode confirmar por aqui?'
       },
       textos: {
         heroTitulo: 'Sua primeira aula começa com um pedido.',

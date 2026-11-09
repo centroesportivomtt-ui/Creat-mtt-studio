@@ -78,7 +78,9 @@
   --couro-latao: var(--pe-destaque);
   --veio-claro: color-mix(in oklab, var(--pe-fundo) 84%, var(--pe-destaque));
   --veio-escuro: color-mix(in oklab, var(--pe-fundo) 72%, black);
-  --gravado: color-mix(in oklab, var(--pe-texto) 52%, var(--pe-fundo));
+  /* v1.1.1: 62% (era 52%). Continua "aço antes de afiar", mas fica >= 5:1 sobre o couro liso
+     (Poste 5,9 · Selaria 5,9 · Lousa 5,4) e não some sobre os veios claros; o cromo vem depois do ritual. */
+  --gravado: color-mix(in oklab, var(--pe-texto) 62%, var(--pe-fundo));
 }
 
 /* ---- TEMA CLARO (padrão sem preferência) ---- */
@@ -231,6 +233,15 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
   text-underline-offset: 0.18em;
 }
 .faixa-demo a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+/* v1.1.1 · no tema escuro a faixa não vira um bloco claro: superfície da página, tinta clara e
+   um fio do destaque embaixo, para continuar sendo a primeira coisa que se lê */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) .faixa-demo { background: var(--fundo-3); color: var(--tinta); box-shadow: inset 0 -2px 0 var(--destaque); }
+}
+:root[data-tema="escuro"] .faixa-demo { background: var(--fundo-3); color: var(--tinta); box-shadow: inset 0 -2px 0 var(--destaque); }
+/* selo "exemplo" no letreiro e no título do horário da demonstração */
+.letreiro .selo { flex: 0 0 auto; font-size: var(--t-micro); line-height: 1.3; }
+.contato-horario h3 .selo { margin-left: var(--esp-1); transform: translateY(-0.2em); }
 
 /* ---------------------------------------------------------------------
    BOTÕES
