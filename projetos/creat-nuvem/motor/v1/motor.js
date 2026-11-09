@@ -17,13 +17,16 @@
  * window.CREAT_SITE (opções do site, escritas pelo build; não é campo do tenant):
  *   { home: 'https://.../', rodape: true|false, url: 'https://site-do-cliente/', manual, nomeExemplo }
  *   rodape:false só sai do build-site.cjs --sem-rodape (decisão do Marcos).
+ *   demonstracao:true (v1.1, aditivo; só build-site.cjs/produzir.mjs --demonstracao): site-demonstração
+ *   com nome fictício. Mostra a faixa "demonstração · nome fictício" no topo, sai com noindex e sem
+ *   JSON-LD (negócio fictício não vira LocalBusiness no Google). Não é campo do tenant (ADR-001).
  *
  * Segurança: nenhum innerHTML com dado. Tudo por createElement/textContent.
  */
 (function (raiz) {
   'use strict';
 
-  var VERSAO = 'v1.0.0';
+  var VERSAO = 'v1.2.0';
   var W = typeof window !== 'undefined' ? window : null;
   var DOC = W && W.document ? W.document : null;
 
@@ -66,6 +69,14 @@
     somLigar: 'Ligar o som',
     somDesligar: 'Desligar o som',
     faixaPrevia: 'Prévia. Serviços, preços e textos são exemplo até o dono aprovar.',
+    faixaDemo: 'demonstração · nome fictício',
+    faixaDemoTexto: 'Site feito pela esteira real da Creat Nuvem. Endereço e horários são de exemplo. O pedido de horário vai para o WhatsApp da Creat, não para um negócio.',
+    demoLocalNota: 'Endereço e horário de exemplo: este negócio não existe.',
+    demoHeroiNota: 'Nesta demonstração, o pedido vai para o WhatsApp da Creat.',
+    demoHorarioRodape: 'Horário de exemplo',
+    faixaDemoLink: 'Quero um assim',
+    demoSede: 'Veja a equipe que montou este site',
+    demoSedeLeitor: ' (sede 3D da Creat Nuvem, demonstração)',
     exemplo: 'exemplo',
     sobConsulta: 'sob consulta',
     min: 'min',
@@ -379,10 +390,33 @@
     return base + sep + 'utm_source=rodape&utm_medium=ref&utm_campaign=rodape-v1&utm_content=' + encodeURIComponent(nicho || 'site');
   }
 
-  /* JSON-LD LocalBusiness do site entregue (prévia não tem) */
+  /* link "Quero um assim" da faixa de demonstração (mesma regra do rodapé, outra origem) */
+  function hrefDemo(home, nicho) {
+    var base = String(home).split('#')[0];
+    if (!/^https:\/\//.test(base)) return '';
+    var sep = base.indexOf('?') === -1 ? '?' : '&';
+    return base + sep + 'utm_source=demo&utm_medium=ref&utm_campaign=demo-v1&utm_content=' + encodeURIComponent(nicho || 'site');
+  }
+
+  /* link "Veja a equipe que montou este site" (só na demonstração): <home>/sede/?modo=demo&marca=<nome>.
+     Só https; a marca passa pela mesma limpeza da sede (letras, números, espaço e & . - ', até 28)
+     e vai codificada; o href entra por setAttribute, nunca por HTML. */
+  function hrefSede(home, nome) {
+    var base = String(home || '').split('#')[0].split('?')[0];
+    if (!/^https:\/\/[^\s"'<>\\]+$/.test(base)) return '';
+    if (base.charAt(base.length - 1) !== '/') base += '/';
+    var m = '';
+    try { m = String(nome || '').normalize('NFC').replace(/[^\p{L}\p{N} &.'-]/gu, ''); } catch (e) { m = String(nome || '').replace(/[^A-Za-zÀ-ÿ0-9 &.'-]/g, ''); }
+    m = m.replace(/\s+/g, ' ').trim();
+    if (m.length > 28) { m = m.slice(0, 28); var i = m.lastIndexOf(' '); m = (i > 10 ? m.slice(0, i) : m).trim(); }
+    return base + 'sede/?modo=demo' + (m ? '&marca=' + encodeURIComponent(m) : '');
+  }
+
+  /* JSON-LD LocalBusiness do site entregue (prévia e demonstração não têm) */
   function jsonLd(tenant, opc) {
     opc = opc || {};
     if (!tenant || !tenant.meta || tenant.meta.previa) return null;
+    if (opc.site && opc.site.demonstracao) return null;
     var preset = opc.preset || null, neg = tenant.negocio || {}, e = neg.endereco || {};
     var o = {
       '@context': 'https://schema.org',
@@ -443,12 +477,16 @@
     var fontes = (preset && preset.fontes) || FONTES_PADRAO;
     var rodapeMostrar = site.rodape !== false;
     var rotulo = (preset && preset.rotulo) || '';
+    var demonstracao = !previa && !!site.demonstracao;
     return {
       versao: VERSAO,
       slug: String(tenant.slug || 'site'),
       nicho: String(tenant.nicho || ''),
       rotuloNicho: rotulo,
       previa: previa,
+      demonstracao: demonstracao,
+      demoHref: demonstracao && site.home ? hrefDemo(site.home, tenant.nicho) : '',
+      sedeHref: demonstracao && site.home ? hrefSede(site.home, neg.nome) : '',
       nomeExemplo: !!(previa && site.nomeExemplo),
       nome: neg.nome || '',
       nomeCurto: neg.nomeCurto || neg.nome || '',
@@ -456,7 +494,7 @@
       cidade: end.cidade || '',
       titulo: (tenant.pagina && tenant.pagina.titulo) || neg.nome || '',
       descricao: (tenant.pagina && tenant.pagina.descricao) || '',
-      robots: previa ? 'noindex, nofollow' : 'index, follow',
+      robots: previa || demonstracao ? 'noindex, nofollow' : 'index, follow',
       paleta: paletaDoTenant(tenant, preset),
       fontes: fontes,
       fontesHref: fontes.google ? 'https://fonts.googleapis.com/css2?' + fontes.google + '&display=swap' : '',
@@ -475,7 +513,8 @@
         telefone: neg.telefoneExibicao || (whats ? mascararWhats(whats.slice(2)) : ''),
         enderecoLinhas: enderecoLinhas(end),
         enderecoCompleto: !!(end.rua && end.cidade),
-        mapaUrl: end.rua ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([enderecoTexto(end), neg.nome].filter(Boolean).join(', ')) : '',
+        // demonstração: sem link do Maps (o endereço é de exemplo e não pode levar a um imóvel de terceiros)
+        mapaUrl: end.rua && !demonstracao ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([enderecoTexto(end), neg.nome].filter(Boolean).join(', ')) : '',
         instagram: neg.instagram && /^https:\/\//.test(String(neg.instagram.url || '')) ? { usuario: neg.instagram.usuario || '', url: neg.instagram.url } : null
       },
       pedido: {
@@ -530,6 +569,7 @@
     var ld = e.jsonLd ? '<script type="application/ld+json">' + jsonSeguro(e.jsonLd) + '</script>' : '';
     var canonical = opc.site && opc.site.url ? '<link rel="canonical" href="' + escaparHtml(opc.site.url) + '">' : '';
     var nos = '<p>' + escaparHtml(e.nome) + (e.bordao ? ' · ' + escaparHtml(e.bordao) : '') + '</p>';
+    if (e.demonstracao) nos = '<p>' + escaparHtml(UI.faixaDemo) + '. ' + escaparHtml(UI.faixaDemoTexto) + '</p>' + nos;
     if (e.contato.waBase) nos += '<p>Para pedir horário sem JavaScript, chame no WhatsApp: <a href="' + escaparHtml(e.contato.waBase) + '">' + escaparHtml(e.contato.telefone) + '</a></p>';
     if (e.contato.enderecoLinhas.length) nos += '<p>' + e.contato.enderecoLinhas.map(escaparHtml).join('<br>') + '</p>';
     var trocas = {
@@ -544,12 +584,22 @@
       '<!--{{CANONICAL}}-->': canonical,
       '<!--{{NOSCRIPT}}-->': nos
     };
-    return String(texto).replace(/\{\{[A-Z_]+\}\}|<!--\{\{[A-Z_]+\}\}-->/g, function (m) { return tem(trocas, m) ? trocas[m] : m; });
+    var html = String(texto).replace(/\{\{[A-Z_]+\}\}|<!--\{\{[A-Z_]+\}\}-->/g, function (m) { return tem(trocas, m) ? trocas[m] : m; });
+    return comRitual(html, opc.preset, opc.caminhoMotor || 'motor/');
+  }
+  /* T8 (aditivo): o ritual do nicho que mora em motor/v1/rituais/ entra como <link> + <script defer> antes de </head> */
+  function comRitual(html, preset, caminho) {
+    var a = preset && preset.ritualArquivos, ok = /^v1\/rituais\/[a-z][a-z0-9-]{0,30}\.(js|css)$/, tags = '';
+    if (!a || typeof a !== 'object') return html;
+    if (ok.test(String(a.css || '')) && /\.css$/.test(a.css)) tags += '<link rel="stylesheet" href="' + escaparHtml(caminho + a.css) + '" data-rituais-css>\n';
+    (Array.isArray(a.js) ? a.js : []).forEach(function (c) { if (ok.test(String(c)) && /\.js$/.test(c)) tags += '<script src="' + escaparHtml(caminho + c) + '" defer></script>\n'; });
+    return tags && html.indexOf('</head>') !== -1 ? html.replace('</head>', tags + '</head>') : html;
   }
   /* conteúdo do tenant.js que o template carrega (o site abre do disco: file:// não faz fetch de JSON) */
   function scriptTenant(tenant, site) {
     var s = { home: site && site.home ? String(site.home) : '', rodape: !(site && site.rodape === false) };
     if (site && site.url) s.url = String(site.url);
+    if (site && site.demonstracao) s.demonstracao = true;
     return '/* gerado pelo build-site.cjs a partir de tenant.json; não editar à mão */\n' +
       'window.TENANT = ' + jsonSeguro(tenant) + ';\n' +
       'window.CREAT_SITE = ' + jsonSeguro(s) + ';\n';
@@ -665,7 +715,7 @@
   function aplicarCabeca(e) {
     if (e.titulo) DOC.title = e.titulo;
     if (e.descricao) meta('description', e.descricao);
-    if (e.previa) meta('robots', e.robots);
+    if (e.previa || e.demonstracao) meta('robots', e.robots);
     meta('theme-color', e.temaCor);
     if (e.fontesHref && !DOC.querySelector('link[data-motor-fontes]')) {
       if (!DOC.querySelector('link[rel="preconnect"][href="https://fonts.gstatic.com"]')) {
@@ -753,7 +803,8 @@
 
   function renderTopo(e) {
     var topo = criar('header', { classe: 'topo' });
-    topo.appendChild(criar('p', { id: 'letreiro', classe: 'letreiro', role: 'status', 'aria-live': 'polite' }, [criar('span', { classe: 'letreiro-texto' })]));
+    // demonstração: o "aberto/fechado agora" sai de um horário de exemplo, e o selo diz isso
+    topo.appendChild(criar('p', { id: 'letreiro', classe: 'letreiro', role: 'status', 'aria-live': 'polite' }, [e.demonstracao ? selo(UI.exemplo) : null, criar('span', { classe: 'letreiro-texto' })]));
     var pedir = e.pedido.modo === 'link_externo'
       ? criar('a', { classe: 'btn btn-pedir', id: 'btn-pedir', href: e.pedido.urlExterna, target: '_blank', rel: 'noopener', texto: UI.agendarExterno })
       : criar('a', { classe: 'btn btn-pedir', id: 'btn-pedir', href: '#pedir', texto: UI.pedir });
@@ -775,7 +826,12 @@
     h.appendChild(nome);
     if (e.nomeExemplo) h.appendChild(criar('p', { classe: 'heroi-exemplo' }, [selo(UI.exemplo)]));
     if (e.bordao) h.appendChild(criar('p', { classe: 'heroi-bordao', texto: e.bordao }));
-    if (e.textos.heroSubtitulo) h.appendChild(criar('p', { classe: 'heroi-sub', texto: e.textos.heroSubtitulo }));
+    if (e.textos.heroSubtitulo) {
+      // demonstração: o texto do herói fala do WhatsApp do negócio; a frase extra desfaz a contradição com a faixa
+      h.appendChild(criar('p', { classe: 'heroi-sub' }, e.demonstracao
+        ? [e.textos.heroSubtitulo + ' ', criar('span', { classe: 'heroi-sub-demo', texto: UI.demoHeroiNota })]
+        : [e.textos.heroSubtitulo]));
+    }
     return h;
   }
 
@@ -846,10 +902,13 @@
       local.appendChild(ad);
     }
     if (!e.contato.enderecoCompleto && e.previa) local.appendChild(criar('p', { classe: 'nota' }, [selo(UI.exemplo), ' ' + UI.enderecoPrevia]));
+    if (e.demonstracao) local.appendChild(criar('p', { classe: 'nota nota-demo' }, [selo(UI.exemplo), ' ' + UI.demoLocalNota]));
     if (e.contato.mapaUrl) local.appendChild(criar('p', null, [criar('a', { classe: 'link-forte', href: e.contato.mapaUrl, target: '_blank', rel: 'noopener', texto: UI.comoChegar })]));
     if (e.contato.instagram) local.appendChild(criar('p', null, [criar('a', { classe: 'link-forte', href: e.contato.instagram.url, target: '_blank', rel: 'noopener', texto: UI.instagram + (e.contato.instagram.usuario ? ' · ' + e.contato.instagram.usuario : '') })]));
     s.appendChild(local);
-    var hor = criar('div', { classe: 'contato-horario' }, [criar('h3', { texto: UI.horarioTitulo })]);
+    var h3hor = criar('h3', { texto: UI.horarioTitulo });
+    if (e.demonstracao) { h3hor.appendChild(DOC.createTextNode(' ')); h3hor.appendChild(selo(UI.exemplo)); }
+    var hor = criar('div', { classe: 'contato-horario' }, [h3hor]);
     var tab = criar('table', { classe: 'funcionamento' }, [criar('caption', { classe: 'so-leitor', texto: UI.horarioTitulo })]);
     var tb = criar('tbody');
     var hoje = new Date().getDay();
@@ -880,12 +939,18 @@
     if (e.textos.rodapeFrase) l1.appendChild(DOC.createTextNode(' · ' + e.textos.rodapeFrase));
     r.appendChild(l1);
     var resumo = e.linhasHorario.filter(function (l) { return !l.folga; }).map(function (l) { return l.rotulo + ', ' + l.valor; }).join(' · ');
+    if (resumo && e.demonstracao) resumo = UI.demoHorarioRodape + ': ' + resumo;
     var l2 = criar('p', null, resumo ? [criar('span', { texto: resumo })] : []);
     if (e.contato.waBase) {
       if (resumo) l2.appendChild(DOC.createTextNode(' · '));
       l2.appendChild(criar('a', { href: e.contato.waBase, target: '_blank', rel: 'noopener', texto: UI.whatsRodape + ' ' + e.contato.telefone }));
     }
     if (l2.childNodes.length) r.appendChild(l2);
+    if (e.demonstracao && e.sedeHref) {
+      r.appendChild(criar('p', { classe: 'rodape-sede' }, [
+        criar('a', { href: e.sedeHref, rel: 'noopener' }, [criar('span', { classe: 'rodape-sede-pontos', 'aria-hidden': 'true' }), DOC.createTextNode(UI.demoSede), criar('span', { classe: 'so-leitor', texto: UI.demoSedeLeitor })])
+      ]));
+    }
     if (e.rodape.mostrar) {
       var txt = e.rodape.texto + ' · ' + e.rodape.chamada;
       r.appendChild(criar('p', { classe: 'creat' }, [
@@ -899,6 +964,11 @@
     while (alvo.firstChild) alvo.removeChild(alvo.firstChild);
     alvo.appendChild(criar('a', { classe: 'pular-link', href: e.pedido.modo === 'link_externo' ? '#pedir' : '#pedir', texto: UI.pular }));
     if (e.previa) alvo.appendChild(criar('p', { classe: 'faixa-previa', role: 'note' }, [selo('prévia'), ' ' + UI.faixaPrevia.replace(/^Prévia\.\s*/, '')]));
+    else if (e.demonstracao) {
+      var fd = [selo(UI.faixaDemo), ' ' + UI.faixaDemoTexto];
+      if (e.demoHref) fd.push(' ', criar('a', { href: e.demoHref, rel: 'noopener', texto: UI.faixaDemoLink }));
+      alvo.appendChild(criar('p', { classe: 'faixa-previa faixa-demo', role: 'note', 'data-demonstracao': '' }, fd));
+    }
     alvo.appendChild(renderTopo(e));
     alvo.appendChild(renderHeroi(e));
     var main = criar('main', { id: 'conteudo' });
@@ -963,6 +1033,10 @@
       estado: e, tenant: tenant, preset: preset, armazem: armazem, puro: puro, emitir: emitir,
       criar: criar, selo: selo, reduzMovimento: reduz, ritual: e.ritual && W.CREAT_RITUAIS ? W.CREAT_RITUAIS[e.ritual] || null : null
     };
+    /* o ritual do nicho (CREAT_RITUAIS[preset.ritual]) transforma o herói no palco do gesto */
+    if (ctx.ritual && typeof ctx.ritual.montarHeroi === 'function') {
+      try { ctx.ritual.montarHeroi($('heroi'), ctx); } catch (er) { if (W.console) W.console.error('[motor] ritual:', er); }
+    }
     modulos.forEach(function (m) {
       try { m.fn(ctx); } catch (er) { if (W.console) W.console.error('[motor] módulo ' + m.nome + ':', er); }
     });

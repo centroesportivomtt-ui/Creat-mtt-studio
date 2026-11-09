@@ -1,0 +1,36 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&family=JetBrains+Mono:wght@500&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="base.css">
+<title>S2 Placa stories</title>
+<style>.peca{width:1080px;height:1920px}
+/* área segura Reels/Stories: 14% topo (269px), 35% base (672px), 6% laterais (65px). Texto e marca só entre y 269 e 1248. */
+.guia{position:absolute;left:65px;right:65px;top:269px;height:979px;outline:3px dashed #e33;display:none}
+.com-guia .guia{display:block}</style></head><body>
+<div class="peca" id="peca">
+  <div class="nuvem" style="width:380px;height:190px;left:-70px;top:60px"></div>
+  <div class="nuvem" style="width:280px;height:140px;right:-30px;top:120px"></div>
+  <div class="nuvem" style="width:420px;height:210px;left:-110px;top:1730px"></div>
+  <div class="marca" style="position:absolute;left:65px;top:290px"><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M14 40a10 10 0 0 1-1-20 14 14 0 0 1 27-6 11 11 0 0 1 13 11 8 8 0 0 1-1 15z" fill="#FFC93C" stroke="#1E1B2E" stroke-width="4" stroke-linejoin="round"/><circle cx="26" cy="28" r="2.6" fill="#1E1B2E"/><circle cx="38" cy="28" r="2.6" fill="#1E1B2E"/><path d="M28 34q4 3 8 0" fill="none" stroke="#1E1B2E" stroke-width="3" stroke-linecap="round"/></svg><span>Creat Nuvem</span><span class="olho" style="margin-left:10px;align-self:flex-end;padding-bottom:6px">· Porta Aberta</span></div>
+  <h1 class="titulo" style="--t:122px;position:absolute;left:65px;top:380px;width:950px">Digite o nome.<br>Vire a <em>placa.</em></h1>
+  <span class="chip" style="position:absolute;left:65px;top:655px">Grátis para ver · Sem cadastro</span>
+
+  <div class="mini" data-placa="fechado" style="left:745px;top:615px;width:250px;transform:rotate(8deg)"></div>
+  <svg class="seta" style="left:0;top:0" width="1080" height="1920" viewBox="0 0 1080 1920" aria-hidden="true">
+    <path d="M880 800 Q 800 900 640 930" fill="none" stroke="#1E1B2E" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 18"/>
+    <path d="M640 930 l28 -16 M640 930 l26 18" fill="none" stroke="#1E1B2E" stroke-width="8" stroke-linecap="round"/>
+  </svg>
+  <span class="selo" style="left:860px;top:820px;transform:rotate(-3deg)">1 toque</span>
+
+  <div class="porta" style="left:65px;top:790px;width:640px;height:960px">
+    <div class="vidro"><img src="../../../assets/img/sede-ilha.webp" alt="" style="object-position:50% 50%"></div>
+  </div>
+  <div class="placa" data-placa="aberto" data-corrente data-nome="Barbearia Navalha Fictícia" style="left:165px;top:745px;width:440px"></div>
+  <span class="selo" style="left:430px;top:1150px;transform:rotate(4deg)">nome fictício</span>
+  <span class="legenda-vidro" style="left:115px;top:1196px">sede da Creat · demonstração</span>
+
+  <div class="celular" style="left:650px;top:1010px;width:380px;height:820px;transform:rotate(3deg)"><img src="../saida/prints/previa-barbearia-topo.png" alt=""></div>
+  <span class="selo" style="left:730px;top:986px;transform:rotate(-4deg);background:#FFC93C">prévia real</span>
+  <div class="guia"></div>
+</div>
+<script src="montar.js"></script></body></html>

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:creat-nuvem:schema:pedido:v1",
   "title": "Pedido (PEDIDO v1 de entrada e registro Pedido da Fase 2)",
-  "description": "Dois formatos com um único vocabulário. PedidoEntrada é o texto PEDIDO v1 (linhas 'chave: valor') convertido em objeto, exatamente com as chaves das linhas. Pedido é o registro que a Fase 2 guarda no D1. Nenhum dos dois tem campo para mensagem de cliente final nem CPF/CNPJ (ficam só no Asaas).",
+  "description": "Dois formatos com um único vocabulário. PedidoEntrada é o texto PEDIDO v1 (linhas 'chave: valor') convertido em objeto, exatamente com as chaves das linhas. Pedido é o registro que a Fase 2 guarda no D1. Nenhum dos dois tem campo para mensagem de cliente final nem CPF/CNPJ (ficam só no provedor de pagamento: Mercado Pago ou Stripe).",
   "oneOf": [
     { "$ref": "#/$defs/PedidoEntrada" },
     { "$ref": "#/$defs/Pedido" }

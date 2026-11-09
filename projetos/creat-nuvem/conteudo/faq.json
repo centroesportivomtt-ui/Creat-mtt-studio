@@ -34,7 +34,7 @@
     {
       "id": "prazo",
       "pergunta": "E se passar do prazo?",
-      "resposta": "O prazo é de {{precos.prazoHoras}} h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. Se passar, o 1º mês do plano é grátis. Domínio próprio e verificação do Google ficam fora do relógio, porque dependem de você e de terceiros."
+      "resposta": "O prazo é de {{precos.prazoHoras}} h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. O formulário também pede seu nome e seu e-mail, para contato e recibo. Eles não mudam o prazo. Se passar, o 1º mês do plano é grátis. Domínio próprio e verificação do Google ficam fora do relógio, porque dependem de você e de terceiros."
     },
     {
       "id": "instagram",
@@ -49,7 +49,7 @@
     {
       "id": "meus-dados",
       "pergunta": "E os meus dados?",
-      "resposta": "Antes de você aceitar os termos, a página não guarda nada pessoal: o nome do negócio e o seu WhatsApp de teste ficam só no seu aparelho. Os dados do pedido vão pelo seu próprio WhatsApp para o Suporte Creat. O pagamento e o CPF ou CNPJ ficam com o Asaas. Detalhes na página de privacidade."
+      "resposta": "Antes de você aceitar os termos, a página não guarda nada pessoal: o nome do negócio e o seu WhatsApp de teste ficam só no seu aparelho. Os dados do pedido vão pelo seu próprio WhatsApp para o Suporte Creat. O pagamento e o CPF ou CNPJ ficam com o Mercado Pago (Pix e cartão) ou com o Stripe (mensalidade no cartão). Detalhes na página de privacidade."
     },
     {
       "id": "pedido-confirmado",

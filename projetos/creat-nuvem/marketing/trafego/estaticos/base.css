@@ -1,0 +1,42 @@
+/* Conceito: A porta de vidro — a placa vira de FECHADO para ABERTO pendurada
+   no vidro da porta, e pelo vidro se vê a sede 3D com a equipe trabalhando.
+   Momento-assinatura: a placa ABERTO com o nome em giz, sobre a sede ao vivo.
+   Ousadia única: a porta (madeira + vidro + sede). Resto calmo: céu, tinta, sol.
+   Tokens herdados de projetos/creat-nuvem/assets/tokens.css (não mudar sem o dono). */
+:root{
+  --ceu:#CDEBFF; --papel:#FFFDF6; --fundo:#FBF6EA; --tinta:#1E1B2E; --apagado:#5E5974;
+  --sol:#FFC93C; --madeira:#D39A5B; --madeira-clara:#E6B67B; --madeira-sombra:#7A4B2A;
+  --lousa:#22322D; --giz:#F4F1E6; --vidro:#13213A;
+  --f-display:"Lilita One","Arial Rounded MT Bold",sans-serif;
+  --f-texto:"Figtree",system-ui,sans-serif;
+  --f-dado:"JetBrains Mono",ui-monospace,monospace;
+  --borda:6px; --sombra:10px 10px 0 var(--tinta); --sombra-p:6px 6px 0 var(--tinta);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--ceu)}
+body{font-family:var(--f-texto);color:var(--tinta);-webkit-font-smoothing:antialiased}
+.peca{position:relative;overflow:hidden;background:var(--ceu)}
+.nuvem{position:absolute;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100'%3E%3Cpath d='M32 92a24 24 0 0 1 2-48 32 32 0 0 1 60-16 28 28 0 0 1 50 6 24 24 0 0 1 26 22 22 22 0 0 1-4 36z' fill='%23FFFDF6' stroke='%231E1B2E' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center/contain}
+.chip{white-space:nowrap}
+.marca{display:flex;align-items:center;gap:14px;font:400 44px/1 var(--f-display)}
+.marca svg{width:66px;height:50px}
+.olho{font:500 26px/1 var(--f-dado);letter-spacing:.12em;text-transform:uppercase;color:var(--apagado)}
+.titulo{font:400 var(--t,110px)/.98 var(--f-display);letter-spacing:-.01em;text-wrap:balance}
+.titulo em{font-style:normal;background:var(--sol);padding:0 .14em;border:var(--borda) solid var(--tinta);border-radius:18px;box-shadow:var(--sombra-p);display:inline-block;transform:rotate(-2deg)}
+/* a porta */
+.porta{position:absolute;background:var(--madeira);border:var(--borda) solid var(--tinta);border-radius:26px;box-shadow:var(--sombra);
+  background-image:linear-gradient(var(--madeira-clara) 0 18px,transparent 18px),linear-gradient(0deg,var(--madeira-sombra) 0 22px,transparent 22px)}
+.vidro{position:absolute;inset:34px 34px 34px 34px;border:var(--borda) solid var(--tinta);border-radius:14px;overflow:hidden;background:var(--vidro)}
+.vidro img{width:100%;height:100%;object-fit:cover;display:block}
+.vidro::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 0 30%,rgba(255,255,255,.16) 30% 38%,transparent 38% 44%,rgba(255,255,255,.10) 44% 47%,transparent 47%)}
+.macaneta{position:absolute;width:26px;height:70px;border:var(--borda) solid var(--tinta);border-radius:14px;background:#8C909B}
+.placa{position:absolute;filter:drop-shadow(0 0 0 transparent)}
+.placa svg{display:block;width:100%;height:auto;overflow:visible}
+.selo{position:absolute;font:500 22px/1 var(--f-dado);letter-spacing:.06em;background:var(--papel);border:4px solid var(--tinta);border-radius:10px;padding:8px 12px;white-space:nowrap}
+.legenda-vidro{position:absolute;font:500 20px/1 var(--f-dado);color:var(--giz);background:rgba(19,33,58,.82);border:3px solid var(--giz);border-radius:8px;padding:7px 10px;letter-spacing:.04em}
+.celular{position:absolute;border:10px solid var(--tinta);border-radius:52px;overflow:hidden;background:var(--tinta);box-shadow:var(--sombra)}
+.celular img{display:block;width:100%;border-radius:40px}
+.chip{display:inline-flex;align-items:center;gap:16px;font:800 34px/1 var(--f-texto);background:var(--sol);border:var(--borda) solid var(--tinta);border-radius:999px;padding:20px 30px;box-shadow:var(--sombra-p)}
+.texto{font:600 36px/1.3 var(--f-texto);text-wrap:pretty}
+.seta{position:absolute;overflow:visible}
+.mini{position:absolute}

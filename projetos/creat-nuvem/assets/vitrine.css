@@ -198,6 +198,10 @@ body.com-previa .zap-flutuante,body.com-consentimento .zap-flutuante{display:non
 /* ---------------------------------------------------------------- consentimento: aceitar e recusar com o MESMO peso */
 .consentimento{position:fixed;left:var(--gut);right:var(--gut-d);bottom:calc(8px + env(safe-area-inset-bottom, 0px));z-index:var(--z-consentimento);display:grid;gap:var(--r2);max-width:560px;margin-inline:auto;padding:var(--r3) var(--r4);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra)}
 .consentimento p{font-size:var(--t-menor)}
+/* sai da frente da sede embutida (vitrine.js): desce em 200 ms; volta subindo em 260 ms */
+.consentimento{transition:transform 260ms var(--curva-saida),opacity 260ms var(--curva-saida),visibility 0s}
+.consentimento.is-recuado{transform:translateY(calc(100% + 24px));opacity:0;visibility:hidden;transition:transform 200ms cubic-bezier(.4,0,1,1),opacity 200ms cubic-bezier(.4,0,1,1),visibility 0s 200ms}
+@media (prefers-reduced-motion:reduce){.consentimento,.consentimento.is-recuado{transform:none}}
 .consentimento .botoes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .consentimento .btn{min-height:var(--alvo);padding:6px 16px;background:var(--papel);color:var(--tinta)} /* nenhum dos dois é amarelo: escolha livre */
 

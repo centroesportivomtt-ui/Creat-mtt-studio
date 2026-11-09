@@ -8,9 +8,11 @@ Verbo (T3), 08/11/2026. Seção 12 do briefing. Uma régua só, para todo link q
 |---|---|---|
 | `utm_source` | `meta` · `instagram` · `whatsapp` · `indicacao` · `parceiro` · `bastidores` · `rodape` | de onde veio |
 | `utm_medium` | `pago` · `organico` · `ref` | se foi mídia paga, orgânico ou indicação |
-| `utm_campaign` | `cal-nov26` (calibragem 16 a 22/11) · `ctwa-jan27` · `saudacao` · `ausencia` · `r1` · `r14` · `bio` · `indica-v1` · `rodape-v1` · outros no mesmo formato | qual ação |
+| `utm_campaign` | `cal-nov26` (calibragem 16 a 22/11) · `ctwa-nov26` (Click-to-WhatsApp, `trafego/anuncios-meta.md`) · `rt-nov26` (retargeting) · `fechamento` (fluxo F1 a F5 fora de anúncio) · `ctwa-jan27` · `saudacao` · `ausencia` · `r1` · `r14` · `bio` · `indica-v1` · `rodape-v1` · outros no mesmo formato | qual ação |
 | `utm_content` | código do anúncio ou peça, por exemplo `A1-barbearia-v1` | qual criativo |
 | `utm_term` | não usado na Fase 1 | |
+
+Contrato de nomes no Gerenciador (`trafego/campanha-meta.md` §9): nome da campanha = `utm_campaign`; nome do anúncio = `utm_content`.
 
 Formato (contrato do T1, `docs/ARQUITETURA.md` item c): cada valor com 1 a 64 caracteres de `A-Z a-z 0-9 . _ -`. Sem acento, sem espaço, sem maiúscula por padrão. Valor fora disso é descartado pela página sem erro.
 
@@ -20,8 +22,8 @@ Formato (contrato do T1, `docs/ARQUITETURA.md` item c): cada valor com 1 a 64 ca
 
 `<ângulo><número do texto>-<nicho>-v<versão>`
 
-- ângulo: `A` prévia · `B` sem amarra · `C` a equipe · `D` antes do Natal · `E` site grátis do Google · `W` Click-to-WhatsApp
-- número do texto: 1, 2 ou 3 (o texto principal usado)
+- ângulo: `A` prévia · `B` sem amarra · `C` a equipe · `D` antes do Natal · `E` site grátis do Google · `W` Click-to-WhatsApp (`W0` = conversa de anúncio sem código identificado) · `F` dor em cena · `T` teste do pedido · `V` retargeting (os três últimos desde 09/11/2026, em `trafego/anuncios-meta.md`)
+- número do texto: 1, 2 ou 3 em `anuncios.md`; 4 e 5 nos textos novos dos ângulos A e C em `trafego/anuncios-meta.md`; `F0` é o Reel de dor que já rodou na conta (CPC de cerca de R$ 0,22), reaproveitado com o botão Enviar mensagem (`trafego/campanha-meta.md` §11, desde 09/11/2026)
 - nicho: `barbearia` · `salao` · `academia` · `geral`
 - versão: sobe quando o texto ou o vídeo mudam (`v1`, `v2`...)
 
@@ -36,6 +38,7 @@ Exemplos: `A1-barbearia-v1`, `B1-salao-v1`, `C1-barbearia-v1`, `W2-geral-v1`.
 | Anúncio da calibragem, criativo 1 | `{{site.url}}/?nicho=barbearia&utm_source=meta&utm_medium=pago&utm_campaign=cal-nov26&utm_content=A1-barbearia-v1` |
 | Anúncio da calibragem, criativo 2 | `{{site.url}}/?nicho=salao&utm_source=meta&utm_medium=pago&utm_campaign=cal-nov26&utm_content=B1-salao-v1` |
 | Anúncio da calibragem, criativo 3 | `{{site.url}}/?nicho=barbearia&utm_source=meta&utm_medium=pago&utm_campaign=cal-nov26&utm_content=C1-barbearia-v1` |
+| Link enviado no Click-to-WhatsApp (novembro, F3; configuração em `trafego/campanha-meta.md`) | `{{site.url}}/?nicho=<nicho>&utm_source=meta&utm_medium=pago&utm_campaign=ctwa-nov26&utm_content=<código do anúncio>` |
 | Link enviado no Click-to-WhatsApp (janeiro) | `{{site.url}}/?nicho=<nicho>&utm_source=meta&utm_medium=pago&utm_campaign=ctwa-jan27&utm_content=W1-<nicho>-v1` |
 | Saudação do WhatsApp | `{{site.url}}/?utm_source=whatsapp&utm_medium=organico&utm_campaign=saudacao` |
 | Ausência do WhatsApp | `{{site.url}}/?utm_source=whatsapp&utm_medium=organico&utm_campaign=ausencia` |

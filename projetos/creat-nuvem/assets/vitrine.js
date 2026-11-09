@@ -213,6 +213,8 @@
         planos: base ? { aberto: base.planos.aberto, vitrine: base.planos.vitrine } : pad.planos,
         anualMesesPagos: base ? base.anualMesesPagos : pad.anualMesesPagos,
         bastidores: base && num(base.bastidores) && base.bastidores > 0 ? base.bastidores : pad.bastidores,
+        // Só para o texto dos termos (descreve a regra): o preço de inauguração como está no arquivo, mesmo velho.
+        inauguracaoTermos: base && base.abertura.inauguracao && num(base.abertura.inauguracao.preco) && base.abertura.inauguracao.preco > 0 ? base.abertura.inauguracao.preco : null,
         vagasHoje: frescoV ? { vagas_hoje: v.vagas_hoje, capacidade_dia: v.capacidade_dia } : null,
         linkChave: chave,
         linkAbertura: links[chave]
@@ -272,6 +274,13 @@
       btn.setAttribute('href', link);
       btn.removeAttribute('aria-disabled'); btn.removeAttribute('tabindex');
       btn.textContent = btn.getAttribute('data-rotulo');
+    } else if (suporteOk()) {
+      // Sem link de pagamento ainda: a venda fecha pelo WhatsApp do Suporte Creat, com Pix na conversa. Nunca deixamos o botão morto.
+      var rotulo = btn.getAttribute('data-rotulo');
+      btn.setAttribute('href', linkWhats(CK.whatsappSuporte, 'Oi! Quero fazer a Abertura do Porta Aberta (' + chave + '). Como pago por Pix?'));
+      btn.setAttribute('target', '_blank'); btn.setAttribute('rel', 'noopener noreferrer');
+      btn.removeAttribute('aria-disabled'); btn.removeAttribute('tabindex');
+      btn.textContent = rotulo + ' pelo WhatsApp';
     } else {
       btn.removeAttribute('href');
       btn.setAttribute('aria-disabled', 'true'); btn.setAttribute('tabindex', '-1');
@@ -285,10 +294,10 @@
   var PROPS_EVENTO = {
     placa_vista: ['dispositivo'], sede_aberta: ['dispositivo'],
     nicho_escolhido: ['dispositivo', 'nicho'], nome_digitado: ['dispositivo', 'nicho'], previa_gerada: ['dispositivo', 'nicho'], reserva_teste: ['dispositivo', 'nicho'],
-    plano_visto: ['dispositivo', 'plano', 'nicho'], checkout_iniciado: ['dispositivo', 'plano', 'nicho'], pago_pagina: ['dispositivo', 'plano', 'nicho'],
+    plano_visto: ['dispositivo', 'plano', 'nicho'], checkout_iniciado: ['dispositivo', 'plano', 'nicho'], pedido_enviado_pagina: ['dispositivo', 'plano', 'nicho'],
     lista_espera_enviada: ['dispositivo', 'nicho']
   };
-  var EXIGIDAS = { nicho_escolhido: 'nicho', nome_digitado: 'nicho', previa_gerada: 'nicho', reserva_teste: 'nicho', plano_visto: 'plano', checkout_iniciado: 'plano', pago_pagina: 'plano', lista_espera_enviada: 'nicho' };
+  var EXIGIDAS = { nicho_escolhido: 'nicho', nome_digitado: 'nicho', previa_gerada: 'nicho', reserva_teste: 'nicho', plano_visto: 'plano', checkout_iniciado: 'plano', pedido_enviado_pagina: 'plano', lista_espera_enviada: 'nicho' };
   // Internas que o PostHog precisa para aceitar o evento; nenhuma carrega URL com # nem texto digitado.
   var PH_INTERNAS = ['token', 'distinct_id', '$lib', '$lib_version', '$insert_id', '$time', '$session_id', '$window_id', '$device_type', '$browser', '$os', '$process_person_profile', '$is_identified', '$configured_session_timeout_ms'];
   function valorPermitido(evento, k, v) {
@@ -335,8 +344,9 @@
     else if (posthogPedido) fila.push([nome, limpo]);
   }
   W.__creatEventos = W.__creatEventos || [];
-  function carregarScript(src, aoCarregar) {
+  function carregarScript(src, aoCarregar, integridade) {
     var s = el('script', { src: src, async: true, crossorigin: 'anonymous', referrerpolicy: 'no-referrer' });
+    if (integridade) s.integrity = integridade; // SRI: arquivo alterado no CDN = navegador recusa, nada roda na nossa origem
     s.onload = aoCarregar || null; s.onerror = function () { fila = []; };
     D.head.appendChild(s);
   }
@@ -359,7 +369,7 @@
         });
         posthogPronto = true;
         fila.splice(0).forEach(function (e) { try { W.posthog.capture(e[0], e[1]); } catch (x) {} });
-      });
+      }, MED.posthogIntegridade);
     };
     if ('requestIdleCallback' in W) W.requestIdleCallback(iniciar, { timeout: 4000 }); else setTimeout(iniciar, 1500);
   }
@@ -389,7 +399,8 @@
   function pixelEvento(nome) { try { if (terceirosCarregados && W.fbq) W.fbq('track', nome); } catch (e) {} }
   function montarConsentimento() {
     var caixa = $('#consentimento'); if (!caixa) return;
-    var mostrar = function () { caixa.hidden = false; D.body.classList.add('com-consentimento'); };
+    // O banner reserva o próprio espaço no fim da página: nada fica escondido atrás dele.
+    var mostrar = function () { caixa.hidden = false; D.body.classList.add('com-consentimento'); D.body.style.setProperty('--altura-consentimento', (caixa.offsetHeight + 24) + 'px'); };
     var esconder = function () { caixa.hidden = true; D.body.classList.remove('com-consentimento'); };
     var decidir = function (sim) {
       guarda.gravar(CHAVE_CONSENT, JSON.stringify({ versao: 1, analytics: true, pixel: sim, clarity: sim, em: new Date().toISOString() }));
@@ -398,7 +409,29 @@
     };
     $$('[data-consentir]', caixa).forEach(function (b) { b.addEventListener('click', function () { decidir(b.getAttribute('data-consentir') === 'sim'); }); });
     $$('[data-preferencias]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); mostrar(); var p = $('[data-consentir]', caixa); if (p) p.focus(); }); });
-    if (!consentimento()) mostrar(); else carregarTerceiros();
+    if (consentimento()) { carregarTerceiros(); return; }
+    // O banner não cobre a primeira tela: aparece quando o visitante passa do hero, fecha a prévia
+    // ou depois de 25 s. Até lá nada de Pixel nem Clarity (só carregam com o Aceitar).
+    var heroi = $('#porta'), mostrado = false;
+    var talvez = function () {
+      if (mostrado) return;
+      var limite = heroi ? heroi.offsetTop + heroi.offsetHeight * 0.6 : W.innerHeight * 0.6;
+      if ((W.scrollY || 0) + W.innerHeight * 0.4 > limite) disparar();
+    };
+    var disparar = function () { if (mostrado) return; mostrado = true; W.removeEventListener('scroll', talvez); mostrar(); };
+    W.addEventListener('scroll', talvez, { passive: true });
+    W.addEventListener('creat:previa-fechada', disparar);
+    setTimeout(disparar, 25000);
+    // Com a janela da sede na tela, o banner desce e sai da frente: a placa com o nome do negócio fica
+    // na parte de baixo da janela. Volta assim que a janela sai. Nada de Pixel/Clarity até a escolha.
+    var janela = $('#janela-sede');
+    if (janela && 'IntersectionObserver' in W) {
+      new IntersectionObserver(function (ents) {
+        var naTela = ents.some(function (e) { return e.isIntersecting; });
+        if (naTela && caixa.contains(D.activeElement)) return;     // quem está no banner pelo teclado não perde o foco
+        caixa.classList.toggle('is-recuado', naTela);
+      }, { threshold: 0.6 }).observe(janela);
+    }
   }
 
   /* ------------------------------------------------------------ suporte, barra e som */
@@ -445,13 +478,15 @@
     var i = RAIZ.indexOf('/projetos/creat-nuvem/');
     return i !== -1 ? RAIZ.slice(0, i) + '/sede/index.html' : RAIZ + 'sede/index.html';
   }
-  // O nome vai só para a sede (mesma origem), pelo location do iframe; o atributo src fica limpo.
-  function carregarSede(janela, nome, lite, aoCarregar) {
-    if (janela.querySelector('iframe')) return;
-    var q = [];
-    if (nome) q.push('marca=' + encodeURIComponent(cortar28(nome)));
-    q.push('modo=demo'); if (lite) q.push('lite=1');
-    var url = urlSede() + '?' + q.join('&');
+  // O nome vai só no fragmento (#marca=), que o navegador não envia ao servidor, à CDN nem no Referer
+  // (ADR-002). A query leva só parâmetros sem dado pessoal. O atributo src do iframe fica limpo.
+  // marcaFicticia: nome dos sites-demonstração (fictício, público), que pode ir na query (?marca=).
+  function carregarSede(janela, nome, lite, aoCarregar, marcaFicticia, etapa) {
+    var ja = janela.querySelector('iframe'); if (ja) return ja;
+    var q = ['modo=demo']; if (lite) q.push('lite=1');
+    if (typeof etapa === 'number' && etapa > 0 && etapa <= 5 && etapa % 1 === 0) q.push('etapa=' + etapa);   // a sede começa no passo da comanda
+    if (marcaFicticia && !nome) q.push('marca=' + encodeURIComponent(cortar28(marcaFicticia)));
+    var url = urlSede() + '?' + q.join('&') + (nome ? '#marca=' + encodeURIComponent(cortar28(nome)) : '');
     var carregando = el('div', { class: 'carregando sede-carregando', role: 'status' });
     carregando.appendChild(el('img', { class: 'placa-mini', src: RAIZ + 'assets/svg/placa.svg', alt: '', width: '120', height: '109' }));
     carregando.appendChild(el('p', null, 'Carregando a sede...'));
@@ -464,6 +499,7 @@
     janela.insertBefore(fr, janela.firstChild);
     try { fr.setAttribute('data-alvo', '1'); fr.contentWindow.location.replace(url); } catch (e) { fr.src = url; }
     evento('sede_aberta', {});
+    return fr;
   }
   function montarJanelaSede(janela, nomeFn) {
     if (!janela) return;
@@ -474,6 +510,131 @@
       var io = new IntersectionObserver(function (ents) { if (ents.some(function (e) { return e.isIntersecting; })) { io.disconnect(); abrir(); } }, { rootMargin: '300px 0px' });
       io.observe(janela);
     }
+  }
+
+  /* ------------------------------------------------------------ sede viva (home): janela + comanda
+     A sede embutida (sede/?modo=demo) avisa por postMessage a etapa do ciclo de demonstração
+     ({creatSede:1, tipo:'etapa', etapa:0..5}); a comanda acende o mesmo passo. Antes de a sede
+     carregar (no celular, só sob toque), a comanda segue o mesmo relógio da sede (6 s; 9 s com
+     movimento reduzido). A página manda à sede só {tipo:'marca'} (nome fictício ou o do próprio
+     visitante, nunca para a rede) e {tipo:'visivel'} para pausar o desenho fora da tela. */
+  var ESTEIRA_AGORA = ['Nimbus organiza o pedido', 'Verbo escreve os textos e Paleta escolhe as cores', 'Pixel monta o site',
+    'Lupa testa no celular e Muralha confere a segurança', 'Trilho publica o site', 'Site no ar. Pode abrir.'];
+  var ESTEIRA_ULTIMA = ESTEIRA_AGORA.length - 1;     // = DEMO_ETAPAS.length da sede (5 etapas + tudo feito)
+  function montarSedeViva(sec, opc) {
+    opc = opc || {};
+    var janela = sec && $('#janela-sede', sec), est = sec && $('#esteira', sec), grupo = sec && $('[data-sede-marcas]', sec);
+    if (!janela || !est || !grupo) return;
+    var link = $('[data-esteira-abrir]', est), linkSr = $('[data-esteira-abrir-sr]', est);
+    var nomeEl = $('[data-esteira-nome]', est), agoraEl = $('[data-esteira-agora]', est), barra = $('[data-esteira-barra]', est);
+    var itens = $$('.esteira-lista li', est), botao = $('[data-ver-ao-vivo]', janela);
+    var fr = null, viaSede = false, esperandoSede = false, visivel = false, relogio = 0, etapa = 0, manual = false, seuNome = '';
+    var PASSO = MOV_REDUZIDO.matches ? 9000 : 6000;
+    var ALVO = location.origin && location.origin !== 'null' ? location.origin : '*';
+    var atual = { marca: '', seu: false };
+
+    function pintar(k) {
+      etapa = k; est.setAttribute('data-etapa', String(k));
+      itens.forEach(function (li) {
+        var j = +li.getAttribute('data-passo'), st = j < k ? 'feito' : j === k ? 'agora' : 'fila';
+        li.setAttribute('data-estado', st);
+        if (st === 'agora') li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+        var t = $('[data-st]', li); if (t) t.textContent = st === 'fila' ? 'na fila' : st;
+      });
+      agoraEl.textContent = ESTEIRA_AGORA[k] || '';
+      barra.style.setProperty('--progresso', Math.round(k / ESTEIRA_ULTIMA * 100) + '%');
+    }
+    function parar() { clearInterval(relogio); relogio = 0; }
+    function andar() {
+      parar();
+      if (viaSede || esperandoSede || !visivel || D.hidden) return;
+      relogio = setInterval(function () { pintar((etapa + 1) % (ESTEIRA_ULTIMA + 1)); }, PASSO);
+    }
+    function pronta() { return !!(fr && fr.contentWindow && fr.getAttribute('data-pronta') === '1'); }
+    function paraSede(msg) {
+      if (!pronta()) return;
+      msg.creatSede = 1;
+      try { fr.contentWindow.postMessage(msg, ALVO); } catch (e) {}
+    }
+    function escolher(btn) {
+      if (!btn) return;
+      $$('.chip', grupo).forEach(function (b) { b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
+      var seu = btn.hasAttribute('data-seu');
+      atual = { marca: seu ? seuNome : btn.getAttribute('data-marca') || '', seu: seu };
+      nomeEl.textContent = atual.marca;
+      var legMarca = $('[data-legenda-marca]', janela);
+      if (legMarca) legMarca.textContent = seu ? 'O nome do seu negócio na fachada, só neste aparelho.' : 'Nome fictício na fachada.';
+      est.classList.remove('trocou'); void est.offsetWidth; est.classList.add('trocou');
+      if (seu) { link.firstChild.textContent = 'Ver a prévia do seu site'; link.setAttribute('href', '#porta'); linkSr.textContent = ''; }
+      else {
+        link.firstChild.textContent = 'Abrir o site pronto';
+        link.setAttribute('href', btn.getAttribute('data-site'));
+        linkSr.textContent = ': ' + atual.marca + ' (site-demonstração, nome fictício)';
+      }
+      pintar(0);
+      if (pronta()) { viaSede = true; parar(); paraSede({ tipo: 'marca', marca: atual.marca, reiniciar: true }); }
+      else andar();
+    }
+    $$('.chip', grupo).forEach(function (b) { b.addEventListener('click', function () { manual = true; escolher(b); }); });
+    link.addEventListener('click', function (e) {
+      if (atual.seu && opc.abrirSeu) { e.preventDefault(); opc.abrirSeu(); }
+    });
+
+    // chip com o nome do próprio visitante (digitado no hero; fica só neste aparelho e só vai à sede por postMessage/fragmento)
+    function conferirSeu() {
+      var s = opc.seu ? opc.seu() : null, chip = $('[data-seu]', grupo);
+      var n = s && s.n && s.k ? cortar28(s.n) : '';
+      if (!n) {
+        if (chip) { var era = chip.getAttribute('aria-pressed') === 'true'; grupo.removeChild(chip); if (era) escolher($('.chip', grupo)); }
+        seuNome = ''; return;
+      }
+      var mudou = n !== seuNome; seuNome = n;
+      if (!chip) {
+        chip = el('button', { class: 'chip chip-seu', type: 'button', 'aria-pressed': 'false', 'data-seu': '' });
+        chip.addEventListener('click', function () { manual = true; escolher(chip); });
+        grupo.insertBefore(chip, grupo.firstChild);
+      }
+      chip.textContent = n;
+      chip.appendChild(el('span', { class: 'so-leitor' }, ' (o seu negócio)'));
+      if (!manual || (mudou && chip.getAttribute('aria-pressed') === 'true')) escolher(chip);
+    }
+
+    function abrir() {
+      if (fr) return;
+      var carregada = atual.marca;
+      // enquanto a sede carrega, a comanda segura o passo atual; a sede começa nesse mesmo passo (?etapa=),
+      // então a comanda nunca volta atrás. Trocar de negócio continua recomeçando do zero, de propósito.
+      esperandoSede = true; parar();
+      fr = carregarSede(janela, atual.seu ? seuNome : '', true, function () {
+        esperandoSede = false; viaSede = true; parar();   // daqui em diante quem dita o passo é a sede
+        fr.setAttribute('data-pronta', '1');
+        var dica = $('[data-legenda-dica]', janela); if (dica) { dica.className = ''; dica.textContent = ' Arraste para girar a ilha e toque num personagem.'; }
+        paraSede({ tipo: 'visivel', visivel: visivel });
+        if (atual.marca !== carregada) { viaSede = true; parar(); paraSede({ tipo: 'marca', marca: atual.marca, reiniciar: true }); }
+      }, atual.seu ? '' : atual.marca, etapa);
+    }
+    if (botao) botao.addEventListener('click', abrir);
+    W.addEventListener('message', function (ev) {
+      if (!fr || ev.source !== fr.contentWindow || !(ev.origin === location.origin || ev.origin === 'null')) return;
+      var d = ev.data;
+      if (!d || d.creatSede !== 1 || d.tipo !== 'etapa' || typeof d.etapa !== 'number' || d.etapa % 1 || d.etapa < 0 || d.etapa > ESTEIRA_ULTIMA) return;
+      viaSede = true; parar(); pintar(d.etapa);
+      janela.setAttribute('data-sede-pronta', '');   // a sede respondeu: o selo DEMONSTRAÇÃO dela está na tela, o da janela sai
+    });
+    if ('IntersectionObserver' in W) {
+      var vio = new IntersectionObserver(function (ents) {
+        var v = ents.some(function (e) { return e.isIntersecting; });
+        if (v === visivel) return;
+        visivel = v;
+        if (v) conferirSeu();
+        if (v && ehDesktop()) abrir();
+        paraSede({ tipo: 'visivel', visivel: v });
+        andar();
+      }, { rootMargin: '200px 0px' });
+      vio.observe(sec);
+    } else { visivel = true; }
+    D.addEventListener('visibilitychange', andar);
+    escolher($('.chip[aria-pressed="true"]', grupo) || $('.chip', grupo));
   }
 
   /* ------------------------------------------------------------ id do pedido */
@@ -496,7 +657,9 @@
     var q = new URLSearchParams(location.search);
     var hashIni = lerFragmento(location.hash);
     utmAtual = lerUtm(q); if (!Object.keys(utmAtual).length) utmAtual = hashIni.utm;
-    if (location.hash === '#previa') history.replaceState(null, '', location.pathname + location.search);
+    // A home nunca guarda nome ou cidade no endereço (Pixel e Clarity podem ler a URL depois do aceite):
+    // lê o fragmento vindo de /abrir/ ou /previa/ e limpa o endereço na hora.
+    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
 
     var form = $('#form-abrir'), campoNome = $('#nome'), campoCidade = $('#cidade');
     var caixaNome = campoNome.closest('.campo'), erroNome = $('#nome-erro'), erroNicho = $('#nicho-erro');
@@ -511,7 +674,6 @@
       var n = limparNome(campoNome.value), c = limparNome(campoCidade.value);
       return { k: nichoAtual(), n: nomeValido(n) ? n : null, c: c && cidadeValida(c) ? c : null, p: 1, utm: utmAtual };
     }
-    function nomeParaSede() { var s = estado(); return s.n || ''; }
 
     /* placa (T6) */
     var placa = W.CreatPlaca && typeof W.CreatPlaca.montar === 'function' ? W.CreatPlaca : null;
@@ -580,7 +742,7 @@
 
     function aoAbrirPlaca(via) {
       if (abrindo) return;
-      if (!validarNome() || !validarNicho() || !validarCidade()) { if (placa) { try { placa.reiniciar(); } catch (e) {} } return; }
+      if (!validarNome() || !validarNicho() || !validarCidade()) { if (placa) { try { placa.reiniciar(); placa.definirNome(limparNome(campoNome.value)); } catch (e) {} } return; }
       abrindo = true;
       setTimeout(function () { abrindo = false; abrirPrevia(); }, MOV_REDUZIDO.matches ? 220 : 680);
     }
@@ -628,6 +790,7 @@
       if (placa) { try { placa.reiniciar(); placa.definirNome(limparNome(campoNome.value)); } catch (e) {} }
       if (!deHistorico && history.state && history.state.previa) history.back();
       if (focoAntes && focoAntes.focus) focoAntes.focus();
+      try { W.dispatchEvent(new CustomEvent('creat:previa-fechada')); } catch (e) {}
     }
     $('#previa-fechar').addEventListener('click', function () { fecharPrevia(false); });
     W.addEventListener('popstate', function () { if (!previa.hidden) fecharPrevia(true); });
@@ -715,8 +878,9 @@
       ];
       if (ok.indexOf(false) !== -1) { var inv = tForm.querySelector('[aria-invalid="true"]'); if (inv) inv.focus(); return; }
       var s = estado();
-      var msg = t('Teste do Porta Aberta. Assim chega um pedido de horário no site da {negocio}: "Olá! Quero pedir um horário: {servico}, {dia} às {hora}. Meu nome é (nome do cliente)." No site de verdade, o dono confirma pelo WhatsApp.',
-        { negocio: s.n || 'seu negócio', servico: tServ.value, dia: tDia.value, hora: tHora.value });
+      var modelo = 'Teste do Porta Aberta. Assim chega um pedido de horário no site da {negocio}: "Olá! Quero pedir um horário: {servico}, {dia} às {hora}. Meu nome é (nome do cliente)." No site de verdade, o dono confirma pelo WhatsApp.';
+      if (!s.n) modelo = modelo.replace('no site da {negocio}', 'no seu site');
+      var msg = t(modelo, { negocio: s.n, servico: tServ.value, dia: tDia.value, hora: tHora.value });
       $('#celular-msg').textContent = msg;
       abrirExterno(linkWhats(numero, msg));   // o número só existe aqui, na memória, e no link do próprio WhatsApp
       somFn('plim');
@@ -727,7 +891,7 @@
       var s = estado();
       var msg = t('Olá! Quero pedir um horário: {servico}, {dia} às {hora}. Meu nome é (nome do cliente).', { servico: tServ.value || 'Corte', dia: tDia.value || 'amanhã', hora: tHora.value || '10:00' });
       $('#celular-msg').textContent = msg;
-      $('#celular-de').textContent = 'Pedido pelo site da ' + (s.n || 'seu negócio');
+      $('#celular-de').textContent = s.n ? 'Pedido pelo site da ' + s.n : 'Pedido pelo seu site';
       var cel = $('#celular'); cel.hidden = false; cel.classList.remove('chegou'); void cel.offsetWidth; cel.classList.add('chegou');
       somFn('plim');
     });
@@ -752,7 +916,10 @@
       });
       sec.hidden = false;
     });
-    montarJanelaSede($('#janela-sede'), nomeParaSede);
+    montarSedeViva($('#sede'), {
+      seu: function () { var s = estado(); return s.n && s.k ? { n: s.n, k: s.k } : null; },
+      abrirSeu: function () { var s = estado(); if (s.n && s.k) abrirPrevia(); else { var c = $('#nome'); if (c) c.focus(); } }
+    });
 
     /* WhatsApp flutuante: some quando um botão principal está na faixa de baixo da tela */
     var zap = $('.zap-flutuante');
@@ -844,7 +1011,10 @@
     var zapBruto = v('p-whatsapp'), zap = normalizarWhats(zapBruto);
     conferir('p-whatsapp', !soDigitos(zapBruto) ? 'Digite o WhatsApp que recebe os pedidos, com DDD.' : !zap ? 'Esse número não parece um celular com DDD. Confira e digite de novo, por exemplo (11) 9XXXX-XXXX.' : '');
     var end = limparNome(v('p-endereco'));
-    conferir('p-endereco', end.length < 8 || end.length > 160 || !/\d/.test(end) ? 'Escreva o endereço completo, com número, bairro e cidade.' : '');
+    // mesma regra da produção (assets/endereco.js): endereço aceito aqui nunca trava depois do pagamento
+    var END = window.CreatEndereco;
+    conferir('p-endereco', end.length < 8 || end.length > 160 ? 'Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.'
+      : END ? END.mensagem(end, cidade) : (!/\d/.test(end) ? 'Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.' : ''));
     var hCaixa = f.querySelector('#p-horarios'), h = lerHorarios(hCaixa), hErro = f.querySelector('#p-horarios-erro');
     if (h.erro) { hErro.textContent = h.erro; hErro.hidden = false; faltam++; } else hErro.hidden = true;
     var email = String(v('p-email')).trim();
@@ -918,7 +1088,7 @@
       resumo.hidden = false;
       $('#abrir-negocio-nome').textContent = est.n;
       $('#abrir-negocio-detalhe').textContent = ROTULO_NICHO[est.k] + (est.c ? ' · ' + est.c : '');
-      $('#abrir-voltar').href = RAIZ + '#porta';
+      $('#abrir-voltar').href = RAIZ + '#' + montarFragmento(est, false);   // a home lê, preenche e limpa o endereço
     }
     var radios = $$('input[name="plano"]', f);
     radios.forEach(function (r) { r.checked = r.value === est.plano; });
@@ -982,6 +1152,9 @@
     var precos = null;
     lerPrecos().then(function (pr) { precos = pr; aplicarPrecos(pr, D); });
     var sem = $('#obrigado-sem-dados'), com = $('#obrigado-pedido');
+    // pedido_enviado_pagina: no máximo um por carga, e só com pedido real.
+    // Indicador aproximado: o pedido é gravado ao clicar em Pagar, antes do Pix; não é pagamento confirmado.
+    var pedidoContado = false;
     function renderizar(p) {
       utmAtual = origemParaUtm(p.origem);
       sem.hidden = true; com.hidden = false;
@@ -999,7 +1172,7 @@
       $('#voltar-plano').href = RAIZ + 'abrir/#' + montarFragmento({ plano: p.plano, k: p.nicho, n: p.negocio, c: p.cidade, p: p.paleta || 1, utm: utmAtual }, true);
       var janela = $('#janela-sede');
       if (janela && !janela.getAttribute('data-montada')) { janela.setAttribute('data-montada', '1'); montarJanelaSede(janela, function () { return p.negocio; }); }
-      evento('pago_pagina', { plano: p.plano, nicho: p.nicho });
+      if (!pedidoContado) { pedidoContado = true; evento('pedido_enviado_pagina', { plano: p.plano, nicho: p.nicho }); }
     }
     $('#copiar-pedido').addEventListener('click', function () {
       var txt = $('#pedido-texto').textContent;
@@ -1027,7 +1200,6 @@
       renderizar(s.registro);
       W.scrollTo(0, 0); var h = $('#obrigado-titulo'); if (h) h.focus();
     });
-    evento('pago_pagina', { plano: 'vitrine' });
   }
 
   /* ======================================================================
@@ -1087,13 +1259,27 @@
       $$('[data-carregando-doc]').forEach(function (x) { x.hidden = true; });
       if (!md) { alvo.appendChild(el('p', null, 'O texto não carregou. Recarregue a página ou peça o texto pelo e-mail ' + emailSuporte() + '.')); return; }
       var v = valoresDe(pr);
-      v['precos.abertura.inauguracao.preco'] = milhar((CK && pr.inauguracao) ? pr.inauguracao.preco : 297);
+      var pi = pr.inauguracao ? pr.inauguracao.preco : pr.inauguracaoTermos;
+      v['precos.abertura.inauguracao.preco'] = pi ? milhar(pi) : '(valor da página /abrir/)';
       renderMarkdown(md, alvo, v);
     });
   }
 
+  /* ------------------------------------------------------------ âncoras abaixo do cabeçalho fixo
+     O cabeçalho tem 1 linha no desktop (~64 px) e 2 no celular (~140 px). O CSS fixa 80 px como reserva;
+     aqui o scroll-padding acompanha a altura real, para o olho da seção (ex.: "Sede ao vivo") não ficar
+     debaixo dele quando alguém toca num link do menu. */
+  function ajustarAncoras() {
+    var barra = $('header.barra'); if (!barra) return;
+    var ajustar = function () { D.documentElement.style.scrollPaddingTop = Math.ceil(barra.getBoundingClientRect().height + 16) + 'px'; };
+    ajustar();
+    if ('ResizeObserver' in W) new ResizeObserver(ajustar).observe(barra);
+    else W.addEventListener('resize', ajustar);
+  }
+
   /* ------------------------------------------------------------ partida */
   function iniciar() {
+    ajustarAncoras();
     montarSuporte();
     montarSom();
     try {

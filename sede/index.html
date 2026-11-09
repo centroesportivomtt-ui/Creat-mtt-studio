@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="icon" href="data:,">
+<!-- Porta Aberta: a URL da sede carrega #marca= (nome do negócio; ?marca= só em link feito à mão). Sem referrer, o nome não sai para o jsDelivr nem para o Google Fonts. -->
+<meta name="referrer" content="no-referrer">
 <title>Creat Nuvem HQ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Sede 3D da Creat Nuvem, a agência de agentes do Claude Code.">
@@ -55,7 +58,7 @@ button{font:inherit;color:inherit}
 #app{position:fixed;inset:0}
 #scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #scene.hover{cursor:pointer}
-#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#labels{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}   /* contexto próprio: etiquetas do CSS2D (z 1..16) nunca passam por cima do topo, da ficha ou dos chips */
 
 .panel{background:var(--paper);border:2.5px solid var(--line);border-radius:var(--r);box-shadow:var(--pop)}
 
@@ -71,6 +74,23 @@ button{font:inherit;color:inherit}
 .btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--line)}
 .btn-sun{background:var(--sun);color:var(--sun-ink)}
 .btn-sun svg{width:14px;height:14px;vertical-align:-2px;margin-right:6px}
+/* som da sede (Eco): botão ao lado de "Rodar projeto"; nunca toca antes de um gesto */
+.acoes{display:flex;gap:10px;align-items:flex-start}
+.btn-som{position:relative;display:inline-flex;align-items:center;gap:7px;padding:9px 16px 9px 12px}
+.btn-som[hidden]{display:none}
+.btn-som svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.btn-som .spk{fill:currentColor}
+.btn-som .ondas{display:none}
+.btn-som[aria-pressed="true"]{background:var(--sun);color:var(--sun-ink)}
+.btn-som[aria-pressed="true"] .ondas{display:inline}
+.btn-som[aria-pressed="true"] .xis{display:none}
+.btn-som.pend{background:var(--sun);color:var(--sun-ink)}
+.btn-som.pend .ondas{display:inline}
+.btn-som.pend .xis{display:none}
+.btn-som.pend .ondas{opacity:.45}
+.btn-som::after{content:"";position:absolute;inset:-4px;border-radius:999px;border:3px solid var(--sun);opacity:0;pointer-events:none}
+.btn-som.convite::after{animation:somConvite .6s cubic-bezier(.2,.8,.3,1) 1}
+@keyframes somConvite{0%{opacity:1;transform:scale(.9)}100%{opacity:0;transform:scale(1.35)}}
 
 /* equipe */
 #roster{position:absolute;left:0;right:0;bottom:calc(var(--safe-b) + 12px);z-index:5;display:flex;gap:8px;overflow-x:auto;padding:4px var(--gut-r) 8px var(--gut-l);scroll-snap-type:x proximity;scrollbar-width:none;justify-content:safe center}
@@ -104,6 +124,9 @@ button{font:inherit;color:inherit}
   .brand p{font-size:11px}
   #online{display:none}
   .btn{padding:9px 14px;font-size:14px}
+  .acoes{flex-direction:column;align-items:flex-end;gap:8px}
+  .btn-som{width:44px;height:44px;padding:0;justify-content:center}
+  .btn-som .som-txt{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
 
 .card-head{position:sticky;top:0;z-index:1;background:var(--c);color:var(--on);padding:16px 18px 14px;border-bottom:2.5px solid var(--line);border-radius:15px 15px 0 0}
@@ -169,6 +192,12 @@ button{font:inherit;color:inherit}
 #live .phase li{align-items:start}
 .btn .live-badge{margin-left:8px;padding:1px 7px;font-size:11px;border-width:1.5px}
 .btn .live-badge i{width:6px;height:6px}
+@media (max-width:719px){
+  .btn-sun{position:relative}
+  .btn .live-badge{position:absolute;top:-8px;right:-6px;margin:0;width:20px;height:20px;padding:0;justify-content:center;gap:0;box-shadow:2px 2px 0 var(--line)}
+  .btn .live-badge i{width:7px;height:7px}
+  .btn .live-badge .lb-t{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}
 .live-off{padding:10px 18px 0;font-size:12.5px;color:var(--muted)}
 .note code{font-family:var(--f-mono);font-size:11.5px;color:var(--fg);background:var(--chip);padding:1px 5px;border-radius:5px}
 
@@ -183,7 +212,31 @@ button{font:inherit;color:inherit}
 .tagwrap{position:relative;display:flex;justify-content:center}
 @media (max-width:719px){ .tag{font-size:11px;padding:1px 7px 1px 2px} .tag i{width:11px;height:11px} }
 
+/* telas vivas (Órbita): espelho HTML da tela do laptop na ficha + anel de dica do gesto */
+.tela{display:flex;flex-direction:column;gap:8px}
+.tela-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tela-top h3{margin:0}
+.tela canvas{display:block;width:100%;max-width:360px;aspect-ratio:16/9;height:auto;border:2px solid var(--line);border-radius:12px;box-shadow:var(--pop);background:var(--paper)}
+@media (min-width:720px){ .tela canvas{max-width:none} }
+.tela-txt{margin:0;font-weight:700;font-size:14px;line-height:1.35;text-wrap:pretty;overflow-wrap:anywhere}
+.tela-t{font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.mini.on{background:var(--sun);color:var(--sun-ink)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+.anelwrap{pointer-events:none}
+.anel{width:70px;height:70px;border-radius:50%;border:4px solid #FFC93C;box-shadow:0 0 0 2.5px #1E1B2E, inset 0 0 0 2.5px #1E1B2E;opacity:0}
+.anel.on{animation:anel 1s cubic-bezier(.2,.8,.3,1) 2}
+.anel.fixo{opacity:1}
+@keyframes anel{0%{transform:scale(.45);opacity:1}70%{opacity:.9}100%{transform:scale(1.35);opacity:0}}
+@media (max-width:719px){ .card-head{touch-action:none} }
+
 /* carregando */
+/* Porta Aberta (T6): legenda fixa do modo demo; nunca parece pedido real */
+#demoTag{position:absolute;left:50%;top:calc(var(--safe-t) + 74px);transform:translateX(-50%);z-index:6;margin:0;padding:4px 14px;border:2.5px solid var(--line);border-radius:999px;background:var(--sun);color:var(--sun-ink);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;box-shadow:3px 3px 0 var(--line);pointer-events:none;white-space:nowrap}
+/* embutida na vitrine (modo demo dentro de iframe): a ilha é o assunto; marca, elenco e dica saem, o selo vai para o canto */
+html.embutida .top .brand,html.embutida #roster,html.embutida #hint{display:none}
+html.embutida #demoTag{left:12px;top:calc(var(--safe-t) + 12px);transform:none;font-size:11px;padding:3px 10px}
+html.embutida .top{justify-content:flex-end}
+@media (max-width:560px){html.embutida .top .acoes{display:none}}
 #loader{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:var(--bg);transition:opacity .5s}
 #loader.out{opacity:0;pointer-events:none}
 #loader div{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:0 24px}
@@ -207,10 +260,13 @@ button{font:inherit;color:inherit}
       <svg viewBox="0 0 48 36" aria-hidden="true"><path d="M12 31h25a9 9 0 0 0 1.4-17.9A12.5 12.5 0 0 0 14.6 10 10.5 10.5 0 0 0 12 31z" fill="#fff" stroke="var(--line)" stroke-width="3" stroke-linejoin="round"/><circle cx="20" cy="21" r="2.2" fill="#1E1B2E"/><circle cx="29" cy="21" r="2.2" fill="#1E1B2E"/><path d="M21.5 25.5q3 2.6 6 0" fill="none" stroke="#1E1B2E" stroke-width="2.2" stroke-linecap="round"/><path d="M40 4l1.3 3.2L44.5 8.5l-3.2 1.3L40 13l-1.3-3.2L35.5 8.5l3.2-1.3z" fill="var(--sun)" stroke="var(--line)" stroke-width="1.6" stroke-linejoin="round"/></svg>
       <div><h1>Creat Nuvem</h1><p>Agência de agentes<span id="online"> · 15 na sede</span></p></div>
     </div>
-    <button id="runBtn" class="btn btn-sun" type="button"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg>Rodar projeto</button>
+    <div class="acoes">
+      <button id="runBtn" class="btn btn-sun" type="button"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg>Rodar projeto</button>
+      <button id="somBtn" class="btn btn-som" type="button" aria-pressed="false" aria-describedby="somDica" title="Ouvir a equipe" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M3.5 9.2h3.6L12 5.2v13.6l-4.9-4H3.5z"/><path class="ondas" d="M15.6 8.9a4.6 4.6 0 0 1 0 6.2M18.4 6.3a8.4 8.4 0 0 1 0 11.4"/><path class="xis" d="M16 9.6l4.8 4.8M20.8 9.6L16 14.4"/></svg><span class="som-txt">Som</span></button><span id="somDica" class="sr"></span>
+    </div>
   </header>
 
-  <aside id="card" class="panel sheet" hidden aria-live="polite"></aside>
+  <aside id="card" class="panel sheet" hidden></aside>
 
   <aside id="ops" class="panel sheet" hidden>
     <div class="ops-head">
@@ -230,6 +286,7 @@ button{font:inherit;color:inherit}
     <p class="note" id="opsNote">O formulário acima é uma simulação. Quando a agência está trabalhando de verdade no Claude Code, o bloco <b>Ao vivo</b> aparece aqui com os fluxos, agentes e tempos reais (<code>node sede/servidor.cjs</code> na sua máquina, ou a publicação atualizada por mim).</p>
   </aside>
 
+  <p id="demoTag" hidden>Demonstração</p>
   <p id="hint">Arraste para girar · toque num agente</p>
   <nav id="roster" aria-label="Equipe da agência"></nav>
 
@@ -250,8 +307,16 @@ button{font:inherit;color:inherit}
     }
   },15000);
 </script>
+<!-- Three.js fixo em 0.160.0 (r160), do jsDelivr (npm "three"); addons da mesma versão. Trocar só os dois números juntos.
+     "integrity" (SRI): sha384 de cada arquivo do tarball oficial three@0.160.0 do npm, que o jsDelivr serve sem alterar.
+     Trocou a versão ou passou a importar outro addon? Recalcule: openssl dgst -sha384 -binary <arquivo> | base64 -->
 <script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"},
+"integrity":{
+"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js":"sha384-61S/Nu32S3E5+n+KpCOTb2eRYps6fVKm+9Gz1QBvSePFthb46f063Aa/qe/lykFZ",
+"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js":"sha384-qlO/ZugKPxAQUAvTlQoo0QECzxJIJySZmCF/DHdb2Xn/hHndFwX/vfUAC9Hbk6LP",
+"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js":"sha384-oxPlnJSeUCYU9W3RMQswb4S/vFd4Bhxuy1Ffx0V2KJakWeb6n1gaqUtSE9Ic/F72",
+"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/geometries/RoundedBoxGeometry.js":"sha384-S52/WAm3DaIIFna675h5dmavqea/akLlPFtPdnzgWWhnz+/nMqR6PPsSXPOd8Gpw"}}
 </script>
 <script type="module">
 import * as THREE from 'three';
@@ -352,6 +417,34 @@ const YES = ['Deixa comigo!','Já vou!','Bora!','Recebido!','Pode mandar!','Na h
 
 const $ = s => document.querySelector(s);
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ── Porta Aberta (T6): ?marca= ?modo= ?lite= ──
+   marca: só letras, números, espaço e & . - ' (o resto é removido), até 28; desenhada só por fillText.
+   modo: demo (estado fictício embutido, legenda "Demonstração"), publico (só estado-publico.json),
+         local (comportamento de antes: estado.json + banco do artefato). Sem ?modo: local no
+         localhost/arquivo/artefato do Claude (uso do Marcos); publico em qualquer outro host. */
+const QS = new URLSearchParams(location.search);
+/* marca no fragmento (#marca=, usado pela vitrine: não vai ao servidor nem no Referer, ADR-002);
+   ?marca= continua valendo só para links feitos à mão. O fragmento #<agente> segue igual. */
+const HS = new URLSearchParams(location.hash.includes('=') ? location.hash.slice(1) : '');
+function limparMarca(v){
+  if (v == null || typeof v !== 'string' || /[<>]/.test(v)) return null; // marcação não é nome de negócio: placa atual
+  let m = v.normalize('NFC').replace(/[^\p{L}\p{N} &.'-]/gu, '').replace(/\s+/g, ' ').trim();
+  if (m.length > 28){ m = m.slice(0, 28); const i = m.lastIndexOf(' '); m = (i > 10 ? m.slice(0, i) : m).trim(); }
+  return m || null;
+}
+const MARCA = limparMarca(HS.has('marca') ? HS.get('marca') : QS.get('marca'));
+let marcaAtual = MARCA;   // pode trocar depois, pela vitrine (mensagem 'marca', só da página que embute)
+const MODO = (() => {
+  const v = QS.get('modo'); if (v === 'demo' || v === 'publico' || v === 'local') return v;
+  const h = location.hostname;
+  return location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(h) || /(^|\.)(claude\.ai|claudeusercontent\.com)$/.test(h) ? 'local' : 'publico';
+})();
+const LITE = QS.get('lite') === '1';
+/* ?etapa=0..5 (só modo demo): a vitrine embute a sede no passo em que a comanda dela já está, para não voltar atrás */
+const ETAPA0 = (() => { const v = QS.get('etapa'); return /^[0-5]$/.test(v || '') ? +v : 0; })();
+if (MARCA){ document.title = 'Sede · ' + MARCA; const lm = document.getElementById('loadMsg'); if (lm) lm.textContent = 'Pendurando a placa de ' + MARCA + '.'; }
+if (MODO === 'demo') document.getElementById('demoTag').hidden = false;
+if (MODO === 'demo' && window.parent !== window) document.documentElement.classList.add('embutida');   // janela pequena na vitrine: menos painel, mais ilha
 const isDark = () => { const t = document.documentElement.getAttribute('data-theme'); return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; };
 const lum = hex => { const c = new THREE.Color(hex); return 0.2126*c.r + 0.7152*c.g + 0.0722*c.b; };
 const mix = (hex, to, k) => '#' + new THREE.Color(hex).lerp(new THREE.Color(to), k).getHexString();
@@ -368,8 +461,8 @@ try {
   $('#loadMsg').textContent = 'Seu navegador não liberou o WebGL. A equipe continua disponível na barra de baixo.';
 }
 const small = Math.min(innerWidth, innerHeight) < 700;
-renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.75 : 2));
-renderer.shadowMap.enabled = true;
+renderer.setPixelRatio(LITE ? 1 : Math.min(devicePixelRatio, small ? 1.75 : 2));
+renderer.shadowMap.enabled = !LITE;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
@@ -520,9 +613,13 @@ const signTex = (() => {
   const c = document.createElement('canvas'); c.width = 1024; c.height = 300;
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   const draw = () => { const g = c.getContext('2d'); g.clearRect(0,0,1024,300); g.textAlign = 'center'; g.fillStyle = '#1E1B2E';
+    if (marcaAtual){ // nome do cliente: só fillText, nunca HTML; encolhe até caber
+      let px = 150; do { g.font = `${px}px "Lilita One", "Arial Rounded MT Bold", sans-serif`; px -= 6; } while (g.measureText(marcaAtual).width > 950 && px > 48);
+      g.fillText(marcaAtual, 512, 175);
+      g.font = '700 46px Figtree, system-ui, sans-serif'; g.fillText('ABERTO PELA CREAT NUVEM', 512, 255); t.needsUpdate = true; return; }
     g.font = '150px "Lilita One", "Arial Rounded MT Bold", sans-serif'; g.fillText('CREAT NUVEM', 512, 170);
     g.font = '700 46px Figtree, system-ui, sans-serif'; g.fillText('AGÊNCIA DE AGENTES · DESDE 2026', 512, 250); t.needsUpdate = true; };
-  draw(); document.fonts && document.fonts.ready.then(draw); return t;
+  draw(); document.fonts && document.fonts.ready.then(draw); t.userData.redesenhar = draw; return t;
 })();
 (() => {
   const g = new THREE.Group();
@@ -695,13 +792,508 @@ function buildCharacter(a){
   return root;
 }
 
-/* estações de trabalho */
-function screenTexture(color, seed){
-  const c = document.createElement('canvas'); c.width = 128; c.height = 128; const g = c.getContext('2d'); const r = rng(seed);
-  g.fillStyle = '#16182E'; g.fillRect(0,0,128,128);
-  for (let y = 6; y < 128; y += 9){ let x = 8 + Math.floor(r()*3)*8; const n = 1 + Math.floor(r()*3); for (let k = 0; k < n; k++){ const w = 10 + r()*34; g.fillStyle = r() < .55 ? color : (r() < .5 ? '#FFFFFF' : '#7FE7FF'); g.globalAlpha = .9; g.fillRect(x, y, w, 4); x += w + 5; if (x > 118) break; } }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapT = THREE.RepeatWrapping; return t;
+/* ───────────────────────── telas vivas (Órbita) ─────────────────────────
+   Cada laptop (e a lousa do Nimbus) tem um canvas 256x144 com a MESMA moldura: barra (nick · tarefa · tempo),
+   área do ofício (mini-interface da função, 256x90) e linha de ação. Redesenho "em dois": um ticker de 12 Hz
+   dentro do frame(), no máximo 3 telas por tick (2 no celular), por prioridade (focada > perto e visível > resto > paradas sujas).
+   A tela selecionada troca para uma textura 512x288 (nítida de perto) que também é copiada no painel HTML da ficha. */
+const TW = 256, TH = 144;
+const DEBUG = QS.get('debug') === '1';
+const F = {
+  nick:'14px "Lilita One", "Arial Rounded MT Bold", sans-serif', bar:'800 12px Figtree, system-ui, sans-serif', mono:'500 11px "JetBrains Mono", ui-monospace, monospace',
+  acao:'800 15px Figtree, system-ui, sans-serif', acaoP:'800 13px Figtree, system-ui, sans-serif', extra:'500 10px "JetBrains Mono", ui-monospace, monospace',
+  t10:'800 10px Figtree, system-ui, sans-serif', t11:'800 11px Figtree, system-ui, sans-serif', t12:'800 12px Figtree, system-ui, sans-serif',
+  m9:'500 9px "JetBrains Mono", ui-monospace, monospace', m10:'500 10px "JetBrains Mono", ui-monospace, monospace',
+  l16:'16px "Lilita One", "Arial Rounded MT Bold", sans-serif', l18:'18px "Lilita One", "Arial Rounded MT Bold", sans-serif', l26:'26px "Lilita One", "Arial Rounded MT Bold", sans-serif',
+  l30:'30px "Lilita One", "Arial Rounded MT Bold", sans-serif', aaL:'34px "Lilita One", "Arial Rounded MT Bold", sans-serif', aaF:'800 34px Figtree, system-ui, sans-serif',
+};
+const TEMA_D = { paper:'#FFFDF6', chip:'#F2ECDD', folha:'#FFFFFF', ink:'#1E1B2E', line:'#1E1B2E', fg:'#1E1B2E', muted:'#5E5974', ok:'#22915E', work:'#D7561A', soft:'rgba(30,27,46,.22)', plus:'#D9F3E4', minus:'#FBE0E3' };
+const TEMA_N = { paper:'#232851', chip:'#2F3568', folha:'#2F3568', ink:'#06071A', line:'rgba(244,241,255,.6)', fg:'#F4F1FF', muted:'#B6B2DA', ok:'#5BD69A', work:'#FF9A4D', soft:'rgba(244,241,255,.26)', plus:'rgba(91,214,154,.22)', minus:'rgba(255,120,140,.22)' };
+const NUVEM = new Path2D('M12 31h25a9 9 0 0 0 1.4-17.9A12.5 12.5 0 0 0 14.6 10 10.5 10.5 0 0 0 12 31z');
+const sim = { brief:'', pi:-1 };                       // simulação startRun: briefing e fase atual (lousa)
+const somApi = () => window.somSede || null;           // ganchos do Eco: { ligado, analyser, foco(a|null), tick4() }
+const telas = [];
+let telaF = 0, telaAcc = 0, festaF0 = -1, telaFoco = null, hdDono = null, isDarkC = false;
+const fitCache = new Map();
+function fnt(g, f){ if (g._f !== f){ g.font = f; g._f = f; } }
+function sv(g){ g.save(); }
+function rs(g){ g.restore(); g._f = null; }
+function rr(g, x, y, w, h, r){ r = Math.min(r, w/2, h/2); g.beginPath(); g.moveTo(x+r, y); g.arcTo(x+w, y, x+w, y+h, r); g.arcTo(x+w, y+h, x, y+h, r); g.arcTo(x, y+h, x, y, r); g.arcTo(x, y, x+w, y, r); g.closePath(); }
+function caixa(g, T, x, y, w, h, fill, r = 6, pop = true){ if (pop){ g.fillStyle = T.ink; rr(g, x+2, y+2, w, h, r); g.fill(); } g.fillStyle = fill; rr(g, x, y, w, h, r); g.fill(); g.lineWidth = 2; g.strokeStyle = T.line; g.stroke(); }
+function traco(g, x, y, w, cor, h = 4){ if (w <= 0) return; g.fillStyle = cor; rr(g, x, y, w, h, h/2); g.fill(); }
+function tx(g, s, x, y, font, cor, al = 'left'){ fnt(g, font); g.textAlign = al; g.fillStyle = cor; g.fillText(s, x, y); }
+function fit(g, s, w){
+  s = String(s == null ? '' : s); const k = g.font + '\u0001' + w + '\u0001' + s; let r = fitCache.get(k); if (r !== undefined) return r;
+  if (g.measureText(s).width <= w) r = s;
+  else { let lo = 0, hi = s.length; while (lo < hi){ const m = (lo + hi + 1) >> 1; if (g.measureText(s.slice(0, m).trimEnd() + '…').width <= w) lo = m; else hi = m - 1; } r = s.slice(0, lo).trimEnd() + '…'; }
+  if (fitCache.size > 600) fitCache.clear(); fitCache.set(k, r); return r;
 }
+function quebrar(g, s, w, max = 2){
+  const k = 'Q' + g.font + '\u0001' + w + '\u0001' + s; let r = fitCache.get(k); if (r) return r;
+  const ws = String(s).split(/\s+/); r = []; let cur = '';
+  for (const p of ws){ const tst = cur ? cur + ' ' + p : p; if (g.measureText(tst).width <= w || !cur) cur = tst; else { r.push(cur); cur = p; } }
+  if (cur) r.push(cur);
+  if (r.length > max){ r = r.slice(0, max); r[max-1] = fit(g, r[max-1] + ' …', w); }
+  r = r.map(l => g.measureText(l).width > w ? fit(g, l, w) : l);
+  fitCache.set(k, r); return r;
+}
+function checkV(g, x, y, s, cor, p = 1, lw = 2.5){
+  const a1 = .3, P1 = [x + s*a1, y + s*a1], dx = s*(1 - a1), dy = s*(a1 + .5), L1 = s*a1*Math.SQRT2, L2 = Math.hypot(dx, dy), tot = (L1 + L2) * Math.min(1, Math.max(0, p));
+  g.beginPath(); g.moveTo(x, y);
+  if (tot <= L1){ const q = tot / L1; g.lineTo(x + s*a1*q, y + s*a1*q); }
+  else { g.lineTo(P1[0], P1[1]); const q = (tot - L1) / L2; g.lineTo(P1[0] + dx*q, P1[1] - dy*q); }
+  g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = lw; g.strokeStyle = cor; g.stroke();
+}
+function estrela(g, T, x, y, r){ g.beginPath(); for (let i = 0; i < 10; i++){ const an = -Math.PI/2 + i*Math.PI/5, rr2 = i % 2 ? r*.45 : r; g.lineTo(x + Math.cos(an)*rr2, y + Math.sin(an)*rr2); } g.closePath(); g.fillStyle = '#FFC93C'; g.fill(); g.lineWidth = 2; g.strokeStyle = T.ink; g.lineJoin = 'round'; g.stroke(); }
+function lupaIco(g, x, y, r, cor, lw = 2){ g.beginPath(); g.arc(x, y, r, 0, Math.PI*2); g.lineWidth = lw; g.strokeStyle = cor; g.stroke(); g.beginPath(); g.moveTo(x + r*.7, y + r*.7); g.lineTo(x + r*1.6, y + r*1.6); g.lineCap = 'round'; g.lineWidth = lw + .8; g.stroke(); }
+function forte(a){ return lum(a.color) > .7 ? '#00B8D9' : a.color; }       // Lupa é quase branca: destaque em ciano
+function tinta(a){ return a._on || (a._on = lum(a.color) > .38 ? '#1E1B2E' : '#FFFFFF'); }
+function hexRgb(h){ const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+const PRISMA = (() => { const base = 289, out = []; for (let h = 0; h < 36; h++){ out.push([38, 50, 62, 74].map(l => `hsl(${(h*10 + base) % 360},80%,${l}%)`)); } return out; })();
+const ecoBuf = { t:null, f:null };
+
+/* mini-interfaces por função (área 256x90; f = quadro a 12 Hz, determinístico) */
+const OF = {
+  criativo: { ciclo:36, draw(g, T, a, f){
+    const k = f % 36, cores = [a.color, '#FFE45E', '#FF8FD1'], rot = [-6, 3, -2], xs = [22, 98, 174];
+    for (let i = 0; i < 3; i++){ if (k < i*6) continue; const e = k - i*6, s = e === 0 ? .82 : e === 1 ? 1.06 : 1;
+      sv(g); g.translate(xs[i] + 30, 46); g.rotate(rot[i]*Math.PI/180); g.scale(s, s);
+      caixa(g, T, -28, -32, 56, 60, cores[i], 4);
+      tx(g, 'ABC'[i], 0, -4, F.l26, '#1E1B2E', 'center');
+      traco(g, -18, 8, 36, 'rgba(30,27,46,.35)', 3); traco(g, -18, 15, 26, 'rgba(30,27,46,.35)', 3);
+      if (i === 1 && k >= 26) estrela(g, T, 22, -28, k === 26 ? 14 : 11);
+      rs(g); }
+    const on = Math.floor(f/6) % 2; g.beginPath(); g.arc(244, 12, 6.5, 0, Math.PI*2); g.fillStyle = on ? '#FFE45E' : '#FFFFFF'; g.fill(); g.lineWidth = 2; g.strokeStyle = T.line; g.stroke();
+    g.fillStyle = T.line; g.fillRect(241, 19, 6, 4);
+  }},
+  arquiteto: { ciclo:48, draw(g, T, a, f){
+    const k = f % 48, B = [['página', 10, 8, T.folha], ['API', 96, 8, a.color], ['banco', 182, 8, T.folha], ['pagamento', 91, 58, T.chip]], W = 64, H = 24;
+    const A = [[0, 1, 'h'], [1, 2, 'h'], [1, 3, 'v']];
+    A.forEach(([i, j, d], n) => { const p = Math.min(1, Math.max(0, (k - 16 - n*6) / 6)); if (p <= 0) return;
+      const [, x1, y1] = B[i], [, x2, y2] = B[j]; let sx, sy, ex, ey;
+      if (d === 'h'){ sx = x1 + W; sy = y1 + H/2; ex = x2 - 3; ey = sy; } else { sx = x1 + W/2; sy = y1 + H; ex = sx; ey = y2 - 3; }
+      const cx = sx + (ex - sx)*p, cy = sy + (ey - sy)*p;
+      g.beginPath(); g.moveTo(sx, sy); g.lineTo(cx, cy); g.lineWidth = 2; g.strokeStyle = T.line; g.lineCap = 'round'; g.stroke();
+      if (p >= 1){ g.beginPath(); if (d === 'h'){ g.moveTo(ex - 5, ey - 4); g.lineTo(ex, ey); g.lineTo(ex - 5, ey + 4); } else { g.moveTo(ex - 4, ey - 5); g.lineTo(ex, ey); g.lineTo(ex + 4, ey - 5); } g.stroke(); }
+    });
+    B.forEach(([nome, x, y, cor], i) => { const nasce = i*4; if (k < nasce) return;
+      const w = i === 3 ? 74 : W;
+      caixa(g, T, x, y, w, H, cor, 6);
+      if (k - nasce < 2){ g.lineWidth = 2; g.strokeStyle = T.line; rr(g, x - 3, y - 3, w + 6, H + 6, 8); g.stroke(); }
+      tx(g, nome, x + w/2, y + 16, F.t11, cor === a.color ? tinta(a) : T.fg, 'center'); });
+    tx(g, 'v' + (1 + Math.floor(f/48) % 9), 246, 84, F.m9, T.muted, 'right');
+  }},
+  frontend: { ciclo:40, draw(g, T, a, f){
+    const k = f % 40, vis = n => k >= n*4;
+    caixa(g, T, 8, 5, 178, 80, T.folha, 6);
+    g.fillStyle = T.chip; g.fillRect(9, 6, 176, 8); [0, 1, 2].forEach(i => { g.beginPath(); g.arc(16 + i*7, 10, 2, 0, Math.PI*2); g.fillStyle = T.soft; g.fill(); });
+    if (vis(0)){ traco(g, 16, 19, 22, a.color, 5); traco(g, 128, 20, 14, T.soft, 3); traco(g, 146, 20, 14, T.soft, 3); traco(g, 164, 20, 14, T.soft, 3); }
+    if (vis(1)){ traco(g, 16, 32, 86, T.fg, 6); traco(g, 16, 42, 64, T.soft, 4); }
+    if (vis(2)){ g.fillStyle = T.ink; rr(g, 18, 54, 44, 13, 6); g.fill(); g.fillStyle = a.color; rr(g, 16, 52, 44, 13, 6); g.fill(); g.lineWidth = 2; g.strokeStyle = T.line; g.stroke(); }
+    if (vis(3)){ caixa(g, T, 112, 30, 32, 36, T.chip, 4, false); traco(g, 117, 56, 20, T.soft, 3); }
+    if (vis(4)){ caixa(g, T, 148, 30, 32, 36, T.chip, 4, false); traco(g, 153, 56, 20, T.soft, 3); }
+    if (vis(5)){ traco(g, 16, 75, 160, T.soft, 3); }
+    // mini celular com o mesmo layout empilhado
+    caixa(g, T, 204, 6, 40, 78, T.folha, 7);
+    if (vis(0)) traco(g, 209, 13, 12, a.color, 3);
+    if (vis(1)){ traco(g, 209, 21, 30, T.fg, 4); traco(g, 209, 28, 22, T.soft, 3); }
+    if (vis(2)){ g.fillStyle = a.color; rr(g, 209, 35, 20, 7, 3.5); g.fill(); }
+    if (vis(3)){ g.fillStyle = T.chip; rr(g, 209, 46, 30, 13, 3); g.fill(); }
+    if (vis(4)){ g.fillStyle = T.chip; rr(g, 209, 62, 30, 13, 3); g.fill(); }
+    // cursor-seta indo de bloco em bloco
+    const P = [[30, 22], [60, 36], [40, 60], [128, 48], [164, 48], [96, 76], [60, 36]], s = Math.min(6, Math.floor(k/4)), q = (k % 4) / 4, p0 = P[s], p1 = P[Math.min(6, s + 1)];
+    const cx = p0[0] + (p1[0] - p0[0])*q, cy = p0[1] + (p1[1] - p0[1])*q;
+    g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx, cy + 13); g.lineTo(cx + 3.5, cy + 10); g.lineTo(cx + 6.5, cy + 15); g.lineTo(cx + 8.5, cy + 14); g.lineTo(cx + 5.5, cy + 9); g.lineTo(cx + 10, cy + 9); g.closePath();
+    g.fillStyle = '#FFFFFF'; g.fill(); g.lineWidth = 1.6; g.lineJoin = 'round'; g.strokeStyle = '#1E1B2E'; g.stroke();
+  }},
+  backend: { ciclo:36, draw(g, T, a, f){
+    const R = [['GET', '/agenda'], ['POST', '/pedido'], ['PIX', 'webhook'], ['GET', '/horarios'], ['POST', '/cliente'], ['GET', '/status'], ['PUT', '/servico'], ['POST', '/login']];
+    caixa(g, T, 8, 5, 240, 80, T.folha, 6);
+    tx(g, 'servidor · api', 16, 17, F.m9, T.muted);
+    const st = Math.floor(f/6);
+    for (let r = 0; r < 4; r++){
+      const j = st + r, [m, p] = R[j % R.length], y = 33 + r*15, novo = r === 3;
+      tx(g, novo ? '›' : ' ', 14, y, F.m10, T.muted);
+      tx(g, m, 22, y, F.m10, a.color); tx(g, p, 22 + (m.length + 1)*6.1, y, F.m10, T.fg);
+      const erro = novo && hash3(j, 3, 7) < .05 && f % 6 < 3, cod = erro ? '422' : m === 'POST' ? '201' : '200';
+      if (!novo || f % 6 >= 1){ g.fillStyle = erro ? T.work : T.ok; rr(g, 208, y - 9, 32, 12, 6); g.fill(); tx(g, cod, 224, y, F.m9, '#FFFFFF', 'center'); }
+      if (novo && Math.floor(f/3) % 2){ g.fillStyle = T.fg; g.fillRect(22 + (m.length + p.length + 2)*6.1, y - 8, 5, 9); }
+    }
+  }},
+  designer: { ciclo:48, draw(g, T, a, f){
+    const k = f % 48, cores = [a.color, '#FFC93C', '#2EC4B6', '#9B6BFF', '#FF6B6B'], cur = Math.min(4, Math.floor(k/5));
+    cores.forEach((c, i) => { const x = 22 + i*32, y = 32, ch = k >= i*5 + 3;
+      g.beginPath(); g.arc(x, y, 13, 0, Math.PI*2);
+      if (ch){ g.fillStyle = T.ink; g.beginPath(); g.arc(x + 2, y + 2, 13, 0, Math.PI*2); g.fill(); g.beginPath(); g.arc(x, y, 13, 0, Math.PI*2); g.fillStyle = c; g.fill(); g.setLineDash([]); }
+      else g.setLineDash([3, 3]);
+      g.lineWidth = 2; g.strokeStyle = T.line; g.stroke(); g.setLineDash([]); });
+    // conta-gotas
+    const dx = 22 + cur*32 + 7, dy = 12 + (k % 5 < 2 ? 2 : 0);
+    sv(g); g.translate(dx, dy); g.rotate(.7); g.fillStyle = T.folha; rr(g, -3, -2, 6, 16, 3); g.fill(); g.lineWidth = 2; g.strokeStyle = T.line; g.stroke(); g.fillStyle = a.color; rr(g, -4.5, -9, 9, 8, 4); g.fill(); g.stroke(); rs(g);
+    const ult = cores[Math.max(0, Math.min(4, Math.floor((k - 3)/5)))];
+    tx(g, ult.toUpperCase(), 10, 66, F.m10, T.fg); traco(g, 10, 74, 120, T.soft, 3);
+    caixa(g, T, 178, 7, 68, 74, T.folha, 6);
+    const lil = Math.floor(f/24) % 2 === 0;
+    tx(g, 'Aa', 212, 52, lil ? F.aaL : F.aaF, T.fg, 'center'); tx(g, lil ? 'Lilita' : 'Figtree', 212, 72, F.m9, T.muted, 'center');
+  }},
+  'motion-3d': { ciclo:48, draw(g, T, a, f){
+    const k = f % 48, u = k / 48;
+    g.lineWidth = 2; g.strokeStyle = T.line; g.beginPath(); g.moveTo(10, 36); g.lineTo(246, 36); g.stroke();
+    let bx = 14 + u*228, by, sx = 1, sy = 1;
+    if (RM){ bx = 128; by = 30; }
+    else { const ph = (u*3) % 1, h = 4*ph*(1 - ph); by = 30 - h*24; if (ph < .05 || ph > .95){ sx = 1.3; sy = .7; by = 32; } else if (h < .3){ sx = .88; sy = 1.14; } }
+    sv(g); g.translate(bx, by + 6); g.scale(sx, sy); g.beginPath(); g.arc(0, -6, 6, 0, Math.PI*2); g.fillStyle = a.color; g.fill(); g.lineWidth = 2; g.strokeStyle = T.line; g.stroke(); rs(g);
+    caixa(g, T, 8, 44, 240, 42, T.folha, 6);
+    const K = [[30, 92, 170], [62, 140, 218], [44, 120, 196]], cor = [a.color, '#FFC93C', '#2EC4B6'], px = 12 + u*232;
+    for (let r = 0; r < 3; r++){ const y = 54 + r*11; traco(g, 14, y - 1, 228, T.soft, 2);
+      K[r].forEach(x => { const s = Math.abs(x - px) < 5 ? 5.5 : 4; g.beginPath(); g.moveTo(x, y - s); g.lineTo(x + s, y); g.lineTo(x, y + s); g.lineTo(x - s, y); g.closePath(); g.fillStyle = cor[r]; g.fill(); g.lineWidth = 1.5; g.strokeStyle = T.line; g.stroke(); }); }
+    g.fillStyle = '#FF6B6B'; g.fillRect(px - 1, 44, 2, 42); g.beginPath(); g.moveTo(px - 5, 41); g.lineTo(px + 5, 41); g.lineTo(px, 47); g.closePath(); g.fill();
+  }},
+  shader: { ciclo:48, draw(g, T, a, f){
+    for (let y = 0; y < 9; y++) for (let x = 0; x < 16; x++){
+      const h = ((Math.sin(x*.6 + f*.25) + Math.cos(y*.8 - f*.18)) * 60 % 360 + 360) % 360, v = (Math.sin(x*.45 + y*.35 + f*.2) + 1) / 2;
+      g.fillStyle = PRISMA[Math.floor(h/10) % 36][Math.min(3, Math.floor(v*4))]; g.fillRect(x*16, y*10, 16, 10); }
+    caixa(g, T, 8, 6, 66, 15, T.folha, 5); tx(g, 'frag.glsl', 41, 17, F.m9, T.fg, 'center');
+  }},
+  som: { ciclo:12, draw(g, T, a, f){
+    caixa(g, T, 8, 5, 240, 80, T.folha, 6);
+    g.fillStyle = T.soft; for (let x = 32; x < 200; x += 24) g.fillRect(x, 9, 1, 72); g.fillRect(12, 45, 188, 1);
+    const s = somApi(), an = s && s.ligado && s.analyser;
+    if (an){
+      if (!ecoBuf.t || ecoBuf.t.length !== an.fftSize){ ecoBuf.t = new Uint8Array(an.fftSize); ecoBuf.f = new Uint8Array(an.frequencyBinCount); }
+      an.getByteTimeDomainData(ecoBuf.t); an.getByteFrequencyData(ecoBuf.f);
+      const n = ecoBuf.t.length; g.beginPath();
+      for (let i = 0; i < n; i++){ const x = 12 + i / (n - 1) * 188, y = 45 + Math.max(-34, Math.min(34, (ecoBuf.t[i] - 128) / 128 * 34 * 8)); i ? g.lineTo(x, y) : g.moveTo(x, y); }   // ganho de tela ×8: o mix fica em torno de -30 dBFS
+      g.lineJoin = 'round'; g.lineWidth = 4; g.strokeStyle = T.ink; g.stroke(); g.lineWidth = 2; g.strokeStyle = a.color; g.stroke();
+      const B = ecoBuf.f.length, per = Math.max(1, Math.floor(B / 8 / 2));
+      for (let b = 0; b < 8; b++){ let m = 0; for (let j = 0; j < per; j++) m = Math.max(m, ecoBuf.f[b*per + j] || 0); const h = 4 + m / 255 * 62;
+        g.fillStyle = a.color; g.fillRect(208 + b*4.8, 80 - h, 3.4, h); }
+    } else {
+      g.lineWidth = 4; g.strokeStyle = T.ink; g.beginPath(); g.moveTo(12, 45); g.lineTo(200, 45); g.stroke(); g.lineWidth = 2; g.strokeStyle = a.color; g.stroke();
+      for (let b = 0; b < 8; b++){ g.fillStyle = T.soft; g.fillRect(208 + b*4.8, 76, 3.4, 4); }
+      tx(g, 'som desligado · toque no alto-falante', 106, 70, F.t10, T.fg, 'center');
+    }
+  }},
+  copywriter: { ciclo:40, draw(g, T, a, f, d){
+    caixa(g, T, 18, 4, 222, 82, T.folha, 4);
+    g.strokeStyle = '#FF6B6B'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(34, 6); g.lineTo(34, 84); g.stroke();
+    fnt(g, F.l16); const L = quebrar(g, d.acao || 'texto novo', 192, 2), tot = L.join('').length, ciclo = tot + 18;
+    let n = RM ? tot : Math.min(tot, f % ciclo), cx = 42, cy = 24;
+    L.forEach((ln, i) => { const vis = ln.slice(0, Math.max(0, n)); n -= ln.length; if (!vis) return; tx(g, vis, 42, 24 + i*18, F.l16, T.fg); cx = 42 + g.measureText(vis).width + 2; cy = 24 + i*18; });
+    if (Math.floor(f/6) % 2 === 0){ g.fillStyle = a.color; g.fillRect(cx, cy - 13, 2.5, 15); }
+    const y0 = L.length > 1 ? 54 : 40; [180, 160, 128, 170].slice(0, L.length > 1 ? 3 : 4).forEach((w, i) => traco(g, 42, y0 + i*9, w, T.soft, 3));
+  }},
+  pesquisador: { ciclo:60, draw(g, T, a, f, d){
+    const q = String(d.tarefa || 'busca'), Q = Math.min(24, q.length), T0 = Q + 2, ciclo = T0 + 42, k = RM ? ciclo - 1 : f % ciclo, k2 = k - T0;
+    caixa(g, T, 10, 4, 236, 22, T.folha, 11); lupaIco(g, 23, 14, 4.5, T.line, 2);
+    fnt(g, F.t12); const vis = fit(g, q.slice(0, Math.min(Q, k)), 196); tx(g, vis, 36, 19, F.t12, T.fg);
+    if (k < T0 + 6 && Math.floor(f/3) % 2 === 0){ g.fillStyle = a.color; g.fillRect(37 + g.measureText(vis).width, 9, 2, 12); }
+    for (let r = 0; r < 3; r++){ if (k2 < r*6) continue; const y = 34 + r*18, w = r === 0 ? 118 : 96 + hash3(r, Math.floor(f/ciclo), 2)*60;
+      g.fillStyle = a.color; rr(g, 12, y + 1, 9, 9, 2); g.fill(); g.lineWidth = 1.5; g.strokeStyle = T.line; g.stroke();
+      traco(g, 27, y, w, T.fg, 5); traco(g, 27, y + 9, 64, a.color, 2.5); }
+    if (k2 >= 18){ const e = k2 - 18; sv(g); g.translate(222, 40); g.rotate(-.12); const s = RM ? 1 : e === 0 ? 1.35 : e === 1 ? .95 : 1; g.scale(s, s);
+      g.fillStyle = T.ok; rr(g, -22, -8, 44, 16, 8); g.fill(); g.lineWidth = 2; g.strokeStyle = T.ink; g.stroke(); tx(g, 'fonte', 0, 4, F.t11, '#FFFFFF', 'center'); rs(g); }
+  }},
+  revisor: { ciclo:36, draw(g, T, a, f){
+    const k = f % 36, cyc = Math.floor(f/36), r = rng(11 + cyc), kinds = Array.from({ length:6 }, (_, i) => i === 2 ? '-' : r() < .5 ? '+' : r() < .5 ? ' ' : '+');
+    kinds.forEach((kd, i) => { const y = 6 + i*13;
+      if (kd !== ' '){ g.fillStyle = kd === '+' ? T.plus : T.minus; g.fillRect(8, y, 180, 12); }
+      tx(g, String(40 + i), 12, y + 9, F.m9, T.muted); tx(g, kd === '-' ? '−' : kd, 30, y + 9, F.m10, kd === '+' ? T.ok : T.work);
+      traco(g, 42, y + 4, 40 + r()*96, kd === ' ' ? T.soft : T.fg, 4); });
+    const mais = 8 + Math.floor(r()*8), menos = 1 + Math.floor(r()*4);
+    tx(g, '+' + mais, 196, 16, F.mono, T.ok); tx(g, '−' + menos, 226, 16, F.mono, T.work);
+    if (k >= 10){ const ok = k >= 24; caixa(g, T, 196, 26, 52, 24, ok ? T.ok : '#FFE45E', 7);
+      g.fillStyle = ok ? T.ok : '#FFE45E'; g.beginPath(); g.moveTo(197, 34); g.lineTo(190, 38); g.lineTo(197, 42); g.fill();
+      if (ok) checkV(g, 214, 38, 16, '#FFFFFF', RM ? 1 : Math.min(1, (k - 23) / 2), 3); else tx(g, 'linha 42', 222, 42, F.t10, '#1E1B2E', 'center'); }
+    traco(g, 196, 62, 52, T.soft, 3); traco(g, 196, 70, 38, T.soft, 3);
+  }},
+  qa: { ciclo:40, draw(g, T, a, f){
+    const k = f % 40, c = forte(a);
+    lupaIco(g, 30, 40, 14, T.line, 3); g.beginPath(); g.arc(30, 40, 11.5, 0, Math.PI*2); g.fillStyle = 'rgba(127,231,255,.35)'; g.fill();
+    caixa(g, T, 72, 3, 52, 84, T.folha, 9);
+    traco(g, 79, 12, 18, c, 4); traco(g, 79, 22, 38, T.fg, 5); traco(g, 79, 31, 28, T.soft, 3);
+    g.fillStyle = c; rr(g, 79, 38, 24, 9, 4.5); g.fill(); g.fillStyle = T.chip; rr(g, 79, 52, 38, 14, 3); g.fill(); rr(g, 79, 69, 38, 12, 3); g.fill();
+    const P = [[91, 42], [98, 59], [86, 24]][Math.floor(k/8) % 3], e = RM ? 4 : k % 8;
+    g.beginPath(); g.arc(P[0], P[1], 3 + e*2.2, 0, Math.PI*2); g.globalAlpha = 1 - e/9; g.lineWidth = 2.5; g.strokeStyle = T.work; g.stroke(); g.globalAlpha = 1;
+    g.beginPath(); g.arc(P[0], P[1], 3, 0, Math.PI*2); g.fillStyle = T.work; g.fill();
+    ['390 px', 'console', 'escuro'].forEach((s, i) => { const y = 14 + i*24; caixa(g, T, 140, y, 14, 14, T.folha, 3, false);
+      if (k >= (i + 1)*10 || RM) checkV(g, 143, y + 8, 9, T.ok, 1, 2.5); tx(g, s, 162, y + 11, F.t11, T.fg); });
+  }},
+  seguranca: { ciclo:48, draw(g, T, a, f){
+    const k = f % 48, n = RM ? 4 : Math.min(4, Math.floor(k/9)), pulso = !RM && k >= 9 && k <= 37 && k % 9 < 2 ? 1.08 : 1;
+    sv(g); g.translate(46, 44); g.scale(pulso, pulso);
+    const esc = () => { g.beginPath(); g.moveTo(0, -34); g.bezierCurveTo(16, -28, 26, -28, 28, -26); g.lineTo(28, -2); g.bezierCurveTo(28, 18, 14, 30, 0, 38); g.bezierCurveTo(-14, 30, -28, 18, -28, -2); g.lineTo(-28, -26); g.bezierCurveTo(-26, -28, -16, -28, 0, -34); g.closePath(); };
+    g.translate(2, 2); esc(); g.fillStyle = T.ink; g.fill(); g.translate(-2, -2); esc(); g.fillStyle = a.color; g.fill(); g.lineWidth = 2.5; g.strokeStyle = T.line; g.lineJoin = 'round'; g.stroke();
+    g.beginPath(); g.arc(0, -4, 7, Math.PI, 0); g.lineWidth = 3.5; g.strokeStyle = '#FFC93C'; g.stroke();
+    g.fillStyle = '#FFC93C'; rr(g, -10, -4, 20, 16, 3); g.fill(); g.lineWidth = 2; g.strokeStyle = '#1E1B2E'; g.stroke(); g.fillStyle = '#1E1B2E'; g.fillRect(-1.2, 1, 2.4, 6);
+    rs(g);
+    ['segredos', 'XSS', 'LGPD', 'dependências'].forEach((s, i) => { const y = 7 + i*20; caixa(g, T, 96, y, 14, 14, T.folha, 3, false);
+      if (i < n) checkV(g, 99, y + 8, 9, T.ok, 1, 2.5); tx(g, s, 118, y + 12, F.t12, i < n ? T.fg : T.muted); });
+  }},
+  devops: { ciclo:60, draw(g, T, a, f){
+    const k = f % 60, u = k / 60, X = [26, 92, 158, 224];
+    ['build', 'testes', 'revisão', 'no ar'].forEach((s, i) => { tx(g, s, X[i], 11, F.t10, T.fg, 'center'); caixa(g, T, X[i] - 15, 15, 30, 6, T.chip, 3, false); });
+    for (let x = 10; x < 248; x += 10){ g.fillStyle = '#B07A4A'; g.fillRect(x, 42, 4, 14); }
+    g.fillStyle = T.line; g.fillRect(6, 45, 244, 2); g.fillRect(6, 52, 244, 2);
+    const x = RM ? 200 : 34 + u*196;
+    caixa(g, T, x - 58, 31, 24, 13, mix(a.color, '#FFFFFF', .25), 3, false);
+    caixa(g, T, x - 30, 26, 30, 18, a.color, 4, false); g.fillStyle = '#FFE45E'; rr(g, x - 12, 29, 8, 6, 2); g.fill();
+    g.fillStyle = a.color; g.fillRect(x - 26, 19, 6, 7); g.lineWidth = 2; g.strokeStyle = T.line; g.strokeRect(x - 26, 19, 6, 7);
+    [x - 52, x - 40, x - 24, x - 8].forEach(w => { g.beginPath(); g.arc(w, 47, 3.6, 0, Math.PI*2); g.fillStyle = T.ink; g.fill(); g.lineWidth = 1.5; g.strokeStyle = T.line; g.stroke(); });
+    if (!RM && k % 6 < 3){ g.beginPath(); g.arc(x - 23, 14, 3, 0, Math.PI*2); g.fillStyle = T.soft; g.fill(); }
+    caixa(g, T, 10, 68, 236, 7, T.chip, 3.5, false); g.fillStyle = T.ok; rr(g, 11, 69, Math.max(4, 234*(RM ? 1 : u)), 5, 2.5); g.fill();
+    tx(g, Math.round((RM ? 1 : u)*100) + '%', 246, 87, F.m9, T.muted, 'right');
+    const hf = RM ? 1 : Math.min(1, Math.max(0, (k - 48) / 8)); g.fillStyle = T.line; g.fillRect(243, 22, 2, 40);
+    g.fillStyle = T.ok; g.beginPath(); g.moveTo(245, 42 - hf*18); g.lineTo(256, 46 - hf*18); g.lineTo(245, 50 - hf*18); g.closePath(); g.fill();
+  }},
+  diretor: { ciclo:12, draw(g, T, a, f, d){
+    (d.fluxos || []).slice(0, 3).forEach((fx, r) => { const y = 5 + r*29;
+      fnt(g, F.t12); tx(g, fit(g, fx.nome, 236), 10, y + 11, F.t12, T.fg);
+      fx.fases.slice(0, 18).forEach((p, i) => { const x = 10 + i*13, pulse = p === 'trab' && Math.floor(f/6) % 2 === 0 && !RM, w = pulse ? 12 : 10;
+        g.fillStyle = p === 'feito' ? T.ok : p === 'trab' ? T.work : 'transparent'; rr(g, x - (w - 10)/2, y + 15 - (w - 10)/2, w, w - 1, 3); if (p !== 'fila') g.fill(); g.lineWidth = 1.8; g.strokeStyle = T.line; g.stroke(); });
+    });
+  }},
+};
+
+/* dados: o que a tela de cada agente mostra (local/db, público/demo, simulação) */
+const tarefaDe = (lab, fluxo) => { lab = String(lab || ''); const i = lab.indexOf(':'); return i >= 0 ? lab.slice(i + 1) : (fluxo || lab || 'tarefa'); };
+function fluxoPub(e, id){ for (const f of e.fluxos || []) for (const ag of f.agentes || []) if (ag.personagem === id) return { nome: f.nome, status: ag.status }; return null; }
+function telaDados(a){
+  if (running){
+    if (a.state === 'working' || (a.id === 'diretor' && a.state === 'think')) return { estado:'trabalhando', sim:true, tarefa: curto(sim.brief, 24), acao: a.task, segundos: (performance.now() - (a.desde || performance.now())) / 1000, mais:0, extra:'' };
+    return { estado: a.simFeito ? 'feito' : 'na fila', sim:true, tarefa: curto(sim.brief, 24), acao: a.simFeito ? 'parte entregue' : 'na fila', segundos:null, mais:0, extra:'' };
+  }
+  const e = live.estado, l = e && e.personagens && e.personagens[a.id];
+  if (e && e.publico){
+    const fp = fluxoPub(e, a.id), nome = fp ? fp.nome : 'Pedido da Creat';
+    if (l && l.length) return { estado:'trabalhando', tarefa: nome, acao: FRASE[a.id], segundos:null, mais:0, extra:'' };
+    if (fp && fp.status === 'esperando') return { estado:'na fila', tarefa: nome, acao:'na fila', segundos:null, mais:0, extra:'' };
+    if (fp && fp.status === 'feito') return { estado:'feito', tarefa: nome, acao:'terminou a sua parte', segundos:null, mais:0, extra:'' };
+  } else if (l && l.length){
+    const t = l[0];
+    return { estado:'trabalhando', tarefa: tarefaDe(t.label, t.fluxo), acao: t.acao || 'pensando', segundos: (t.segundos || 0) + (Date.now() - (live.recebidoEm || Date.now())) / 1000, mais: l.length - 1, extra:'' };
+  }
+  let extra = '';
+  if (e && !e.publico && Array.isArray(e.fluxos)){
+    let best = null;
+    for (const f of e.fluxos) for (const ag of f.agentes || []) if (ag.personagem === a.id && ag.status === 'feito' && (!best || (f.ultimo_evento || 0) >= best.t)) best = { lab: ag.label, t: f.ultimo_evento || 0 };
+    if (best && best.t) extra = `última: ${tarefaDe(best.lab)} · há ${fmtS((Date.now() - best.t) / 1000)}`;
+  }
+  return { estado:'parado', tarefa:'na sede', acao:'Livre para o próximo pedido', segundos:null, mais:0, extra };
+}
+function lousaDados(){
+  const e = live.estado; let fluxos = [], acao;
+  if (running){
+    fluxos = [{ nome: curto(sim.brief, 40), fases: FLOW.map((_, i) => i < sim.pi ? 'feito' : i === sim.pi ? 'trab' : 'fila') }];
+    const n = TEAM.filter(a => a.state === 'working' || a.state === 'think').length;
+    acao = n ? `${n} agente${n > 1 ? 's' : ''} trabalhando agora` : 'Distribuindo o trabalho';
+  } else if (e && e.publico){
+    fluxos = (e.fluxos || []).map(f => ({ nome: f.nome, fases: (f.agentes || []).map(ag => ag.status === 'feito' ? 'feito' : ag.status === 'trabalhando' ? 'trab' : 'fila') }));
+    acao = fluxos.some(f => f.fases.includes('trab')) ? FRASE.diretor : (e.mensagem || 'A equipe espera o próximo pedido.');
+  } else if (e && !e.velho){
+    const agora = Date.now();
+    fluxos = (e.fluxos || []).filter(f => f.em_andamento || agora - (f.ultimo_evento || 0) < 6 * 3600e3).sort((x, y) => (y.em_andamento - x.em_andamento) || ((y.ultimo_evento || 0) - (x.ultimo_evento || 0)))
+      .map(f => ({ nome: /^wf_/.test(f.nome || '') ? (f.descricao || 'Fluxo ' + String(f.nome).slice(3, 9)) : (f.nome || 'Fluxo'), fases: (f.fases || []).map(p => p.trabalhando ? 'trab' : p.feitos >= p.total ? 'feito' : 'fila') }));
+    const n = e.total_trabalhando || 0;
+    acao = n ? `${n} agente${n > 1 ? 's' : ''} trabalhando agora` : 'Fila em dia';
+  } else acao = 'Fila em dia';
+  const pulsa = fluxos.slice(0, 3).some(f => f.fases.includes('trab'));
+  const nAr = fluxos.filter(f => f.fases.includes('trab')).length;
+  return { estado: pulsa ? 'trabalhando' : 'parado', lousa:true, tarefa:'Fila da casa', acao, segundos:null, tempo: nAr ? `${nAr} em andamento` : '', mais:0, extra: acao === 'Fila em dia' ? (e && e.velho && !e.publico ? 'Sem sinal recente da equipe' : 'Esperando o próximo pedido') : '', fluxos, pulsa };
+}
+function telaFrase(a, d){
+  if (d.lousa) return `Fila da casa: ${d.acao}` + (d.extra ? `, ${d.extra.toLowerCase()}` : '') + (d.fluxos.length ? ` · ${d.fluxos.slice(0, 3).map(f => f.nome).join(' · ')}` : '');
+  if (d.estado === 'trabalhando') return d.sim ? `${a.nick} ${d.acao} · tarefa: ${d.tarefa}` : `${a.nick} está ${d.acao} · tarefa: ${d.tarefa}`;
+  if (d.estado === 'na fila') return `${a.nick} está na fila · ${d.tarefa}`;
+  if (d.estado === 'feito') return `${a.nick} terminou a sua parte · ${d.tarefa}`;
+  return `${a.nick} está na sede, livre para o próximo pedido` + (d.extra ? ` (${d.extra})` : '');
+}
+const tempoTxt = d => d.tempo != null ? d.tempo : d.segundos != null ? fmtS(d.segundos) : d.estado === 'trabalhando' ? 'agora' : '';
+function telaEvento(a, tipo){
+  const tl = a && a.tela; if (!tl) return;
+  if (tipo === 'feito'){ tl.fCong = fQuadro(a); if (tl.dados && tl.dados.estado === 'trabalhando') tl.congDados = tl.dados; }
+  tl.ev = { tipo, f0: telaF }; tl.suja = true;
+}
+const fQuadro = a => { const of = OF[a.id], tl = a.tela; return RM ? of.ciclo - 1 : telaF - (tl.trabF0 || 0) + tl.off; };
+
+/* ícone do acessório (descanso do ofício) */
+function iconeAcc(g, T, acc, cor){
+  g.lineWidth = 2.5; g.strokeStyle = T.line; g.lineJoin = 'round'; g.lineCap = 'round'; g.fillStyle = cor;
+  const fs = () => { g.fill(); g.stroke(); }, B = (x, y, w, h, r = 3) => { rr(g, x, y, w, h, r); fs(); }, C = (x, y, r, a0 = 0, a1 = Math.PI*2) => { g.beginPath(); g.arc(x, y, r, a0, a1); a1 - a0 < 6 && g.closePath(); fs(); };
+  switch (acc){
+    case 'crown': g.beginPath(); g.moveTo(-16, 8); g.lineTo(-16, -6); g.lineTo(-8, 2); g.lineTo(0, -10); g.lineTo(8, 2); g.lineTo(16, -6); g.lineTo(16, 8); g.closePath(); fs(); break;
+    case 'bulb': C(0, -3, 10); B(-5, 7, 10, 6, 2); break;
+    case 'glasses': g.fillStyle = 'transparent'; C(-9, 0, 7); C(9, 0, 7); g.beginPath(); g.moveTo(-2, -1); g.lineTo(2, -1); g.stroke(); break;
+    case 'cap': C(0, 4, 13, Math.PI, 0); B(-2, 2, 22, 5, 2.5); break;
+    case 'beanie': C(0, 6, 14, Math.PI, 0); B(-15, 3, 30, 6, 3); C(0, -10, 4); break;
+    case 'hardhat': C(0, 6, 14, Math.PI, 0); B(-18, 4, 36, 5, 2.5); break;
+    case 'safari': C(0, 4, 11, Math.PI, 0); B(-20, 2, 40, 5, 2.5); break;
+    case 'beret': g.beginPath(); g.ellipse(0, 2, 17, 7, -.15, 0, Math.PI*2); fs(); B(-1.5, -9, 3, 5, 1); break;
+    case 'antenna': g.beginPath(); g.moveTo(0, 12); g.lineTo(0, -4); g.stroke(); C(0, -8, 5); break;
+    case 'fedora': B(-11, -8, 22, 12, 4); B(-19, 3, 38, 5, 2.5); break;
+    case 'tophat': B(-9, -14, 18, 20, 2); B(-16, 5, 32, 5, 2.5); break;
+    case 'prism': g.beginPath(); g.moveTo(0, -14); g.lineTo(11, 0); g.lineTo(0, 14); g.lineTo(-11, 0); g.closePath(); fs(); break;
+    case 'headphones': g.beginPath(); g.arc(0, 4, 13, Math.PI, 0); g.lineWidth = 4; g.stroke(); g.lineWidth = 2.5; B(-17, 1, 7, 12, 3); B(10, 1, 7, 12, 3); break;
+    case 'magnifier': g.fillStyle = 'rgba(127,231,255,.5)'; C(-3, -3, 9); g.beginPath(); g.moveTo(4, 4); g.lineTo(12, 12); g.lineWidth = 4; g.stroke(); break;
+    case 'visor': B(-17, -5, 34, 10, 5); break;
+  }
+}
+function descanso(g, T, a, d){
+  g.globalAlpha = .42;
+  sv(g); g.translate(128 - 24*1.6, 50 - 20*1.6); g.scale(1.6, 1.6);
+  g.fillStyle = T.folha; g.fill(NUVEM); g.lineWidth = 2; g.strokeStyle = T.line; g.lineJoin = 'round'; g.stroke(NUVEM);
+  g.fillStyle = T.line; g.beginPath(); g.arc(20, 21, 1.8, 0, Math.PI*2); g.arc(29, 21, 1.8, 0, Math.PI*2); g.fill();
+  g.beginPath(); g.moveTo(21.5, 25.5); g.quadraticCurveTo(24.5, 28.1, 27.5, 25.5); g.lineWidth = 1.8; g.stroke();
+  rs(g);
+  sv(g); g.translate(134, 22); g.rotate(.12); iconeAcc(g, T, a.acc, a.color); rs(g);
+  g.globalAlpha = 1;
+  if (d.estado === 'na fila' || d.estado === 'feito'){ const ok = d.estado === 'feito'; caixa(g, T, 178, 62, 66, 20, ok ? T.ok : T.folha, 10, false); tx(g, ok ? 'feito' : 'na fila', 211, 76, F.t11, ok ? '#FFFFFF' : T.fg, 'center'); }
+}
+
+/* moldura única: barra 0-22, área 22-112, linha de ação 112-144 */
+function desenharTela(g, a, s){
+  const tl = a.tela, T = tl.T, d = tl.dados, modo = tl.modo;
+  g.setTransform(s, 0, 0, s, 0, 0); g._f = null; g.globalAlpha = 1; g.textBaseline = 'alphabetic';
+  if (modo === 'entregue'){
+    const on = tinta(a), p = RM ? 1 : Math.min(1, (telaF - festaF0 + 1) / 3);
+    g.fillStyle = a.color; g.fillRect(0, 0, TW, TH);
+    tx(g, a.nick, 10, 18, F.nick, on);
+    checkV(g, 98, 62, 60, T.ink, p, 13); checkV(g, 98, 62, 60, on === '#FFFFFF' ? '#FFFFFF' : '#FFFDF6', p, 7);
+    fnt(g, F.l26); g.lineWidth = 5; g.strokeStyle = '#1E1B2E'; g.lineJoin = 'round'; g.textAlign = 'center'; g.strokeText('Entregue', 128, 128); g.fillStyle = '#FFFDF6'; g.fillText('Entregue', 128, 128);
+    return;
+  }
+  g.fillStyle = T.paper; g.fillRect(0, 22, TW, 90);
+  sv(g); g.beginPath(); g.rect(0, 22, TW, 90); g.clip(); g.translate(0, 22);
+  const ev = tl.ev || { f0: telaF - 99 }, fd = modo === 'feito' ? (tl.congDados || d) : d;
+  if (modo === 'trab' || modo === 'chegou' || modo === 'feito' || (a.id === 'som' && somApi() && somApi().ligado)) OF[a.id].draw(g, T, a, modo === 'feito' ? (tl.fCong || 0) : fQuadro(a), fd);
+  else if (d.lousa && d.fluxos.length) OF.diretor.draw(g, T, a, fQuadro(a), d);
+  else descanso(g, T, a, d);
+  if (modo === 'chegou'){
+    const k = telaF - ev.f0, x0 = k < 3 ? 0 : k < 9 ? 0 : (k - 9) / 3 * TW, x1 = k < 3 ? (k + 1) / 3 * TW : TW;
+    g.fillStyle = a.color; g.fillRect(x0, 0, x1 - x0, 90); g.fillStyle = T.ink; g.fillRect(x1 - 3, 0, 3, 90);
+    if (k >= 2 && k < 10){ const on = tinta(a); tx(g, 'Nova tarefa', 128, 34, F.t12, on, 'center'); fnt(g, F.l18); tx(g, fit(g, d.tarefa, 230), 128, 60, F.l18, on, 'center'); }
+  }
+  if (modo === 'feito'){
+    const k = telaF - ev.f0, sc = RM ? 1 : [1.4, 1, 1.05][k] || 1;
+    g.globalAlpha = .4; g.fillStyle = T.paper; g.fillRect(0, 0, TW, 90); g.globalAlpha = 1;
+    sv(g); g.translate(128, 46); g.rotate(-8 * Math.PI / 180); g.scale(sc, sc);
+    g.lineWidth = 3; g.strokeStyle = T.ok; rr(g, -62, -24, 124, 46, 8); g.stroke(); rr(g, -57, -19, 114, 36, 5); g.lineWidth = 1.5; g.stroke();
+    fnt(g, F.l30); g.textAlign = 'center'; g.lineJoin = 'round'; g.lineWidth = 3; g.strokeStyle = T.ink; g.strokeText('FEITO', 0, 11); g.fillStyle = T.ok; g.fillText('FEITO', 0, 11);
+    rs(g);
+  }
+  rs(g);
+  // barra superior
+  const on = tinta(a);
+  g.fillStyle = a.color; g.fillRect(0, 0, TW, 22);
+  const est = modo === 'feito' ? 'feito' : d.estado, r0 = est === 'trabalhando' && !RM && Math.floor(telaF/6) % 2 ? 4 : 3;
+  g.beginPath(); g.arc(9, 11, r0, 0, Math.PI*2); g.lineWidth = 1.6;
+  if (est === 'trabalhando'){ g.fillStyle = on; g.fill(); } else if (est === 'feito'){ g.fillStyle = T.ok; g.fill(); g.strokeStyle = on; g.stroke(); } else { g.strokeStyle = on; g.globalAlpha = est === 'parado' ? .6 : 1; g.stroke(); g.globalAlpha = 1; }
+  tx(g, a.nick, 17, 16, F.nick, on);
+  const wn = g.measureText(a.nick).width;
+  const tt = tempoTxt(fd); let xr = 250;
+  if (tt){ fnt(g, F.mono); tx(g, tt, xr, 15, F.mono, on, 'right'); xr -= g.measureText(tt).width + 6; }
+  if (fd.mais > 0){ const s2 = '+' + fd.mais; g.fillStyle = on; rr(g, xr - 20, 5, 20, 12, 6); g.fill(); tx(g, s2, xr - 10, 14.5, F.m9, a.color, 'center'); xr -= 26; }
+  if (fd.tarefa){ fnt(g, F.bar); const x0 = 17 + wn + 3, w = xr - x0 - 2; if (w > 20) tx(g, fit(g, ' · ' + fd.tarefa, w), x0, 15.5, F.bar, on); }
+  // linha de ação
+  g.fillStyle = T.chip; g.fillRect(0, 112, TW, 32);
+  g.fillStyle = T.ink; g.fillRect(0, 21, TW, 2); g.fillRect(0, 111, TW, 2);
+  const acao = modo === 'feito' ? 'Feito! ' + (fd.acao || '') : fd.acao;
+  if (fd.extra && modo !== 'feito'){
+    fnt(g, F.acaoP); tx(g, fit(g, acao, 236), 10, 127, F.acaoP, T.fg);
+    fnt(g, F.extra); tx(g, fit(g, fd.extra, 236), 10, 140, F.extra, T.muted);
+  } else {
+    fnt(g, F.acao); let fonte = F.acao;
+    if (g.measureText(acao).width > 236){ fonte = F.acaoP; fnt(g, fonte); }
+    tx(g, fit(g, acao, 236), 10, 133, fonte, T.fg);
+  }
+}
+function mkTelaTex(cv){ const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.minFilter = THREE.LinearFilter; t.magFilter = THREE.LinearFilter; t.generateMipmaps = false; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; }
+function criarTela(a, i){
+  const cv = document.createElement('canvas'); cv.width = TW; cv.height = TH;
+  const tl = { cv, ctx: cv.getContext('2d'), tex: mkTelaTex(cv), suja:true, ult:-99, key:'', modo:'parado', ev:null, off: i*7, trabF0:0, T:TEMA_D, dados:null };
+  a.tela = tl; telas.push(a);
+  tl.mat = new THREE.MeshBasicMaterial({ map: tl.tex, color:'#FFFFFF', toneMapped:false });
+  // dados provisórios (live/running ainda não existem aqui): o primeiro tick troca pelos reais
+  tl.dados = a.id === 'diretor' ? { estado:'parado', lousa:true, tarefa:'Fila da casa', acao:'Fila em dia', segundos:null, tempo:'', mais:0, extra:'Esperando o próximo pedido', fluxos:[], pulsa:false }
+    : { estado:'parado', tarefa:'na sede', acao:'Livre para o próximo pedido', segundos:null, mais:0, extra:'' };
+  desenharTela(tl.ctx, a, 1);
+  return tl;
+}
+const hdCv = document.createElement('canvas'); hdCv.width = TW*2; hdCv.height = TH*2;
+const hdCtx = hdCv.getContext('2d'), hdTex = mkTelaTex(hdCv);
+const painel = { cv:null, ctx:null, txt:null, time:null, frase:'', dono:null };
+if (document.fonts && document.fonts.load){
+  Promise.all(['14px "Lilita One"', '800 15px Figtree', '500 11px "JetBrains Mono"'].map(f => document.fonts.load(f).catch(() => null)))
+    .then(() => { fitCache.clear(); telas.forEach(a => { a.tela.suja = true; a.tela.key = ''; }); });
+}
+const _frus = new THREE.Frustum(), _pm = new THREE.Matrix4(), _wp = new V3();
+let dbgSoma = 0, dbgMax = 0, dbgN = 0, dbgT = 0;
+function telaTick(){
+  const t0 = DEBUG ? performance.now() : 0;
+  telaF++;
+  const escuro = isDark(), T = escuro ? TEMA_N : TEMA_D, phone = innerWidth < 720;
+  const festa = TEAM.some(a => a.state === 'celebrate');
+  if (festa && festaF0 < 0){ festaF0 = telaF; sfx('acorde'); } else if (!festa) festaF0 = -1;   // acorde no mesmo tick em que as telas viram "Entregue"
+  const festaIni = festa && telaF - festaF0 < 3;
+  _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _frus.setFromProjectionMatrix(_pm);
+  const foco = selected && byId[selected] && byId[selected].tela ? byId[selected] : null;
+  if (hdDono !== foco){
+    if (hdDono){ hdDono.tela.mat.map = hdDono.tela.tex; hdDono.tela.suja = true; }
+    hdDono = foco; if (foco){ foco.tela.mat.map = hdTex; foco.tela.suja = true; }
+  }
+  const somOn = !!(somApi() && somApi().ligado);
+  const anims = [], fila = [];
+  for (const a of telas){
+    const tl = a.tela, d = a.id === 'diretor' ? lousaDados() : telaDados(a);
+    let modo;
+    if (festa) modo = 'entregue';
+    else if (tl.ev && tl.ev.tipo === 'feito' && telaF - tl.ev.f0 < 48) modo = 'feito';
+    else if (d.estado === 'trabalhando') modo = tl.ev && tl.ev.tipo === 'chegou' && telaF - tl.ev.f0 < 12 && !RM ? 'chegou' : 'trab';
+    else modo = 'parado';
+    if (modo === 'trab' && tl.modo !== 'trab') tl.trabF0 = telaF;
+    if (d.estado === 'trabalhando') tl.congDados = d;
+    tl.modo = modo; tl.dados = d; tl.T = T;
+    const key = [modo, d.estado, d.tarefa, d.acao, tempoTxt(d), d.extra, d.mais, escuro, d.lousa ? JSON.stringify(d.fluxos.slice(0, 3)) : '', a.id === 'som' && somOn].join('|');
+    if (key !== tl.key){ tl.key = key; tl.suja = true; }
+    const eco = a.id === 'som' && somOn;
+    if (RM && eco && telaF - tl.ult >= 12) tl.suja = true;
+    const anim = !RM && (modo === 'trab' || modo === 'chegou' || (modo === 'feito' && tl.ev && telaF - tl.ev.f0 < 4) || (modo === 'entregue' && festaIni) || (d.lousa && d.pulsa) || eco);
+    if (!anim && !tl.suja) continue;
+    if (a === foco || (modo === 'entregue' && festaIni)){ fila.push({ a, pri: a === foco ? 0 : -1 }); continue; }
+    if (anim){ (a.laptop || a.lousa).getWorldPosition(_wp); anims.push({ a, vis: _frus.containsPoint(_wp), dist: camera.position.distanceTo(_wp) }); }
+    else fila.push({ a, pri: 1.5 });
+  }
+  const perto = anims.filter(x => x.vis).sort((x, y) => x.dist - y.dist).slice(0, 4);
+  // dado novo (suja) passa na frente de "só mais um quadro de animação"; senão, perto e visível a 6 Hz, o resto a 3 Hz
+  anims.forEach(x => { const iv = perto.includes(x) ? 2 : 4; if (x.a.tela.suja) fila.push({ a: x.a, pri: perto.includes(x) ? 1 : 1.5 }); else if (telaF - x.a.tela.ult >= iv) fila.push({ a: x.a, pri: perto.includes(x) ? 2 : 3 }); });
+  fila.sort((x, y) => (x.pri - y.pri) || (x.a.tela.ult - y.a.tela.ult));
+  let teto = phone ? 2 : 3;
+  for (const it of fila){
+    const a = it.a, tl = a.tela;
+    if (it.pri > 0 && teto <= 0) break;
+    if (it.pri >= 0) teto--;
+    if (a === hdDono){
+      desenharTela(hdCtx, a, 2); hdTex.needsUpdate = true;
+      if (painel.dono === a && painel.ctx){ painel.ctx.drawImage(hdCv, 0, 0); atualizarPainelTxt(a); }
+    } else { desenharTela(tl.ctx, a, 1); tl.tex.needsUpdate = true; }
+    tl.ult = telaF; tl.suja = false;
+  }
+  if (telaF % 3 === 0){ const s = somApi(); if (s && s.tick4) try { s.tick4(); } catch {} }
+  if (DEBUG){ const ms = performance.now() - t0; dbgSoma += ms; dbgMax = Math.max(dbgMax, ms); dbgN++; if (performance.now() - dbgT > 5000){ console.log(`[telas] média ${(dbgSoma/dbgN).toFixed(2)} ms · pico ${dbgMax.toFixed(2)} ms · ${dbgN} ticks`); dbgT = performance.now(); dbgSoma = dbgMax = dbgN = 0; } }
+}
+function atualizarPainelTxt(a){
+  const d = a.tela.dados; if (!d || !painel.txt) return;
+  const fr = telaFrase(a, d), tt = tempoTxt(d);
+  if (fr !== painel.frase){ // o aria-live só muda quando ação/tarefa/estado mudam; o tempo vai junto só como texto para leitor de tela
+    painel.frase = fr; painel.txt.textContent = fr;
+    if (tt && d.segundos != null){ const sp = document.createElement('span'); sp.className = 'sr'; sp.textContent = ` · há ${tt}`; painel.txt.append(sp); }
+  }
+  const vis = tt ? (d.segundos != null ? 'há ' + tt : tt) : '';
+  if (painel.time.textContent !== vis) painel.time.textContent = vis;
+}
+
+/* estações de trabalho */
+const TELA_GEO = new THREE.PlaneGeometry(.544, .306), GLOW_GEO = new THREE.PlaneGeometry(1.15, .62);
 const TEAM = AGENTS.map(a => ({ ...a }));
 const byId = Object.fromEntries(TEAM.map(a => [a.id, a]));
 const pickables = [];
@@ -714,7 +1306,17 @@ TEAM.forEach((a, i) => {
     const rim = mk(new THREE.TorusGeometry(1.0, .06, 8, 40), '#FFC93C', { ol: 0 }); rim.rotation.x = Math.PI/2; rim.position.y = .5; st.add(rim);
     char.position.y = .5; char.scale.setScalar(1.15); st.add(char);
     a.root = char; a.station = st; a.angle = 0; a.out = new V3(0, 0, 1);
-    a.screen = null;
+    // lousa num cavalete ao lado do pódio: a "tela" do Nimbus (fila de fluxos e fases)
+    const lousa = new THREE.Group(); lousa.position.set(1.5, .12, .7); lousa.rotation.y = -.55; st.add(lousa);
+    const madeira = '#B07A4A';
+    [-1, 1].forEach(sx => { const p = mk(new THREE.CylinderGeometry(.035, .045, 1.75, 6), madeira, { ol: .012 }); p.position.set(sx*.42, .85, -.04); p.rotation.z = -sx*.08; lousa.add(p); });
+    const tras = mk(new THREE.CylinderGeometry(.03, .04, 1.6, 6), madeira, { ol: .012 }); tras.position.set(0, .78, -.32); tras.rotation.x = -.33; lousa.add(tras);
+    const moldura = mk(new RoundedBoxGeometry(1.06, .64, .06, 2, .02), madeira, { ol: .015 }); moldura.position.y = 1.32; lousa.add(moldura);
+    const bandeja = mk(new RoundedBoxGeometry(.9, .04, .1, 1, .015), madeira, { ol: .01 }); bandeja.position.set(0, .98, .05); lousa.add(bandeja);
+    const tl = criarTela(a, i);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(.96, .54), tl.mat); face.position.set(0, 1.32, .032); lousa.add(face);
+    moldura.userData.part = face.userData.part = 'tela';
+    a.lousa = lousa; a.telaMesh = face;
   } else {
     const k = i - 1, ang = (k + .5) / (AGENTS.length - 1) * Math.PI * 2;
     const st = new THREE.Group(); st.position.set(Math.sin(ang)*5.05, .12, Math.cos(ang)*5.05); st.rotation.y = ang; island.add(st);
@@ -725,14 +1327,19 @@ TEAM.forEach((a, i) => {
     const base = mk(new RoundedBoxGeometry(.62, .035, .42, 2, .012), '#DCE1EA', { ol: .015 }); base.position.set(0, 1.02, .62); st.add(base);
     const hinge = new THREE.Group(); hinge.position.set(0, 1.035, .83); hinge.rotation.x = .5; st.add(hinge);
     const lid = mk(new RoundedBoxGeometry(.62, .36, .03, 2, .012), '#DCE1EA', { ol: .015 }); lid.position.y = .18; hinge.add(lid);
-    const tex = screenTexture(a.color, 30 + i);
-    const scr = new THREE.Mesh(new THREE.PlaneGeometry(.56, .3), new THREE.MeshBasicMaterial({ map: tex })); scr.position.set(0, .18, -.017); scr.rotation.y = Math.PI; hinge.add(scr);
+    const tl = criarTela(a, i);
+    const scr = new THREE.Mesh(TELA_GEO, tl.mat); scr.position.set(0, .18, -.017); scr.rotation.y = Math.PI; hinge.add(scr);
     const stick = new THREE.Mesh(new THREE.CircleGeometry(.07, 20), basic(a.color)); stick.position.set(0, .19, .017); hinge.add(stick);
+    lid.userData.part = scr.userData.part = stick.userData.part = 'tela';
+    // brilho da tela sobre a mesa quando trabalha (aditivo, sem sombra, não pega clique)
+    const glow = new THREE.Mesh(GLOW_GEO, new THREE.MeshBasicMaterial({ map: haloTex, color: a.color, transparent:true, opacity:0, depthWrite:false, blending: THREE.AdditiveBlending, toneMapped:false }));
+    glow.rotation.x = -Math.PI/2; glow.position.set(0, 1.042, .6); glow.raycast = noRay; glow.visible = false; st.add(glow);
+    a._glow = glow; a.telaMesh = scr;
     if (i % 3 === 0){ const mug = mk(new THREE.CylinderGeometry(.07, .06, .14, 14), mix(a.color, '#FFFFFF', .2), { ol: .012 }); mug.position.set(.5, 1.07, .62); st.add(mug); }
     else if (i % 3 === 1){ const pot = mk(new THREE.CylinderGeometry(.08, .06, .12, 12), '#C9895A', { ol: .012 }); pot.position.set(-.5, 1.06, .62); st.add(pot); const lf = sph(.13, '#4FB06A', .015); lf.position.set(-.5, 1.2, .62); st.add(lf); }
     else { const bk = mk(new RoundedBoxGeometry(.24, .07, .32, 1, .01), '#E63946', { ol: .012 }); bk.position.set(.48, 1.04, .66); bk.rotation.y = .3; st.add(bk); }
     st.add(char);
-    a.root = char; a.station = st; a.angle = ang; a.out = new V3(Math.sin(ang), 0, Math.cos(ang)); a.screen = tex; a.laptop = hinge;
+    a.root = char; a.station = st; a.angle = ang; a.out = new V3(Math.sin(ang), 0, Math.cos(ang)); a.laptop = hinge;
   }
   a.station.traverse(o => { o.userData.agent = a.id; if (o.isMesh) pickables.push(o); });
 
@@ -749,9 +1356,10 @@ TEAM.forEach((a, i) => {
 
 function say(a, text, ms = 2200){
   a.bubble.textContent = text; a.bubble.classList.add('on');
+  if (telaFoco && telaFoco.a === a) sfx('fala', a, text);
   clearTimeout(a._bt); a._bt = setTimeout(() => a.bubble.classList.remove('on'), ms);
 }
-function hop(a, n = 1, h = .45, dur = .5){ a.hop = { t0: clock.elapsedTime, n, h, dur }; }
+function hop(a, n = 1, h = .45, dur = .5, o){ a.hop = { t0: clock.elapsedTime, n, h, dur }; if (o && o.som) sfx('boing', a); }   // só pulos de evento soam; os ociosos ficam mudos
 function headWorld(a){ return a.root.localToWorld(new V3(0, 1.45, 0)); }
 
 /* pacotes de tarefa, faíscas de código, confete */
@@ -766,12 +1374,14 @@ function sendPacket(fromA, toA, cb){
   const p = packets.find(p => !p.active); if (!p){ cb && cb(); return; }
   const a = headWorld(fromA).add(new V3(0, .6, 0)), b = headWorld(toA).add(new V3(0, .3, 0));
   const c = a.clone().lerp(b, .5); c.y += 2.8;
-  Object.assign(p, { active:true, a, b, c, t0: clock.elapsedTime, dur: RM ? .35 : .95, cb });
+  Object.assign(p, { active:true, a, b, c, t0: clock.elapsedTime, dur: RM ? .35 : .95, cb, to: toA });
   p.g.visible = true;
+  sfx('pacote', fromA, toA, p.dur);
 }
 const bits = [];
 for (let i = 0; i < 40; i++){ const m = new THREE.Mesh(new RoundedBoxGeometry(.09, .09, .09, 1, .02), new THREE.MeshToonMaterial({ gradientMap: gradient })); m.visible = false; scene.add(m); bits.push({ m, life:0 }); }
 function spawnBit(a){
+  if (telaFoco && telaFoco.a === a) return;   // "na tela": nada passa na frente do que se lê
   const b = bits.find(b => b.life <= 0); if (!b || !a.laptop) return;
   b.m.material.color.set(Math.random() < .6 ? a.color : '#FFFFFF');
   a.laptop.localToWorld(b.m.position.set((Math.random()-.5)*.4, .38, 0));
@@ -791,6 +1401,8 @@ function burst(){
 /* ───────────────────────── tema ───────────────────────── */
 function applyTheme(){
   const P = isDark() ? NIGHT : DAY;
+  isDarkC = P === NIGHT; telas.forEach(a => { a.tela.suja = true; });   // papel, tinta e chip das telas trocam pelo tema
+  sfx('tema');
   const g = skyCanvas.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
   gr.addColorStop(0, P.top); gr.addColorStop(1, P.bot); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); skyTex.needsUpdate = true;
   scene.fog.color.set(P.fog);
@@ -838,6 +1450,7 @@ TEAM.forEach(a => {
 const card = $('#card'), ops = $('#ops');
 let selected = null;
 const X_ICON = '<svg viewBox="0 0 14 14"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
+const FEM = new Set(['backend', 'motion-3d']);   // Forja e Órbita (ver .claude/agents/)
 function renderCard(a){
   const on = lum(a.color) > .38 ? '#1E1B2E' : '#FFFFFF';
   const i = TEAM.indexOf(a), prev = TEAM[(i + TEAM.length - 1) % TEAM.length], next = TEAM[(i + 1) % TEAM.length];
@@ -846,6 +1459,12 @@ function renderCard(a){
     <div class="card-head"><span class="id">@${a.id}</span><h2>${a.nick}</h2><p>${a.role}</p>
       <button class="x" type="button" data-close aria-label="Fechar ficha">${X_ICON}</button></div>
     <div class="card-body">
+      ${a.tela ? `<section class="tela" aria-labelledby="tela-h-${a.id}">
+        <div class="tela-top"><h3 id="tela-h-${a.id}">${a.lousa ? 'Na lousa' : 'Na tela'} ${FEM.has(a.id) ? 'da' : 'do'} ${a.nick}</h3>
+          <button class="mini" type="button" data-tela>${a.lousa ? 'Ver a lousa' : 'Entrar na tela'}</button></div>
+        <canvas width="${TW*2}" height="${TH*2}" aria-hidden="true"></canvas>
+        <p class="tela-txt" aria-live="polite"></p><time class="tela-t" aria-hidden="true"></time>
+      </section>` : ''}
       <p class="quote">“${a.quote}”</p>
       <div><h3>O que entrega</h3><ul>${a.does.map(d => `<li>${d}</li>`).join('')}</ul></div>
       <div><h3>Arsenal</h3><div class="tools">${a.kit.map(k => `<span class="${CASA.has(k) ? 'casa' : ''}">${k}</span>`).join('')}</div></div>
@@ -856,10 +1475,16 @@ function renderCard(a){
           <div class="row"><span class="file">.claude/agents/${a.id}.md</span><button class="mini" type="button" data-copy>Copiar</button></div></div></div>
       <div class="pager"><button class="mini" type="button" data-go="${prev.id}">← ${prev.nick}</button><button class="mini" type="button" data-go="${next.id}">${next.nick} →</button></div>
     </div>`;
+  const cv = card.querySelector('.tela canvas');
+  Object.assign(painel, { cv, ctx: cv ? cv.getContext('2d') : null, txt: card.querySelector('.tela-txt'), time: card.querySelector('.tela-t'), btn: card.querySelector('[data-tela]'), frase:'', dono: cv ? a : null });
+  if (cv && hdDono === a) painel.ctx.drawImage(hdCv, 0, 0);
+  if (a.tela) a.tela.suja = true;
+  botaoTela();
 }
 card.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
   if (t.hasAttribute('data-close')) select(null);
+  else if (t.hasAttribute('data-tela')){ const a = byId[selected]; if (telaFoco) sairDaTela(); else if (a) entrarNaTela(a); }
   else if (t.dataset.go) select(t.dataset.go);
   else if (t.hasAttribute('data-copy')){
     const code = card.querySelector('code'); const txt = code.textContent;
@@ -869,7 +1494,32 @@ card.addEventListener('click', e => {
 });
 function selectText(el){ const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
 
+// câmera nunca atrás de árvore, poste ou placa: raio do ponto de interesse até a câmera contra a ilha (o próprio agente não conta)
+const _oc = new THREE.Raycaster(), _Y = new V3(0, 1, 0);
+function tapado(de, para, a){
+  const dir = para.clone().sub(de), L = dir.length(); if (L < 1e-3) return false;
+  _oc.set(de, dir.divideScalar(L)); _oc.far = L;
+  return _oc.intersectObject(island, true).some(h => { for (let o = h.object; o; o = o.parent) if (!o.visible || o === a.station || o === a.root) return false; return true; });
+}
+function enquadrar(a){
+  const head = headWorld(a), corpo = head.clone().add(new V3(0, -.75, 0));
+  let out0 = a.out.clone();
+  if (a.id === 'diretor'){ out0 = camera.position.clone().setY(0).normalize(); }
+  const phone = innerWidth < 720, dist = phone ? 5.6 : 4.4, sobe = new V3(0, phone ? 2.4 : 1.7, 0);
+  const em = ang => head.clone().addScaledVector(out0.clone().applyAxisAngle(_Y, ang), dist).add(sobe);
+  const ANG = [0, .3, -.3, .6, -.6, .9, -.9];
+  const livre = (p, largo) => {   // largo: também as bordas do cone de visão (árvore colada na lente come meia tela)
+    if (tapado(head, p, a) || tapado(corpo, p, a)) return false;
+    if (!largo) return true;
+    const lado = new V3().crossVectors(_Y, p.clone().sub(head)).setLength(1.1);
+    return !tapado(head, p.clone().add(lado), a) && !tapado(head, p.clone().sub(lado), a);
+  };
+  let pos = null;
+  for (const largo of [true, false]){ for (const ang of ANG){ const p = em(ang); if (livre(p, largo)){ pos = p; break; } } if (pos) break; }
+  return { pos: pos || em(0), target: head.clone().add(new V3(0, -.25, 0)) };
+}
 function select(id, fromHash = false){
+  if (telaFoco && telaFoco.a.id !== id) sairDaTela(false);
   const prev = selected; selected = id;
   TEAM.forEach(a => { const on = a.id === id; a.chip.setAttribute('aria-pressed', on); a.tag.classList.toggle('sel', on); if (a.state === 'wave' && !on) a.state = 'idle'; });
   if (!id){
@@ -885,18 +1535,78 @@ function select(id, fromHash = false){
   if (!fromHash && location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
   a.chip.scrollIntoView({ block:'nearest', inline:'center', behavior: RM ? 'auto' : 'smooth' });
   controls.autoRotate = false;
-  const head = headWorld(a);
-  let out = a.out.clone();
-  if (a.id === 'diretor'){ out = camera.position.clone().setY(0).normalize(); }
-  const phone = innerWidth < 720;
-  const dist = phone ? 5.6 : 4.4;
-  flyTo(head.clone().addScaledVector(out, dist).add(new V3(0, phone ? 2.4 : 1.7, 0)), head.clone().add(new V3(0, -.25, 0)));
+  if (!telaFoco){ const v = enquadrar(a); flyTo(v.pos, v.target); }
   if (!running){ a.state = 'wave'; a.waveUntil = clock.elapsedTime + 2.2; }
   say(a, a.hi, 2400);
   hideHint();
+  dicaTela(a);
+}
+
+/* ── "Entrar na tela": a câmera chega por cima do ombro e a tela enche o quadro ── */
+const _up = new V3(0, 1, 0);
+function entrarNaTela(a){
+  if (!a || !a.tela) return;
+  if (selected !== a.id) select(a.id);
+  let alvo, pos;
+  if (a.laptop){
+    // centro e normal calculados com a tampa já no ângulo "aberta" (.62), para a câmera não chegar torta
+    const th = .62, c = Math.cos(th), s = Math.sin(th);
+    alvo = a.station.localToWorld(new V3(0, 1.035 + .18*c + .017*s, .83 + .18*s - .017*c));
+    const n = new V3(0, s, -c).transformDirection(a.station.matrixWorld);
+    const lado = new V3().crossVectors(_up, n).normalize();
+    const ref = tween ? tween.p1 : camera.position;   // toque direto no laptop: a câmera ainda está indo para a ficha; vale o destino
+    if (lado.dot(ref.clone().sub(alvo)) < 0) lado.negate();      // entra pelo ombro mais perto da câmera
+    const dn = innerWidth < 720 ? 1.45 : .98, emL = l => alvo.clone().addScaledVector(n, dn).addScaledVector(l, .14).addScaledVector(_up, .04);
+    const tapa = l => { const p = emL(l); return [0, .24, -.24].some(k => tapado(alvo.clone().addScaledVector(lado, k), p, a)); };   // centro e as duas pontas da tela
+    if (tapa(lado) && !tapa(lado.clone().negate())) lado.negate();
+    // o agente chega a cadeira para o outro lado (abre espaço) e a câmera fica quase de frente para a tela
+    const ladoLocal = a.station.worldToLocal(a.station.getWorldPosition(new V3()).add(lado)).x;
+    a.slideX = -Math.sign(ladoLocal || 1) * 1.05;
+    pos = emL(lado);
+  } else {
+    alvo = a.telaMesh.getWorldPosition(new V3());
+    const n = new V3(0, 0, 1).applyQuaternion(a.telaMesh.getWorldQuaternion(new THREE.Quaternion()));
+    pos = alvo.clone().addScaledVector(n, innerWidth < 720 ? 2.9 : 1.25).addScaledVector(_up, .1);   // celular: a lousa inteira (moldura 1,06 × ,64 m) cabe na faixa livre acima da ficha
+  }
+  controls.minDistance = .5; controls.autoRotate = false;
+  flyTo(pos, alvo, .9);
+  telaFoco = { a, iy: island.position.y, ty: null };
+  if (innerWidth < 720 && !card.hidden){ // celular: a tela fica no meio da faixa livre entre o topo e a ficha
+    const topo = card.getBoundingClientRect().top, livre0 = 84; telaFoco.ty = Math.max(0, innerHeight/2 - (livre0 + topo)/2);
+  }
+  if (a.state === 'wave') a.state = a.id === 'diretor' ? 'idle' : telaDados(a).estado === 'trabalhando' ? 'working' : 'idle';
+  const lp = a.station.worldToLocal(pos.clone()); a.olharYaw = Math.max(-1, Math.min(1, Math.atan2(lp.x, lp.z))); a.olharAte = clock.elapsedTime + 2.6;
+  const d = a.id === 'diretor' ? lousaDados() : telaDados(a);
+  say(a, a.id === 'diretor' ? 'Essa é a fila da casa.' : d.estado !== 'trabalhando' ? 'Oi! Tô livre agora.' : d.sim ? curto('Minha parte: ' + d.acao, 34) : 'Oi! Tô ' + curto(d.acao, 28), 2600);
+  a.tela.suja = true; botaoTela();
+  const so = somApi(); if (so && so.foco) try { so.foco(a); } catch {}
+}
+function sairDaTela(voar = true){
+  if (!telaFoco) return;
+  const a = telaFoco.a; telaFoco = null; a.olharAte = 0;
+  if (voar && selected === a.id){ const v = enquadrar(a); flyTo(v.pos, v.target, .8); }
+  botaoTela();
+  const so = somApi(); if (so && so.foco) try { so.foco(null); } catch {}
+}
+function botaoTela(){
+  const b = painel.btn; if (!b || !painel.dono) return;
+  const on = !!telaFoco && telaFoco.a === painel.dono;
+  b.classList.toggle('on', on); b.textContent = on ? (painel.dono.lousa ? 'Sair da lousa' : 'Sair da tela') : (painel.dono.lousa ? 'Ver a lousa' : 'Entrar na tela');
+}
+// dica do gesto: na 1ª ficha de agente com laptop da sessão, um anel pulsa 2x sobre o laptop
+const anelEl = document.createElement('div'); anelEl.className = 'anelwrap'; anelEl.innerHTML = '<div class="anel"></div>';
+const anelObj = new CSS2DObject(anelEl); anelObj.visible = false;
+let dicaDada = false; try { dicaDada = sessionStorage.getItem('creat.sede.dicaTela') === '1'; } catch {}
+function dicaTela(a){
+  if (dicaDada || !a.laptop) return;
+  dicaDada = true; try { sessionStorage.setItem('creat.sede.dicaTela', '1'); } catch {}
+  a.laptop.add(anelObj); anelObj.position.set(0, .18, -.05); anelObj.visible = true;
+  const r = anelEl.firstChild; r.classList.remove('on', 'fixo'); void r.offsetWidth;
+  setTimeout(() => { r.classList.add(RM ? 'fixo' : 'on'); }, 700);
+  setTimeout(() => { r.classList.remove('on', 'fixo'); anelObj.visible = false; }, RM ? 2400 : 2900);
 }
 addEventListener('keydown', e => {
-  if (e.key === 'Escape'){ if (!card.hidden) select(null); else if (!ops.hidden) closeOps(); }
+  if (e.key === 'Escape'){ if (telaFoco || !card.hidden || !ops.hidden) sfx('clique', -1); if (telaFoco) sairDaTela(); else if (!card.hidden) select(null); else if (!ops.hidden) closeOps(); }
   if (selected && (e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !e.target.closest('input')){
     const i = TEAM.findIndex(a => a.id === selected); select(TEAM[(i + (e.key === 'ArrowRight' ? 1 : TEAM.length - 1)) % TEAM.length].id);
   }
@@ -910,20 +1620,27 @@ setTimeout(hideHint, 9000);
 /* seleção por toque na cena */
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let down = null;
-function pick(ev){
+const pick = ev => { const h = pickParte(ev); return h ? h.id : null; };
+function pickParte(ev){
   const r = canvas.getBoundingClientRect();
   ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ndc, camera);
   const hit = ray.intersectObjects(pickables, false)[0];
-  return hit ? hit.object.userData.agent : null;
+  return hit ? { id: hit.object.userData.agent, part: hit.object.userData.part } : null;
 }
 canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; hideHint(); if (tween){ tween = null; controls.enabled = true; } });
 canvas.addEventListener('pointerup', e => {
   if (!down) return; const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null;
   if (moved > 6) return;
-  const id = pick(e);
-  if (id) select(id); else if (selected) select(null);
+  const h = pickParte(e), id = h && h.id;
+  if (h && h.part === 'tela' && byId[id] && byId[id].tela){ sfx('clique', 1); entrarNaTela(byId[id]); }   // tocar no laptop (ou na lousa) entra na tela
+  else if (id){ if (id !== selected) sfx('clique', 1); select(id); } else if (selected){ sfx('clique', -1); select(null); }
 });
+// celular: arrastar a ficha para baixo sai da tela (ou fecha a ficha)
+let arrasto = null;
+card.addEventListener('pointerdown', e => { if (innerWidth >= 720 || !e.target.closest('.card-head') || e.target.closest('button')) return; arrasto = { y: e.clientY }; });
+addEventListener('pointerup', e => { if (!arrasto) return; const dy = e.clientY - arrasto.y; arrasto = null; if (dy > 60){ sfx('clique', -1); if (telaFoco) sairDaTela(); else select(null); } });
+addEventListener('pointercancel', () => { arrasto = null; });
 let hoverT = 0;
 canvas.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse' || down) return; const now = performance.now(); if (now - hoverT < 80) return; hoverT = now; canvas.classList.toggle('hover', !!pick(e)); });
 
@@ -958,10 +1675,14 @@ function setRow(pi, id, s, ms){
   if (s === 'run') sec.scrollIntoView({ block:'nearest', behavior: RM ? 'auto' : 'smooth' });
 }
 const wait = (ms, tok) => new Promise((res, rej) => setTimeout(() => tok === runToken ? res() : rej('stop'), RM ? ms * .6 : ms));
-$('#opsForm').addEventListener('submit', e => { e.preventDefault(); running ? stopRun() : startRun(); });
+let ultimoGo = -1e9;
+$('#opsForm').addEventListener('submit', e => { e.preventDefault(); const t = performance.now(); if (t - ultimoGo < 600) return; ultimoGo = t; running ? stopRun() : startRun(); });   // clique duplo conta uma vez
 function stopRun(){
   runToken++; running = false; $('#goBtn').textContent = 'Começar';
   TEAM.forEach(a => { a.state = 'idle'; a.chip.classList.remove('working'); a.tag.classList.remove('working'); });
+  flowEl.querySelectorAll('.st.run').forEach(st => { st.className = 'st wait'; st.textContent = 'parado'; });
+  flowEl.querySelectorAll('.pips i.run').forEach(p => { p.className = ''; });
+  flowEl.querySelectorAll('.phase[data-s="run"]').forEach(s => { s.dataset.s = 'wait'; });
   controls.autoRotate = !RM;
 }
 async function startRun(){
@@ -971,17 +1692,18 @@ async function startRun(){
   const o = overview(); flyTo(o.pos, o.target, 1.0);
   const brief = ($('#brief').value || 'Novo projeto').trim();
   const boss = byId.diretor;
+  sim.brief = brief; sim.pi = 0; TEAM.forEach(a => { a.simFeito = false; });
   const t0 = performance.now();
   try {
     for (let pi = 0; pi < FLOW.length; pi++){
-      const f = FLOW[pi];
+      const f = FLOW[pi]; sim.pi = pi;
       if (pi === 0){
         setRow(0, 'diretor', 'run', 0);
-        boss.state = 'think'; boss.chip.classList.add('working'); boss.tag.classList.add('working');
+        boss.state = 'think'; boss.chip.classList.add('working'); boss.tag.classList.add('working'); boss.desde = performance.now(); telaEvento(boss, 'chegou');
         say(boss, `Briefing: ${brief.length > 34 ? brief.slice(0, 33) + '…' : brief}`, 2400);
         await wait(f.dur, tok);
         boss.state = 'idle'; boss.chip.classList.remove('working'); boss.tag.classList.remove('working');
-        say(boss, 'Plano pronto. Distribuindo!', 1800); hop(boss);
+        say(boss, 'Plano pronto. Distribuindo!', 1800); hop(boss); boss.simFeito = true; telaEvento(boss, 'feito'); sfx('feito', boss);
         setRow(0, 'diretor', 'done', performance.now() - t0);
         continue;
       }
@@ -992,7 +1714,8 @@ async function startRun(){
         await wait(260, tok);
         sendPacket(boss, a, () => {
           if (tok !== runToken) return;
-          hop(a); a.state = 'working'; a.chip.classList.add('working'); a.tag.classList.add('working');
+          hop(a, 1, .45, .5, { som:true }); a.state = 'working'; a.chip.classList.add('working'); a.tag.classList.add('working');
+          a.desde = performance.now(); telaEvento(a, 'chegou');
           say(a, YES[(pi + id.length) % YES.length], 1500);
           starts[id] = performance.now(); setRow(pi, id, 'run', 0);
         });
@@ -1001,13 +1724,13 @@ async function startRun(){
       for (const id of f.who){
         const a = byId[id];
         a.state = 'idle'; a.chip.classList.remove('working'); a.tag.classList.remove('working'); hop(a, 2, .35, .4);
-        say(a, 'Feito!', 1300);
+        say(a, 'Feito!', 1300); a.simFeito = true; telaEvento(a, 'feito'); sfx('feito', a);
         setRow(pi, id, 'done', performance.now() - (starts[id] || performance.now()));
         await wait(180, tok);
       }
       await wait(350, tok);
     }
-    boss.faceTo = null;
+    boss.faceTo = null; sim.pi = FLOW.length;
     TEAM.forEach((a, i) => { a.state = 'celebrate'; setTimeout(() => { if (tok === runToken) say(a, i === 0 ? 'Projeto entregue!' : ['Uhul!','Boa, time!','Mais um!','Entregue!'][i % 4], 2600); }, i * 90); });
     if (!RM) burst();
     flowEl.insertAdjacentHTML('beforeend', `<section class="phase" data-s="done"><header><h4>Entrega</h4><span class="count">${fmt(performance.now() - t0)}</span></header><p style="margin:6px 0 0;font-size:13px">Todas as etapas concluídas. Na vida real, o Nimbus confere os critérios de aceite e escreve o relatório final.</p></section>`);
@@ -1018,7 +1741,9 @@ async function startRun(){
 }
 
 /* ───────────────────────── ao vivo: estado real dos fluxos ───────────────────────── */
-const live = { estado:null, fonte:null, prev:new Set(), abriu:false, bolha:0 };
+const live = { estado:null, cru:null, fonte:null, prev:new Set(), abriu:false, bolha:0 };
+const VALIDADE_LOCAL = 15 * 60 * 1000;   // estado local sem atualização há 15 min não é "ao vivo" (servidor.cjs regrava a cada 3 s)
+setInterval(() => { if (live.cru && live.estado && !live.estado.velho && !live.estado.publico) aplicarEstado(live.cru); }, 30000);   // vence mesmo sem chegar dado novo
 const liveEl = $('#live');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 const fmtS = s => { s = Math.max(0, Math.round(s)); return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s/60)}min` : `${Math.floor(s/3600)}h${String(Math.floor(s%3600/60)).padStart(2,'0')}`; };
@@ -1027,6 +1752,11 @@ const curto = (s, n = 36) => { s = String(s || ''); return s.length > n ? s.slic
 function aplicarEstado(e){
   if (!e || !e.atualizado) return;
   if (live.estado && Date.parse(e.atualizado) < Date.parse(live.estado.atualizado)) return;
+  if (!e.publico){   // modo local (banco do artefato ou estado.json): prazo de validade, como no público
+    live.cru = e;
+    if (Date.now() - Date.parse(e.atualizado) > VALIDADE_LOCAL) e = { ...e, velho:true, total_trabalhando:0, personagens:{} };
+  }
+  if (!live.estado || live.estado.atualizado !== e.atualizado) live.recebidoEm = Date.now();   // o mesmo arquivo puxado de novo não zera o relógio das telas
   live.estado = e;
   const ativos = new Map(Object.entries(e.personagens || {}).filter(([, l]) => l && l.length));
   if (!running){
@@ -1034,10 +1764,10 @@ function aplicarEstado(e){
     TEAM.forEach(a => {
       const on = ativos.has(a.id), was = live.prev.has(a.id);
       if (on && !was){
-        if (a.id !== 'diretor' && live.prev.size) sendPacket(boss, a, () => { hop(a); say(a, YES[a.id.length % YES.length], 1400); });
-        else { hop(a); say(a, curto(ativos.get(a.id)[0].acao || 'começando'), 1800); }
+        if (a.id !== 'diretor' && live.prev.size) sendPacket(boss, a, () => { hop(a, 1, .45, .5, { som:true }); say(a, YES[a.id.length % YES.length], 1400); telaEvento(a, 'chegou'); });
+        else { hop(a, 1, .45, .5, { som:true }); say(a, curto(ativos.get(a.id)[0].acao || 'começando'), 1800); telaEvento(a, 'chegou'); }
       }
-      if (!on && was){ hop(a, 2, .35, .4); say(a, 'Feito!', 1400); }
+      if (!on && was && !e.velho){ hop(a, 2, .35, .4); say(a, 'Feito!', 1400); telaEvento(a, 'feito'); sfx('feito', a); }   // venceu o prazo: volta ao repouso sem comemorar
       if (on){ a.state = a.id === 'diretor' ? 'think' : 'working'; a.chip.classList.add('working'); a.tag.classList.add('working'); }
       else if (was){ a.state = 'idle'; a.chip.classList.remove('working'); a.tag.classList.remove('working'); }
     });
@@ -1045,26 +1775,31 @@ function aplicarEstado(e){
   live.prev = new Set(ativos.keys());
   const n = e.total_trabalhando || 0;
   $('#online').textContent = n ? ` · ${n} trabalhando agora` : ' · equipe em pausa';
-  if (!runBtn.querySelector('.live-badge')) runBtn.insertAdjacentHTML('beforeend', '<span class="live-badge"><i></i>Ao vivo</span>');
+  const seloBtn = runBtn.querySelector('.live-badge');
+  if (e.velho){ if (seloBtn) seloBtn.remove(); } // estado vencido não é "ao vivo"
+  else if (!e.demo && !seloBtn) runBtn.insertAdjacentHTML('beforeend', '<span class="live-badge"><i></i><span class="lb-t">Ao vivo</span></span>'); // demo já tem a legenda fixa
   $('#opsTitle').textContent = 'Operações';
-  $('#opsSub').textContent = n ? `${n} agente${n > 1 ? 's' : ''} trabalhando de verdade agora.` : 'Nenhum fluxo em andamento neste momento.';
+  $('#opsSub').textContent = e.demo ? 'Demonstração: é assim que a equipe aparece quando há um pedido em produção.'
+    : n ? `${n} agente${n > 1 ? 's' : ''} trabalhando de verdade agora.` : e.publico ? (e.mensagem || 'A equipe espera o próximo pedido.') : e.velho ? 'Sem sinal recente da equipe.' : 'Nenhum fluxo em andamento neste momento.';
   renderLive(e);
   if (!live.abriu && n && innerWidth >= 720 && card.hidden){ live.abriu = true; openOps(); }
 }
 function renderLive(e){
+  if (e.publico) return renderPublico(e);
   const agora = Date.now();
   const fluxos = (e.fluxos || []).filter(f => f.em_andamento || agora - (f.ultimo_evento || 0) < 6 * 3600e3);
   liveEl.hidden = false;
   const ha = Math.round((agora - Date.parse(e.atualizado)) / 1000);
+  if (e.velho){ liveEl.innerHTML = `<div class="live-head"><span class="count">último sinal há ${fmtS(ha)}</span></div><p class="live-off">Sem atualização recente. A equipe aparece aqui de novo quando o próximo fluxo começar.</p>`; return; }
   let html = `<div class="live-head"><span class="live-badge"><i></i>Ao vivo</span><span class="count">atualizado há ${fmtS(ha)}</span></div>`;
   if (!fluxos.length) html += `<p class="live-off">Nenhum fluxo nas últimas horas. A equipe está na sede, à espera do próximo briefing.</p>`;
   html += fluxos.map(f => {
     const trab = f.agentes.filter(a => a.status === 'trabalhando');
     const ultimos = f.agentes.filter(a => a.status !== 'trabalhando').slice(-3).reverse();
     const feitos = f.agentes.filter(a => a.status === 'feito').length;
-    const linha = a => { const p = byId[a.personagem] || byId.diretor; const st = a.status === 'trabalhando' ? 'run' : a.status === 'feito' ? 'done' : 'wait'; return `<li><i class="d" style="--c:${p.color}"></i><span class="t"><b>${p.nick}</b><span>${esc(a.status === 'trabalhando' ? (a.acao || 'pensando') : a.label)}</span></span><span class="st ${st}">${a.status}</span><time>${fmtS(a.segundos || 0)}</time></li>`; };
-    return `<section class="phase" data-s="${f.em_andamento ? 'run' : 'done'}"><header><h4>${esc(f.nome)}</h4><span class="count">${feitos}/${f.agentes.length} · ${fmtTok(f.tokens || 0)}</span></header>
-      <div class="pips">${f.fases.map(p => `<i class="${p.trabalhando ? 'run' : p.feitos === p.total ? 'done' : ''}" title="${esc(p.nome)}: ${p.feitos}/${p.total}"></i>`).join('')}</div>
+    const linha = a => { const p = byId[a.personagem] || byId.diretor; const st = a.status === 'trabalhando' ? 'run' : a.status === 'feito' ? 'done' : 'wait'; return `<li><i class="d" style="--c:${p.color}"></i><span class="t"><b>${p.nick}</b><span>${esc(a.status === 'trabalhando' ? (a.acao || 'pensando') : a.label)}</span></span><span class="st ${st}">${esc(a.status)}</span><time>${esc(fmtS(a.segundos || 0))}</time></li>`; };
+    return `<section class="phase" data-s="${f.em_andamento ? 'run' : 'done'}"><header><h4>${esc(f.nome)}</h4><span class="count">${feitos}/${f.agentes.length} · ${esc(fmtTok(f.tokens || 0))}</span></header>
+      <div class="pips">${f.fases.map(p => `<i class="${p.trabalhando ? 'run' : p.feitos === p.total ? 'done' : ''}" title="${esc(p.nome)}: ${esc(p.feitos)}/${esc(p.total)}"></i>`).join('')}</div>
       <ul>${trab.map(linha).join('')}${ultimos.map(linha).join('')}</ul></section>`;
   }).join('');
   liveEl.innerHTML = html;
@@ -1078,19 +1813,449 @@ setInterval(() => {
   const t = l[0]; say(a, curto(t.acao || t.label), 2600);
   if (a.laptop) spawnBit(a);
 }, 6000);
+/* Porta Aberta (T6): estado público com vocabulário fechado (sede/publicar-estado.cjs).
+   A frase é refeita aqui pela tabela, por personagem e status; texto livre do arquivo é ignorado. */
+const FRASE = { diretor:'organizando a fila', criativo:'pensando o conceito', arquiteto:'desenhando a estrutura', frontend:'montando a página', backend:'ligando os sistemas', designer:'escolhendo as cores', 'motion-3d':'animando os detalhes', shader:'criando os efeitos', som:'afinando os sons', copywriter:'escrevendo os textos', pesquisador:'conferindo os dados', revisor:'revisando o código', qa:'testando no celular', seguranca:'conferindo segurança', devops:'publicando' };
+const STATUS_PUB = { trabalhando:'trabalhando', feito:'terminou a sua parte', esperando:'na fila' };
+const VALIDADE_PUB = 10 * 60 * 1000;
+function dePublico(p, demo){
+  if (!p || p.versao !== 1) return null;
+  const quando = Date.parse(p.atualizado_em); if (!quando) return null;
+  const personagens = {}, fluxos = [];
+  (Array.isArray(p.fluxos) ? p.fluxos : []).slice(0, 4).forEach(f => {
+    const nome = demo ? 'Demonstração · exemplo de pedido' : f && f.nome === 'Projeto interno' ? 'Projeto interno' : 'Pedido da Creat';
+    const agentes = (Array.isArray(f && f.agentes) ? f.agentes : []).filter(a => a && FRASE[a.personagem] && STATUS_PUB[a.status]).slice(0, 15)
+      .map(a => ({ personagem:a.personagem, status:a.status, frase: a.status === 'trabalhando' ? FRASE[a.personagem] : STATUS_PUB[a.status] }));
+    agentes.forEach(a => { if (a.status === 'trabalhando') (personagens[a.personagem] = personagens[a.personagem] || []).push({ acao:a.frase, label:a.frase }); });
+    fluxos.push({ nome, em_andamento: agentes.some(a => a.status === 'trabalhando'), agentes });
+  });
+  // Prazo de validade: estado público com mais de 10 min (ou do futuro) não é "ao vivo"; vira sem fluxo.
+  const velho = !demo && (Date.now() - quando > VALIDADE_PUB || quando - Date.now() > 120000);
+  if (velho) return { publico:true, demo:false, velho:true, atualizado:new Date(quando).toISOString(), total_trabalhando:0, personagens:{}, fluxos:[], mensagem:'A equipe espera o próximo pedido.' };
+  return { publico:true, demo:!!demo, atualizado:new Date(quando).toISOString(), total_trabalhando:Object.values(personagens).reduce((n, l) => n + l.length, 0), personagens, fluxos,
+    mensagem: fluxos.some(f => f.em_andamento) ? 'A equipe está trabalhando agora.' : 'A equipe espera o próximo pedido.' };
+}
+function renderPublico(e){
+  liveEl.hidden = false;
+  const selo = e.demo ? 'Demonstração' : e.velho ? '' : 'Ao vivo';
+  let html = selo ? `<div class="live-head"><span class="live-badge"><i></i>${selo}</span><span class="count">${e.demo ? 'dados de exemplo' : 'atualizado há ' + fmtS((Date.now() - Date.parse(e.atualizado)) / 1000)}</span></div>` : '';
+  if (!e.fluxos.length) html += `<p class="live-off">${esc(e.mensagem)}</p>`;
+  html += e.fluxos.map(f => {
+    const linha = a => { const p = byId[a.personagem] || byId.diretor; const st = a.status === 'trabalhando' ? 'run' : a.status === 'feito' ? 'done' : 'wait'; return `<li><i class="d" style="--c:${p.color}"></i><span class="t"><b>${esc(p.nick)}</b><span>${esc(a.frase)}</span></span><span class="st ${st}">${esc(a.status === 'feito' ? 'feito' : a.status)}</span></li>`; };
+    const ord = f.agentes.filter(a => a.status === 'trabalhando').concat(f.agentes.filter(a => a.status !== 'trabalhando'));
+    return `<section class="phase" data-s="${f.em_andamento ? 'run' : 'done'}"><header><h4>${esc(f.nome)}</h4><span class="count">${f.agentes.filter(a => a.status === 'feito').length}/${f.agentes.length}</span></header><ul>${ord.map(linha).join('')}</ul></section>`;
+  }).join('');
+  liveEl.innerHTML = html;
+}
+// Demonstração: estado fictício embutido; o pedido passa de mão em mão em ciclo e nunca é apresentado como real.
+const DEMO_ETAPAS = [['diretor'], ['copywriter','designer'], ['frontend'], ['qa','seguranca'], ['devops']];
+function estadoDemo(i){
+  const k = i % (DEMO_ETAPAS.length + 1), agentes = [];
+  DEMO_ETAPAS.forEach((ids, j) => ids.forEach(id => agentes.push({ personagem:id, status: j < k ? 'feito' : j === k ? 'trabalhando' : 'esperando' })));
+  return { versao:1, atualizado_em:new Date().toISOString(), fluxos:[{ nome:'Demonstração', agentes }] };
+}
+/* Vitrine ↔ sede embutida (só modo demo, só dado fictício): a sede avisa a etapa do ciclo à página que a
+   embute, para a linha do tempo de fora acender o mesmo passo; a página pode trocar o nome da fachada
+   (sempre por limparMarca + fillText), reiniciar o ciclo e pausar o desenho quando a janela sai da tela. */
+const EMBUTIDA = window.parent !== window;
+const ALVO_PAI = location.origin && location.origin !== 'null' ? location.origin : '*';   // payload é só o número da etapa
+let pausadaPeloPai = false, demoI = ETAPA0, demoT = 0, demoEspera = false;
+function avisarPai(msg){ if (EMBUTIDA) try { window.parent.postMessage(Object.assign({ creatSede:1 }, msg), ALVO_PAI); } catch {} }
+function demoPasso(){ const k = demoI++ % (DEMO_ETAPAS.length + 1); aplicarEstado(dePublico(estadoDemo(k), true)); avisarPai({ tipo:'etapa', etapa:k, total:DEMO_ETAPAS.length }); }
+function demoParar(){ clearTimeout(demoT); clearInterval(demoT); demoT = 0; }
+// janela fora da tela (pausadaPeloPai): o ciclo também para, e retoma quando ela volta (a comanda de fora para junto)
+function demoLigar(atraso){ demoParar(); if (pausadaPeloPai){ demoEspera = true; return; } demoEspera = false; demoT = setTimeout(() => { demoPasso(); demoT = setInterval(demoPasso, RM ? 9000 : 6000); }, atraso == null ? 1500 : atraso); } // 1º passo depois da cena montar
+// o protocolo com a página que embute só existe no modo demo (dado fictício); nos outros modos a sede não ouve ninguém
+if (EMBUTIDA && MODO === 'demo') window.addEventListener('message', ev => {
+  if (ev.source !== window.parent || !(ev.origin === location.origin || location.origin === 'null')) return;
+  const d = ev.data; if (!d || d.creatSede !== 1) return;
+  if (d.tipo === 'visivel'){
+    const p = d.visivel === false; if (p === pausadaPeloPai) return;
+    pausadaPeloPai = p;
+    if (p){ if (demoT){ demoParar(); demoEspera = true; } }
+    else if (demoEspera) demoLigar(2500);
+  }
+  else if (d.tipo === 'marca'){
+    marcaAtual = limparMarca(d.marca); signTex.userData.redesenhar();
+    document.title = marcaAtual ? 'Sede · ' + marcaAtual : 'Creat Nuvem HQ';
+    if (d.reiniciar){ demoI = 0; demoLigar(250); }
+  }
+});
+function ligarModoPorta(){
+  // Simulação com briefing escondida para o cliente: só o estado (demo ou público) movimenta a equipe.
+  $('#opsForm').style.display = 'none'; $('#flow').style.display = 'none';
+  runBtn.childNodes.forEach(n => { if (n.nodeType === 3 && n.textContent.trim()) n.textContent = 'Ver a equipe'; });
+  $('#opsTitle').textContent = 'A equipe';
+  $('#opsNote').textContent = MODO === 'demo' ? 'Demonstração com dados de exemplo. Quando o seu pedido estiver em produção, você vê aqui a equipe de verdade.' : 'Mostramos só o que a equipe está fazendo agora, sem dados de nenhum cliente.';
+  if (MODO === 'demo'){ demoLigar(); return; }
+  let ultimo = null; // último JSON público recebido: reavaliado a cada ciclo, para vencer mesmo se a rede cair
+  const puxar = async () => {
+    try { const r = await fetch('estado-publico.json', { cache:'no-store' }); if (r.ok) ultimo = await r.json(); } catch {}
+    const e = ultimo && dePublico(ultimo, false); if (e){ live.fonte = 'publico'; aplicarEstado(e); }
+  };
+  puxar(); setInterval(puxar, 15000);
+}
 async function ligarAoVivo(){
+  if (MODO !== 'local') return ligarModoPorta();
   // 1) banco de dados do artefato publicado (atualizado pelo Claude)
   try {
     const db = window.claude && window.claude.use ? await window.claude.use('db') : null;
     if (db) db.doc('sede/estado').onSnapshot(s => { if (s.exists){ live.fonte = 'db'; aplicarEstado(s.data()); } }, () => {});
   } catch {}
-  // 2) estado.json ao lado da página (servidor local ou arquivo publicado junto)
+  // 2) estado.json ao lado da página (servidor local ou arquivo publicado junto).
+  // Sem arquivo (artefato, página aberta do disco, servidor estático sem estado) não fica pedindo a cada 5 s:
+  // no file:// nem tenta; nos outros, se a 1ª tentativa falha e nunca deu certo, para (um 404 no console, não dezenas).
+  if (location.protocol === 'file:') return;
+  let jaDeu = false, iv = 0;
   const puxar = async () => {
-    try { const r = await fetch('estado.json', { cache:'no-store' }); if (!r.ok) return; const e = await r.json(); if (!live.fonte) live.fonte = 'arquivo'; aplicarEstado(e); } catch {}
+    try {
+      const r = await fetch('estado.json', { cache:'no-store' });
+      if (!r.ok) throw 0;
+      const e = await r.json(); jaDeu = true; if (!live.fonte) live.fonte = 'arquivo'; aplicarEstado(e);
+    } catch { if (!jaDeu){ clearInterval(iv); iv = 0; } }   // depois de funcionar uma vez, uma falha passageira (servidor reiniciando) não desliga
   };
-  puxar(); setInterval(puxar, 5000);
+  puxar(); iv = setInterval(puxar, 5000);
 }
 ligarAoVivo();
+
+/* ───────────────────────── som da sede (Eco) ─────────────────────────
+   100% sintetizado com Web Audio, nenhum arquivo. Antes de um gesto não existe AudioContext nem nó.
+   Grafo: [MUNDO: ambiente + teclas dos outros + efeitos] → porta (passa-baixa 18 kHz) → gMundo ─┐
+          [PERTO: teclas e fala de quem está "na tela"] ─────────────────────────────────────────┴→ master (0,7) → compressor → analyser (tela do Eco) → saída
+   Microssons com pico de no máximo -18 dBFS (0,125); toda mudança de ganho é rampa (setTargetAtTime / rampas a partir do valor atual).
+   Som nunca é a única pista: cada evento já tem par visual (pulo, balão, pacote, carimbo FEITO, cartão Entregue, tela). Tabela no fim do arquivo. */
+const SOM_KEY = 'creat.sede.som';
+const PENTA = [349.23, 392, 440, 523.25, 587.33, 698.46, 783.99, 880, 1046.5, 1174.66];   // pentatônica de Fá: cada agente tem a sua nota
+const ACORDES = [[174.61, 220, 261.63, 329.63, 392], [146.83, 220, 261.63, 329.63, 349.23], [116.54, 174.61, 220, 293.66], [130.81, 196, 261.63, 293.66]]; // Fmaj9 › Dm9 › Bbmaj7 › Csus2
+const AC_SOM = window.AudioContext || window.webkitAudioContext;
+const SUPORTE_SOM = !!(AC_SOM && AC_SOM.prototype && 'createStereoPanner' in AC_SOM.prototype);
+const somBtn = $('#somBtn'), somTxt = somBtn.querySelector('.som-txt'), somDica = $('#somDica');
+const S = { ctx:null, querLigado:false, ligado:false, pend:false, foco:null, vozes:0, n:-1, acorde:0, proxAcorde:0, proxBicho:0, ambOk:false };
+const lerPref = () => { try { return localStorage.getItem(SOM_KEY); } catch { return null; } };
+const gravarPref = v => { try { localStorage.setItem(SOM_KEY, v ? '1' : '0'); } catch {} };
+const clampS = (v, a, b) => Math.max(a, Math.min(b, v));
+const f0De = a => a._f0 || (a._f0 = PENTA[Math.max(0, TEAM.indexOf(a)) % PENTA.length]);
+const K_VENTO = 9, K_CACH = 2.4, NOTA_PAD = .016;   // compensação do ruído filtrado (medida no analyser) e ganho de cada nota do pad
+const AMB_G = .7;   // ambiente inteiro ≈ -35 dBFS RMS (pico ≈ -23), sempre abaixo dos microssons; movimento reduzido: metade (-6 dB)
+
+function alvo(param, v, tau = .05, t){ const c = S.ctx; t = t == null ? c.currentTime : t; param.cancelScheduledValues(t); param.setValueAtTime(param.value, t); param.setTargetAtTime(v, t, tau); }
+function nGanho(v){ const g = S.ctx.createGain(); g.gain.value = v; return g; }
+function nFiltro(tipo, f, q = .7){ const b = S.ctx.createBiquadFilter(); b.type = tipo; b.frequency.value = f; b.Q.value = q; return b; }
+function nPan(p, dest){ const n = S.ctx.createStereoPanner(); n.pan.value = clampS(p, -1, 1); n.connect(dest); return n; }
+function soltar(src, nos){ src.onended = () => { try { src.disconnect(); nos.forEach(n => n.disconnect()); } catch {} }; }
+
+function criarSom(){
+  if (S.ctx) return true;
+  if (!SUPORTE_SOM) return false;
+  let c; try { c = new AC_SOM({ latencyHint:'interactive' }); } catch { return false; }
+  S.ctx = c;
+  S.master = nGanho(0);
+  const k = c.createDynamicsCompressor(); k.threshold.value = -18; k.knee.value = 12; k.ratio.value = 4; k.attack.value = .003; k.release.value = .25;
+  S.analyser = c.createAnalyser(); S.analyser.fftSize = 256; S.analyser.smoothingTimeConstant = .55;
+  S.master.connect(k); k.connect(S.analyser); S.analyser.connect(c.destination); S.comp = k;
+  S.mundo = nGanho(1); S.porta = nFiltro('lowpass', 18000, .5); S.gMundo = nGanho(1);
+  S.mundo.connect(S.porta); S.porta.connect(S.gMundo); S.gMundo.connect(S.master);
+  S.perto = nGanho(1); S.perto.connect(S.master);
+  S.amb = nGanho(0); S.amb.connect(S.mundo);
+  const len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  S.ruido = buf;
+  c.onstatechange = () => {
+    if (c.state === 'running' && S.querLigado && !S.ligado && !document.hidden) aoRodar();
+    else if (c.state === 'suspended' && S.querLigado && S.ligado && !document.hidden) c.resume().catch(() => {});   // ligou de novo enquanto um suspend antigo terminava
+  };
+  return true;
+}
+
+/* blocos de síntese */
+function tom(t, f, { tipo = 'sine', a = .003, d = .12, pico = .05, dest, f1, tf = d, det = 0 }){
+  const c = S.ctx, o = c.createOscillator(), g = c.createGain();
+  o.type = tipo; o.detune.value = det; o.frequency.setValueAtTime(f, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + tf);
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(pico, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d);
+  o.connect(g); g.connect(dest); o.start(t); o.stop(t + a + d + .05); soltar(o, [g]); return o;
+}
+function sopro(t, dur, { tipo = 'bandpass', f = 1000, q = 1, pico = .05, a = .001, dest }){
+  const c = S.ctx, s = c.createBufferSource(), b = nFiltro(tipo, f, q), g = c.createGain();
+  s.buffer = S.ruido;
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(pico, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + dur);
+  s.connect(b); b.connect(g); g.connect(dest); s.start(t, Math.random() * 1.8, a + dur + .05); soltar(s, [b, g]); return s;
+}
+
+/* panorama e distância pela posição do agente na tela */
+const _pv = new V3(), _pc = new V3();
+function posVoz(a){
+  if (a.station) a.station.getWorldPosition(_pv); else _pv.set(0, 0, 0);
+  _pv.y += 1;
+  return posPonto(_pv);
+}
+function posPonto(p){
+  const dist = camera.position.distanceTo(p);
+  _pc.copy(p).applyMatrix4(camera.matrixWorldInverse);           // espaço da câmera: x à direita, z negativo à frente
+  let g = clampS(6 / Math.max(.01, dist), .15, 1), pan;
+  if (_pc.z < 0){ _pc.copy(p).project(camera); pan = clampS(_pc.x * .9, -.9, .9); }
+  else { pan = Math.sign(_pc.x || 1) * .7; g *= .5; }                // atrás da câmera: só o lado, mais baixo
+  return { pan, g, dist };
+}
+
+/* ambiente da ilha: vento, cachoeira, pad em Fá e bichos (pássaros de dia, grilos à noite) */
+function notaPad(f){
+  const c = S.ctx, t = c.currentTime, g = nGanho(0), m = nGanho(.5), o1 = c.createOscillator(), o2 = c.createOscillator();
+  o1.type = 'triangle'; o1.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f; o2.detune.value = 7;
+  o1.connect(m); o2.connect(m); m.connect(g); g.connect(S.padF); o1.start(t); o2.start(t);
+  o1.onended = () => { try { o1.disconnect(); o2.disconnect(); m.disconnect(); g.disconnect(); } catch {} };
+  return { g, o:[o1, o2] };
+}
+function montarAcorde(i, tau){
+  const t = S.ctx.currentTime;
+  (S.notas || []).forEach(v => { alvo(v.g.gain, 0, 1); v.o.forEach(o => o.stop(t + 5)); });   // crossfade de ~3 s
+  S.notas = ACORDES[i].map(notaPad);
+  aplicarN(tau);
+}
+function aplicarN(tau = .5){
+  const n = Math.max(0, S.n), kN = n === 0 ? 2 : n <= 2 ? 3 : n <= 5 ? 4 : 5;
+  S.notas.forEach((v, i) => alvo(v.g.gain, i < kN ? NOTA_PAD : 0, tau));
+  alvo(S.padF.frequency, n === 0 ? 650 : n <= 2 ? 650 + 220 * n : n <= 5 ? Math.min(1700, 650 + 220 * n) : Math.min(2200, 1700 + 100 * (n - 5)), .6);
+  alvo(S.gVento.gain, (n === 0 ? .022 : n <= 2 ? .017 : .014) * K_VENTO, .6);
+  alvo(S.shimOut.gain, n >= 6 ? .004 : 0, .5);
+}
+function ambiente(){
+  if (S.ambOk) return; S.ambOk = true;
+  const c = S.ctx, t = c.currentTime;
+  // vento: ruído → passa-baixa 900 (quase rosa) → passa-banda 420 Hz, com LFOs lentos (sem LFO em movimento reduzido)
+  const v = c.createBufferSource(); v.buffer = S.ruido; v.loop = true;
+  const bp = nFiltro('bandpass', 420, .7); S.gVento = nGanho(.017 * K_VENTO);
+  v.connect(nFiltro('lowpass', 900)).connect(bp).connect(S.gVento).connect(S.amb); v.start(t);
+  if (!RM){
+    const l1 = c.createOscillator(); l1.frequency.value = .07; l1.connect(nGanho(220)).connect(bp.frequency); l1.start(t);
+    const l2 = c.createOscillator(); l2.frequency.value = .045; l2.connect(nGanho(.005 * K_VENTO)).connect(S.gVento.gain); l2.start(t);
+  }
+  // cachoeira (fica em z≈-10): ruído claro, volume e lado pela distância e posição na tela
+  const w = c.createBufferSource(); w.buffer = S.ruido; w.loop = true;
+  S.gCach = nGanho(0); S.pCach = nPan(0, S.amb);
+  w.connect(nFiltro('highpass', 1200)).connect(nFiltro('lowpass', 5200, .5)).connect(S.gCach).connect(S.pCach); w.start(t, 1);
+  // pad: Fá maior com nona, triangle + sine (+7 cents), passa-baixa "brilho" que abre com a equipe trabalhando
+  S.padF = nFiltro('lowpass', 650, .6); S.gPad = nGanho(isDarkC ? .79 : 1); S.padF.connect(S.gPad).connect(S.amb);
+  const sh = c.createOscillator(); sh.frequency.value = 783.99; const shG = nGanho(.5), trem = c.createOscillator(); trem.frequency.value = 4;
+  trem.connect(nGanho(.5)).connect(shG.gain); S.shimOut = nGanho(0); sh.connect(shG).connect(S.shimOut).connect(S.gPad); sh.start(t); trem.start(t);
+  S.n = TEAM.filter(a => a.state === 'working' || a.state === 'think').length;
+  S.notas = []; S.acorde = 0; S.proxAcorde = t + 16; montarAcorde(0, 1.3);   // ataque de ~4 s
+  S.proxBicho = t + 4 + Math.random() * 4;
+}
+function passaro(t){
+  const c = S.ctx, p = nPan(Math.random() * 1.6 - .8, S.amb), n = 2 + (Math.random() < .5 ? 1 : 0), sobe = 1 + Math.random() * .15;
+  for (let i = 0; i < n; i++){
+    const ti = t + i * .16, o = c.createOscillator(), fm = c.createOscillator(), fg = nGanho(260), g = c.createGain();
+    o.frequency.setValueAtTime(2800 * sobe, ti); o.frequency.exponentialRampToValueAtTime(4200 * sobe, ti + .07);
+    fm.frequency.value = 150 + Math.random() * 60; fm.connect(fg).connect(o.frequency);   // FM curta: o "trinado"
+    g.gain.setValueAtTime(.0001, ti); g.gain.linearRampToValueAtTime(.03, ti + .008); g.gain.exponentialRampToValueAtTime(.0001, ti + .075);
+    o.connect(g).connect(p); o.start(ti); fm.start(ti); o.stop(ti + .12); fm.stop(ti + .12); soltar(o, i === n - 1 ? [g, fm, fg, p] : [g, fm, fg]);
+  }
+}
+function grilos(t){
+  const c = S.ctx, o = c.createOscillator(), g = c.createGain(), p = nPan(Math.random() * 1.4 - .7, S.amb);
+  o.frequency.value = 4500; g.gain.setValueAtTime(.0001, t);
+  for (let i = 0; i < 6; i++){ const ti = t + i * .048; g.gain.setValueAtTime(.0001, ti); g.gain.linearRampToValueAtTime(.01, ti + .002); g.gain.exponentialRampToValueAtTime(.0001, ti + .008); }
+  o.connect(g).connect(p); o.start(t); o.stop(t + .35); soltar(o, [g, p]);
+}
+function tema(){
+  if (!S.ambOk) return;
+  alvo(S.gPad.gain, isDarkC ? .79 : 1, .5);   // à noite o pad desce 2 dB e os grilos entram no lugar dos pássaros
+}
+function tick4(){   // 4 Hz, chamado pelo telaTick (pausa com a aba escondida)
+  if (!S.ligado || !S.ambOk || S.ctx.state !== 'running') return;
+  const t = S.ctx.currentTime;
+  const vivo = !running && live.estado && !live.estado.velho ? +live.estado.total_trabalhando || 0 : 0;   // total_trabalhando do estado real conta subagentes também
+  const n = Math.max(vivo, TEAM.filter(a => a.state === 'working' || a.state === 'think').length);
+  if (n !== S.n){ S.n = n; aplicarN(.5); }
+  if (!RM && t >= S.proxAcorde){ S.acorde = (S.acorde + 1) % ACORDES.length; S.proxAcorde = t + 16; montarAcorde(S.acorde, 1); }
+  _pv.set(0, island.position.y - 1, -10); const pc = posPonto(_pv);
+  alvo(S.gCach.gain, .02 * K_CACH * clampS(8 / pc.dist, .3, 1), .25); alvo(S.pCach.pan, pc.pan, .25);
+  if (!RM && t >= S.proxBicho){
+    if (isDarkC){ grilos(t + .05); S.proxBicho = t + 3 + Math.random() * 4; }
+    else { passaro(t + .05); S.proxBicho = t + 8 + Math.random() * 12; }
+  }
+}
+
+/* teclas: quem está trabalhando digita em rajadas; cada agente com a sua nota e o seu lado do panorama */
+function canal(a){
+  if (a._canal) return a._canal;
+  const ent = nGanho(1), p = S.ctx.createStereoPanner(), gM = nGanho(0), gP = nGanho(0);
+  ent.connect(p); p.connect(gM); p.connect(gP); gM.connect(S.mundo); gP.connect(S.perto);
+  return (a._canal = { ent, p, gM, gP });
+}
+function tecla(t, a, espaco){
+  const i = TEAM.indexOf(a), f0 = f0De(a), dest = canal(a).ent;
+  sopro(t, espaco ? .016 : .01, { f: espaco ? 900 + i * 45 : 1700 + i * 110, q:3, pico: espaco ? .07 : .09, dest });
+  const o = tom(t, espaco ? f0 : f0 * 2, { a:.002, d: espaco ? .03 : .018, pico:.032, dest });
+  S.vozes++; o.addEventListener('ended', () => { S.vozes--; });
+}
+function teclasTick(){
+  if (!S.ligado || document.hidden || S.ctx.state !== 'running') return;
+  const now = S.ctx.currentTime, foco = S.foco;
+  const trab = [];
+  for (const a of TEAM){
+    if (!a.laptop) continue;
+    if (a.state !== 'working'){ if (a._tec) a._tec.t = 0; continue; }
+    trab.push({ a, v: posVoz(a) });
+  }
+  trab.sort((x, y) => (y.a === foco) - (x.a === foco) || x.v.dist - y.v.dist);
+  trab.slice(0, 5).forEach(({ a, v }) => {   // só os 5 mais perto soam (o focado sempre)
+    const ch = canal(a), f = a === foco;
+    alvo(ch.p.pan, f ? 0 : v.pan, .06); alvo(ch.gM.gain, f ? 0 : v.g, .06); alvo(ch.gP.gain, f ? 2.4 : 0, .06);   // o focado sobe ~+8 dB no barramento PERTO (pico medido ≈ -19 dBFS, abaixo do teto de -18)
+    const k = a._tec || (a._tec = { t:0, resto:0, esp:-1 });
+    if (!k.t){ k.t = now + .05 + Math.random() * .4; k.resto = 0; }   // começou a trabalhar agora
+    else if (k.t < now + .02) k.t = now + .02;                          // aba travada ou celular lento: retoma sem perder o ritmo
+    let guarda = 4;
+    while (k.t < now + .12 && guarda--){
+      if (k.resto <= 0){ k.resto = 3 + Math.floor(Math.random() * 7); k.esp = Math.floor(Math.random() * k.resto); }
+      if (S.vozes < 10) tecla(Math.max(k.t, now + .02), a, k.resto - 1 === k.esp);
+      k.resto--;
+      k.t += k.resto > 0 ? .085 + Math.random() * .055 + (Math.random() - .5) * .04 : .4 + Math.random() * 1.2;
+    }
+  });
+}
+
+/* microssons por evento */
+function pacote(fromA, toA, dur){
+  const c = S.ctx, t = c.currentTime + .01, a = posVoz(fromA), b = posVoz(toA);
+  const s = c.createBufferSource(); s.buffer = S.ruido; s.loop = true;
+  const bp = nFiltro('bandpass', 300, 1.2), g = c.createGain(), p = nPan(a.pan, S.mundo);
+  bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(2200, t + dur * .5); bp.frequency.exponentialRampToValueAtTime(500, t + dur);
+  const curva = new Float32Array(32), pk = .32 * Math.max(a.g, b.g);   // ruído em banda estreita: pico real ≈ -20 dBFS
+  for (let i = 0; i < 32; i++) curva[i] = Math.max(.0001, Math.pow(Math.sin(Math.PI * i / 31), 1.5) * pk);
+  g.gain.setValueCurveAtTime(curva, t, dur);
+  p.pan.setValueAtTime(a.pan, t); p.pan.linearRampToValueAtTime(b.pan, t + dur);
+  s.connect(bp).connect(g).connect(p); s.start(t, Math.random()); s.stop(t + dur + .05); soltar(s, [bp, g, p]);
+}
+function plim(a){
+  const v = posVoz(a), t = S.ctx.currentTime + .005;
+  tom(t, f0De(a) * 2, { a:.003, d:.12, pico:.08 * v.g, dest: nPanTemp(v.pan, .3) });
+}
+function nPanTemp(pan, vida){ const p = nPan(pan, S.mundo); setTimeout(() => { try { p.disconnect(); } catch {} }, (vida + .3) * 1000); return p; }
+function feito(a){   // sino: cada agente tem a sua nota, então entregas em sequência viram melodia
+  const v = posVoz(a), t = S.ctx.currentTime + .01, f = f0De(a) * 2, p = nPanTemp(v.pan, 1.4), k = Math.max(.5, v.g);
+  tom(t, f, { a:.005, d:1.2, pico:.078 * k, dest:p });
+  tom(t, f * 2.76, { a:.005, d:.7, pico:.031 * k, dest:p });
+  tom(t, f * 2, { a:.005, d:.9, pico:.0125 * k, dest:p });
+}
+function boing(a){
+  if (RM) return;   // movimento reduzido: sem boing
+  const c = S.ctx, v = posVoz(a), t = c.currentTime + .01, p = nPanTemp(v.pan, .4), k = Math.max(.4, v.g);
+  const vib = c.createOscillator(); vib.frequency.value = 18; vib.start(t); vib.stop(t + .25);
+  [[1, 'sine', .072], [2, 'triangle', .018]].forEach(([m, tipo, pk]) => {
+    const o = c.createOscillator(), g = c.createGain(), dv = nGanho(12 * m); o.type = tipo;
+    o.frequency.setValueAtTime(220 * m, t); o.frequency.exponentialRampToValueAtTime(440 * m, t + .06); o.frequency.exponentialRampToValueAtTime(330 * m, t + .18);
+    vib.connect(dv).connect(o.frequency);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(pk * k, t + .006); g.gain.setTargetAtTime(pk * k * .7, t + .06, .05); g.gain.exponentialRampToValueAtTime(.0001, t + .19);
+    o.connect(g).connect(p); o.start(t); o.stop(t + .24); soltar(o, [g, dv]);
+  });
+  soltar(vib, []);
+}
+function acorde(){   // celebrate: Fmaj9 dedilhado no mesmo tick em que as telas viram "Entregue"
+  const c = S.ctx, t = c.currentTime + .02, d = RM ? 1 : 2;
+  [349.23, 440, 523.25, 659.25, 783.99].forEach((f, i) => {
+    const p = nPanTemp(-.5 + i * .25, d + .3), ti = t + i * .04;
+    tom(ti, f, { tipo:'triangle', a:.006, d, pico:.013, dest:p }); tom(ti, f, { a:.006, d, pico:.013, dest:p, det:4 });   // pico medido ≈ -19,5 dBFS
+  });
+  if (!RM) for (let i = 0; i < 3; i++) sopro(t + Math.random() * .4, .015, { tipo:'highpass', f:3000, q:.7, pico:.07, dest: nPanTemp(Math.random() * 1.6 - .8, .6) });
+}
+function clique(dir = 1){
+  const t = S.ctx.currentTime + .005;
+  sopro(t, .002, { tipo:'highpass', f:2500, q:.7, pico:.02, dest:S.mundo });
+  tom(t, dir > 0 ? 900 : 1300, { a:.002, d:.028, pico:.04, dest:S.mundo, f1: dir > 0 ? 1300 : 800, tf:.025 });
+}
+function fala(a, texto){   // murmúrio de sílabas, só de quem está na tela (senão vira barulho a cada 6 s)
+  if (a !== S.foco) return;
+  const c = S.ctx, t = c.currentTime + .03, n = Math.min(12, Math.ceil(String(texto || '').length / 2)); if (!n) return;
+  const o = c.createOscillator(), lp = nFiltro('lowpass', 1200, .8), g = c.createGain(), f0 = f0De(a) / 2;
+  o.type = 'square'; g.gain.setValueAtTime(.0001, t);
+  for (let i = 0; i < n; i++){
+    const ti = t + i * .075; o.frequency.setValueAtTime(f0 * Math.pow(2, (Math.random() * 6 - 3) / 12), ti);
+    g.gain.setValueAtTime(.0001, ti); g.gain.linearRampToValueAtTime(.035, ti + .008); g.gain.exponentialRampToValueAtTime(.0001, ti + .055);
+  }
+  o.connect(lp).connect(g).connect(S.perto); o.start(t); o.stop(t + n * .075 + .05); soltar(o, [lp, g]);
+}
+function foco(a, silencioso){   // "Encosta na mesa": a ilha fica do outro lado de uma porta; as teclas do agente vêm para o centro
+  S.foco = a || null;
+  if (!S.ligado) return;
+  alvo(S.porta.frequency, a ? 900 : 18000, .15); alvo(S.gMundo.gain, a ? .4 : 1, .15);
+  if (a && !silencioso) sopro(S.ctx.currentTime + .01, .4, { tipo:'lowpass', f:600, q:.5, pico:.09, a:.12, dest:S.perto });
+}
+
+/* liga, desliga, aba escondida */
+function aoRodar(){
+  if (S.ligado || !S.querLigado) return;
+  S.ligado = true; S.pend = false; clearTimeout(S.tSusp);
+  alvo(S.master.gain, .7, .15);   // ~0,6 s até o volume cheio
+  ambiente(); alvo(S.amb.gain, RM ? AMB_G / 2 : AMB_G, .35);   // ambiente entra em ~1,2 s; movimento reduzido: -6 dB, sem bichos, acorde fixo
+  tema(); S.n = -1; foco(S.foco, true);
+  clique(1);
+  if (!S.iv) S.iv = setInterval(teclasTick, 40);
+  somUI();
+}
+function ligarSom(){
+  S.querLigado = true;
+  if (!criarSom()){ S.querLigado = false; somBtn.hidden = true; return; }
+  clearTimeout(S.tSusp);
+  const c = S.ctx;
+  if (c.state === 'running') aoRodar();
+  else { S.pend = true; const r = c.resume(); if (r && r.then) r.then(() => { if (c.state === 'running') aoRodar(); }, () => {}); }
+  somUI();
+}
+function desligarSom(){
+  S.querLigado = false; S.pend = false;
+  if (S.iv){ clearInterval(S.iv); S.iv = 0; }   // sem timer ocioso; aoRodar recria
+  if (S.ctx){
+    if (S.ligado){
+      clique(-1);
+      const t = S.ctx.currentTime + .03;
+      alvo(S.master.gain, 0, .06, t); alvo(S.amb.gain, 0, .06, t);
+    }
+    clearTimeout(S.tSusp); S.tSusp = setTimeout(() => { if (!S.querLigado && S.ctx.state === 'running') S.ctx.suspend().catch(() => {}); }, 320);
+  }
+  S.ligado = false; somUI();
+}
+function somUI(){
+  const on = S.querLigado && !S.pend;   // pendente (lembrado, ainda sem gesto) não é "ligado": nada toca ainda
+  somBtn.setAttribute('aria-pressed', on); somBtn.classList.toggle('pend', S.pend);
+  somTxt.textContent = 'Som';   // rótulo fixo = nome acessível; o estado vai no aria-pressed e no ícone
+  somDica.textContent = S.pend ? 'Som lembrado: começa no seu primeiro toque na página.' : '';
+  somBtn.title = S.pend ? 'O som volta no seu primeiro toque na página' : on ? 'Silenciar a sede' : 'Ouvir a equipe';
+}
+function somConvite(){   // 2,5 s depois do loader, o botão chama uma vez (sem animação em movimento reduzido)
+  if (!SUPORTE_SOM || S.querLigado) return;
+  setTimeout(() => { if (S.querLigado) return; somBtn.classList.add('convite'); setTimeout(() => somBtn.classList.remove('convite'), 900); }, 2500);
+}
+function sfx(nome, ...args){   // ponte segura: sem som ligado, não cria nada (e não toca no módulo antes de ele existir)
+  if (!window.somSede || !S.ligado || !S.ctx || S.ctx.state !== 'running') return;
+  const f = SOM_FN[nome]; if (!f) return;
+  try { f(...args); } catch (e) { if (DEBUG) console.warn('[som]', nome, e); }
+}
+const SOM_FN = { clique, pacote, plim, feito, boing, acorde, fala, tema };
+
+if (SUPORTE_SOM){
+  somBtn.hidden = false;
+  if (lerPref() === '1'){ S.querLigado = true; S.pend = true; }   // ligado-pendente: o primeiro gesto na página cria o som
+  somUI();
+  somBtn.addEventListener('click', () => { if (S.querLigado && (!S.pend || S.ctx)){ desligarSom(); gravarPref(false); } else { gravarPref(true); ligarSom(); } });   // pendente: o toque no botão é o gesto que libera o som
+  const gesto = e => { if (!S.pend || !S.querLigado || (e.target && e.target.closest && e.target.closest('#somBtn'))) return; if (e.type === 'keydown' && e.key === 'Escape') return; ligarSom(); };
+  ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, gesto, true));
+  document.addEventListener('visibilitychange', () => {
+    if (!S.ctx) return;
+    if (document.hidden){
+      if (S.ligado){ alvo(S.master.gain, 0, .03); clearTimeout(S.tVis); S.tVis = setTimeout(() => { if (document.hidden) S.ctx.suspend().catch(() => {}); }, 150); }
+    } else if (S.querLigado && S.ligado){
+      clearTimeout(S.tVis);
+      S.ctx.resume().then(() => alvo(S.master.gain, .7, .05), () => {});
+    }
+  });
+  // clique de UI em todo botão (o do som tem o seu); fechar e desmarcar descem o tom
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('button'); if (!b || b === somBtn) return;
+    sfx('clique', b.hasAttribute('data-close') || b.id === 'opsClose' || b.getAttribute('aria-pressed') === 'true' ? -1 : 1);
+  }, true);
+}
+window.somSede = { get ligado(){ return S.ligado; }, get analyser(){ return S.ligado ? S.analyser : null; }, foco, tick4, ...(DEBUG ? { _S: S, sfx } : {}) };
 
 /* ───────────────────────── animação ───────────────────────── */
 const clock = new THREE.Clock();
@@ -1136,6 +2301,7 @@ function animateAgent(a, t, dt){
   R.rotation.x = lerpA(R.rotation.x, rx[0], k); L.rotation.x = lerpA(L.rotation.x, rx[1], k);
   R.rotation.z = lerpA(R.rotation.z, rz[0], k); L.rotation.z = lerpA(L.rotation.z, rz[1], k);
   a.yaw = lerpA(a.yaw, yaw, k * .5); a.pitch = lerpA(a.pitch, pitch, k * .5);
+  if (a.olharAte && t < a.olharAte){ a.yaw = lerpA(a.yaw, a.olharYaw, k * .5); a.pitch = lerpA(a.pitch, -.12, k * .5); }
   a.head.rotation.set(a.pitch, a.yaw, lerpA(a.head.rotation.z, tilt, k * .5));
   a.mouth.scale.y = a.state === 'celebrate' || a.state === 'wave' ? 1.6 : 1;
 
@@ -1155,13 +2321,21 @@ function animateAgent(a, t, dt){
   if (a._bulb){ const on = a.state === 'working' || a.state === 'think' || a.state === 'celebrate'; a._bulb.position.y = .82 + Math.sin(ts * 3) * .05; a._bulbGlass.material.color.set(on ? (Math.sin(t*14) > 0 ? '#FFFFFF' : '#FFE45E') : '#FFF3A6'); a._bulb.scale.setScalar(on ? 1.15 : 1); }
   if (a._prism){ const sp = a.state === 'working' ? 3.2 : 1.1; a._prism.position.set(Math.sin(t*sp) * .62, .62 + Math.sin(t*sp*1.7) * .08, Math.cos(t*sp) * .62); a._prism.rotation.y = t * 2; a._prismMat.color.setHSL((t * .12) % 1, .85, .65); }
   if (a._ant){ a._ant.rotation.z = Math.sin(t * 6 + a.phase) * .18 + (a.hop ? Math.sin(t*20)*.2 : 0); a._ant.rotation.x = Math.cos(t * 5) * .1; }
-  if (a.screen) a.screen.offset.y -= dt * (a.state === 'working' ? 1.4 : .12);
+  if (a.laptop){
+    const foc = !!telaFoco && telaFoco.a === a, on = a.state === 'working' || foc, kl = 1 - Math.exp(-dt * 7.5);   // ~0,4 s
+    a.laptop.rotation.x = lerpA(a.laptop.rotation.x, on ? .62 : .5, kl);
+    a.root.position.x = RM ? (foc ? a.slideX || 0 : 0) : lerpA(a.root.position.x, foc ? a.slideX || 0 : 0, 1 - Math.exp(-dt * 6));   // movimento reduzido: a cadeira já está no lugar
+    const go = lerpA(a._glow.material.opacity, a.state === 'working' ? (isDarkC ? .7 : .45) : 0, kl); a._glow.material.opacity = go; a._glow.visible = go > .01;
+    const c = a.tela.mat.color, v = lerpA(c.r, on || a.id === selected ? 1 : .84, kl); c.setRGB(v, v, v);
+  }
 }
 
 let frames = 0, last = 0;
-function frame(){
+let liteUlt = 0;
+function frame(now){
+  if (LITE){ if (now - liteUlt < 1000/30 - 2) return; liteUlt = now; } // ?lite=1: no máximo 30 quadros por segundo
   const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
-  if (document.hidden) return;
+  if (document.hidden || pausadaPeloPai) return;
 
   if (tween){
     const p = Math.min(1, (t - tween.s) / tween.dur), e = p < .5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3) / 2;
@@ -1173,12 +2347,13 @@ function frame(){
   // desloca o enquadramento para o personagem não ficar atrás dos painéis
   const phone = innerWidth < 720;
   view.tx = !card.hidden && !phone ? 180 : !ops.hidden && !phone ? -170 : 0;
-  view.ty = (!card.hidden || !ops.hidden) && phone ? innerHeight * .2 : 0;
+  view.ty = (!card.hidden || !ops.hidden) && phone ? (telaFoco && telaFoco.ty != null ? telaFoco.ty : innerHeight * .2) : 0;
   view.x += (view.tx - view.x) * Math.min(1, dt * 6); view.y += (view.ty - view.y) * Math.min(1, dt * 6);
   if (Math.abs(view.x) > .5 || Math.abs(view.y) > .5) camera.setViewOffset(innerWidth, innerHeight, view.x, view.y, innerWidth, innerHeight);
   else if (camera.view && camera.view.enabled) camera.clearViewOffset();
 
   TEAM.forEach(a => animateAgent(a, t, dt));
+  telaAcc += dt; if (telaAcc >= 1/12){ telaAcc %= 1/12; telaTick(); }   // telas "em dois": 12 Hz
 
   // etiquetas mais fracas ao fundo
   TEAM.forEach(a => { const d = camera.position.distanceTo(a.station.position); a.label.style.opacity = a.id === selected ? 1 : Math.max(.35, Math.min(1, 1.55 - d / 30)).toFixed(2); });
@@ -1187,6 +2362,10 @@ function frame(){
   clouds.forEach(c => { const u = c.userData; u.a += u.sp * dt * drift; c.position.set(Math.sin(u.a) * u.R, u.y + Math.sin(t * .4 + u.ph) * .35, Math.cos(u.a) * u.R); });
   islets.forEach(g => { g.position.y = g.userData.y + Math.sin(t * .6 + g.userData.ph) * .4; g.rotation.y += dt * .05 * drift; });
   island.position.y = Math.sin(t * .5) * .12 * drift;
+  if (telaFoco){ // dentro da tela, a câmera boia junto com a ilha (senão a tela "escorrega" no quadro)
+    const dy = island.position.y - telaFoco.iy; telaFoco.iy = island.position.y;
+    if (tween){ tween.p1.y += dy; tween.t1.y += dy; } else { camera.position.y += dy; controls.target.y += dy; }
+  } else if (!tween && controls.minDistance < 3.2) controls.minDistance = 3.2;
   const ba = t * .05 * drift; balloon.position.set(Math.sin(ba) * 21, 7 + Math.sin(t * .7) * .6, Math.cos(ba) * 21 - 4); balloon.rotation.y = -ba;
 
   // cachoeira
@@ -1205,7 +2384,7 @@ function frame(){
     const u = Math.min(1, (t - p.t0) / p.dur), e = u * u * (3 - 2 * u), iu = 1 - e;
     p.g.position.set(iu*iu*p.a.x + 2*iu*e*p.c.x + e*e*p.b.x, iu*iu*p.a.y + 2*iu*e*p.c.y + e*e*p.b.y, iu*iu*p.a.z + 2*iu*e*p.c.z + e*e*p.b.z);
     p.g.rotation.set(Math.sin(t * 9) * .4, t * 8, 0); p.g.scale.setScalar(1 + Math.sin(u * Math.PI) * .5);
-    if (u >= 1){ p.active = false; p.g.visible = false; p.cb && p.cb(); }
+    if (u >= 1){ p.active = false; p.g.visible = false; sfx('plim', p.to); p.cb && p.cb(); }
   });
   bits.forEach(b => { if (b.life <= 0) return; b.life -= dt * 1.4; b.m.position.addScaledVector(b.v, dt); b.m.rotation.x += dt * 5; b.m.rotation.y += dt * 4; b.m.scale.setScalar(Math.max(.01, b.life)); if (b.life <= 0) b.m.visible = false; });
 
@@ -1218,16 +2397,32 @@ function frame(){
 
   renderer.render(scene, camera);
   labels.render(scene, camera);
-  if (++frames === 2){ $('#loader').classList.add('out'); }
+  if (++frames === 2){ $('#loader').classList.add('out'); somConvite(); }
 }
 
 resize();
+if (DEBUG) window.__sede = { camera, controls, scene, byId, TEAM, entrarNaTela, sairDaTela, select, live, telas, telaEvento,
+  pickParte, desenharTodas: () => telas.forEach(a => desenharTela(a.tela.ctx, a, 1)) };   // só com ?debug=1 (testes)
 const o0 = overview();
 camera.position.copy(o0.pos).add(new V3(0, 6, 10)); controls.target.copy(o0.target);
 flyTo(o0.pos, o0.target, 2.2);
 renderer.setAnimationLoop(frame);
-const startId = location.hash.slice(1);
+const startId = location.hash.includes('=') ? '' : location.hash.slice(1);
 if (byId[startId]) setTimeout(() => select(startId, true), 900);
 </script>
+<!-- som da sede (Eco): tabela evento → som → duração. Tudo sintetizado (Web Audio), nada antes de um gesto, teto de -18 dBFS nos microssons.
+  Picos medidos na saída com um AudioWorkletNode (Chromium, câmera na visão geral; o ganho cai com a distância).
+  evento (gancho)                          | som                                                                   | duração          | pico medido
+  teclas (state 'working', teclasTick 40ms)| rajadas de 3-9 toques: ruído passa-banda (1700+i·110 Hz) + "toc" na nota do agente; 1 "espaço" grave; só os 5 mais perto, máx. 10 vozes | 10-30 ms/toque | -33 dBFS (na tela: -20)
+  pacote (sendPacket)                      | ruído passa-banda 300›2200›500 Hz, panorama do remetente ao destino    | 0,95 s (0,35 RM) | -25 dBFS
+  chegada do pacote (callback)             | "plim": seno na nota do agente ×2                                     | 0,15 s           | -31 dBFS
+  Feito! (aplicarEstado / startRun)        | sino: nota ×2 + parcial 2,76 + oitava; feitos em sequência = melodia  | 1,2 s            | -24 dBFS
+  pulo de evento (hop {som:true})          | boing 220›440›330 Hz com vibrato 18 Hz (mudo em movimento reduzido)   | 0,18 s           | -28 dBFS
+  celebrate (telas viram "Entregue")       | Fmaj9 dedilhado (F4 A4 C5 E5 G5) + 3 pops de confete                 | 2,2 s (1 s RM)   | -19,5 dBFS
+  clique de UI (botões, chips, etiquetas, toque na cena) | ruído 2 ms + seno 900›1300 Hz (fechar: 1300›800)       | 30 ms            | -26 dBFS
+  entrar/sair da tela (foco)               | "porta": passa-baixa do mundo 18 k›900 Hz e -8 dB, teclas do agente no centro + sopro | 0,6 s | -30 dBFS
+  fala de quem está na tela (say)          | murmúrio: 1 sílaba a cada 2 letras (máx. 12), quadrada em passa-baixa | até 0,9 s        | -26 dBFS
+  ambiente (contínuo)                      | vento (ruído filtrado + LFO), cachoeira pela distância, pad Fmaj9›Dm9›Bbmaj7›Csus2 a cada 16 s que abre com a equipe trabalhando (total_trabalhando), pássaros (FM curta) de dia, grilos à noite; RM: -6 dB, sem bichos, sem LFO, acorde fixo | contínuo | -35 dBFS RMS (RM -40)
+-->
 </body>
 </html>

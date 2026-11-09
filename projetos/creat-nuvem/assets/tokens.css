@@ -44,6 +44,11 @@
   --vidro-luz:#FFD98A;      /* luz de dentro da loja vista pelo vidro */
   --veu:rgba(30,27,46,.55); /* fundo atrás da prévia em tela cheia */
 
+  /* -- figurino da equipe na sede (sede/index.html, AGENTS.color): iguais nos dois temas,
+        sempre com contorno de nanquim; usados só nos pontos da linha do tempo da sede -- */
+  --agente-nimbus:#FFD23F; --agente-verbo:#FF9F1C; --agente-paleta:#FF8FD1; --agente-pixel:#FF6B6B;
+  --agente-lupa:#EEF2F7; --agente-muralha:#3D4A7A; --agente-trilho:#8D6E63;
+
   /* -- papéis (aliases para quem prefere nomes por função) -- */
   --cor-fundo:var(--fundo); --cor-texto:var(--tinta); --cor-destaque:var(--sol); --cor-apoio:var(--ceu);
 

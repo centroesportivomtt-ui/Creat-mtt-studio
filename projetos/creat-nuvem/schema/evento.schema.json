@@ -12,8 +12,9 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["evento", "propriedades"],
+      "$comment": "pedido_enviado_pagina é indicador aproximado: a pessoa chegou em /obrigado/ com pedido gravado no aparelho. O pedido é gravado ao clicar em Pagar, antes do Pix, então quem clica e volta sem pagar também conta. Não é pagamento confirmado; não otimizar anúncio por ele como se fosse compra. Dispara no máximo 1 vez por carga e nunca sem pedido.",
       "properties": {
-        "evento": { "enum": ["placa_vista", "nicho_escolhido", "nome_digitado", "previa_gerada", "reserva_teste", "plano_visto", "checkout_iniciado", "pago_pagina", "sede_aberta", "lista_espera_enviada"] },
+        "evento": { "enum": ["placa_vista", "nicho_escolhido", "nome_digitado", "previa_gerada", "reserva_teste", "plano_visto", "checkout_iniciado", "pedido_enviado_pagina", "sede_aberta", "lista_espera_enviada"] },
         "propriedades": { "type": "object" }
       },
       "allOf": [
@@ -21,7 +22,7 @@
           "then": { "properties": { "propriedades": { "$ref": "#/$defs/propsBase" } } } },
         { "if": { "properties": { "evento": { "enum": ["nicho_escolhido", "nome_digitado", "previa_gerada", "reserva_teste"] } } },
           "then": { "properties": { "propriedades": { "$ref": "#/$defs/propsNicho" } } } },
-        { "if": { "properties": { "evento": { "enum": ["plano_visto", "checkout_iniciado", "pago_pagina"] } } },
+        { "if": { "properties": { "evento": { "enum": ["plano_visto", "checkout_iniciado", "pedido_enviado_pagina"] } } },
           "then": { "properties": { "propriedades": { "$ref": "#/$defs/propsPlano" } } } },
         { "if": { "properties": { "evento": { "const": "lista_espera_enviada" } } },
           "then": { "properties": { "propriedades": { "$ref": "#/$defs/propsEspera" } } } }

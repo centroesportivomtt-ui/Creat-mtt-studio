@@ -1,0 +1,11 @@
+# Saídas da produção (T9). Têm dado pessoal de cliente (pedido.json: e-mail, responsável,
+# WhatsApp, endereço) e builds: nunca vão para o git. Ver docs/relatorio/T9.md.
+sites/
+pedidos/
+# dist/<slug>/ e os zips do SAIR; dist/publico/ é o build público da T10 (já versionado, sem PII)
+dist/*
+!dist/publico/
+# segredos locais (os nomes ficam em .env.example)
+.env
+.env.*
+!.env.example

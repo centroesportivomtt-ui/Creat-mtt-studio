@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Porta Aberta: seu negócio aberto na internet | Creat</title>
+<meta name="description" content="Digite o nome do seu negócio e veja o seu site pronto em segundos, com pedido de horário no seu WhatsApp. Sem fidelidade. Só paga se gostar.">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#CDEBFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1D2552" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Seu negócio aberto na internet.">
+<meta property="og:description" content="Digite o nome do seu negócio, vire a placa para ABERTO e veja o seu site pronto. Grátis para ver.">
+<meta property="og:image" content="assets/img/sede-ilha.webp">
+<meta property="og:image:alt" content="Placa de madeira presa por uma correntinha, virada para o lado ABERTO, com o nome de um negócio escrito a giz.">
+<link rel="icon" href="assets/svg/placa.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&family=JetBrains+Mono:wght@500&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/vitrine.css">
+<link rel="stylesheet" href="ritual/placa.css">
+<style>
+/* Complementos da home (T5). Só tokens de assets/tokens.css; nada de cor solta. */
+.num-carregando{display:inline-block;min-width:2.4em;min-height:.9em;border-radius:6px;background:repeating-linear-gradient(-45deg,var(--lasca) 0 6px,transparent 6px 12px);vertical-align:middle}
+.placa-reserva{width:100%;height:auto}
+.palco-placa .placa-reserva{transform-origin:48.5% 7.3%;animation:balanca var(--duracao-balanco) var(--curva-balanco) infinite}
+.linha-acao{display:flex;flex-wrap:wrap;align-items:center;gap:var(--r3) var(--r4)}
+.espera{display:grid;gap:8px;margin-top:var(--r2)}
+.espera p{font-size:var(--t-nota);color:var(--apagado)}
+.chip-avise{font-family:inherit}
+.previa-corpo{position:relative;min-height:0}
+.previa-corpo iframe{position:absolute;inset:0}
+.previa-corpo .carregando{position:absolute;inset:0;min-height:0}
+.previa-topo .acoes{display:flex;gap:8px;flex:none}
+.previa{grid-template-columns:minmax(0,1fr)}
+.previa-topo{min-width:0}
+.previa-topo .rotulo-previa{display:block;flex:1 1 auto;min-width:0}
+.previa-topo .rotulo-previa::before{display:inline-block;vertical-align:middle;margin-right:8px}
+.previa-topo .btn{padding:6px 12px}
+body.com-previa .consentimento{display:none}
+body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
+.consentimento p{font-size:var(--t-nota)}
+@media (max-width:719px){.previa-topo .acoes .btn{font-size:13px;padding:6px 10px}}
+.previa{transform:translateY(0)}
+@media (prefers-reduced-motion:no-preference){.previa{transform:translateY(24px);opacity:0;transition:transform var(--duracao-longa) var(--curva-entrada),opacity var(--duracao-media) var(--curva-entrada)}.previa.aberta{transform:none;opacity:1}}
+.teste .painel form{padding:var(--r5)}
+.teste-nicho{font:500 var(--t-micro)/1.3 var(--f-dado);text-transform:uppercase;letter-spacing:.08em;color:var(--apagado)}
+.campo select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--tinta) 50%),linear-gradient(135deg,var(--tinta) 50%,transparent 50%);background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:40px}
+.campo select:focus{outline:none;box-shadow:0 0 0 3px var(--sol),var(--sombra)}
+.link-texto{background:none;border:0;padding:0 4px;min-height:var(--alvo);font-weight:800;text-decoration:underline;text-underline-offset:.18em;cursor:pointer;color:var(--tinta);text-align:left}
+.ok-msg{font-weight:700;color:var(--ok)}
+/* celular desenhado em nanquim, apoiado (nunca inclinado) */
+.celular{width:100%;max-width:280px;margin-inline:auto;aspect-ratio:9/16;max-height:480px;display:grid;grid-template-rows:auto auto 1fr;border:var(--borda-g) solid var(--linha);border-radius:34px;background:var(--papel);box-shadow:var(--sombra);overflow:hidden;padding:10px}
+.celular-topo{height:18px;width:38%;margin:0 auto 8px;border-radius:0 0 12px 12px;background:var(--linha)}
+.celular-cab{display:flex;align-items:center;gap:8px;padding:8px 10px;border:var(--borda) solid var(--linha);border-radius:14px;background:var(--ceu);font-weight:800;font-size:var(--t-nota)}
+.celular-cab span{display:block;font:500 var(--t-micro)/1.2 var(--f-dado);color:var(--apagado)}
+.celular-tela{display:flex;flex-direction:column;justify-content:flex-end;gap:8px;padding:12px 2px 4px}
+.balao{max-width:92%;align-self:flex-end;padding:10px 12px;border:var(--borda) solid var(--linha);border-radius:16px 16px 4px 16px;background:var(--lasca);font-size:var(--t-nota);line-height:1.4}
+.balao small{display:block;margin-top:6px;font:500 var(--t-micro)/1 var(--f-dado);color:var(--apagado);text-align:right}
+@media (prefers-reduced-motion:no-preference){.celular.chegou .balao{animation:chega var(--duracao-longa) var(--curva-entrada) both}}
+@keyframes chega{0%{opacity:0;transform:translateY(18px) scale(.96)}100%{opacity:1;transform:none}}
+.celular-vazio{color:var(--apagado);font-size:var(--t-nota);text-align:center;padding:12px}
+/* Sede ao vivo · a empresa em funcionamento
+   Momento-assinatura: o pedido de demonstração passa de mão em mão na sede 3D e, ao mesmo tempo,
+   acende o passo na comanda ao lado; quando Trilho publica, o carimbo NO AR bate e o botão
+   "Abrir o site pronto" vira amarelo. Celular: comanda embaixo da janela, sede só sob toque. */
+.sede-grade{display:grid;gap:var(--r5)}
+.sede-grade .cab{margin-bottom:0}
+.sede-grade .cab p{max-width:var(--medida)}
+.sede-viva{display:grid;gap:var(--r3);min-width:0}
+.sede-marcas{display:flex;flex-wrap:wrap;gap:8px}
+.sede-marcas .chip{font-family:inherit;color:var(--tinta);font-size:var(--t-menor)}
+.sede-marcas .chip[aria-pressed="true"]{color:var(--sol-tinta)}
+.sede-marcas .chip:focus-visible{outline:3px solid var(--sol);outline-offset:3px;box-shadow:0 0 0 6px var(--linha)}
+@media (max-width:719px){
+  .sede-marcas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sede-marcas .chip{justify-content:center;text-align:center;min-height:56px;padding:6px 8px;border-radius:var(--raio-p);font-size:13px;line-height:1.2}
+  .sede-marcas .chip-seu{grid-column:1 / -1;min-height:var(--alvo)}
+}
+.sede-marcas .chip-seu{border-style:dashed}
+.sede-marcas .chip-seu[aria-pressed="true"]{border-style:solid}
+.janela-sede{min-height:0}
+.sede-palco{position:relative}
+.janela-sede iframe{display:block;width:100%;aspect-ratio:16/10;border:0;background:var(--vidro)}
+.janela-sede .sede-carregando{position:absolute;inset:0;min-height:0;background:var(--vidro);color:var(--giz)}
+.janela-sede .selo-demo{z-index:2}
+.janela-sede .ver-ao-vivo{z-index:2}
+.sede-nota{margin-top:var(--r3);font-size:var(--t-nota);color:var(--apagado)}
+@media (min-width:1000px) and (pointer:fine){.janela-sede .so-celular{display:none}}
+.esteira{min-width:0;display:flex;flex-direction:column;gap:var(--r4);padding:var(--r5);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra)}
+.esteira-cab{padding-bottom:var(--r4);border-bottom:var(--borda) dashed var(--linha)}
+.esteira-cab .olho{margin-bottom:var(--r1)}
+.esteira-cab h3{font:400 var(--t-h3)/1.1 var(--f-display);text-wrap:balance;overflow-wrap:anywhere}
+.esteira-agora{margin-top:var(--r2);font-weight:800;min-height:1.55em}
+.esteira-trilho{margin-top:var(--r3);height:12px;border:2px solid var(--linha);border-radius:var(--raio-pilula);background:var(--lasca);overflow:hidden}
+.esteira-trilho span{display:block;height:100%;width:var(--progresso,0%);background:var(--sol);border-right:2px solid var(--linha)}
+.esteira[data-etapa="0"] .esteira-trilho span{border-right-color:transparent}
+.esteira-lista{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.esteira-lista li{--ag:var(--agente-nimbus);display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:40px;padding:6px 12px 6px 8px;border:2px solid transparent;border-radius:var(--raio-p);color:var(--apagado)}
+.esteira-lista li i{width:18px;height:18px;border-radius:50%;background:var(--ag);border:2.5px solid var(--linha)}
+.esteira-lista b{color:var(--tinta);font-weight:800}
+.esteira-st{font:500 var(--t-micro)/1 var(--f-dado);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.esteira-lista li[data-estado="fila"] i{background:var(--lasca);border-style:dashed}
+.esteira-lista li[data-estado="feito"]{color:var(--tinta)}
+.esteira-lista li[data-estado="feito"] .esteira-st{color:var(--ok)}
+.esteira-lista li[data-estado="agora"]{background:var(--sol);color:var(--sol-tinta);border-color:var(--linha);box-shadow:var(--sombra-p)}
+.esteira-lista li[data-estado="agora"] b{color:var(--sol-tinta)}
+.esteira-lista li[data-estado="agora"] i{box-shadow:0 0 0 3px var(--papel)}
+.esteira-lista [data-agente="verbo"]{--ag:var(--agente-verbo)}.esteira-lista [data-agente="paleta"]{--ag:var(--agente-paleta)}.esteira-lista [data-agente="pixel"]{--ag:var(--agente-pixel)}
+.esteira-lista [data-agente="lupa"]{--ag:var(--agente-lupa)}.esteira-lista [data-agente="muralha"]{--ag:var(--agente-muralha)}.esteira-lista [data-agente="trilho"]{--ag:var(--agente-trilho)}
+.janela-sede[data-sede-pronta] > .selo-demo{display:none} /* só quando a sede já mandou a 1ª etapa: aí o selo DEMONSTRAÇÃO dela está na tela */
+.esteira-fim{display:flex;flex-wrap:wrap;align-items:center;gap:var(--r3) var(--r4);margin-top:auto}
+.esteira-carimbo{order:2;font:400 22px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04em;color:var(--ok);border:3px solid currentColor;border-radius:8px;padding:6px 10px 4px;transform:rotate(-7deg);visibility:hidden}
+.esteira[data-etapa="5"] .esteira-carimbo{visibility:visible}
+.esteira[data-etapa="5"] .esteira-abrir{background:var(--sol);color:var(--sol-tinta);box-shadow:var(--sombra)}
+.esteira-nota{font-size:var(--t-nota);color:var(--apagado)}
+@media (prefers-reduced-motion:no-preference){
+  .esteira-trilho span{transition:width var(--duracao-longa) var(--curva-saida)}
+  .esteira-lista li,.esteira-lista b,.esteira-abrir{transition:background-color var(--duracao-media) var(--curva-saida),color var(--duracao-media) var(--curva-saida),box-shadow var(--duracao-media) var(--curva-saida),border-color var(--duracao-media) var(--curva-saida),transform var(--duracao-curta) var(--curva-saida)}
+  .esteira-lista li[data-estado="agora"] i{animation:esteira-pulo 1.1s var(--curva-balanco) infinite}
+  .esteira[data-etapa="5"] .esteira-carimbo{animation:esteira-carimbo var(--duracao-giro) var(--curva-mola) both}
+  .esteira.trocou .esteira-cab h3{animation:esteira-troca var(--duracao-media) var(--curva-entrada) both}
+}
+@keyframes esteira-pulo{0%,100%{transform:translateY(0)}45%{transform:translateY(-4px)}}
+@keyframes esteira-carimbo{0%{opacity:0;transform:rotate(-18deg) scale(1.6)}100%{opacity:1;transform:rotate(-7deg) scale(1)}}
+@keyframes esteira-troca{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+@media (min-width:1000px){
+  .sede-grade{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-areas:"cab cab" "viva esteira";gap:var(--r5) var(--r6);align-items:stretch}
+  .sede-grade .cab{grid-area:cab}
+  .sede-viva{grid-area:viva;align-content:start}
+  .esteira{grid-area:esteira}
+}
+.preco strong span,.preco s span{font:inherit;color:inherit}
+.cartao-preco .anual{font-size:var(--t-nota)}
+.cartao-preco .anual a{font-weight:700;display:inline-flex;align-items:center;min-height:var(--alvo)}
+.precos-extra{display:grid;gap:var(--r5);margin-top:var(--r6)}
+.precos-extra h3{font-size:var(--t-h3);margin-bottom:var(--r3)}
+.precisa ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.precisa .nota{margin-top:var(--r3);font-size:var(--t-nota);color:var(--apagado)}
+.contrato-bloco a{display:inline-flex;align-items:center;min-height:var(--alvo);font-weight:700;margin-top:var(--r2)}
+.agenda-externa{padding:var(--r5);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio)}
+.agenda-externa h3{font-size:var(--t-h3)}
+.agenda-externa p+p{margin-top:var(--r2)}
+.agenda-externa small{display:block;margin-top:var(--r2);color:var(--apagado);font-size:var(--t-nota)}
+.de-verdade ul{margin:var(--r3) 0 0;padding-left:20px;display:grid;gap:6px}
+.precos-carregando{font:500 var(--t-micro)/1.3 var(--f-dado);color:var(--apagado);margin-bottom:var(--r4)}
+.prova .nota{margin-top:var(--r4);font-size:var(--t-nota);color:var(--apagado)}
+.chamada .btn-fantasma{color:var(--giz);border-color:var(--giz)}
+.som-botao{min-height:var(--alvo);padding:6px 14px;font-size:var(--t-menor)}
+.rodape .linha-rodape{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.rodape button.link-texto{font-size:inherit}
+@media (min-width:720px){.precos-extra{grid-template-columns:1fr 1fr}.precos-extra .agenda-externa{grid-column:1 / -1}}
+/* sites-demonstração: três cartões, um por nicho (tokens de assets/tokens.css) */
+.demos{margin:0;padding:0;list-style:none;display:grid;gap:var(--r4)}
+.demo-cartao{display:flex;flex-direction:column;gap:var(--r2);padding:var(--r5);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio)}
+.demo-cartao .olho{margin-bottom:0}
+.demo-cartao h3{font-size:var(--t-h3)}
+.demo-cartao p{color:var(--apagado)}
+.demo-cartao .btn{margin-top:auto;align-self:flex-start}
+.demos-nota{margin-top:var(--r4);font-size:var(--t-nota);color:var(--apagado)}
+@media (min-width:860px){.demos{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+<script defer src="checkout.config.js"></script>
+<script defer src="assets/som/creat-som.js"></script>
+<script defer src="ritual/placa.js"></script>
+<script defer src="assets/vitrine.js"></script>
+</head>
+<body data-pagina="home">
+<a class="pular" href="#nome">Pular para o campo do nome</a>
+
+<header class="barra">
+  <div class="cx">
+    <a class="marca" href="#porta" aria-label="Creat Nuvem, início">
+      <svg viewBox="0 0 64 48" aria-hidden="true"><path d="M14 40a10 10 0 0 1-1-20 14 14 0 0 1 27-6 11 11 0 0 1 13 11 8 8 0 0 1-1 15z" fill="var(--sol)" stroke="var(--linha)" stroke-width="4" stroke-linejoin="round"/><circle cx="26" cy="28" r="2.6" fill="var(--sol-tinta)"/><circle cx="38" cy="28" r="2.6" fill="var(--sol-tinta)"/><path d="M28 34q4 3 8 0" fill="none" stroke="var(--sol-tinta)" stroke-width="3" stroke-linecap="round"/></svg>
+      <span>Creat Nuvem</span>
+    </a>
+    <ul class="barra-links">
+      <li><a href="#como-funciona">Como funciona</a></li>
+      <li><a href="#precos">Preços</a></li>
+      <li><a href="#sede">Sede ao vivo</a></li>
+    </ul>
+    <a class="btn barra-zap" data-zap="duvida" href="#perguntas"><span data-rotulo-zap>Chamar no WhatsApp</span></a>
+  </div>
+</header>
+
+<main id="conteudo">
+  <!-- 2 · HERO -->
+  <section class="heroi" id="porta" aria-labelledby="h1">
+    <div class="cx">
+      <div class="heroi-cabeca">
+        <span class="olho">Porta Aberta</span>
+        <h1 id="h1">Seu negócio aberto na internet.</h1>
+      </div>
+
+      <div class="palco-placa">
+        <div class="porta" aria-hidden="true"></div>
+        <div id="placa" class="ponto-placa">
+          <div class="placa-reserva"><svg class="placa-reserva-svg" width="330" height="300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 300" role="img" aria-labelledby="placa-titulo placa-desc">
+<title id="placa-titulo">Placa FECHADO</title>
+<desc id="placa-desc">Placa de madeira presa por correntinha num prego, mostrando FECHADO. Ao virar, mostra ABERTO com o nome do negócio em giz.</desc>
+<style>
+.pl-tinta{fill:var(--sol-tinta,#1E1B2E)}
+.pl-sombra{fill:var(--linha,#1E1B2E)}
+.pl-contorno{stroke:var(--linha,#1E1B2E);stroke-linejoin:round;stroke-linecap:round}
+.pl-madeira{fill:var(--madeira,#D39A5B)}
+.pl-madeira-clara{fill:var(--madeira-clara,#E6B67B)}
+.pl-madeira-sombra{fill:var(--madeira-sombra,#7A4B2A)}
+.pl-veio{fill:none;stroke:var(--madeira-veio,#9A6438);stroke-width:2.5;stroke-linecap:round}
+.pl-lousa{fill:var(--lousa,#22322D)}
+.pl-sol{fill:var(--sol,#FFC93C)}
+.pl-giz{fill:var(--giz,#F4F1E6)}
+.pl-giz-traco{fill:none;stroke:var(--giz,#F4F1E6);stroke-linecap:round}
+.pl-poeira{fill:var(--giz-apagado,#AEBBB4)}
+.pl-metal{fill:var(--corrente,#8C909B)}
+.pl-elo{fill:none;stroke:var(--corrente,#8C909B);stroke-width:3.2}
+.pl-elo-brilho{fill:none;stroke:var(--corrente-brilho,#E7E9EF);stroke-width:1.2;stroke-linecap:round}
+.pl-elo-tinta{fill:none;stroke:var(--linha,#1E1B2E);stroke-width:6.4}
+.pl-display{font-family:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",sans-serif}
+.pl-texto{font-family:Figtree,system-ui,sans-serif;font-weight:800}
+</style><g id="corrente"><g id="corrente-esq"><g id="corrente-esq-elo-1" transform="translate(155.1 30.3) rotate(138.4)"><ellipse class="pl-elo-tinta" rx="7.6" ry="4.6"/><ellipse class="pl-elo" rx="7.6" ry="4.6"/><path class="pl-elo-brilho" d="M-4 -3.2 Q0 -4.4 4 -3.2"/></g><g id="corrente-esq-elo-2" transform="translate(145.3 39) rotate(138.4)"><path class="pl-elo-tinta" d="M-7 0 H7"/><path class="pl-elo" d="M-7 0 H7"/></g><g id="corrente-esq-elo-3" transform="translate(135.6 47.7) rotate(138.4)"><ellipse class="pl-elo-tinta" rx="7.6" ry="4.6"/><ellipse class="pl-elo" rx="7.6" ry="4.6"/><path class="pl-elo-brilho" d="M-4 -3.2 Q0 -4.4 4 -3.2"/></g><g id="corrente-esq-elo-4" transform="translate(125.8 56.3) rotate(138.4)"><path class="pl-elo-tinta" d="M-7 0 H7"/><path class="pl-elo" d="M-7 0 H7"/></g><g id="corrente-esq-elo-5" transform="translate(116 65) rotate(138.4)"><ellipse class="pl-elo-tinta" rx="7.6" ry="4.6"/><ellipse class="pl-elo" rx="7.6" ry="4.6"/><path class="pl-elo-brilho" d="M-4 -3.2 Q0 -4.4 4 -3.2"/></g><g id="corrente-esq-elo-6" transform="translate(106.2 73.7) rotate(138.4)"><path class="pl-elo-tinta" d="M-7 0 H7"/><path class="pl-elo" d="M-7 0 H7"/></g><g id="corrente-esq-elo-7" transform="translate(96.4 82.3) rotate(138.4)"><ellipse class="pl-elo-tinta" rx="7.6" ry="4.6"/><ellipse class="pl-elo" rx="7.6" ry="4.6"/><path class="pl-elo-brilho" d="M-4 -3.2 Q0 -4.4 4 -3.2"/></g><g id="corrente-esq-elo-8" transform="translate(86.7 91) rotate(138.4)"><path class="pl-elo-tinta" d="M-7 0 H7"/><path class="pl-elo" d="M-7 0 H7"/></g><g id="corrente-esq-elo-9" transform="translate(76.9 99.7) rotate(138.4)"><ellipse class="pl-elo-tinta" rx="7.6" ry="4.6"/><ellipse class="pl-elo" rx="7.6" ry="4.6"/><path class="pl-elo-brilho" d="M-4 -3.2 Q0 -4.4 4 -3.2"/></g></g><g id="corrente-dir"><g id="corrente-dir-elo-1" transform="translate(164.9 30.3) rotate(41.6)"><ellipse class="pl-elo-tinta" rx="7.6" ry="4.6"/><ellipse class="pl-elo" rx="7.6" ry="4.6"/><path class="pl-elo-brilho" d="M-4 -3.2 Q0 -4.4 4 -3.2"/></g><g id="corrente-dir-elo-2" transform="translate(174.7 39) rotate(41.6)"><path class="pl-elo-tinta" d="M-7 0 H7"/><path class="pl-elo" d="M-7 0 H7"/></g><g id="corrente-dir-elo-3" transform="translate(184.4 47.7) rotate(41.6)"><ellipse class="pl-elo-tinta" rx="7.6" ry="4.6"/><ellipse class="pl-elo" rx="7.6" ry="4.6"/><path class="pl-elo-brilho" d="M-4 -3.2 Q0 -4.4 4 -3.2"/></g><g id="corrente-dir-elo-4" transform="translate(194.2 56.3) rotate(41.6)"><path class="pl-elo-tinta" d="M-7 0 H7"/><path class="pl-elo" d="M-7 0 H7"/></g><g id="corrente-dir-elo-5" transform="translate(204 65) rotate(41.6)"><ellipse class="pl-elo-tinta" rx="7.6" ry="4.6"/><ellipse class="pl-elo" rx="7.6" ry="4.6"/><path class="pl-elo-brilho" d="M-4 -3.2 Q0 -4.4 4 -3.2"/></g><g id="corrente-dir-elo-6" transform="translate(213.8 73.7) rotate(41.6)"><path class="pl-elo-tinta" d="M-7 0 H7"/><path class="pl-elo" d="M-7 0 H7"/></g><g id="corrente-dir-elo-7" transform="translate(223.6 82.3) rotate(41.6)"><ellipse class="pl-elo-tinta" rx="7.6" ry="4.6"/><ellipse class="pl-elo" rx="7.6" ry="4.6"/><path class="pl-elo-brilho" d="M-4 -3.2 Q0 -4.4 4 -3.2"/></g><g id="corrente-dir-elo-8" transform="translate(233.3 91) rotate(41.6)"><path class="pl-elo-tinta" d="M-7 0 H7"/><path class="pl-elo" d="M-7 0 H7"/></g><g id="corrente-dir-elo-9" transform="translate(243.1 99.7) rotate(41.6)"><ellipse class="pl-elo-tinta" rx="7.6" ry="4.6"/><ellipse class="pl-elo" rx="7.6" ry="4.6"/><path class="pl-elo-brilho" d="M-4 -3.2 Q0 -4.4 4 -3.2"/></g></g><g id="argola-esq"><circle class="pl-elo-tinta" cx="70" cy="106" r="6.5"/><circle class="pl-elo" cx="70" cy="106" r="6.5"/></g><g id="argola-dir"><circle class="pl-elo-tinta" cx="250" cy="106" r="6.5"/><circle class="pl-elo" cx="250" cy="106" r="6.5"/></g><g id="prego"><circle class="pl-sombra" cx="162" cy="24" r="9"/><circle class="pl-metal pl-contorno" stroke-width="3" cx="160" cy="22" r="9"/><path class="pl-elo-brilho" d="M156 19 Q160 16 164 19"/></g></g><g transform="translate(0 96)"><g id="face-fechado"><defs><clipPath id="pl-clip-fechado"><rect x="10" y="14" width="300" height="172" rx="22"/></clipPath></defs>
+<rect class="pl-sombra" x="16" y="20" width="300" height="172" rx="22"/>
+<g id="fechado-tabua">
+<rect class="pl-madeira" x="10" y="14" width="300" height="172" rx="22"/>
+<g clip-path="url(#pl-clip-fechado)"><rect class="pl-madeira-clara" x="0" y="0" width="330" height="34"/><rect class="pl-madeira-sombra" x="0" y="160" width="330" height="40"/>
+<g id="fechado-veios"><path class="pl-veio" d="M30 52 C70 44 110 60 150 50"/><path class="pl-veio" d="M190 46 C220 40 255 54 292 46"/><path class="pl-veio" d="M24 146 C64 138 96 152 136 144"/><path class="pl-veio" d="M206 150 C236 140 262 156 296 148"/><ellipse class="pl-veio" cx="262" cy="96" rx="9" ry="5"/><path class="pl-veio" d="M240 92 C250 84 274 84 286 94"/></g></g>
+<rect fill="none" class="pl-contorno" stroke-width="5" x="10" y="14" width="300" height="172" rx="22"/>
+</g><g id="parafusos-fechado"><g><circle class="pl-metal pl-contorno" stroke-width="2.5" cx="30" cy="34" r="5"/><path class="pl-contorno" stroke-width="2" d="M27 36 L33 32"/></g><g><circle class="pl-metal pl-contorno" stroke-width="2.5" cx="290" cy="34" r="5"/><path class="pl-contorno" stroke-width="2" d="M287 36 L293 32"/></g><g><circle class="pl-metal pl-contorno" stroke-width="2.5" cx="30" cy="166" r="5"/><path class="pl-contorno" stroke-width="2" d="M27 168 L33 164"/></g><g><circle class="pl-metal pl-contorno" stroke-width="2.5" cx="290" cy="166" r="5"/><path class="pl-contorno" stroke-width="2" d="M287 168 L293 164"/></g></g>
+<text id="palavra-fechado" class="pl-display pl-tinta" x="160" y="122" font-size="60" text-anchor="middle" letter-spacing="1.5">FECHADO</text></g></g></svg></div>
+        </div>
+      </div>
+
+      <div class="heroi-corpo">
+        <p class="sub">Digite o nome do seu negócio. Em segundos você vê o seu site pronto, testa o pedido no seu próprio WhatsApp e só paga se gostar.</p>
+        <form class="abrir" id="form-abrir" novalidate>
+          <div class="campo">
+            <label for="nome">Nome do seu negócio</label>
+            <input id="nome" name="nome" type="text" autocomplete="organization" inputmode="text" maxlength="40" placeholder="Exemplo: Barbearia do Zé" aria-describedby="nome-ajuda nome-erro" enterkeyhint="go" spellcheck="false">
+            <span class="contador-giz" id="contador-giz" aria-hidden="true">0 de 40</span>
+            <span class="ajuda" id="nome-ajuda">O nome fica só neste aparelho até você decidir pedir o site.</span>
+            <span class="erro" id="nome-erro" role="alert" hidden></span>
+          </div>
+
+          <fieldset class="chips">
+            <legend>Que tipo de negócio?</legend>
+            <label class="chip"><input type="radio" name="nicho" value="barbearia"> Barbearia</label>
+            <label class="chip"><input type="radio" name="nicho" value="salao"> Salão e estética</label>
+            <label class="chip"><input type="radio" name="nicho" value="academia"> Academia e studio</label>
+          </fieldset>
+          <span class="erro" id="nicho-erro" role="alert" hidden>Escolha o tipo do seu negócio para montar o site certo.</span>
+
+          <div class="campo">
+            <label for="cidade">Cidade (opcional)</label>
+            <input id="cidade" name="cidade" type="text" autocomplete="address-level2" maxlength="40" placeholder="Exemplo: Campinas" aria-describedby="cidade-erro">
+            <span class="erro" id="cidade-erro" role="alert" hidden>Use só letras, espaço e estes sinais: . - '</span>
+          </div>
+
+          <div class="linha-acao">
+            <button class="btn btn-sol btn-g" type="submit" data-cta>Abrir meu negócio</button>
+            <span class="dica-arrastar" hidden>ou arraste a placa</span>
+          </div>
+          <div class="espera">
+            <p id="espera-rotulo">Chegam depois. Toque para ser avisado:</p>
+            <div class="chips" role="group" aria-labelledby="espera-rotulo">
+              <button type="button" class="chip chip-avise" data-espera="pet" aria-label="Pet, avise-me quando chegar" data-msg="Olá! Tenho um pet shop ou banho e tosa. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Pet</button>
+              <button type="button" class="chip chip-avise" data-espera="restaurante" aria-label="Restaurante, avise-me quando chegar" data-msg="Olá! Tenho um restaurante, marmitaria ou lanchonete. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Restaurante</button>
+              <button type="button" class="chip chip-avise" data-espera="oficina" aria-label="Oficina, avise-me quando chegar" data-msg="Olá! Tenho uma oficina. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Oficina</button>
+              <button type="button" class="chip chip-avise" data-espera="tatuagem" aria-label="Tatuagem, avise-me quando chegar" data-msg="Olá! Tenho um estúdio de tatuagem. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Tatuagem</button>
+            </div>
+          </div>
+
+        </form>
+        <noscript><p class="ajuda">Para ver a prévia do seu site, ative o JavaScript no navegador.</p></noscript>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · TESTE DE VERDADE -->
+  <section class="secao" id="teste" aria-labelledby="teste-titulo">
+    <div class="cx teste">
+      <div>
+        <div class="cab">
+          <span class="olho">Teste de verdade</span>
+          <h2 id="teste-titulo">Peça um horário para você mesmo.</h2>
+          <p>Escolha um serviço e um horário. O pedido abre no seu WhatsApp do jeito que vai chegar para você quando um cliente pedir.</p>
+        </div>
+        <div class="painel">
+          <form id="form-teste" novalidate>
+            <span class="teste-nicho">Serviços de exemplo · <span id="teste-nicho">Barbearia</span></span>
+            <div class="campo">
+              <label for="teste-whats">Seu WhatsApp, com DDD</label>
+              <input id="teste-whats" type="tel" inputmode="tel" autocomplete="off" placeholder="(11) 9XXXX-XXXX" maxlength="16" aria-describedby="teste-nota teste-whats-erro">
+              <span class="erro" id="teste-whats-erro" role="alert" hidden></span>
+            </div>
+            <div class="campo">
+              <label for="teste-servico">Serviço</label>
+              <select id="teste-servico"><option value="">Escolha um serviço</option></select>
+              <span class="erro" role="alert" hidden></span>
+            </div>
+            <div class="linha-campos">
+              <div class="campo">
+                <label for="teste-dia">Dia</label>
+                <select id="teste-dia"><option value="">Escolha o dia</option></select>
+                <span class="erro" role="alert" hidden></span>
+              </div>
+              <div class="campo">
+                <label for="teste-hora">Horário</label>
+                <select id="teste-hora"><option value="">Escolha o dia antes</option></select>
+                <span class="erro" role="alert" hidden></span>
+              </div>
+            </div>
+            <p class="nota-aparelho" id="teste-nota">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M10 18h4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+              <span>Seu número fica só neste aparelho. Ele não é salvo nem enviado para a Creat.</span>
+            </p>
+            <button class="btn btn-sol btn-g btn-bloco" type="submit" data-cta>Enviar o teste para o meu WhatsApp</button>
+            <p class="ok-msg" id="teste-abriu" role="status" hidden>Abrimos o WhatsApp com o teste. Volte aqui quando quiser escolher o plano.</p>
+            <button class="link-texto" type="button" id="teste-alternativa" aria-controls="celular">Não abriu? Veja como o pedido chega</button>
+          </form>
+        </div>
+      </div>
+      <div class="celular-desenho">
+        <div class="celular" id="celular" aria-live="polite" aria-label="Exemplo de mensagem">
+          <div class="celular-topo" aria-hidden="true"></div>
+          <div class="celular-cab">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 20l1.4-4A8 8 0 1 1 8.6 19z" fill="var(--papel)" stroke="var(--linha)" stroke-width="2.2" stroke-linejoin="round"/></svg>
+            <div>WhatsApp<span id="celular-de">Exemplo de mensagem</span></div>
+          </div>
+          <div class="celular-tela">
+            <div class="balao"><span id="celular-msg">Olá! Quero pedir um horário: Corte, amanhã às 10:00. Meu nome é (nome do cliente).</span><small>exemplo</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · COMO FUNCIONA -->
+  <section class="secao secao-ceu" id="como-funciona" aria-labelledby="como-titulo">
+    <div class="cx">
+      <div class="cab">
+        <span class="olho">Como funciona</span>
+        <h2 id="como-titulo">Do nome na placa ao site no ar, em 4 passos.</h2>
+      </div>
+      <ol class="passos">
+        <li><h3>Veja pronto</h3><p>Digite o nome e veja o seu site na hora. Teste o pedido de horário no seu WhatsApp. Ver é grátis.</p></li>
+        <li><h3>Pague por Pix</h3><p>Escolha o plano e pague a Abertura por Pix ou cartão. Você vê o total antes de pagar. Sem criar conta.</p></li>
+        <li><h3>Acompanhe na sede</h3><p>Abra a sede da Creat e veja a equipe montando o seu site, com o nome do seu negócio na fachada.</p></li>
+        <li><h3>No ar, você aprova</h3><p>Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade.</p></li>
+      </ol>
+      <div class="de-verdade">
+        <h3>Como funciona de verdade</h3>
+        <p>A equipe de agentes de IA da Creat criou o modelo de cada nicho e as regras de qualidade. No seu pedido, o texto é escrito por IA, conferido por regras automáticas e por uma pessoa da equipe antes de chegar até você.</p>
+        <ul>
+          <li>As regras automáticas conferem o número do WhatsApp, os horários, os preços e as palavras que não podem aparecer.</li>
+          <li>Uma pessoa da equipe lê o site antes de mandar para você aprovar.</li>
+          <li>Nada vai ao ar sem a sua aprovação.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5b · SITES-DEMONSTRAÇÃO (conteudo/home.json sitesDemo; feitos pela esteira real, nome fictício) -->
+  <section class="secao" id="sites-demo" aria-labelledby="demo-titulo">
+    <div class="cx">
+      <div class="cab">
+        <span class="olho">Sites-demonstração</span>
+        <h2 id="demo-titulo">Veja um site pronto</h2>
+        <p>Três sites feitos pela esteira real, a mesma que monta o seu. Nome fictício, cidade de verdade: Riachão do Jacuípe, na Bahia. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat.</p>
+      </div>
+      <ul class="demos">
+        <li class="demo-cartao">
+          <span class="olho">Barbearia</span>
+          <h3>Barbearia Navalha Fictícia</h3>
+          <p>Afie a navalha no couro para mandar o pedido.</p>
+          <a class="btn" href="sites/demo-barbearia/">Abrir a barbearia<span class="so-leitor"> (site-demonstração, nome fictício)</span></a>
+        </li>
+        <li class="demo-cartao">
+          <span class="olho">Salão e estética</span>
+          <h3>Salão Esmalte Fictício</h3>
+          <p>Pinte a unha com o dedo para mandar o pedido.</p>
+          <a class="btn" href="sites/demo-salao/">Abrir o salão<span class="so-leitor"> (site-demonstração, nome fictício)</span></a>
+        </li>
+        <li class="demo-cartao">
+          <span class="olho">Academia e studio</span>
+          <h3>Studio Barra Fictícia</h3>
+          <p>Levante a barra para pedir a aula experimental.</p>
+          <a class="btn" href="sites/demo-academia/">Abrir o studio<span class="so-leitor"> (site-demonstração, nome fictício)</span></a>
+        </li>
+      </ul>
+      <p class="demos-nota">Feito pela esteira real, nome fictício. Nenhum desses negócios existe.</p>
+    </div>
+  </section>
+
+  <!-- 6 · PREÇOS -->
+  <section class="secao" id="precos" aria-labelledby="precos-titulo">
+    <div class="cx">
+      <div class="cab">
+        <span class="olho">Preços</span>
+        <h2 id="precos-titulo">Um preço para abrir, um plano para manter aberto.</h2>
+        <p>Você paga a Abertura uma vez. A mensalidade só começa no dia em que o site entra no ar.</p>
+      </div>
+      <p class="precos-carregando" data-carregando-precos role="status">Conferindo os preços de hoje...</p>
+      <div class="precos-grade">
+        <article class="cartao-preco abertura" aria-labelledby="c-abertura">
+          <header>
+            <span class="selo" data-se="inauguracao" hidden>Inauguração: preço das <span data-v="precos.abertura.inauguracao.vagasTotal"></span> primeiras vagas</span>
+            <h3 id="c-abertura">Abertura</h3>
+            <p class="preco" data-se="inauguracao" hidden><strong>R$ <span data-v="precos.abertura.inauguracao.preco"></span></strong> <s>de R$ <span data-v="precos.abertura.padrao"></span></s> <span>uma vez</span></p>
+            <p class="preco" data-se="sem-inauguracao" hidden><strong>R$ <span data-v="precos.abertura.padrao"></span></strong> <span>uma vez</span></p>
+            <p class="preco" data-carregando-precos><strong><span class="num-carregando" data-v="precos.abertura.atual"></span></strong></p>
+            <p class="vagas" data-se="varias-vagas" hidden>Restam <span data-v="precos.abertura.inauguracao.vagasRestantes"></span> vagas com este preço.</p>
+            <p class="vagas" data-se="ultima-vaga" hidden>Resta 1 vaga com este preço.</p>
+          </header>
+          <div class="corpo">
+            <span class="rotulo-lista">Inclui</span>
+            <ul class="lista inclui">
+              <li>Site montado a partir do modelo do seu nicho, com o nome, a cidade e as cores que você escolheu</li>
+              <li>Textos escritos para o seu negócio e conferidos por uma pessoa da equipe</li>
+              <li>Pedido de horário que chega no seu WhatsApp</li>
+              <li>Endereço do site na Creat, pronto para usar</li>
+              <li>Passo a passo para ligar o seu domínio e o seu Perfil da Empresa no Google</li>
+              <li>Site no ar em até <span data-v="precos.prazoHoras" class="num-carregando"></span> h ou o 1º mês do plano grátis</li>
+            </ul>
+            <p class="vagas" data-se="vagas-hoje" hidden>Vagas de produção hoje: <span data-v="vagas.vagas_hoje"></span> de <span data-v="vagas.capacidade_dia"></span>.</p>
+            <p class="vagas" data-se="vagas-esgotadas" hidden>As vagas de produção de hoje acabaram. Pedido pago agora entra na fila, e o prazo de <span data-v="precos.prazoHoras"></span> h conta do mesmo jeito.</p>
+            <div class="compra"><a class="btn btn-bloco" href="#porta" data-ir-hero data-cta>Ver o meu site primeiro</a></div>
+          </div>
+        </article>
+
+        <article class="cartao-preco" aria-labelledby="c-aberto">
+          <header>
+            <h3 id="c-aberto">Aberto</h3>
+            <p>O site no ar, cuidado todo mês.</p>
+            <p class="preco"><strong>R$ <span class="num-carregando" data-v="precos.planos.aberto"></span></strong> <span>por mês, a partir do dia em que o site entra no ar</span></p>
+          </header>
+          <div class="corpo">
+            <span class="rotulo-lista">Inclui</span>
+            <ul class="lista inclui">
+              <li>Hospedagem do site</li>
+              <li>Pedido de horário no seu WhatsApp</li>
+              <li>Alterações sem limite de quantidade em texto, preço, serviço, horário, foto, promoção e equipe</li>
+              <li>Pedido especial respondido em até 1 dia útil</li>
+              <li>Suporte pelo WhatsApp</li>
+              <li>Ajuda para ligar o seu domínio e o Perfil da Empresa no Google</li>
+            </ul>
+            <span class="rotulo-lista">Não inclui</span>
+            <ul class="lista nao-inclui">
+              <li>Posts para o Instagram</li>
+              <li>Página nova, seção nova ou loja virtual (viram orçamento à parte)</li>
+              <li>Anúncios pagos</li>
+              <li>A anuidade do domínio, paga no seu nome ao Registro.br</li>
+            </ul>
+            <p class="anual"><a href="abrir/#plano=aberto_anual" data-plano="aberto_anual">Ou R$ <span class="num-carregando" data-v="precos.anual.aberto"></span> por 12 meses no Pix: você paga <span data-v="precos.anualMesesPagos"></span>.</a></p>
+            <div class="compra"><a class="btn btn-bloco" href="abrir/#plano=aberto" data-plano="aberto" data-cta>Escolher o Aberto</a></div>
+          </div>
+        </article>
+
+        <article class="cartao-preco recomendado" aria-labelledby="c-vitrine">
+          <header>
+            <span class="selo">recomendado</span>
+            <h3 id="c-vitrine">Vitrine</h3>
+            <p>O site no ar e posts prontos todo mês.</p>
+            <p class="preco"><strong>R$ <span class="num-carregando" data-v="precos.planos.vitrine"></span></strong> <span>por mês, a partir do dia em que o site entra no ar</span></p>
+          </header>
+          <div class="corpo">
+            <span class="rotulo-lista">Inclui</span>
+            <ul class="lista inclui">
+              <li>Tudo do plano Aberto</li>
+              <li>Posts prontos todo mês para o seu Instagram, aprovados por você</li>
+              <li>Pedido especial respondido em até 4 h úteis, de segunda a sábado, das 9h às 19h</li>
+              <li>Link do Instagram no site</li>
+            </ul>
+            <span class="rotulo-lista">Não inclui</span>
+            <ul class="lista nao-inclui">
+              <li>Gestão de anúncios pagos e verba de anúncio</li>
+              <li>Responder as mensagens dos seus clientes</li>
+              <li>Página nova, seção nova ou loja virtual (viram orçamento à parte)</li>
+              <li>A anuidade do domínio, paga no seu nome ao Registro.br</li>
+            </ul>
+            <p class="anual"><a href="abrir/#plano=vitrine_anual" data-plano="vitrine_anual">Ou R$ <span class="num-carregando" data-v="precos.anual.vitrine"></span> por 12 meses no Pix: você paga <span data-v="precos.anualMesesPagos"></span>.</a></p>
+            <div class="compra"><a class="btn btn-sol btn-bloco" href="abrir/#plano=vitrine" data-plano="vitrine" data-cta>Escolher o Vitrine</a></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="precos-extra">
+        <div class="precisa">
+          <h3>O que você precisa ter</h3>
+          <ul>
+            <li>WhatsApp Business no celular. O app é grátis.</li>
+            <li>CPF ou CNPJ para registrar o domínio .com.br no seu nome, se quiser um.</li>
+            <li>Instagram, só no plano Vitrine.</li>
+            <li>Logo e fotos, se tiver. Sem eles, o site sai com a tipografia do modelo e você manda depois.</li>
+          </ul>
+          <p class="nota">A Creat nunca pede a sua senha de nenhuma conta.</p>
+        </div>
+        <div class="contrato-bloco">
+          <h3>O contrato em 6 linhas</h3>
+          <ol class="contrato">
+            <li>Sem fidelidade.</li>
+            <li>Sem multa para sair.</li>
+            <li>O domínio fica no seu nome.</li>
+            <li>Se sair, você leva o site, o domínio e os arquivos.</li>
+            <li>7 dias para se arrepender, com o dinheiro de volta.</li>
+            <li>Mensalidade só com o site no ar.</li>
+          </ol>
+          <a href="termos/">Ler os termos completos</a>
+        </div>
+        <div class="agenda-externa">
+          <h3>Já tem agenda (Trinks, Booksy...)? O botão do seu site pode apontar para ela.</h3>
+          <p>Se você já marca horários por um aplicativo, o botão do site abre esse aplicativo em vez do WhatsApp. É só mandar o link quando fizer o pedido.</p>
+          <small>Trinks e Booksy são só exemplos de ferramentas. A Creat não tem vínculo com elas.</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · SEDE AO VIVO: a empresa em funcionamento (conteudo/home.json sede). Demonstração, nome fictício. -->
+  <section class="secao secao-ceu" id="sede" aria-labelledby="sede-titulo">
+    <div class="cx sede-grade">
+      <div class="cab">
+        <span class="olho">Sede ao vivo</span>
+        <h2 id="sede-titulo">Veja quem monta o seu site</h2>
+        <p>Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um organiza, um escreve, outro escolhe as cores, outro testa no celular. Escolha um negócio e veja o pedido passar de mão em mão até o site ir para o ar.</p>
+      </div>
+      <div class="sede-viva">
+        <div class="sede-marcas" role="group" aria-label="Negócio na fachada da sede" data-sede-marcas>
+          <button class="chip" type="button" aria-pressed="true" data-marca="Barbearia Navalha Fictícia" data-site="sites/demo-barbearia/">Barbearia Navalha Fictícia</button>
+          <button class="chip" type="button" aria-pressed="false" data-marca="Salão Esmalte Fictício" data-site="sites/demo-salao/">Salão Esmalte Fictício</button>
+          <button class="chip" type="button" aria-pressed="false" data-marca="Studio Barra Fictícia" data-site="sites/demo-academia/">Studio Barra Fictícia</button>
+        </div>
+        <figure class="janela-sede" id="janela-sede">
+          <span class="selo-demo">Demonstração</span>
+          <div class="sede-palco"><picture data-poster>
+            <source media="(max-width: 719px)" srcset="assets/img/sede-ilha-640.webp" width="640" height="400">
+            <img src="assets/img/sede-ilha.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Ilha da sede da Creat Nuvem desenhada em 3D, com a equipe de personagens trabalhando nas mesas.">
+          </picture>
+          <button class="btn btn-sol ver-ao-vivo" type="button" data-ver-ao-vivo>Ver ao vivo</button></div>
+          <figcaption><span data-legenda-marca>Nome fictício na fachada.</span><span class="so-celular" data-legenda-dica> A sede 3D só carrega quando você toca em Ver ao vivo, para poupar dados.</span></figcaption>
+        </figure>
+      </div>
+      <aside class="esteira" id="esteira" aria-labelledby="esteira-titulo" data-etapa="0">
+        <div class="esteira-cab">
+          <span class="olho">Pedido de demonstração</span>
+          <h3 id="esteira-titulo" data-esteira-nome>Barbearia Navalha Fictícia</h3>
+          <p class="esteira-agora" data-esteira-agora>Nimbus organiza o pedido</p>
+          <div class="esteira-trilho" aria-hidden="true"><span data-esteira-barra></span></div>
+        </div>
+        <ol class="esteira-lista">
+          <li data-passo="0" data-agente="nimbus"><i aria-hidden="true"></i><span class="esteira-quem"><b>Nimbus</b> organiza o pedido</span><span class="esteira-st" data-st>agora</span></li>
+          <li data-passo="1" data-agente="verbo"><i aria-hidden="true"></i><span class="esteira-quem"><b>Verbo</b> escreve os textos</span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-passo="1" data-agente="paleta"><i aria-hidden="true"></i><span class="esteira-quem"><b>Paleta</b> escolhe as cores</span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-passo="2" data-agente="pixel"><i aria-hidden="true"></i><span class="esteira-quem"><b>Pixel</b> monta o site</span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-passo="3" data-agente="lupa"><i aria-hidden="true"></i><span class="esteira-quem"><b>Lupa</b> testa no celular</span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-passo="3" data-agente="muralha"><i aria-hidden="true"></i><span class="esteira-quem"><b>Muralha</b> confere a segurança</span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-passo="4" data-agente="trilho"><i aria-hidden="true"></i><span class="esteira-quem"><b>Trilho</b> publica</span><span class="esteira-st" data-st>na fila</span></li>
+        </ol>
+        <div class="esteira-fim">
+          <span class="esteira-carimbo" aria-hidden="true">No ar</span>
+          <a class="btn esteira-abrir" href="sites/demo-barbearia/" data-esteira-abrir>Abrir o site pronto<span class="so-leitor" data-esteira-abrir-sr>: Barbearia Navalha Fictícia (site-demonstração, nome fictício)</span></a>
+        </div>
+        <p class="esteira-nota">Demonstração: é assim que a equipe aparece quando há um pedido em produção. Os nomes são fictícios e nenhum desses negócios existe.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 8 · PROVA (só com depoimento autorizado em dados/depoimentos.json) -->
+  <section class="secao prova" id="prova" aria-labelledby="prova-titulo" hidden>
+    <div class="cx">
+      <div class="cab">
+        <span class="olho">Quem já abriu</span>
+        <h2 id="prova-titulo">Negócios que já abriram com a Creat</h2>
+      </div>
+      <ul class="prova-lista" id="prova-lista"></ul>
+      <p class="nota">Publicado com autorização por escrito de cada dono.</p>
+    </div>
+  </section>
+
+  <!-- 9 · PERGUNTAS -->
+  <section class="secao" id="perguntas" aria-labelledby="faq-titulo">
+    <div class="cx">
+      <div class="cab">
+        <span class="olho">Perguntas</span>
+        <h2 id="faq-titulo">Perguntas diretas, respostas diretas</h2>
+      </div>
+      <div class="faq">
+        <details id="faq-e-ia"><summary>É IA?</summary><div class="resp"><p>É, e a gente diz como. A equipe de agentes de IA da Creat criou o modelo de cada nicho e as regras de qualidade. No seu pedido, a IA escreve os textos, regras automáticas conferem número, horários, preços e palavras proibidas, e uma pessoa da equipe lê o site antes de mandar para você aprovar.</p></div></details>
+        <details id="faq-quem-confere"><summary>Quem confere o meu site?</summary><div class="resp"><p>Duas camadas. Primeiro, regras automáticas: o WhatsApp precisa estar no formato certo, o horário precisa fechar depois de abrir, o site é testado num celular de 390 px sem rolagem lateral. Depois, uma pessoa da equipe lê tudo. Por último, você: nada vai ao ar sem a sua aprovação.</p></div></details>
+        <details id="faq-assinatura"><summary>Preciso de outra assinatura?</summary><div class="resp"><p>Não. Hospedagem, IA e ferramentas ficam por conta da Creat. Você só precisa do app WhatsApp Business, que é grátis. Se quiser um domínio .com.br, a anuidade é paga ao Registro.br no seu nome, e a gente mostra o passo a passo.</p></div></details>
+        <details id="faq-app-de-horarios"><summary>E se eu já uso agenda?</summary><div class="resp"><p>Pode continuar usando. Se você já marca horários por um aplicativo (Trinks, Booksy ou outro), o botão do seu site abre esse aplicativo em vez do WhatsApp. Basta mandar o link no pedido. Os nomes são só exemplos de ferramenta; a Creat não tem vínculo com nenhuma.</p></div></details>
+        <details id="faq-dominio"><summary>O domínio é meu?</summary><div class="resp"><p>É. O domínio é registrado no seu nome e no seu CPF ou CNPJ, no Registro.br. A Creat nunca guarda a sua senha. Enquanto você não tiver domínio, o site funciona num endereço da Creat.</p></div></details>
+        <details id="faq-cancelar"><summary>E se eu cancelar?</summary><div class="resp"><p>Sem multa e sem fidelidade. Você pede pelo WhatsApp e recebe o SAIR: o site num arquivo que abre direto no computador, com o botão do WhatsApp funcionando, mais os seus textos, fotos e logo. O domínio já é seu. O endereço da Creat redireciona por 30 dias e depois sai.</p></div></details>
+        <details id="faq-prazo"><summary>E se passar do prazo?</summary><div class="resp"><p>O prazo é de <span data-v="precos.prazoHoras"></span> h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. O formulário também pede seu nome e seu e-mail, para contato e recibo. Eles não mudam o prazo. Se passar, o 1º mês do plano é grátis. Domínio próprio e verificação do Google ficam fora do relógio, porque dependem de você e de terceiros.</p></div></details>
+        <details id="faq-instagram"><summary>Preciso de Instagram?</summary><div class="resp"><p>Não. O plano Aberto funciona só com o WhatsApp. O Instagram entra no plano Vitrine, que traz posts prontos todo mês para você aprovar.</p></div></details>
+        <details id="faq-clinica"><summary>Serve para clínica?</summary><div class="resp"><p>Não. Hoje o Porta Aberta não atende esse segmento. Os modelos prontos são para barbearia, salão e estética, academia e studio.</p></div></details>
+        <details id="faq-meus-dados"><summary>E os meus dados?</summary><div class="resp"><p>Antes de você aceitar os termos, a página não guarda nada pessoal: o nome do negócio e o seu WhatsApp de teste ficam só no seu aparelho. Os dados do pedido vão pelo seu próprio WhatsApp para o Suporte Creat. O pagamento e o CPF ou CNPJ ficam com o Mercado Pago (Pix e cartão) ou com o Stripe (mensalidade no cartão). Detalhes na <a href="privacidade/">página de privacidade</a>.</p></div></details>
+        <details id="faq-pedido-confirmado"><summary>O cliente marca o horário sozinho?</summary><div class="resp"><p>Ele escolhe dia, horário e serviço no site, e o pedido chega pronto no seu WhatsApp. Quem confirma é você, pelo WhatsApp. Assim o site nunca promete um horário que você não pode atender.</p></div></details>
+        <details id="faq-alteracoes"><summary>Posso mudar preço e horário depois?</summary><div class="resp"><p>Pode, sem limite de quantidade, pelo WhatsApp: texto, preço, serviço, horário, foto, promoção e equipe. Página nova, seção nova ou loja virtual viram orçamento à parte.</p></div></details>
+        <details id="faq-resultado"><summary>Vou ter mais clientes?</summary><div class="resp"><p>Não prometemos número de clientes nem faturamento. O que entregamos é o seu negócio aberto na internet, com um caminho curto para o cliente pedir horário no seu WhatsApp. O resultado depende do seu negócio, da sua região e de como você divulga.</p></div></details>
+        <details id="faq-gostar"><summary>E se eu não gostar do site pronto?</summary><div class="resp"><p>Você pede os ajustes antes de aprovar. E tem 7 dias de arrependimento depois do pagamento: o valor volta para você e o site sai do ar.</p></div></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · CHAMADA FINAL -->
+  <section class="secao chamada" aria-labelledby="chamada-titulo">
+    <div class="cx">
+      <div class="painel">
+        <div>
+          <h2 id="chamada-titulo">Seu nome na placa leva segundos.</h2>
+          <p>Veja o seu site pronto antes de decidir qualquer coisa.</p>
+        </div>
+        <div class="linha-acao">
+          <a class="btn btn-sol btn-g" href="#porta" data-ir-hero data-cta>Abrir meu negócio</a>
+          <a class="btn btn-fantasma" data-zap="duvida" href="#perguntas"><span data-rotulo-zap>Prefere conversar? Chamar no WhatsApp</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="cx">
+    <p>Creat Nuvem é um serviço da Creat.MTT Studio.</p>
+    <p>Suporte: <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a></p>
+    <nav aria-label="Rodapé">
+      <ul>
+        <li><a href="termos/">Termos de uso</a></li>
+        <li><a href="privacidade/">Privacidade</a></li>
+        <li><button type="button" class="link-texto" data-preferencias>Preferências de medição</button></li>
+        <li><button type="button" class="btn btn-fantasma som-botao" data-som aria-pressed="true" hidden><span>Som ligado</span></button></li>
+      </ul>
+    </nav>
+    <p class="discreto"><a href="bastidores/">Bastidores: como a equipe funciona por dentro</a></p>
+    <p class="discreto">A Creat Nuvem é independente e não tem vínculo com a Anthropic, a Meta ou o Google.</p>
+  </div>
+</footer>
+
+<!-- 3 · PRÉVIA em tela cheia (iframe de previa/) -->
+<section class="previa" id="previa" role="dialog" aria-modal="true" aria-labelledby="previa-rotulo" hidden>
+  <div class="previa-topo">
+    <span class="rotulo-previa" id="previa-rotulo">Prévia do seu site · <span id="previa-nome"></span></span>
+    <span class="acoes">
+      <button class="btn" type="button" id="previa-copiar">copiar link</button>
+      <button class="btn" type="button" id="previa-fechar" aria-label="Fechar a prévia">Fechar</button>
+    </span>
+  </div>
+  <div class="previa-corpo">
+    <iframe id="previa-frame" title="Prévia do site" referrerpolicy="no-referrer"></iframe>
+    <div class="carregando" id="previa-carregando" role="status">
+      <img class="placa-mini" src="assets/svg/placa.svg" alt="" width="120" height="109">
+      <p>Montando o site<span class="giz-pontos"></span></p>
+    </div>
+  </div>
+  <div class="previa-base">
+    <button class="btn" type="button" id="previa-testar">Testar no meu WhatsApp</button>
+    <button class="btn btn-sol" type="button" id="previa-quero">Quero este site no ar</button>
+  </div>
+</section>
+
+<a class="btn zap-flutuante" data-zap="duvida" data-some-sem-zap href="#perguntas" aria-label="Chamar o Suporte Creat no WhatsApp">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.4-4A8 8 0 1 1 8.6 19z" fill="var(--sol)" stroke="var(--linha)" stroke-width="2.2" stroke-linejoin="round"/><path d="M9.5 9.5c.4 2 2.2 3.8 4.4 4.4" fill="none" stroke="var(--linha)" stroke-width="2" stroke-linecap="round"/></svg>
+  <span>Chamar no WhatsApp</span>
+</a>
+
+<div class="consentimento" id="consentimento" role="region" aria-label="Medição desta página" data-salvo="Preferência salva. Você muda quando quiser no rodapé, em Preferências de medição." hidden>
+  <p><strong>Medição desta página.</strong> Medimos visitas sem cookie e sem dado pessoal. Com a sua permissão, usamos também o Pixel da Meta e o Clarity para medir anúncios. <a href="privacidade/">Privacidade</a></p>
+  <div class="botoes">
+    <button class="btn" type="button" data-consentir="sim">Aceitar</button>
+    <button class="btn" type="button" data-consentir="nao">Recusar</button>
+  </div>
+</div>
+</body>
+</html>

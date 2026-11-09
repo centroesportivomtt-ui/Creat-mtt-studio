@@ -37,7 +37,7 @@ Ver a prévia é grátis e não exige cadastro. A prévia usa serviços, preços
 ## 5. Prazo e garantia
 
 - O site fica pronto para a sua aprovação em até {{precos.prazoHoras}} horas.
-- O prazo começa quando a Creat confirma o pagamento e tem os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário de funcionamento.
+- O prazo começa quando a Creat confirma o pagamento e tem os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário de funcionamento. O formulário também pede o nome do responsável e o e-mail. Eles servem para contato, recibo e registro dos termos e não mudam a contagem.
 - Sem logo e fotos, o site sai com a tipografia do modelo. Logo e fotos enviados depois entram como melhoria em até 24 horas do envio.
 - Ficam fora do prazo o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros.
 - Se a Creat passar do prazo, o 1º mês do plano é grátis.
@@ -53,7 +53,7 @@ Você tem 7 dias, contados do pagamento, para desistir sem dar motivo (Código d
 ## 7. Mensalidade, cobrança e cancelamento
 
 - A primeira mensalidade só é cobrada a partir do dia em que o site entra no ar.
-- A cobrança é feita pelo Asaas, por Pix, boleto ou cartão, conforme o link enviado.
+- A Abertura e o plano anual são cobrados pelo Mercado Pago, por Pix ou cartão. A mensalidade no cartão é cobrada pelo Stripe, com renovação automática que você cancela quando quiser. O valor e o dia da cobrança aparecem no link antes de você pagar.
 - Não há fidelidade nem multa. Você cancela quando quiser, pelo WhatsApp do Suporte Creat ou por e-mail. O cancelamento vale para o próximo ciclo; o mês já pago segue até o fim.
 - **Plano anual**: se você cancelar antes de terminar os 12 meses, devolvemos o valor proporcional aos meses inteiros ainda não usados, calculado sobre o preço pago no anual.
 
@@ -100,7 +100,7 @@ O endereço do site na Creat redireciona para o seu domínio por 30 dias e depoi
 
 ## 13. Uso do nome do seu negócio pela Creat
 
-- Durante a produção, o nome do seu negócio aparece na fachada da sede 3D, no link de acompanhamento que enviamos para você.
+- O nome do seu negócio aparece na fachada da sede 3D quando você abre a sede pelas nossas páginas. A sede mostra uma demonstração de como a equipe trabalha; o andamento do seu pedido é enviado pelo WhatsApp.
 - Mostrar o seu negócio em público (portfólio, vídeo, post ou anúncio da Creat) só com a sua autorização por escrito, que você pode retirar quando quiser. Depoimento seu só é publicado com autorização por escrito.
 - O rodapé do site traz a frase "Aberto pela Creat · veja o seu", com link para a Creat. Se preferir sem, peça ao suporte.
 
@@ -114,7 +114,7 @@ O endereço do site na Creat redireciona para o seu domínio por 30 dias e depoi
 
 ## 15. Serviços de terceiros
 
-O site depende de serviços que a Creat não controla: WhatsApp e Instagram (Meta), Registro.br, Google, Asaas e a hospedagem. A Creat não responde por falha, mudança de regra ou bloqueio nesses serviços, mas ajuda você a resolver.
+O site depende de serviços que a Creat não controla: WhatsApp e Instagram (Meta), Registro.br, Google, Mercado Pago, Stripe e a hospedagem. A Creat não responde por falha, mudança de regra ou bloqueio nesses serviços, mas ajuda você a resolver.
 
 ## 16. Responsabilidade
 

@@ -32,13 +32,13 @@ Em /abrir/, você preenche: seu nome, o WhatsApp que recebe os pedidos, o endere
 
 ## 5. Pagamento
 
-O pagamento é feito no Asaas. A Creat não vê os dados do seu cartão. O CPF ou CNPJ de quem paga fica com o Asaas e não é guardado no pedido da Creat.
+O pagamento é feito no Mercado Pago (Abertura e plano anual, por Pix ou cartão) ou no Stripe (mensalidade no cartão). A Creat não vê os dados do seu cartão. O CPF ou CNPJ de quem paga fica com o provedor de pagamento e não é guardado no pedido da Creat.
 
 ## 6. Com quem os dados são compartilhados
 
 Só com quem precisa para o serviço funcionar:
 
-- Asaas, para a cobrança.
+- Mercado Pago e Stripe, para a cobrança.
 - Anthropic, que fornece a IA que escreve os textos do site. Recebe os dados do negócio (nome, serviços, cidade), não o seu e-mail.
 - A hospedagem do site e da vitrine.
 - Meta (WhatsApp e, se você aceitar, Pixel) e Microsoft (Clarity, se você aceitar).

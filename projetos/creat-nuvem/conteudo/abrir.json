@@ -3,7 +3,7 @@
 
   "seo": {
     "titulo": "Escolha o plano e abra o seu negócio | Creat",
-    "descricao": "Veja o total antes de pagar, preencha 5 dados e pague a Abertura por Pix ou cartão. Mensalidade só com o site no ar. Sem fidelidade."
+    "descricao": "Veja o total antes de pagar, informe WhatsApp, endereço e horário e pague a Abertura por Pix ou cartão. Mensalidade só com o site no ar."
   },
 
   "titulo": "Falta pouco para abrir a {negocio}.",
@@ -32,7 +32,7 @@
 
   "campos": {
     "titulo": "Os dados do seu negócio",
-    "texto": "O nome do negócio veio da prévia. Com o WhatsApp, o endereço e o horário, a equipe tem os 4 dados que fazem o relógio do prazo começar.",
+    "texto": "O relógio do prazo começa com 4 dados do pedido: o nome do negócio, que veio da prévia, o WhatsApp, o endereço e o horário. Seu nome e seu e-mail servem para a equipe falar com você e mandar o recibo. Eles não mudam o prazo.",
     "responsavel": {
       "rotulo": "Seu nome (responsável)",
       "ajuda": "Quem a equipe chama para aprovar o site."
@@ -44,8 +44,8 @@
     },
     "endereco": {
       "rotulo": "Endereço completo",
-      "exemplo": "Rua, número, bairro, cidade, UF e CEP",
-      "ajuda": "Aparece no site e no link de como chegar."
+      "exemplo": "Rua, número, bairro, cidade-UF, CEP",
+      "ajuda": "Exemplo: Rua das Flores, 120, Centro, Campinas-SP, 13010-000. Aparece no site e no link de como chegar."
     },
     "horarios": {
       "rotulo": "Horário de funcionamento",
@@ -74,14 +74,14 @@
     "cartao": "Cartão em até 2x",
     "emConfiguracao": "Link de pagamento em configuração",
     "emConfiguracaoNota": "O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.",
-    "seguranca": "O pagamento é feito no Asaas. A Creat não vê os dados do seu cartão.",
+    "seguranca": "O pagamento é feito no Mercado Pago, por Pix ou cartão. A Creat não vê os dados do seu cartão.",
     "semConta": "Sem criar conta.",
     "salvoNoAparelho": "Seus dados ficam salvos neste aparelho para a próxima página. Você pode apagar a qualquer momento."
   },
 
   "garantia": {
     "titulo": "Garantia de prazo",
-    "texto": "Seu site fica pronto em até {{precos.prazoHoras}} h, contadas da confirmação do pagamento com os 4 dados preenchidos aqui. Passou do prazo, o 1º mês do plano é grátis.",
+    "texto": "Seu site fica pronto em até {{precos.prazoHoras}} h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp, endereço e horário. Passou do prazo, o 1º mês do plano é grátis.",
     "fora": "Ficam fora do relógio o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros. Logo e fotos enviados depois entram como melhoria em até 24 h."
   },
 
@@ -91,7 +91,7 @@
       "Você volta para a página do pedido e envia o pedido pronto no WhatsApp do Suporte Creat.",
       "A equipe confere o pagamento e responde no seu WhatsApp.",
       "O relógio de {{precos.prazoHoras}} h começa a contar.",
-      "Você acompanha a equipe na sede, com o nome do seu negócio na fachada.",
+      "Você recebe o andamento do pedido no WhatsApp. Na sede, vê uma demonstração de como a equipe trabalha, com o nome do seu negócio na fachada.",
       "Você recebe o site pronto, pede ajustes se quiser e aprova.",
       "O site entra no ar. A mensalidade começa neste dia.",
       "A equipe manda o passo a passo do domínio e do Perfil da Empresa no Google."
@@ -102,7 +102,7 @@
     "responsavel": "Escreva o seu nome para a equipe saber com quem falar.",
     "whatsappVazio": "Digite o WhatsApp que recebe os pedidos, com DDD.",
     "whatsappInvalido": "Esse número não parece um celular com DDD. Confira e digite de novo, por exemplo (11) 9XXXX-XXXX.",
-    "endereco": "Escreva o endereço completo, com número, bairro e cidade.",
+    "endereco": "Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.",
     "horarioNenhumDia": "Marque pelo menos um dia aberto.",
     "horarioInvertido": "Em {dia}, o horário de fechar está antes do de abrir. Ajuste para seguir.",
     "email": "Esse e-mail não parece completo. Confira se tem @ e o final, como .com ou .com.br.",

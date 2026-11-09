@@ -1,0 +1,95 @@
+# Porta Aberta · rotina diária de vagas e preço de inauguração (Trilho)
+#
+# Por quê: a vitrine só mostra "R$ 297 · restam N vagas" com dados/*.json carimbados há
+# no máximo 48 h (ADR-003, CDC art. 37). O site é estático, então o carimbo só vale
+# depois de publicado. Esta rotina, todo dia às 00:07 de Salvador:
+#   1. roda scripts/atualizar-vagas.cjs --rotina (novo dia + carimbo + checagem do link da inauguração);
+#   2. faz commit dos dois JSON carimbados (o repositório continua sendo a fonte da verdade);
+#   3. publica com wrangler deploy (o build do wrangler.toml roda checar-placeholders + montar-publico);
+#   4. se algo falhar, abre (ou comenta) uma issue "Rotina de vagas falhou" e o GitHub manda e-mail.
+#
+# Desligada até o Marcos ligar: Settings > Secrets and variables > Actions > Variables >
+#   ROTINA_VAGAS_ATIVA = true
+# Segredos (Settings > Secrets and variables > Actions > Secrets):
+#   CLOUDFLARE_API_TOKEN   token "Edit Cloudflare Workers" só da conta da Creat
+#   CLOUDFLARE_ACCOUNT_ID  dash.cloudflare.com > Workers & Pages > Account ID (coluna da direita)
+#
+# Importante: o contador da inauguração só desce com --vendeu. Depois de cada pedido pago,
+# rode `node scripts/atualizar-vagas.cjs --vendeu` com o repositório atualizado (git pull antes)
+# e faça push; a rotina publica o que estiver no repositório.
+name: Rotina de vagas
+
+on:
+  schedule:
+    - cron: '7 3 * * *'   # 03:07 UTC = 00:07 em Salvador (UTC-3, sem horário de verão)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: rotina-vagas
+  cancel-in-progress: false
+
+jobs:
+  carimbar-e-publicar:
+    if: ${{ vars.ROTINA_VAGAS_ATIVA == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: projetos/creat-nuvem
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '22.12.0'
+
+      - name: Carimbar vagas e preços
+        id: carimbo
+        run: |
+          set +e
+          node scripts/atualizar-vagas.cjs --rotina
+          rc=$?
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          # 2 = carimbou, mas o link da inauguração ainda está publicado com a inauguração encerrada:
+          # publica mesmo assim (a página já cai no preço padrão) e falha no fim para alertar.
+          if [ "$rc" != "0" ] && [ "$rc" != "2" ]; then exit "$rc"; fi
+
+      - name: Conferir a vitrine
+        run: node scripts/checar.cjs
+
+      - name: Commit do carimbo
+        run: |
+          git config user.name "creat-rotina"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dados/vagas.json dados/precos.json
+          git diff --cached --quiet && exit 0
+          git commit -m "rotina: carimbo diário de vagas e preços"
+          git push
+
+      - name: Publicar (Cloudflare Workers Static Assets)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4.158.0 deploy
+
+      - name: Alertar link da inauguração
+        if: ${{ steps.carimbo.outputs.rc == '2' }}
+        run: |
+          echo "::error::Inauguração encerrada e link do Asaas ainda no checkout.config.js. Desative o link no Asaas e volte aberturaInauguracao para o marcador."
+          exit 1
+
+      - name: Abrir issue de falha
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXECUCAO: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          titulo="Rotina de vagas falhou"
+          n=$(gh issue list --state open --search "in:title \"$titulo\"" --json number --jq '.[0].number')
+          corpo="A rotina diária de vagas falhou em $(date -u +%FT%TZ): $EXECUCAO
+          Sem a rotina, 48 h depois do último carimbo a vitrine cai no preço padrão e esconde o contador (ADR-003)."
+          if [ -n "$n" ]; then gh issue comment "$n" --body "$corpo"; else gh issue create --title "$titulo" --body "$corpo"; fi

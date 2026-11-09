@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bastidores: a agência de 15 agentes da Creat | Creat</title>
+<meta name="description" content="Os 15 agentes, as skills e o kit 3D que a Creat usa por dentro, para quem quer montar a própria agência no Claude Code.">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="../assets/svg/placa.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&family=JetBrains+Mono:wght@500&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/vitrine.css">
+<link rel="stylesheet" href="../abrir/pedido.css">
+<script defer src="../checkout.config.js"></script>
+<script defer src="../assets/vitrine.js"></script>
+</head>
+<body data-pagina="bastidores">
+<header class="barra barra-simples">
+  <div class="cx">
+    <a class="marca" href="../" aria-label="Creat Nuvem, início">
+      <svg viewBox="0 0 64 48" aria-hidden="true"><path d="M14 40a10 10 0 0 1-1-20 14 14 0 0 1 27-6 11 11 0 0 1 13 11 8 8 0 0 1-1 15z" fill="var(--sol)" stroke="var(--linha)" stroke-width="4" stroke-linejoin="round"/><circle cx="26" cy="28" r="2.6" fill="var(--sol-tinta)"/><circle cx="38" cy="28" r="2.6" fill="var(--sol-tinta)"/><path d="M28 34q4 3 8 0" fill="none" stroke="var(--sol-tinta)" stroke-width="3" stroke-linecap="round"/></svg>
+      <span>Creat Nuvem</span>
+    </a>
+    <a class="btn voltar" href="../">Voltar para o Porta Aberta</a>
+  </div>
+</header>
+
+<main class="pagina" id="conteudo">
+  <div class="cx">
+    <p class="aviso-dev" id="aviso-claude-code">Para quem quer montar a própria agência. Exige Claude Code, assinatura paga da Anthropic, por conta de quem compra.</p>
+
+    <span class="olho mt-5">Bastidores</span>
+    <h1>A equipe da Creat, por dentro.</h1>
+    <p class="lead">São os mesmos agentes que montam os sites do Porta Aberta: o diretor planeja, a designer cria as cores, o frontend constrói, o revisor lê o código e o QA testa no navegador. Tudo roda no seu Claude Code, no seu repositório.</p>
+
+    <div class="grade-pedido">
+      <section class="bloco" aria-labelledby="pacote-titulo">
+        <h2 id="pacote-titulo">O que vem no pacote</h2>
+        <ul class="lista inclui">
+          <li>15 agentes com cargo, regras de qualidade e ferramentas, do diretor ao DevOps</li>
+          <li>As skills da casa: ideação, direção de arte, 3D em estilo desenho, verificação visual, navegador e definição de pronto</li>
+          <li>O fluxo que divide o projeto em ondas e deixa relatório a cada etapa</li>
+          <li>O kit 3D em estilo desenho para Three.js, o mesmo da sede</li>
+          <li>A sede 3D com modo ao vivo, que mostra qual agente está trabalhando</li>
+          <li>O site Fio no Couro como exemplo de saída: um site de barbearia com pedido de horário pelo WhatsApp, com dados de exemplo para trocar</li>
+        </ul>
+      </section>
+
+      <aside class="lateral">
+        <section class="bloco" aria-labelledby="preco-titulo">
+          <h2 id="preco-titulo">Bastidores</h2>
+          <p class="preco-unico"><strong>R$ <span data-v="precos.bastidores" class="num-carregando"></span></strong> <span>pagamento único</span></p>
+          <a class="btn btn-sol btn-g btn-bloco mt-4" data-checkout="bastidores" aria-disabled="true" tabindex="-1" data-rotulo="Comprar os Bastidores">Link de pagamento em configuração</a>
+          <p class="notas mt-3" id="bastidores-config">O link de compra ainda está sendo configurado. Enquanto isso, peça o Lite grátis abaixo.</p>
+          <p class="notas mt-3">O pacote não inclui acesso ao Claude. Os tokens que cada agente usa são cobrados na sua conta da Anthropic.</p>
+        </section>
+        <section class="bloco-tracejado" aria-labelledby="lite-titulo">
+          <h2 id="lite-titulo">Creat Nuvem Lite, grátis</h2>
+          <p>Três agentes que trabalham em dupla com você: o frontend constrói, o revisor lê o código e o QA testa no navegador, com prints no celular e no desktop. Bom para ver se o jeito de trabalhar combina com você antes de comprar. Licença MIT.</p>
+          <a class="btn mt-4" href="mailto:mttcreatt@gmail.com?subject=Quero%20o%20Creat%20Nuvem%20Lite&amp;body=Ol%C3%A1!%20Quero%20receber%20o%20Creat%20Nuvem%20Lite%20gr%C3%A1tis.">Pedir o Lite por e-mail</a>
+        </section>
+      </aside>
+    </div>
+
+    <section class="mt-5" aria-labelledby="licenca-titulo">
+      <h2 id="licenca-titulo">A licença, em linguagem simples</h2>
+      <div class="duas-colunas">
+        <div class="bloco">
+          <span class="rotulo-lista">Pode</span>
+          <ul class="lista inclui mt-3">
+            <li>Usar em projetos seus e de clientes, inclusive cobrando pelo trabalho.</li>
+            <li>Modificar e combinar com outros materiais.</li>
+            <li>Entregar ao cliente o site ou o código final que usa partes do pacote.</li>
+          </ul>
+        </div>
+        <div class="bloco">
+          <span class="rotulo-lista">Não pode</span>
+          <ul class="lista nao-inclui mt-3">
+            <li>Revender, dar ou alugar o pacote, inteiro ou em partes, modificado ou não.</li>
+            <li>Publicar o pacote em repositório público, site de download, curso ou banco de templates.</li>
+            <li>Tirar o aviso de licença das cópias.</li>
+          </ul>
+        </div>
+      </div>
+      <ul class="lista-simples mt-4">
+        <li>Uma licença por pessoa ou empresa. A equipe da mesma empresa usa a mesma licença.</li>
+        <li>O pacote vem como está, sem garantia. Os agentes geram código automaticamente: revise antes de publicar.</li>
+        <li>O Lite tem licença MIT: pode usar, copiar e redistribuir mantendo o aviso.</li>
+        <li>O texto completo vai no arquivo LICENSE de cada pacote e segue a lei brasileira.</li>
+      </ul>
+    </section>
+
+    <section class="mt-5 faq" aria-labelledby="bperg-titulo">
+      <h2 id="bperg-titulo">Perguntas</h2>
+      <details><summary>Preciso de alguma assinatura?</summary><div class="resp"><p>Sim. Os agentes rodam dentro do Claude Code, que exige uma assinatura paga da Anthropic, por sua conta. Para a sede e os prints também é preciso ter Node.js e o Playwright; o guia mostra os comandos.</p></div></details>
+      <details><summary>Isso vai me fazer ganhar dinheiro?</summary><div class="resp"><p>Não prometemos ganho financeiro. É uma ferramenta de trabalho: organiza o Claude Code em especialistas com revisão e teste no meio. O resultado depende do que você constrói.</p></div></details>
+      <details><summary>É um produto da Anthropic?</summary><div class="resp"><p>Não. A Creat Nuvem é independente e não tem vínculo, patrocínio ou aprovação da Anthropic. Claude e Claude Code são marcas da Anthropic.</p></div></details>
+      <details><summary>E se não servir para mim?</summary><div class="resp"><p>Compra pela internet tem 7 dias de arrependimento. Peça a devolução pelo e-mail <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a>. Na dúvida, peça o Lite antes: é o mesmo jeito de trabalhar, com três agentes.</p></div></details>
+    </section>
+
+    <section class="bloco-tracejado mt-5">
+      <p>Tem um negócio local e quer o site pronto, sem mexer em código? Esse é o Porta Aberta.</p>
+      <a class="link-forte" href="../">Voltar para o Porta Aberta</a>
+    </section>
+  </div>
+</main>
+
+<footer class="rodape-simples">
+  <div class="cx">
+    <span>Creat.MTT Studio · <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a></span>
+    <a href="../termos/">Termos de uso</a>
+    <a href="../privacidade/">Privacidade</a>
+    <span class="notas">Claude e Claude Code são marcas da Anthropic. A Creat Nuvem não tem vínculo com a Anthropic.</span>
+  </div>
+</footer>
+</body>
+</html>
