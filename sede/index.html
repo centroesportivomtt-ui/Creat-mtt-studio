@@ -1496,8 +1496,15 @@ function enquadrar(a){
   if (a.id === 'diretor'){ out0 = camera.position.clone().setY(0).normalize(); }
   const phone = innerWidth < 720, dist = phone ? 5.6 : 4.4, sobe = new V3(0, phone ? 2.4 : 1.7, 0);
   const em = ang => head.clone().addScaledVector(out0.clone().applyAxisAngle(_Y, ang), dist).add(sobe);
+  const ANG = [0, .3, -.3, .6, -.6, .9, -.9];
+  const livre = (p, largo) => {   // largo: também as bordas do cone de visão (árvore colada na lente come meia tela)
+    if (tapado(head, p, a) || tapado(corpo, p, a)) return false;
+    if (!largo) return true;
+    const lado = new V3().crossVectors(_Y, p.clone().sub(head)).setLength(1.1);
+    return !tapado(head, p.clone().add(lado), a) && !tapado(head, p.clone().sub(lado), a);
+  };
   let pos = null;
-  for (const ang of [0, .3, -.3, .6, -.6, .9, -.9]){ const p = em(ang); if (!tapado(head, p, a) && !tapado(corpo, p, a)){ pos = p; break; } }
+  for (const largo of [true, false]){ for (const ang of ANG){ const p = em(ang); if (livre(p, largo)){ pos = p; break; } } if (pos) break; }
   return { pos: pos || em(0), target: head.clone().add(new V3(0, -.25, 0)) };
 }
 function select(id, fromHash = false){
@@ -1548,7 +1555,7 @@ function entrarNaTela(a){
   } else {
     alvo = a.telaMesh.getWorldPosition(new V3());
     const n = new V3(0, 0, 1).applyQuaternion(a.telaMesh.getWorldQuaternion(new THREE.Quaternion()));
-    pos = alvo.clone().addScaledVector(n, innerWidth < 720 ? 2.6 : 1.25).addScaledVector(_up, .1);   // celular: a lousa inteira (moldura 1,06 m) cabe na largura
+    pos = alvo.clone().addScaledVector(n, innerWidth < 720 ? 2.9 : 1.25).addScaledVector(_up, .1);   // celular: a lousa inteira (moldura 1,06 × ,64 m) cabe na faixa livre acima da ficha
   }
   controls.minDistance = .5; controls.autoRotate = false;
   flyTo(pos, alvo, .9);
@@ -2279,7 +2286,7 @@ function animateAgent(a, t, dt){
   if (a.laptop){
     const foc = !!telaFoco && telaFoco.a === a, on = a.state === 'working' || foc, kl = 1 - Math.exp(-dt * 7.5);   // ~0,4 s
     a.laptop.rotation.x = lerpA(a.laptop.rotation.x, on ? .62 : .5, kl);
-    a.root.position.x = lerpA(a.root.position.x, foc ? a.slideX || 0 : 0, 1 - Math.exp(-dt * 6));
+    a.root.position.x = RM ? (foc ? a.slideX || 0 : 0) : lerpA(a.root.position.x, foc ? a.slideX || 0 : 0, 1 - Math.exp(-dt * 6));   // movimento reduzido: a cadeira já está no lugar
     const go = lerpA(a._glow.material.opacity, a.state === 'working' ? (isDarkC ? .7 : .45) : 0, kl); a._glow.material.opacity = go; a._glow.visible = go > .01;
     const c = a.tela.mat.color, v = lerpA(c.r, on || a.id === selected ? 1 : .84, kl); c.setRGB(v, v, v);
   }
