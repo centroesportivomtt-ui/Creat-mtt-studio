@@ -2,6 +2,7 @@
 node_modules/
 .impeccable/
 sede/estado.json
+__pycache__/
 sede/estado-publico.json
 
 # Porta Aberta (T10): dados de cliente e saídas de build nunca entram no repositório
