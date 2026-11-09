@@ -38,7 +38,7 @@
 
   var CREAT_CHECKOUT = {
     versao: 1,
-    whatsappSuporte: '[WHATSAPP_SUPORTE_55DDDNUMERO]',
+    whatsappSuporte: '5575981151202',
     emailSuporte: 'mttcreatt@gmail.com',
     links: {
       aberturaInauguracao: '[LINK_ASAAS_ABERTURA_INAUGURACAO]',

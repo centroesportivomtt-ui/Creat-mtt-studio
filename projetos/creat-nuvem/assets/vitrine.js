@@ -274,6 +274,13 @@
       btn.setAttribute('href', link);
       btn.removeAttribute('aria-disabled'); btn.removeAttribute('tabindex');
       btn.textContent = btn.getAttribute('data-rotulo');
+    } else if (suporteOk()) {
+      // Sem link de pagamento ainda: a venda fecha pelo WhatsApp do Suporte Creat, com Pix na conversa. Nunca deixamos o botão morto.
+      var rotulo = btn.getAttribute('data-rotulo');
+      btn.setAttribute('href', linkWhats(CK.whatsappSuporte, 'Oi! Quero fazer a Abertura do Porta Aberta (' + chave + '). Como pago por Pix?'));
+      btn.setAttribute('target', '_blank'); btn.setAttribute('rel', 'noopener noreferrer');
+      btn.removeAttribute('aria-disabled'); btn.removeAttribute('tabindex');
+      btn.textContent = rotulo + ' pelo WhatsApp';
     } else {
       btn.removeAttribute('href');
       btn.setAttribute('aria-disabled', 'true'); btn.setAttribute('tabindex', '-1');
