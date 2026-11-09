@@ -100,3 +100,9 @@ cd public && rm -rf 404.html _headers abrir assets bastidores checkout.config.js
 ## O que o Base44 não aplica
 
 O `_headers` (CSP e cache) é formato da Cloudflare, e o Base44 não o lê. No Base44 a vitrine e os sites ficam sem esses cabeçalhos. Se a CSP precisar valer, o caminho é o deploy da Cloudflare (`wrangler.toml`) ou a configuração de cabeçalhos do Base44, se existir. `robots.txt` e `sitemap.xml` de cada site ficam em `/sites/<slug>/`. O Google só lê o `robots.txt` da raiz, então para indexar os sites é preciso um `sitemap.xml` na raiz da vitrine que liste cada `/sites/<slug>/` (pendência registrada no RELATORIO).
+
+## Molduras e o cabeçalho da hospedagem (09/11/2026)
+
+A Base44 responde todas as páginas com `X-Frame-Options: DENY` e ignora o `_headers`. Página nossa não abre em iframe por endereço: a prévia e a sede embutidas ficavam em branco no ar. Desde 09/11 o `assets/vitrine.js` carrega as duas como documento blob (`carregarNoQuadro`), e a sede lê a query de `window.__creatLocal`.
+
+Antes de publicar qualquer mudança na vitrine, na prévia ou na sede, rode `node scripts/conferir-moldura.cjs`. Ele sobe um servidor com o mesmo bloqueio e falha se a prévia ou a sede ficarem em branco. Teste local sem esse cabeçalho não pega o defeito.

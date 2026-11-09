@@ -422,7 +422,9 @@ const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
    modo: demo (estado fictício embutido, legenda "Demonstração"), publico (só estado-publico.json),
          local (comportamento de antes: estado.json + banco do artefato). Sem ?modo: local no
          localhost/arquivo/artefato do Claude (uso do Marcos); publico em qualquer outro host. */
-const QS = new URLSearchParams(location.search);
+// Embutida na vitrine a sede chega como blob (a hospedagem bloqueia iframe por endereço): a query vem em __creatLocal.
+const LOCAL = window.__creatLocal || null;
+const QS = new URLSearchParams(LOCAL ? LOCAL.search : location.search);
 /* marca no fragmento (#marca=, usado pela vitrine: não vai ao servidor nem no Referer, ADR-002);
    ?marca= continua valendo só para links feitos à mão. O fragmento #<agente> segue igual. */
 const HS = new URLSearchParams(location.hash.includes('=') ? location.hash.slice(1) : '');
@@ -1524,7 +1526,7 @@ function select(id, fromHash = false){
   TEAM.forEach(a => { const on = a.id === id; a.chip.setAttribute('aria-pressed', on); a.tag.classList.toggle('sel', on); if (a.state === 'wave' && !on) a.state = 'idle'; });
   if (!id){
     card.hidden = true;
-    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    if (location.hash && !LOCAL) history.replaceState(null, '', location.pathname + location.search);
     if (prev && !running){ const o = overview(); flyTo(o.pos, o.target, 1.2); }
     controls.autoRotate = !RM && !running;
     return;
@@ -1532,7 +1534,7 @@ function select(id, fromHash = false){
   const a = byId[id]; if (!a) return;
   ops.hidden = true;
   renderCard(a); card.hidden = false;
-  if (!fromHash && location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+  if (!fromHash && !LOCAL && location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
   a.chip.scrollIntoView({ block:'nearest', inline:'center', behavior: RM ? 'auto' : 'smooth' });
   controls.autoRotate = false;
   if (!telaFoco){ const v = enquadrar(a); flyTo(v.pos, v.target); }

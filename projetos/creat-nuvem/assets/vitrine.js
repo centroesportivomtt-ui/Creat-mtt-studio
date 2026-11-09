@@ -472,6 +472,34 @@
   function minutos(h) { var m = /^(\d{2}):(\d{2})$/.exec(h || ''); return m ? (+m[1]) * 60 + (+m[2]) : NaN; }
   function hhmm(min) { var h = Math.floor(min / 60), m = min % 60; return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m; }
 
+  /* ------------------------------------------------------------ moldura sem X-Frame-Options
+     A hospedagem responde TODAS as páginas com X-Frame-Options: DENY (o _headers é ignorado), então
+     nenhuma página nossa abre em iframe por endereço. O documento entra como blob, que não tem
+     cabeçalho HTTP: mesma origem, <base> para os caminhos relativos, e o endereço pretendido em
+     window.__creatLocal (a query não viaja em URL de blob; o fragmento viaja). Dentro do blob, link
+     para página nossa abre na aba inteira e âncora rola a página, porque navegar a moldura para um
+     endereço nosso voltaria a ser bloqueado. Se algo falhar, vale o caminho antigo (endereço direto). */
+  function carregarNoQuadro(fr, url) {
+    var u; try { u = new URL(url, location.href); } catch (e) { fr.src = url; return; }
+    var direto = function () { try { fr.contentWindow.location.replace(u.href); } catch (e) { fr.src = u.href; } };
+    if (!W.fetch || !W.Blob || !W.URL || !URL.createObjectURL || u.origin !== location.origin || location.protocol === 'file:') { direto(); return; }
+    fetch(u.origin + u.pathname, { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('http'); return r.text(); }).then(function (html) {
+      var base = u.origin + u.pathname.replace(/[^\/]*$/, '');
+      var local = JSON.stringify({ search: u.search, hash: u.hash, base: base }).replace(/</g, '\\u003c');
+      var inj = '<base href="' + base.replace(/"/g, '%22') + '"><script>window.__creatLocal=' + local + ';' +
+        'document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest("a[href]"):null;if(!a)return;' +
+        'var h=a.getAttribute("href")||"";if(h.charAt(0)==="#"){e.preventDefault();var d=h.length>1?document.getElementById(decodeURIComponent(h.slice(1))):null;' +
+        'if(d&&d.scrollIntoView)d.scrollIntoView();return;}' +
+        'if(!a.target&&/^https?:$/.test(a.protocol)&&a.origin===' + JSON.stringify(u.origin) + ')a.target="_top";},true);<\/script>';
+      html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (m) { return m + inj; }) : inj + html;
+      var antigo = fr.getAttribute('data-blob');
+      var b = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+      fr.setAttribute('data-blob', b);
+      try { fr.contentWindow.location.replace(b + u.hash); } catch (e) { fr.src = b + u.hash; }
+      if (antigo) setTimeout(function () { try { URL.revokeObjectURL(antigo); } catch (e) {} }, 5000);
+    }).catch(direto);
+  }
+
   /* ------------------------------------------------------------ sede (iframe sob demanda) */
   function urlSede() {
     // No repositório a sede mora em /sede/ na raiz; publicada, ela vai para /sede/ do site (T10 copia).
@@ -497,7 +525,7 @@
     var botao = janela.querySelector('[data-ver-ao-vivo]'); if (botao) botao.hidden = true;
     janela.insertBefore(carregando, janela.firstChild);
     janela.insertBefore(fr, janela.firstChild);
-    try { fr.setAttribute('data-alvo', '1'); fr.contentWindow.location.replace(url); } catch (e) { fr.src = url; }
+    fr.setAttribute('data-alvo', '1'); carregarNoQuadro(fr, url);
     evento('sede_aberta', {});
     return fr;
   }
@@ -774,7 +802,7 @@
       previa.hidden = false; D.body.classList.add('com-previa');
       fora.forEach(function (x) { if (x) x.setAttribute('inert', ''); });
       focoAntes = D.activeElement;
-      try { frame.contentWindow.location.replace(urlPreviaAtual); } catch (e) { frame.src = urlPreviaAtual; }
+      carregarNoQuadro(frame, urlPreviaAtual);
       if (!history.state || !history.state.previa) history.pushState({ previa: 1 }, '', location.pathname + location.search + '#previa');
       requestAnimationFrame(function () { previa.classList.add('aberta'); $('#previa-fechar').focus(); });
       evento('previa_gerada', { nicho: s.k });
