@@ -80,6 +80,8 @@ Quem cria e constrói (criativo, designer, frontend, backend, motion-3d, shader,
 
 `sede/index.html` é uma página única (Three.js) com a ilha flutuante da agência: personagens em estilo desenho animado, cada um na sua mesa. Toque num agente para ver a ficha dele, o arsenal (skills e conexões) e o comando para chamá-lo, ou em **Rodar projeto** para ver uma demonstração do fluxo.
 
+**Painel ao vivo** (`sede/ao-vivo.html`): placar de operações publicado como artefato no claude.ai. Lê as suas sessões do Claude Code pelo conector *Claude Code Remote* a cada 30 s e mostra os 15 agentes (quem está trabalhando, em quê, há quanto tempo), as fases do fluxo, as entregas recentes, as sessões que precisam de você e a cota de uso.
+
 Para abrir localmente:
 
 ```
