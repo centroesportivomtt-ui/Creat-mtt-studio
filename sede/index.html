@@ -73,6 +73,20 @@ button{font:inherit;color:inherit}
 .btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--line)}
 .btn-sun{background:var(--sun);color:var(--sun-ink)}
 .btn-sun svg{width:14px;height:14px;vertical-align:-2px;margin-right:6px}
+/* som da sede (Eco): botão ao lado de "Rodar projeto"; nunca toca antes de um gesto */
+.acoes{display:flex;gap:10px;align-items:flex-start}
+.btn-som{position:relative;display:inline-flex;align-items:center;gap:7px;padding:9px 16px 9px 12px}
+.btn-som[hidden]{display:none}
+.btn-som svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.btn-som .spk{fill:currentColor}
+.btn-som .ondas{display:none}
+.btn-som[aria-pressed="true"]{background:var(--sun);color:var(--sun-ink)}
+.btn-som[aria-pressed="true"] .ondas{display:inline}
+.btn-som[aria-pressed="true"] .xis{display:none}
+.btn-som.pend .ondas{opacity:.45}
+.btn-som::after{content:"";position:absolute;inset:-4px;border-radius:999px;border:3px solid var(--sun);opacity:0;pointer-events:none}
+.btn-som.convite::after{animation:somConvite .6s cubic-bezier(.2,.8,.3,1) 1}
+@keyframes somConvite{0%{opacity:1;transform:scale(.9)}100%{opacity:0;transform:scale(1.35)}}
 
 /* equipe */
 #roster{position:absolute;left:0;right:0;bottom:calc(var(--safe-b) + 12px);z-index:5;display:flex;gap:8px;overflow-x:auto;padding:4px var(--gut-r) 8px var(--gut-l);scroll-snap-type:x proximity;scrollbar-width:none;justify-content:safe center}
@@ -106,6 +120,9 @@ button{font:inherit;color:inherit}
   .brand p{font-size:11px}
   #online{display:none}
   .btn{padding:9px 14px;font-size:14px}
+  .acoes{flex-direction:column;align-items:flex-end;gap:8px}
+  .btn-som{width:44px;height:44px;padding:0;justify-content:center}
+  .btn-som .som-txt{display:none}
 }
 
 .card-head{position:sticky;top:0;z-index:1;background:var(--c);color:var(--on);padding:16px 18px 14px;border-bottom:2.5px solid var(--line);border-radius:15px 15px 0 0}
@@ -228,7 +245,10 @@ button{font:inherit;color:inherit}
       <svg viewBox="0 0 48 36" aria-hidden="true"><path d="M12 31h25a9 9 0 0 0 1.4-17.9A12.5 12.5 0 0 0 14.6 10 10.5 10.5 0 0 0 12 31z" fill="#fff" stroke="var(--line)" stroke-width="3" stroke-linejoin="round"/><circle cx="20" cy="21" r="2.2" fill="#1E1B2E"/><circle cx="29" cy="21" r="2.2" fill="#1E1B2E"/><path d="M21.5 25.5q3 2.6 6 0" fill="none" stroke="#1E1B2E" stroke-width="2.2" stroke-linecap="round"/><path d="M40 4l1.3 3.2L44.5 8.5l-3.2 1.3L40 13l-1.3-3.2L35.5 8.5l3.2-1.3z" fill="var(--sun)" stroke="var(--line)" stroke-width="1.6" stroke-linejoin="round"/></svg>
       <div><h1>Creat Nuvem</h1><p>Agência de agentes<span id="online"> · 15 na sede</span></p></div>
     </div>
-    <button id="runBtn" class="btn btn-sun" type="button"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg>Rodar projeto</button>
+    <div class="acoes">
+      <button id="runBtn" class="btn btn-sun" type="button"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg>Rodar projeto</button>
+      <button id="somBtn" class="btn btn-som" type="button" aria-pressed="false" aria-label="Som da sede" title="Ouvir a equipe" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M3.5 9.2h3.6L12 5.2v13.6l-4.9-4H3.5z"/><path class="ondas" d="M15.6 8.9a4.6 4.6 0 0 1 0 6.2M18.4 6.3a8.4 8.4 0 0 1 0 11.4"/><path class="xis" d="M16 9.6l4.8 4.8M20.8 9.6L16 14.4"/></svg><span class="som-txt" aria-hidden="true">Mudo</span></button>
+    </div>
   </header>
 
   <aside id="card" class="panel sheet" hidden aria-live="polite"></aside>
@@ -1193,7 +1213,7 @@ function telaTick(){
   telaF++;
   const escuro = isDark(), T = escuro ? TEMA_N : TEMA_D, phone = innerWidth < 720;
   const festa = TEAM.some(a => a.state === 'celebrate');
-  if (festa && festaF0 < 0) festaF0 = telaF; else if (!festa) festaF0 = -1;
+  if (festa && festaF0 < 0){ festaF0 = telaF; sfx('acorde'); } else if (!festa) festaF0 = -1;   // acorde no mesmo tick em que as telas viram "Entregue"
   const festaIni = festa && telaF - festaF0 < 3;
   _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _frus.setFromProjectionMatrix(_pm);
   const foco = selected && byId[selected] && byId[selected].tela ? byId[selected] : null;
@@ -1316,9 +1336,10 @@ TEAM.forEach((a, i) => {
 
 function say(a, text, ms = 2200){
   a.bubble.textContent = text; a.bubble.classList.add('on');
+  if (telaFoco && telaFoco.a === a) sfx('fala', a, text);
   clearTimeout(a._bt); a._bt = setTimeout(() => a.bubble.classList.remove('on'), ms);
 }
-function hop(a, n = 1, h = .45, dur = .5){ a.hop = { t0: clock.elapsedTime, n, h, dur }; }
+function hop(a, n = 1, h = .45, dur = .5, o){ a.hop = { t0: clock.elapsedTime, n, h, dur }; if (o && o.som) sfx('boing', a); }   // só pulos de evento soam; os ociosos ficam mudos
 function headWorld(a){ return a.root.localToWorld(new V3(0, 1.45, 0)); }
 
 /* pacotes de tarefa, faíscas de código, confete */
@@ -1333,8 +1354,9 @@ function sendPacket(fromA, toA, cb){
   const p = packets.find(p => !p.active); if (!p){ cb && cb(); return; }
   const a = headWorld(fromA).add(new V3(0, .6, 0)), b = headWorld(toA).add(new V3(0, .3, 0));
   const c = a.clone().lerp(b, .5); c.y += 2.8;
-  Object.assign(p, { active:true, a, b, c, t0: clock.elapsedTime, dur: RM ? .35 : .95, cb });
+  Object.assign(p, { active:true, a, b, c, t0: clock.elapsedTime, dur: RM ? .35 : .95, cb, to: toA });
   p.g.visible = true;
+  sfx('pacote', fromA, toA, p.dur);
 }
 const bits = [];
 for (let i = 0; i < 40; i++){ const m = new THREE.Mesh(new RoundedBoxGeometry(.09, .09, .09, 1, .02), new THREE.MeshToonMaterial({ gradientMap: gradient })); m.visible = false; scene.add(m); bits.push({ m, life:0 }); }
@@ -1359,6 +1381,7 @@ function burst(){
 function applyTheme(){
   const P = isDark() ? NIGHT : DAY;
   isDarkC = P === NIGHT; telas.forEach(a => { a.tela.suja = true; });   // papel, tinta e chip das telas trocam pelo tema
+  sfx('tema');
   const g = skyCanvas.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
   gr.addColorStop(0, P.top); gr.addColorStop(1, P.bot); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); skyTex.needsUpdate = true;
   scene.fog.color.set(P.fog);
@@ -1540,7 +1563,7 @@ function dicaTela(a){
   setTimeout(() => { r.classList.remove('on', 'fixo'); anelObj.visible = false; }, RM ? 2400 : 2900);
 }
 addEventListener('keydown', e => {
-  if (e.key === 'Escape'){ if (telaFoco) sairDaTela(); else if (!card.hidden) select(null); else if (!ops.hidden) closeOps(); }
+  if (e.key === 'Escape'){ if (telaFoco || !card.hidden || !ops.hidden) sfx('clique', -1); if (telaFoco) sairDaTela(); else if (!card.hidden) select(null); else if (!ops.hidden) closeOps(); }
   if (selected && (e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !e.target.closest('input')){
     const i = TEAM.findIndex(a => a.id === selected); select(TEAM[(i + (e.key === 'ArrowRight' ? 1 : TEAM.length - 1)) % TEAM.length].id);
   }
@@ -1573,13 +1596,13 @@ canvas.addEventListener('pointerup', e => {
   if (!down) return; const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y); down = null;
   if (moved > 6) return;
   const h = pickParte(e), id = h && h.id;
-  if (h && h.part === 'tela' && byId[id] && byId[id].tela) entrarNaTela(byId[id]);   // tocar no laptop (ou na lousa) entra na tela
-  else if (id) select(id); else if (selected) select(null);
+  if (h && h.part === 'tela' && byId[id] && byId[id].tela){ sfx('clique', 1); entrarNaTela(byId[id]); }   // tocar no laptop (ou na lousa) entra na tela
+  else if (id){ if (id !== selected) sfx('clique', 1); select(id); } else if (selected){ sfx('clique', -1); select(null); }
 });
 // celular: arrastar a ficha para baixo sai da tela (ou fecha a ficha)
 let arrasto = null;
 card.addEventListener('pointerdown', e => { if (innerWidth >= 720 || !e.target.closest('.card-head') || e.target.closest('button')) return; arrasto = { y: e.clientY }; });
-addEventListener('pointerup', e => { if (!arrasto) return; const dy = e.clientY - arrasto.y; arrasto = null; if (dy > 60){ if (telaFoco) sairDaTela(); else select(null); } });
+addEventListener('pointerup', e => { if (!arrasto) return; const dy = e.clientY - arrasto.y; arrasto = null; if (dy > 60){ sfx('clique', -1); if (telaFoco) sairDaTela(); else select(null); } });
 addEventListener('pointercancel', () => { arrasto = null; });
 let hoverT = 0;
 canvas.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse' || down) return; const now = performance.now(); if (now - hoverT < 80) return; hoverT = now; canvas.classList.toggle('hover', !!pick(e)); });
@@ -1639,7 +1662,7 @@ async function startRun(){
         say(boss, `Briefing: ${brief.length > 34 ? brief.slice(0, 33) + '…' : brief}`, 2400);
         await wait(f.dur, tok);
         boss.state = 'idle'; boss.chip.classList.remove('working'); boss.tag.classList.remove('working');
-        say(boss, 'Plano pronto. Distribuindo!', 1800); hop(boss); boss.simFeito = true; telaEvento(boss, 'feito');
+        say(boss, 'Plano pronto. Distribuindo!', 1800); hop(boss); boss.simFeito = true; telaEvento(boss, 'feito'); sfx('feito', boss);
         setRow(0, 'diretor', 'done', performance.now() - t0);
         continue;
       }
@@ -1650,7 +1673,7 @@ async function startRun(){
         await wait(260, tok);
         sendPacket(boss, a, () => {
           if (tok !== runToken) return;
-          hop(a); a.state = 'working'; a.chip.classList.add('working'); a.tag.classList.add('working');
+          hop(a, 1, .45, .5, { som:true }); a.state = 'working'; a.chip.classList.add('working'); a.tag.classList.add('working');
           a.desde = performance.now(); telaEvento(a, 'chegou');
           say(a, YES[(pi + id.length) % YES.length], 1500);
           starts[id] = performance.now(); setRow(pi, id, 'run', 0);
@@ -1660,7 +1683,7 @@ async function startRun(){
       for (const id of f.who){
         const a = byId[id];
         a.state = 'idle'; a.chip.classList.remove('working'); a.tag.classList.remove('working'); hop(a, 2, .35, .4);
-        say(a, 'Feito!', 1300); a.simFeito = true; telaEvento(a, 'feito');
+        say(a, 'Feito!', 1300); a.simFeito = true; telaEvento(a, 'feito'); sfx('feito', a);
         setRow(pi, id, 'done', performance.now() - (starts[id] || performance.now()));
         await wait(180, tok);
       }
@@ -1693,10 +1716,10 @@ function aplicarEstado(e){
     TEAM.forEach(a => {
       const on = ativos.has(a.id), was = live.prev.has(a.id);
       if (on && !was){
-        if (a.id !== 'diretor' && live.prev.size) sendPacket(boss, a, () => { hop(a); say(a, YES[a.id.length % YES.length], 1400); telaEvento(a, 'chegou'); });
-        else { hop(a); say(a, curto(ativos.get(a.id)[0].acao || 'começando'), 1800); telaEvento(a, 'chegou'); }
+        if (a.id !== 'diretor' && live.prev.size) sendPacket(boss, a, () => { hop(a, 1, .45, .5, { som:true }); say(a, YES[a.id.length % YES.length], 1400); telaEvento(a, 'chegou'); });
+        else { hop(a, 1, .45, .5, { som:true }); say(a, curto(ativos.get(a.id)[0].acao || 'começando'), 1800); telaEvento(a, 'chegou'); }
       }
-      if (!on && was){ hop(a, 2, .35, .4); say(a, 'Feito!', 1400); telaEvento(a, 'feito'); }
+      if (!on && was){ hop(a, 2, .35, .4); say(a, 'Feito!', 1400); telaEvento(a, 'feito'); sfx('feito', a); }
       if (on){ a.state = a.id === 'diretor' ? 'think' : 'working'; a.chip.classList.add('working'); a.tag.classList.add('working'); }
       else if (was){ a.state = 'idle'; a.chip.classList.remove('working'); a.tag.classList.remove('working'); }
     });
@@ -1810,6 +1833,335 @@ async function ligarAoVivo(){
   puxar(); setInterval(puxar, 5000);
 }
 ligarAoVivo();
+
+/* ───────────────────────── som da sede (Eco) ─────────────────────────
+   100% sintetizado com Web Audio, nenhum arquivo. Antes de um gesto não existe AudioContext nem nó.
+   Grafo: [MUNDO: ambiente + teclas dos outros + efeitos] → porta (passa-baixa 18 kHz) → gMundo ─┐
+          [PERTO: teclas e fala de quem está "na tela"] ─────────────────────────────────────────┴→ master (0,7) → compressor → analyser (tela do Eco) → saída
+   Microssons com pico de no máximo -18 dBFS (0,125); toda mudança de ganho é rampa (setTargetAtTime / rampas a partir do valor atual).
+   Som nunca é a única pista: cada evento já tem par visual (pulo, balão, pacote, carimbo FEITO, cartão Entregue, tela). Tabela no fim do arquivo. */
+const SOM_KEY = 'creat.sede.som';
+const PENTA = [349.23, 392, 440, 523.25, 587.33, 698.46, 783.99, 880, 1046.5, 1174.66];   // pentatônica de Fá: cada agente tem a sua nota
+const ACORDES = [[174.61, 220, 261.63, 329.63, 392], [146.83, 220, 261.63, 329.63, 349.23], [116.54, 174.61, 220, 293.66], [130.81, 196, 261.63, 293.66]]; // Fmaj9 › Dm9 › Bbmaj7 › Csus2
+const AC_SOM = window.AudioContext || window.webkitAudioContext;
+const SUPORTE_SOM = !!(AC_SOM && AC_SOM.prototype && 'createStereoPanner' in AC_SOM.prototype);
+const somBtn = $('#somBtn'), somTxt = somBtn.querySelector('.som-txt');
+const S = { ctx:null, querLigado:false, ligado:false, pend:false, foco:null, vozes:0, n:-1, acorde:0, proxAcorde:0, proxBicho:0, ambOk:false };
+const lerPref = () => { try { return localStorage.getItem(SOM_KEY); } catch { return null; } };
+const gravarPref = v => { try { localStorage.setItem(SOM_KEY, v ? '1' : '0'); } catch {} };
+const clampS = (v, a, b) => Math.max(a, Math.min(b, v));
+const f0De = a => a._f0 || (a._f0 = PENTA[Math.max(0, TEAM.indexOf(a)) % PENTA.length]);
+const K_VENTO = 9, K_CACH = 2.4, NOTA_PAD = .016;   // compensação do ruído filtrado (medida no analyser) e ganho de cada nota do pad
+
+function alvo(param, v, tau = .05, t){ const c = S.ctx; t = t == null ? c.currentTime : t; param.cancelScheduledValues(t); param.setValueAtTime(param.value, t); param.setTargetAtTime(v, t, tau); }
+function nGanho(v){ const g = S.ctx.createGain(); g.gain.value = v; return g; }
+function nFiltro(tipo, f, q = .7){ const b = S.ctx.createBiquadFilter(); b.type = tipo; b.frequency.value = f; b.Q.value = q; return b; }
+function nPan(p, dest){ const n = S.ctx.createStereoPanner(); n.pan.value = clampS(p, -1, 1); n.connect(dest); return n; }
+function soltar(src, nos){ src.onended = () => { try { src.disconnect(); nos.forEach(n => n.disconnect()); } catch {} }; }
+
+function criarSom(){
+  if (S.ctx) return true;
+  if (!SUPORTE_SOM) return false;
+  let c; try { c = new AC_SOM({ latencyHint:'interactive' }); } catch { return false; }
+  S.ctx = c;
+  S.master = nGanho(0);
+  const k = c.createDynamicsCompressor(); k.threshold.value = -18; k.knee.value = 12; k.ratio.value = 4; k.attack.value = .003; k.release.value = .25;
+  S.analyser = c.createAnalyser(); S.analyser.fftSize = 256; S.analyser.smoothingTimeConstant = .55;
+  S.master.connect(k); k.connect(S.analyser); S.analyser.connect(c.destination); S.comp = k;
+  S.mundo = nGanho(1); S.porta = nFiltro('lowpass', 18000, .5); S.gMundo = nGanho(1);
+  S.mundo.connect(S.porta); S.porta.connect(S.gMundo); S.gMundo.connect(S.master);
+  S.perto = nGanho(1); S.perto.connect(S.master);
+  S.amb = nGanho(0); S.amb.connect(S.mundo);
+  const len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  S.ruido = buf;
+  c.onstatechange = () => { if (c.state === 'running' && S.querLigado && !S.ligado && !document.hidden) aoRodar(); };
+  return true;
+}
+
+/* blocos de síntese */
+function tom(t, f, { tipo = 'sine', a = .003, d = .12, pico = .05, dest, f1, tf = d, det = 0 }){
+  const c = S.ctx, o = c.createOscillator(), g = c.createGain();
+  o.type = tipo; o.detune.value = det; o.frequency.setValueAtTime(f, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + tf);
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(pico, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d);
+  o.connect(g); g.connect(dest); o.start(t); o.stop(t + a + d + .05); soltar(o, [g]); return o;
+}
+function sopro(t, dur, { tipo = 'bandpass', f = 1000, q = 1, pico = .05, a = .001, dest }){
+  const c = S.ctx, s = c.createBufferSource(), b = nFiltro(tipo, f, q), g = c.createGain();
+  s.buffer = S.ruido;
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(pico, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + dur);
+  s.connect(b); b.connect(g); g.connect(dest); s.start(t, Math.random() * 1.8, a + dur + .05); soltar(s, [b, g]); return s;
+}
+
+/* panorama e distância pela posição do agente na tela */
+const _pv = new V3(), _pc = new V3();
+function posVoz(a){
+  if (a.station) a.station.getWorldPosition(_pv); else _pv.set(0, 0, 0);
+  _pv.y += 1;
+  return posPonto(_pv);
+}
+function posPonto(p){
+  const dist = camera.position.distanceTo(p);
+  _pc.copy(p).applyMatrix4(camera.matrixWorldInverse);           // espaço da câmera: x à direita, z negativo à frente
+  let g = clampS(6 / Math.max(.01, dist), .15, 1), pan;
+  if (_pc.z < 0){ _pc.copy(p).project(camera); pan = clampS(_pc.x * .9, -.9, .9); }
+  else { pan = Math.sign(_pc.x || 1) * .7; g *= .5; }                // atrás da câmera: só o lado, mais baixo
+  return { pan, g, dist };
+}
+
+/* ambiente da ilha: vento, cachoeira, pad em Fá e bichos (pássaros de dia, grilos à noite) */
+function notaPad(f){
+  const c = S.ctx, t = c.currentTime, g = nGanho(0), m = nGanho(.5), o1 = c.createOscillator(), o2 = c.createOscillator();
+  o1.type = 'triangle'; o1.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f; o2.detune.value = 7;
+  o1.connect(m); o2.connect(m); m.connect(g); g.connect(S.padF); o1.start(t); o2.start(t);
+  o1.onended = () => { try { o1.disconnect(); o2.disconnect(); m.disconnect(); g.disconnect(); } catch {} };
+  return { g, o:[o1, o2] };
+}
+function montarAcorde(i, tau){
+  const t = S.ctx.currentTime;
+  (S.notas || []).forEach(v => { alvo(v.g.gain, 0, 1); v.o.forEach(o => o.stop(t + 5)); });   // crossfade de ~3 s
+  S.notas = ACORDES[i].map(notaPad);
+  aplicarN(tau);
+}
+function aplicarN(tau = .5){
+  const n = Math.max(0, S.n), kN = n === 0 ? 2 : n <= 2 ? 3 : n <= 5 ? 4 : 5;
+  S.notas.forEach((v, i) => alvo(v.g.gain, i < kN ? NOTA_PAD : 0, tau));
+  alvo(S.padF.frequency, n === 0 ? 650 : n <= 2 ? 650 + 220 * n : n <= 5 ? Math.min(1700, 650 + 220 * n) : Math.min(2200, 1700 + 100 * (n - 5)), .6);
+  alvo(S.gVento.gain, (n === 0 ? .022 : n <= 2 ? .017 : .014) * K_VENTO, .6);
+  alvo(S.shimOut.gain, n >= 6 ? .004 : 0, .5);
+}
+function ambiente(){
+  if (S.ambOk) return; S.ambOk = true;
+  const c = S.ctx, t = c.currentTime;
+  // vento: ruído → passa-baixa 900 (quase rosa) → passa-banda 420 Hz, com LFOs lentos (sem LFO em movimento reduzido)
+  const v = c.createBufferSource(); v.buffer = S.ruido; v.loop = true;
+  const bp = nFiltro('bandpass', 420, .7); S.gVento = nGanho(.017 * K_VENTO);
+  v.connect(nFiltro('lowpass', 900)).connect(bp).connect(S.gVento).connect(S.amb); v.start(t);
+  if (!RM){
+    const l1 = c.createOscillator(); l1.frequency.value = .07; l1.connect(nGanho(220)).connect(bp.frequency); l1.start(t);
+    const l2 = c.createOscillator(); l2.frequency.value = .045; l2.connect(nGanho(.005 * K_VENTO)).connect(S.gVento.gain); l2.start(t);
+  }
+  // cachoeira (fica em z≈-10): ruído claro, volume e lado pela distância e posição na tela
+  const w = c.createBufferSource(); w.buffer = S.ruido; w.loop = true;
+  S.gCach = nGanho(0); S.pCach = nPan(0, S.amb);
+  w.connect(nFiltro('highpass', 1200)).connect(nFiltro('lowpass', 5200, .5)).connect(S.gCach).connect(S.pCach); w.start(t, 1);
+  // pad: Fá maior com nona, triangle + sine (+7 cents), passa-baixa "brilho" que abre com a equipe trabalhando
+  S.padF = nFiltro('lowpass', 650, .6); S.gPad = nGanho(isDarkC ? .79 : 1); S.padF.connect(S.gPad).connect(S.amb);
+  const sh = c.createOscillator(); sh.frequency.value = 783.99; const shG = nGanho(.5), trem = c.createOscillator(); trem.frequency.value = 4;
+  trem.connect(nGanho(.5)).connect(shG.gain); S.shimOut = nGanho(0); sh.connect(shG).connect(S.shimOut).connect(S.gPad); sh.start(t); trem.start(t);
+  S.n = TEAM.filter(a => a.state === 'working' || a.state === 'think').length;
+  S.notas = []; S.acorde = 0; S.proxAcorde = t + 16; montarAcorde(0, 1.3);   // ataque de ~4 s
+  S.proxBicho = t + 4 + Math.random() * 4;
+}
+function passaro(t){
+  const c = S.ctx, p = nPan(Math.random() * 1.6 - .8, S.amb), n = 2 + (Math.random() < .5 ? 1 : 0), sobe = 1 + Math.random() * .15;
+  for (let i = 0; i < n; i++){
+    const ti = t + i * .16, o = c.createOscillator(), fm = c.createOscillator(), fg = nGanho(260), g = c.createGain();
+    o.frequency.setValueAtTime(2800 * sobe, ti); o.frequency.exponentialRampToValueAtTime(4200 * sobe, ti + .07);
+    fm.frequency.value = 150 + Math.random() * 60; fm.connect(fg).connect(o.frequency);   // FM curta: o "trinado"
+    g.gain.setValueAtTime(.0001, ti); g.gain.linearRampToValueAtTime(.03, ti + .008); g.gain.exponentialRampToValueAtTime(.0001, ti + .075);
+    o.connect(g).connect(p); o.start(ti); fm.start(ti); o.stop(ti + .12); fm.stop(ti + .12); soltar(o, [g, fm, fg]);
+  }
+}
+function grilos(t){
+  const c = S.ctx, o = c.createOscillator(), g = c.createGain(), p = nPan(Math.random() * 1.4 - .7, S.amb);
+  o.frequency.value = 4500; g.gain.setValueAtTime(.0001, t);
+  for (let i = 0; i < 6; i++){ const ti = t + i * .048; g.gain.setValueAtTime(.0001, ti); g.gain.linearRampToValueAtTime(.01, ti + .002); g.gain.exponentialRampToValueAtTime(.0001, ti + .008); }
+  o.connect(g).connect(p); o.start(t); o.stop(t + .35); soltar(o, [g, p]);
+}
+function tema(){
+  if (!S.ambOk) return;
+  alvo(S.gPad.gain, isDarkC ? .79 : 1, .5);   // à noite o pad desce 2 dB e os grilos entram no lugar dos pássaros
+}
+function tick4(){   // 4 Hz, chamado pelo telaTick (pausa com a aba escondida)
+  if (!S.ligado || !S.ambOk || S.ctx.state !== 'running') return;
+  const t = S.ctx.currentTime;
+  const n = TEAM.filter(a => a.state === 'working' || a.state === 'think').length;
+  if (n !== S.n){ S.n = n; aplicarN(.5); }
+  if (!RM && t >= S.proxAcorde){ S.acorde = (S.acorde + 1) % ACORDES.length; S.proxAcorde = t + 16; montarAcorde(S.acorde, 1); }
+  _pv.set(0, island.position.y - 1, -10); const pc = posPonto(_pv);
+  alvo(S.gCach.gain, .02 * K_CACH * clampS(8 / pc.dist, .3, 1), .25); alvo(S.pCach.pan, pc.pan, .25);
+  if (!RM && t >= S.proxBicho){
+    if (isDarkC){ grilos(t + .05); S.proxBicho = t + 3 + Math.random() * 4; }
+    else { passaro(t + .05); S.proxBicho = t + 8 + Math.random() * 12; }
+  }
+}
+
+/* teclas: quem está trabalhando digita em rajadas; cada agente com a sua nota e o seu lado do panorama */
+function canal(a){
+  if (a._canal) return a._canal;
+  const ent = nGanho(1), p = S.ctx.createStereoPanner(), gM = nGanho(0), gP = nGanho(0);
+  ent.connect(p); p.connect(gM); p.connect(gP); gM.connect(S.mundo); gP.connect(S.perto);
+  return (a._canal = { ent, p, gM, gP });
+}
+function tecla(t, a, espaco){
+  const i = TEAM.indexOf(a), f0 = f0De(a), dest = canal(a).ent;
+  sopro(t, espaco ? .016 : .01, { f: espaco ? 900 + i * 45 : 1700 + i * 110, q:3, pico: espaco ? .07 : .09, dest });
+  const o = tom(t, espaco ? f0 : f0 * 2, { a:.002, d: espaco ? .03 : .018, pico:.032, dest });
+  S.vozes++; o.addEventListener('ended', () => { S.vozes--; });
+}
+function teclasTick(){
+  if (!S.ligado || document.hidden || S.ctx.state !== 'running') return;
+  const now = S.ctx.currentTime, foco = S.foco;
+  const trab = [];
+  for (const a of TEAM){
+    if (!a.laptop) continue;
+    if (a.state !== 'working'){ if (a._tec) a._tec.t = 0; continue; }
+    trab.push({ a, v: posVoz(a) });
+  }
+  trab.sort((x, y) => (y.a === foco) - (x.a === foco) || x.v.dist - y.v.dist);
+  trab.slice(0, 5).forEach(({ a, v }) => {   // só os 5 mais perto soam (o focado sempre)
+    const ch = canal(a), f = a === foco;
+    alvo(ch.p.pan, f ? 0 : v.pan, .06); alvo(ch.gM.gain, f ? 0 : v.g, .06); alvo(ch.gP.gain, f ? 3.2 : 0, .06);   // .063 → ~.2 (-14 dBFS) no barramento PERTO
+    const k = a._tec || (a._tec = { t:0, resto:0, esp:-1 });
+    if (k.t < now - .2){ k.t = now + .05 + Math.random() * .4; k.resto = 0; }
+    let guarda = 4;
+    while (k.t < now + .08 && guarda--){
+      if (k.resto <= 0){ k.resto = 3 + Math.floor(Math.random() * 7); k.esp = Math.floor(Math.random() * k.resto); }
+      if (S.vozes < 10) tecla(Math.max(k.t, now + .02), a, k.resto - 1 === k.esp);
+      k.resto--;
+      k.t += k.resto > 0 ? .085 + Math.random() * .055 + (Math.random() - .5) * .04 : .4 + Math.random() * 1.2;
+    }
+  });
+}
+
+/* microssons por evento */
+function pacote(fromA, toA, dur){
+  const c = S.ctx, t = c.currentTime + .01, a = posVoz(fromA), b = posVoz(toA);
+  const s = c.createBufferSource(); s.buffer = S.ruido; s.loop = true;
+  const bp = nFiltro('bandpass', 300, 1.2), g = c.createGain(), p = nPan(a.pan, S.mundo);
+  bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(2200, t + dur * .5); bp.frequency.exponentialRampToValueAtTime(500, t + dur);
+  const curva = new Float32Array(32), pk = .32 * Math.max(a.g, b.g);   // ruído em banda estreita: pico real ≈ -20 dBFS
+  for (let i = 0; i < 32; i++) curva[i] = Math.max(.0001, Math.pow(Math.sin(Math.PI * i / 31), 1.5) * pk);
+  g.gain.setValueCurveAtTime(curva, t, dur);
+  p.pan.setValueAtTime(a.pan, t); p.pan.linearRampToValueAtTime(b.pan, t + dur);
+  s.connect(bp).connect(g).connect(p); s.start(t, Math.random()); s.stop(t + dur + .05); soltar(s, [bp, g, p]);
+}
+function plim(a){
+  const v = posVoz(a), t = S.ctx.currentTime + .005;
+  tom(t, f0De(a) * 2, { a:.003, d:.12, pico:.08 * v.g, dest: nPanTemp(v.pan, .3) });
+}
+function nPanTemp(pan, vida){ const p = nPan(pan, S.mundo); setTimeout(() => { try { p.disconnect(); } catch {} }, (vida + .3) * 1000); return p; }
+function feito(a){   // sino: cada agente tem a sua nota, então entregas em sequência viram melodia
+  const v = posVoz(a), t = S.ctx.currentTime + .01, f = f0De(a) * 2, p = nPanTemp(v.pan, 1.4), k = Math.max(.5, v.g);
+  tom(t, f, { a:.005, d:1.2, pico:.078 * k, dest:p });
+  tom(t, f * 2.76, { a:.005, d:.7, pico:.031 * k, dest:p });
+  tom(t, f * 2, { a:.005, d:.9, pico:.0125 * k, dest:p });
+}
+function boing(a){
+  if (RM) return;   // movimento reduzido: sem boing
+  const c = S.ctx, v = posVoz(a), t = c.currentTime + .01, p = nPanTemp(v.pan, .4), k = Math.max(.4, v.g);
+  const vib = c.createOscillator(); vib.frequency.value = 18; vib.start(t); vib.stop(t + .25);
+  [[1, 'sine', .072], [2, 'triangle', .018]].forEach(([m, tipo, pk]) => {
+    const o = c.createOscillator(), g = c.createGain(), dv = nGanho(12 * m); o.type = tipo;
+    o.frequency.setValueAtTime(220 * m, t); o.frequency.exponentialRampToValueAtTime(440 * m, t + .06); o.frequency.exponentialRampToValueAtTime(330 * m, t + .18);
+    vib.connect(dv).connect(o.frequency);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(pk * k, t + .006); g.gain.setTargetAtTime(pk * k * .7, t + .06, .05); g.gain.exponentialRampToValueAtTime(.0001, t + .19);
+    o.connect(g).connect(p); o.start(t); o.stop(t + .24); soltar(o, [g, dv]);
+  });
+  soltar(vib, []);
+}
+function acorde(){   // celebrate: Fmaj9 dedilhado no mesmo tick em que as telas viram "Entregue"
+  const c = S.ctx, t = c.currentTime + .02, d = RM ? 1 : 2;
+  [349.23, 440, 523.25, 659.25, 783.99].forEach((f, i) => {
+    const p = nPanTemp(-.5 + i * .25, d + .3), ti = t + i * .04;
+    tom(ti, f, { tipo:'triangle', a:.006, d, pico:.016, dest:p }); tom(ti, f, { a:.006, d, pico:.016, dest:p, det:4 });
+  });
+  if (!RM) for (let i = 0; i < 3; i++) sopro(t + Math.random() * .4, .015, { tipo:'highpass', f:3000, q:.7, pico:.07, dest: nPanTemp(Math.random() * 1.6 - .8, .6) });
+}
+function clique(dir = 1){
+  const t = S.ctx.currentTime + .005;
+  sopro(t, .002, { tipo:'highpass', f:2500, q:.7, pico:.03, dest:S.mundo });
+  tom(t, dir > 0 ? 900 : 1300, { a:.002, d:.028, pico:.05, dest:S.mundo, f1: dir > 0 ? 1300 : 800, tf:.025 });
+}
+function fala(a, texto){   // murmúrio de sílabas, só de quem está na tela (senão vira barulho a cada 6 s)
+  if (a !== S.foco) return;
+  const c = S.ctx, t = c.currentTime + .03, n = Math.min(12, Math.ceil(String(texto || '').length / 2)); if (!n) return;
+  const o = c.createOscillator(), lp = nFiltro('lowpass', 1200, .8), g = c.createGain(), f0 = f0De(a) / 2;
+  o.type = 'square'; g.gain.setValueAtTime(.0001, t);
+  for (let i = 0; i < n; i++){
+    const ti = t + i * .075; o.frequency.setValueAtTime(f0 * Math.pow(2, (Math.random() * 6 - 3) / 12), ti);
+    g.gain.setValueAtTime(.0001, ti); g.gain.linearRampToValueAtTime(.05, ti + .008); g.gain.exponentialRampToValueAtTime(.0001, ti + .055);
+  }
+  o.connect(lp).connect(g).connect(S.perto); o.start(t); o.stop(t + n * .075 + .05); soltar(o, [lp, g]);
+}
+function foco(a, silencioso){   // "Encosta na mesa": a ilha fica do outro lado de uma porta; as teclas do agente vêm para o centro
+  S.foco = a || null;
+  if (!S.ligado) return;
+  alvo(S.porta.frequency, a ? 900 : 18000, .15); alvo(S.gMundo.gain, a ? .4 : 1, .15);
+  if (a && !silencioso) sopro(S.ctx.currentTime + .01, .4, { tipo:'lowpass', f:600, q:.5, pico:.09, a:.12, dest:S.perto });
+}
+
+/* liga, desliga, aba escondida */
+function aoRodar(){
+  if (S.ligado || !S.querLigado) return;
+  S.ligado = true; S.pend = false; clearTimeout(S.tSusp);
+  alvo(S.master.gain, .7, .04);
+  ambiente(); alvo(S.amb.gain, RM ? .5 : 1, .35);   // ambiente entra em ~1,2 s; movimento reduzido: -6 dB, sem bichos, acorde fixo
+  tema(); S.n = -1; foco(S.foco, true);
+  clique(1);
+  if (!S.iv) S.iv = setInterval(teclasTick, 40);
+  somUI();
+}
+function ligarSom(){
+  S.querLigado = true;
+  if (!criarSom()){ S.querLigado = false; somBtn.hidden = true; return; }
+  clearTimeout(S.tSusp);
+  const c = S.ctx;
+  if (c.state === 'running') aoRodar();
+  else { S.pend = true; const r = c.resume(); if (r && r.then) r.then(() => { if (c.state === 'running') aoRodar(); }, () => {}); }
+  somUI();
+}
+function desligarSom(){
+  S.querLigado = false; S.pend = false;
+  if (S.ctx && S.ligado){
+    clique(-1);
+    const t = S.ctx.currentTime + .03;
+    alvo(S.master.gain, 0, .06, t); alvo(S.amb.gain, 0, .06, t);
+    clearTimeout(S.tSusp); S.tSusp = setTimeout(() => { if (!S.querLigado && S.ctx.state === 'running') S.ctx.suspend().catch(() => {}); }, 320);
+  }
+  S.ligado = false; somUI();
+}
+function somUI(){
+  const on = S.querLigado;
+  somBtn.setAttribute('aria-pressed', on); somBtn.classList.toggle('pend', S.pend);
+  somTxt.textContent = on ? 'Som' : 'Mudo';
+  somBtn.title = S.pend ? 'O som volta no seu primeiro toque na página' : on ? 'Silenciar a sede' : 'Ouvir a equipe';
+}
+function somConvite(){   // 2,5 s depois do loader, o botão chama uma vez (sem animação em movimento reduzido)
+  if (!SUPORTE_SOM || S.querLigado) return;
+  setTimeout(() => { if (S.querLigado) return; somBtn.classList.add('convite'); setTimeout(() => somBtn.classList.remove('convite'), 900); }, 2500);
+}
+function sfx(nome, ...args){   // ponte segura: sem som ligado, não cria nada (e não toca no módulo antes de ele existir)
+  if (!window.somSede || !S.ligado || !S.ctx || S.ctx.state !== 'running') return;
+  const f = SOM_FN[nome]; if (!f) return;
+  try { f(...args); } catch (e) { if (DEBUG) console.warn('[som]', nome, e); }
+}
+const SOM_FN = { clique, pacote, plim, feito, boing, acorde, fala, tema };
+
+if (SUPORTE_SOM){
+  somBtn.hidden = false;
+  if (lerPref() === '1'){ S.querLigado = true; S.pend = true; }   // ligado-pendente: o primeiro gesto na página cria o som
+  somUI();
+  somBtn.addEventListener('click', () => { if (S.querLigado){ desligarSom(); gravarPref(false); } else { gravarPref(true); ligarSom(); } });
+  const gesto = e => { if (!S.pend || !S.querLigado || (e.target && e.target.closest && e.target.closest('#somBtn'))) return; if (e.type === 'keydown' && e.key === 'Escape') return; ligarSom(); };
+  ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, gesto, true));
+  document.addEventListener('visibilitychange', () => {
+    if (!S.ctx) return;
+    if (document.hidden){
+      if (S.ligado){ alvo(S.master.gain, 0, .03); clearTimeout(S.tVis); S.tVis = setTimeout(() => { if (document.hidden) S.ctx.suspend().catch(() => {}); }, 150); }
+    } else if (S.querLigado && S.ligado){
+      clearTimeout(S.tVis);
+      S.ctx.resume().then(() => alvo(S.master.gain, .7, .05), () => {});
+    }
+  });
+  // clique de UI em todo botão (o do som tem o seu); fechar e desmarcar descem o tom
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('button'); if (!b || b === somBtn) return;
+    sfx('clique', b.hasAttribute('data-close') || b.id === 'opsClose' || b.getAttribute('aria-pressed') === 'true' ? -1 : 1);
+  }, true);
+}
+window.somSede = { get ligado(){ return S.ligado; }, get analyser(){ return S.ligado ? S.analyser : null; }, foco, tick4, ...(DEBUG ? { _S: S, sfx } : {}) };
 
 /* ───────────────────────── animação ───────────────────────── */
 const clock = new THREE.Clock();
@@ -1938,7 +2290,7 @@ function frame(now){
     const u = Math.min(1, (t - p.t0) / p.dur), e = u * u * (3 - 2 * u), iu = 1 - e;
     p.g.position.set(iu*iu*p.a.x + 2*iu*e*p.c.x + e*e*p.b.x, iu*iu*p.a.y + 2*iu*e*p.c.y + e*e*p.b.y, iu*iu*p.a.z + 2*iu*e*p.c.z + e*e*p.b.z);
     p.g.rotation.set(Math.sin(t * 9) * .4, t * 8, 0); p.g.scale.setScalar(1 + Math.sin(u * Math.PI) * .5);
-    if (u >= 1){ p.active = false; p.g.visible = false; p.cb && p.cb(); }
+    if (u >= 1){ p.active = false; p.g.visible = false; sfx('plim', p.to); p.cb && p.cb(); }
   });
   bits.forEach(b => { if (b.life <= 0) return; b.life -= dt * 1.4; b.m.position.addScaledVector(b.v, dt); b.m.rotation.x += dt * 5; b.m.rotation.y += dt * 4; b.m.scale.setScalar(Math.max(.01, b.life)); if (b.life <= 0) b.m.visible = false; });
 
@@ -1951,7 +2303,7 @@ function frame(now){
 
   renderer.render(scene, camera);
   labels.render(scene, camera);
-  if (++frames === 2){ $('#loader').classList.add('out'); }
+  if (++frames === 2){ $('#loader').classList.add('out'); somConvite(); }
 }
 
 resize();
@@ -1964,5 +2316,18 @@ renderer.setAnimationLoop(frame);
 const startId = location.hash.includes('=') ? '' : location.hash.slice(1);
 if (byId[startId]) setTimeout(() => select(startId, true), 900);
 </script>
+<!-- som da sede (Eco): tabela evento → som → duração. Tudo sintetizado (Web Audio), nada antes de um gesto; pico ≤ -18 dBFS nos microssons.
+  evento (gancho)                         | som                                                                  | duração        | pico
+  teclas (state 'working', teclasTick 40ms)| rajadas de 3-9 toques: ruído passa-banda (1700+i·110 Hz) + "toc" na nota do agente; 1 "espaço" grave | 10-30 ms/toque | -24 dBFS (focado -14)
+  pacote (sendPacket)                     | ruído passa-banda 300›2200›500 Hz, panorama do remetente ao destino   | 0,95 s (0,35 RM)| -20 dBFS
+  chegada do pacote (callback)            | "plim": seno na nota do agente ×2                                    | 0,15 s         | -22 dBFS
+  Feito! (aplicarEstado / startRun)       | sino: nota ×2 + parcial 2,76 + oitava; feitos em sequência = melodia | 1,2 s          | -18 dBFS
+  pulo de evento (hop {som:true})         | boing 220›440›330 Hz com vibrato 18 Hz (mudo em movimento reduzido)  | 0,18 s         | -21 dBFS
+  celebrate (telas viram "Entregue")      | Fmaj9 dedilhado (F4 A4 C5 E5 G5) + 3 pops de confete                | 2,2 s (1 s RM) | -16 dBFS no total
+  clique de UI (botões, toque na cena)    | ruído 2 ms + seno 900›1300 Hz (fechar: 1300›800)                     | 30 ms          | -26 dBFS
+  entrar/sair da tela (foco)              | "porta": passa-baixa do mundo 18 k›900 Hz e -8 dB, teclas do agente no centro + sopro | 0,6 s | -30 dBFS
+  fala de quem está na tela (say)         | murmúrio: 1 sílaba a cada 2 letras (máx. 12), quadrada em passa-baixa | até 0,9 s      | -26 dBFS
+  ambiente (contínuo)                     | vento (ruído filtrado + LFO), cachoeira pela distância, pad Fmaj9›Dm9›Bbmaj7›Csus2 a cada 16 s que abre com a equipe trabalhando, pássaros (FM curta) de dia, grilos à noite; RM: -6 dB, sem bichos, acorde fixo | contínuo | ≈ -30 dBFS
+-->
 </body>
 </html>
