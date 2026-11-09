@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Sede ao Vivo · creat.MTT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="estilo.css">
+<style>
+/* acréscimos desta versão: login, agentes de fora da equipe, faixa de demonstração */
+.login{padding:22px;display:grid;gap:12px;max-width:520px}
+.login h2{font-size:26px}
+.login p{margin:0;color:var(--muted);font-weight:600}
+.login form{display:flex;gap:10px;flex-wrap:wrap}
+.login input{flex:1 1 220px;font:inherit;font-weight:700;color:var(--fg);background:var(--deck-2);border:3px solid var(--ink);border-radius:12px;padding:10px 12px}
+.demo-tag{background:var(--sun);color:var(--on);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:2px solid var(--ink);border-radius:999px;padding:4px 10px}
+.mesa{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.chip{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--deck-2);border:2px solid var(--ink);border-radius:12px;padding:8px 10px;min-width:0}
+.chip .dot{width:12px;height:12px;border-radius:50%;background:var(--c);border:2px solid var(--ink);opacity:.45}
+.chip .cn{min-width:0;display:grid}
+.chip b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip time{font-family:var(--f-mono);font-size:11.5px;font-weight:600}
+.chip[data-s="run"]{box-shadow:0 0 0 2px var(--c) inset;background:color-mix(in srgb,var(--c) 14%,var(--deck-2))}
+.chip[data-s="run"] .dot{opacity:1;animation:rec 1.4s infinite}
+.chip[data-s="run"] small{color:var(--fg)}
+.chip[data-s="done"] .dot{opacity:1;background:var(--ok)}
+.chip[data-s="stall"] .dot{opacity:1;background:var(--warn)}
+.ag .st{white-space:nowrap}.ag .foot{flex-wrap:wrap;row-gap:2px}
+.stage-txt .ctx{color:var(--sun);font-weight:800;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="cmd">
+    <div class="mark"><b>creat<em>.</em>MTT</b><span>Sede ao vivo</span></div>
+    <span class="demo-tag" id="demoTag" hidden>Demonstração</span>
+    <span class="rec" id="rec" data-on="0"><i></i><span id="recTxt">Conectando</span></span>
+    <span class="clock" id="clock">--:--:--</span>
+    <span class="sync" id="sync"></span>
+    <button class="tbtn" id="somBtn" type="button" aria-pressed="false" title="Toca um sinal quando alguém começa ou entrega uma tarefa">Som</button>
+    <button class="tbtn" id="tvBtn" type="button" aria-pressed="false" title="Tela cheia e tela sempre acesa">Modo TV</button>
+    <button class="tbtn" id="sairBtn" type="button" hidden>Sair</button>
+  </header>
+
+  <div class="panel banner" id="banner" hidden><p id="bannerTxt"></p></div>
+
+  <section class="panel login" id="login" hidden aria-labelledby="loginH">
+    <h2 id="loginH">Entrar na sede</h2>
+    <p>Digite o seu e-mail. Chega um link de acesso; abra-o neste mesmo aparelho.</p>
+    <form id="loginForm"><input id="email" type="email" required autocomplete="email" placeholder="seu@email.com" aria-label="E-mail"><button class="go" type="submit">Enviar link</button></form>
+    <p id="loginMsg" role="status"></p>
+  </section>
+
+  <section class="panel stage" id="stage" data-s="idle" aria-live="polite">
+    <div class="who-big" id="stageToon" data-s="idle"></div>
+    <div class="stage-txt">
+      <h1 class="headline" id="headline">A equipe está na sede</h1>
+      <div class="typed" id="typed">esperando a primeira leitura</div>
+      <span class="ctx" id="stageCtx"></span>
+      <div class="stage-meta" id="stageMeta"></div>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="big-num"><b id="nWork">0</b><span id="nWorkTxt">trabalhando agora</span></div>
+  </section>
+
+  <div class="main">
+    <section class="sec" aria-labelledby="teamH">
+      <div class="sec-h"><h2 id="teamH">A equipe</h2><span class="note" id="teamNote">15 agentes fixos</span></div>
+      <div class="team" id="team"></div>
+    </section>
+    <aside class="panel log" aria-labelledby="logH">
+      <div class="sec-h"><h2 id="logH">Acontecendo agora</h2><span class="note" id="logNote"></span></div>
+      <ol id="log"><li class="empty">Cada ação entra aqui no instante em que acontece.</li></ol>
+    </aside>
+  </div>
+
+  <section class="sec" aria-labelledby="outrosH">
+    <div class="sec-h"><h2 id="outrosH">Todos os agentes</h2><span class="note" id="outrosNote"></span></div>
+    <div class="panel flow"><ul class="mesa" id="mesa"><li class="chip"><span class="cn"><b>Ninguém trabalhando nas últimas horas</b></span></li></ul></div>
+  </section>
+
+  <section class="sec" aria-labelledby="sessH">
+    <div class="sec-h"><h2 id="sessH">Sessões</h2><span class="note">ativas nas últimas 12 horas</span></div>
+    <ul class="list" id="sess"><li class="row"><span></span><p class="empty">As sessões aparecem aqui quando enviarem o primeiro evento.</p><span></span></li></ul>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="nucleo.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+name: Sede ao vivo
+
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', 'sede/aovivo/**', '.github/workflows/sede-ao-vivo.yml']
+  pull_request:
+    paths: ['site/**', 'sede/aovivo/**', '.github/workflows/sede-ao-vivo.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Núcleo
+        run: node site/ao-vivo/teste-nucleo.cjs
+      - name: Higiene dos ganchos
+        run: |
+          out=$(echo '{"hook_event_name":"PreToolUse","session_id":"s","tool_name":"Bash","tool_input":{"command":"curl -H \"Authorization: Bearer abc\" --token=x sb_secret_Y"}}' | python3 -I sede/aovivo/evento.py)
+          echo "$out"
+          ! echo "$out" | grep -E 'abc|sb_secret_Y|token=x'
+      - name: Tela (modo demonstração)
+        run: |
+          npm i --no-save playwright@1.48.2
+          npx playwright install --with-deps chromium
+          node site/ao-vivo/teste-tela.cjs
+
+  publicar:
+    if: github.event_name != 'pull_request'
+    needs: testes
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+      - id: deploy
+        uses: actions/deploy-pages@v4
