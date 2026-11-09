@@ -142,6 +142,28 @@ async function supa(){
   if (!window.supabase || !CFG.supabaseUrl || !CFG.supabaseKey){ aviso('A sede ainda não foi ligada ao banco. Abra com ?demo para ver a demonstração.'); return; }
   const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { persistSession: true, detectSessionInUrl: true } });
   $('#sairBtn').addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
+  // Entrada com senha. O e-mail fica lembrado neste aparelho, então depois é só a senha.
+  const LEMBRADO = 'sede-ao-vivo:email';
+  const lembrado = () => { try { return localStorage.getItem(LEMBRADO) || ''; } catch (_) { return ''; } };
+  const lembrar = v => { try { v ? localStorage.setItem(LEMBRADO, v) : localStorage.removeItem(LEMBRADO); } catch (_) {} };
+  function mostrarEmail(){
+    const e = lembrado();
+    $('#senhaEmail').value = e;
+    $('#senhaEmailBox').hidden = !!e; $('#trocarEmail').hidden = !e;
+    (e ? $('#senha') : $('#senhaEmail')).focus();
+  }
+  mostrarEmail();
+  $('#trocarEmail').addEventListener('click', () => { lembrar(''); mostrarEmail(); });
+  $('#senhaForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const email = (lembrado() || $('#senhaEmail').value).trim(), password = $('#senha').value;
+    if (!email || !password){ $('#senhaMsg').textContent = 'Preencha o e-mail e a senha.'; return; }
+    $('#senhaMsg').textContent = 'Entrando…';
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error){ $('#senhaMsg').textContent = 'E-mail ou senha não conferem.'; $('#senha').select(); return; }
+    lembrar(email); $('#senha').value = ''; $('#senhaMsg').textContent = '';
+  });
+  // Entrada sem senha (uso único, quando ainda não há senha definida): link por e-mail.
   $('#loginForm').addEventListener('submit', async ev => {
     ev.preventDefault();
     const email = $('#email').value.trim(); $('#loginMsg').textContent = 'Enviando…';
