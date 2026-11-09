@@ -53,7 +53,7 @@ Você tem 7 dias, contados do pagamento, para desistir sem dar motivo (Código d
 ## 7. Mensalidade, cobrança e cancelamento
 
 - A primeira mensalidade só é cobrada a partir do dia em que o site entra no ar.
-- A cobrança é feita pelo Asaas, por Pix, boleto ou cartão, conforme o link enviado.
+- A Abertura e o plano anual são cobrados pelo Mercado Pago, por Pix ou cartão. A mensalidade no cartão é cobrada pelo Stripe, com renovação automática que você cancela quando quiser. O valor e o dia da cobrança aparecem no link antes de você pagar.
 - Não há fidelidade nem multa. Você cancela quando quiser, pelo WhatsApp do Suporte Creat ou por e-mail. O cancelamento vale para o próximo ciclo; o mês já pago segue até o fim.
 - **Plano anual**: se você cancelar antes de terminar os 12 meses, devolvemos o valor proporcional aos meses inteiros ainda não usados, calculado sobre o preço pago no anual.
 
@@ -114,7 +114,7 @@ O endereço do site na Creat redireciona para o seu domínio por 30 dias e depoi
 
 ## 15. Serviços de terceiros
 
-O site depende de serviços que a Creat não controla: WhatsApp e Instagram (Meta), Registro.br, Google, Asaas e a hospedagem. A Creat não responde por falha, mudança de regra ou bloqueio nesses serviços, mas ajuda você a resolver.
+O site depende de serviços que a Creat não controla: WhatsApp e Instagram (Meta), Registro.br, Google, Mercado Pago, Stripe e a hospedagem. A Creat não responde por falha, mudança de regra ou bloqueio nesses serviços, mas ajuda você a resolver.
 
 ## 16. Responsabilidade
 

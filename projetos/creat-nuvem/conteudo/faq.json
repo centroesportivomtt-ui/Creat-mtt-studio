@@ -49,7 +49,7 @@
     {
       "id": "meus-dados",
       "pergunta": "E os meus dados?",
-      "resposta": "Antes de você aceitar os termos, a página não guarda nada pessoal: o nome do negócio e o seu WhatsApp de teste ficam só no seu aparelho. Os dados do pedido vão pelo seu próprio WhatsApp para o Suporte Creat. O pagamento e o CPF ou CNPJ ficam com o Asaas. Detalhes na página de privacidade."
+      "resposta": "Antes de você aceitar os termos, a página não guarda nada pessoal: o nome do negócio e o seu WhatsApp de teste ficam só no seu aparelho. Os dados do pedido vão pelo seu próprio WhatsApp para o Suporte Creat. O pagamento e o CPF ou CNPJ ficam com o Mercado Pago (Pix e cartão) ou com o Stripe (mensalidade no cartão). Detalhes na página de privacidade."
     },
     {
       "id": "pedido-confirmado",

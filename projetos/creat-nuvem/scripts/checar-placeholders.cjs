@@ -12,7 +12,8 @@
    - qualquer arquivo publicável tiver "[LINK_", "[WHATSAPP_SUPORTE" ou "[PREENCHER"
      (marcador fora do checkout.config.js já é erro por si só);
    - o valor colocado no lugar do marcador não passar na validação do próprio
-     checkout.config.js (link https do Asaas/Cakto; WhatsApp 55 + DDD + número).
+     checkout.config.js (link https de Mercado Pago, Stripe, Asaas ou Cakto;
+     WhatsApp 55 + DDD + número).
    PASSA (código 0) quando o Marcos trocar os 4 marcadores por valores válidos.
 
    Arquivos publicáveis = tudo na pasta do projeto, menos docs/, scripts/,
@@ -78,7 +79,7 @@ if (!abertos.length) {
   try { vm.runInContext(fonteCk, vm.createContext(j)); } catch (e) { falha('checkout.config.js não carrega: ' + e.message); }
   const C = j.CREAT_CHECKOUT;
   if (C) {
-    ['aberturaInauguracao', 'aberturaPadrao', 'bastidores'].forEach((k) => { if (!C.linkValido(C.links[k])) falha(`links.${k} não é um link https do Asaas ou da Cakto: ${JSON.stringify(C.links[k])}`); });
+    ['aberturaInauguracao', 'aberturaPadrao', 'bastidores'].forEach((k) => { if (!C.linkValido(C.links[k])) falha(`links.${k} não é um link https aceito (Mercado Pago, Stripe, Asaas ou Cakto): ${JSON.stringify(C.links[k])}`); });
     if (!C.whatsappValido(C.whatsappSuporte)) falha(`whatsappSuporte precisa ser 55 + DDD + número, só dígitos: ${JSON.stringify(C.whatsappSuporte)}`);
     const M = j.CREAT_MEDICAO || {};
     if (M.posthogValida && !M.posthogValida(M.posthogChave)) console.log('aviso  PostHog desligado: posthogChave ainda é exemplo (chave pública phc_ do projeto)');
@@ -88,7 +89,7 @@ if (!abertos.length) {
 }
 
 if (falhas) {
-  console.log(`\n${falhas} problema(s). Deploy bloqueado: troque os marcadores em checkout.config.js pelos links reais do Asaas e da Cakto e pelo número do Suporte Creat.`);
+  console.log(`\n${falhas} problema(s). Deploy bloqueado: troque os marcadores em checkout.config.js pelos links reais de pagamento (docs/INTEGRACAO-PAGAMENTO.md) e pelo número do Suporte Creat.`);
   process.exit(1);
 }
 console.log('ok     nenhum marcador aberto; links e WhatsApp de suporte válidos. Pode publicar.');

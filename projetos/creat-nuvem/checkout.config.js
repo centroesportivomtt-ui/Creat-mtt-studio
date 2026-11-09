@@ -6,29 +6,48 @@
    o número público do Suporte Creat e IDs públicos de medição.
 
    Os 4 marcadores abaixo são os ÚNICOS do projeto. Enquanto existirem,
-   os botões de pagamento ficam desativados com o texto
-   "Link de pagamento em configuração" e scripts/checar-placeholders.cjs
-   falha o deploy. Para liberar, o Marcos troca cada marcador pelo valor
-   real (link do Asaas, link da Cakto, número 55 + DDD + número).
+   os botões de pagamento caem no WhatsApp do Suporte Creat (ou ficam com
+   "Link de pagamento em configuração" sem WhatsApp válido) e
+   scripts/checar-placeholders.cjs falha o deploy. Para liberar, o Marcos
+   troca cada marcador pelo link real. O nome do marcador ficou com
+   "ASAAS"/"CAKTO" por histórico: vale link de qualquer provedor aceito
+   em linkValido (Mercado Pago, Stripe, Asaas, Cakto). Passo a passo:
+   docs/INTEGRACAO-PAGAMENTO.md.
+
+   Provedores aceitos em linkValido (só https, sem usuário/senha/porta):
+   - Mercado Pago: mpago.la, mpago.li (links curtos do painel),
+     link.mercadopago.com.br, www.mercadopago.com.br (Checkout Pro,
+     init_point das preferências do AutoCreatFlux). Host exato.
+   - Stripe: buy.stripe.com (Payment Link), checkout.stripe.com
+     (Checkout Session da assinatura). Host exato.
+   - Asaas (asaas.com e subdomínios) e Cakto (cakto.com.br e subdomínios).
 
    Link da inauguração: este arquivo é público, então quem guardar o link
-   pode pagar o preço de inauguração depois do fim. No Asaas, crie o link com
-   limite (Cobranças > Links de pagamento > Novo link > "Quantidade máxima de
-   pagamentos" = vagas restantes, e data de encerramento). Quando a inauguração
-   acabar, desative o link no Asaas e volte aberturaInauguracao para o marcador:
+   pode pagar o preço de inauguração depois do fim. Crie o link com data de
+   encerramento (Mercado Pago: Link de pagamento > "Data de vencimento"; Asaas:
+   "Quantidade máxima de pagamentos" = vagas restantes). Quando a inauguração
+   acabar, desative o link no provedor e volte aberturaInauguracao para o marcador:
    scripts/atualizar-vagas.cjs avisa e a rotina diária falha até isso ser feito.
    ===================================================================== */
 (function () {
   'use strict';
 
+  // Host e subdomínios (contrato original de T5).
   var HOSTS = ['asaas.com', 'cakto.com.br'];
+  // Só o host exato: subdomínio de Mercado Pago ou Stripe fora desta lista não é página de pagamento.
+  var HOSTS_EXATOS = [
+    'mpago.la', 'mpago.li', 'link.mercadopago.com.br', 'www.mercadopago.com.br',
+    'buy.stripe.com', 'checkout.stripe.com'
+  ];
 
   function linkValido(valor) {
     if (typeof valor !== 'string' || !valor || valor.indexOf('[') !== -1) return false;
     var u;
     try { u = new URL(valor); } catch (e) { return false; }
-    if (u.protocol !== 'https:') return false;
+    // Sem credencial embutida (usuário ou senha antes do @) e sem porta.
+    if (u.protocol !== 'https:' || u.port || u.username || /^\s*https:[\/\\]*[^\/\\?#]*@/i.test(valor)) return false;
     var h = u.hostname.toLowerCase();
+    if (HOSTS_EXATOS.indexOf(h) !== -1) return u.pathname.length > 1;
     return HOSTS.some(function (base) { return h === base || h.slice(-(base.length + 1)) === '.' + base; });
   }
 
