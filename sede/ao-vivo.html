@@ -39,6 +39,7 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;letter-spacing:.0
 .live[data-on="1"] i{background:#FF4D4D;box-shadow:0 0 0 0 rgba(255,77,77,.6);animation:pulse 1.6s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,77,77,.55)}70%{box-shadow:0 0 0 10px rgba(255,77,77,0)}100%{box-shadow:0 0 0 0 rgba(255,77,77,0)}}
 .fresh{font-size:13px;color:var(--muted);font-weight:600;text-align:right}
+.status{display:grid;gap:8px;justify-items:end}
 
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .stat{padding:14px 16px;display:grid;gap:2px;min-width:0}
@@ -146,18 +147,17 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;letter-spacing:.0
 .grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:22px;align-items:start}
 
 @media (max-width:900px){ .grid2,.cols{grid-template-columns:1fr} .stats{grid-template-columns:repeat(2,minmax(0,1fr))} .steps{grid-template-columns:repeat(3,minmax(0,1fr))} }
-@media (max-width:480px){ .top{grid-template-columns:1fr} .fresh{text-align:left} .bar{grid-template-columns:84px 1fr 44px} .team{grid-template-columns:1fr} }
+@media (max-width:480px){ .top{grid-template-columns:1fr} .fresh{text-align:left} .status{justify-items:start} .bar{grid-template-columns:84px 1fr 44px} .team{grid-template-columns:1fr} }
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 </style>
 
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <span class="live" id="live" data-on="0"><i></i><span id="liveTxt">Conectando</span></span>
       <h1>Sede ao vivo</h1>
       <p>creat.MTT · a Creat Nuvem trabalhando agora, direto das suas sessões do Claude Code</p>
     </div>
-    <div class="fresh" id="fresh">aguardando a primeira leitura</div>
+    <div class="status"><span class="live" id="live" data-on="0"><i></i><span id="liveTxt">Conectando</span></span><div class="fresh" id="fresh">aguardando a primeira leitura</div></div>
   </header>
 
   <section class="stats" aria-label="Resumo">
