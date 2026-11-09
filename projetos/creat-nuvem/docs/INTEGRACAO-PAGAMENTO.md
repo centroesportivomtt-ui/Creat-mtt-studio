@@ -485,3 +485,16 @@ Stripe (ao vivo), assinaturas mensais no cartão, com retorno a `/obrigado/?assi
 Portal do assinante (cancelar ao fim do período, trocar cartão, faturas), configuração `bpc_1UZvuT9f9VS5QiOdCO4l5tkY`: https://billing.stripe.com/p/login/7sYbIV5JIe7nfvR09r2cg00
 
 Pendências que continuam: o webhook do AutoCreatFlux ignora estes pagamentos (sem Order), então a confirmação é pela conciliação do painel do Mercado Pago e pelas etiquetas do WhatsApp até o Plano A (funções `portaAberta*` isoladas) entrar.
+
+## Links do plano anual criados em 09/11/2026 (Mercado Pago, Pix ou cartão em até 12x)
+
+Criados por uma função isolada de uso único (`portaAbertaAnual`) no AutoCreatFlux, executada uma vez e apagada, junto com a automação que a chamou. Conta recebedora 2189692475. Links permanentes.
+
+| produto | valor | link |
+|---|---|---|
+| Plano Aberto anual (12 meses pelo preço de 10) | R$ 1.470 | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-b59a2303-a790-4649-bdf2-a2a9ee223bf2 |
+| Plano Vitrine anual (12 meses pelo preço de 10) | R$ 2.970 | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-65fb5ba7-2b72-4712-9070-3a7268468aef |
+| Abertura (inauguração) + Plano Aberto anual | R$ 1.767 | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-78effa57-7b26-4cd5-9617-6d6bc32cce32 |
+| Abertura (inauguração) + Plano Vitrine anual | R$ 3.267 | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-9914ecb8-0c03-45b7-a9bc-3c36972f372d |
+
+Regras: o anual segue os termos (cláusula do plano anual: devolução proporcional aos meses inteiros não usados). Os dois combos usam o preço de inauguração: desative-os no Mercado Pago quando a 20ª vaga for paga. Estes links são enviados na conversa, depois do "LI E ACEITO"; não entram no `checkout.config.js`.

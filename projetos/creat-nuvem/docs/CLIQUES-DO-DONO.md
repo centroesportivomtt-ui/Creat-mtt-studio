@@ -55,12 +55,10 @@ Decisões da agência nesta montagem:
 - **Aprimoramentos Advantage+ de criativo desligados na origem** em todos os anúncios válidos. Os três primeiros anúncios de site (sem esse desligamento) foram arquivados.
 - **Imagens:** S1 (1:1) no feed e S2 (9:16) em Stories e Reels, nas variantes barbearia e salão (`estaticos/renderizar.cjs --nicho salao`).
 
-### O único gesto que falta: ligar (é gasto, só o dono)
+### Ligadas em 09/11/2026, por volta das 20h (ordem direta do Marcos no chat)
 
-| # | o quê | onde | tempo |
-|---|---|---|---|
-| A | **Ligar a célula site** `cal-nov26`: campanha, conjunto e os 3 anúncios (R$ 40/dia, teto R$ 300) | https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=4078332059160918&selected_campaign_ids=120254150908340237 | 1 min |
-| B | **Ligar a célula WhatsApp** `ctwa-nov26`: campanha, conjunto e os 5 anúncios (R$ 40/dia, teto R$ 300). Só ligue com alguém respondendo o WhatsApp em até 5 min | https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=4078332059160918&selected_campaign_ids=120254150873900237 | 1 min |
-| C | (melhoria, sem pressa) Ligar o WhatsApp à Página Creat.MTT Studio, para trocar o link pelo destino nativo com contagem de conversas | https://business.facebook.com/latest/settings/whatsapp_account?business_id=694246740441336&asset_id=1418388018024129 | 3 min, com o aparelho do número |
+As duas células foram ativadas pelo MCP oficial: campanha, conjunto e anúncios. Leitura logo depois: os 3 anúncios de site ATIVOS; os 5 de WhatsApp em processamento na Meta. Gasto máximo: R$ 40/dia em cada uma (R$ 80/dia somadas), teto de R$ 300 por campanha.
 
-Como ligar: marque a caixa da campanha, entre nos níveis Conjuntos e Anúncios e ligue as chaves dos três níveis. As duas juntas gastam no máximo R$ 80/dia e R$ 600 no total. A Meta revisa antes de entregar (até 24 h).
+Para pausar: https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=4078332059160918 e desligar a chave da campanha. Ou pedir no chat.
+
+Melhoria sem pressa: ligar o WhatsApp à Página Creat.MTT Studio (https://business.facebook.com/latest/settings/whatsapp_account?business_id=694246740441336&asset_id=1418388018024129), para trocar o link `wa.me` pelo destino nativo com contagem de conversas.
