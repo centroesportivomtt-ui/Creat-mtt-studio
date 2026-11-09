@@ -162,6 +162,24 @@ button,a{font:inherit;color:inherit}
 .kpi b{font-family:var(--f-display);font-weight:400;font-size:26px;line-height:1.05;font-variant-numeric:tabular-nums}
 .kpi span{font-size:12px;color:var(--muted);font-weight:700}
 
+/* mesa: todos os agentes do fluxo */
+.mesa-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+.mesa-h .note{color:var(--muted);font-weight:700;font-size:13px}
+.mesa{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.chip{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--deck-2);border:2px solid var(--ink);border-radius:12px;padding:8px 10px;min-width:0}
+.chip .dot{width:12px;height:12px;border-radius:50%;background:var(--c);border:2px solid var(--ink);opacity:.45}
+.chip .cn{min-width:0;display:grid}
+.chip b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip time{font-family:var(--f-mono);font-size:11.5px;color:var(--fg);font-weight:600}
+.chip[data-s="run"]{box-shadow:0 0 0 2px var(--c) inset;background:color-mix(in srgb,var(--c) 14%,var(--deck-2))}
+.chip[data-s="run"] .dot{opacity:1;animation:rec 1.4s infinite}
+.chip[data-s="run"] small{color:var(--fg)}
+.chip[data-s="done"] .dot{opacity:1;background:var(--ok)}
+.chip[data-s="fila"]{border-style:dashed}
+.chip[data-s="stall"] .dot,.chip[data-s="warn"] .dot{opacity:1;background:var(--warn)}
+.chip.more{border-style:dashed;justify-items:start;grid-template-columns:1fr}
+
 /* rodapé: sessões, precisa de você, cota */
 .lower{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:22px;align-items:start}
 .list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
@@ -248,7 +266,7 @@ body.tv .lower{display:none}
   </div>
 
   <section class="sec" aria-labelledby="flowH">
-    <div class="sec-h"><h2 id="flowH">Fluxo da agência</h2><span class="note" id="flowNote"></span></div>
+    <div class="sec-h"><h2 id="flowH">Fluxos ao vivo</h2><span class="note" id="flowNote"></span></div>
     <div id="flows"><div class="panel flow"><p class="empty">Nenhum fluxo da agência rodando agora. Quando você pedir "rode o workflow agencia", as seis fases aparecem aqui e acendem uma a uma.</p></div></div>
   </section>
 
@@ -295,8 +313,18 @@ const quem = (label, tipo) => {
   if (tipo && BY[tipo]) return tipo;
   const l = String(label||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
   for (const [re,id] of MAPA) if (re.test(l)) return id;
-  return 'diretor';
+  return null;
 };
+const PREF = { act:'Ato', build:'Montagem', ingest:'Ingestão', assets:'Assets', board:'Storyboard', director:'Direção', social:'Social', review:'Revisão', fix:'Correção', assemble:'Montagem final', render:'Render', voice:'Voz', color:'Cor', audio:'Áudio', qa:'QA', plan:'Plano', research:'Pesquisa', write:'Texto', edit:'Edição' };
+const CORES = ['#FF6B6B','#4D7CFE','#2EC4B6','#FF9F1C','#9B6BFF','#6CC08B','#FF8FD1','#FFD23F','#D63AF9','#7B8BD1','#B8E04A','#FFB4A2'];
+const hashCor = s => { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return CORES[h % CORES.length]; };
+const bonito = label => {
+  const [pre, ...resto] = String(label||'agente').split(':');
+  const r = resto.join(' ').replace(/[_-]+/g,' ').trim();
+  const p = PREF[pre.toLowerCase()] || (pre.charAt(0).toUpperCase() + pre.slice(1));
+  return curto(r ? p + ' ' + r : p, 26);
+};
+const pessoa = a => a && a.quem && BY[a.quem] ? BY[a.quem] : { id:'x:' + (a && a.label), nick: bonito(a && a.label), color: hashCor(String(a && a.label).split(':')[0]), role:'produção', fora:true };
 const STALL = 10 * 60e3;
 const RAPIDO = 2500, SESSOES = 8000;   // ritmo das leituras: eventos a cada 2,5 s, lista de sessões a cada 8 s
 
@@ -314,6 +342,7 @@ const limpa = t => {
   if (m) return m[1];
   return t.replace(/[{}\[\]"`]/g,' ').replace(/\b(aprovado|ajustes|achados|real)\s*:/g,'').replace(/\s+/g,' ').trim();
 };
+const tarefaDe = a => a.quem ? tarefa(a.label) : 'trabalhando em ' + (a.phaseTitle || 'uma etapa').toLowerCase();
 const tarefa = label => {
   const p = String(label||'').split(':'); p.shift();
   const r = p.join(':');
@@ -387,13 +416,14 @@ function teamBase(){
 }
 
 const agentes = () => { const out = []; for (const f of st.flows.values()) for (const a of f.agentes.values()) out.push(a); return out; };
-const emCurso = a => a.state === 'progress' || a.state === 'running' || a.state === 'queued';
+const emCurso = a => a.state === 'progress' || a.state === 'running';
+const naFila = a => a.state === 'start' || a.state === 'queued' || a.state === 'pending';
 const vivo = (a, agora) => emCurso(a) && agora - (a.lastProgressAt || a.startedAt || 0) < STALL;
 const porRecencia = (x, y) => (y.lastProgressAt||0) - (x.lastProgressAt||0);
 
 function renderTeam(agora){
   const porId = {};
-  for (const a of agentes()) (porId[a.quem] = porId[a.quem] || []).push(a);
+  for (const a of agentes()) if (a.quem) (porId[a.quem] = porId[a.quem] || []).push(a);
   let n = 0, pessoas = 0;
   document.querySelectorAll('.ag').forEach(el => {
     const lista = porId[el.dataset.id] || [];
@@ -440,10 +470,10 @@ function renderStage(agora, n){
   const stage = $('#stage');
   let key, p = BY.diretor, lbl, head, typed, meta = '', s = 'idle';
   if (run.length){
-    const a = run[st.stageI % run.length]; p = BY[a.quem]; s = 'run';
+    const a = run[st.stageI % run.length]; p = pessoa(a); s = 'run';
     key = a.agentId + '|' + a.lastToolSummary;
-    lbl = 'Agora · ' + (a.fluxo || 'fluxo da agência');
-    head = `<em>${esc(p.nick)}</em> está ${esc(tarefa(a.label))}`;
+    lbl = 'Agora · ' + (a.fluxo || 'fluxo') + (run.length > 1 ? ` · ${(st.stageI % run.length) + 1} de ${run.length} trabalhando` : '');
+    head = `<em>${esc(p.nick)}</em> está ${esc(tarefaDe(a))}`;
     typed = acao(a);
     meta = [['há', dur(agora - (a.startedAt||agora))], ['tokens', tok(a.tokens||0)], ['ações', a.toolCalls||0], ['modelo', modelo(a.model)]].filter(x => x[1] !== '' && x[1] !== 0).map(([k,v]) => `<span>${k} <b>${esc(v)}</b></span>`).join('');
   } else if (ativas.length){
@@ -457,6 +487,7 @@ function renderStage(agora, n){
     typed = st.ok ? 'nenhum agente trabalhando neste momento' : 'esperando a primeira leitura das suas sessões';
   }
   if (s === 'run' && run.length) stage.style.setProperty('--c', p.color); else stage.style.removeProperty('--c');
+  if (!run.length && ativas.length) typed = ativas.map(x => x.task_summary ? curto(x.title, 28) + ': ' + x.task_summary : curto(x.title, 40)).join(' · ');
   stage.dataset.s = s;
   const box = $('#stageToon');
   if (box.dataset.who !== p.id){ box.innerHTML = toonHTML(p); box.dataset.who = p.id; }
@@ -471,7 +502,21 @@ function renderStage(agora, n){
 function agoraTxt(d){
   const m = String(d).match(/^([^:]+):\s*(.+)$/);
   if (!m) return curto(d, 60);
-  return m[1] + ' · ' + BY[quem(m[2])].nick + ' ' + tarefa(m[2]);
+  const a = { label:m[2], quem:quem(m[2]), phaseTitle:m[1] };
+  return m[1] + ' · ' + pessoa(a).nick + (a.quem ? ' ' + tarefa(m[2]) : '');
+}
+function mesa(ag, agora){
+  const ordem = a => vivo(a, agora) ? 0 : emCurso(a) ? 1 : naFila(a) ? 2 : a.state === 'done' ? 3 : 1;
+  const lista = ag.slice().sort((x,y) => ordem(x) - ordem(y) || porRecencia(x,y));
+  const chip = a => {
+    const p = pessoa(a), v = vivo(a, agora);
+    const sc = v ? 'run' : naFila(a) ? 'fila' : a.state === 'done' ? 'done' : emCurso(a) ? 'stall' : 'warn';
+    const st = { run:'trabalhando', fila:'na fila', done:'entregue', stall:'sem sinal', warn:a.state }[sc];
+    const sub = v ? acao(a) : a.state === 'done' && a.resultPreview ? limpa(a.resultPreview) : (a.quem ? tarefa(a.label) : a.phaseTitle || '');
+    return `<li class="chip" data-s="${sc}" style="--c:${p.color}" title="${esc(a.label)}"><span class="dot"></span><span class="cn"><b>${esc(p.fora ? p.nick : p.nick + ' · ' + tarefa(a.label))}</b><small>${esc(st)}${sub ? ' · ' + esc(curto(sub, 70)) : ''}</small></span>${v ? `<time>${dur(agora - (a.startedAt||agora))}</time>` : ''}</li>`;
+  };
+  const vis = lista.slice(0, 24), resto = lista.length - vis.length;
+  return `<div class="mesa-h"><span class="lbl">Todos os agentes deste fluxo</span><span class="note">${lista.filter(a => vivo(a, agora)).length} trabalhando · ${lista.filter(naFila).length} na fila · ${lista.filter(a => a.state === 'done').length} entregues</span></div><ul class="mesa">${vis.map(chip).join('')}${resto > 0 ? `<li class="chip more"><span class="cn"><b>+${resto} entregues antes</b></span></li>` : ''}</ul>`;
 }
 function renderFlows(agora){
   const fl = [...st.flows.values()].filter(f => agora - f.ultimo < 6 * 3600e3).sort((a,b) => b.ultimo - a.ultimo);
@@ -492,6 +537,7 @@ function renderFlows(agora){
     return `<article class="panel flow">
       <div class="flow-h"><h3>${esc(f.sessao || 'Fluxo da agência')}</h3><span>${esc(f.agora ? 'agora: ' + agoraTxt(f.agora) : '')}</span></div>
       <div class="track" style="--n:${Math.max(1, fases.length)};--p:${prog}"><span class="fill"></span>${nodes}</div>
+      ${mesa(ag, agora)}
       <div class="flow-cols">
         <div class="kpi"><b>${feitos}/${ag.length}</b><span>tarefas entregues</span></div>
         <div class="kpi"><b>${tok(f.tokens||0)}</b><span>tokens processados</span></div>
@@ -508,7 +554,7 @@ function renderSessions(){
   if (!st.sessions.length) return;
   $('#sess').innerHTML = st.sessions.slice(0, 8).map(s => {
     const b = bucket(s), ps = s.post_turn_summary || {};
-    const txt = b === 'BLOCKED' && ps.needs_action ? ps.needs_action : ps.recent_action || '';
+    const txt = b === 'BLOCKED' && ps.needs_action ? ps.needs_action : b === 'WORKING' && s.task_summary ? 'agora: ' + s.task_summary : ps.recent_action || s.task_summary || '';
     return `<li class="row"><span class="b" data-b="${b}">${esc(BUCKET[b] || b)}</span><div style="min-width:0"><a class="ttl" href="${link(s)}" target="_blank" rel="noopener">${esc(curto(s.title || 'Sessão sem título', 64))}</a>${txt ? `<p>${esc(curto(txt, 150))}</p>` : ''}</div><time>${esc(ha(Date.parse(s.updated_at)))}</time></li>`;
   }).join('');
   const need = st.sessions.filter(s => bucket(s) === 'BLOCKED' && (s.post_turn_summary||{}).needs_action && Date.now() - Date.parse(s.updated_at) < 7 * 864e5);
@@ -529,14 +575,14 @@ const KIND = { done:'entregou', start:'começou', warn:'atenção', tool:'ação
 function renderLog(){
   if (!st.log.length) return;
   $('#log').innerHTML = st.log.slice(0, 40).map(e => {
-    const p = BY[e.who] || BY.diretor, novo = !st.logSeen.has(e.id);
+    const p = e.p || BY[e.who] || BY.diretor, novo = !st.logSeen.has(e.id);
     st.logSeen.add(e.id);
     return `<li class="${novo ? '' : 'seen'}">${toonHTML(p, 0)}<p><span class="k" data-k="${e.kind}">${KIND[e.kind] || e.kind}</span><b>${esc(e.whoName || p.nick)}</b> ${esc(e.text)}<small>${hora(e.t)}${e.fluxo ? ' · ' + esc(curto(e.fluxo, 30)) : ''}</small></p></li>`;
   }).join('');
   $('#logNote').textContent = st.log.length + (st.log.length === 1 ? ' evento' : ' eventos');
 }
 function evento(e, silencioso){
-  e.id = e.id || (e.who + '|' + e.kind + '|' + e.text);
+  e.id = e.id || ((e.p ? e.p.nick : e.who) + '|' + e.kind + '|' + e.text);
   if (st.log.some(x => x.id === e.id)) return;
   st.log.push(e); st.log.sort((a,b) => b.t - a.t); if (st.log.length > 80) st.log.length = 80;
   if (!silencioso) toque(e.kind === 'done' ? 'done' : e.kind === 'warn' ? 'warn' : e.kind === 'start' ? 'start' : null);
@@ -544,7 +590,8 @@ function evento(e, silencioso){
 
 function render(){
   const agora = Date.now();
-  const n = renderTeam(agora);
+  renderTeam(agora);
+  const n = agentes().filter(a => vivo(a, agora)).length;
   renderStage(agora, n);
   renderFlows(agora); renderSessions(); renderQuota(); renderLog();
   $('#rec').dataset.on = n || st.sessions.some(s => bucket(s) === 'WORKING') ? '1' : '0';
@@ -565,16 +612,16 @@ function aplicarWP(sessao, c, t){
     const o = prev && prev.agentes.get(a.agentId);
     if (o && o.state === a.state && (o.lastProgressAt||0) > (a.lastProgressAt||0)) a.lastProgressAt = o.lastProgressAt;
     agentes.set(a.agentId, a);
-    const ev = (kind, text, when, idSuf, sil) => evento({ who:a.quem, kind, text, t:when || t, fluxo:a.fluxo, id: idSuf ? a.agentId + '|' + idSuf : undefined }, sil);
-    const resumo = () => entregou(a.label) + (a.resultPreview ? ' · ' + curto(limpa(a.resultPreview), 90) : '');
+    const ev = (kind, text, when, idSuf, sil) => evento({ p: pessoa(a), kind, text, t:when || t, fluxo:a.fluxo, id: idSuf ? a.agentId + '|' + idSuf : undefined }, sil);
+    const resumo = () => (a.quem ? entregou(a.label) : (a.phaseTitle || 'etapa').toLowerCase()) + (a.resultPreview ? ' · ' + curto(limpa(a.resultPreview), 90) : '');
     if (base){   // primeira leitura: monta um histórico curto, sem som
       if (a.state === 'done') ev('done', resumo(), a.lastProgressAt, 'done', true);
-      else ev('start', tarefa(a.label), a.startedAt, 'start', true);
+      else if (emCurso(a)) ev('start', tarefaDe(a), a.startedAt, 'start', true);
       continue;
     }
-    if (!o) ev('start', tarefa(a.label), a.startedAt, 'start');
+    if ((!o || naFila(o)) && emCurso(a)) ev('start', tarefaDe(a), a.startedAt, 'start');
     if (a.state === 'done' && (!o || o.state !== 'done')) ev('done', resumo(), a.lastProgressAt, 'done');
-    else if (/fail|error|cancel/.test(a.state) && (!o || o.state !== a.state)) ev('warn', 'parou: ' + tarefa(a.label), t, 'fail');
+    else if (/fail|error|cancel/.test(a.state) && (!o || o.state !== a.state)) ev('warn', 'parou: ' + tarefaDe(a), t, 'fail');
     else if (a.state !== 'done' && a.lastToolSummary && (!o || o.lastToolSummary !== a.lastToolSummary)) ev('tool', acao(a), a.lastProgressAt, null, true);
   }
   const ini = Math.min(...lista.map(a => a.startedAt || ultimo));
@@ -604,8 +651,8 @@ function aplicarEventos(sessao, data){
     }
     if (c.subtype === 'task_started' && c.description && c.owned_by_subagent){
       const f = [...st.flows.values()].find(x => x.sessao === sessao.title);
-      const q = f && f.agora ? quem(String(f.agora).replace(/^[^:]+:\s*/, '')) : 'diretor';
-      evento({ who:q, kind:'bash', text: curto(c.description, 90), t, fluxo: sessao.title, id: c.task_id + '|bash' }, true);
+      const lab = f && f.agora ? String(f.agora).replace(/^[^:]+:\s*/, '') : '';
+      evento({ p: lab ? pessoa({ label:lab, quem:quem(lab) }) : { nick:'Claude', color:'#FFD25E' }, kind:'bash', text: curto(c.description, 90), t, fluxo: sessao.title, id: c.task_id + '|bash' }, true);
     }
   }
 }
@@ -683,7 +730,7 @@ setInterval(() => {
   if (st.ok) renderTeam(Date.now());
 }, 1000);
 /* o palco alterna entre quem está trabalhando */
-setInterval(() => { st.stageI++; if (st.ok){ const agora = Date.now(); renderStage(agora, renderTeam(agora)); } }, 7000);
+setInterval(() => { st.stageI++; if (st.ok){ const agora = Date.now(); renderTeam(agora); renderStage(agora, agentes().filter(a => vivo(a, agora)).length); } }, 7000);
 
 async function iniciar(){
   teamBase(); render();
