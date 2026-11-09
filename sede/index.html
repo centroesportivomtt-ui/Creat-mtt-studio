@@ -57,7 +57,7 @@ button{font:inherit;color:inherit}
 #app{position:fixed;inset:0}
 #scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #scene.hover{cursor:pointer}
-#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#labels{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}   /* contexto próprio: etiquetas do CSS2D (z 1..16) nunca passam por cima do topo, da ficha ou dos chips */
 
 .panel{background:var(--paper);border:2.5px solid var(--line);border-radius:var(--r);box-shadow:var(--pop)}
 
@@ -83,6 +83,9 @@ button{font:inherit;color:inherit}
 .btn-som[aria-pressed="true"]{background:var(--sun);color:var(--sun-ink)}
 .btn-som[aria-pressed="true"] .ondas{display:inline}
 .btn-som[aria-pressed="true"] .xis{display:none}
+.btn-som.pend{background:var(--sun);color:var(--sun-ink)}
+.btn-som.pend .ondas{display:inline}
+.btn-som.pend .xis{display:none}
 .btn-som.pend .ondas{opacity:.45}
 .btn-som::after{content:"";position:absolute;inset:-4px;border-radius:999px;border:3px solid var(--sun);opacity:0;pointer-events:none}
 .btn-som.convite::after{animation:somConvite .6s cubic-bezier(.2,.8,.3,1) 1}
@@ -122,7 +125,7 @@ button{font:inherit;color:inherit}
   .btn{padding:9px 14px;font-size:14px}
   .acoes{flex-direction:column;align-items:flex-end;gap:8px}
   .btn-som{width:44px;height:44px;padding:0;justify-content:center}
-  .btn-som .som-txt{display:none}
+  .btn-som .som-txt{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
 
 .card-head{position:sticky;top:0;z-index:1;background:var(--c);color:var(--on);padding:16px 18px 14px;border-bottom:2.5px solid var(--line);border-radius:15px 15px 0 0}
@@ -188,6 +191,12 @@ button{font:inherit;color:inherit}
 #live .phase li{align-items:start}
 .btn .live-badge{margin-left:8px;padding:1px 7px;font-size:11px;border-width:1.5px}
 .btn .live-badge i{width:6px;height:6px}
+@media (max-width:719px){
+  .btn-sun{position:relative}
+  .btn .live-badge{position:absolute;top:-8px;right:-6px;margin:0;width:20px;height:20px;padding:0;justify-content:center;gap:0;box-shadow:2px 2px 0 var(--line)}
+  .btn .live-badge i{width:7px;height:7px}
+  .btn .live-badge .lb-t{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}
 .live-off{padding:10px 18px 0;font-size:12.5px;color:var(--muted)}
 .note code{font-family:var(--f-mono);font-size:11.5px;color:var(--fg);background:var(--chip);padding:1px 5px;border-radius:5px}
 
@@ -208,9 +217,9 @@ button{font:inherit;color:inherit}
 .tela-top h3{margin:0}
 .tela canvas{display:block;width:100%;max-width:360px;aspect-ratio:16/9;height:auto;border:2px solid var(--line);border-radius:12px;box-shadow:var(--pop);background:var(--paper)}
 @media (min-width:720px){ .tela canvas{max-width:none} }
-.tela-txt{margin:0;font-weight:700;font-size:14px;line-height:1.35;text-wrap:pretty}
+.tela-txt{margin:0;font-weight:700;font-size:14px;line-height:1.35;text-wrap:pretty;overflow-wrap:anywhere}
 .tela-t{font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
-.mini[aria-pressed="true"]{background:var(--sun);color:var(--sun-ink)}
+.mini.on{background:var(--sun);color:var(--sun-ink)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
 .anelwrap{pointer-events:none}
 .anel{width:70px;height:70px;border-radius:50%;border:4px solid #FFC93C;box-shadow:0 0 0 2.5px #1E1B2E, inset 0 0 0 2.5px #1E1B2E;opacity:0}
@@ -247,11 +256,11 @@ button{font:inherit;color:inherit}
     </div>
     <div class="acoes">
       <button id="runBtn" class="btn btn-sun" type="button"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg>Rodar projeto</button>
-      <button id="somBtn" class="btn btn-som" type="button" aria-pressed="false" aria-label="Som da sede" title="Ouvir a equipe" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M3.5 9.2h3.6L12 5.2v13.6l-4.9-4H3.5z"/><path class="ondas" d="M15.6 8.9a4.6 4.6 0 0 1 0 6.2M18.4 6.3a8.4 8.4 0 0 1 0 11.4"/><path class="xis" d="M16 9.6l4.8 4.8M20.8 9.6L16 14.4"/></svg><span class="som-txt" aria-hidden="true">Mudo</span></button>
+      <button id="somBtn" class="btn btn-som" type="button" aria-pressed="false" aria-describedby="somDica" title="Ouvir a equipe" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M3.5 9.2h3.6L12 5.2v13.6l-4.9-4H3.5z"/><path class="ondas" d="M15.6 8.9a4.6 4.6 0 0 1 0 6.2M18.4 6.3a8.4 8.4 0 0 1 0 11.4"/><path class="xis" d="M16 9.6l4.8 4.8M20.8 9.6L16 14.4"/></svg><span class="som-txt">Som</span></button><span id="somDica" class="sr"></span>
     </div>
   </header>
 
-  <aside id="card" class="panel sheet" hidden aria-live="polite"></aside>
+  <aside id="card" class="panel sheet" hidden></aside>
 
   <aside id="ops" class="panel sheet" hidden>
     <div class="ops-head">
@@ -1059,7 +1068,7 @@ function telaDados(a){
     for (const f of e.fluxos) for (const ag of f.agentes || []) if (ag.personagem === a.id && ag.status === 'feito' && (!best || (f.ultimo_evento || 0) >= best.t)) best = { lab: ag.label, t: f.ultimo_evento || 0 };
     if (best && best.t) extra = `última: ${tarefaDe(best.lab)} · há ${fmtS((Date.now() - best.t) / 1000)}`;
   }
-  return { estado:'parado', tarefa:'na sede', acao:'Na sede, pronto para o próximo pedido', segundos:null, mais:0, extra };
+  return { estado:'parado', tarefa:'na sede', acao:'Livre para o próximo pedido', segundos:null, mais:0, extra };
 }
 function lousaDados(){
   const e = live.estado; let fluxos = [], acao;
@@ -1070,23 +1079,23 @@ function lousaDados(){
   } else if (e && e.publico){
     fluxos = (e.fluxos || []).map(f => ({ nome: f.nome, fases: (f.agentes || []).map(ag => ag.status === 'feito' ? 'feito' : ag.status === 'trabalhando' ? 'trab' : 'fila') }));
     acao = fluxos.some(f => f.fases.includes('trab')) ? FRASE.diretor : (e.mensagem || 'A equipe espera o próximo pedido.');
-  } else if (e){
+  } else if (e && !e.velho){
     const agora = Date.now();
     fluxos = (e.fluxos || []).filter(f => f.em_andamento || agora - (f.ultimo_evento || 0) < 6 * 3600e3).sort((x, y) => (y.em_andamento - x.em_andamento) || ((y.ultimo_evento || 0) - (x.ultimo_evento || 0)))
       .map(f => ({ nome: /^wf_/.test(f.nome || '') ? (f.descricao || 'Fluxo ' + String(f.nome).slice(3, 9)) : (f.nome || 'Fluxo'), fases: (f.fases || []).map(p => p.trabalhando ? 'trab' : p.feitos >= p.total ? 'feito' : 'fila') }));
     const n = e.total_trabalhando || 0;
-    acao = n ? `${n} agente${n > 1 ? 's' : ''} trabalhando agora` : 'Fila em dia, pronto para o próximo pedido';
-  } else acao = 'Fila em dia, pronto para o próximo pedido';
+    acao = n ? `${n} agente${n > 1 ? 's' : ''} trabalhando agora` : 'Fila em dia';
+  } else acao = 'Fila em dia';
   const pulsa = fluxos.slice(0, 3).some(f => f.fases.includes('trab'));
   const nAr = fluxos.filter(f => f.fases.includes('trab')).length;
-  return { estado: pulsa ? 'trabalhando' : 'parado', lousa:true, tarefa:'Fila da casa', acao, segundos:null, tempo: nAr ? `${nAr} no ar` : '', mais:0, extra:'', fluxos, pulsa };
+  return { estado: pulsa ? 'trabalhando' : 'parado', lousa:true, tarefa:'Fila da casa', acao, segundos:null, tempo: nAr ? `${nAr} em andamento` : '', mais:0, extra: acao === 'Fila em dia' ? (e && e.velho && !e.publico ? 'Sem sinal recente da equipe' : 'Esperando o próximo pedido') : '', fluxos, pulsa };
 }
 function telaFrase(a, d){
-  if (d.lousa) return `Fila da casa: ${d.acao}` + (d.fluxos.length ? ` · ${d.fluxos.slice(0, 3).map(f => f.nome).join(' · ')}` : '');
+  if (d.lousa) return `Fila da casa: ${d.acao}` + (d.extra ? `, ${d.extra.toLowerCase()}` : '') + (d.fluxos.length ? ` · ${d.fluxos.slice(0, 3).map(f => f.nome).join(' · ')}` : '');
   if (d.estado === 'trabalhando') return d.sim ? `${a.nick} ${d.acao} · tarefa: ${d.tarefa}` : `${a.nick} está ${d.acao} · tarefa: ${d.tarefa}`;
   if (d.estado === 'na fila') return `${a.nick} está na fila · ${d.tarefa}`;
   if (d.estado === 'feito') return `${a.nick} terminou a sua parte · ${d.tarefa}`;
-  return `${a.nick} está na sede, pronto para o próximo pedido` + (d.extra ? ` (${d.extra})` : '');
+  return `${a.nick} está na sede, livre para o próximo pedido` + (d.extra ? ` (${d.extra})` : '');
 }
 const tempoTxt = d => d.tempo != null ? d.tempo : d.segundos != null ? fmtS(d.segundos) : d.estado === 'trabalhando' ? 'agora' : '';
 function telaEvento(a, tipo){
@@ -1194,8 +1203,8 @@ function criarTela(a, i){
   a.tela = tl; telas.push(a);
   tl.mat = new THREE.MeshBasicMaterial({ map: tl.tex, color:'#FFFFFF', toneMapped:false });
   // dados provisórios (live/running ainda não existem aqui): o primeiro tick troca pelos reais
-  tl.dados = a.id === 'diretor' ? { estado:'parado', lousa:true, tarefa:'Fila da casa', acao:'Fila em dia, pronto para o próximo pedido', segundos:null, tempo:'', mais:0, extra:'', fluxos:[], pulsa:false }
-    : { estado:'parado', tarefa:'na sede', acao:'Na sede, pronto para o próximo pedido', segundos:null, mais:0, extra:'' };
+  tl.dados = a.id === 'diretor' ? { estado:'parado', lousa:true, tarefa:'Fila da casa', acao:'Fila em dia', segundos:null, tempo:'', mais:0, extra:'Esperando o próximo pedido', fluxos:[], pulsa:false }
+    : { estado:'parado', tarefa:'na sede', acao:'Livre para o próximo pedido', segundos:null, mais:0, extra:'' };
   desenharTela(tl.ctx, a, 1);
   return tl;
 }
@@ -1361,6 +1370,7 @@ function sendPacket(fromA, toA, cb){
 const bits = [];
 for (let i = 0; i < 40; i++){ const m = new THREE.Mesh(new RoundedBoxGeometry(.09, .09, .09, 1, .02), new THREE.MeshToonMaterial({ gradientMap: gradient })); m.visible = false; scene.add(m); bits.push({ m, life:0 }); }
 function spawnBit(a){
+  if (telaFoco && telaFoco.a === a) return;   // "na tela": nada passa na frente do que se lê
   const b = bits.find(b => b.life <= 0); if (!b || !a.laptop) return;
   b.m.material.color.set(Math.random() < .6 ? a.color : '#FFFFFF');
   a.laptop.localToWorld(b.m.position.set((Math.random()-.5)*.4, .38, 0));
@@ -1429,6 +1439,7 @@ TEAM.forEach(a => {
 const card = $('#card'), ops = $('#ops');
 let selected = null;
 const X_ICON = '<svg viewBox="0 0 14 14"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
+const FEM = new Set(['backend', 'motion-3d']);   // Forja e Órbita (ver .claude/agents/)
 function renderCard(a){
   const on = lum(a.color) > .38 ? '#1E1B2E' : '#FFFFFF';
   const i = TEAM.indexOf(a), prev = TEAM[(i + TEAM.length - 1) % TEAM.length], next = TEAM[(i + 1) % TEAM.length];
@@ -1438,8 +1449,8 @@ function renderCard(a){
       <button class="x" type="button" data-close aria-label="Fechar ficha">${X_ICON}</button></div>
     <div class="card-body">
       ${a.tela ? `<section class="tela" aria-labelledby="tela-h-${a.id}">
-        <div class="tela-top"><h3 id="tela-h-${a.id}">${a.lousa ? 'Na lousa' : 'Na tela'} do ${a.nick}</h3>
-          <button class="mini" type="button" data-tela aria-pressed="false">${a.lousa ? 'Ver a lousa' : 'Entrar na tela'}</button></div>
+        <div class="tela-top"><h3 id="tela-h-${a.id}">${a.lousa ? 'Na lousa' : 'Na tela'} ${FEM.has(a.id) ? 'da' : 'do'} ${a.nick}</h3>
+          <button class="mini" type="button" data-tela>${a.lousa ? 'Ver a lousa' : 'Entrar na tela'}</button></div>
         <canvas width="${TW*2}" height="${TH*2}" aria-hidden="true"></canvas>
         <p class="tela-txt" aria-live="polite"></p><time class="tela-t" aria-hidden="true"></time>
       </section>` : ''}
@@ -1472,12 +1483,22 @@ card.addEventListener('click', e => {
 });
 function selectText(el){ const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
 
+// câmera nunca atrás de árvore, poste ou placa: raio do ponto de interesse até a câmera contra a ilha (o próprio agente não conta)
+const _oc = new THREE.Raycaster(), _Y = new V3(0, 1, 0);
+function tapado(de, para, a){
+  const dir = para.clone().sub(de), L = dir.length(); if (L < 1e-3) return false;
+  _oc.set(de, dir.divideScalar(L)); _oc.far = L;
+  return _oc.intersectObject(island, true).some(h => { for (let o = h.object; o; o = o.parent) if (!o.visible || o === a.station || o === a.root) return false; return true; });
+}
 function enquadrar(a){
-  const head = headWorld(a);
-  let out = a.out.clone();
-  if (a.id === 'diretor'){ out = camera.position.clone().setY(0).normalize(); }
-  const phone = innerWidth < 720, dist = phone ? 5.6 : 4.4;
-  return { pos: head.clone().addScaledVector(out, dist).add(new V3(0, phone ? 2.4 : 1.7, 0)), target: head.clone().add(new V3(0, -.25, 0)) };
+  const head = headWorld(a), corpo = head.clone().add(new V3(0, -.75, 0));
+  let out0 = a.out.clone();
+  if (a.id === 'diretor'){ out0 = camera.position.clone().setY(0).normalize(); }
+  const phone = innerWidth < 720, dist = phone ? 5.6 : 4.4, sobe = new V3(0, phone ? 2.4 : 1.7, 0);
+  const em = ang => head.clone().addScaledVector(out0.clone().applyAxisAngle(_Y, ang), dist).add(sobe);
+  let pos = null;
+  for (const ang of [0, .3, -.3, .6, -.6, .9, -.9]){ const p = em(ang); if (!tapado(head, p, a) && !tapado(corpo, p, a)){ pos = p; break; } }
+  return { pos: pos || em(0), target: head.clone().add(new V3(0, -.25, 0)) };
 }
 function select(id, fromHash = false){
   if (telaFoco && telaFoco.a.id !== id) sairDaTela(false);
@@ -1515,15 +1536,19 @@ function entrarNaTela(a){
     alvo = a.station.localToWorld(new V3(0, 1.035 + .18*c + .017*s, .83 + .18*s - .017*c));
     const n = new V3(0, s, -c).transformDirection(a.station.matrixWorld);
     const lado = new V3().crossVectors(_up, n).normalize();
-    if (lado.dot(camera.position.clone().sub(alvo)) < 0) lado.negate();      // entra pelo ombro mais perto da câmera
+    const ref = tween ? tween.p1 : camera.position;   // toque direto no laptop: a câmera ainda está indo para a ficha; vale o destino
+    if (lado.dot(ref.clone().sub(alvo)) < 0) lado.negate();      // entra pelo ombro mais perto da câmera
+    const dn = innerWidth < 720 ? 1.45 : .98, emL = l => alvo.clone().addScaledVector(n, dn).addScaledVector(l, .14).addScaledVector(_up, .04);
+    const tapa = l => { const p = emL(l); return [0, .24, -.24].some(k => tapado(alvo.clone().addScaledVector(lado, k), p, a)); };   // centro e as duas pontas da tela
+    if (tapa(lado) && !tapa(lado.clone().negate())) lado.negate();
     // o agente chega a cadeira para o outro lado (abre espaço) e a câmera fica quase de frente para a tela
     const ladoLocal = a.station.worldToLocal(a.station.getWorldPosition(new V3()).add(lado)).x;
     a.slideX = -Math.sign(ladoLocal || 1) * 1.05;
-    pos = alvo.clone().addScaledVector(n, innerWidth < 720 ? 1.45 : .98).addScaledVector(lado, .14).addScaledVector(_up, .04);
+    pos = emL(lado);
   } else {
     alvo = a.telaMesh.getWorldPosition(new V3());
     const n = new V3(0, 0, 1).applyQuaternion(a.telaMesh.getWorldQuaternion(new THREE.Quaternion()));
-    pos = alvo.clone().addScaledVector(n, innerWidth < 720 ? 1.7 : 1.25).addScaledVector(_up, .1);
+    pos = alvo.clone().addScaledVector(n, innerWidth < 720 ? 2.6 : 1.25).addScaledVector(_up, .1);   // celular: a lousa inteira (moldura 1,06 m) cabe na largura
   }
   controls.minDistance = .5; controls.autoRotate = false;
   flyTo(pos, alvo, .9);
@@ -1548,7 +1573,7 @@ function sairDaTela(voar = true){
 function botaoTela(){
   const b = painel.btn; if (!b || !painel.dono) return;
   const on = !!telaFoco && telaFoco.a === painel.dono;
-  b.setAttribute('aria-pressed', on); b.textContent = on ? (painel.dono.lousa ? 'Sair da lousa' : 'Sair da tela') : (painel.dono.lousa ? 'Ver a lousa' : 'Entrar na tela');
+  b.classList.toggle('on', on); b.textContent = on ? (painel.dono.lousa ? 'Sair da lousa' : 'Sair da tela') : (painel.dono.lousa ? 'Ver a lousa' : 'Entrar na tela');
 }
 // dica do gesto: na 1ª ficha de agente com laptop da sessão, um anel pulsa 2x sobre o laptop
 const anelEl = document.createElement('div'); anelEl.className = 'anelwrap'; anelEl.innerHTML = '<div class="anel"></div>';
@@ -1577,13 +1602,7 @@ setTimeout(hideHint, 9000);
 /* seleção por toque na cena */
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let down = null;
-function pick(ev){
-  const r = canvas.getBoundingClientRect();
-  ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
-  ray.setFromCamera(ndc, camera);
-  const hit = ray.intersectObjects(pickables, false)[0];
-  return hit ? hit.object.userData.agent : null;
-}
+const pick = ev => { const h = pickParte(ev); return h ? h.id : null; };
 function pickParte(ev){
   const r = canvas.getBoundingClientRect();
   ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
@@ -1638,10 +1657,14 @@ function setRow(pi, id, s, ms){
   if (s === 'run') sec.scrollIntoView({ block:'nearest', behavior: RM ? 'auto' : 'smooth' });
 }
 const wait = (ms, tok) => new Promise((res, rej) => setTimeout(() => tok === runToken ? res() : rej('stop'), RM ? ms * .6 : ms));
-$('#opsForm').addEventListener('submit', e => { e.preventDefault(); running ? stopRun() : startRun(); });
+let ultimoGo = -1e9;
+$('#opsForm').addEventListener('submit', e => { e.preventDefault(); const t = performance.now(); if (t - ultimoGo < 600) return; ultimoGo = t; running ? stopRun() : startRun(); });   // clique duplo conta uma vez
 function stopRun(){
   runToken++; running = false; $('#goBtn').textContent = 'Começar';
   TEAM.forEach(a => { a.state = 'idle'; a.chip.classList.remove('working'); a.tag.classList.remove('working'); });
+  flowEl.querySelectorAll('.st.run').forEach(st => { st.className = 'st wait'; st.textContent = 'parado'; });
+  flowEl.querySelectorAll('.pips i.run').forEach(p => { p.className = ''; });
+  flowEl.querySelectorAll('.phase[data-s="run"]').forEach(s => { s.dataset.s = 'wait'; });
   controls.autoRotate = !RM;
 }
 async function startRun(){
@@ -1700,7 +1723,9 @@ async function startRun(){
 }
 
 /* ───────────────────────── ao vivo: estado real dos fluxos ───────────────────────── */
-const live = { estado:null, fonte:null, prev:new Set(), abriu:false, bolha:0 };
+const live = { estado:null, cru:null, fonte:null, prev:new Set(), abriu:false, bolha:0 };
+const VALIDADE_LOCAL = 15 * 60 * 1000;   // estado local sem atualização há 15 min não é "ao vivo" (servidor.cjs regrava a cada 3 s)
+setInterval(() => { if (live.cru && live.estado && !live.estado.velho && !live.estado.publico) aplicarEstado(live.cru); }, 30000);   // vence mesmo sem chegar dado novo
 const liveEl = $('#live');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 const fmtS = s => { s = Math.max(0, Math.round(s)); return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s/60)}min` : `${Math.floor(s/3600)}h${String(Math.floor(s%3600/60)).padStart(2,'0')}`; };
@@ -1709,7 +1734,12 @@ const curto = (s, n = 36) => { s = String(s || ''); return s.length > n ? s.slic
 function aplicarEstado(e){
   if (!e || !e.atualizado) return;
   if (live.estado && Date.parse(e.atualizado) < Date.parse(live.estado.atualizado)) return;
-  live.estado = e; live.recebidoEm = Date.now();
+  if (!e.publico){   // modo local (banco do artefato ou estado.json): prazo de validade, como no público
+    live.cru = e;
+    if (Date.now() - Date.parse(e.atualizado) > VALIDADE_LOCAL) e = { ...e, velho:true, total_trabalhando:0, personagens:{} };
+  }
+  if (!live.estado || live.estado.atualizado !== e.atualizado) live.recebidoEm = Date.now();   // o mesmo arquivo puxado de novo não zera o relógio das telas
+  live.estado = e;
   const ativos = new Map(Object.entries(e.personagens || {}).filter(([, l]) => l && l.length));
   if (!running){
     const boss = byId.diretor;
@@ -1719,7 +1749,7 @@ function aplicarEstado(e){
         if (a.id !== 'diretor' && live.prev.size) sendPacket(boss, a, () => { hop(a, 1, .45, .5, { som:true }); say(a, YES[a.id.length % YES.length], 1400); telaEvento(a, 'chegou'); });
         else { hop(a, 1, .45, .5, { som:true }); say(a, curto(ativos.get(a.id)[0].acao || 'começando'), 1800); telaEvento(a, 'chegou'); }
       }
-      if (!on && was){ hop(a, 2, .35, .4); say(a, 'Feito!', 1400); telaEvento(a, 'feito'); sfx('feito', a); }
+      if (!on && was && !e.velho){ hop(a, 2, .35, .4); say(a, 'Feito!', 1400); telaEvento(a, 'feito'); sfx('feito', a); }   // venceu o prazo: volta ao repouso sem comemorar
       if (on){ a.state = a.id === 'diretor' ? 'think' : 'working'; a.chip.classList.add('working'); a.tag.classList.add('working'); }
       else if (was){ a.state = 'idle'; a.chip.classList.remove('working'); a.tag.classList.remove('working'); }
     });
@@ -1729,10 +1759,10 @@ function aplicarEstado(e){
   $('#online').textContent = n ? ` · ${n} trabalhando agora` : ' · equipe em pausa';
   const seloBtn = runBtn.querySelector('.live-badge');
   if (e.velho){ if (seloBtn) seloBtn.remove(); } // estado vencido não é "ao vivo"
-  else if (!e.demo && !seloBtn) runBtn.insertAdjacentHTML('beforeend', '<span class="live-badge"><i></i>Ao vivo</span>'); // demo já tem a legenda fixa
+  else if (!e.demo && !seloBtn) runBtn.insertAdjacentHTML('beforeend', '<span class="live-badge"><i></i><span class="lb-t">Ao vivo</span></span>'); // demo já tem a legenda fixa
   $('#opsTitle').textContent = 'Operações';
   $('#opsSub').textContent = e.demo ? 'Demonstração: é assim que a equipe aparece quando há um pedido em produção.'
-    : n ? `${n} agente${n > 1 ? 's' : ''} trabalhando de verdade agora.` : e.publico ? (e.mensagem || 'A equipe espera o próximo pedido.') : 'Nenhum fluxo em andamento neste momento.';
+    : n ? `${n} agente${n > 1 ? 's' : ''} trabalhando de verdade agora.` : e.publico ? (e.mensagem || 'A equipe espera o próximo pedido.') : e.velho ? 'Sem sinal recente da equipe.' : 'Nenhum fluxo em andamento neste momento.';
   renderLive(e);
   if (!live.abriu && n && innerWidth >= 720 && card.hidden){ live.abriu = true; openOps(); }
 }
@@ -1742,15 +1772,16 @@ function renderLive(e){
   const fluxos = (e.fluxos || []).filter(f => f.em_andamento || agora - (f.ultimo_evento || 0) < 6 * 3600e3);
   liveEl.hidden = false;
   const ha = Math.round((agora - Date.parse(e.atualizado)) / 1000);
+  if (e.velho){ liveEl.innerHTML = `<div class="live-head"><span class="count">último sinal há ${fmtS(ha)}</span></div><p class="live-off">Sem atualização recente. A equipe aparece aqui de novo quando o próximo fluxo começar.</p>`; return; }
   let html = `<div class="live-head"><span class="live-badge"><i></i>Ao vivo</span><span class="count">atualizado há ${fmtS(ha)}</span></div>`;
   if (!fluxos.length) html += `<p class="live-off">Nenhum fluxo nas últimas horas. A equipe está na sede, à espera do próximo briefing.</p>`;
   html += fluxos.map(f => {
     const trab = f.agentes.filter(a => a.status === 'trabalhando');
     const ultimos = f.agentes.filter(a => a.status !== 'trabalhando').slice(-3).reverse();
     const feitos = f.agentes.filter(a => a.status === 'feito').length;
-    const linha = a => { const p = byId[a.personagem] || byId.diretor; const st = a.status === 'trabalhando' ? 'run' : a.status === 'feito' ? 'done' : 'wait'; return `<li><i class="d" style="--c:${p.color}"></i><span class="t"><b>${p.nick}</b><span>${esc(a.status === 'trabalhando' ? (a.acao || 'pensando') : a.label)}</span></span><span class="st ${st}">${a.status}</span><time>${fmtS(a.segundos || 0)}</time></li>`; };
-    return `<section class="phase" data-s="${f.em_andamento ? 'run' : 'done'}"><header><h4>${esc(f.nome)}</h4><span class="count">${feitos}/${f.agentes.length} · ${fmtTok(f.tokens || 0)}</span></header>
-      <div class="pips">${f.fases.map(p => `<i class="${p.trabalhando ? 'run' : p.feitos === p.total ? 'done' : ''}" title="${esc(p.nome)}: ${p.feitos}/${p.total}"></i>`).join('')}</div>
+    const linha = a => { const p = byId[a.personagem] || byId.diretor; const st = a.status === 'trabalhando' ? 'run' : a.status === 'feito' ? 'done' : 'wait'; return `<li><i class="d" style="--c:${p.color}"></i><span class="t"><b>${p.nick}</b><span>${esc(a.status === 'trabalhando' ? (a.acao || 'pensando') : a.label)}</span></span><span class="st ${st}">${esc(a.status)}</span><time>${esc(fmtS(a.segundos || 0))}</time></li>`; };
+    return `<section class="phase" data-s="${f.em_andamento ? 'run' : 'done'}"><header><h4>${esc(f.nome)}</h4><span class="count">${feitos}/${f.agentes.length} · ${esc(fmtTok(f.tokens || 0))}</span></header>
+      <div class="pips">${f.fases.map(p => `<i class="${p.trabalhando ? 'run' : p.feitos === p.total ? 'done' : ''}" title="${esc(p.nome)}: ${esc(p.feitos)}/${esc(p.total)}"></i>`).join('')}</div>
       <ul>${trab.map(linha).join('')}${ultimos.map(linha).join('')}</ul></section>`;
   }).join('');
   liveEl.innerHTML = html;
@@ -1767,7 +1798,7 @@ setInterval(() => {
 /* Porta Aberta (T6): estado público com vocabulário fechado (sede/publicar-estado.cjs).
    A frase é refeita aqui pela tabela, por personagem e status; texto livre do arquivo é ignorado. */
 const FRASE = { diretor:'organizando a fila', criativo:'pensando o conceito', arquiteto:'desenhando a estrutura', frontend:'montando a página', backend:'ligando os sistemas', designer:'escolhendo as cores', 'motion-3d':'animando os detalhes', shader:'criando os efeitos', som:'afinando os sons', copywriter:'escrevendo os textos', pesquisador:'conferindo os dados', revisor:'revisando o código', qa:'testando no celular', seguranca:'conferindo segurança', devops:'publicando' };
-const STATUS_PUB = { trabalhando:'trabalhando', feito:'terminou a parte dele', esperando:'na fila' };
+const STATUS_PUB = { trabalhando:'trabalhando', feito:'terminou a sua parte', esperando:'na fila' };
 const VALIDADE_PUB = 10 * 60 * 1000;
 function dePublico(p, demo){
   if (!p || p.versao !== 1) return null;
@@ -1826,11 +1857,19 @@ async function ligarAoVivo(){
     const db = window.claude && window.claude.use ? await window.claude.use('db') : null;
     if (db) db.doc('sede/estado').onSnapshot(s => { if (s.exists){ live.fonte = 'db'; aplicarEstado(s.data()); } }, () => {});
   } catch {}
-  // 2) estado.json ao lado da página (servidor local ou arquivo publicado junto)
+  // 2) estado.json ao lado da página (servidor local ou arquivo publicado junto).
+  // Sem arquivo (artefato, página aberta do disco, servidor estático sem estado) não fica pedindo a cada 5 s:
+  // no file:// nem tenta; nos outros, se a 1ª tentativa falha e nunca deu certo, para (um 404 no console, não dezenas).
+  if (location.protocol === 'file:') return;
+  let jaDeu = false, iv = 0;
   const puxar = async () => {
-    try { const r = await fetch('estado.json', { cache:'no-store' }); if (!r.ok) return; const e = await r.json(); if (!live.fonte) live.fonte = 'arquivo'; aplicarEstado(e); } catch {}
+    try {
+      const r = await fetch('estado.json', { cache:'no-store' });
+      if (!r.ok) throw 0;
+      const e = await r.json(); jaDeu = true; if (!live.fonte) live.fonte = 'arquivo'; aplicarEstado(e);
+    } catch { if (!jaDeu){ clearInterval(iv); iv = 0; } }   // depois de funcionar uma vez, uma falha passageira (servidor reiniciando) não desliga
   };
-  puxar(); setInterval(puxar, 5000);
+  puxar(); iv = setInterval(puxar, 5000);
 }
 ligarAoVivo();
 
@@ -1845,7 +1884,7 @@ const PENTA = [349.23, 392, 440, 523.25, 587.33, 698.46, 783.99, 880, 1046.5, 11
 const ACORDES = [[174.61, 220, 261.63, 329.63, 392], [146.83, 220, 261.63, 329.63, 349.23], [116.54, 174.61, 220, 293.66], [130.81, 196, 261.63, 293.66]]; // Fmaj9 › Dm9 › Bbmaj7 › Csus2
 const AC_SOM = window.AudioContext || window.webkitAudioContext;
 const SUPORTE_SOM = !!(AC_SOM && AC_SOM.prototype && 'createStereoPanner' in AC_SOM.prototype);
-const somBtn = $('#somBtn'), somTxt = somBtn.querySelector('.som-txt');
+const somBtn = $('#somBtn'), somTxt = somBtn.querySelector('.som-txt'), somDica = $('#somDica');
 const S = { ctx:null, querLigado:false, ligado:false, pend:false, foco:null, vozes:0, n:-1, acorde:0, proxAcorde:0, proxBicho:0, ambOk:false };
 const lerPref = () => { try { return localStorage.getItem(SOM_KEY); } catch { return null; } };
 const gravarPref = v => { try { localStorage.setItem(SOM_KEY, v ? '1' : '0'); } catch {} };
@@ -1964,7 +2003,7 @@ function passaro(t){
     o.frequency.setValueAtTime(2800 * sobe, ti); o.frequency.exponentialRampToValueAtTime(4200 * sobe, ti + .07);
     fm.frequency.value = 150 + Math.random() * 60; fm.connect(fg).connect(o.frequency);   // FM curta: o "trinado"
     g.gain.setValueAtTime(.0001, ti); g.gain.linearRampToValueAtTime(.03, ti + .008); g.gain.exponentialRampToValueAtTime(.0001, ti + .075);
-    o.connect(g).connect(p); o.start(ti); fm.start(ti); o.stop(ti + .12); fm.stop(ti + .12); soltar(o, [g, fm, fg]);
+    o.connect(g).connect(p); o.start(ti); fm.start(ti); o.stop(ti + .12); fm.stop(ti + .12); soltar(o, i === n - 1 ? [g, fm, fg, p] : [g, fm, fg]);
   }
 }
 function grilos(t){
@@ -2120,18 +2159,22 @@ function ligarSom(){
 }
 function desligarSom(){
   S.querLigado = false; S.pend = false;
-  if (S.ctx && S.ligado){
-    clique(-1);
-    const t = S.ctx.currentTime + .03;
-    alvo(S.master.gain, 0, .06, t); alvo(S.amb.gain, 0, .06, t);
+  if (S.iv){ clearInterval(S.iv); S.iv = 0; }   // sem timer ocioso; aoRodar recria
+  if (S.ctx){
+    if (S.ligado){
+      clique(-1);
+      const t = S.ctx.currentTime + .03;
+      alvo(S.master.gain, 0, .06, t); alvo(S.amb.gain, 0, .06, t);
+    }
     clearTimeout(S.tSusp); S.tSusp = setTimeout(() => { if (!S.querLigado && S.ctx.state === 'running') S.ctx.suspend().catch(() => {}); }, 320);
   }
   S.ligado = false; somUI();
 }
 function somUI(){
-  const on = S.querLigado;
+  const on = S.querLigado && !S.pend;   // pendente (lembrado, ainda sem gesto) não é "ligado": nada toca ainda
   somBtn.setAttribute('aria-pressed', on); somBtn.classList.toggle('pend', S.pend);
-  somTxt.textContent = on ? 'Som' : 'Mudo';
+  somTxt.textContent = 'Som';   // rótulo fixo = nome acessível; o estado vai no aria-pressed e no ícone
+  somDica.textContent = S.pend ? 'Som lembrado: começa no seu primeiro toque na página.' : '';
   somBtn.title = S.pend ? 'O som volta no seu primeiro toque na página' : on ? 'Silenciar a sede' : 'Ouvir a equipe';
 }
 function somConvite(){   // 2,5 s depois do loader, o botão chama uma vez (sem animação em movimento reduzido)
@@ -2149,7 +2192,7 @@ if (SUPORTE_SOM){
   somBtn.hidden = false;
   if (lerPref() === '1'){ S.querLigado = true; S.pend = true; }   // ligado-pendente: o primeiro gesto na página cria o som
   somUI();
-  somBtn.addEventListener('click', () => { if (S.querLigado && !S.pend){ desligarSom(); gravarPref(false); } else { gravarPref(true); ligarSom(); } });   // pendente: o toque no botão é o gesto que libera o som
+  somBtn.addEventListener('click', () => { if (S.querLigado && (!S.pend || S.ctx)){ desligarSom(); gravarPref(false); } else { gravarPref(true); ligarSom(); } });   // pendente: o toque no botão é o gesto que libera o som
   const gesto = e => { if (!S.pend || !S.querLigado || (e.target && e.target.closest && e.target.closest('#somBtn'))) return; if (e.type === 'keydown' && e.key === 'Escape') return; ligarSom(); };
   ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, gesto, true));
   document.addEventListener('visibilitychange', () => {
