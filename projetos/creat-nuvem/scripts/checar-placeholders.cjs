@@ -16,7 +16,7 @@
      WhatsApp 55 + DDD + número).
    PASSA (código 0) quando o Marcos trocar os 4 marcadores por valores válidos.
 
-   Arquivos publicáveis = tudo na pasta do projeto, menos docs/, scripts/,
+   Arquivos publicáveis = tudo na pasta do projeto, menos docs/, scripts/, marketing/,
    RELATORIO.md e pastas geradas (node_modules, .verificacao, dist, sites, pedidos).
    docs/ e scripts/ citam os nomes dos marcadores de propósito e não vão ao ar.
    Os IDs de medição (PostHog, Pixel, Clarity) em formato de exemplo NÃO travam:
@@ -32,7 +32,7 @@ const iRaiz = args.indexOf('--raiz');
 const RAIZ = path.resolve(iRaiz !== -1 ? args[iRaiz + 1] : path.join(__dirname, '..'));
 const MARCADORES = ['[LINK_ASAAS_ABERTURA_INAUGURACAO]', '[LINK_ASAAS_ABERTURA_PADRAO]', '[LINK_CAKTO_BASTIDORES]', '[WHATSAPP_SUPORTE_55DDDNUMERO]'];
 const PADRAO = /\[(LINK_|WHATSAPP_SUPORTE|PREENCHER)[^\]\s]*\]?/g;
-const IGNORAR_DIR = new Set(['node_modules', '.verificacao', 'dist', 'sites', 'pedidos', '.git', 'docs', 'scripts']);
+const IGNORAR_DIR = new Set(['node_modules', '.verificacao', 'dist', 'sites', 'pedidos', '.git', 'docs', 'scripts', 'marketing']);
 const IGNORAR_ARQ = new Set(['RELATORIO.md']);
 const TEXTO = /\.(html?|js|cjs|mjs|json|css|md|txt|xml|svg|webmanifest|toml|ya?ml)$|^_headers$|^_redirects$/i;
 

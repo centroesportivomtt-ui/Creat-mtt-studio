@@ -60,9 +60,9 @@ Em `checkout.config.js`: `[LINK_ASAAS_ABERTURA_INAUGURACAO]`, `[LINK_ASAAS_ABERT
 Custo real por pedido e tabela `PRECOS` (cache da skill, 06/10/2026); câmbio R$ 5,50; preços do GitHub Actions e Hetzner (ADR-004); tempo por pedido no executor; metas da calibragem (a definir); prazo de 72 h (promessa do briefing); timbre do som e gesto em celular real; benchmark e ângulo E de anúncios (artigo do SEJ de 29/02/2024 não reaberto).
 
 ## Incoerências de oferta e atritos conhecidos (severidade alta)
-- O contador de vagas só desce com `atualizar-vagas.cjs --vendeu` a cada pedido pago. Sem isso a rotina publica um contador maior que o real. Ideal: `produzir.mjs` ou webhook do Asaas chamar `--vendeu`.
+- O contador de vagas só desce com `atualizar-vagas.cjs --vendeu` a cada pedido pago. Sem isso a rotina publica um contador maior que o real. Ideal: `produzir.mjs` ou webhook do Mercado Pago chamar `--vendeu`.
 - A sede pública mostra demonstração; o andamento do pedido chega pelo WhatsApp. A publicação ao vivo (`publicar-estado.cjs` a cada 1 a 2 min) não existe. Os fluxos reais precisam seguir o padrão `pedido-*`.
-- O link da inauguração no Asaas deve ter limite de pagamentos e data de fim; a rotina sai com código 2 se o link real persistir após o fim.
+- O link da inauguração no provedor (Mercado Pago: data de vencimento; Asaas: quantidade máxima) deve ter limite e data de fim; a rotina sai com código 2 se o link real persistir após o fim.
 - Detalhe visual: sombra em L na caixinha "Aberto" dos dias em /abrir/ parece traço solto (Paleta).
 - `projetos/loja/produtos/agencia/sede/servidor.cjs` ainda serve qualquer arquivo da pasta.
 

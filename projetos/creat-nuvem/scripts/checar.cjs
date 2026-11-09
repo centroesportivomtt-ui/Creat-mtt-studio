@@ -373,12 +373,14 @@ function conferirTexto(onde, texto, opcoes) {
     if (p.endsWith('.json')) { let o; try { o = JSON.parse(ler(p)); } catch (e) { falha(rel(p), 'JSON inválido'); return; } conferirTexto(rel(p), valoresJson(o).join('\n')); }
     else conferirTexto(rel(p), ler(p));
   });
-  // marketing/: só emoji, lorem e [PREENCHER] (os arquivos citam a regra da palavra proibida ao explicá-la).
+  // marketing/: só emoji e lorem falham (os arquivos citam a regra da palavra proibida ao explicá-la); [PREENCHER] avisa.
   listar(path.join(RAIZ, 'marketing'), (p) => p.endsWith('.md')).forEach((p) => {
     const t = ler(p), em = RE_EMOJI.exec(t);
     if (em) falha(rel(p), `emoji ${JSON.stringify(em[0])}`);
     if (RE_LOREM.test(t)) falha(rel(p), 'lorem ipsum');
-    if (/\[PREENCHER/i.test(t)) falha(rel(p), '[PREENCHER] esquecido');
+    // marketing/ não vai ao ar: marcador aberto aqui é pendência do dono (link, CNPJ, etiqueta), vira aviso contado.
+    const pend = (t.match(/\[PREENCHER/gi) || []).length;
+    if (pend) aviso(rel(p), `${pend} marcador(es) [PREENCHER] à espera do dono`);
   });
   // termos e privacidade: primeira linha REVISAO_JURIDICA_PENDENTE (regra dura 8)
   for (const n of ['termos', 'privacidade']) {

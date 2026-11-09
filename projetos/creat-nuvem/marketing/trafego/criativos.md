@@ -2,7 +2,7 @@
 
 Paleta (designer), 09/11/2026. Complementa `../anuncios.md` (textos A a E e W) e `../roteiros-video.md` (R1 a R3, 15 s). Não repete nada deles: os textos de anúncio continuam lá; aqui estão a imagem, o roteiro cena a cena e as peças prontas.
 
-**Como isto ajuda a vender:** o anúncio de preço direto da conta saiu cerca de 14x mais caro por clique que o Reel com gancho de dor (R$ 74,87 → 345 cliques, CPC ~R$ 0,22; dado da conta act_916420481553001, briefing de 09/11/2026). Os 6 criativos abaixo mostram a prova que concorrente nenhum mostra nas páginas que o Radar leu (ver o site pronto e testar o pedido no próprio WhatsApp antes de pagar), em 3 conceitos de formato e ângulo realmente diferentes, porque o algoritmo atual trata a mesma imagem com texto diferente como quase o mesmo criativo (E-Commerce Brasil, 25/06/2026, alegação de blog).
+**Como isto ajuda a vender:** o anúncio de preço direto da conta saiu cerca de 14x mais caro por clique que o Reel com gancho de dor (R$ 74,87 → 345 cliques, CPC ~R$ 0,22; dado da conta act_916420481553001, briefing de 09/11/2026). Os 6 criativos abaixo mostram a prova (ver o site pronto e testar o pedido no próprio WhatsApp antes de pagar) que não apareceu nas duas páginas de concorrentes que o Radar leu (Vokel e Vicine). Isso não diz o que os concorrentes anunciam: a Biblioteca de Anúncios da Meta deu HTTP 403 e não foi consultada, em 3 conceitos de formato e ângulo realmente diferentes, porque o algoritmo atual trata a mesma imagem com texto diferente como quase o mesmo criativo (E-Commerce Brasil, 25/06/2026, alegação de blog).
 
 | código | formato | conceito | ângulo do texto (`anuncios.md`) | status |
 |---|---|---|---|---|
@@ -31,13 +31,13 @@ Ousadia em um lugar só: a placa virando. O resto fica calmo: céu, tinta e um �
 | `--lousa` / `--giz` | `#22322D` / `#F4F1E6` | face ABERTO da placa e o nome em giz |
 | `--madeira` | `#D39A5B` | tábua FECHADO e moldura da porta |
 
-- **Fontes:** Lilita One só no título e na palavra da placa; Figtree 600/800 no texto; JetBrains Mono 500 nos selos e rótulos ("prévia real", "nome fictício", "sede da Creat · tela real"). Todas do Google Fonts, as mesmas da vitrine (`assets/tokens.css`).
+- **Fontes:** Lilita One só no título e na palavra da placa; Figtree 600/800 no texto; JetBrains Mono 500 nos selos e rótulos ("prévia real", "nome fictício", "sede da Creat · demonstração"). Todas do Google Fonts, as mesmas da vitrine (`assets/tokens.css`).
 - **Escala (canvas 1080 px de largura):** título 94 px (feed) e 122 px (Stories); legenda de vídeo 64 a 72 px; texto 28 a 36 px; selo 22 px. Nada abaixo de 22 px.
 - **Contorno e sombra:** borda de nanquim de 6 px e sombra dura `10px 10px 0 #1E1B2E`. Nunca sombra borrada, nunca degradê, nunca brilho.
 - **Legenda queimada em vídeo:** Lilita One 64 px mínimo, tinta sobre faixa `--sol` com contorno de 4 px, no máximo 2 linhas de 18 caracteres. Uma frase por cena.
 - **Área segura 9:16 (regra mais conservadora entre as duas fontes):** nada de texto ou marca nos 14% de cima (269 px), nos 35% de baixo (672 px) nem nos 6% laterais (65 px). Texto só entre y 269 e y 1248. Fontes: CineRads (lendo o Guia de Anúncios da Meta, 07/09/2026) e Digital Applied (02/02/2026). Guia visual em `saida/S2-placa-porta-1080x1920-guia.png` (linha tracejada vermelha).
 - **Tamanho de vídeo:** exportar 1440x2560 (especificação 2026 citada pela CineRads) com cópia 1080x1920. 30 fps, H.264.
-- **Honestidade (regra dura):** nome fictício com o selo "nome fictício" sempre que aparecer; "prévia real" e "sede da Creat · tela real" só sobre print verdadeiro; número de WhatsApp sempre de teste e coberto pela faixa "número de teste"; sede gravada em `?modo=demo` mantém a legenda "Demonstração" visível.
+- **Honestidade (regra dura):** nome fictício com o selo "nome fictício" sempre que aparecer; "prévia real" só sobre print verdadeiro, e todo print ou gravação da sede leva "sede da Creat · demonstração" (hoje a sede pública é demonstração; "tela real" sozinho sugere acompanhamento ao vivo, que não existe); número de WhatsApp sempre de teste e coberto pela faixa "número de teste"; sede gravada em `?modo=demo` mantém a legenda "Demonstração" visível.
 
 ### Proibido em todas as peças
 Preço, prazo, promessa de ganho ou de resultado, "agenda", pergunta sobre quem vê ("Você é dono...?", "Cansado de...?"), afirmação sobre o estado do negócio de quem vê, antes e depois, depoimento, estrela, logo do WhatsApp ou da Meta alterado (usar o balão próprio da vitrine), tela piscando, música fora da Sound Collection da Meta, emoji. Fontes: `../anuncios.md` (conferência de 08/11/2026) e Padrões de Publicidade da Meta (lidos em 09/11/2026).
@@ -117,14 +117,14 @@ Duas versões, porque `anuncios.md` proíbe "foto de pessoa":
 | tempo | quadro | ação / câmera | texto na tela | som | corte 15 s |
 |---|---|---|---|---|---|
 | 0,0 a 3,0 | R6a: Marcos olhando para a câmera, celular na mão. R6b: mão segurando celular com mensagem "Tem horário amanhã?" chegando às 23:12 | movimento no quadro 1: o celular entra na tela | **23h. Um cliente quer horário amanhã.** | notificação | 0,0 a 3,0 |
-| 3,0 a 7,0 | a mensagem fica sem resposta; a tela apaga e acende (sem piscar: um único fade de 400 ms) | dedo some do quadro | **e a barbearia já fechou** | silêncio de 1 s | fora |
+| 3,0 a 7,0 | a mensagem fica sem resposta; a tela apaga e acende (sem piscar: um único fade de 400 ms) | dedo some do quadro | **e a mensagem ficou sem resposta** | silêncio de 1 s | fora |
 | 7,0 a 11,0 | corte para a prévia: o cliente fictício escolhe "Corte · ter 10 · 10h" sozinho | rolagem e toques | **Com o site, ele mesmo pede** | cliques | 3,0 a 6,0 |
 | 11,0 a 15,0 | o balão do pedido chega (`whatsapp-pedido-chega.png`) | corte seco | **e o pedido espera no WhatsApp** | plim | 6,0 a 8,5 |
-| 15,0 a 20,0 | a sede: `sede-ilha.webp` com zoom lento de 6% até o letreiro CREAT NUVEM; depois `sede-ao-vivo.webp` com o painel "Operações" | Ken Burns lento, sem tremer | **Quem monta: esta equipe** · selo "sede da Creat · tela real" | trilha entra | 8,5 a 11,5 |
-| 20,0 a 23,5 | `sede-ficha-agente.webp`: o Pixel na mesa, ficha "Telas rápidas, responsivas" | aproximação curta | **E você assiste, com o nome do seu negócio** | — | fora |
+| 15,0 a 20,0 | a sede: `sede-ilha.webp` com zoom lento de 6% até o letreiro CREAT NUVEM; depois `sede-ao-vivo.webp` com o painel "Operações" | Ken Burns lento, sem tremer | **Quem monta: esta equipe** · selo "sede da Creat · demonstração", visível o tempo todo (hoje a sede pública mostra demonstração, `RELATORIO.md`) | trilha entra | 8,5 a 11,5 |
+| 20,0 a 23,5 | `sede-ficha-agente.webp`: o Pixel na mesa, ficha "Telas rápidas, responsivas" | aproximação curta | **A equipe que monta o site** · selo "demonstração" | — | fora |
 | 23,5 a 28,0 | quadro final `--ceu`: placa ABERTO + chip "Grátis para ver · Sem cadastro" | parado | **Digite o nome e veja o seu pronto** | trilha fecha | 11,5 a 15,0 |
 
-Cuidados: "a barbearia já fechou" descreve o personagem fictício da cena, não quem vê; se a Lupa ou a Meta lerem como insinuação, trocar por "e ninguém viu a mensagem". Na sede, só prints reais; se gravar a sede ao vivo, usar `?modo=demo` e manter "Demonstração" visível; não mostrar pedido real de outro cliente. Texto principal curto: "Seu cliente pede horário sozinho" (32). Título: "Assista ao seu site sendo montado".
+Cuidados: a legenda era "e a barbearia já fechou", que, ao lado do público de donos de barbearia, pode ser lida como afirmação sobre o negócio de quem vê. Trocada em 09/11/2026 por "e a mensagem ficou sem resposta", que descreve só a cena. Na sede, só prints reais; grave com `?modo=demo` e mantenha "Demonstração" visível o tempo todo; não mostrar pedido real de outro cliente. Texto principal curto: "Seu cliente pede horário sozinho" (32). Título: "Conheça a equipe que monta o site" ("Assista ao seu site sendo montado" saiu em 09/11/2026: a sede pública é demonstração e a publicação ao vivo não existe, então "assista" não bate com a página).
 Trilha: Sound Collection, "piano minimal" de 0 a 7 s, virando "indie pop" a partir de 15 s; na R6a, a fala do Marcos com ducking da trilha a −20 dB e limpeza de voz por IA se gravado sem microfone (regra de vídeo da casa).
 
 ---
@@ -136,7 +136,7 @@ Gerados por HTML + Playwright, com os SVGs e prints reais. Fonte: `estaticos/fee
 ### S1 · A porta de vidro · 1080x1080 (Feed)
 Arquivo: `saida/S1-placa-porta-1080x1080.png`
 
-Ordem de leitura: marca "Creat Nuvem · Porta Aberta" → título "Digite o nome. Vire a **placa.**" (a palavra placa no bloco amarelo, girado −2°) → mini placa FECHADO no canto, com seta pontilhada e selo "1 toque" até a placa grande → a porta: moldura de madeira, vidro com a sede real, placa ABERTO pendurada pela corrente com "Barbearia Navalha Fictícia" em giz, selos "nome fictício" e "sede da Creat · tela real" → o celular com a prévia real, selo "prévia real" → rodapé: chip "Grátis para ver · Sem cadastro" e "O site pronto, com pedido de horário no seu WhatsApp."
+Ordem de leitura: marca "Creat Nuvem · Porta Aberta" → título "Digite o nome. Vire a **placa.**" (a palavra placa no bloco amarelo, girado −2°) → mini placa FECHADO no canto, com seta pontilhada e selo "1 toque" até a placa grande → a porta: moldura de madeira, vidro com a sede real, placa ABERTO pendurada pela corrente com "Barbearia Navalha Fictícia" em giz, selos "nome fictício" e "sede da Creat · demonstração" (corrigido e renderizado de novo em 09/11/2026; antes dizia "tela real") → o celular com a prévia real, selo "prévia real" → rodapé: chip "Grátis para ver · Sem cadastro" e "O site pronto, com pedido de horário no seu WhatsApp."
 Texto do anúncio: A2 do nicho. Destino: célula A.
 
 ### S2 · A porta de vidro · 1080x1920 (Stories e Reels)
@@ -165,7 +165,7 @@ Para quem: quem para para ler no Feed. Cada card é um passo real do produto; a 
 | 1 | Digite o nome. | `home-fechado.png` recortado no campo do nome + placa FECHADO vetorial balançando (inclinada 3°) | "Barbearia, salão ou academia." | — |
 | 2 | Vire a placa. | placa ABERTO vetorial grande com "Barbearia Navalha Fictícia" em giz, a corrente saindo do topo do card | "Um toque, e ela abre." | nome fictício |
 | 3 | Veja o site pronto. | celular com `previa-barbearia-topo.png` e, sobreposto 30%, `previa-barbearia-pedido.png` | "Serviços, dia e horário. Prévia de exemplo." | prévia real |
-| 4 | Teste no seu WhatsApp. | `whatsapp-pedido-chega.png` + ao fundo, no vidro de uma porta pequena, `sede-ilha.webp` | "O pedido chega como vai chegar do cliente. A equipe que monta, você assiste." | sede da Creat · tela real |
+| 4 | Teste no seu WhatsApp. | `whatsapp-pedido-chega.png` + ao fundo, no vidro de uma porta pequena, `sede-ilha.webp` | "O pedido chega como vai chegar do cliente. A equipe que monta o site aparece na sede (demonstração)." | sede da Creat · demonstração |
 | 5 | Só paga se gostar. | quadro final: placa ABERTO + chip "Grátis para ver · Sem cadastro" + botão desenhado "Abrir meu negócio" | "A mensalidade só começa com o site no ar." | — |
 
 Regras: sem preço (a mensalidade é citada sem valor, como em B3, e a página mostra os valores antes do Pix); seta desenhada à direita nos cards 1 a 4 indicando que continua; o card 1 sozinho já precisa vender (é o único que muita gente vê). Para montar: copie `estaticos/feed-1080x1080.html` cinco vezes, troque o miolo, acrescente a linha em `PECAS` do `renderizar.cjs` e renderize.

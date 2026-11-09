@@ -19,6 +19,7 @@ Fechamento no chat: `../whatsapp-scripts.md`, mensagens F1 a F5 e objeções O1 
 |---|---|---|
 | Reel 9:16 de 6 a 15 s, com marca e mensagem nos 3 primeiros segundos, movimento no quadro 1, legenda para som desligado e estilo nativo | Meta, Central de Ajuda, facebook.com/business/help/188534925073536 (sem data, lida em 09/11/2026) | oficial |
 | Gancho de dor em vez de preço no anúncio | Dado próprio da conta act_916420481553001: Reel de dor com R$ 74,87 por 345 cliques (CPC de cerca de R$ 0,22) contra anúncio de preço com clique cerca de 14x mais caro (briefing, 09/11/2026). Ainda não se sabe se os 345 são cliques no link ou todos os cliques. | dado real, uma conta, zero venda atribuída |
+| **Limite do R$ 0,22**: ele não prova que as cenas F1 vão render o mesmo | O Reel antigo pode ter usado outro texto (inclusive um que as regras de hoje proíbem), outro objetivo e outro destino, e CPC não é custo por conversa nem por venda. As cenas F são uma versão limpa da mesma ideia: hipótese, não repetição do teste | hipótese |
 | 3 conceitos diferentes de verdade, não 3 textos sobre a mesma imagem | E-Commerce Brasil, 25/06/2026: o algoritmo trata a mesma imagem com textos diferentes quase como o mesmo criativo | blog, não auditado |
 | O criativo diz que o clique abre uma conversa. Botão "Enviar mensagem". Saudação automática e lembrete | Meta, facebook.com/business/help/269324800441478 (sem data, lida em 09/11/2026) | oficial |
 | 1 campanha, 1 conjunto, poucos anúncios; 7 dias sem editar | Meta, fase de aprendizado, facebook.com/business/help/112167992830700 (cerca de 50 resultados por semana) | oficial |
@@ -76,17 +77,17 @@ Nada sobe ativo. O Marcos ativa depois da aprovação da Meta (até 24 h).
 
 | item | valor |
 |---|---|
-| Campanha | Engajamento, local da conversa **Aplicativos de mensagens > WhatsApp**, número 5575981151202 ligado à Página |
+| Campanha | **Leads** (plano B: Engajamento), local da conversa **Aplicativos de mensagens > WhatsApp**, número 5575981151202 ligado à Página. Vale `campanha-meta.md` §2 |
 | Meta de desempenho | Maximizar número de conversas. Depois de 10 etiquetas Lead em 30 dias, passar para leads, num conjunto novo e sem editar o que está aprendendo |
-| Conjunto | 1 só · `ctwa-nov26-ba-amplo` |
-| Público | Advantage+ público ligado. **Controles**: localização Bahia (estado), "pessoas que moram neste local", idade mínima 18. Segmentação detalhada só como **sugestão**: barbearia, salão de beleza, academia, pequenas empresas, WhatsApp Business. Sem pilha de interesses |
+| Conjunto | 1 por vez · `ctwa-nov26-fase1-riachao60` (nome da fase; ver `campanha-meta.md` §3 e §5) |
+| Público | Advantage+ público ligado. **Controles**: localização da fase vigente (Fase 1: Riachão do Jacuípe + 60 km; `campanha-meta.md` §5), "pessoas que moram neste local", idade mínima 18. Segmentação detalhada só como **sugestão**: barbearia, salão de beleza, academia, pequenas empresas, WhatsApp Business. Sem pilha de interesses |
 | Dispositivo | só celular (Android e iOS), porque a conversa nasce no app |
 | Aprimoramentos criativos da Meta | **desligados**, para não mudar o logo e as letras da marca |
-| Anúncios | M01, M02, M04, M05, M07 e M09 (6, dentro do limite de 10 por conjunto que a Meta recomenda testar) |
-| Orçamento (decisão do Marcos) | R$ 70/dia por 7 dias = R$ 490 de mídia, cerca de R$ 558 no cartão. Com essa verba, o conjunto sai do aprendizado se a conversa custar até R$ 9,80 (R$ 490 ÷ 50, conta sobre a regra da Meta). Com R$ 40/dia o teto é R$ 5,60, e o mais provável é o conjunto ficar em "Aprendizado limitado". **Não dividir os R$ 280 da calibragem entre as duas células** |
+| Anúncios | M01, M02, M04, M05, M07 e M09, mais o `F0` (Reel antigo) se passar na revisão de política (`campanha-meta.md` §11). Dentro do limite de 10 por conjunto que a Meta recomenda testar |
+| Orçamento (decisão do Marcos; **vale `campanha-meta.md` §4: Fase 1 a R$ 40/dia, Fase 2 a R$ 70/dia**) | Referência de R$ 70/dia por 7 dias = R$ 490 de mídia, cerca de R$ 558 no cartão. Com essa verba, o conjunto sai do aprendizado se a conversa custar até R$ 9,80 (R$ 490 ÷ 50, conta sobre a regra da Meta). Com R$ 40/dia o teto é R$ 5,60, e o mais provável é o conjunto ficar em "Aprendizado limitado". **Não dividir os R$ 280 da calibragem entre as duas células** |
 | Prazo | 7 dias sem editar. Primeira leitura de anúncio no dia 4; decisão no dia 7; custo por venda só no dia 14 |
 
-**Alcance.** Começar pela Bahia. Riachão + 60 km tem público pequeno demais para 50 conversas por semana. Feira de Santana entra pelo controle de estado. O Brasil inteiro é o segundo teste de 7 dias, com o mesmo orçamento. Isso é hipótese, não benchmark: confira o tamanho estimado do público no Gerenciador antes de subir.
+**Alcance.** A ordem das fases (Riachão + 60 km, depois Feira de Santana, Bahia e Brasil) e os gatilhos de cada uma estão em `campanha-meta.md` §5, que substitui o texto antigo deste parágrafo ("começar pela Bahia"). A pesquisa avisou que Riachão + 60 km tem público pequeno para 50 conversas por semana; a Fase 1 aceita isso e só mede se a conversa vira Pix. Tudo isso é hipótese, não benchmark: confira o tamanho estimado do público no Gerenciador antes de subir.
 
 ### Célula site · campanha de Tráfego já planejada
 
@@ -145,9 +146,9 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
 - **Título** (31/40): Veja o site da barbearia pronto
 - **Descrição** (29/30): Abre uma conversa no WhatsApp
 - **Botão**: Enviar mensagem
-- **Público**: dono ou dona de barbearia na Bahia, que atende pelo WhatsApp. Conjunto `ctwa-nov26-ba-amplo`.
+- **Público**: dono ou dona de barbearia (o Advantage+ decide quem vê; não há trava por profissão). Conjunto da fase vigente, `ctwa-nov26-fase1-riachao60` na Fase 1.
 - **Formato**: Reel 9:16, 12 a 15 s, gancho G-B3 (seção 5) mais o corpo da barbearia.
-- **Por que deve funcionar**: é da família do Reel de dor que custou cerca de R$ 0,22 por clique na conta da Creat. A dor aparece na tela como mensagem de um cliente fictício, sem afirmar nada sobre quem vê. Isso segue a regra de atributos pessoais dos Padrões de Publicidade da Meta. A descrição deixa claro que o clique abre uma conversa, como a Meta pede.
+- **Hipótese (sem teste)**: é da família do Reel de dor que custou cerca de R$ 0,22 por clique na conta da Creat. A dor aparece na tela como mensagem de um cliente fictício, sem afirmar nada sobre quem vê. Isso segue a regra de atributos pessoais dos Padrões de Publicidade da Meta. A descrição deixa claro que o clique abre uma conversa, como a Meta pede.
 
 ### M02 · `T1-barbearia-v1` · barbearia · Reel · WhatsApp
 
@@ -162,9 +163,9 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
 - **Título** (30/40): Teste o pedido no seu WhatsApp
 - **Descrição** (21/30): Grátis e sem cadastro
 - **Botão**: Enviar mensagem
-- **Público**: dono ou dona de barbearia na Bahia. Conjunto `ctwa-nov26-ba-amplo`.
+- **Público**: dono ou dona de barbearia. Conjunto da fase vigente.
 - **Formato**: Reel 9:16, gancho G-B2. Quadro 1 com a notificação entrando na tela.
-- **Por que deve funcionar**: testar o pedido no próprio WhatsApp é o gesto que o produto tem e que as páginas de concorrentes lidas em 09/11/2026 não mostravam. A Meta pede movimento no primeiro quadro: aqui é a notificação chegando.
+- **Hipótese (sem teste)**: testar o pedido no próprio WhatsApp é o gesto que o produto tem e que as páginas de concorrentes lidas em 09/11/2026 não mostravam. A Meta pede movimento no primeiro quadro: aqui é a notificação chegando.
 
 ### M03 · `A4-barbearia-v1` · barbearia · Reel · site
 
@@ -182,7 +183,7 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
 - **Link**: `?nicho=barbearia` · `A4-barbearia-v1`
 - **Público**: o mesmo perfil, na campanha de Tráfego da célula site.
 - **Formato**: Reel 9:16 com o vídeo R1 de `../roteiros-video.md`, refeito na área segura nova, com o gancho G-B1 no lugar dos 2 primeiros segundos parados.
-- **Por que deve funcionar**: hoje o R1 abre com 2 s de placa parada. A Meta pede movimento e mensagem nos 3 primeiros segundos, e o G-B1 já começa com o polegar digitando. A versão longa deixa a mensalidade clara antes do clique, porque os Padrões da Meta proíbem assinatura sem divulgação clara (Práticas Comerciais Proibidas, alteração de 29/10/2026).
+- **Hipótese (sem teste)**: hoje o R1 abre com 2 s de placa parada. A Meta pede movimento e mensagem nos 3 primeiros segundos, e o G-B1 já começa com o polegar digitando. A versão longa deixa a mensalidade clara antes do clique, porque os Padrões da Meta proíbem assinatura sem divulgação clara (Práticas Comerciais Proibidas, alteração de 29/10/2026).
 
 ### M04 · `F1-salao-v1` · salão e estética · Reel · WhatsApp
 
@@ -197,9 +198,9 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
 - **Título** (31/40): Veja o site do seu salão pronto
 - **Descrição** (29/30): Abre uma conversa no WhatsApp
 - **Botão**: Enviar mensagem
-- **Público**: dona ou dono de salão, estúdio de unha ou estética na Bahia. Conjunto `ctwa-nov26-ba-amplo`.
+- **Público**: dona ou dono de salão, estúdio de unha ou estética. Conjunto da fase vigente.
 - **Formato**: Reel 9:16, gancho G-S3.
-- **Por que deve funcionar**: é o mesmo mecanismo do Reel de dor que deu o clique mais barato da conta. A cena mostra duas perguntas de uma cliente fictícia, que o site responde na tela. Nada fala da aparência de ninguém, como exige a política de Saúde e bem-estar da Meta (22/07/2026).
+- **Hipótese (sem teste)**: é o mesmo mecanismo do Reel de dor que deu o clique mais barato da conta. A cena mostra duas perguntas de uma cliente fictícia, que o site responde na tela. Nada fala da aparência de ninguém, como exige a política de Saúde e bem-estar da Meta (22/07/2026).
 
 ### M05 · `T1-salao-v1` · salão e estética · Reel · WhatsApp
 
@@ -216,7 +217,7 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
 - **Botão**: Enviar mensagem
 - **Público**: o mesmo do M04.
 - **Formato**: Reel 9:16, gancho G-S2.
-- **Por que deve funcionar**: é o mesmo conceito do M02, num nicho diferente. Assim dá para saber se o "teste do pedido" ganha da "dor em cena" nos dois nichos de maior volume. A Meta recomenda testar criativos por pelo menos 4 dias e ficar com os melhores.
+- **Hipótese (sem teste)**: é o mesmo conceito do M02, num nicho diferente. Assim dá para saber se o "teste do pedido" ganha da "dor em cena" nos dois nichos de maior volume. A Meta recomenda testar criativos por pelo menos 4 dias e ficar com os melhores.
 
 ### M06 · `A4-salao-v1` · salão e estética · Carrossel · site
 
@@ -237,7 +238,7 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
 - **Link**: `?nicho=salao` · `A4-salao-v1` (o mesmo nos 4 cartões)
 - **Público**: o mesmo perfil, na célula site.
 - **Formato**: carrossel com 4 cartões 1:1, cada um com uma ação real, na ordem do produto.
-- **Por que deve funcionar**: é variação de formato, não só de texto. Isso conta para o algoritmo atual, segundo o E-Commerce Brasil (25/06/2026). Não há prova de que o carrossel vença o Reel nesta oferta: ele entra para medir. O cartão 4 deixa a assinatura clara.
+- **Hipótese (sem teste)**: é variação de formato, não só de texto. Isso conta para o algoritmo atual, segundo o E-Commerce Brasil (25/06/2026). Não há prova de que o carrossel vença o Reel nesta oferta: ele entra para medir. O cartão 4 deixa a assinatura clara.
 
 ### M07 · `F1-academia-v1` · academia e studio · Reel · WhatsApp
 
@@ -252,9 +253,9 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
 - **Título** (34/40): Veja o site da sua academia pronto
 - **Descrição** (29/30): Abre uma conversa no WhatsApp
 - **Botão**: Enviar mensagem
-- **Público**: dono ou dona de academia, studio de pilates, funcional ou dança na Bahia. Conjunto `ctwa-nov26-ba-amplo`.
+- **Público**: dono ou dona de academia, studio de pilates, funcional ou dança. Conjunto da fase vigente.
 - **Formato**: Reel 9:16, gancho G-A3.
-- **Por que deve funcionar**: segue o formato do Reel de dor da conta. A pergunta é de quem quer começar a treinar, e nenhum texto fala de corpo, peso ou resultado. Isso segue a política de Saúde e bem-estar da Meta e a regra da casa para academia.
+- **Hipótese (sem teste)**: segue o formato do Reel de dor da conta. A pergunta é de quem quer começar a treinar, e nenhum texto fala de corpo, peso ou resultado. Isso segue a política de Saúde e bem-estar da Meta e a regra da casa para academia.
 
 ### M08 · `T1-academia-v1` · academia e studio · Reel · site
 
@@ -272,7 +273,7 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
 - **Link**: `?nicho=academia` · `T1-academia-v1`
 - **Público**: o mesmo do M07, na célula site.
 - **Formato**: Reel 9:16, gancho G-A2.
-- **Por que deve funcionar**: põe o conceito "teste do pedido" também na célula site. Assim o mesmo conceito é comparado nos dois destinos pelo custo por Pix pago, como a pesquisa recomendou.
+- **Hipótese (sem teste)**: põe o conceito "teste do pedido" também na célula site. Assim o mesmo conceito é comparado nos dois destinos pelo custo por Pix pago, como a pesquisa recomendou.
 
 ### M09 · `A5-geral-v1` · os 3 nichos · Imagem estática · WhatsApp
 
@@ -287,9 +288,9 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
 - **Título** (30/40): Seu negócio aberto na internet
 - **Descrição** (29/30): Abre uma conversa no WhatsApp
 - **Botão**: Enviar mensagem
-- **Público**: os 3 nichos, conjunto `ctwa-nov26-ba-amplo`.
+- **Público**: os 3 nichos, conjunto da fase vigente.
 - **Formato**: imagem 1080 × 1350 (Feed) e 1080 × 1920 (Stories e Reels), com a placa ABERTO escrita a giz com "Barbearia Navalha Fictícia" e o selo "nome fictício". Faixa embaixo, dentro da área segura: "Chame no WhatsApp e receba o seu". Ícone próprio de balão, sem o logo do WhatsApp. Sem botão de play.
-- **Por que deve funcionar**: a Meta recomenda misturar vídeo e imagem nos anúncios de conversa (help/269324800441478). A imagem é a variação de formato do conjunto, não a aposta principal. O texto diz o que acontece depois do clique.
+- **Hipótese (sem teste)**: a Meta recomenda misturar vídeo e imagem nos anúncios de conversa (help/269324800441478). A imagem é a variação de formato do conjunto, não a aposta principal. O texto diz o que acontece depois do clique.
 
 ### M10 · `C4-geral-v1` · os 3 nichos · Reel · site · CONDICIONAL
 
@@ -303,13 +304,13 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
   >
   > Comece digitando o nome do negócio: o site pronto aparece em segundos.
 - **Versão Reels** (30/44): A equipe que monta o seu site.
-- **Título** (33/40): Assista ao seu site sendo montado
+- **Título** (33/40): Conheça a equipe que monta o site
 - **Descrição** (20/30): Cena de demonstração
 - **Botão**: Saiba mais
 - **Link**: sem `?nicho=` (a pessoa escolhe o nicho na home) · `C4-geral-v1`
 - **Público**: os 3 nichos, na célula site.
 - **Formato**: Reel 9:16, vídeo R3 refeito na área segura nova.
-- **Por que deve funcionar**: a sede é a prova que só a Creat tem (tese da casa). Este anúncio fica por último porque, hoje, ela é demonstração. Prometer "acompanhe ao vivo" antes da publicação ao vivo seria página que não bate com o anúncio, motivo de reprovação nos Padrões da Meta.
+- **Hipótese (sem teste)**: a sede é a prova que só a Creat tem (tese da casa). Este anúncio fica por último porque, hoje, ela é demonstração. Prometer "acompanhe ao vivo" ou "assista ao seu site sendo montado" antes da publicação ao vivo seria página que não bate com o anúncio, motivo de reprovação nos Padrões da Meta; por isso o título é "Conheça a equipe", e não "Assista".
 
 ---
 
@@ -415,25 +416,25 @@ Se a pessoa editar a mensagem e não der para saber o anúncio, use `utm_content
 - excluir quem já pagou.
 - Público "pessoas que enviaram mensagem à Página": existe segundo praticantes, mas não foi confirmado em página oficial da Meta. Confira no Gerenciador antes de contar com ele.
 
-**Regra de texto.** O anúncio não diz "você viu", "você esteve aqui" nem nada que mostre que a Creat sabe o que a pessoa fez. Ele fala do produto e responde a uma dúvida comum.
+**Regra de texto.** O anúncio não diz "você viu", "você esteve aqui", "de novo", "ficou alguma dúvida" nem nada que mostre que a Creat sabe o que a pessoa fez. (A primeira versão de V1 e V2 dizia "de novo" e "ficou": contrariava esta regra e foi corrigida em 09/11/2026.) Ele fala do produto e responde a uma dúvida comum.
 
 ### V1 · `V1-geral-v1` · Reel ou imagem · site
 
-- **Texto principal, 1ª linha** (107/125): A prévia abre de novo em segundos: digite o nome do negócio, vire a placa e teste o pedido no seu WhatsApp.
+- **Texto principal, 1ª linha** (99/125): A prévia abre em segundos: digite o nome do negócio, vire a placa e teste o pedido no seu WhatsApp.
 - **Versão longa**:
-  > A prévia abre de novo em segundos: digite o nome do negócio, vire a placa e teste o pedido no seu WhatsApp.
+  > A prévia abre em segundos: digite o nome do negócio, vire a placa e teste o pedido no seu WhatsApp.
   >
   > Se gostar, a página mostra a Abertura e a mensalidade antes de qualquer pagamento. Pix ou cartão.
   >
   > A mensalidade só começa no dia em que o site entra no ar.
-- **Versão Reels** (36/44): Abra a prévia de novo quando quiser.
+- **Versão Reels** (28/44): Abra a prévia quando quiser.
 - **Título** (38/40): O site do seu negócio, pronto para ver
 - **Descrição** (29/30): Mensalidade só com site no ar
 - **Botão**: Saiba mais
 - **Link**: `{{site.url}}/?utm_source=meta&utm_medium=pago&utm_campaign=rt-nov26&utm_content=V1-geral-v1` (sem `?nicho=`: a home volta ao nicho da última visita só se o próprio aparelho guardou)
 - **Público**: prévia gerada sem pagamento, 30 dias.
 - **Formato**: o corpo da seção 5, sem gancho de dor. Quadro 1 com a placa já girando.
-- **Por que deve funcionar**: quem gerou prévia já fez o gesto principal. O que falta é saber o preço e a regra da mensalidade, e o texto diz onde isso aparece sem citar valores, que mudam com a inauguração. "Pix ou cartão" só entra quando o checkout do Mercado Pago estiver ligado. Antes disso, tire a frase.
+- **Hipótese (sem teste)**: quem gerou prévia já fez o gesto principal. O que falta é saber o preço e a regra da mensalidade, e o texto diz onde isso aparece sem citar valores, que mudam com a inauguração. "Pix ou cartão" só entra quando o checkout do Mercado Pago estiver ligado. Antes disso, tire a frase.
 
 ### V2 · `V2-geral-v1` · Imagem · WhatsApp
 
@@ -443,7 +444,7 @@ Se a pessoa editar a mensagem e não der para saber o anúncio, use `utm_content
   >
   > A mensalidade só começa quando o site entra no ar. Se um dia quiser sair, você leva o site e os arquivos.
   >
-  > Ficou alguma dúvida? Toque em Enviar mensagem e pergunte para a equipe da Creat.
+  > Para tirar dúvidas, toque em Enviar mensagem e pergunte para a equipe da Creat.
 - **Versão Reels** (37/44): Sem fidelidade. 7 dias para desistir.
 - **Título** (26/40): Tire a dúvida com a equipe
 - **Descrição** (29/30): Abre uma conversa no WhatsApp
@@ -451,7 +452,7 @@ Se a pessoa editar a mensagem e não der para saber o anúncio, use `utm_content
 - **Pré-preenchida**: "Oi! Tenho uma dúvida antes de abrir o meu site."
 - **Público**: quem assistiu a 75% de um Reel, mais quem gerou prévia, 30 dias, excluindo quem pagou.
 - **Formato**: imagem 1080 × 1350 com três linhas desenhadas a giz: "Sem fidelidade" · "7 dias para desistir" · "Leva o site se sair". Sem preço.
-- **Por que deve funcionar**: tira o risco percebido sem prometer resultado. Cada frase está nos termos: cláusula 6 (arrependimento, art. 49 do CDC), cláusula 7 (sem fidelidade) e cláusula 9 (SAIR). A pergunta da versão longa fala da dúvida, não de quem lê. É o mesmo convite do botão.
+- **Hipótese (sem teste)**: tira o risco percebido sem prometer resultado. Cada frase está nos termos: cláusula 6 (arrependimento, art. 49 do CDC), cláusula 7 (sem fidelidade) e cláusula 9 (SAIR). A pergunta da versão longa fala da dúvida, não de quem lê. É o mesmo convite do botão.
 
 ---
 

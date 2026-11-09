@@ -32,7 +32,7 @@ Fora do horário de atendimento (segunda a sábado, das 9h às 19h).
 
 > Recebemos a sua mensagem. A equipe responde de segunda a sábado, das 9h às 19h.
 > Enquanto isso, veja a prévia do seu site: {{site.url}}/?utm_source=whatsapp&utm_medium=organico&utm_campaign=ausencia
-> Se você já pagou, o seu pedido está na fila e o prazo conta normalmente.
+> Se você já pagou, o seu pedido está na fila. O prazo de {{precos.prazoHoras}} h conta a partir do pagamento confirmado com os 4 dados do pedido.
 
 ## Fluxo de fechamento em 5 mensagens
 
@@ -49,7 +49,7 @@ Para quem chega pelo anúncio (mensagem pré-preenchida da tabela em `trafego/an
 Exemplo: `{{site.url}}/?nicho=barbearia&utm_source=meta&utm_medium=pago&utm_campaign=ctwa-nov26&utm_content=F1-barbearia-v1#k=barbearia&n=Barbearia%20Navalha%20Ficticia`
 
 **F1 · Saudação** (`/f1`) · logo depois da primeira mensagem, em até 5 minutos
-> Oi! Aqui é {atendente}, da equipe da Creat. Vou montar a prévia do seu site agora, com o nome do seu negócio na placa.
+> Oi! Aqui é {atendente}, da equipe da Creat. Já te mando a prévia do seu site, com o nome do seu negócio na placa.
 > Ver é grátis e sem cadastro.
 
 **F2 · Qualificação, 1 pergunta** (`/f2`) · na mesma hora, logo depois do F1
@@ -71,7 +71,7 @@ Etiquetas: "Lead · anúncio" (ou "Lead · orgânico") e, da Meta, **Lead**.
 > Pague por Pix ou cartão neste link, que mostra o total antes: {{site.url}}/abrir/#plano=aberto&k={nicho}&n={negócio}&utm_source=meta&utm_medium=pago&utm_campaign=ctwa-nov26&utm_content={código}
 > Depois de pagar, você tem 7 dias para desistir com o dinheiro de volta.
 
-Antes de mandar, confira em `dados/precos.json` se a inauguração ainda vale e quantas vagas restam. Sem inauguração, troque a primeira linha por "Abertura de R$ {{precos.abertura.padrao}}, uma vez." Se a pessoa já escolheu o Vitrine, troque `plano=aberto` por `plano=vitrine`. Etiquetas: "Checkout" e, da Meta, **New order**.
+Antes de mandar, confira em `dados/precos.json` se a inauguração ainda vale e quantas vagas restam. Quem digita a resposta rápida no app não vê o `precos.json` mudar: o preço de inauguração que ficou salvo no atalho continua aparecendo para sempre, mesmo depois da 20ª vaga. Conte as vagas pagas à mão (Mercado Pago) e, na 20ª, troque o texto do `/f4` e do `/precos` no mesmo dia (e, no Plano B, desative o link de R$ 297). Sem inauguração, troque a primeira linha por "Abertura de R$ {{precos.abertura.padrao}}, uma vez." Se a pessoa já escolheu o Vitrine, troque `plano=aberto` por `plano=vitrine`. Etiquetas: "Checkout" e, da Meta, **New order**.
 
 **F4b · Enquanto `/abrir/` ainda termina no WhatsApp** (`/f4b`) · só até o link do Mercado Pago estar em `checkout.config.js`
 

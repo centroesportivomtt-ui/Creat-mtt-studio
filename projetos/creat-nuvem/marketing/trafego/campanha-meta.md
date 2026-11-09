@@ -160,7 +160,7 @@ Os limites de raio que o Gerenciador aceita variam entre fontes terceiras: 1 a 7
 | Idade (controle) | **mínima 18**; sem máxima | quem paga e aceita os termos tem de ser maior de idade |
 | Idade (sugestão) | nenhuma | não há dado de idade do dono de barbearia, salão ou academia; inventar faixa seria palpite |
 | Gênero | todos | idem |
-| Segmentação detalhada | **só como sugestão**: Barbearia, Salão de beleza, Academia, Pequenas empresas, WhatsApp Business | mesma lista de `anuncios-meta.md`; sem pilha de interesses |
+| Segmentação detalhada | **só como sugestão**: Barbearia, Salão de beleza, Academia, Pequenas empresas, WhatsApp Business | mesma lista de `anuncios-meta.md`; sem pilha de interesses. **Limite:** interesse como "Barbearia" ou "Academia" descreve quem gosta do assunto, que inclui o cliente final e não só o dono. Sem fonte da pesquisa para esta lista; trate como palpite e leia a entrega por nicho no dia 7 |
 | Idiomas | **em branco** | o público é de quem mora no Brasil; o filtro tiraria quem usa o celular em outro idioma, sem ganho |
 | Públicos personalizados e exclusões | nenhum no dia 1 | retargeting só em conjunto separado acima de R$ 110/dia (`anuncios-meta.md` §7). Lista de clientes para excluir só com aval da Muralha (LGPD) |
 
@@ -237,7 +237,7 @@ Enquanto não houver domínio próprio, `{{site.url}}` é `https://creat-nuvem-4
 | `PageView` | carregou a página | navegador | automático | nenhum |
 | `ViewContent` | `previa_gerada` (a placa virou e o site apareceu) | navegador | `prev-<uuid da sessão>` | nenhum; `content_category` = nicho |
 | `InitiateCheckout` | clicou em Pagar no `/abrir/` | navegador | `chk-<id do pedido>`, quando houver | nenhum |
-| `Purchase` | o webhook confirmou o pagamento | **servidor**, `action_source=website`, mesmo pixel | `<id do pedido>` (por exemplo `PA-XXXXXXXX`), o mesmo usado em qualquer disparo do navegador, para deduplicar (developers.facebook.com, boas práticas da CAPI, atualizada em 28/06/2026) | e-mail e telefone com hash SHA-256, só no servidor |
+| `Purchase` | o webhook confirmou o pagamento | **servidor**, `action_source=website`, mesmo pixel | `<id do pedido>` (por exemplo `PA-XXXXXXXX`). Se um dia o navegador disparar o mesmo evento, usa o mesmo id, para deduplicar; enquanto o Purchase sair só do servidor, não há o que deduplicar (developers.facebook.com, boas práticas da CAPI, atualizada em 28/06/2026) | e-mail e telefone com hash SHA-256, só no servidor |
 
 Regras:
 - O token da API de Conversões fica nos segredos do app Base44 AutoCreatFlux, nunca no repositório nem neste arquivo.
@@ -262,6 +262,7 @@ Todos sobem juntos no dia 1: anúncio novo dentro do conjunto conta como ediçã
 | `F1-academia-v1` | M07 | R6b, versão academia | Reel 9:16 | gravar |
 
 - **Mínimo para ligar:** F0 (ou F1-barbearia, se o F0 não passar), T1-barbearia, F1-barbearia e A5-geral.
+- **F0 e o limite do R$ 0,22.** Não localizei no repositório o texto nem o destino do Reel que rodou. O CPC de R$ 0,22 pode ter vindo de um texto que as regras de hoje proíbem (afirmar o estado de quem vê), e a pesquisa não diz se os 345 cliques foram no link ou em qualquer lugar do anúncio. Se o F0 for reaproveitado, ele vale como mais um criativo a medir, não como a prova de que as cenas F1 vão custar o mesmo.
 - **Mensagem pré-preenchida do F0** (as outras estão na seção 6 de `anuncios-meta.md`): "Oi! Vi o vídeo e quero ver o site do meu negócio pronto."
 - O Reel antigo pode ter subido com outro botão. Se o Gerenciador não deixar trocar para **Enviar mensagem** em "Usar publicação existente", suba o arquivo como anúncio novo. Ele perde as curtidas, mas mantém o criativo.
 
@@ -303,7 +304,7 @@ A primeira regra que se aplicar decide o dia:
 |---|---|---|---|---|
 | Custo por conversa iniciada (sem imposto) | Gerenciador, conjunto e anúncio | até R$ 10,65 (mediana 2B Growth, out/2026); aceitável até o alvo | acima de 2× o alvo por 3 dias | **Bom**: manter; com todas as condições do §4, **escalar 20%**. **Ruim no anúncio**: **trocar criativo** no lote do dia 7. **Gastou 3× o alvo (R$ 36,90 com o alvo de partida) e fez 0 conversa**: **pausar o anúncio** (regra R1) |
 | Taxa de gancho (reproduções de 3 s ÷ impressões) | métrica personalizada no Gerenciador | a partir de 25% | abaixo de 15% depois do dia 4 | **Ruim**: **trocar criativo**, só o gancho (`v2`), mantendo o corpo. Faixas de blog de agência (Digital Applied, 02/02/2026), não da Meta |
-| Frequência de 7 dias | conjunto | até 2,5 | acima de 3,0 | **Ruim**: gatilho de fase (§5); se já está na Fase 4, **trocar criativo** |
+| Frequência de 7 dias | conjunto | até 2,5 (hipótese; sem fonte) | acima de 3,0 (blog de agência, Digital Applied) | **Ruim**: gatilho de fase (§5); se já está na Fase 4, **trocar criativo** |
 | CPM | conjunto | perto de R$ 14,38 (mediana 2B Growth, out/2026) | 20% acima da 1ª semana com os mesmos criativos | **Ruim**: saturação ou leilão caro; gatilho de fase. Na semana de 23 a 29/11, nada muda, salvo CPM acima de 1,5× a semana anterior: aí, **pausar o conjunto** até 30/11 |
 | Gasto do dia ÷ orçamento | conjunto | a partir de 90% | abaixo de 80% por 3 dias | **Ruim**: confira saldo e restrição da conta; se estiver tudo certo, o público esgotou: gatilho de fase |
 | Status do aprendizado | conjunto | "Ativo" | "Aprendizado limitado" no dia 7, a partir da Fase 2 | **Ruim**: reduza para os 4 ou 5 melhores anúncios num conjunto novo, ou suba o orçamento até `50 × custo por conversa ÷ 7` |
@@ -375,7 +376,7 @@ As regras automatizadas ficam em **Todas as ferramentas > Regras automatizadas**
 - Condição: custo por resultado (últimos 3 dias) acima de R$ 24,60 **e** valor gasto (últimos 3 dias) acima de R$ 60.
 - Ação: só notificar.
 
-**B1 · R4 · escala de 20%** (criada **desligada**; o Marcos liga depois do 1º Pix e do dia 7)
+**B1 · R4 · escala de 20%** (criada **desligada**; o Marcos liga depois do 1º Pix e do dia 7). **Atenção:** a regra automática só vê custo, resultados e frequência. Ela não vê as condições 4 (Pix pago), 6 (1ª resposta em 5 min) e 7 (semana de Black Friday) do §4. Por isso ela fica desligada na Fase 1, e o Marcos confere essas três à mão antes de ligá-la e a **desliga de 23 a 29/11**
 - Aplica-se a: conjunto.
 - Condição: custo por resultado (últimos 3 dias) até R$ 12,30, resultados (últimos 3 dias) a partir de 6 e frequência (últimos 7 dias) até 3,0.
 - Ação: aumentar o orçamento diário em 20%, com **máximo de R$ 121**, no máximo uma vez a cada 72 h.
@@ -393,7 +394,7 @@ As regras automatizadas ficam em **Todas as ferramentas > Regras automatizadas**
 
 **B3 · Vigiar os valores das regras.** Quando o alvo for recalculado (§12), atualize os valores de R1, R3 e R4 no mesmo dia: R1 = 3× o alvo, R3 = 2× o alvo, R4 = o alvo.
 
-Com o bloco B pronto, a campanha corta sozinha o anúncio que só gasta, avisa sozinha quando satura, e escala sozinha depois que o Marcos liberar R4. A leitura diária vira conferência, não operação.
+Com o bloco B pronto, a campanha corta sozinha o anúncio que só gasta e avisa sozinha quando satura. A escala (R4) só roda depois que o Marcos conferir à mão as condições 4, 6 e 7 do §4, que a regra não enxerga. A leitura diária vira conferência, não operação.
 
 ---
 

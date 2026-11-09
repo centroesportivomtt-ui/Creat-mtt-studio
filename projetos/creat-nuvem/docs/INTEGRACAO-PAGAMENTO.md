@@ -28,7 +28,7 @@ O Mercado Pago fica com a Abertura porque o Pix é o meio de pagamento principal
   - recusa 21 formatos ruins (marcador, http, porta, credencial, host parecido, subdomínio, `javascript:`);
   - confere que não há segredo nem `APP_USR-` no arquivo;
   - roda o `checar-placeholders` numa cópia com links do Mercado Pago e do Stripe (código 0) e com host falso (código 1).
-- **Textos públicos**: as menções ao Asaas viraram Mercado Pago (Pix e cartão) e Stripe (mensalidade no cartão) em `abrir/index.html`, `index.html` (FAQ), `conteudo/abrir.json`, `conteudo/faq.json`, `conteudo/termos.md` (cláusulas 7 e 13) e `conteudo/privacidade.md` (seções 5 e 6). Termos e privacidade continuam com `REVISAO_JURIDICA_PENDENTE`.
+- **Textos públicos**: as menções ao Asaas viraram Mercado Pago (Pix e cartão) e Stripe (mensalidade no cartão) em `abrir/index.html`, `index.html` (FAQ), `conteudo/abrir.json`, `conteudo/faq.json`, `conteudo/termos.md` (cláusulas 7 e 15) e `conteudo/privacidade.md` (seções 5 e 6). Termos e privacidade continuam com `REVISAO_JURIDICA_PENDENTE`.
 - **`docs/CONTRATOS-DETALHE.md`**: o contrato de `linkValido` foi atualizado.
 
 Os nomes dos marcadores (`[LINK_ASAAS_ABERTURA_INAUGURACAO]` e os outros) ficaram como estavam, porque o checador e o histórico dependem deles. Qualquer link de provedor aceito pode substituir um marcador.
