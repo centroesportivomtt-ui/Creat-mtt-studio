@@ -80,6 +80,8 @@ Verificado nos arquivos do repositório hoje, salvo onde diz "não verificado".
 
 ---
 
+> **Linha de base lida pelo MCP oficial da Meta em 09/11/2026 (conta CTMTT, `act_4078332059160918`, últimos 90 dias).** O anúncio com clique mais barato foi "R47F | veo dor | contador" (Reel com gancho de dor, vídeo gerado): R$ 58,77 gastos, 10.425 impressões, 565 cliques, **CPC R$ 0,10**. O "Reel Cafeína" de seguidores deu CPC R$ 0,32 (R$ 80,25, 18.610 impressões, 251 cliques). Os anúncios do kit R27 ativos hoje estão entre R$ 0,14 e R$ 0,18 por clique. São cliques totais, não cliques no link; nenhum tem venda atribuída. Confirma a hipótese do plano: gancho de dor em vídeo vertical é o ponto de partida do lote. O id `916420481553001` que constava aqui não existe neste login e foi substituído pelo da CTMTT em todo o plano.
+
 ## 5. Portões para ligar (conferidos na segunda 16/11, até 18h)
 
 "Duro" bloqueia a largada. "Mole" não bloqueia, mas fica registrado.
