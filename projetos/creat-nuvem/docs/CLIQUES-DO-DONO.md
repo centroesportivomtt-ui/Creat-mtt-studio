@@ -41,26 +41,26 @@ Tudo o que podia ser resolvido por agente foi resolvido. Esta é a lista mínima
 - Página Creat.MTT Studio ainda **não aceitou os Termos de Lead Ads** (`leadgen_tos_accepted: false`). Só é preciso se a campanha usar formulário; a de WhatsApp não exige.
 - Conta de anúncios `1427936409451958` está **desativada por atividade incomum**: não usar.
 
-## Montado pela agência na Meta em 09/11/2026 (conta CTMTT, tudo PAUSADO)
+## Montado pela agência na Meta em 09/11/2026 (conta CTMTT, tudo PAUSADO, gasto zero)
 
-Feito pelo MCP oficial da Meta, sem gastar nada. Nada liga sozinho.
+Feito pelo MCP oficial da Meta. Nada liga sozinho: a ativação com gasto é bloqueada para agente e fica com o dono.
 
-| campanha | o que é | ids | estado |
-|---|---|---|---|
-| `cal-nov26` | célula site · Tráfego · Brasil · 18+ · Advantage+ público e posicionamentos · R$ 40/dia no orçamento da campanha · limite total R$ 300 · otimização "visualizações da página de destino" | campanha 120254150908340237 · conjunto `cal-nov26-amplo-barb-salao` 120254150914740237 · anúncios `A1-barbearia-v1` 120254150918520237, `A1-salao-v1` 120254150967100237, `B1-salao-v1` 120254150971860237 | **pronta para ligar** |
-| `ctwa-nov26` | célula WhatsApp · Leads · limite total R$ 300 | campanha 120254150873900237 · criativos prontos: `A5-geral-v1` 1647724113428664, `F1-barbearia-v1` 1616055989622257, `T1-barbearia-v1` 1574166267852270, `F1-salao-v1` 1593225002131573, `T1-salao-v1` 1643162970519139 | **bloqueada**: a Página Creat.MTT Studio não tem WhatsApp ligado (erro 2446886 da Meta) |
+| campanha | o que é | ids |
+|---|---|---|
+| `cal-nov26` · célula site | Tráfego · Brasil · 18+ · Advantage+ público e posicionamentos · R$ 40/dia no orçamento da campanha · limite total R$ 300 · otimização "visualizações da página de destino" · pixel 2223314621951948 | campanha 120254150908340237 · conjunto `cal-nov26-amplo-barb-salao` 120254150914740237 · anúncios `A1-barbearia-v1` 120254151012220237, `A1-salao-v1` 120254151012440237, `B1-salao-v1` 120254151012600237 |
+| `ctwa-nov26` · célula WhatsApp por link | Leads · limite total R$ 300 · conjunto com R$ 40/dia · Riachão do Jacuípe + 60 km · só celular · Feed, Stories, Reels e Explorar · otimização "cliques no link" · cada anúncio abre `wa.me/5575981151202` com a mensagem pré-preenchida do anúncio | campanha 120254150873900237 · conjunto `ctwa-nov26-fase1-riachao60-link` 120254151018270237 · anúncios `A5-geral-v1` 120254151025310237, `F1-barbearia-v1` 120254151026210237, `T1-barbearia-v1` 120254151026690237, `F1-salao-v1` 120254151027130237, `T1-salao-v1` 120254151027310237 (em análise na Meta desde 09/11) |
 
-Criativos na conta: S1/S2 barbearia (hashes 0d38b464…, 0d75f360…) e S1/S2 salão (009fe008…, 6e435f56…), renderizados por `marketing/trafego/estaticos/renderizar.cjs --nicho salao`. Feed usa o 1:1 e Stories/Reels o 9:16 (personalização por posicionamento).
+Decisões da agência nesta montagem:
+- **WhatsApp sem depender do vínculo da Página.** A Meta recusou o destino nativo de WhatsApp (erro 2446886: a Página Creat.MTT Studio não tem WhatsApp ligado). Em vez de esperar, os anúncios usam o link oficial de conversa `wa.me`, que abre o mesmo chat. Custo: a Meta mede clique, não "conversa iniciada", e não há modelo de boas-vindas; a saudação é a automática do app.
+- **Aprimoramentos Advantage+ de criativo desligados na origem** em todos os anúncios válidos. Os três primeiros anúncios de site (sem esse desligamento) foram arquivados.
+- **Imagens:** S1 (1:1) no feed e S2 (9:16) em Stories e Reels, nas variantes barbearia e salão (`estaticos/renderizar.cjs --nicho salao`).
 
-### Cliques novos do Marcos
+### O único gesto que falta: ligar (é gasto, só o dono)
 
 | # | o quê | onde | tempo |
 |---|---|---|---|
-| A | **Ligar o WhatsApp +55 75 8115-1202 à Página Creat.MTT Studio** (hoje ele está na página Seller 24/7). Caminho da Meta: Página → Configurações → Contas vinculadas → WhatsApp → código no aparelho. Ou em Configurações do negócio → Contas do WhatsApp, escolhendo a Página Creat.MTT Studio | https://business.facebook.com/latest/settings/whatsapp_account?business_id=694246740441336&asset_id=1418388018024129 · ajuda: https://www.facebook.com/business/help/1583303048513172 | 3 min · depois disso a agência cria o conjunto e os anúncios de WhatsApp sozinha |
-| B | **Ligar a campanha `cal-nov26`** (campanha, conjunto e 3 anúncios). A Meta revisa em até 24 h; o gasto só começa depois da aprovação | https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=4078332059160918&selected_campaign_ids=120254150908340237 | 1 min · ou responda "liga" no chat que a agência liga pelo MCP |
-| C | **Desligar os aprimoramentos Advantage+ de criativo** nos 3 anúncios (o MCP não altera isso em anúncio com mídia por posicionamento). Em cada anúncio: Configuração do anúncio → Aprimoramentos → desmarcar | mesmo link do item B, nível Anúncios | 3 min · opcional; o padrão da Meta só ajusta brilho/contraste, comentários e botão |
-| D | **Saldo**: a conta tem forma de pagamento cadastrada; para o pré-pago Pix de R$ 320 do plano, Pagamentos | https://business.facebook.com/billing_hub/accounts | 5 min |
+| A | **Ligar a célula site** `cal-nov26`: campanha, conjunto e os 3 anúncios (R$ 40/dia, teto R$ 300) | https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=4078332059160918&selected_campaign_ids=120254150908340237 | 1 min |
+| B | **Ligar a célula WhatsApp** `ctwa-nov26`: campanha, conjunto e os 5 anúncios (R$ 40/dia, teto R$ 300). Só ligue com alguém respondendo o WhatsApp em até 5 min | https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=4078332059160918&selected_campaign_ids=120254150873900237 | 1 min |
+| C | (melhoria, sem pressa) Ligar o WhatsApp à Página Creat.MTT Studio, para trocar o link pelo destino nativo com contagem de conversas | https://business.facebook.com/latest/settings/whatsapp_account?business_id=694246740441336&asset_id=1418388018024129 | 3 min, com o aparelho do número |
 
-Observações:
-- O MCP da Meta **não cria** o modelo de mensagem de boas-vindas do WhatsApp (seção 6 de `marketing/trafego/anuncios-meta.md`); isso fica para o Gerenciador quando a célula WhatsApp for publicada.
-- Os ids do dossiê que não existiam já foram trocados; a conta certa é a CTMTT.
+Como ligar: marque a caixa da campanha, entre nos níveis Conjuntos e Anúncios e ligue as chaves dos três níveis. As duas juntas gastam no máximo R$ 80/dia e R$ 600 no total. A Meta revisa antes de entregar (até 24 h).

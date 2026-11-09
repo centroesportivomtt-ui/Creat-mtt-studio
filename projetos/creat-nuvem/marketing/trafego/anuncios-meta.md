@@ -482,8 +482,6 @@ Se a pessoa editar a mensagem e não der para saber o anúncio, use `utm_content
 
 ---
 
-## 10. O que já está na conta CTMTT (09/11/2026, montado pelo MCP oficial, tudo pausado)
+## 10. O que já está na conta CTMTT (09/11/2026)
 
-- Célula site `cal-nov26` (120254150908340237): conjunto `cal-nov26-amplo-barb-salao` (120254150914740237), Brasil, 18+, Advantage+ público e posicionamentos, R$ 40/dia, limite R$ 300, otimização "visualizações da página de destino", pixel 2223314621951948 no rastreamento. Anúncios: `A1-barbearia-v1` (120254150918520237), `A1-salao-v1` (120254150967100237), `B1-salao-v1` (120254150971860237). Os Reels R1/R2/R3 ainda não existem; os três rodam com os estáticos S1 (feed) e S2 (Stories e Reels), nas variantes barbearia e salão.
-- Célula WhatsApp `ctwa-nov26` (120254150873900237): só a campanha. O conjunto foi recusado pela Meta (erro 2446886) porque a Página Creat.MTT Studio não tem WhatsApp ligado. Criativos prontos na conta: M09 `A5-geral-v1` (1647724113428664), M01 `F1-barbearia-v1` (1616055989622257), M02 `T1-barbearia-v1` (1574166267852270), M04 `F1-salao-v1` (1593225002131573), M05 `T1-salao-v1` (1643162970519139), todos com botão Enviar mensagem e os mesmos S1/S2 no lugar dos Reels.
-- Aprimoramentos Advantage+ de criativo: o MCP não altera em anúncio com mídia por posicionamento; desligar no Gerenciador (`docs/CLIQUES-DO-DONO.md`, item C).
+A lista viva de campanhas, conjuntos, anúncios e ids montados pelo MCP oficial está em `docs/CLIQUES-DO-DONO.md` (seção "Montado pela agência na Meta") e no adendo de `ROTINA-GESTOR.md`. Resumo: célula site `cal-nov26` (Brasil, 3 anúncios) e célula WhatsApp por link `ctwa-nov26` (Riachão + 60 km, 5 anúncios abrindo `wa.me` com a mensagem pré-preenchida da seção 6). Os Reels ainda não existem; todos rodam com os estáticos S1 (feed) e S2 (Stories e Reels). Nos anúncios por link, "Toque em Enviar mensagem" virou "Toque no botão", porque o botão é "Fale conosco".
