@@ -15,7 +15,8 @@
   const CLAUDE = { id: 'claude', nick: 'Claude', role: 'conversa principal', color: '#FFD25E', principal: true };
   const CORES = ['#FF6B6B','#4D7CFE','#2EC4B6','#FF9F1C','#9B6BFF','#6CC08B','#FF8FD1','#FFD23F','#D63AF9','#7B8BD1','#B8E04A','#FFB4A2'];
   const NOMES = { 'general-purpose': 'Agente geral', Explore: 'Explorador', Plan: 'Planejador', 'claude-code-guide': 'Guia', 'web-fetch': 'Leitor da web' };
-  const PARADO_MS = 5 * 60e3;
+  const PARADO_MS = 10 * 60e3;
+  const tsDe = e => e._t || (e._t = Date.parse(e.ts));
 
   const hashCor = s => { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return CORES[h % CORES.length]; };
   const curto = (s, n) => { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
@@ -38,10 +39,10 @@
 
   // eventos: [{id, ts, sessao, sessao_nome, pasta, agente, tipo, evento, ferramenta, resumo}] (qualquer ordem)
   function estado(eventos, agora) {
-    const ord = eventos.slice().sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts) || (a.id || 0) - (b.id || 0));
+    const ord = eventos.slice().sort((a, b) => tsDe(a) - tsDe(b) || (a.id || 0) - (b.id || 0));
     const ags = new Map(), sess = new Map(), log = [];
     for (const e of ord) {
-      const t = Date.parse(e.ts);
+      const t = tsDe(e);
       const s = sess.get(e.sessao) || { id: e.sessao, nome: null, pasta: null, inicio: t, ultimo: t, ultimoEvento: null };
       if (e.sessao_nome) s.nome = e.sessao_nome;
       if (e.pasta) s.pasta = e.pasta;
@@ -49,7 +50,7 @@
       sess.set(e.sessao, s);
       if (e.evento === 'SessionStart' || e.evento === 'SessionEnd' || e.evento === 'UserPromptSubmit') {
         if (e.evento === 'UserPromptSubmit') log.push({ t, tipo: 'pedido', p: CLAUDE, texto: 'recebeu um pedido seu', sessao: e.sessao });
-        if (e.evento === 'SessionEnd') { const m = ags.get(e.sessao + '|'); if (m) { m.fim = t; m.status = 'feito'; } }
+        if (e.evento === 'SessionEnd') for (const m of ags.values()) if (m.sessao === e.sessao && !m.fim) { m.fim = t; m.ultimo = t; }
         if (e.evento !== 'UserPromptSubmit') continue;
       }
       const principal = !e.agente;
@@ -57,7 +58,9 @@
       let a = ags.get(k);
       if (!a) { a = { chave: k, sessao: e.sessao, agente: e.agente || null, tipo: e.tipo || null, principal, inicio: t, ultimo: t, acoes: 0, acao: '', fim: null }; ags.set(k, a); }
       if (e.tipo) a.tipo = e.tipo;
-      a.ultimo = t;
+      // subagente já entregou: ações que chegam depois são atrasos do gancho assíncrono
+      if (!principal && a.fim && e.evento === 'PreToolUse') continue;
+      a.ultimo = Math.max(a.ultimo, t);
       const p = pessoa(a.tipo, principal);
       if (e.evento === 'SubagentStart') { a.inicio = t; a.fim = null; log.push({ t, tipo: 'start', p, texto: 'começou a trabalhar', sessao: e.sessao }); }
       else if (e.evento === 'SubagentStop') { a.fim = t; log.push({ t, tipo: 'done', p, texto: 'entregou' + (a.acoes ? ` depois de ${a.acoes} ${a.acoes === 1 ? 'ação' : 'ações'}` : ''), sessao: e.sessao }); }

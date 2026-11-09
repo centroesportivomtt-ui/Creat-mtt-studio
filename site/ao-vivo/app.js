@@ -43,9 +43,11 @@ function base(){
 }
 const SC = { trabalhando:'run', parado:'stall', feito:'done', pausa:'done' };
 
+let E = { agentes: [], sessoes: [], log: [] }, ultimoCalc = 0;
+const pinta = (sel, html) => { const el = $(sel); if (el._html !== html){ el._html = html; el.innerHTML = html; } };
 function render(){
   const agora = Date.now();
-  const E = N.estado(st.eventos, agora);
+  if (st.sujo || agora - ultimoCalc > 5000){ E = N.estado(st.eventos, agora); st.sujo = false; ultimoCalc = agora; }
   const vivos = E.agentes.filter(a => a.status === 'trabalhando').sort((a, b) => b.ultimo - a.ultimo);
 
   // equipe fixa
@@ -90,22 +92,22 @@ function render(){
   const ordem = { trabalhando:0, parado:1, pausa:2, feito:3 };
   const todos = E.agentes.filter(a => agora - a.ultimo < JANELA_MS).sort((a, b) => ordem[a.status] - ordem[b.status] || b.ultimo - a.ultimo);
   $('#outrosNote').textContent = todos.length ? `${vivos.length} trabalhando · ${todos.length} nas últimas 12 h` : '';
-  if (todos.length) $('#mesa').innerHTML = todos.slice(0, 36).map(a => {
+  if (todos.length) pinta('#mesa', todos.slice(0, 36).map(a => {
     const s = SC[a.status], rot = { trabalhando:'trabalhando', parado:'sem sinal', feito:'entregou', pausa:'esperando você' }[a.status];
     return `<li class="chip" data-s="${s}" style="--c:${a.pessoa.color}"><span class="dot"></span><span class="cn"><b>${esc(a.pessoa.nick)} · ${esc(curto(a.sessaoNome, 30))}</b><small>${esc(rot)}${a.acao ? ' · ' + esc(curto(a.acao, 70)) : ''}</small></span>${a.status === 'trabalhando' ? `<time>${dur(agora - a.inicio)}</time>` : `<time>${esc(ha(a.ultimo))}</time>`}</li>`;
-  }).join('');
+  }).join(''));
 
   // sessões
   const ses = E.sessoes.filter(s => agora - s.ultimo < JANELA_MS);
   const B = { trabalhando:['WORKING','Trabalhando'], esperando:['BLOCKED','Esperando você'], parada:['IDLE','Parada'], encerrada:['COMPLETED','Encerrada'] };
-  if (ses.length) $('#sess').innerHTML = ses.slice(0, 10).map(s => `<li class="row"><span class="b" data-b="${B[s.status][0]}">${B[s.status][1]}</span><div style="min-width:0"><b>${esc(curto(s.nomeExib, 70))}</b><p>${s.trabalhando ? s.trabalhando + (s.trabalhando > 1 ? ' agentes trabalhando' : ' agente trabalhando') : 'último sinal ' + esc(ha(s.ultimo))}${s.pasta && s.nome ? ' · ' + esc(s.pasta) : ''}</p></div><time>${esc(ha(s.ultimo))}</time></li>`).join('');
+  if (ses.length) pinta('#sess', ses.slice(0, 10).map(s => `<li class="row"><span class="b" data-b="${B[s.status][0]}">${B[s.status][1]}</span><div style="min-width:0"><b>${esc(curto(s.nomeExib, 70))}</b><p>${s.trabalhando ? s.trabalhando + (s.trabalhando > 1 ? ' agentes trabalhando' : ' agente trabalhando') : 'último sinal ' + esc(ha(s.ultimo))}${s.pasta && s.nome ? ' · ' + esc(s.pasta) : ''}</p></div><time>${esc(ha(s.ultimo))}</time></li>`).join(''));
 
   // registro
-  const novos = E.log.filter(l => l.tipo !== 'tool' || E.log.indexOf(l) < 60).slice(0, 50);
+  const novos = E.log.slice(0, 50);
   if (novos.length){
     const K = { done:'entregou', start:'começou', tool:'ação', pausa:'pausa', pedido:'pedido' }, KK = { done:'done', start:'start', pausa:'warn', pedido:'start' };
-    $('#log').innerHTML = novos.map(l => { const id = l.t + l.p.id + l.texto, novo = !st.logVisto.has(id); st.logVisto.add(id); if (novo && st.conectado && Date.now() - l.t < 8000) toque(l.tipo);
-      return `<li class="${novo ? '' : 'seen'}">${toon(l.p)}<p><span class="k" data-k="${KK[l.tipo] || ''}">${K[l.tipo]}</span><b>${esc(l.p.nick)}</b> ${esc(l.texto)}<small>${hora(l.t)}${l.sessaoNome ? ' · ' + esc(curto(l.sessaoNome, 32)) : ''}</small></p></li>`; }).join('');
+    pinta('#log', novos.map(l => { const id = l.t + l.p.id + l.texto, novo = !st.logVisto.has(id); st.logVisto.add(id); if (novo && st.conectado && Date.now() - l.t < 8000) toque(l.tipo);
+      return `<li class="${novo ? '' : 'seen'}">${toon(l.p)}<p><span class="k" data-k="${KK[l.tipo] || ''}">${K[l.tipo]}</span><b>${esc(l.p.nick)}</b> ${esc(l.texto)}<small>${hora(l.t)}${l.sessaoNome ? ' · ' + esc(curto(l.sessaoNome, 32)) : ''}</small></p></li>`; }).join(''));
     $('#logNote').textContent = E.log.length + ' eventos';
   }
   $('#rec').dataset.on = vivos.length ? '1' : '0';
@@ -122,9 +124,15 @@ function aviso(txt){ $('#banner').hidden = !txt; $('#bannerTxt').textContent = t
 /* ---------- dados ---------- */
 let pendente = false;
 function receber(lista){
-  for (const e of lista){ if (e.id != null && st.ids.has(e.id)) continue; if (e.id != null) st.ids.add(e.id); st.eventos.push(e); st.ultimoEvento = Math.max(st.ultimoEvento, Date.parse(e.ts)); }
-  const corte = Date.now() - JANELA_MS;
-  if (st.eventos.length > 6000) st.eventos = st.eventos.filter(e => Date.parse(e.ts) > corte).slice(-5000);
+  let novo = false;
+  for (const e of lista){ if (e.id != null && st.ids.has(e.id)) continue; if (e.id != null) st.ids.add(e.id); e._t = Date.parse(e.ts); st.eventos.push(e); st.ultimoEvento = Math.max(st.ultimoEvento, e._t); novo = true; }
+  if (!novo) return;
+  if (st.eventos.length > 6000){
+    const corte = Date.now() - JANELA_MS;
+    st.eventos = st.eventos.filter(e => e._t > corte).sort((a, b) => a._t - b._t).slice(-5000);   // mantém os mais novos
+    st.ids = new Set(st.eventos.map(e => e.id));
+  }
+  st.sujo = true;
   if (!pendente){ pendente = true; requestAnimationFrame(() => { pendente = false; render(); }); }
 }
 
@@ -135,8 +143,8 @@ async function supa(){
   $('#loginForm').addEventListener('submit', async ev => {
     ev.preventDefault();
     const email = $('#email').value.trim(); $('#loginMsg').textContent = 'Enviando…';
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
-    $('#loginMsg').textContent = error ? 'Não consegui enviar: ' + error.message : 'Pronto. Abra o link que chegou no seu e-mail.';
+    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: false } });
+    $('#loginMsg').textContent = error ? 'Não consegui enviar. Confira se este é o e-mail cadastrado como dono.' : 'Pronto. Abra o link que chegou no seu e-mail.';
   });
   let ligado = false;
   async function ligar(sessao){
@@ -145,11 +153,24 @@ async function supa(){
     $('#login').hidden = true; $('#sairBtn').hidden = false;
     const { data: dono } = await sb.from('donos').select('email').limit(1);
     if (!dono || !dono.length){ aviso('Você entrou, mas este e-mail não está liberado. Cadastre-o na tabela "donos" do Supabase (veja sede/aovivo/INSTALAR.md).'); return; }
+    async function carregar(desdeMs){
+      const desde = new Date(desdeMs).toISOString();
+      for (let de = 0; de < 5000; de += 1000){   // o Supabase devolve no máximo 1000 linhas por vez
+        const { data, error } = await sb.from('eventos').select('*').gte('ts', desde).order('ts', { ascending: false }).range(de, de + 999);
+        if (error){ aviso('Não consegui ler os eventos: ' + error.message); return; }
+        receber(data || []);
+        if (!data || data.length < 1000) return;
+      }
+    }
+    let caiu = false;
     sb.channel('sede-eventos').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'eventos' }, m => receber([m.new]))
-      .subscribe(s => { st.conectado = s === 'SUBSCRIBED'; if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') aviso('A conexão em tempo real caiu. Tentando de novo…'); else if (st.conectado) aviso(''); render(); });
-    const desde = new Date(Date.now() - JANELA_MS).toISOString();
-    const { data, error } = await sb.from('eventos').select('*').gte('ts', desde).order('ts', { ascending: false }).limit(5000);
-    if (error) aviso('Não consegui ler os eventos: ' + error.message); else receber(data || []);
+      .subscribe(s => {
+        st.conectado = s === 'SUBSCRIBED';
+        if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED'){ caiu = true; aviso('A conexão em tempo real caiu. Tentando de novo…'); }
+        else if (st.conectado){ aviso(''); if (caiu){ caiu = false; carregar(st.ultimoEvento - 60e3); } }   // recupera o que chegou durante a queda
+        render();
+      });
+    await carregar(Date.now() - JANELA_MS);
   }
   const { data } = await sb.auth.getSession();
   ligar(data.session);

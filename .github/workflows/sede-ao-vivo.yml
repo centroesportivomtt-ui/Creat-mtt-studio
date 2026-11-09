@@ -1,5 +1,9 @@
 name: Sede ao vivo
 
+concurrency:
+  group: sede-ao-vivo-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
@@ -32,10 +36,11 @@ jobs:
           node site/ao-vivo/teste-tela.cjs
 
   publicar:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: testes
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
