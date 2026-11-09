@@ -18,7 +18,7 @@ Fechamento no chat: `../whatsapp-scripts.md`, mensagens F1 a F5 e objeções O1 
 | decisão | base | grau de prova |
 |---|---|---|
 | Reel 9:16 de 6 a 15 s, com marca e mensagem nos 3 primeiros segundos, movimento no quadro 1, legenda para som desligado e estilo nativo | Meta, Central de Ajuda, facebook.com/business/help/188534925073536 (sem data, lida em 09/11/2026) | oficial |
-| Gancho de dor em vez de preço no anúncio | Dado próprio da conta act_916420481553001: Reel de dor com R$ 74,87 por 345 cliques (CPC de cerca de R$ 0,22) contra anúncio de preço com clique cerca de 14x mais caro (briefing, 09/11/2026). Ainda não se sabe se os 345 são cliques no link ou todos os cliques. | dado real, uma conta, zero venda atribuída |
+| Gancho de dor em vez de preço no anúncio | Dado próprio da conta act_4078332059160918: Reel de dor com R$ 74,87 por 345 cliques (CPC de cerca de R$ 0,22) contra anúncio de preço com clique cerca de 14x mais caro (briefing, 09/11/2026). Ainda não se sabe se os 345 são cliques no link ou todos os cliques. | dado real, uma conta, zero venda atribuída |
 | **Limite do R$ 0,22**: ele não prova que as cenas F1 vão render o mesmo | O Reel antigo pode ter usado outro texto (inclusive um que as regras de hoje proíbem), outro objetivo e outro destino, e CPC não é custo por conversa nem por venda. As cenas F são uma versão limpa da mesma ideia: hipótese, não repetição do teste | hipótese |
 | 3 conceitos diferentes de verdade, não 3 textos sobre a mesma imagem | E-Commerce Brasil, 25/06/2026: o algoritmo trata a mesma imagem com textos diferentes quase como o mesmo criativo | blog, não auditado |
 | O criativo diz que o clique abre uma conversa. Botão "Enviar mensagem". Saudação automática e lembrete | Meta, facebook.com/business/help/269324800441478 (sem data, lida em 09/11/2026) | oficial |
@@ -91,7 +91,7 @@ Nada sobe ativo. O Marcos ativa depois da aprovação da Meta (até 24 h).
 
 ### Célula site · campanha de Tráfego já planejada
 
-A calibragem `cal-nov26` (16 a 22/11) está em `../anuncios.md`. Os anúncios M03, M06, M08 e M10 entram como segunda rodada ou como substitutos do criativo de pior custo por prévia. O link de cada um vai para a home com `?nicho=` e os eventos do Pixel 1743291620082635 (com consentimento):
+A calibragem `cal-nov26` (16 a 22/11) está em `../anuncios.md`. Os anúncios M03, M06, M08 e M10 entram como segunda rodada ou como substitutos do criativo de pior custo por prévia. O link de cada um vai para a home com `?nicho=` e os eventos do Pixel 2223314621951948 (com consentimento):
 
 - `previa_gerada`;
 - `reserva_teste`;

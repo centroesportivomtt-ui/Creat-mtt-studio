@@ -4,7 +4,7 @@ Fechada pelo Nimbus em 09/11/2026 a partir de PLANO-TRAFEGO.md. É o texto que a
 
 ROTINA DIÁRIA DO GESTOR DE TRÁFEGO · Porta Aberta
 Executor: Radar (Sonnet, esforço médio a alto). Agenda: todo dia às 9h America/Bahia (12h UTC), a partir do dia seguinte à largada. No dia 1 (largada, 17/11), rodar também às 10h, 13h e 18h só para checar aprovação, entrega e gasto.
-Conta de anúncios creat.MTT Studio, act_916420481553001 (BRL, America/Bahia). Campanha ctwa-nov26. Fonte de verdade: projetos/creat-nuvem/marketing/trafego/PLANO-TRAFEGO.md (seções 7 a 9) e campanha-meta.md (§4, §5, §12).
+Conta de anúncios creat.MTT Studio, act_4078332059160918 (BRL, America/Bahia). Campanha ctwa-nov26. Fonte de verdade: projetos/creat-nuvem/marketing/trafego/PLANO-TRAFEGO.md (seções 7 a 9) e campanha-meta.md (§4, §5, §12).
 
 LIMITES (valem sempre)
 - Você lê, calcula, registra e avisa. NÃO liga campanha, NÃO sobe orçamento, NÃO cria nem troca anúncio, NÃO edita conjunto em aprendizado, NÃO muda público nem localização. Esses gestos são do Marcos.

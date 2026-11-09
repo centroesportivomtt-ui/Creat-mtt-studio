@@ -2,7 +2,7 @@
 
 Paleta (designer), 09/11/2026. Complementa `../anuncios.md` (textos A a E e W) e `../roteiros-video.md` (R1 a R3, 15 s). Não repete nada deles: os textos de anúncio continuam lá; aqui estão a imagem, o roteiro cena a cena e as peças prontas.
 
-**Como isto ajuda a vender:** o anúncio de preço direto da conta saiu cerca de 14x mais caro por clique que o Reel com gancho de dor (R$ 74,87 → 345 cliques, CPC ~R$ 0,22; dado da conta act_916420481553001, briefing de 09/11/2026). Os 6 criativos abaixo mostram a prova (ver o site pronto e testar o pedido no próprio WhatsApp antes de pagar) que não apareceu nas duas páginas de concorrentes que o Radar leu (Vokel e Vicine). Isso não diz o que os concorrentes anunciam: a Biblioteca de Anúncios da Meta deu HTTP 403 e não foi consultada, em 3 conceitos de formato e ângulo realmente diferentes, porque o algoritmo atual trata a mesma imagem com texto diferente como quase o mesmo criativo (E-Commerce Brasil, 25/06/2026, alegação de blog).
+**Como isto ajuda a vender:** o anúncio de preço direto da conta saiu cerca de 14x mais caro por clique que o Reel com gancho de dor (R$ 74,87 → 345 cliques, CPC ~R$ 0,22; dado da conta act_4078332059160918, briefing de 09/11/2026). Os 6 criativos abaixo mostram a prova (ver o site pronto e testar o pedido no próprio WhatsApp antes de pagar) que não apareceu nas duas páginas de concorrentes que o Radar leu (Vokel e Vicine). Isso não diz o que os concorrentes anunciam: a Biblioteca de Anúncios da Meta deu HTTP 403 e não foi consultada, em 3 conceitos de formato e ângulo realmente diferentes, porque o algoritmo atual trata a mesma imagem com texto diferente como quase o mesmo criativo (E-Commerce Brasil, 25/06/2026, alegação de blog).
 
 | código | formato | conceito | ângulo do texto (`anuncios.md`) | status |
 |---|---|---|---|---|
@@ -175,7 +175,7 @@ Regras: sem preço (a mensalidade é citada sem valor, como em B3, e a página m
 ## 6. Plano de teste (resumo para o Gerenciador)
 
 - 1 campanha, 1 conjunto, criada **pausada** (regra da casa). Até 10 criativos por conjunto, teste de no mínimo 4 dias e campanha de 7 dias antes de decidir (Meta, página 188534925073536).
-- Célula A (home com `?nicho=` e Pixel 1743291620082635): R4 G1, R4 G2, S1, K1. Célula B (Enviar mensagem): R5 G1, R6b, S2. R6a entra só com o OK do Marcos.
+- Célula A (home com `?nicho=` e Pixel 2223314621951948): R4 G1, R4 G2, S1, K1. Célula B (Enviar mensagem): R5 G1, R6b, S2. R6a entra só com o OK do Marcos.
 - Medir taxa de gancho (reproduções de 3 s ÷ impressões; acima de 25% forte, abaixo de 15% fraca, segundo Digital Applied, 02/02/2026, blog de agência) e trocar o gancho antes do corpo. Decidir por custo por Pix pago, não por clique.
 - Antes de subir: Lupa faz a segunda leitura das legendas contra `anuncios.md`; conferir no Gerenciador o limite real do texto principal em Reels.
 

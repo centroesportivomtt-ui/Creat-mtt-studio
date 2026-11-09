@@ -119,7 +119,7 @@ Isso muda a interface. Antes de publicar, passa por `navegador` e `verificacao-v
 
 ## 4. Plano A: Abertura pelo `createMercadoPagoCheckout` (código do AutoCreatFlux)
 
-**Princípio.** O preço é decidido no servidor. A inauguração fecha sozinha na 20ª Abertura paga. O comprador não ganha conta no AutoCreatFlux. O Suporte Creat recebe um e-mail a cada venda. O Purchase vai à Meta no pixel `1743291620082635`, com `event_id` que dá para deduplicar. Todo o código abaixo segue o estilo do app (Deno, `npm:@base44/sdk@0.8.53`, `secrets` de `base44:runtime`). Nenhum segredo novo é necessário: usa `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET` e `META_CAPI_ACCESS_TOKEN`, que já existem.
+**Princípio.** O preço é decidido no servidor. A inauguração fecha sozinha na 20ª Abertura paga. O comprador não ganha conta no AutoCreatFlux. O Suporte Creat recebe um e-mail a cada venda. O Purchase vai à Meta no pixel `2223314621951948`, com `event_id` que dá para deduplicar. Todo o código abaixo segue o estilo do app (Deno, `npm:@base44/sdk@0.8.53`, `secrets` de `base44:runtime`). Nenhum segredo novo é necessário: usa `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET` e `META_CAPI_ACCESS_TOKEN`, que já existem.
 
 Antes de editar, crie um checkpoint no Base44 (`create_checkpoint`) para poder voltar.
 

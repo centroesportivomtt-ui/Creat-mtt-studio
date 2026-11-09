@@ -91,7 +91,7 @@
     // SRI do arquivo acima (sha384 do tarball oficial posthog-js@1.447.3 no npm). Trocou a versão? Recalcule:
     // npm pack posthog-js@<versão> && tar xzf posthog-js-*.tgz && openssl dgst -sha384 -binary package/dist/array.no-external.js | base64
     posthogIntegridade: 'sha384-YmnhYWsqUnLKK4nAaNG2wrvyUx1fnHXxTyfegNDVC4MaQhFVdiAv6WtuHY27jb5F',
-    metaPixel: '1743291620082635',
+    metaPixel: '2223314621951948',
     clarity: 'ID_DO_PROJETO_CLARITY',
     posthogValida: function (v) { return typeof v === 'string' && /^phc_[A-Za-z0-9]{20,}$/.test(v); },
     pixelValido: function (v) { return typeof v === 'string' && /^\d{10,20}$/.test(v); },

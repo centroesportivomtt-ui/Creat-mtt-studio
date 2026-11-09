@@ -38,7 +38,7 @@ O resto daquele arquivo continua valendo.
 | # | pré-requisito | estado em 09/11/2026 | quem resolve |
 |---|---|---|---|
 | P1 | Pagamento funcionando no `/abrir/`. Plano B de hoje: 2 links `mpago.la`, e `mpago.la` e `mercadopago.com.br` acrescentados aos `HOSTS` de `checkout.config.js`. Plano A da semana: a função `portaAbertaCheckout` no servidor | **não feito**: `HOSTS` aceita só `asaas.com` e `cakto.com.br`, então o botão Pagar cai no WhatsApp | Marcos (links) e Forja (código) |
-| P2 | Pixel ligado no site: `metaPixel: '1743291620082635'` em `checkout.config.js`. É ID público, não é segredo | **desligado** no site publicado (`'ID_DO_PIXEL_META'`, conferido por curl em 09/11/2026). PostHog também está desligado (`phc_CHAVE_PUBLICA_DO_PROJETO`) | Forja |
+| P2 | Pixel ligado no site: `metaPixel: '2223314621951948'` em `checkout.config.js`. É ID público, não é segredo | **desligado** no site publicado (`'ID_DO_PIXEL_META'`, conferido por curl em 09/11/2026). PostHog também está desligado (`phc_CHAVE_PUBLICA_DO_PROJETO`) | Forja |
 | P3 | Número 5575981151202 ligado à Página do Facebook da Creat (Configurações da Página > WhatsApp, com código de confirmação) | não verificado | Marcos |
 | P4 | **Atividade dos seus clientes** ligada no app WhatsApp Business, antes de gastar o primeiro real. Assim a contagem de 10 eventos em 30 dias já começa a correr | não verificado; `whatsapp-scripts.md` tem `[PREENCHER]` | Marcos |
 | P5 | Teste da saudação dupla (seção 6 de `anuncios-meta.md`) com um número que nunca falou com o Suporte Creat | `[PREENCHER]` | Marcos |
@@ -54,7 +54,7 @@ O resto daquele arquivo continua valendo.
 
 | campo no Gerenciador | valor |
 |---|---|
-| Conta | creat.MTT Studio · act_916420481553001. Conferir: moeda BRL e fuso America/Bahia |
+| Conta | creat.MTT Studio · act_4078332059160918. Conferir: moeda BRL e fuso America/Bahia |
 | Objetivo | **Leads** |
 | Nome da campanha | `ctwa-nov26`. Este nome é igual ao `utm_campaign`, e esse é o contrato: campanha do Gerenciador = `utm_campaign`. Se a campanha for criada em janeiro, use `ctwa-jan27` em tudo |
 | Categoria especial de anúncio | nenhuma (crédito, emprego, moradia e política não se aplicam) |
@@ -225,7 +225,7 @@ Enquanto não houver domínio próprio, `{{site.url}}` é `https://creat-nuvem-4
 |---|---|---|---|
 | Conversa iniciada | a própria Meta, no clique | a otimização desta campanha | automático |
 | Lead, New order, Pending payment, Paid, Follow up | etiquetas **predefinidas** do app WhatsApp Business, com "Atividade dos seus clientes" ligada, em até 7 dias do clique (Meta for Business, página de otimização de CTWA, lida pelo Radar em 09/11/2026) | a escada de meta do §8 | P4 pendente |
-| PageView, InitiateCheckout | Pixel 1743291620082635 no navegador, **só com consentimento** (`assets/vitrine.js`) | relatório e públicos de retargeting | **desligado**: falta P2 |
+| PageView, InitiateCheckout | Pixel 2223314621951948 no navegador, **só com consentimento** (`assets/vitrine.js`) | relatório e públicos de retargeting | **desligado**: falta P2 |
 | ViewContent na `previa_gerada` | Pixel | relatório (prévias por anúncio) | **não existe no código**. Hoje o site só dispara PageView e InitiateCheckout. Contrato para a Forja abaixo |
 | Purchase | **somente servidor**: API de Conversões, a partir do webhook do Mercado Pago (Plano A) | relatório e futura campanha de site | não existe; depende do Plano A |
 | Venda de verdade | painel do Mercado Pago, mais a `origem` do PEDIDO v1 | a planilha do §12 | manual até o Plano A |
@@ -243,7 +243,7 @@ Regras:
 - O token da API de Conversões fica nos segredos do app Base44 AutoCreatFlux, nunca no repositório nem neste arquivo.
 - Nenhum nome de evento ou conversão personalizada sugere saúde ou situação financeira.
 - **Sem dupla contagem.** Para esta campanha, a verdade é a etiqueta Paid do app. O Purchase do Pixel e da CAPI mede o site. A Meta não deduplica os eventos de mensagens com os do site (developers.facebook.com, CAPI para mensagens, atualizada em 28/09/2026).
-- No anúncio, em **Rastreamento > Eventos do site**, marque o pixel 1743291620082635, se a opção aparecer. Isso deixa ver na mesma linha do Gerenciador as prévias e os checkouts que vieram depois do chat.
+- No anúncio, em **Rastreamento > Eventos do site**, marque o pixel 2223314621951948, se a opção aparecer. Isso deixa ver na mesma linha do Gerenciador as prévias e os checkouts que vieram depois do chat.
 
 ---
 
@@ -276,7 +276,7 @@ Campos iguais em todos os anúncios:
 | Modelo de mensagem | saudação, pré-preenchida do anúncio e 3 perguntas, exatamente como na seção 6 de `anuncios-meta.md` |
 | Aprimoramentos criativos Advantage+ | **todos desligados**: melhorias padrão, música, sobreposições, ajuste de imagem, variações de texto, tradução. Eles mudam logo, tipografia e texto revisado |
 | Música | só a da Coleção de Sons da Meta, escolhida no próprio Gerenciador |
-| Rastreamento | Eventos do site: pixel 1743291620082635 (§10) |
+| Rastreamento | Eventos do site: pixel 2223314621951948 (§10) |
 
 ---
 
@@ -346,7 +346,7 @@ Com P1 a P8 feitos e os arquivos dos anúncios na mão (Google Drive, nunca anex
 
 | min | passo | feito |
 |---|---|---|
-| 0-2 | Abra o Gerenciador na conta act_916420481553001. Confira: moeda BRL, fuso America/Bahia, forma de pagamento com o saldo Pix da fase (§4) | [ ] |
+| 0-2 | Abra o Gerenciador na conta act_4078332059160918. Confira: moeda BRL, fuso America/Bahia, forma de pagamento com o saldo Pix da fase (§4) | [ ] |
 | 2-4 | **Criar** > objetivo **Leads** > nome `ctwa-nov26` > categoria especial **nenhuma** > teste A/B desligado > Orçamento Advantage+ da campanha **desligado** > limite de gastos R$ 300 (§2) | [ ] |
 | 4-6 | Conjunto: nome `ctwa-nov26-fase1-riachao60` > local da conversão **Apps de mensagem**, só **WhatsApp**, número 5575981151202 > meta **Maximizar o número de conversas** > lance **Maior volume** (§8) | [ ] |
 | 6-7 | Orçamento **diário R$ 40** > início **terça, 8h** > sem data de término (§4 e §13) | [ ] |
