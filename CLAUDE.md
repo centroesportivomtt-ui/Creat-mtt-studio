@@ -46,8 +46,18 @@ Agentes em `.claude/agents/`, skills da casa em `.claude/skills/`, fluxo que coo
 O dono delegou a escolha dos modos. O Claude decide sozinho e registra, sem perguntar:
 - **Dentro da agência (automático de verdade):** modelo e esforço de cada agente são escolhidos por tarefa. Criar, desenhar, construir e escrever para vender → Opus, esforço alto ou máximo. Ler, revisar, auditar, pesquisar e sintetizar → Sonnet, esforço médio/alto. Verificação adversarial → esforço alto. Isso está nos arquivos de `.claude/agents/` e nos workflows e não depende do dono.
 - **Orquestração:** qualquer trabalho com mais de uma etapa roda pela agência (workflow), por autorização permanente do dono ("execute tudo da forma que verificar ser melhor"). Conversa, decisão e ajustes pequenos rodam direto, sem agentes, para poupar cota.
-- **O que o Claude não consegue trocar:** o modelo e o esforço do chat principal e o botão Ultracode são controles do app. Configuração recomendada para deixar fixa e esquecer: **Fable 5.1 · esforço alto · Ultracode ligado**. O Claude avisa na primeira linha da resposta só quando valer a pena mudar (ex.: "pode baixar para Sonnet agora, é só conversa").
-- Toda resposta que inicia trabalho começa com a linha **Modo: ...** dizendo o que está sendo usado por dentro.
+- **O que o Claude não consegue trocar:** o modelo e o esforço do chat principal e o botão Ultracode são controles do app. Por isso o Claude sempre diz ao dono o que deixar selecionado (regra abaixo).
+
+## Linha de modo em TODA resposta (regra do dono, 10/11)
+
+- Toda resposta ao Marcos, sem exceção (comando, pergunta, conversa, status), abre com a linha:
+  **Modo recomendado: <modelo> · esforço <baixo/médio/alto/máximo> · Ultracode <ligado/desligado>**
+- A linha é escolhida para a tarefa daquele comando. Se o modo atual já é o ideal, diga "mantém". Se vale trocar, diga para qual e por quê em uma frase.
+- Guia: criação, edição premium de vídeo, direção e decisão difícil → Fable mais novo do seletor, esforço alto, Ultracode ligado.
+- Guia: conversa, dúvida rápida e status → Sonnet, esforço médio, Ultracode desligado (poupa cota).
+- Quando a resposta inicia trabalho, a segunda linha é **Modo por dentro: ...**, dizendo o que os agentes estão usando.
+- Agente de workflow que só devolve dados não precisa da linha. Ela é para o que o dono lê.
+- A regra é reforçada por gancho: `.claude/settings.json` injeta `.claude/modo-linha.txt` a cada comando.
 
 ## Regras da casa
 
@@ -67,8 +77,9 @@ O dono delegou a escolha dos modos. O Claude decide sozinho e registra, sem perg
 
 - Todo vídeo precisa ter um "pulo do gato": edição premium, pegada de cinema. A reação esperada de quem assiste é "como eles conseguiram fazer isso?". Isso vale para legendas animadas, tipografia cinematográfica, transições criativas, cor profissional, sound design diferenciado e música com ducking sob a fala.
 - Áudio gravado sem microfone passa por limpeza de voz com IA, sem artefatos.
-- **Nunca** colocar vídeos ou arquivos pesados no computador do dono. Tudo é processado na nuvem, e a entrega é feita por link do Google Drive, nunca como anexo.
+- **Nunca** colocar vídeos ou arquivos pesados no computador do dono. Tudo é processado na nuvem, e a entrega é feita por link clicável do **Dropbox** do dono, nunca como anexo.
 - Gravações do celular: Dropbox `/Marcos/Envio da câmera` (nome do arquivo = data e hora da gravação). Pasta da equipe: `/Pasta da equipe Mttcreatt`.
+- Edição premium: zoom nos momentos cruciais, pele tratada, cor por ambiente, legendas no meio da tela com tipografia expressiva, acelerar a fala (1.1x a 1.2x) quando ajudar.
 - Antes de usar qualquer serviço pago, avisar o dono e pedir autorização.
 
 ## "Modo ultracode ativado" = Modo Marcos
