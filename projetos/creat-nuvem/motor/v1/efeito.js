@@ -15,9 +15,17 @@
  *   motor:ritual-pronto                         (o motor leva o "Pedir horário" para o polegar)
  * Ritual vivo (09/11/2026): a navalha entra fechada, arma, a lâmina estala para fora do cabo (gira no rebite)
  * e passa no couro, tudo em dois; parada, a cada 6 a 9 s faz duas passadas virando a lâmina e o nome vira
- * cromo por um instante; a dica vira "Arraste você"; o primeiro toque ou arrasto encerra. Afiada: o risco de
- * luz varre a lâmina, uma estrela estala na ponta e um raio atravessa o couro. A demonstração não emite
- * ritual:passada (sem som, sem contar fio). O CSS disso entra por <style data-ritual-vivo> (CSS_VIVO).
+ * cromo por um instante; a dica vira "Arraste a navalha" (ritualTextos.dicaVez do preset); o primeiro toque
+ * ou arrasto encerra. Afiada: o risco de luz varre a lâmina, uma estrela estala na ponta e um raio atravessa
+ * o couro. A demonstração não emite ritual:passada (sem som, sem contar fio). O CSS disso entra por
+ * <style data-ritual-vivo> (CSS_VIVO; mudou o texto, troque o hash de style-src em motor/v1/template.html).
+ * Onda 3 (10/11/2026):
+ *   - a navalha é de barbeiro: escamas pretas foscas, pino de latão no pivô, espiga com rabo para o dedo,
+ *     lâmina com dorso grosso e fio polido, aberta a 150 graus; o nome vai gravado na lâmina, fora do brilho;
+ *   - a navalha nunca repousa sobre o texto: fica acima do .heroi-olho (borda de baixo >= 16 px acima dele),
+ *     com o selo entre ela e o olho; sem altura, vai para a coluna ao lado do texto (paisagem) ou o herói
+ *     cresce (padding-top e min-height no próprio elemento, nunca encolhe a navalha);
+ *   - o nome começa gravado no couro (legível desde o quadro 0) e recebe um brilho de cromo sozinho aos 1,2 s.
  */
 (function () {
   'use strict';

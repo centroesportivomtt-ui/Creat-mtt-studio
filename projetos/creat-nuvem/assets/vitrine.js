@@ -1772,7 +1772,12 @@
   }
   // [data-texto="chave.do.json"] recebe o texto do conteudo/ (com {{precos.*}} preenchido); sem a chave, fica o do HTML.
   function aplicarTextos(j, vars) {
-    $$('[data-texto]').forEach(function (e) { var s = textoDe(j, e.getAttribute('data-texto')); if (s) e.textContent = preencher(s, vars); });
+    $$('[data-texto]').forEach(function (e) {
+      var s = textoDe(j, e.getAttribute('data-texto')); if (!s) return;
+      // marcador sem valor conhecido: fica o texto do HTML (nunca "Prazo:  h")
+      var falta = (s.match(/\{\{\s*[\w.]+\s*\}\}|\{[\w.]+\}/g) || []).some(function (m) { var k = m.replace(/[{}\s]/g, ''); return !vars || vars[k] === undefined || vars[k] === null || vars[k] === ''; });
+      if (!falta) e.textContent = preencher(s, vars);
+    });
   }
   // A versão dos termos escrita no aceite é a mesma que vai no registro (checkout.config.js termosVersao).
   function montarTermosVersao() {
@@ -2227,7 +2232,10 @@
     if (pedido) utmAtual = origemParaUtm(pedido.origem);
     desenhar();
     lerPrecos().then(function (pr) { precos = pr; aplicarPrecos(pr, D); desenhar(); });
-    buscarJSON('conteudo/obrigado.json').then(function (j) { if (j && typeof j === 'object') { textos = j; desenhar(); aplicarTextos(j, vars()); } });
+    // os textos com {{precos.prazoHoras}} só entram com os preços lidos (nunca "Prazo:  h")
+    var textosNaTela = function () { if (textos && precos) aplicarTextos(textos, vars()); };
+    lerPrecos().then(textosNaTela);
+    buscarJSON('conteudo/obrigado.json').then(function (j) { if (j && typeof j === 'object') { textos = j; desenhar(); textosNaTela(); } });
     if (!API) { if (pedido) falhou(); return; }
     var comPagamento = (familiaAprovado() || estado === 'pendente' || estado === 'teste_ok') && RE_PAGAMENTO.test(volta.paymentId || '');
     if (comPagamento) { if (familiaAprovado()) linha('conferindo'); confirmar(); }
