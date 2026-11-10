@@ -295,6 +295,26 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
   /* o selo pode ir a duas linhas; "Como funciona" e "Quero um assim" nunca quebram */
   .faixa-demo .selo-demo { font-size: 0.6875rem; letter-spacing: 0.04em; line-height: 1.2; }
 }
+/* v1.3.1 (QA onda 3, SELO-2-LINHAS): o texto inteiro do selo pede de 180 a 216 px e, a 390 px, sobram
+   141 ao lado de "Como funciona" e "Quero um assim". Quando o motor entrega a forma curta junto
+   (.selo-curto), abaixo de 480 px ela entra no lugar e o selo fica numa linha; o nome acessível da faixa
+   (aria-label) continua com o texto inteiro. Sem a forma curta, o selo segue em duas linhas balanceadas. */
+.selo-demo .selo-curto { display: none; }
+@media (max-width: 479px) {
+  .faixa-demo .selo-demo:has(> .selo-curto) { white-space: nowrap; padding-inline: 6px; }
+  .selo-demo:has(> .selo-curto) > .selo-longo { display: none; }
+  .selo-demo > .selo-curto { display: inline; }
+}
+/* v1.3.1 (QA onda 3, LETREIRO-2-LINHAS): "Aberto · peça para amanhã às 5h30" em uma linha no celular.
+   Selo "exemplo" mais justo e vão menor a 390 px; abaixo de 380 px, a mesma fonte de dado em 12 px.
+   Texto mais longo de outro negócio volta a quebrar em duas linhas, sem cortar a hora. */
+@media (max-width: 420px) {
+  .topo .letreiro { gap: 6px; }
+  .topo .letreiro .selo { padding-inline: 6px; letter-spacing: 0.04em; }
+}
+@media (max-width: 379px) {
+  .topo .letreiro-texto { font-size: 0.75rem; letter-spacing: -0.01em; }
+}
 /* selo "exemplo" no letreiro e no título do horário da demonstração */
 .letreiro .selo { flex: 0 0 auto; font-size: var(--t-micro); line-height: 1.3; }
 .contato-horario h3 .selo { margin-left: var(--esp-1); transform: translateY(-0.2em); }
@@ -1010,6 +1030,48 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
 .oferta-demo .oferta-titulo { font-family: var(--fonte-display); font-weight: 700; font-size: var(--t-h3); line-height: 1.2; text-transform: uppercase; text-wrap: balance; }
 .oferta-demo .oferta-linha { font-size: var(--t-menor); color: var(--tinta-suave); max-width: 36ch; }
 .oferta-demo .btn-externo { white-space: normal; text-align: center; }
+
+/* v1.3.1 (QA onda 3, ESPELHO-DOBRA): depois do envio, a oferta "quero um assim" não pode ficar abaixo
+   da dobra. O espelho oval (barbearia e salão) vira ficha de duas colunas em torno do eixo: rótulo
+   alinhado à direita, dado à esquerda, uma linha por item em vez de duas. Título largo, menos ar no
+   alto e cabo mais curto no celular. A ficha da academia (rituais.css) sobrepõe estas regras. */
+.espelho h3 { max-width: min(16ch, 88%); text-wrap: balance; }
+.espelho dl {
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+  column-gap: var(--esp-4); row-gap: var(--esp-2);
+  align-items: baseline;
+  margin-block: var(--esp-1);
+}
+.espelho dt { margin-top: 0; text-align: right; }
+.espelho dd { text-align: left; overflow-wrap: break-word; }
+@media (max-width: 959px) {
+  .espelho {
+    min-height: 0;
+    margin-bottom: calc(var(--esp-7) + 12px);
+    padding: var(--esp-8) 1.75rem var(--esp-6);
+    gap: var(--esp-2);
+  }
+  .espelho::after { bottom: -44px; height: 46px; }
+  .espelho h3 { font-size: clamp(1.375rem, 1.2rem + 1vw, 1.75rem); }
+  #espelho-novo { margin-top: 0; }
+}
+/* desktop: espelho e oferta lado a lado. O espelho é o objeto; a oferta é a nota presa ao lado dele,
+   no meio da altura, já dentro da tela quando o pedido termina. */
+@media (min-width: 960px) {
+  #pedir-corpo:has(> #oferta-demo:not([hidden])) {
+    display: grid; grid-template-columns: minmax(0, 25rem) minmax(0, 24rem);
+    justify-content: center; align-items: center;
+    column-gap: var(--esp-8);
+  }
+  #pedir-corpo:has(> #oferta-demo:not([hidden])) > .espelho { width: 100%; margin-inline: 0; }
+  #pedir-corpo:has(> #oferta-demo:not([hidden])) > .oferta-demo {
+    width: auto; margin: 0;
+    padding: var(--esp-2) 0 var(--esp-2) var(--esp-6);
+    border-top: 0; border-left: 2px solid var(--destaque);
+    justify-items: start; text-align: left;
+  }
+  #pedir-corpo:has(> #oferta-demo:not([hidden])) > .oferta-demo .btn-externo { text-align: left; }
+}
 
 /* v1.3 (CTA-VENDA, SAL-09, ACAD-14): o fecho de venda da demonstração. Faixa de ponta a ponta na
    tinta do site, espelhando a faixa do topo: a moldura da Creat abre e fecha a página do negócio. */
