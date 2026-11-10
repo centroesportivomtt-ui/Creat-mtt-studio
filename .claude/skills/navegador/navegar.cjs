@@ -682,7 +682,12 @@ if (bruto[0] === '__servidor') {
           try { await l.count(); } catch (e) { if (f === page.mainFrame()) throw new Error(`Seletor inválido: ${s}`); continue; }
           l = l.first();
         }
-        if (await l.count().catch(() => 0)) return l;
+        // O alvo fica fixado no elemento achado agora (como o número do "ver"): depois de uma navegação, a leitura
+        // do estado falha em vez de achar o campo homônimo da página nova e afirmar o estado dele.
+        if (await l.count().catch(() => 0)) {
+          const h = await l.elementHandle({ timeout: 3000 }).catch(() => null);
+          if (h) return h;
+        }
       }
       if (Date.now() >= fim) throw new Error(`Não achei o alvo ${s} em 6 s (procurei na página e nas molduras). Rode "ver" e use o número.`);
       await page.waitForTimeout(200);
@@ -738,30 +743,66 @@ if (bruto[0] === '__servidor') {
     }
     return null;
   }
-  // A prova da mudança, guardada antes que a página saia: uma promessa que resolve com o estado no "change" do campo
-  // (caixa e opção nativas) ou na troca de aria-checked (alternador e caixa desenhada). O filtro que envia o formulário
-  // ou navega ao mudar tira o campo da página logo depois; a promessa já resolveu antes. O ouvinte é da fase normal,
-  // registrado depois dos da página (onchange no HTML), então a foto sai depois deles: se a página desfaz a marca, a
-  // foto mostra desfeito. Opção nativa que já estava marcada não dispara "change": vale a foto no "click" dela.
+  // Dono do estado quando o alvo é um pedaço do rótulo (span com o texto, como no Contact Form 7 e no WooCommerce):
+  // sobe até o rótulo com campo ou até o elemento com papel de caixa, opção ou alternador. Para num link, botão ou
+  // outro interativo no caminho: o link "termos" dentro do rótulo continua sendo clique em link. Sem dono, devolve o próprio alvo.
+  function DONO_MARCA(e) {
+    const papel = n => /^(checkbox|switch|radio|menuitemcheckbox|menuitemradio)$/.test(String(n.getAttribute('role') || '').toLowerCase().trim());
+    const tem = n => (n.tagName === 'LABEL' && !!n.control) || (n.tagName === 'INPUT' && /^(checkbox|radio)$/i.test(n.type)) || papel(n);
+    const INTER = 'a[href],button,input,select,textarea,summary,[contenteditable=""],[contenteditable=true],[role=button],[role=link],[role=tab],[role=menuitem],[role=option],[role=textbox],[role=combobox]';
+    if (tem(e) || e.matches(INTER)) return e;
+    for (let n = e.parentElement; n; n = n.parentElement) {
+      if (tem(n)) return n;
+      if (n.matches(INTER)) return e;
+    }
+    return e;
+  }
+  // A prova da mudança, guardada antes que a página saia: uma promessa que resolve com o estado depois do "change" do
+  // campo (caixa e opção nativas) ou da troca de aria-checked (alternador e caixa desenhada). O filtro que envia o
+  // formulário ou navega ao mudar tira o campo da página logo depois; a promessa já resolveu antes.
+  // A foto não sai no ouvinte do campo: ali, os ouvintes delegados (no document ou na raiz, como o .on do jQuery e a
+  // raiz do React) ainda não rodaram. Quando o evento chega ao campo, um ouvinte de uma vez só em window tira a foto:
+  // window é o último da propagação, então a foto sai depois de todos os ouvintes da página. Se a página para a
+  // propagação (stopPropagation) ou o evento não sai do shadow DOM, um setTimeout(0) de reserva tira a foto logo
+  // depois do evento inteiro. Vale o que vier primeiro. Se a página desfaz a marca, a foto mostra desfeito.
+  // Opção nativa que já estava marcada não dispara "change": vale a foto depois do "click" dela.
+  // Alternador que regrava o mesmo aria-checked não conta como mudança: compara o valor, não só o disparo.
   // Resolve com null depois de "ms" sem mudança. Montada a partir de ESTADO_MARCA para não haver duas regras de estado.
   // eslint-disable-next-line no-new-func
   const VIGIAR_MARCA = new Function('e', 'ms', `const EST = ${ESTADO_MARCA.toString()};
     const c = e.tagName === 'LABEL' ? e.control : e;
     if (!c) return null;
     const radioMarcado = c.tagName === 'INPUT' && String(c.type).toLowerCase() === 'radio' && c.checked;
+    const aria = v => { v = String(v == null ? 'false' : v).toLowerCase().trim(); return v === 'true' || v === 'mixed' ? v : 'false'; };
     return new Promise(res => {
-      let feito = false, ob = null;
+      let feito = false, ob = null, adiado = null, relogio = null;
+      const foto = () => sai(EST(c));
       const sai = v => {
         if (feito) return; feito = true;
-        try { c.removeEventListener('change', ouvir); c.removeEventListener('click', ouvir); } catch {}
+        try { c.removeEventListener('change', ouvirChange); c.removeEventListener('click', ouvirClick); } catch {}
+        try { adiado && window.removeEventListener(adiado, foto); } catch {}
+        try { relogio && clearTimeout(relogio); } catch {}
         try { ob && ob.disconnect(); } catch {}
         res(v);
       };
-      const ouvir = () => sai(EST(c));
-      c.addEventListener('change', ouvir);
-      if (radioMarcado) c.addEventListener('click', ouvir);
-      if (c.hasAttribute('role')) { ob = new MutationObserver(() => sai(EST(c))); ob.observe(c, { attributes: true, attributeFilter: ['aria-checked'] }); }
-      setTimeout(() => sai(null), ms);
+      const adiar = tipo => {
+        if (feito || adiado) return; adiado = tipo;
+        window.addEventListener(tipo, foto, { once: true });
+        setTimeout(foto, 0);
+      };
+      const ouvirChange = () => adiar('change');
+      const ouvirClick = () => adiar('click');
+      c.addEventListener('change', ouvirChange);
+      if (radioMarcado) c.addEventListener('click', ouvirClick);
+      if (c.hasAttribute('role')) {
+        ob = new MutationObserver(regs => {
+          // Mudou de verdade só se algum valor da sequência difere do seguinte (o último é o valor de agora).
+          const vals = regs.map(r => aria(r.oldValue)).concat(aria(c.getAttribute('aria-checked')));
+          if (vals.some((v, i) => i && v !== vals[i - 1])) adiar('click');
+        });
+        ob.observe(c, { attributes: true, attributeFilter: ['aria-checked'], attributeOldValue: true });
+      }
+      relogio = setTimeout(() => sai(null), ms);
     });`);
 
   // Um ponto do rótulo (relativo ao canto do rótulo) em que o toque cai no próprio rótulo ou num pedaço de texto dele,
@@ -1000,10 +1041,13 @@ if (bruto[0] === '__servidor') {
         const fr = el.ownerFrame ? await el.ownerFrame().catch(() => null) : null;
         const urlDe = () => { const u = [page.url()]; try { if (fr && fr !== page.mainFrame() && !fr.isDetached()) u.push(fr.url()); } catch {} return u; };
         const u0 = urlDe();
-        const lerMarca = () => el.evaluate(ESTADO_MARCA, undefined, { timeout: 3000 }).catch(() => undefined);
+        // O estado é lido no dono (o alvo, ou o rótulo ou a caixa desenhada de que o alvo faz parte); o clique não muda de lugar.
+        const donoH = await el.evaluateHandle(DONO_MARCA).catch(() => null);
+        const dono = (donoH && donoH.asElement()) || el;
+        const lerMarca = () => dono.evaluate(ESTADO_MARCA, undefined, { timeout: 3000 }).catch(() => undefined);
         const m0 = await lerMarca();
         // Com caixa, opção ou alternador, a vigia fica armada antes de qualquer clique (ela some se a página sair).
-        const prova = m0 ? el.evaluate(VIGIAR_MARCA, 20000).catch(() => undefined) : null;
+        const prova = m0 ? dono.evaluate(VIGIAR_MARCA, 20000).catch(() => undefined) : null;
         // txt ={ msg, via }: a mensagem de sucesso e por onde o clique foi (para a mensagem de falha).
         const fim = async (txt) => {
           if (!m0) {

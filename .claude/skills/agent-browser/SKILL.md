@@ -53,7 +53,7 @@ $N fechar
 | `console`, `errors` | `console` |
 | `network requests` | `rede` (>= 400 e falhas) e `eventos "<trecho>"` (`--regex` para regex) |
 | `--allowed-domains` | `--so-dominios` (rede interna já fica fechada sem lista; `--rede-interna` libera por um `abrir`) |
-| `set device` / throttling | `--celular` (Android real), `--rede-lenta`, `--cpu-lenta <n>` |
+| `set device` / throttling | `--celular` (Android emulado, com agente de usuário real), `--rede-lenta`, `--cpu-lenta <n>` |
 | `close` | `fechar` |
 
 O que ficou de fora e por quê está em `ORIGEM.md`.
