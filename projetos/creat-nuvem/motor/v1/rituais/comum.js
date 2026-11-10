@@ -15,7 +15,8 @@
  *   ponteiro(el, cb)           arrasto 2D com Pointer Events (o el tem touch-action: none no CSS)
  *   tira(el, opc, desenho)     a tira de confirmar com arrasto HORIZONTAL (a página continua rolando)
  *   emDois, curva, trecho, cena, diretor, dicaVez, nomeNegocio   ritual vivo (09/11/2026): entrada em dois,
- *                              demonstração em loop a cada 6 a 9 s e a dica "Arraste você" (ver o bloco no meio)
+ *                              demonstração em loop a cada 6 a 9 s e a dica da vez ("Arraste o pincel",
+ *                              "Puxe a barra"; ver o bloco no meio)
  *
  * Regras que todo ritual da T8 segue (iguais às do 'navalha' do efeito.js):
  *   - o gesto confirma só no pointerup (o window.open do WhatsApp precisa de gesto do usuário);
@@ -23,7 +24,9 @@
  *     leitor de tela também confirma; toque comum não confirma sozinho;
  *   - com prefers-reduced-motion a tira não nasce (o motor mostra "Enviar sem arrastar") e o herói
  *     já aparece no estado final, sem gesto;
- *   - nunca emitem 'ritual:passada' nem 'ritual:afiada' (são os sons de navalha do som.js).
+ *   - nunca emitem 'ritual:passada' nem 'ritual:afiada' (são os sons de navalha do som.js);
+ *   - eventos próprios de cada ritual só saem de gesto de gente, nunca da demonstração (o esmalte emite
+ *     ritual:tampa, ritual:pincelada e ritual:pronto para o som da onda 6; ver rituais/esmalte.js).
  */
 (function () {
   'use strict';
@@ -315,7 +318,7 @@
 
 
   /* =====================================================================
-     RITUAL VIVO (09/11/2026): entrada, demonstração em loop e a dica "Arraste você"
+     RITUAL VIVO (09/11/2026): entrada, demonstração em loop e a dica da vez
      Cada ritual desenha a própria cena; aqui ficam só o relógio e as regras:
        - emDois(ms): tempo da pose "em dois" (12 poses por segundo, como desenho animado);
        - cena(passo, fim): laço de requestAnimationFrame com tempo que NÃO salta quando a aba
@@ -323,7 +326,8 @@
        - diretor(el, opc): 1,8 a 2,6 s depois da entrada e, dali em diante, a cada 6 a 9 s, com o palco
          na tela, a aba visível e ninguém mexendo, chama opc.tocar(fim). Para de vez no primeiro toque ou tecla (parar()) e não volta
          nesta visita. Nunca roda com movimento reduzido;
-       - dicaVez(dica): troca a dica do palco por "Arraste você" por 2,6 s no fim da demonstração.
+       - dicaVez(dica, reserva): mostra, por 2,6 s no fim da demonstração, a dica da vez: ritualTextos.dicaVez
+         do preset; sem ela, a reserva do ritual (diz o gesto: "Arraste o pincel"), e só então "Arraste aqui".
      ===================================================================== */
   var QUADRO_EM_DOIS = 1000 / 12;
   function emDois(ms) { return Math.floor(ms / QUADRO_EM_DOIS) * QUADRO_EM_DOIS; }
@@ -407,8 +411,8 @@
     };
   }
 
-  /* a dica do palco ganha uma segunda linha empilhada ("Arraste você") que entra no fim da demonstração */
-  function dicaVez(dica) {
+  /* a dica do palco ganha uma segunda linha empilhada (a dica da vez) que entra no fim da demonstração */
+  function dicaVez(dica, reserva) {
     if (!dica) return null;
     var orig = no('span', 'dica-orig');
     while (dica.firstChild) orig.appendChild(dica.firstChild);
@@ -417,7 +421,7 @@
     vez.setAttribute('aria-hidden', 'true');
     no('span', 'vez-dedo', vez).setAttribute('aria-hidden', 'true');
     var tx = no('span', 'vez-texto', vez);
-    tx.textContent = texto('dicaVez', 'Arraste você');
+    tx.textContent = texto('dicaVez', reserva || 'Arraste aqui');
     dica.classList.add('tem-vez');
     var timer = 0;
     return {

@@ -68,7 +68,7 @@
 
   /* ---------- ritual vivo (09/11/2026): relógio em dois, curvas, diretor da demonstração e a dica ----------
      MUDA JUNTO: cópia enxuta de rituais/comum.js (emDois, trecho, curva, diretor), porque a barbearia não
-     carrega o comum.js. Corrigiu o ciclo de vida ou os tempos num, corrija no outro. A dica "Arraste você"
+     carrega o comum.js. Corrigiu o ciclo de vida ou os tempos num, corrija no outro. A dica "Arraste a navalha"
      daqui é diferente de propósito: flutua junto da navalha (o texto do herói fica abaixo da dobra no celular). */
   var QUADRO_EM_DOIS = 1000 / 12;
   function emDois(ms) { return Math.floor(ms / QUADRO_EM_DOIS) * QUADRO_EM_DOIS; }
@@ -118,24 +118,23 @@
       parado: function () { return st.parado; }
     };
   }
-  /* "Arraste você": um selo que flutua logo acima da navalha parada (ou abaixo, se não couber), dentro do
-     couro. Assim o convite aparece na primeira dobra também no celular, onde a dica do texto fica lá embaixo. */
-  function criarDicaVez(couro, navEl) {
-    if (!couro || !navEl) return null;
+  /* "Arraste a navalha": um selo que flutua entre a navalha parada e o .heroi-olho, dentro do couro. Assim o
+     convite aparece na primeira dobra também no celular, onde a dica do texto fica lá embaixo. Quem decide
+     o lugar é o encaixe do herói (onde(largura, altura) -> {x, y}, em px do couro); o selo nunca vai sobre o h1. */
+  function criarDicaVez(couro, onde) {
+    if (!couro || !onde) return null;
     var vez = D.createElement('p'); vez.className = 'couro-vez'; vez.setAttribute('aria-hidden', 'true');
     var dedo = D.createElement('span'); dedo.className = 'vez-dedo';
-    var tx = D.createElement('span'); tx.className = 'vez-texto'; tx.textContent = texto('dicaVez', 'Arraste você');
+    var tx = D.createElement('span'); tx.className = 'vez-texto'; tx.textContent = texto('dicaVez', 'Arraste a navalha');
     vez.appendChild(dedo); vez.appendChild(tx); couro.appendChild(vez);
     var timer = 0;
     function posicionar() {
-      var rc = couro.getBoundingClientRect(), rn = navEl.getBoundingClientRect();
-      var lv = vez.offsetWidth || 150, av = vez.offsetHeight || 32, folga = 10;
-      var x = lim(rn.left + rn.width / 2 - rc.left - lv / 2, 12, Math.max(12, rc.width - lv - 12));
-      var y = rn.top - rc.top - av - folga;
-      if (y < 8) y = rn.bottom - rc.top + folga;            // sem espaço em cima: vai para baixo da lâmina
-      vez.style.left = Math.round(x) + 'px'; vez.style.top = Math.round(y) + 'px';
+      var p = onde(vez.offsetWidth || 170, vez.offsetHeight || 36);
+      vez.style.left = Math.round(p.x) + 'px'; vez.style.top = Math.round(p.y) + 'px';
     }
     return {
+      el: vez,
+      altura: function () { return reduzido() ? 0 : (vez.offsetHeight || 36); },
       mostrar: function () {
         if (reduzido()) return;
         clearTimeout(timer); posicionar(); vez.classList.add('is-visivel');
@@ -160,9 +159,15 @@
     '.couro-raio{position:absolute;top:-10%;bottom:-10%;left:0;width:34%;pointer-events:none;opacity:0;background:linear-gradient(90deg,transparent,color-mix(in oklab,var(--couro-tinta) 38%,transparent) 50%,transparent);transform:translateX(-110%) skewX(-16deg)}',
     '.couro-raio.is-passando{animation:couro-raio 760ms var(--curva-entrada) both}',
     '@keyframes couro-raio{0%{opacity:0;transform:translateX(-110%) skewX(-16deg)}25%{opacity:1}100%{opacity:0;transform:translateX(310%) skewX(-16deg)}}',
-    '.heroi.couro.is-relance:not(.is-afiada) .heroi-nome{background-image:linear-gradient(100deg,var(--gravado) 0%,var(--gravado) 40%,color-mix(in oklab,var(--couro-tinta) 80%,white) 47%,var(--couro-tinta) 50%,color-mix(in oklab,var(--couro-tinta) 60%,var(--couro-fundo)) 53%,var(--gravado) 60%,var(--gravado) 100%);background-size:320% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;animation:relance-cromo 950ms var(--curva-entrada) both}',
+    /* o nome começa gravado no couro: tinta a 85%, sombra embaixo e realce em cima (relevo), legível desde o quadro 0 */
+    '.heroi.couro{--nome-gravado:color-mix(in oklab,var(--couro-tinta) 85%,transparent)}',
+    /* sem transição de cor antes de afiar: no fim do brilho o nome volta direto ao gravado, sem piscar transparente */
+    '.heroi.couro:not(.is-afiada) .heroi-nome{color:var(--nome-gravado);text-shadow:0 1px 0 rgba(0,0,0,.5),0 -1px 0 rgba(255,255,255,.08);transition:none}',
+    /* o cromo passa no nome da esquerda para a direita: sozinho aos 1,2 s (is-brilho, 900 ms) e no meio da demonstração (is-relance) */
+    '.heroi.couro.is-relance:not(.is-afiada) .heroi-nome,.heroi.couro.is-brilho:not(.is-afiada) .heroi-nome{background-image:linear-gradient(100deg,var(--nome-gravado) 0%,var(--nome-gravado) 37%,color-mix(in oklab,var(--couro-tinta) 42%,var(--couro-fundo)) 44%,#fff 49%,color-mix(in oklab,var(--couro-tinta) 70%,white) 51%,color-mix(in oklab,var(--couro-tinta) 38%,var(--couro-fundo)) 56%,var(--nome-gravado) 63%,var(--nome-gravado) 100%);background-size:320% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;animation:relance-cromo 950ms var(--curva-entrada) both}',
+    '.heroi.couro.is-brilho:not(.is-afiada) .heroi-nome{background-size:250% 100%;animation-duration:900ms;animation-timing-function:cubic-bezier(.45,0,.55,1)}',
     '@keyframes relance-cromo{from{background-position:100% 0}to{background-position:0 0}}',
-    '@media (prefers-reduced-motion:reduce){.couro-vez{display:none}.couro-raio,.navalha .nv-estrela{animation:none!important;opacity:0}.heroi.couro.is-relance .heroi-nome{animation:none}}'
+    '@media (prefers-reduced-motion:reduce){.couro-vez{display:none}.couro-raio,.navalha .nv-estrela{animation:none!important;opacity:0}.heroi.couro.is-relance:not(.is-afiada) .heroi-nome,.heroi.couro.is-brilho:not(.is-afiada) .heroi-nome{animation:none;background-image:none;color:var(--nome-gravado);-webkit-text-fill-color:currentColor}}'
   ].join('\n');
   function garantirCssVivo() {
     if (D.querySelector('style[data-ritual-vivo]')) return;
@@ -323,12 +328,36 @@
   /* ---------- a navalha: UMA fábrica para o hero e para a tira ---------- */
   var SVGNS = 'http://www.w3.org/2000/svg', seq = 0;
   var VB_W = 320, VB_H = 64;
-  var LAMINA = { cx: 239 / VB_W - 0.5, meiaL: 75 / VB_W, meiaA: 18 / VB_H };  // pegada da lâmina (frações)
+  /* navalha de barbeiro aberta a 150 graus, no viewBox 320 x 64 (o desenho passa um pouco do quadro embaixo):
+     lâmina na horizontal, do ombro (x 140) à ponta (x 315), dorso em y 4 a 9,5 e fio em y 40;
+     espiga e rabo em volta do pivô (124, 14); escamas descendo para a esquerda a 30 graus da lâmina. */
+  var PIVO = { x: 124, y: 14 }, FECHADA = 150;      // fechada, a lâmina gira 150 graus e deita entre as escamas
+  var DESENHO = { x0: 26, x1: 317, y0: 2, y1: 74 }; // caixa do desenho aberto, para o encaixe no herói
+  var LAMINA = { cx: 228 / VB_W - 0.5, cy: 22 / VB_H - 0.5, meiaL: 88 / VB_W, meiaA: 18 / VB_H };  // pegada (frações)
   function svg(tag, at, pai) {
     var n = D.createElementNS(SVGNS, tag);
     for (var k in at) n.setAttribute(k, at[k]);
     if (pai) pai.appendChild(n);
     return n;
+  }
+  function degrade(defs, id, x2, y2, paradas) {
+    var g = svg('linearGradient', { id: id, x1: 0, y1: 0, x2: x2, y2: y2 }, defs);
+    paradas.forEach(function (p) { svg('stop', { offset: p[0], 'stop-color': p[1], 'stop-opacity': p[2] === undefined ? 1 : p[2] }, g); });
+    return g;
+  }
+  /* meia-extensão do desenho em px a partir do centro do elemento, com a pose (rotação em graus, escala Y f) */
+  function caixaNavalha(L, rotGraus, f) {
+    var k = L / VB_W, a = rotGraus * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), fy = f === undefined ? 1 : f;
+    var r = { cima: 0, baixo: 0, esq: 0, dir: 0 };
+    [DESENHO.x0, DESENHO.x1].forEach(function (x) {
+      [DESENHO.y0, DESENHO.y1].forEach(function (y) {
+        var px = (x - VB_W / 2) * k, py = (y - VB_H / 2) * k * fy;
+        var X = px * c - py * s, Y = px * s + py * c;
+        if (-Y > r.cima) r.cima = -Y; if (Y > r.baixo) r.baixo = Y;
+        if (-X > r.esq) r.esq = -X; if (X > r.dir) r.dir = X;
+      });
+    });
+    return r;
   }
   function criarNavalha(comprimento) {
     var id = 'nv' + (++seq);
@@ -338,70 +367,85 @@
     var s = svg('svg', { viewBox: '0 0 ' + VB_W + ' ' + VB_H, focusable: 'false', 'aria-hidden': 'true' }, raiz);
     var defs = svg('defs', {}, s);
 
-    // aço fosco: lombo mais escuro, bisel claro perto do fio
-    var gL = svg('linearGradient', { id: id + 'l', x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
-    [[0, '#7c838a'], [0.3, '#aab0b5'], [0.62, '#c4c9cd'], [0.84, '#dde1e3'], [1, '#eef0f1']].forEach(function (p) {
-      svg('stop', { offset: p[0], 'stop-color': p[1] }, gL);
-    });
-    // cabo: chifre escuro com reflexo baixo
-    var gC = svg('linearGradient', { id: id + 'c', x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
-    [[0, '#3b302a'], [0.45, '#1c1614'], [1, '#0c0908']].forEach(function (p) { svg('stop', { offset: p[0], 'stop-color': p[1] }, gC); });
-    // rebite
-    var gR = svg('radialGradient', { id: id + 'r', cx: 0.4, cy: 0.35, r: 0.7 }, defs);
-    svg('stop', { offset: 0, 'stop-color': '#eceeef' }, gR); svg('stop', { offset: 1, 'stop-color': '#6f747a' }, gR);
+    // aço polido: reflete o couro escuro em cima (onde o nome fica) e clareia no bisel, até o fio
+    degrade(defs, id + 'l', 0, 1, [[0, '#454b52'], [0.3, '#535a62'], [0.56, '#6b737b'], [0.7, '#9aa2a9'], [0.86, '#d3d8dc'], [1, '#f1f3f4']]);
+    // dorso: aço grosso, mais escuro, com um fio de luz em cima
+    degrade(defs, id + 'd', 0, 1, [[0, '#8a9198'], [0.3, '#3b4147'], [1, '#2a2f34']]);
+    // espiga: aço escovado
+    degrade(defs, id + 'e', 0, 1, [[0, '#9aa1a8'], [0.5, '#6f767d'], [1, '#4f555b']]);
+    // escamas: preto fosco (quase sem reflexo)
+    degrade(defs, id + 'c', 0, 1, [[0, '#2b2b2f'], [0.5, '#17171a'], [1, '#0c0c0e']]);
+    // pinos de latão
+    var gR = svg('radialGradient', { id: id + 'r', cx: 0.38, cy: 0.34, r: 0.75 }, defs);
+    [[0, '#ecd7a6'], [0.45, '#B08D57'], [1, '#6e5330']].forEach(function (p) { svg('stop', { offset: p[0], 'stop-color': p[1] }, gR); });
     // risco especular: faixa clara em gradiente horizontal
-    var gB = svg('linearGradient', { id: id + 'b', x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
-    [[0, 0], [0.5, 0.75], [1, 0]].forEach(function (p) { svg('stop', { offset: p[0], 'stop-color': '#ffffff', 'stop-opacity': p[1] }, gB); });
+    degrade(defs, id + 'b', 1, 0, [[0, '#ffffff', 0], [0.5, '#ffffff', 0.8], [1, '#ffffff', 0]]);
 
-    var pLamina = 'M164 16 L298 13 Q314 14 315 28 Q313 46 296 50 L178 48 Q166 46 164 40 Z';
+    var pLamina = 'M138 6 L140 4 L298 4 Q314 4 315 20 Q315 35 301 40 L158 40 Q143 38 140 21 Z';
+    // o brilho de cromo mora só na faixa do bisel, perto do fio (o nome, em cima, fica fora dele)
     var clip = svg('clipPath', { id: id + 'k' }, defs);
-    svg('path', { d: pLamina }, clip);
+    svg('path', { d: 'M140 29 L315 29 L315 41 L140 41 Z' }, clip);
+    var clipL = svg('clipPath', { id: id + 'q' }, defs);
+    svg('path', { d: pLamina }, clipL);
 
-    // lâmina + espiga num grupo que gira no rebite (133, 32): a navalha abre do cabo na entrada do herói.
-    // Fica ANTES do cabo no desenho: fechada, ela dorme atrás dele, como na navalha de verdade.
+    // lâmina + espiga num grupo que gira no pivô: a navalha abre das escamas na entrada do herói.
+    // Fica ANTES das escamas no desenho: fechada, ela dorme entre elas, como na navalha de verdade.
     var gLam = svg('g', {}, s);
-    // espiga com ranhuras (jimps)
-    svg('path', { d: 'M138 24 L168 22 L168 42 L138 40 Z', fill: '#8a9096' }, gLam);
-    for (var j = 0; j < 4; j++) svg('path', { d: 'M' + (146 + j * 5) + ' 23.5 v3', stroke: '#5d6268', 'stroke-width': 1.4 }, gLam);
+    // rabo da espiga: o gancho logo abaixo do pivô, onde o dedo apoia
+    svg('path', { d: 'M119 18 Q106 23 106.5 33 Q108 41 115.5 39 Q115 30 126 21 Z', fill: 'url(#' + id + 'e)', stroke: 'rgba(0,0,0,0.45)', 'stroke-width': 0.8 }, gLam);
+    // espiga com ranhuras (jimps) em cima e embaixo
+    svg('path', { d: 'M114 8 Q114 6 117 6 L141 5 L141 21.5 L117 21 Q114 21 114 18 Z', fill: 'url(#' + id + 'e)', stroke: 'rgba(0,0,0,0.4)', 'stroke-width': 0.8 }, gLam);
+    for (var j = 0; j < 5; j++) {
+      svg('path', { d: 'M' + (127 + j * 2.6) + ' 5.6 v2.4 M' + (127 + j * 2.6) + ' 18.8 v2.4', stroke: '#3d4248', 'stroke-width': 1 }, gLam);
+    }
     // lâmina
-    svg('path', { d: pLamina, fill: 'url(#' + id + 'l)' }, gLam);
-    svg('path', { d: 'M168 41 L296 45', stroke: 'rgba(255,255,255,0.45)', 'stroke-width': 1, fill: 'none' }, gLam);   // linha do bisel
-    svg('path', { d: 'M178 48 L296 50', stroke: '#f7f8f9', 'stroke-width': 0.8, fill: 'none' }, gLam);              // fio
-    svg('path', { d: 'M164 16 L298 13', stroke: 'rgba(40,44,48,0.5)', 'stroke-width': 1.2, fill: 'none' }, gLam);   // lombo
-    // "FIO & COURO" gravado e apagado (sombra escura + realce claro deslocado)
+    svg('path', { d: pLamina, fill: 'url(#' + id + 'l)', stroke: 'rgba(0,0,0,0.5)', 'stroke-width': 0.8 }, gLam);
+    // dorso reto e grosso (5,5 unidades: 4 a 6 px na tela)
+    svg('path', { d: 'M140 4 L298 4 Q309 4 312 9.5 L140 9.5 Z', fill: 'url(#' + id + 'd)' }, gLam);
+    svg('path', { d: 'M141 4.6 L297 4.6', stroke: 'rgba(255,255,255,0.35)', 'stroke-width': 0.7, fill: 'none' }, gLam);
+    // linha do bisel e fio polido
+    svg('path', { d: 'M150 33.5 L306 33.5', stroke: 'rgba(255,255,255,0.32)', 'stroke-width': 0.8, fill: 'none' }, gLam);
+    svg('path', { d: 'M158 39.6 L301 39.6', stroke: '#fbfcfc', 'stroke-width': 1, fill: 'none' }, gLam);
+    // o nome gravado na lâmina (fosco, na cor do texto do couro a 70%), entre o dorso e o bisel
     var fonte = "'Big Shoulders Display','Arial Narrow',sans-serif";
     var est = W.CreatMotor && W.CreatMotor.estado;
     var gravacao = String((est && (est.nomeCurto || est.nome)) || '').trim().toUpperCase().slice(0, 28);
-    var t1 = svg('text', { x: 238, y: 36.6, 'text-anchor': 'middle', 'font-family': fonte, 'font-weight': 800, 'font-size': 12, 'letter-spacing': 2, fill: 'rgba(255,255,255,0.32)' }, gLam);
-    t1.textContent = gravacao;
-    var t2 = svg('text', { x: 238, y: 36, 'text-anchor': 'middle', 'font-family': fonte, 'font-weight': 800, 'font-size': 12, 'letter-spacing': 2, fill: 'rgba(28,30,33,0.34)' }, gLam);
-    t2.textContent = gravacao;
-    // nome longo: comprime para caber entre o espigão e a ponta da lâmina
-    if (gravacao.length > 11) [t1, t2].forEach(function (t) { t.setAttribute('textLength', 118); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); });
-    // brilho recortado na forma da lâmina
+    var gNome = svg('g', { 'clip-path': 'url(#' + id + 'q)' }, gLam);
+    var t1 = svg('text', { x: 228, y: 25.6, 'text-anchor': 'middle', 'font-family': fonte, 'font-weight': 800, 'font-size': 14, 'letter-spacing': 1.2, fill: '#000000', 'fill-opacity': 0.35 }, gNome);
+    var t2 = svg('text', { x: 228, y: 25, 'text-anchor': 'middle', 'font-family': fonte, 'font-weight': 800, 'font-size': 14, 'letter-spacing': 1.2, fill: '#E9EFE6', 'fill-opacity': 0.7 }, gNome);
+    t2.style.fill = 'var(--couro-tinta, #E9EFE6)';   // CSSOM (a CSP aceita): segue a paleta do tenant
+    t1.textContent = t2.textContent = gravacao;
+    // nome longo: comprime para caber entre o ombro e a ponta
+    if (gravacao.length * 6.9 + (gravacao.length - 1) * 1.2 > 150) [t1, t2].forEach(function (t) { t.setAttribute('textLength', 150); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); });
+    // brilho recortado na faixa do bisel
     var gk = svg('g', { 'clip-path': 'url(#' + id + 'k)' }, gLam);
     var faixa = svg('g', { transform: 'translate(120 0)' }, gk);
     svg('rect', { x: 0, y: -10, width: 44, height: 84, fill: 'url(#' + id + 'b)', transform: 'skewX(-22)' }, faixa);
     // a estrela de luz que estala na ponta quando a navalha fica afiada (celebração)
-    var gEst = svg('g', { transform: 'translate(304 24)' }, gLam);
+    var gEst = svg('g', { transform: 'translate(310 26)' }, gLam);
     svg('path', { 'class': 'nv-estrela', d: 'M0 -19 Q2.6 -2.6 19 0 Q2.6 2.6 0 19 Q-2.6 2.6 -19 0 Q-2.6 -2.6 0 -19 Z', fill: '#ffffff' }, gEst);
-    // cabo + rebites (por cima da espiga)
-    svg('path', { d: 'M12 21 Q3 32 12 43 L140 46 Q151 32 140 18 Z', fill: 'url(#' + id + 'c)', stroke: 'rgba(255,255,255,0.10)', 'stroke-width': 1 }, s);
-    svg('path', { d: 'M18 24 L136 21', stroke: 'rgba(255,255,255,0.08)', 'stroke-width': 1.5, fill: 'none' }, s);
-    svg('circle', { cx: 24, cy: 32, r: 3.6, fill: 'url(#' + id + 'r)' }, s);
-    svg('circle', { cx: 133, cy: 32, r: 3.6, fill: 'url(#' + id + 'r)' }, s);
+
+    // escamas: duas placas pretas foscas vistas de lado, do pivô para baixo e para a esquerda (por cima da espiga)
+    var gEsc = svg('g', { transform: 'translate(' + PIVO.x + ' ' + PIVO.y + ') rotate(' + FECHADA + ')' }, s);
+    svg('path', { d: 'M-8 0 Q-8 -7 0 -7.5 C35 -9.6 70 -8.6 96 -6.6 Q106 -6 106 0 Q106 6 96 6.6 C70 8.6 35 9.6 0 7.5 Q-8 7 -8 0 Z', fill: 'url(#' + id + 'c)', stroke: 'rgba(255,255,255,0.12)', 'stroke-width': 0.8 }, gEsc);
+    svg('path', { d: 'M4 5.4 C36 7.2 70 6.6 94 4.8', stroke: 'rgba(255,255,255,0.07)', 'stroke-width': 1.4, fill: 'none' }, gEsc);   // fio de luz fosco
+    svg('path', { d: 'M99 -5.2 L99 5.2', stroke: 'rgba(255,255,255,0.1)', 'stroke-width': 0.8 }, gEsc);                            // a cunha no fim
+    svg('circle', { cx: 99.5, cy: 0, r: 2.5, fill: 'url(#' + id + 'r)' }, gEsc);                                                     // pino do fim
+    // pino de pivô em latão, com o anel da arruela
+    svg('circle', { cx: PIVO.x, cy: PIVO.y, r: 4.6, fill: 'none', stroke: 'rgba(176,141,87,0.55)', 'stroke-width': 1 }, s);
+    svg('circle', { cx: PIVO.x, cy: PIVO.y, r: 3.4, fill: 'url(#' + id + 'r)' }, s);
 
     var L = 0, A = 0, ultimoBrilho = -1, ultimaAbertura = 1;
     var nav = {
       el: raiz,
-      // a de 0 (fechada, atrás do cabo) a 1 (aberta); passa de 1 no estalo. Encurta no meio do giro
-      // (a lâmina sai do plano, como no gesto de verdade) e volta ao tamanho cheio aberta.
+      // a de 0 (fechada, entre as escamas) a 1 (aberta a 150 graus); passa de 1 no estalo. Encurta no meio
+      // do giro (a lâmina sai do plano, como no gesto de verdade) e volta ao tamanho cheio aberta.
       abrir: function (a) {
         if (Math.abs(a - ultimaAbertura) < 0.002) return;
         ultimaAbertura = a;
         if (a >= 1 && a < 1.002) { gLam.removeAttribute('transform'); return; }
-        var ang = 180 * (1 - a), sx = 0.72 + 0.28 * lim(a, 0, 1);
-        gLam.setAttribute('transform', 'translate(133 32) rotate(' + ang.toFixed(2) + ') scale(' + sx.toFixed(3) + ' 1) translate(-133 -32)');
+        var ang = FECHADA * (1 - a), sx = 0.72 + 0.28 * lim(a, 0, 1);
+        gLam.setAttribute('transform', 'translate(' + PIVO.x + ' ' + PIVO.y + ') rotate(' + ang.toFixed(2) + ') scale(' + sx.toFixed(3) + ' 1) translate(' + (-PIVO.x) + ' ' + (-PIVO.y) + ')');
       },
       tamanho: function (c) {
         L = c; A = c * VB_H / VB_W;
@@ -421,10 +465,12 @@
         faixa.setAttribute('transform', 'translate(' + x + ' 0)');
       },
       // pegada da lâmina no mundo (para a camada de marcas)
-      pegada: function (x, y, rotRad) {
-        var bx = LAMINA.cx * L;
-        return { x: x + Math.cos(rotRad) * bx, y: y + Math.sin(rotRad) * bx, r: rotRad };
+      pegada: function (x, y, rotRad, f) {
+        var bx = LAMINA.cx * L, by = LAMINA.cy * A * (f === undefined ? 1 : f);
+        var c = Math.cos(rotRad), sn = Math.sin(rotRad);
+        return { x: x + c * bx - sn * by, y: y + sn * bx + c * by, r: rotRad };
       },
+      caixa: function (rotGraus, f) { return caixaNavalha(L, rotGraus, f); },
       meiaL: function () { return LAMINA.meiaL * L; },
       meiaA: function () { return LAMINA.meiaA * A; }
     };
@@ -527,13 +573,19 @@
       visivel: true, rodando: false, tAnt: 0,
       teclado: 0, ultimaTecla: 0, sentidoTecla: -1,
       ant: null, vel: 0, arrasto: null, desvioY: 0,
-      cena: null, diretor: null, vez: null, reflexo: null, raio: null
+      cena: null, diretor: null, vez: null, reflexo: null, raio: null,
+      modo: 'acima', cresceu: 0, livre: false, colX0: 0, colX1: 0,
+      lim: { cima: -1e9, baixo: 1e9, esq: -1e9 }, selo: { x: 12, y: 8 }, tBrilho: 0
     };
     garantirCssVivo();
     h.raio = D.createElement('div'); h.raio.className = 'couro-raio'; h.raio.setAttribute('aria-hidden', 'true');
     slot.appendChild(h.raio);
     slot.appendChild(h.nav.el);
-    h.vez = criarDicaVez(couro, h.nav.el);
+    h.vez = criarDicaVez(couro, function (lv, av) {
+      // o selo fica no vão entre a navalha parada e o olho; na coluna ao lado do texto, nunca invade o texto
+      var x0 = h.modo === 'lado' ? h.colX0 : 12;
+      return { x: lim(h.selo.x - lv / 2, x0, Math.max(x0, h.w - lv - 12)), y: h.selo.y };
+    });
 
     medirHero();
     // ritual vivo: a navalha abre do cabo e passa no couro; depois, demonstração em loop até o primeiro toque
@@ -545,6 +597,8 @@
     });
     if (reduzido()) estadoFinalHero();
     else {
+      // o cromo passa sozinho no nome aos 1,2 s, uma vez, para mostrar o que o gesto faz
+      setTimeout(function () { if (!h.afiada && !reduzido()) brilhoNome('is-brilho', 1000); }, 1200);
       h.nav.abrir(0); h.nav.el.style.opacity = '0';        // nada aparece aberto antes do primeiro quadro da entrada
       rodarCena(entradaCena, function () { if (h.diretor) h.diretor.iniciar(); });
     }
@@ -614,7 +668,7 @@
       if (e.repeat && t - h.ultimaTecla < 180) return;  // segurar a tecla não vira metralhadora; toques novos sempre contam
       h.ultimaTecla = t; h.sentidoTecla = s;
       primeiroToque();
-      h.mx.alvo = h.repouso.x + s * h.w * 0.26;
+      h.mx.alvo = h.repouso.x + s * (h.modo === 'lado' ? Math.max(16, h.folga) : h.w * 0.26);
       h.mr.alvo = -4 + s * 6;
       h.mf.alvo = s;
       h.teclado = t + 260;
@@ -637,8 +691,8 @@
       tRes = setTimeout(function () {
         var tam = couro.clientWidth + 'x' + couro.clientHeight;
         if (tam === ultimoTam && dpr() === h.d) return;
-        ultimoTam = tam;
         medirHero(); desenharHero(); agendarHero();
+        ultimoTam = couro.clientWidth + 'x' + couro.clientHeight;   // o encaixe pode ter feito o herói crescer
       }, 200);
     }
     if ('ResizeObserver' in W) new ResizeObserver(aoRedimensionar).observe(couro);
@@ -656,7 +710,11 @@
       if (mqTema.addEventListener) mqTema.addEventListener('change', aoMudarTema);
     }
     // as fontes chegam depois: o nome muda de altura e o repouso da navalha também
-    if (D.fonts && D.fonts.ready) D.fonts.ready.then(function () { calcularRepouso(); if (!h.arrasto.ativo()) voltarAoRepouso(reduzido()); agendarHero(); desenharHero(); });
+    if (D.fonts && D.fonts.ready) D.fonts.ready.then(function () {
+      if (h.arrasto.ativo()) return;
+      medirHero(); ultimoTam = couro.clientWidth + 'x' + couro.clientHeight;
+      agendarHero(); desenharHero();
+    });
   }
 
   function gerarBase() {
@@ -669,38 +727,127 @@
     try { return gerarCouro(h.w, h.hgt, h.d, cores); } catch (e) { return null; }
   }
 
+  /* ---------- encaixe da navalha no herói (onda 3) ----------
+     A navalha repousa onde não cobre texto nenhum:
+       'acima': acima do .heroi-olho, com a borda de baixo do desenho >= FOLGA_OLHO px acima dele e o selo
+                "Arraste a navalha" no vão entre os dois;
+       'lado' : sem essa altura (celular deitado), na coluna à direita do texto;
+       sem nenhum dos dois, o herói cresce o que falta (padding-top e min-height no próprio elemento, pelo
+       CSSOM, que a CSP aceita) e fica 'acima'. A navalha nunca encolhe para caber.
+     h.lim vale para toda pose que não é o dedo da pessoa (entrada, demonstração, mola, teclado): a cena pode
+     girar e virar a lâmina, mas a caixa do desenho não passa do limite (gira menos se precisar). */
+  var TOPO_LIVRE = 10, FOLGA_OLHO = 16, FOLGA_SELO = 8, ROT_REPOUSO = -4, COLUNA_MIN = 220;
+  function topoRel(el, rc) { return el.getBoundingClientRect().top - rc.top; }
+  // a borda direita das letras (não das caixas) de tudo o que o herói escreve
+  function direitaDoTexto(c, rc) {
+    var dir = 0, rg = D.createRange();
+    for (var n = c.firstElementChild; n; n = n.nextElementSibling) {
+      if (n.id === 'couro-canvas' || n.id === 'navalha-slot' || n.id === 'couro-instrucao' || n.classList.contains('couro-vez')) continue;
+      if (!n.getClientRects().length) continue;
+      var rs;
+      if ((n.textContent || '').trim()) { rg.selectNodeContents(n); rs = rg.getClientRects(); } else rs = n.getClientRects();
+      for (var i = 0; i < rs.length; i++) if (rs[i].width > 0) dir = Math.max(dir, rs[i].right - rc.left);
+    }
+    return dir;
+  }
+  function prepararPalco() {
+    var h = hero, c = h.couro;
+    if (h.cresceu) { c.style.paddingTop = ''; c.style.minHeight = ''; h.cresceu = 0; }
+    var rc = c.getBoundingClientRect(), w = Math.max(1, c.clientWidth), H = Math.max(1, c.clientHeight);
+    var L0 = lim(w * (w < 600 ? 0.66 : 0.74), 180, 380);   // no celular, menor: sobra couro para a passada
+    var ext = caixaNavalha(L0, ROT_REPOUSO, 1);
+    var olho = c.querySelector('.heroi-olho') || c.querySelector('.heroi-nome');
+    var olhoTopo = olho ? topoRel(olho, rc) : H * 0.6;
+    var seloA = h.vez ? h.vez.altura() : 0;
+    var precisa = TOPO_LIVRE + ext.cima + ext.baixo + (seloA ? FOLGA_SELO + seloA : 0) + FOLGA_OLHO;
+    h.modo = 'acima';
+    h.nav.tamanho(L0);
+    if (olhoTopo >= precisa) return;
+    var cs = getComputedStyle(c), padD = parseFloat(cs.paddingRight) || 16;
+    var x0 = Math.round(direitaDoTexto(c, rc) + 24), col = w - padD - x0;
+    if (col >= COLUNA_MIN) {
+      h.modo = 'lado'; h.colX0 = x0; h.colX1 = w - padD;
+      h.nav.tamanho(Math.min(L0, Math.max(180, col * 0.82)));
+      return;
+    }
+    var d = Math.ceil(precisa - olhoTopo);
+    c.style.paddingTop = ((parseFloat(cs.paddingTop) || 0) + d) + 'px';
+    c.style.minHeight = (H + d) + 'px';
+    h.cresceu = d;
+  }
+
   function calcularRepouso() {
-    var h = hero, cs = getComputedStyle(h.couro);
-    var topo = parseFloat(cs.paddingTop) || 120;
-    var nome = h.couro.querySelector('.heroi-nome');
-    var inicioTexto = nome ? nome.offsetTop : h.hgt * 0.6;
-    h.repouso.x = h.w / 2;
-    h.repouso.y = lim((topo * 0.75 + inicioTexto) / 2, h.nav.A + 8, Math.max(h.nav.A + 8, h.hgt - h.nav.A));
-    // quanto a navalha pode andar para os lados nas cenas sem a ponta sair do couro (no celular, pouco)
-    h.folga = Math.max(0, Math.min(h.repouso.x, h.w - h.repouso.x) - h.nav.L / 2 - 8);
+    var h = hero, c = h.couro, rc = c.getBoundingClientRect(), cs = getComputedStyle(c);
+    var olho = c.querySelector('.heroi-olho') || c.querySelector('.heroi-nome');
+    var nome = c.querySelector('.heroi-nome');
+    var olhoTopo = olho ? topoRel(olho, rc) : h.hgt * 0.6;
+    var ext = h.nav.caixa(ROT_REPOUSO, 1);
+    var seloA = h.vez ? h.vez.altura() : 0;
+    if (h.modo === 'lado') {
+      var x0 = h.colX0, x1 = h.colX1, padB = parseFloat(cs.paddingBottom) || 0;
+      var nomeBase = nome ? nome.getBoundingClientRect().bottom - rc.top : olhoTopo + 80;
+      h.repouso.x = (x0 + x1) / 2 + (ext.esq - ext.dir) / 2;            // centra o desenho, não o elemento
+      var yMin = TOPO_LIVRE + ext.cima;
+      h.repouso.y = lim((olhoTopo + nomeBase) / 2 - seloA / 2, yMin, Math.max(yMin, h.hgt - padB - ext.baixo));
+      h.lim = { cima: 2, baixo: h.hgt - 2, esq: x0 };
+      h.folga = Math.max(0, Math.min(h.repouso.x - ext.esq - x0, x1 - h.repouso.x - ext.dir));
+      var yb = h.repouso.y + ext.baixo + FOLGA_SELO;
+      h.selo = { x: (x0 + x1) / 2, y: yb + seloA <= h.hgt - 8 ? yb : h.repouso.y - ext.cima - FOLGA_SELO - seloA };
+    } else {
+      var topo = parseFloat(cs.paddingTop) || 120;
+      var inicioTexto = nome ? nome.offsetTop : h.hgt * 0.6;
+      var baixo = olhoTopo - FOLGA_OLHO;
+      var yMin2 = TOPO_LIVRE + ext.cima;
+      var yMax2 = baixo - ext.baixo - (seloA ? FOLGA_SELO + seloA : 0);
+      h.repouso.x = h.w / 2 + (ext.esq - ext.dir) / 2;
+      h.repouso.y = lim((topo * 0.75 + inicioTexto) / 2, yMin2, Math.max(yMin2, yMax2));
+      h.lim = { cima: 2, baixo: baixo, esq: -1e9 };
+      // quanto a navalha pode andar para os lados nas cenas sem a ponta sair do couro (no celular, pouco)
+      h.folga = Math.max(0, Math.min(h.repouso.x, h.w - h.repouso.x) - h.nav.L / 2 - 8);
+      var fundoNav = h.repouso.y + ext.baixo;
+      h.selo = { x: h.w / 2, y: Math.max(fundoNav + FOLGA_SELO, (fundoNav + olhoTopo - seloA) / 2) };
+    }
   }
 
   function medirHero() {
     var h = hero;
+    prepararPalco();
     h.w = Math.max(1, h.couro.clientWidth); h.hgt = Math.max(1, h.couro.clientHeight); h.d = dpr();
     h.canvas.width = Math.round(h.w * h.d); h.canvas.height = Math.round(h.hgt * h.d);
     h.base = gerarBase();
     h.marcas.tamanho(h.w, h.hgt, 1);                    // marcas em 1x: borradas de propósito, 4x mais baratas
-    h.nav.tamanho(lim(h.w * (h.w < 600 ? 0.66 : 0.74), 180, 380));   // no celular, menor: sobra couro para a passada
     calcularRepouso();
     if (!h.arrasto || !h.arrasto.ativo()) voltarAoRepouso(true);
   }
 
   function voltarAoRepouso(imediato) {
     var h = hero;
-    h.mx.alvo = h.repouso.x; h.my.alvo = h.repouso.y; h.mr.alvo = -4;
-    if (imediato) { h.mx.fixar(h.repouso.x); h.my.fixar(h.repouso.y); h.mr.fixar(-4); h.mf.fixar(h.mf.alvo < 0 ? -1 : 1); posarHero(); }
+    h.mx.alvo = h.repouso.x; h.my.alvo = h.repouso.y; h.mr.alvo = ROT_REPOUSO;
+    if (imediato) { h.mx.fixar(h.repouso.x); h.my.fixar(h.repouso.y); h.mr.fixar(ROT_REPOUSO); h.mf.fixar(h.mf.alvo < 0 ? -1 : 1); posarHero(); }
+  }
+
+  /* a pose dentro dos limites: gira menos se a caixa não couber; o texto (baixo) manda mais que o topo */
+  function encaixar(x, y, r, f) {
+    var h = hero, L = h.lim, alt = L.baixo - L.cima, e = h.nav.caixa(r, f), i = 0;
+    while (e.cima + e.baixo > alt && i++ < 24 && Math.abs(r - ROT_REPOUSO) > 0.05) { r += (ROT_REPOUSO - r) * 0.3; e = h.nav.caixa(r, f); }
+    if (y - e.cima < L.cima) y = L.cima + e.cima;
+    if (y + e.baixo > L.baixo) y = L.baixo - e.baixo;
+    if (x - e.esq < L.esq) x = L.esq + e.esq;
+    return { x: x, y: y, r: r, f: f };
   }
 
   function posarHero() {
-    var h = hero;
-    h.nav.pose(h.mx.x, h.my.x, h.mr.x, h.mf.x);
-    h.nav.brilho((h.mx.x + h.nav.L / 2) / (h.w + h.nav.L) + h.mx.v * 0.00015);
+    var h = hero, p = { x: h.mx.x, y: h.my.x, r: h.mr.x, f: h.mf.x };
+    // o dedo leva a navalha aonde quiser; solta, ela volta pela mola e só então os limites valem de novo
+    if (h.arrasto && h.arrasto.ativo()) h.livre = true;
+    else {
+      var q = encaixar(p.x, p.y, p.r, p.f);
+      if (h.livre && Math.abs(q.x - p.x) < 0.5 && Math.abs(q.y - p.y) < 0.5 && Math.abs(q.r - p.r) < 0.1) h.livre = false;
+      if (!h.livre) p = q;
+    }
+    h.nav.pose(p.x, p.y, p.r, p.f);
+    h.nav.brilho((p.x + h.nav.L / 2) / (h.w + h.nav.L) + h.mx.v * 0.00015);
+    return p;
   }
 
   function desenharHero() {
@@ -749,13 +896,17 @@
     h.cena = null;
     encerrarVisual();
   }
-  function relanceCromo() {
-    var c = hero.couro;
-    c.classList.remove('is-relance');
+  /* o cromo passa no nome (classe is-brilho ou is-relance); dois brilhos a menos de 4 s viram um só */
+  function brilhoNome(classe, ms) {
+    var h = hero, c = h.couro, t = agora();
+    if (h.afiada || (h.tBrilho && t - h.tBrilho < 4000)) return;
+    h.tBrilho = t;
+    c.classList.remove('is-relance', 'is-brilho');
     void c.offsetWidth;
-    c.classList.add('is-relance');
-    setTimeout(function () { c.classList.remove('is-relance'); }, 1100);
+    c.classList.add(classe);
+    setTimeout(function () { c.classList.remove(classe); }, ms);
   }
+  function relanceCromo() { brilhoNome('is-relance', 1100); }
 
   /* entrada, EM DOIS (12 poses/s): a navalha aparece fechada, arma para trás (antecipação),
      a lâmina estala para fora do cabo passando do ponto, e ainda assentando já desce no couro
@@ -832,7 +983,7 @@
       marcando = ativo || !!h.teclado;
       alfa = 0.09 + 0.14 * lim(Math.abs(h.mx.v) / 1500, 0, 1);
     }
-    posarHero();
+    var pose = posarHero();
     // celebração: o risco de luz varre a lâmina inteira de uma vez
     if (h.reflexo) {
       if (!h.reflexo.t0) h.reflexo.t0 = t;
@@ -842,8 +993,7 @@
     }
 
     // marca no couro onde a lâmina passou
-    var rr = h.mr.x * Math.PI / 180;
-    var pg = h.nav.pegada(h.mx.x, h.my.x, rr);
+    var pg = h.nav.pegada(pose.x, pose.y, pose.r * Math.PI / 180, pose.f);
     if (marcando && h.ant && (Math.abs(pg.x - h.ant.x) > 0.5 || Math.abs(pg.y - h.ant.y) > 0.5)) {
       h.marcas.riscar(h.ant, pg, h.nav.meiaL(), h.nav.meiaA() * Math.abs(h.mf.x) + 1, alfa);
     }

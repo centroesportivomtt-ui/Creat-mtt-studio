@@ -306,13 +306,13 @@
 :root:has(#heroi[data-ritual="barra"]) .espelho-texto { max-width: none; }
 :root:has(#heroi[data-ritual="barra"]) .espelho dl {
   grid-template-columns: auto minmax(0, 1fr);
-  column-gap: var(--esp-4); row-gap: 0;
+  gap: 0;
   margin-block: var(--esp-2);
   border-top: 1px solid var(--borda);
 }
 :root:has(#heroi[data-ritual="barra"]) .espelho dt,
-:root:has(#heroi[data-ritual="barra"]) .espelho dd { margin: 0; padding-block: var(--esp-3); border-bottom: 1px solid var(--borda); align-self: stretch; display: flex; align-items: baseline; }
-:root:has(#heroi[data-ritual="barra"]) .espelho dd { justify-content: flex-end; text-align: right; font-family: var(--fonte-dado); }
+:root:has(#heroi[data-ritual="barra"]) .espelho dd { margin: 0; padding-block: var(--esp-3); border-bottom: 1px solid var(--borda); align-self: stretch; display: flex; align-items: center; }
+:root:has(#heroi[data-ritual="barra"]) .espelho dd { justify-content: flex-end; padding-left: var(--esp-4); text-align: right; font-family: var(--fonte-dado); }
 :root:has(#heroi[data-ritual="barra"]) .espelho .link-whats,
 :root:has(#heroi[data-ritual="barra"]) .espelho #espelho-novo { justify-self: stretch; border-radius: var(--raio-2); }
 

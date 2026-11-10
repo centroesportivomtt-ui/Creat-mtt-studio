@@ -849,7 +849,7 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
 .servico-opcao .nome { flex: 1 1 10rem; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
 .servico-opcao .duracao { font-family: var(--fonte-dado); font-size: var(--t-menor); color: var(--tinta-suave); }
 .servico-opcao .preco { font-family: var(--fonte-texto); font-size: 1em; font-weight: 500; color: var(--tinta-suave); min-width: 5.5ch; text-align: right; }
-.servico-opcao:hover:not(.is-nao-cabe) { border-color: var(--tinta); }
+@media (hover: hover) and (pointer: fine) { .servico-opcao:hover:not(.is-nao-cabe) { border-color: var(--tinta); } }
 .servico-opcao[aria-checked="true"] {
   border-color: var(--destaque);
   background: color-mix(in oklab, var(--destaque) 8%, var(--fundo-2));

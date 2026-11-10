@@ -16,10 +16,18 @@
  * Tira: arrasto horizontal do pincel pintando uma unha comprida; Enter/Espaço confirmam.
  * prefers-reduced-motion: unha já pintada, sem gesto, sem tira (fica "Enviar sem arrastar").
  * Ritual vivo (09/11/2026): ao carregar, a mão sobe e o vidrinho entra girando (em dois), assenta comprimido
- *   e o pincel sai, sacode e volta; parado, a cada 6 a 9 s o pincel pinta uma faixa da unha, uma gota escorre
- *   pelo dedo e a tinta da demonstração some (não conta na cobertura); o primeiro toque encerra.
+ *   e o pincel sai, sacode e volta; parado, a cada 6 a 9 s o pincel pinta uma faixa da unha, volta por cima
+ *   do vidrinho, solta o excesso numa gota que cai de volta no gargalo e entra; a tinta da demonstração some
+ *   (não conta na cobertura); o primeiro toque encerra. A gota nunca toca a pele (onda 3, SAL-06).
  *   Unha pronta: um reflexo atravessa a unha e uma estrela de brilho estala.
- * Eventos: motor:ritual-pronto {ritual:'esmalte'} · ritual:confirmar {origem:'tira', el}.
+ * Desenho do dedo (onda 3, SAL-06): traço fino no tom da própria pele, sombra lateral e cutícula, como
+ *   ilustração de revista; o tom é sorteado uma vez por visitante entre 4 (TONS_PELE: retinta, marrom,
+ *   parda, clara) e guardado em localStorage 'creat-pele' (0 a 3), então não muda a cada visita.
+ *   No tema escuro o contorno do dedo clareia para não sumir no fundo.
+ * Eventos: motor:ritual-pronto {ritual:'esmalte'} · ritual:confirmar {origem:'tira', el}
+ *   e, só para gesto de gente (nunca na demonstração nem com movimento reduzido), para o som da onda 6:
+ *   ritual:tampa {origem:'heroi', acao:'abrir'|'fechar'} · ritual:pincelada {origem:'heroi', progresso: 0..1}
+ *   · ritual:pronto {origem:'heroi', ritual:'esmalte'}. Este arquivo não toca som novo.
  * Precisa de rituais/comum.js antes.
  */
 (function () {
@@ -34,6 +42,36 @@
   var COLUNAS = [82, 95, 108];         // as 3 pinceladas da manicure: esquerda, meio, direita
   var COBERTURA_PRONTA = 0.82;
   var REPOUSO = { x: 170, y: 172, rot: 0 };   // ponta do pincel dentro do vidrinho
+  var GARGALO = { x: 170, y: 122 };           // boca do vidrinho: a gota da demonstração cai aqui
+
+  /* tons de pele (onda 3): o público de Feira e de Salvador é majoritariamente negro e pardo */
+  var TONS_PELE = [
+    { nome: 'retinta', pele: '#5E3B2A', sombra: '#4A2D20', linha: '#24140D', brilho: '#86594A' },
+    { nome: 'marrom', pele: '#8A5A3C', sombra: '#704630', linha: '#33200F', brilho: '#AC7A5E' },
+    { nome: 'parda', pele: '#B57E58', sombra: '#986546', linha: '#4A2E1C', brilho: '#D2A07D' },
+    { nome: 'clara', pele: '#E2B592', sombra: '#C7977A', linha: '#6A4430', brilho: '#F3D2B6' }
+  ];
+  var CHAVE_PELE = 'creat-pele';
+  function escolherPele() {
+    var i = -1;
+    try { var g = W.localStorage.getItem(CHAVE_PELE); if (g !== null && /^[0-9]$/.test(g) && +g < TONS_PELE.length) i = +g; } catch (e) {}
+    if (i < 0) {
+      i = Math.floor(Math.random() * TONS_PELE.length);
+      try { W.localStorage.setItem(CHAVE_PELE, String(i)); } catch (e) {}
+    }
+    return TONS_PELE[i];
+  }
+  /* fundo escuro atrás do palco? (tema escuro do tenant): o contorno do dedo clareia */
+  function fundoEscuro(el) {
+    for (var n = el; n && n.nodeType === 1; n = n.parentNode) {
+      var m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(getComputedStyle(n).backgroundColor || '');
+      if (m && (m[4] === undefined || +m[4] > 0.5)) {
+        var lum = function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+        return 0.2126 * lum(+m[1]) + 0.7152 * lum(+m[2]) + 0.0722 * lum(+m[3]) < 0.18;
+      }
+    }
+    return false;
+  }
 
   function dentroUnha(x, y) {
     if (x < 75 || x > 115 || y > 119 || y < 58) return false;
@@ -75,16 +113,27 @@
     var defs = svg('defs', null, s);
     var cp = svg('clipPath', { id: 're-clip-unha' }, defs);
     svg('path', { d: UNHA }, cp);
+    // sombra macia do dedo (editorial, sem o carimbo deslocado do desenho animado)
+    var desfoque = svg('filter', { id: 're-desfoque', x: '-20%', y: '-20%', width: '140%', height: '140%' }, defs);
+    svg('feGaussianBlur', { stdDeviation: 4 }, desfoque);
     // a mão (dedo + unha) e a garrafa (pincel em repouso + vidrinho) são grupos: a entrada move cada um
     var mao = svg('g', { 'class': 're-mao' }, s);
-    // dedo
+    var tom = escolherPele();
+    palco.style.setProperty('--ritual-pele', tom.pele);          // CSSOM: a CSP aceita, e o .re-pele usa a variável
+    palco.setAttribute('data-pele', tom.nome);
+    // dedo: afina um pouco para a ponta, sombra do lado direito, luz do lado esquerdo, cutícula e dobras finas
+    var DEDO = 'M60 204 C59 150 58 112 60 82 Q62 38 95 36 Q128 38 130 82 C132 112 131 150 130 204 Z';
     var dedo = svg('g', null, mao);
-    svg('path', { 'class': 're-sombra', d: 'M58 204 V78 Q58 36 95 36 Q132 36 132 78 V204 Z', transform: 'translate(5 4)' }, dedo);
-    svg('path', { 'class': 're-pele re-l', d: 'M58 204 V78 Q58 36 95 36 Q132 36 132 78 V204 Z' }, dedo);
-    svg('path', { 'class': 're-lf', d: 'M74 166 Q95 172 116 166 M78 178 Q95 183 112 178' }, dedo);
+    var sombraDedo = svg('path', { d: DEDO, transform: 'translate(6 6)', filter: 'url(#re-desfoque)', fill: '#000000', opacity: 0.22 }, dedo);
+    svg('path', { 'class': 're-pele', d: DEDO }, dedo);
+    svg('path', { d: 'M114 58 Q127 66 128.6 86 C130.4 116 129.6 160 129 204 L119 204 C121 160 121.4 114 119.6 90 Q118 70 108 58 Z', fill: tom.sombra, opacity: 0.85 }, dedo);
+    svg('path', { d: 'M67 150 C66 120 65.5 98 67 84 Q69 58 86 46', fill: 'none', stroke: tom.brilho, 'stroke-width': 2.4, 'stroke-linecap': 'round', opacity: 0.7 }, dedo);
+    var contornoDedo = svg('path', { d: DEDO, fill: 'none', stroke: tom.linha, 'stroke-width': 1.6, 'stroke-linejoin': 'round' }, dedo);
+    svg('path', { d: 'M78 168 Q95 172 112 168 M82 179 Q95 182 108 179', fill: 'none', stroke: tom.linha, 'stroke-width': 1.1, 'stroke-linecap': 'round', opacity: 0.45 }, dedo);
+    svg('path', { d: 'M71 121 Q95 133 119 121', fill: 'none', stroke: tom.sombra, 'stroke-width': 1.6, 'stroke-linecap': 'round' }, dedo);
     // unha
     var unha = svg('g', null, mao);
-    svg('path', { 'class': 're-unha-base re-l', 'stroke-width': 3, d: UNHA }, unha);
+    var baseUnha = svg('path', { 'class': 're-unha-base re-l', 'stroke-width': 3, d: UNHA }, unha);
     var tinta = svg('g', { 'clip-path': 'url(#re-clip-unha)' }, unha);
     var pinceladas = svg('g', { 'class': 're-pinceladas' }, tinta);
     var demoTraco = svg('path', { 'class': 're-pincelada re-demo', d: 'M95 62 l0 0', opacity: 0 }, tinta);   // a pincelada da demonstração (não conta)
@@ -93,10 +142,7 @@
     var lampejo = svg('g', { 'class': 're-lampejo' }, tinta);
     svg('rect', { x: 60, y: 40, width: 12, height: 100, transform: 'skewX(-18)' }, lampejo);
     svg('path', { 'class': 're-brilho re-reflexo', 'stroke-width': 3.5, d: 'M84 98 V86 Q84 74 92 70' }, unha);
-    svg('path', { fill: 'none', 'class': 're-l', 'stroke-width': 3.5, d: UNHA }, unha);
-    // a gota que escorre na demonstração (sai da ponta da unha e desce pelo dedo)
-    var gota = svg('g', { 'class': 're-gota', opacity: 0 }, unha);
-    svg('path', { 'class': 're-destaque re-l', 'stroke-width': 2.5, d: 'M0 -7 Q4.5 0 4.5 3 A4.5 4.5 0 0 1 -4.5 3 Q-4.5 0 0 -7 Z' }, gota);
+    var contornoUnha = svg('path', { fill: 'none', 'class': 're-l', 'stroke-width': 3.5, d: UNHA }, unha);
     // o brilho de quatro pontas que estala quando a unha fica pronta
     var estrelaLugar = svg('g', { transform: 'translate(113 66)' }, unha);
     svg('path', { 'class': 're-estrela', d: 'M0 -10 Q1.6 -1.6 10 0 Q1.6 1.6 0 10 Q-1.6 1.6 -10 0 Q-1.6 -1.6 0 -10 Z' }, estrelaLugar);
@@ -109,8 +155,34 @@
     svg('rect', { 'class': 're-destaque', x: 155, y: 144, width: 30, height: 35, rx: 8 }, frasco);
     svg('path', { 'class': 're-brilho', d: 'M159 136 V144' }, frasco);
     svg('rect', { 'class': 're-gargalo re-l', 'stroke-width': 3, x: 162, y: 122, width: 16, height: 8, rx: 2 }, frasco);
+    // a gota da demonstração: pendura na ponta do pincel por cima do vidrinho e cai de volta no gargalo.
+    // Mora numa camada acima do vidrinho e longe da mão: nunca passa sobre a pele.
+    var gota = svg('g', { 'class': 're-gota', opacity: 0 }, s);
+    svg('path', { 'class': 're-destaque re-l', 'stroke-width': 2.5, d: 'M0 -7 Q4.5 0 4.5 3 A4.5 4.5 0 0 1 -4.5 3 Q-4.5 0 0 -7 Z' }, gota);
     var camadaFrente = svg('g', null, s);
     var pincel = desenharPincel(camadaAtras);
+    // traço mais fino no palco (o nanquim grosso brigava com a Bodoni do salão); a tira não muda
+    [].forEach.call(s.querySelectorAll('.re-l'), function (n) { n.style.strokeWidth = '2.4'; });
+    [].forEach.call(s.querySelectorAll('.re-lf'), function (n) { n.style.strokeWidth = '2'; });
+    contornoUnha.style.strokeWidth = '1.8';
+    // a unha é contornada no tom escuro da própria pele (cutícula de verdade), nos dois temas
+    [baseUnha, contornoUnha].forEach(function (n) { n.style.stroke = tom.linha; });
+    // tema escuro: o nanquim (#1E1B2E) sumia no fundo vinho; no palco do salão o traço clareia e as sombras
+    // ficam pretas translúcidas (o token --ritual-linha muda só aqui, pelo CSSOM; a tira e a academia não mudam)
+    var sombras = s.querySelectorAll('.re-sombra');
+    function contornoNoTema() {
+      var escuro = fundoEscuro(el);
+      if (escuro) palco.style.setProperty('--ritual-linha', '#F3E6E8'); else palco.style.removeProperty('--ritual-linha');
+      [].forEach.call(sombras, function (n) { n.style.fill = escuro ? 'rgba(0,0,0,0.45)' : ''; });
+      contornoDedo.setAttribute('stroke', escuro ? '#F3E6E8' : tom.linha);
+      contornoDedo.setAttribute('stroke-opacity', escuro ? 0.6 : 1);
+      sombraDedo.setAttribute('opacity', escuro ? 0.4 : 0.22);
+    }
+    contornoNoTema();
+    var tTema = 0;
+    function aoTema() { clearTimeout(tTema); tTema = setTimeout(contornoNoTema, 60); }
+    if ('MutationObserver' in W) new MutationObserver(aoTema).observe(D.documentElement, { attributes: true, attributeFilter: ['style', 'class', 'data-tema'] });
+    if (W.matchMedia) { var mqT = W.matchMedia('(prefers-color-scheme: dark)'); if (mqT.addEventListener) mqT.addEventListener('change', aoTema); }
 
     var dica = no('p', 'ritual-dica');
     dica.textContent = C.texto('heroiDica', 'Pinte a unha.');
@@ -132,9 +204,9 @@
       mx: new C.Mola(REPOUSO.x, 320, 0.78), my: new C.Mola(REPOUSO.y, 320, 0.78), mr: new C.Mola(REPOUSO.rot, 200, 0.7),
       cobertas: new Array(AMOSTRAS.length), nCobertas: 0, pintada: false,
       traco: null, pontos: 0, ultimo: null, rodando: false, tAnt: 0, pego: false, desvio: 0,
-      teclas: 0, animando: false, ultimoSom: 0,
+      teclas: 0, animando: false, ultimoSom: 0, tampaAberta: false, tom: tom,
       mao: mao, garrafa: garrafa, demoTraco: demoTraco, gota: gota,
-      cena: null, vez: C.dicaVez(dica), diretor: null
+      cena: null, vez: C.dicaVez(dica, 'Arraste o pincel'), diretor: null
     };
 
     if (C.reduzido()) estadoFinal();
@@ -273,8 +345,9 @@
     return true;
   }
 
-  /* demonstração curta: tira o pincel, voa em arco até a cutícula, pinta a faixa do meio,
-     uma gota escorre pelo dedo enquanto o pincel volta, e a tinta da demonstração se apaga */
+  /* demonstração curta: tira o pincel, voa em arco até a cutícula, pinta a faixa do meio, volta em arco
+     até ficar sobre o gargalo, sacode, o excesso cai de volta no vidrinho numa gota, e o pincel entra.
+     A gota só aparece com a ponta do pincel já fora do dedo (x > 140) e cai no gargalo: nunca toca a pele. */
   function demoCena(T) {
     var h = heroi, cv = C.curva, tr = C.trecho;
     if (T > 2150) return false;
@@ -291,19 +364,28 @@
       x = 95 + 1.5 * Math.sin(c * Math.PI * 3); y = 62 + 54 * c; r = -24 + 4 * Math.sin(c * Math.PI * 2);
       h.demoTraco.setAttribute('d', 'M95 62 L' + x.toFixed(1) + ' ' + y.toFixed(1));
       h.demoTraco.setAttribute('opacity', 1);
-    } else if (T < 1580) {
-      var d = cv.meio(tr(T, 1180, 1580));
-      x = bezier(95, 146, 170, d); y = bezier(116, 64, 172, d); r = -24 + 24 * d;
-      if (d > 0.82 && h.pincel.parentNode !== h.atras) h.atras.appendChild(h.pincel);   // entra no gargalo por trás do vidro
+    } else if (T < 1440) {
+      var d = cv.meio(tr(T, 1180, 1440));                 // sobe em arco e para em cima do gargalo
+      x = bezier(95, 140, GARGALO.x, d); y = bezier(116, 70, 94, d); r = -24 + 22 * d;
+    } else if (T < 1540) {
+      x = GARGALO.x; y = 94; r = (Math.floor(T / (1000 / 12)) % 2 ? 4 : -4);   // sacode: o excesso solta
+    } else if (T < 1700) {
+      var e2 = cv.entrada(tr(T, 1540, 1700));              // desce e entra no vidrinho
+      x = GARGALO.x; y = 94 + (REPOUSO.y - 94) * e2; r = 0;
+      if (y > GARGALO.y - 4 && h.pincel.parentNode !== h.atras) h.atras.appendChild(h.pincel);   // entra por trás do vidro
     }
     h.mx.fixar(x); h.my.fixar(y); h.mr.fixar(r);
-    // a gota: nasce na ponta da unha, escorre pelo dedo esticando e some
-    if (T >= 1150) {
-      var nasce = cv.saida(tr(T, 1150, 1320)), desce = cv.entrada(tr(T, 1320, 1820));
-      var gy = 121 + 24 * desce, gs = 0.2 + 0.8 * nasce;
-      h.gota.setAttribute('transform', 'translate(95 ' + gy.toFixed(1) + ') scale(' + gs.toFixed(3) + ' ' + (gs * (1 + 0.4 * desce)).toFixed(3) + ')');
-      h.gota.setAttribute('opacity', (1 - tr(T, 1800, 2050)).toFixed(2));
-    }
+    // a gota: cresce pendurada na ponta do pincel já longe do dedo, solta no sacode e cai no gargalo
+    if (T >= 1300 && T < 1470 && x > 140) {
+      var gs = 0.25 + 0.75 * cv.saida(tr(T, 1300, 1460));
+      h.gota.setAttribute('transform', 'translate(' + x.toFixed(1) + ' ' + (y + 5).toFixed(1) + ') scale(' + gs.toFixed(3) + ')');
+      h.gota.setAttribute('opacity', 1);
+    } else if (T >= 1470 && T < 1640) {
+      var cai = cv.entrada(tr(T, 1470, 1610));
+      var gy = 99 + (GARGALO.y + 2 - 99) * cai;
+      h.gota.setAttribute('transform', 'translate(' + GARGALO.x + ' ' + gy.toFixed(1) + ') scale(' + (1 - 0.15 * cai).toFixed(3) + ' ' + (1 + 0.35 * cai).toFixed(3) + ')');
+      h.gota.setAttribute('opacity', (1 - tr(T, 1585, 1630)).toFixed(2));
+    } else h.gota.setAttribute('opacity', 0);
     if (T >= 1720) h.demoTraco.setAttribute('opacity', (1 - cv.saida(tr(T, 1720, 2120))).toFixed(2));
     return true;
   }
@@ -318,6 +400,7 @@
     var h = heroi;
     if (h.pego) return;
     h.pego = true;
+    if (!h.tampaAberta) { h.tampaAberta = true; C.emitir('ritual:tampa', { origem: 'heroi', acao: 'abrir' }); }
     h.frente.appendChild(h.pincel);
     h.palco.classList.add('is-pincel-na-mao');
   }
@@ -334,6 +417,7 @@
     h.trD = 'M' + x.toFixed(1) + ' ' + y.toFixed(1);
     h.ultimo = { x: x, y: y };
     marcar(x, y, x, y);
+    if (!C.reduzido()) C.emitir('ritual:pincelada', { origem: 'heroi', progresso: lim(cobertura() / COBERTURA_PRONTA, 0, 1) });
   }
   function continuarTraco(x, y) {
     var h = heroi;
@@ -418,6 +502,7 @@
     }
     agendar();
     C.emitir('motor:ritual-pronto', { ritual: 'esmalte' });
+    if (comEfeito && !C.reduzido()) C.emitir('ritual:pronto', { origem: 'heroi', ritual: 'esmalte' });
   }
 
   function estadoFinal() {
@@ -427,7 +512,8 @@
     if (h.arrasto) h.arrasto.soltar();
     h.mx.fixar(REPOUSO.x); h.my.fixar(REPOUSO.y); h.mr.fixar(REPOUSO.rot);
     h.atras.appendChild(h.pincel);
-    h.pego = false;
+    h.pego = false; h.tampaAberta = false;
+    h.gota.setAttribute('opacity', 0);
     pintar(false);
     posar();
   }
@@ -454,6 +540,7 @@
     else {
       h.tAnt = 0;
       if (!h.pego && h.pincel.parentNode !== h.atras) h.atras.appendChild(h.pincel);   // voltou para dentro do vidrinho
+      if (!h.pego && h.tampaAberta) { h.tampaAberta = false; if (!C.reduzido()) C.emitir('ritual:tampa', { origem: 'heroi', acao: 'fechar' }); }
     }
   }
 

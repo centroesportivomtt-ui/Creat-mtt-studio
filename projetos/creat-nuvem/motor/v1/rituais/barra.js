@@ -17,7 +17,8 @@
  * prefers-reduced-motion: barra já no alto, sem gesto, sem tira (fica "Enviar sem arrastar").
  * Ritual vivo (09/11/2026): ao carregar, a barra cai do alto em dois (antecipação, queda esticada, batida
  *   comprimida, quique, anilhas vibrando, pó de magnésio); parada, a cada 6 a 9 s ela sobe e desce sozinha
- *   com peso e enverga, e a dica vira "Arraste você"; o primeiro toque encerra a demonstração na visita.
+ *   com peso e enverga, e a dica vira "Puxe a barra" (ritualTextos.dicaVez do preset manda);
+ *   o primeiro toque encerra a demonstração na visita.
  *   Ao travar no alto, a faixa de cada anilha ganha o nome do negócio (carimbo).
  * Eventos: motor:ritual-pronto {ritual:'barra'} · ritual:confirmar {origem:'tira', el}.
  * Precisa de rituais/comum.js antes.
@@ -119,7 +120,7 @@
       el: el, palco: palco, svg: s, subir: subir, barra: barra, poeira: poeira, medidor: med, frase: pronto,
       my: new C.Mola(0, 120, 0.72), alturaMax: 0, levantada: false, rodando: false, tAnt: 0,
       y0: 0, l0: 0, teclas: 0, caindo: false, flexAnt: 0,
-      cena: null, vez: C.dicaVez(dica), diretor: null
+      cena: null, vez: C.dicaVez(dica, 'Puxe a barra'), diretor: null
     };
 
     if (C.reduzido()) estadoFinal();
