@@ -81,3 +81,10 @@ Plano vigente: EXPANSAO.md, nesta pasta. Leia as seções "Estado na Meta", "Mí
 - Alertas das regras anti-desperdício (só avisar, nunca agir): anúncio com R$ 25 gastos e zero clique; CPC acima de R$ 1,00 depois de R$ 30; frequência de 7 dias a partir de 2,0; anúncio sem impressão depois de 48 h; qualquer entrega fora do Brasil.
 - De 23 a 29/11 nada se edita. Só leitura e pausa de emergência (reprovação, site fora do ar, gasto fora do plano), que é decisão do Marcos.
 - Conte todo dia os Pix pagos nos links de inauguração. Com 19 pagos, avise em nível 3 para fechar o link de R$ 297.
+
+ADENDO DE 10/11/2026 (2) · ALARMES NOVOS
+- Clique acidental em Reels: anúncio com CTR no link acima de 8% e menos de 50% dos cliques virando visita à página é alerta de nível 2 para pausar o anúncio. CTR alto nunca é boa notícia sozinho.
+- Página antes de mídia: leia toda manhã a taxa clique para visita e, quando o Pixel marcar, visita para prévia gerada e prévia para checkout iniciado. Se as duas praças tiverem zero checkout depois de 150 prévias, a recomendação é verba para a página, não outra praça.
+- Saúde do pagamento: confira status da conta de anúncios, dívida e forma de pagamento. Falha de cobrança é nível 3 no mesmo dia.
+- Lead só conta com registro e origem. Visualização de página não é lead.
+- Nunca recomendar baixar o preço como primeira resposta a checkout zerado: a ordem é prova e identidade na tela, garantia, público e só então preço.
