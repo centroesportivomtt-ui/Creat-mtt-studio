@@ -335,3 +335,19 @@ Produção ao fim: conferência no ar com 95 certas e 0 com defeito; as 3 demons
 - **Checkpoint depois de remoção.** O primeiro checkpoint pode sair com o commit antigo. O roteiro agora manda conferir antes de publicar.
 
 Não verificado: um usuário comum logado nas 4 entidades privadas (falta credencial de teste); os passos de dono na desistência real (estorno e aviso ao cliente).
+
+### Publicação das ondas 2 e 3 (10/11/2026, 23:16 e 23:24 UTC)
+
+**O que foi ao ar, num ato só:** servidor com termos versão 2 e a regra de prazo das 11h; página de compra que grava o pedido no toque em Pagar; página de obrigado que só diz "Pagamento confirmado" com o servidor confirmando; termos v2 e privacidade v3; marca de consentimento nas 8 páginas; contador próprio de visitas sem cookie; as 3 demonstrações novas (preços de exemplo, galeria de ilustrações rotuladas, fecho de venda, "Pedir este", fuso do negócio); vitrine com "Esmalte & Fio" e endereço de exemplo em Feira de Santana.
+
+**Portões antes:** 237 de 237 testes; verificação geral, moldura, início com rede lenta e marcadores sem falha. O que foi montado no aplicativo bateu byte a byte com o que foi testado (4 impressões digitais iguais).
+
+**Conferência no endereço real, depois de cada deploy:** 105 conferências, 105 certas, 0 com defeito; jornada e cookies 10 de 10; as 3 demonstrações em 200; impressão digital dos termos no ar igual à gravada no servidor; `robots.txt` barrando rascunhos; contador respondendo 204.
+
+**Segunda publicação (23:24 UTC):** a compra passou a abrir no plano Aberto (R$ 147), o mesmo que o anúncio promete. Antes abria com o Vitrine (R$ 297) marcado. Vista no celular emulado em 4G lenta, no ar.
+
+**Pontos de volta:** antes das ondas, checkpoint `6af390f85152f3344b8248b0`; ondas 2 e 3, `6af3a5a7b17767a96a3613c7`; no ar agora, `6af3a7aa82d1d83aba5457b6`.
+
+**Não verificado:** usuário comum logado nas 4 entidades privadas (22 itens, falta credencial de teste); aparelho iPhone real; compra real pela página nova (o teste de R$ 1 foi feito antes dela).
+
+**Executor:** a tarefa agendada ainda NÃO foi criada. Falta a separação de papéis decidida no fecho (quem tem o conector não lê texto de cliente; leitor e redator isolados). Até lá, pedido pago é produzido à mão pelo coordenador, no mesmo roteiro.
