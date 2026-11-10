@@ -17,7 +17,7 @@
   })));
   // letreiro e linhas: reduz até caber na largura da caixa
   document.querySelectorAll('[data-fit]').forEach(el => {
-    const max = +el.dataset.fit, min = +(el.dataset.min || 28);
+    const max = +(f === 'f1' && el.dataset.fit1 ? el.dataset.fit1 : el.dataset.fit), min = +(el.dataset.min || 28);
     let fs = parseFloat(getComputedStyle(el).fontSize);
     const prop = el.classList.contains('nicho') ? '--t' : (el.classList.contains('linha') ? '--l' : null);
     const set = v => prop ? el.style.setProperty(prop, v + 'px') : (el.style.fontSize = v + 'px');
