@@ -88,3 +88,13 @@ ADENDO DE 10/11/2026 (2) · ALARMES NOVOS
 - Saúde do pagamento: confira status da conta de anúncios, dívida e forma de pagamento. Falha de cobrança é nível 3 no mesmo dia.
 - Lead só conta com registro e origem. Visualização de página não é lead.
 - Nunca recomendar baixar o preço como primeira resposta a checkout zerado: a ordem é prova e identidade na tela, garantia, público e só então preço.
+
+## Adendo 10/11 (madrugada): a medição só existe a partir de agora
+
+- **Antes de 10/11, 00:42 (Bahia), o Pixel nunca carregou no site.** O arquivo da Meta era pedido com um atributo que o navegador bloqueava. Nenhum evento chegou à Meta em 09/11. Visita, prévia e clique em pagar desse dia não existem na conta; não trate o zero como "ninguém quis".
+- **A partir de 10/11, 00:42:** PageView, ViewContent (prévia gerada), InitiateCheckout (clique em pagar) e Purchase (retorno aprovado de link conhecido). Conferido ao vivo com navegador de celular: o evento sai uma vez por carga.
+- **O Pixel só dispara para quem toca em "Aceitar"** no aviso de medição. O número de eventos é menor que o de visitas. Compare ViewContent com visitas carregadas só como tendência, nunca como taxa exata.
+- **Navegador de teste sem cara de celular não gera evento** (a Meta descarta). Para conferir, use agente de usuário de celular real.
+- **Troca de otimização para prévia gerada:** só depois de pelo menos 3 dias de evento e 50 ViewContent somados nas duas praças. Antes disso as campanhas ficam como estão. Regra do dono: nada de virar plano a cada 24 horas.
+- **Identificação da empresa** (nome empresarial, CNPJ e endereço) está no ar em termos, privacidade e rodapés desde 10/11. O prazo de 11/11 às 18h do EXPANSAO.md para esse item está cumprido.
+- **Regra de fala:** nunca informar ao dono valor de saldo da conta de anúncios. Se a cobrança falhar, dizer "falha de cobrança" e o que ele clica.
