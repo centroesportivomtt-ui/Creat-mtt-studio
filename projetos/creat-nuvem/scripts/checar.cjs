@@ -37,6 +37,10 @@
    Chaves JSON (ex.: "agendamento", "agendaExterna") não são texto público.
    6. Seção #sede da home: os textos de conteudo/home.json (sede.*) iguais no index.html, no
       assets/vitrine.js (ESTEIRA_AGORA na mesma ordem) ou na sede/index.html.
+   7. robots.txt da raiz (ROBOTS_RAIZ de scripts/montar-publico.cjs): tem "User-agent: *" e a
+      linha exata "Disallow: /sites/*--r-" (rascunhos, ADR-004), não barra o site inteiro nem
+      /sites/ inteiro, não barra site final com "-r-" no slug (ex.: barbearia-do-r-feira-de-santana), e não há robots.txt solto na raiz do projeto disputando com ele. Se
+      dist/publico/ existir, o robots.txt dele é igual ao texto (montagem velha = FALHA).
    ===================================================================== */
 'use strict';
 const fs = require('fs');
@@ -450,6 +454,39 @@ function conferirTexto(onde, texto, opcoes) {
   const lis = (ler(ph).match(/<span class="esteira-quem">([\s\S]*?)<\/span>/g) || []).map((x) => norm(x.replace(/<[^>]+>/g, '')).trim());
   if (JSON.stringify(lis) !== JSON.stringify(sede.passos)) falha(rel(ph), 'passos da comanda (#esteira) diferentes de conteudo/home.json sede.passos');
   ok(`sede viva: ${nomes.length} textos de conteudo/home.json iguais no index.html / vitrine.js / sede`);
+})();
+
+(function robotsRaiz() {
+  const onde = 'scripts/montar-publico.cjs ROBOTS_RAIZ';
+  const antes = falhas;
+  let txt;
+  try { txt = require(path.join(__dirname, 'montar-publico.cjs')).ROBOTS_RAIZ; } catch (e) { falha(onde, 'não carregou: ' + e.message); return; }
+  if (typeof txt !== 'string' || !txt.endsWith('\n')) { falha(onde, 'ausente ou sem quebra de linha no fim'); return; }
+  const linhas = txt.split('\n').map((l) => l.trim()).filter(Boolean);
+  if (!linhas.includes('User-agent: *')) falha(onde, 'sem "User-agent: *"');
+  if (!linhas.includes('Disallow: /sites/*--r-')) falha(onde, 'sem a linha "Disallow: /sites/*--r-" (rascunhos de aprovação, ADR-004)');
+  const errados = linhas.filter((l) => /^Disallow:\s*(\/|\/sites\/?|\/sites\/\*)?\s*$/i.test(l) && l !== 'Disallow:');
+  if (errados.length) falha(onde, 'barra o site inteiro ou /sites/ inteiro: ' + errados.join(' | '));
+  const soltos = linhas.filter((l) => !/^(User-agent|Allow|Disallow|Sitemap):\s*\S*$/i.test(l));
+  if (soltos.length) falha(onde, 'linha fora do formato do robots.txt: ' + soltos.join(' | '));
+  // nenhum caminho de site final pode casar com a regra: prova com slugs comuns e com slug final que tem "-r-"
+  const casa = (url) => linhas.filter((l) => /^Disallow:/i.test(l)).some((l) => {
+    const pad = l.replace(/^Disallow:\s*/i, '');
+    if (!pad) return false;
+    const re = new RegExp('^' + pad.split('*').map((x) => x.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('.*'));
+    return re.test(url);
+  });
+  if (!casa('/sites/barbearia-do-ze-feira--r-k3x9q2m7d4b8p1aa/')) falha(onde, 'a regra não barra o rascunho /sites/<slug>--r-<id>/');
+  if (!casa('/sites/barbearia-do-r-feira-de-santana--r-k3x9q2m7d4b8p1aa/')) falha(onde, 'a regra não barra o rascunho de um slug com "-r-"');
+  for (const u of ['/', '/abrir/', '/sites/demo-salao/', '/sites/barbearia-do-ze-feira/', '/sites/barbearia-do-r-feira-de-santana/', '/sites/studio-r-feira-de-santana/', '/sites/cliente-r-r-x/']) if (casa(u)) falha(onde, `a regra barra ${u}, que precisa ser indexável`);
+  if (existe(path.join(RAIZ, 'robots.txt'))) falha('robots.txt', 'arquivo solto na raiz do projeto: o da raiz do domínio sai só do montar-publico.cjs');
+  const pub = path.join(RAIZ, 'dist', 'publico');
+  if (existe(pub)) {
+    const pr = path.join(pub, 'robots.txt');
+    if (!existe(pr)) falha(rel(pr), 'dist/publico/ sem robots.txt: rode de novo node scripts/montar-publico.cjs');
+    else if (ler(pr) !== txt) falha(rel(pr), 'diferente de ROBOTS_RAIZ: rode de novo node scripts/montar-publico.cjs');
+  }
+  if (falhas === antes) ok('robots.txt da raiz: barra só /sites/*--r- (rascunhos), "/" e os sites finais (inclusive com "-r-" no slug) continuam indexáveis');
 })();
 
 console.log(`\n${falhas ? falhas + ' falha(s)' : 'tudo certo'}${avisos ? ', ' + avisos + ' aviso(s)' : ''}`);

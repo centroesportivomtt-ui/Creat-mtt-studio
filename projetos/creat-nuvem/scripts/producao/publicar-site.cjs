@@ -21,11 +21,11 @@
  * --demo confere também, na página renderizada, que a faixa é a primeira coisa visível e que a meta robots
  *   é noindex (testar-site exigirFaixaDemo), além de tenant.js com "demonstracao":true.
  * Modos do pacote 1C (rascunho para aprovação, PV-03, e saída do cliente, PV-10):
- *   --rascunho     publica dist/<slug>-r-<id>/ (lido de sites/<slug>/rascunho.json) em /sites/<slug>-r-<id>/.
+ *   --rascunho     publica dist/<slug>--r-<id>/ (lido de sites/<slug>/rascunho.json) em /sites/<slug>--r-<id>/.
  *                  Confere que é o build final + faixa (lib/rascunho.cjs conferirRascunho), noindex,
  *                  meta noindex (o robots.txt da pasta não vale para buscador), sem sitemap, e testa a faixa e o botão de 44 px a 390 px.
  *   --aprovado     depois do "Aprovar" do cliente: publica dist/<slug>/ (o MESMO build, sha256 igual ao
- *                  registrado em rascunho.json) em /sites/<slug>/ e o passo a passo APAGA /sites/<slug>-r-<id>/.
+ *                  registrado em rascunho.json) em /sites/<slug>/ e o passo a passo APAGA /sites/<slug>--r-<id>/.
  *   --saida-dominio publica dist/<slug>-saida/ (build-site --saida-dominio) em /sites/<slug>/.
  *   O token do rascunho nunca entra no zip, no passo a passo nem na saída deste script.
  * Código: 0 ok · 1 entrada ou dist inválido · 2 ambiente (Playwright, fflate) · 3 teste do site falhou.

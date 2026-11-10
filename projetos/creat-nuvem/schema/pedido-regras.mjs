@@ -4,7 +4,7 @@
 // Sem import, sem rede, sem banco e sem relógio próprio: a hora sempre entra por parâmetro (milissegundos UTC).
 // Contrato completo: docs/PEDIDO-API.md.
 
-export const VERSAO_REGRAS = 'pa-regras-1A-2026-11-10b';
+export const VERSAO_REGRAS = 'pa-regras-1A-2026-11-10c';
 
 /* ---------- Vocabulário fechado ---------- */
 
@@ -54,14 +54,38 @@ export const LIMITES = Object.freeze({
   janelaRegra3Ms: 6 * 3600 * 1000,
   janelaRegra2Ms: 7 * 24 * 3600 * 1000,
   candidatosRegra2: 20,
-  // portaAbertaVerificar (1B) aceita 10 chamadas por hora por pagamento e 60 por hora por origem (o servidor do
-  // Porta Aberta é UMA origem para todos os clientes). Por confirmação: 1 chamada sem e-mail e no máximo 4 com
-  // e-mail (e-mails distintos, mais recentes primeiro). Respostas firmes ficam guardadas 1 h (aprovado) ou 2 min.
+  // portaAbertaVerificar (1B) aceita, por origem e por hora, 60 respostas SEM pagamento aprovado (acima disso só o
+  // pagamento aprovado do Porta Aberta é respondido; o resto é 429) e 600 chamadas no total (teto duro, que barra
+  // tudo). O servidor do Porta Aberta é UMA origem para todos os clientes. Por confirmação: 1 chamada sem e-mail e,
+  // na Regra 2, UMA chamada com a lista de até 5 e-mails distintos (emails_candidatos do 1B, contrato c3).
+  // Cache: aprovado 1 h; negativo SEM e-mail 15 s; negativo COM e-mail nunca (Pix pendente que compensa tem de virar
+  // pago na consulta seguinte: politicaCacheVerificar, contrato c2).
   verificacoesRegra2: 4,
-  verificarHora: 50,
+  candidatosLista: 5,
+  // Orçamento por hora de chamadas ao portaAbertaVerificar (orcamentoVerificar, contrato c3, fecho 2 de 10/11):
+  //  verificarHora: teto de todas as chamadas, bem abaixo do teto duro de 600 do 1B (que barraria até o aprovado).
+  //  verificarAnonHora: tentativas anônimas que NÃO voltaram aprovado:true (falsas, 429, 5xx, rede), todas as origens.
+  //    aprovado:true nunca gasta nada, e o total de chamadas NÃO entra nesta conta: os ids inventados de um endereço
+  //    não fecham a porta para a origem de onde vem o aviso do Mercado Pago.
+  //  verificarAnonOrigemHora: com verificarAnonHora esgotado, cada origem ainda tem estas tentativas falsas por hora.
+  //    O aviso do Mercado Pago só chama a confirmação com pagamento aprovado, então a origem dele nunca gasta a sua.
+  //  verificarFalsosTetoHora: teto global das tentativas anônimas falsas (protege o teto duro do 1B). Para alcançá-lo,
+  //    são precisos 57 endereços diferentes na mesma hora (30 + 3 por endereço novo).
+  verificarHora: 400,
   verificarAnonHora: 30,
+  verificarAnonOrigemHora: 3,
+  verificarFalsosTetoHora: 200,
   cacheVerificarMs: 3600 * 1000,
-  cacheNegativoMs: 2 * 60 * 1000,
+  cacheNegativoMs: 15 * 1000,
+  // Confirmação anônima que ficou em 202 (passageiro): Operacao pendente_<payment_id>, sem dado pessoal. A rotina
+  // refaz a confirmação pela faixa do servidor (não disputa o orçamento anônimo) e alerta a partir de 2 h.
+  pendentesNovosHora: 60,
+  pendentesPorRotina: 10,
+  pendenteValidadeMs: 7 * 24 * 3600 * 1000,
+  alertaPendenteMs: 2 * 3600 * 1000,
+  // a_conferir: alerta na rotina a partir de 2 h, um aviso por dia por pagamento; registro em Operacao por 30 dias.
+  alertaConferirMs: 2 * 3600 * 1000,
+  conferirRegistroMs: 30 * 24 * 3600 * 1000,
   registrarHora: 30,
   registrarGlobalHora: 300,
   registrarGlobalDuroHora: 900,
@@ -84,7 +108,9 @@ export const RE = Object.freeze({
   // 128 bits em base64url sem preenchimento: 22 caracteres, o último em [AQgw].
   segredo: /^[A-Za-z0-9_-]{21}[AQgw]$/,
   hex64: /^[0-9a-f]{64}$/,
-  slugRascunho: /^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?-r-[a-z0-9]{12,32}$/,
+  // Pasta do rascunho: <slug>--r-<id>. O hífen duplo nunca aparece num slug final (slugSeguro), e por isso o robots.txt
+  // da raiz barra /sites/*--r- sem barrar site final com "-r-" no nome (fecho 2 de 10/11).
+  slugRascunho: /^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?--r-[a-z0-9]{12,32}$/,
   utm: /^[A-Za-z0-9._-]{1,64}$/,
   email: /^[^\s@:;<>"',]{1,64}@[^\s@:;<>"',.]{1,63}(\.[^\s@:;<>"',.]{1,63})+$/,
   // 55 + DDD (dois dígitos de 1 a 9) + celular (9 e mais 8) ou fixo (2 a 5 e mais 7).
@@ -271,6 +297,213 @@ export async function montarRegra2(candidatos, verificar, max) {
     return { pedido: p, emailConfere: achou ? false : null };
   });
   return { regra2, chamadas, transitorio: transitorio && !achou };
+}
+
+/* ---------- Verificação: cache, orçamento e uma pergunta com regras (c2 e c3 do fecho de 10/11) ---------- */
+
+// Quanto tempo guardar uma resposta firme do portaAbertaVerificar. comEmail: a pergunta levou email_candidato.
+//  aprovado:true              1 h (não muda mais)
+//  aprovado:false sem e-mail  15 s (segura a rajada do mesmo número; a consulta seguinte, 20 s depois, já pergunta
+//                             de novo, e por isso o Pix que compensa 30 s depois vira pago nela: contrato c2)
+//  aprovado:false com e-mail  0: NÃO guarda. O 1B devolve aprovado:false para o Pix pendente; se ficasse guardado,
+//                             a Regra 2 do aviso que chega quando o Pix compensa leria "não aprovado" e mandaria a
+//                             a_conferir quem pagou certo.
+export function politicaCacheVerificar(d, comEmail) {
+  if (!d || typeof d !== 'object' || typeof d.aprovado !== 'boolean') return 0;
+  if (d.aprovado === true) return LIMITES.cacheVerificarMs;
+  return comEmail ? 0 : LIMITES.cacheNegativoMs;
+}
+
+// Uma resposta guardada pode ser usada? Negativa com e-mail nunca (inclusive linha antiga gravada antes desta regra).
+// Negativa sem e-mail só dentro da validade de 15 s (a rota confere pela validade da linha; aqui, pelo carimbo
+// "em" quando existe, para que linha antiga de 2 min não segure o Pix que compensou).
+export function cacheVerificarUtil(d, comEmail, agoraMs) {
+  if (!d || typeof d !== 'object' || typeof d.aprovado !== 'boolean') return false;
+  if (d.aprovado === true) return true;
+  if (comEmail) return false;
+  if (Number.isFinite(agoraMs)) {
+    const em = typeof d.em === 'number' ? d.em : NaN;
+    if (!Number.isFinite(em) || agoraMs - em > LIMITES.cacheNegativoMs) return false;
+  }
+  return true;
+}
+
+// Pode chamar o portaAbertaVerificar agora? Contadores da hora corrente:
+//  total: chamadas feitas (todas as faixas);
+//  falsosAnon: tentativas anônimas que NÃO voltaram aprovado:true (falsas e passageiras), todas as origens;
+//  falsosAnonOrigem: as mesmas, só da origem desta chamada.
+// autenticado: veio com o segredo certo do pedido, ou é a rotina do servidor (admin). pagamentoReal: esta confirmação
+// já viu o pagamento aprovado:true (pergunta da Regra 2). Esses dois nunca disputam o orçamento anônimo.
+// O total NÃO fecha a faixa anônima (era o defeito do fecho 1: 40 chamadas inventadas de 5 endereços fechavam a porta
+// para o aviso do Mercado Pago). A faixa anônima fecha só por tentativa falsa: global, e depois por origem.
+// Devolve { ok, motivo?, faixa? }.
+export function orcamentoVerificar({ autenticado = false, pagamentoReal = false, total = 0, falsosAnon = 0, falsosAnonOrigem = 0 } = {}) {
+  if (total >= LIMITES.verificarHora) return { ok: false, motivo: 'orcamento' };
+  if (autenticado) return { ok: true, faixa: 'autenticado' };
+  if (pagamentoReal) return { ok: true, faixa: 'pagamento_real' };
+  if (falsosAnon >= LIMITES.verificarFalsosTetoHora) return { ok: false, motivo: 'orcamento_anonimo' };
+  if (falsosAnon < LIMITES.verificarAnonHora) return { ok: true, faixa: 'anonimo' };
+  if (falsosAnonOrigem < LIMITES.verificarAnonOrigemHora) return { ok: true, faixa: 'anonimo_por_origem' };
+  return { ok: false, motivo: 'orcamento_anonimo' };
+}
+
+function resumoVerificar(d, agoraMs) {
+  // Guarda só o que a regra usa. Nunca e-mail nem nome (o 1B também não devolve).
+  const resumo = { aprovado: d.aprovado };
+  for (const k of ['valor', 'external_reference', 'email_confere', 'aprovado_em', 'meio', 'email_confere_indice']) if (d[k] !== undefined) resumo[k] = d[k];
+  if (Number.isFinite(agoraMs)) resumo.em = agoraMs;
+  return resumo;
+}
+
+// Uma pergunta ao portaAbertaVerificar com cache e orçamento. Todo I/O entra por io (a rota liga ao banco e à rede):
+//  io.chave(payment_id, email)  -> texto     io.lerCache(chave) -> resposta guardada ou null
+//  io.gravarCache(chave, d, ms)              io.contadores() -> { total, falsosAnon, falsosAnonOrigem }
+//  io.somar(nome) para 'total' | 'falso_anon'  io.chamar(corpo) -> { d } | { transitorio, motivo }
+//  io.agora() -> ms (opcional)
+// Devolve { d, guardado? } (resposta firme) ou { transitorio, motivo } (a rota responde 202 e não muda nada).
+// Tentativa anônima que não volta aprovado:true (falsa OU passageira: 429 do 1B, 5xx, rede) gasta 1 do orçamento
+// anônimo; sem isso, quem passasse do limite do 1B ganharia chamadas de graça até o teto total.
+export async function verificarComRegras(io, { payment_id, email_candidato, autenticado = false, pagamentoReal = false }) {
+  const email = typeof email_candidato === 'string' ? email_candidato.trim().toLowerCase() : '';
+  const comEmail = email.length > 0;
+  const agoraMs = typeof io.agora === 'function' ? io.agora() : Date.now();
+  const chave = await io.chave(payment_id, email);
+  try {
+    const g = await io.lerCache(chave);
+    if (cacheVerificarUtil(g, comEmail, agoraMs)) return { d: g, guardado: true };
+  } catch { /* sem cache: segue */ }
+  const anonimo = !autenticado && !pagamentoReal;
+  const orc = orcamentoVerificar({ autenticado, pagamentoReal, ...(await io.contadores()) });
+  if (!orc.ok) return { transitorio: true, motivo: orc.motivo };
+  await io.somar('total');
+  const corpo = { payment_id };
+  if (comEmail) corpo.email_candidato = email;
+  const r = await io.chamar(corpo);
+  if (!r || r.transitorio || !r.d || typeof r.d.aprovado !== 'boolean') {
+    if (anonimo) { try { await io.somar('falso_anon'); } catch { /* melhor esforço */ } }
+    return { transitorio: true, motivo: (r && r.motivo) || 'formato' };
+  }
+  const resumo = resumoVerificar(r.d, agoraMs);
+  if (anonimo && resumo.aprovado === false) {
+    try { await io.somar('falso_anon'); } catch { /* melhor esforço */ }
+  }
+  const ms = politicaCacheVerificar(resumo, comEmail);
+  if (ms > 0) { try { await io.gravarCache(chave, resumo, ms); } catch { /* melhor esforço */ } }
+  return { d: resumo };
+}
+
+// Regra 2 numa chamada só (contrato c3): manda ao 1B a lista de até 5 e-mails distintos (emails_candidatos) de um
+// pagamento JÁ visto aprovado:true (faixa pagamentoReal, fora do orçamento anônimo) e lê email_confere_indice.
+//  io: o mesmo de verificarComRegras (contadores, somar, chamar); nada é guardado (a lista tem e-mail).
+//  candidatos: pedidos que casam (pedidoCasa), mais recentes primeiro.
+// Devolve { regra2, chamadas, transitorio } no mesmo formato de montarRegra2:
+//  e-mail que confere: true; os outros perguntados: false; os que passaram do teto (sobra): null (nunca promove).
+export async function montarRegra2Lista(io, { payment_id, candidatos, autenticado = false, max }) {
+  const lista = Array.isArray(candidatos) ? candidatos : [];
+  const n = Number.isInteger(max) && max >= 1 ? Math.min(max, LIMITES.candidatosLista) : LIMITES.candidatosLista;
+  const { emails } = escolherVerificacoes(lista, n);
+  const vazio = { regra2: lista.map(p => ({ pedido: p, emailConfere: null })), chamadas: 0, transitorio: false };
+  if (!emails.length) return vazio;
+  const orc = orcamentoVerificar({ autenticado, pagamentoReal: true, ...(await io.contadores()) });
+  if (!orc.ok) return { ...vazio, transitorio: true };
+  await io.somar('total');
+  const r = await io.chamar({ payment_id, emails_candidatos: emails });
+  if (!r || r.transitorio || !r.d || typeof r.d.aprovado !== 'boolean') return { ...vazio, chamadas: 1, transitorio: true };
+  const i = r.d.aprovado === true && Number.isInteger(r.d.email_confere_indice) ? r.d.email_confere_indice : -1;
+  const certo = i >= 0 && i < emails.length ? emails[i] : null;
+  const perguntados = new Set(emails);
+  const regra2 = lista.map(p => {
+    const e = typeof p.email === 'string' ? p.email.trim().toLowerCase() : '';
+    if (certo) return { pedido: p, emailConfere: e === certo };
+    return { pedido: p, emailConfere: perguntados.has(e) ? false : null };
+  });
+  return { regra2, chamadas: 1, transitorio: false };
+}
+
+/* ---------- Confirmação pendente (aviso que ficou em 202; fecho 2 de 10/11) ---------- */
+
+// Registro em Operacao pendente_<payment_id>: só número, horas e contagem. Nada de pedido nem e-mail.
+// prev: registro anterior (ou null). n conta quantas vezes o mesmo pagamento voltou em 202 (o aviso real volta:
+// 1 + 3 novas tentativas do 1B + reenvios do Mercado Pago), e por isso sobe na fila da rotina.
+export function registroPendente(prev, { payment_id, motivo, agoraMs }) {
+  const p = prev && typeof prev === 'object' && prev.payment_id === payment_id ? prev : null;
+  return {
+    payment_id,
+    desde: p && typeof p.desde === 'string' ? p.desde : new Date(agoraMs).toISOString(),
+    ultimo: new Date(agoraMs).toISOString(),
+    n: (p && Number.isInteger(p.n) ? p.n : 0) + 1,
+    motivo: typeof motivo === 'string' ? motivo.replace(/[^a-z0-9_]/g, '').slice(0, 30) : null,
+    tentativas_rotina: p && Number.isInteger(p.tentativas_rotina) ? p.tentativas_rotina : 0
+  };
+}
+
+// Quais pendentes a rotina refaz nesta rodada. Ordem: os que a rotina tentou menos vezes primeiro (rodízio: número
+// inventado que o 1B segura em 429 não ocupa a fila para sempre); depois os mais repetidos (o aviso real se repete;
+// a conta para em 5, para repetição comprada não furar a fila); depois os mais antigos.
+export function escolherPendentes(registros, max) {
+  const n = Number.isInteger(max) && max >= 0 ? max : LIMITES.pendentesPorRotina;
+  const rep = r => Math.min(5, Number.isInteger(r.n) ? r.n : 0);
+  const tent = r => (Number.isInteger(r.tentativas_rotina) ? r.tentativas_rotina : 0);
+  return (Array.isArray(registros) ? registros : [])
+    .filter(r => r && typeof r.payment_id === 'string' && RE.paymentId.test(r.payment_id))
+    .slice()
+    .sort((a, b) => tent(a) - tent(b) || rep(b) - rep(a) || Date.parse(a.desde) - Date.parse(b.desde))
+    .slice(0, n);
+}
+
+// Depois de a rotina refazer a confirmação: o que fazer com o registro.
+//  resultado: 'confirmado' (pago, teste_ok, a_conferir, já usado), 'firme' (fora do catálogo), 'nao_aprovado'
+//  (o 1B disse aprovado:false: número inventado ou pagamento que não foi aprovado) ou 'passageiro'.
+// Devolve { apagar, alerta }: alerta = continua passageiro há 2 h ou mais (vai à resposta da rotina e ao suporte).
+export function destinoPendente(reg, resultado, agoraMs) {
+  if (resultado === 'confirmado' || resultado === 'firme' || resultado === 'nao_aprovado') return { apagar: true, alerta: false };
+  const desde = msDe(reg && reg.desde);
+  return { apagar: false, alerta: desde !== null && agoraMs - desde >= LIMITES.alertaPendenteMs };
+}
+
+/* ---------- a_conferir na rotina (c4 do fecho de 10/11) ---------- */
+
+// Registro de um pagamento que foi a a_conferir (Operacao conferir_<payment_id>, sem dado pessoal).
+// teste: pagamento ou pedido de teste (aparece na rotina, nunca gera aviso).
+export function registroAConferir({ payment_id, pedido_id, candidatos, regra, teste, agoraMs }) {
+  return {
+    payment_id,
+    teste: teste === true,
+    pedido_id: typeof pedido_id === 'string' ? pedido_id : null,
+    candidatos: (Array.isArray(candidatos) ? candidatos : []).filter(c => typeof c === 'string' && RE.pedidoId.test(c)).slice(0, 20),
+    regra: Number.isInteger(regra) ? regra : null,
+    desde: new Date(agoraMs).toISOString()
+  };
+}
+
+// Junta os pedidos em a_conferir e os registros de pagamento a conferir sem pedido marcado.
+//  pedidos: linhas de PedidoPortaAberta com status a_conferir
+//  registros: registroAConferir(...) lidos de Operacao (os já resolvidos a rota tira antes)
+//  avisadosHoje: payment_id ou pedido_id que já tiveram aviso no dia (Bahia)
+// Devolve { itens, avisar }: itens = todos, com horas e alerta (>= 2 h); avisar = os com alerta, sem aviso hoje e
+// que não são teste. Pedido de teste aparece na lista (teste:true), mas nunca gera aviso.
+export function itensAConferir({ pedidos, registros, avisadosHoje, agoraMs }) {
+  const avisados = new Set(Array.isArray(avisadosHoje) ? avisadosHoje : []);
+  const porPagamento = new Map();
+  for (const r of Array.isArray(registros) ? registros : []) if (r && r.payment_id) porPagamento.set(r.payment_id, r);
+  const itens = [];
+  const usados = new Set();
+  for (const p of Array.isArray(pedidos) ? pedidos : []) {
+    if (!p || p.status !== 'a_conferir') continue;
+    const reg = p.payment_id ? porPagamento.get(p.payment_id) : null;
+    if (reg) usados.add(reg.payment_id);
+    const desde = msDe(reg && reg.desde) ?? msDe(p.updated_date) ?? msDe(p.created_date) ?? msDe(p.criado_em) ?? agoraMs;
+    itens.push({ ref: p.payment_id || p.pedido_id, pedido_id: p.pedido_id, payment_id: p.payment_id || null, desde: new Date(desde).toISOString(), teste: !!p.eh_teste || !!(reg && reg.teste), candidatos: reg ? reg.candidatos : [p.pedido_id], ms: agoraMs - desde });
+  }
+  for (const [pid, r] of porPagamento) {
+    if (usados.has(pid)) continue;
+    const desde = msDe(r.desde) ?? agoraMs;
+    itens.push({ ref: pid, pedido_id: null, payment_id: pid, desde: new Date(desde).toISOString(), teste: r.teste === true, candidatos: r.candidatos || [], ms: agoraMs - desde });
+  }
+  for (const i of itens) { i.horas = Math.floor(Math.max(0, i.ms) / 360000) / 10; i.alerta = i.ms >= LIMITES.alertaConferirMs; delete i.ms; }
+  itens.sort((a, b) => Date.parse(a.desde) - Date.parse(b.desde));
+  const avisar = itens.filter(i => i.alerta && !i.teste && !avisados.has(i.ref));
+  return { itens, avisar };
 }
 
 function msDe(v) { const t = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isNaN(t) ? null : t; }

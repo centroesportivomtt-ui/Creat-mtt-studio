@@ -30,8 +30,13 @@ function servicosDoCliente(lista, nicho) {
  * slug que começa com demo-, teste- ou ensaio- (vindo do nome ou de --slug) ganha o prefixo "cliente-".
  */
 const RE_SLUG_RESERVADO = /^(demo|teste|ensaio)(-|$)/;
+/*
+ * Hífen duplo nunca fica no slug final (fecho 2 da onda 1, 10/11/2026): o rascunho é /sites/<slug>--r-<id>/ e o
+ * robots.txt da raiz barra /sites/*--r-. Como o slug final não tem "--", um negócio chamado "Barbearia do R"
+ * (barbearia-do-r-feira-de-santana) continua indexável. Vale também para --slug passado à mão.
+ */
 function slugSeguro(slug, demonstracao) {
-  const s = String(slug || '');
+  const s = String(slug || '').replace(/-{2,}/g, '-');
   if (demonstracao || !RE_SLUG_RESERVADO.test(s)) return s;
   return ('cliente-' + s).slice(0, 40).replace(/-+$/, '');
 }

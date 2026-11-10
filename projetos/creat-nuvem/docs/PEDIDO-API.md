@@ -60,7 +60,7 @@ Registro **transitório**: `chave_hash = sha256(sal_da_hora | função | origem 
 
 ### Operacao `{chave, valor, expira_em}`
 
-Chaves do executor: `pausado`, `trava_deploy`, `email_cliente` (`ligado` liga o recibo automático ao comprador). Chaves internas: `sal_taxa_<hora>`, `emails_<data>` (teto de 20 e-mails por dia), `resumo_<data>`, `alerta_linhas_<data>`, `ultimo_email_suporte` (diagnóstico do último e-mail ao suporte, sem endereço nem conteúdo), `verif_<hash>` (resposta firme de `portaAbertaVerificar` guardada: 1 h se aprovado, 2 min se não; a chave é sha256 de pagamento e e-mail, o valor só tem `aprovado`, `valor`, `external_reference`, `email_confere`, nunca e-mail).
+Chaves do executor: `pausado`, `trava_deploy`, `email_cliente` (`ligado` liga o recibo automático ao comprador). Chaves internas: `sal_taxa_<hora>`, `emails_<data>` (teto de 20 e-mails por dia), `resumo_<data>`, `alerta_linhas_<data>`, `ultimo_email_suporte` (diagnóstico do último e-mail ao suporte, sem endereço nem conteúdo), `verif_<hash>` (resposta firme de `portaAbertaVerificar` guardada: 1 h se aprovado; 15 s se não aprovado e a pergunta foi sem e-mail; **nunca** se não aprovado e a pergunta levou e-mail, seção 4.3; a chave é sha256 de pagamento e e-mail, o valor só tem `aprovado`, `valor`, `external_reference`, `email_confere`, `aprovado_em`, nunca e-mail), `conferir_<payment_id>` (pagamento que foi a `a_conferir`: `{payment_id, teste, pedido_id, candidatos, regra, desde}`, só ids e hora, 30 dias; a rotina avisa e apaga quando o pagamento sai de `a_conferir`; o suporte solta à mão pela `operacao` com `acao: soltar`), `aviso_conferir_<data>` (pagamentos já avisados no dia), `ultimo_alerta_conferir` (`{em, n, refs, email}` do último aviso de `a_conferir`), `pendente_<payment_id>` (confirmação sem segredo que ficou em 202: `{payment_id, desde, ultimo, n, motivo, tentativas_rotina}`, 7 dias, seção 4.3), `aviso_pendente_<data>` e `ultimo_alerta_pendente` (`{em, n, refs, email}`).
 
 ## 3. Estados
 
@@ -145,7 +145,7 @@ Corpo `{id, segredo}`. Resposta 200:
 
 ```json
 { "ok": true, "status": "pago", "prazo_fim": "...", "entrega_prevista_em": "...",
-  "rascunho_url": "https://.../sites/<slug>-r-<...>/",
+  "rascunho_url": "https://.../sites/<slug>--r-<...>/",
   "recibo": { "pedido": "PA-...", "produto": "Abertura do site (preço de inauguração)", "valor": 297, "meio": "Mercado Pago",
               "pagamento": "<payment_id>", "pago_em": "...", "regra_prazo": "<texto da regra>", "termos": "https://.../termos/" } }
 ```
@@ -181,24 +181,36 @@ Segredo errado vale como se não houvesse `pedido_id`. `payment_id` é único: r
 
 Ao virar `pago`: grava `pago_em`, `prazo_fim` e `entrega_prevista_em` (seção 6) e manda e-mail ao suporte. Se `Operacao email_cliente = ligado`, manda também o recibo ao comprador.
 
-Respostas (nenhuma com dado pessoal):
+Respostas (nenhuma com dado pessoal). A coluna "para o webhook" é o contrato fechado com o 1B (c1, 10/11/2026); os nomes não mudam:
 
-| resposta | quer dizer | o que `/obrigado/` faz |
-|---|---|---|
-| 200 `{ok:true, status}` | `pago`, `teste_ok` ou `a_conferir` (com `prazo_fim` e `entrega_prevista_em` só para quem mandou o segredo do próprio pedido) | segue para `consultarPedido` |
-| 200 `{ok:false, motivo:"nao_confirmado"}` | **ainda conferindo**: pagamento inexistente, pendente (Pix ainda não compensado), recusado ou de outro negócio. Nunca quer dizer "recusado" | "Estamos confirmando o seu pagamento", e repete a confirmação com o mesmo recuo do 4.2 por até 30 min; depois, suporte com o número do pagamento |
-| 200 `{ok:false, motivo:"produto_fora_do_catalogo"}` | aprovado, mas de um produto que este servidor não vende (Bastidores, anuais, combos). O suporte recebe um aviso (uma vez por pagamento) | "Pagamento recebido. O suporte vai falar com você", com o número do pagamento |
-| 200 `{ok:false, motivo:"pagamento_ja_usado"}` | o pagamento já confirma outro pedido | suporte com o número do pagamento |
-| 202 `{ok:false, motivo:"tente_mais_tarde"}` | a verificação não respondeu **de verdade** (429 ou 5xx do 1B, rede, tempo, ou o orçamento da hora deste servidor acabou). Nada mudou no pedido | repete com recuo |
-| 429 `{ok:false, erro:"limite"}` | 60 por origem por hora; com segredo de pedido, 6 por origem por hora | espera 60 s |
+| resposta | quer dizer | para o webhook do 1B | o que `/obrigado/` faz |
+|---|---|---|---|
+| 200 `{ok:true, status}` | `pago`, `teste_ok` ou `a_conferir` (com `prazo_fim` e `entrega_prevista_em` só para quem mandou o segredo do próprio pedido). `a_conferir` entra na rotina, com alerta a partir de 2 h (seção 6) | **confirmado**: 200 ao Mercado Pago, chave por 30 dias | segue para `consultarPedido` |
+| 200 `{ok:false, motivo:"nao_confirmado"}` | **ainda conferindo**: pagamento inexistente, pendente (Pix ainda não compensado), recusado ou de outro negócio. Nunca quer dizer "recusado" | **passageiro**: quando o GET do próprio 1B no Mercado Pago disse `approved`, responde 503 ao Mercado Pago e chama `insistir()` (20 s, 60 s, 180 s) | "Estamos confirmando o seu pagamento", e repete a confirmação com o mesmo recuo do 4.2 por até 30 min; depois, suporte com o número do pagamento |
+| 200 `{ok:false, motivo:"produto_fora_do_catalogo"}` | aprovado, mas de um produto que este servidor não vende (Bastidores, anuais, combos). O suporte recebe um aviso (uma vez por pagamento) | **firme**: 200, chave por 30 dias | "Pagamento recebido. O suporte vai falar com você", com o número do pagamento |
+| 200 `{ok:false, motivo:"pagamento_ja_usado"}` | o pagamento já confirma outro pedido | **firme**: 200, chave por 30 dias | suporte com o número do pagamento |
+| 202 `{ok:false, motivo:"tente_mais_tarde"}` | a verificação não respondeu **de verdade** (429 ou 5xx do 1B, rede, tempo, ou o orçamento da hora deste servidor acabou). Nada mudou no pedido | passageiro: 503 e nova tentativa | repete com recuo |
+| 429 `{ok:false, erro:"limite"}` | 60 por origem por hora; com segredo de pedido, 6 por origem por hora | passageiro: 503 e nova tentativa | espera 60 s |
 
-Chamadas a `portaAbertaVerificar` por confirmação (o 1B aceita 10 por hora por pagamento e 60 por hora por origem, e este servidor é UMA origem para todos os clientes):
+Por que `nao_confirmado` é passageiro e não firme: as perguntas com e-mail que voltam `aprovado:false` não ficam guardadas, e a sem e-mail fica no máximo 15 s; as novas tentativas do 1B (20 s, 60 s e 180 s) já passam desse prazo. Quando o Mercado Pago já disse `approved`, a resposta muda para `ok:true` numa delas.
+
+Chamadas a `portaAbertaVerificar` por confirmação (o 1B aceita por origem e por hora 60 respostas sem pagamento aprovado, acima disso responde só o pagamento aprovado e devolve 429 ao resto, e 600 chamadas no total; este servidor é UMA origem para todos os clientes):
 - 1 chamada: com o e-mail do pedido do chamador, se o segredo confere; sem e-mail, se não.
-- Regra 2: no máximo 4 chamadas a mais, com e-mails **distintos** dos candidatos (os mais recentes primeiro; e-mail repetido conta uma vez), e para no primeiro que confere (`montarRegra2` em `pedido-regras.mjs`). Candidato que ficou sem pergunta nunca é dado como "não confere": se nenhum perguntado conferiu, o pagamento vai a `a_conferir` com todos os candidatos no aviso ao suporte. Teste com 12 candidatos: 4 chamadas.
-- Resposta firme guardada em `Operacao` (`verif_<hash>`): 1 h se aprovado, 2 min se não. A volta a `/obrigado/`, o aviso do Mercado Pago e a nova tentativa dele não gastam chamada de novo.
-- Orçamento deste servidor: 50 chamadas por hora no total (abaixo das 60 do 1B), das quais no máximo 30 sem segredo de pedido (aviso do Mercado Pago e anônimos). Quem manda `payment_id` inventado esgota no máximo as 30 sem segredo; a volta a `/obrigado/` de quem acabou de pagar ainda tem 20. Passou do orçamento: 202, nada muda.
-- Pior caso pela conta: 1 + 4 = 5 chamadas por pagamento na primeira confirmação, 0 nas repetições dentro de 1 h.
-- Limite que continua: com o orçamento sem segredo esgotado por um ataque, o aviso do Mercado Pago recebe 202 e só a volta a `/obrigado/` confirma. Pedido ao 1B: refazer o aviso que recebeu 202 (5, 15 e 60 min) e um limite próprio para este servidor.
+- Regra 2: **1 chamada a mais**, com a lista `emails_candidatos` de até 5 e-mails **distintos** dos candidatos (os mais recentes primeiro; e-mail repetido conta uma vez). O 1B devolve `email_confere_indice` (`montarRegra2Lista` em `pedido-regras.mjs`, contrato c3, fecho 2 de 10/11). Candidato que ficou de fora da lista (sexto em diante) nunca é dado como "não confere": se nenhum da lista conferiu, o pagamento vai a `a_conferir` com todos os candidatos. A lista não fica guardada (tem e-mail). Teste com 7 candidatos: 1 chamada, 5 `false` e 2 `null`.
+- Cache em `Operacao` (`verif_<hash>`, regras `politicaCacheVerificar` e `cacheVerificarUtil`, c2):
+  - `aprovado:true`: 1 h, com e sem e-mail (não muda mais).
+  - `aprovado:false` de pergunta **sem** e-mail: 15 s, com carimbo `em` (segura a rajada do mesmo número; a consulta seguinte, 20 s depois, pergunta de novo). Linha antiga sem carimbo é ignorada.
+  - `aprovado:false` de pergunta **com** e-mail: **não guarda**, e linha antiga desse tipo é ignorada na leitura. Motivo: o 1B devolve `aprovado:false` para o Pix pendente; se ficasse guardado, a Regra 2 do aviso que chega quando o Pix compensa mandaria a `a_conferir` quem pagou certo. O Pix que compensa 30 s depois vira `pago` na consulta seguinte (testes em `pedido-api.test.mjs`, inclusive o de 20 s sem e-mail).
+- Orçamento deste servidor por hora (regra `orcamentoVerificar`, c3, refeita no fecho 2 de 10/11):
+  - 400 chamadas no total, abaixo do teto duro de 600 por origem do 1B (que barraria até o pagamento aprovado).
+  - Faixa anônima: só gasta a tentativa anônima que **não** volta `aprovado:true` (falsa, ou passageira: 429 do 1B, 5xx, rede). `aprovado:true` não gasta nada; repetição servida pelo cache também não. 30 por hora para todas as origens; com as 30 gastas, cada origem ainda tem 3; teto global de 200 falsas.
+  - **O total de chamadas não fecha mais a faixa anônima.** No fecho 1, 40 chamadas inventadas (30 de um endereço e 4 em cada um de 4 endereços novos) fechavam a porta para todos e o aviso do Mercado Pago levava 202 até a hora virar. Agora o aviso, que vem do servidor do 1B e só chama a confirmação com pagamento aprovado, nunca gasta a faixa da própria origem, e passa. Provado no teste "fecho 2 (achado 5)" e no ensaio das rotas (seção 8.8).
+  - Faixa autenticada (segredo certo do pedido, ou a rotina do servidor) e faixa do pagamento real (Regra 2 de um pagamento que o 1B acabou de devolver `aprovado:true`): nunca disputam o orçamento anônimo; só o teto de 400.
+  - Passou do orçamento: 202, nada muda no pedido.
+  - Sem segredo compartilhado novo: o caminho real se distingue pela própria resposta do 1B (`aprovado:true`), não por cabeçalho.
+- Pior caso pela conta: 1 + 1 = 2 chamadas por pagamento na primeira confirmação, 0 nas repetições dentro de 1 h.
+- **Confirmação pendente (fecho 2 de 10/11).** Todo 202 de chamada **sem** segredo grava `Operacao pendente_<payment_id>` (só número, `desde`, `ultimo`, `n` de repetições e `motivo`; nada de pedido nem e-mail; vale 7 dias; no máximo 60 linhas novas por hora, repetição só soma `n`). A rotina de cada hora refaz até 10 pela faixa do servidor, em rodízio (menos tentativas da rotina primeiro, depois os mais repetidos com a conta parada em 5, porque o aviso real volta: 1 + 3 tentativas do 1B + reenvios do Mercado Pago): confirmado, firme ou `aprovado:false` apaga o registro; ainda passageiro há 2 h ou mais vai a `alerta_confirmacao_pendente` na resposta da rotina, a `Operacao ultimo_alerta_pendente` e a um e-mail por dia ao suporte. Quem pagou e não voltou a `/obrigado/` deixa de depender só dos reenvios do Mercado Pago.
+- Limite que continua, com número: para fechar a faixa anônima de todos, um ataque precisa de 57 endereços diferentes na mesma hora (30 + 3 por endereço novo até 200), e ainda passa pelo limite de 60 por origem desta rota; mesmo assim o número do pagamento real fica em `pendente_<id>` e a rotina confirma pela faixa do servidor. Se o 1A estiver fora do ar (404 ou 5xx), nada chega aqui para gravar: o 1B responde 503 e o Mercado Pago reenvia (15 min, 30 min, 6 h, 48 h, depois a cada 96 h). A saída com HMAC entre os dois apps continua descartada porque o contrato c3 proíbe segredo compartilhado novo.
 
 Limite declarado do casamento: quem paga com e-mail diferente do digitado cai em `a_conferir` e a conferência é manual. Gatilho para a preferência por pedido (Plano A): mais de 10 por cento de `a_conferir` nos 20 primeiros pedidos.
 
@@ -220,7 +232,7 @@ Só `POST`. Duas formas, as duas com 128 bits comparados pelo hash em tempo cons
 - `{slug, token}`: token do link do rascunho (`/sites/<slug>/#t=<token>`), formato igual ao do segredo. O servidor guarda só `token_hash`.
 - `{slug, pedido_id, segredo}`: o segredo do pedido que o navegador guardou em `/abrir/` (mesmo aparelho, mesma origem). **Este é o caminho de hoje**, porque o e-mail ao comprador está desligado e o link de `/obrigado/` (`rascunho_url`) não leva `#t=`. A página do rascunho (pacote 1C, `rascunho.js`), sem `#t=` no endereço, lê `localStorage['creat:pedido:v1']` dentro de `try/catch`; com `id` e `segredo` válidos (`^PA-[0-9A-Z]{10}$` e `^[A-Za-z0-9_-]{21}[AQgw]$`), deixa o botão ligado e manda `{slug, pedido_id: id, segredo}`. Sem nada salvo, o botão fica desligado com o texto "Abra este rascunho no aparelho em que você fez o pedido, ou fale com o suporte".
 
-`slug` segue `^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?-r-[a-z0-9]{12,32}$`. Vale 14 dias depois do `gravarRascunho`. 5 tentativas erradas travam até um novo `gravarRascunho`. `aprovado_em` é a hora do servidor. Slug inexistente, credencial errada, vencido ou travado: a mesma 403 `{ok:false, erro:"negado"}`. Sucesso: 200 `{ok:true, status:"aprovado"}` (repetir com a credencial certa devolve o mesmo).
+`slug` segue `^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?--r-[a-z0-9]{12,32}$`. Vale 14 dias depois do `gravarRascunho`. 5 tentativas erradas travam até um novo `gravarRascunho`. `aprovado_em` é a hora do servidor. Slug inexistente, credencial errada, vencido ou travado: a mesma 403 `{ok:false, erro:"negado"}`. Sucesso: 200 `{ok:true, status:"aprovado"}` (repetir com a credencial certa devolve o mesmo).
 
 ## 5. Funções internas (só admin)
 
@@ -251,6 +263,14 @@ Como o executor (pacote 1D) chega a elas, sem nenhum token na mão:
 - **Prazo:** 72 horas contadas da confirmação. Confirmação fora de segunda a sábado, 9h às 19h (America/Bahia, UTC-3), começa às 9h do próximo dia de atendimento (domingo pula para segunda). Texto exato para página e e-mail: `TEXTO_REGRA_PRAZO` em `pedido-regras.mjs`.
 - **Entrega prevista:** `prazo_fim` + 1 dia para cada lote de `capacidade_dia` pedidos à frente (`pago`, `em_revisao`, `em_producao`, sem teste). `capacidade_dia` vem de `/dados/vagas.json` (padrão 3 se não ler). Quando a entrega passa do prazo, o e-mail ao suporte avisa.
 - **Rotina (workflow "Porta Aberta rotina", minuto 17 de cada hora, America/Bahia):** alerta ao suporte 12 h antes do prazo (uma vez por pedido); purga de `aguardando_pagamento`, `recusado` e `desistiu` com mais de 30 dias; apaga `LimiteTaxa` e `Operacao` vencidos em lotes de 500, repetindo até não sobrar vencida, com teto de 2.000 por entidade por rodada (passou do teto, a saída marca `<campo>_sobrou` e a rodada seguinte continua); alerta se a entidade passar de 5.000 linhas; resumo diário ao suporte na primeira rodada depois das 8h.
+- **a_conferir na rotina (c4 de 10/11/2026):** a rotina junta os pedidos em `a_conferir` e os registros `Operacao conferir_<payment_id>` (gravados pela `confirmarPagamento` sempre que um pagamento aprovado vai a `a_conferir`, inclusive quando nenhum pedido foi marcado: dois candidatos com e-mail conferido, candidato sem pergunta ou nenhum pedido). A hora que conta é a do registro (a primeira vez); sem registro, a última atualização do pedido. Regra pura: `itensAConferir` em `pedido-regras.mjs`.
+  - Resposta da rotina: `a_conferir` (quantos), `alerta_a_conferir` (lista dos que estão há 2 h ou mais, com `ref`, `pedido_id`, `payment_id`, `desde`, `horas`, `candidatos`, `teste`, `avisado_hoje`) e `avisos_a_conferir` (quantos avisos saíram nesta rodada).
+  - Aviso: um por dia por pagamento (Bahia), num e-mail só por rodada ao suporte, e o registro em `Operacao ultimo_alerta_conferir`. O e-mail sai só quando a plataforma aceitar (hoje 422, seção 7); o registro e o campo da resposta valem mesmo assim.
+  - Pedido ou pagamento de teste aparece na lista com `teste: true` e nunca gera aviso.
+  - Resolvido: quando o pagamento aparece num pedido fora de `a_conferir` (por exemplo `marcarPedido` para `pago` ou `recusado`), a rotina encerra o registro. Pagamento sem pedido resolvido no painel do Mercado Pago (estorno): `operacao {acao: "soltar", chave: "conferir_<payment_id>"}`.
+- **Pendentes na rotina (fecho 2 de 10/11/2026):** antes do `a_conferir`, a rotina lê `Operacao pendente_<payment_id>`, refaz a confirmação de até 10 pela faixa do servidor (os que a rotina tentou menos vezes primeiro, em rodízio; depois os mais repetidos, com a conta parada em 5; depois os mais antigos) e apaga o registro quando a resposta é firme (`pago`, `teste_ok`, `a_conferir`, já usado, fora do catálogo ou `aprovado:false`). O que vira `a_conferir` aqui já entra na lista desta mesma rodada. Regras puras: `escolherPendentes` e `destinoPendente`.
+  - Resposta da rotina: `pendentes` (quantos registros), `pendentes_refeitos` (`[{payment_id, resultado}]`) e `alerta_confirmacao_pendente` (os ainda passageiros há 2 h ou mais, com `payment_id`, `desde`, `horas`, `n`, `motivo`).
+  - Aviso: um por dia por pagamento, num e-mail só por rodada, e `Operacao ultimo_alerta_pendente` (`email: enviado | falhou | sem_novos`). O registro e o campo valem mesmo com o e-mail em 422.
 - **Teto de e-mail ao suporte:** 20 por dia, contando tudo (pago, a conferir, prazo, resumo, reuso).
 
 ## 7. E-mail
@@ -325,6 +345,49 @@ Por que isso não abre o pedido: (1) toda chamada de navegador vinda de outro si
 - Se a função recebe `cf-connecting-ip` em produção (a seção 8.7 prova que o cliente não consegue mandar esse cabeçalho; não prova que ele chega à rota). Prova depois do deploy: 40 `POST` em `registrarPedido` de um endereço fixo com `X-Forwarded-For` diferentes; tem de aparecer 429 antes do 31º. Esta sessão não tem endereço de saída fixo (o proxy troca de IP a cada chamada), por isso o teste é do qa no ensaio, de um celular em 4G.
 - Comportamento de CORS em produção com as rotas novas (seção 8.4).
 
+### 8.8 Fecho da onda 1 (10/11/2026, noite): c1 a c4
+
+Checkpoints: antes `6af34a91c18a68ad2f4bc573`, depois `6af34ded32a578cf08af80e3`. `npx eslint src/lib/pa src/routes/api/pa` e `npm run build` no sandbox: saída 0. Arquivos do app tocados: só `src/lib/pa/{regras.js,servidor.server.js}` e `src/routes/api/pa/{confirmarPagamento,rotina,operacao}.js`. Funções de backend do app antes e depois: `[]`. Rotas: as mesmas 13. Entidades: sem mudança de esquema. Preview do sandbox (mesmo código que vai ao ar):
+
+```
+confirmar payment_id falso (4 números distintos) -> 200 nao_confirmado nos 4; o mesmo número repetido -> 200 nao_confirmado servido pelo cache
+LimiteTaxa da hora: verificar_falso_anon = 4 (o repetido não contou); verificar_falso_anon_origem: 4 linhas de n 1 (o IP de saída desta sessão troca a cada chamada); verificar soma as chamadas reais
+rotina (execução manual do workflow, como admin) com 3 registros conferir_ de teste: só o de 3 h sem marca de teste foi avisado
+  (aviso_conferir_2026-11-10 = ["100000001"], ultimo_alerta_conferir n=1 email=falhou, porque o e-mail ao suporte ainda dá 422);
+  o de teste com 5 h e o de 30 min não; segunda rodada na mesma hora: nenhum aviso novo, contador de e-mails do dia igual
+pedido de teste com o mesmo payment_id fora de a_conferir -> a rotina encerrou o registro (expira_em no passado); pedido de teste devolvido ao estado anterior
+```
+
+NÃO VERIFICADO aqui: Pix pendente que compensa com pagamento real (depende de uma compra Pix de verdade; provado no teste de `pedido-api.test.mjs` com o contrato exato do 1B); 30 falsos seguidos e um pagamento real no mesmo servidor (não há pagamento aprovado de teste disponível e gastar 30 chamadas do 1B não muda a prova; provado no teste); o campo `alerta_a_conferir` na resposta HTTP (o workflow não mostra a saída e nenhum agente manuseia token de admin; provado pelo efeito em `Operacao` e no teste).
+
+### 8.9 Fecho 2 da onda 1 (10/11/2026, noite): o aviso do Mercado Pago fora do orçamento anônimo
+
+Checkpoints: antes `6af354f00b25bf47f29a0a45`, depois `6af35911fdafe4a585c8c510` e final `6af35ad174fc217ed76d14fb` (rodízio na fila de pendentes). Arquivos do app tocados: `src/lib/pa/{regras.js,servidor.server.js,confirmar.server.js (novo)}` e `src/routes/api/pa/{confirmarPagamento,rotina,gravarRascunho}.js`. Rotas: as mesmas 13. Entidades: sem mudança. `npx eslint --quiet src/lib/pa src/routes/api/pa` e `npx vite build` no sandbox: saída 0. AutoCreatFlux: nada mudou (71 funções antes e depois; os três `portaAberta*` com o mesmo sha256).
+
+Preview do sandbox (mesmo código que vai ao ar; o IP de saída desta sessão troca a cada chamada, então cada chamada é quase sempre uma origem nova):
+
+```
+36 payment_id inventados seguidos -> 34 x 200 nao_confirmado, 2 x 202 tente_mais_tarde (a origem já tinha as 3 da faixa por origem)
+Operacao: pendente_88100000026 e pendente_88100000029, {payment_id, desde, ultimo, n:1, motivo:"orcamento_anonimo", tentativas_rotina:0}, sem dado pessoal
+LimiteTaxa da hora: verificar = 42 e verificar_falso_anon = 42 (o fecho 1 fecharia a faixa anônima de todos em 40);
+  verificar_falso_anon_origem: nenhuma origem passou de 3
+outra origem (o sandbox do Base44, no papel do servidor do aviso) com o total já em 42 -> 200 nao_confirmado (o 1B respondeu de verdade; o fecho 1 daria 202)
+aprovarRascunho slug "nada--r-abcdefghijkl" -> 403 negado; slug no formato antigo "nada-r-abcdefghijkl" -> 422 campo slug
+confirmar payment_id objeto -> 422; GET -> 405; rotina sem login -> 401; confirmar teste:true -> 200 nao_confirmado, sem pendente
+```
+
+Ensaio das rotas no sandbox, com o código do app e banco e rede falsos (`harness.mjs` no scratchpad do fecho), porque a rotina só roda como admin e nenhum agente manuseia token de admin:
+
+```
+ataque do achado 5 (30 ids de um endereço + 4 em cada um de 4 endereços novos): só o 4º de cada endereço novo leva 202
+aviso real logo depois, de outra origem: 200 {ok:true,status:"pago"} com 2 chamadas ao 1B (1 sem e-mail + 1 com a lista); só o pedido do pagador virou pago
+mesmo número em 202 de novo: n=2, mesma hora de início; teste:true em 202 não grava pendente
+rotina: 4 inventados -> nao_aprovado, apagados; 1B fora do ar há 3 h -> passageiro, alerta_confirmacao_pendente, ultimo_alerta_pendente email=falhou
+rotina com um pendente de pagamento real: pago pela faixa do servidor, registro apagado; segunda rodada no dia: nenhum e-mail novo (sem_novos)
+```
+
+NÃO VERIFICADO aqui: o caminho com pagamento aprovado de verdade (não existe pagamento aprovado de teste até o dono pagar a `pa-teste`); a rotina com token de admin no preview (o workflow roda no app publicado, onde as rotas ainda dão 404).
+
 ### 8.7 Correções da conferência da onda 1 (10/11/2026, tarde)
 
 Checkpoints: antes `6af33eee392cd812d1eba5e4`, depois `6af3423f769e842f204702b6`. Rotas antes e depois: as mesmas 13 em `src/routes/api/pa/` (nenhuma criada, nenhuma apagada); entidades: só acréscimo de 15 campos em `PedidoPortaAberta`, regras de acesso iguais. Preview do sandbox (mesmo código que vai ao ar):
@@ -351,7 +414,7 @@ sha256sum projetos/creat-nuvem/schema/pedido-regras.mjs           # neste reposi
 sha256sum src/lib/pa/regras.js                                     # no app (run_command do MCP do Base44)
 ```
 
-Os dois têm de dar o mesmo valor. Valor depois das correções da onda 1 (10/11/2026, `pa-regras-1A-2026-11-10b`): `ac5c9ebc7b8fd91a73d930ce6a7b1b39597243525a5c1a8bd595e169e1257095` nos dois (conferido no sandbox). Valor anterior: `a51a663c...`. Toda mudança nas regras é feita no repositório, testada com `npm test` e copiada byte a byte para o app.
+Os dois têm de dar o mesmo valor. Valor depois do fecho 2 da onda 1 (10/11/2026, `pa-regras-1A-2026-11-10d`): `510ebc77c5634bdf1ac56bf9b0c9745fab24221c52d53036eb854967b5a15863` nos dois (conferido no sandbox). Valores anteriores: `5a5ec057...` (`-10c`), `ac5c9ebc...` (`-10b`), `a51a663c...`. Toda mudança nas regras é feita no repositório, testada com `npm test` e copiada byte a byte para o app.
 
 ## 10. Para ir ao ar (coordenador)
 
@@ -370,8 +433,8 @@ curl -sS -o /dev/null -w '%{http_code}\n' -X POST $O/api/pa/rotina -d '{}'      
 curl -sS -o /dev/null -D - -X OPTIONS $O/api/pa/registrarPedido -H 'Origin: https://golpe.example' | grep -i access-control                # registrar o que sair
 ```
 
-4. Ativar os dois workflows (estão **inativos**): `POST /api/apps/6aefffe66b684db9404b1994/workflows/<id>/toggle-status?status=active` pelo MCP (`execute_api`), com `6af32ac81c44bac8d5631876` (rotina) e `6af32ad02773909a692bcf9a` (e-mail ao cliente).
+4. Logo depois da conferência no ar verde, ativar os dois workflows (estão **inativos**, `total_runs` 0; sem isso nenhum `a_conferir` nem `pendente_` é avisado): `POST /api/apps/6aefffe66b684db9404b1994/workflows/<id>/toggle-status?status=active` pelo MCP (`execute_api`), com `6af32ac81c44bac8d5631876` (rotina) e `6af32ad02773909a692bcf9a` (e-mail ao cliente). Em seguida `POST .../workflows/6af32ac81c44bac8d5631876/run-now` uma vez e conferir: `last_run_status` igual a `success`, e `Operacao resumo_<data>` ou `ultimo_email_suporte` atualizada. Antes do deploy não ligue: a rotina daria 404.
 5. Clique do dono (uma vez): entrar em https://creat-nuvem-404b1994.base44.app/login com a conta Google `mttcreatt@gmail.com`. Depois disso o e-mail ao suporte passa a sair; conferir com a execução manual do workflow da rotina e ler `Operacao ultimo_email_suporte` (tem de dizer `enviado`).
 6. Ensaio do qa: repetir o teste do e-mail ao endereço sem conta (`PA-TESTEMAIL1`, `email_solicitado = recibo`) com a gravação pelo endpoint de um registro (`PUT /api/apps/{app_id}/entities/PedidoPortaAberta/{id}`), que pode disparar o gatilho de entidade, e ler `email_resultado`. Resultado esperado pelo FATO: 422 até haver domínio verificado.
-7. Ensaio do qa, linhas novas: (a) 40 `POST` em `registrarPedido` de um celular em 4G com `X-Forwarded-For` diferentes: 429 antes do 31º; (b) `confirmarPagamento` com um `payment_id` aprovado de teste e 12 pedidos `aguardando_pagamento` de teste do mesmo produto: no máximo 5 chamadas ao 1B (contar as linhas `verificar:3600000` de `LimiteTaxa`); (c) `marcarPedido` de `rascunho_enviado` para `no_ar` antes de 7 dias: 409 `aceite_tacito_cedo`.
-8. Pedidos que dependem de outros pacotes antes do ensaio verde: 1B troca o endereço do aviso para `/api/pa/confirmarPagamento`; 1C faz `rascunho.js` aprovar com o segredo do aparelho (seção 4.5) e usa `entradaDoRegistro` (seção 5.1); 2A coleta `responsavel`, `endereco`, `horarios` e `plano` em `/abrir/` e segue o recuo da seção 4.2; copywriter publica a cláusula do aceite tácito e a política de privacidade nova no mesmo ato da página que chama `registrarPedido`.
+7. Ensaio do qa, linhas novas: (a) 40 `POST` em `registrarPedido` de um celular em 4G com `X-Forwarded-For` diferentes: 429 antes do 31º; (b) `confirmarPagamento` com um `payment_id` aprovado de teste e 12 pedidos `aguardando_pagamento` de teste do mesmo produto: no máximo 2 chamadas ao 1B (1 sem e-mail e 1 com a lista; contar `verificar:3600000` de `LimiteTaxa`); (c) `marcarPedido` de `rascunho_enviado` para `no_ar` antes de 7 dias: 409 `aceite_tacito_cedo`; (d) Pix real de teste: abrir `/obrigado/` com o Pix ainda pendente e pagar em seguida; o pedido tem de terminar `pago`, não `a_conferir`; (e) um pedido de teste em `a_conferir` há mais de 2 h aparece em `alerta_a_conferir` da rotina com `teste: true` e sem aviso; (f) a compra de R$ 1 do dono: verde é `PA_APROVADO_CONFIRMADO` (ou `_TARDE`) no log do `portaAbertaNotificacao` e `Operacao conferir_<payment_id>` com `teste:true` (ou `teste_ok`, se um pedido `pa-teste` tiver o e-mail do pagador), nunca `pago` (`docs/INTEGRACAO-PAGAMENTO.md`, "O que a compra de R$ 1 do dono vira"); (g) depois de ligar a rotina, nenhum `Operacao pendente_` com mais de 2 h sem aparecer em `alerta_confirmacao_pendente`.
+8. Pedidos que dependem de outros pacotes antes do ensaio verde: 1B troca o endereço do aviso para `/api/pa/confirmarPagamento`; 1C faz `rascunho.js` aprovar com o segredo do aparelho (seção 4.5) e usa `entradaDoRegistro` (seção 5.1); 2A coleta `responsavel`, `endereco`, `horarios` e `plano` em `/abrir/` e segue o recuo da seção 4.2; copywriter publica a cláusula do aceite tácito e a política de privacidade nova no mesmo ato da página que chama `registrarPedido`. A política nova já está escrita em `conteudo/privacidade-v3.md` (fecho 2 de 10/11: momento exato em que os dados saem do aparelho, lista do que é gravado, base legal por finalidade, hash do IP com sal por hora, Base44 e a função de conferência como operadores, a comparação de e-mail sem devolução, o cadastro do e-mail para o envio pelo Base44, o atendimento manual do art. 18 em até 15 dias e a contagem diária do `contar`). No deploy da 2A, e só nele: `git mv conteudo/privacidade-v3.md conteudo/privacidade.md` (a página `/privacidade/` lê esse arquivo). Antes disso ela não vai ao ar, porque descreve uma gravação que a página de hoje ainda não faz. Faltam, antes de tirar a marca `REVISAO_JURIDICA_PENDENTE`: preencher `{{empresa.*}}` e `{{contato.email}}` com o dado real, a revisão jurídica e uma decisão do dono sobre o prazo de 5 anos do pedido pago (a rotina não apaga pedido pago; hoje a eliminação é manual no painel). `termos.md` não mudou, então `TERMOS` continua `termos-v1`; se a revisão mexer nos termos, sobe para `termos-v2` com o sha256 novo no mesmo commit.

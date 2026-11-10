@@ -97,16 +97,16 @@ node scripts/conferir-sites-no-ar.cjs    # TRAVA (seção 0): os sites linkados 
 
 Leve `dist/publico/` ao app pelo mesmo caminho dos sites: zip, Drive, `share_file`, `curl` e `sha256sum -c`. Depois, no Base44, **apague só os caminhos de topo da vitrine** e copie por cima.
 
-Lista atual dos caminhos de topo da vitrine (09/11/2026; é a lista `ENTRA` de `montar-publico.cjs` mais `sede`):
+Lista atual dos caminhos de topo da vitrine (10/11/2026; é a lista `ENTRA` de `montar-publico.cjs` mais `sede` e `robots.txt`, que o `montar-publico.cjs` gera):
 
 ```
-404.html _headers abrir assets bastidores checkout.config.js conteudo dados index.html motor obrigado previa privacidade ritual sede termos
+404.html _headers abrir assets bastidores checkout.config.js conteudo dados index.html motor obrigado previa privacidade ritual robots.txt sede termos
 ```
 
 ```bash
 # no Base44, raiz do app, com a vitrine descompactada de modo que exista <origem>/dist/publico/
 cd public && rm -rf 404.html _headers abrir assets bastidores checkout.config.js conteudo dados \
-  index.html motor obrigado previa privacidade ritual sede termos && cd .. \
+  index.html motor obrigado previa privacidade ritual robots.txt sede termos && cd .. \
 && cp -r <origem>/dist/publico/. public/ && ls public public/sites 2>/dev/null
 ```
 
@@ -117,7 +117,7 @@ cd public && rm -rf 404.html _headers abrir assets bastidores checkout.config.js
 
 ## O que o Base44 não aplica
 
-O `_headers` (CSP e cache) é formato da Cloudflare, e o Base44 não o lê. No Base44 a vitrine e os sites ficam sem esses cabeçalhos. Se a CSP precisar valer, o caminho é o deploy da Cloudflare (`wrangler.toml`) ou a configuração de cabeçalhos do Base44, se existir. `robots.txt` e `sitemap.xml` de cada site ficam em `/sites/<slug>/`. O Google só lê o `robots.txt` da raiz, então para indexar os sites é preciso um `sitemap.xml` na raiz da vitrine que liste cada `/sites/<slug>/` (pendência registrada no RELATORIO).
+O `_headers` (CSP e cache) é formato da Cloudflare, e o Base44 não o lê. No Base44 a vitrine e os sites ficam sem esses cabeçalhos. Se a CSP precisar valer, o caminho é o deploy da Cloudflare (`wrangler.toml`) ou a configuração de cabeçalhos do Base44, se existir. `robots.txt` e `sitemap.xml` de cada site ficam em `/sites/<slug>/`. O Google só lê o `robots.txt` da raiz (desde 10/11 gerado pelo `montar-publico.cjs`, com `Disallow: /sites/*--r-` para os rascunhos), então para indexar os sites é preciso um `sitemap.xml` na raiz da vitrine que liste cada `/sites/<slug>/` (pendência registrada no RELATORIO).
 
 ## Molduras e o cabeçalho da hospedagem (09/11/2026)
 

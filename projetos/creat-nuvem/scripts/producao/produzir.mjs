@@ -9,7 +9,7 @@
  *   2. o agente redator da sessão principal lê redator.json e grava um JSON de textos.
  *   3. node scripts/producao/produzir.mjs --pedido <arquivo> --textos <json do agente> --rascunho
  *        aplica os textos pela lista branca, passa pelo portão de conteúdo e pelo validar-tenant, gera
- *        dist/<slug>/ (o build final) e dist/<slug>-r-<id>/ (o rascunho, cópia com a faixa), testa os
+ *        dist/<slug>/ (o build final) e dist/<slug>--r-<id>/ (o rascunho, cópia com a faixa), testa os
  *        dois a 390 px e grava sites/<slug>/rascunho.json com o link de aprovação (#t=<token>).
  *
  * Opções:
@@ -40,7 +40,7 @@
  *   CREAT_CAMBIO        R$ por US$ para o custo.json (obrigatória só no caminho --api/fixture)
  *   CREAT_HOME          home da vitrine (padrão https://creat-nuvem-404b1994.base44.app/; "0" = rodapé sem link)
  *   CREAT_URL_SITES     URL dos sites com {slug} (padrão https://creat-nuvem-404b1994.base44.app/sites/{slug}/;
- *                       "0" = sem canonical nem sitemap); o rascunho usa o mesmo modelo com <slug>-r-<id>
+ *                       "0" = sem canonical nem sitemap); o rascunho usa o mesmo modelo com <slug>--r-<id>
  *   CREAT_APROVAR_URL   caminho da função de aprovação na mesma origem (padrão /api/pa/aprovarRascunho)
  *   CREAT_DOMINIOS      domínios da Creat, separados por vírgula (varredura do SAIR)
  *   CREAT_SAIDA         pasta de saída

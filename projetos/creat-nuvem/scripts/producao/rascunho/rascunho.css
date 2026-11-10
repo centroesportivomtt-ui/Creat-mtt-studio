@@ -1,5 +1,5 @@
 /* scripts/producao/rascunho/rascunho.css · faixa do rascunho para aprovação (pacote 1C)
-   Só existe no rascunho (/sites/<slug>-r-<id>/). O site final não carrega este arquivo.
+   Só existe no rascunho (/sites/<slug>--r-<id>/). O site final não carrega este arquivo.
    Sem estilo inline: a CSP do template não aceita. */
 /* --rascunho-h: altura da faixa (rascunho.js mede e atualiza; o valor daqui vale até o script rodar).
    O topo do site (sticky) e os saltos de âncora descem essa altura, para a faixa não cobrir nada. */

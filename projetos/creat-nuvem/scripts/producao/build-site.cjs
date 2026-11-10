@@ -24,7 +24,7 @@
  * um build anterior (marcador: tenant.json + index.html + motor/v1/, ou saida.json + index.html da página
  * de saída). Nunca a raiz do disco, a home,
  * a raiz do projeto, o cwd ou um pai deles (ver checarDestino).
- * --rascunho [--rascunho-id <id>] (pacote 1C, PV-03): além de dist/<slug>/, grava dist/<slug>-r-<id>/,
+ * --rascunho [--rascunho-id <id>] (pacote 1C, PV-03): além de dist/<slug>/, grava dist/<slug>--r-<id>/,
  *   cópia do build final com a faixa "Rascunho para a sua aprovação. Ainda não está no ar.", o botão
  *   "Aprovar e colocar no ar" (POST /api/pa/aprovarRascunho {slug, token}; token só do #t= da URL),
  *   o link "Pedir ajuste" no WhatsApp da Creat, meta noindex (a proteção real; o robots.txt da subpasta não é lido por buscador) e SEM sitemap.

@@ -646,14 +646,14 @@ test('1C servicos_texto: parser de regra (nome, preço, minutos); só a saída e
   assert.equal(t.textos.servicosNota, require(path.join(PROD, 'lib', 'tenant.cjs')).NOTA_SEM_PRECO, 'um serviço sem preço: nota de sob consulta');
 });
 
-test('1C --rascunho: dist/<slug>-r-<16>/ é o build final + faixa, noindex, Disallow, sem sitemap; token só no rascunho.json; reaproveita e troca', () => {
+test('1C --rascunho: dist/<slug>--r-<16>/ é o build final + faixa, noindex, Disallow, sem sitemap; token só no rascunho.json; reaproveita e troca', () => {
   const s = pasta('rascunho');
   const a = ['--pedido', path.join(FIX, 'pedido-valido.txt'), '--saida', s, '--textos', TEXTOS, '--rascunho', '--sem-navegador', '--sem-sair'];
   const r = rodar('produzir.mjs', a);
   assert.equal(r.codigo, 0, r.saida);
   const site = path.join(s, 'sites', SLUG);
   const j = C.lerJson(path.join(site, 'rascunho.json'));
-  assert.match(j.dir, new RegExp(`^${SLUG}-r-[a-z0-9]{16}$`));
+  assert.match(j.dir, new RegExp(`^${SLUG}--r-[a-z0-9]{16}$`));
   assert.match(j.dir, RS.RE_DIR);
   assert.match(j.token, /^[A-Za-z0-9_-]{21}[AQgw]$/, 'formato RE.segredo do 1A');
   assert.equal(j.link, `https://creat-nuvem-404b1994.base44.app/sites/${j.dir}/#t=${j.token}`);
@@ -987,6 +987,10 @@ test('1C conferência: cliente chamado "Demo ..." nunca cai em sites/demo-*/ (ve
   assert.equal(slugSeguro('demo-studio-campinas', true), 'demo-studio-campinas', 'demonstração mantém demo-');
   assert.equal(slugSeguro('ensaio', false), 'cliente-ensaio');
   assert.equal(slugSeguro('demonstrativo-x', false), 'demonstrativo-x', 'só o prefixo exato');
+  // Fecho 2: slug final nunca tem "--" (o marcador do rascunho é "--r-"); "-r-" de um nome com R continua.
+  assert.equal(slugSeguro('barbearia-do-r-feira-de-santana', false), 'barbearia-do-r-feira-de-santana');
+  assert.equal(slugSeguro('studio--r-x', false), 'studio-r-x');
+  assert.equal(slugSeguro('demo--r-abc', true), 'demo-r-abc');
   const longo = slugSeguro('demo-' + 'a'.repeat(34), false);
   assert.ok(longo.length <= 40 && C.SLUG_RE.test(longo), longo);
 });

@@ -8,7 +8,7 @@
  * o suporte mandar o link pelo WhatsApp que o próprio comprador deu no pedido (mensagem do pedido pago,
  * não prospecção). Este comando faz o link desse envio sem precisar do contêiner antigo:
  *
- *   node scripts/producao/link-aprovacao.cjs --dir <slug>-r-<id> [--saida <pasta>] [--json]
+ *   node scripts/producao/link-aprovacao.cjs --dir <slug>--r-<id> [--saida <pasta>] [--json]
  *
  *   --dir    o slug_rascunho gravado no PedidoPortaAberta (o rascunho já publicado em /sites/<dir>/)
  *   --saida  se sites/<slug>/rascunho.json existir nessa pasta com o mesmo dir, grava nele o token novo
@@ -36,7 +36,7 @@ function urlDoDir(dir) {
 /* novoLink({ dir, saida? }) -> { dir, url, link, token, token_hash, gravado } */
 function novoLink(o) {
   const dir = String(o.dir || '');
-  if (!R.RE_DIR.test(dir)) throw new C.ErroCampo('--dir', `precisa ser o slug_rascunho do pedido, no formato <slug>-r-<id> (veio ${dir.slice(0, 80) || 'nada'})`);
+  if (!R.RE_DIR.test(dir)) throw new C.ErroCampo('--dir', `precisa ser o slug_rascunho do pedido, no formato <slug>--r-<id> (veio ${dir.slice(0, 80) || 'nada'})`);
   const url = urlDoDir(dir);
   if (!url) throw new C.ErroCampo('CREAT_URL_SITES', 'está desligada ("0"): sem endereço, não há link para mandar ao cliente');
   const token = R.novoToken();
@@ -44,7 +44,7 @@ function novoLink(o) {
   const link = `${url}#t=${token}`;
   let gravado = '';
   if (o.saida) {
-    const slug = dir.slice(0, dir.lastIndexOf('-r-'));
+    const slug = dir.slice(0, dir.lastIndexOf('--r-'));
     const arq = path.join(path.resolve(o.saida), 'sites', slug, 'rascunho.json');
     if (fs.existsSync(arq)) {
       const j = C.lerJson(arq);
@@ -59,7 +59,7 @@ function novoLink(o) {
 
 function main(argv) {
   const a = C.lerArgs(argv);
-  if (!a.dir || a.dir === true) { console.error('Uso: node scripts/producao/link-aprovacao.cjs --dir <slug>-r-<id> [--saida <pasta>] [--json]'); return 1; }
+  if (!a.dir || a.dir === true) { console.error('Uso: node scripts/producao/link-aprovacao.cjs --dir <slug>--r-<id> [--saida <pasta>] [--json]'); return 1; }
   let r;
   try { r = novoLink({ dir: a.dir, saida: typeof a.saida === 'string' ? a.saida : '' }); }
   catch (e) { console.error(e.message); return 1; }

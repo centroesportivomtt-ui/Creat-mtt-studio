@@ -2,19 +2,19 @@
  * scripts/producao/lib/rascunho.cjs · rascunho para a aprovação do cliente (pacote 1C, achado PV-03)
  *
  * O rascunho É o build final. build-site grava dist/<slug>/ (o site que vai ao ar depois) e, com
- * --rascunho, uma cópia dele em dist/<slug>-r-<id>/ com só estas diferenças, todas reversíveis:
+ * --rascunho, uma cópia dele em dist/<slug>--r-<id>/ com só estas diferenças, todas reversíveis:
  *   index.html   meta robots "noindex, nofollow"; <link rascunho.css> e <script rascunho.js> no fim do
  *                <head>; a faixa logo depois de <body>. htmlFinalDoRascunho() desfaz e tem de dar o
  *                index.html final byte a byte (conferido em build e em teste).
  *   robots.txt   "User-agent: *\nDisallow: /"; sem sitemap.xml (rascunho nunca entra em sitemap).
- *                ATENÇÃO: buscador só lê robots.txt na RAIZ do domínio. Em /sites/<slug>-r-<id>/robots.txt
+ *                ATENÇÃO: buscador só lê robots.txt na RAIZ do domínio. Em /sites/<slug>--r-<id>/robots.txt
  *                o arquivo NÃO protege nada; fica só para o caso de alguém copiar a pasta para a raiz de
  *                outro domínio. A proteção real do rascunho é a meta noindex do index.html (e o endereço
  *                imprevisível). Na raiz, o robots.txt publicado pelo montar-publico.cjs precisa ter
- *                "Disallow: /sites/*-r-" (pedido ao dono desse arquivo).
+ *                "Disallow: /sites/*--r-" (pedido ao dono desse arquivo).
  *   rascunho.js / rascunho.css   cópias de scripts/producao/rascunho/.
  * A aprovação só publica dist/<slug>/ (que já existe e tem o mesmo sha256 registrado em rascunho.json)
- * e apaga /sites/<slug>-r-<id>/. Nada é reconstruído na aprovação.
+ * e apaga /sites/<slug>--r-<id>/. Nada é reconstruído na aprovação.
  *
  * id: 16 caracteres [a-z0-9] por crypto.randomInt (cerca de 82 bits), no formato RE.slugRascunho do 1A.
  * token: 16 bytes por crypto.randomBytes em base64url (22 caracteres, último em [AQgw]), o RE.segredo
@@ -30,7 +30,7 @@ const ALFABETO = 'abcdefghijklmnopqrstuvwxyz0123456789';
 const TAM_ID = 16;
 const RE_TOKEN = /^[A-Za-z0-9_-]{21}[AQgw]$/;
 const RE_ID = /^[a-z0-9]{12,32}$/;
-const RE_DIR = /^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?-r-[a-z0-9]{12,32}$/;     // = RE.slugRascunho (schema/pedido-regras.mjs)
+const RE_DIR = /^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?--r-[a-z0-9]{12,32}$/;     // = RE.slugRascunho (schema/pedido-regras.mjs)
 const ENDPOINT_PADRAO = '/api/pa/aprovarRascunho';
 const WHATSAPP_AJUSTE = '5575981151202';                                      // Suporte Creat
 const ASSETS = path.join(__dirname, '..', 'rascunho');
@@ -39,7 +39,7 @@ const TEXTO_FAIXA = 'Rascunho para a sua aprovação. Ainda não está no ar.';
 
 function novoId() { let s = ''; for (let i = 0; i < TAM_ID; i++) s += ALFABETO[crypto.randomInt(ALFABETO.length)]; return s; }
 function novoToken() { return crypto.randomBytes(16).toString('base64url'); }
-function dirRascunho(slug, id) { return `${slug}-r-${id}`; }
+function dirRascunho(slug, id) { return `${slug}--r-${id}`; }
 function sha256(buf) { return crypto.createHash('sha256').update(buf).digest('hex'); }
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
@@ -111,7 +111,7 @@ function manifesto(pasta, listar) {
  */
 function gravarRascunho(o) {
   const dir = path.basename(o.destino);
-  if (!RE_DIR.test(dir) || dir !== dirRascunho(o.slug, o.id)) throw new Error(`pasta de rascunho fora do formato <slug>-r-<id>: ${dir}`);
+  if (!RE_DIR.test(dir) || dir !== dirRascunho(o.slug, o.id)) throw new Error(`pasta de rascunho fora do formato <slug>--r-<id>: ${dir}`);
   const opc = { dir, endpoint: endpoint(), ajuste: linkAjuste(o.negocio) };
   fs.rmSync(o.destino, { recursive: true, force: true });
   o.copiarPasta(o.pastaFinal, o.destino);

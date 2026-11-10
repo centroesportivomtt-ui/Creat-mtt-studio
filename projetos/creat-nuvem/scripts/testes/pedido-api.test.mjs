@@ -233,9 +233,9 @@ test('recibo traz produto, valor, meio, número do pagamento, prazo, regra do pr
   assert.equal(m.corpo.includes('base44-interno'), false, 'o id interno do Base44 não aparece');
   assert.equal(m.assunto.includes('Barbearia'), false);
   assert.equal(R.modeloEmailCliente('outro', {}), null);
-  const r = R.modeloEmailCliente('rascunho', { pedido_id: 'PA-AAAAAAAAAA', slug_rascunho: 'barbearia-x-r-abcdefghijkl', token_rascunho: 'q1Zr8Xn4Lw0bT6yHc9VfEA' });
-  assert.ok(r.corpo.includes('/sites/barbearia-x-r-abcdefghijkl/#t=q1Zr8Xn4Lw0bT6yHc9VfEA'));
-  const r2 = R.modeloEmailCliente('rascunho', { pedido_id: 'PA-AAAAAAAAAA', slug_rascunho: 'barbearia-x-r-abcdefghijkl', token_rascunho: 'x" onclick=' });
+  const r = R.modeloEmailCliente('rascunho', { pedido_id: 'PA-AAAAAAAAAA', slug_rascunho: 'barbearia-x--r-abcdefghijkl', token_rascunho: 'q1Zr8Xn4Lw0bT6yHc9VfEA' });
+  assert.ok(r.corpo.includes('/sites/barbearia-x--r-abcdefghijkl/#t=q1Zr8Xn4Lw0bT6yHc9VfEA'));
+  const r2 = R.modeloEmailCliente('rascunho', { pedido_id: 'PA-AAAAAAAAAA', slug_rascunho: 'barbearia-x--r-abcdefghijkl', token_rascunho: 'x" onclick=' });
   assert.equal(r2.corpo.includes('#t='), false, 'token fora do formato não entra no link');
 });
 
@@ -359,4 +359,313 @@ test('campos do executor: só os da lista, com o tipo certo', () => {
   assert.equal(R.validarCamposExecutor({ no_ar_em: 'amanhã' }).campo, 'no_ar_em');
   assert.equal(R.validarCamposExecutor({ motivo_revisao: 'Texto livre do cliente' }).campo, 'motivo_revisao');
   assert.equal(R.validarCamposExecutor({ status: 'pago' }).campo, 'status');
+});
+
+/* ---------- Fecho de 10/11: cache negativo do Pix (c2), orçamento anônimo (c3), a_conferir na rotina (c4) ---------- */
+
+// Simula o banco (Operacao e LimiteTaxa) e o portaAbertaVerificar (1B) com o mesmo contrato do 1B:
+// pendente -> {aprovado:false, ..., email_confere}; inexistente -> {aprovado:false}; aprovado -> {aprovado:true, ...}.
+function bancoFalso({ pagamentos = {}, origem = 'cf:1' } = {}) {
+  const cache = new Map();
+  const cont = { total: 0, falsosAnon: 0, porOrigem: new Map() };
+  const chamadas = [];
+  const io = (deOrigem = origem) => ({
+    chave: async (pid, email) => 'verif_' + (await R.sha256Hex('verif|' + pid + '|' + email)).slice(0, 40),
+    lerCache: async k => cache.get(k) || null,
+    gravarCache: async (k, d, ms) => { cache.set(k, d); cache.set(k + ':ms', ms); },
+    contadores: async () => ({ total: cont.total, falsosAnon: cont.falsosAnon, falsosAnonOrigem: cont.porOrigem.get(deOrigem) || 0 }),
+    somar: async nome => {
+      if (nome === 'total') { cont.total++; return; }
+      cont.falsosAnon++; cont.porOrigem.set(deOrigem, (cont.porOrigem.get(deOrigem) || 0) + 1);
+    },
+    chamar: async corpo => {
+      chamadas.push(corpo);
+      const p = pagamentos[corpo.payment_id];
+      if (!p) return { d: { aprovado: false } };
+      const email_confere = !!corpo.email_candidato && corpo.email_candidato === p.email;
+      if (p.status !== 'approved') return { d: { aprovado: false, valor: p.valor, external_reference: p.ref, email_confere } };
+      return { d: { aprovado: true, valor: p.valor, external_reference: p.ref, email_confere, aprovado_em: p.aprovado_em } };
+    }
+  });
+  return { io, cache, cont, chamadas };
+}
+
+// Faz o que a rota confirmarPagamento faz depois do r1 (Regra 2), com as regras puras e o banco falso.
+async function confirmarSemPedido(b, payment_id, candidatos, io, agoraMs) {
+  const r1 = await R.verificarComRegras(io, { payment_id });
+  if (r1.transitorio) return { resposta: 'tente_mais_tarde', r1 };
+  const cls = R.classificarPagamento(r1.d);
+  if (cls.tipo !== 'aprovado') return { resposta: cls.tipo === 'nao_aprovado' ? 'nao_confirmado' : cls.tipo, r1 };
+  const recentes = candidatos.filter(p => R.pedidoCasa(p, cls.pg, agoraMs));
+  const m2 = await R.montarRegra2(recentes, async email => {
+    const r = await R.verificarComRegras(io, { payment_id, email_candidato: email, pagamentoReal: true });
+    return r.transitorio ? { transitorio: true } : { confere: r.d.aprovado === true && r.d.email_confere === true };
+  }, R.LIMITES.verificacoesRegra2);
+  if (m2.transitorio) return { resposta: 'tente_mais_tarde' };
+  return { resposta: 'decidido', d: R.decidirConfirmacao({ pg: cls.pg, regra1: null, regra2: m2.regra2, agoraMs }) };
+}
+
+test('c2: pergunta com e-mail do Pix pendente não fica guardada como false; quando o Pix compensa, o aviso vira pago (não a_conferir)', async () => {
+  const pagamentos = { 123456789: { status: 'pending', valor: 297, ref: 'pa-abertura-inauguracao-feira-2026-11', email: 'dono@exemplo.com.br' } };
+  const b = bancoFalso({ pagamentos });
+  const io = b.io();
+  // Passo 1: a volta a /obrigado/ pergunta com o e-mail do pedido enquanto o Pix está pendente.
+  const antes = await R.verificarComRegras(io, { payment_id: '123456789', email_candidato: 'dono@exemplo.com.br', autenticado: true });
+  assert.equal(antes.d.aprovado, false);
+  assert.equal(R.politicaCacheVerificar(antes.d, true), 0, 'negativa com e-mail não tem validade');
+  const chaveEmail = await io.chave('123456789', 'dono@exemplo.com.br');
+  assert.equal(b.cache.has(chaveEmail), false, 'nada guardado para a pergunta com e-mail');
+  // Passo 2: 30 s depois o Pix compensa e chega o aviso do Mercado Pago (sem pedido_id; Regra 2 pergunta com o e-mail).
+  pagamentos[123456789].status = 'approved';
+  pagamentos[123456789].aprovado_em = new Date(TER_10H_BAHIA + 30000).toISOString();
+  const cand = [pedido({ pedido_id: 'PA-PIXPENDE01', email: 'dono@exemplo.com.br' })];
+  const r = await confirmarSemPedido(b, '123456789', cand, io, TER_10H_BAHIA + 60000);
+  assert.equal(r.resposta, 'decidido');
+  assert.equal(r.d.acao, 'pago');
+  assert.equal(r.d.regra, 2);
+  assert.equal(r.d.pedido.pedido_id, 'PA-PIXPENDE01');
+  // Mesmo que uma linha antiga (gravada antes desta regra) guarde false com e-mail, ela é ignorada.
+  const b2 = bancoFalso({ pagamentos });
+  const io2 = b2.io();
+  b2.cache.set(await io2.chave('123456789', 'dono@exemplo.com.br'), { aprovado: false, email_confere: true });
+  const r2 = await confirmarSemPedido(b2, '123456789', cand, io2, TER_10H_BAHIA + 60000);
+  assert.equal(r2.d.acao, 'pago', 'cache negativo antigo com e-mail não manda a a_conferir');
+  // Sem e-mail, a negativa fica guardada 15 s; a positiva, 1 h.
+  assert.equal(R.politicaCacheVerificar({ aprovado: false }, false), R.LIMITES.cacheNegativoMs);
+  assert.equal(R.politicaCacheVerificar({ aprovado: true }, true), R.LIMITES.cacheVerificarMs);
+  assert.equal(R.cacheVerificarUtil({ aprovado: false }, true), false);
+  assert.equal(R.cacheVerificarUtil({ aprovado: false }, false), true);
+  assert.equal(R.cacheVerificarUtil({ aprovado: true, email_confere: false }, true), true);
+});
+
+test('c3: 30 chamadas anônimas com payment_id inventado não bloqueiam a confirmação real; aprovado:true não gasta o orçamento anônimo', async () => {
+  const pagamentos = { 987654321: { status: 'approved', valor: 297, ref: 'pa-abertura-inauguracao-feira-2026-11', email: 'real@exemplo.com.br', aprovado_em: new Date(TER_10H_BAHIA).toISOString() } };
+  const b = bancoFalso({ pagamentos });
+  const atacante = b.io('cf:203.0.113.9');
+  for (let i = 0; i < 30; i++) {
+    const r = await R.verificarComRegras(atacante, { payment_id: String(500000000 + i) });
+    assert.equal(r.d && r.d.aprovado, false, 'falso ' + i + ' recebe resposta firme negativa');
+  }
+  assert.equal(b.cont.falsosAnon, 30);
+  // O 31º do mesmo endereço já não chega ao 1B (orçamento anônimo esgotado e a faixa da origem também).
+  const r31 = await R.verificarComRegras(atacante, { payment_id: '599999999' });
+  assert.equal(r31.transitorio, true);
+  assert.equal(r31.motivo, 'orcamento_anonimo');
+  // O aviso do pagamento real chega de outra origem (servidor do 1B), sem segredo e sem pedido_id.
+  const webhook = b.io('cf:198.51.100.7');
+  const cand = [pedido({ pedido_id: 'PA-REALREAL01', email: 'real@exemplo.com.br', criado_em: new Date(TER_10H_BAHIA - H).toISOString() })];
+  const r = await confirmarSemPedido(b, '987654321', cand, webhook, TER_10H_BAHIA + 60000);
+  assert.equal(r.resposta, 'decidido');
+  assert.equal(r.d.acao, 'pago');
+  assert.equal(b.cont.falsosAnon, 30, 'respostas aprovado:true não contam como tentativa anônima');
+  // Mesmo com a faixa da origem do webhook gasta, a Regra 2 de um pagamento já visto aprovado passa (pagamentoReal).
+  assert.equal(R.orcamentoVerificar({ pagamentoReal: true, total: 39, falsosAnon: 99, falsosAnonOrigem: 99 }).ok, true);
+  assert.equal(R.orcamentoVerificar({ autenticado: true, total: 45, falsosAnon: 99, falsosAnonOrigem: 99 }).ok, true);
+  // Tetos que continuam valendo: 400 chamadas por hora para todos; anônimo fecha só por tentativa falsa.
+  assert.equal(R.orcamentoVerificar({ autenticado: true, total: 400 }).motivo, 'orcamento');
+  assert.equal(R.orcamentoVerificar({ total: 40 }).ok, true, 'o total sozinho não fecha a faixa anônima (fecho 2)');
+  assert.equal(R.orcamentoVerificar({ total: 31, falsosAnon: 30, falsosAnonOrigem: 2 }).ok, true);
+  assert.equal(R.orcamentoVerificar({ total: 31, falsosAnon: 30, falsosAnonOrigem: 3 }).ok, false);
+  assert.equal(R.orcamentoVerificar({ total: 210, falsosAnon: 200, falsosAnonOrigem: 0 }).motivo, 'orcamento_anonimo', 'teto global de falsas');
+  // Repetir o mesmo número inventado dentro de 15 s usa o cache e não gasta nada.
+  const antes = b.cont.total;
+  const rep = await R.verificarComRegras(b.io('cf:192.0.2.1'), { payment_id: '500000000' });
+  assert.equal(rep.guardado, true);
+  assert.equal(b.cont.total, antes);
+});
+
+test('c4: rotina lista a_conferir, alerta a partir de 2 h, um aviso por dia e nunca avisa pedido de teste', () => {
+  const agoraMs = TER_10H_BAHIA;
+  const pedidos = [
+    pedido({ pedido_id: 'PA-CONFERE001', status: 'a_conferir', payment_id: '111111111', updated_date: new Date(agoraMs - 3 * H).toISOString() }),
+    pedido({ pedido_id: 'PA-CONFERE002', status: 'a_conferir', payment_id: '222222222', updated_date: new Date(agoraMs - 30 * 60000).toISOString() }),
+    pedido({ pedido_id: 'PA-TESTE00003', status: 'a_conferir', payment_id: '333333333', eh_teste: true, updated_date: new Date(agoraMs - 5 * H).toISOString() })
+  ];
+  const registros = [
+    // O registro manda na hora (a primeira vez que foi a a_conferir), não o updated_date.
+    R.registroAConferir({ payment_id: '222222222', pedido_id: 'PA-CONFERE002', candidatos: ['PA-CONFERE002'], regra: 1, agoraMs: agoraMs - 2.5 * H }),
+    // Pagamento aprovado sem pedido marcado (dois candidatos com e-mail): só existe no registro.
+    R.registroAConferir({ payment_id: '444444444', pedido_id: null, candidatos: ['PA-CANDIDAT01', 'PA-CANDIDAT02', 'nao-e-id'], regra: 2, agoraMs: agoraMs - 4 * H }),
+    R.registroAConferir({ payment_id: '555555555', pedido_id: null, candidatos: [], regra: 3, agoraMs: agoraMs - H })
+  ];
+  const { itens, avisar } = R.itensAConferir({ pedidos, registros, avisadosHoje: [], agoraMs });
+  assert.equal(itens.length, 5);
+  const porRef = Object.fromEntries(itens.map(i => [i.ref, i]));
+  assert.equal(porRef['111111111'].alerta, true);
+  assert.equal(porRef['111111111'].horas, 3);
+  assert.equal(porRef['222222222'].alerta, true, 'vale a hora do registro (2,5 h), não a última atualização (30 min)');
+  assert.equal(porRef['444444444'].pedido_id, null);
+  assert.deepEqual(porRef['444444444'].candidatos, ['PA-CANDIDAT01', 'PA-CANDIDAT02']);
+  assert.equal(porRef['555555555'].alerta, false, '1 h ainda não alerta');
+  assert.equal(porRef['333333333'].teste, true);
+  assert.deepEqual(avisar.map(i => i.ref).sort(), ['111111111', '222222222', '444444444'], 'teste e item com menos de 2 h não geram aviso');
+  // Na próxima rodada do mesmo dia nada é avisado de novo; no dia seguinte, sim.
+  const mesmoDia = R.itensAConferir({ pedidos, registros, avisadosHoje: avisar.map(i => i.ref), agoraMs: agoraMs + H });
+  assert.deepEqual(mesmoDia.avisar.map(i => i.ref), ['555555555'], 'só o que passou de 2 h nesta hora; os já avisados hoje não repetem');
+  assert.equal(mesmoDia.itens.filter(i => i.alerta).length, 5, 'o alerta continua na resposta da rotina enquanto não se resolve (inclusive o de teste)');
+  const outroDia = R.itensAConferir({ pedidos, registros, avisadosHoje: [], agoraMs: agoraMs + 24 * H });
+  assert.equal(outroDia.avisar.length, 4);
+  // Exatamente 2 h já alerta; 1 h 59 não.
+  const limite = R.itensAConferir({ pedidos: [], registros: [R.registroAConferir({ payment_id: '666666666', agoraMs: agoraMs - 2 * H })], avisadosHoje: [], agoraMs });
+  assert.equal(limite.avisar.length, 1);
+  const deTeste = R.itensAConferir({ pedidos: [], registros: [R.registroAConferir({ payment_id: '777777777', teste: true, agoraMs: agoraMs - 5 * H })], avisadosHoje: [], agoraMs });
+  assert.equal(deTeste.itens[0].teste, true);
+  assert.equal(deTeste.itens[0].alerta, true);
+  assert.equal(deTeste.avisar.length, 0, 'registro de teste nunca gera aviso');
+  const quase = R.itensAConferir({ pedidos: [], registros: [R.registroAConferir({ payment_id: '666666666', agoraMs: agoraMs - 2 * H + 60000 })], avisadosHoje: [], agoraMs });
+  assert.equal(quase.avisar.length, 0);
+});
+
+/* ---------- Fecho 2 de 10/11: o aviso do Mercado Pago não disputa o orçamento anônimo (c3) ---------- */
+
+// Banco falso com o 1B de verdade em miniatura: lista de e-mails (emails_candidatos) e 429 por origem acima de 60 falsas.
+function bancoLista({ pagamentos = {}, limite1b = 60 } = {}) {
+  const b = bancoFalso({ pagamentos });
+  let falsas1b = 0;
+  const io = (origem) => {
+    const base = b.io(origem);
+    return {
+      ...base,
+      chamar: async corpo => {
+        b.chamadas.push(corpo);
+        const p = pagamentos[corpo.payment_id];
+        const aprovado = !!p && p.status === 'approved';
+        if (!aprovado) { falsas1b++; if (falsas1b > limite1b) return { transitorio: true, motivo: 'limite_1b' }; }
+        if (!p) return { d: { aprovado: false } };
+        const lista = Array.isArray(corpo.emails_candidatos) ? corpo.emails_candidatos : null;
+        const cands = lista || (corpo.email_candidato ? [corpo.email_candidato] : []);
+        const i = cands.findIndex(e => e === p.email);
+        const d = { aprovado, valor: p.valor, external_reference: p.ref, email_confere: i >= 0 };
+        if (lista) d.email_confere_indice = i;
+        if (aprovado) d.aprovado_em = p.aprovado_em;
+        return { d };
+      }
+    };
+  };
+  return { ...b, io };
+}
+
+async function confirmarComLista(b, payment_id, candidatos, io, agoraMs) {
+  const r1 = await R.verificarComRegras(io, { payment_id });
+  if (r1.transitorio) return { resposta: 'tente_mais_tarde', motivo: r1.motivo };
+  const cls = R.classificarPagamento(r1.d);
+  if (cls.tipo !== 'aprovado') return { resposta: 'nao_confirmado' };
+  const recentes = candidatos.filter(p => R.pedidoCasa(p, cls.pg, agoraMs));
+  const m2 = await R.montarRegra2Lista(io, { payment_id, candidatos: recentes });
+  if (m2.transitorio) return { resposta: 'tente_mais_tarde' };
+  return { resposta: 'decidido', chamadas: m2.chamadas, d: R.decidirConfirmacao({ pg: cls.pg, regra1: null, regra2: m2.regra2, agoraMs }) };
+}
+
+test('fecho 2 (achado 5): 30 ids inventados de um endereço e 4 por endereço em 4 endereços novos não atrasam o aviso do Mercado Pago', async () => {
+  const pagamentos = { 987650001: { status: 'approved', valor: 297, ref: 'pa-abertura-inauguracao-feira-2026-11', email: 'real@exemplo.com.br', aprovado_em: new Date(TER_10H_BAHIA).toISOString() } };
+  const b = bancoLista({ pagamentos });
+  let id = 700000000;
+  for (let i = 0; i < 30; i++) await R.verificarComRegras(b.io('cf:203.0.113.1'), { payment_id: String(id++) });
+  let barradas = 0;
+  for (let e = 2; e <= 5; e++) {
+    for (let i = 0; i < 4; i++) {
+      const r = await R.verificarComRegras(b.io('cf:203.0.113.' + e), { payment_id: String(id++) });
+      if (r.transitorio) barradas++;
+    }
+  }
+  assert.equal(b.cont.falsosAnon, 42, '30 + 3 por endereço novo');
+  assert.equal(barradas, 4, 'o 4º de cada endereço novo é barrado');
+  assert.ok(b.cont.total >= 40, 'o total passou de 40, o que no fecho 1 fechava a porta: ' + b.cont.total);
+  const cand = [pedido({ pedido_id: 'PA-REALREAL02', email: 'real@exemplo.com.br', criado_em: new Date(TER_10H_BAHIA - H).toISOString() }),
+    pedido({ pedido_id: 'PA-OUTROOUT02', email: 'outro@exemplo.com.br', criado_em: new Date(TER_10H_BAHIA - 2 * H).toISOString() })];
+  const antes = b.chamadas.length;
+  const r = await confirmarComLista(b, '987650001', cand, b.io('cf:198.51.100.7'), TER_10H_BAHIA + 60000);
+  assert.equal(r.resposta, 'decidido');
+  assert.equal(r.d.acao, 'pago');
+  assert.equal(r.d.regra, 2);
+  assert.equal(r.d.pedido.pedido_id, 'PA-REALREAL02');
+  assert.equal(b.chamadas.length - antes, 2, '1 sem e-mail + 1 com a lista inteira');
+  assert.deepEqual(b.chamadas.at(-1).emails_candidatos, ['real@exemplo.com.br', 'outro@exemplo.com.br']);
+});
+
+test('fecho 2: com 1B devolvendo 429 às falsas, cada 429 anônimo gasta o orçamento (não vira chamada de graça)', async () => {
+  const b = bancoLista({ limite1b: 5 });
+  for (let i = 0; i < 40; i++) await R.verificarComRegras(b.io('cf:203.0.113.50'), { payment_id: String(710000000 + i) });
+  assert.equal(b.chamadas.length, 30, 'depois de 30 tentativas falsas ou passageiras, o endereço fica sem faixa');
+  assert.equal(b.cont.falsosAnon, 30);
+});
+
+test('fecho 2: teto global de falsas protege o teto duro do 1B; a faixa autenticada e a do pagamento real seguem abertas', async () => {
+  const b = bancoLista({ limite1b: 1e9 });
+  let id = 720000000, enderecos = 0;
+  while (b.cont.falsosAnon < R.LIMITES.verificarFalsosTetoHora) {
+    enderecos++;
+    for (let i = 0; i < 4; i++) await R.verificarComRegras(b.io('cf:10.0.' + enderecos), { payment_id: String(id++) });
+  }
+  assert.equal(b.cont.falsosAnon, R.LIMITES.verificarFalsosTetoHora);
+  assert.ok(enderecos >= 57, 'foram precisos ' + enderecos + ' endereços');
+  const novo = await R.verificarComRegras(b.io('cf:10.9.9.9'), { payment_id: String(id++) });
+  assert.equal(novo.motivo, 'orcamento_anonimo');
+  assert.ok(b.cont.total < R.LIMITES.verificarHora);
+  assert.equal(R.orcamentoVerificar({ autenticado: true, ...{ total: b.cont.total, falsosAnon: b.cont.falsosAnon } }).ok, true);
+  assert.ok(R.LIMITES.verificarHora < 600, 'abaixo do teto duro do 1B por origem');
+});
+
+test('fecho 2 (c2 estrito): negativa sem e-mail vale 15 s; 20 s depois a consulta pergunta de novo e o Pix compensado vira aprovado', async () => {
+  const pagamentos = { 730000001: { status: 'pending', valor: 297, ref: 'pa-abertura-inauguracao-feira-2026-11', email: 'pix@exemplo.com.br' } };
+  const b = bancoLista({ pagamentos });
+  let relogio = TER_10H_BAHIA;
+  const io = { ...b.io('cf:198.51.100.8'), agora: () => relogio };
+  const a = await R.verificarComRegras(io, { payment_id: '730000001' });
+  assert.equal(a.d.aprovado, false);
+  relogio += 5000;
+  assert.equal((await R.verificarComRegras(io, { payment_id: '730000001' })).guardado, true, 'rajada em 5 s usa o cache');
+  pagamentos[730000001].status = 'approved';
+  pagamentos[730000001].aprovado_em = new Date(relogio).toISOString();
+  relogio += 15000;
+  const c = await R.verificarComRegras(io, { payment_id: '730000001' });
+  assert.equal(c.guardado, undefined);
+  assert.equal(c.d.aprovado, true);
+  // Linha antiga, sem carimbo (gravada com a validade de 2 min do fecho 1): não segura nada.
+  assert.equal(R.cacheVerificarUtil({ aprovado: false }, false, relogio), false);
+  assert.equal(R.cacheVerificarUtil({ aprovado: false, em: relogio - 16000 }, false, relogio), false);
+  assert.equal(R.cacheVerificarUtil({ aprovado: false, em: relogio - 1000 }, false, relogio), true);
+});
+
+test('fecho 2: Regra 2 com lista: sem acerto, perguntados ficam false e a sobra fica null (nunca promove); falha do 1B é passageira', async () => {
+  const pagamentos = { 740000001: { status: 'approved', valor: 297, ref: 'pa-abertura-inauguracao-feira-2026-11', email: 'ninguem@exemplo.com.br', aprovado_em: new Date(TER_10H_BAHIA).toISOString() } };
+  const b = bancoLista({ pagamentos });
+  const cand = Array.from({ length: 7 }, (_, i) => pedido({ pedido_id: 'PA-LISTA0000' + i, email: 'l' + i + '@exemplo.com.br' }));
+  const m = await R.montarRegra2Lista(b.io('cf:1'), { payment_id: '740000001', candidatos: cand });
+  assert.equal(m.chamadas, 1);
+  assert.equal(b.chamadas.at(-1).emails_candidatos.length, 5);
+  assert.deepEqual(m.regra2.map(x => x.emailConfere), [false, false, false, false, false, null, null]);
+  assert.equal(R.decidirConfirmacao({ pg: pg297(), regra1: null, regra2: m.regra2, agoraMs: TER_10H_BAHIA }).acao, 'a_conferir');
+  const quebrado = { ...b.io('cf:1'), chamar: async () => ({ transitorio: true, motivo: 'http_503' }) };
+  assert.equal((await R.montarRegra2Lista(quebrado, { payment_id: '740000001', candidatos: cand })).transitorio, true);
+  assert.equal((await R.montarRegra2Lista(b.io('cf:1'), { payment_id: '740000001', candidatos: [] })).chamadas, 0);
+});
+
+test('fecho 2: confirmação pendente: registro sem dado pessoal, fila por repetição, apagar e alertar', () => {
+  const t0 = TER_10H_BAHIA;
+  const r1 = R.registroPendente(null, { payment_id: '750000001', motivo: 'orcamento_anonimo', agoraMs: t0 });
+  assert.deepEqual(Object.keys(r1).sort(), ['desde', 'motivo', 'n', 'payment_id', 'tentativas_rotina', 'ultimo']);
+  const r2 = R.registroPendente(r1, { payment_id: '750000001', motivo: 'limite_1b', agoraMs: t0 + 20000 });
+  assert.equal(r2.n, 2);
+  assert.equal(r2.desde, r1.desde, 'a primeira hora é a que conta');
+  const outro = R.registroPendente(null, { payment_id: '750000002', motivo: 'x', agoraMs: t0 - H });
+  const fila = R.escolherPendentes([outro, r2, { payment_id: 'lixo' }], 10);
+  assert.deepEqual(fila.map(x => x.payment_id), ['750000001', '750000002']);
+  assert.equal(R.escolherPendentes([outro, r2], 1).length, 1);
+  // Rodízio: o que a rotina já tentou 3 vezes vai para o fim; repetição acima de 5 não fura a fila.
+  const velho = { ...R.registroPendente(null, { payment_id: '750000003', motivo: 'limite_1b', agoraMs: t0 - 5 * H }), n: 40, tentativas_rotina: 3 };
+  const comprado = { ...R.registroPendente(null, { payment_id: '750000004', motivo: 'x', agoraMs: t0 }), n: 99 };
+  const real = { ...R.registroPendente(null, { payment_id: '750000005', motivo: 'x', agoraMs: t0 - H }), n: 5 };
+  assert.deepEqual(R.escolherPendentes([velho, comprado, real], 3).map(x => x.payment_id), ['750000005', '750000004', '750000003']);
+  assert.deepEqual(R.destinoPendente(r2, 'confirmado', t0), { apagar: true, alerta: false });
+  assert.deepEqual(R.destinoPendente(r2, 'nao_aprovado', t0), { apagar: true, alerta: false });
+  assert.deepEqual(R.destinoPendente(r2, 'passageiro', t0 + H), { apagar: false, alerta: false });
+  assert.deepEqual(R.destinoPendente(r2, 'passageiro', t0 + 2 * H), { apagar: false, alerta: true });
+});
+
+test('fecho 2: pasta do rascunho é <slug>--r-<id>; o formato antigo -r- e o slug final com "-r-" não passam como rascunho', () => {
+  assert.ok(R.RE.slugRascunho.test('barbearia-do-r-feira-de-santana--r-k3x9q2m7d4b8'));
+  assert.equal(R.RE.slugRascunho.test('barbearia-do-ze--r-abc'), false, 'id curto');
+  assert.equal(R.RE.slugRascunho.test('barbearia-do-ze-r-k3x9q2m7d4b8'), false, 'marcador antigo');
+  assert.equal(R.RE.slugRascunho.test('barbearia-do-r-feira-de-santana'), false);
 });

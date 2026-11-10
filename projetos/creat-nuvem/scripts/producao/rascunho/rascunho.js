@@ -1,7 +1,7 @@
 /*
  * scripts/producao/rascunho/rascunho.js · botão "Aprovar e colocar no ar" do rascunho (pacote 1C)
  *
- * Só existe no rascunho (/sites/<slug>-r-<id>/); o site final não carrega este arquivo.
+ * Só existe no rascunho (/sites/<slug>--r-<id>/); o site final não carrega este arquivo.
  * Script clássico, sem dependência, sem estilo inline (a CSP do template não aceita).
  * Duas credenciais, as duas aceitas pela função aprovarRascunho do 1A (docs/PEDIDO-API.md 4.5):
  *  1. token do fragmento da URL (#t=<token>): o fragmento não vai ao servidor da hospedagem, nem no

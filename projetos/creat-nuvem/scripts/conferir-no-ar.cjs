@@ -325,7 +325,7 @@ function aviso(grupo, nome, detalhe) {
       anota(G, 'confirmarPagamento com objeto no payment_id devolve 4xx', recusaDaFuncao(r, [400, 422]), recusaDaFuncao(r, [400, 422]) ? `status ${r.st}` : curto(r));
 
       // aprovarRascunho com token falso: 4xx
-      r = await chama(F('aprovarRascunho'), { corpo: { slug: 'conferencia-r-000000000000', token: 'AAAAAAAAAAAAAAAAAAAAAA' } });
+      r = await chama(F('aprovarRascunho'), { corpo: { slug: 'conferencia--r-000000000000', token: 'AAAAAAAAAAAAAAAAAAAAAA' } });
       const negou = recusaDaFuncao(r) && !PESSOAL.test(r.txt);
       anota(G, 'aprovarRascunho com token falso devolve 4xx', negou, negou ? `status ${r.st}` : curto(r));
 

@@ -82,7 +82,9 @@
 
   /* Link de TESTE (compra real de R$ 1 do dono, estornada depois). Fica fora de LINKS de propósito:
      nenhum botão da página usa, valorDaPreferencia não o conhece (nunca gera Purchase no Pixel) e o
-     pedido pa-teste nunca entra em produção (vira teste_ok no app Porta Aberta, pacote 1A).
+     pagamento pa-teste nunca entra em produção: no app Porta Aberta (pacote 1A) ele só vira teste_ok se algum
+     pedido pa-teste tiver o e-mail do pagador; sem isso fica em a_conferir com teste:true, sem aviso nem produção
+     (docs/INTEGRACAO-PAGAMENTO.md, "Ponta a ponta").
      valeAte = expiration_date_to lido na preferência em 10/11/2026. Depois disso o Mercado Pago recusa. */
   var TESTE = {
     produto: 'pa-teste',
