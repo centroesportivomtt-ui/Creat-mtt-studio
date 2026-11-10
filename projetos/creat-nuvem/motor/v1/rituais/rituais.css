@@ -26,23 +26,16 @@
 
 /* ---------- herói com ritual ---------- */
 .heroi.ritual-heroi { min-height: 78svh; }
+/* v1.3 (SAL-24): sem as listras de 1 px (moiré em tela de densidade 1) e sem a faixa rosa listrada do pé.
+   Fica a toalha como um grão quase invisível (até 4%) e a borda de 1 px das outras seções. */
 .heroi.esmalte {
   background-color: var(--fundo-2);
-  /* felpa de toalha: fios verticais bem finos no tom da tinta */
-  background-image:
-    repeating-linear-gradient(90deg, transparent 0 5px, color-mix(in oklab, var(--tinta) 5%, transparent) 5px 6px),
-    linear-gradient(180deg, transparent 0 calc(100% - 10px), color-mix(in oklab, var(--destaque) 30%, var(--fundo-2)) calc(100% - 10px));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.06'/%3E%3C/svg%3E");
+  border-bottom: 1px solid var(--borda);
 }
-.heroi.barra {
-  background-color: var(--fundo);
-  /* piso de borracha da sala de pesos, com as juntas das placas */
-  background-image:
-    linear-gradient(180deg, transparent 0 calc(100% - 36px), color-mix(in oklab, var(--tinta) 9%, var(--fundo)) calc(100% - 36px)),
-    repeating-linear-gradient(90deg, transparent 0 119px, color-mix(in oklab, var(--tinta) 16%, var(--fundo)) 119px 120px);
-  background-size: 100% 100%, 100% 36px;
-  background-position: 0 0, 0 100%;
-  background-repeat: no-repeat, repeat-x;
-}
+/* v1.3 (ACAD-08): o piso de borracha deixou de ser uma faixa solta no pé do herói (127 px abaixo do chão
+   da barra); ele nasce do próprio palco (.palco-barra::before), na altura exata do chão do desenho */
+.heroi.barra { background-color: var(--fundo); }
 
 .palco-ritual {
   position: relative;
@@ -95,11 +88,63 @@
   .palco-ritual.is-pintada, .palco-ritual.is-levantada { cursor: default; }
 }
 
-@media (min-width: 960px) {
+/* ---------- primeira dobra (v1.3: SAL-07, ACAD-03, ACAD-08) ----------
+   Até 1023 px o texto vem primeiro (sobretítulo, nome, bordão, frase) e o palco depois, centrado, com
+   altura de no máximo 46% da tela: quem chega do anúncio lê o que é e de quem é antes do gesto.
+   --palco-prop = altura / largura do conjunto (desenho + dica + medidor); o palco nunca passa de 46svh. */
+.palco-esmalte { --palco-prop: 1.32; }
+.palco-barra { --palco-prop: 1.45; }
+@media (max-width: 1023px) {
+  .heroi.ritual-heroi { grid-template-columns: minmax(0, 1fr); align-content: start; min-height: 0; }
+  .heroi.ritual-heroi > .palco-ritual {
+    order: 1;
+    justify-self: center;
+    width: min(100%, 300px);
+    width: min(100%, 300px, calc(46svh / var(--palco-prop)));
+    margin-top: var(--esp-3);
+    margin-bottom: 0;
+  }
+  /* a frase da demonstração desce para depois do gesto: nome, bordão e o desenho inteiro (a barra no
+     chão, a unha) cabem na primeira tela de 360 x 740 e 390 x 844 */
+  .heroi.ritual-heroi > .heroi-sub { order: 2; }
+}
+@media (max-width: 559px) {
+  .heroi.ritual-heroi > .palco-ritual { width: min(100%, 300px, calc(38svh / var(--palco-prop))); }
+}
+@media (min-width: 560px) and (max-width: 1023px) {
+  .heroi.ritual-heroi > .palco-ritual { width: min(100%, 420px, calc(46svh / var(--palco-prop))); }
+}
+/* paisagem no celular: duas colunas, texto à esquerda, palco à direita na altura da tela */
+@media (orientation: landscape) and (max-height: 500px) {
+  .heroi.ritual-heroi { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--esp-6); align-content: center; }
+  .heroi.ritual-heroi > :not(.palco-ritual) { grid-column: 1; }
+  .heroi.ritual-heroi > .palco-ritual { grid-column: 2; grid-row: 1 / span 8; align-self: center; margin: 0; width: calc(72svh / var(--palco-prop)); }
+}
+@media (min-width: 1024px) {
   .heroi.ritual-heroi { grid-template-columns: minmax(0, 1fr) clamp(240px, 24vw, 330px); column-gap: var(--esp-7); }
   .heroi.ritual-heroi > :not(.palco-ritual) { grid-column: 1; }
   .heroi.ritual-heroi > .palco-ritual { grid-column: 2; grid-row: 1 / span 8; align-self: end; width: 100%; margin-bottom: 0; }
 }
+
+/* ---------- piso da academia (ACAD-08) ----------
+   O desenho vai para o pé do palco (dica e medidor em cima) e o palco desce até o pé do herói; o piso é
+   uma faixa de ponta a ponta atrás dele, com o topo exatamente na linha do chão do desenho (y = 226 de
+   240, ou seja, 14/240 da largura acima do pé). O herói corta o que passa das bordas. */
+@media (min-width: 1024px) {
+  .palco-barra > .ra-svg { order: 2; }
+  .heroi.barra > .palco-barra { margin-bottom: calc(-1 * var(--esp-8)); container-type: inline-size; }
+}
+.palco-barra::before { display: none; }
+@media (min-width: 1024px) { .palco-barra::before {
+  display: block;
+  content: ""; position: absolute; z-index: -1;
+  left: -100vw; right: -100vw; bottom: 0;
+  height: 19px;
+  height: calc(100cqi * 14 / 240);
+  background-color: color-mix(in oklab, var(--tinta) 9%, var(--fundo));
+  background-image: repeating-linear-gradient(90deg, transparent 0 119px, color-mix(in oklab, var(--tinta) 16%, var(--fundo)) 119px 120px);
+  border-top: 1px solid color-mix(in oklab, var(--tinta) 22%, var(--fundo));
+} }
 
 /* ---------- esmalte: desenho ---------- */
 .re-l { stroke: var(--ritual-linha); stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; }
@@ -203,6 +248,30 @@
   background: color-mix(in oklab, var(--destaque) 7%, var(--fundo-2));
   overflow: hidden;
 }
+/* v1.3 (SAL-17, SAL-N2): a tira do salão é só a pílula da unha (um contorno, não dois). Ganha 14 px
+   em cima para o pincel caber inteiro (ele tem 46 px e a ponta molha no meio da pílula), e o rótulo
+   fica centrado na pista, numa linha, com folga do pincel em repouso dos dois lados. */
+.tira-ritual.tira-esmalte {
+  height: calc(var(--altura-tira, 56px) + 14px);
+  padding: 14px 0 0;
+  border-color: transparent;
+  background: transparent;
+}
+.tira-esmalte .te-unha { inset: 20px 8px 6px; }
+.tira-esmalte .te-pincel { top: 0; }
+.tira-esmalte::before { left: 8px; right: 8px; border-radius: 0 0 var(--raio-2) var(--raio-2); }
+.tira-esmalte .texto-tira {
+  width: 100%;
+  padding-inline: 40px;
+  white-space: nowrap;
+  text-align: center;
+}
+.tira-ritual.tira-esmalte.is-confirmada { border-color: transparent; }
+.tira-esmalte.is-confirmada .te-unha { border-color: var(--destaque); }
+.tira-esmalte:focus-visible { outline-offset: 0; }
+@media (max-width: 400px) {
+  .tira-esmalte .texto-tira { padding-inline: 36px; font-size: var(--t-micro); letter-spacing: 0; }
+}
 .te-tinta { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--destaque); }
 .te-brilho { position: absolute; left: 12px; right: 14px; top: 6px; height: 3px; border-radius: 3px; background: color-mix(in oklab, white 55%, transparent); }
 .te-pincel { position: absolute; left: 0; top: calc(50% - 36px); width: 30px; height: 46px; z-index: 2; pointer-events: none; transform-origin: 50% 91.3%; will-change: transform; }
@@ -214,6 +283,38 @@
 .ra-barra-mini { fill: var(--ritual-aco-escuro); stroke: var(--ritual-linha); stroke-width: 1.2; }
 .ra-l-mini { stroke: var(--ritual-linha); stroke-width: 1.6; }
 .tira-barra.is-pronta .tb-barra svg, .tira-esmalte.is-pronta .te-pincel svg { filter: drop-shadow(0 0 5px color-mix(in oklab, var(--destaque) 70%, transparent)); }
+
+/* ---------- espelho da academia (ACAD-02) ----------
+   O espelho oval de mão é da barbearia e do salão. Na academia, a confirmação é a ficha de treino:
+   cartão retangular com a régua do destaque no alto, rótulo à esquerda e dado à direita. O atributo
+   data-ritual mora no #heroi; o espelho fica no pedido, então a regra pergunta à página com :has(). */
+:root:has(#heroi[data-ritual="barra"]) .espelho {
+  width: min(100%, 26rem);
+  min-height: 0;
+  margin-bottom: var(--esp-7);
+  padding: var(--esp-6) var(--esp-5) var(--esp-5);
+  justify-items: stretch;
+  text-align: left;
+  border-radius: var(--raio-2);
+  border: 1px solid var(--borda-forte);
+  border-top: 8px solid var(--destaque);
+  box-shadow: var(--sombra-2);
+  background: var(--fundo-2);
+}
+:root:has(#heroi[data-ritual="barra"]) .espelho::after { content: none; }
+:root:has(#heroi[data-ritual="barra"]) .espelho h3 { max-width: none; }
+:root:has(#heroi[data-ritual="barra"]) .espelho-texto { max-width: none; }
+:root:has(#heroi[data-ritual="barra"]) .espelho dl {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--esp-4); row-gap: 0;
+  margin-block: var(--esp-2);
+  border-top: 1px solid var(--borda);
+}
+:root:has(#heroi[data-ritual="barra"]) .espelho dt,
+:root:has(#heroi[data-ritual="barra"]) .espelho dd { margin: 0; padding-block: var(--esp-3); border-bottom: 1px solid var(--borda); align-self: stretch; display: flex; align-items: baseline; }
+:root:has(#heroi[data-ritual="barra"]) .espelho dd { justify-content: flex-end; text-align: right; font-family: var(--fonte-dado); }
+:root:has(#heroi[data-ritual="barra"]) .espelho .link-whats,
+:root:has(#heroi[data-ritual="barra"]) .espelho #espelho-novo { justify-self: stretch; border-radius: var(--raio-2); }
 
 /* ---------- movimento reduzido: estado final, sem gesto, sem tira ---------- */
 @media (prefers-reduced-motion: reduce) {

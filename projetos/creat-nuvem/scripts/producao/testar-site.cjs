@@ -17,6 +17,7 @@
  *   - opc.exigirFaixaDemo (--demonstracao): a faixa "demonstração · nome fictício" é a primeira coisa
  *     visível da página e a meta robots é noindex.
  *   - CSP (pacote 1C): toda violação da Content-Security-Policy (evento securitypolicyviolation) é falha.
+ *   - aba e cartão (onda 3): exatamente um <link rel="icon"> próprio em data:image/svg+xml, og:title e og:description.
  *   - opc.exigirFaixaRascunho (--rascunho): faixa "Rascunho para a sua aprovação. Ainda não está no ar."
  *     visível no topo ao abrir e depois de rolar até o fim, botão "Aprovar e colocar no ar" com 44 px
  *     ou mais, meta noindex. opc.waExtras: números aceitos SÓ dentro da faixa (o "Pedir ajuste" da Creat).
@@ -99,9 +100,14 @@ async function testarSite(pasta, opc) {
       const creatTexto = /Aberto pela Creat/i.test(document.body.innerText);
       const fx = document.querySelector('[data-demonstracao]');
       const faixa = fx ? { texto: fx.textContent, topo: Math.round(fx.getBoundingClientRect().top), visivel: fx.getBoundingClientRect().height > 1 } : null;
-      return { faixa, scrollW: de.scrollWidth, larg: window.innerWidth, was, wasFaixa, menor, onde, ld, robots, titulo: document.title, rodape, creatTexto, csp: (window.__cspViolacoes || []).slice(0, 20) };
+      const icones = [...document.querySelectorAll('link[rel~="icon"]')].map((l) => l.getAttribute('href') || '');
+      const og = { titulo: !!document.querySelector('meta[property="og:title"][content]'), descricao: !!document.querySelector('meta[property="og:description"][content]') };
+      return { icones, og, faixa, scrollW: de.scrollWidth, larg: window.innerWidth, was, wasFaixa, menor, onde, ld, robots, titulo: document.title, rodape, creatTexto, csp: (window.__cspViolacoes || []).slice(0, 20) };
     });
     for (const v of m.csp) falhas.push(`CSP bloqueou: ${v}`);
+    // aba e cartão de link (onda 3): ícone próprio em data URI (sem ele a hospedagem injeta o dela) e og:title/og:description
+    if (m.icones.length !== 1 || !/^data:image\/svg\+xml,/.test(m.icones[0])) falhas.push(`ícone da aba: esperado 1 <link rel="icon"> próprio em data:image/svg+xml (achei ${m.icones.length}: ${m.icones.map((h) => h.slice(0, 40)).join(' ')})`);
+    if (!m.og.titulo || !m.og.descricao) falhas.push('sem og:title ou og:description (o link compartilhado no WhatsApp sai sem cartão)');
     for (const h of m.wasFaixa) {
       const num = (String(h).match(/wa\.me\/(\d+)/) || [])[1];
       if (!(opc.waExtras || []).includes(num)) falhas.push(`wa.me na faixa do rascunho com número ${num} fora da lista`);
@@ -135,7 +141,8 @@ async function testarSite(pasta, opc) {
     }
     if (opc.semRodapeViral && (m.rodape.length || m.creatTexto)) falhas.push(`rodapé da Creat presente (${m.rodape.join(' ') || 'texto'})`);
     if (opc.exigirFaixaDemo) {
-      if (!m.faixa || !/demonstração · nome fictício/.test(m.faixa.texto) || !m.faixa.visivel) falhas.push('site-demonstração sem a faixa "demonstração · nome fictício" visível');
+      // /i: o selo é sentence-case no DOM ("Demonstração · nome fictício") e caixa alta só pelo CSS
+      if (!m.faixa || !/demonstração · nome fictício/i.test(m.faixa.texto) || !m.faixa.visivel) falhas.push('site-demonstração sem a faixa "demonstração · nome fictício" visível');
       else if (m.faixa.topo > 60) falhas.push(`faixa de demonstração fora do topo (${m.faixa.topo}px)`);
       if (!previa) falhas.push('site-demonstração sem meta robots noindex');
     }

@@ -9,6 +9,8 @@
 <meta name="theme-color" content="#CDEBFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1D2552" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
+<!-- O Base44 injeta no ar o b44-visitor-tracking (cookies base44_referrer_*). Com esta meta ele só grava depois do "Aceitar" -->
+<meta name="base44-visitor-tracking" content="consent" data-privacy-signals="honor">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:title" content="Seu negócio aberto na internet.">
@@ -698,7 +700,8 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 </a>
 
 <div class="consentimento" id="consentimento" role="region" aria-label="Medição desta página" data-salvo="Preferência salva. Você muda quando quiser no rodapé, em Preferências de medição." hidden>
-  <p><strong>Medição desta página.</strong> Medimos visitas sem cookie e sem dado pessoal. Com a sua permissão, usamos também o Pixel da Meta e o Clarity para medir anúncios. <a href="privacidade/">Privacidade</a></p>
+  <p class="cons-longo"><strong>Medição desta página.</strong> A Creat conta as visitas sem cookie e sem guardar o seu IP. A hospedagem registra o acesso técnico. Com a sua permissão, usamos o Pixel da Meta para medir os anúncios, e a hospedagem guarda de onde você veio. <a href="privacidade/">Privacidade</a></p>
+  <p class="cons-curto">Contamos visitas sem cookie. Pixel da Meta só com o seu sim. <a href="privacidade/">Privacidade</a></p>
   <div class="botoes">
     <button class="btn" type="button" data-consentir="sim">Aceitar</button>
     <button class="btn" type="button" data-consentir="nao">Recusar</button>

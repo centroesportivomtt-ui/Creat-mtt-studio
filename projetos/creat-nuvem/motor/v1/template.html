@@ -4,8 +4,14 @@
   <!--
     motor/v1/template.html · página de todo site entregue do Porta Aberta (ADR-001).
     Preenchido pelo build-site.cjs (T9) com CreatMotor.preencherTemplate(texto, tenant, {preset, site, caminhoMotor}).
-    Marcadores: {{TITULO}} {{DESCRICAO}} {{ROBOTS}} {{TEMA_COR}} {{FONTES_HREF}} {{NICHO}} {{MOTOR}}
-    e os comentários JSONLD, CANONICAL e NOSCRIPT. Nada de dado de cliente aqui: tudo vem de tenant.js
+    Marcadores: {{TITULO}} {{DESCRICAO}} {{ROBOTS}} {{FONTES_HREF}} {{NICHO}} {{MOTOR}}
+    e os comentários JSONLD, CANONICAL e NOSCRIPT (motor.js preencherTemplate). O build-site.cjs preenche
+    {{ICONE}} {{NOME_SITE}} {{OG_URL}} {{OG_IMAGEM}} {{TWITTER_CARD}} {{TEMA_COR_CLARO}} {{TEMA_COR_ESCURO}} (pacote 3B, onda 3):
+    ícone SVG em data URI com a inicial do negócio na cor de destaque (sem ele a hospedagem injeta o ícone
+    dela na aba), cartão de link (og:*, twitter:card) e theme-color da faixa do topo no claro e no escuro;
+    motor/v1/agendamento.js troca o theme-color[data-barra] pela cor real do topo e segue o botão de tema.
+    og:url só com URL do site e og:image só da demonstração com assets/img/og-demo-<nicho>.jpg.
+    Nada de dado de cliente aqui: tudo vem de tenant.js
     (gerado por CreatMotor.scriptTenant). Abre por duplo clique (file://): só scripts clássicos.
     CSP (pacote 1C, 10/11/2026): vale para todo site de cliente, rascunho e pacote SAIR. Só scripts
     da mesma origem; nenhum script inline (o JSON-LD é dado, não roda); conexões só com a mesma origem.
@@ -23,8 +29,18 @@
   <title>{{TITULO}}</title>
   <meta name="description" content="{{DESCRICAO}}">
   <meta name="robots" content="{{ROBOTS}}">
-  <meta name="theme-color" content="{{TEMA_COR}}">
+  <meta name="theme-color" content="{{TEMA_COR_CLARO}}" media="(prefers-color-scheme: light)" data-barra>
+  <meta name="theme-color" content="{{TEMA_COR_ESCURO}}" media="(prefers-color-scheme: dark)" data-barra>
   <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="icon" href="{{ICONE}}" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="{{NOME_SITE}}">
+  <meta property="og:title" content="{{TITULO}}">
+  <meta property="og:description" content="{{DESCRICAO}}">
+  <!--{{OG_URL}}-->
+  <!--{{OG_IMAGEM}}-->
+  <meta name="twitter:card" content="{{TWITTER_CARD}}">
   <!--{{CANONICAL}}-->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

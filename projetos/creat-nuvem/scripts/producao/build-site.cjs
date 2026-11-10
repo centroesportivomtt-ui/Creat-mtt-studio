@@ -3,7 +3,7 @@
  * scripts/producao/build-site.cjs · tenant.json -> dist/<slug>/ (T9 · Forja)
  *
  * Uso:
- *   node scripts/producao/build-site.cjs --slug <slug> [--saida <pasta>] [--home <url>] [--url <url>] [--sem-rodape] [--demonstracao]
+ *   node scripts/producao/build-site.cjs --slug <slug> [--saida <pasta>] [--home <url>] [--url <url>] [--sem-rodape] [--demonstracao] [--precos <precos.json>]
  *   node scripts/producao/build-site.cjs --tenant <arquivo tenant.json> [--destino <pasta>] ...
  *
  * Gera, com o motor congelado (ADR-001) e nenhum dado de cliente fora do tenant:
@@ -34,6 +34,17 @@
  *   https://<dominio>/) e robots.txt. publicar-site.cjs --saida-dominio a publica em /sites/<slug>/.
  * CSP: motor/v1/template.html traz a CSP dos sites de cliente. O build confere que o hash do <style>
  *   do motor (CSS_VIVO de efeito.js) é o que a CSP aceita; se não for, recusa (código 2).
+ * Cabeça social e aba (pacote 3B, onda 3): preenche no template o ícone SVG em data URI (inicial do
+ *   negócio na cor de destaque; sem ícone próprio a hospedagem injeta o dela), og:site_name, og:url (só
+ *   com URL do site), og:image (só na demonstração e só se existir assets/img/og-demo-<nicho>.jpg, com
+ *   URL absoluta da home), twitter:card e o theme-color claro e escuro da faixa do topo.
+ * Galeria (onda 3): copia de sites/<slug>/galeria/ (ou da pasta do --tenant) para dist/<slug>/galeria/ só
+ *   os arquivos que tenant.galeria[].src cita ("galeria/<arquivo>.webp|avif|jpg|jpeg|png|svg"). Arquivo
+ *   citado que não existe recusa o build. Tenant sem galeria não leva pasta nenhuma.
+ * Fecho de venda da demonstração (onda 3): com --demonstracao, CREAT_SITE.fecho = {titulo, linha, botao}
+ *   lido de dados/precos.json (ou --precos <arquivo>): abertura de inauguração só se ela vale (ativa, com
+ *   vaga e carimbo de até 7 dias, ADR-005), senão a padrão, e o plano Aberto. precos.json inválido: sem
+ *   fecho e com aviso (nunca preço à mão). Preço mudou: refaça o build das demos.
  * Sem rede, sem segredo. Código 0 = ok, 1 = tenant inválido ou destino recusado, 2 = ambiente.
  */
 'use strict';
@@ -76,6 +87,132 @@ function conferirCsp(template) {
     if (falta.length) { const x = new Error(`CSP do template não aceita ${falta.length} atributo(s) style da poeira de barra.js: acrescente em style-src-attr ${falta.join(' ')}`); x.codigo = 2; throw x; }
   }
   return csp;
+}
+
+/* ---------- cabeça social, aba e barra do navegador (pacote 3B, onda 3) ---------- */
+const COR_RE = /^#[0-9A-Fa-f]{6}$/;
+function linear(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+function srgb(c) { const v = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; return Math.round(Math.min(1, Math.max(0, v)) * 255); }
+function paraOklab(hex) {
+  const [r, g, b] = [1, 3, 5].map((i) => linear(parseInt(hex.slice(i, i + 2), 16)));
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const q = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * q, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * q, 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * q];
+}
+function deOklab([L, A, B]) {
+  const l = Math.pow(L + 0.3963377774 * A + 0.2158037573 * B, 3);
+  const m = Math.pow(L - 0.1055613458 * A - 0.0638541728 * B, 3);
+  const q = Math.pow(L - 0.0894841775 * A - 1.2914855480 * B, 3);
+  const rgb = [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * q, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * q, -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * q];
+  return '#' + rgb.map((c) => srgb(c).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+/* o mesmo que color-mix(in oklab, a p, b) do styles.css (p de 0 a 1) */
+function misturar(a, b, p) {
+  if (!COR_RE.test(a) || !COR_RE.test(b)) return COR_RE.test(a) ? a.toUpperCase() : '';
+  const x = paraOklab(a), y = paraOklab(b);
+  return deOklab(x.map((v, i) => v * p + y[i] * (1 - p)));
+}
+/* cor da faixa do topo (styles.css): demonstração = .faixa-demo (claro: --tinta; escuro: --fundo-3);
+   site de cliente = .topo (--fundo). agendamento.js confere a cor real na página e segue o botão de tema. */
+function coresDaBarra(paleta, demonstracao) {
+  const c = (paleta && paleta.claro) || {}, e = (paleta && paleta.escuro) || null;
+  const claro = (demonstracao ? c.texto : c.fundo) || '#FFFFFF';
+  const escuro = e ? (demonstracao ? misturar(e.superficie, e.texto, 0.86) : e.fundo) : claro;
+  return { claro: claro.toUpperCase(), escuro: (escuro || claro).toUpperCase() };
+}
+/* inicial do negócio: pula a palavra do ramo ("Barbearia Navalha" -> N; "Salão Esmalte & Fio" -> E) */
+const PALAVRA_DO_RAMO = /^(barbearia|barber|salão|salao|studio|estúdio|estudio|academia|espaço|espaco|clínica|clinica|instituto|ateliê|atelie)$/i;
+function inicialDo(nome) {
+  const palavras = String(nome || '').normalize('NFC').split(/\s+/).map((p) => p.replace(/^[^\p{L}\p{N}]+/u, '')).filter(Boolean);
+  const p = palavras.length > 1 && PALAVRA_DO_RAMO.test(palavras[0]) ? palavras[1] : palavras[0];
+  return (Array.from(p || 'C')[0] || 'C').toLocaleUpperCase('pt-BR');
+}
+const FONTE_ICONE = { salao: "Georgia,'Times New Roman',serif" };
+function iconeDataUri(nome, paleta, nicho) {
+  const c = (paleta && paleta.claro) || {};
+  const fundo = COR_RE.test(c.destaque || '') ? c.destaque : '#14213D';
+  const tinta = COR_RE.test(c.sobreDestaque || '') ? c.sobreDestaque : '#FFFFFF';
+  const fonte = FONTE_ICONE[nicho] || "'Arial Black','Helvetica Neue',Arial,sans-serif";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="${fundo}"/>` +
+    `<text x="16" y="22.6" text-anchor="middle" font-family="${fonte}" font-size="20" font-weight="700" fill="${tinta}">${escXml(inicialDo(nome))}</text></svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+function urlAbsoluta(base, rel) {
+  try { const u = new URL(rel, String(base).replace(/[?#].*$/, '').replace(/\/?$/, '/')); return u.protocol === 'https:' ? u.href : ''; } catch (e) { return ''; }
+}
+/* marcadores do 3B no template já preenchido pelo motor; tudo escapado para atributo */
+function cabecaSocial(html, tenant, preset, site, M) {
+  const e = M.construirEstado(tenant, { preset, site });
+  const barra = coresDaBarra(e.paleta, !!e.demonstracao);
+  const nicho = /^[a-z][a-z0-9-]{1,30}$/.test(String(tenant.nicho)) ? tenant.nicho : '';
+  let ogImagem = '';
+  if (e.demonstracao && nicho && site.home && fs.existsSync(path.join(C.RAIZ, 'assets', 'img', `og-demo-${nicho}.jpg`))) {
+    const u = urlAbsoluta(site.home, `assets/img/og-demo-${nicho}.jpg`);
+    if (u) ogImagem = [`<meta property="og:image" content="${escXml(u)}">`, '<meta property="og:image:type" content="image/jpeg">', '<meta property="og:image:width" content="1200">', '<meta property="og:image:height" content="630">',
+      `<meta property="og:image:alt" content="${escXml(`Foto de exemplo: demonstração do site ${e.nome}, feito pela Creat Nuvem`)}">`].join('\n  ');
+  }
+  const trocas = {
+    '{{ICONE}}': escXml(iconeDataUri(e.nomeCurto || e.nome, e.paleta, nicho)),
+    '{{NOME_SITE}}': escXml(e.nome),
+    '{{TEMA_COR_CLARO}}': escXml(barra.claro),
+    '{{TEMA_COR_ESCURO}}': escXml(barra.escuro),
+    '{{TWITTER_CARD}}': ogImagem ? 'summary_large_image' : 'summary',
+    '<!--{{OG_URL}}-->': site.url ? `<meta property="og:url" content="${escXml(site.url)}">` : '',
+    '<!--{{OG_IMAGEM}}-->': ogImagem
+  };
+  return html.replace(/[ \t]*<!--\{\{(OG_URL|OG_IMAGEM)\}\}-->\n?/g, (m, k) => (trocas[`<!--{{${k}}}-->`] ? m.replace(`<!--{{${k}}}-->`, trocas[`<!--{{${k}}}-->`]) : ''))
+    .replace(/\{\{(ICONE|NOME_SITE|TEMA_COR_CLARO|TEMA_COR_ESCURO|TWITTER_CARD)\}\}/g, (m) => trocas[m]);
+}
+
+/* ---------- fecho de venda da demonstração: preço só de dados/precos.json (regra do ADR-005) ---------- */
+const D7 = 7 * 24 * 3600e3, FOLGA = 5 * 60e3;
+function numero(v) { return typeof v === 'number' && isFinite(v) && v > 0; }
+function reais(v) { return 'R$ ' + String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function fechoDemo(precos, agora) {
+  const p = precos;
+  if (!p || !p.abertura || !numero(p.abertura.padrao) || !p.planos || !numero(p.planos.aberto)) return null;
+  const i = p.abertura.inauguracao, t = Date.parse(p.atualizado_em), dif = (agora || Date.now()) - t;
+  const inaug = !!(i && i.ativa === true && numero(i.preco) && i.preco < p.abertura.padrao && Number.isInteger(i.vagasRestantes) && i.vagasRestantes > 0 &&
+    !isNaN(t) && dif <= D7 && dif >= -FOLGA);
+  const abertura = inaug ? `${reais(i.preco)} de abertura (preço de inauguração)` : `${reais(p.abertura.padrao)} de abertura`;
+  const prazo = numero(p.prazoHoras) ? p.prazoHoras : 72;
+  return {
+    // mesma promessa da vitrine (conteudo/comum.json, garantia): pronto para aprovar em até {{prazoHoras}} h
+    titulo: `Este site, com o nome do seu negócio, pronto para você aprovar em até ${prazo} h.`,
+    linha: `${abertura} e ${reais(p.planos.aberto)} por mês no plano Aberto, que só começa quando o site entra no ar.`,
+    botao: 'Quero este para o meu negócio',
+    abertura: inaug ? i.preco : p.abertura.padrao,
+    mensal: p.planos.aberto
+  };
+}
+function lerPrecos(arq) {
+  try { return JSON.parse(fs.readFileSync(arq || path.join(C.RAIZ, 'dados', 'precos.json'), 'utf8')); } catch (e) { return null; }
+}
+
+/* ---------- galeria: só os arquivos que o tenant cita ---------- */
+const GALERIA_RE = /^galeria\/[A-Za-z0-9][A-Za-z0-9._-]{0,80}\.(webp|avif|jpe?g|png|svg)$/i;
+function arquivosDaGaleria(tenant) {
+  const g = Array.isArray(tenant && tenant.galeria) ? tenant.galeria : [];
+  return g.map((x, i) => ({ i, src: String((x && x.src) || '') }));
+}
+function copiarGaleria(tenant, pastaTenant, destino) {
+  const lista = arquivosDaGaleria(tenant);
+  if (!lista.length) return [];
+  const erros = [];
+  for (const x of lista) {
+    if (!GALERIA_RE.test(x.src) || x.src.includes('..')) erros.push({ campo: `galeria[${x.i}].src`, mensagem: `precisa ser "galeria/<arquivo>.webp|avif|jpg|png|svg" (está "${x.src}")` });
+    else if (!pastaTenant || !fs.existsSync(path.join(pastaTenant, x.src)) || !fs.lstatSync(path.join(pastaTenant, x.src)).isFile()) erros.push({ campo: `galeria[${x.i}].src`, mensagem: `arquivo não encontrado em ${pastaTenant ? path.join(pastaTenant, x.src) : '(sem pasta do tenant)'}` });
+  }
+  if (erros.length) throw new C.ErroLista(`Galeria do tenant ${tenant.slug} com problema:`, erros);
+  const feitos = [];
+  for (const x of lista) {
+    if (feitos.includes(x.src)) continue;
+    fs.mkdirSync(path.join(destino, 'galeria'), { recursive: true });
+    fs.copyFileSync(path.join(pastaTenant, x.src), path.join(destino, x.src));
+    feitos.push(x.src);
+  }
+  return feitos;
 }
 
 function escXml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -149,6 +286,11 @@ function buildSite(opc) {
     rodape: !(opc.site && opc.site.rodape === false)
   };
   if (!previa && opc.site && opc.site.demonstracao) site.demonstracao = true;
+  if (site.demonstracao) {
+    const f = fechoDemo(opc.precos !== undefined ? opc.precos : lerPrecos(opc.arqPrecos), opc.agora);
+    if (f) site.fecho = { titulo: f.titulo, linha: f.linha, botao: f.botao };
+    else avisos.push('dados/precos.json ausente ou inválido: a demonstração sai sem o fecho de venda (o preço nunca é escrito à mão)');
+  }
   if (!previa && !site.url) avisos.push('sem URL do site (--url, ou CREAT_URL_SITES diferente de "0"): sem canonical, sem sitemap.xml e sem "url" no JSON-LD');
   if (site.rodape && !site.home) avisos.push('sem home da vitrine (--home, ou CREAT_HOME diferente de "0"): o rodapé "Aberto pela Creat" sai sem link');
 
@@ -164,12 +306,17 @@ function buildSite(opc) {
   conferirCsp(template);
   // sem fonte do Google o motor põe href="data:text/css,", que a CSP (style-src sem data:) bloquearia
   // com erro no console; sem fonte não há o que carregar, então a linha sai
-  const html = M.preencherTemplate(template, tenant, { preset, site, caminhoMotor: 'motor/' }).replace(/[ \t]*<link rel="stylesheet" href="data:text\/css," data-motor-fontes>\n?/, '');
+  const html = cabecaSocial(M.preencherTemplate(template, tenant, { preset, site, caminhoMotor: 'motor/' }).replace(/[ \t]*<link rel="stylesheet" href="data:text\/css," data-motor-fontes>\n?/, ''), tenant, preset, site, M);
   const sobra = html.match(/\{\{[A-Z_]+\}\}/g);
   if (sobra) throw new Error(`template com marcador sem valor: ${sobra.join(', ')}`);
   fs.writeFileSync(path.join(destino, 'index.html'), html);
-  fs.writeFileSync(path.join(destino, 'tenant.js'), M.scriptTenant(tenant, site));
+  let js = M.scriptTenant(tenant, site);
+  // o fecho vai pelo mesmo canal da demonstração (CREAT_SITE); motor.js antigo não copia o campo
+  if (site.fecho && !/"fecho"\s*:/.test(js)) js += 'window.CREAT_SITE.fecho = ' + M._puro.jsonSeguro(site.fecho) + ';\n';
+  fs.writeFileSync(path.join(destino, 'tenant.js'), js);
   C.gravarJson(path.join(destino, 'tenant.json'), tenant);
+  const pastaTenant = opc.pastaTenant ? path.resolve(opc.pastaTenant) : path.join(C.pastaSaida({ saida: opc.saida }), 'sites', String(tenant.slug));
+  copiarGaleria(tenant, pastaTenant, destino);
 
   if (previa || site.demonstracao) fs.writeFileSync(path.join(destino, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
   else {
@@ -260,7 +407,9 @@ function main(argv) {
   if (a.destino === true || a.destino === '') throw new C.ErroCampo('--destino', 'informe a pasta de saída (ex.: --destino dist/meu-slug)');
   const destino = a.destino || path.join(C.pastaSaida(a), 'dist', String(tenant.slug));
   const rascunho = a.rascunho ? { id: typeof a['rascunho-id'] === 'string' ? a['rascunho-id'] : '' } : null;
-  const r = buildSite({ tenant, destino, saida: C.pastaSaida(a), rascunho, site: { home: typeof a.home === 'string' ? a.home : C.homePadrao(), url: a.url, rodape: !a['sem-rodape'], demonstracao: !!a.demonstracao } });
+  if (a.precos === true) throw new C.ErroCampo('--precos', 'informe o arquivo (ex.: --precos dados/precos.json)');
+  const r = buildSite({ tenant, destino, saida: C.pastaSaida(a), rascunho, pastaTenant: path.dirname(path.resolve(arqTenant)), arqPrecos: typeof a.precos === 'string' ? path.resolve(a.precos) : undefined,
+    site: { home: typeof a.home === 'string' ? a.home : C.homePadrao(), url: a.url, rodape: !a['sem-rodape'], demonstracao: !!a.demonstracao } });
   r.avisos.forEach((x) => console.log(`aviso: ${x}`));
   console.log(`ok: ${r.destino} (${r.arquivos.length} arquivos)`);
   if (r.rascunho) console.log(`rascunho: ${r.rascunho.destino} (sem token aqui; o link com #t= é montado por produzir.mjs)`);
@@ -272,4 +421,4 @@ if (require.main === module) {
   catch (e) { console.error(e.message); process.exitCode = e instanceof C.ErroCampo || e instanceof C.ErroLista ? 1 : 2; }
 }
 
-module.exports = { buildSite, buildSaida, dominioDaCreat, conferirCsp, urlDoSite, checarDestino, main };
+module.exports = { buildSite, buildSaida, dominioDaCreat, conferirCsp, urlDoSite, checarDestino, main, fechoDemo, coresDaBarra, misturar, inicialDo, iconeDataUri, copiarGaleria, GALERIA_RE };

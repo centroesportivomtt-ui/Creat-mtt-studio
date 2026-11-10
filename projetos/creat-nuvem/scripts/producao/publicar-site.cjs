@@ -7,7 +7,8 @@
  *
  * O que faz (sem rede, sem segredo, sem publicar nada):
  *   1. confere dist/<slug>/ (build do build-site: tenant.json + index.html + motor/v1/, slug igual,
- *      só arquivos da lista branca, nenhum link simbólico);
+ *      só arquivos da lista branca, nenhum link simbólico; galeria/ só com as imagens que
+ *      tenant.galeria[].src cita, webp, avif, jpg, png ou svg, e todas as citadas presentes);
  *   2. roda testar-site.cjs (Chromium do Playwright, 390 px, console limpo, wa.me certo);
  *      --demo exige também a faixa "demonstração · nome fictício" e o WhatsApp do Suporte Creat;
  *   3. grava <destino>/site-<slug>.zip com sites/<slug>/... (mtime fixo: mesmo build = mesmo sha256)
@@ -46,7 +47,9 @@ const WHATSAPP_DEMO = '5575981151202';                                // Suporte
 const FAIXA_DEMO = /demonstra[çc][ãa]o\s*·\s*nome fict[íi]cio/i;
 const MTIME = new Date('2026-01-01T00:00:00Z');
 // o que build-site.cjs grava; qualquer outra coisa em dist/<slug>/ não vai ao ar
-const LISTA_BRANCA = [/^index\.html$/, /^tenant\.js$/, /^tenant\.json$/, /^robots\.txt$/, /^sitemap\.xml$/, /^motor\/(v1|nichos)\/([A-Za-z0-9_-][A-Za-z0-9._-]*\/)*[A-Za-z0-9._-]+\.(js|css|svg|json|woff2?|png|webp)$/];
+// galeria/ (onda 3): só imagem, e só o que tenant.galeria[].src cita (conferido em conferir())
+const GALERIA = /^galeria\/[A-Za-z0-9][A-Za-z0-9._-]{0,80}\.(webp|avif|jpe?g|png|svg)$/i;
+const LISTA_BRANCA = [/^index\.html$/, /^tenant\.js$/, /^tenant\.json$/, /^robots\.txt$/, /^sitemap\.xml$/, /^motor\/(v1|nichos)\/([A-Za-z0-9_-][A-Za-z0-9._-]*\/)*[A-Za-z0-9._-]+\.(js|css|svg|json|woff2?|png|webp)$/, GALERIA];
 const LISTA_RASCUNHO = [/^rascunho\.js$/, /^rascunho\.css$/];
 const LISTA_SAIDA = [/^index\.html$/, /^robots\.txt$/];
 
@@ -81,6 +84,12 @@ function conferir(pasta, slug, opc) {
   const lista = opc.rascunho ? LISTA_BRANCA.concat(LISTA_RASCUNHO) : LISTA_BRANCA;
   const fora = arquivos.filter((r) => !lista.some((re) => re.test(r)) || (opc.rascunho && r === 'sitemap.xml'));
   if (fora.length) throw new C.ErroLista(`dist/${slug}/ tem arquivos fora da lista branca (não vão ao ar; refaça o build):`, fora.map((r) => ({ campo: r, mensagem: 'fora da lista branca' })));
+  // galeria: cada arquivo publicado é citado pelo tenant, e cada citado está no build
+  const citados = new Set((Array.isArray(tenant.galeria) ? tenant.galeria : []).map((g) => String((g && g.src) || '')));
+  const naPasta = arquivos.filter((r) => GALERIA.test(r));
+  const galeriaErros = naPasta.filter((r) => !citados.has(r)).map((r) => ({ campo: r, mensagem: 'imagem que o tenant não cita (não vai ao ar; refaça o build)' }))
+    .concat([...citados].filter((r) => !naPasta.includes(r)).map((r) => ({ campo: r, mensagem: 'o tenant cita e o build não tem (refaça o build)' })));
+  if (galeriaErros.length) throw new C.ErroLista(`dist/${slug}/galeria fora das regras:`, galeriaErros);
   const avisos = [];
   const html = fs.readFileSync(path.join(pasta, 'index.html'), 'utf8');
   const canon = (html.match(/<link rel="canonical" href="([^"]+)"/) || [])[1] || '';
@@ -226,4 +235,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { conferir, conferirSaida, lerRascunho, zipar, passos, LISTA_BRANCA, LISTA_RASCUNHO, main };
+module.exports = { conferir, conferirSaida, lerRascunho, zipar, passos, LISTA_BRANCA, LISTA_RASCUNHO, GALERIA, main };

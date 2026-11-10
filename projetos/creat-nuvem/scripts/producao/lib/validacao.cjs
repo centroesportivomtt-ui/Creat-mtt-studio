@@ -15,7 +15,11 @@
  *  - (1C) domínio solto, entidade HTML, "@" e telefone diferente do WhatsApp do pedido em texto;
  *  - preço de procedimento de saúde (e qualquer preço em nicho de saúde);
  *  - pedido de horário sem dizer que o dono confirma pelo WhatsApp;
- *  - site entregue com texto de exemplo do preset ("exemplo", "Seu negócio").
+ *  - site entregue com texto de exemplo do preset ("exemplo", "Seu negócio");
+ *  - (v1.3, ADR-006) galeria[]: alt e legenda passam pelos mesmos termos; na demonstração (slug demo-*)
+ *    começam por "Foto de exemplo"; recados[] (recado de exemplo) só em demonstração.
+ * Demonstração = slug demo-*: o produzir.mjs dá o prefixo "cliente-" a todo slug de cliente que começaria
+ * assim (lib/tenant.cjs, slugSeguro), então nenhum site de cliente tem slug demo-*.
  * Todo erro cita o campo. Sem rede.
  */
 'use strict';
@@ -51,6 +55,8 @@ function textosDoTenant(t) {
   add('pagina.titulo', t.pagina && t.pagina.titulo); add('pagina.descricao', t.pagina && t.pagina.descricao);
   (t.servicos || []).forEach((s, i) => { add(`servicos[${i}].nome`, s && s.nome); add(`servicos[${i}].descricao`, s && s.descricao); });
   (t.profissionais || []).forEach((p, i) => { add(`profissionais[${i}].especialidade`, p && p.especialidade); add(`profissionais[${i}].bio`, p && p.bio); });
+  (Array.isArray(t.galeria) ? t.galeria : []).forEach((g, i) => { add(`galeria[${i}].alt`, g && g.alt); add(`galeria[${i}].legenda`, g && g.legenda); add(`galeria[${i}].credito`, g && g.credito); });
+  (Array.isArray(t.recados) ? t.recados : []).forEach((r, i) => { add(`recados[${i}].texto`, r && r.texto); add(`recados[${i}].autor`, r && r.autor); });
   const tx = t.textos || {};
   for (const k of Object.keys(tx)) {
     if (k === 'faq' && Array.isArray(tx.faq)) tx.faq.forEach((f, i) => { add(`textos.faq[${i}].pergunta`, f && f.pergunta); add(`textos.faq[${i}].resposta`, f && f.resposta); });
@@ -151,8 +157,16 @@ function validarTenant(t, opc) {
   }
   if (preset && t.nicho && preset.id !== t.nicho) e('nicho', `o tenant é ${t.nicho} e o preset é ${preset.id}`);
 
+  // 3b. v1.3: galeria e recados (ADR-006)
+  const demonstracao = /^demo-/.test(String(t.slug || ''));
+  if (Array.isArray(t.recados) && t.recados.length && !demonstracao) e('recados', 'recado de exemplo só existe em site-demonstração (slug demo-*); depoimento de cliente vai em avaliacoes[] com origem e aprovadoEm');
+  if (demonstracao) (Array.isArray(t.galeria) ? t.galeria : []).forEach((g, i) => {
+    if (!g || typeof g !== 'object') return;
+    for (const k of ['alt', 'legenda']) if (typeof g[k] === 'string' && !/^foto de exemplo\b/.test(norm(g[k]))) e(`galeria[${i}].${k}`, 'na demonstração, alt e legenda começam por "Foto de exemplo"');
+  });
+
   // 4. termos proibidos, emoji e marcadores
-  const entregue = !!(t.meta && t.meta.previa === false);
+  const entregue = !!(t.meta && t.meta.previa === false) && !demonstracao;
   for (const [campo, txt] of textosDoTenant(t)) {
     const n = norm(txt);
     for (const [re, motivo] of PROIBIDOS) if (re.test(n)) { e(campo, `termo proibido: ${motivo}`); break; }
@@ -165,7 +179,7 @@ function validarTenant(t, opc) {
     if (EMOJI.test(txt)) e(campo, 'emoji não é aceito');
     const marc = String(txt).match(/\{(\w+)\}/g) || [];
     for (const m of marc) if (!MARCADORES.includes(m.slice(1, -1))) e(campo, `marcador desconhecido ${m} (aceitos: ${MARCADORES.map((x) => `{${x}}`).join(' ')})`);
-    if (entregue && /\b(precos?|textos?|servicos?|nomes?|horarios?|dados?) de exemplo\b|\(exemplo\)/.test(n)) e(campo, 'texto de exemplo do preset num site entregue (troque pelo texto do negócio)');
+    if (entregue && /\b(precos?|textos?|servicos?|nomes?|horarios?|dados?|fotos?|imagens?|recados?|profissional|profissionais) de exemplo\b|\(exemplo\)/.test(n)) e(campo, 'texto de exemplo do preset num site entregue (troque pelo texto do negócio)');
   }
   if (entregue && /^seu negocio$/.test(norm(neg.nome || ''))) e('negocio.nome', 'nome de exemplo ("Seu negócio") num site entregue');
 

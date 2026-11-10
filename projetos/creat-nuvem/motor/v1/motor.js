@@ -21,12 +21,21 @@
  *   com nome fictício. Mostra a faixa "demonstração · nome fictício" no topo, sai com noindex e sem
  *   JSON-LD (negócio fictício não vira LocalBusiness no Google). Não é campo do tenant (ADR-001).
  *
+ *   fecho (v1.3, aditivo; só com demonstracao:true): { titulo, linha, botao } escritos pelo build a partir
+ *   de dados/precos.json. O motor monta a seção .fecho-demo e o bloco .oferta-demo do espelho com eles; o
+ *   href é sempre o de compra do nicho (hrefCompra). Sem fecho, título e botão saem do UI e a linha de
+ *   preço não aparece: preço nunca é escrito à mão no motor.
+ *
+ * v1.3 (ADR-006, compatível): campos opcionais galeria[], fuso e recados[] no tenant; relógio do negócio
+ * (CreatMotor.agoraNoNegocio, Intl no fuso do tenant, padrão America/Bahia); ordem das seções com a tabela
+ * antes do pedido e "Pedir este" em cada serviço; mapa ilustrativo e fecho de venda na demonstração.
+ *
  * Segurança: nenhum innerHTML com dado. Tudo por createElement/textContent.
  */
 (function (raiz) {
   'use strict';
 
-  var VERSAO = 'v1.2.0';
+  var VERSAO = 'v1.3.0';
   var W = typeof window !== 'undefined' ? window : null;
   var DOC = W && W.document ? W.document : null;
 
@@ -78,6 +87,21 @@
     demoSede: 'Veja a equipe que montou este site',
     demoSedeLeitor: ' (sede 3D da Creat Nuvem, demonstração)',
     exemplo: 'exemplo',
+    /* v1.3 */
+    seloDemo: 'Demonstração · nome fictício',
+    faixaDemoComo: 'Como funciona',
+    demoComoChegar: 'Como chegar',
+    demoMapaNota: 'Mapa ilustrativo: no seu site abre o endereço do seu negócio.',
+    galeriaTitulo: 'Trabalhos da casa',
+    fotoExemplo: 'Foto de exemplo',
+    recadoExemplo: 'recado de exemplo',
+    pedirEste: 'Pedir este',
+    fechoTitulo: 'Este site, com o nome do seu negócio, no ar em horas.',
+    fechoBotao: 'Quero este para o meu negócio',
+    abertoAte: 'Aberto até {hora}',
+    abertoPecaPara: 'Aberto · peça para {dia} às {hora}',
+    abreAs: 'Abre às {hora}',
+    abreDia: 'Abre {dia} às {hora}',
     sobConsulta: 'sob consulta',
     min: 'min',
     folga: 'fechado',
@@ -126,6 +150,49 @@
   }
   /* 'sábado, 15/11' (mensagem e conferência, sem ambiguidade) */
   function diaLongo(d, agora) { return diaRelativo(d, agora) + ', ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1); }
+
+  /* ---------- v1.3 · relógio do negócio (FUSO-DO-APARELHO) ----------
+     "Aberto agora", "hoje" e os horários livres seguem o fuso do negócio, não o do aparelho de quem
+     visita. tenant.fuso (opcional) vence; sem ele, o fuso da UF do endereço; sem UF, America/Bahia. */
+  var FUSO_PADRAO = 'America/Bahia';
+  var FUSOS_BR = ['America/Noronha', 'America/Belem', 'America/Fortaleza', 'America/Recife', 'America/Araguaina',
+    'America/Maceio', 'America/Bahia', 'America/Sao_Paulo', 'America/Campo_Grande', 'America/Cuiaba',
+    'America/Santarem', 'America/Porto_Velho', 'America/Boa_Vista', 'America/Manaus', 'America/Eirunepe', 'America/Rio_Branco'];
+  var FUSO_DA_UF = {
+    AC: 'America/Rio_Branco', AL: 'America/Maceio', AP: 'America/Belem', AM: 'America/Manaus', BA: 'America/Bahia',
+    CE: 'America/Fortaleza', DF: 'America/Sao_Paulo', ES: 'America/Sao_Paulo', GO: 'America/Sao_Paulo',
+    MA: 'America/Fortaleza', MT: 'America/Cuiaba', MS: 'America/Campo_Grande', MG: 'America/Sao_Paulo',
+    PA: 'America/Belem', PB: 'America/Fortaleza', PR: 'America/Sao_Paulo', PE: 'America/Recife', PI: 'America/Fortaleza',
+    RJ: 'America/Sao_Paulo', RN: 'America/Fortaleza', RS: 'America/Sao_Paulo', RO: 'America/Porto_Velho',
+    RR: 'America/Boa_Vista', SC: 'America/Sao_Paulo', SP: 'America/Sao_Paulo', SE: 'America/Maceio', TO: 'America/Araguaina'
+  };
+  function fusoDoTenant(tenant) {
+    var f = tenant && tenant.fuso;
+    if (typeof f === 'string' && FUSOS_BR.indexOf(f) !== -1) return f;
+    var uf = tenant && tenant.negocio && tenant.negocio.endereco && tenant.negocio.endereco.uf;
+    return (uf && FUSO_DA_UF[uf]) || FUSO_PADRAO;
+  }
+  /*
+   * Date cujos campos locais (getFullYear, getDay, getHours...) são o relógio de parede do negócio, com
+   * as partes também como propriedades: ano, mes (1 a 12), dia, hora, minuto, diaSemana (0 = domingo), fuso.
+   * Sem Intl com fuso (navegador muito antigo), devolve o relógio do aparelho, como no v1.2.
+   */
+  function agoraNoFuso(fuso, base) {
+    var b = base instanceof Date && !isNaN(base) ? base : new Date();
+    var d = null;
+    try {
+      var partes = {};
+      new Intl.DateTimeFormat('en-CA', { timeZone: fuso || FUSO_PADRAO, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })
+        .formatToParts(b).forEach(function (p) { partes[p.type] = p.value; });
+      var h = +partes.hour % 24;
+      d = new Date(+partes.year, +partes.month - 1, +partes.day, h, +partes.minute, +partes.second || 0);
+      if (isNaN(d)) d = null;
+    } catch (e) { d = null; }
+    if (!d) d = new Date(b.getTime());
+    d.ano = d.getFullYear(); d.mes = d.getMonth() + 1; d.dia = d.getDate();
+    d.hora = d.getHours(); d.minuto = d.getMinutes(); d.diaSemana = d.getDay(); d.fuso = fuso || FUSO_PADRAO;
+    return d;
+  }
 
   function fmt(str, vars) {
     return String(str == null ? '' : str).replace(/\{(\w+)\}/g, function (m, k) {
@@ -214,15 +281,48 @@
     return { chave: chave, data: d, horario: h, aberto: !!h, horarios: horarios, livres: horarios.length };
   }
 
-  function calcularLetreiro(funcionamento, textos, agora) {
+  /* primeiro horário pedível depois de hoje (até 14 dias): { data, hora } ou null */
+  function proximoPedivel(funcionamento, servicos, agora) {
+    for (var k = 1; k <= 14; k++) {
+      var d = somarDias(agora, k), hs = gerarHorarios(funcionamento, servicos, chaveData(d), agora);
+      if (hs.length) return { data: d, hora: hs[0] };
+    }
+    return null;
+  }
+  /* v1.2 escrevia frases longas que quebravam o topo em 2 linhas no celular (ACAD-21, TOPO-PESADO). O v1.3 usa
+     o letreiro curto do motor ("Aberto até 21h", "Abre às 5h30"); texto do tenant só vale se, já preenchido,
+     couber em LETREIRO_MAX caracteres (o campo continua válido no schema: nada muda para o tenant antigo). */
+  var LETREIRO_MAX = 24;
+  function letreiroDoTenant(textos, chave, vars) {
+    var t = textos && textos[chave === 'aberto' ? 'letreiroAberto' : 'letreiroFechado'];
+    var f = t ? colapsar(fmt(t, vars || {})) : '';
+    return f && f.length <= LETREIRO_MAX && !/\{\w+\}/.test(f) ? f : '';
+  }
+  /*
+   * servicos (v1.3, opcional): com eles, "aberto" sem horário pedível hoje vira "Aberto · peça para amanhã às 9h"
+   * (SAL-N4: o letreiro não promete o que o dia não tem mais).
+   */
+  function calcularLetreiro(funcionamento, textos, agora, servicos) {
     var h = horarioDoDia(funcionamento, agora.getDay());
     var m = minutosDe(agora);
-    if (h && m >= h.abre && m < h.fecha) return { estado: 'aberto', texto: fmt(textos.letreiroAberto, {}) };
-    if (h && m < h.abre) return { estado: 'fechado', texto: fmt(textos.letreiroFechado, { dia: 'hoje', hora: horaTexto(h.abre) }) };
+    if (h && m >= h.abre && m < h.fecha) {
+      if (Array.isArray(servicos) && !gerarHorarios(funcionamento, servicos, chaveData(agora), agora).length) {
+        var px = proximoPedivel(funcionamento, servicos, agora);
+        if (px) return { estado: 'aberto', texto: fmt(UI.abertoPecaPara, { dia: diaRelativo(px.data, agora), hora: horaTexto(px.hora) }) };
+      }
+      return { estado: 'aberto', texto: letreiroDoTenant(textos, 'aberto') || fmt(UI.abertoAte, { hora: horaTexto(h.fecha) }) };
+    }
+    if (h && m < h.abre) {
+      var vh = { dia: 'hoje', hora: horaTexto(h.abre) };
+      return { estado: 'fechado', texto: letreiroDoTenant(textos, 'fechado', vh) || fmt(UI.abreAs, vh) };
+    }
     for (var k = 1; k <= 7; k++) {
       var d = somarDias(agora, k);
       var hd = horarioDoDia(funcionamento, d.getDay());
-      if (hd) return { estado: 'fechado', texto: fmt(textos.letreiroFechado, { dia: diaRelativo(d, agora), hora: horaTexto(hd.abre) }) };
+      if (hd) {
+        var vd = { dia: diaRelativo(d, agora), hora: horaTexto(hd.abre) };
+        return { estado: 'fechado', texto: letreiroDoTenant(textos, 'fechado', vd) || fmt(UI.abreDia, vd) };
+      }
     }
     return { estado: 'fechado', texto: UI.fechadoSemPrevisao };
   }
@@ -237,16 +337,18 @@
       if (ult && ult.ass === ass && ordem.indexOf(dia) === ordem.indexOf(ult.dias[ult.dias.length - 1]) + 1) ult.dias.push(dia);
       else grupos.push({ ass: ass, dias: [dia], h: h });
     });
+    /* v1.3 (ACAD-N2): dia da semana é minúsculo no meio da expressão ("Segunda a quinta") */
+    function inicial(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
     var linhas = grupos.map(function (g) {
-      var rot = g.dias.length === 1 ? DIAS_TITULO[g.dias[0]]
-        : g.dias.length === 2 ? DIAS_TITULO[g.dias[0]] + ' e ' + DIAS_TITULO[g.dias[1]]
-          : DIAS_TITULO[g.dias[0]] + ' a ' + DIAS_TITULO[g.dias[g.dias.length - 1]];
-      return { rotulo: rot, valor: horaTexto(g.h.abre) + ' às ' + horaTexto(g.h.fecha), dias: g.dias, folga: false };
+      var rot = g.dias.length === 1 ? DIAS_LONGO[g.dias[0]]
+        : g.dias.length === 2 ? DIAS_LONGO[g.dias[0]] + ' e ' + DIAS_LONGO[g.dias[1]]
+          : DIAS_LONGO[g.dias[0]] + ' a ' + DIAS_LONGO[g.dias[g.dias.length - 1]];
+      return { rotulo: inicial(rot), rotuloMinusculo: rot, valor: horaTexto(g.h.abre) + ' às ' + horaTexto(g.h.fecha), dias: g.dias, folga: false };
     });
     if (folgas.length) {
-      var nomes = folgas.map(function (d) { return DIAS_TITULO[d]; });
+      var nomes = folgas.map(function (d) { return DIAS_LONGO[d]; });
       var rot = nomes.length === 1 ? nomes[0] : nomes.slice(0, -1).join(', ') + ' e ' + nomes[nomes.length - 1];
-      linhas.push({ rotulo: rot, valor: UI.folga, dias: folgas, folga: true });
+      linhas.push({ rotulo: inicial(rot), rotuloMinusculo: rot, valor: UI.folga, dias: folgas, folga: true });
     }
     return linhas;
   }
@@ -255,7 +357,7 @@
     if (!e) return [];
     return [
       [e.rua, e.numero].filter(Boolean).join(', '),
-      [e.bairro, [e.cidade, e.uf].filter(Boolean).join(' - ')].filter(Boolean).join(' · '),
+      [e.bairro, e.cidade ? e.cidade + (e.uf ? ' (' + e.uf + ')' : '') : ''].filter(Boolean).join(', '),
       e.cep ? 'CEP ' + e.cep : ''
     ].filter(Boolean);
   }
@@ -354,8 +456,10 @@
     desc = cidade ? fmt(desc, vars) : desc.replace(/ em \{cidade\}/g, '').replace(/\{cidade\}/g, '');
     t.pagina = { titulo: titulo, descricao: cortarFrases(fmt(desc, vars), 160) };
     if (pal) t.cores = { fundo: pal.fundo, texto: pal.texto, destaque: pal.destaque, apoio: pal.apoio };
-    t.meta = { previa: opc.previa !== false, motorVersao: 'v1', criadoEm: (opc.agora || new Date()).toISOString() };
+    t.meta = { previa: opc.previa !== false, motorVersao: 'v1.3', criadoEm: (opc.agora || new Date()).toISOString() };
     if (t.meta.previa) { t.profissionais = []; t.avaliacoes = []; delete t.negocio.whatsapp; }
+    // v1.3: galeria e recados do preset nunca passam para a prévia nem para um cliente (fotos e recados de exemplo)
+    delete t.galeria; delete t.recados;
     return t;
   }
 
@@ -390,12 +494,72 @@
     return base + sep + 'utm_source=rodape&utm_medium=ref&utm_campaign=rodape-v1&utm_content=' + encodeURIComponent(nicho || 'site');
   }
 
-  /* link "Quero um assim" da faixa de demonstração (mesma regra do rodapé, outra origem) */
-  function hrefDemo(home, nicho) {
-    var base = String(home).split('#')[0];
-    if (!/^https:\/\//.test(base)) return '';
-    var sep = base.indexOf('?') === -1 ? '?' : '&';
-    return base + sep + 'utm_source=demo&utm_medium=ref&utm_campaign=demo-v1&utm_content=' + encodeURIComponent(nicho || 'site');
+  /*
+   * v1.3 (CTA-VENDA, SAL-09, ACAD-14): compra do nicho a partir da demonstração. Destino único do funil:
+   * a home com ?nicho=<nicho> (o mesmo dos anúncios; a home marca o nicho e abre a prévia e o pagamento).
+   * /previa/?nicho= não serve: a prévia lê só o fragmento #k= e abriria a barbearia com "Escolha o seu nicho".
+   * origem: 'demo' (faixa, fecho e espelho) ou 'rodape'. Só https; nicho fora da lista vira só utm.
+   */
+  var NICHOS_COMPRA = ['barbearia', 'salao', 'academia'];
+  function hrefCompra(home, nicho, origem) {
+    var base = String(home || '').split('#')[0].split('?')[0];
+    if (!/^https:\/\/[^\s"'<>\\]+$/.test(base)) return '';
+    if (base.charAt(base.length - 1) !== '/') base += '/';
+    var k = NICHOS_COMPRA.indexOf(nicho) !== -1 ? nicho : '';
+    var o = origem === 'rodape' ? 'rodape' : 'demo';
+    return base + '?' + (k ? 'nicho=' + k + '&' : '') + 'utm_source=' + o + '&utm_medium=ref&utm_campaign=' + o + '-v1&utm_content=' + encodeURIComponent(k || 'site');
+  }
+  /* link "Quero um assim" da faixa de demonstração: compra do nicho (v1.3) */
+  function hrefDemo(home, nicho) { return hrefCompra(home, nicho, 'demo'); }
+
+  /* v1.3 · textos do fecho escritos pelo build (dados/precos.json); só texto, com limite */
+  function limparFecho(f) {
+    if (!f || typeof f !== 'object') return null;
+    var out = {}, lim = { titulo: 90, linha: 180, botao: 40 };
+    Object.keys(lim).forEach(function (k) { var v = colapsar(f[k]); if (v && !/[<>]/.test(v)) out[k] = v.slice(0, lim[k]); });
+    return Object.keys(out).length ? out : null;
+  }
+  /* na tela, "R$ 147" e "72 h" não quebram no meio (o dado injetado pelo build fica como veio) */
+  function semQuebra(t) { return String(t || '').replace(/R\$ (?=\d)/g, 'R$\u00a0').replace(/(\d) (?=h\b)/g, '$1\u00a0'); }
+
+  /* v1.3 · galeria: só arquivo da própria pasta do site (nenhuma imagem de terceiro em tempo de execução) */
+  var RE_FOTO = /^galeria\/[a-z0-9][a-z0-9-]{0,60}\.(webp|avif|jpg|jpeg|png)$/;
+  function prefixoExemplo(t) {
+    t = colapsar(t);
+    if (/^foto de exemplo\b/i.test(t)) return t;
+    return UI.fotoExemplo + (t ? ': ' + t.charAt(0).toLowerCase() + t.slice(1) : '');
+  }
+  function galeriaDe(tenant, demonstracao, previa) {
+    if (previa || !Array.isArray(tenant.galeria)) return [];
+    var lista = tenant.galeria.filter(function (g) { return g && RE_FOTO.test(String(g.src || '')) && colapsar(g.alt); }).slice(0, 6).map(function (g) {
+      var larg = +g.largura, alt = +g.altura;
+      return {
+        src: String(g.src),
+        alt: demonstracao ? prefixoExemplo(g.alt) : colapsar(g.alt),
+        legenda: demonstracao ? prefixoExemplo(g.legenda || '') : colapsar(g.legenda || ''),
+        credito: colapsar(g.credito || ''),
+        largura: larg >= 16 && larg <= 4000 ? Math.round(larg) : 1280,
+        altura: alt >= 16 && alt <= 4000 ? Math.round(alt) : 960
+      };
+    });
+    return lista.length >= 3 ? lista : [];
+  }
+  /* v1.3 · recados de exemplo: só na demonstração, sempre com selo; no site do cliente, só avaliacoes[] com origem */
+  function recadosDe(tenant, demonstracao) {
+    if (!demonstracao || !Array.isArray(tenant.recados)) return [];
+    return tenant.recados.filter(function (r) { return r && colapsar(r.texto) && colapsar(r.autor); }).slice(0, 3)
+      .map(function (r) { return { texto: colapsar(r.texto), autor: colapsar(r.autor) }; });
+  }
+  /* v1.3 (DEMO-DONO-CONFIRMA): na demonstração o pedido vai para a Creat; o texto diz isso sem contradição */
+  var DO_NICHO = { barbearia: 'da sua barbearia', salao: 'do seu salão', academia: 'da sua academia' };
+  function textosDaDemo(textos, nicho) {
+    var site = 'No site ' + (DO_NICHO[nicho] || 'do seu negócio') + ', o pedido chega pronto no seu WhatsApp.';
+    textos.heroSubtituloBase = 'Escolha o serviço, o dia e a hora aqui mesmo. ' + site;
+    textos.heroSubtituloDemo = 'Nesta demonstração, chega no WhatsApp da Creat.';
+    textos.heroSubtitulo = textos.heroSubtituloBase + ' ' + textos.heroSubtituloDemo;
+    textos.pedidoNota = 'Teste à vontade. Aqui o pedido vai para o WhatsApp da Creat; no seu site, vai para o seu.';
+    textos.confirmacaoTexto = 'Toque em enviar. A mensagem chega na Creat, e a gente responde mostrando como fica o seu.';
+    return textos;
   }
 
   /* link "Veja a equipe que montou este site" (só na demonstração): <home>/sede/?modo=demo&marca=<nome>.
@@ -461,7 +625,10 @@
     var preset = opc.preset || null, site = opc.site || {};
     var neg = tenant.negocio || {}, end = neg.endereco || {};
     var previa = !!(tenant.meta && tenant.meta.previa);
+    var demonstracao = !previa && !!site.demonstracao;
     var textos = textosDe(tenant);
+    if (demonstracao) textosDaDemo(textos, String(tenant.nicho || ''));
+    var fuso = fusoDoTenant(tenant);
     var servicos = (Array.isArray(tenant.servicos) ? tenant.servicos : []).filter(function (s) { return s && s.id && s.nome; }).map(function (s) {
       return {
         id: String(s.id), nome: String(s.nome), preco: typeof s.preco === 'number' ? s.preco : null,
@@ -477,7 +644,8 @@
     var fontes = (preset && preset.fontes) || FONTES_PADRAO;
     var rodapeMostrar = site.rodape !== false;
     var rotulo = (preset && preset.rotulo) || '';
-    var demonstracao = !previa && !!site.demonstracao;
+    var demoHref = demonstracao && site.home ? hrefDemo(site.home, tenant.nicho) : '';
+    var fechoSite = demonstracao ? limparFecho(site.fecho) || {} : null;
     return {
       versao: VERSAO,
       slug: String(tenant.slug || 'site'),
@@ -485,7 +653,13 @@
       rotuloNicho: rotulo,
       previa: previa,
       demonstracao: demonstracao,
-      demoHref: demonstracao && site.home ? hrefDemo(site.home, tenant.nicho) : '',
+      demoHref: demoHref,
+      fuso: fuso,
+      galeria: galeriaDe(tenant, demonstracao, previa),
+      recados: recadosDe(tenant, demonstracao),
+      // o espelho do agendamento.js (#espelho-compra) usa e.fecho e e.fechoHref: um destino só no funil
+      fechoHref: demoHref,
+      fecho: fechoSite && demoHref ? { titulo: semQuebra(fechoSite.titulo || UI.fechoTitulo), linha: semQuebra(fechoSite.linha || ''), botao: fechoSite.botao || UI.fechoBotao, href: demoHref } : null,
       sedeHref: demonstracao && site.home ? hrefSede(site.home, neg.nome) : '',
       nomeExemplo: !!(previa && site.nomeExemplo),
       nome: neg.nome || '',
@@ -513,8 +687,12 @@
         telefone: neg.telefoneExibicao || (whats ? mascararWhats(whats.slice(2)) : ''),
         enderecoLinhas: enderecoLinhas(end),
         enderecoCompleto: !!(end.rua && end.cidade),
-        // demonstração: sem link do Maps (o endereço é de exemplo e não pode levar a um imóvel de terceiros)
-        mapaUrl: end.rua && !demonstracao ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([enderecoTexto(end), neg.nome].filter(Boolean).join(', ')) : '',
+        // demonstração (v1.3, SEM-MAPA): mapa ilustrativo, o centro da cidade de exemplo e nunca a rua de
+        // exemplo, que poderia levar a um imóvel de terceiros
+        mapaUrl: demonstracao
+          ? (end.cidade ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent('Centro, ' + end.cidade + (end.uf ? ' - ' + end.uf : '')) : '')
+          : (end.rua ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([enderecoTexto(end), neg.nome].filter(Boolean).join(', ')) : ''),
+        mapaIlustrativo: demonstracao && !!end.cidade,
         instagram: neg.instagram && /^https:\/\//.test(String(neg.instagram.url || '')) ? { usuario: neg.instagram.usuario || '', url: neg.instagram.url } : null
       },
       pedido: {
@@ -527,7 +705,7 @@
         mostrar: rodapeMostrar,
         texto: UI.creat,
         chamada: UI.creatChamada,
-        href: rodapeMostrar ? hrefRodape(site.home, tenant.nicho) : ''
+        href: rodapeMostrar ? (demonstracao ? hrefCompra(site.home, tenant.nicho, 'rodape') : hrefRodape(site.home, tenant.nicho)) : ''
       },
       jsonLd: jsonLd(tenant, { preset: preset, site: site }),
       temaCor: (function () { var p = paletaDoTenant(tenant, preset); return p ? p.claro.fundo : '#FFFFFF'; })(),
@@ -599,7 +777,11 @@
   function scriptTenant(tenant, site) {
     var s = { home: site && site.home ? String(site.home) : '', rodape: !(site && site.rodape === false) };
     if (site && site.url) s.url = String(site.url);
-    if (site && site.demonstracao) s.demonstracao = true;
+    if (site && site.demonstracao) {
+      s.demonstracao = true;
+      var f = limparFecho(site.fecho);
+      if (f) s.fecho = f;
+    }
     return '/* gerado pelo build-site.cjs a partir de tenant.json; não editar à mão */\n' +
       'window.TENANT = ' + jsonSeguro(tenant) + ';\n' +
       'window.CREAT_SITE = ' + jsonSeguro(s) + ';\n';
@@ -613,6 +795,8 @@
     whatsNegocioValido: whatsNegocioValido, nomeValido: nomeValido,
     horarioDoDia: horarioDoDia, gerarHorarios: gerarHorarios, servicosQueCabem: servicosQueCabem, resumoDia: resumoDia,
     calcularLetreiro: calcularLetreiro, linhasHorario: linhasHorario, avaliacoesValidas: avaliacoesValidas,
+    agoraNoFuso: agoraNoFuso, fusoDoTenant: fusoDoTenant, FUSOS_BR: FUSOS_BR, FUSO_PADRAO: FUSO_PADRAO,
+    hrefCompra: hrefCompra, galeriaDe: galeriaDe, enderecoLinhas: enderecoLinhas, proximoPedivel: proximoPedivel,
     mensagemPedido: mensagemPedido, urlWhats: urlWhats, cortarNaPalavra: cortarNaPalavra, slugDe: slugDe,
     escaparHtml: escaparHtml, jsonSeguro: jsonSeguro
   };
@@ -628,6 +812,8 @@
     jsonLd: jsonLd,
     preencherTemplate: preencherTemplate,
     scriptTenant: scriptTenant,
+    /* no node (e antes do início no navegador): relógio do negócio do tenant dado; padrão America/Bahia */
+    agoraNoNegocio: function (tenant, base) { return agoraNoFuso(fusoDoTenant(tenant || {}), base); },
     _puro: puro
   };
 
@@ -827,9 +1013,9 @@
     if (e.nomeExemplo) h.appendChild(criar('p', { classe: 'heroi-exemplo' }, [selo(UI.exemplo)]));
     if (e.bordao) h.appendChild(criar('p', { classe: 'heroi-bordao', texto: e.bordao }));
     if (e.textos.heroSubtitulo) {
-      // demonstração: o texto do herói fala do WhatsApp do negócio; a frase extra desfaz a contradição com a faixa
-      h.appendChild(criar('p', { classe: 'heroi-sub' }, e.demonstracao
-        ? [e.textos.heroSubtitulo + ' ', criar('span', { classe: 'heroi-sub-demo', texto: UI.demoHeroiNota })]
+      // demonstração (v1.3): uma frase só diz para quem vai o pedido aqui e no site do cliente
+      h.appendChild(criar('p', { classe: 'heroi-sub' }, e.demonstracao && e.textos.heroSubtituloDemo
+        ? [e.textos.heroSubtituloBase + ' ', criar('span', { classe: 'heroi-sub-demo', texto: e.textos.heroSubtituloDemo })]
         : [e.textos.heroSubtitulo]));
     }
     return h;
@@ -839,7 +1025,7 @@
     if (!e.textos.manifesto) return null;
     var s = secao('manifesto', e.textos.heroTitulo, 'manifesto');
     s.appendChild(criar('p', { texto: e.textos.manifesto }));
-    if (e.bordao) s.appendChild(criar('p', { classe: 'manifesto-bordao', texto: e.bordao }));
+    // v1.3 (BORDAO-REPETIDO): a citação era o próprio bordão, já escrito no herói; repetir só gastava espaço
     return s;
   }
 
@@ -854,16 +1040,38 @@
     if (!e.servicos.length) return null;
     var s = secao('servicos', e.textos.servicosTitulo, null, e.previa ? selo(UI.exemplo) : null);
     var ul = criar('ul', { classe: 'precos', id: 'lista-precos' });
+    var comPedir = e.pedido.modo === 'whatsapp';
     e.servicos.forEach(function (sv) {
-      ul.appendChild(criar('li', null, [
+      ul.appendChild(criar('li', { 'data-servico': sv.id }, [
         criar('span', { classe: 'nome', texto: sv.nome }),
         criar('span', { classe: 'duracao', texto: sv.duracaoTexto }),
         criar('span', { classe: 'preco' + (sv.preco === null ? ' is-consulta' : ''), texto: sv.precoTexto }),
-        sv.descricao ? criar('span', { classe: 'descricao', texto: sv.descricao }) : null
+        sv.descricao ? criar('span', { classe: 'descricao', texto: sv.descricao }) : null,
+        // v1.3 (ORDEM-SECOES): "Pedir este" escolhe o serviço no pedido e desce até ele
+        comPedir ? criar('a', { classe: 'btn btn-secundario pedir-este', href: '#pedir', 'data-servico': sv.id, 'aria-label': UI.pedirEste + ': ' + sv.nome, texto: UI.pedirEste }) : null
       ]));
     });
     s.appendChild(ul);
     if (e.textos.servicosNota) s.appendChild(criar('p', { classe: 'nota servicos-nota', texto: e.textos.servicosNota }));
+    return s;
+  }
+
+  /* v1.3 (SEM-FOTO): fotos da pasta galeria/ do site; na demonstração, cada uma rotulada "Foto de exemplo" */
+  function renderGaleria(e) {
+    if (!e.galeria.length) return null;
+    var s = secao('trabalhos', UI.galeriaTitulo, 'trabalhos', e.demonstracao ? selo(UI.exemplo) : null);
+    e.galeria.forEach(function (g) {
+      var img = criar('img', { src: g.src, alt: g.alt, width: g.largura, height: g.altura, loading: 'lazy', decoding: 'async' });
+      // altura pela proporção de width/height (sem distorcer e sem layout shift); CSSOM não esbarra na CSP
+      img.style.height = 'auto';
+      var cap = criar('figcaption', null, [g.legenda || g.alt]);
+      if (g.credito) cap.appendChild(criar('span', { classe: 'credito', texto: ' · ' + g.credito }));
+      s.appendChild(criar('figure', { classe: 'foto' }, [
+        img,
+        e.demonstracao ? criar('span', { classe: 'selo selo-foto', 'aria-hidden': 'true', texto: UI.fotoExemplo }) : null,
+        cap
+      ]));
+    });
     return s;
   }
 
@@ -883,6 +1091,16 @@
   }
 
   function renderRecados(e) {
+    if (!e.avaliacoes.length && e.recados.length) {
+      // v1.3: recados de exemplo só existem na demonstração, com selo no título e em cada autor
+      var sx = secao('recados', e.textos.avaliacoesTitulo, 'quadro', selo(UI.exemplo));
+      var ux = criar('ul');
+      e.recados.forEach(function (a) {
+        ux.appendChild(criar('li', null, [criar('blockquote', null, [criar('p', { texto: a.texto })]), criar('cite', { texto: a.autor + ' (' + UI.recadoExemplo + ')' })]));
+      });
+      sx.appendChild(ux);
+      return sx;
+    }
     if (!e.avaliacoes.length) return null;
     var s = secao('recados', e.textos.avaliacoesTitulo, 'quadro');
     var ul = criar('ul');
@@ -903,7 +1121,10 @@
     }
     if (!e.contato.enderecoCompleto && e.previa) local.appendChild(criar('p', { classe: 'nota' }, [selo(UI.exemplo), ' ' + UI.enderecoPrevia]));
     if (e.demonstracao) local.appendChild(criar('p', { classe: 'nota nota-demo' }, [selo(UI.exemplo), ' ' + UI.demoLocalNota]));
-    if (e.contato.mapaUrl) local.appendChild(criar('p', null, [criar('a', { classe: 'link-forte', href: e.contato.mapaUrl, target: '_blank', rel: 'noopener', texto: UI.comoChegar })]));
+    if (e.contato.mapaUrl) {
+      local.appendChild(criar('p', { classe: 'como-chegar' }, [criar('a', { classe: 'link-forte', href: e.contato.mapaUrl, target: '_blank', rel: 'noopener', texto: e.contato.mapaIlustrativo ? UI.demoComoChegar : UI.comoChegar })]));
+      if (e.contato.mapaIlustrativo) local.appendChild(criar('p', { classe: 'nota nota-mapa' }, [UI.demoMapaNota]));
+    }
     if (e.contato.instagram) local.appendChild(criar('p', null, [criar('a', { classe: 'link-forte', href: e.contato.instagram.url, target: '_blank', rel: 'noopener', texto: UI.instagram + (e.contato.instagram.usuario ? ' · ' + e.contato.instagram.usuario : '') })]));
     s.appendChild(local);
     var h3hor = criar('h3', { texto: UI.horarioTitulo });
@@ -911,7 +1132,7 @@
     var hor = criar('div', { classe: 'contato-horario' }, [h3hor]);
     var tab = criar('table', { classe: 'funcionamento' }, [criar('caption', { classe: 'so-leitor', texto: UI.horarioTitulo })]);
     var tb = criar('tbody');
-    var hoje = new Date().getDay();
+    var hoje = agoraNoNegocio().getDay();
     e.linhasHorario.forEach(function (l) {
       var tr = criar('tr', { classe: [l.folga ? 'is-folga' : '', l.dias.indexOf(hoje) !== -1 ? 'is-hoje' : ''].join(' ').trim() || null }, [
         criar('th', { scope: 'row', texto: l.rotulo }), criar('td', { texto: l.valor })
@@ -938,14 +1159,17 @@
     var l1 = criar('p', null, [criar('strong', { texto: e.nome })]);
     if (e.textos.rodapeFrase) l1.appendChild(DOC.createTextNode(' · ' + e.textos.rodapeFrase));
     r.appendChild(l1);
-    var resumo = e.linhasHorario.filter(function (l) { return !l.folga; }).map(function (l) { return l.rotulo + ', ' + l.valor; }).join(' · ');
+    // v1.3 (RODAPE-PONTO-SOLTO, ACAD-12, ACAD-N2): horário e WhatsApp em parágrafos separados; ' · ' só entre
+    // os grupos de dias; depois de "Horário de exemplo:" os dias vão em minúsculas
+    var abertos = e.linhasHorario.filter(function (l) { return !l.folga; });
+    var resumo = abertos.map(function (l) { return (e.demonstracao ? l.rotuloMinusculo : l.rotulo) + ', ' + l.valor; }).join(' · ');
     if (resumo && e.demonstracao) resumo = UI.demoHorarioRodape + ': ' + resumo;
-    var l2 = criar('p', null, resumo ? [criar('span', { texto: resumo })] : []);
+    if (resumo) r.appendChild(criar('p', { classe: 'rodape-horario' }, [resumo]));
     if (e.contato.waBase) {
-      if (resumo) l2.appendChild(DOC.createTextNode(' · '));
-      l2.appendChild(criar('a', { href: e.contato.waBase, target: '_blank', rel: 'noopener', texto: UI.whatsRodape + ' ' + e.contato.telefone }));
+      r.appendChild(criar('p', { classe: 'rodape-whats' }, [
+        criar('a', { classe: 'link-whats-rodape', href: e.contato.waBase, target: '_blank', rel: 'noopener', texto: UI.whatsRodape + ' ' + e.contato.telefone })
+      ]));
     }
-    if (l2.childNodes.length) r.appendChild(l2);
     if (e.demonstracao && e.sedeHref) {
       r.appendChild(criar('p', { classe: 'rodape-sede' }, [
         criar('a', { href: e.sedeHref, rel: 'noopener' }, [criar('span', { classe: 'rodape-sede-pontos', 'aria-hidden': 'true' }), DOC.createTextNode(UI.demoSede), criar('span', { classe: 'so-leitor', texto: UI.demoSedeLeitor })])
@@ -960,21 +1184,54 @@
     return r;
   }
 
+  /* v1.3 (CTA-VENDA, ACAD-14): o próximo passo depois de testar tudo, antes do rodapé */
+  function renderFecho(e) {
+    if (!e.demonstracao || !e.fecho) return null;
+    var s = criar('section', { classe: 'secao fecho-demo', 'aria-labelledby': 'fecho-demo-titulo' }, [
+      criar('h2', { id: 'fecho-demo-titulo', texto: e.fecho.titulo })
+    ]);
+    if (e.fecho.linha) s.appendChild(criar('p', { classe: 'fecho-linha', texto: e.fecho.linha }));
+    s.appendChild(criar('p', { classe: 'fecho-acao' }, [criar('a', { classe: 'btn btn-externo fecho-botao', href: e.fecho.href, rel: 'noopener', texto: e.fecho.botao })]));
+    return s;
+  }
+  /* a mesma chamada junto do espelho de confirmação (o espelho nasce no agendamento.js, que deixa este bloco
+     para o motor). Fica logo DEPOIS do espelho, fora da moldura do ritual (o frasco do salão e o espelho
+     oval cortariam o botão), e aparece e some junto com ele. Uma vez só; vale para o agendamento atrasado. */
+  function garantirOfertaEspelho() {
+    var e = estadoAtual, esp = $('espelho');
+    if (!e || !e.demonstracao || !e.fecho || !esp || !esp.parentNode || $('oferta-demo')) return;
+    var bloco = criar('div', { id: 'oferta-demo', classe: 'oferta-demo', hidden: esp.hidden ? true : null }, [criar('p', { classe: 'oferta-titulo', texto: e.fecho.titulo })]);
+    if (e.fecho.linha) bloco.appendChild(criar('p', { classe: 'oferta-linha', texto: e.fecho.linha }));
+    bloco.appendChild(criar('a', { classe: 'btn btn-externo', href: e.fecho.href, rel: 'noopener', texto: e.fecho.botao }));
+    esp.parentNode.insertBefore(bloco, esp.nextSibling);
+    function seguir() { bloco.hidden = !!esp.hidden; }
+    if ('MutationObserver' in W) new W.MutationObserver(seguir).observe(esp, { attributes: true, attributeFilter: ['hidden'] });
+    else W.addEventListener('motor:pedido', function () { setTimeout(seguir, 0); });
+  }
+  /* v1.3 (TOPO-PESADO): selo + "Como funciona" fechado + "Quero um assim" numa faixa de uma linha */
+  function renderFaixaDemo(e) {
+    var filhos = [
+      criar('span', { classe: 'selo-demo', texto: UI.seloDemo }),
+      criar('details', null, [criar('summary', { texto: UI.faixaDemoComo }), criar('p', { texto: UI.faixaDemoTexto })])
+    ];
+    if (e.demoHref) filhos.push(criar('a', { classe: 'quero-assim', href: e.demoHref, rel: 'noopener', texto: UI.faixaDemoLink }));
+    return criar('div', { classe: 'faixa-previa faixa-demo', role: 'note', 'aria-label': UI.seloDemo, 'data-demonstracao': '' }, filhos);
+  }
+
   function render(e, alvo) {
     while (alvo.firstChild) alvo.removeChild(alvo.firstChild);
     alvo.appendChild(criar('a', { classe: 'pular-link', href: e.pedido.modo === 'link_externo' ? '#pedir' : '#pedir', texto: UI.pular }));
     if (e.previa) alvo.appendChild(criar('p', { classe: 'faixa-previa', role: 'note' }, [selo('prévia'), ' ' + UI.faixaPrevia.replace(/^Prévia\.\s*/, '')]));
-    else if (e.demonstracao) {
-      var fd = [selo(UI.faixaDemo), ' ' + UI.faixaDemoTexto];
-      if (e.demoHref) fd.push(' ', criar('a', { href: e.demoHref, rel: 'noopener', texto: UI.faixaDemoLink }));
-      alvo.appendChild(criar('p', { classe: 'faixa-previa faixa-demo', role: 'note', 'data-demonstracao': '' }, fd));
-    }
+    else if (e.demonstracao) alvo.appendChild(renderFaixaDemo(e));
     alvo.appendChild(renderTopo(e));
     alvo.appendChild(renderHeroi(e));
     var main = criar('main', { id: 'conteudo' });
-    [renderManifesto(e), renderPedido(e), renderServicos(e), renderEquipe(e), renderRecados(e), renderOnde(e), renderFaq(e)]
+    // v1.3 (ORDEM-SECOES): manifesto curto, tabela da casa, trabalhos, pedido, equipe, recados, onde, perguntas
+    [renderManifesto(e), renderServicos(e), renderGaleria(e), renderPedido(e), renderEquipe(e), renderRecados(e), renderOnde(e), renderFaq(e)]
       .forEach(function (s) { if (s) main.appendChild(s); });
     alvo.appendChild(main);
+    var fecho = renderFecho(e);
+    if (fecho) alvo.appendChild(fecho);
     if (e.contato.waBase) {
       var fab = criar('a', { id: 'whats-flutuante', classe: 'whats-flutuante', href: e.contato.waBase, target: '_blank', rel: 'noopener', 'aria-label': UI.whatsFlutuante });
       fab.appendChild(iconeWhats());
@@ -986,7 +1243,7 @@
   function atualizarLetreiro() {
     var el = $('letreiro');
     if (!el || !estadoAtual) return;
-    var r = calcularLetreiro(estadoAtual.funcionamento, estadoAtual.textos, new Date());
+    var r = calcularLetreiro(estadoAtual.funcionamento, estadoAtual.textos, agoraNoNegocio(), estadoAtual.servicos);
     (el.querySelector('.letreiro-texto') || el).textContent = r.texto;
     el.setAttribute('data-estado', r.estado);
   }
@@ -995,16 +1252,58 @@
   function vigiarPolegar() {
     var btn = $('btn-pedir'), heroi = $('heroi'), pedir = $('pedir');
     if (!btn || !('IntersectionObserver' in W)) return;
-    var foraHeroi = false, naSecao = false;
+    var foraHeroi = false, naSecao = false, fabNoPedido = false;
+    var topo = DOC.querySelector('.topo'), fab = $('whats-flutuante');
+    /* ACAD-07: depois do ritual, o botão só desce para o polegar quando o nome (h1) já subiu acima da faixa
+       onde ele fica (96 px do pé da tela); assim o botão fixo nunca cobre o nome do negócio */
+    function nomeLivre() {
+      var t = DOC.querySelector('#heroi h1');
+      return !t || t.getBoundingClientRect().bottom < W.innerHeight - 96;
+    }
     function pintar() {
-      btn.classList.toggle('is-polegar', foraHeroi || btn.classList.contains('is-ritual-pronto'));
+      var polegar = foraHeroi || (btn.classList.contains('is-ritual-pronto') && nomeLivre());
+      btn.classList.toggle('is-polegar', polegar);
       btn.classList.toggle('is-na-secao', naSecao);
+      // TOPO-PESADO: com o botão no polegar, o topo não guarda o vão dele
+      if (topo) topo.classList.toggle('sem-pedir', polegar);
+      // FAB-COBRE: o WhatsApp flutuante some enquanto o herói está na tela e dentro do pedido
+      if (fab) fab.classList.toggle('is-escondido', !foraHeroi || fabNoPedido);
     }
     if (heroi) new W.IntersectionObserver(function (ents) { foraHeroi = !ents[ents.length - 1].isIntersecting; pintar(); }, { threshold: 0, rootMargin: '-35% 0px 0px 0px' }).observe(heroi);
     if (pedir) new W.IntersectionObserver(function (ents) { naSecao = ents[ents.length - 1].isIntersecting; pintar(); }).observe(pedir);
+    if (fab && pedir) new W.IntersectionObserver(function (ents) { fabNoPedido = ents[ents.length - 1].isIntersecting; pintar(); }, { rootMargin: '0px 0px -20% 0px' }).observe(pedir);
     W.addEventListener('motor:ritual-pronto', function () { btn.classList.add('is-ritual-pronto'); pintar(); });
-    var fab = $('whats-flutuante');
-    if (fab && pedir) new W.IntersectionObserver(function (ents) { fab.classList.toggle('is-escondido', ents[ents.length - 1].isIntersecting); }, { rootMargin: '0px 0px -20% 0px' }).observe(pedir);
+    var agendado = false;
+    function aoRolar() {
+      if (agendado || !btn.classList.contains('is-ritual-pronto')) return;
+      agendado = true;
+      (W.requestAnimationFrame || setTimeout)(function () { agendado = false; pintar(); });
+    }
+    W.addEventListener('scroll', aoRolar, { passive: true });
+    W.addEventListener('resize', aoRolar, { passive: true });
+    pintar();
+  }
+
+  /* v1.3 (ORDEM-SECOES): "Pedir este" pré-seleciona o serviço (agendamento.js) e desce até o pedido */
+  function ligarPedirEste(reduz) {
+    var lista = $('lista-precos');
+    if (!lista) return;
+    lista.addEventListener('click', function (ev) {
+      var a = ev.target && ev.target.closest ? ev.target.closest('a.pedir-este') : null;
+      if (!a) return;
+      var alvo = $('pedir');
+      if (!alvo) return;
+      ev.preventDefault();
+      var id = a.getAttribute('data-servico');
+      var ag = W.CreatAgendamento;
+      try { if (ag && typeof ag.escolherServico === 'function') ag.escolherServico(id); } catch (er) { if (W.console) W.console.error('[motor] pedir este:', er); }
+      try { alvo.scrollIntoView({ block: 'start', behavior: reduz ? 'auto' : 'smooth' }); } catch (er) { alvo.scrollIntoView(); }
+      var foco = alvo.querySelector('.servico-opcao[aria-checked="true"]') || alvo.querySelector('h2');
+      if (foco) {
+        if (!foco.hasAttribute('tabindex') && foco.tagName === 'H2') foco.setAttribute('tabindex', '-1');
+        try { foco.focus({ preventScroll: true }); } catch (er) {}
+      }
+    });
   }
 
   function semTenant(alvo) {
@@ -1020,8 +1319,10 @@
     if (!tenant || typeof tenant !== 'object' || tenant.versao !== 1 || !tenant.negocio || !tenant.funcionamento) { semTenant(alvo); return null; }
     iniciado = true;
     var preset = W.CreatNichos ? W.CreatNichos.obter(tenant.nicho) : null;
-    var e = estadoAtual = construirEstado(tenant, { preset: preset, site: W.CREAT_SITE || {}, agora: new Date() });
+    var e = estadoAtual = construirEstado(tenant, { preset: preset, site: W.CREAT_SITE || {} });
     armazem = criarArmazem(e.armazemPrefixo, e.previa);
+    // ACAD-21: som desligado por padrão; liga só pelo toque no botão (som.js lê 'site:<slug>:som')
+    if (!e.previa && armazem.ler('som') === null) armazem.gravar('som', 'off');
     var reduz = false;
     try { reduz = !!(W.matchMedia && W.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (er) {}
     aplicarCabeca(e);
@@ -1039,6 +1340,9 @@
     }
     ctxAtual = ctx;
     modulos.forEach(rodarModulo);
+    garantirOfertaEspelho();
+    W.addEventListener('motor:pedido', garantirOfertaEspelho);
+    ligarPedirEste(reduz);
     vigiarPolegar();
     setInterval(atualizarLetreiro, 60000);
     DOC.addEventListener('visibilitychange', function () { if (!DOC.hidden) atualizarLetreiro(); });
@@ -1048,6 +1352,11 @@
   }
 
   api.iniciar = iniciar;
+  /* v1.3 · relógio do negócio para os módulos (agendamento.js usa no lugar de new Date()) */
+  function agoraNoNegocio() {
+    return agoraNoFuso(estadoAtual ? estadoAtual.fuso : fusoDoTenant(W.TENANT || {}));
+  }
+  api.agoraNoNegocio = agoraNoNegocio;
   /* Módulo que chega depois do início (script que demorou a baixar) roda na hora, com o mesmo contexto. */
   var ctxAtual = null;
   function rodarModulo(m) {
@@ -1056,7 +1365,7 @@
   api.registrarModulo = function (nome, fn) {
     var m = { nome: nome, fn: fn };
     modulos.push(m);
-    if (ctxAtual) rodarModulo(m);
+    if (ctxAtual) { rodarModulo(m); garantirOfertaEspelho(); }
   };
   Object.defineProperty(api, 'estado', { get: function () { return estadoAtual; }, enumerable: true });
   raiz.CreatMotor = api;

@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Envie o seu pedido | Creat</title>
-<meta name="description" content="Envie o pedido pelo WhatsApp. A equipe confere o pagamento e começa.">
+<title>Seu pedido | Creat</title>
+<meta name="description" content="Volta do pagamento do Porta Aberta: a página confere o pagamento, mostra o recibo e o próximo passo.">
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light dark">
+<!-- O Base44 injeta no ar o b44-visitor-tracking (cookies base44_referrer_*). Com esta meta ele só grava depois do "Aceitar" -->
+<meta name="base44-visitor-tracking" content="consent" data-privacy-signals="honor">
 <link rel="icon" href="../assets/svg/placa.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,29 +32,50 @@
   </div>
 </header>
 
-<main class="pagina" id="conteudo">
+<main class="pagina pagina-obrigado" id="conteudo" data-estado="carregando">
   <div class="cx">
-    <span class="olho">Pedido</span>
-    <h1 id="obrigado-titulo" tabindex="-1">Agora é com a equipe.</h1>
-    <p class="lead" id="obrigado-lead">Se você acabou de pagar, envie o pedido abaixo; a equipe confere o pagamento e começa.</p>
+    <span class="olho" id="obrigado-olho">Pedido</span>
+    <h1 id="obrigado-titulo" tabindex="-1">Conferindo o seu pedido.</h1>
+    <p class="lead" id="obrigado-lead">Um instante: esta página lê a volta do pagamento.</p>
+    <div class="obrigado-acoes">
+      <a class="btn btn-sol btn-g" id="obrigado-botao" href="../abrir/">Voltar para o pagamento</a>
+      <a class="link-forte" id="obrigado-secundario" href="mailto:mttcreatt@gmail.com" hidden>Falar com o suporte no WhatsApp</a>
+    </div>
+    <p class="obrigado-servidor" id="obrigado-servidor" role="status" aria-live="polite" hidden></p>
+    <p class="obrigado-rascunho-texto" id="obrigado-rascunho-texto" hidden></p>
+    <a class="btn btn-g mt-3" id="obrigado-rascunho" href="../" hidden>Abrir o site para aprovar</a>
 
-    <!-- Com os dados do aparelho -->
+    <section class="recibo" id="obrigado-recibo" aria-labelledby="recibo-titulo" hidden>
+      <h2 class="olho" id="recibo-titulo">Recibo</h2>
+      <dl class="recibo-linhas">
+        <div id="recibo-produto" hidden><dt>Produto</dt><dd></dd></div>
+        <div id="recibo-meio" hidden><dt>Meio de pagamento</dt><dd></dd></div>
+        <div id="recibo-numero" hidden><dt>Número do pagamento</dt><dd></dd></div>
+        <div id="recibo-pedido" hidden><dt>Número do pedido</dt><dd></dd></div>
+      </dl>
+      <p class="notas mt-3" id="recibo-nota">O comprovante oficial é o que o Mercado Pago manda para o e-mail que você usou lá.</p>
+    </section>
+
+    <!-- Com o pedido neste aparelho -->
     <div id="obrigado-pedido" hidden>
       <div class="grade-pedido">
         <div>
           <section class="bloco" aria-labelledby="enviar-titulo">
-            <h2 id="enviar-titulo">Pedido da <span id="obrigado-negocio"></span></h2>
-            <a class="btn btn-sol btn-g btn-bloco" id="enviar-pedido" href="#" hidden>Enviar pedido no WhatsApp</a>
-            <p class="notas mt-3">O WhatsApp abre com o pedido escrito. É só tocar em enviar.</p>
-            <div class="bloco-tracejado mt-4" id="sem-zap" hidden>
-              <p>Envie o pedido para <a id="sem-zap-email" href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a>. Copie o texto abaixo e cole no e-mail.</p>
+            <h2 id="enviar-titulo">Seu pedido: <span id="obrigado-negocio"></span></h2>
+            <p class="notas">Número do pedido: <span class="nq" id="pedido-id"></span></p>
+            <div id="bloco-whats" class="mt-4" hidden>
+              <a class="btn btn-sol btn-g btn-bloco" id="enviar-pedido" href="#" hidden>Enviar pedido no WhatsApp</a>
+              <p class="notas mt-3">O WhatsApp abre com o pedido escrito. É só tocar em enviar.</p>
+              <div class="bloco-tracejado mt-4" id="sem-zap" hidden>
+                <p>Envie o pedido para <a id="sem-zap-email" href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a>. Copie o texto abaixo e cole no e-mail.</p>
+              </div>
+              <p class="rotulo mt-5" id="pedido-rotulo">Este é o texto que vai no WhatsApp</p>
+              <pre class="pedido-texto mt-3" id="pedido-texto" aria-labelledby="pedido-rotulo" tabindex="0"></pre>
+              <button class="btn mt-3" type="button" id="copiar-pedido">Copiar o texto do pedido</button>
             </div>
-            <p class="rotulo mt-5" id="pedido-rotulo">Este é o texto que vai no WhatsApp</p>
-            <pre class="pedido-texto mt-3" id="pedido-texto" aria-labelledby="pedido-rotulo" tabindex="0"></pre>
-            <button class="btn mt-3" type="button" id="copiar-pedido">Copiar o texto do pedido</button>
           </section>
 
-          <section class="mt-5" aria-labelledby="sede-titulo">
+          <section class="mt-5" aria-labelledby="sede-titulo" data-estados="aprovado confirmado pendente aguardando">
             <h2 id="sede-titulo">A sua fachada na sede</h2>
             <figure class="janela-sede" id="janela-sede">
               <span class="selo-demo">Demonstração</span>
@@ -79,51 +102,47 @@
           </section>
         </div>
 
-        <aside class="lateral" aria-label="Prazo e próximos passos">
+        <aside class="lateral" aria-label="Prazo e próximos passos" data-estados="aprovado confirmado pendente aguardando">
           <section class="relogio" aria-labelledby="relogio-titulo">
-            <span class="olho" id="relogio-titulo">Relógio de <span data-v="precos.prazoHoras"></span> h</span>
-            <span class="digitos" aria-hidden="true"><span data-v="precos.prazoHoras" class="num-carregando"></span>:00:00</span>
-            <span class="estado">aguardando confirmação do pagamento</span>
-            <p>O relógio começa quando a equipe confirma o pagamento. Você recebe essa confirmação no seu WhatsApp.</p>
+            <span class="olho" id="relogio-titulo" data-texto="relogio.rotulo">Prazo: <span data-v="precos.prazoHoras"></span> h a partir da confirmação</span>
+            <span class="digitos" id="relogio-digitos" aria-hidden="true" hidden></span>
+            <span class="estado" id="relogio-estado" data-texto="relogio.aguardando">aguardando a confirmação do pagamento</span>
+            <p id="relogio-texto" data-texto="relogio.texto">O prazo de <span data-v="precos.prazoHoras"></span> h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).</p>
           </section>
           <section class="bloco" aria-labelledby="esperar-titulo">
             <h2 id="esperar-titulo">O que esperar</h2>
             <ul class="lista inclui">
-              <li>Resposta da equipe no seu WhatsApp, confirmando o pagamento.</li>
-              <li>O andamento do seu pedido no seu WhatsApp, enquanto a equipe trabalha.</li>
-              <li>O site pronto para você conferir e aprovar, em até <span data-v="precos.prazoHoras"></span> h.</li>
-              <li>A mensalidade só começa no dia em que o site entrar no ar.</li>
+              <li data-texto="esperar.itens.0">Resposta da equipe no seu WhatsApp, de segunda a sábado, das 9h às 19h. Pagou fora desse horário? Respondemos até as 11h do próximo dia de atendimento.</li>
+              <li data-texto="esperar.itens.1">O andamento do seu pedido nesta página, neste aparelho, enquanto a equipe trabalha.</li>
+              <li data-texto="esperar.itens.2">O site pronto para você conferir e aprovar, em até <span data-v="precos.prazoHoras"></span> h.</li>
+              <li data-texto="esperar.itens.3">A mensalidade só começa no dia em que o site entrar no ar.</li>
             </ul>
-          </section>
-          <section class="bloco-tracejado">
-            <p>Ainda não pagou? Volte para o plano e pague por lá.</p>
-            <a class="link-forte" id="voltar-plano" href="../abrir/">Voltar para o plano</a>
-            <button class="link-texto mt-3" type="button" id="esquecer">Esquecer meus dados neste aparelho</button>
           </section>
         </aside>
       </div>
     </div>
 
-    <!-- Sem dados no aparelho: pede os campos de novo -->
-    <div id="obrigado-sem-dados" hidden>
-      <section class="bloco mt-5" aria-labelledby="sem-dados-titulo">
-        <h2 id="sem-dados-titulo">Não achamos os dados do pedido neste aparelho.</h2>
-        <p class="notas mb-4">Isso acontece se você pagou em outro aparelho, usou uma aba anônima ou apagou os dados. Preencha os campos de novo para montar o pedido.</p>
+    <!-- Sem o pedido neste aparelho: o formulário registra o pedido (o WhatsApp fica de reserva) -->
+    <div id="obrigado-sem-dados" class="mt-5" hidden>
+      <details class="bloco sem-dados" id="sem-dados-detalhes" open>
+        <summary id="sem-dados-resumo">Envie os dados do seu pedido</summary>
+        <p class="notas mt-3 mb-4"><span data-texto="semDados.titulo">Não achamos os dados do pedido neste aparelho.</span> <span data-texto="semDados.texto">Isso acontece se você pagou em outro aparelho, usou uma aba anônima ou apagou os dados. Preencha os campos de novo para registrar o pedido.</span></p>
         <form id="form-pedido" novalidate>
           <div class="campos">
             <div class="campo" data-se-falta="plano">
               <label for="p-plano">Plano que você escolheu</label>
-              <select id="p-plano">
-                <option value="vitrine">Vitrine (recomendado)</option>
+              <select id="p-plano" required>
+                <option value="" selected disabled>Escolha o plano</option>
                 <option value="aberto">Aberto</option>
-                <option value="vitrine_anual">Vitrine anual</option>
+                <option value="vitrine">Vitrine</option>
                 <option value="aberto_anual">Aberto anual</option>
+                <option value="vitrine_anual">Vitrine anual</option>
               </select>
               <span class="erro" role="alert" hidden></span>
             </div>
             <div class="campo" data-se-falta="n">
               <label for="p-negocio">Nome do seu negócio</label>
-              <input id="p-negocio" type="text" autocomplete="organization" maxlength="60" placeholder="Exemplo: Barbearia do Zé">
+              <input id="p-negocio" type="text" autocomplete="organization" maxlength="40" placeholder="Exemplo: Barbearia do Zé">
               <span class="erro" role="alert" hidden></span>
             </div>
             <div class="campo" data-se-falta="k">
@@ -138,12 +157,12 @@
             </div>
             <div class="campo" data-se-falta="c">
               <label for="p-cidade">Cidade do negócio</label>
-              <input id="p-cidade" type="text" autocomplete="address-level2" maxlength="60" placeholder="Exemplo: Campinas">
+              <input id="p-cidade" type="text" autocomplete="address-level2" maxlength="40" placeholder="Exemplo: Campinas">
               <span class="erro" role="alert" hidden></span>
             </div>
             <div class="campo">
               <label for="p-responsavel">Seu nome (responsável)</label>
-              <input id="p-responsavel" type="text" autocomplete="name" maxlength="80" required>
+              <input id="p-responsavel" type="text" autocomplete="name" maxlength="60" required>
               <span class="erro" role="alert" hidden></span>
             </div>
             <div class="campo">
@@ -153,7 +172,7 @@
             </div>
             <div class="campo">
               <label for="p-endereco">Endereço completo</label>
-              <input id="p-endereco" type="text" autocomplete="street-address" maxlength="160" placeholder="Rua, número, bairro, cidade, UF e CEP" required>
+              <input id="p-endereco" type="text" autocomplete="street-address" maxlength="160" placeholder="Rua, número, bairro, cidade-UF, CEP" required>
               <span class="erro" role="alert" hidden></span>
             </div>
             <div class="campo">
@@ -166,17 +185,21 @@
               <input id="p-email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="voce@exemplo.com.br" required>
               <span class="erro" role="alert" hidden></span>
             </div>
+            <div class="isca" aria-hidden="true"><label for="p-site">Site</label><input id="p-site" type="text" tabindex="-1" autocomplete="off"></div>
             <label class="aceite" for="p-aceite">
               <input type="checkbox" id="p-aceite" required aria-describedby="p-aceite-erro">
-              <span>Li e aceito os <a href="../termos/" target="_blank" rel="noopener">Termos de uso (versão 1)</a>. Peço o início imediato da produção e sei que tenho 7 dias de arrependimento, com o valor devolvido.</span>
+              <span>Li e aceito os <a href="../termos/" target="_blank" rel="noopener">Termos de uso (versão <span data-termos-versao>1</span>)</a>. Peço o início imediato da produção e sei que tenho 7 dias de arrependimento, com o valor devolvido.</span>
             </label>
-            <span class="erro-solto" id="p-aceite-erro" role="alert" hidden>Marque o aceite para montar o pedido.</span>
+            <span class="erro-solto" id="p-aceite-erro" role="alert" hidden>Marque o aceite para enviar o pedido.</span>
             <p class="resumo-erros" id="p-resumo" role="alert" hidden></p>
-            <button class="btn btn-sol btn-g" type="submit">Montar o meu pedido</button>
+            <p class="notas">Ao tocar em Enviar, os dados deste formulário vão para o sistema da Creat, para registrar o pedido. Se não houver pagamento, apagamos em 30 dias. <a href="../privacidade/">Privacidade</a></p>
+            <button class="btn btn-sol btn-g" type="submit" id="enviar-dados">Enviar o meu pedido</button>
           </div>
         </form>
-      </section>
+      </details>
     </div>
+
+    <p class="mt-5"><button class="link-texto" type="button" id="esquecer" hidden>Esquecer meus dados neste aparelho</button></p>
   </div>
 </main>
 
@@ -190,7 +213,8 @@
   </div>
 </footer>
 <div class="consentimento" id="consentimento" role="region" aria-label="Medição desta página" data-salvo="Preferência salva. Você muda quando quiser no rodapé, em Preferências de medição." hidden>
-  <p><strong>Medição desta página.</strong> Medimos visitas sem cookie e sem dado pessoal. Com a sua permissão, usamos também o Pixel da Meta para medir anúncios. <a href="../privacidade/">Privacidade</a></p>
+  <p class="cons-longo"><strong>Medição desta página.</strong> A Creat conta as visitas sem cookie e sem guardar o seu IP. A hospedagem registra o acesso técnico. Com a sua permissão, usamos o Pixel da Meta para medir os anúncios, e a hospedagem guarda de onde você veio. <a href="../privacidade/">Privacidade</a></p>
+  <p class="cons-curto">Contamos visitas sem cookie. Pixel da Meta só com o seu sim. <a href="../privacidade/">Privacidade</a></p>
   <div class="botoes">
     <button class="btn" type="button" data-consentir="sim">Aceitar</button>
     <button class="btn" type="button" data-consentir="nao">Recusar</button>

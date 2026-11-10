@@ -611,7 +611,7 @@
   function estadoDaVolta(v) {
     if (!v) return 'sem_retorno';
     if (v.assinatura === 'ok') return 'assinatura_ok';
-    if (v.assinatura === 'cancelada') return 'sem_retorno';
+    if (v.assinatura === 'cancelada') return 'assinatura_cancelada';
     if (v.pagamento === 'aprovado') {
       if (/^pa-anual-(aberto|vitrine)$/.test(v.produto || '')) return 'anual_pago';
       if (v.produto === 'pa-teste') return 'teste_ok';
@@ -712,11 +712,14 @@
       var alt = caixa.classList.contains('is-digitando') ? 0 : caixa.offsetHeight + (caixa.classList.contains('is-faixa') ? 8 : 24);
       D.body.style.setProperty('--altura-consentimento', alt + 'px');
       D.documentElement.style.scrollPaddingBottom = alt ? alt + 'px' : '';
+      if (agendarPos) agendarPos();
     };
     var mostrar = function () { caixa.hidden = false; caixa.classList.toggle('is-digitando', ehCampo(D.activeElement)); D.body.classList.add('com-consentimento'); medir(); };
     var esconder = function () { caixa.hidden = true; D.body.classList.remove('com-consentimento'); D.documentElement.style.scrollPaddingBottom = ''; };
     if ('ResizeObserver' in W) new ResizeObserver(medir).observe(caixa);
     var formularios = $$('#form-abrir, #form-pedido, #form-teste');
+    // /obrigado/: sempre faixa (PG-12). O recibo e o próximo passo são o que a pessoa veio ver.
+    if (PAGINA === 'obrigado') { caixa.classList.add('is-faixa'); formularios = []; }
     if (formularios.length && 'IntersectionObserver' in W) {
       var naTela = [];
       var fio = new IntersectionObserver(function (ents) {
@@ -725,6 +728,44 @@
       }, { threshold: 0 });
       formularios.forEach(function (fm) { fio.observe(fm); });
     }
+    /* A faixa escolhe a borda da tela que não cobre nenhum campo nem botão do formulário: embaixo (padrão) ou logo
+       abaixo do cabeçalho. Se as duas cobririam, ela sai da frente até a rolagem liberar uma delas. */
+    var CONTROLES = 'input:not([type=hidden]):not(#p-site),select,textarea,button,.chip,.aceite,summary';
+    var posAgendada = false, rolando = false, fimRolagem = 0;
+    var posicionar = function () {
+      posAgendada = false;
+      if (caixa.hidden || !caixa.classList.contains('is-faixa')) { caixa.classList.remove('is-topo', 'is-sem-lugar'); return; }
+      var alt = caixa.offsetHeight, vh = W.innerHeight, cab = $('header.barra'), topo = cab ? Math.max(0, cab.getBoundingClientRect().bottom) : 0;
+      var cobre = function (a, b) {
+        return $$('#form-abrir, #form-pedido, #form-teste').some(function (fm) {
+          return $$(CONTROLES, fm).some(function (c) {
+            // dentro de <details> fechado o Chromium ainda dá caixa ao campo (content-visibility): não conta
+            if (c.closest('details:not([open])') && c.tagName !== 'SUMMARY') return false;
+            if (c.checkVisibility && !c.checkVisibility({ visibilityProperty: true })) return false;
+            var r = c.getBoundingClientRect(); return r.height > 0 && r.bottom > a && r.top < b;
+          });
+        });
+      };
+      var livreBaixo = !cobre(vh - alt, vh), livreCima = !cobre(topo, topo + alt);
+      // durante a rolagem fica onde está enquanto aquela borda estiver livre (não pula a cada passo);
+      // parada, volta para baixo, que é o lugar preferido, se lá estiver livre
+      var estaCima = caixa.classList.contains('is-topo');
+      var cima = estaCima && rolando ? livreCima : (!livreBaixo && livreCima);
+      var semLugar = !cima && !livreBaixo;
+      caixa.style.setProperty('--topo-consentimento', topo + 'px');
+      if (cima !== estaCima && !MOV_REDUZIDO.matches) {   // troca de borda com um esmaecer curto, nunca um salto seco
+        caixa.classList.add('is-trocando'); void caixa.offsetWidth;
+        (W.requestAnimationFrame || setTimeout)(function () { caixa.classList.remove('is-trocando'); });
+      }
+      caixa.classList.toggle('is-topo', cima);
+      caixa.classList.toggle('is-sem-lugar', semLugar && !caixa.contains(D.activeElement));
+    };
+    var agendarPos = function () { if (!posAgendada) { posAgendada = true; (W.requestAnimationFrame || setTimeout)(posicionar); } };
+    W.addEventListener('scroll', function () {
+      rolando = true; agendarPos();
+      clearTimeout(fimRolagem); fimRolagem = setTimeout(function () { rolando = false; agendarPos(); }, 220);
+    }, { passive: true });
+    W.addEventListener('resize', agendarPos);
     var ehCampo = function (x) { return !!(x && x.matches && x.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),select,textarea') && !caixa.contains(x)); };
     D.addEventListener('focusin', function (e) { if (ehCampo(e.target)) { caixa.classList.add('is-digitando'); medir(); } });
     D.addEventListener('focusout', function () { setTimeout(function () { if (!ehCampo(D.activeElement)) { caixa.classList.remove('is-digitando'); medir(); } }, 0); });
@@ -1372,7 +1413,7 @@
       var cab = el('div', { class: 'dia-cab' });
       cab.appendChild(el('span', { class: 'dia-nome', id: id + '-nome' }, DIA_NOME[idx]));
       var rot = el('label', { class: 'dia-aberto' });
-      var ck = el('input', { type: 'checkbox', id: id + '-aberto', 'aria-describedby': id + '-nome' });
+      var ck = el('input', { type: 'checkbox', id: id + '-aberto', 'aria-label': DIA_NOME[idx] + ', aberto' });   // o leitor diz o dia, não só "Aberto"
       ck.checked = !!h; rot.appendChild(ck); rot.appendChild(el('span', null, 'Aberto'));
       cab.appendChild(rot); linha.appendChild(cab);
       var horas = el('div', { class: 'dia-horas' });
@@ -1693,6 +1734,7 @@
     var T = CK && CK.teste;
     var vale = !!(T && T.produto === 'pa-teste' && T.valor === 1 && CK.linkValido(T.link) && Date.parse(T.valeAte) > Date.now());
     var nota = $('#modo-teste'); if (nota) nota.hidden = false;
+    var vt = $('#modo-teste-valor'); if (vt) vt.textContent = T && num(T.valor) ? milhar(T.valor) : '';
     var venc = $('#modo-teste-vencido'); if (venc) venc.hidden = vale;
     return {
       compra: function () { return { produto: 'pa-teste', valor: 1, praca: null, link: vale ? T.link : null }; },
@@ -1728,78 +1770,472 @@
     var v = obj; caminho.split('.').forEach(function (k) { v = v && typeof v === 'object' ? v[k] : undefined; });
     return typeof v === 'string' && v.trim() ? v : null;
   }
+  // [data-texto="chave.do.json"] recebe o texto do conteudo/ (com {{precos.*}} preenchido); sem a chave, fica o do HTML.
+  function aplicarTextos(j, vars) {
+    $$('[data-texto]').forEach(function (e) { var s = textoDe(j, e.getAttribute('data-texto')); if (s) e.textContent = preencher(s, vars); });
+  }
+  // A versão dos termos escrita no aceite é a mesma que vai no registro (checkout.config.js termosVersao).
+  function montarTermosVersao() {
+    var m = /^termos-v(\d{1,3})$/.exec((CK && CK.termosVersao) || '');
+    if (m) $$('[data-termos-versao]').forEach(function (x) { x.textContent = m[1]; });
+  }
   function lerTextosAbrir() {
     Promise.all([buscarJSON('conteudo/abrir.json'), lerPrecos()]).then(function (r) {
       var j = r[0], vars = valoresDe(r[1]); if (!j) return;
+      aplicarTextos(j, vars);
       var trocar = function (sel, chave) { var e = $(sel), s = textoDe(j, chave); if (e && s) { e.textContent = preencher(s, vars); e.hidden = false; } };
       trocar('#pagar-parcelas', 'pagar.parcelas');
       trocar('#pagar-recebedor', 'pagar.recebedor');
       var av = $('#pagar-aviso-texto'), s = textoDe(j, 'pagar.aviso_dados');
       if (av && s) av.textContent = preencher(s, vars) + ' ';
+      var lk = $('#pagar-aviso-link'), sl = textoDe(j, 'pagar.linkPrivacidade'); if (lk && sl) lk.textContent = sl;
+      var bt = textoDe(j, 'pagar.botaoTeste');
+      if (bt && ENTRADA.teste) { var pb = $('.pagar [data-checkout]'); if (pb && pb.getAttribute('data-link-ok') === '1') { pb.textContent = bt; pb.setAttribute('data-rotulo', bt); } }
     });
   }
 
   /* ======================================================================
      /obrigado/
      ====================================================================== */
-  function textoPedido(p) {
-    var linha = function (k) { return k + ': ' + String(p[k]).replace(/[\r\n]+/g, ' ').trim(); };
-    return ['PEDIDO v1'].concat(['id', 'plano', 'nicho', 'negocio', 'cidade', 'responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'origem', 'previa', 'aceite_termos'].map(linha)).join('\n');
-  }
-  function paginaObrigado() {
-    var precos = null;
-    var lead = $('#obrigado-lead');
-    if (lead && ENTRADA.retorno && ENTRADA.retorno.aprovado) lead.textContent = 'O Mercado Pago aprovou o pagamento. Envie o pedido abaixo; a equipe confere e começa.';
-    lerPrecos().then(function (pr) { precos = pr; aplicarPrecos(pr, D); });
-    var sem = $('#obrigado-sem-dados'), com = $('#obrigado-pedido');
-    // pedido_enviado_pagina: no máximo um por carga, e só com pedido real.
-    // Indicador aproximado: o pedido é gravado ao clicar em Pagar, antes do Pix; não é pagamento confirmado.
-    var pedidoContado = false;
-    function renderizar(p) {
-      utmAtual = origemParaUtm(p.origem);
-      sem.hidden = true; com.hidden = false;
-      var nomeLet = $('#letreiro-nome');
-      if (nomeLet) {
-        var nm = cortar28(p.negocio); nomeLet.textContent = nm;
-        nomeLet.setAttribute('font-size', nm.length > 22 ? '38' : nm.length > 16 ? '46' : '60');
-      }
-      $('#obrigado-negocio').textContent = p.negocio;
-      var txt = textoPedido(p);
-      $('#pedido-texto').textContent = txt;
-      var enviar = $('#enviar-pedido'), semZap = $('#sem-zap');
-      if (suporteOk()) { enviar.href = linkWhats(CK.whatsappSuporte, txt); enviar.target = '_blank'; enviar.rel = 'noopener noreferrer'; enviar.hidden = false; semZap.hidden = true; }
-      else { enviar.hidden = true; semZap.hidden = false; var m = $('#sem-zap-email'); m.href = linkEmail('PEDIDO v1 ' + p.id, txt); m.textContent = emailSuporte(); }
-      $('#voltar-plano').href = RAIZ + 'abrir/#' + montarFragmento({ plano: p.plano, k: p.nicho, n: p.negocio, c: p.cidade, p: p.paleta || 1, utm: utmAtual }, true);
-      var janela = $('#janela-sede');
-      if (janela && !janela.getAttribute('data-montada')) { janela.setAttribute('data-montada', '1'); montarJanelaSede(janela, function () { return p.negocio; }); }
-      if (!pedidoContado) { pedidoContado = true; evento('pedido_enviado_pagina', { plano: p.plano, nicho: p.nicho }); }
+  var CHAVES_PEDIDO_V1 = ['id', 'plano', 'nicho', 'negocio', 'cidade', 'responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'origem', 'previa', 'aceite_termos'];
+  /* PEDIDO v1 (contrato g). pg (opcional): as linhas do pagamento depois de aceite_termos (PG-N2), cada uma só com
+     valor conhecido: pagamento (aprovado|pendente|recusado|sem_retorno), mp_pagamento (número válido), produto, valor. */
+  function textoPedido(p, pg) {
+    var linha = function (k, v) { return k + ': ' + String(v).replace(/[\r\n]+/g, ' ').trim(); };
+    var l = ['PEDIDO v1'].concat(CHAVES_PEDIDO_V1.map(function (k) { return linha(k, p[k]); }));
+    if (pg) {
+      if (/^(aprovado|pendente|recusado|sem_retorno)$/.test(pg.pagamento || '')) l.push(linha('pagamento', pg.pagamento));
+      if (RE_PAGAMENTO.test(pg.paymentId || '')) l.push(linha('mp_pagamento', pg.paymentId));
+      if (/^pa-[a-z0-9-]{1,40}$/.test(pg.produto || '')) l.push(linha('produto', pg.produto));
+      if (num(pg.valor) && pg.valor > 0) l.push(linha('valor', pg.valor));
     }
+    return l.join('\n');
+  }
+  // Mensagem do WhatsApp: uma frase de gente na primeira linha (PV-15), linha em branco e o PEDIDO v1.
+  var ABRE_MENSAGEM = {
+    aprovado: 'Oi! Acabei de pagar a Abertura do Porta Aberta. Segue o meu pedido:',
+    confirmado: 'Oi! Acabei de pagar a Abertura do Porta Aberta. Segue o meu pedido:',
+    pendente: 'Oi! Gerei o Pix da Abertura do Porta Aberta. Segue o meu pedido:'
+  };
+  function mensagemPedido(p, estado, pg, abertura) {
+    var abre = (typeof abertura === 'string' && abertura.trim() && estado !== 'pendente' ? abertura.trim() : '') || ABRE_MENSAGEM[estado] || 'Oi! Segue o meu pedido do Porta Aberta:';
+    if (p.enxuto) {
+      // o servidor já tem os dados: a mensagem leva só o número do pedido e o do pagamento
+      return abre.replace(/ Segue o meu pedido:$/, '') + ' Meu pedido é ' + p.id + (pg && RE_PAGAMENTO.test(pg.paymentId || '') ? ', pagamento nº ' + pg.paymentId : '') + '.';
+    }
+    return abre + '\n\n' + textoPedido(p, pg);
+  }
+
+  /* Textos de reserva de /obrigado/. As chaves são as de conteudo/obrigado.json (copywriter, pacote 2B):
+     estados.<chave>.{titulo,texto,botao}; o que faltar lá vale daqui. Regra do 2B: "aprovado" só com o SERVIDOR
+     confirmando; com a URL dizendo aprovado e o servidor ainda sem resposta, vale "a_conferir" (chaveTexto). */
+  var ESTADOS_OBRIGADO = {
+    a_conferir: { olho: 'Pagamento', titulo: 'Estamos conferindo o seu pagamento', texto: 'O Mercado Pago avisou o pagamento e a equipe está conferindo. Guarde o número do pagamento abaixo.', botao: 'Falar com o suporte no WhatsApp' },
+    aprovado: { olho: 'Pagamento', titulo: 'Pagamento confirmado', texto: 'Recebemos o seu pagamento, e a equipe começa o seu site. Guarde o recibo abaixo. O link do site pronto chega {canais}.', botao: 'Falar com a equipe no WhatsApp' },
+    conferencia_longa: { olho: 'Pagamento', titulo: 'Seu pagamento está em conferência', texto: 'Esta página parou de consultar para não gastar a sua internet. Guarde o número do pagamento e fale com o suporte: a equipe confere e responde no seu WhatsApp.', botao: 'Falar com o suporte no WhatsApp' },
+    produto_fora: { olho: 'Pagamento', titulo: 'Pagamento recebido', texto: 'Recebemos um pagamento que esta página não reconhece. O suporte vai falar com você. Guarde o número do pagamento abaixo.', botao: 'Falar com o suporte no WhatsApp' },
+    recusado: { olho: 'Pagamento', titulo: 'O pagamento não passou', texto: 'O banco ou o cartão recusou. Nada foi cobrado.', botao: 'Tentar de novo' },
+    pendente: { olho: 'Pagamento', titulo: 'Seu Pix espera o pagamento', texto: 'Pague o Pix no app do seu banco, com o código que o Mercado Pago mostrou. Depois de pagar, a confirmação aparece nesta página, neste aparelho.', botao: 'Voltar para o pagamento' },
+    sem_retorno: { olho: 'Pedido', titulo: 'Você ainda não pagou', texto: 'Esta página não recebeu a volta do Mercado Pago. Se você ainda não pagou, volte ao plano e pague por lá. Se já pagou, guarde o comprovante e fale com o suporte.', botao: 'Voltar para o pagamento' },
+    aguardando: { olho: 'Pagamento', titulo: 'Termine o pagamento na outra aba', texto: 'Abrimos o Mercado Pago em outra aba. Quando o pagamento aprovar, esta página mostra a confirmação.', botao: 'Abrir o pagamento de novo' },
+    assinatura_ok: { olho: 'Assinatura', titulo: 'Assinatura ativa', texto: 'O plano {plano} está ativo. A cobrança se renova todo mês no cartão. Para cancelar ou trocar o cartão, use o portal do assinante, sem multa.', semPlano: 'A assinatura está ativa. A cobrança se renova todo mês no cartão. Para cancelar ou trocar o cartão, use o portal do assinante, sem multa.', botao: 'Abrir o portal do assinante' },
+    assinatura_cancelada: { olho: 'Assinatura', titulo: 'A assinatura não foi concluída', texto: 'Nada foi cobrado. Se quiser, tente de novo ou fale com a equipe.', botao: 'Falar com a equipe no WhatsApp' },
+    anual_pago: { olho: 'Plano anual', titulo: 'Plano anual pago', texto: 'Recebemos o pagamento do plano {plano} anual. Os 12 meses contam do dia em que o site entrou no ar, e não há outra cobrança nesse período.', semPlano: 'Recebemos o pagamento do plano anual. Os 12 meses contam do dia em que o site entrou no ar, e não há outra cobrança nesse período.', botao: 'Falar com a equipe no WhatsApp' },
+    teste_ok: { olho: 'Teste', titulo: 'Teste concluído', texto: 'O pagamento de teste passou. Nada foi produzido e nenhum prazo começou.', botao: 'Voltar para a página inicial' },
+    bastidores_pago: { olho: 'Bastidores', titulo: 'Bastidores comprado', texto: 'O Mercado Pago aprovou a compra do Bastidores. O suporte fala com você no WhatsApp para a entrega.', botao: 'Falar com o suporte no WhatsApp' }
+  };
+  // Mensagem pronta do "Chamar no WhatsApp" do cabeçalho (PG-08). Chave do 2B: obrigado.json wa.<chave>.
+  var ZAP_OBRIGADO = {
+    aprovado: 'Olá! Paguei a Abertura do Porta Aberta. Pedido {id}.',
+    a_conferir: 'Olá! Paguei a Abertura do Porta Aberta e a página diz que o pagamento está em conferência. Pedido {id}.',
+    recusado: 'Olá! Tentei pagar a Abertura do Porta Aberta e não consegui.',
+    pendente: 'Olá! Gerei o Pix da Abertura do Porta Aberta e quero confirmar.',
+    sem_retorno: 'Olá! Estou na página do pedido do Porta Aberta e tenho uma dúvida sobre o pagamento.',
+    aguardando: 'Olá! Estou pagando a Abertura do Porta Aberta e tenho uma dúvida.',
+    assinatura: 'Olá! Assinei o plano {plano} do Porta Aberta e tenho uma dúvida.',
+    anual: 'Olá! Paguei o plano anual {plano} do Porta Aberta.',
+    teste: 'Olá! Fiz o pagamento de teste de R$ 1 do Porta Aberta.',
+    bastidores: 'Olá! Comprei o Bastidores do Porta Aberta.'
+  };
+  // Linha do estado do SERVIDOR (consultarPedido e confirmarPagamento), embaixo do texto do estado.
+  var LINHAS_SERVIDOR = {
+    conferindo: 'Conferindo no nosso sistema...',
+    confirmando: 'Esta página confere sozinha com o Mercado Pago a cada poucos segundos.',
+    registrado: 'Seu pedido está registrado. Quando o pagamento cair, esta página mostra a confirmação.',
+    pago: 'O prazo de {prazo} h começou.',
+    a_conferir: 'O nosso sistema recebeu o pagamento, e a equipe confere à mão.',
+    depois_do_pagamento: 'Recebemos os dados do pedido. Como eles chegaram depois do pagamento, a equipe confere à mão.',
+    ja_usado: 'Este pagamento já confirma outro pedido. Fale com o suporte.',
+    recusado_servidor: 'O Mercado Pago não confirmou este pagamento. Fale com o suporte.',
+    desistiu: 'Este pedido foi cancelado.',
+    sem_servidor: 'Não conseguimos falar com o nosso sistema agora. Envie o pedido pelo WhatsApp abaixo; a equipe confere à mão.',
+    nao_encontrado: 'Não achamos este pedido no nosso sistema. Envie o pedido pelo WhatsApp abaixo.'
+  };
+  var NOME_PRODUTO = {
+    'pa-abertura-inauguracao': 'Abertura do Porta Aberta, preço de inauguração', 'pa-abertura': 'Abertura do Porta Aberta',
+    'pa-teste': 'Pagamento de teste', 'pa-anual-aberto': 'Plano Aberto anual', 'pa-anual-vitrine': 'Plano Vitrine anual',
+    'pa-bastidores': 'Bastidores', 'pa-combo-aberto-anual': 'Abertura e plano Aberto anual', 'pa-combo-vitrine-anual': 'Abertura e plano Vitrine anual'
+  };
+  var MEIO_TEXTO = { pix: 'Pix', cartao: 'cartão', saldo: 'saldo do Mercado Pago' };
+  var ROTULO_PLANO = { aberto: 'Aberto', vitrine: 'Vitrine', aberto_anual: 'Aberto anual', vitrine_anual: 'Vitrine anual' };
+  var PAGOS = ['pago', 'em_revisao', 'em_producao', 'rascunho_enviado', 'aprovado', 'no_ar'];
+  var ESPERA_SERVIDOR = ['aguardando_pagamento', 'a_conferir'];
+  var CHAVE_VOLTA = 'creat:obrigado:volta';   // sessionStorage: a recarga da mesma aba mantém o estado da volta
+  var TRINTA_MIN = 30 * 60 * 1000;
+  function dataBahia(iso) {
+    var t = Date.parse(iso); if (isNaN(t)) return '';
+    try { return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Bahia', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(t)); } catch (e) { return ''; }
+  }
+  function voltaGuardada() {
+    var v = lerSessao(CHAVE_VOLTA);
+    if (!v || typeof v !== 'object' || !/^(aprovado|recusado|pendente|sem_retorno)$/.test(v.pagamento)) return null;
+    var limpo = lerVolta('');
+    ['pagamento', 'paymentId', 'preferencia', 'meio', 'produto', 'praca', 'assinatura', 'plano', 'espera'].forEach(function (k) { if (v[k] !== undefined) limpo[k] = v[k]; });
+    if (limpo.paymentId && !/^\d{1,24}$/.test(limpo.paymentId)) limpo.paymentId = null;
+    if (limpo.produto && !/^pa-[a-z0-9-]{1,40}$/.test(limpo.produto)) limpo.produto = null;
+    limpo.tem = true;
+    return limpo;
+  }
+
+  function paginaObrigado() {
+    var volta = ENTRADA.volta && ENTRADA.volta.tem ? ENTRADA.volta : (voltaGuardada() || ENTRADA.volta || lerVolta(''));
+    if (ENTRADA.volta && ENTRADA.volta.tem) gravarSessao(CHAVE_VOLTA, ENTRADA.volta);
+    var estado = estadoDaVolta(volta);
+    var pedido = lerPedidoSalvo();
+    var precos = null, textos = null, servidor = null, servidorFalhou = null, linhaAtual = null;
+    var inicio = Date.now(), relogioTimer = 0, pedidoContado = false, depoisDoPagamento = false, esgotado = false, foraCatalogo = false;
+
+    var main = $('main'), titulo = $('#obrigado-titulo'), lead = $('#obrigado-lead'), olho = $('#obrigado-olho');
+    var botao = $('#obrigado-botao'), secundario = $('#obrigado-secundario'), linhaServ = $('#obrigado-servidor'), rascunho = $('#obrigado-rascunho');
+    var recibo = $('#obrigado-recibo'), blocoPedido = $('#obrigado-pedido'), blocoWhats = $('#bloco-whats');
+    var semDados = $('#obrigado-sem-dados'), esquecer = $('#esquecer'), zapTopo = $('header [data-zap]');
+    var f = $('#form-pedido');
+
+    var podeServidor = function () { return !!(API && pedido && RE_ID.test(pedido.id) && RE_SEGREDO.test(pedido.segredo || '')); };
+    var familiaAprovado = function () { return estado === 'aprovado' || estado === 'confirmado'; };
+    function produtoBase() {
+      var p = volta.produto || (pedido && pedido.produto ? pedido.produto.replace(/-\d{4}-\d{2}$/, '') : null);
+      return p && /^pa-[a-z0-9-]{1,40}$/.test(p) ? p : null;
+    }
+    // Plano e valor do texto de assinatura e do anual: os números saem de dados/precos.json (ou da reserva do checkout.config.js).
+    function planoEValor() {
+      var pr = precos || { planos: (CK && CK.precosPadrao && CK.precosPadrao.planos) || { aberto: 147, vitrine: 297 }, anualMesesPagos: (CK && CK.precosPadrao && CK.precosPadrao.anualMesesPagos) || 10 };
+      if (estado === 'assinatura_ok') { var k = volta.plano; return k === 'aberto' || k === 'vitrine' ? { plano: ROTULO_PLANO[k], valor: milhar(pr.planos[k]) } : null; }
+      if (estado === 'anual_pago') { var m = /^pa-anual-(aberto|vitrine)$/.exec(volta.produto || ''); return m ? { plano: ROTULO_PLANO[m[1]], valor: milhar(pr.planos[m[1]] * pr.anualMesesPagos) } : null; }
+      return null;
+    }
+    function vars() {
+      var v = precos ? valoresDe(precos) : {}, pv = planoEValor();
+      v.negocio = pedido ? pedido.negocio : ''; v.prazo = precos ? milhar(precos.prazoHoras) : '72';
+      v.numero = volta.paymentId || ''; v.pedido = pedido ? pedido.id : ''; v.id = pedido && RE_ID.test(pedido.id) ? pedido.id : '';
+      v.canais = (textos && textoDe(textos, 'rascunho.canais')) || 'nesta página e no seu WhatsApp';
+      if (pv) { v.plano = pv.plano; v.valor = pv.valor; }
+      return v;
+    }
+    // Chave do texto (2B): a URL aprovada sem o servidor confirmar mostra "a_conferir"; o servidor confirmado, "aprovado".
+    function chaveTexto() {
+      if (estado === 'aprovado') return foraCatalogo ? 'produto_fora' : esgotado ? 'conferencia_longa' : 'a_conferir';
+      if (estado === 'confirmado') return 'aprovado';
+      return estado;
+    }
+    function texto(campo) {
+      var k = chaveTexto(), base = ESTADOS_OBRIGADO[k], j = textos && textos.estados && textos.estados[k], v = vars();
+      // assinatura e anual sem plano conhecido: nunca "Plano , R$ por mês"; vale a frase sem plano nem valor
+      if (campo === 'texto' && base.semPlano && !planoEValor()) return base.semPlano;
+      var s = j && typeof j[campo] === 'string' && j[campo].trim() ? j[campo] : base[campo];
+      return preencher(s, v);
+    }
+    // Sem link do anual nesta página: no anual e no Bastidores recusado ou pendente, o botão leva ao suporte (PG-03).
+    function produtoSemLink() { return /^pa-(anual-|bastidores|combo-)/.test(volta.produto || ''); }
+    function hrefAbrir() {
+      if (!pedido) return RAIZ + 'abrir/';
+      var utm = origemParaUtm(pedido.origem);
+      return RAIZ + 'abrir/#' + montarFragmento({ plano: pedido.plano, k: pedido.nicho, n: pedido.negocio, c: pedido.cidade, p: pedido.paleta || 1, utm: utm }, true);
+    }
+    function chaveZap() {
+      var k = chaveTexto();
+      return { aprovado: 'aprovado', a_conferir: 'a_conferir', conferencia_longa: 'a_conferir', produto_fora: 'a_conferir', assinatura_ok: 'assinatura', assinatura_cancelada: 'sem_retorno', anual_pago: 'anual', teste_ok: 'teste', bastidores_pago: 'bastidores' }[k] || k;
+    }
+    function msgZap() {
+      var k = chaveZap(), pv = planoEValor(), v = vars();
+      var j = textos && textos.wa && typeof textos.wa[k] === 'string' && textos.wa[k].trim() ? textos.wa[k] : ZAP_OBRIGADO[k];
+      if ((k === 'assinatura' || k === 'anual') && !pv) j = k === 'assinatura' ? 'Olá! Assinei um plano do Porta Aberta e tenho uma dúvida.' : 'Olá! Paguei o plano anual do Porta Aberta.';
+      // frase com {id} sem pedido neste aparelho sai inteira (nunca "Pedido .")
+      if (!v.id) j = j.replace(/\s*[^.!?]*\{\{?\s*id\s*\}?\}[^.!?]*[.!?]/g, '');
+      return preencher(j, v);
+    }
+    function linkZap(msg) { return suporteOk() ? linkWhats(CK.whatsappSuporte, msg) : linkEmail('Porta Aberta', msg); }
+    function acao() {
+      var suporte = { href: linkZap(msgZap()), fora: true };
+      if (estado === 'assinatura_ok') return { href: PORTAL_ASSINANTE, fora: true };
+      if (estado === 'teste_ok') return { href: RAIZ, fora: false };
+      if (familiaAprovado() || /^(assinatura_cancelada|anual_pago|bastidores_pago)$/.test(estado)) return suporte;
+      if ((estado === 'recusado' || estado === 'pendente') && produtoSemLink()) return { href: suporte.href, fora: true, rotulo: 'Falar com o suporte no WhatsApp' };
+      if (estado === 'aguardando' && pedido && pedido.link) return { href: pedido.link, fora: true };
+      return { href: hrefAbrir(), fora: false };
+    }
+
+    function linha(chave, extra) {
+      if (chave === 'esgotou' || chave === 'fora_catalogo') {
+        if (chave === 'esgotou') esgotado = true; else foraCatalogo = true;
+        chave = null; desenhar();
+      }
+      linhaAtual = chave;
+      if (!chave) { linhaServ.hidden = true; linhaServ.textContent = ''; return; }
+      var s = preencher(LINHAS_SERVIDOR[chave], vars());
+      if (/^(ja_usado|recusado_servidor)$/.test(chave) && volta.paymentId) s += ' Número do pagamento: ' + volta.paymentId + '.';
+      if (extra) s += ' ' + extra;
+      linhaServ.textContent = s; linhaServ.hidden = false;
+      linhaServ.setAttribute('data-linha', chave);
+    }
+    function desenharRecibo() {
+      var r = servidor && servidor.recibo && typeof servidor.recibo === 'object' ? servidor.recibo : null;
+      var mostrar = familiaAprovado() || /^(anual_pago|teste_ok|bastidores_pago)$/.test(estado);
+      var j = textos && textos.recibo, rot = function (k, reserva) { return (j && textoDe(j, k)) || reserva; };
+      var pb = produtoBase(), nome = (r && typeof r.produto === 'string' && r.produto.trim()) || (pb && NOME_PRODUTO[pb]) || '';
+      var valor = r && num(r.valor) && r.valor > 0 ? r.valor : (CK && CK.valorDaPreferencia ? CK.valorDaPreferencia(volta.preferencia) : null);
+      if (num(valor) && valor > 0) valor = milhar(valor); else { var pv = planoEValor(); valor = estado === 'anual_pago' && pv ? pv.valor : ''; }
+      var numero = (r && typeof r.pagamento === 'string' && /^\d{1,24}$/.test(r.pagamento) && r.pagamento) || volta.paymentId || '';
+      var meio = volta.meio === 'pix' ? rot('pix', 'Pix') : volta.meio === 'cartao' ? rot('cartao', 'Cartão') : volta.meio === 'saldo' ? 'Saldo do Mercado Pago' : '';
+      var idPedido = pedido && RE_ID.test(pedido.id) ? pedido.id : '';
+      var linhas = [
+        ['produto', 'Produto', nome ? nome + (valor ? ' · R$\u00a0' + valor : '') : ''],   // R$ e o número nunca quebram
+        ['meio', 'Meio de pagamento', meio],
+        ['numero', 'Número do pagamento', numero],
+        ['pedido', 'Número do pedido', idPedido]
+      ];
+      var algum = false;
+      linhas.forEach(function (l) {
+        var caixa = $('#recibo-' + l[0]); if (!caixa) return;
+        $('dt', caixa).textContent = rot(l[0], l[1]); $('dd', caixa).textContent = l[2];
+        caixa.hidden = !l[2]; if (l[2] && l[0] !== 'pedido') algum = true;
+      });
+      $('#recibo-titulo').textContent = rot('titulo', 'Recibo');
+      $('#recibo-nota').textContent = rot('nota', 'O comprovante oficial é o que o Mercado Pago manda para o e-mail que você usou lá.');
+      recibo.hidden = !(mostrar && algum);
+    }
+    function precisaWhats() { return !!(pedido && (familiaAprovado() || estado === 'pendente') && servidorFalhou); }
+    function desenharPedido() {
+      var mostrar = !!pedido && /^(aprovado|confirmado|pendente|aguardando|sem_retorno)$/.test(estado);
+      blocoPedido.hidden = !mostrar;
+      $$('[data-estados]', blocoPedido).forEach(function (x) { x.hidden = x.getAttribute('data-estados').split(' ').indexOf(estado) === -1; });
+      if (!mostrar) return;
+      var nomeLet = $('#letreiro-nome');
+      if (nomeLet) { var nm = cortar28(pedido.negocio); nomeLet.textContent = nm; nomeLet.setAttribute('font-size', nm.length > 22 ? '38' : nm.length > 16 ? '46' : '60'); }
+      $('#obrigado-negocio').textContent = pedido.negocio;
+      $('#pedido-id').textContent = pedido.id;
+      var whats = precisaWhats();
+      blocoWhats.hidden = !whats;
+      if (whats) {
+        var pg = { pagamento: volta.pagamento, paymentId: volta.paymentId, produto: pedido.produto || PRODUTO_DA_VOLTA[volta.produto] || volta.produto, valor: (CK && CK.valorDaPreferencia ? CK.valorDaPreferencia(volta.preferencia) : null) || pedido.valor };
+        var msg = mensagemPedido(pedido, estado, pg, textos && textoDe(textos, 'wa.pedidoAbertura'));
+        $('#pedido-texto').textContent = msg;
+        var enviar = $('#enviar-pedido'), semZap = $('#sem-zap');
+        if (suporteOk()) { enviar.href = linkWhats(CK.whatsappSuporte, msg); enviar.target = '_blank'; enviar.rel = 'noopener noreferrer'; enviar.hidden = false; semZap.hidden = true; }
+        else { enviar.hidden = true; semZap.hidden = false; var m = $('#sem-zap-email'); m.href = linkEmail('PEDIDO v1 ' + pedido.id, msg); m.textContent = emailSuporte(); }
+      }
+      if (/^(aprovado|confirmado|pendente|aguardando)$/.test(estado)) {
+        var janela = $('#janela-sede');
+        if (janela && !janela.getAttribute('data-montada')) { janela.setAttribute('data-montada', '1'); montarJanelaSede(janela, function () { return pedido ? pedido.negocio : ''; }); }
+      }
+      if (!pedidoContado && (familiaAprovado() || estado === 'pendente')) { pedidoContado = true; evento('pedido_enviado_pagina', { plano: pedido.plano, nicho: pedido.nicho }); }
+    }
+    function desenhar() {
+      var base = ESTADOS_OBRIGADO[chaveTexto()];
+      main.setAttribute('data-estado', estado); main.setAttribute('data-texto', chaveTexto());
+      olho.textContent = base.olho;
+      titulo.textContent = texto('titulo');
+      lead.textContent = texto('texto');
+      try { D.title = titulo.textContent.replace(/\.$/, '') + ' | Creat'; } catch (e) {}
+      var a = acao();
+      botao.textContent = a.rotulo || texto('botao');
+      botao.href = a.href;
+      if (a.fora) { botao.target = '_blank'; botao.rel = 'noopener noreferrer'; } else { botao.removeAttribute('target'); botao.removeAttribute('rel'); }
+      // segundo caminho: na assinatura, o suporte (o botão principal é o portal do assinante)
+      secundario.hidden = estado !== 'assinatura_ok';
+      if (!secundario.hidden) { secundario.href = linkZap(msgZap()); secundario.target = '_blank'; secundario.rel = 'noopener noreferrer'; }
+      if (zapTopo) { zapTopo.href = linkZap(msgZap()); if (suporteOk()) { zapTopo.target = '_blank'; zapTopo.rel = 'noopener noreferrer'; } }
+      desenharRecibo();
+      desenharPedido();
+      // Formulário: só quando o pedido não está neste aparelho e a pessoa pagou ou pode ter pagado (nunca em recusado,
+      // assinatura, anual, teste, Bastidores nem na espera do desktop). Sem retorno, ele fica fechado.
+      var comForm = !pedido && /^(aprovado|confirmado|pendente|sem_retorno)$/.test(estado);
+      semDados.hidden = !comForm;
+      var det = $('#sem-dados-detalhes');
+      if (det && comForm && !det.hasAttribute('data-tocado')) det.open = estado !== 'sem_retorno';
+      $('#sem-dados-resumo').textContent = estado === 'sem_retorno' ? 'Já pagou em outro aparelho? Envie os dados do pedido' : 'Envie os dados do seu pedido';
+      esquecer.hidden = !pedido;
+      if (!linhaAtual && !API) linha(null);
+    }
+
+    /* ---- servidor: confirmação (com recuo e no máximo 6 por carga) e consulta (5, 10, 20, 30 e 60 s, até 30 min) */
+    var confirma = { n: 0, feito: false, timer: 0 }, consulta = { passo: 0, timer: 0, reRegistrou: false };
+    var ESPERAS_CONFIRMA = [20, 60, 180, 600, 1200], ESPERAS_CONSULTA = [5, 10, 20, 30];
+    function dentroDaJanela(seg) { return Date.now() - inicio + (seg || 0) * 1000 <= TRINTA_MIN; }
+    function falhou(motivo) {
+      servidorFalhou = motivo || 'sem_servidor';
+      if ((familiaAprovado() || estado === 'pendente') && API) linha(motivo === 'nao_encontrado' ? 'nao_encontrado' : 'sem_servidor');
+      desenharPedido();
+    }
+    function confirmar() {
+      if (!API || confirma.feito || confirma.n >= 6 || !RE_PAGAMENTO.test(volta.paymentId || '')) return;
+      confirma.n++;
+      var corpo = { payment_id: volta.paymentId };
+      if (podeServidor()) { corpo.pedido_id = pedido.id; corpo.segredo = pedido.segredo; }
+      chamar('confirmarPagamento', corpo).then(function (r) {
+        var j = r.json || {};
+        if (r.status === 200 && j.ok === true) {
+          confirma.feito = true;
+          if (podeServidor()) consultar(); else if (typeof j.status === 'string') aoStatus(j.status, j);
+          return;
+        }
+        if (r.status === 200 && j.motivo === 'produto_fora_do_catalogo') { confirma.feito = true; linha('fora_catalogo'); return; }
+        if (r.status === 200 && j.motivo === 'pagamento_ja_usado') { confirma.feito = true; linha('ja_usado'); return; }
+        if (/^(400|403|405|413|422)$/.test(String(r.status))) { confirma.feito = true; return; }
+        // nao_confirmado (Pix ainda não compensou), 202, 429, rede ou função fora do ar: tenta de novo mais tarde
+        if (familiaAprovado() && !(servidor && servidor.status === 'a_conferir') && !esgotado) linha('confirmando');
+        var espera = r.status === 429 ? 60 : ESPERAS_CONFIRMA[Math.min(confirma.n - 1, ESPERAS_CONFIRMA.length - 1)];
+        if (dentroDaJanela(espera)) confirma.timer = setTimeout(confirmar, espera * 1000);
+        else if (familiaAprovado()) linha('esgotou');
+      });
+    }
+    function seguirConsultando() { return /^(aprovado|confirmado|pendente|aguardando)$/.test(estado); }
+    function agendarConsulta(seg) {
+      clearTimeout(consulta.timer);
+      var s = seg || ESPERAS_CONSULTA[consulta.passo] || 60; consulta.passo++;
+      if (dentroDaJanela(s)) consulta.timer = setTimeout(consultar, s * 1000);
+      else if (familiaAprovado() || estado === 'pendente') linha('esgotou');
+    }
+    function consultar() {
+      if (!podeServidor()) return;
+      clearTimeout(consulta.timer);
+      chamar('consultarPedido', { id: pedido.id, segredo: pedido.segredo }).then(function (r) {
+        var j = r.json || {};
+        if (r.status === 200 && j.ok === true && typeof j.status === 'string') {
+          servidorFalhou = null;
+          // PV-16: o servidor tem o pedido; responsável, WhatsApp, endereço, horários e e-mail saem deste aparelho
+          if (!pedido.enxuto) pedido = enxugar(pedido, 'registrado');
+          servidor = j; aoStatus(j.status, j);
+          if (ESPERA_SERVIDOR.indexOf(j.status) !== -1 && seguirConsultando()) agendarConsulta();
+          return;
+        }
+        if (r.status === 404 && j.erro === 'nao_encontrado') {
+          // o envio do clique não chegou (rede, aba fechada): registra de novo com os dados do aparelho, uma vez
+          if (!consulta.reRegistrou && registravel(pedido)) {
+            consulta.reRegistrou = true;
+            chamar('registrarPedido', corpoRegistro(pedido, '')).then(function (x) { if (x.status === 200 && x.json && x.json.ok === true) consultar(); else falhou(); });
+            return;
+          }
+          falhou('nao_encontrado'); return;
+        }
+        if (r.status === 429) { agendarConsulta(Math.max(5, Math.min(600, +j.tentar_em_s || 60))); return; }
+        falhou(); if (seguirConsultando()) agendarConsulta();
+      });
+    }
+    function aoStatus(st, j) {
+      if (st === 'teste_ok') { if (estado !== 'teste_ok') { estado = 'teste_ok'; desenhar(); } linha('teste_ok'); return; }
+      if (PAGOS.indexOf(st) !== -1) {
+        if (estado !== 'confirmado') { estado = 'confirmado'; desenhar(); }   // o servidor confirmou: vale o texto "aprovado" do 2B
+        clearTimeout(confirma.timer); confirma.feito = true;
+        desenharRecibo();
+        var entrega = j && dataBahia(j.entrega_prevista_em);
+        linha('pago', entrega ? 'Entrega prevista: ' + entrega + ' (horário da Bahia).' : '');
+        if (j && j.prazo_fim) relogio(j.prazo_fim);
+        var u = j && typeof j.rascunho_url === 'string' ? j.rascunho_url : '';
+        if (u && u.indexOf(location.origin + '/sites/') === 0 && /^[^\s#?]+$/.test(u)) {
+          rascunho.href = u; rascunho.hidden = false;
+          rascunho.textContent = preencher((textos && textoDe(textos, 'rascunho.botao')) || 'Abrir o site para aprovar', vars());
+          var rt = $('#obrigado-rascunho-texto');
+          if (rt) { rt.textContent = preencher((textos && textoDe(textos, 'rascunho.texto')) || 'Abra, confira e toque em Aprovar e colocar no ar. Se quiser mudar algo, responda no WhatsApp do Suporte Creat.', vars()); rt.hidden = false; }
+        }
+        return;
+      }
+      if (st === 'a_conferir') { linha(depoisDoPagamento ? 'depois_do_pagamento' : 'a_conferir'); return; }
+      if (st === 'aguardando_pagamento') { linha(familiaAprovado() ? 'confirmando' : estado === 'sem_retorno' ? null : 'registrado'); return; }
+      if (st === 'recusado') { linha('recusado_servidor'); return; }
+      if (st === 'desistiu') linha('desistiu');
+    }
+    // Relógio de verdade: só com o prazo_fim do servidor. Antes disso a tela mostra "72 h" parado e diz que começa na confirmação.
+    function relogio(prazoFim) {
+      var fim = Date.parse(prazoFim), dig = $('#relogio-digitos'), est = $('#relogio-estado'), txt = $('#relogio-texto');
+      if (isNaN(fim) || !dig) return;
+      var p2 = function (n) { return (n < 10 ? '0' : '') + n; };
+      var tique = function () { var s = Math.max(0, Math.floor((fim - Date.now()) / 1000)); dig.textContent = Math.floor(s / 3600) + ':' + p2(Math.floor(s % 3600 / 60)) + ':' + p2(s % 60); };
+      tique(); clearInterval(relogioTimer); relogioTimer = setInterval(tique, 1000);
+      dig.hidden = false;
+      // daqui em diante o servidor manda nestes dois: o texto do conteudo/ não volta por cima
+      [est, txt].forEach(function (x) { if (x) x.removeAttribute('data-texto'); });
+      if (est) est.textContent = 'prazo correndo';
+      var prev = (textos && textoDe(textos, 'relogio.previsto')) || 'Site pronto para você aprovar até {data}.';
+      if (txt) txt.textContent = preencher(prev, { data: dataBahia(prazoFim) + ' (horário da Bahia)' });
+    }
+
+    /* ---- formulário sem dados: vira o jeito de registrar o pedido; o WhatsApp fica como envio de reserva */
+    var est = { k: null, n: null, c: null, p: 1, plano: null, utm: lerOrigem() || (volta.praca ? { utm_campaign: volta.praca } : {}) };
+    prepararFormPedido(f, est, null);
+    var selPlano = $('#p-plano');
+    var planoDaVolta = volta.plano || ({ 'pa-anual-aberto': 'aberto_anual', 'pa-anual-vitrine': 'vitrine_anual' })[volta.produto || ''] || '';
+    if (selPlano && PLANOS.indexOf(planoDaVolta) !== -1) selPlano.value = planoDaVolta;
+    var det = $('#sem-dados-detalhes'); if (det) det.addEventListener('toggle', function () { det.setAttribute('data-tocado', ''); });
+    var botaoForm = $('#enviar-dados'), enviando = false;
+    function compraDaVolta() {
+      var prod = PRODUTO_DA_VOLTA[volta.produto] || (precos && precos.inauguracao ? 'pa-abertura-inauguracao-2026-11' : 'pa-abertura-2026-11');
+      var o = lerOrigem() || {};
+      return { produto: prod, valor: CATALOGO[prod], praca: volta.praca || (PRACAS.indexOf(o.utm_campaign) !== -1 ? o.utm_campaign : null), link: null };
+    }
+    var CAMPO_DO_SERVIDOR = { negocio: 'p-negocio', nicho: 'p-nicho', cidade: 'p-cidade', plano: 'p-plano', responsavel: 'p-responsavel', whatsapp: 'p-whatsapp', endereco: 'p-endereco', email: 'p-email' };
+    function irAoTopo() { W.scrollTo(0, 0); if (titulo) titulo.focus(); }
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (enviando) return;
+      var r = lerFormPedido(f, est);
+      if (!r.ok) { resumoErros(f, r.faltam || 1); return; }
+      resumoErros(f, 0);
+      var s = salvarPedido(r.dados, est, null, compraDaVolta());
+      if (!API || !registravel(s.registro)) { pedido = s.registro; desenhar(); falhou(); irAoTopo(); return; }
+      enviando = true; botaoForm.disabled = true; botaoForm.textContent = 'Enviando...';
+      var hp = f.querySelector('#p-site');
+      chamar('registrarPedido', corpoRegistro(s.registro, hp ? String(hp.value || '') : '')).then(function (x) {
+        enviando = false; botaoForm.disabled = false; botaoForm.textContent = 'Enviar o meu pedido';
+        if (x.status === 422 && x.json && CAMPO_DO_SERVIDOR[x.json.campo]) {
+          guarda.apagar(CHAVE_PEDIDO);
+          var c = f.querySelector('#' + CAMPO_DO_SERVIDOR[x.json.campo]); if (c) marcar(c, 'Confira este campo.');
+          resumoErros(f, 1); return;
+        }
+        pedido = s.registro;
+        if (x.status === 200 && x.json && x.json.ok === true) {
+          pedido.status = 'registrado'; gravarPedido(pedido);
+          depoisDoPagamento = familiaAprovado();
+          desenhar();
+          if (familiaAprovado() || estado === 'pendente') { linha('conferindo'); confirmar(); }
+          consultar();
+        } else { desenhar(); falhou(); }
+        irAoTopo();
+      });
+    });
     $('#copiar-pedido').addEventListener('click', function () {
       var txt = $('#pedido-texto').textContent;
-      var ok = function () { aviso('Pedido copiado.'); }, falhou = function () { aviso('Não deu para copiar. Toque e segure o texto para copiar.'); };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, falhou); else falhou();
+      var ok = function () { aviso('Pedido copiado.'); }, ruim = function () { aviso('Não deu para copiar. Toque e segure o texto para copiar.'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, ruim); else ruim();
     });
-    $('#esquecer').addEventListener('click', function () {
+    esquecer.addEventListener('click', function () {
       esquecerTudo(); aviso('Pronto. Tudo o que este site guardou neste aparelho foi apagado.');
       setTimeout(function () { location.reload(); }, 900);
     });
-    var p = lerPedidoSalvo();
-    if (p) { renderizar(p); return; }
-    // Sem dados no aparelho: pede os campos de novo, inclusive negócio, nicho, cidade e plano.
-    sem.hidden = false; com.hidden = true;
-    var est = { k: null, n: null, c: null, p: 1, plano: null, utm: {} };
-    var f = $('#form-pedido');
-    prepararFormPedido(f, est, null);
-    f.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var r = lerFormPedido(f, est);
-      if (PLANOS.indexOf(r.dados.plano) === -1) r.ok = false;
-      if (!r.ok) { resumoErros(f, r.faltam || 1); return; }
-      resumoErros(f, 0);
-      var s = salvarPedido(r.dados, est, null);
-      renderizar(s.registro);
-      W.scrollTo(0, 0); var h = $('#obrigado-titulo'); if (h) h.focus();
-    });
+
+    /* ---- partida */
+    if (pedido) utmAtual = origemParaUtm(pedido.origem);
+    desenhar();
+    lerPrecos().then(function (pr) { precos = pr; aplicarPrecos(pr, D); desenhar(); });
+    buscarJSON('conteudo/obrigado.json').then(function (j) { if (j && typeof j === 'object') { textos = j; desenhar(); aplicarTextos(j, vars()); } });
+    if (!API) { if (pedido) falhou(); return; }
+    var comPagamento = (familiaAprovado() || estado === 'pendente' || estado === 'teste_ok') && RE_PAGAMENTO.test(volta.paymentId || '');
+    if (comPagamento) { if (familiaAprovado()) linha('conferindo'); confirmar(); }
+    if (podeServidor() && /^(aprovado|confirmado|pendente|aguardando|sem_retorno|teste_ok)$/.test(estado)) {
+      if (!comPagamento && estado !== 'sem_retorno') linha('conferindo');
+      // na espera do desktop, o envio do clique (keepalive) pode chegar um instante depois desta página
+      if (estado === 'aguardando') consulta.timer = setTimeout(consultar, 3000); else consultar();
+    } else if (pedido && (familiaAprovado() || estado === 'pendente') && !podeServidor()) falhou();
   }
 
   /* ======================================================================
@@ -1893,6 +2329,7 @@
     ajustarAncoras();
     montarSuporte();
     montarEmpresa();
+    montarTermosVersao();
     montarSom();
     try {
       if (PAGINA === 'home') paginaHome();
@@ -1912,7 +2349,9 @@
     lerPrecos: lerPrecos, lerFragmento: lerFragmento, montarFragmento: montarFragmento, filtrarPropriedades: filtrarPropriedades,
     beforeSend: beforeSend, normalizarWhats: normalizarWhats, textoPedido: textoPedido, fresco: fresco, raiz: RAIZ,
     lerRetornoMP: lerRetornoMP, medirCompra: medirCompra, filtrarPixel: filtrarPixel, lerOrigem: lerOrigem, guardarOrigem: guardarOrigem,
-    consentimento: consentimento, esquecerTudo: esquecerTudo, limparVencidos: limparVencidos
+    consentimento: consentimento, esquecerTudo: esquecerTudo, limparVencidos: limparVencidos,
+    lerVolta: lerVolta, estadoDaVolta: estadoDaVolta, mensagemPedido: mensagemPedido, novoId: novoId, novoSegredo: novoSegredo,
+    corpoRegistro: corpoRegistro, corpoContagem: corpoContagem, lerPedidoSalvo: lerPedidoSalvo
   };
   if (D.readyState === 'loading') D.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();

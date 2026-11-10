@@ -18,12 +18,17 @@
  *   F. página de pagamento: para cada praça, o botão aponta para o link certo do checkout.config.js no ar
  *   G. Mercado Pago: cada link abre, mostra o item do Porta Aberta e o valor certo, com Pix e cartão (não paga)
  *   H. identificação da empresa nos termos e na privacidade; sede com a cena no ar
+ *   J. jornada (onda 2, pacote 2C): /obrigado/ nos estados recusado (sem formulário), pendente e aprovado pela
+ *      URL com pagamento falso (título de espera, nunca "confirmado" sem o servidor), com os títulos lidos do
+ *      conteudo/obrigado.json publicado; /abrir/?teste=pa-teste com noindex; chegando com Referer externo,
+ *      nenhum cookie base44_* antes do aceite em /, /abrir/ e /obrigado/, e a meta base44-visitor-tracking
+ *      com content="consent" nessas 3 páginas
  *   I. funções do pedido e do pagamento (pacote 1F, decisão D10): respostas, recusas e ausência de dado
  *      pessoal em registrarPedido, contar, consultarPedido, confirmarPagamento, aprovarRascunho, nas 4
  *      entidades privadas, em portaAbertaVerificar e portaAbertaNotificacao (AutoCreatFlux) e no OPTIONS
  *
- * Contagem: A a H são 54 conferências (com as 7 praças de pagamento); I são 41 (mais 22 com o usuário comum).
- * Total esperado: 95 (117 com o usuário comum).
+ * Contagem: A a H são 54 conferências (com as 7 praças de pagamento); J são 10; I são 41 (mais 22 com o usuário comum).
+ * Total esperado: 105 (127 com o usuário comum). Com --sem-funcoes: 64. Com --so-funcoes: 41.
  * Linhas de prova (10/11/2026): lista vazia só prova leitura negada se houver linha para ler. Por isso Operacao
  *   (chave prova_conferencia) e PedidoPortaAberta (PA-PROVACONF1, eh_teste) têm uma linha fixa, sem dado pessoal,
  *   com o id em LINHAS_DE_PROVA abaixo. O update anônimo nesse id real tem de dar 403 (a plataforma só responde 403
@@ -36,10 +41,11 @@
  * Toda chamada ao site e às funções leva o cabeçalho X-Conferencia: 1 e a UTM utm_content=conferencia,
  * para o contador próprio descartar a conferência (docs/PEDIDO-API.md, seção 4.4).
  *
- * Uso: node scripts/conferir-no-ar.cjs [--base https://...] [--sem-mp] [--so-funcoes] [--sem-funcoes] [--cors-estrito] [--json arquivo]
+ * Uso: node scripts/conferir-no-ar.cjs [--base https://...] [--sem-mp] [--so-funcoes] [--sem-funcoes] [--exigir-funcoes] [--exigir-jornada] [--cors-estrito] [--json arquivo]
  *   --so-funcoes   só o grupo I (logo depois de publicar as funções, antes das páginas)
  *   --sem-funcoes  pula o grupo I (só enquanto as funções ainda não foram publicadas; anote no relatório)
  *   --exigir-funcoes rota de função ausente é defeito mesmo com FUNCOES_PUBLICADAS = false (uso do coordenador no deploy)
+ *   --exigir-jornada falha do grupo J é defeito mesmo com JORNADA_PUBLICADA = false (uso do coordenador no deploy da onda 2)
  *   --cors-estrito trata "access-control-allow-origin: *" no OPTIONS como defeito (padrão: aviso, ver grupo I)
  *   Usuário comum (opcional): CONFERENCIA_TOKEN_USUARIO_COMUM no ambiente, com a sessão de um usuário de
  *   papel "user" criado só para isto. O valor nunca é impresso. Sem ele, as 20 tentativas logadas saem
@@ -61,6 +67,11 @@ const CORS_ESTRITO = args.includes('--cors-estrito');
 const EXIGIR_FUNCOES = args.includes('--exigir-funcoes');
 // troque para true no mesmo ato do deploy das funções da onda 1 (docs/ROTINA-DIARIA.md, seção 7)
 const FUNCOES_PUBLICADAS = true;
+// troque para true no mesmo ato da publicação da vitrine da onda 2 (pacotes 2A e 2B): até lá, o que o grupo J
+// acha de errado sai como NÃO VERIFICADO (é o estado anterior à onda, conhecido), para a rotina diária não pausar
+// anúncio por defeito que já tem correção agendada. Daí em diante, falha no grupo J é DEFEITO. --exigir-jornada força o true.
+const JORNADA_PUBLICADA = false;
+const EXIGIR_JORNADA = args.includes('--exigir-jornada');
 const APP_ID = '6aefffe66b684db9404b1994';
 const GRUPO_FUNCOES = 'I funções';
 // linhas de prova (id da plataforma, não é segredo: a regra de acesso é o que protege). Criadas pelo MCP em 10/11/2026.
@@ -257,6 +268,84 @@ function aviso(grupo, nome, detalhe) {
     await ctx.close();
   }
 
+  /* ---------------- J. jornada depois do pagamento, link de teste e cookies (onda 2, pacote 2C) ---------------- */
+  if (!SO_FUNCOES) {
+    const anotaJ = (grupo, nome, ok, detalhe) => {
+      if (ok || JORNADA_PUBLICADA || EXIGIR_JORNADA) return anota(grupo, nome, ok, detalhe);
+      naoVerificado(grupo, nome, `a vitrine da onda 2 ainda não foi publicada (JORNADA_PUBLICADA = false); hoje: ${detalhe}`);
+    };
+    // títulos esperados: os publicados (conteudo/obrigado.json no ar); sem eles, os do repositório
+    let textosObrigado = null;
+    try {
+      const c0 = await novoCtx(); const p0 = await c0.newPage();
+      const r0 = await p0.goto(BASE + '/conteudo/obrigado.json', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      if (r0 && r0.status() === 200) textosObrigado = JSON.parse(await r0.text());
+      await c0.close();
+    } catch (e) { /* cai no do repositório */ }
+    if (!textosObrigado) { try { textosObrigado = JSON.parse(fs.readFileSync(require('path').join(__dirname, '..', 'conteudo', 'obrigado.json'), 'utf8')); } catch (e) { textosObrigado = {}; } }
+    const est = (textosObrigado && textosObrigado.estados) || {};
+    const limpo = s => String(s || '').replace(/\s+/g, ' ').replace(/[.!]+$/, '').trim().toLowerCase();
+    const tituloDe = (k, reserva) => limpo((est[k] && est[k].titulo) || reserva);
+    const tituloVisivel = pg => pg.evaluate(() => { const h = [...document.querySelectorAll('h1')].find(x => x.offsetParent !== null && x.innerText.trim()); return h ? h.innerText.trim() : ''; });
+    const formVisivel = pg => pg.evaluate(() => [...document.querySelectorAll('main input:not([type=hidden]), main textarea, main select')].some(x => x.offsetParent !== null));
+    // pagamento falso diferente a cada rodada (o servidor nunca confirma; limite de 10 por hora por pagamento)
+    const pagFalso = '9' + String(Math.floor(Math.random() * 1e10)).padStart(10, '0');
+    const estados = [
+      ['recusado', '?pago=mp&produto=pa-abertura-inauguracao&collection_status=rejected', [tituloDe('recusado', 'O pagamento não passou')], true],
+      ['pendente', '?pago=mp&produto=pa-abertura-inauguracao&collection_status=pending', [tituloDe('pendente', 'Seu Pix espera o pagamento')], false],
+      // aprovado só pela URL, com pagamento que o servidor não conhece: a tela NUNCA diz "confirmado";
+      // vale o título de espera (a_conferir, conferência longa) ou o de aprovado pela volta do Mercado Pago
+      ['aprovado', `?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=${pagFalso}&payment_type=bank_transfer`,
+        [tituloDe('a_conferir', 'Estamos conferindo o seu pagamento'), tituloDe('conferencia_longa', 'Seu pagamento está em conferência'), 'pagamento aprovado'], false]
+    ];
+    const confirmado = [tituloDe('aprovado', 'Pagamento confirmado'), 'pagamento confirmado'];
+    for (const [nome, q, aceitos, semForm] of estados) {
+      const ctx = await novoCtx(); const pg = await ctx.newPage();
+      try {
+        await pg.goto(`${BASE}/obrigado/${q}`, { waitUntil: 'networkidle', timeout: 60000 });
+        await pg.waitForTimeout(nome === 'aprovado' ? 7000 : 2500);   // dá tempo de o servidor responder ao pagamento falso
+        const t = await tituloVisivel(pg);
+        const form = await formVisivel(pg);
+        // no aprovado falso, "Pagamento confirmado" só é aceito se for também o título de espera (não deve ser)
+        const mente = nome === 'aprovado' && confirmado.includes(limpo(t)) && !aceitos.slice(0, 2).includes(limpo(t));
+        const ok = aceitos.includes(limpo(t)) && !mente && !(semForm && form);
+        anotaJ('J jornada', `/obrigado/ ${nome}: título certo${semForm ? ' e sem formulário' : ''}${nome === 'aprovado' ? ' e nunca "confirmado" sem o servidor' : ''}`, ok,
+          ok ? t : `título "${t || 'nenhum'}" · esperado: ${aceitos.join(' | ')}${mente ? ' · MENTE: diz confirmado sem o servidor' : ''}${semForm && form ? ' · formulário visível' : ''}`);
+      } catch (e) { anotaJ('J jornada', `/obrigado/ ${nome}`, false, String(e).slice(0, 140)); }
+      await ctx.close();
+    }
+    // link de teste: fora do Google
+    {
+      const ctx = await novoCtx(); const pg = await ctx.newPage();
+      try {
+        const r = await pg.goto(`${BASE}/abrir/?teste=pa-teste`, { waitUntil: 'networkidle', timeout: 60000 });
+        await pg.waitForTimeout(1500);
+        const meta = await pg.evaluate(() => [...document.querySelectorAll('meta[name="robots"], meta[name="googlebot"]')].map(m => m.content).join(' '));
+        const cab = (r && r.headers()['x-robots-tag']) || '';
+        const ok = /noindex/i.test(meta) || /noindex/i.test(cab);
+        anotaJ('J jornada', '/abrir/?teste=pa-teste tem noindex', ok, ok ? (meta || cab) : `robots "${meta || 'nenhum'}" · X-Robots-Tag "${cab || 'nenhum'}"`);
+      } catch (e) { anotaJ('J jornada', '/abrir/?teste=pa-teste tem noindex', false, String(e).slice(0, 140)); }
+      await ctx.close();
+    }
+    // cookies da hospedagem: chegando de fora (Referer do Instagram), nenhum base44_* antes do aceite;
+    // e a meta que manda o script da hospedagem esperar o consentimento (contrato do pacote 2A: content="consent")
+    for (const u of ['/', '/abrir/', '/obrigado/']) {
+      const ctx = await novoCtx(); const pg = await ctx.newPage();
+      try {
+        await pg.goto(`${BASE}${u}${u === '/' ? '?nicho=barbearia&utm_source=meta&utm_medium=pago&utm_campaign=feira&utm_content=conferencia' : ''}`,
+          { waitUntil: 'networkidle', timeout: 60000, referer: 'https://l.instagram.com/' });
+        await pg.waitForTimeout(3000);
+        const antes = (await ctx.cookies()).map(c => c.name).filter(n => /^base44_/i.test(n));
+        anotaJ('J cookies', `${u}: nenhum cookie base44_* antes do aceite (Referer externo)`, antes.length === 0, antes.length ? `gravados: ${antes.join(', ')}` : '');
+        const metas = await pg.evaluate(() => [...document.querySelectorAll('meta[name="base44-visitor-tracking"]')].map(m => m.content));
+        const okMeta = metas.includes('consent');
+        anotaJ('J cookies', `${u}: meta base44-visitor-tracking com content="consent"`, okMeta, `metas: ${metas.length ? metas.map(m => `"${m}"`).join(', ') : 'nenhuma'}`);
+        if (okMeta && metas.some(m => m !== 'consent')) aviso('J cookies', `${u} meta duplicada`, `a hospedagem também injeta ${metas.filter(m => m !== 'consent').join(', ')}; vale o cookie conferido acima`);
+      } catch (e) { anotaJ('J cookies', `${u}: cookies e meta`, false, String(e).slice(0, 140)); }
+      await ctx.close();
+    }
+  }
+
   /* ---------------- I. funções do pedido e do pagamento (D10) ---------------- */
   if (!SEM_FUNCOES) {
     // contexto de requisição próprio: o do navegador não herda o proxy do ambiente (o Chromium herda)
@@ -419,7 +508,11 @@ function aviso(grupo, nome, detalhe) {
   if (ARQ_JSON) fs.writeFileSync(ARQ_JSON, JSON.stringify({ base: BASE, total: res.length, falhas: falhas.length, nao_verificadas: naoVerificadas, avisos, itens: res }, null, 1));
   const ext = (naoVerificadas.length ? ` · ${naoVerificadas.length} não verificada(s)` : '') + (avisos.length ? ` · ${avisos.length} aviso(s)` : '');
   const escopo = SO_FUNCOES ? 'só funções' : (SEM_FUNCOES ? 'vitrine, SEM as funções' : 'vitrine e funções');
-  console.log(`\n${res.length} conferências no ar (${escopo}) · ${res.length - falhas.length} certas · ${falhas.length} com defeito${ext}`);
+  // contagem esperada (cabeçalho): vitrine 64 = A a H 54 + J 10 (menos as praças do Mercado Pago com --sem-mp); funções 41
+  const esperadas = (SO_FUNCOES ? 0 : 64 - (SEM_MP ? Object.keys(links).length : 0)) + (SEM_FUNCOES ? 0 : 41 + (process.env.CONFERENCIA_TOKEN_USUARIO_COMUM ? 22 : 0));
+  const naoRodaram = naoVerificadas.reduce((s, n) => s + (n.itens || 1), 0);
+  const jornada = res.filter(r => /^J /.test(r.grupo));
+  console.log(`\n${res.length} conferências no ar (${escopo}; esperadas ${esperadas}${naoRodaram ? `, ${naoRodaram} delas não verificadas` : ''}) · ${res.length - falhas.length} certas · ${falhas.length} com defeito${ext}` + (SO_FUNCOES ? '' : ` · jornada e cookies ${jornada.filter(r => r.ok).length} de ${jornada.length + naoVerificadas.filter(n => /^J /.test(n.grupo)).length} certas`));
   if (falhas.length) {
     console.error('DEFEITO NO AR. Pause os anúncios, corrija e rode de novo:');
     falhas.forEach(f => console.error(`  - ${f.grupo} · ${f.nome}${f.detalhe ? ' | ' + f.detalhe : ''}`));
@@ -433,6 +526,6 @@ function aviso(grupo, nome, detalhe) {
   if (SEM_FUNCOES) final = 'ok     a vitrine no ar funciona para quem chega pelo anúncio; as funções do pedido NÃO foram conferidas (grupo I pulado nesta rodada).';
   else if (nvFuncoes.length) final = `${SO_FUNCOES ? 'ok     nada com defeito no que respondeu' : 'ok     a vitrine no ar funciona'}; as funções do pedido NÃO foram conferidas (${itensFuncoes} itens: ${nvFuncoes.map(n => n.nome).join('; ')}).`;
   else final = SO_FUNCOES ? 'ok     as funções no ar respondem e recusam como o contrato manda (vitrine não conferida nesta rodada).'
-    : 'ok     o site no ar e as funções funcionam de ponta a ponta para quem chega pelo anúncio.';
+    : 'ok     o site no ar, a volta do pagamento, os cookies e as funções funcionam de ponta a ponta para quem chega pelo anúncio.';
   console.log(final + (outrasNv.length ? ` Atenção: ${outrasNv.length} outro(s) item(ns) NÃO VERIFICADO(S) acima não contam como prova.` : ''));
 })().catch(e => { console.error('erro  ', e); process.exit(2); });

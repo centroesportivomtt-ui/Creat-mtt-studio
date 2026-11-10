@@ -171,7 +171,8 @@ button { cursor: pointer; background: none; border: 0; padding: 0; }
 a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
 a:hover { text-decoration-thickness: 2px; }
 ul, ol { padding: 0; list-style: none; }
-h1, h2, h3 { line-height: 1.05; text-wrap: balance; font-weight: 700; }
+/* v1.3 (SAL-02, SAL-N1): 1.05 encostava acento e cedilha na linha vizinha em caixa alta (SEÇ/SEÚ, CAŞA) */
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; font-weight: 700; }
 p, li, dd { text-wrap: pretty; }
 p { max-width: var(--largura-texto); }
 ::selection { background: var(--destaque); color: var(--sobre-destaque); }
@@ -239,6 +240,61 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
   :root:not([data-tema="claro"]) .faixa-demo { background: var(--fundo-3); color: var(--tinta); box-shadow: inset 0 -2px 0 var(--destaque); }
 }
 :root[data-tema="escuro"] .faixa-demo { background: var(--fundo-3); color: var(--tinta); box-shadow: inset 0 -2px 0 var(--destaque); }
+
+/* v1.3 (TOPO-PESADO, SAL-07, ACAD-03): a faixa da demonstração é UMA linha de até 48 px em qualquer
+   largura: selo à esquerda, "Como funciona" fechado no meio e "Quero um assim" à direita. A explicação
+   abre por cima do topo (não empurra a página) e fecha no mesmo toque. */
+.faixa-demo {
+  --faixa-fundo: var(--tinta); --faixa-tinta: var(--fundo);
+  position: relative;
+  flex-wrap: nowrap; gap: var(--esp-2) var(--esp-3);
+  min-height: var(--alvo); max-height: 48px;
+  padding-block: 2px;
+  background: var(--faixa-fundo); color: var(--faixa-tinta);
+  font-size: var(--t-nota); line-height: 1.25;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-tema="claro"]) .faixa-demo { --faixa-fundo: var(--fundo-3); --faixa-tinta: var(--tinta); } }
+:root[data-tema="escuro"] .faixa-demo { --faixa-fundo: var(--fundo-3); --faixa-tinta: var(--tinta); }
+.faixa-demo .selo-demo {
+  flex: 0 1 auto; min-width: 0;
+  padding: 2px var(--esp-2);
+  border: 1px solid currentColor; border-radius: var(--raio-1);
+  font-family: var(--fonte-dado); font-size: var(--t-micro); font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.25;
+  text-wrap: balance;
+}
+.faixa-demo details { flex: 0 0 auto; position: static; }
+.faixa-demo summary {
+  display: inline-flex; align-items: center; gap: var(--esp-1);
+  min-height: var(--alvo); padding-inline: var(--esp-1);
+  font-weight: 600; white-space: nowrap; cursor: pointer; list-style: none;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em;
+}
+.faixa-demo summary::-webkit-details-marker { display: none; }
+.faixa-demo summary::after {
+  content: ""; flex: 0 0 auto; width: 0.45em; height: 0.45em; margin-left: 2px;
+  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: translateY(-0.15em) rotate(45deg);
+  transition: transform var(--dur-rapida) var(--curva-entrada);
+}
+.faixa-demo details[open] summary::after { transform: translateY(0.1em) rotate(-135deg); }
+.faixa-demo summary:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.faixa-demo details > p {
+  position: absolute; z-index: calc(var(--z-topo) + 1);
+  top: 100%; left: 0; right: 0;
+  max-width: none;
+  padding: var(--esp-3) var(--calha) var(--esp-4);
+  background: var(--faixa-fundo); color: var(--faixa-tinta);
+  border-top: 1px solid color-mix(in oklab, var(--faixa-tinta) 30%, transparent);
+  box-shadow: var(--sombra-2);
+  font-size: var(--t-menor); line-height: 1.45;
+}
+.faixa-demo a.quero-assim { flex: 0 0 auto; margin-left: auto; white-space: nowrap; }
+@media (max-width: 600px) {
+  .faixa-demo { gap: var(--esp-2); font-size: var(--t-micro); }
+  /* o selo pode ir a duas linhas; "Como funciona" e "Quero um assim" nunca quebram */
+  .faixa-demo .selo-demo { font-size: 0.6875rem; letter-spacing: 0.04em; line-height: 1.2; }
+}
 /* selo "exemplo" no letreiro e no título do horário da demonstração */
 .letreiro .selo { flex: 0 0 auto; font-size: var(--t-micro); line-height: 1.3; }
 .contato-horario h3 .selo { margin-left: var(--esp-1); transform: translateY(-0.2em); }
@@ -282,13 +338,29 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
 .btn-pedir.is-polegar:active { transform: translateX(-50%) translateY(1px); }
 .btn-pedir.is-polegar.is-na-secao { opacity: 0; visibility: hidden; pointer-events: none; animation: none; }
 @keyframes sobe-polegar { from { transform: translate(-50%, 140%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+/* v1.3 (FAB-COBRE): no celular, "Pedir horário" e o WhatsApp viram uma barra só, na mesma linha de base:
+   o botão começa na coluna do texto e para 12 px antes da bolha */
+@media (max-width: 600px) {
+  .btn-pedir.is-polegar {
+    left: max(var(--esp-4), env(safe-area-inset-left, 0px));
+    right: calc(max(var(--esp-4), env(safe-area-inset-right, 0px)) + var(--whats) + var(--esp-3));
+    max-width: none;
+    transform: none;
+    animation-name: sobe-polegar-barra;
+  }
+  .btn-pedir.is-polegar:active { transform: translateY(1px); }
+}
+@keyframes sobe-polegar-barra { from { transform: translateY(140%); opacity: 0; } to { transform: none; opacity: 1; } }
 
 .btn-sem-arrastar {
   width: 100%; min-height: 48px;
   background: transparent; color: var(--tinta);
   border: 1px solid var(--borda-forte);
 }
-.btn-sem-arrastar:hover { background: var(--fundo-2); }
+/* v1.3 (BTN-INVISIVEL, SAL-11): hover só com mouse de verdade; no toque ele grudava e apagava o texto */
+@media (hover: hover) and (pointer: fine) {
+  .btn-sem-arrastar:hover { background: var(--fundo-2); }
+}
 .btn-secundario { background: transparent; color: var(--tinta); border: 1px solid var(--borda-forte); }
 .btn-externo { min-height: 56px; padding-inline: var(--esp-6); background: var(--destaque); color: var(--sobre-destaque); font-size: 1.0625rem; }
 .btn-link { min-height: var(--alvo); color: var(--tinta); text-decoration: underline; text-underline-offset: 0.2em; font-weight: 600; }
@@ -318,6 +390,9 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
   border-bottom: 1px solid var(--borda);
 }
 .topo > .btn-pedir { margin-left: auto; }
+/* v1.3 (ACAD-06, SAL-12): quando "Pedir horário" vira o botão do polegar (position: fixed), a margem
+   automática dele deixa de empurrar; os ícones continuam presos à direita em qualquer largura */
+.topo > .btn-pedir.is-polegar ~ #alternar-tema { margin-left: auto; }
 .letreiro {
   display: inline-flex; align-items: center; gap: var(--esp-2);
   flex: 1 1 14rem; min-width: 0; min-height: var(--alvo);
@@ -341,7 +416,12 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
 @media (max-width: 559px) {
   .letreiro { flex-basis: 100%; min-height: 0; font-size: var(--t-nota); }
   .topo > .btn-pedir { margin-left: 0; margin-right: auto; }
-  html { scroll-padding-top: 124px; }
+  html { scroll-padding-top: 84px; }
+  /* v1.3 (SAL-N5, ACAD-N3): sem o "Pedir horário" (está no polegar), letreiro e ícones numa linha só:
+     topo de 61 px (8 + 44 + 8 + 1) em vez de 89 a 103 px. O letreiro pode ir a duas linhas por dentro. */
+  .topo.sem-pedir { flex-wrap: nowrap; }
+  .topo.sem-pedir .letreiro { flex: 1 1 0; min-height: var(--alvo); }
+  .topo.sem-pedir .letreiro-texto { min-width: 0; }
 }
 
 /* ---------------------------------------------------------------------
@@ -368,7 +448,7 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
   font-family: var(--fonte-display);
   font-weight: 800;
   font-size: var(--t-heroi);
-  line-height: 0.84;
+  line-height: 1.14;   /* v1.3 (SAL-02): 0.84 jogava o acento de FICTÍCIO no A de ESMALTE e o til de SALÃO no sobretítulo */
   letter-spacing: -0.01em;
   text-transform: uppercase;
   max-width: 100%;
@@ -376,10 +456,23 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
   hyphens: manual;
 }
 .heroi-nome[data-tamanho="medio"] { font-size: clamp(3.25rem, 0.8rem + 12.5vw, 10rem); }
-.heroi-nome[data-tamanho="longo"] { font-size: clamp(2.5rem, 0.6rem + 9vw, 7.5rem); line-height: 0.9; }
+.heroi-nome[data-tamanho="longo"] { font-size: clamp(2.5rem, 0.6rem + 9vw, 7.5rem); line-height: 1.16; }
 .heroi-exemplo { margin-top: calc(-1 * var(--esp-2)); color: var(--tinta-suave); }
 .heroi-bordao { font-size: var(--t-lead); max-width: 30ch; color: var(--tinta); }
 .heroi-sub { font-size: var(--t-corpo); max-width: 44ch; color: var(--tinta-suave); }
+/* v1.3 (SAL-07, ACAD-03, FAB-COBRE): no celular o herói começa mais perto do topo e o texto corrido
+   para antes da faixa do polegar e da bolha do WhatsApp (56 px + 16 px) */
+@media (max-width: 600px) {
+  .heroi { padding-top: var(--esp-6); }
+  .heroi-bordao, .heroi-sub { max-width: min(30ch, calc(100% - var(--whats) - var(--esp-4))); }
+  .heroi-sub { max-width: min(44ch, calc(100% - var(--whats) - var(--esp-4))); }
+}
+/* paisagem no celular (844 x 390): o nome inteiro cabe na primeira tela, ao lado do botão do topo */
+@media (orientation: landscape) and (max-height: 500px) {
+  .heroi { min-height: 0; padding-block: var(--esp-5) var(--esp-6); gap: var(--esp-3); }
+  .heroi-nome, .heroi-nome[data-tamanho] { font-size: clamp(2.25rem, 15svh, 4.5rem); }
+  .heroi.couro { min-height: 0; padding-bottom: calc(var(--esp-6) + 56px + env(safe-area-inset-bottom, 0px)); }
+}
 .heroi-sub-demo { font-weight: 600; color: var(--tinta); }   /* só na demonstração: o pedido vai para a Creat */
 .heroi.couro .heroi-sub-demo { color: var(--couro-tinta); }
 
@@ -506,12 +599,19 @@ main { display: block; }
 }
 .secao h3 { font-size: var(--t-h3); font-weight: 600; line-height: 1.2; }
 
+/* v1.3 (ACAD-22): o manifesto era um slide (36 px, 10 linhas, metade da tela vazia). Agora corpo de
+   20 a 28 px em até 34ch e, no desktop, o título à esquerda e o texto à direita, na mesma linha de leitura */
 .manifesto p {
-  font-size: var(--t-manifesto);
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
   font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
-  max-width: 28ch;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  max-width: 34ch;
+}
+@media (min-width: 960px) {
+  .secao.manifesto { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); column-gap: var(--esp-8); align-items: start; }
+  .secao.manifesto > h2 { margin-bottom: 0; }
+  .secao.manifesto > :not(h2) { grid-column: 2; }
 }
 .manifesto .manifesto-bordao {
   margin-top: var(--esp-7);
@@ -519,7 +619,7 @@ main { display: block; }
   font-family: var(--fonte-display);
   font-size: var(--t-h3);
   font-weight: 700;
-  line-height: 1.05;
+  line-height: 1.2;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--destaque);
@@ -546,6 +646,20 @@ main { display: block; }
 .precos .preco { order: 3; font-family: var(--fonte-dado); font-weight: 600; font-size: var(--t-lead); min-width: 5.5ch; text-align: right; }
 .precos .preco.is-consulta { font-size: var(--t-menor); }
 .precos .descricao { order: 4; flex-basis: 100%; margin-top: var(--esp-1); font-size: var(--t-menor); color: var(--tinta-suave); }
+/* v1.3 (ORDEM-SECOES): "Pedir este" em cada linha. Celular: embaixo, alinhado à coluna do nome.
+   A partir de 560 px: na ponta da linha, depois do preço, como a etiqueta da tabela da parede. */
+.precos .pedir-este { min-height: var(--alvo); padding-inline: var(--esp-4); font-size: var(--t-menor); }
+.precos:has(.pedir-este) { max-width: 52rem; }
+@media (hover: hover) and (pointer: fine) { .precos .pedir-este:hover { border-color: var(--tinta); background: var(--fundo-2); } }
+@media (min-width: 560px) {
+  .precos li:has(.pedir-este) { display: grid; grid-template-columns: minmax(0, auto) minmax(1.5rem, 1fr) auto auto auto; column-gap: var(--esp-3); align-items: baseline; }
+  .precos li:has(.pedir-este) .nome { grid-column: 1; grid-row: 1; }
+  .precos li:has(.pedir-este)::after { grid-column: 2; grid-row: 1; }
+  .precos li:has(.pedir-este) .duracao { grid-column: 3; grid-row: 1; }
+  .precos li:has(.pedir-este) .preco { grid-column: 4; grid-row: 1; }
+  .precos li:has(.pedir-este) .pedir-este { grid-column: 5; grid-row: 1 / span 2; align-self: center; margin-left: var(--esp-2); }
+  .precos li:has(.pedir-este) .descricao { grid-column: 1 / 5; grid-row: 2; }
+}
 @media (max-width: 559px) {
   .precos li { display: grid; grid-template-columns: minmax(0, auto) minmax(1rem, 1fr) auto; column-gap: var(--esp-2); }
   .precos .nome { grid-column: 1; grid-row: 1; }
@@ -553,12 +667,13 @@ main { display: block; }
   .precos .preco { grid-column: 3; grid-row: 1; }
   .precos .duracao { grid-column: 1 / -1; grid-row: 2; }
   .precos .descricao { grid-column: 1 / -1; grid-row: 3; }
+  .precos .pedir-este { grid-column: 1 / -1; grid-row: 4; justify-self: start; margin-top: var(--esp-3); }
 }
 .servicos-nota { margin-top: var(--esp-5); }
 
 .profissionais li { display: grid; gap: var(--esp-1) var(--esp-5); padding-block: var(--esp-5); border-top: 1px solid var(--borda); }
 .profissionais li:last-child { border-bottom: 1px solid var(--borda); }
-.profissionais .nome { font-family: var(--fonte-display); font-weight: 700; font-size: clamp(2rem, 1.4rem + 3vw, 3.25rem); line-height: 0.95; text-transform: uppercase; overflow-wrap: anywhere; }
+.profissionais .nome { font-family: var(--fonte-display); font-weight: 700; font-size: clamp(2rem, 1.4rem + 3vw, 3.25rem); line-height: 1.16; text-transform: uppercase; overflow-wrap: anywhere; }
 .profissionais .especialidade { font-family: var(--fonte-dado); font-size: var(--t-menor); color: var(--destaque); letter-spacing: 0.04em; }
 .profissionais .bio { color: var(--tinta-suave); max-width: 46ch; }
 @media (min-width: 720px) {
@@ -566,6 +681,22 @@ main { display: block; }
   .profissionais .especialidade, .profissionais .bio { grid-column: 2; }
   .profissionais .nome { grid-row: span 2; }
 }
+
+/* v1.3 (SEM-FOTO): trabalhos da casa. Duas colunas no celular, até quatro no desktop; a altura vem
+   de width/height da imagem (sem salto de layout). Na demonstração, selo "Foto de exemplo" na foto. */
+.secao.trabalhos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--esp-5) var(--esp-3); align-items: start; }
+.secao.trabalhos > h2 { grid-column: 1 / -1; margin-bottom: var(--esp-2); }
+@media (min-width: 760px) { .secao.trabalhos { grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--esp-6) var(--esp-5); } }
+.trabalhos figure.foto { position: relative; display: grid; gap: var(--esp-2); min-width: 0; }
+.trabalhos figure.foto img { width: 100%; height: auto; border-radius: var(--raio-2); background: var(--fundo-3); }
+.trabalhos .selo-foto {
+  position: absolute; top: var(--esp-2); left: var(--esp-2);
+  max-width: calc(100% - 2 * var(--esp-2));
+  background: color-mix(in oklab, var(--fundo) 90%, transparent); color: var(--tinta);
+  font-size: var(--t-micro); letter-spacing: 0.04em;
+}
+.trabalhos figcaption { font-size: var(--t-menor); line-height: 1.4; color: var(--tinta-suave); overflow-wrap: anywhere; }
+.trabalhos figcaption .credito { font-family: var(--fonte-dado); font-size: var(--t-micro); }
 
 /* recados aprovados (só com origem e aprovadoEm) */
 .quadro ul { display: grid; gap: var(--esp-6); }
@@ -580,6 +711,8 @@ address.endereco { font-style: normal; font-size: var(--t-lead); line-height: 1.
 .contato-local .nota { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-2); }
 .link-forte { display: inline-flex; align-items: center; min-height: var(--alvo); font-weight: 600; color: var(--tinta); overflow-wrap: anywhere; }
 .link-forte:hover { color: var(--destaque); }
+.contato-local .como-chegar { margin-top: var(--esp-4); }
+.contato-local .nota-mapa { margin-top: 0; max-width: 40ch; }
 .contato-horario > h3 { margin-bottom: var(--esp-3); }
 table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; }
 .funcionamento th, .funcionamento td { padding: var(--esp-3) 0; border-bottom: 1px solid var(--borda); text-align: left; font-weight: 400; }
@@ -614,32 +747,49 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
 .agendar-escolhas, .agendar-resumo { min-width: 0; }
 @media (min-width: 960px) {
   .agendar-grade { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); align-items: start; gap: var(--esp-8); }
-  .agendar-resumo { position: sticky; top: 104px; }
+  /* v1.3 (ACAD-16): o resumo acompanha a rolagem logo abaixo do topo (61 px) com 16 px de folga */
+  .agendar-resumo { position: sticky; top: calc(var(--alvo) + 2 * var(--esp-2) + 1px + var(--esp-4)); }
+}
+/* v1.3 (ACAD-16): no celular, menos vão entre os passos e entre a grade e o resumo */
+@media (max-width: 959px) {
+  .agendar-grade { gap: var(--esp-6); }
 }
 .passo { counter-increment: passo; min-width: 0; padding: 0; border: 0; margin: 0 0 var(--esp-7); }
+@media (max-width: 959px) { .passo { margin-bottom: var(--esp-6); } }
 .passo > legend {
   display: flex; align-items: baseline; gap: var(--esp-3);
   padding: 0; margin-bottom: var(--esp-4);
   font-size: var(--t-h3); font-weight: 600; line-height: 1.2;
 }
-.passo > legend::before { content: counter(passo); font-family: var(--fonte-dado); font-size: var(--t-menor); font-weight: 600; color: var(--destaque); min-width: 1.5ch; }
+/* v1.3 (ACAD-18): o número do passo em 16 px, na mesma linha de base do título */
+.passo > legend::before { content: counter(passo); align-self: baseline; font-family: var(--fonte-dado); font-size: 1rem; font-weight: 600; line-height: 1.2; color: var(--destaque); min-width: 1.5ch; }
 
+/* v1.3 (ACAD-17): fita alinhada à margem (sem o recuo de 4 px), chips de 72 px e um esmaecido de
+   24 px na borda direita avisando que dá para rolar; some quando a fita chega ao fim */
+@property --fita-fade { syntax: '<length>'; inherits: false; initial-value: 24px; }
 .fita-dias {
   display: flex; gap: var(--esp-2);
   max-width: 100%;
   overflow-x: auto; overflow-y: hidden;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: var(--esp-1);
-  padding: var(--esp-1) var(--esp-1) var(--esp-3);
+  scroll-padding-inline: 0;
+  padding: var(--esp-1) 0 var(--esp-3);
   scrollbar-width: thin;
   scrollbar-color: var(--borda-forte) transparent;
+  --fita-fade: 24px;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - var(--fita-fade)), transparent);
+          mask-image: linear-gradient(90deg, #000 calc(100% - var(--fita-fade)), transparent);
+}
+@supports (animation-timeline: scroll()) {
+  .fita-dias { animation: fita-fim linear both; animation-timeline: scroll(self inline); }
+  @keyframes fita-fim { 0%, 92% { --fita-fade: 24px; } 100% { --fita-fade: 0px; } }
 }
 .dia {
-  flex: 0 0 auto; scroll-snap-align: start;
+  flex: 0 0 72px; scroll-snap-align: start;
   display: grid; justify-items: center; align-content: center; gap: 2px;
-  min-width: 68px; min-height: 72px;
-  padding: var(--esp-2) var(--esp-3);
+  width: 72px; min-width: 72px; min-height: 72px;
+  padding: var(--esp-2) var(--esp-1);
   border: 1px solid var(--borda-forte);
   border-radius: var(--raio-2);
   background: var(--fundo-2);
@@ -650,8 +800,11 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
   letter-spacing: 0.06em;
   transition: background-color var(--dur-rapida), color var(--dur-rapida), border-color var(--dur-rapida);
 }
-.dia .num { font-family: var(--fonte-display); font-size: 1.75rem; font-weight: 700; line-height: 1; letter-spacing: 0; }
-.dia small { font-size: var(--t-micro); }
+/* v1.3 (SAL-14): número da data na fonte de texto; em Bodoni o 1 perdia a serifa e 11 lia como II */
+.dia .num { font-family: var(--fonte-texto); font-size: 1.625rem; font-weight: 600; line-height: 1; letter-spacing: 0; font-variant-numeric: lining-nums tabular-nums; }
+.dia small { font-size: var(--t-micro); letter-spacing: 0; }
+/* foco por dentro: a fita rola e cortaria o contorno de fora */
+.dia:focus-visible { outline-offset: -5px; }
 .dia:hover:not([aria-disabled="true"]) { border-color: var(--tinta); }
 .dia[aria-pressed="true"] { background: var(--tinta); color: var(--fundo); border-color: var(--tinta); box-shadow: inset 0 -3px 0 var(--destaque); }
 .dia[aria-disabled="true"] { cursor: not-allowed; color: var(--apagado); border-style: dashed; border-color: var(--borda); background: transparent; }
@@ -673,22 +826,46 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
 .aviso-dia { display: grid; gap: var(--esp-2); justify-items: start; margin-top: var(--esp-3); padding: var(--esp-4); border: 1px dashed var(--borda-forte); border-radius: var(--raio-2); color: var(--tinta-suave); }
 
 .servicos-cabem { display: grid; gap: var(--esp-2); }
+/* v1.3 (ACAD-18, SELECAO-CINZA): cada opção tem o seu marcador redondo; a escolhida ganha borda de 2 px
+   no destaque, fundo com 8% do destaque e o visto dentro do marcador. O cinza lia como desativado.
+   A borda de 2 px é desenhada por sombra interna, para a opção não mudar de tamanho ao ser escolhida. */
 .servico-opcao {
+  position: relative;
   display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--esp-1) var(--esp-3);
   width: 100%; min-height: 56px;
-  padding: var(--esp-3) var(--esp-4);
+  padding: var(--esp-3) var(--esp-4) var(--esp-3) calc(var(--esp-4) + 1.25rem + var(--esp-3));
   border: 1px solid var(--borda-forte);
   border-radius: var(--raio-2);
   background: var(--fundo-2);
   color: var(--tinta);
   text-align: left;
-  transition: border-color var(--dur-rapida), background-color var(--dur-rapida);
+  transition: border-color var(--dur-rapida), background-color var(--dur-rapida), box-shadow var(--dur-rapida);
+}
+.servico-opcao::before {
+  content: ""; position: absolute; left: var(--esp-4); top: calc(var(--esp-3) + 0.1rem);
+  width: 1.25rem; height: 1.25rem; border-radius: 50%;
+  border: 2px solid var(--borda-forte); background: var(--fundo-2);
 }
 .servico-opcao .nome { flex: 1 1 10rem; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
 .servico-opcao .duracao { font-family: var(--fonte-dado); font-size: var(--t-menor); color: var(--tinta-suave); }
-.servico-opcao .preco { font-family: var(--fonte-dado); font-weight: 600; min-width: 5.5ch; text-align: right; }
+.servico-opcao .preco { font-family: var(--fonte-texto); font-size: 1em; font-weight: 500; color: var(--tinta-suave); min-width: 5.5ch; text-align: right; }
 .servico-opcao:hover:not(.is-nao-cabe) { border-color: var(--tinta); }
-.servico-opcao[aria-checked="true"] { border-color: var(--destaque); background: var(--fundo-3); box-shadow: inset 3px 0 0 var(--destaque); }
+.servico-opcao[aria-checked="true"] {
+  border-color: var(--destaque);
+  background: color-mix(in oklab, var(--destaque) 8%, var(--fundo-2));
+  box-shadow: inset 0 0 0 1px var(--destaque);
+}
+.servico-opcao[aria-checked="true"] .nome { font-weight: 600; }
+.servico-opcao[aria-checked="true"]::before { border-color: var(--destaque); background: var(--destaque); }
+/* o visto na cor sobre-destaque do tema (claro no tema claro, escuro no escuro) */
+.servico-opcao[aria-checked="true"]::after {
+  content: ""; position: absolute; left: var(--esp-4); top: calc(var(--esp-3) + 0.1rem);
+  width: 1.25rem; height: 1.25rem;
+  background: var(--sobre-destaque);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l2.9 2.9 6.1-6.6' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l2.9 2.9 6.1-6.6' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.servico-opcao.is-nao-cabe::before { border-style: dashed; border-color: var(--borda); background: transparent; }
 .servico-opcao.is-nao-cabe { cursor: not-allowed; color: var(--apagado); border-color: var(--borda); border-style: dashed; background: transparent; }
 .servico-opcao.is-nao-cabe :is(.nome, .preco, .duracao) { text-decoration: line-through; color: var(--apagado); }
 .nota { font-family: var(--fonte-dado); font-size: var(--t-nota); color: var(--tinta-suave); }
@@ -719,6 +896,8 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
 .chip small { font-family: var(--fonte-dado); font-size: var(--t-micro); opacity: 0.9; }
 
 .campo { display: grid; gap: var(--esp-2); margin-bottom: var(--esp-5); max-width: 28rem; }
+/* v1.3 (ACAD-16): no pedido, os campos têm a largura da lista de serviços (uma coluna só, um eixo só) */
+.agendar-escolhas .campo { max-width: none; }
 .campo label { font-weight: 600; font-size: 1rem; }
 .campo input {
   width: 100%; min-height: var(--altura-campo);
@@ -803,7 +982,7 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
   border-radius: 0 0 var(--raio-2) var(--raio-2);
   background: linear-gradient(90deg, var(--fundo-3), var(--fundo-2) 50%, var(--fundo-3));
 }
-.espelho h3 { font-family: var(--fonte-display); font-weight: 700; font-size: clamp(1.5rem, 1.25rem + 1.2vw, 2rem); text-transform: uppercase; line-height: 1; max-width: 12ch; }
+.espelho h3 { font-family: var(--fonte-display); font-weight: 700; font-size: clamp(1.5rem, 1.25rem + 1.2vw, 2rem); text-transform: uppercase; line-height: 1.2; max-width: 12ch; }
 .espelho-texto { font-size: var(--t-menor); color: var(--tinta-suave); max-width: 30ch; }
 .espelho dl { display: grid; gap: var(--esp-1); width: 100%; }
 .espelho dt { font-family: var(--fonte-dado); font-size: var(--t-micro); letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-suave); margin-top: var(--esp-2); }
@@ -819,6 +998,38 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
 }
 .link-whats:hover { background: color-mix(in oklab, var(--destaque) 88%, var(--tinta)); }
 #espelho-novo { margin-top: var(--esp-2); }
+
+/* v1.3 (CTA-VENDA): a chamada de compra logo depois do espelho, centrada no eixo dele */
+.oferta-demo {
+  display: grid; justify-items: center; gap: var(--esp-3);
+  width: min(100%, 26rem); margin: 0 auto var(--esp-7);
+  padding-top: var(--esp-5);
+  border-top: 2px solid var(--destaque);
+  text-align: center;
+}
+.oferta-demo .oferta-titulo { font-family: var(--fonte-display); font-weight: 700; font-size: var(--t-h3); line-height: 1.2; text-transform: uppercase; text-wrap: balance; }
+.oferta-demo .oferta-linha { font-size: var(--t-menor); color: var(--tinta-suave); max-width: 36ch; }
+.oferta-demo .btn-externo { white-space: normal; text-align: center; }
+
+/* v1.3 (CTA-VENDA, SAL-09, ACAD-14): o fecho de venda da demonstração. Faixa de ponta a ponta na
+   tinta do site, espelhando a faixa do topo: a moldura da Creat abre e fecha a página do negócio. */
+.secao.fecho-demo {
+  --fecho-fundo: var(--tinta); --fecho-tinta: var(--fundo);
+  max-width: none;
+  padding-inline: max(var(--calha), calc((100% - var(--largura-conteudo)) / 2));
+  background: var(--fecho-fundo); color: var(--fecho-tinta);
+  border-top: 0;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-tema="claro"]) .secao.fecho-demo { --fecho-fundo: var(--fundo-3); --fecho-tinta: var(--tinta); box-shadow: inset 0 2px 0 var(--destaque); } }
+:root[data-tema="escuro"] .secao.fecho-demo { --fecho-fundo: var(--fundo-3); --fecho-tinta: var(--tinta); box-shadow: inset 0 2px 0 var(--destaque); }
+.secao.fecho-demo > h2 { max-width: 20ch; margin-bottom: var(--esp-5); }
+.fecho-demo .fecho-linha { font-size: var(--t-lead); line-height: 1.45; max-width: 46ch; }
+.fecho-demo .fecho-acao { margin-top: var(--esp-6); }
+/* botão invertido dentro da faixa: o fundo da página sobre a tinta, o mesmo par do "Pedir horário" */
+.fecho-demo .fecho-botao { background: var(--fecho-tinta); color: var(--fecho-fundo); white-space: normal; text-align: center; box-shadow: 0 0 0 1px var(--fecho-tinta); }
+@media (hover: hover) and (pointer: fine) { .fecho-demo .fecho-botao:hover { background: color-mix(in oklab, var(--fecho-tinta) 88%, var(--destaque)); } }
+.fecho-demo .fecho-botao:focus-visible { outline-color: var(--fecho-tinta); }
+@media (max-width: 600px) { .fecho-demo .fecho-botao { width: 100%; } }
 
 /* ---------------------------------------------------------------------
    WHATSAPP FLUTUANTE + RODAPÉ
@@ -874,6 +1085,9 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
   #medidor-fio::before { transform: scaleX(1); }
   .tira { display: none; }
   .btn-sem-arrastar { background: var(--tinta); color: var(--fundo); border-color: var(--tinta); min-height: 56px; }
+  /* v1.3 (BTN-INVISIVEL, SAL-11): sem a tira, este é o botão de envio; o hover continua escuro com texto
+     claro (antes virava fundo claro com texto claro, 1,1:1) */
+  .btn-sem-arrastar:hover { background: color-mix(in oklab, var(--tinta) 88%, var(--destaque)); color: var(--fundo); }
   .navalha { will-change: auto; }
 }
 
@@ -883,4 +1097,6 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
     --fundo-3: var(--pc-superficie); --borda: var(--pc-apoio); --borda-forte: var(--pc-apoio); --apagado: var(--pc-apoio);
     --veio-claro: var(--pe-superficie); --veio-escuro: var(--pe-fundo); --gravado: var(--pe-apoio); --vidro: transparent;
   }
+  .servico-opcao[aria-checked="true"] { background: var(--fundo-2); }
+  .btn-sem-arrastar:hover { background: var(--tinta); color: var(--fundo); }
 }

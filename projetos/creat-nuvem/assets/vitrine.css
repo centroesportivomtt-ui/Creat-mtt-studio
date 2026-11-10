@@ -210,6 +210,21 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 @media (prefers-reduced-motion:reduce){.consentimento,.consentimento.is-recuado{transform:none}}
 .consentimento .botoes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .consentimento .btn{min-height:var(--alvo);padding:6px 16px;background:var(--papel);color:var(--tinta)} /* nenhum dos dois é amarelo: escolha livre */
+.consentimento .cons-curto{display:none}
+/* Com um formulário na tela (vitrine.js, CH-05 e PG-12): faixa de até 64 px colada no rodapé, texto curto e os dois
+   botões na mesma linha, com 44 px. O body e o scroll-padding reservam a altura dela, então nenhum campo fica embaixo. */
+.consentimento.is-faixa{left:0;right:0;bottom:0;max-width:none;margin:0;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 10px;padding:6px var(--gut-d) calc(6px + env(safe-area-inset-bottom, 0px)) var(--gut);border-width:var(--borda) 0 0;border-radius:0;box-shadow:none}
+.consentimento.is-faixa .cons-longo{display:none}
+.consentimento.is-faixa .cons-curto{display:block;font-size:12px;line-height:1.25;font-weight:600}
+.consentimento.is-faixa .cons-curto a{font-weight:800}
+.consentimento.is-faixa .botoes{grid-template-columns:auto auto;gap:8px}
+.consentimento.is-faixa .btn{min-height:var(--alvo);padding:0 10px;font-size:14px}
+@media (max-width:379px){.consentimento.is-faixa .cons-curto{font-size:11px;line-height:1.2}.consentimento.is-faixa .btn{padding:0 8px}}
+/* foco num campo (teclado aberto): a faixa sai da frente e volta quando o foco sai */
+.consentimento.is-faixa.is-topo{top:var(--topo-consentimento,0px);bottom:auto;padding-top:6px;padding-bottom:6px;border-width:0 0 var(--borda)}
+.consentimento.is-trocando{opacity:0;transition:none}
+.consentimento.is-sem-lugar,.consentimento.is-digitando{transform:translateY(calc(100% + 24px));opacity:0;visibility:hidden;pointer-events:none}
+@media (min-width:720px){.consentimento.is-faixa{max-width:none}.consentimento.is-faixa .cons-curto{font-size:14px}}
 
 /* ---------------------------------------------------------------- carregamento desenhado (nunca tela branca) */
 .carregando{display:grid;place-items:center;gap:var(--r4);min-height:60vh;padding:var(--r6) var(--gut);background:var(--fundo);color:var(--tinta);text-align:center}

@@ -16,11 +16,112 @@
  * Script clássico; registra-se em CreatMotor.registrarModulo('agendamento', fn).
  * Eventos: dispara 'motor:pedido' {previa, nicho} (sem dado pessoal); ouve 'ritual:confirmar'.
  * Na prévia avisa a página-mãe por postMessage {tipo:'creat:previa', evento:'reserva_teste', nicho}.
+ *
+ * Onda 3 (pacote 3B, 10/11/2026):
+ *  - Demonstração (CREAT_SITE.demonstracao): a mensagem começa com "Testei a demonstração de <nicho> da
+ *    Creat (<nome>). Simulação: " e termina com " Quero saber como ter um site assim.", para a Creat saber
+ *    que é lead de demo. O botão flutuante e o WhatsApp do rodapé levam "Vi a demonstração de ...".
+ *    Site de cliente nunca leva esse texto; a prévia continua com "Teste da prévia do site: ".
+ *  - A mensagem usa o dia da semana ("quarta, 11/11 às 14h"); "hoje" e "amanhã" ficam só na tela.
+ *  - Horários agrupados por turno (Manhã, Tarde, Noite); só o turno com mais vagas abre, os outros
+ *    ficam em "Ver tarde (12)". Fita de dias com máscara de fade na borda que ainda rola.
+ *  - Relógio do negócio: CreatMotor.agoraNoNegocio() (fuso do tenant), com reserva para new Date().
+ *  - window.CreatAgendamento.escolherServico(id): o "Pedir este" da tabela de serviços pré-seleciona.
+ *  - Preço sem valor: classe "preco is-consulta". Na demonstração o valor leva "(exemplo)".
+ *  - Barra do navegador: meta theme-color[data-barra] segue a cor real da faixa do topo e o botão de tema.
+ *  Funções puras em CreatAgendamento._puro (e module.exports no Node, para os testes).
  */
 (function () {
   'use strict';
   var W = typeof window !== 'undefined' ? window : null;
-  if (!W || !W.document || !W.CreatMotor || !W.CreatMotor.registrarModulo) return;
+
+  /* ===================== funções puras (testadas em scripts/testes/agendamento.test.mjs) ===================== */
+  var DIAS_SEMANA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+  var NICHO_NOME = { barbearia: 'barbearia', salao: 'salão', academia: 'academia' };
+  var TURNOS = [
+    { id: 'manha', rotulo: 'Manhã', ate: 12 * 60 },
+    { id: 'tarde', rotulo: 'Tarde', ate: 18 * 60 },
+    { id: 'noite', rotulo: 'Noite', ate: 24 * 60 + 1 }
+  ];
+  var TXT = {
+    prefixoTeste: 'Teste da prévia do site: ',
+    prefixoDemo: 'Testei a demonstração de {nicho} da Creat ({nome}). Simulação: ',
+    sufixoDemo: ' Quero saber como ter um site assim.',
+    flutuanteDemo: 'Vi a demonstração de {nicho} da Creat ({nome}). Quero saber como ter um site assim.'
+  };
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function trocar(s, v) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return v[k] != null ? String(v[k]) : m; }); }
+  /* "barbearia", "salão", "academia"; nicho novo cai no rótulo do preset em minúsculas */
+  function nomeDoNicho(nicho, rotulo) {
+    if (Object.prototype.hasOwnProperty.call(NICHO_NOME, nicho)) return NICHO_NOME[nicho];
+    var r = String(rotulo || '').trim();
+    return r ? r.charAt(0).toLowerCase() + r.slice(1) : String(nicho || 'negócio');
+  }
+  /* "quarta, 11/11": a mensagem fica certa mesmo lida no dia seguinte */
+  function diaDaMensagem(d) { return DIAS_SEMANA[d.getDay()] + ', ' + pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1); }
+  /* o = { previa, demonstracao, nicho, rotulo, nome } */
+  function mensagemFinal(base, o) {
+    o = o || {};
+    if (o.previa) return TXT.prefixoTeste + base;
+    if (o.demonstracao === true) return trocar(TXT.prefixoDemo, { nicho: nomeDoNicho(o.nicho, o.rotulo), nome: String(o.nome || '').trim() || 'nome fictício' }) + base + TXT.sufixoDemo;
+    return base;
+  }
+  function mensagemFlutuante(o) {
+    o = o || {};
+    return trocar(TXT.flutuanteDemo, { nicho: nomeDoNicho(o.nicho, o.rotulo), nome: String(o.nome || '').trim() || 'nome fictício' });
+  }
+  function turnoDe(min) { for (var i = 0; i < TURNOS.length; i++) if (min < TURNOS[i].ate) return TURNOS[i]; return TURNOS[TURNOS.length - 1]; }
+  /* [min] -> [{ id, rotulo, horarios:[min] }], só turnos com horário, na ordem do dia */
+  function agruparTurnos(horarios) {
+    var g = {};
+    (horarios || []).forEach(function (t) { var x = turnoDe(t); (g[x.id] = g[x.id] || { id: x.id, rotulo: x.rotulo, horarios: [] }).horarios.push(t); });
+    return TURNOS.map(function (x) { return g[x.id]; }).filter(Boolean);
+  }
+  /* turno aberto: o do horário escolhido; senão o de mais vagas (empate: o mais cedo) */
+  function turnoAberto(grupos, hora) {
+    if (!grupos || !grupos.length) return null;
+    if (hora != null) for (var i = 0; i < grupos.length; i++) if (grupos[i].horarios.indexOf(hora) !== -1) return grupos[i].id;
+    var m = grupos[0];
+    grupos.forEach(function (x) { if (x.horarios.length > m.horarios.length) m = x; });
+    return m.id;
+  }
+  function classePreco(preco) { return 'preco' + (preco === null || preco === undefined ? ' is-consulta' : ''); }
+  /* o que CreatMotor.agoraNoNegocio() devolver -> Date com o relógio de parede do negócio.
+     Aceita Date, ou { ano, mes (1 a 12), dia, hora, minuto, diaSemana? }; diaSemana confere o mês. */
+  function dataDoRelogio(v) {
+    if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+    if (!v || typeof v !== 'object') return null;
+    var a = +v.ano, m = +v.mes, d = +v.dia, h = +(v.hora || 0), mi = +(v.minuto || 0);
+    if (![a, m, d, h, mi].every(isFinite)) return null;
+    var x = new Date(a, m - 1, d, h, mi, +(v.segundo || 0) || 0);
+    var ds = v.diaSemana != null ? +v.diaSemana : null;
+    if (ds !== null && isFinite(ds) && x.getDay() !== ds) {
+      var y = new Date(a, m, d, h, mi);                     // mês contado de 0
+      if (y.getDay() === ds) x = y;
+    }
+    return isNaN(x.getTime()) ? null : x;
+  }
+  var PURO = {
+    TXT: TXT, TURNOS: TURNOS, nomeDoNicho: nomeDoNicho, diaDaMensagem: diaDaMensagem, mensagemFinal: mensagemFinal,
+    mensagemFlutuante: mensagemFlutuante, turnoDe: turnoDe, agruparTurnos: agruparTurnos, turnoAberto: turnoAberto,
+    classePreco: classePreco, dataDoRelogio: dataDoRelogio
+  };
+  if (typeof module === 'object' && module && module.exports) module.exports = PURO;
+
+  if (!W || !W.document) return;
+  /* "Pedir este" (motor) pode chegar antes do módulo montar: guarda o pedido e aplica na montagem */
+  var pendenteServico = null, aplicarServico = null;
+  W.CreatAgendamento = {
+    escolherServico: function (id) {
+      id = String(id == null ? '' : id);
+      if (!id) return false;
+      if (aplicarServico) return aplicarServico(id);
+      pendenteServico = id;
+      return true;
+    },
+    _puro: PURO
+  };
+  if (!W.CreatMotor || !W.CreatMotor.registrarModulo) return;
   var DOC = W.document;
 
   var T = {
@@ -61,18 +162,81 @@
     novo: 'Pedir outro horário',
     deSempre: 'O de sempre',
     deSempreNota: 'Serviço escolhido. Agora escolha o dia e o horário.',
-    prefixoTeste: 'Teste da prévia do site: ',
-    externoNota: 'Abre a página de horários que o negócio já usa.'
+    prefixoTeste: TXT.prefixoTeste,
+    externoNota: 'Abre a página de horários que o negócio já usa.',
+    verTurno: 'Ver {turno} ({n})',
+    servicoPedido: '{servico} escolhido. Agora escolha o dia e o horário.',
+    exemplo: ' (exemplo)'
   };
+
+  /* ---------- barra do navegador: theme-color = cor real da faixa do topo (claro, escuro e botão de tema) ---------- */
+  var tela = null;
+  function corDoPixel(cor) {
+    try {
+      if (!tela) { tela = DOC.createElement('canvas'); tela.width = tela.height = 1; }
+      var c = tela.getContext('2d', { willReadFrequently: true });
+      if (!c) return '';
+      c.clearRect(0, 0, 1, 1);
+      c.fillStyle = '#000';
+      c.fillStyle = cor;
+      c.fillRect(0, 0, 1, 1);
+      var p = c.getImageData(0, 0, 1, 1).data;
+      if (p[3] < 250) return '';
+      return '#' + [p[0], p[1], p[2]].map(function (n) { return (n < 16 ? '0' : '') + n.toString(16); }).join('').toUpperCase();
+    } catch (er) { return ''; }
+  }
+  /* a primeira faixa da página, não importa a rolagem: rascunho, demonstração ou prévia, senão o topo */
+  var FAIXAS = ['[data-rascunho-faixa]', '#motor-raiz [data-demonstracao]', '#motor-raiz .faixa-previa', '#motor-raiz .topo'];
+  function corDoTopo() {
+    var el = null;
+    for (var i = 0; i < FAIXAS.length && !el; i++) el = DOC.querySelector(FAIXAS[i]);
+    for (; el && el.nodeType === 1; el = el.parentElement) {
+      var bg = W.getComputedStyle(el).backgroundColor;
+      if (bg && bg !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(bg)) { var h = corDoPixel(bg); if (h) return h; }
+    }
+    return corDoPixel(W.getComputedStyle(DOC.body).backgroundColor) || corDoPixel(W.getComputedStyle(DOC.documentElement).backgroundColor);
+  }
+  function pintarBarra() {
+    var metas = DOC.querySelectorAll('meta[name="theme-color"][data-barra]');
+    if (!metas.length) return;
+    var cor = corDoTopo();
+    if (!cor) return;
+    Array.prototype.forEach.call(metas, function (m) { if (m.getAttribute('content') !== cor) m.setAttribute('content', cor); });
+  }
+  function vigiarBarra() {
+    if (!DOC.querySelector('meta[name="theme-color"][data-barra]')) return;
+    var depois = function () {
+      try { W.requestAnimationFrame(pintarBarra); } catch (er) { pintarBarra(); }
+      setTimeout(pintarBarra, 400);
+    };
+    depois();
+    W.addEventListener('motor:tema', depois);
+    W.addEventListener('load', depois, { once: true });
+    try {
+      var mq = W.matchMedia('(prefers-color-scheme: dark)');
+      if (mq.addEventListener) mq.addEventListener('change', depois);
+    } catch (er) {}
+  }
 
   W.CreatMotor.registrarModulo('agendamento', function (ctx) {
     var e = ctx.estado, P = ctx.puro, criar = ctx.criar, armazem = ctx.armazem;
+    try { vigiarBarra(); } catch (er) {}
+    var demo = !e.previa && e.demonstracao === true;
+    var dadosDemo = { nicho: e.nicho, rotulo: e.rotuloNicho, nome: e.nome };
+    /* demonstração: botão flutuante e WhatsApp do rodapé dizem que vieram da demo (o motor monta com waBase puro) */
+    if (demo && e.contato && e.contato.whatsapp && e.contato.waBase) {
+      var hrefDemo = P.urlWhats(e.contato.whatsapp, mensagemFlutuante(dadosDemo));
+      Array.prototype.forEach.call(DOC.querySelectorAll('#motor-raiz a[href]'), function (a) {
+        if (a.getAttribute('href') === e.contato.waBase) a.setAttribute('href', hrefDemo);
+      });
+    }
     var corpo = DOC.getElementById('pedir-corpo');
     if (!corpo) return;
 
     if (e.pedido.modo === 'link_externo') { montarExterno(); return; }
 
     var previa = e.previa;
+    var exemplo = previa || demo;          // prévia e demonstração: preço de exemplo
     // exemplo de WhatsApp com o DDD do negócio (75 na Bahia, não 11 de São Paulo)
     var dddNegocio = (/^55(\d{2})\d{8,9}$/.exec(String((e.contato && e.contato.whatsapp) || '')) || [])[1] || '11';
     var whatsExemplo = T.whatsExemplo.replace('{ddd}', dddNegocio);
@@ -88,11 +252,19 @@
     };
     var revelado = { profissional: false, dados: false };
     var tiraCriada = false;
+    var turnosDia = null, turnosAbertos = {};
 
     function $(id) { return DOC.getElementById(id); }
     function limpar(el) { while (el && el.firstChild) el.removeChild(el.firstChild); }
     function mostrar(el, sim) { if (el) el.hidden = !sim; }
-    function agora() { return new Date(); }
+    /* relógio de parede do negócio (fuso do tenant): o visitante de Manaus vê os horários da Bahia */
+    function agora() {
+      var M = W.CreatMotor;
+      if (M && typeof M.agoraNoNegocio === 'function') {
+        try { var d = dataDoRelogio(M.agoraNoNegocio()); if (d) return d; } catch (er) {}
+      }
+      return new Date();
+    }
     function servicoPorId(id) { return servicos.filter(function (s) { return s.id === id; })[0] || null; }
     function profPorId(id) { return profs.filter(function (p) { return p.id === id; })[0] || null; }
     function maiuscula(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -132,7 +304,7 @@
       criar('div', { id: 'fita-dias', classe: 'fita-dias', role: 'group', 'aria-labelledby': 'passo-dia-titulo' })
     ]));
     escolhas.appendChild(passo('passo-hora', T.passoHora, [
-      criar('div', { id: 'lista-horarios', classe: 'horarios', role: 'group', 'aria-labelledby': 'passo-hora-titulo' }),
+      criar('div', { id: 'lista-horarios', classe: 'horarios-turnos', role: 'group', 'aria-labelledby': 'passo-hora-titulo' }),
       criar('div', { id: 'aviso-dia', classe: 'aviso-dia', 'aria-live': 'polite', hidden: true })
     ]));
     escolhas.appendChild(passo('passo-servico', T.passoServico, [
@@ -165,6 +337,7 @@
     form.appendChild(resumo);
     corpo.appendChild(form);
 
+    /* demonstração: a chamada de compra do espelho (.oferta-demo) e o texto do espelho são do motor (3A) */
     var espelho = criar('section', { id: 'espelho', classe: 'espelho', hidden: true, tabindex: '-1', 'aria-labelledby': 'espelho-titulo' }, [
       criar('h3', { id: 'espelho-titulo', texto: e.textos.confirmacaoTitulo }),
       criar('p', { classe: 'espelho-texto', texto: e.textos.confirmacaoTexto }),
@@ -210,6 +383,21 @@
         fita.appendChild(b);
       });
       if (!focoPronto) { var p = fita.querySelector('.dia:not([aria-disabled="true"])') || fita.querySelector('.dia'); if (p) p.tabIndex = 0; }
+      mascararFita();
+    }
+    /* fita que rola: fade de 24 px só na borda que ainda tem dia escondido (estilo no próprio elemento,
+       pelo CSSOM, que a CSP aceita; o atributo style seria bloqueado) */
+    function mascararFita() {
+      var fita = $('fita-dias');
+      if (!fita || !fita.style) return;
+      if (fita.style.getPropertyValue('scroll-snap-type') !== 'x mandatory') fita.style.setProperty('scroll-snap-type', 'x mandatory');
+      var max = fita.scrollWidth - fita.clientWidth;
+      var esq = fita.scrollLeft > 2, dir = max > 2 && fita.scrollLeft < max - 2;
+      var m = !esq && !dir ? '' : 'linear-gradient(to right, ' + (esq ? 'transparent 0, #000 24px' : '#000 0') + ', ' + (dir ? '#000 calc(100% - 24px), transparent 100%' : '#000 100%') + ')';
+      if (fita.getAttribute('data-mascara') === m) return;
+      fita.setAttribute('data-mascara', m);
+      if (m) { fita.style.setProperty('-webkit-mask-image', m); fita.style.setProperty('mask-image', m); }
+      else { fita.style.removeProperty('-webkit-mask-image'); fita.style.removeProperty('mask-image'); }
     }
     function botoesDia() { return Array.prototype.slice.call($('fita-dias').querySelectorAll('.dia')); }
     function selecionarDia(chave, opc) {
@@ -242,12 +430,34 @@
       }
       var r = P.resumoDia(e.funcionamento, servicos, est.dia, hoje);
       var valida = false;
-      r.horarios.forEach(function (t) {
-        var b = criar('button', { type: 'button', classe: 'horario', 'data-hora': P.minParaHHMM(t) }, [criar('span', { classe: 'hora', texto: P.horaTexto(t) })]);
-        var sel = t === est.hora;
-        if (sel) valida = true;
-        b.setAttribute('aria-pressed', sel ? 'true' : 'false');
-        lista.appendChild(b);
+      if (turnosDia !== est.dia) { turnosDia = est.dia; turnosAbertos = {}; }
+      var grupos = agruparTurnos(r.horarios);
+      var aberto = turnoAberto(grupos, r.horarios.indexOf(est.hora) !== -1 ? est.hora : null);
+      if (aberto) turnosAbertos[aberto] = true;
+      lista.style.setProperty('display', 'grid');
+      lista.style.setProperty('gap', 'var(--esp-4, 1rem)');
+      grupos.forEach(function (g) {
+        var idT = 'turno-' + g.id, idH = idT + '-horarios';
+        var bloco = criar('div', { classe: 'turno', role: 'group', 'aria-labelledby': idT + '-titulo', 'data-turno': g.id });
+        var tit = criar('p', { id: idT + '-titulo', classe: 'turno-titulo', texto: g.rotulo });
+        [['font-family', 'var(--fonte-dado)'], ['font-size', 'var(--t-nota, 0.8125rem)'], ['font-weight', '600'], ['letter-spacing', '0.08em'],
+          ['text-transform', 'uppercase'], ['color', 'var(--tinta-suave)'], ['margin', '0 0 var(--esp-2, 0.5rem)']].forEach(function (x) { tit.style.setProperty(x[0], x[1]); });
+        bloco.appendChild(tit);
+        var grade = criar('div', { id: idH, classe: 'horarios', hidden: !turnosAbertos[g.id] });
+        g.horarios.forEach(function (t) {
+          var b = criar('button', { type: 'button', classe: 'horario', 'data-hora': P.minParaHHMM(t) }, [criar('span', { classe: 'hora', texto: P.horaTexto(t) })]);
+          var sel = t === est.hora;
+          if (sel) valida = true;
+          b.setAttribute('aria-pressed', sel ? 'true' : 'false');
+          grade.appendChild(b);
+        });
+        bloco.appendChild(grade);
+        if (!turnosAbertos[g.id]) {
+          var nomeT = g.rotulo.toLowerCase();
+          var ver = criar('button', { type: 'button', classe: 'btn-link ver-turno', 'aria-expanded': 'false', 'aria-controls': idH, 'data-ver-turno': g.id, texto: P.fmt(T.verTurno, { turno: nomeT, n: g.horarios.length }) });
+          bloco.appendChild(ver);
+        }
+        lista.appendChild(bloco);
       });
       if (!valida) est.hora = null;
       tabindexHorarios();
@@ -264,7 +474,17 @@
         mostrar(aviso, true);
       }
     }
-    function botoesHora() { return Array.prototype.slice.call($('lista-horarios').querySelectorAll('.horario')); }
+    /* só os horários que estão na tela (turno recolhido fica de fora da navegação por setas) */
+    function botoesHora() { return Array.prototype.slice.call($('lista-horarios').querySelectorAll('.horarios:not([hidden]) .horario')); }
+    function abrirTurno(id, foco) {
+      turnosAbertos[id] = true;
+      var g = $('turno-' + id + '-horarios');
+      if (g) g.hidden = false;
+      var ver = $('lista-horarios').querySelector('[data-ver-turno="' + id + '"]');
+      if (ver && ver.parentNode) ver.parentNode.removeChild(ver);
+      tabindexHorarios();
+      if (foco && g) { var b = g.querySelector('.horario'); if (b) b.focus(); }
+    }
     function tabindexHorarios() {
       var bs = botoesHora();
       var alvo = bs.filter(function (b) { return b.getAttribute('aria-pressed') === 'true'; })[0] || bs[0];
@@ -315,7 +535,7 @@
         var b = criar('button', { type: 'button', role: 'radio', classe: 'servico-opcao', 'data-servico': s.id }, [
           criar('span', { classe: 'nome', texto: s.nome }),
           criar('span', { classe: 'duracao', texto: s.duracaoTexto }),
-          criar('span', { classe: 'preco', texto: s.precoTexto })
+          criar('span', { classe: classePreco(s.preco), texto: s.precoTexto })
         ]);
         var sel = s.id === est.servicoId;
         b.setAttribute('aria-checked', sel ? 'true' : 'false');
@@ -460,7 +680,7 @@
         [T.hora, est.hora != null ? P.horaTexto(est.hora) : '', 'hora'],
         [T.servico, s ? s.nome + ' · ' + s.duracaoTexto : '', null],
         [T.profissional, p ? p.nome : '', null],
-        [T.valor, s ? s.precoTexto + (previa && s.preco !== null ? ' (exemplo)' : '') : '', 'preco']
+        [T.valor, s ? s.precoTexto + (exemplo && s.preco !== null ? T.exemplo : '') : '', classePreco(s ? s.preco : null)]
       ].filter(function (l) { return l[1]; });
     }
     function preencherDl(dl, linhas) {
@@ -512,7 +732,7 @@
     function focarFalta() {
       var a = null;
       if (!est.dia) a = $('fita-dias').querySelector('.dia[tabindex="0"]');
-      else if (est.hora == null) a = $('lista-horarios').querySelector('.horario');
+      else if (est.hora == null) a = $('lista-horarios').querySelector('.horarios:not([hidden]) .horario');
       else if (!est.servicoId) a = $('lista-servicos').querySelector('[role="radio"][tabindex="0"]');
       else if (temProf && !est.profissionalId) a = DOC.querySelector('.chip[data-profissional]');
       else { var er = erros(); a = er.nome ? inputNome : er.whats ? inputWhats : null; }
@@ -544,13 +764,12 @@
       var dados = {
         nome: nome,
         servico: s.nome,
-        dia: P.diaLongo(P.dataDaChave(est.dia), agora()),
+        dia: diaDaMensagem(P.dataDaChave(est.dia)),       // "quarta, 11/11": "hoje" e "amanhã" só na tela
         hora: P.horaTexto(est.hora),
         profissional: p ? p.nome : '',
         whats: P.mascararWhats(whatsCliente)
       };
-      var msg = P.mensagemPedido(e, dados);
-      if (previa) msg = T.prefixoTeste + msg;
+      var msg = mensagemFinal(P.mensagemPedido(e, dados), { previa: previa, demonstracao: demo, nicho: dadosDemo.nicho, rotulo: dadosDemo.rotulo, nome: dadosDemo.nome });
       var url = P.urlWhats(destino, msg);
       /* dentro do mesmo gesto, para o navegador não bloquear a janela */
       try { W.open(url, '_blank', 'noopener'); } catch (er2) {}
@@ -576,7 +795,7 @@
         [T.profissional, p ? p.nome : '', null],
         [T.dia, maiuscula(P.diaLongo(P.dataDaChave(est.dia), agora())), null],
         [T.hora, P.horaTexto(est.hora), 'hora'],
-        [T.valor, s.precoTexto + (previa && s.preco !== null ? ' (exemplo)' : ''), 'preco']
+        [T.valor, s.precoTexto + (exemplo && s.preco !== null ? T.exemplo : ''), classePreco(s.preco)]
       ].filter(function (l) { return l[1]; }));
       var link = $('espelho-whats');
       link.href = url;
@@ -616,6 +835,8 @@
         bs[j].focus();
         try { bs[j].scrollIntoView({ inline: 'nearest', block: 'nearest' }); } catch (er) {}
       });
+      fita.addEventListener('scroll', mascararFita, { passive: true });
+      W.addEventListener('resize', mascararFita);
       fita.addEventListener('focusout', function (ev) {
         if (ev.relatedTarget && fita.contains(ev.relatedTarget)) return;
         var bs = botoesDia(), sel = bs.filter(function (b) { return b.getAttribute('aria-pressed') === 'true'; })[0];
@@ -624,6 +845,8 @@
 
       var lh = $('lista-horarios');
       lh.addEventListener('click', function (ev) {
+        var v = ev.target.closest && ev.target.closest('[data-ver-turno]');
+        if (v) { abrirTurno(v.getAttribute('data-ver-turno'), true); return; }
         var b = ev.target.closest && ev.target.closest('.horario');
         if (b) selecionarHora(P.hm(b.getAttribute('data-hora')));
       });
@@ -694,7 +917,23 @@
     depoisDeEscolher();
     ligar();
 
+    /* "Pedir este" da tabela de serviços (motor): pré-seleciona o serviço; com horário que cabe, já marca */
+    aplicarServico = function (id) {
+      var s = servicoPorId(id);
+      if (!s) return false;
+      if (!espelho.hidden) novoPedido();
+      if (est.hora != null && cabe(id)) { est.servicoPendente = null; escolherServico(id, false); notaAtalho(''); return true; }
+      est.servicoId = null;
+      est.servicoPendente = id;
+      notaAtalho(est.hora != null ? s.nome + ' não cabe nesse horário. Escolha outro horário.' : P.fmt(T.servicoPedido, { servico: s.nome }));
+      depoisDeEscolher();
+      return true;
+    };
+    if (pendenteServico) { var pend = pendenteServico; pendenteServico = null; aplicarServico(pend); }
+
     function montarExterno() {
+      aplicarServico = function () { return false; };     // sem fluxo próprio: "Pedir este" só rola até o botão
+      pendenteServico = null;
       corpo.appendChild(criar('p', { classe: 'pedido-nota', texto: T.externoNota }));
       corpo.appendChild(criar('p', null, [criar('a', {
         classe: 'btn btn-externo', href: e.pedido.urlExterna, target: '_blank', rel: 'noopener', texto: e.ui.agendarExterno

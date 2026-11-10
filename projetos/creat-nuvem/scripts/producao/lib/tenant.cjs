@@ -7,7 +7,9 @@
  * ("sob consulta") e servicosNota diz isso; os preços do preset são só de exemplo da prévia.
  */
 'use strict';
-const { motor } = require('./comum.cjs');
+const fs = require('fs');
+const path = require('path');
+const { motor, RAIZ } = require('./comum.cjs');
 const { semanaDosHorarios, partesEndereco, fragmentoPrevia } = require('./pedido.cjs');
 
 const NOTA_SEM_PRECO = 'Valores sob consulta: pergunte no WhatsApp da casa antes de pedir o horário.';
@@ -41,6 +43,25 @@ function slugSeguro(slug, demonstracao) {
   return ('cliente-' + s).slice(0, 40).replace(/-+$/, '');
 }
 
+/*
+ * v1.3 (ADR-006): extras de demonstração. Só com --demonstracao, o arquivo versionado
+ * demos/extras-<nicho>.json pode trazer galeria[], profissionais[], recados[] e fuso, que o PEDIDO v1 não
+ * tem. Assim "apagar sites/demo-* e gerar de novo a partir de demos/" reproduz o mesmo tenant.json.
+ * Site de cliente nunca lê esse arquivo: galeria e recados de exemplo não passam para cliente.
+ */
+const CHAVES_EXTRAS = ['galeria', 'profissionais', 'recados', 'fuso'];
+function extrasDaDemo(nicho, pasta) {
+  if (!/^[a-z][a-z0-9-]{1,30}$/.test(String(nicho || ''))) return {};
+  const arq = path.join(pasta || path.join(RAIZ, 'demos'), `extras-${nicho}.json`);
+  if (!fs.existsSync(arq)) return {};
+  let o;
+  try { o = JSON.parse(fs.readFileSync(arq, 'utf8')); } catch (e) { throw new Error(`demos/extras-${nicho}.json ilegível: ${e.message}`); }
+  if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error(`demos/extras-${nicho}.json precisa ser um objeto`);
+  const fora = Object.keys(o).filter((k) => !CHAVES_EXTRAS.includes(k));
+  if (fora.length) throw new Error(`demos/extras-${nicho}.json com chave fora da lista (${CHAVES_EXTRAS.join(', ')}): ${fora.join(', ')}`);
+  return JSON.parse(JSON.stringify(o));
+}
+
 function tenantDoPedido(pedido, preset, opc) {
   opc = opc || {};
   const M = motor();
@@ -57,9 +78,11 @@ function tenantDoPedido(pedido, preset, opc) {
   t.servicos = Array.isArray(opc.servicos) && opc.servicos.length ? servicosDoCliente(opc.servicos, pedido.nicho) : t.servicos.map((s) => Object.assign({}, s, { preco: null }));
   t.profissionais = [];
   t.avaliacoes = [];
+  delete t.galeria; delete t.recados;   // v1.3: nada de exemplo do preset chega ao cliente
+  if (opc.demonstracao) Object.assign(t, extrasDaDemo(pedido.nicho, opc.pastaExtras));
   const todosComPreco = t.servicos.every((s) => typeof s.preco === 'number');
   if (t.textos && (preset.textosPermitidos || []).includes('servicosNota')) t.textos.servicosNota = todosComPreco ? NOTA_COM_PRECO : NOTA_SEM_PRECO;
   return t;
 }
 
-module.exports = { tenantDoPedido, slugSeguro, RE_SLUG_RESERVADO, NOTA_SEM_PRECO, NOTA_COM_PRECO };
+module.exports = { tenantDoPedido, slugSeguro, extrasDaDemo, CHAVES_EXTRAS, RE_SLUG_RESERVADO, NOTA_SEM_PRECO, NOTA_COM_PRECO };

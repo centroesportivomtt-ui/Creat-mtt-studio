@@ -56,7 +56,7 @@ function carregar(opcoes = {}) {
   };
   const resposta = (dado) => Promise.resolve(dado ? { ok: true, json: () => Promise.resolve(JSON.parse(JSON.stringify(dado))) } : { ok: false, json: () => Promise.resolve(null) });
   const ctx = {
-    URL, URLSearchParams, Promise, Date, Math, JSON, setTimeout, clearTimeout, AbortController, console,
+    URL, URLSearchParams, Promise, Date, Math, JSON, setTimeout, clearTimeout, AbortController, console, crypto: globalThis.crypto, btoa, Blob, Intl,
     document: D, location: { href, search: local.search, hash: local.hash, pathname: local.pathname, origin: local.origin, host: local.host, hostname: local.hostname, protocol: local.protocol },
     history: { replaceState() {}, pushState() {} },
     localStorage: armazem(), sessionStorage: armazem(),
@@ -348,7 +348,8 @@ test('navegador: /abrir/ limpa nome e cidade do endereço, escolhe o link da pra
     // sem contador numérico na tela (D1) e parcelas explicadas (D7)
     assert.equal(await pg.isVisible('[data-se="varias-vagas"]'), false);
     assert.equal(await pg.isVisible('[data-se="ultima-vaga"]'), false);
-    assert.match(await pg.textContent('#pagar-parcelas'), /Pix ou cartão\. As condições de parcelamento aparecem no Mercado Pago antes de você pagar/);
+    assert.match(await pg.textContent('#pagar-parcelas'), /Pix ou cartão.*parcelamento aparecem/);
+    assert.match(await pg.textContent('#pagar-aviso-dados'), /Ao tocar em Pagar, enviamos à Creat os dados .*30 dias/, 'aviso dos dados ao lado do botão Pagar');
     assert.equal(await pg.locator('.pagar [data-checkout]').count(), 1);
     await pg.click('label.plano-opcao:has(input[value="vitrine"])');
     // formulário completo e clique em pagar (navegação para o Mercado Pago bloqueada)
@@ -396,7 +397,9 @@ test('navegador: /obrigado/ manda Purchase só com aprovado, eventID = payment_i
     assert.equal(compras.length, 1);
     assert.deepEqual(compras[0].slice(2), [{ value: 297, currency: 'BRL' }, { eventID: '111222333' }]);
     assert.ok(fila.some((a) => a[1] === 'PageView'));
-    assert.match(await pg.textContent('#obrigado-lead'), /aprovou o pagamento/);
+    // a URL diz aprovado, mas só o servidor confirma: sem servidor, a tela fica em "conferindo" (texto a_conferir do 2B)
+    assert.equal(await pg.getAttribute('main', 'data-texto'), 'a_conferir');
+    assert.match(await pg.textContent('#obrigado-titulo'), /conferindo/i);
     // a mesma volta de novo (recarga ou voltar): sem segundo Purchase
     await pg.goto(base + '/obrigado/?collection_status=approved&payment_id=111222333&preference_id=' + PREF.feira);
     await pg.waitForTimeout(300);
@@ -500,9 +503,429 @@ test('navegador: nome de 40 letras sem espaço não cria rolagem lateral em /abr
     assert.equal(await pg.textContent('#obrigado-negocio'), nome);
     assert.ok(await pg.evaluate(() => document.documentElement.scrollWidth) <= 390, '/obrigado/');
     // "Esquecer meus dados" em /obrigado/ apaga tudo do site, inclusive a cópia da aba de /abrir/
-    await Promise.all([pg.waitForEvent('load'), pg.click('#obrigado-pedido #esquecer')]);
+    await Promise.all([pg.waitForEvent('load'), pg.click('#esquecer')]);
     const sobrou = await pg.evaluate(() => [...Object.keys(localStorage), ...Object.keys(sessionStorage)].filter((k) => k.startsWith('creat:')));
     assert.deepEqual(sobrou, []);
     assert.deepEqual(erros, []);
   } finally { await nav.close(); srv.close(); }
+});
+
+/* ======================================================================
+   Onda 2, pacote 2A (10/11/2026): pedido no servidor, estados de /obrigado/, contador, link de teste e aviso honesto.
+   Contrato: docs/PEDIDO-API.md. As regras do servidor (schema/pedido-regras.mjs) julgam o que a página manda.
+   ====================================================================== */
+const REGRAS = await import(new URL('../../schema/pedido-regras.mjs', import.meta.url));
+const { lerPedidoTexto } = require('../producao/lib/pedido.cjs');
+const PEDIDO_CHEIO = () => ({
+  id: 'PA-7K3QX2MD4R', segredo: 'q1Zr8Xn4Lw0bT6yHc9VfEA', produto: 'pa-abertura-inauguracao-2026-11', valor: 297, praca: 'feira',
+  link: link(PREF.feira), plano: 'vitrine', nicho: 'salao', negocio: 'Studio Bela & Cia', cidade: 'Feira de Santana',
+  responsavel: 'Maria Souza', whatsapp_negocio: '5575991234567', endereco: 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000',
+  horarios: 'seg=09:00-18:00;ter=09:00-18:00;qua=09:00-18:00;qui=09:00-18:00;sex=09:00-18:00;sab=09:00-13:00;dom=fechado',
+  email: 'maria@exemplo.com.br', origem: 'utm_source=meta;utm_campaign=feira;utm_content=A1-salao-v1', previa: 'http://x/previa/#k=salao&n=Studio&p=1',
+  aceite_termos: '2026-11-10T10:00:00-03:00 termos-v1', paleta: 1, salvo_em: new Date().toISOString(), status: 'enviado'
+});
+const limpar = (o) => JSON.parse(JSON.stringify(o));
+
+test('2A pedido: id PA- e 10, segredo de 128 bits no formato que o servidor aceita, sem repetir', () => {
+  const V = carregar().Vitrine, ids = new Set(), seg = new Set();
+  for (let i = 0; i < 300; i++) {
+    const id = V.novoId(), s = V.novoSegredo();
+    assert.match(id, REGRAS.RE.pedidoId); assert.match(s, REGRAS.RE.segredo); assert.equal(s.length, 22);
+    ids.add(id); seg.add(s);
+  }
+  assert.equal(ids.size, 300); assert.equal(seg.size, 300);
+});
+
+test('2A volta: cada URL de volta vira o estado certo (lerVolta + estadoDaVolta)', () => {
+  const V = carregar({ href: 'http://creat.local/obrigado/' }).Vitrine;
+  const e = (q) => V.estadoDaVolta(V.lerVolta(q));
+  const casos = [
+    ['?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=123', 'aprovado'],
+    ['?pago=mp&produto=pa-abertura-inauguracao&collection_status=rejected&payment_id=123', 'recusado'],
+    ['?pago=mp&produto=pa-abertura-inauguracao&status=cancelled', 'recusado'],
+    ['?pago=mp&produto=pa-teste&resultado=recusado', 'recusado'],
+    ['?pago=mp&produto=pa-abertura-inauguracao&resultado=pendente', 'pendente'],
+    ['?collection_status=in_process&payment_id=55', 'pendente'],
+    ['', 'sem_retorno'],
+    ['?pago=mp&produto=pa-abertura&collection_status=null&payment_id=null', 'sem_retorno'],
+    ['?collection_status=approved', 'sem_retorno'],
+    ['?espera=1', 'aguardando'],
+    ['?assinatura=ok&plano=aberto', 'assinatura_ok'],
+    ['?assinatura=cancelada', 'assinatura_cancelada'],
+    ['?pago=mp&produto=pa-anual-aberto&collection_status=approved&payment_id=123', 'anual_pago'],
+    ['?pago=mp&produto=pa-anual-vitrine&status=approved&payment_id=123', 'anual_pago'],
+    ['?pago=mp&produto=pa-teste&resultado=aprovado&payment_id=188866285972', 'teste_ok'],
+    ['?pago=mp&produto=pa-bastidores&collection_status=approved&payment_id=123', 'bastidores_pago']
+  ];
+  for (const [q, esperado] of casos) assert.equal(e(q), esperado, q);
+  const v = limpar(V.lerVolta('?collection_status=approved&payment_id=188866285972&payment_type=bank_transfer&produto=pa-abertura-inauguracao&praca=feira&preference_id=' + PREF.feira));
+  assert.equal(v.meio, 'pix'); assert.equal(v.praca, 'feira'); assert.equal(v.produto, 'pa-abertura-inauguracao'); assert.equal(v.preferencia, PREF.feira);
+  assert.equal(V.lerVolta('?payment_type=credit_card').meio, 'cartao');
+  assert.equal(V.lerVolta('?produto=<script>&plano=ouro&praca=marte').produto, null, 'produto fora do formato é ignorado');
+});
+
+test('2A registro: o corpo que a página manda passa no validarRegistro do servidor, sem chave a mais e abaixo de 2 KB', () => {
+  const V = carregar().Vitrine;
+  const corpo = limpar(V.corpoRegistro(PEDIDO_CHEIO(), ''));
+  const r = REGRAS.validarRegistro(corpo);
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.deepEqual(Object.keys(corpo).sort(), ['cidade', 'consentimento_dados', 'email', 'endereco', 'horarios', 'hp', 'id', 'negocio', 'nicho', 'plano', 'praca', 'produto', 'responsavel', 'segredo', 'termos_versao', 'teste', 'utm_campaign', 'utm_content', 'utm_source', 'valor', 'whatsapp']);
+  assert.equal(corpo.teste, false); assert.equal(corpo.consentimento_dados, true);
+  assert.equal(corpo.utm_content, 'A1-salao-v1'); assert.equal(corpo.praca, 'feira');
+  assert.ok(Buffer.byteLength(JSON.stringify(corpo)) < 2048);
+  // pa-teste e padrão também passam; sem origem, as utm vão nulas
+  const t = PEDIDO_CHEIO(); t.produto = 'pa-teste'; t.valor = 1; t.praca = null; t.origem = 'direto';
+  assert.equal(REGRAS.validarRegistro(limpar(V.corpoRegistro(t, ''))).ok, true);
+  const p = PEDIDO_CHEIO(); p.produto = 'pa-abertura-2026-11'; p.valor = 497;
+  assert.equal(REGRAS.validarRegistro(limpar(V.corpoRegistro(p, ''))).ok, true);
+});
+
+test('2A contador: corpo do contar sem dado pessoal, aceito pelo normalizarContagem do servidor', () => {
+  const ctx = carregar(), V = ctx.Vitrine;
+  V.guardarOrigem({ utm_source: 'meta', utm_campaign: 'feira', utm_content: 'A1-salao-v1' });
+  const c = limpar(V.corpoContagem('clique_pagar', 'salao'));
+  assert.deepEqual(c, { evento: 'clique_pagar', nicho: 'salao', praca: 'feira', utm_content: 'A1-salao-v1' });
+  assert.deepEqual(limpar(REGRAS.normalizarContagem(c)), { conferencia: false, evento: 'clique_pagar', nicho: 'salao', praca: 'feira', anuncio: 'A1-salao-v1' });
+  for (const ev of ['visita', 'previa', 'ida_pagamento', 'clique_pagar']) assert.ok(REGRAS.normalizarContagem(limpar(V.corpoContagem(ev, 'barbearia'))), ev);
+  assert.equal(limpar(V.corpoContagem('visita', 'clinica')).nicho, 'outro');
+});
+
+test('2A PEDIDO v1 no WhatsApp: frase de gente na 1ª linha, linhas do pagamento depois do aceite, pedido enxuto sem dado pessoal', () => {
+  const V = carregar().Vitrine, p = PEDIDO_CHEIO();
+  const m = V.mensagemPedido(p, 'aprovado', { pagamento: 'aprovado', paymentId: '188866285972', produto: 'pa-abertura-inauguracao-2026-11', valor: 297 });
+  const [abre, branco, ...resto] = m.split('\n');
+  assert.equal(abre, 'Oi! Acabei de pagar a Abertura do Porta Aberta. Segue o meu pedido:');
+  assert.equal(branco, '');
+  assert.equal(resto[0], 'PEDIDO v1');
+  assert.deepEqual(resto.slice(-4), ['pagamento: aprovado', 'mp_pagamento: 188866285972', 'produto: pa-abertura-inauguracao-2026-11', 'valor: 297']);
+  assert.doesNotMatch(m, /segredo|q1Zr8Xn4/, 'o segredo nunca vai ao WhatsApp');
+  assert.doesNotMatch(V.mensagemPedido(p, 'pendente', { pagamento: 'pendente', paymentId: '123' }), /mp_pagamento/, 'número fora do formato não entra');
+  // o bloco PEDIDO v1 (sem as linhas novas) continua lido pelo produzir.mjs
+  assert.equal(lerPedidoTexto(V.textoPedido(p)).id, 'PA-7K3QX2MD4R');
+  const enx = Object.assign({}, p, { enxuto: true }); for (const k of ['responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email']) delete enx[k];
+  assert.equal(V.mensagemPedido(enx, 'aprovado', { paymentId: '188866285972' }), 'Oi! Acabei de pagar a Abertura do Porta Aberta. Meu pedido é PA-7K3QX2MD4R, pagamento nº 188866285972.');
+});
+
+test('2A aparelho: dado pessoal sai em 7 dias (id e segredo ficam até 30); pedido antigo sem segredo some em 7 dias', () => {
+  const ctx = carregar(), V = ctx.Vitrine, ls = ctx.localStorage, dia = 24 * H;
+  ls.setItem('creat:pedido:v1', JSON.stringify(Object.assign(PEDIDO_CHEIO(), { salvo_em: iso(8 * dia) })));
+  const e = limpar(V.lerPedidoSalvo());
+  assert.equal(e.enxuto, true); assert.equal(e.id, 'PA-7K3QX2MD4R'); assert.equal(e.segredo, 'q1Zr8Xn4Lw0bT6yHc9VfEA');
+  for (const k of ['responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'previa', 'aceite_termos']) assert.equal(k in e, false, k);
+  assert.doesNotMatch(ls.getItem('creat:pedido:v1'), /maria@|5575991234567|Rua das Flores|Maria Souza/);
+  ls.setItem('creat:pedido:v1', JSON.stringify(Object.assign(JSON.parse(ls.getItem('creat:pedido:v1')), { salvo_em: iso(31 * dia) })));
+  assert.equal(V.lerPedidoSalvo(), null); assert.equal(ls.getItem('creat:pedido:v1'), null);
+  const antigo = Object.assign(PEDIDO_CHEIO(), { id: 'PA-ABCDEFGH', segredo: undefined, salvo_em: iso(8 * dia) });
+  ls.setItem('creat:pedido:v1', JSON.stringify(antigo));
+  assert.equal(V.lerPedidoSalvo(), null);
+  ls.setItem('creat:pedido:v1', JSON.stringify(Object.assign(antigo, { salvo_em: iso(1 * H) })));
+  assert.equal(V.lerPedidoSalvo().id, 'PA-ABCDEFGH', 'o pedido antigo de 8 continua valendo até 7 dias');
+});
+
+/* ---- navegador: API simulada (window.__creatApi), corpos guardados para conferir com as regras do servidor */
+async function paginaApi(navegador, base, opcoes = {}) {
+  const ctx = await navegador.newContext(opcoes.desktop ? { viewport: { width: 1440, height: 900 } } : { viewport: { width: opcoes.w || 390, height: opcoes.h || 844 }, isMobile: true, hasTouch: true });
+  const pg = await ctx.newPage();
+  const erros = []; pg.on('pageerror', (e) => erros.push(e.message));
+  const api = [];
+  await pg.addInitScript(() => { window.__creatApi = '/api/pa/'; });
+  await pg.route(/^https:\/\/(connect\.facebook\.net|www\.clarity\.ms|fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net)\//, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
+  await pg.route(/mercadopago\.com\.br/, (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<p>mp</p>' }));
+  await pg.route('**/api/pa/**', async (r) => {
+    const nome = r.request().url().split('/api/pa/')[1];
+    let corpo = null; try { corpo = JSON.parse(r.request().postData() || 'null'); } catch (e) { corpo = 'invalido'; }
+    api.push({ nome, corpo });
+    const resp = opcoes.api && opcoes.api[nome];
+    if (resp === 'abortar') return r.abort();
+    if (resp && resp.atraso) await new Promise((ok) => setTimeout(ok, resp.atraso));
+    if (resp && resp.status) return r.fulfill({ status: resp.status, contentType: 'application/json', body: JSON.stringify(resp.json || {}) });
+    if (nome === 'contar') return r.fulfill({ status: 204, body: '' });
+    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(nome === 'consultarPedido' ? { ok: true, status: 'aguardando_pagamento' } : nome === 'confirmarPagamento' ? { ok: false, motivo: 'nao_confirmado' } : { ok: true }) });
+  });
+  await pg.goto(base + '/termos/');
+  if (opcoes.consentir !== false) await pg.evaluate(() => localStorage.setItem('creat:consentimento', JSON.stringify({ versao: 1, analytics: true, pixel: true, clarity: true, em: new Date().toISOString() })));
+  if (opcoes.pedido) await pg.evaluate((p) => localStorage.setItem('creat:pedido:v1', JSON.stringify(p)), opcoes.pedido);
+  return { pg, ctx, erros, api };
+}
+async function preencherAbrir(pg) {
+  await pg.fill('#p-responsavel', 'Maria Souza');
+  await pg.fill('#p-whatsapp', '75991234567');
+  await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000');
+  await pg.fill('#p-email', 'maria@exemplo.com.br');
+  await pg.check('#p-aceite');
+}
+const visivel = (pg, s) => pg.evaluate((x) => { const e = document.querySelector(x); return !!(e && !e.closest('[hidden]') && e.getClientRects().length); }, s);
+
+test('2A navegador: /obrigado/ nos 6 estados da volta, cada um com título, texto, botão e WhatsApp próprios', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const casos = [
+      { q: '?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=123', texto: 'a_conferir', titulo: /conferindo/i, botao: /WhatsApp/, form: true, relogio: false, zap: /Paguei a Abertura/ },
+      { q: '?pago=mp&produto=pa-abertura-inauguracao&collection_status=rejected&payment_id=123', texto: 'recusado', titulo: /não passou/, botao: /^Tentar de novo$/, href: /\/abrir\//, form: false, relogio: false, zap: /Tentei pagar/ },
+      { q: '?pago=mp&produto=pa-abertura-inauguracao&resultado=pendente', texto: 'pendente', titulo: /Pix espera/, botao: /Voltar para o pagamento/, href: /\/abrir\//, form: true, relogio: false, zap: /Gerei o Pix/ },
+      { q: '', texto: 'sem_retorno', titulo: /ainda não pagou/, botao: /Voltar para o pagamento/, href: /\/abrir\//, form: true, relogio: false, zap: /dúvida sobre o pagamento/ },
+      { q: '?assinatura=ok&plano=aberto', texto: 'assinatura_ok', titulo: /Assinatura ativa/, lead: /Aberto/, botao: /portal do assinante/i, href: /billing\.stripe\.com/, form: false, relogio: false, zap: /Assinei o plano Aberto/ },
+      { q: '?pago=mp&produto=pa-anual-aberto&collection_status=approved&payment_id=123', texto: 'anual_pago', titulo: /anual pago/i, lead: /Aberto anual/, botao: /WhatsApp/, form: false, relogio: false, zap: /anual/ }
+    ];
+    for (const c of casos) {
+      const { pg, ctx, erros } = await paginaApi(nav, base, { consentir: false });
+      await pg.goto(base + '/obrigado/' + c.q);
+      await pg.waitForFunction((t) => document.querySelector('main').getAttribute('data-texto') === t, c.texto);
+      assert.match(await pg.textContent('#obrigado-titulo'), c.titulo, c.q);
+      if (c.lead) assert.match(await pg.textContent('#obrigado-lead'), c.lead, c.q);
+      assert.match((await pg.textContent('#obrigado-botao')).trim(), c.botao, c.q);
+      if (c.href) assert.match(await pg.getAttribute('#obrigado-botao', 'href'), c.href, c.q);
+      // detalhes do formulário de dados (fechado no "sem retorno"), relógio e o "Ainda não pagou" antigo
+      assert.equal(await visivel(pg, '#obrigado-sem-dados'), c.form, 'formulário: ' + c.q);
+      assert.equal(await visivel(pg, '.relogio'), c.relogio, 'relógio: ' + c.q);
+      assert.equal(await pg.locator('text=Ainda não pagou?').count(), 0, c.q);
+      assert.match(decodeURIComponent(await pg.getAttribute('header [data-zap]', 'href')), c.zap, 'WhatsApp do cabeçalho (PG-08): ' + c.q);
+      assert.doesNotMatch(pg.url(), /payment_id|collection|status|assinatura|produto|resultado/, 'endereço limpo: ' + c.q);
+      assert.ok(await pg.evaluate(() => document.documentElement.scrollWidth) <= 390, 'sem rolagem lateral: ' + c.q);
+      assert.deepEqual(erros, [], c.q);
+      await ctx.close();
+    }
+    // recusado e pendente com o pedido no aparelho: o pedido não vira "enviar no WhatsApp"; o relógio aparece no pendente
+    const { pg, ctx } = await paginaApi(nav, base, { pedido: PEDIDO_CHEIO() });
+    await pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=rejected&payment_id=123');
+    await pg.waitForFunction(() => document.querySelector('main').getAttribute('data-texto') === 'recusado');
+    assert.equal(await visivel(pg, '#obrigado-pedido'), false); assert.equal(await visivel(pg, '#obrigado-sem-dados'), false);
+    assert.match(await pg.getAttribute('#obrigado-botao', 'href'), /\/abrir\/#plano=vitrine&k=salao&n=Studio/, 'Tentar de novo volta ao plano guardado');
+    await pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&resultado=pendente');
+    await pg.waitForFunction(() => document.querySelector('main').getAttribute('data-texto') === 'pendente');
+    assert.equal(await visivel(pg, '.relogio'), true);
+    assert.match(await pg.textContent('#enviar-titulo'), /^Seu pedido: Studio Bela & Cia$/, 'sem artigo fixo (PG-N4)');
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('2A navegador: aprovado só vira "confirmado" com o servidor; recibo de 3 linhas, relógio real e "Ainda não pagou" fora', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const prazo = new Date(Date.now() + 71 * H).toISOString();
+    const { pg, ctx, erros, api } = await paginaApi(nav, base, { pedido: PEDIDO_CHEIO(), api: {
+      confirmarPagamento: { status: 200, json: { ok: true, status: 'pago' } },
+      consultarPedido: { status: 200, json: { ok: true, status: 'pago', prazo_fim: prazo, entrega_prevista_em: prazo, recibo: { pedido: 'PA-7K3QX2MD4R', produto: 'Abertura do site (preço de inauguração)', valor: 297, meio: 'Mercado Pago', pagamento: '188866285972' } } }
+    } });
+    await pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&praca=feira&collection_status=approved&payment_id=188866285972&payment_type=bank_transfer&preference_id=' + PREF.feira);
+    await pg.waitForFunction(() => document.querySelector('main').getAttribute('data-texto') === 'aprovado');
+    assert.match(await pg.textContent('#obrigado-titulo'), /Pagamento confirmado/);
+    const recibo = await pg.innerText('#obrigado-recibo');
+    assert.match(recibo, /R\$\u00a0297/, "R$ e o valor sem quebra"); assert.match(recibo, /Pix/); assert.match(recibo, /188866285972/);
+    assert.match(await pg.textContent('#relogio-digitos'), /^(70|71):\d\d:\d\d$/, 'relógio conta do prazo_fim do servidor');
+    const conf = api.find((a) => a.nome === 'confirmarPagamento');
+    assert.deepEqual(conf.corpo, { payment_id: '188866285972', pedido_id: 'PA-7K3QX2MD4R', segredo: 'q1Zr8Xn4Lw0bT6yHc9VfEA' });
+    assert.ok(api.every((a) => !/segredo/.test(a.nome)), 'o segredo só vai no corpo');
+    // PV-16: com a resposta do servidor, e-mail, WhatsApp, endereço e responsável saem do aparelho
+    const guardado = await pg.evaluate(() => localStorage.getItem('creat:pedido:v1'));
+    assert.doesNotMatch(guardado, /maria@|5575991234567|Rua das Flores|Maria Souza/);
+    assert.match(guardado, /"segredo":"q1Zr8Xn4Lw0bT6yHc9VfEA"/);
+    assert.equal(await visivel(pg, '#bloco-whats'), false, 'servidor com o pedido: nada de reenviar pelo WhatsApp');
+    // recarga: o estado volta da sessão da aba, sem os parâmetros na URL
+    await pg.reload(); await pg.waitForFunction(() => document.querySelector('main').getAttribute('data-texto') === 'aprovado');
+    assert.deepEqual(erros, []);
+    await ctx.close();
+    // função fora do ar: o WhatsApp vira o caminho, com a frase de gente e as linhas do pagamento
+    const b = await paginaApi(nav, base, { pedido: PEDIDO_CHEIO(), api: { confirmarPagamento: 'abortar', consultarPedido: 'abortar', registrarPedido: 'abortar' } });
+    await b.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972&preference_id=' + PREF.feira);
+    await b.pg.waitForFunction(() => !document.querySelector('#bloco-whats').hidden);
+    const texto = await b.pg.textContent('#pedido-texto');
+    assert.match(texto, /^Oi! Acabei de pagar a Abertura do Porta Aberta\. Segue o meu pedido:\n\nPEDIDO v1\n/);
+    assert.match(texto, /pagamento: aprovado\nmp_pagamento: 188866285972\nproduto: pa-abertura-inauguracao-2026-11\nvalor: 297$/);
+    await b.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('2A navegador: com registrarPedido bloqueado, Pagar chega ao Mercado Pago em menos de 300 ms e checkout_iniciado sai', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    for (const modo of ['abortar', 'pendurado']) {
+      const { pg, ctx, api } = await paginaApi(nav, base, { api: { registrarPedido: modo === 'abortar' ? 'abortar' : { atraso: 4000, status: 200, json: { ok: true } } } });
+      await pg.goto(base + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Feira%20de%20Santana&p=1&utm_campaign=feira');
+      await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+      await preencherAbrir(pg);
+      let tMp = 0; pg.on('request', (q) => { if (!tMp && /mercadopago\.com\.br/.test(q.url())) tMp = Date.now(); });
+      const t0 = Date.now();
+      const eventos = await pg.evaluate(() => { document.querySelector('.pagar [data-checkout]').click(); return window.__creatEventos.map((e) => e.evento); });
+      await pg.waitForURL(/mercadopago/);
+      const ms = tMp - t0;
+      console.log('# 2A tempo até o Mercado Pago com registrarPedido ' + modo + ': ' + ms + ' ms');
+      assert.ok(tMp && ms < 300, modo + ': ' + ms + ' ms');
+      assert.ok(eventos.includes('checkout_iniciado'), 'checkout_iniciado sai');
+      const reg = api.find((a) => a.nome === 'registrarPedido');
+      assert.ok(reg, 'o pedido foi enviado no clique');
+      assert.equal(REGRAS.validarRegistro(reg.corpo).ok, true, JSON.stringify(REGRAS.validarRegistro(reg.corpo)));
+      assert.equal(reg.corpo.produto, 'pa-abertura-inauguracao-2026-11'); assert.equal(reg.corpo.valor, 297); assert.equal(reg.corpo.praca, 'feira');
+      assert.ok(api.some((a) => a.nome === 'contar' && a.corpo.evento === 'clique_pagar'));
+      await ctx.close();
+    }
+    // depois do ack do servidor (consultarPedido 200), não sobra e-mail nem WhatsApp no aparelho
+    const { pg, ctx } = await paginaApi(nav, base);
+    await pg.goto(base + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Feira%20de%20Santana&p=1');
+    await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await preencherAbrir(pg);
+    await Promise.all([pg.waitForURL(/mercadopago/), pg.click('.pagar [data-checkout]')]);
+    await pg.goto(base + '/termos/');
+    assert.match(await pg.evaluate(() => localStorage.getItem('creat:pedido:v1')), /maria@exemplo\.com\.br/, 'antes do ack o aparelho guarda o pedido inteiro');
+    await pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&resultado=pendente');
+    await pg.waitForFunction(() => /"enxuto":true/.test(localStorage.getItem('creat:pedido:v1') || ''));
+    const g = await pg.evaluate(() => localStorage.getItem('creat:pedido:v1'));
+    assert.doesNotMatch(g, /maria@|75991234567|"whatsapp_negocio"|"email"/);
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('2A navegador: link de teste mostra só o botão de R$ 1 e registra pa-teste; /abrir/ sem o parâmetro não mostra nada de teste', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const T = carregar().CREAT_CHECKOUT.teste, vale = Date.parse(T.valeAte) > Date.now();
+    const { pg, ctx, api, erros } = await paginaApi(nav, base);
+    await pg.goto(base + '/abrir/?teste=pa-teste#plano=vitrine&k=salao&n=Studio%20Bela&c=Feira%20de%20Santana&p=1');
+    await pg.waitForFunction(() => !document.querySelector('[data-carregando-precos]') || document.querySelector('.pagar [data-checkout]').getAttribute('data-checkout') === 'teste');
+    assert.equal(await pg.getAttribute('meta[name="robots"]', 'content'), 'noindex');
+    assert.equal(await pg.locator('[data-checkout]:visible').count(), 1, 'um único botão de pagar');
+    assert.equal(await visivel(pg, '#modo-teste'), true);
+    if (vale) {
+      assert.match((await pg.textContent('.pagar [data-checkout]')).trim(), /^Pagar R\$ 1 \(teste\)$/);
+      assert.equal(await pg.getAttribute('.pagar [data-checkout]', 'href'), T.link);
+      await preencherAbrir(pg);
+      await Promise.all([pg.waitForURL(/mercadopago/), pg.click('.pagar [data-checkout]')]);
+      const reg = api.find((a) => a.nome === 'registrarPedido');
+      assert.equal(reg.corpo.produto, 'pa-teste'); assert.equal(reg.corpo.valor, 1);
+      assert.equal(REGRAS.validarRegistro(reg.corpo).ok, true);
+      assert.equal(api.filter((a) => a.nome === 'contar').length, 0, 'o link de teste não entra no contador');
+    } else {
+      assert.match(await pg.textContent('.pagar [data-checkout]'), /venceu/);
+      assert.equal(await pg.getAttribute('.pagar [data-checkout]', 'aria-disabled'), 'true');
+    }
+    await pg.goto(base + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&p=1');
+    await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    assert.equal(await visivel(pg, '#modo-teste'), false);
+    assert.equal(await pg.locator('text=/R\\$ 1 \\(teste\\)/').count(), 0);
+    assert.notEqual(await pg.getAttribute('.pagar [data-checkout]', 'href'), T.link);
+    assert.deepEqual(erros, []);
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('2A navegador: no desktop o pagamento abre em outra aba e esta aba vai a /obrigado/ esperando; no celular, mesma aba', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, erros } = await paginaApi(nav, base, { desktop: true });
+    await pg.goto(base + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Feira%20de%20Santana&p=1');
+    await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    assert.equal(await pg.getAttribute('.pagar [data-checkout]', 'target'), '_blank');
+    assert.equal(await pg.getAttribute('.pagar [data-checkout]', 'rel'), 'noopener noreferrer');
+    await preencherAbrir(pg);
+    const [aba] = await Promise.all([ctx.waitForEvent('page'), pg.click('.pagar [data-checkout]')]);
+    await aba.waitForURL(/mercadopago/);
+    await pg.waitForURL(/\/obrigado\//);
+    await pg.waitForFunction(() => document.querySelector('main').getAttribute('data-estado') === 'aguardando');
+    assert.match(await pg.textContent('#obrigado-titulo'), /outra aba/);
+    assert.match(await pg.getAttribute('#obrigado-botao', 'href'), /mercadopago/);
+    assert.deepEqual(erros, []);
+    await ctx.close();
+    const m = await paginaApi(nav, base);
+    await m.pg.goto(base + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&p=1');
+    await m.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    assert.equal(await m.pg.getAttribute('.pagar [data-checkout]', 'target'), null, 'celular: mesma aba (lá existe o Voltar à loja)');
+    await m.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('2A navegador: contador manda visita, prévia, ida ao pagamento e clique sem aceite e sem dado pessoal', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, api } = await paginaApi(nav, base, { consentir: false });
+    await pg.goto(base + '/?nicho=salao&utm_source=meta&utm_campaign=feira&utm_content=A1-salao-v1');
+    await pg.fill('#nome', 'Studio Bela'); await pg.click('#form-abrir [type=submit]');
+    await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+    await pg.goto(base + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Feira%20de%20Santana&p=1');
+    await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await preencherAbrir(pg);
+    await Promise.all([pg.waitForURL(/mercadopago/), pg.click('.pagar [data-checkout]')]);
+    const contagens = api.filter((a) => a.nome === 'contar').map((a) => a.corpo);
+    assert.deepEqual(contagens.map((c) => c.evento), ['visita', 'previa', 'ida_pagamento', 'clique_pagar']);
+    for (const c of contagens) {
+      assert.deepEqual(Object.keys(c).sort(), ['evento', 'nicho', 'praca', 'utm_content']);
+      assert.equal(c.nicho, 'salao'); assert.equal(c.praca, 'feira'); assert.equal(c.utm_content, 'A1-salao-v1');
+    }
+    assert.doesNotMatch(JSON.stringify(contagens), /Studio|Maria|maria@|75991234567|Feira de Santana/);
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+// Controles do formulário na tela com algum ponto (centro e 4 cantos recuados) atrás do aviso de medição.
+const COBERTOS = (sel) => [...document.querySelectorAll(sel + ' input:not([type=hidden]):not(#p-site), ' + sel + ' select, ' + sel + ' button, ' + sel + ' .chip, ' + sel + ' .aceite')].filter((e) => {
+  const r = e.getBoundingClientRect(); if (r.width < 2 || r.height < 2 || r.bottom <= 0 || r.top >= innerHeight) return false;
+  const pts = [[.5, .5], [.15, .2], [.85, .2], [.15, .8], [.85, .8]].map(([fx, fy]) => [r.left + r.width * fx, r.top + r.height * fy]).filter(([, y]) => y > 0 && y < innerHeight);
+  return pts.some(([x, y]) => { const el = document.elementFromPoint(x, y); return el && el.closest('#consentimento'); });
+}).map((e) => e.id || e.className);
+
+test('2A navegador: aviso de medição vira faixa de até 64 px com o formulário na tela, nunca cobre campo e avisa a hospedagem', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    for (const [w, h] of [[390, 844], [360, 640]]) {
+      // home: o aviso aparece ao passar do hero; com o formulário na tela é faixa
+      const { pg, ctx, erros } = await paginaApi(nav, base, { consentir: false, w, h });
+      await pg.goto(base + '/?nicho=salao');
+      await pg.evaluate(() => window.scrollTo(0, 400)); await pg.waitForTimeout(400);
+      await pg.waitForSelector('#consentimento:not([hidden])');
+      const faixa = await pg.evaluate(() => { const c = document.querySelector('#consentimento'); return { faixa: c.classList.contains('is-faixa'), h: c.getBoundingClientRect().height }; });
+      assert.equal(faixa.faixa, true, w + ' home');
+      assert.ok(faixa.h <= 64, w + ' home: ' + faixa.h + ' px');
+      for (const y of [250, 400, 550, 700, 900]) {
+        await pg.evaluate((yy) => window.scrollTo(0, yy), y); await pg.waitForTimeout(120);
+        assert.deepEqual(await pg.evaluate(COBERTOS, '#form-abrir'), [], w + ' home y=' + y);
+      }
+      await pg.evaluate(() => window.scrollTo(0, 400)); await pg.waitForTimeout(120);
+
+      // foco num campo: a faixa sai da frente
+      await pg.focus('#cidade');
+      assert.equal(await pg.evaluate(() => getComputedStyle(document.querySelector('#consentimento')).visibility), 'hidden');
+      await pg.evaluate(() => document.activeElement.blur());
+      // alvos >= 44 px e texto >= 11 px
+      const medidas = await pg.evaluate(() => ({ botoes: [...document.querySelectorAll('#consentimento .btn')].map((b) => b.getBoundingClientRect().height), fonte: parseFloat(getComputedStyle(document.querySelector('#consentimento .cons-curto')).fontSize) }));
+      assert.ok(medidas.botoes.every((x) => x >= 44), JSON.stringify(medidas)); assert.ok(medidas.fonte >= 11);
+      // o "Aceitar" avisa a hospedagem (dataLayer, lido pelo b44-visitor-tracking no ar) e o "Recusar" também
+      await pg.click('#consentimento [data-consentir="sim"]');
+      assert.deepEqual(await pg.evaluate(() => JSON.parse(JSON.stringify(window.dataLayer))), [['consent', 'update', { analytics_storage: 'granted' }]]);
+      assert.deepEqual(erros, []);
+      await ctx.close();
+      // /obrigado/: sempre faixa, e os campos do formulário ficam livres
+      const o = await paginaApi(nav, base, { consentir: false, w, h });
+      await o.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972');
+      await o.pg.waitForSelector('#consentimento:not([hidden])');
+      assert.ok(await o.pg.evaluate(() => document.querySelector('#consentimento').classList.contains('is-faixa') && document.querySelector('#consentimento').getBoundingClientRect().height <= 64));
+      for (const y of [300, 700, 1100, 1500]) {
+        await o.pg.evaluate((yy) => window.scrollTo(0, yy), y); await o.pg.waitForTimeout(80);
+        const cob = await o.pg.evaluate(COBERTOS, '#form-pedido');
+        assert.deepEqual(cob, [], w + ' /obrigado/ y=' + y);
+      }
+      // a página reserva a altura da faixa no fim: rolando até o fim, o último botão fica livre
+      await o.pg.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); await o.pg.waitForTimeout(120);
+      assert.deepEqual(await o.pg.evaluate(COBERTOS, '#form-pedido'), [], w + ' /obrigado/ fim');
+      assert.deepEqual(o.erros, []);
+      await o.ctx.close();
+    }
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('2A páginas: meta do b44-visitor-tracking pede consentimento em /, /abrir/ e /obrigado/; selo "recomendado" fora do /obrigado/', () => {
+  for (const f of ['index.html', 'abrir/index.html', 'obrigado/index.html']) {
+    const html = fs.readFileSync(path.join(RAIZ, f), 'utf8');
+    assert.match(html, /<meta name="base44-visitor-tracking" content="consent" data-privacy-signals="honor">/, f);
+    assert.ok(html.indexOf('base44-visitor-tracking') < html.indexOf('</head>'), f + ': no head');
+  }
+  const ob = fs.readFileSync(path.join(RAIZ, 'obrigado/index.html'), 'utf8');
+  assert.doesNotMatch(ob, /recomendado/i);
+  assert.match(ob, /<option value="" selected disabled>Escolha o plano<\/option>/);
+  assert.doesNotMatch(fs.readFileSync(path.join(RAIZ, 'assets/vitrine.js'), 'utf8'), /'Pedido da '|abrir a ' \+|site da ' \+/, 'sem artigo fixo antes do nome (PG-N4)');
 });

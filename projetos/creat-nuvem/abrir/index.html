@@ -8,6 +8,8 @@
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light dark">
+<!-- O Base44 injeta no ar o b44-visitor-tracking (cookies base44_referrer_*). Com esta meta ele só grava depois do "Aceitar" -->
+<meta name="base44-visitor-tracking" content="consent" data-privacy-signals="honor">
 <link rel="icon" href="../assets/svg/placa.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +38,7 @@
   <div class="cx">
     <span class="olho">Abrir meu negócio</span>
     <h1 id="abrir-titulo">Falta pouco para abrir o seu negócio.</h1>
+    <p class="modo-teste" id="modo-teste" role="note" hidden><strong>Link de teste.</strong> Este pagamento é de R$ <span id="modo-teste-valor"></span>, serve só para conferir o caminho do pagamento e não abre site. <span id="modo-teste-vencido" hidden>O link de teste venceu; peça um novo à equipe.</span></p>
     <p class="progresso" id="abrir-progresso" hidden><span class="feito">Nome, tipo de negócio e prévia: pronto.</span> Faltam 2 passos: os dados do negócio e o pagamento.</p>
 
     <!-- resumo de preço no topo: o mesmo total do botão de pagar -->
@@ -44,7 +47,7 @@
       <p data-carregando-precos>Conferindo os preços de hoje...</p>
       <p id="resumo-mensal" hidden><strong>Hoje: Abertura de R$ <span data-v="abrir.total"></span>.</strong> Mensalidade de R$ <span data-v="plano.preco"></span> só começa com o site no ar.</p>
       <p id="resumo-anual" hidden><strong>Hoje: só a Abertura, R$ <span data-v="abrir.total"></span>.</strong> O plano anual, R$ <span data-v="plano.preco"></span> pelos 12 meses, é cobrado no dia em que o site entra no ar, por este valor.</p>
-      <p class="menor">Sem fidelidade. 7 dias para desistir com devolução.</p>
+      <p class="menor" data-texto="resumo.risco">Sem fidelidade. 7 dias para desistir, com o valor devolvido.</p>
     </section>
 
     <div class="resumo-negocio" id="abrir-negocio" hidden>
@@ -80,7 +83,7 @@
 
         <section class="bloco mt-5" aria-labelledby="campos-titulo">
           <h2 id="campos-titulo">Os dados do seu negócio</h2>
-          <p class="notas mb-4">O relógio do prazo começa com 4 dados do pedido: o nome do negócio, que veio da prévia, o WhatsApp, o endereço e o horário. Seu nome e seu e-mail servem para a equipe falar com você e mandar o recibo. Eles não mudam o prazo.</p>
+          <p class="notas mb-4" data-texto="campos.texto">Com o nome do negócio, que veio da prévia, o WhatsApp, o endereço e o horário, a equipe monta o site sem precisar perguntar nada. Seu nome e seu e-mail servem para falarmos com você sobre o pedido.</p>
           <div class="campos">
             <div class="campo" data-se-falta="n">
               <label for="p-negocio">Nome do seu negócio</label>
@@ -104,7 +107,7 @@
             </div>
             <div class="campo">
               <label for="p-responsavel">Seu nome (responsável)</label>
-              <input id="p-responsavel" type="text" autocomplete="name" maxlength="80" required aria-describedby="p-responsavel-ajuda">
+              <input id="p-responsavel" type="text" autocomplete="name" maxlength="60" required aria-describedby="p-responsavel-ajuda">
               <span class="ajuda" id="p-responsavel-ajuda">Quem a equipe chama para aprovar o site.</span>
               <span class="erro" role="alert" hidden></span>
             </div>
@@ -129,14 +132,16 @@
             <div class="campo">
               <label for="p-email">E-mail</label>
               <input id="p-email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="voce@exemplo.com.br" required aria-describedby="p-email-ajuda">
-              <span class="ajuda" id="p-email-ajuda">Para o recibo e para os termos. Não mandamos propaganda.</span>
+              <span class="ajuda" id="p-email-ajuda" data-texto="campos.email.ajuda">Para falarmos com você sobre o pedido e mandarmos os termos que você aceitou. Não mandamos propaganda.</span>
               <span class="erro" role="alert" hidden></span>
             </div>
+            <div class="isca" aria-hidden="true"><label for="p-site">Site</label><input id="p-site" type="text" tabindex="-1" autocomplete="off"></div>
             <label class="aceite" for="p-aceite">
               <input type="checkbox" id="p-aceite" required aria-describedby="p-aceite-erro">
-              <span>Li e aceito os <a href="../termos/" target="_blank" rel="noopener">Termos de uso (versão 1)</a>. Peço o início imediato da produção e sei que tenho 7 dias de arrependimento, com o valor devolvido.</span>
+              <span>Li e aceito os <a href="../termos/" target="_blank" rel="noopener">Termos de uso (versão <span data-termos-versao>1</span>)</a>. Peço o início imediato da produção e sei que tenho 7 dias de arrependimento, com o valor devolvido.</span>
             </label>
             <span class="erro-solto" id="p-aceite-erro" role="alert" hidden>Marque o aceite para seguir para o pagamento.</span>
+            <p class="notas">Ao tocar em Pagar, os dados deste formulário vão para o sistema da Creat, para registrar o pedido. <a href="../privacidade/">Privacidade</a></p>
             <p class="resumo-erros" id="p-resumo" role="alert" hidden></p>
           </div>
         </section>
@@ -146,23 +151,24 @@
       <aside class="lateral area-confianca" aria-label="Garantia, desistência e próximos passos">
         <section class="bloco-tracejado" aria-labelledby="garantia-titulo">
           <h2 id="garantia-titulo">Garantia de prazo</h2>
-          <p>Seu site fica pronto em até <span data-v="precos.prazoHoras" class="num-carregando"></span> h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp, endereço e horário. Passou do prazo, o 1º mês do plano é grátis.</p>
-          <p class="notas mt-3">Ficam fora do relógio o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros. Logo e fotos enviados depois entram como melhoria em até 24 h.</p>
+          <p data-texto="garantia.texto">Seu site fica pronto para você aprovar em até <span data-v="precos.prazoHoras"></span> h. Passou do prazo, o 1º mês do plano é grátis.</p>
+          <p class="notas mt-3" data-texto="garantia.regra">O prazo de <span data-v="precos.prazoHoras"></span> h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).</p>
+          <p class="notas mt-3" data-texto="garantia.fora">Ficam fora do relógio o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros. Logo e fotos enviados depois entram como melhoria em até 24 h.</p>
         </section>
         <section class="bloco-tracejado" aria-labelledby="desistir-titulo">
           <h2 id="desistir-titulo">7 dias para desistir com devolução</h2>
-          <p>Você tem 7 dias, contados do pagamento, para desistir sem dar motivo, como manda a lei (Código de Defesa do Consumidor, art. 49). O valor volta pelo mesmo meio de pagamento. Sem fidelidade e sem multa para sair. A mensalidade só começa com o site no ar.</p>
+          <p data-texto="desistir.texto">Você tem 7 dias para desistir sem dar motivo, contados do pagamento ou da entrega do site para você aprovar, o que vier por último (Código de Defesa do Consumidor, art. 49). Devolvemos o valor em até 5 dias úteis depois do pedido, pelo mesmo meio de pagamento. Sem fidelidade e sem multa para sair. A mensalidade só começa com o site no ar.</p>
         </section>
         <section class="bloco" aria-labelledby="depois-titulo">
           <h2 id="depois-titulo">O que acontece depois do pagamento</h2>
           <ol class="lista-numerada">
-            <li>Você volta para a página do pedido e envia o pedido pronto no WhatsApp do Suporte Creat.</li>
-            <li>A equipe confere o pagamento e responde no seu WhatsApp.</li>
-            <li>O relógio de <span data-v="precos.prazoHoras"></span> h começa a contar.</li>
-            <li>Você recebe o andamento do pedido no WhatsApp. Na sede, vê uma demonstração de como a equipe trabalha, com o nome do seu negócio na fachada.</li>
-            <li>Você recebe o site pronto, pede ajustes se quiser e aprova.</li>
-            <li>O site entra no ar. A mensalidade começa neste dia.</li>
-            <li>A equipe manda o passo a passo do domínio e do Perfil da Empresa no Google.</li>
+            <li data-texto="depois.passos.0">O pedido fica registrado no toque em Pagar, e o Mercado Pago manda o comprovante para o e-mail que você usar lá.</li>
+            <li data-texto="depois.passos.1">Você volta para a página do pedido, que mostra a confirmação do pagamento.</li>
+            <li data-texto="depois.passos.2">O prazo de <span data-v="precos.prazoHoras"></span> h começa com a confirmação do pagamento.</li>
+            <li data-texto="depois.passos.3">O andamento aparece na página do pedido, neste aparelho. Na sede, você vê uma demonstração de como a equipe trabalha, com o nome do seu negócio na fachada.</li>
+            <li data-texto="depois.passos.4">Você recebe o link do site pronto no seu WhatsApp, pede ajustes se quiser e aprova.</li>
+            <li data-texto="depois.passos.5">O site entra no ar com o seu sim. A mensalidade começa neste dia. Sem resposta em 7 dias, ele entra no ar como está.</li>
+            <li data-texto="depois.passos.6">A equipe manda o passo a passo do domínio e do Perfil da Empresa no Google.</li>
           </ol>
         </section>
       </aside>
@@ -170,9 +176,11 @@
       <section class="bloco area-pagar" id="pagamento" aria-labelledby="pagamento-titulo">
         <h2 id="pagamento-titulo">Pagamento</h2>
         <p class="pagar-total">Total de hoje: <strong>R$ <span data-v="abrir.total" class="num-carregando"></span></strong></p>
+        <p class="notas mb-4" id="pagar-recebedor" hidden></p>
         <div class="pagar">
           <a class="btn btn-sol btn-g" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Pagar no Pix ou cartão" aria-describedby="pagar-parcelas">Link de pagamento em configuração</a>
         </div>
+        <p class="notas mt-3 pagar-aviso" id="pagar-aviso-dados"><span id="pagar-aviso-texto">Ao tocar em Pagar, enviamos à Creat os dados deste formulário (nome do negócio, cidade, seu nome, WhatsApp, e-mail, endereço e horário) para registrar o pedido. Se você não pagar, apagamos em 30 dias. </span><a id="pagar-aviso-link" href="../privacidade/">Ler a política de privacidade</a></p>
         <p class="notas mt-3" id="pagar-parcelas">Pix ou cartão. As condições de parcelamento aparecem no Mercado Pago antes de você pagar.</p>
         <div class="bloco-tracejado mt-4" id="pagamento-config">
           <p>O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.</p>
@@ -180,7 +188,7 @@
         </div>
         <div class="notas mt-4">
           <p>O pagamento é feito no Mercado Pago. A Creat não vê os dados do seu cartão. Sem criar conta.</p>
-          <p>Seus dados ficam salvos neste aparelho por até 7 dias, para a próxima página. Você pode apagar a qualquer momento.</p>
+          <p>Uma cópia dos dados fica neste aparelho até o pedido ser registrado, por no máximo 7 dias. Você pode apagar a qualquer momento.</p>
         </div>
         <button class="link-texto" type="button" id="esquecer" hidden>Esquecer meus dados neste aparelho</button>
       </section>
@@ -223,7 +231,8 @@
   </div>
 </footer>
 <div class="consentimento" id="consentimento" role="region" aria-label="Medição desta página" data-salvo="Preferência salva. Você muda quando quiser no rodapé, em Preferências de medição." hidden>
-  <p><strong>Medição desta página.</strong> Medimos visitas sem cookie e sem dado pessoal. Com a sua permissão, usamos também o Pixel da Meta para medir anúncios. <a href="../privacidade/">Privacidade</a></p>
+  <p class="cons-longo"><strong>Medição desta página.</strong> A Creat conta as visitas sem cookie e sem guardar o seu IP. A hospedagem registra o acesso técnico. Com a sua permissão, usamos o Pixel da Meta para medir os anúncios, e a hospedagem guarda de onde você veio. <a href="../privacidade/">Privacidade</a></p>
+  <p class="cons-curto">Contamos visitas sem cookie. Pixel da Meta só com o seu sim. <a href="../privacidade/">Privacidade</a></p>
   <div class="botoes">
     <button class="btn" type="button" data-consentir="sim">Aceitar</button>
     <button class="btn" type="button" data-consentir="nao">Recusar</button>

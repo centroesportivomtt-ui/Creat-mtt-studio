@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:creat-nuvem:schema:tenant:v1",
   "title": "TenantConfig v1",
-  "description": "Dados de um site do Porta Aberta. O motor v1 lê window.TENANT com este formato (ADR-001). Qualquer chave fora desta lista é rejeitada, inclusive demo.ocupacaoFicticia. Regras que o JSON Schema não expressa (fecha > abre, termos proibidos, chaves de textos fora da lista do preset, frase 'o dono confirma pelo WhatsApp') ficam em scripts/producao/validar-tenant.mjs.",
+  "description": "Dados de um site do Porta Aberta (v1.3: campos opcionais fuso, galeria e recados, ADR-006). O motor v1 lê window.TENANT com este formato (ADR-001). Qualquer chave fora desta lista é rejeitada, inclusive demo.ocupacaoFicticia. Regras que o JSON Schema não expressa (fecha > abre, termos proibidos, chaves de textos fora da lista do preset, frase 'o dono confirma pelo WhatsApp') ficam em scripts/producao/validar-tenant.mjs.",
   "type": "object",
   "additionalProperties": false,
   "required": ["versao", "slug", "nicho", "negocio", "pagina", "funcionamento", "servicos", "avaliacoes", "cores", "agendamento", "textos", "meta"],
@@ -183,6 +183,42 @@
           }
         },
         "rodapeFrase": { "$ref": "#/$defs/textoMedio" }
+      }
+    },
+    "fuso": {
+      "description": "v1.3 (opcional): fuso do negócio para 'aberto agora', 'hoje' e horários livres. Sem ele, o motor usa o fuso da UF do endereço e, sem UF, America/Bahia (ADR-006).",
+      "enum": ["America/Noronha", "America/Belem", "America/Fortaleza", "America/Recife", "America/Araguaina", "America/Maceio", "America/Bahia", "America/Sao_Paulo", "America/Campo_Grande", "America/Cuiaba", "America/Santarem", "America/Porto_Velho", "America/Boa_Vista", "America/Manaus", "America/Eirunepe", "America/Rio_Branco"]
+    },
+    "galeria": {
+      "description": "v1.3 (opcional): fotos do site, só da pasta galeria/ do próprio site (nenhuma imagem de terceiro em tempo de execução). O motor mostra a seção 'Trabalhos da casa' com 3 fotos ou mais; na demonstração, cada uma é rotulada 'Foto de exemplo'. Sem galeria, a seção não existe (ADR-006).",
+      "type": "array",
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["src", "alt", "legenda"],
+        "properties": {
+          "src": { "type": "string", "pattern": "^galeria/[a-z0-9][a-z0-9-]{0,60}\\.(webp|avif|jpg|jpeg|png)$" },
+          "alt": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "legenda": { "type": "string", "minLength": 1, "maxLength": 90 },
+          "credito": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "largura": { "type": "integer", "minimum": 16, "maximum": 4000 },
+          "altura": { "type": "integer", "minimum": 16, "maximum": 4000 }
+        }
+      }
+    },
+    "recados": {
+      "description": "v1.3 (opcional): recados DE EXEMPLO, só em site-demonstração (slug demo-*); o motor só os mostra com demonstracao:true e com selo. Depoimento de cliente real continua em avaliacoes[], com origem e aprovadoEm (ADR-006).",
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["texto", "autor"],
+        "properties": {
+          "texto": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "autor": { "type": "string", "minLength": 1, "maxLength": 40 }
+        }
       }
     },
     "meta": {
