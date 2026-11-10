@@ -52,6 +52,7 @@ O dono operou quatro semanas com outro agente, gastou em anúncio e não vendeu.
 9. **Não virar o plano a cada 24 horas.** Preço, página e produto só mudam depois de uma amostra mínima definida antes. Correção de erro e de qualidade não é virada de plano e não espera.
 10. **Desligar o que não muda decisão.** Relatório, vigia ou painel que ninguém usa para decidir sai do ar.
 11. **Estruturas separadas.** A operação antiga (kits e a frente em inglês) é outra estrutura, cuidada em outra conversa. Daqui só se aproveitam as lições e os dados; nada do Porta Aberta aparece lá e nada de lá aparece aqui.
+12. **Erro grave no ar, jamais.** Nada é dado como publicado sem a conferência no endereço real, como o cliente abre: celular, internet móvel, terceiros de verdade. Teste local e simulação não contam como prova. Anúncio só fica ligado com essa conferência verde; se ela falhar, pausa primeiro e corrige depois (skill `padrao-de-entrega`, bloco "No ar").
 
 ## Governança dos modos
 O dono não escolhe modelo, esforço nem orquestração: a casa escolhe por tarefa (ver CLAUDE.md, "Modo de trabalho"). Trabalho com mais de uma etapa vai para a agência por autorização permanente; conversa e ajuste pequeno rodam direto.

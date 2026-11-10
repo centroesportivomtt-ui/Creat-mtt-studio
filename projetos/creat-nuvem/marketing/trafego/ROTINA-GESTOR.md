@@ -14,6 +14,13 @@ LIMITES (valem sempre)
 - Dado faltando = decisão conservadora ("nada muda") e aviso. Nunca estime para preencher.
 - Nenhum dado pessoal (nome, telefone, e-mail) em arquivo, log ou mensagem.
 
+PASSO 0 · O SITE ESTÁ FUNCIONANDO? (obrigatório desde 10/11/2026, antes de qualquer número)
+Rode, a partir de projetos/creat-nuvem: node scripts/conferir-no-ar.cjs
+- Saída 0 (todas as conferências certas): siga para o passo 1 e registre "site no ar: ok" na observação do dia.
+- Saída 1 (defeito no ar): os anúncios estão levando gente para uma página quebrada. PAUSE na hora as campanhas "PA | Site | Feira" (120254150908340237) e "PA | Site | Salvador RMS" (120254151674300237). Pausar para proteger dinheiro é o único gesto de escrita que esta rotina faz sozinha; religar é do coordenador, depois de corrigir e conferir. Avise o Marcos em bloco curto: o que quebrou (as linhas FALHA), desde quando pode estar quebrado e que as campanhas foram pausadas. Registre no diário com decisão "pausado por defeito no ar".
+- Saída 2 ou o script não roda: não conclua nada sobre o site. Registre "site no ar: não verificado" e avise.
+Motivo: em 09 e 10/11 a medição nunca carregou e as demonstrações abriam sem formulário, com todos os testes locais verdes. Ninguém tinha olhado o site real.
+
 PASSO 1 · CONTEXTO
 Leia a última linha de diario-campanha.csv. Descubra: fase vigente, dia da fase (D+N, N = dias completos de veiculação; dia 1 = dia da largada), orçamento vigente, anúncios ativos e se hoje cai entre 23/11 e 29/11 (Black Friday em 27/11).
 

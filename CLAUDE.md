@@ -35,6 +35,10 @@ Agentes em `.claude/agents/`, skills da casa em `.claude/skills/`, fluxo que coo
 - `verificacao-visual`: prints em celular/desktop, claro/escuro, com erros de console, rolagem e texto pequeno (`node .claude/skills/verificacao-visual/olhar.cjs <página>`).
 - `navegador`: Chromium persistente controlado por comandos (`node .claude/skills/navegador/navegar.cjs abrir|ver|clicar|digitar|ler|print|console`) para testar fluxos como uma pessoa.
 - `padrao-de-entrega`: definição de pronto e formato do relatório.
+- `grilling`: interrogatório do plano em rodadas, com resposta recomendada; por dentro, a agência interroga o próprio plano antes de distribuir.
+- `handoff`: passagem de bastão para outra conversa, em página privada, nunca no repositório.
+- `find-skills`: acha a skill certa (em casa e no skills.sh), confere, lê inteira, revisa e só então traz. Registro em `docs/skills-de-fora.md`.
+- `agent-browser`: o navegador da casa com o método do agent-browser (sessão por tarefa, espera por condição).
 
 ## Automações recorrentes
 
@@ -70,6 +74,7 @@ O dono delegou a escolha dos modos. O Claude decide sozinho e registra, sem perg
 - Projeto que precisa ser memorável passa pelo `criativo` antes do design.
 - Nenhuma interface é dada como pronta sem percorrer o fluxo no `navegador`, rodar `verificacao-visual` e olhar os prints.
 - Todo código novo passa pelo `revisor`; nada é publicado sem `qa` e `seguranca`.
+- **Nada é "publicado" sem a conferência no ar.** Depois de todo deploy roda a conferência no endereço de produção (Porta Aberta: `node projetos/creat-nuvem/scripts/conferir-no-ar.cjs`). Falhou: pausa os anúncios daquela página, corrige e confere de novo. Teste local verde não é prova (skill `padrao-de-entrega`, "No ar").
 - Textos em português do Brasil, a não ser que o cliente peça outro idioma.
 - Segredos nunca entram no repositório.
 

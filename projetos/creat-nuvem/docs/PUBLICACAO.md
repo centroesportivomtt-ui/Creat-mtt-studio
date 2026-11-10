@@ -114,3 +114,16 @@ Os sites carregam `motor.js`, `efeito.js`, `som.js` e `agendamento.js` com `defe
 Antes de publicar qualquer site ou mudança em `motor/`, rode `node scripts/conferir-boot.cjs` (ou `npm run conferir-boot`). Ele serve cada `dist/<slug>/` com atraso de 0, 350 e 900 ms nos scripts que vêm depois do motor e falha se o formulário ou o gesto não aparecerem. Teste local sem atraso não pega esse defeito.
 
 Cada site publicado tem a própria cópia de `motor/v1/`. Correção no motor exige republicar `public/motor/` (prévia da vitrine) e `public/sites/<slug>/motor/` de todos os sites no ar.
+
+## Depois de todo deploy: conferência no ar (obrigatória desde 10/11/2026)
+
+```bash
+node scripts/conferir-no-ar.cjs          # ou: npm run conferir-no-ar
+```
+
+São 54 conferências no endereço de produção, em celular com agente de usuário de Android real: páginas (200 e 404), caminho do anúncio nos 3 nichos (nome, prévia, formulário dentro da prévia), medição (o arquivo da Meta carrega e os eventos saem do navegador; o envio é cancelado para não sujar a conta), demonstrações em 3 cargas cada, botão de pagar por praça e os 7 links no Mercado Pago (abre, mostra o item, R$ 297, Pix e cartão; não paga), identificação da empresa e sede.
+
+- Saída 0: pode dizer que está publicado. Cole a última linha no relatório.
+- Saída 1: **defeito no ar**. Pause as campanhas que levam ao site, corrija, publique e rode de novo. Só então religue.
+- Ela não substitui `npm test`, `checar.cjs`, `conferir-moldura.cjs` e `conferir-boot.cjs`, que rodam **antes** do deploy. Ela pega o que eles não veem: rede real, terceiros de verdade e o que a hospedagem faz com os arquivos.
+- A rotina diária do gestor de tráfego roda esta conferência antes de ler qualquer número (ROTINA-GESTOR.md, passo 0).

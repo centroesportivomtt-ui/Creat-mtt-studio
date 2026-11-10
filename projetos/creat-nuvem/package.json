@@ -18,7 +18,8 @@
     "checar": "node scripts/checar.cjs",
     "checar-placeholders": "node scripts/checar-placeholders.cjs",
     "conferir-sites-no-ar": "node scripts/conferir-sites-no-ar.cjs",
-    "conferir-boot": "node scripts/conferir-boot.cjs"
+    "conferir-boot": "node scripts/conferir-boot.cjs",
+    "conferir-no-ar": "node scripts/conferir-no-ar.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.1.0",
