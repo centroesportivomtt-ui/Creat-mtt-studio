@@ -23,7 +23,7 @@ const iQ = args.indexOf('--quadros'), soQuadros = iQ > -1 ? args[iQ + 1].split('
 const log = (...a) => console.log(...a);
 
 /* capa: o quadro mais forte de cada Reel (placa ABERTO com nome e legenda) */
-const CAPA = { R8: 2.3, R7: 0.98 };
+const CAPA = { R8: 2.3, R7: 2.3 };
 
 async function renderPalco(browser, base, reel) {
   const R = L[reel], dir = path.join(TMP, 'quadros', reel);

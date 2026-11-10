@@ -33,22 +33,26 @@
     hora: '2026-11-10T09:12:00-03:00',
     /* sessão A: abertura em close na página real (0 a 2,4 s). Sessão B: plano-sequência sem corte (2,4 a 12 s). */
     sessoes: {
-      A: { t0: 0, t1: 2.4, teclas: teclas(nomeR8, 0.18, 0.045, 0, 1), arraste: { t0: 1.2, t1: 1.46, solta: 1.5, dy: 82 }, relogioParaEm: 1.52 },
-      B: { t0: 2.4, t1: 12.0, teclas: teclas(nomeR8, 3.7, 0.098, 0.03, 8), arraste: { t0: 6.2, t1: 6.5, solta: 6.56, dy: 82 },
-           rolarHome: { t0: 3.45, t1: 3.78, dy: 54 }, rolagem: { t0: 8.35, t1: 11.05 }, toqueDia: 11.4 }
+      /* A segue até 3,6 s: o recuo da câmera revela a MESMA página com a placa em ABERTO (sem salto de estado) */
+      A: { t0: 0, t1: 3.6, teclas: teclas(nomeR8, 0.18, 0.045, 0, 1), arraste: { t0: 1.2, t1: 1.46, solta: 1.5, dy: 82 }, relogioParaEm: 1.52 },
+      /* B: corte seco em 3,6 s (clique) e o plano-sequência recomeça do campo vazio */
+      B: { t0: 3.6, t1: 12.0, teclas: teclas(nomeR8, 3.92, 0.098, 0.03, 8), arraste: { t0: 6.3, t1: 6.6, solta: 6.66, dy: 82 },
+           rolarHome: { t0: 3.62, t1: 3.95, dy: 54 },
+           /* prévia: primeiro para no nome do studio (a promessa "com o nome"), depois desce até o pedido de aula */
+           rolagem: [{ t0: 7.75, t1: 8.5, alvo: 'nome', y: 232 }, { t0: 9.95, t1: 11.05, alvo: 'pedido', y: 200 }], toqueDia: 11.42 }
     },
     camera: { recuo: [2.4, 3.45] },      /* close (2,68x) -> celular (1,43x) */
     legendas: [
       [0.0, 1.2, 'Digite o <k>nome.</k>'],
       [1.2, 2.4, 'Vire a <k>placa.</k>'],
-      [2.4, 3.9, 'Não é animação.<br><k>É a página.</k>'],
-      [3.9, 7.6, 'Sem corte.<br><k>Gravado na página.</k>'],
+      [2.4, 3.6, 'Não é animação.<br><k>É a página.</k>'],
+      [3.6, 7.6, 'Sem corte.<br><k>Gravado na página.</k>'],
       [7.6, 12.0, '<k>O site pronto,</k><br>com o nome.'],
       [12.0, 15.0, 'Digite o <k>nome.</k><br>Veja o site pronto']
     ],
     selos: [
-      { t0: 0, t1: 3.9, texto: 'Creat Nuvem · Porta Aberta', lugar: 'topo-esq' },
-      { t0: 3.9, t1: 12, texto: 'sem corte · gravado na página', lugar: 'topo-esq' },
+      { t0: 0, t1: 3.6, texto: 'Creat Nuvem · Porta Aberta', lugar: 'topo-esq' },
+      { t0: 3.6, t1: 12, texto: 'sem corte · gravado na página', lugar: 'topo-esq' },
       { t0: 0, t1: 12, texto: 'nome fictício', lugar: 'topo-dir' },
       { t0: 7.7, t1: 12, texto: 'prévia · serviços e preços de exemplo', lugar: 'baixo-2' }
     ],
@@ -60,7 +64,7 @@
   var R7 = {
     codigo: 'R7', nicho: 'barbearia', arquivo: 'R7-barbearia-v1', nome: nomeR7, duracao: 15,
     hora: '2026-11-10T23:12:00-03:00',
-    cena: { descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 158 }, vidro: [2.42, 2.98] },
+    cena: { descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, vidro: [2.42, 2.98] },
     sessoes: {
       C: { t0: 2.4, t1: 7.0, rolagem: [3.2, 3.9], toques: [
         { t: 4.25, alvo: 'dia', rolarAntes: null },
@@ -92,7 +96,7 @@
     A.teclas.forEach(function (k) { if (k.ch !== ' ') e.push({ t: k.t, voz: 'giz', forca: 1 }); });
     e.push({ t: A.arraste.t0, voz: 'tic', forca: 1 }, { t: A.arraste.t0 + 0.12, voz: 'rangido', forca: 0.8 });
     e.push({ t: A.arraste.solta + 0.6, voz: 'sino', forca: 1 });
-    e.push({ t: 2.4, voz: 'clique', forca: 0.7 }, { t: 2.3, voz: 'sala', dur: 9.9 });
+    e.push({ t: 3.6, voz: 'clique', forca: 0.7 }, { t: 2.3, voz: 'sala', dur: 9.9 });
     B.teclas.forEach(function (k) { e.push({ t: k.t, voz: 'tecla', forca: 0.55 }); if (k.ch !== ' ') e.push({ t: k.t + 0.004, voz: 'giz', forca: 0.5 }); });
     e.push({ t: B.arraste.t0, voz: 'tic', forca: 1 }, { t: B.arraste.t0 + 0.12, voz: 'rangido', forca: 0.7 });
     e.push({ t: B.arraste.solta + 0.6, voz: 'sino', forca: 0.95 });

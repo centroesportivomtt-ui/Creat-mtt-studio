@@ -112,6 +112,10 @@ async function prepararHome(pg, base, nicho) {
   return medirHome(pg);
 }
 
+/* valores em reais visíveis na janela (o vídeo não mostra preço: o palco cobre com o selo "exemplo") */
+const PRECOS = () => [...document.querySelectorAll('body *')].filter(e => !e.children.length && /R\$\s?\d/.test(e.textContent) && e.offsetParent)
+  .map(e => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; }).filter(r => r.y + r.h > 0 && r.y < 700 && r.w > 0);
+
 function suave(x) { return x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x); }
 function easeInOut(x) { return x <= 0 ? 0 : x >= 1 ? 1 : (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2); }
 function easeOut(x) { return x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3); }
@@ -156,18 +160,25 @@ async function capturarR8(browser, base, L, dir, log) {
       if (S.rolagem) {
         const fr = pg.frames().find(x => x.url().startsWith('blob:'));
         if (fr && !prevAberta) { prevAberta = true; try { await fr.waitForLoadState('load', { timeout: 8000 }); } catch (e) {} ms.previaEm = t; }
-        if (fr && t >= S.rolagem.t0 && !rol) {
-          rol = await fr.evaluate(() => {
-            const r0 = scrollY;
-            const alvo = [...document.querySelectorAll('h2,h3,.titulo,strong')].find(e => /pe[çc]a a sua aula experimental/i.test(e.textContent)) || document.getElementById('fita-dias');
-            document.documentElement.style.scrollBehavior = 'auto';
-            const y = alvo ? alvo.getBoundingClientRect().top + scrollY - 150 : 1600;
-            return { de: scrollY, para: Math.max(0, y) };
-          });
-          ms.rolagem = rol;
+        /* rolagem em etapas: cada etapa mede o alvo na hora em que começa (texto real da prévia) */
+        const etapas = Array.isArray(S.rolagem) ? S.rolagem : [S.rolagem];
+        for (const E of etapas) {
+          if (fr && t >= E.t0 - 1e-6 && !E.__feito) {
+            E.__feito = true;
+            const fb = await (await fr.frameElement()).boundingBox();
+            rol = await fr.evaluate(({ alvo, yTela, topo }) => {
+              document.documentElement.style.scrollBehavior = 'auto';
+              const hs = [...document.querySelectorAll('h1,h2,h3')];
+              const el = alvo === 'nome' ? hs.find(e => e.tagName === 'H1') : (hs.find(e => /pe[çc]a a sua aula experimental|pe[çc]a o seu hor[áa]rio/i.test(e.textContent)) || document.getElementById('fita-dias'));
+              const y = el ? el.getBoundingClientRect().top + scrollY - (yTela - topo) : 1600;
+              return { de: scrollY, para: Math.max(0, y), alvo };
+            }, { alvo: E.alvo, yTela: E.y, topo: fb.y });
+            rol.t0 = E.t0; rol.t1 = E.t1;
+            (ms.rolagem = ms.rolagem || []).push(rol);
+          }
         }
         if (fr && rol) {
-          const y = rol.de + (rol.para - rol.de) * easeInOut((t - S.rolagem.t0) / (S.rolagem.t1 - S.rolagem.t0));
+          const y = rol.de + (rol.para - rol.de) * easeInOut((t - rol.t0) / (rol.t1 - rol.t0));
           await fr.evaluate(y => window.scrollTo(0, y), y);
         }
         if (fr && S.toqueDia && t >= S.toqueDia - 1e-6 && !tocou) {
@@ -249,6 +260,7 @@ async function capturarR7(browser, base, L, dir, log) {
     }
     await pg.clock.runFor(1000 / FPS);
     await posicionar(pg, t);
+    (meta.precos = meta.precos || {})[f] = await pg.evaluate(PRECOS);
     await fotografar(pg, path.join(pasta, String(f).padStart(4, '0') + '.png'));
     if (f % 30 === 0) log('  R7/C ' + t.toFixed(1) + ' s');
   }
