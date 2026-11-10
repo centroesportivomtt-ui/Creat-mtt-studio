@@ -4,6 +4,10 @@ Verbo (T3), 08/11/2026. Seção 13 do briefing. Para configurar uma vez no app W
 
 Atualizado em 09/11/2026 para os anúncios de `trafego/anuncios-meta.md`: fluxo de fechamento em 5 mensagens (F1 a F5), lembretes 1:1 (L1 e L2), objeções O1 a O8 e etiquetas que a Meta lê. R5 passou a ser o F5; R14 virou O1 a O8; "É robô?" virou R15.
 
+Atualizado em 10/11/2026 (onda 2, pacote 2B): regra única de prazo no R3, no F5 e na ausência; R7 com o prazo de 7 dias para responder ao site pronto; R14 passou a ser a desistência (`/desisto`, o mesmo texto que `docs/DESISTENCIA.md` chama de R16); V1 e V2 para os posts do Vitrine (`docs/VITRINE-POSTS.md`); domínio só "seu" quando o cliente registra um. Termos agora na versão 2 (termos-v2).
+
+**Regra única de prazo.** Toda mensagem que fala de prazo usa esta frase, sem mudar nada: "O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado)." A mesma frase está em `conteudo/home.json`, `conteudo/faq.json`, `conteudo/abrir.json`, `conteudo/obrigado.json` e `conteudo/termos.md` (cláusula 5).
+
 ## Regras
 
 - No máximo 4 linhas por mensagem. Tom direto, de pessoa para pessoa. Sem emoji.
@@ -32,7 +36,7 @@ Fora do horário de atendimento (segunda a sábado, das 9h às 19h).
 
 > Recebemos a sua mensagem. A equipe responde de segunda a sábado, das 9h às 19h.
 > Enquanto isso, veja a prévia do seu site: {{site.url}}/?utm_source=whatsapp&utm_medium=organico&utm_campaign=ausencia
-> Se você já pagou, o seu pedido está na fila. O prazo de {{precos.prazoHoras}} h conta a partir do pagamento confirmado com os 4 dados do pedido.
+> Se você já pagou, o seu pedido está na fila. O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).
 
 ## Fluxo de fechamento em 5 mensagens
 
@@ -67,7 +71,7 @@ Etiquetas: "Lead · anúncio" (ou "Lead · orgânico") e, da Meta, **Lead**.
 
 **F4 · Preço e Pix** (`/f4`) · quando a pessoa disser que gostou, perguntar o preço ou mandar o pedido de teste
 > Para pôr {negócio} no ar: Abertura de R$ {{precos.abertura.inauguracao.preco}}, uma vez, nas {{precos.abertura.inauguracao.vagasTotal}} vagas de inauguração (depois, R$ {{precos.abertura.padrao}}).
-> A mensalidade só começa no dia em que o site entra no ar: Aberto R$ {{precos.planos.aberto}} ou Vitrine R$ {{precos.planos.vitrine}} por mês, este com posts para o Instagram. Sem fidelidade e sem multa.
+> A mensalidade só começa no dia em que o site entra no ar: Aberto R$ {{precos.planos.aberto}} ou Vitrine R$ {{precos.planos.vitrine}} por mês no cartão, ou anual no Pix. O Vitrine traz 4 posts prontos por mês para você publicar. Sem fidelidade e sem multa.
 > Pague por Pix ou cartão neste link, que mostra o total antes: {{site.url}}/abrir/#plano=aberto&k={nicho}&n={negócio}&utm_source=meta&utm_medium=pago&utm_campaign=ctwa-nov26&utm_content={código}
 > Depois de pagar, você tem 7 dias para desistir com o dinheiro de volta.
 
@@ -83,12 +87,14 @@ Mande as duas primeiras linhas do F4 (Abertura e mensalidade) e, em seguida, est
 O link de pagamento só sai depois do "LI E ACEITO". Abertura inauguração (R$ 297): https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-388377b3-87f4-43db-b88c-af75b6ce6526 · Abertura (R$ 497): https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-fc609d62-006f-49e5-ae5a-93e73f762a68 · Plano Aberto R$ 147/mês (cartão): https://buy.stripe.com/7sYbIV5JIe7nfvR09r2cg00 · Plano Vitrine R$ 297/mês (cartão): https://buy.stripe.com/28EcMZ7RQbZf2J56xP2cg01 · portal do assinante (cancelar, trocar cartão): https://billing.stripe.com/p/login/7sYbIV5JIe7nfvR09r2cg00 Sem o `/abrir/`, os 4 dados do pedido vêm por esta conversa, depois do pagamento (F5).
 
 **F5 · Confirmação e próximos passos** (`/recebi`, o mesmo atalho do antigo R5) · só depois de ver o pagamento aprovado no Mercado Pago
-> Pagamento confirmado, {nome}. Pedido {id}.
-> O site fica pronto para você aprovar em até {{precos.prazoHoras}} h, contadas a partir de quando eu tiver os 4 dados: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. {Falta: ... | Já tenho os 4: o relógio começou agora.}
-> Próximos passos: eu mando o site aqui, você responde APROVO ou o que quer mudar, e o site entra no ar. A mensalidade começa nesse dia.
-> Veja como a equipe trabalha (demonstração, com o nome do seu negócio na fachada): {link da sede}
+> Pagamento confirmado, {nome}. Pedido {id}: guarde este número, ele é o seu protocolo.
+> O site fica pronto para você aprovar em até {{precos.prazoHoras}} h. O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).
+> Se puder, mande também a lista de serviços com preço e duração. Se não mandar, o site sai com os serviços do modelo, sem preço, e você ajusta antes de aprovar.
+> Os termos que você aceitou (termos-v2, a versão que você aceitou): {{site.url}}/termos/ . O recibo do pagamento é o que o Mercado Pago mandou para o seu e-mail.
 
-Se a Creat passar do prazo, o 1º mês do plano é grátis (termos, cláusula 5). Diga isso só se a pessoa perguntar pelo prazo; o R3 tem o texto. Etiquetas: "Pago · conferir" até conferir os dados, depois "Em produção". Da Meta: **Paid**, em até 7 dias do clique no anúncio.
+Mande em seguida, como segunda mensagem: "Próximos passos: eu mando o site aqui, você responde APROVO ou o que quer mudar, e o site entra no ar. A mensalidade começa nesse dia. Veja como a equipe trabalha (demonstração, com o nome do seu negócio na fachada): {link da sede}". O F5 tem mais de 4 linhas por causa da regra de prazo, que não pode ser cortada nem resumida. Se o pedido chegou sem endereço ou horário, peça o que falta numa terceira mensagem: "Para montar, falta: {o que falta}."
+
+Se a Creat passar do prazo, o 1º mês do plano é grátis (termos, cláusula 5). Diga isso só se a pessoa perguntar pelo prazo; o R3 tem o texto. Se o cliente aceitou a versão 1 dos termos (o pedido diz `termos-v1`), troque "termos-v2" por "termos-v1" na mensagem. Etiquetas: "Pago · conferir" até conferir os dados, depois "Em produção". Da Meta: **Paid**, em até 7 dias do clique no anúncio.
 
 ## Lembretes 1:1 (só para quem chamou)
 
@@ -110,15 +116,15 @@ Atalho entre parênteses: é o que se digita depois da barra `/` no app.
 > Dá para testar o pedido de horário no seu próprio WhatsApp. Ver é grátis.
 
 **R2 · Preços** (`/precos`)
-> Abertura: R$ {{precos.abertura.atual}}, uma vez. Depois, o plano começa no dia em que o site entra no ar: Aberto R$ {{precos.planos.aberto}} por mês ou Vitrine R$ {{precos.planos.vitrine}} por mês (com posts para o Instagram).
+> Abertura: R$ {{precos.abertura.atual}}, uma vez. Depois, o plano começa no dia em que o site entra no ar: Aberto R$ {{precos.planos.aberto}} por mês ou Vitrine R$ {{precos.planos.vitrine}} por mês (com 4 posts prontos por mês para você publicar), no cartão.
 > Sem fidelidade e sem multa. Anual: 12 meses pelo preço de {{precos.anualMesesPagos}}, no Pix.
 > Não inclui anúncio pago, loja virtual nem a anuidade do domínio, que é paga no seu nome ao Registro.br.
 
 Se a inauguração estiver valendo, troque a primeira linha por: "Abertura: R$ {{precos.abertura.inauguracao.preco}} nas {{precos.abertura.inauguracao.vagasTotal}} primeiras vagas (depois R$ {{precos.abertura.padrao}}), uma vez." Confira as vagas restantes no `precos.json` antes de mandar.
 
 **R3 · Prazo e garantia** (`/prazo`)
-> O site fica pronto para você aprovar em até {{precos.prazoHoras}} h, contadas do pagamento confirmado com os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário.
-> Se a gente passar do prazo, o 1º mês do plano é grátis.
+> O site fica pronto para você aprovar em até {{precos.prazoHoras}} h. Se a gente passar do prazo, o 1º mês do plano é grátis.
+> O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).
 > Domínio próprio e Google ficam fora do relógio, porque dependem de você e de terceiros.
 
 **R4 · Preciso ter alguma coisa?** (`/precisa`)
@@ -135,8 +141,10 @@ Substituído pelo F5 do fluxo de fechamento, que ficou com o atalho `/recebi`. C
 
 **R7 · Prévia pronta** (`/pronta`)
 > {nome}, o site da {negócio} está pronto para você conferir: {link}
-> Para aprovar, responda APROVO. Se quiser mudar algo, escreva o que é, numa mensagem só.
-> O site só entra no ar depois do seu APROVO.
+> Abra, confira e toque em Aprovar e colocar no ar, ou responda APROVO aqui. Se quiser mudar algo, escreva o que é, numa mensagem só. O link vale 14 dias.
+> Se você não responder em 7 dias, o site entra no ar como está e a mensalidade começa nesse dia. Você pode pedir ajustes depois.
+
+O `{link}` é o link de aprovação de `docs/EXECUTOR.md`, passo (i), item 3 (com o código depois do `#`). Ele não vai para relatório, etiqueta nem outra conversa. Os 7 dias contam do envio desta mensagem (`rascunho_em`); antes deles, o site não vai ao ar sem o APROVO.
 
 **R8 · No ar** (`/noar`)
 > O site está no ar: {link}. A mensalidade começa hoje.
@@ -157,7 +165,7 @@ Substituído pelo F5 do fluxo de fechamento, que ficou com o atalho `/recebi`. C
 
 **R11 · Cancelamento e SAIR** (`/sair`)
 > Sem multa e sem fidelidade. O cancelamento vale para o próximo ciclo; o mês pago segue até o fim.
-> Você recebe o SAIR: o site num arquivo que abre direto no computador, com o botão do seu WhatsApp, mais os seus textos, fotos e logo. O domínio já é seu.
+> Você recebe o SAIR: o site num arquivo que abre direto no computador, com o botão do seu WhatsApp, mais os seus textos, fotos e logo. Se você registrou um domínio, ele continua seu.
 > Confirma o cancelamento? Responda CANCELAR e eu mando o SAIR por aqui.
 
 **R12 · Pedido de depoimento** (`/depoimento`)
@@ -170,11 +178,32 @@ Substituído pelo F5 do fluxo de fechamento, que ficou com o atalho `/recebi`. C
 
 Nota (08/11/2026): o R13 não promete recompensa. Nenhuma cláusula de `conteudo/termos.md` cobre indicação. A recompensa só entra neste texto depois que o Marcos decidir a regra (quando vale, quem recebe, quantas vezes) e ela for escrita nos termos. O `utm_content={id}` leva o id curto do pedido (`PA-` + 8 caracteres) e aguarda o aval da Muralha para uso no analytics; até lá, o link acima sai sem o parâmetro. Com o aval, acrescente `&utm_content={id}` ao fim.
 
+**R14 · Desistência** (`/desisto`) · na hora em que a pessoa pedir para desistir, dentro dos 7 dias (termos, cláusula 6). É o texto que `docs/DESISTENCIA.md` chama de R16.
+> Recebemos o seu pedido de desistência. Protocolo: {id}.
+> Devolvemos o valor em até 5 dias úteis depois do pedido, pelo mesmo meio de pagamento (no Pix, na mesma conta; no cartão, o estorno aparece na fatura conforme o banco).
+> O site sai do ar hoje. Você não precisa fazer mais nada.
+
+Não pergunte o motivo e não ofereça desconto. Depois de mandar, siga os passos de `docs/DESISTENCIA.md`, seção 3, e use a etiqueta "Arrependimento". Pedido chegou por e-mail: responda com o mesmo texto, no e-mail. Sem o número do pedido, ache pelo WhatsApp de quem escreveu, sem pedir documento.
+
 **R15 · "É robô?"** (`/robo`)
 > É uma equipe de agentes de IA, e eu sou uma pessoa da equipe. A IA monta os textos do seu site, regras automáticas conferem e uma pessoa lê tudo antes de você aprovar.
 > Aqui no WhatsApp, quem responde é gente.
 
 Atenção no R15: "quem responde é gente" só pode ficar enquanto as respostas forem escritas por uma pessoa. Se um dia entrar resposta automática por IA neste número, troque a última linha por "Algumas respostas aqui são automáticas; uma pessoa da equipe acompanha a conversa."
+
+## Posts do plano Vitrine · V1 e V2
+
+Só para cliente do Vitrine com o site no ar. Processo inteiro em `docs/VITRINE-POSTS.md`.
+
+**V1 · Posts do mês** (`/posts`) · na primeira semana do mês do plano; no primeiro mês, em até 7 dias do site no ar. Mande as 4 imagens antes, cada uma com a legenda logo abaixo.
+> {nome}, aqui estão os 4 posts de {mês} para o Instagram da {negócio}, com a legenda de cada um.
+> Para cada post, responda com o número e SIM, AJUSTE (e o que mudar) ou NÃO. Exemplo: 1 SIM, 2 AJUSTE trocar a foto, 3 SIM, 4 NÃO.
+> Nada vai para o seu Instagram sem o seu sim. Os aprovados você publica no seu perfil, quando quiser.
+
+**V2 · Lembrete dos posts** (`/posts2`) · uma vez, 3 dias depois do V1, só se a pessoa não respondeu
+> {nome}, os 4 posts de {mês} continuam aqui na conversa. Quando quiser, responda com o número de cada um e SIM, AJUSTE ou NÃO.
+
+Depois do V2, pare. Sem resposta, nada é publicado e nada mais é mandado sobre os posts daquele mês.
 
 ## Objeções · O1 a O8
 
@@ -205,7 +234,7 @@ Se a inauguração estiver valendo e o `atualizado_em` de `dados/precos.json` ti
 **O5 · "Como sei que não é golpe?"** (`/confia`)
 > Pergunta justa. Você vê o site pronto antes de pagar qualquer coisa, e o pagamento é pelo Mercado Pago, com comprovante.
 > Depois de pagar, você tem 7 dias para desistir com o dinheiro de volta pelo mesmo meio (Código de Defesa do Consumidor, art. 49).
-> A Creat.MTT Studio fica em Riachão do Jacuípe (BA), [PREENCHER: CNPJ ou MEI]. O nosso trabalho está no Instagram @creat.mtt, e os termos, aqui: {{site.url}}/termos/
+> A creat.MTT Studio fica em Riachão do Jacuípe (BA), CNPJ 57.068.874/0001-06. O nosso trabalho está no Instagram @creat.mtt, e os termos, aqui: {{site.url}}/termos/
 
 Nunca peça senha, número de cartão nem foto de documento, nem para "provar" nada. O pagamento acontece só na página do Mercado Pago.
 
@@ -219,7 +248,7 @@ Nunca peça senha, número de cartão nem foto de documento, nem para "provar" n
 > Veja como fica, com o nome do seu negócio: {link da prévia}
 
 **O8 · "E se eu quiser sair?"** (`/sesair`)
-> Você sai quando quiser, sem multa. Leva o site num arquivo que abre no computador, o domínio, que já é seu, e os seus arquivos.
+> Você sai quando quiser, sem multa. Leva o site num arquivo que abre no computador e os seus arquivos. Se você registrou um domínio, ele continua seu.
 > Está nos termos, na cláusula do SAIR: {{site.url}}/termos/
 
 Nos links de prévia das objeções, use o mesmo formato do F3. Fora de anúncio, use `utm_campaign=r14` no lugar de `ctwa-nov26`: a campanha antiga das objeções continua valendo em `utm.md`.

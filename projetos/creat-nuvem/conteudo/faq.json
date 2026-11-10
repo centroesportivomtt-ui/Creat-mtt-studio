@@ -9,7 +9,7 @@
     {
       "id": "quem-confere",
       "pergunta": "Quem confere o meu site?",
-      "resposta": "Duas camadas. Primeiro, regras automáticas: o WhatsApp precisa estar no formato certo, o horário precisa fechar depois de abrir, o site é testado num celular de 390 px sem rolagem lateral. Depois, uma pessoa da equipe lê tudo. Por último, você: nada vai ao ar sem a sua aprovação."
+      "resposta": "Duas camadas. Primeiro, regras automáticas: o WhatsApp precisa estar no formato certo, o horário precisa fechar depois de abrir, o site é testado num celular de 390 px sem rolagem lateral. Depois, uma pessoa da equipe lê tudo. Por último, você: o site vai para você conferir e aprovar antes de entrar no ar."
     },
     {
       "id": "assinatura",
@@ -24,22 +24,22 @@
     {
       "id": "dominio",
       "pergunta": "O domínio é meu?",
-      "resposta": "É. O domínio é registrado no seu nome e no seu CPF ou CNPJ, no Registro.br. A Creat nunca guarda a sua senha. Enquanto você não tiver domínio, o site funciona num endereço da Creat."
+      "resposta": "É, se você registrar um. O domínio .com.br é registrado no seu nome e no seu CPF ou CNPJ, no Registro.br, e a anuidade é paga por você. A gente manda o passo a passo, e a Creat nunca guarda a sua senha. Sem domínio, o site funciona num endereço da Creat, sem custo, enquanto o plano estiver ativo."
     },
     {
       "id": "cancelar",
       "pergunta": "E se eu cancelar?",
-      "resposta": "Sem multa e sem fidelidade. Você pede pelo WhatsApp e recebe o SAIR: o site num arquivo que abre direto no computador, com o botão do WhatsApp funcionando, mais os seus textos, fotos e logo. O domínio já é seu. O endereço da Creat redireciona por 30 dias e depois sai."
+      "resposta": "Sem multa e sem fidelidade. Você pede pelo WhatsApp e recebe o SAIR: o site num arquivo que abre direto no computador, com o botão do WhatsApp funcionando, mais os seus textos, fotos e logo. Se você registrou um domínio, ele continua seu. Por 30 dias, o endereço antigo mostra uma página que leva ao seu domínio. Depois, deixa de existir. Sem domínio, o endereço da Creat deixa de existir quando você sai."
     },
     {
       "id": "prazo",
       "pergunta": "E se passar do prazo?",
-      "resposta": "O prazo é de {{precos.prazoHoras}} h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. O formulário também pede seu nome e seu e-mail, para contato e recibo. Eles não mudam o prazo. Se passar, o 1º mês do plano é grátis. Domínio próprio e verificação do Google ficam fora do relógio, porque dependem de você e de terceiros."
+      "resposta": "O site fica pronto para você aprovar em até {{precos.prazoHoras}} h. Se passar, o 1º mês do plano é grátis. O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado). Domínio próprio e verificação do Google ficam fora do relógio, porque dependem de você e de terceiros."
     },
     {
       "id": "instagram",
       "pergunta": "Preciso de Instagram?",
-      "resposta": "Não. O plano Aberto funciona só com o WhatsApp. O Instagram entra no plano Vitrine, que traz posts prontos todo mês para você aprovar."
+      "resposta": "Não. O plano Aberto funciona só com o WhatsApp. O Instagram entra no plano Vitrine: 4 posts por mês, com imagem e legenda, que você aprova e publica no seu perfil. Nada é publicado sem o seu sim."
     },
     {
       "id": "clinica",
@@ -49,7 +49,7 @@
     {
       "id": "meus-dados",
       "pergunta": "E os meus dados?",
-      "resposta": "Antes de você aceitar os termos, a página não guarda nada pessoal: o nome do negócio e o seu WhatsApp de teste ficam só no seu aparelho. Os dados do pedido vão pelo seu próprio WhatsApp para o Suporte Creat. O pagamento e o CPF ou CNPJ ficam com o Mercado Pago (Pix e cartão) ou com o Stripe (mensalidade no cartão). Detalhes na página de privacidade."
+      "resposta": "Enquanto você só vê a prévia, o nome do negócio e o seu WhatsApp de teste ficam no seu aparelho. Quando você toca em Pagar, enviamos à Creat os dados do formulário do pedido para registrá-lo. Se você não pagar, apagamos em 30 dias. O pagamento e o CPF ou CNPJ ficam com o Mercado Pago (Pix e cartão) ou com o Stripe (mensalidade no cartão). Detalhes na página de privacidade."
     },
     {
       "id": "pedido-confirmado",
@@ -69,7 +69,7 @@
     {
       "id": "gostar",
       "pergunta": "E se eu não gostar do site pronto?",
-      "resposta": "Você pede os ajustes antes de aprovar. E tem 7 dias de arrependimento depois do pagamento: o valor volta para você e o site sai do ar."
+      "resposta": "Você pede os ajustes antes de aprovar. E tem 7 dias para desistir, contados do pagamento ou da entrega do site para você aprovar, o que vier por último. Devolvemos o valor em até 5 dias úteis depois do pedido, pelo mesmo meio de pagamento (no Pix, na mesma conta; no cartão, o estorno aparece na fatura conforme o banco), e o site sai do ar. Peça pelo WhatsApp do Suporte Creat ou por e-mail: o número do pedido é o seu protocolo."
     }
   ]
 }

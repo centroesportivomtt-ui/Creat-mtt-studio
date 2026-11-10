@@ -2,7 +2,7 @@ REVISAO_JURIDICA_PENDENTE
 
 # Termos de uso do Porta Aberta
 
-Versão 1 (termos-v1) · 08/11/2026 · texto revisto em 10/11/2026 para explicar o preço de inauguração e quando o plano anual é cobrado
+Versão 2 (termos-v2) · 10/11/2026 · substitui a versão 1 (termos-v1, de 08/11/2026). Mudou: o prazo e a hora da confirmação do pagamento, a aprovação do site com prazo de 7 dias para responder, o prazo da devolução na desistência, os posts do plano Vitrine, o domínio e o endereço do site na saída, e a régua de atraso. Quem aceitou a versão 1 continua com ela até ser avisado (cláusula 17).
 
 Estes termos valem para quem contrata o Porta Aberta, o serviço da Creat Nuvem que monta e mantém no ar o site de um negócio local. Ao marcar o aceite em /abrir/ e pagar a Abertura, você concorda com eles. Escrevemos em linguagem simples de propósito. Se algo não ficar claro, pergunte antes de pagar.
 
@@ -16,7 +16,7 @@ O Porta Aberta monta o site do seu negócio a partir de um modelo pronto do seu 
 
 O site tem um botão de pedido de horário. O cliente do seu negócio escolhe o serviço, o dia e o horário, e o pedido abre no WhatsApp do seu negócio. O site não confirma horário sozinho: quem confirma é você, pelo WhatsApp. Se você já usa um aplicativo de horários, o botão pode abrir esse aplicativo.
 
-Como o trabalho é feito: a equipe de agentes de IA da Creat criou os modelos e as regras de qualidade. No seu pedido, os textos são escritos por IA, conferidos por regras automáticas e lidos por uma pessoa da equipe. Nada vai ao ar sem a sua aprovação.
+Como o trabalho é feito: a equipe de agentes de IA da Creat criou os modelos e as regras de qualidade. No seu pedido, os textos são escritos por IA, conferidos por regras automáticas e lidos por uma pessoa da equipe. O site vai para você conferir e aprovar antes de entrar no ar (cláusula 5).
 
 A Creat não promete número de clientes, de pedidos nem de faturamento.
 
@@ -29,7 +29,7 @@ Ver a prévia é grátis e não exige cadastro. A prévia usa serviços, preços
 - **Abertura**: pagamento único de R$ {{precos.abertura.padrao}}.
 - **Preço de inauguração**: R$ {{precos.abertura.inauguracao.preco}} pela Abertura, válido para as {{precos.abertura.inauguracao.vagasTotal}} primeiras Aberturas pagas. Enquanto ele vale, /abrir/ mostra "preço de inauguração"; quando as Aberturas de inauguração acabam, a página passa a mostrar R$ {{precos.abertura.padrao}}. O preço que vale é o que aparece em /abrir/ no momento do pagamento.
 - **Plano Aberto**: R$ {{precos.planos.aberto}} por mês. Inclui hospedagem, pedido de horário no WhatsApp, alterações dentro dos limites da cláusula 10, suporte pelo WhatsApp e ajuda com o domínio e o Perfil da Empresa no Google.
-- **Plano Vitrine**: R$ {{precos.planos.vitrine}} por mês. Inclui tudo do Aberto, posts prontos todo mês para o seu Instagram e prazo menor para pedidos especiais.
+- **Plano Vitrine**: R$ {{precos.planos.vitrine}} por mês. Inclui tudo do Aberto, 4 posts por mês para o seu Instagram, entregues prontos para você publicar (cláusula 11), e prazo menor para pedidos especiais.
 - **Plano anual (opcional)**: 12 meses pelo preço de {{precos.anualMesesPagos}}, pago no Pix. No pedido, você paga só a Abertura. O plano anual é cobrado no dia em que o site entra no ar, pelo valor que aparecia em /abrir/ quando você fez o pedido. Nada do anual é cobrado antes de o site existir.
 - O total aparece antes do pagamento. Não há taxa escondida.
 - O preço do seu plano fica travado por 12 meses a partir do dia em que o site entra no ar.
@@ -38,16 +38,22 @@ Ver a prévia é grátis e não exige cadastro. A prévia usa serviços, preços
 ## 5. Prazo e garantia
 
 - O site fica pronto para a sua aprovação em até {{precos.prazoHoras}} horas.
-- O prazo começa quando a Creat confirma o pagamento e tem os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário de funcionamento. O formulário também pede o nome do responsável e o e-mail. Eles servem para contato, recibo e registro dos termos e não mudam a contagem.
+- O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).
+- O site sai com os serviços do modelo do seu nicho, sem preço, a não ser que você mande a sua lista de serviços com preço e duração. Você ajusta os serviços antes de aprovar.
 - Sem logo e fotos, o site sai com a tipografia do modelo. Logo e fotos enviados depois entram como melhoria em até 24 horas do envio.
 - Ficam fora do prazo o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros.
-- Se a Creat passar do prazo, o 1º mês do plano é grátis.
+- Se a Creat passar do prazo, o 1º mês do plano é grátis: a mensalidade começa um mês depois do dia em que o site entra no ar.
+
+**Aprovação.** O link do site pronto chega pelo WhatsApp do Suporte Creat e aparece na página do pedido, no aparelho em que você pagou. Você confere, pede os ajustes que quiser e aprova. Se você não responder em 7 dias, o site entra no ar como está e a mensalidade começa nesse dia. Você pode pedir ajustes depois.
 
 ## 6. Direito de arrependimento
 
-Você tem 7 dias, contados do pagamento, para desistir sem dar motivo (Código de Defesa do Consumidor, art. 49). Basta pedir pelo WhatsApp do Suporte Creat ou por e-mail.
+Você tem 7 dias para desistir sem dar motivo, contados do pagamento ou da entrega do site para a sua aprovação, o que vier por último (Código de Defesa do Consumidor, art. 49). Basta pedir pelo WhatsApp do Suporte Creat ou por e-mail ({{contato.email}}).
 
-- O valor pago é devolvido pelo mesmo meio de pagamento.
+- Você recebe o protocolo na hora: é o número do pedido (começa com PA-).
+- Devolvemos o valor em até 5 dias úteis depois do pedido, pelo mesmo meio de pagamento (no Pix, na mesma conta; no cartão, o estorno aparece na fatura conforme o banco).
+- Se já houver mensalidade cobrada dentro desse prazo, ela também é devolvida e a assinatura é cancelada.
+- O seu aceite destes termos fica registrado no pedido com a versão, a data e a hora do servidor da Creat.
 - Ao marcar o aceite, você pede que a produção comece na hora. Mesmo assim, o direito de arrependimento continua valendo nesses 7 dias.
 - Se você desistir, o site sai do ar. A exportação dos arquivos (cláusula 9) só é liberada depois dos 7 dias, para quem continua cliente.
 
@@ -60,14 +66,13 @@ Você tem 7 dias, contados do pagamento, para desistir sem dar motivo (Código d
 
 ## 8. Atraso no pagamento
 
-A régua é sempre a mesma e nunca corta o canal entre você e os seus clientes:
+Vale para a mensalidade no cartão:
 
-- 3 dias antes do vencimento: lembrete.
-- No vencimento: cobrança.
-- 1 e 3 dias depois: lembretes.
+- 3 dias antes do vencimento: lembrete pelo WhatsApp.
+- No vencimento: a cobrança automática no cartão.
+- 1 dia depois, se a cobrança não passou: lembrete.
 - 7 dias depois: o plano pausa alterações e posts. O site continua no ar.
-- 30 dias depois: o site mostra uma página de manutenção com o botão do seu WhatsApp ainda funcionando.
-- 60 dias depois: o site sai do ar e os arquivos ficam guardados por mais 30 dias. Nesse período, você pode pagar e voltar, ou pedir o SAIR.
+- Se o atraso continuar, a Creat avisa por escrito, com pelo menos 15 dias de antecedência, antes de tirar o site do ar. Nesse prazo, você pode pagar e seguir, ou pedir o SAIR.
 
 ## 9. SAIR: o que você leva
 
@@ -75,9 +80,9 @@ Ao cancelar, você recebe o SAIR:
 
 - O site estático completo, que abre direto no computador, com o botão de pedido apontando para o seu WhatsApp e sem nenhum script ou endereço da Creat.
 - Os seus textos, fotos e logo.
-- O domínio, que já está no seu nome.
+- Se você registrou um domínio, ele continua no seu nome. A Creat não precisa transferir nada.
 
-O endereço do site na Creat redireciona para o seu domínio por 30 dias e depois deixa de existir.
+O endereço do site na Creat deixa de existir quando você sai. Se você tem domínio próprio: por 30 dias, o endereço antigo mostra uma página que leva ao seu domínio. Depois, deixa de existir.
 
 ## 10. Alterações e os limites do "sem limite"
 
@@ -88,20 +93,22 @@ O endereço do site na Creat redireciona para o seu domínio por 30 dias e depoi
 
 ## 11. Posts do plano Vitrine
 
-- Os posts são enviados para a sua aprovação.
-- Se você não responder em 48 horas, o post que passou nas regras de conferência é publicado. Você pode pedir a qualquer momento que nada seja publicado sem o seu sim.
-- Para publicar, você autoriza o acesso ao seu Instagram pela ferramenta de publicação. A Creat nunca pede a sua senha.
+- Todo mês do plano, a Creat faz 4 posts para o seu Instagram, com imagem e legenda, a partir dos dados do seu site (serviços, horários, endereço e cores).
+- Os 4 posts chegam pelo WhatsApp do Suporte Creat na primeira semana de cada mês do plano. No primeiro mês, em até 7 dias do dia em que o site entra no ar.
+- Você aprova cada post, pede ajuste ou recusa. Nada é publicado no seu Instagram sem o seu sim; silêncio não aprova.
+- Os posts aprovados chegam prontos para você publicar no seu perfil, com a legenda para copiar. A Creat não acessa o seu Instagram e nunca pede a sua senha.
+- Posts não usados no mês não acumulam para o mês seguinte.
 
 ## 12. A propriedade de cada coisa
 
-- **Domínio**: é registrado no seu nome e no seu CPF ou CNPJ. É seu.
-- **Seus conteúdos** (nome, marca, logo, fotos, textos sobre o seu negócio, preços): são seus. Você autoriza a Creat a usá-los só para montar, manter e publicar o seu site e os seus posts.
+- **Domínio**: se você registrar um, ele fica no seu nome e no seu CPF ou CNPJ, e é seu. A anuidade é paga por você ao Registro.br.
+- **Seus conteúdos** (nome, marca, logo, fotos, textos sobre o seu negócio, preços): são seus. Você autoriza a Creat a usá-los só para montar, manter e publicar o seu site e para fazer os seus posts.
 - **O site exportado no SAIR**: você pode usar, alterar e hospedar onde quiser, para o seu negócio, sem prazo. O código do modelo (motor) continua sendo da Creat; você não pode revendê-lo nem oferecê-lo como produto ou modelo para outros negócios.
 - Você garante que tem direito sobre o que manda (fotos, logo, textos) e que as informações do site são verdadeiras.
 
 ## 13. Uso do nome do seu negócio pela Creat
 
-- O nome do seu negócio aparece na fachada da sede 3D quando você abre a sede pelas nossas páginas. A sede mostra uma demonstração de como a equipe trabalha; o andamento do seu pedido é enviado pelo WhatsApp.
+- O nome do seu negócio aparece na fachada da sede 3D quando você abre a sede pelas nossas páginas. A sede mostra uma demonstração de como a equipe trabalha; o andamento do seu pedido aparece na página do pedido.
 - Mostrar o seu negócio em público (portfólio, vídeo, post ou anúncio da Creat) só com a sua autorização por escrito, que você pode retirar quando quiser. Depoimento seu só é publicado com autorização por escrito.
 - O rodapé do site traz a frase "Aberto pela Creat · veja o seu", com link para a Creat. Se preferir sem, peça ao suporte.
 
@@ -123,7 +130,7 @@ A Creat responde pelo serviço contratado, dentro do que a lei permite. A Creat 
 
 ## 17. Mudanças nestes termos
 
-Se estes termos mudarem, avisamos pelo WhatsApp ou e-mail com 30 dias de antecedência. Você pode cancelar sem multa se não concordar. A versão aceita fica registrada no seu pedido (por exemplo, termos-v1).
+Se estes termos mudarem, avisamos pelo WhatsApp ou e-mail com 30 dias de antecedência. Você pode cancelar sem multa se não concordar. A versão aceita fica registrada no seu pedido (por exemplo, termos-v2), com a data e a hora do servidor.
 
 ## 18. Lei e foro
 

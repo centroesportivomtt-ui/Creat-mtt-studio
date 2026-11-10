@@ -1,13 +1,112 @@
 {
-  "_sobre": "Textos de /obrigado/. A página NÃO afirma pagamento confirmado. A mensagem PEDIDO v1 é montada por código (docs/ARQUITETURA.md, item g); aqui ficam só os textos em volta dela.",
+  "_sobre": "Textos de /obrigado/. A página NÃO afirma pagamento confirmado pela URL: o estado aprovado só vale com a resposta do servidor (confirmarPagamento e consultarPedido, docs/PEDIDO-API.md). A mensagem PEDIDO v1 é montada por código (docs/ARQUITETURA.md, item g); aqui ficam só os textos em volta dela. Contrato com o pacote 2A (onda 2): estados.*, recibo.*, wa.*, rascunho.*. {plano} = nome do plano lido de plano= (valores de CREAT_CHECKOUT); {id} = id do pedido; {canais} = rascunho.canais.",
 
   "seo": {
-    "titulo": "Envie o seu pedido | Creat",
-    "descricao": "Envie o pedido pelo WhatsApp. A equipe confere o pagamento e começa."
+    "titulo": "Seu pedido | Creat",
+    "descricao": "Acompanhe o pagamento e o pedido do seu site. A equipe confere o pagamento e começa."
+  },
+
+  "estados": {
+    "_regra": "Um estado por vez. aprovado só com o servidor confirmando; com a URL dizendo aprovado e o servidor ainda sem resposta, vale a_conferir. recusado, assinatura_ok, anual_pago e teste_ok não mostram formulário nem relógio.",
+    "aprovado": {
+      "titulo": "Pagamento confirmado",
+      "texto": "Recebemos o seu pagamento, e a equipe começa o seu site. Guarde o recibo abaixo. O link do site pronto chega {canais}.",
+      "botao": "Falar com a equipe no WhatsApp"
+    },
+    "a_conferir": {
+      "titulo": "Estamos conferindo o seu pagamento",
+      "texto": "O Mercado Pago avisou o pagamento e a equipe está conferindo. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado). Guarde o número do pagamento abaixo.",
+      "botao": "Falar com o suporte no WhatsApp"
+    },
+    "conferencia_longa": {
+      "titulo": "Seu pagamento está em conferência",
+      "texto": "Esta página parou de consultar para não gastar a sua internet. Guarde o número do pagamento e fale com o suporte: a equipe confere e responde no seu WhatsApp.",
+      "botao": "Falar com o suporte no WhatsApp"
+    },
+    "recusado": {
+      "titulo": "O pagamento não passou",
+      "texto": "O banco ou o cartão recusou. Nada foi cobrado.",
+      "botao": "Tentar de novo"
+    },
+    "pendente": {
+      "titulo": "Seu Pix espera o pagamento",
+      "texto": "Pague o Pix no app do seu banco, com o código que o Mercado Pago mostrou, dentro do prazo que aparece lá. Depois de pagar, a confirmação aparece nesta página, neste aparelho.",
+      "botao": "Voltar para o pagamento"
+    },
+    "sem_retorno": {
+      "titulo": "Você ainda não pagou",
+      "texto": "Esta página não recebeu a volta do Mercado Pago. Se você ainda não pagou, volte ao plano e pague por lá. Se já pagou, guarde o comprovante e fale com o suporte.",
+      "botao": "Voltar para o pagamento"
+    },
+    "assinatura_ok": {
+      "titulo": "Assinatura ativa",
+      "texto": "O plano {plano} está ativo. A cobrança se renova todo mês no cartão. Para cancelar ou trocar o cartão, use o portal do assinante, sem multa.",
+      "botao": "Abrir o portal do assinante"
+    },
+    "assinatura_cancelada": {
+      "titulo": "A assinatura não foi concluída",
+      "texto": "Nada foi cobrado. Se quiser, tente de novo ou fale com a equipe.",
+      "botao": "Falar com a equipe no WhatsApp"
+    },
+    "anual_pago": {
+      "titulo": "Plano anual pago",
+      "texto": "Recebemos o pagamento do plano {plano} anual. Os 12 meses contam do dia em que o site entrou no ar, e não há outra cobrança nesse período.",
+      "botao": "Falar com a equipe no WhatsApp"
+    },
+    "teste_ok": {
+      "titulo": "Teste concluído",
+      "texto": "O pagamento de teste passou. Nada foi produzido e nenhum prazo começou.",
+      "botao": "Voltar para a página inicial"
+    },
+    "produto_fora": {
+      "titulo": "Pagamento recebido",
+      "texto": "Recebemos um pagamento que esta página não reconhece. O suporte vai falar com você. Guarde o número do pagamento abaixo.",
+      "botao": "Falar com o suporte no WhatsApp"
+    }
+  },
+
+  "recibo": {
+    "titulo": "Recibo",
+    "produto": "Produto",
+    "meio": "Meio de pagamento",
+    "numero": "Número do pagamento",
+    "pedido": "Número do pedido",
+    "pix": "Pix",
+    "cartao": "Cartão",
+    "nota": "O comprovante oficial é o que o Mercado Pago manda para o e-mail que você usou lá.",
+    "termos": "Termos que você aceitou"
+  },
+
+  "recebedor": "No Mercado Pago, o recebedor aparece com o CNPJ 57.068.874 (creat.MTT Studio, o mesmo do rodapé).",
+  "desistir": "Em qualquer meio, vale o nosso prazo de 7 dias para desistir, com o valor devolvido (Termos, cláusula 6).",
+  "_recebedor": "recebedor vai nos estados pendente e recusado; desistir vai no pendente (PG-01, PG-06).",
+
+  "wa": {
+    "_sobre": "Mensagem do botão de WhatsApp do cabeçalho em cada estado (wa.me/<whatsappSuporte>?text=, com encodeURIComponent). Nunca levam WhatsApp, e-mail ou endereço do visitante. {id} só entra se o aparelho tem o pedido.",
+    "aprovado": "Olá! Paguei a Abertura do Porta Aberta. Pedido {id}.",
+    "recusado": "Olá! Tentei pagar a Abertura do Porta Aberta e não consegui.",
+    "pendente": "Olá! Gerei o Pix da Abertura do Porta Aberta e quero confirmar.",
+    "sem_retorno": "Olá! Estou na página do pedido do Porta Aberta e tenho uma dúvida sobre o pagamento.",
+    "a_conferir": "Olá! Paguei a Abertura do Porta Aberta e a página diz que o pagamento está em conferência. Pedido {id}.",
+    "assinatura": "Olá! Assinei o plano {plano} do Porta Aberta e tenho uma dúvida.",
+    "pedidoAbertura": "Oi! Acabei de pagar a Abertura do Porta Aberta. Segue o meu pedido:"
+  },
+
+  "rascunho": {
+    "_sobre": "Bloco do site pronto para aprovar (rascunho_url de consultarPedido). canais é a ÚNICA chave que diz por onde o link chega: se o envio automático de e-mail ao comprador for ligado e provado no ensaio (Operacao email_cliente = ligado), o coordenador troca o valor por canaisComEmail. Hoje o e-mail ao comprador está desligado (docs/PEDIDO-API.md, seção 7), por isso o padrão não promete e-mail.",
+    "canais": "nesta página e no seu WhatsApp",
+    "canaisComEmail": "nesta página, no seu WhatsApp e por e-mail",
+    "titulo": "Seu site está pronto para você aprovar",
+    "texto": "Abra, confira e toque em Aprovar e colocar no ar. Se quiser mudar algo, responda no WhatsApp do Suporte Creat.",
+    "botao": "Abrir o site para aprovar",
+    "aviso": "Se você não responder em 7 dias, o site entra no ar como está e a mensalidade começa nesse dia. Você pode pedir ajustes depois.",
+    "aprovado": "Site aprovado. A equipe põe no ar e avisa no seu WhatsApp.",
+    "noAr": "O seu site está no ar.",
+    "abrirNoAr": "Abrir o meu site"
   },
 
   "titulo": "Agora é com a equipe.",
-  "texto": "Se você acabou de pagar, envie o pedido abaixo; a equipe confere o pagamento e começa.",
+  "texto": "Se o seu pedido não aparece aqui, envie os dados abaixo. A equipe confere o pagamento e começa.",
   "botao": "Enviar pedido no WhatsApp",
   "botaoNota": "O WhatsApp abre com o pedido escrito. É só tocar em enviar.",
   "semWhatsappSuporte": "Envie o pedido para {{contato.email}}. Copie o texto abaixo e cole no e-mail.",
@@ -17,22 +116,24 @@
 
   "sede": {
     "titulo": "A sua fachada na sede",
-    "legenda": "A placa mostra o nome do seu negócio. A sede mostra uma demonstração de como a equipe trabalha; o andamento do seu pedido chega no seu WhatsApp.",
+    "legenda": "A placa mostra o nome do seu negócio. A sede mostra uma demonstração de como a equipe trabalha; o andamento real do seu pedido aparece nesta página.",
     "botao": "Abrir a sede",
     "semPedidoAtivo": "A equipe espera o próximo pedido."
   },
 
   "relogio": {
-    "rotulo": "Relógio de {{precos.prazoHoras}} h",
-    "texto": "O relógio começa quando a equipe confirma o pagamento. Você recebe essa confirmação no seu WhatsApp.",
-    "aguardando": "aguardando confirmação do pagamento"
+    "_regra": "Sem número de contagem parado (nada de 72:00:00). Só o rótulo e a regra; a data de entrega aparece quando consultarPedido devolver prazo_fim.",
+    "rotulo": "Prazo: {{precos.prazoHoras}} h a partir da confirmação",
+    "texto": "O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).",
+    "aguardando": "aguardando a confirmação do pagamento",
+    "previsto": "Site pronto para você aprovar até {data}."
   },
 
   "esperar": {
     "titulo": "O que esperar",
     "itens": [
-      "Resposta da equipe no seu WhatsApp, confirmando o pagamento.",
-      "O andamento do seu pedido no seu WhatsApp, enquanto a equipe trabalha.",
+      "Resposta da equipe no seu WhatsApp, de segunda a sábado, das 9h às 19h. Pagou fora desse horário? Respondemos até as 11h do próximo dia de atendimento.",
+      "O andamento do seu pedido nesta página, neste aparelho, enquanto a equipe trabalha.",
       "O site pronto para você conferir e aprovar, em até {{precos.prazoHoras}} h.",
       "A mensalidade só começa no dia em que o site entrar no ar."
     ]
@@ -43,7 +144,7 @@
 
   "semDados": {
     "titulo": "Não achamos os dados do pedido neste aparelho.",
-    "texto": "Isso acontece se você pagou em outro aparelho, usou uma aba anônima ou apagou os dados. Preencha os campos de novo para montar o pedido.",
+    "texto": "Isso acontece se você pagou em outro aparelho, usou uma aba anônima ou apagou os dados. Preencha os campos de novo para registrar o pedido.",
     "botao": "Preencher os dados"
   },
 

@@ -10,16 +10,16 @@
   "cabecalhoDuvidas": "Dúvidas",
   "progresso": "Nome, tipo de negócio e prévia: pronto. Faltam 2 passos: os dados do negócio e o pagamento.",
   "resumo": {
-    "mensal": "Hoje: Abertura de R$ {{abrir.total}}. Mensalidade de R$ {{plano.preco}} só começa com o site no ar.",
+    "mensal": "Hoje: Abertura de R$ {{abrir.total}}. Mensalidade de R$ {{plano.preco}} por mês no cartão, ou anual no Pix, só começa com o site no ar.",
     "anual": "Hoje: só a Abertura, R$ {{abrir.total}}. O plano anual, R$ {{plano.preco}} pelos 12 meses, é cobrado no dia em que o site entra no ar, por este valor.",
-    "risco": "Sem fidelidade. 7 dias para desistir com devolução."
+    "risco": "Sem fidelidade. 7 dias para desistir, com o valor devolvido."
   },
   "plano": {
     "rotulo": "Seu plano",
     "trocar": "Trocar de plano",
     "opcoes": {
-      "aberto": "Aberto · R$ {{precos.planos.aberto}} por mês",
-      "vitrine": "Vitrine · R$ {{precos.planos.vitrine}} por mês · recomendado",
+      "aberto": "Aberto · R$ {{precos.planos.aberto}} por mês no cartão",
+      "vitrine": "Vitrine · R$ {{precos.planos.vitrine}} por mês no cartão",
       "aberto_anual": "Aberto anual · R$ {{precos.anual.aberto}} por 12 meses",
       "vitrine_anual": "Vitrine anual · R$ {{precos.anual.vitrine}} por 12 meses"
     },
@@ -27,7 +27,7 @@
   },
   "total": {
     "rotulo": "Total",
-    "mensal": "Hoje: R$ {{abrir.total}} (Abertura). A partir do dia em que o site entrar no ar: R$ {{plano.preco}} por mês. Sem fidelidade.",
+    "mensal": "Hoje: R$ {{abrir.total}} (Abertura). A partir do dia em que o site entrar no ar: R$ {{plano.preco}} por mês no cartão, ou anual no Pix. Sem fidelidade.",
     "anual": "Hoje: R$ {{abrir.total}}, só a Abertura. O plano anual, R$ {{plano.preco}} pelos 12 meses, é cobrado no dia em que o site entrar no ar, no Pix. Nada do anual é cobrado antes. Sem fidelidade.",
     "inauguracao": "Preço de inauguração.",
     "nadaMais": "Não existe taxa escondida. A anuidade do domínio, se você quiser um, é paga no seu nome ao Registro.br.",
@@ -37,7 +37,7 @@
   },
   "campos": {
     "titulo": "Os dados do seu negócio",
-    "texto": "O relógio do prazo começa com 4 dados do pedido: o nome do negócio, que veio da prévia, o WhatsApp, o endereço e o horário. Seu nome e seu e-mail servem para a equipe falar com você e mandar o recibo. Eles não mudam o prazo.",
+    "texto": "Com o nome do negócio, que veio da prévia, o WhatsApp, o endereço e o horário, a equipe monta o site sem precisar perguntar nada. Seu nome e seu e-mail servem para falarmos com você sobre o pedido.",
     "responsavel": {
       "rotulo": "Seu nome (responsável)",
       "ajuda": "Quem a equipe chama para aprovar o site."
@@ -71,39 +71,51 @@
     "email": {
       "rotulo": "E-mail",
       "exemplo": "voce@exemplo.com.br",
-      "ajuda": "Para o recibo e para os termos. Não mandamos propaganda."
+      "ajuda": "Para falarmos com você sobre o pedido e mandarmos os termos que você aceitou. Não mandamos propaganda."
     }
   },
   "aceite": {
-    "texto": "Li e aceito os Termos de uso (versão 1). Peço o início imediato da produção e sei que tenho 7 dias de arrependimento, com o valor devolvido.",
+    "texto": "Li e aceito os Termos de uso (versão 2). Peço o início imediato da produção e sei que tenho 7 dias para desistir, com o valor devolvido.",
+    "_versao": "A versão escrita aqui é a mesma de checkout.config.js termosVersao e de TERMOS em schema/pedido-regras.mjs (termos-v2, com o sha256 do conteudo/termos.md publicado). As três mudam no mesmo ato.",
     "linkTermos": "Ler os Termos de uso",
     "erro": "Marque o aceite para seguir para o pagamento."
   },
   "pagamento": {
     "titulo": "Pagamento",
     "pix": "Pagar no Pix ou cartão",
-    "parcelas": "Pix ou cartão. As condições de parcelamento aparecem no Mercado Pago antes de você pagar.",
+    "parcelas": "Pix ou cartão, sem criar conta no Mercado Pago. As condições de parcelamento aparecem lá antes de você pagar. Em qualquer meio, vale o nosso prazo de 7 dias para desistir, com o valor devolvido (Termos, cláusula 6).",
+    "_parcelas": "Chave antiga. A página usa pagar.parcelas, com o mesmo texto.",
     "emConfiguracao": "Link de pagamento em configuração",
     "emConfiguracaoNota": "O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.",
     "seguranca": "O pagamento é feito no Mercado Pago. A Creat não vê os dados do seu cartão.",
     "semConta": "Sem criar conta.",
     "salvoNoAparelho": "Seus dados ficam salvos neste aparelho para a próxima página. Você pode apagar a qualquer momento.",
+    "_salvoNoAparelho": "Vale até o servidor confirmar o registro do pedido (PV-16, pacote 2A): depois disso, e-mail e WhatsApp saem do aparelho.",
     "totalHoje": "Total de hoje: R$ {{abrir.total}}"
+  },
+  "pagar": {
+    "_sobre": "Linhas coladas no botão Pagar de /abrir/ (pacote 2A). recebedor fica logo acima do primeiro botão; parcelas logo abaixo; aviso_dados ao lado do botão, com o link para /privacidade/ em linkPrivacidade. O CNPJ é o mesmo de checkout.config.js empresa.documento (CNPJ 57.068.874/0001-06); o nome pessoal do titular não entra aqui.",
+    "recebedor": "No Mercado Pago, o recebedor aparece com o CNPJ 57.068.874 (creat.MTT Studio, o mesmo do rodapé).",
+    "parcelas": "Pix ou cartão, sem criar conta no Mercado Pago. As condições de parcelamento aparecem lá antes de você pagar. Em qualquer meio, vale o nosso prazo de 7 dias para desistir, com o valor devolvido (Termos, cláusula 6).",
+    "aviso_dados": "Ao tocar em Pagar, enviamos à Creat os dados deste formulário (nome do negócio, cidade, seu nome, WhatsApp, e-mail, endereço e horário) para registrar o pedido. Se você não pagar, apagamos em 30 dias.",
+    "linkPrivacidade": "Ler a política de privacidade",
+    "botaoTeste": "Pagar R$ 1 (teste)"
   },
   "garantia": {
     "titulo": "Garantia de prazo",
-    "texto": "Seu site fica pronto em até {{precos.prazoHoras}} h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp, endereço e horário. Passou do prazo, o 1º mês do plano é grátis.",
+    "texto": "Seu site fica pronto para você aprovar em até {{precos.prazoHoras}} h. Passou do prazo, o 1º mês do plano é grátis.",
+    "regra": "O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).",
     "fora": "Ficam fora do relógio o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros. Logo e fotos enviados depois entram como melhoria em até 24 h."
   },
   "depois": {
     "titulo": "O que acontece depois do pagamento",
     "passos": [
-      "Você volta para a página do pedido e envia o pedido pronto no WhatsApp do Suporte Creat.",
-      "A equipe confere o pagamento e responde no seu WhatsApp.",
-      "O relógio de {{precos.prazoHoras}} h começa a contar.",
-      "Você recebe o andamento do pedido no WhatsApp. Na sede, vê uma demonstração de como a equipe trabalha, com o nome do seu negócio na fachada.",
-      "Você recebe o site pronto, pede ajustes se quiser e aprova.",
-      "O site entra no ar. A mensalidade começa neste dia.",
+      "O pedido fica registrado no toque em Pagar, e o Mercado Pago manda o comprovante para o e-mail que você usar lá.",
+      "Você volta para a página do pedido, que mostra a confirmação do pagamento.",
+      "O prazo de {{precos.prazoHoras}} h começa com a confirmação do pagamento.",
+      "O andamento aparece na página do pedido, neste aparelho. Na sede, você vê uma demonstração de como a equipe trabalha, com o nome do seu negócio na fachada.",
+      "Você recebe o link do site pronto no seu WhatsApp, pede ajustes se quiser e aprova.",
+      "O site entra no ar com o seu sim. A mensalidade começa neste dia. Sem resposta em 7 dias, ele entra no ar como está.",
       "A equipe manda o passo a passo do domínio e do Perfil da Empresa no Google."
     ]
   },
@@ -119,7 +131,7 @@
   },
   "desistir": {
     "titulo": "7 dias para desistir com devolução",
-    "texto": "Você tem 7 dias, contados do pagamento, para desistir sem dar motivo, como manda a lei (Código de Defesa do Consumidor, art. 49). O valor volta pelo mesmo meio de pagamento. Sem fidelidade e sem multa para sair. A mensalidade só começa com o site no ar."
+    "texto": "Você tem 7 dias para desistir sem dar motivo, contados do pagamento ou da entrega do site para você aprovar, o que vier por último (Código de Defesa do Consumidor, art. 49). Devolvemos o valor em até 5 dias úteis depois do pedido, pelo mesmo meio de pagamento. Sem fidelidade e sem multa para sair. A mensalidade só começa com o site no ar."
   },
   "quemMonta": "Mesmos textos de conteudo/home.json quemMonta."
 }

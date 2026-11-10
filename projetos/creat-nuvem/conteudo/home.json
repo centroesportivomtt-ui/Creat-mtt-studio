@@ -109,11 +109,11 @@
       },
       {
         "titulo": "Veja como a equipe trabalha",
-        "texto": "Na sede da Creat, uma demonstração mostra cada etapa do trabalho, com o nome do seu negócio na fachada. O andamento real do seu pedido chega no seu WhatsApp."
+        "texto": "Na sede da Creat, uma demonstração mostra cada etapa do trabalho, com o nome do seu negócio na fachada. O andamento real do seu pedido aparece na página do pedido, e o site pronto chega no seu WhatsApp."
       },
       {
-        "titulo": "No ar, você aprova",
-        "texto": "Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade."
+        "titulo": "Você aprova, ele entra no ar",
+        "texto": "Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade. Sem resposta em 7 dias, ele entra no ar como está, e você pode pedir ajustes depois."
       }
     ],
     "deVerdade": {
@@ -122,7 +122,7 @@
       "itens": [
         "As regras automáticas conferem o número do WhatsApp, os horários, os preços e as palavras que não podem aparecer.",
         "Uma pessoa da equipe lê o site antes de mandar para você aprovar.",
-        "Nada vai ao ar sem a sua aprovação."
+        "Nada vai ao ar antes de você receber o site para conferir e aprovar."
       ]
     }
   },
@@ -160,13 +160,15 @@
       "_regraContador": "Contadores desligados (checkout.config.js contadoresAoVivo: false, decisão D1 de 10/11/2026) até o número vir de pedido pago gravado em servidor.",
       "periodo": "uma vez",
       "inclui": [
-        "Site montado a partir do modelo do seu nicho, com o nome, a cidade e as cores que você escolheu",
+        "Site montado a partir do modelo do seu nicho, com o nome, a cidade e as cores que você escolheu e com os serviços do modelo, que você ajusta antes de aprovar",
         "Textos escritos para o seu negócio e conferidos por uma pessoa da equipe",
         "Pedido de horário que chega no seu WhatsApp",
-        "Endereço do site na Creat, pronto para usar",
+        "Endereço do site pronto para usar, sem custo",
         "Passo a passo para ligar o seu domínio e o seu Perfil da Empresa no Google",
-        "Site no ar em até {{precos.prazoHoras}} h ou o 1º mês do plano grátis"
-      ]
+        "Site pronto para você aprovar em até {{precos.prazoHoras}} h ou o 1º mês do plano grátis"
+      ],
+      "regraPrazo": "O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).",
+      "_regraPrazo": "Logo abaixo da lista inclui da Abertura, em texto pequeno. É a regra única de prazo: a mesma frase em faq.json (prazo), abrir.json (garantia.regra), obrigado.json (relogio.texto), termos.md (cláusula 5) e marketing/whatsapp-scripts.md (R3 e F5)."
     },
 
     "vagasHoje": "Vagas de produção hoje: {{vagas.vagas_hoje}} de {{vagas.capacidade_dia}}.",
@@ -176,7 +178,7 @@
       "aberto": {
         "nome": "Aberto",
         "preco": "R$ {{precos.planos.aberto}}",
-        "periodo": "por mês, a partir do dia em que o site entra no ar",
+        "periodo": "por mês no cartão, ou anual no Pix, a partir do dia em que o site entra no ar",
         "resumo": "O site no ar, cuidado todo mês.",
         "inclui": [
           "Hospedagem do site",
@@ -197,13 +199,13 @@
       },
       "vitrine": {
         "nome": "Vitrine",
-        "selo": "recomendado",
+        "_selo": "Sem selo de recomendado: o ciclo de posts (docs/VITRINE-POSTS.md) ainda não rodou com cliente real. Decisão do plano de qualidade de 10/11/2026 sobre o Metricool e o plano Vitrine.",
         "preco": "R$ {{precos.planos.vitrine}}",
-        "periodo": "por mês, a partir do dia em que o site entra no ar",
-        "resumo": "O site no ar e posts prontos todo mês.",
+        "periodo": "por mês no cartão, ou anual no Pix, a partir do dia em que o site entra no ar",
+        "resumo": "O site no ar e 4 posts prontos por mês para o seu Instagram.",
         "inclui": [
           "Tudo do plano Aberto",
-          "Posts prontos todo mês para o seu Instagram, aprovados por você",
+          "4 posts por mês para o seu Instagram, com imagem e legenda, aprovados por você e entregues prontos para você publicar",
           "Pedido especial respondido em até 4 h úteis, de segunda a sábado, das 9h às 19h",
           "Link do Instagram no site"
         ],
@@ -236,8 +238,8 @@
       "linhas": [
         "Sem fidelidade.",
         "Sem multa para sair.",
-        "O domínio fica no seu nome.",
-        "Se sair, você leva o site, o domínio e os arquivos.",
+        "O domínio que você registrar fica no seu nome.",
+        "Se sair, você leva o site e os arquivos.",
         "7 dias para se arrepender, com o dinheiro de volta.",
         "Mensalidade só com o site no ar."
       ],
@@ -306,7 +308,7 @@
     "passos": [
       { "titulo": "Você vê e pede.", "texto": "A prévia é grátis. Para abrir, você paga a Abertura e manda os dados do negócio." },
       { "titulo": "A equipe monta.", "texto": "Os agentes escrevem e montam o site, e uma pessoa da equipe lê tudo antes de mandar para você." },
-      { "titulo": "Você aprova.", "texto": "O site só entra no ar com o seu sim, e a mensalidade só começa nesse dia." }
+      { "titulo": "Você aprova.", "texto": "O site entra no ar com o seu sim, e a mensalidade só começa nesse dia. Sem resposta em 7 dias, ele entra no ar como está." }
     ],
     "contato": "Para falar com a gente: WhatsApp do Suporte Creat ou {{contato.email}}.",
     "linkSede": "Ver a sede da Creat",
