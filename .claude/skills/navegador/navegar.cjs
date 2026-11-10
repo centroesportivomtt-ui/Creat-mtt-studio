@@ -13,7 +13,7 @@
 //                               inclusive de dentro de iframes e molduras blob
 //   ler [--dentro "<css>"] [--max <n>]   texto visível (página e molduras)
 //   clicar <n|seletor|"texto"> [--forcar]
-//   digitar <n|seletor> "texto" [--enter]
+//   digitar <n|seletor> "texto" [--enter]   em lista de seleção, escolhe a opção
 //   tecla <Enter|Escape|Tab|ArrowDown...>
 //   rolar <px>                  positivo desce, negativo sobe
 //   esperar-texto "<texto>"     espera o texto aparecer (em qualquer moldura)
@@ -165,7 +165,7 @@ if (bruto[0] === '__servidor') {
       : `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${maior}.0.0.0 Safari/537.36`;
     const marcas = v => [{ brand: 'Chromium', version: v }, { brand: 'Google Chrome', version: v }, { brand: 'Not_A Brand', version: '24' }];
     return {
-      userAgent, acceptLanguage: 'pt-BR,pt;q=0.9', platform: celular ? 'Linux armv81' : 'Linux x86_64',
+      userAgent, acceptLanguage: 'pt-BR,pt', platform: celular ? 'Linux armv81' : 'Linux x86_64',
       userAgentMetadata: {
         brands: marcas(maior), fullVersionList: marcas(cheia), fullVersion: cheia,
         platform: celular ? 'Android' : 'Linux', platformVersion: celular ? '10.0.0' : '6.8.0',
@@ -275,7 +275,8 @@ if (bruto[0] === '__servidor') {
   async function rotuloMoldura(f) {
     const u = f.url();
     let tipo;
-    if (u.startsWith('blob:')) tipo = 'blob ' + corta(u.replace(/^blob:/, '').replace(/\/[0-9a-f-]{20,}$/i, ''), 80);
+    // O fragmento (#...) de uma moldura blob pode levar o que a pessoa digitou: nunca sai.
+    if (u.startsWith('blob:')) tipo = 'blob ' + corta(u.replace(/^blob:/, '').replace(/[?#].*$/, '').replace(/\/[0-9a-f-]{20,}$/i, ''), 80);
     else if (u === 'about:srcdoc') tipo = 'srcdoc';
     else tipo = limparUrl(u, 120);
     let t = ''; try { t = await f.title(); } catch {}
@@ -294,7 +295,7 @@ if (bruto[0] === '__servidor') {
     const IGNORA = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'HEAD', 'META', 'LINK', 'TITLE']);
     const MARCO_TAG = { HEADER: 'cabeçalho', NAV: 'navegação', MAIN: 'principal', FOOTER: 'rodapé', ASIDE: 'lateral', FORM: 'formulário', DIALOG: 'diálogo', SECTION: 'seção', ARTICLE: 'artigo', UL: 'lista', OL: 'lista', TABLE: 'tabela', FIELDSET: 'grupo' };
     const MARCO_PAPEL = { banner: 'cabeçalho', navigation: 'navegação', main: 'principal', contentinfo: 'rodapé', complementary: 'lateral', form: 'formulário', dialog: 'diálogo', alertdialog: 'diálogo', region: 'seção', list: 'lista', table: 'tabela', alert: 'alerta', status: 'status', group: 'grupo', radiogroup: 'grupo' };
-    const PAPEIS = { button: 'botão', link: 'link', checkbox: 'caixa de marcar', radio: 'opção', textbox: 'campo', searchbox: 'campo de busca', combobox: 'lista', listbox: 'lista', option: 'item', tab: 'aba', menuitem: 'item de menu', menuitemcheckbox: 'item de menu', menuitemradio: 'item de menu', switch: 'interruptor', slider: 'deslizante', spinbutton: 'campo numérico' };
+    const PAPEIS = { button: 'botão', link: 'link', checkbox: 'caixa de marcar', radio: 'opção', textbox: 'campo', searchbox: 'campo de busca', combobox: 'lista', listbox: 'lista', option: 'item', tab: 'aba', menuitem: 'item de menu', menuitemcheckbox: 'item de menu', menuitemradio: 'item de menu', switch: 'interruptor', slider: 'deslizante', spinbutton: 'campo numérico', group: 'grupo', radiogroup: 'grupo de opções', dialog: 'diálogo', img: 'imagem', application: 'área interativa' };
     const temCaixa = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
     const casa = (el, s) => { try { return el.matches(s); } catch { return false; } };
     const textoDe = el => { const c = el.cloneNode(true); c.querySelectorAll('select,textarea,script,style').forEach(x => x.remove()); return limpa(c.textContent); };
@@ -577,7 +578,7 @@ if (bruto[0] === '__servidor') {
         await page.waitForTimeout(800);
         const ms = Date.now() - t0;
         const { total, nMold } = await mapear();
-        return `Aberto: ${await page.title() || '(sem título)'} — ${limparUrl(page.url())}\nModo: ${descModo()} · carregou em ${(ms / 1000).toFixed(1)} s${aviso}\n` +
+        return `Aberto: ${await page.title() || '(sem título)'} · ${limparUrl(page.url())}\nModo: ${descModo()} · carregou em ${(ms / 1000).toFixed(1)} s${aviso}\n` +
           `${total} elementos interativos${nMold ? ` (com ${nMold} moldura(s))` : ''}. Use "ver" para listar.`;
       }
       case 'ver': {
@@ -613,7 +614,7 @@ if (bruto[0] === '__servidor') {
         if (!r.ok && o.forcar && /coberto/.test(r.motivo)) {
           await el.evaluate(e => e.click());
           await page.waitForTimeout(500);
-          return `Clicado em ${a[0]} à força (o alvo ${r.motivo}; o clique foi entregue direto ao alvo). Agora: ${await page.title()} — ${limparUrl(page.url())}`;
+          return `Clicado em ${a[0]} à força (o alvo ${r.motivo}; o clique foi entregue direto ao alvo). Agora: ${await page.title()} · ${limparUrl(page.url())}`;
         }
         try { await el.click({ timeout: 6000, force: !!o.forcar }); }
         catch (e) {
@@ -627,12 +628,20 @@ if (bruto[0] === '__servidor') {
         }
         await page.waitForTimeout(500);
         const aba = abasNovas.length > antes ? `\nAbriu uma aba nova: ${limparUrl(abasNovas[abasNovas.length - 1].url())} (o navegador continua na aba original).` : '';
-        return `Clicado em ${a[0]}. Agora: ${await page.title()} — ${limparUrl(page.url())}${aba}`;
+        return `Clicado em ${a[0]}. Agora: ${await page.title()} · ${limparUrl(page.url())}${aba}`;
       }
       case 'digitar': {
         if (a.length < 2) throw new Error('Uso: digitar <n|seletor> "texto" [--enter].');
         const el = await alvo(a[0]);
-        try { await el.fill(a.slice(1).join(' '), { timeout: 10000 }); }
+        const texto = a.slice(1).join(' ');
+        // Lista de seleção: escolhe a opção pelo texto visível (ou pelo valor).
+        if (await el.evaluate(e => e.tagName === 'SELECT').catch(() => false)) {
+          let ok = await el.selectOption({ label: texto }, { timeout: 5000 }).then(() => true).catch(() => false);
+          if (!ok) ok = await el.selectOption(texto, { timeout: 5000 }).then(() => true).catch(() => false);
+          if (!ok) throw new Error(`Não escolhi em ${a[0]}: a lista não tem a opção "${corta(texto, 60)}". Rode "ver" para ver as opções.`);
+          return `Escolhido em ${a[0]}.`;
+        }
+        try { await el.fill(texto, { timeout: 10000 }); }
         catch (e) {
           const m = e.message;
           if (/not an <input>/.test(m)) throw new Error(`Não digitei em ${a[0]}: o alvo não é um campo de texto. Rode "ver" e use o número de um campo.`);
