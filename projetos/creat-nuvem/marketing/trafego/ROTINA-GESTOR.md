@@ -71,3 +71,13 @@ Conta act_4078332059160918. Tudo nasceu pausado; a largada é o dia em que o Mar
 - Métrica da célula site: custo por visualização da página, e no PostHog/Pixel previa_gerada, reserva_teste, checkout_iniciado. Pix pago pelo painel do Mercado Pago.
 - Gasto conjunto máximo dentro do plano: R$ 80/dia (R$ 40 + R$ 40). Acima disso é alerta de nível 3.
 - Leitura da Meta: use o conector "face meta claude code nuvem" (MCP oficial), só ferramentas de leitura (ads_get_*). Nunca ads_activate_entity, ads_update_entity, ads_create_*.
+
+ADENDO DE 10/11/2026 · EXPANSÃO (vale sobre o adendo de 09/11 e sobre o texto acima onde houver diferença)
+Plano vigente: EXPANSAO.md, nesta pasta. Leia as seções "Estado na Meta", "Mídia", "Regras anti-desperdício" e "Escada de orçamento" antes de qualquer conclusão.
+- Campanhas ATIVAS, R$ 40/dia cada, teto de R$ 300 cada: "PA | Site | Feira" (120254150908340237; conjunto 120254150914740237; anúncios 120254151686550237, 120254151686810237, 120254151686970237) e "PA | Site | Salvador RMS" (120254151674300237; conjunto 120254151675610237; anúncios 120254151687230237, 120254151687430237, 120254151687710237). Tráfego, visualização da página de destino, posicionamento manual.
+- Campanha PAUSADA de propósito: ctwa-nov26 (120254150873900237). Se aparecer ativa, é alerta de nível 3. Anúncios ARQUIVADOS são versões antigas: ignore.
+- Gasto máximo dentro do plano: R$ 80/dia somando as duas. Acima disso, ou qualquer campanha do Porta Aberta fora desta lista ativa, é alerta de nível 3.
+- Leitura por praça: compare Feira e Salvador RMS por custo por visualização de página e, quando o Pixel marcar, por custo por prévia gerada e por checkout iniciado. Pix pago por praça sai do painel do Mercado Pago (um link de Abertura por praça). Nenhuma conclusão por CPC ou CTR com menos de 100 cliques por anúncio ou R$ 50 de gasto.
+- Alertas das regras anti-desperdício (só avisar, nunca agir): anúncio com R$ 25 gastos e zero clique; CPC acima de R$ 1,00 depois de R$ 30; frequência de 7 dias a partir de 2,0; anúncio sem impressão depois de 48 h; qualquer entrega fora do Brasil.
+- De 23 a 29/11 nada se edita. Só leitura e pausa de emergência (reprovação, site fora do ar, gasto fora do plano), que é decisão do Marcos.
+- Conte todo dia os Pix pagos nos links de inauguração. Com 19 pagos, avise em nível 3 para fechar o link de R$ 297.

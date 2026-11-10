@@ -1,0 +1,252 @@
+# Sistema de criativos em vídeo · "Atrás da placa"
+
+Definido pela Faísca e roteirizado pelo Verbo em 09/11/2026, a partir da pesquisa de persuasão e da leitura da concorrência. É o sistema dos Reels do tráfego frio nacional. Substitui a seção de Reels de `criativos.md` onde houver diferença.
+
+## Conceito
+
+ATRÁS DA PLACA. Cada Reel é uma porta. Todos abrem com o mesmo gesto, a placa real da vitrine virando de FECHADO para ABERTO até o segundo 2,4. Depois a câmera atravessa o vidro e mostra uma coisa só: a cena, o site, a equipe ou a garantia. A virada funciona como logotipo, gancho e virada narrativa ao mesmo tempo. Muda só o que existe atrás da porta.
+
+POR QUE NÃO É O QUE O MERCADO FAZ. Fontes: pesquisa de persuasão, achados 16 e 17; Biblioteca de Anúncios da Meta, 09/11/2026, só títulos. Trinks, Booksy, Frizzar, Kavyora, Fluya e BeautyClick anunciam agenda e gestão com "50% OFF", "teste grátis" e "app para barbearias". As agências pequenas fecham com "Fale conosco". A Frizzar já usa "agenda aberta 24 horas", então a palavra "aberto" sozinha não diferencia. O que diferencia é o gesto e o nome no giz. O Porta Aberta não vai nesse caminho:
+- não dá desconto;
+- não faz pergunta a quem vê;
+- não põe ninguém falando para a câmera;
+- não usa áudio da moda nem tela de painel com celular flutuando;
+- o chamado é "veja", nunca "fale conosco";
+- o produto termina o trabalho dentro do vídeo.
+Não afirmo que "ninguém mostra prévia", porque li só títulos e páginas iniciais.
+
+MAPA DO MUNDO (ideação, passo 1)
+- Objetos: placa de madeira pendurada num prego, corrente, lousa e giz, porta de vidro, porta de aço de enrolar, sininho de porta, cadeira de barbeiro, esmalte, anilha.
+- Gestos: virar a placa de manhã, levantar a porta de aço, escrever o "hoje tem" na lousa, responder WhatsApp de madrugada.
+- Sons: o rrrá da porta de aço, a corrente tilintando, o sino, o giz riscando, o plim.
+- Jargão: "tá aberto?", "tem horário?", "o de sempre", "encaixe".
+- Momento de maior emoção: o primeiro cliente do dia entrando, e ver o próprio nome na fachada.
+- Detalhe já existente no produto: em ritual/placa.js, o giz escreve o nome letra a letra na borda da face FECHADO, com som de giz. No meio do giro aparece por instantes o verso com a nuvem queimada, que é a marca da Creat. A placa assenta em ABERTO com o nome e toca o sino. A marca aparece dentro do próprio gesto.
+
+OS 3 CONCEITOS (passo 2)
+1. METÁFORA · "A Porta de Enrolar". Todo Reel abre como o comércio brasileiro abre de manhã: a porta de aço sobe e revela o site. No celular funciona perfeitamente, porque a porta sobe na vertical. Risco 3: cria um segundo ícone que não é o do produto e enfraquece a placa. Custo: animação 2D da porta mais o som.
+2. INVERSÃO · "Vídeo Calado". Faz o contrário do setor: ninguém fala, não há desconto nem "fale conosco", e o vídeo termina com o site pronto, não com um formulário. Risco 2: falta um gancho emocional, e pode parecer só demonstração de tela. Custo: baixo.
+3. RITUAL · "Atrás da Placa". A virada da placa real abre todos os Reels, e a câmera atravessa o vidro para o mundo de cada ângulo. Funciona com o polegar e na vertical. Risco 2: se todos os Reels começarem igual, a Meta pode tratá-los como o mesmo criativo. Isso é alegação de blog (E-Commerce Brasil, 25/06/2026), e a resposta está na regra de variação. Custo: gravação com Playwright mais a composição em HTML; não precisa de 3D novo.
+
+PONTUAÇÃO (passo 4; critérios: memorável, fiel ao cliente, viável, celular, acessível)
+
+| conceito | memorável | fiel | viável | celular | acessível | total |
+|---|---|---|---|---|---|---|
+| Porta de Enrolar | 4 | 4 | 3 | 5 | 4 | 20 |
+| Vídeo Calado | 3 | 4 | 5 | 4 | 5 | 21 |
+| Atrás da Placa | 5 | 5 | 4 | 5 | 4 | 23 |
+
+VENCEDOR: Atrás da Placa.
+
+ENXERTOS
+- Da Porta de Enrolar vem o som da porta de aço subindo, que vira a assinatura sonora do fim. São 0,9 s sob o carimbo NO AR e sob o cartão final, o barulho de "a loja abriu" que todo comerciante conhece. Sem som, o carimbo cumpre o mesmo papel.
+- Do Vídeo Calado viram regra de produção: ninguém fala, sem desconto, sem pergunta, e o chamado é sempre "ver".
+
+PARA O DESCONHECIDO DE OUTRA CIDADE. Todo cartão final diz quem somos: "Creat Nuvem · equipe de agentes de IA · Bahia". Nenhum criativo cita cidade enquanto o conjunto tiver várias praças; a leitura por praça vem do recorte por localização. Este sistema reorganiza os roteiros R4 a R6 de criativos.md:
+- R4 vira o ângulo 2;
+- R6b vira o ângulo 1;
+- R5 vira o ângulo 5.
+Todos passam a usar a abertura comum e o cartão final comum. Numeração nova: R7 a R12.
+
+## Momento-assinatura
+
+ROTEIRO DOS PRIMEIROS 5 SEGUNDOS (versão-base, ângulo "Vire Você"; 30 fps; 1080x1920)
+
+0,0 a 0,5 s
+- VÊ: no quadro 1, o fundo --ceu e a placa FECHADO real da vitrine (gravada da página em escala 3, recorte fechado) ocupando 70% da largura, no meio da faixa segura. A placa está no fim de um balanço de 6° na corrente, já em movimento. Acima, a legenda "Digite o nome." vai sendo escrita a giz. No alto da faixa segura, o selo "Creat Nuvem · Porta Aberta".
+- OUVE: dois elos de corrente tilintando e uma rua de manhã ao fundo, a −30 dB.
+- FAZ: o polegar para diante de um objeto que toda porta de comércio tem.
+
+0,5 a 1,3 s
+- VÊ: o giz escreve "Barbearia Navalha Fictícia", letra a letra, na borda da placa. É o efeito real da página ao digitar. No canto aparece o selo "nome fictício".
+- OUVE: um risco de giz por letra (o mesmo som da vitrine, CreatSom.giz).
+
+1,3 a 1,6 s
+- VÊ: um anel de giz de 88 px (o toque, sem mão) pousa na placa e desce 60 px. A placa estica para baixo com a mola do arraste real. A legenda muda para "Vire a placa."
+- OUVE: um tic seco no pouso do anel.
+
+1,6 a 2,4 s
+- VÊ: a placa gira 180°. Por volta de 1,9 s, durante 4 quadros, aparece o verso de madeira com a nuvem queimada (a marca da Creat dentro do gesto). A placa assenta em ABERTO, com o nome em giz e duas oscilações curtas. Não há flash nem tela piscando.
+- OUVE: um rangido curto da corrente. No quadro exato em que a placa assenta (2,2 s), um único toque de sino de porta, que deixa eco.
+- Este é o pico.
+
+2,4 a 3,0 s
+- VÊ: a câmera recua de 220% para 100%. Aparece que tudo aconteceu dentro da tela de um celular: a página real, com o campo do nome e o botão "Abrir meu negócio". A legenda diz "Não é animação. É a página."
+- OUVE: o eco do sino segura; o ambiente da rua some.
+
+3,0 a 5,0 s
+- VÊ: a prévia real sobe em tela cheia e rola devagar: a navalha, o nome, os serviços. A faixa "prévia · serviços e preços de exemplo" fica visível. A legenda diz "O site pronto, com o nome do negócio."
+- OUVE: silêncio limpo e um tom grave curto, de "lado de dentro". O plim fica guardado para o pedido.
+- FAZ: entende a promessa inteira em 5 s (digitar, virar, site pronto) e o próximo passo: fazer o mesmo com o nome do próprio negócio.
+
+REGRA DE VARIAÇÃO DO GESTO
+O que é fixo em todos os ângulos:
+- a placa assenta em ABERTO até 2,4 s;
+- o sino toca no assentamento;
+- a nuvem queimada aparece no meio do giro.
+
+O que muda por ângulo é o que vem antes (0 a 1,3 s) e o que fica atrás do vidro:
+- Dor 23h: o quadro 1 é um balão "Tem horário amanhã?" com 23:12 e o selo "cena de exemplo". Em 0,6 s a placa FECHADO desce na corrente na frente da cena.
+- Link da Bio: o quadro 1 é um toque num link que abre "Página não encontrada".
+- Sede: em 2,4 s a câmera atravessa o vidro em vez de recuar, porque atrás dele está a sede.
+
+Assim a marca se repete e a Meta recebe primeiros quadros diferentes.
+
+## Ângulos
+
+- **R7 · A Mensagem das 23h (dor em cena)** · 0 a 1,3 s: tela de celular escura com o balão "Tem horário amanhã?" e 23:12, selo "cena de exemplo". A placa FECHADO desce na corrente na frente da cena. 1,3 a 2,4 s: a virada com o sino. 2,4 a 7 s: a câmera atravessa o vidro e cai na prévia real. A cliente fictícia escolhe sozinha "Corte · amanhã · 10h", com anéis de giz em cada toque. 7 a 10 s: corte seco no plim e o balão real "Pedido pelo site da Barbearia Navalha Fictícia" chega (número coberto pela faixa "número de teste"). 10 a 15 s: cartão final. Legendas: "23h12. Um cliente quer horário." / "Pelo site, ele mesmo escolhe." / "E o pedido chega no WhatsApp." Versões: salão ("Tem vaga para pé e mão sábado?") e academia ("Posso fazer aula experimental amanhã às 6h?"). Corte de 8 s para Stories: abertura, plim e cartão final. Diferença para o R6: a dor fica no primeiro segundo e não há o momento de 'sem resposta'. Princípio: Transportação narrativa (Green e Brock, 2000) em três atos de 15 s: dor, virada, resultado. A Meta recomenda Problema, Solução, Resultado, sem dados publicados. A perda é concreta e em terceira pessoa (o cliente que pede às 23h), sem usar aversão à perda como pilar, porque a evidência é contestada (Gal e Rucker, 2018). Isso também cumpre a política de atributos pessoais da Meta, porque não afirma nada sobre quem assiste. É a família do Reel de dor que custou cerca de R$ 0,10 a R$ 0,32 por clique (dado do briefing). Ainda é hipótese que repita esse custo.. Para quem: Dono de barbearia ou salão de outra cidade que hoje recebe pedido de horário no WhatsApp e responde à mão, em público frio. É o primeiro ângulo a testar, porque herda o único dado bom da conta.
+- **R8 · Vire Você (demonstração do gesto)** · É a versão-base do momento-assinatura, seguida de um plano-sequência sem corte, gravado da página real, de 3 a 12 s. O vídeo volta ao campo, digita "Studio Barra Fictícia" em ritmo real com o contador "0 de 40" correndo, escolhe o chip do nicho e toca em "Abrir meu negócio". A placa vira de verdade e a prévia sobe e rola até o pedido de horário. A legenda fixa no rodapé da faixa segura diz "Sem corte. Gravado na página." A ausência de corte é a prova de que não é montagem. 12 a 15 s: cartão final. Uma versão por nicho. Quando existir a escolha curta de cor ou de serviço (alavanca 1 da pesquisa), gravar a variante com 1 escolha e testar contra a variante só com o nome. Corte de 8 s para Stories: só a abertura, a prévia e o cartão. Princípio: O produto aparece nos 3 primeiros segundos, como a Meta recomenda (Central de Ajuda 1574729747001887). A prévia pessoal se apoia no efeito "eu desenhei" (Franke, Schreier e Kaiser, 2010), estudado em bens físicos; para site isso é hipótese. A reciprocidade vem de ver grátis e sem cadastro (Regan, 1971, favor pequeno). Não afirmar efeito IKEA para quem só digita o nome (Norton e outros, 2012, exige trabalho concluído).. Para quem: Público frio dos três nichos que nunca ouviu falar da Creat e precisa entender o produto em 5 s. É o ângulo padrão da campanha de site.
+- **R9 · Quem Monta (prova e bastidor na sede)** · Na virada, a câmera atravessa o vidro em vez de recuar. Atrás dele está a sede 3D gravada em sede/index.html?modo=demo, com o selo "sede da Creat · demonstração" visível o tempo todo. 3 a 10 s: a comanda passa de mão em mão em 7 planos de 1 s, cada um com o ponto na cor do personagem: Nimbus organiza, Verbo escreve, Paleta escolhe as cores, Pixel monta, Lupa testa no celular, Muralha confere a segurança, Trilho publica. 10 a 11,5 s: o carimbo NO AR bate, com o som da porta de aço subindo (o enxerto). 11,5 a 15 s: corte para o site-demonstração no celular e o cartão final. Legendas: "Quem monta: uma equipe de agentes de IA." / "Cada um faz uma parte." / "E só sai depois de testado no celular." Não usar "ao vivo", "assista" nem prazo, porque a publicação ao vivo não existe (RELATORIO.md). Princípio: Ilusão do trabalho, ou transparência operacional (Buell e Norton, 2011, Management Science 57(9):1564-1579, DOI 10.1287/mnsc.1110.1376). Em cinco experimentos com serviços online simulados, mostrar o esforço feito aumentou o valor percebido. Limite: os serviços eram simulados, e a nossa sede é demonstração, então o selo tem de ficar visível. Funciona também como prova de processo enquanto não houver cliente pago para servir de prova social (achado 6). E responde a "quem são vocês" para quem nunca ouviu falar da Creat.. Para quem: O cético do "site feito por IA é qualquer coisa" e o desconhecido de outra cidade que precisa ver alguém trabalhando antes de pagar. Serve também como segundo toque no remarketing de quem viu a prévia.
+- **R10 · Sem Amarra (redução de risco)** · Depois da virada, a câmera atravessa o vidro até uma lousa grande, onde o giz escreve três linhas, uma de cada vez. Cada linha vem com um recorte real da página como prova, sem nenhum valor em reais à vista. Linha 1: "Ver: grátis, sem cadastro", com a página inicial sem pedir e-mail nem WhatsApp. Linha 2: "Mensalidade: só com o site no ar", com o recorte do texto real "a partir do dia em que o site entra no ar", mascarando o preço. Linha 3: "Fidelidade: nenhuma". Depois, em letra menor: "7 dias para desistir, como manda a lei". Cada linha ganha um risco de giz de "feito" e um tic. 12 a 15 s: cartão final. Proibido escrever "só paga se gostar": a Abertura é paga antes e os 7 dias são direito legal. A frase está hoje no subtítulo da home e deve ser revista pelo Verbo. Princípio: Redução do risco percebido em compra à distância (Wood, 2001, J. Marketing Research). O diferencial real vem da combinação "sem fidelidade" com "mensalidade só com o site no ar", porque agendadores do mercado cobram multa ou exigem fidelidade no plano anual (achado 16). Os 7 dias são apresentados honestamente como piso legal (CDC art. 49), não como bondade. A prova é de tela, não de promessa. Pendente com advogado: o reembolso quando o site já foi produzido.. Para quem: O dono que já foi preso a contrato, já pagou agência que sumiu ou tem medo de assinatura. É o ângulo mais forte no remarketing de quem gerou prévia e não iniciou o checkout.
+- **R11 · O Pedido Chega no Seu (experimentar antes de comprar)** · Depois da virada, o vídeo recua para a página real e segue o fluxo real "Enviar o teste para o meu WhatsApp". O número é de teste, coberto pela faixa "número de teste". O WhatsApp abre com o pedido pronto, "Corte, amanhã às 10:00", e o anel de giz segura o botão de enviar. Corte seco no plim. 11 a 15 s: cartão final. Legendas: "Teste o pedido no seu próprio WhatsApp." / "Antes de pagar qualquer coisa." / "Do jeito que vai chegar do cliente." Na campanha de conversa, o botão é Enviar mensagem e a última legenda é "Toque e receba o link no chat", como a Meta pede (Central de Ajuda 269324800441478). Na campanha de site, o botão é Saiba mais. Princípio: Experimentabilidade: poder testar antes de adotar reduz a incerteza. É a referência clássica de difusão de inovações (Rogers), que não li nesta rodada e que não foi testada neste produto, então é hipótese. Soma-se a reciprocidade (Regan, 1971) e a concretude de ver o resultado no próprio aparelho; para concretude não achei estudo (lacuna da pesquisa).. Para quem: O dono que acha que site é vitrine parada e não entende o que ganha. É o ângulo da campanha de WhatsApp, em que o WhatsApp fecha a venda e a conversa começa com quem já testou.
+- **R12 · O Link da Bio (dor alternativa)** · 0 a 1,3 s: um perfil fictício (@barbearianavalhaficticia, selo "cena de exemplo"). Um anel de giz toca no link da bio e abre uma tela genérica "Página não encontrada", desenhada pela casa, sem marca de nenhuma ferramenta real. A placa FECHADO cai na corrente na frente dessa tela. 1,3 a 2,4 s: a virada com o sino. 2,4 a 10 s: o mesmo toque, agora no site real, abre a prévia com o pedido de horário funcionando. 10 a 15 s: cartão final. Legendas: "O cliente tocou no link." / "E deu em nada." / "Aqui, o link abre o pedido de horário." Nunca citar ferramenta, concorrente ou página real (os anúncios com 'Site Not Found' da Biblioteca são só inspiração da dor). Princípio: Contraste e perda concreta e verificável: uma tela que qualquer pessoa já viu, em vez de "você está perdendo clientes", que a política da Meta e a evidência contestada (Gal e Rucker, 2018) desaconselham. A cena em terceira pessoa respeita a política de atributos pessoais (alterada em 26/06/2024). A eficácia comparada com o R7 é hipótese de teste.. Para quem: O dono cujo "site" é o Instagram com link na bio, um link de agregador ou uma página quebrada. É o público de salão e estética, que vive no Instagram e é o mais exposto a essa dor.
+
+## Regras de produção
+
+- FORMATO: master de 15 s e corte de 8 s para Stories. A Meta recomenda menos de 15 s no Feed e menos de 10 s em Stories (Central de Ajuda 1574729747001887, consultada em 09/11/2026). Exportar 1080x1920 e cópia 1440x2560 (padrão de criativos.md), 30 fps, H.264 com yuv420p e áudio AAC a 48 kHz. O nome do arquivo segue utm.md: R7-<nicho>-v1.mp4 até R12-<nicho>-v1.mp4.
+- ÁREA SEGURA (regra mais conservadora da casa, anuncios-meta.md): texto, marca, placa e ação principal só entre y 269 e y 1248 e entre x 65 e x 1015 em 1080x1920. Abaixo de y 1248 só imagem que pode ser coberta pelos botões do Instagram. Conferir cada versão com a camada-guia tracejada de saida/S2-placa-porta-1080x1920-guia.png.
+- IMAGEM SÓ DO PRODUTO REAL: tudo o que é mostrado como produto vem de gravação da página real. A captura é feita pelo Chromium da skill navegador ou pelo Playwright, em 390x844 com escala 3 (1170x2532), por um script que dirige o ponteiro. Nenhuma tela redesenhada. Os closes são recortes da captura em escala 3 e nunca passam de 2x de aproximação. A abertura usa a placa real (ritual/placa.js) gravada da página, não uma animação refeita. Só as cenas de dor (balão das 23h, 'página não encontrada') podem ser desenhadas, e sempre com o selo 'cena de exemplo'.
+- MONTAGEM EM NUVEM: a linha do tempo de cada Reel é um HTML com as camadas (gravação, legendas, selos, anel de toque, cartão final). Ela é renderizada quadro a quadro pelo Playwright, no mesmo caminho de estaticos/renderizar.cjs, e montada com ffmpeg num container da nuvem. Nada roda no computador do dono, e a entrega é por link do Google Drive, nunca como anexo. A montagem programática de vídeo não consta em docs/stack-ferramentas-2026.md, onde o CapCut aparece como uso manual. Pela regra de melhores-ferramentas, comparar 'HTML + Playwright + ffmpeg' com Remotion (licença e uso comercial) e registrar a escolha e o motivo no estudo antes do primeiro lote.
+- SEM ATOR, SEM VOZ, SEM MÃO: nenhum rosto, nenhuma locução, nenhuma mão filmada. O toque aparece como um anel de giz de 88 px (traço --giz de 6 px com textura de giz) que segue as coordenadas reais do ponteiro gravado pelo script, sincronizado ao quadro. Isso substitui o R6a: o Marcos não precisa aparecer.
+- LEGENDA CINEMATOGRÁFICA, NÃO KARAOKÊ: nada de palavra pulando, cor trocando por sílaba ou emoji, que são o padrão de template. Cada legenda é escrita a giz, com o traço revelado em 280 a 400 ms. A palavra-chave vai em Lilita One e o resto em Figtree 800. Mínimo de 64 px, no máximo 2 linhas de 18 caracteres e uma frase por plano. Tinta --tinta sobre faixa --sol com contorno de 4 px, ou giz sobre placa --lousa. A legenda entra no exato quadro do evento sonoro (giz, tic, sino, plim) e fica pelo menos 1,2 s na tela. Esse tempo é regra da casa, não tem fonte. O vídeo tem de ser entendido inteiro sem som.
+- SOM DESENHADO, A LOJA ABRINDO: por padrão, sem música. A trilha é feita de efeitos: corrente, giz por letra, tic do toque, rangido curto, sino de porta no assentamento, plim do WhatsApp, rua de manhã ao fundo a −30 dB, tom grave de 'lado de dentro' e a porta de aço subindo (0,9 s) no carimbo NO AR e no cartão final. O Eco sintetiza tudo a partir de assets/som/creat-som.js, renderizado offline (OfflineAudioContext) na nuvem e sincronizado por quadro. Assim o direito é da casa e o som é o mesmo da página. Música só da Coleção de Sons da Meta, colocada no Gerenciador a −18 dB por baixo dos efeitos e testada como variável à parte. Normalizar em torno de −14 LUFS: é convenção de plataformas de streaming, porque não li um alvo da Meta (hipótese). Todo som tem um par visual.
+- MOVIMENTO COM MOTIVO: um movimento orquestrado por plano. A mola da página (--curva-mola) aparece na placa e nas entradas. A câmera virtual faz só dois movimentos: recuar para revelar o celular, ou atravessar o vidro. Corte seco nos eventos de som. Proibidos: tremor, flash, tela piscando (vetada pela política da Meta), transição de whoosh, glitch, celular 3D flutuando, mockup inclinado, contagem regressiva e seta piscando.
+- IDENTIDADE: só os tokens da casa: --ceu #CDEBFF, --tinta #1E1B2E, --sol #FFC93C (a única cor de ação), --papel #FFFDF6, --lousa #22322D com --giz #F4F1E6, e --madeira #D39A5B. Sombra dura de 10 px, sem desfoque e sem degradê. Fontes: Lilita One, Figtree e JetBrains Mono, esta última para os selos. Uma ousadia só: a placa. Todo o resto fica calmo.
+- CARTÃO FINAL FIXO (últimos 2,5 a 5 s): a placa ABERTO na corrente, a legenda 'Digite o nome do seu negócio e veja o site pronto', o chip --sol 'Grátis para ver · Sem cadastro' e a linha de origem 'Creat Nuvem · equipe de agentes de IA · Bahia', que diz quem somos a quem nunca ouviu falar da Creat. O botão do anúncio é Saiba mais, levando à home com ?nicho= e UTM. Enviar mensagem só no R11, na campanha de conversa. O cartão final serve de fim desenhado (pico e fim, achado 12).
+- SELOS DE HONESTIDADE, SEMPRE VISÍVEIS: 'nome fictício' quando aparece Barbearia Navalha Fictícia, Salão Esmalte Fictício ou Studio Barra Fictícia; 'cena de exemplo' sobre mensagens e perfis encenados; 'sede da Creat · demonstração' durante todo plano da sede, gravada com ?modo=demo; 'prévia · serviços e preços de exemplo' sobre a prévia; e a faixa 'número de teste' sobre qualquer número de WhatsApp.
+- PROIBIDO NO TEXTO DO VÍDEO E DO ANÚNCIO:
+- nome da pessoa ou do negócio dela, e frase que sugira que o anunciante os conhece (política de atributos pessoais da Meta, 26/06/2024);
+- pergunta a quem vê;
+- afirmação sobre a situação do negócio ou as finanças de quem vê;
+- preço e prazo (ficam na página, com a mesma clareza);
+- promessa de cliente, de ganho ou de agenda cheia, e a palavra 'agenda';
+- 'ao vivo', 'assista ao seu site sendo montado' e 'só paga se gostar';
+- 'ninguém faz isso' (não foi verificado);
+- nome de concorrente;
+- depoimento, estrela ou número de clientes enquanto não houver cliente real com permissão;
+- 'neurociência' como argumento;
+- nome de cidade enquanto o conjunto tiver várias praças;
+- logo do WhatsApp ou da Meta alterado (usar o balão próprio da vitrine).
+- ESCASSEZ SÓ SE FOR REAL: o vídeo não mostra contador. 'Vagas de hoje: X de 3' e as 20 vagas de inauguração aparecem só na página, ligadas ao banco de pedidos. Se algum dia um criativo citar a capacidade de 3 pedidos por dia, ele sai do ar no dia em que esse número mudar.
+- VARIAÇÃO PARA O ALGORITMO: 6 ângulos x 3 nichos. A virada é idêntica, porque é o ativo de marca. O primeiro 1,3 s, o mundo atrás do vidro e a cena mudam por ângulo, para que a Meta não trate os criativos como o mesmo. A alegação de que a Meta faz isso é de blog (E-Commerce Brasil, 25/06/2026), por isso vale como cuidado, não como fato. O primeiro quadro de cada versão é diferente e serve de capa, legível sem tocar.
+- VERIFICAÇÃO ANTES DE SUBIR:
+- assistir no celular, sem som, de braço esticado; se a legenda não ler, aumentar;
+- rodar verificacao-visual no HTML da linha do tempo e olhar os prints;
+- o Lupa confere legendas e selos contra anuncios.md;
+- ver a prévia em todos os posicionamentos pelo Gerenciador (ads_get_ad_preview), conferindo a área segura e o corte do texto principal.
+O Crivo revisa o script de gravação e de montagem.
+- MEDIÇÃO E RITMO: ler a taxa de gancho (reproduções de 3 s divididas por impressões), o ThruPlay e o CTR de link. A decisão é tomada pelo custo de 'prévia gerada' e de 'checkout iniciado', porque com R$ 80 por dia o Pix é raro demais para decidir (pesquisa de mídia). Trocar primeiro o primeiro 1,3 s, depois o corpo, uma variável por teste. Ordem de entrada: R7, R8 e R9 na campanha de site; R11 na de conversa; R10 e R12 depois, no remarketing e como desafiantes. Não editar de 23 a 29/11, porque o CPM sobe na Black Friday (pesquisa de mídia, base 2025).
+
+## Roteiros
+
+### R7-barbearia-v1 · R7 · A Mensagem das 23h (dor em cena). Transportação narrativa em três atos (dor, virada, resultado), perda concreta em terceira pessoa. Herda a família do Reel de dor que custou cerca de R$ 0,10 a R$ 0,32 por clique (dado do briefing, conta CTMTT); repetir esse custo é hipótese. Primeiro a entrar na campanha de site. Corte de 8 s para Stories: 0 a 2,4 s, plim (7 a 8,5 s) e cartão final. · barbearia · destino site · 15 s
+
+| tempo | o que aparece | texto na tela | som |
+|---|---|---|---|
+| 0 a 1.3 s | Quadro 1 (capa): tela de celular escura com o balão próprio da vitrine 'Tem horário amanhã?' e a hora 23:12; selo 'cena de exemplo' em JetBrains Mono. Em 0,6 s a placa FECHADO real (gravada de ritual/placa.js) desce na corrente na frente da cena, já com 'Barbearia Navalha Fictícia' a giz e o selo 'nome fictício'. | 23h12. Um cliente quer horário. | Vibração curta e abafada do celular no quadro 1; dois elos de corrente tilintando na descida da placa; rua à noite ao fundo, bem baixa (menos 30 dB). |
+| 1.3 a 2.4 s | Anel de giz de 88 px pousa na placa e desce 60 px; a placa estica com a mola real e gira 180 graus. Em 1,9 s, por 4 quadros, aparece o verso de madeira com a nuvem queimada. Em 2,2 s assenta em ABERTO com o nome a giz e duas oscilações curtas. Sem flash. | Vire a placa. | Tic seco no pouso do anel; rangido curto da corrente; um toque de sino de porta exatamente em 2,2 s, com eco. |
+| 2.4 a 7 s | A câmera atravessa o vidro e cai na prévia real da barbearia (gravação em 390x844, escala 3). Anéis de giz seguem o ponteiro gravado: tocam em 'Corte', em 'amanhã' e em '10h'. Faixa 'prévia · serviços e preços de exemplo' visível o tempo todo. | Pelo site, ele mesmo escolhe. | O eco do sino segura e some; tom grave curto de 'lado de dentro'; um tic por toque, sincronizado ao quadro. |
+| 7 a 10 s | Corte seco no plim: o balão real 'Pedido pelo site da Barbearia Navalha Fictícia' chega com 'Corte, amanhã às 10:00'. O número fica coberto pela faixa 'número de teste'. Selo 'nome fictício' no canto. | E o pedido chega no WhatsApp. | Plim do WhatsApp da vitrine (o único plim do vídeo), depois silêncio limpo. |
+| 10 a 15 s | Cartão final fixo: fundo --ceu, placa ABERTO na corrente, chip --sol 'Grátis para ver · Sem cadastro' e a linha de origem 'Creat Nuvem · equipe de agentes de IA · Bahia' (chip e origem são elementos fixos da marca, fora da contagem da legenda). Tudo dentro da área segura (y 269 a 1248). | Digite o nome. Veja o site pronto. | Porta de aço subindo por 0,9 s na entrada do cartão (assinatura sonora); eco final do sino. |
+
+- **Texto principal:** Às 23h12 um cliente pede horário. No site Porta Aberta, ele mesmo escolhe o serviço e o pedido chega no WhatsApp do dono. Digite o nome do seu negócio e veja o site pronto, grátis e sem cadastro. Feito pela Creat Nuvem, equipe de agentes de IA da Bahia.
+- **Título:** Pedido de horário direto no WhatsApp
+- **Descrição:** Grátis para ver, sem cadastro
+- **Botão:** Saiba mais
+
+### R8-academia-v1 · R8 · Vire Você (demonstração do gesto). Versão-base do momento-assinatura: o produto aparece nos 3 primeiros segundos (recomendação da Meta, Central de Ajuda 1574729747001887) e o plano-sequência sem corte é a prova de que não é montagem. Reciprocidade de ver grátis e sem cadastro. Ângulo padrão da campanha de site para público frio. Quando existir a micro-escolha de cor na prévia, gravar a variante com 1 escolha e testar contra esta. Corte de 8 s: abertura, prévia e cartão. · academia · destino site · 15 s
+
+| tempo | o que aparece | texto na tela | som |
+|---|---|---|---|
+| 0 a 1.3 s | Quadro 1 (capa): fundo --ceu e a placa FECHADO real ocupando 70% da largura, no fim de um balanço de 6 graus na corrente. O giz escreve 'Studio Barra Fictícia' letra a letra na borda da placa (efeito real da página ao digitar). Selo 'nome fictício' no canto e 'Creat Nuvem · Porta Aberta' no alto da faixa segura. | Digite o nome. | Dois elos de corrente tilintando; rua de manhã ao fundo a menos 30 dB; um risco de giz por letra (CreatSom.giz, o mesmo som da vitrine). |
+| 1.3 a 2.4 s | Anel de giz pousa e puxa a placa 60 px para baixo; giro de 180 graus com a nuvem queimada por 4 quadros em 1,9 s; assenta em ABERTO com o nome a giz em 2,2 s. | Vire a placa. | Tic no pouso; rangido curto; sino de porta no quadro do assentamento (2,2 s), com eco. |
+| 2.4 a 3.6 s | A câmera recua de 220% para 100% e revela que tudo aconteceu na tela de um celular: a página real com o campo do nome e o botão 'Abrir meu negócio'. | Não é animação. É a página. | O eco do sino segura; o ambiente da rua some. |
+| 3.6 a 8 s | Plano-sequência sem corte, gravado da página real: o campo recebe 'Studio Barra Fictícia' em ritmo real com o contador '0 de 40' correndo, o anel toca no chip 'Academia e studio' e em 'Abrir meu negócio', e a placa vira de verdade. No rodapé da faixa segura, o selo fixo 'sem corte · gravado na página'. | Sem corte. Gravado na página. | Um tic por tecla, baixo; tic no chip e no botão; sino no assentamento real da placa. |
+| 8 a 12 s | A prévia real sobe em tela cheia e rola devagar: o nome do studio, a anilha, os serviços, até o pedido de 'Aula experimental'. Faixa 'prévia · serviços e preços de exemplo' visível. | O site pronto, com o nome. | Silêncio limpo e o tom grave curto de 'lado de dentro'. |
+| 12 a 15 s | Cartão final fixo: placa ABERTO na corrente, chip --sol 'Grátis para ver · Sem cadastro' e a linha 'Creat Nuvem · equipe de agentes de IA · Bahia'. | Digite o nome. Veja o site pronto. | Porta de aço subindo por 0,9 s; eco do sino. |
+
+- **Texto principal:** Digite o nome do seu negócio, vire a placa para ABERTO e veja o site pronto em segundos, com pedido de aula experimental pelo WhatsApp. Grátis para ver e sem cadastro. Gravado na página real, sem corte. Creat Nuvem, equipe de agentes de IA da Bahia.
+- **Título:** Vire a placa e veja o site do studio
+- **Descrição:** Veja grátis, sem cadastro
+- **Botão:** Saiba mais
+
+### R9-salao-v1 · R9 · Quem Monta (prova e bastidor na sede). Ilusão do trabalho, ou transparência operacional (Buell e Norton, 2011, Management Science 57(9):1564-1579): mostrar o esforço aumentou o valor percebido em serviços simulados. Como a sede pública é demonstração, o selo fica visível o tempo todo. Responde 'quem são vocês' para quem nunca ouviu falar da Creat e serve de prova de processo enquanto não há cliente real com permissão. Campanha de site e segundo toque no remarketing. Proibido 'ao vivo', 'assista' e prazo. · salao · destino site · 15 s
+
+| tempo | o que aparece | texto na tela | som |
+|---|---|---|---|
+| 0 a 1.3 s | Quadro 1 (capa): close em 2x (recorte da captura em escala 3) da borda da placa FECHADO real enquanto o giz escreve 'Salão Esmalte Fictício'. Selo 'nome fictício'. Em 1,0 s a câmera abre para a placa inteira na corrente. | Um nome na placa. | Giz riscando por letra; corrente tilintando; rua de manhã a menos 30 dB. |
+| 1.3 a 2.4 s | Anel de giz puxa a placa; giro com a nuvem queimada por 4 quadros em 1,9 s; assenta em ABERTO com o nome a giz em 2,2 s. | Agora, atrás da placa. | Tic; rangido curto; sino de porta em 2,2 s. |
+| 2.4 a 3.6 s | Em vez de recuar, a câmera atravessa o vidro da placa. Atrás dele está a sede 3D gravada em sede/index.html?modo=demo, com 'Salão Esmalte Fictício' na fachada. Selo 'sede da Creat · demonstração' fixo no alto da faixa segura até a cena do carimbo. | Quem monta: agentes de IA. | Eco do sino; tom grave de 'lado de dentro'; a rua some. |
+| 3.6 a 6.8 s | A comanda passa de mão em mão em 4 planos de 0,8 s, cada um com o ponto na cor do personagem e o rótulo real da sede: Nimbus organiza o pedido, Verbo escreve os textos, Paleta escolhe as cores, Pixel monta o site. | Cada um faz uma parte. | Corte seco a cada plano, cada um com um tic curto de papel. |
+| 6.8 a 10 s | Mais 3 planos de cerca de 1,07 s: Lupa testa no celular, Muralha confere a segurança, Trilho publica. | Só sai depois de testado no celular. | Tic de papel em cada corte; um tic mais grave no plano do Trilho. |
+| 10 a 11.2 s | O carimbo NO AR bate na comanda, em --sol com contorno --tinta e sombra dura de 10 px. Ainda com o selo 'sede da Creat · demonstração'. | No ar. | Porta de aço subindo por 0,9 s sob o carimbo (o enxerto da Porta de Enrolar). |
+| 11.2 a 12.5 s | Corte para o site-demonstração real do salão (sites/demo-salao/) aberto no celular, com a faixa 'demonstração · nome fictício'. | O site pronto, no celular. | Silêncio curto. |
+| 12.5 a 15 s | Cartão final fixo: placa ABERTO na corrente, chip --sol 'Grátis para ver · Sem cadastro' e a linha 'Creat Nuvem · equipe de agentes de IA · Bahia'. | Digite o nome. Veja o site pronto. | Eco do sino; a porta de aço não repete aqui para não brigar com o carimbo. |
+
+- **Texto principal:** Quem monta o site é uma equipe de agentes de IA, e cada um faz uma parte: texto, cores, montagem, teste no celular e segurança. Veja a sede da Creat em demonstração e digite o nome do seu negócio para ver o site pronto, grátis e sem cadastro.
+- **Título:** Veja a equipe que monta o site
+- **Descrição:** Sede da Creat em demonstração
+- **Botão:** Saiba mais
+
+### R10-barbearia-v1 · R10 · Sem Amarra (redução de risco). Redução do risco percebido em compra à distância (Wood, 2001, Journal of Marketing Research). O diferencial real é a combinação 'sem fidelidade' com 'mensalidade só com o site no ar'; os 7 dias aparecem como piso legal (CDC art. 49), não como bondade. Prova de tela, sem nenhum valor em reais à vista. Entra no remarketing de quem gerou prévia e não iniciou o checkout, e depois como desafiante na campanha de site. Proibido 'só paga se gostar'. Pendente com advogado: reembolso quando o site já foi produzido e aplicação do CDC a MEI. · barbearia · destino site · 15 s
+
+| tempo | o que aparece | texto na tela | som |
+|---|---|---|---|
+| 0 a 1.3 s | Quadro 1 (capa): uma lousa --lousa vazia ocupando a faixa segura, com moldura --madeira. Em 0,6 s a placa FECHADO real desce na corrente na frente da lousa, com 'Barbearia Navalha Fictícia' a giz e o selo 'nome fictício'. | Três linhas antes de decidir. | Giz batendo na lousa uma vez; corrente tilintando na descida. |
+| 1.3 a 2.4 s | Anel de giz puxa a placa; giro com a nuvem queimada por 4 quadros em 1,9 s; assenta em ABERTO em 2,2 s. | Sem amarra. | Tic; rangido curto; sino de porta em 2,2 s. |
+| 2.4 a 5 s | A câmera atravessa o vidro até a lousa. O giz escreve a linha 1. Ao lado, recorte real da home mostrando o campo do nome e o botão, sem pedir e-mail nem WhatsApp. Um risco de giz de 'feito' fecha a linha. | Ver: grátis, sem cadastro. | Giz riscando na escrita; tic no risco de 'feito'. |
+| 5 a 7.6 s | O giz escreve a linha 2. Ao lado, recorte real da página com o texto 'a partir do dia em que o site entra no ar', com o preço mascarado por uma faixa --lousa. Risco de 'feito'. | Mensalidade: só com o site no ar. | Giz; tic. |
+| 7.6 a 10.2 s | O giz escreve a linha 3. Ao lado, recorte real de 'O contrato em 6 linhas' com 'Sem fidelidade.' e 'Sem multa para sair.' em destaque. Risco de 'feito'. | Fidelidade: nenhuma. | Giz; tic. |
+| 10.2 a 12 s | Em letra menor, abaixo das três linhas, o giz escreve a nota legal. As três linhas continuam visíveis. | 7 dias para desistir, pela lei. | Giz mais leve; silêncio curto. |
+| 12 a 15 s | Cartão final fixo: placa ABERTO na corrente, chip --sol 'Grátis para ver · Sem cadastro' e a linha 'Creat Nuvem · equipe de agentes de IA · Bahia'. | Digite o nome. Veja o site pronto. | Porta de aço subindo por 0,9 s; eco do sino. |
+
+- **Texto principal:** Ver o site pronto é grátis e sem cadastro. A mensalidade só começa com o site no ar, sem fidelidade e sem multa para sair. E há 7 dias para desistir, como prevê o Código de Defesa do Consumidor. Digite o nome do seu negócio e veja o site.
+- **Título:** Mensalidade só com o site no ar
+- **Descrição:** Sem fidelidade, sem multa
+- **Botão:** Saiba mais
+
+### R11-academia-v1 · R11 · O Pedido Chega no Seu (experimentar antes de comprar). Experimentabilidade (Rogers, difusão de inovações; não lida nesta rodada nem testada neste produto, portanto hipótese) somada à reciprocidade (Regan, 1971). Campanha de conversa: o botão é Enviar mensagem e a última legenda diz 'no chat', como a Meta pede (Central de Ajuda 269324800441478). Mensagem pré-preenchida começa com 'R11:' para atribuir a venda. O WhatsApp fecha a conversa com quem já testou; o chat manda o link da prévia, para a venda seguir pelo site. · academia · destino whatsapp · 15 s
+
+| tempo | o que aparece | texto na tela | som |
+|---|---|---|---|
+| 0 a 1.3 s | Quadro 1 (capa): recorte em 2x do campo do nome na página real recebendo 'Studio Barra Fictícia'; selo 'nome fictício'. Em 0,7 s a câmera abre e a placa FECHADO real aparece na corrente com o mesmo nome a giz. | Digite o nome do negócio. | Tic baixo por tecla; giz riscando na placa; corrente tilintando. |
+| 1.3 a 2.4 s | Anel de giz puxa a placa; giro com a nuvem queimada por 4 quadros em 1,9 s; assenta em ABERTO em 2,2 s. | Vire a placa. | Tic; rangido curto; sino de porta em 2,2 s. |
+| 2.4 a 5 s | A câmera recua para a página real e desce até 'Teste de verdade · Peça um horário para você mesmo.' O anel toca em 'Aula experimental', no dia e no horário. | Teste o pedido no seu próprio WhatsApp. | Eco do sino some; um tic por toque. |
+| 5 a 8 s | O campo 'Seu WhatsApp, com DDD' aparece preenchido, com o número coberto pela faixa 'número de teste'. O anel toca em 'Enviar o teste para o meu WhatsApp'. | Antes de pagar qualquer coisa. | Tic no botão; tom grave curto. |
+| 8 a 11 s | O WhatsApp do aparelho de teste abre com a mensagem real do teste: 'Assim chega um pedido de horário no site da Studio Barra Fictícia', com 'Aula experimental, amanhã às 07:00'. O anel segura o botão de enviar; corte seco no plim e o balão enviado. Número coberto pela faixa 'número de teste'; logo do aplicativo sem alteração. | Do jeito que chega do cliente. | Plim do WhatsApp no corte seco; silêncio limpo depois. |
+| 11 a 15 s | Cartão final versão conversa: placa ABERTO na corrente, chip --sol 'Grátis para ver · Sem cadastro', balão próprio da vitrine indicando o chat e a linha 'Creat Nuvem · equipe de agentes de IA · Bahia'. | Toque e receba o link no chat. | Porta de aço subindo por 0,9 s; eco do sino. |
+
+- **Texto principal:** Teste o pedido de aula experimental no seu próprio WhatsApp antes de pagar qualquer coisa. Toque em Enviar mensagem e receba no chat o link para ver o site pronto com o nome do seu negócio. Grátis para ver. Creat Nuvem, equipe de agentes de IA da Bahia.
+- **Título:** Teste o pedido no seu WhatsApp
+- **Descrição:** Abre uma conversa no WhatsApp
+- **Botão:** Enviar mensagem
+
+### R12-salao-v1 · R12 · O Link da Bio (dor alternativa). Contraste e perda concreta e verificável (uma tela que qualquer pessoa já viu), em terceira pessoa, dentro da política de atributos pessoais da Meta (26/06/2024). Público de salão e estética, que vive no Instagram. Exceção pedida pela pauta: o sistema reservava Enviar mensagem só ao R11; aqui o R12 vai para a campanha de conversa para cobrir o segundo Reel de WhatsApp, com a mesma última legenda 'no chat'. A versão de site deste roteiro (botão Saiba mais, cartão padrão) fica como desafiante no remarketing. Mensagem pré-preenchida começa com 'R12:'. A eficácia contra o R7 é hipótese de teste. A tela 'Página não encontrada' é desenhada pela casa, sem marca de ferramenta real. · salao · destino whatsapp · 15 s
+
+| tempo | o que aparece | texto na tela | som |
+|---|---|---|---|
+| 0 a 1.3 s | Quadro 1 (capa): perfil fictício @salaoesmalteficticio com o selo 'cena de exemplo'. O anel de giz toca no link da bio e abre uma tela genérica 'Página não encontrada', desenhada pela casa. Em 0,8 s a placa FECHADO real cai na corrente na frente dessa tela, com 'Salão Esmalte Fictício' a giz e o selo 'nome fictício'. | O link da bio deu em nada. | Tic do toque; um silêncio seco de meio segundo na tela vazia; corrente tilintando na queda. |
+| 1.3 a 2.4 s | Anel de giz puxa a placa; giro com a nuvem queimada por 4 quadros em 1,9 s; assenta em ABERTO em 2,2 s. | Vire a placa. | Tic; rangido curto; sino de porta em 2,2 s. |
+| 2.4 a 7 s | O mesmo toque, agora no link do site real: abre a prévia do Salão Esmalte Fictício. O anel escolhe 'Pé e mão', 'sábado' e '9h'. Faixa 'prévia · serviços e preços de exemplo' visível. | Aqui, o link abre o pedido. | Eco do sino some; tom grave de 'lado de dentro'; um tic por toque. |
+| 7 a 10 s | Corte seco no plim: o balão real 'Pedido pelo site do Salão Esmalte Fictício' chega com 'Pé e mão, sábado às 09:00'. Número coberto pela faixa 'número de teste'. | O pedido chega no WhatsApp. | Plim do WhatsApp; silêncio limpo. |
+| 10 a 15 s | Cartão final versão conversa: placa ABERTO na corrente, chip --sol 'Grátis para ver · Sem cadastro', balão próprio da vitrine indicando o chat e a linha 'Creat Nuvem · equipe de agentes de IA · Bahia'. | Toque e receba o link no chat. | Porta de aço subindo por 0,9 s; eco do sino. |
+
+- **Texto principal:** O cliente tocou no link da bio e deu em página não encontrada. No site Porta Aberta, o link abre o pedido de horário e ele chega no WhatsApp do dono. Toque em Enviar mensagem e receba no chat o link para ver o site pronto com o nome do seu negócio, grátis.
+- **Título:** Link da bio que abre pedido de horário
+- **Descrição:** Abre uma conversa no WhatsApp
+- **Botão:** Enviar mensagem
+
+## Trocas de texto na página (para o visitante frio)
+
+| onde | hoje | proposto | por quê |
+|---|---|---|---|
+| Home · seo.descricao e seo.titulo (conteudo/home.json) | Descrição: "Digite o nome do seu negócio e veja o seu site pronto em segundos, com pedido de horário no seu WhatsApp. Sem fidelidade. Só paga se gostar." Título: "Porta Aberta: seu negócio aberto na internet | Creat" | Descrição (144 caracteres): "Digite o nome do seu negócio e veja o site pronto em segundos, com pedido de horário no WhatsApp. Grátis para ver, sem cadastro e sem fidelidade." Título, 2 opções: (1) "Site pronto com pedido de horário no WhatsApp | Creat" (53); (2) "Site para barbearia, salão e studio em 72 h | Creat" (51). | "Só paga se gostar" não é verdade: a Abertura é paga antes e os 7 dias são direito legal. Quem chega de outra cidade lê isso como promessa e cobra depois. A troca põe a reciprocidade verdadeira no lugar (ver é grátis e sem cadastro, alavanca 8). Os dois títulos usam os termos que o público busca, já que o atual não diz o que é vendido. A opção 2 cita o prazo, que já está garantido na página. |
+| Home · hero.subtitulo | Digite o nome do seu negócio. Em segundos você vê o seu site pronto, testa o pedido no seu próprio WhatsApp e só paga se gostar. | Digite o nome do seu negócio. Em segundos você vê o site pronto e testa o pedido no seu próprio WhatsApp. Ver é grátis e não pede cadastro. | Tira a promessa falsa do primeiro texto que o visitante frio lê. A redução de risco fica honesta: o que é grátis de verdade é ver. É também o que os Reels prometem ('Grátis para ver · Sem cadastro'), e a página continua a frase do anúncio sem contradizer. |
+| Home · hero, novo campo hero.origem (linha logo abaixo do botão 'Abrir meu negócio') | Não existe. A página só diz quem é a Creat no rodapé ('Creat Nuvem é um serviço da Creat.MTT Studio'). | Feito pela Creat Nuvem, uma equipe de agentes de IA na Bahia. Uma pessoa da equipe confere cada site antes de ir ao ar. Tudo pela internet, para negócio de qualquer cidade. | A pessoa de outra cidade nunca ouviu falar da Creat e precisa saber quem está do outro lado antes de digitar (consciência, pergunta de corte). A frase repete a linha de origem do cartão final dos Reels e usa um fato da própria página: a conferência por uma pessoa, em comoFunciona.deVerdade. 'Qualquer cidade' bate com os exemplos de /abrir/ (Campinas, DDD 11). Se o dono não quiser atender todo o Brasil já, troque por [PREENCHER: praças atendidas]. |
+| Home · comoFunciona.passos[2] e rótulos da sede (barra.links.sede, sede.olho, sede.botao, sede.legendaCelular) | Passo 3: "Acompanhe na sede" / "Abra a sede da Creat e veja a equipe montando o seu site, com o nome do seu negócio na fachada." Rótulos: "Sede ao vivo", "Sede ao vivo", "Ver ao vivo", "...quando você toca em Ver ao vivo..." | Passo 3, título: "Veja como a equipe trabalha". Texto: "Na sede da Creat, uma demonstração mostra cada etapa do trabalho, com o nome do seu negócio na fachada. O andamento real do seu pedido chega no seu WhatsApp." Rótulos: barra.links.sede "A equipe"; sede.olho "Sede da Creat"; sede.botao "Abrir a sede"; sede.legendaCelular " A sede 3D só carrega quando você toca em Abrir a sede, para poupar dados." | A sede pública é demonstração e a publicação ao vivo não existe. /abrir/ (depois.passos[3]) já diz isso certo, e a home tem de dizer o mesmo. Prova de processo só convence quem não conhece a Creat se for verdadeira (alavanca 2; Buell e Norton, 2011). Além disso, 'ao vivo' está proibido nos anúncios, e a página não pode prometer mais do que o anúncio. |
+| Home · sitesDemo.texto | Três sites feitos pela esteira real, a mesma que monta o seu. Nome fictício, cidade de verdade: Riachão do Jacuípe, na Bahia. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat. | Três sites feitos pela mesma esteira que monta o seu. Os nomes são fictícios e a cidade é Riachão do Jacuípe, na Bahia, onde fica a sede da Creat. No seu, entram o nome, a cidade e o WhatsApp do seu negócio. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat. | Quem é de outra cidade vê 'Riachão do Jacuípe' e pode achar que o serviço é só local. A troca explica por que a cidade é essa e diz, de forma concreta, que no site dele entram a cidade e o WhatsApp dele. A região fica como base, não como teto. |
+| Prévia · novo campo previa.notaQuero (linha logo abaixo do botão 'Quero este site no ar') | Não existe. O botão 'Quero este site no ar' aparece sozinho. | Ver é grátis. Se pedir, a mensalidade só começa com o site no ar, e não tem fidelidade. | Este é o ponto de decisão, e é aqui que o medo de assinatura trava quem não conhece a Creat. A redução de risco em camadas fica junto do botão (alavanca 3; Wood, 2001), não lá embaixo na seção de preços. Usa só fatos do contrato da home ('Sem fidelidade', 'Mensalidade só com o site no ar'). |
+| Prévia · nova etapa antes de mostrar o site (micro-escolha de cor), campos previa.escolha.* | Não existe. A placa vira e a prévia abre direto. | Título: "Antes de abrir, escolha a cor da fachada." Ajuda: "As cores vêm do seu tipo de negócio. Dá para trocar depois." Botão: "Abrir com esta cor". Link: "Abrir sem escolher". As opções usam os nomes reais das paletas de conteudo/nichos/*.json (ex.: academia: Anilha 25, Anilha 20, Anilha 15). | Alavanca 1: uma escolha curta deixa a prévia mais 'dele' (Franke, Schreier e Kaiser, 2010, estudado com bens físicos; para site é hipótese). Entra como teste A/B (só o nome contra o nome mais 1 escolha), medido pelo clique em 'Quero este site no ar'. O link 'Abrir sem escolher' garante que a etapa não vire barreira. Nenhum texto diz 'efeito comprovado'. |
+| Home · precos.texto | Você paga a Abertura uma vez. A mensalidade só começa no dia em que o site entra no ar. | Hoje você paga só a Abertura: R$ { {precos.abertura.inauguracao.preco}} uma vez, preço das { {precos.abertura.inauguracao.vagasTotal}} primeiras vagas (depois, R$ { {precos.abertura.padrao}}). A mensalidade, R$ { {precos.planos.aberto}} no Aberto ou R$ { {precos.planos.vitrine}} no Vitrine, só começa no dia em que o site entra no ar. Quando a inauguração acabar, a primeira frase vira: "Hoje você paga só a Abertura: R$ { {precos.abertura.padrao}} uma vez." | A regra da casa manda mostrar a Abertura e a mensalidade sempre juntas. O visitante frio decide pelo custo total, e mostrar só um dos dois pareceria truque. A âncora é real (R$ 497 depois das 20 vagas, alavanca 4), e a escassez é a mesma das 20 vagas ligadas ao banco (alavanca 5). A referência 'site de agência a partir de R$ 1.200' fica fora até ter fonte e data. |
+| /abrir/ · novo campo abrir.progresso (logo abaixo do título 'Falta pouco para abrir a {negocio}.') | Não existe. | Nome, tipo de negócio e prévia: pronto. Faltam 2 passos: os dados do negócio e o pagamento. | Alavanca 8: mostrar que boa parte do caminho já foi feita diminui o abandono no checkout. A evidência é de compras repetidas, então isto é teste, medido por checkout iniciado contra Pix pago. Para quem chegou de um anúncio há minutos, a frase também mostra que falta pouco e que não há conta para criar. |
+| /abrir/ · novo campo pagamento.risco (logo acima dos botões 'Pagar no Pix' e 'Cartão em até 2x') | Não existe junto ao botão. A informação está espalhada entre total.mensal ('Sem fidelidade'), plano.anualNota e o aceite. | 7 dias para desistir, como manda a lei. Sem fidelidade e sem multa para sair. A mensalidade só começa com o site no ar. | Alavanca 3: as três camadas de risco ficam no último ponto antes do pagamento, onde a dúvida de quem compra à distância é maior. Os 7 dias aparecem como piso legal, não como bondade (CDC art. 49). Ainda está pendente com o advogado o reembolso quando o site já foi produzido e o caso de MEI. Se ele restringir a regra, ajustar só a primeira frase. |
