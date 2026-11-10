@@ -13,7 +13,7 @@ Todo plano é uma **árvore de decisões**: cada decisão abre outras que depend
 
 Duas regras que não mudam:
 
-1. **Fato é trabalho nosso, nunca do dono.** Se a pergunta se responde olhando o repositório, a conta de anúncios, o site no ar, um documento ou uma fonte, um agente vai buscar. Enquanto ele busca, só as perguntas que dependem daquele fato esperam; o resto da rodada segue.
+1. **Fato é trabalho nosso, nunca do dono.** Se a pergunta se responde olhando o repositório, a conta de anúncios, o site no ar, um documento ou uma fonte, um subagente de contexto limpo vai buscar. Enquanto ele busca, só as perguntas que dependem daquele fato esperam; o resto da rodada segue.
 2. **Toda pergunta vem com a resposta recomendada**, escrita de modo que "sim" aceita a recomendação.
 
 ## Modo dono (ele pediu para ser interrogado)
@@ -29,8 +29,8 @@ Recomendo: ...
 ```
 
 - Ele pode responder "sim a tudo" ou "1 sim, 2 não, 3 a segunda opção". Áudio transcrito serve.
-- Fecha quando a fronteira esvazia: nenhuma decisão em aberto, nada assumido. Aí devolva o **plano fechado** em bloco curto (decisão, porquê, quem executa) e execute.
-- Se ele parar de responder no meio: decisão reversível segue pela recomendada e fica registrada; decisão sem volta espera.
+- Fecha quando a fronteira esvazia: nenhuma decisão em aberto, nada assumido. Aí devolva o **plano fechado** em bloco curto (decisão, porquê, quem executa) e **espere o dono responder "confirmo"** (ou equivalente claro) antes de executar. Sem confirmação, nada anda.
+- Se ele parar de responder no meio: nada é executado. As respostas recomendadas ficam registradas como proposta, e a próxima conversa retoma da rodada em que parou.
 
 ## Modo interno (padrão em plano grande, sem incomodar o dono)
 
@@ -41,8 +41,15 @@ O dono mandou decidir sem perguntar o que dá para decidir. Então o interrogat�
 3. Cada decisão cai em uma de três caixas:
    - **Fato:** alguém busca e traz com fonte.
    - **Decisão reversível** (texto, layout, ordem das ondas, qual agente, qual ferramenta já aprovada): decide-se pela evidência e registra-se o porquê.
-   - **Decisão só do dono** (dinheiro novo ou aumento de verba, serviço pago, dado pessoal dele ou de terceiros, nome e imagem de cliente, parecer jurídico, apagar algo, mudar preço ou produto): vai para **uma única rodada** a ele, no formato acima, no fim. Nunca em conta-gotas.
+   - **Decisão só do dono:** dinheiro novo ou aumento de verba; serviço pago; dado pessoal dele ou de terceiros; nome e imagem de cliente; parecer jurídico; apagar algo; mudar preço ou produto; **permissões e configuração** (`settings`, `CLAUDE.md`, ganchos); **instalar ou executar código, programa ou skill de fora**; **publicar no ar ou ligar tráfego pago**; **enviar mensagem ou dado a terceiros ou a serviço externo**; **git push**. Vai para **uma única rodada** a ele, no formato acima, no fim. Nunca em conta-gotas. Nada disso anda sem o "confirmo" dele.
+   - **Decisão mista** (parte técnica reversível, parte do dono, como fotos: o tratamento é reversível, a origem e o direito de uso são do dono): separe em duas. A parte reversível segue; a do dono vai para a rodada dele.
 4. O plano só é distribuído quando a fronteira interna esvazia. As perguntas feitas e as respostas ficam no relatório.
+
+Regras do modo interno:
+- **Pedido a um agente só:** ele faz os três papéis (desenha a árvore, pergunta como cético e responde com evidência) e diz isso no relatório.
+- **Onde fica:** as rodadas vão para o `RELATORIO.md` do projeto, numa seção "Grilling <data>", no formato `F1 · <fato> · fonte: <caminho, link ou comando>` e `D1 · <decisão> · caixa: reversível | dono | mista · porquê: ...`.
+- **Documentos da casa em conflito:** vale o mais recente (pela data do arquivo ou do commit); registre qual foi superado e avise quem cuida dele para corrigir.
+- **Fato que não dá para buscar** (sem fonte, sem acesso, caro demais): vira suposição declarada na seção "O que estamos assumindo", com o risco se estiver errada e quem confere depois. Não trave a rodada por ele.
 
 ## O que perguntar sempre
 

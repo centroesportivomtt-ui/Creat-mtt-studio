@@ -4,7 +4,13 @@
 - Fonte: https://github.com/mattpocock/skills, pasta `skills/productivity/handoff/`, commit `4ae2317` (31/10/2026).
 - Diretório público: https://skills.sh/mattpocock/skills/handoff
 - Como chegou aqui: Reel "5 skills mais instaladas" (tiagolemosx, 02/11/2026), indicado pelo dono em 10/11/2026.
-- O que mudou: tradução para português do Brasil; o documento vai para página privada ou Dropbox (o original grava na pasta temporária do computador, que na nuvem some com a sessão); estrutura fixa de oito blocos; regras do dono sobre segredo, dado de terceiro e saldo.
+- O que mudou: tradução para português do Brasil; por conta própria grava só no scratchpad, e com o pedido do dono vai para página privada ou Dropbox (o original grava na pasta temporária do computador, que na nuvem some com a sessão); estrutura fixa de onze blocos; regras do dono sobre segredo, dado de terceiro e saldo; regras para a sessão que lê.
+
+## Revisão de 10/11/2026
+Revisão de segurança (Muralha) e de uso real (Lupa). Correções aplicadas pela Forja no mesmo dia:
+- Por conta própria, a passagem só fica no scratchpad; publicar (Artifact ou Dropbox) só com o pedido do dono. O original é só do usuário (`disable-model-invocation: true`); a casa manteve o início automático e documentou a exceção no `SKILL.md`.
+- A passagem é lida como notas: ação que gasta, instala, publica, mexe em configuração ou manda dado para fora pede confirmação do dono; ordem permanente só vale no `CLAUDE.md` ou na `consciencia`; texto de fora entra só como citação marcada.
+- Modelo com datas que mandam, "verificado por quem", tarefas agendadas, print na pendência do Marcos e "o que não cobre"; checagem final por grep de segredo, e-mail, telefone e CPF.
 
 ## Licença do original (MIT), texto integral
 
