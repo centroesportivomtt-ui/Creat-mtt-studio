@@ -38,10 +38,10 @@ O dono mandou decidir sem perguntar o que dá para decidir. Então o interrogat�
 
 1. O `diretor` desenha a árvore de decisões do plano.
 2. Um agente cético (esforço alto) faz as perguntas da fronteira. Outro responde com evidência. Fato sem fonte não fecha pergunta.
-3. Cada decisão cai em uma de três caixas:
+3. Cada pergunta cai em uma de quatro caixas (fato vira `F1`, `F2`...; as três de decisão viram `D1`, `D2`...):
    - **Fato:** alguém busca e traz com fonte.
    - **Decisão reversível** (texto, layout, ordem das ondas, qual agente, qual ferramenta já aprovada): decide-se pela evidência e registra-se o porquê.
-   - **Decisão só do dono:** dinheiro novo ou aumento de verba; serviço pago; dado pessoal dele ou de terceiros; nome e imagem de cliente; parecer jurídico; apagar algo; mudar preço ou produto; **permissões e configuração** (`settings`, `CLAUDE.md`, ganchos); **instalar ou executar código, programa ou skill de fora**; **publicar no ar ou ligar tráfego pago**; **enviar mensagem ou dado a terceiros ou a serviço externo**; **git push**. Vai para **uma única rodada** a ele, no formato acima, no fim. Nunca em conta-gotas. Nada disso anda sem o "confirmo" dele.
+   - **Decisão só do dono:** dinheiro novo ou aumento de verba; serviço pago; dado pessoal dele ou de terceiros; nome e imagem de cliente; parecer jurídico; apagar algo; mudar preço ou produto; **permissões e configuração** (`settings`, `CLAUDE.md`, ganchos); **instalar ou executar código, programa ou skill de fora**; **publicar no ar ou ligar tráfego pago**; **enviar mensagem ou dado a terceiros ou a serviço externo**; **git push**. Vai para **uma única rodada** a ele, no formato acima, no fim. Aqui o limite de 5 perguntas não vale: junte todas, da mais cara para a mais barata. Nunca em conta-gotas. Nada disso anda sem o "confirmo" dele.
    - **Decisão mista** (parte técnica reversível, parte do dono, como fotos: o tratamento é reversível, a origem e o direito de uso são do dono): separe em duas. A parte reversível segue; a do dono vai para a rodada dele.
 4. O plano só é distribuído quando a fronteira interna esvazia. As perguntas feitas e as respostas ficam no relatório.
 

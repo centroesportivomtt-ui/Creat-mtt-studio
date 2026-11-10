@@ -115,7 +115,7 @@ const CONTROLE = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u
 // Texto que veio da página, numa linha só: sem controle, cortado e entre aspas.
 const dado = (s, n = 80) => '"' + corta(String(s == null ? '' : s).replace(CONTROLE, ' ').replace(/\s+/g, ' ').trim(), n).replace(/"/g, "'") + '"';
 // Parâmetros de endereço que podem carregar dado pessoal ou segredo: nunca impressos.
-const PARAM_SENSIVEL = /^(ud\[.*\]|fbp|fbc|_fbp|_fbc|cd\[.*\]|em|ph|fn|ln|ge|db|zp|external_id|e-?mail|tel|telefone|fone|cel|celular|whatsapp|wpp|nome|name|first_?name|last_?name|cpf|cnpj|rg|cid|uid|user|usuario|token|access_token|id_token|refresh_token|key|api_?key|apikey|senha|password|pass|pwd|secret|auth|authorization|code|otp|session|sessionid|sid|cookie|signature|sig|x-amz-.*)$/i;
+const PARAM_SENSIVEL = /^(ud\[.*\]|fbp|fbc|_fbp|_fbc|cd\[.*\]|em|ph|fn|ln|ge|db|zp|external_id|e-?mail|tel|telefone|fone|cel|celular|whatsapp|wpp|nome|name|text|body|msg|mensagem|message|subject|assunto|first_?name|last_?name|cpf|cnpj|rg|cid|uid|user|usuario|token|access_token|id_token|refresh_token|key|api_?key|apikey|senha|password|pass|pwd|secret|auth|authorization|code|otp|session|sessionid|sid|cookie|signature|sig|x-amz-.*)$/i;
 // Raízes que, em qualquer parte do nome do parâmetro, indicam dado pessoal ou segredo (user_mail, phone_number...).
 const RAIZ_SENSIVEL = /(mail|phone|fone|celular|whats|cpf|cnpj|token|senha|passw|secret|api_?key|auth|session|cookie|signature|nome|name)/i;
 const PARAM_ENDERECO = /^(dl|rl|ref|referrer|url|redirect|redirect_uri|return|return_to|next|u)$/i;
@@ -125,7 +125,9 @@ const pareceAleatorio = v => v.length > 16 && /^[\w.~%+\/=-]+$/.test(v) && /\d/.
 const valorSensivel = (k, v) => PARAM_SENSIVEL.test(k) || RAIZ_SENSIVEL.test(k) || pareceEmail(v) || pareceTelefone(v) || pareceAleatorio(v);
 // Fragmento (#...) é mais estrito: só fica o valor curto e sem espaço, porque leva o que a pessoa digitou.
 const valorCurto = v => /^[\w.-]{1,24}$/.test(v) && !pareceTelefone(v) && !pareceAleatorio(v);
-function limparUrl(u, max = 300) {
+// cru = true: não decodifica (%20 continua %20). É o que vale em toda linha fora das marcas de dado não confiável,
+// para a página não conseguir escrever uma frase legível com o próprio endereço.
+function limparUrl(u, max = 300, cru = false) {
   try {
     const x = new URL(u);
     if (/^(mailto|tel|sms|callto|whatsapp):$/.test(x.protocol)) return x.protocol + '***';
@@ -143,14 +145,18 @@ function limparUrl(u, max = 300) {
         ? h.split('&').map(par => { const i = par.indexOf('='); if (i < 0) return valorCurto(par) ? par : '***'; const k = par.slice(0, i); let v = par.slice(i + 1); try { v = decodeURIComponent(v); } catch {} return k + '=' + (valorCurto(v) && !valorSensivel(k, v) ? v : '***'); }).join('&')
         : (valorCurto(h) ? h : '***');
     }
-    let s = x.toString(); try { s = decodeURI(s); } catch {}
+    let s = x.toString(); if (!cru) { try { s = decodeURI(s); } catch {} }
     // decodeURI volta %0A em quebra de linha: todo caractere de controle sai codificado de novo.
     s = s.replace(CONTROLE, ch => encodeURIComponent(ch));
     return corta(s, max);
   } catch { return corta(String(u).split(/[?#]/)[0], max).replace(CONTROLE, ' '); }
 }
-// Mensagem de erro (do Playwright ou da página) numa linha só, com todo endereço limpo.
-const limparMsg = (m, n = 300) => corta(String(m == null ? '' : m).split('\n')[0].replace(/\b(?:https?|wss?):\/\/[^\s"'<>]+/g, u => limparUrl(u, 160)).replace(CONTROLE, ' '), n);
+// Endereço para linha de status ou de erro (fora das marcas): limpo, codificado e sem espaço nem controle.
+// Na consulta (antes do #), "+" é espaço: sai como %20 também, para nenhuma frase aparecer com "+" no lugar do espaço.
+const endereco = (u, max = 300) => limparUrl(u, max, true).replace(/\?[^#]*/, q => q.replace(/\+/g, '%20')).replace(/[\s\u0000-\u001f\u007f-\u009f]/g, ch => encodeURIComponent(ch));
+// Mensagem de erro (do Playwright ou da página) numa linha só, com todo endereço limpo e codificado.
+// A pontuação colada no fim (":" ",", ".", ")") fica fora do endereço e continua na frase.
+const limparMsg = (m, n = 300) => corta(String(m == null ? '' : m).split('\n')[0].replace(/\b(?:https?|wss?):\/\/[^\s"'<>]+?(?=[.,;:!?)\]]*(?:[\s"'<>]|$))/g, u => endereco(u, 160)).replace(CONTROLE, ' '), n);
 function vivo(pid) {
   if (!pid) return false;
   try { process.kill(pid, 0); } catch { return false; }
@@ -682,11 +688,25 @@ if (bruto[0] === '__servidor') {
   }
   // Roda o COBERTURA no alvo com tempo curto e erro claro (sem esperar os 30 s do Playwright).
   async function cobertura(el, s) {
-    try { return await el.evaluate(COBERTURA, undefined, { timeout: 6000 }); }
-    catch (e) {
+    let r, emMoldura = false;
+    try {
+      r = await el.evaluate(COBERTURA, undefined, { timeout: 6000 });
+      emMoldura = await el.evaluate(() => window !== window.top, undefined, { timeout: 6000 });
+    } catch (e) {
       if (/Timeout|detached|not attached|saiu/i.test(e.message)) throw new Error(`O alvo ${s} saiu da página antes da ação. Rode "ver" de novo.`);
       throw new Error(`Não consegui conferir o alvo ${s}: ${limparMsg(e.message, 160)}`);
     }
+    // Dentro de moldura, o elementFromPoint só enxerga a moldura: um aviso da página de fora por cima passaria.
+    // A conferência de alvo do Playwright (trial: confere e não clica) atravessa as molduras.
+    // Ela já repete a conferência por 3 s, então quem chama não repete de novo (r.fora).
+    if (r.ok && emMoldura) {
+      try { await el.click({ trial: true, timeout: 3000 }); }
+      catch (e) {
+        const por = (String(e.message).match(/(<[^\n]*?>)[^\n]*intercepts pointer events/) || [])[1];
+        if (por) return { ok: false, tipo: 'coberto', motivo: 'está coberto por ' + por, por, fora: true };
+      }
+    }
+    return r;
   }
 
   // Confere se o centro do alvo recebe o clique ou se outro elemento está por cima.
@@ -704,7 +724,12 @@ if (bruto[0] === '__servidor') {
     el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height) return { ok: false, tipo: 'invisivel', motivo: 'não está visível (sem tamanho na tela)' };
-    if (getComputedStyle(el).pointerEvents === 'none') return { ok: false, tipo: 'coberto', motivo: 'não recebe clique (pointer-events: none)' };
+    const est = getComputedStyle(el);
+    if (est.visibility === 'hidden' || est.visibility === 'collapse') return { ok: false, tipo: 'invisivel', motivo: 'está invisível (visibility: hidden)' };
+    // Transparente (opacity 0 nele ou num ancestral): a pessoa não vê. Exceção: campo com rótulo, que é quem recebe o toque (caixa de marcar desenhada).
+    let op = el; while (op && op.nodeType === 1 && getComputedStyle(op).opacity !== '0') op = op.parentElement || (op.getRootNode && op.getRootNode().host) || null;
+    if (op && op.nodeType === 1 && !(el.labels && el.labels.length)) return { ok: false, tipo: 'invisivel', motivo: 'está invisível (transparente, opacity: 0)' };
+    if (est.pointerEvents === 'none') return { ok: false, tipo: 'bloqueado', motivo: 'não recebe toque (pointer-events: none)' };
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return { ok: true };
     let hit = document.elementFromPoint(x, y);
@@ -721,7 +746,7 @@ if (bruto[0] === '__servidor') {
     for (;;) {
       const r = await cond();
       if (r) return r;
-      if (Date.now() >= fim) throw new Error(`Tempo esgotado (${tempo} ms): ${desc}. Endereço atual: ${limparUrl(page.url(), 160)}`);
+      if (Date.now() >= fim) throw new Error(`Tempo esgotado (${tempo} ms): ${desc}. Endereço atual: ${endereco(page.url(), 160)}`);
       await page.waitForTimeout(150);
     }
   }
@@ -792,7 +817,7 @@ if (bruto[0] === '__servidor') {
         // --rede-interna vale só para o "abrir" que a traz: o próximo "abrir" sem ela fecha a rede interna de novo.
         const redeInterna = !!o.redeInterna;
         const motivo = await motivoBloqueio(url, { lista, redeInterna });
-        if (motivo) throw new Error(`Não abri ${limparUrl(url, 160)}: ${motivo}${lista ? ` (lista: ${lista.join(', ')})` : ''}.`);
+        if (motivo) throw new Error(`Não abri ${endereco(url, 160)}: ${motivo}${lista ? ` (lista: ${lista.join(', ')})` : ''}.`);
         const mesmaLista = JSON.stringify(lista || null) === JSON.stringify(soDominios || null);
         // Opção de modo: recria só com as opções dadas. Só a lista ou a rede interna mudou: recria mantendo o modo.
         if (!ctx || !page || page.isClosed() || pedeModo || !mesmaLista || redeInterna !== !!modo.redeInterna) {
@@ -808,7 +833,7 @@ if (bruto[0] === '__servidor') {
         try { await page.goto(url, { waitUntil: 'domcontentloaded', timeout: tempo }); }
         catch (e) {
           const bloq = bloqueadas.get(url);
-          throw new Error(`Não consegui abrir ${limparUrl(url, 160)}: ${bloq || limparMsg(e.message, 200)}`);
+          throw new Error(`Não consegui abrir ${endereco(url, 160)}: ${bloq || limparMsg(e.message, 200)}`);
         }
         let aviso = '';
         await page.waitForLoadState('load', { timeout: Math.max(1000, tempo - (Date.now() - t0)) })
@@ -829,15 +854,34 @@ if (bruto[0] === '__servidor') {
       case 'ler': {
         const max = o.max || 8000;
         const partes = [];
+        const limpa = t => t.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+        // --dentro segue a regra do "ver --dentro": vale o primeiro que casa, da página para as molduras.
+        // Se ele é um <iframe>, lê o conteúdo da moldura (e das molduras dentro dela).
+        let casou = !o.dentro, alvoMoldura = null;
         for (const { frame, prof } of await molduras()) {
-          let t = null;
-          try { t = await frame.evaluate(sel => { const r = sel ? document.querySelector(sel) : document.body; return r ? r.innerText : null; }, o.dentro || null); }
+          if (alvoMoldura) {
+            if (!descende(frame, alvoMoldura)) continue;
+            let t = null; try { t = await frame.evaluate(() => document.body ? document.body.innerText : ''); } catch { continue; }
+            if (t && t.trim()) partes.push((await rotuloMoldura(frame)) + '\n' + limpa(t));
+            continue;
+          }
+          if (o.dentro && casou) break;
+          let r = null;
+          try { r = await frame.evaluate(sel => { const e = sel ? document.querySelector(sel) : document.body; if (!e) return null; return /^(IFRAME|FRAME)$/.test(e.tagName) ? { moldura: true } : { t: e.innerText || '' }; }, o.dentro || null); }
           catch (e) { if (/SyntaxError|not a valid selector/i.test(e.message)) throw new Error(`Seletor CSS inválido em --dentro: ${o.dentro}`); continue; }
-          if (t === null || !t.trim()) continue;
-          partes.push((prof ? (await rotuloMoldura(frame)) + '\n' : '') + t.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim());
-          if (o.dentro) break;
+          if (r === null) continue;
+          casou = true;
+          if (r.moldura) {
+            const h = await frame.$(o.dentro).catch(() => null);
+            const cf = h && await h.contentFrame().catch(() => null);
+            if (!cf) throw new Error(`O alvo de --dentro "${o.dentro}" é uma moldura sem conteúdo acessível. Use ler sem --dentro.`);
+            alvoMoldura = cf; continue;
+          }
+          if (!r.t.trim()) continue;
+          partes.push((prof ? (await rotuloMoldura(frame)) + '\n' : '') + limpa(r.t));
         }
-        if (o.dentro && !partes.length) throw new Error(`Nada casa com --dentro "${o.dentro}".`);
+        if (o.dentro && !casou) throw new Error(`Nada casa com --dentro "${o.dentro}".`);
+        if (o.dentro && !partes.length) return `O trecho --dentro "${o.dentro}" existe, mas não tem texto visível.`;
         let txt = partes.join('\n\n');
         if (txt.length > max) txt = txt.slice(0, max) + `\n… (cortado em ${max} de ${txt.length} caracteres; use --max ou --dentro)`;
         return embrulhar(txt || '(sem texto visível)');
@@ -846,18 +890,20 @@ if (bruto[0] === '__servidor') {
         const el = await alvo(a[0]);
         const antes = abasNovas.length;
         let r = await cobertura(el, a[0]);
-        if (!r.ok && r.tipo === 'coberto') { await page.waitForTimeout(400); r = await cobertura(el, a[0]); }
+        if (!r.ok && r.tipo === 'coberto' && !r.fora) { await page.waitForTimeout(400); r = await cobertura(el, a[0]); }
         const motivo = r.ok ? '' : r.tipo === 'coberto' && r.por ? `está coberto por ${dado(r.por, 100)}` : r.motivo;
         // Desabilitado e inerte não se forçam: o clique não faria nada e o "Clicado" seria mentira.
         if (!r.ok && r.tipo === 'desabilitado') throw new Error(`Não cliquei em ${a[0]}: o alvo está desabilitado. Espere a condição que o habilita.`);
         if (!r.ok && r.tipo === 'inerte') throw new Error(`Não cliquei em ${a[0]}: o alvo ${motivo}. Feche o diálogo ou use um elemento de dentro dele.`);
         if (!r.ok && !o.forcar) {
-          const dica = r.tipo === 'invisivel' ? 'Role até ele ou espere ele aparecer.' : 'Feche o que está por cima ou espere a condição certa; use --forcar só se for de propósito.';
+          const dica = r.tipo === 'invisivel' ? 'Espere ele aparecer ou confira se a página o escondeu.'
+            : r.tipo === 'bloqueado' ? 'A página bloqueou o toque neste alvo; confira se ele está liberado. Use --forcar só se for de propósito.'
+            : 'Feche o que está por cima ou espere a condição certa; use --forcar só se for de propósito.';
           throw new Error(`Não cliquei em ${a[0]}: o alvo ${motivo}. ${dica}`);
         }
-        // --forcar com alvo coberto: o clique na coordenada cairia em quem está por cima,
+        // --forcar com alvo coberto ou bloqueado: o clique na coordenada cairia em quem está por cima (ou por baixo),
         // então entregamos o evento de clique direto ao alvo e avisamos.
-        if (!r.ok && o.forcar && r.tipo === 'coberto') {
+        if (!r.ok && o.forcar && (r.tipo === 'coberto' || r.tipo === 'bloqueado')) {
           await el.evaluate(e => e.click());
           await page.waitForTimeout(500);
           return `Clicado em ${a[0]} à força (o alvo ${motivo}; o clique foi entregue direto ao alvo).\n` + await ondeEstou('Agora');
@@ -874,7 +920,7 @@ if (bruto[0] === '__servidor') {
           throw new Error(`Não cliquei em ${a[0]}: ${limparMsg(m, 200)}`);
         }
         await page.waitForTimeout(500);
-        const aba = abasNovas.length > antes ? `\nAbriu uma aba nova: ${limparUrl(abasNovas[abasNovas.length - 1].url())} (o navegador continua na aba original).` : '';
+        const aba = abasNovas.length > antes ? `\nAbriu uma aba nova: ${endereco(abasNovas[abasNovas.length - 1].url())} (o navegador continua na aba original).` : '';
         return `Clicado em ${a[0]}.${aba}\n` + await ondeEstou('Agora');
       }
       case 'digitar': {
@@ -884,6 +930,20 @@ if (bruto[0] === '__servidor') {
         // Campo em área inerte ou fora do diálogo aberto: a pessoa não alcança, o navegador também não finge.
         const fundo = await el.evaluate(FORA_DO_FUNDO, undefined, { timeout: 6000 }).catch(() => true);
         if (!fundo) throw new Error(`Não digitei em ${a[0]}: o campo está em área inerte ou fora do diálogo aberto. Feche o diálogo ou use um campo de dentro dele.`);
+        // Campo coberto (aviso de cookies, de medição, carregamento) ou sem tamanho: a pessoa não alcança, e o fill do Playwright digitaria mesmo assim.
+        let cob = await cobertura(el, a[0]);
+        if (!cob.ok && cob.tipo === 'coberto' && !cob.fora) { await page.waitForTimeout(400); cob = await cobertura(el, a[0]); }
+        if (!cob.ok) {
+          if (cob.tipo === 'desabilitado') throw new Error(`Não digitei em ${a[0]}: o campo está desabilitado. Espere a condição que o habilita.`);
+          if (cob.tipo === 'inerte') throw new Error(`Não digitei em ${a[0]}: o campo ${cob.motivo}. Feche o diálogo ou use um campo de dentro dele.`);
+          if (cob.tipo === 'invisivel') throw new Error(`Não digitei em ${a[0]}: o campo ${cob.motivo}. Espere ele aparecer ou confira se a página o escondeu.`);
+          if (cob.tipo === 'bloqueado') throw new Error(`Não digitei em ${a[0]}: o campo ${cob.motivo}. A página bloqueou o toque neste campo; confira se ele está liberado.`);
+          const motivo = cob.por ? `está coberto por ${dado(cob.por, 100)}` : cob.motivo;
+          throw new Error(`Não digitei em ${a[0]}: o campo ${motivo}. Feche o que está por cima (aviso, banner, carregamento) e digite de novo.`);
+        }
+        // Só leitura: recusa na hora (o fill do Playwright esperaria 6 s para dizer o mesmo).
+        if (await el.evaluate(e => e.readOnly === true || e.getAttribute('aria-readonly') === 'true', undefined, { timeout: 6000 }).catch(() => false))
+          throw new Error(`Não digitei em ${a[0]}: o campo é só leitura (a página não deixa escrever nele).`);
         // Lista de seleção: escolhe a opção pelo texto visível (ou pelo valor).
         if (await el.evaluate(e => e.tagName === 'SELECT', undefined, { timeout: 6000 }).catch(() => false)) {
           let ok = await el.selectOption({ label: texto }, { timeout: 5000 }).then(() => true).catch(() => false);
@@ -938,7 +998,7 @@ if (bruto[0] === '__servidor') {
           }
           return null;
         });
-        return `Apareceu "${corta(alvoTxt, 80)}" (${onde}).`;
+        return onde === 'página principal' ? `Apareceu "${corta(alvoTxt, 80)}" (página principal).` : `Apareceu "${corta(alvoTxt, 80)}" numa moldura:\n` + embrulhar(onde);
       }
       case 'esperar-seletor': {
         const css = a.join(' ');
@@ -952,14 +1012,14 @@ if (bruto[0] === '__servidor') {
           }
           return null;
         });
-        return `Visível: ${css} (${onde}).`;
+        return onde === 'página principal' ? `Visível: ${css} (página principal).` : `Visível: ${css} numa moldura:\n` + embrulhar(onde);
       }
       case 'esperar-url': {
         const p = a.join(' ');
         if (!p) throw new Error('Falta o trecho: esperar-url "<trecho|glob>".');
         const re = /\*/.test(p) ? globParaRegex(p) : null;
         await esperarAte(`o endereço não casou com "${p}"`, o.tempo || 25000, async () => (re ? re.test(page.url()) : page.url().includes(p)));
-        return `Endereço casou: ${limparUrl(page.url())}`;
+        return `Endereço casou: ${endereco(page.url())}`;
       }
       case 'esperar-js': {
         const expr = a.join(' ').replace(/;\s*$/, '');
@@ -973,7 +1033,7 @@ if (bruto[0] === '__servidor') {
         catch (e) {
           if (/Timeout/i.test(e.message)) {
             const ultimo = await page.evaluate(k => globalThis[k], chave).catch(() => null);
-            throw new Error(`Tempo esgotado (${tempo} ms): a expressão não ficou verdadeira: ${corta(expr, 120)}${ultimo ? `. Último erro: ${dado(ultimo, 120)}` : ''}`);
+            throw new Error(`Tempo esgotado (${tempo} ms): a expressão não ficou verdadeira: ${corta(expr, 120)}${ultimo ? `. Último erro: ${dado(ultimo, 120)}` : ''}. Endereço atual: ${endereco(page.url(), 160)}`);
           }
           throw new Error(`Erro na expressão: ${limparMsg(e.message, 200)}`);
         }
@@ -1114,7 +1174,7 @@ if (bruto[0] === '__servidor') {
           if (typeof pedido.cwd === 'string' && path.isAbsolute(pedido.cwd)) cwdCliente = pedido.cwd;
           renovar();
           out = { ok: true, out: await redigir(await executar(c, a.map(String))) };
-          if (page && !page.isClosed()) salvarEstado({ url: limparUrl(page.url(), 200), modo: descModo(), ultimo: Date.now() });
+          if (page && !page.isClosed()) salvarEstado({ url: endereco(page.url(), 200), modo: descModo(), ultimo: Date.now() });
         } catch (e) { out = { ok: false, out: await redigir(limparMsg(e && e.message || e, 600)).catch(() => 'Erro.') }; }
         ocupada = false;
         try { sock.end(JSON.stringify(out)); } catch {}
@@ -1189,7 +1249,7 @@ function limparMorta(c) { for (const f of [c.sock, c.pid, c.estado, c.trava]) { 
       let r = null; try { r = await enviar('__ping', [], c.sock, 5000); } catch {}
       const estado = !r ? '  [ocupada: não respondeu ao ping em 5 s]' : r.ocupada ? '  [ocupada com um comando]' : '';
       const min = Math.round((Date.now() - (e.ultimo || e.inicio || Date.now())) / 60000);
-      linhas.push(`${n}  pid ${e.pid}  último comando há ${min} min  ${e.url || '(sem página)'}${e.modo ? `  [${e.modo}]` : ''}${estado}`);
+      linhas.push(`${n}  pid ${e.pid}  último comando há ${min} min  ${e.url ? endereco(e.url, 200) : '(sem página)'}${e.modo ? `  [${e.modo}]` : ''}${estado}`);
     }
     console.log(linhas.length ? linhas.join('\n') : 'Nenhuma sessão aberta neste repositório.');
     process.exit(0);

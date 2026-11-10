@@ -15,15 +15,15 @@ O programa `agent-browser` (binário em Rust, instalado por npm) **não foi inst
 - `ver` no lugar do snapshot: elementos interativos numerados com papel, nome acessível e estado; iframes e molduras blob incluídos, com o número valendo em `clicar` e `digitar`; `--tudo`, `--dentro`, `--links`, `--max`.
 - Espera por condição (`esperar-texto`, `esperar-seletor`, `esperar-url` com glob, `esperar-js`), padrão de 25 s e erro claro no estouro. Tempo fixo só para depurar.
 - `ler` com `--dentro` e `--max`.
-- Fronteiras de confiança: conteúdo da página (inclusive título e endereço) marcado como dado não confiável; lista de domínios permitidos (`--so-dominios`) para navegação, requisição, WebSocket e WebRTC; nunca imprimir cabeçalho de autorização nem corpo de requisição; valor de cookie e de campo de senha trocado por `***` em toda resposta (melhor esforço); `confirm` e `prompt` recusados por padrão.
-- Clique que avisa quando o alvo está coberto e diz por quem; forçar só com `--forcar`.
+- Fronteiras de confiança: conteúdo da página, título e endereço marcados como dado não confiável; fora das marcas, o endereço sai codificado; lista de domínios permitidos (`--so-dominios`) para navegação, requisição, WebSocket e WebRTC; nunca imprimir cabeçalho de autorização nem corpo de requisição; valor de cookie e de campo de senha trocado por `***` em toda resposta (melhor esforço); `confirm` e `prompt` recusados por padrão.
+- Clique e digitação que avisam quando o alvo está coberto e dizem por quem; forçar só com `--forcar`, e só no clique.
 
 ## O que a casa acrescentou
 - Rede interna fechada por padrão (loopback, faixas privadas, 169.254.x, IPv6 local, com o IP resolvido conferido); `--rede-interna` libera por um `abrir`.
 - `digitar` que confere o valor que ficou no campo; `ver` que respeita diálogo modal e área inerte; `clicar` que não força alvo desabilitado.
 - `--celular` com agente de usuário e client hints de Android real (no lugar de "HeadlessChrome", que a Meta descarta), idioma pt-BR e fuso da Bahia.
 - `--rede-lenta` (4G lento do Lighthouse: 1,6 Mbps, 750 kbps, 150 ms) e `--cpu-lenta <n>`, via CDP.
-- `rede` (respostas >= 400 e falhas) e `eventos "<regex>"`, que mostra o nome do evento de medição (Meta `ev`, GA4 `en`) com e-mail, telefone, `fbp` e tokens trocados por `***`.
+- `rede` (respostas >= 400 e falhas) e `eventos "<trecho>"` (`--regex` para regex), que mostra o nome do evento de medição (Meta `ev`, GA4 `en`) com e-mail, telefone, `fbp` e tokens trocados por `***`.
 
 ## O que ficou de fora e por quê
 - Instalar ou rodar o binário, `npx agent-browser`, `skills get`, `doctor`, `upgrade`: código externo bloqueado.
@@ -36,3 +36,5 @@ O programa `agent-browser` (binário em Rust, instalado por npm) **não foi inst
 
 ## Revisão de 10/11/2026
 Revisão de segurança (Muralha) e de uso real (Lupa) no navegador da casa. Correções aplicadas pela Forja no mesmo dia: título e endereço dentro das marcas de dado, `%0A` sem virar quebra de linha, `ver --links` com endereço limpo, máscara de cookie e senha em toda resposta, rede interna fechada por padrão, `--cdn-local` sem travessia de caminho, `sessoes` sem apagar sessão ocupada, `--so-dominios` só ativo depois de um `abrir` que deu certo, soquete em pasta do usuário com nome em hash, alvo inexistente falhando em 6 s, `esperar-js` que espera o objeto nascer, `ver --dentro` em iframe, servidor local sem arquivos com ponto e com conferência de Host, `print` só na pasta da sessão, `eventos` com texto simples e regex com tempo limite, `confirm` e `prompt` recusados.
+
+Segunda e terceira rodadas da Lupa, no mesmo dia, corrigidas pela Forja: `digitar` recusa campo coberto, invisível ou com o toque bloqueado, inclusive campo dentro de moldura coberto por aviso da página de fora (a conferência atravessa as molduras); motivo certo para `visibility: hidden` e para `pointer-events: none`, no `digitar` e no `clicar`; endereço codificado em toda linha fora das marcas, com `+` da consulta virando `%20`; rótulo de moldura nas esperas entre marcas; parâmetros `text`, `body` e `msg` do endereço trocados por `***` (levam a mensagem que a pessoa escreveu, como no link do WhatsApp); `ler --dentro` num iframe lê a moldura, e trecho sem texto não vira "Nada casa"; campo só leitura recusado na hora, sem esperar 6 s.

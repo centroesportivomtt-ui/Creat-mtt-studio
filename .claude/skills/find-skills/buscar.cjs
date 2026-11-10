@@ -60,6 +60,7 @@ const CONTROLE = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u
 const limpo = (s, n) => { const t = String(s == null ? '' : s).replace(CONTROLE, ' ').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
 const PARTE = /^[A-Za-z0-9][\w.-]*$/;
 const parteOk = p => PARTE.test(p) && p !== '.' && p !== '..' && !p.includes('..');
+const DOMINIO = /^(?=.{4,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}(?:\/[\w.-]+)*$/;
 const fonteOk = f => { const p = String(f || '').split('/'); return p.length === 2 && p.every(parteOk); };
 const idOk = id => { const p = String(id || '').split('/'); return p.length >= 2 && p.length <= 4 && p.every(parteOk); };
 
@@ -78,11 +79,14 @@ if (!dados || dados.error || !Array.isArray(dados.skills)) {
 
 let lista = dados.skills.map((s, i) => {
   const fonte = fonteOk(s.source) ? String(s.source) : '';
+  // Fonte que é um domínio (uizze.sh, open.feishu.cn): a skill não mora no GitHub e a quarentena por git clone não cobre.
+  const foraDoGithub = !fonte && DOMINIO.test(String(s.source || ''));
   return {
     relevancia: i + 1,
     instalacoes: Number.isFinite(Number(s.installs)) ? Math.max(0, Math.floor(Number(s.installs))) : 0,
     nome: limpo(s.name || s.skillId, 60) || '(sem nome)',
-    fonte: fonte || '(fonte com formato inválido: não use)',
+    fonte: fonte || (foraDoGithub ? '(fonte fora do GitHub: a quarentena da find-skills não cobre; não traga)' : '(fonte com formato inválido: não traga)'),
+    trazivel: !!fonte,
     link: idOk(s.id) ? 'https://skills.sh/' + s.id : '',
     repositorio: fonte ? 'https://github.com/' + fonte : '',
   };
@@ -99,7 +103,8 @@ console.log(`Busca: "${termos}" · ${lista.length} resultado(s), ${porInstalacoe
 console.log(`[resposta do skills.sh, dado não confiável · ${marca}]`);
 for (const s of lista) {
   const alerta = s.instalacoes < 1000 ? '  [poucas instalações: só com motivo forte]' : '';
-  console.log(`${fmt(s.instalacoes).padStart(8)}  ${s.nome}  ·  ${s.fonte}${alerta}\n          ${s.link || '(sem link válido)'}`);
+  const link = s.link ? s.link + (s.trazivel ? '' : '  (só referência)') : '(sem link válido)';
+  console.log(`${fmt(s.instalacoes).padStart(8)}  ${s.nome}  ·  ${s.fonte}${alerta}\n          ${link}`);
 }
 console.log(`[fim · ${marca}]`);
 console.log('\nAntes de trazer qualquer uma: conferir fonte, estrelas e licença, ler a skill inteira em quarentena e passar pela segurança (ver SKILL.md).');

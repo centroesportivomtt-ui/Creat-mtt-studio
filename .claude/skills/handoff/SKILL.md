@@ -48,10 +48,12 @@ Vem da skill `handoff` de Matt Pocock (mattpocock/skills, licença MIT, ver `ORI
 
 - Releia como se você fosse a sessão nova, sem memória: dá para continuar só com isto e os lugares apontados? Se algum passo depende de "lembrar", escreva.
 - Confira cada link e cada caminho citado. Passagem com link quebrado é pior que nenhuma.
-- Rode a checagem de segredo e de dado pessoal no arquivo e limpe o que aparecer:
+- Rode a checagem de segredo e de dado pessoal no arquivo e limpe o que aparecer. Aponte `P` para o arquivo real e confira que ele existe antes: se o caminho estiver errado, o `grep` não acha nada e a checagem passa em silêncio.
   ```bash
-  grep -nEi '(sk-|ghp_|github_pat_|xox[bap]-|AKIA|AIza|EAA[A-Za-z0-9]{20}|bearer [a-z0-9._-]{16}|-----BEGIN|(senha|password|token|secret|api[_-]?key).{0,4}[:=])' passagem.md
-  grep -nE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}|(\+?55[ .-]?)?\(?[0-9]{2}\)?[ .-]?9?[0-9]{4}[ .-]?[0-9]{4}|[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}' passagem.md
+  P=<scratchpad>/passagens/AAAA-MM-DD-<assunto>.md
+  test -f "$P" || echo "ARQUIVO NÃO EXISTE: $P"
+  grep -nEi '(sk-|ghp_|github_pat_|xox[bap]-|AKIA|AIza|EAA[A-Za-z0-9]{20}|bearer [a-z0-9._-]{16}|-----BEGIN|(senha|password|token|secret|api[_-]?key).{0,4}[:=])' "$P"
+  grep -nE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}|(\+?55[ .-]?)?\(?[0-9]{2}\)?[ .-]?9?[0-9]{4}[ .-]?[0-9]{4}|[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}' "$P"
   ```
   O segundo comando acha e-mail, telefone e CPF. O e-mail e o WhatsApp públicos da própria Creat podem ficar; de terceiro, nunca.
 - Preencha "O que esta passagem não cobre".
