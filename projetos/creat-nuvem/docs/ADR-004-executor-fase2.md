@@ -10,7 +10,27 @@ Por que a D1 substitui as opções A e B:
 1. **A chamada paga nunca rodou.** O caminho por `ANTHROPIC_API_KEY` só foi exercitado com fixture (achado PV-02). Depender dele para o primeiro pedido pago era apostar a garantia de 72 h numa chamada nunca vista funcionando, e exigia chave do Console e cartão.
 2. **Sem conta nova, sem cartão, sem servidor.** A sessão principal já existe e já é usada pela agência. A opção A pedia repositório privado, Environment com segredos e leitura dos termos do Actions; a B pedia manutenção de máquina. A D1 não pede nada disso.
 3. **Mesma régua de segurança.** O agente redator recebe só `sites/<slug>/redator.json`: nicho, nome, cidade, bairro, funcionamento e serviços estruturados, cada campo conferido por regex (`scripts/producao/lib/textos.cjs`). Nunca e-mail, WhatsApp, responsável, rua, número, CEP, origem ou texto livre bruto. A resposta dele passa pela **mesma lista branca** do caminho por API (`IA.aplicarSaida`), pelo **portão de conteúdo** (`lib/bloqueio.cjs`: ofensa, termo sexual, marca, alegação de saúde, promessa de ganho, injeção, código) e pelo `validar-tenant` (que agora também recusa domínio solto, entidade HTML, `@` e telefone diferente do WhatsApp do pedido). WhatsApp e endereço entram por código, a partir do pedido.
-4. **Quem aprova é o cliente.** `produzir.mjs --rascunho` gera o build final e uma cópia dele com a faixa "Rascunho para a sua aprovação. Ainda não está no ar." em `/sites/<slug>-r-<id>/` (id de 16 caracteres por crypto, noindex, robots Disallow, sem sitemap). O botão "Aprovar e colocar no ar" manda `{slug, token}` a `POST /api/pa/aprovarRascunho` (pacote 1A); o token vem só do `#t=` do link. Aprovado, a tarefa publica o MESMO build em `/sites/<slug>/` e apaga o rascunho (`publicar-site.cjs --aprovado`).
+4. **Quem aprova é o cliente.** `produzir.mjs --rascunho` gera o build final e uma cópia dele com a faixa "Rascunho para a sua aprovação. Ainda não está no ar." em `/sites/<slug>-r-<id>/` (id de 16 caracteres por crypto, meta noindex, sem sitemap). O botão "Aprovar e colocar no ar" chama `POST /api/pa/aprovarRascunho` (pacote 1A) com uma de duas credenciais (seção "Canal de aprovação" abaixo). Aprovado, a tarefa publica o MESMO build em `/sites/<slug>/` e apaga o rascunho (`publicar-site.cjs --aprovado`).
+
+### Canal de aprovação (correção da conferência, 10/11/2026)
+O texto anterior dizia que o token do `#t=` bastava. Não basta: o e-mail ao comprador está desligado (SendEmail dá 422 sem domínio verificado), o token só existia no contêiner do executor e morria com ele, e `/obrigado/` devolve `rascunho_url` sem `#t=`. O cliente abria o rascunho e via o botão desligado. Agora há três caminhos, nesta ordem:
+1. **Mesmo aparelho (o padrão).** Sem `#t=`, o `rascunho.js` LÊ (nunca grava) `localStorage['creat:pedido:v1']` da mesma origem e, com `id` no formato `^PA-[0-9A-Z]{10}$` e `segredo` no formato `^[A-Za-z0-9_-]{21}[AQgw]$`, liga o botão e manda `{slug, pedido_id, segredo}`, que o `aprovarRascunho` do 1A já aceita. Depende de a vitrine gravar o `id` do servidor e o `segredo` nessa chave (pedido ao dono de `assets/vitrine.js`; hoje ela grava id de 8 caracteres e nenhum segredo, e então o botão fica desligado, falha fechada).
+2. **Link com token.** `#t=<token>` continua valendo e tem preferência.
+3. **Quem não volta ao aparelho** (pagou o Pix no app do banco, trocou de celular): o suporte gera um link novo com `node scripts/producao/link-aprovacao.cjs --dir <slug_rascunho>`, em qualquer contêiner, sem precisar do `rascunho.json` antigo. O comando cria um token novo e imprime o link e o `token_hash`; o link só vale depois de `gravarRascunho {id, slug, token_hash}` (troca o hash, zera as tentativas, invalida o link anterior). O suporte manda o link pelo WhatsApp que o próprio comprador informou no pedido: mensagem do pedido pago, não prospecção. O token aparece só na saída do comando.
+Sem nenhuma das três, a faixa diz "Abra este rascunho no aparelho em que você fez o pedido, ou fale com o suporte pelo botão Pedir ajuste."
+
+### robots.txt do rascunho (correção da conferência)
+O texto anterior chamava de proteção o `robots.txt` com `Disallow: /` dentro de `/sites/<slug>-r-<id>/`. Buscador só lê `robots.txt` na raiz do domínio: esse arquivo não protege nada e fica só para o caso de alguém copiar a pasta para a raiz de outro domínio. A proteção real é a meta `noindex, nofollow` no `index.html` do rascunho, mais o endereço imprevisível (cerca de 82 bits) e a ausência de sitemap. Pedido ao dono de `scripts/montar-publico.cjs`: `Disallow: /sites/*-r-` no `robots.txt` da raiz e, quando a hospedagem permitir cabeçalhos, `X-Robots-Tag: noindex` em `/sites/*-r-*/`.
+
+### Portão de conteúdo, rodada 2 (correção da conferência)
+- Antes de qualquer regra, o texto é desarmado: NFKC (letra e dígito de largura total viram comuns), sem caractere de formato (largura zero, inversão de texto), sem acento. Caractere de formato no texto é motivo por si (categoria `disfarce`).
+- Categoria `contato`: domínio, `www`, `@`, `wa.me` e telefone que não é o WhatsApp do pedido, inclusive disfarçados (`exemplo[.]com`, `golpe ponto com`, `arroba`, dígitos de largura total, número ditado por extenso).
+- Injeção em inglês ("disregard previous instructions", "you are now", "System:").
+- Categoria `formato` (`checarNegocio`): `pagina.titulo` precisa conter o nome do negócio do pedido, e nenhum texto pode citar nome próprio de duas palavras ou mais que não seja do pedido (nome, cidade, bairro, serviços, vocabulário do preset). Pega textos escritos para outro cliente.
+- O `validar-tenant` usa o mesmo desarme.
+
+### Slug reservado (correção da conferência)
+O `.gitignore` versiona as pastas `sites/demo-<nome>` e o repositório é público. Fora de `--demonstracao`, todo slug que começa com `demo-`, `teste-` ou `ensaio-` (do nome digitado ou de `--slug`) ganha o prefixo `cliente-` no código (`slugSeguro` em `lib/tenant.cjs`). Um cliente chamado "Demo Studio" vira `sites/cliente-demo-studio-<cidade>/`, que o git ignora.
 
 Comandos (todos sem rede e sem chave):
 
@@ -32,6 +52,7 @@ Hoje a vitrine, `/abrir/`, `/obrigado/` e `/sites/<slug>/` dividem a mesma orige
 
 ### O que não foi verificado (D1)
 - A aprovação em produção: depende das funções do pacote 1A publicadas (`aprovarRascunho`) e do endereço real da função na hospedagem. O botão foi exercitado contra um servidor local que simula a função.
+- A aprovação pelo pedido guardado no aparelho em produção: depende da vitrine gravar `id` e `segredo` em `creat:pedido:v1` (pedido ao dono de `assets/vitrine.js`). Exercitada só contra o servidor local, com um registro fictício.
 - O tempo de um pedido de ponta a ponta na tarefa agendada (medir no ensaio do pacote 1D).
 
 ---

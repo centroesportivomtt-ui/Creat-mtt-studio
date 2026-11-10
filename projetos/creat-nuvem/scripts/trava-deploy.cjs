@@ -14,18 +14,26 @@
  *   chave "trava_deploy"         valor = dono (ex.: "executor:2026-11-10T14:00"), expira_em = agora + 20 min.
  *                                Mesmo formato da função operacao do 1A (valor = dono), então as duas
  *                                maneiras de pegar a trava se respeitam.
- *   chave "pausado"              parada geral. Valor "sim" (ou "true", "1", "pausado") e não vencida = nada publica.
+ *   chave "pausado"              parada geral. Valor "sim" (ou "true", "1", "pausado", sem diferença de maiúscula e
+ *                                espaço) e não vencida = nada publica. Com linhas repetidas, BASTA UMA ligada:
+ *                                o botão de parar nunca depende da ordem em que as linhas chegam.
  *   chave "deploys_ultima_hora"  valor = JSON com a lista dos horários ISO dos deploys dos últimos 60 min.
  *                                Teto: 3 deploys por hora, contando todos os donos.
  *   chave "ensaio_ok"            data ISO gravada pelo coordenador quando o ENSAIO de docs/EXECUTOR.md
- *                                passou inteiro. Sem ela, nenhum site de CLIENTE REAL vai ao ar.
+ *                                passou inteiro. Sem ela, NENHUM rascunho nem site final vai ao ar (padrão fechado).
+ *   chave "ensaio_pedido"        id do pedido de teste do ensaio em curso (PA-...), com expira_em obrigatório,
+ *                                gravado pelo coordenador no passo 1 do ENSAIO e apagado no passo 12. Só com ela
+ *                                --ensaio --pedido <o mesmo id> dispensa o ensaio_ok. Sem ela, --ensaio é recusado.
  *
  * Uso (pasta projetos/creat-nuvem). <estado.json> = a lista de linhas de Operacao lida pelo MCP
  * (array de objetos com chave, valor, expira_em; pode vir como {"records":[...]} ou {"data":[...]}):
  *   node scripts/trava-deploy.cjs pegar        --dono <dono> --estado <estado.json>
  *   node scripts/trava-deploy.cjs confirmar    --dono <dono> --estado <estado relido depois de gravar>
  *   node scripts/trava-deploy.cjs pode-publicar --dono <dono> --estado <estado.json> --tipo rascunho|final|remocao|dados|vitrine
- *                                              [--cliente-real] [--portoes <portoes.json>] [--apesar-da-pausa]
+ *                                              [--portoes <portoes.json>] [--ensaio --pedido <PA-id>] [--apesar-da-pausa]
+ *     Padrão FECHADO: rascunho e final exigem ensaio_ok. Só o ensaio (prompt "MODO: ensaio") passa --ensaio.
+ *     --cliente-real é aceito e não muda nada (era o opt-in antigo; hoje todo site é tratado como de cliente real).
+ *     --ensaio, --cliente-real, --apesar-da-pausa e --ajuda são chaves sem valor: "--ensaio sim" é recusado (código 1).
  *   node scripts/trava-deploy.cjs registrar-deploy --dono <dono> --estado <estado.json>
  *   node scripts/trava-deploy.cjs soltar       --dono <dono> --estado <estado.json>
  *   Opções: --agora <ISO> (teste) · --ttl-min <1..20> (padrão 20) · --ajuda
@@ -52,6 +60,9 @@ const JANELA_MS = 60 * 60 * 1000;
 const RE_DONO = /^[a-z0-9][A-Za-z0-9:._-]{2,79}$/;
 const TIPOS = ['rascunho', 'final', 'remocao', 'dados', 'vitrine'];
 const PAUSA_ATIVA = ['sim', 'true', '1', 'pausado'];
+const RE_PEDIDO = /^PA-[0-9A-Z]{10}$/;
+// chaves sem valor: nunca engolem o argumento seguinte
+const BOOLEANOS = new Set(['ensaio', 'cliente-real', 'apesar-da-pausa', 'ajuda']);
 // portões que todo site de cliente (rascunho ou final) precisa ter verdes ANTES do deploy
 const PORTOES_SITE = ['portao_conteudo', 'csp', 'testar_site', 'conferir_boot'];
 // dados/vagas.json e dados/precos.json (passo m de EXECUTOR.md): atualizar-vagas.cjs saiu com 0
@@ -70,9 +81,14 @@ function linhasDe(bruto) {
   if (!Array.isArray(l)) throw new ErroEntrada('estado: esperava a lista de linhas de Operacao (array ou {records:[...]})');
   const mapa = new Map();
   const vistas = new Map();
+  // todas as linhas de cada chave, para as regras que não podem depender de qual linha "venceu" (pausado)
+  const todas = new Map();
+  Object.defineProperty(mapa, 'todas', { value: todas, enumerable: false });
   for (const r of l) {
     if (!r || typeof r !== 'object' || typeof r.chave !== 'string') continue;
     vistas.set(r.chave, (vistas.get(r.chave) || 0) + 1);
+    if (!todas.has(r.chave)) todas.set(r.chave, []);
+    todas.get(r.chave).push(Object.assign({}, r));
     const atual = mapa.get(r.chave);
     // chave repetida: fica a mais recente (updated_date, depois expira_em) e a dúvida é marcada
     const ordem = (x) => dataValida(x.updated_date) || dataValida(x.expira_em) || 0;
@@ -97,10 +113,16 @@ function lerTrava(mapa, agora) {
   return { livre: false, dono: l.valor, expira_em: new Date(exp).toISOString(), resta_min: Math.floor((exp - agora) / 60000) };
 }
 
-function pausado(mapa, agora) {
-  const l = mapa.get('pausado');
+function pausaLigada(l, agora) {
   if (!l || !vigente(l, agora)) return false;
   return PAUSA_ATIVA.includes(String(l.valor == null ? '' : l.valor).trim().toLowerCase());
+}
+
+/* falha fechada: QUALQUER linha viva de "pausado" ligada pausa tudo, seja qual for a ordem das linhas.
+   (Duplicata nasce de corrida em gravarOperacao ou de linha criada à mão no painel.) */
+function pausado(mapa, agora) {
+  const linhas = (mapa.todas && mapa.todas.get('pausado')) || (mapa.get('pausado') ? [mapa.get('pausado')] : []);
+  return linhas.some((l) => pausaLigada(l, agora));
 }
 
 function deploysRecentes(mapa, agora) {
@@ -146,7 +168,17 @@ function confirmar({ mapa, dono, agora }) {
   return { ok: true, acao: 'confirmar', dono, expira_em: t.expira_em, resta_min: t.resta_min };
 }
 
-function podePublicar({ mapa, dono, agora, tipo, clienteReal = false, portoes = {}, apesarDaPausa = false }) {
+/* ensaio em curso: Operacao.ensaio_pedido vigente, COM validade, e igual ao pedido passado em --pedido */
+function ensaioValido(mapa, agora, pedido) {
+  if (typeof pedido !== 'string' || !RE_PEDIDO.test(pedido)) return { ok: false, motivo: 'ensaio_sem_pedido' };
+  const l = mapa.get('ensaio_pedido');
+  if (!l || dataValida(l.expira_em) === null || !vigente(l, agora)) return { ok: false, motivo: 'ensaio_nao_aberto' };
+  if (l._repetida) return { ok: false, motivo: 'ensaio_duplicado' };
+  if (String(l.valor == null ? '' : l.valor).trim() !== pedido) return { ok: false, motivo: 'ensaio_outro_pedido' };
+  return { ok: true };
+}
+
+function podePublicar({ mapa, dono, agora, tipo, ensaio = false, pedido, portoes = {}, apesarDaPausa = false }) {
   if (!TIPOS.includes(tipo)) throw new ErroEntrada(`--tipo precisa ser ${TIPOS.join(', ')}`);
   const faltas = [];
   const p = pausado(mapa, agora);
@@ -161,13 +193,19 @@ function podePublicar({ mapa, dono, agora, tipo, clienteReal = false, portoes = 
   }
   if (tipo === 'rascunho' || tipo === 'final') {
     for (const k of PORTOES_SITE) if (portoes[k] !== true) faltas.push(k);
-    const e = mapa.get('ensaio_ok');
-    if (clienteReal && !(vigente(e, agora) && dataValida(e.valor) !== null)) faltas.push('ensaio_ok');
+    if (ensaio) {
+      // o ensaio roda ANTES de existir ensaio_ok; ele só vale para o pedido de teste aberto pelo coordenador
+      const ev = ensaioValido(mapa, agora, pedido);
+      if (!ev.ok) faltas.push(ev.motivo);
+    } else {
+      const e = mapa.get('ensaio_ok');
+      if (!(e && vigente(e, agora) && dataValida(e.valor) !== null)) faltas.push('ensaio_ok');
+    }
   }
   if (tipo === 'dados') for (const k of PORTOES_DADOS) if (portoes[k] !== true) faltas.push(k);
   if (tipo === 'vitrine') for (const k of PORTOES_VITRINE) if (portoes[k] !== true) faltas.push(k);
   if (faltas.length) return { ok: false, acao: 'pode-publicar', motivo: 'portao', faltam: faltas };
-  return { ok: true, acao: 'pode-publicar', tipo, dono, deploys_na_hora: recentes.length, teto: TETO_HORA, resta_min: c.resta_min, pausa_ignorada: p && tipo === 'remocao' ? true : undefined };
+  return { ok: true, acao: 'pode-publicar', tipo, dono, ensaio: ensaio && (tipo === 'rascunho' || tipo === 'final') ? true : undefined, deploys_na_hora: recentes.length, teto: TETO_HORA, resta_min: c.resta_min, pausa_ignorada: p && tipo === 'remocao' ? true : undefined };
 }
 
 function registrarDeploy({ mapa, dono, agora }) {
@@ -192,8 +230,10 @@ function args(argv) {
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     if (!k.startsWith('--')) { o._.push(k); continue; }
+    const nome = k.slice(2);
+    if (BOOLEANOS.has(nome)) { o[nome] = true; continue; }
     const v = argv[i + 1] !== undefined && !argv[i + 1].startsWith('--') ? argv[++i] : true;
-    o[k.slice(2)] = v;
+    o[nome] = v;
   }
   return o;
 }
@@ -211,6 +251,10 @@ function executar(argv) {
   if (a.ajuda || !acao) return { codigo: a.ajuda ? 0 : 1, saida: fs.readFileSync(__filename, 'utf8').split('*/')[0] };
   const ACOES = { pegar, confirmar, 'pode-publicar': podePublicar, 'registrar-deploy': registrarDeploy, soltar };
   if (!ACOES[acao]) throw new ErroEntrada(`ação desconhecida: ${acao}. Use pegar, confirmar, pode-publicar, registrar-deploy ou soltar.`);
+  // argumento solto a mais (ex.: "--ensaio sim", "--cliente-real 1"): recusa em vez de adivinhar
+  if (a._.length > 1) throw new ErroEntrada(`argumento a mais: ${a._.slice(1).join(' ')}. --ensaio, --cliente-real e --apesar-da-pausa não levam valor.`);
+  if (a.pedido !== undefined && (typeof a.pedido !== 'string' || !RE_PEDIDO.test(a.pedido))) throw new ErroEntrada('--pedido precisa ser o id PA- com 10 caracteres');
+  if (a.ensaio === true && acao === 'pode-publicar' && a.pedido === undefined) throw new ErroEntrada('--ensaio exige --pedido <id do pedido de teste>');
   const dono = typeof a.dono === 'string' ? a.dono : '';
   if (!RE_DONO.test(dono)) throw new ErroEntrada('--dono precisa seguir ^[a-z0-9][A-Za-z0-9:._-]{2,79}$ (ex.: executor:2026-11-10T14:00)');
   const agora = a.agora === undefined ? Date.now() : dataValida(a.agora);
@@ -223,7 +267,7 @@ function executar(argv) {
   const mapa = linhasDe(lerArquivoJson(a.estado, 'estado'));
   const portoes = a.portoes === undefined ? {} : lerArquivoJson(a.portoes, 'portoes');
   if (!portoes || typeof portoes !== 'object' || Array.isArray(portoes)) throw new ErroEntrada('--portoes: esperava um objeto {portao: true|false}');
-  const r = ACOES[acao]({ mapa, dono, agora, ttlMin, tipo: a.tipo, clienteReal: a['cliente-real'] === true, portoes, apesarDaPausa: a['apesar-da-pausa'] === true });
+  const r = ACOES[acao]({ mapa, dono, agora, ttlMin, tipo: a.tipo, ensaio: a.ensaio === true, pedido: a.pedido, portoes, apesarDaPausa: a['apesar-da-pausa'] === true });
   return { codigo: r.ok ? 0 : 3, saida: JSON.stringify(r) };
 }
 
@@ -238,5 +282,5 @@ if (require.main === module) {
   }
 }
 
-module.exports = { pegar, confirmar, podePublicar, registrarDeploy, soltar, linhasDe, lerTrava, pausado, deploysRecentes, executar, ErroEntrada,
+module.exports = { pegar, confirmar, podePublicar, registrarDeploy, soltar, linhasDe, lerTrava, pausado, ensaioValido, deploysRecentes, executar, args, ErroEntrada,
   TTL_PADRAO_MIN, TETO_HORA, MARGEM_MIN, PORTOES_SITE, PORTOES_DADOS, PORTOES_VITRINE };

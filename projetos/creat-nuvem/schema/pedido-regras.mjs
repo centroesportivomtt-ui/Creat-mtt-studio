@@ -4,7 +4,7 @@
 // Sem import, sem rede, sem banco e sem relógio próprio: a hora sempre entra por parâmetro (milissegundos UTC).
 // Contrato completo: docs/PEDIDO-API.md.
 
-export const VERSAO_REGRAS = 'pa-regras-1A-2026-11-10';
+export const VERSAO_REGRAS = 'pa-regras-1A-2026-11-10b';
 
 /* ---------- Vocabulário fechado ---------- */
 

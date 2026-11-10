@@ -10,19 +10,23 @@ Trilho, 10/11/2026. Base: termos, cláusula 6 (Código de Defesa do Consumidor, 
 
 ## 1. Quem pode desistir e até quando
 
-- Quem pagou a Abertura, em até 7 dias corridos contados do `pago_em` do pedido (hora do servidor, gravada pela confirmação).
+- Quem pagou a Abertura, em até 7 dias corridos contados **do pagamento (`pago_em`) ou da entrega do rascunho (`rascunho_em`), o que vier por último**. Os dois são hora do servidor.
+- Por quê: o Código de Defesa do Consumidor, art. 49, conta os 7 dias "da assinatura ou do ato de recebimento do produto ou serviço". O serviço só chega ao cliente com o rascunho, em até 72 horas ou mais (pedido em `em_revisao`). Contar só do pagamento faria o prazo vencer antes de o cliente ver o que comprou, o que pode ser lido como cláusula abusiva. Contar do que vier por último é o lado seguro.
+- Na prática: o rascunho sempre sai depois do pagamento, então, com rascunho entregue, o fim é `rascunho_em` + 7 dias. Pedido ainda sem rascunho pode desistir a qualquer momento: o prazo nem começou a correr do lado do serviço. Um novo rascunho (`--novo-rascunho`) grava `rascunho_em` de novo, e o prazo passa a contar dele: é o lado do cliente.
 - Vale mesmo com a produção já começada e mesmo com o site já no ar (cláusula 6).
-- Pedido chegado no 8º dia ou depois: não é desistência legal. Vira cancelamento comum (cláusula 7), e o suporte explica com o texto da cláusula.
+- Pedido chegado depois desse fim: não é desistência legal. Vira cancelamento comum (cláusula 7), e o suporte explica com o texto da cláusula.
+- **A mesma regra precisa estar nos termos** (cláusula 6, hoje "7 dias, contados do pagamento") **e nas respostas rápidas** antes do primeiro cliente real. Pedido ao copywriter, onda 2. Texto sugerido: "Você tem 7 dias para desistir sem dar motivo, contados do pagamento ou da entrega do rascunho do site, o que vier por último."
+- Conta pronta para o suporte: `fim = max(pago_em, rascunho_em) + 7 dias`, até 23h59 de Salvador do último dia.
 
 ## 2. Confirmação imediata, com protocolo
 
 - **Protocolo = o id do pedido** (`PA-` e 10 caracteres). Ele está no recibo de `/obrigado/` e no texto do PEDIDO. Quem não tem o id: o suporte acha pelo WhatsApp de quem escreveu, sem pedir documento.
 - **O "imediato" é coberto pela automação de cada canal**, sem pessoa no meio:
   - WhatsApp Business do Suporte Creat: a saudação automática (primeira mensagem ou volta depois de 14 dias) e a mensagem de ausência (fora do horário) respondem na hora. Limite honesto: quem já conversou nos últimos 14 dias, dentro do horário, não recebe a saudação; aí a resposta é do suporte, em até 5 minutos (regra de `marketing/whatsapp-scripts.md`). A resposta rápida `/desisto` (R16, pedido ao copywriter; o número R14 já foi usado e virou O1 a O8) é o texto da confirmação.
-  - E-mail do suporte: resposta automática ligada na caixa, dizendo que o pedido de desistência foi recebido, que o protocolo é o id do pedido e que o valor volta em até 5 dias úteis.
+  - E-mail do suporte: resposta automática ligada na caixa, dizendo que o pedido de desistência foi recebido, que o protocolo é o id do pedido, que a devolução é pedida no mesmo dia e que o valor volta em até 5 dias úteis (prazo máximo do meio de pagamento).
 - Texto da confirmação (R16 `/desisto`, para o copywriter fechar):
   > Recebemos o seu pedido de desistência. Protocolo: {id}.
-  > O site sai do ar hoje e o valor volta pelo mesmo meio de pagamento em até 5 dias úteis.
+  > O site sai do ar hoje. A devolução é pedida hoje ao meio de pagamento e o valor volta pelo mesmo meio, em até 5 dias úteis (o prazo máximo do meio de pagamento).
   > Você não precisa fazer mais nada.
 
 ## 3. Os passos, nesta ordem
@@ -35,15 +39,17 @@ Trilho, 10/11/2026. Base: termos, cláusula 6 (Código de Defesa do Consumidor, 
 | 4 | executor ou coordenador | `create_checkpoint` com o nome `executor remocao <pedido_id>` | id do checkpoint |
 | 5 | executor ou coordenador | deploy pelo procedimento P1 a P9, `--tipo remocao`. Com a parada geral ligada, só o coordenador remove, com `--apesar-da-pausa`: a remoção é obrigação legal | saída do deploy |
 | 6 | executor ou coordenador | confere o 404: `curl -s -o /dev/null -w '%{http_code}\n' https://creat-nuvem-404b1994.base44.app/sites/<slug>/` e o mesmo para o rascunho; depois `node scripts/conferir-no-ar.cjs` | `404`, `404` e a última linha da conferência |
-| 7 | **dono** | estorno no Mercado Pago (seção 4) | `estorno_feito_em` gravado |
+| 7 | **dono** | estorno no Mercado Pago (seção 4), **no mesmo dia do pedido** | `estorno_feito_em` gravado |
 | 8 | **dono** | se já houver assinatura no Stripe, cancelar e estornar a cobrança feita dentro dos 7 dias (seção 4) | assinatura cancelada no painel |
 | 9 | suporte | avisa o cliente que o estorno foi feito, no mesmo canal em que ele pediu | a mensagem enviada |
 
 Se o site não estava no ar ainda (pedido em `pago`, `em_producao` ou `rascunho_enviado`), os passos 3 a 6 valem só para o rascunho e a obra que existirem. A remoção acontece no mesmo dia do pedido.
 
-## 4. Estorno: passo do dono, com SLA de 5 dias úteis rastreado
+## 4. Estorno: passo do dono, pedido no mesmo dia, com teto de 5 dias úteis rastreado
 
 O estorno é a única coisa aqui que exige o dono: nenhum agente tem acesso a dinheiro.
+
+**Dois prazos, que não se confundem.** O art. 49 pede devolução imediata. Por isso: (1) **a devolução é pedida no mesmo dia** do pedido de desistência (o clique do dono em "Devolver dinheiro"); (2) **5 dias úteis é o teto** para o dinheiro chegar ao cliente, que é o prazo do meio de pagamento, não uma folga da Creat. `estorno_prazo_em` guarda o teto; o alerta do mesmo dia cobra o pedido.
 
 **Mercado Pago (Abertura):**
 1. Abra **https://www.mercadopago.com.br/activities** (Atividades) com a conta do recebedor.
@@ -55,11 +61,12 @@ O formato de endereço direto para um pagamento específico **não foi verificad
 
 **Stripe (só se a mensalidade já foi assinada):** **https://dashboard.stripe.com/subscriptions**, procurar o id do pedido (vai como `client_reference_id`), **Cancel subscription** com efeito imediato e, na cobrança, **Refund**.
 
-**Rastreio do SLA.** O executor lê, a cada despertar, os pedidos `desistiu` com `estorno_prazo_em` vencendo e sem `estorno_feito_em`:
-- 2 dias úteis antes do prazo: `ALERTA: estorno do pedido {id} vence em 2 dias úteis` (notificação no celular do dono, link da seção acima).
-- No dia do prazo sem estorno: o alerta repete a cada despertar até o `estorno_feito_em` aparecer.
+**Rastreio.** O executor lê, a cada despertar, os pedidos `desistiu` sem `estorno_feito_em`:
+- no mesmo dia do `desistiu_em`: `ALERTA: estorno do pedido {id} pedido hoje. Devolver no Mercado Pago: https://www.mercadopago.com.br/activities` (notificação no celular do dono);
+- o alerta repete a cada despertar até o `estorno_feito_em` aparecer;
+- 2 dias úteis antes do `estorno_prazo_em`, o alerta passa a dizer "vence em 2 dias úteis", e no dia do teto, "vence hoje".
 
-Os termos (cláusula 6) precisam dizer o mesmo prazo de 5 dias úteis. Hoje dizem só "pelo mesmo meio de pagamento". O PV-09 propôs 2 dias úteis; o pacote 1D usa 5, que é o que dá para cumprir com o dono como único operador do estorno. O copywriter alinha o texto antes de publicar (pedido em aberto).
+Os termos (cláusula 6) precisam dizer o mesmo: devolução pedida no mesmo dia, valor de volta em até 5 dias úteis pelo mesmo meio. Hoje dizem só "pelo mesmo meio de pagamento". O PV-09 propôs 2 dias úteis; o pacote 1D fixa o pedido no mesmo dia e usa 5 dias úteis só como teto do meio de pagamento. O copywriter alinha o texto antes de publicar (pedido em aberto, onda 2).
 
 ## 5. Apagar dado pessoal por pedido do titular (até 15 dias)
 

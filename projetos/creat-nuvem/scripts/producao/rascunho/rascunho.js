@@ -3,9 +3,15 @@
  *
  * Só existe no rascunho (/sites/<slug>-r-<id>/); o site final não carrega este arquivo.
  * Script clássico, sem dependência, sem estilo inline (a CSP do template não aceita).
- * O token vem SÓ do fragmento da URL (#t=<token>): o fragmento não vai ao servidor da hospedagem,
- * nem no Referer, nem em log. Nunca é lido da query, nunca é gravado (nem localStorage, nem cookie).
- * POST <data-endpoint> (padrão /api/pa/aprovarRascunho, mesma origem) com {slug, token}.
+ * Duas credenciais, as duas aceitas pela função aprovarRascunho do 1A (docs/PEDIDO-API.md 4.5):
+ *  1. token do fragmento da URL (#t=<token>): o fragmento não vai ao servidor da hospedagem, nem no
+ *     Referer, nem em log. Nunca é lido da query, nunca é gravado. Envia {slug, token}.
+ *  2. sem #t=: o pedido que o navegador guardou em /abrir/ (localStorage 'creat:pedido:v1', mesma
+ *     origem, mesmo aparelho), com id ^PA-[0-9A-Z]{10}$ e segredo ^[A-Za-z0-9_-]{21}[AQgw]$.
+ *     SÓ LEITURA, dentro de try/catch: este arquivo nunca grava nem apaga nada no aparelho.
+ *     Envia {slug, pedido_id, segredo}. É o caminho de quem pagou e abriu o rascunho por /obrigado/.
+ * Sem nenhuma das duas: botão desligado e o caminho do suporte (Pedir ajuste).
+ * POST <data-endpoint> (padrão /api/pa/aprovarRascunho, mesma origem).
  * Resposta 2xx com {ok:true} = aprovado. 4xx (menos 429) = link sem valor. Rede, 429 ou 5xx = tentar de novo.
  */
 (function () {
@@ -28,20 +34,38 @@
   if ('ResizeObserver' in W) new W.ResizeObserver(medir).observe(faixa);
   else W.addEventListener('resize', medir);
 
+  var RE_SEGREDO = /^[A-Za-z0-9_-]{21}[AQgw]$/, RE_PEDIDO = /^PA-[0-9A-Z]{10}$/;
   function token() {
     var m = /(?:^#|&)t=([A-Za-z0-9_-]{21}[AQgw])(?:&|$)/.exec(W.location.hash || '');
     return m ? m[1] : '';
   }
+  /* pedido guardado neste aparelho: só leitura; qualquer problema (bloqueado, vazio, outro formato) = nada */
+  function pedidoDoAparelho() {
+    try {
+      var bruto = W.localStorage.getItem('creat:pedido:v1');
+      if (!bruto || bruto.length > 8192) return null;
+      var p = JSON.parse(bruto);
+      if (p && typeof p.id === 'string' && RE_PEDIDO.test(p.id) && typeof p.segredo === 'string' && RE_SEGREDO.test(p.segredo)) return { pedido_id: p.id, segredo: p.segredo };
+    } catch (e) { /* sem acesso ao armazenamento */ }
+    return null;
+  }
+  /* corpo da aprovação, ou null; o #t= tem preferência */
+  function credencial() {
+    var t = token();
+    if (t) return { slug: slug, token: t };
+    var p = pedidoDoAparelho();
+    return p ? { slug: slug, pedido_id: p.pedido_id, segredo: p.segredo } : null;
+  }
   function dizer(t, tipo) { status.textContent = t; status.setAttribute('data-tipo', tipo || ''); }
   function travar(sn) { sim.disabled = sn; nao.disabled = sn; }
 
-  if (!token()) {
+  if (!credencial()) {
     btn.disabled = true;
-    dizer('Para aprovar, abra o link completo que você recebeu.', 'aviso');
+    dizer('Abra este rascunho no aparelho em que você fez o pedido, ou fale com o suporte pelo botão Pedir ajuste.', 'aviso');
   }
 
   btn.addEventListener('click', function () {
-    if (!token()) return;
+    if (!credencial()) return;
     btn.hidden = true; conf.hidden = false; sim.focus();
   });
   nao.addEventListener('click', function () {
@@ -63,8 +87,8 @@
 
   sim.addEventListener('click', function () {
     if (enviando) return;
-    var t = token();
-    if (!t) return;
+    var corpo = credencial();
+    if (!corpo) return;
     if (!('fetch' in W)) { falha('Este navegador é antigo para aprovar por aqui. Use o botão Pedir ajuste.', false); return; }
     enviando = true; travar(true);
     dizer('Enviando a sua aprovação...', 'enviando');
@@ -73,7 +97,7 @@
     W.fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: slug, token: t }),
+      body: JSON.stringify(corpo),
       credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer',
       signal: ctl ? ctl.signal : undefined
     }).then(function (r) {
@@ -81,7 +105,7 @@
       return r.json().catch(function () { return {}; }).then(function (j) { return { st: r.status, j: j }; });
     }).then(function (x) {
       if (x.st >= 200 && x.st < 300 && x.j && x.j.ok === true) { aprovado(); return; }
-      if (x.st >= 400 && x.st < 500 && x.st !== 429) { falha('Este link de aprovação não vale mais. Peça um novo pelo botão Pedir ajuste.', false); return; }
+      if (x.st >= 400 && x.st < 500 && x.st !== 429) { falha(corpo.token ? 'Este link de aprovação não vale mais. Peça um novo pelo botão Pedir ajuste.' : 'Não deu para aprovar com os dados deste aparelho. Fale com o suporte pelo botão Pedir ajuste.', false); return; }
       falha('Não deu certo agora. Tente de novo em instantes.', true);
     }, function () {
       W.clearTimeout(relogio);

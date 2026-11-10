@@ -27,7 +27,7 @@
  * --rascunho [--rascunho-id <id>] (pacote 1C, PV-03): além de dist/<slug>/, grava dist/<slug>-r-<id>/,
  *   cópia do build final com a faixa "Rascunho para a sua aprovação. Ainda não está no ar.", o botão
  *   "Aprovar e colocar no ar" (POST /api/pa/aprovarRascunho {slug, token}; token só do #t= da URL),
- *   o link "Pedir ajuste" no WhatsApp da Creat, meta noindex, robots.txt Disallow total e SEM sitemap.
+ *   o link "Pedir ajuste" no WhatsApp da Creat, meta noindex (a proteção real; o robots.txt da subpasta não é lido por buscador) e SEM sitemap.
  *   id: 16 caracteres aleatórios por crypto (sem --rascunho-id). Regras em lib/rascunho.cjs.
  * --saida-dominio <dominio> --slug <slug> (PV-10): página de saída do cliente que foi para um domínio
  *   próprio. Grava dist/<slug>-saida/ com index.html (meta refresh, link visível e canonical para
@@ -200,11 +200,19 @@ function buildSite(opc) {
  * Página que fica em /sites/<slug>/ quando o cliente leva o site para o domínio dele (termos §9):
  * meta refresh imediato, link visível e canonical para https://<dominio>/. Sem script (CSP: nada roda).
  */
+/* endereço da Creat (não do cliente): creatnuvem.*, creatmtt.com.br, *.base44.app e CREAT_DOMINIOS.
+   Só o domínio da Creat é recusado: "creativebarber.com.br" ou "studiocreation.com.br" são de cliente. */
+const DOMINIO_CREAT = /(^|\.)creatnuvem\.[a-z.]+$|(^|\.)creatmtt\.com\.br$|(^|\.)base44\.app$/;
+function dominioDaCreat(dom) {
+  if (DOMINIO_CREAT.test(dom)) return true;
+  return String(process.env.CREAT_DOMINIOS || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean).some((x) => dom === x || dom.endsWith('.' + x));
+}
+
 function buildSaida(o) {
   if (!C.SLUG_RE.test(String(o.slug || ''))) throw new C.ErroCampo('--slug', `slug inválido "${o.slug}"`);
   const dom = String(o.dominio || '').toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   if (!/^([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/.test(dom)) throw new C.ErroCampo('--saida-dominio', `domínio inválido: ${o.dominio}`);
-  if (/creat|base44\.app$/.test(dom)) throw new C.ErroCampo('--saida-dominio', 'o destino da saída é o domínio do cliente, não um endereço da Creat');
+  if (dominioDaCreat(dom)) throw new C.ErroCampo('--saida-dominio', 'o destino da saída é o domínio do cliente, não um endereço da Creat');
   const url = `https://${dom}/`;
   const destino = checarDestino(o.destino, o.saida);
   fs.rmSync(destino, { recursive: true, force: true });
@@ -264,4 +272,4 @@ if (require.main === module) {
   catch (e) { console.error(e.message); process.exitCode = e instanceof C.ErroCampo || e instanceof C.ErroLista ? 1 : 2; }
 }
 
-module.exports = { buildSite, buildSaida, conferirCsp, urlDoSite, checarDestino, main };
+module.exports = { buildSite, buildSaida, dominioDaCreat, conferirCsp, urlDoSite, checarDestino, main };

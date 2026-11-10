@@ -135,7 +135,7 @@ function relatorioPedido(r) {
   if (r.avisos.length) { L.push('', '## Avisos', ''); r.avisos.forEach((a) => L.push(`- ${a}`)); }
   if (r.rascunho) {
     L.push('', '## Rascunho para o cliente aprovar', '');
-    L.push(`- Pasta: \`dist/${r.rascunho.dir}/\` (faixa, noindex, robots Disallow, sem sitemap). Endereço: ${r.rascunho.url || '(sem URL: CREAT_URL_SITES=0)'}`);
+    L.push(`- Pasta: \`dist/${r.rascunho.dir}/\` (faixa, meta noindex, sem sitemap; o robots.txt da pasta não vale para buscador, só o da raiz). Endereço: ${r.rascunho.url || '(sem URL: CREAT_URL_SITES=0)'}`);
     L.push('- O link com o token (#t=) está em `sites/' + r.tenant.slug + '/rascunho.json` (campo link). Não copie o token para relatório, log nem chat.');
     L.push(`- Publicar o rascunho: \`node scripts/producao/publicar-site.cjs --slug ${r.tenant.slug} --rascunho\`. Depois da aprovação: \`--aprovado\` (publica dist/${r.tenant.slug}/ e apaga o rascunho).`);
   }
@@ -164,6 +164,13 @@ function emRevisao(pastaSite, base, fase, motivos, log) {
   return { codigo: 5, status: 'em_revisao', slug: base.slug, pastaSite, motivos };
 }
 
+/* palavras dos textos de partida do preset (não do nome de exemplo): podem vir com maiúscula sem ser outro negócio */
+function vocabularioDoPreset(preset) {
+  const base = preset && preset.tenantBase;
+  if (!base) return [];
+  return textosDoTenant(base).filter(([c]) => !/^negocio\.|^pagina\.titulo$/.test(c)).map(([, v]) => v);
+}
+
 function urlRascunho(dir) {
   const modelo = C.modeloUrlSites();
   return modelo ? modelo.split('{slug}').join(dir).replace(/[?#].*$/, '').replace(/\/?$/, '/') : '';
@@ -190,7 +197,11 @@ export async function produzir(argv) {
   const preset = C.carregarPreset(pedido.nicho);
   const agora = new Date();
   const servicosParse = sep.servicosTexto !== null ? S.analisar(sep.servicosTexto) : null;
-  let tenant = tenantDoPedido(pedido, preset, { agora, slug: a.slug, servicos: servicosParse && !servicosParse.recusadas.length ? servicosParse.servicos : null });
+  let tenant = tenantDoPedido(pedido, preset, { agora, slug: a.slug, demonstracao: !!a.demonstracao, servicos: servicosParse && !servicosParse.recusadas.length ? servicosParse.servicos : null });
+  if (!a.demonstracao && /^cliente-/.test(tenant.slug) && require('./lib/tenant.cjs').RE_SLUG_RESERVADO.test(tenant.slug.slice(8))) {
+    avisos.push(`Slug com prefixo reservado (demo-, teste- ou ensaio-) virou ${tenant.slug}: pasta de cliente nunca fica com nome de demonstração (sites/demo-*/ é versionado).`);
+    log(`aviso: slug reservado, usando ${tenant.slug}`);
+  }
   const pastaSite = path.join(saida, 'sites', tenant.slug);
   const hashPedido = crypto.createHash('sha256').update(JSON.stringify(pedido) + (sep.servicosTexto !== null ? '\n' + JSON.stringify(sep.servicosTexto) : '')).digest('hex');
   const arqProd = path.join(pastaSite, 'producao.json');
@@ -290,7 +301,9 @@ export async function produzir(argv) {
   if (saidaIa) ({ tenant, ignorados } = IA.aplicarSaida(tenant, saidaIa, preset));
 
   // 3. portão de conteúdo nos textos e validar-tenant
-  const g2 = B.checar(textosDoTenant(tenant));
+  const g2 = B.checar(textosDoTenant(tenant), { whatsapp: tenant.negocio.whatsapp });
+  g2.motivos.push(...B.checarNegocio(tenant, { palavras: vocabularioDoPreset(preset) }));
+  g2.ok = g2.motivos.length === 0;
   if (!g2.ok) return emRevisao(pastaSite, Object.assign({}, baseProd, { textos_origem: textosOrigem, textos_sha256: textosSha256 }), 'textos', g2.motivos, log);
   const v = validarTenant(tenant, { preset });
   if (!v.ok) {

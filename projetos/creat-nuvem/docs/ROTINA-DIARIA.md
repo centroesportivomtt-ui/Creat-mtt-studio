@@ -94,7 +94,8 @@ Regra de idade (usada pelo gestor e por quem ler o alerta): até 30 horas, norma
 2. Merge do branch de trabalho no `main` (a tarefa lê os scripts do repositório da sessão principal).
 3. Criar a tarefa: `create_trigger` com `name: "Porta Aberta · carimbo diário"`, `cron_expression: "CRON_TZ=America/Bahia 30 6 * * *"`, sem `create_new_session_on_fire`, `connectors: ["Base44"]`, `initiation: "human_schedule"` e o prompt da seção 3.
 4. Disparar uma vez na hora (`fire_trigger`) e conferir `curl -sS https://creat-nuvem-404b1994.base44.app/dados/precos.json` com a data nova. **Limite: 16/11/2026 23:45 UTC.**
-5. No mesmo ato do deploy das funções da onda 1, trocar `FUNCOES_PUBLICADAS = false` para `true` em `scripts/conferir-no-ar.cjs` e rodar `node scripts/conferir-no-ar.cjs --so-funcoes --exigir-funcoes`. Colar a última linha no relatório.
+5. No mesmo ato do deploy das funções da onda 1, trocar `FUNCOES_PUBLICADAS = false` para `true` em `scripts/conferir-no-ar.cjs` e rodar `node scripts/conferir-no-ar.cjs --so-funcoes --exigir-funcoes`. Colar a última linha no relatório. A frase "funcionam de ponta a ponta" só sai com o grupo I inteiro conferido; se a última linha disser "as funções do pedido NÃO foram conferidas (N itens)", ninguém escreve "funcionando".
+6. Linhas de prova da conferência (não apagar): `Operacao` com `chave: "prova_conferencia"` e `PedidoPortaAberta` com `pedido_id: "PA-PROVACONF1"` (`eh_teste: true`, `produto: "pa-teste"`, valor 0, sem dado pessoal, fora de toda contagem). A conferência exige que o update anônimo no id delas dê 403, o que só acontece com a linha existindo, enquanto list e filter devolvem `[]`. Se ela acusar "a linha de prova sumiu": `create_checkpoint`, recriar a linha pelo MCP com os mesmos campos, conferir com `query_entities` e trocar o id em `LINHAS_DE_PROVA` no script. Limpeza de pedidos de teste nunca leva estas duas linhas.
 
 ## 8. Conciliação das assinaturas (pedido do 1D)
 

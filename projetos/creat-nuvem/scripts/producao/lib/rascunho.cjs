@@ -7,6 +7,11 @@
  *                <head>; a faixa logo depois de <body>. htmlFinalDoRascunho() desfaz e tem de dar o
  *                index.html final byte a byte (conferido em build e em teste).
  *   robots.txt   "User-agent: *\nDisallow: /"; sem sitemap.xml (rascunho nunca entra em sitemap).
+ *                ATENÇÃO: buscador só lê robots.txt na RAIZ do domínio. Em /sites/<slug>-r-<id>/robots.txt
+ *                o arquivo NÃO protege nada; fica só para o caso de alguém copiar a pasta para a raiz de
+ *                outro domínio. A proteção real do rascunho é a meta noindex do index.html (e o endereço
+ *                imprevisível). Na raiz, o robots.txt publicado pelo montar-publico.cjs precisa ter
+ *                "Disallow: /sites/*-r-" (pedido ao dono desse arquivo).
  *   rascunho.js / rascunho.css   cópias de scripts/producao/rascunho/.
  * A aprovação só publica dist/<slug>/ (que já existe e tem o mesmo sha256 registrado em rascunho.json)
  * e apaga /sites/<slug>-r-<id>/. Nada é reconstruído na aprovação.

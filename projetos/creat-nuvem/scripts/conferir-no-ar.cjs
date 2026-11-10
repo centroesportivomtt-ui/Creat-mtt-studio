@@ -22,8 +22,17 @@
  *      pessoal em registrarPedido, contar, consultarPedido, confirmarPagamento, aprovarRascunho, nas 4
  *      entidades privadas, em portaAbertaVerificar e portaAbertaNotificacao (AutoCreatFlux) e no OPTIONS
  *
- * Contagem: A a H são 54 conferências (com as 7 praças de pagamento); I são 39 (mais 20 com o usuário comum).
- * Total esperado: 93 (113 com o usuário comum).
+ * Contagem: A a H são 54 conferências (com as 7 praças de pagamento); I são 41 (mais 22 com o usuário comum).
+ * Total esperado: 95 (117 com o usuário comum).
+ * Linhas de prova (10/11/2026): lista vazia só prova leitura negada se houver linha para ler. Por isso Operacao
+ *   (chave prova_conferencia) e PedidoPortaAberta (PA-PROVACONF1, eh_teste) têm uma linha fixa, sem dado pessoal,
+ *   com o id em LINHAS_DE_PROVA abaixo. O update anônimo nesse id real tem de dar 403 (a plataforma só responde 403
+ *   quando a linha existe; id inexistente dá 404). Isso prova, a cada rodada, que a linha está lá enquanto list e
+ *   filter devolvem []. O delete anônimo responde 404 mesmo com a linha existindo (a plataforma esconde o que a regra
+ *   de leitura nega), então o critério do delete é "não apagou": um segundo update no mesmo id ainda dá 403.
+ *   Sumiu a linha (update 404): é defeito; recrie pelo MCP e troque o id (docs/ROTINA-DIARIA.md).
+ * Última linha: "funcionam de ponta a ponta" só sai com o grupo I inteiro conferido. Com qualquer NÃO VERIFICADO
+ *   no grupo I ela diz que as funções do pedido NÃO foram conferidas, com o número de itens.
  * Toda chamada ao site e às funções leva o cabeçalho X-Conferencia: 1 e a UTM utm_content=conferencia,
  * para o contador próprio descartar a conferência (docs/PEDIDO-API.md, seção 4.4).
  *
@@ -53,6 +62,9 @@ const EXIGIR_FUNCOES = args.includes('--exigir-funcoes');
 // troque para true no mesmo ato do deploy das funções da onda 1 (docs/ROTINA-DIARIA.md, seção 7)
 const FUNCOES_PUBLICADAS = false;
 const APP_ID = '6aefffe66b684db9404b1994';
+const GRUPO_FUNCOES = 'I funções';
+// linhas de prova (id da plataforma, não é segredo: a regra de acesso é o que protege). Criadas pelo MCP em 10/11/2026.
+const LINHAS_DE_PROVA = { Operacao: '6af3422f603d6f31bb6004e4', PedidoPortaAberta: '6af3423044c36fcae207db26' };
 const FUNCOES_AUTOCREAT = String(opt('--funcoes-autocreat', 'https://creatmtt.com.br/functions')).replace(/\/$/, '');
 const CONF = { 'x-conferencia': '1' };
 const ARQ_JSON = opt('--json', '');
@@ -66,9 +78,10 @@ function anota(grupo, nome, ok, detalhe) {
   console.log(`${ok ? 'ok    ' : 'FALHA '} ${grupo} · ${nome}${detalhe ? ' | ' + detalhe : ''}`);
 }
 // não verificado: não conta como certo nem como defeito, e aparece no resumo com o motivo
+// itens: quantas conferências ficaram de fora com este registro (entra no número da última linha)
 const naoVerificadas = [];
-function naoVerificado(grupo, nome, motivo) {
-  naoVerificadas.push({ grupo, nome, motivo });
+function naoVerificado(grupo, nome, motivo, itens = 1) {
+  naoVerificadas.push({ grupo, nome, motivo, itens });
   console.log(`NÃO VERIFICADO ${grupo} · ${nome} | ${motivo}`);
 }
 const avisos = [];
@@ -263,7 +276,7 @@ function aviso(grupo, nome, detalhe) {
     const curto = r => `status ${r.st} · ${String(r.txt).replace(/\s+/g, ' ').slice(0, 90)}`;
     // recusa "de verdade": 4xx com corpo JSON da própria função (um 404 em HTML é rota que não existe no ar)
     const recusaDaFuncao = (x, aceitos) => x.j !== null && (aceitos ? aceitos.includes(x.st) : (x.st >= 400 && x.st < 500 && x.st !== 404));
-    const G = 'I funções';
+    const G = GRUPO_FUNCOES;
     // pagamento falso diferente a cada rodada: o limite de 10 por hora por pagamento da portaAbertaVerificar
     // (INTEGRACAO-PAGAMENTO.md) não pode transformar rodadas seguidas da conferência em defeito falso
     const pagamentoFalso = () => '9' + String(Math.floor(Math.random() * 1e10)).padStart(10, '0');
@@ -274,7 +287,7 @@ function aviso(grupo, nome, detalhe) {
     // mesmo ato do deploy das funções; daí em diante, rota ausente é DEFEITO. --exigir-funcoes força o true.
     const sonda = await chama(F('contar'), { corpo: { evento: 'visita', utm_content: 'conferencia' } });
     const rotasAusentes = sonda.st === 404 && sonda.j === null && !(FUNCOES_PUBLICADAS || EXIGIR_FUNCOES);
-    if (rotasAusentes) naoVerificado(G, '12 conferências das rotas /api/pa e 5 do OPTIONS', 'as funções do pedido ainda não estão publicadas (rota devolve 404 em HTML); depois do deploy, troque FUNCOES_PUBLICADAS para true');
+    if (rotasAusentes) naoVerificado(G, '12 conferências das rotas /api/pa e 5 do OPTIONS', 'as funções do pedido ainda não estão publicadas (rota devolve 404 em HTML); depois do deploy, troque FUNCOES_PUBLICADAS para true', 17);
     let r;
     if (!rotasAusentes) {
       // registrarPedido: teste:true valida e não grava (a não gravação foi provada pelo 1A pelo MCP; daqui só se vê a resposta)
@@ -364,20 +377,40 @@ function aviso(grupo, nome, detalhe) {
         const cab = Object.assign({ 'x-app-id': APP_ID }, tok ? { authorization: 'Bearer ' + tok } : {});
         const vazioOuNegado = x => x.st === 401 || x.st === 403 || (x.st === 200 && Array.isArray(x.j) && x.j.length === 0);
         const naoGravou = x => x.st === 401 || x.st === 403 || x.st === 404 || x.st === 405;
-        let x = await chama(base, { metodo: 'GET', cab });
-        anota(G, `${quem} · ${E} list não devolve linha`, vazioOuNegado(x), vazioOuNegado(x) ? `status ${x.st}` : curto(x));
-        x = await chama(`${base}?q=${encodeURIComponent('{"_id":{"$exists":true}}')}`, { metodo: 'GET', cab });
+        const prova = LINHAS_DE_PROVA[E];
+        // com linha de prova: o update no id real tem de dar 401/403 (403 só sai se a linha existe; sumiu = 404)
+        const negadoComLinha = x => x.st === 401 || x.st === 403;
+        let x, provaExistia = false;
+        if (prova) {
+          x = await chama(`${base}/${prova}`, { metodo: 'PUT', corpo: {}, cab });
+          provaExistia = negadoComLinha(x);
+          anota(G, `${quem} · ${E} update na linha de prova recusado (a linha existe)`, provaExistia,
+            negadoComLinha(x) ? `status ${x.st}` : (x.st === 404 ? 'status 404: a linha de prova sumiu; recrie pelo MCP e troque LINHAS_DE_PROVA' : curto(x)));
+        }
+        x = await chama(base, { metodo: 'GET', cab });
+        anota(G, `${quem} · ${E} list não devolve linha${prova ? ' (com a linha de prova lá)' : ''}`, vazioOuNegado(x), vazioOuNegado(x) ? `status ${x.st}` : curto(x));
+        // com prova: filtra pelo id da linha que existe; sem prova: filtro aberto
+        const filtro = prova ? `{"id":"${prova}"}` : '{"_id":{"$exists":true}}';
+        x = await chama(`${base}?q=${encodeURIComponent(filtro)}`, { metodo: 'GET', cab });
         const filtroOk = vazioOuNegado(x) || x.st === 400 || x.st === 422;
-        anota(G, `${quem} · ${E} filter não devolve linha`, filtroOk, filtroOk ? `status ${x.st}` : curto(x));
+        anota(G, `${quem} · ${E} filter ${prova ? 'pelo id da linha de prova ' : ''}não devolve linha`, filtroOk, filtroOk ? `status ${x.st}` : curto(x));
         x = await chama(base, { corpo: {}, cab });
         anota(G, `${quem} · ${E} create recusado`, x.st === 401 || x.st === 403, x.st === 401 || x.st === 403 ? `status ${x.st}` : curto(x) + (x.st >= 200 && x.st < 300 ? ' · GRAVOU: apagar a linha criada' : ''));
-        x = await chama(`${base}/${idFalso}`, { metodo: 'PUT', corpo: {}, cab });
-        anota(G, `${quem} · ${E} update recusado`, naoGravou(x), naoGravou(x) ? `status ${x.st}` : curto(x));
-        x = await chama(`${base}/${idFalso}`, { metodo: 'DELETE', cab });
-        anota(G, `${quem} · ${E} delete recusado`, naoGravou(x), naoGravou(x) ? `status ${x.st}` : curto(x));
+        if (prova) {
+          x = await chama(`${base}/${prova}`, { metodo: 'DELETE', cab });
+          anota(G, `${quem} · ${E} delete na linha de prova recusado`, naoGravou(x), naoGravou(x) ? `status ${x.st}` : curto(x));
+          x = await chama(`${base}/${prova}`, { metodo: 'PUT', corpo: {}, cab });
+          anota(G, `${quem} · ${E} linha de prova continua lá depois do delete`, negadoComLinha(x),
+            negadoComLinha(x) ? `status ${x.st}` : (x.st === 404 ? (provaExistia ? 'status 404: o delete anônimo APAGOU a linha de prova' : 'status 404: a linha de prova já não existia antes do delete') : curto(x)));
+        } else {
+          x = await chama(`${base}/${idFalso}`, { metodo: 'PUT', corpo: {}, cab });
+          anota(G, `${quem} · ${E} update recusado`, naoGravou(x), naoGravou(x) ? `status ${x.st}` : curto(x));
+          x = await chama(`${base}/${idFalso}`, { metodo: 'DELETE', cab });
+          anota(G, `${quem} · ${E} delete recusado`, naoGravou(x), naoGravou(x) ? `status ${x.st}` : curto(x));
+        }
       }
     }
-    if (!tokComum) naoVerificado(G, 'usuário comum logado nas 4 entidades (20 tentativas)', 'sem CONFERENCIA_TOKEN_USUARIO_COMUM nesta execução; a prova de 10/11 está em docs/PEDIDO-API.md 8.2');
+    if (!tokComum) naoVerificado(G, 'usuário comum logado nas 4 entidades (22 tentativas)', 'sem CONFERENCIA_TOKEN_USUARIO_COMUM nesta execução; a prova de 10/11 está em docs/PEDIDO-API.md 8.2', 22);
     await api.dispose();
   }
 
@@ -392,8 +425,14 @@ function aviso(grupo, nome, detalhe) {
     falhas.forEach(f => console.error(`  - ${f.grupo} · ${f.nome}${f.detalhe ? ' | ' + f.detalhe : ''}`));
     process.exit(1);
   }
-  const final = SO_FUNCOES ? 'ok     as funções no ar respondem e recusam como o contrato manda.'
-    : (SEM_FUNCOES ? 'ok     a vitrine no ar funciona para quem chega pelo anúncio (funções NÃO conferidas nesta rodada).'
-      : 'ok     o site no ar e as funções funcionam de ponta a ponta para quem chega pelo anúncio.');
-  console.log(final + (naoVerificadas.length ? ` Atenção: ${naoVerificadas.length} item(ns) NÃO VERIFICADO(S) acima não contam como prova.` : ''));
+  // "funcionam de ponta a ponta" só com o grupo I inteiro conferido (regra 12 da casa)
+  const nvFuncoes = naoVerificadas.filter(n => n.grupo === GRUPO_FUNCOES);
+  const itensFuncoes = nvFuncoes.reduce((s, n) => s + (n.itens || 1), 0);
+  const outrasNv = naoVerificadas.filter(n => n.grupo !== GRUPO_FUNCOES);
+  let final;
+  if (SEM_FUNCOES) final = 'ok     a vitrine no ar funciona para quem chega pelo anúncio; as funções do pedido NÃO foram conferidas (grupo I pulado nesta rodada).';
+  else if (nvFuncoes.length) final = `${SO_FUNCOES ? 'ok     nada com defeito no que respondeu' : 'ok     a vitrine no ar funciona'}; as funções do pedido NÃO foram conferidas (${itensFuncoes} itens: ${nvFuncoes.map(n => n.nome).join('; ')}).`;
+  else final = SO_FUNCOES ? 'ok     as funções no ar respondem e recusam como o contrato manda (vitrine não conferida nesta rodada).'
+    : 'ok     o site no ar e as funções funcionam de ponta a ponta para quem chega pelo anúncio.';
+  console.log(final + (outrasNv.length ? ` Atenção: ${outrasNv.length} outro(s) item(ns) NÃO VERIFICADO(S) acima não contam como prova.` : ''));
 })().catch(e => { console.error('erro  ', e); process.exit(2); });

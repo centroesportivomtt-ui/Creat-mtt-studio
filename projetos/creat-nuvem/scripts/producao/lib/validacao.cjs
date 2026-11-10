@@ -20,11 +20,13 @@
  */
 'use strict';
 const { validador, REF, errosAjv, motor } = require('./comum.cjs');
+const B = require('./bloqueio.cjs');
 
 const NICHOS_SAUDE = ['saude', 'clinica', 'odontologia', 'fisioterapia', 'nutricao', 'estetica-clinica'];
 const MARCADORES = ['nome', 'cidade', 'dia', 'hora', 'servico', 'profissional'];
 
-function norm(s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+/* mesmo desarme do portão (lib/bloqueio.cjs): NFKC, sem caractere de formato, sem acento, minúsculo */
+const norm = B.norm;
 
 /* [regex sobre texto normalizado (sem acento, minúsculo), motivo] */
 const PROIBIDOS = [
@@ -157,8 +159,8 @@ function validarTenant(t, opc) {
     // pacote 1C: nada de contato ou código escondido em texto (a página só fala pelo WhatsApp do pedido)
     if (DOMINIO.test(n)) e(campo, 'endereço de site dentro de texto (link só por código, nunca em texto)');
     if (/&(#\d+|#x[0-9a-f]+|[a-z]{2,8});/.test(n)) e(campo, 'entidade HTML dentro de texto');
-    if (txt.includes('@')) e(campo, '"@" dentro de texto (e-mail ou perfil não entram em texto)');
-    const tel = telefoneAlheio(txt, neg.whatsapp);
+    if (B.limpar(txt).includes('@')) e(campo, '"@" dentro de texto (e-mail ou perfil não entram em texto)');
+    const tel = telefoneAlheio(B.limpar(txt), neg.whatsapp);
     if (tel) e(campo, `telefone diferente do WhatsApp do pedido dentro de texto (${tel})`);
     if (EMOJI.test(txt)) e(campo, 'emoji não é aceito');
     const marc = String(txt).match(/\{(\w+)\}/g) || [];

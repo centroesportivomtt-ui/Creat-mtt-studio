@@ -2,7 +2,8 @@
  * Porta Aberta · testes da trava de publicação (scripts/trava-deploy.cjs, pacote 1D).
  * Roda com: npm test
  * Cobre: pegar, renovar, confirmar, soltar, TTL (vencida = livre), recusa com trava alheia, parada geral,
- * teto de 3 deploys por hora, portões do site, ensaio_ok para cliente real e a linha de comando.
+ * teto de 3 deploys por hora, portões do site, ensaio_ok exigido por padrão (o ensaio só com --ensaio e o
+ * pedido aberto pelo coordenador), pausa com linhas repetidas nas duas ordens e a linha de comando.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,6 +25,8 @@ const mapa = (linhas) => T.linhasDe(linhas);
 const EU = 'executor:2026-11-10T12:00';
 const OUTRO = 'carimbo:2026-11-10T06:30';
 const PORTOES_OK = { portao_conteudo: true, csp: true, testar_site: true, conferir_boot: true };
+const ENSAIO_OK = { chave: 'ensaio_ok', valor: '2026-11-09T20:00:00Z' };
+const PEDIDO_TESTE = 'PA-TESTERLS01';
 
 /* aplica "gravar" na lista como o MCP faria (update se a chave existe, create se não) */
 function aplicar(linhas, gravar) {
@@ -114,7 +117,7 @@ test('teto de 3 deploys por hora, contando todos os donos, com janela móvel', (
   assert.equal(r.ok, false); assert.equal(r.motivo, 'teto_por_hora'); assert.equal(r.libera_em, min(10));
   // 11 minutos depois o mais antigo saiu da janela
   const trava2 = { chave: 'trava_deploy', valor: EU, expira_em: min(31) };
-  assert.equal(T.podePublicar({ mapa: mapa([trava2, tres]), dono: EU, agora: AGORA + 11 * 60000, tipo: 'rascunho', portoes: PORTOES_OK }).ok, true);
+  assert.equal(T.podePublicar({ mapa: mapa([trava2, tres, ENSAIO_OK]), dono: EU, agora: AGORA + 11 * 60000, tipo: 'rascunho', portoes: PORTOES_OK }).ok, true);
   // registrar-deploy acrescenta e descarta o que tem mais de 60 min
   const g = T.registrarDeploy({ mapa: mapa([trava, { chave: 'deploys_ultima_hora', valor: JSON.stringify([min(-90), min(-10)]) }]), dono: EU, agora: AGORA });
   assert.equal(g.ok, true);
@@ -122,19 +125,57 @@ test('teto de 3 deploys por hora, contando todos os donos, com janela móvel', (
   assert.equal(g.gravar[0].expira_em, min(60));
 });
 
-test('portões do site e ensaio_ok para cliente real', () => {
+test('portões do site; ensaio_ok exigido por PADRÃO em rascunho e final (sem opt-in)', () => {
   const trava = { chave: 'trava_deploy', valor: EU, expira_em: min(20) };
   const semCsp = Object.assign({}, PORTOES_OK, { csp: false });
-  const r = T.podePublicar({ mapa: mapa([trava]), dono: EU, agora: AGORA, tipo: 'final', portoes: semCsp });
+  const r = T.podePublicar({ mapa: mapa([trava, ENSAIO_OK]), dono: EU, agora: AGORA, tipo: 'final', portoes: semCsp });
   assert.equal(r.motivo, 'portao'); assert.deepEqual(r.faltam, ['csp']);
-  const real = T.podePublicar({ mapa: mapa([trava]), dono: EU, agora: AGORA, tipo: 'rascunho', clienteReal: true, portoes: PORTOES_OK });
-  assert.deepEqual(real.faltam, ['ensaio_ok']);
-  const comEnsaio = [trava, { chave: 'ensaio_ok', valor: '2026-11-11T20:00:00Z' }];
-  assert.equal(T.podePublicar({ mapa: mapa(comEnsaio), dono: EU, agora: AGORA, tipo: 'rascunho', clienteReal: true, portoes: PORTOES_OK }).ok, true);
-  // valor que não é data não vale como ensaio
-  assert.equal(T.podePublicar({ mapa: mapa([trava, { chave: 'ensaio_ok', valor: 'sim' }]), dono: EU, agora: AGORA, tipo: 'final', clienteReal: true, portoes: PORTOES_OK }).ok, false);
+  // sem flag nenhuma, rascunho e final sem ensaio_ok são recusados (antes saía ok:true)
+  for (const tipo of ['rascunho', 'final']) {
+    const sem = T.podePublicar({ mapa: mapa([trava]), dono: EU, agora: AGORA, tipo, portoes: PORTOES_OK });
+    assert.equal(sem.ok, false); assert.deepEqual(sem.faltam, ['ensaio_ok']);
+    assert.equal(T.podePublicar({ mapa: mapa([trava, ENSAIO_OK]), dono: EU, agora: AGORA, tipo, portoes: PORTOES_OK }).ok, true);
+  }
+  // valor que não é data, ou ensaio_ok vencido, não vale
+  assert.equal(T.podePublicar({ mapa: mapa([trava, { chave: 'ensaio_ok', valor: 'sim' }]), dono: EU, agora: AGORA, tipo: 'final', portoes: PORTOES_OK }).ok, false);
+  assert.equal(T.podePublicar({ mapa: mapa([trava, { chave: 'ensaio_ok', valor: '2026-11-09T20:00:00Z', expira_em: min(-1) }]), dono: EU, agora: AGORA, tipo: 'final', portoes: PORTOES_OK }).ok, false);
+  // remoção e dados não dependem do ensaio
+  assert.equal(T.podePublicar({ mapa: mapa([trava]), dono: EU, agora: AGORA, tipo: 'remocao' }).ok, true);
   // vitrine exige qa e segurança
   assert.ok(T.podePublicar({ mapa: mapa([trava]), dono: EU, agora: AGORA, tipo: 'vitrine', portoes: {} }).faltam.includes('seguranca'));
+});
+
+test('--ensaio só dispensa ensaio_ok com Operacao.ensaio_pedido vigente, com validade e do mesmo pedido', () => {
+  const trava = { chave: 'trava_deploy', valor: EU, expira_em: min(20) };
+  const aberto = { chave: 'ensaio_pedido', valor: PEDIDO_TESTE, expira_em: min(240) };
+  const pp = (linhas, extra) => T.podePublicar(Object.assign({ mapa: mapa(linhas), dono: EU, agora: AGORA, tipo: 'rascunho', portoes: PORTOES_OK, ensaio: true, pedido: PEDIDO_TESTE }, extra));
+  const ok = pp([trava, aberto]);
+  assert.equal(ok.ok, true); assert.equal(ok.ensaio, true);
+  assert.equal(pp([trava, aberto], { tipo: 'final' }).ok, true);
+  assert.deepEqual(pp([trava]).faltam, ['ensaio_nao_aberto']);
+  assert.deepEqual(pp([trava, Object.assign({}, aberto, { expira_em: undefined })]).faltam, ['ensaio_nao_aberto']);
+  assert.deepEqual(pp([trava, Object.assign({}, aberto, { expira_em: min(-1) })]).faltam, ['ensaio_nao_aberto']);
+  assert.deepEqual(pp([trava, aberto], { pedido: 'PA-OUTRO00001' }).faltam, ['ensaio_outro_pedido']);
+  assert.deepEqual(pp([trava, aberto], { pedido: undefined }).faltam, ['ensaio_sem_pedido']);
+  assert.deepEqual(pp([trava, aberto, Object.assign({}, aberto)]).faltam, ['ensaio_duplicado']);
+});
+
+test('pausa com linhas repetidas: basta UMA ligada, nas duas ordens, com espaço e maiúscula', () => {
+  const trava = { chave: 'trava_deploy', valor: EU, expira_em: min(20) };
+  const ligada = { chave: 'pausado', valor: ' PAUSADO' };
+  const vazia = { chave: 'pausado', valor: '' };
+  for (const linhas of [[trava, ligada, vazia], [trava, vazia, ligada], [{ chave: 'trava_deploy', valor: '' }, ligada, vazia]]) {
+    assert.equal(T.pausado(mapa(linhas), AGORA), true);
+    assert.equal(T.pegar({ mapa: mapa(linhas), dono: EU, agora: AGORA }).motivo, 'pausado');
+    assert.equal(T.podePublicar({ mapa: mapa(linhas.concat([ENSAIO_OK])), dono: EU, agora: AGORA, tipo: 'rascunho', portoes: PORTOES_OK }).motivo, 'pausado');
+  }
+  // a mesma coisa com updated_date que faria a linha vazia "vencer" no mapa
+  const datadas = [Object.assign({}, ligada, { updated_date: '2026-11-10T10:00:00Z' }), Object.assign({}, vazia, { updated_date: '2026-11-10T14:00:00Z' })];
+  assert.equal(T.pausado(mapa(datadas), AGORA), true);
+  assert.equal(T.pausado(mapa([{ chave: 'pausado', valor: 'Sim ' }]), AGORA), true);
+  // duas linhas desligadas, ou a ligada vencida: não pausa
+  assert.equal(T.pausado(mapa([vazia, { chave: 'pausado', valor: 'nao' }]), AGORA), false);
+  assert.equal(T.pausado(mapa([Object.assign({}, ligada, { expira_em: min(-1) }), vazia]), AGORA), false);
 });
 
 test('linhas duplicadas de trava_deploy bloqueiam a confirmação', () => {
@@ -161,6 +202,30 @@ test('linha de comando: códigos 0, 3 e 1, saída JSON e aceita {records:[...]} 
     assert.equal(rodar('pegar', '--dono', EU, '--estado', livre, '--ttl-min', '45').status, 1);
     assert.equal(rodar('voar', '--dono', EU, '--estado', livre).status, 1);
     assert.equal(rodar('pode-publicar', '--dono', EU, '--estado', livre, '--tipo', 'qualquer').status, 1);
+    // padrão fechado pela linha de comando: trava própria e 4 portões verdes, sem flag nenhuma = recusa por ensaio_ok
+    const minha = path.join(dir, 'minha.json');
+    fs.writeFileSync(minha, JSON.stringify([{ chave: 'trava_deploy', valor: EU, expira_em: min(20) }]));
+    const portoes = path.join(dir, 'portoes.json');
+    fs.writeFileSync(portoes, JSON.stringify(PORTOES_OK));
+    const semFlag = rodar('pode-publicar', '--dono', EU, '--estado', minha, '--tipo', 'rascunho', '--portoes', portoes);
+    assert.equal(semFlag.status, 3);
+    assert.deepEqual(JSON.parse(semFlag.stdout).faltam, ['ensaio_ok']);
+    // --cliente-real virou nada: o resultado é o mesmo
+    assert.equal(rodar('pode-publicar', '--dono', EU, '--estado', minha, '--tipo', 'rascunho', '--portoes', portoes, '--cliente-real').status, 3);
+    // chave booleana com valor solto é recusada (antes "--cliente-real sim" engolia o valor e a flag deixava de valer)
+    assert.equal(rodar('pode-publicar', '--dono', EU, '--estado', minha, '--tipo', 'rascunho', '--portoes', portoes, '--cliente-real', 'sim').status, 1);
+    assert.equal(rodar('pode-publicar', '--ensaio', 'sim', '--dono', EU, '--estado', minha, '--tipo', 'rascunho', '--portoes', portoes, '--pedido', PEDIDO_TESTE).status, 1);
+    // --ensaio sem --pedido: entrada inválida; com o pedido aberto pelo coordenador: liberado
+    assert.equal(rodar('pode-publicar', '--dono', EU, '--estado', minha, '--tipo', 'rascunho', '--portoes', portoes, '--ensaio').status, 1);
+    const ensaio = path.join(dir, 'ensaio.json');
+    fs.writeFileSync(ensaio, JSON.stringify([{ chave: 'trava_deploy', valor: EU, expira_em: min(20) }, { chave: 'ensaio_pedido', valor: PEDIDO_TESTE, expira_em: min(240) }]));
+    const comEnsaio = rodar('pode-publicar', '--dono', EU, '--estado', ensaio, '--tipo', 'rascunho', '--portoes', portoes, '--ensaio', '--pedido', PEDIDO_TESTE);
+    assert.equal(comEnsaio.status, 0, comEnsaio.stdout);
+    // pausa duplicada pela linha de comando (o caso reproduzido pela conferência): pegar recusa
+    const dup = path.join(dir, 'dup.json');
+    fs.writeFileSync(dup, JSON.stringify([{ chave: 'trava_deploy', valor: '' }, { chave: 'pausado', valor: ' PAUSADO' }, { chave: 'pausado', valor: '' }]));
+    const p = rodar('pegar', '--dono', 'executor:2026-11-10T11:41', '--estado', dup);
+    assert.equal(p.status, 3); assert.equal(JSON.parse(p.stdout).motivo, 'pausado');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 

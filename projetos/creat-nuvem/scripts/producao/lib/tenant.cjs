@@ -23,6 +23,19 @@ function servicosDoCliente(lista, nicho) {
   return lista.map((s) => ({ id: s.id, nome: s.nome, preco: NICHOS_SAUDE.includes(nicho) ? null : s.preco, duracaoMin: s.duracaoMin || 30, descricao: '' }));
 }
 
+/*
+ * Slug reservado (achado da conferência, 10/11/2026): o .gitignore versiona as pastas sites/demo-(nome) e o repositório
+ * é público. Um cliente real chamado "Demo Studio" geraria sites/demo-studio-<cidade>/pedido.json com
+ * e-mail, WhatsApp e endereço numa pasta que o git não ignora. Por isso, fora de --demonstracao, todo
+ * slug que começa com demo-, teste- ou ensaio- (vindo do nome ou de --slug) ganha o prefixo "cliente-".
+ */
+const RE_SLUG_RESERVADO = /^(demo|teste|ensaio)(-|$)/;
+function slugSeguro(slug, demonstracao) {
+  const s = String(slug || '');
+  if (demonstracao || !RE_SLUG_RESERVADO.test(s)) return s;
+  return ('cliente-' + s).slice(0, 40).replace(/-+$/, '');
+}
+
 function tenantDoPedido(pedido, preset, opc) {
   opc = opc || {};
   const M = motor();
@@ -31,6 +44,7 @@ function tenantDoPedido(pedido, preset, opc) {
     nome: pedido.negocio, cidade: pedido.cidade, paleta: f.p, previa: false,
     agora: opc.agora || new Date(), slug: opc.slug
   });
+  t.slug = slugSeguro(t.slug, opc.demonstracao);
   t.negocio.whatsapp = pedido.whatsapp_negocio;
   t.negocio.telefoneExibicao = M._puro.mascararWhats(pedido.whatsapp_negocio.slice(2));
   t.negocio.endereco = partesEndereco(pedido.endereco, pedido.cidade);
@@ -43,4 +57,4 @@ function tenantDoPedido(pedido, preset, opc) {
   return t;
 }
 
-module.exports = { tenantDoPedido, NOTA_SEM_PRECO, NOTA_COM_PRECO };
+module.exports = { tenantDoPedido, slugSeguro, RE_SLUG_RESERVADO, NOTA_SEM_PRECO, NOTA_COM_PRECO };
