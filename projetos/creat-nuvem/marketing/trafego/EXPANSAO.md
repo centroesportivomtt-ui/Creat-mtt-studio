@@ -460,3 +460,7 @@ Fontes principais:
 - O Pixel 2223314621951948 só carrega na home e só depois do 'Aceitar'. Em /abrir/ e /obrigado/ ele nunca carrega. No teste sem aceite, fbq ficou indefinido em todas as páginas. (alta; projetos/creat-nuvem/assets/vitrine.js:382-399 (PAGINA !== 'home'); checkout.config.js:94; teste ao vivo (typeof fbq = 'undefined' em /abrir/))
 - Eventos que vão para a Meta hoje: PageView (home, com aceite) e InitiateCheckout, que dispara na home no toque em 'Quero este site no ar', antes de a pessoa ver o preço, e logo antes de a página mudar. Não existe ViewContent na prévia, Lead, AddPaymentInfo nem Purchase, nem no navegador nem pelo servidor. (alta; projetos/creat-nuvem/assets/vitrine.js:835-838; marketing/trafego/campanha-meta.md:228-230)
 
+
+## Nota de operação (10/11/2026)
+
+Trocar a segmentação de um conjunto ativo pelo MCP da Meta deixou o conjunto de Feira pausado, sem aviso na resposta (`status_forced_to_paused: false`), e ele ficou cerca de 3 horas sem entregar. Depois de qualquer edição de conjunto, ler o `effective_status` do conjunto e dos anúncios e religar se preciso.
