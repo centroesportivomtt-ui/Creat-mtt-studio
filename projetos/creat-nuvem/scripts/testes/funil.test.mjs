@@ -971,10 +971,13 @@ test('2A navegador: aviso de medição vira faixa de até 64 px com o formulári
   } finally { await nav.close(); srv.close(); }
 });
 
-test('2A páginas: meta do b44-visitor-tracking pede consentimento em /, /abrir/ e /obrigado/; selo "recomendado" fora do /obrigado/', () => {
-  for (const f of ['index.html', 'abrir/index.html', 'obrigado/index.html']) {
+test('2A páginas: meta do b44-visitor-tracking pede consentimento nas 8 páginas (index, abrir, obrigado, termos, privacidade, bastidores, previa e 404); selo "recomendado" fora do /obrigado/', () => {
+  const PAGINAS = ['index.html', 'abrir/index.html', 'obrigado/index.html', 'termos/index.html', 'privacidade/index.html', 'bastidores/index.html', 'previa/index.html', '404.html'];
+  assert.equal(PAGINAS.length, 8);
+  for (const f of PAGINAS) {
     const html = fs.readFileSync(path.join(RAIZ, f), 'utf8');
     assert.match(html, /<meta name="base44-visitor-tracking" content="consent" data-privacy-signals="honor">/, f);
+    assert.equal(html.split('base44-visitor-tracking').length - 1, 1, f + ': uma meta só');
     assert.ok(html.indexOf('base44-visitor-tracking') < html.indexOf('</head>'), f + ': no head');
   }
   const ob = fs.readFileSync(path.join(RAIZ, 'obrigado/index.html'), 'utf8');

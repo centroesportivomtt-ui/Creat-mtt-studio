@@ -4,15 +4,17 @@
  * Parser de REGRA, sem IA: só a saída estruturada (nome, preço, minutos) chega ao redator.
  * Uma linha por serviço (ou separados por ";"), no formato
  *     <nome> [- <preço>] [- <duração>]
- * preço: "R$ 45", "R$45,00", "45 reais", "sob consulta"   duração: "30 min", "1h", "1h30", "90 minutos"
- * Exemplos aceitos: "Corte - R$ 45 - 40 min", "Barba: 30 min", "Corte + barba | R$ 85".
+ * preço: "R$ 45", "R$45,00", "45 reais", "sob consulta", "grátis" (= 0; com ou sem acento, qualquer caixa)
+ * duração: "30 min", "1h", "1h30", "90 minutos"
+ * Exemplos aceitos: "Corte - R$ 45 - 40 min", "Barba: 30 min", "Corte + barba | R$ 85",
+ * "Avaliação - grátis", "Funcional 100% - R$ 90" (o sinal % entra no nome, 10/11/2026).
  * Linha que não casa com o formato vai para "recusadas" com o motivo, e a produção para em revisão
  * (o portão de conteúdo decide). Nada é adivinhado. Máximo de 15 serviços.
  */
 'use strict';
 
 const MAX = 15;
-const NOME = /^[\p{L}][\p{L}\p{N} &+'/.,()-]{1,39}$/u;
+const NOME = /^[\p{L}][\p{L}\p{N} &+'/.,()%-]{1,39}$/u;
 const SEP = /\s*(?:\s[-–—]\s|\s?[|:]\s?)\s*/;            // " - ", " – ", "|", ":"
 
 function norm(s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
@@ -25,10 +27,11 @@ function slugId(nome, usados) {
   return id;
 }
 
-/* "R$ 45,50" -> 45.5 ; "sob consulta" -> null ; outra coisa -> undefined */
+/* "R$ 45,50" -> 45.5 ; "sob consulta" -> null ; "grátis" / "gratis" / "GRÁTIS" -> 0 ; outra coisa -> undefined */
 function lerPreco(p) {
   const n = norm(p);
   if (/^sob consulta$|^a combinar$|^consulte$/.test(n)) return null;
+  if (/^gratis$/.test(n)) return 0;
   const m = n.match(/^(?:r\$\s*(\d{1,5})(?:[.,](\d{2}))?|(\d{1,5})(?:[.,](\d{2}))?\s*reais)$/);
   if (!m) return undefined;
   const inteiro = Number(m[1] || m[3]), cent = Number(m[2] || m[4] || 0);
@@ -60,7 +63,7 @@ function analisar(texto) {
     if (servicos.length >= MAX) return rec(`mais de ${MAX} serviços`);
     const partes = l.split(SEP).map((x) => x.trim()).filter(Boolean);
     const nome = partes.shift();
-    if (!nome || !NOME.test(nome)) return rec('nome do serviço fora do formato (letras, números e & + / . , ( ) -, até 40 caracteres)');
+    if (!nome || !NOME.test(nome)) return rec('nome do serviço fora do formato (letras, números e & + / . , ( ) % -, até 40 caracteres)');
     let preco, duracaoMin;
     for (const p of partes) {
       const pr = lerPreco(p), du = lerDuracao(p);

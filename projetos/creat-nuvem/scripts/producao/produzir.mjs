@@ -33,6 +33,18 @@
  * Portão de conteúdo (lib/bloqueio.cjs): roda sobre negócio, cidade, bairro e servicos_texto ANTES de
  * qualquer coisa e sobre todos os textos do tenant DEPOIS do redator. Disparou: status em_revisao em
  * sites/<slug>/producao.json, motivos em sites/<slug>/revisao.json, código 5, e nada é gerado.
+ * O portão dos outros campos (endereço, responsável, horários, e-mail, origem e prévia, B.checarPedido dentro de
+ * P.validarPedido) também sai com código 5 desde o fecho dos papéis do executor (10/11/2026, Trilho): antes saía
+ * com 1. Nesse caso o pedido ainda não foi validado, então a pasta é sites/revisao-<id em minúsculas>/ (ou a do
+ * --slug); quem procura é o executor, pelo campo "pedido" do producao.json (EXECUTOR.md, passo (d)).
+ *
+ * CREAT_SILENCIO=1 (o executor usa sempre): nenhuma linha de stdout ou stderr traz texto do cliente. Sai só
+ *   em_revisao <classe> campos=<nomes>      (código 5; classe instrucao_no_campo ou portao_conteudo)
+ *   aguardando_textos                       (código 4)
+ *   erro <classe> campo=<nome>              (códigos 1 e 2; classe instrucao_no_campo, entrada_invalida,
+ *                                            tenant_rejeitado, ambiente ou interno)
+ *   ok <status>                             (código 0 ou 3)
+ * Nome de campo que não é da lista conhecida sai como "outro" (no PEDIDO v1 em texto a chave é do cliente).
  *
  * Variáveis de ambiente (nenhum valor no repositório):
  *   ANTHROPIC_API_KEY   só no caminho --api (chave do Claude Console). O caminho padrão não usa.
@@ -74,7 +86,32 @@ const { textosDoTenant } = require('./lib/validacao.cjs');
 
 class ErroAmbiente extends Error {}
 
-function log(...x) { if (!process.env.CREAT_SILENCIO) console.log(...x); }
+const SILENCIO = () => !!process.env.CREAT_SILENCIO;
+function log(...x) { if (!SILENCIO()) console.log(...x); }
+
+/* ---------- silêncio: só classe e nome de campo (fecho dos papéis do executor, 10/11/2026) ---------- */
+const CAMPOS_CONHECIDOS = new Set([...P.ORDEM, 'formato', 'servicos_texto', 'slug', 'funcionamento', 'campos_juntos',
+  'endereco.rua', 'endereco.numero', 'endereco.bairro', 'previa.n', 'previa.c', 'previa.host',
+  'pagamento', 'mp_pagamento', 'produto', 'valor', '--pedido', '--textos', '--api', '--fixture-ia', '--sem-ia']);
+const RE_CAMPO_FORMA = /^(linha \d{1,4}|servicos_texto linha \d{1,3}|servicos\[\d{1,2}\](\.[a-zA-Z]{1,20})?|horarios\.(seg|ter|qua|qui|sex|sab|dom)|endereco \((rua|numero|bairro|cidade|uf|cep)\)|--textos\.(bordao|pagina|servicos|textos)|(negocio|pagina|textos|profissionais\[\d{1,2}\]|avaliacoes\[\d{1,2}\]|galeria\[\d{1,2}\]|recados\[\d{1,2}\])(\.[a-zA-Z]{1,30}){0,2}|bordao|nicho|cidade)$/;
+function campoSeguro(c) { const s = String(c == null ? '' : c); return CAMPOS_CONHECIDOS.has(s) || RE_CAMPO_FORMA.test(s) ? s : 'outro'; }
+function classeRevisao(motivos) { return motivos.some((m) => /^instrucao_no_campo/.test(m.regra || '')) ? 'instrucao_no_campo' : 'portao_conteudo'; }
+function linhaSilenciosa(r) {
+  if (r.codigo === 5) return `em_revisao ${classeRevisao(r.motivos || [])} campos=${[...new Set((r.motivos || []).map((m) => campoSeguro(m.campo)))].join(',')}`;
+  if (r.codigo === 4) return 'aguardando_textos';
+  return `ok ${r.status === 'falhou' ? 'falhou' : r.status === 'rascunho_pronto' ? 'rascunho_pronto' : 'pronto_para_aprovacao'}`;
+}
+function erroSilencioso(e) {
+  const m = String((e && e.message) || '');
+  if (/instrucao_no_campo/.test(m)) return `erro instrucao_no_campo campo=${campoSeguro(e.campo)}`;
+  if (e instanceof C.ErroCampo) return `erro entrada_invalida campo=${campoSeguro(e.campo)}`;
+  if (e instanceof C.ErroLista) {
+    const campos = [...new Set((e.erros || []).map((x) => campoSeguro(x.campo)))].join(',');
+    return `erro ${/^Tenant rejeitado/.test(m) ? 'tenant_rejeitado' : 'entrada_invalida'} campo=${campos || 'outro'}`;
+  }
+  if (e instanceof ErroAmbiente) return 'erro ambiente campo=outro';
+  return 'erro interno campo=outro';
+}
 
 /* a chamada de verdade: SDK oficial, chave explícita do Console, sem tools */
 async function chamarClaude(corpo) {
@@ -164,6 +201,27 @@ function emRevisao(pastaSite, base, fase, motivos, log) {
   return { codigo: 5, status: 'em_revisao', slug: base.slug, pastaSite, motivos };
 }
 
+/*
+ * portão de instrução nos campos que o portão da entrada não recebe (endereço, responsável, horários, e-mail,
+ * origem, prévia): mesmo destino do emRevisao, código 5. O pedido ainda não foi validado, então a pasta sai do
+ * id (formato fechado do schema) ou do --slug; nada do texto do cliente vira nome de pasta.
+ */
+const RE_ID_PEDIDO = /^PA-(?:[0-9A-HJKMNP-TV-Z]{8}|[0-9A-Z]{10})$/;
+function revisaoDaValidacao(o, a, saida, agora, logf) {
+  const motivos = B.checarPedido(o);
+  if (!motivos.length) return null;
+  const id = o && typeof o.id === 'string' ? o.id : '';
+  if (!RE_ID_PEDIDO.test(id)) throw new C.ErroCampo('id', 'instrucao_no_campo num pedido sem id válido: nada gravado');
+  // o resto do que o portão da entrada veria, para a revisão humana ver tudo de uma vez
+  const outros = B.checar([['negocio', o.negocio], ['cidade', o.cidade]].filter(([, v]) => typeof v === 'string')).motivos;
+  const pedidoSlug = typeof a.slug === 'string' && C.SLUG_RE.test(a.slug) ? require('./lib/tenant.cjs').slugSeguro(a.slug) : `revisao-${id.toLowerCase()}`;
+  const pastaSite = path.join(saida, 'sites', pedidoSlug);
+  const arqProd = path.join(pastaSite, 'producao.json');
+  if (fs.existsSync(arqProd) && C.lerJson(arqProd).pedido !== id) throw new C.ErroCampo('slug', `sites/${pedidoSlug}/ já pertence a outro pedido; use --slug para outro endereço`);
+  const base = { pedido: id, hashPedido: crypto.createHash('sha256').update(JSON.stringify(o)).digest('hex'), em: agora.toISOString(), slug: pedidoSlug };
+  return emRevisao(pastaSite, base, 'validacao', motivos.concat(outros), logf);
+}
+
 /* palavras dos textos de partida do preset (não do nome de exemplo): podem vir com maiúscula sem ser outro negócio */
 function vocabularioDoPreset(preset) {
   const base = preset && preset.tenantBase;
@@ -193,9 +251,12 @@ export async function produzir(argv) {
 
   // 1. pedido -> portão de conteúdo da entrada -> tenant parcial
   const sep = separarServicosTexto(P.lerPedidoArquivo(a.pedido));
+  const agora = new Date();
+  // instrução em QUALQUER campo (endereço, responsável, horários, e-mail, origem, prévia): código 5, não 1
+  const rv = revisaoDaValidacao(sep.pedido, a, saida, agora, log);
+  if (rv) return rv;
   const pedido = P.validarPedido(sep.pedido);
   const preset = C.carregarPreset(pedido.nicho);
-  const agora = new Date();
   const servicosParse = sep.servicosTexto !== null ? S.analisar(sep.servicosTexto) : null;
   let tenant = tenantDoPedido(pedido, preset, { agora, slug: a.slug, demonstracao: !!a.demonstracao, servicos: servicosParse && !servicosParse.recusadas.length ? servicosParse.servicos : null });
   if (!a.demonstracao && /^cliente-/.test(tenant.slug) && require('./lib/tenant.cjs').RE_SLUG_RESERVADO.test(tenant.slug.slice(8))) {
@@ -389,8 +450,11 @@ export async function produzir(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
-  produzir(process.argv.slice(2)).then((r) => { process.exitCode = r.codigo; }, (e) => {
-    console.error(e.message);
+  produzir(process.argv.slice(2)).then((r) => {
+    if (SILENCIO()) console.log(linhaSilenciosa(r));
+    process.exitCode = r.codigo;
+  }, (e) => {
+    console.error(SILENCIO() ? erroSilencioso(e) : e.message);
     process.exitCode = e instanceof C.ErroCampo || e instanceof C.ErroLista ? 1 : e instanceof ErroAmbiente ? 2 : 2;
   });
 }

@@ -40,10 +40,10 @@
           "pattern": "^(direto|utm_(source|medium|campaign|content|term)=[A-Za-z0-9._-]{1,64}(;utm_(source|medium|campaign|content|term)=[A-Za-z0-9._-]{1,64}){0,4})$"
         },
         "previa": {
-          "description": "Link da prévia; o estado vai só no fragmento (ADR-002).",
+          "description": "Link da prévia; o estado vai só no fragmento (ADR-002). Fechado em 10/11/2026 (Trilho, fecho dos papéis do executor): só os parâmetros que a vitrine (assets/vitrine.js, montarFragmento) e o entradaDoRegistro montam, nesta ordem e sem repetir: k, n, c (opcional), p (1 a 3, opcional) e utm_source, utm_medium, utm_campaign, utm_content, utm_term (opcionais, mesmo formato de origem). n= e c= vêm de encodeURIComponent do negócio e da cidade (até 40 caracteres cada): até 240 caracteres codificados, porque uma letra acentuada vira %XX%XX (6). O lib/bloqueio.cjs (checarPedido) ainda confere que o n= decodificado é igual ao negócio e o c= à cidade.",
           "type": "string",
           "maxLength": 600,
-          "pattern": "^https://[A-Za-z0-9.-]+(:[0-9]+)?/previa/#k=[a-z]+&n=[^\\s]+$"
+          "pattern": "^https://[A-Za-z0-9.-]+(:[0-9]+)?/previa/#k=[a-z]{2,20}&n=(?:[A-Za-z0-9._~!*'()-]|%[0-9A-Fa-f]{2}){1,240}(&c=(?:[A-Za-z0-9._~!*'()-]|%[0-9A-Fa-f]{2}){1,240})?(&p=[123])?(&utm_source=[A-Za-z0-9._-]{1,64})?(&utm_medium=[A-Za-z0-9._-]{1,64})?(&utm_campaign=[A-Za-z0-9._-]{1,64})?(&utm_content=[A-Za-z0-9._-]{1,64})?(&utm_term=[A-Za-z0-9._-]{1,64})?$"
         },
         "aceite_termos": {
           "description": "Data e hora ISO 8601 com fuso, um espaço e a versão dos termos.",
