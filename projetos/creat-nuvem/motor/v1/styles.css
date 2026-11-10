@@ -1072,6 +1072,23 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
   }
   #pedir-corpo:has(> #oferta-demo:not([hidden])) > .oferta-demo .btn-externo { text-align: left; }
 }
+/* celular deitado (844 x 390): a tela é mais baixa que o espelho; lado a lado, a oferta fica no meio
+   da altura dele e entra na tela junto com o título do espelho */
+@media (min-width: 720px) and (max-width: 959px) and (orientation: landscape) and (max-height: 560px) {
+  #pedir-corpo:has(> #oferta-demo:not([hidden])) {
+    display: grid; grid-template-columns: minmax(0, 21rem) minmax(0, 1fr);
+    justify-content: center; align-items: start; column-gap: var(--esp-6);
+  }
+  #pedir-corpo:has(> #oferta-demo:not([hidden])) > .espelho { width: 100%; margin-inline: 0; }
+  #pedir-corpo:has(> #oferta-demo:not([hidden])) > .oferta-demo {
+    position: sticky; top: 76px;
+    width: auto; margin: var(--esp-6) 0 0;
+    padding: var(--esp-2) 0 var(--esp-2) var(--esp-5);
+    border-top: 0; border-left: 2px solid var(--destaque);
+    justify-items: start; text-align: left;
+  }
+  #pedir-corpo:has(> #oferta-demo:not([hidden])) > .oferta-demo .btn-externo { text-align: left; }
+}
 
 /* v1.3 (CTA-VENDA, SAL-09, ACAD-14): o fecho de venda da demonstração. Faixa de ponta a ponta na
    tinta do site, espelhando a faixa do topo: a moldura da Creat abre e fecha a página do negócio. */

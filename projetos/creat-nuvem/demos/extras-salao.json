@@ -23,5 +23,48 @@
       "texto": "Mão e pé no mesmo horário, pedido pelo celular em um minuto.",
       "autor": "Cliente de exemplo"
     }
+  ],
+  "precos": {
+    "corte": 70,
+    "escova": 50,
+    "progressiva": 180,
+    "coloracao": 150,
+    "mechas": 220,
+    "hidratacao": 80,
+    "manicure": 35,
+    "pedicure": 40,
+    "alongamento-gel": 150,
+    "sobrancelha": 35,
+    "maquiagem": 90
+  },
+  "galeria": [
+    {
+      "src": "galeria/salao-1.webp",
+      "alt": "Ilustração de exemplo: fileira de vidros de esmalte em vinho, rosa, bege, preto e lilás, um aberto com o pincel e uma gota de coral.",
+      "legenda": "Ilustração de exemplo: a parede de esmaltes.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/salao-2.webp",
+      "alt": "Ilustração de exemplo: bancada de manicure vista de cima, com almofada de apoio, lixa, alicate de cutícula, algodão, palito, tigela de água e dois esmaltes.",
+      "legenda": "Ilustração de exemplo: a bancada da manicure.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/salao-3.webp",
+      "alt": "Ilustração de exemplo: secador de cabelo, escova, tesoura, pente, borrifador e presilhas sobre fundo vinho listrado, vistos de cima.",
+      "legenda": "Ilustração de exemplo: as ferramentas do cabelo.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/salao-4.webp",
+      "alt": "Ilustração de exemplo: espelho redondo com lâmpadas, cadeira de veludo vinho, carrinho de apoio e planta ao lado de uma janela em arco.",
+      "legenda": "Ilustração de exemplo: o espaço do salão.",
+      "largura": 1024,
+      "altura": 1280
+    }
   ]
 }

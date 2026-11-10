@@ -9,5 +9,42 @@
       "texto": "Corte + barba numa passada só, pelo valor que estava na tabela.",
       "autor": "Cliente de exemplo"
     }
+  ],
+  "precos": {
+    "corte": 45,
+    "degrade": 55,
+    "barba": 35,
+    "corte-barba": 75,
+    "pezinho": 20
+  },
+  "galeria": [
+    {
+      "src": "galeria/barbearia-1.webp",
+      "alt": "Ilustração de exemplo: cadeira de barbeiro de couro vermelho com capitonê, sob luz pendente, ao lado do poste listrado e do espelho, em piso xadrez.",
+      "legenda": "Ilustração de exemplo: a cadeira da casa.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/barbearia-2.webp",
+      "alt": "Ilustração de exemplo: navalha aberta sobre a tira de couro de afiar, com tesoura, pincel de barba e pente numa toalha, vistos de cima.",
+      "legenda": "Ilustração de exemplo: navalha, couro e tesoura.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/barbearia-3.webp",
+      "alt": "Ilustração de exemplo: bancada de madeira com gavetas e espelho grande, máquina, borrifador e potes em cima, poste listrado na parede.",
+      "legenda": "Ilustração de exemplo: a bancada e o espelho.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/barbearia-4.webp",
+      "alt": "Ilustração de exemplo: prateleiras com pomadas, loção, pote de vidro com pentes no líquido azul, toalhas dobradas e tigela de espuma com pincel.",
+      "legenda": "Ilustração de exemplo: produtos e toalhas.",
+      "largura": 1024,
+      "altura": 1280
+    }
   ]
 }

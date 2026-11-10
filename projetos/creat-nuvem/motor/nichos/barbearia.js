@@ -114,7 +114,7 @@
       cores: { fundo: '#EFDCC0', texto: '#1F1612', destaque: '#7A4E1D', apoio: '#5A4232' },
       agendamento: {
         modo: 'whatsapp',
-        mensagem: 'Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}. Pode confirmar por aqui?'
+        mensagem: 'Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}.'
       },
       textos: {
         heroTitulo: 'Cadeira de bairro, corte no capricho.',
@@ -134,7 +134,7 @@
         localTitulo: 'Onde fica',
         faqTitulo: 'Antes de pedir',
         faq: [
-          { pergunta: 'Pedir pelo site já marca o horário?', resposta: 'Ainda não. O pedido chega no WhatsApp da barbearia e o dono confirma pelo WhatsApp. O horário vale depois da confirmação.' },
+          { pergunta: 'Pedir pelo site já marca o horário?', resposta: 'Não. O pedido chega pronto no WhatsApp da barbearia, com serviço, dia e hora. O horário vale depois que a casa confirma.' },
           { pergunta: 'Quanto custa cada serviço?', resposta: 'O valor está na tabela, ao lado de cada serviço. Corte + barba sai por menos que os dois separados.' },
           { pergunta: 'Como eu pago?', resposta: 'O pagamento é na barbearia. Pergunte no WhatsApp quais formas a casa aceita.' },
           { pergunta: 'Meu nome e meu WhatsApp ficam salvos?', resposta: 'Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar.' }

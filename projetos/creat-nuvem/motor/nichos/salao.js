@@ -124,7 +124,7 @@
       cores: { fundo: '#FBF1EE', texto: '#2A1418', destaque: '#A8123A', apoio: '#6A4A50' },
       agendamento: {
         modo: 'whatsapp',
-        mensagem: 'Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}. Pode confirmar por aqui?'
+        mensagem: 'Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}.'
       },
       textos: {
         heroTitulo: 'Seu horário no salão, pedido em um minuto.',
@@ -136,7 +136,7 @@
         avaliacoesTitulo: 'Recados de quem vem',
         pedidoTitulo: 'Peça o seu horário',
         pedidoNota: 'O pedido vai para o WhatsApp do salão e o dono confirma pelo WhatsApp.',
-        ritualDica: 'Passe o pincel na unha para enviar',
+        ritualDica: 'Pincele a unha para enviar',
         confirmacaoTitulo: 'Pedido pronto para enviar',
         confirmacaoTexto: 'Toque em enviar no WhatsApp. O horário vale depois que o dono confirma pelo WhatsApp.',
         letreiroAberto: 'Aberto agora · peça o seu horário',
@@ -144,7 +144,7 @@
         localTitulo: 'Onde fica',
         faqTitulo: 'Antes de pedir',
         faq: [
-          { pergunta: 'Pedir pelo site já marca o horário?', resposta: 'Ainda não. O pedido chega no WhatsApp do salão e o dono confirma pelo WhatsApp. O horário vale depois da confirmação.' },
+          { pergunta: 'Pedir pelo site já marca o horário?', resposta: 'Não. O pedido chega pronto no WhatsApp do salão, com serviço, dia e hora. O horário vale depois que o salão confirma.' },
           { pergunta: 'Posso pedir mais de um serviço?', resposta: 'Pode. Escolha o primeiro serviço no site e escreva os outros na mensagem do WhatsApp antes de enviar.' },
           { pergunta: 'Quanto custa a coloração?', resposta: 'O valor está na lista de serviços. Se o tom pedir mais produto, o salão avisa antes de confirmar.' },
           { pergunta: 'Meu nome e meu WhatsApp ficam salvos?', resposta: 'Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar.' }

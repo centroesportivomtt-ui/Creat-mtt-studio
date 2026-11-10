@@ -97,7 +97,7 @@
   },
   "agendamento": {
     "modo": "whatsapp",
-    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}. Pode confirmar por aqui?"
+    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}."
   },
   "textos": {
     "heroTitulo": "Cadeira no Centro, corte no capricho.",
@@ -119,7 +119,7 @@
     "faq": [
       {
         "pergunta": "Pedir pelo site já marca o horário?",
-        "resposta": "Não. O pedido chega pronto na barbearia, com serviço, dia e hora. O horário vale depois da confirmação."
+        "resposta": "Não. O pedido sai pronto, com serviço, dia e hora, e o horário vale depois da confirmação. Aqui, ele vai para a Creat. No site da sua barbearia, vai para você."
       },
       {
         "pergunta": "Quanto custa cada serviço?",
@@ -139,7 +139,7 @@
   "meta": {
     "previa": false,
     "motorVersao": "v1.3",
-    "criadoEm": "2026-11-10T19:59:56.773Z"
+    "criadoEm": "2026-11-10T21:57:06.589Z"
   },
   "fuso": "America/Bahia",
   "recados": [
@@ -150,6 +150,36 @@
     {
       "texto": "Corte + barba numa passada só, pelo valor que estava na tabela.",
       "autor": "Cliente de exemplo"
+    }
+  ],
+  "galeria": [
+    {
+      "src": "galeria/barbearia-1.webp",
+      "alt": "Ilustração de exemplo: cadeira de barbeiro de couro vermelho com capitonê, sob luz pendente, ao lado do poste listrado e do espelho, em piso xadrez.",
+      "legenda": "Ilustração de exemplo: a cadeira da casa.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/barbearia-2.webp",
+      "alt": "Ilustração de exemplo: navalha aberta sobre a tira de couro de afiar, com tesoura, pincel de barba e pente numa toalha, vistos de cima.",
+      "legenda": "Ilustração de exemplo: navalha, couro e tesoura.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/barbearia-3.webp",
+      "alt": "Ilustração de exemplo: bancada de madeira com gavetas e espelho grande, máquina, borrifador e potes em cima, poste listrado na parede.",
+      "legenda": "Ilustração de exemplo: a bancada e o espelho.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/barbearia-4.webp",
+      "alt": "Ilustração de exemplo: prateleiras com pomadas, loção, pote de vidro com pentes no líquido azul, toalhas dobradas e tigela de espuma com pincel.",
+      "legenda": "Ilustração de exemplo: produtos e toalhas.",
+      "largura": 1024,
+      "altura": 1280
     }
   ]
 }

@@ -111,17 +111,17 @@
       servicos: [
         { id: 'aula-experimental', nome: 'Aula experimental', preco: 0, duracaoMin: 60, descricao: 'Uma aula para conhecer o espaço, os professores e o ritmo da casa.' },
         { id: 'avaliacao', nome: 'Avaliação para começar', preco: 0, duracaoMin: 45, descricao: 'Conversa com o professor sobre a sua rotina e o seu objetivo, para montar o primeiro treino.' },
-        { id: 'mensal', nome: 'Plano mensal', preco: 99, duracaoMin: 60, descricao: 'Musculação de segunda a sábado, com professor na sala. No pedido, você marca o primeiro treino.' },
-        { id: 'trimestral', nome: 'Plano trimestral', preco: 267, duracaoMin: 60, descricao: 'Três meses de musculação pagos de uma vez, com o valor do mês mais baixo que no mensal.' },
-        { id: 'livre', nome: 'Plano livre', preco: 149, duracaoMin: 60, descricao: 'Musculação, funcional e pilates, quantas vezes quiser na semana.' },
-        { id: 'personal', nome: 'Treino com personal', preco: 69, duracaoMin: 60, descricao: 'Sessão individual, com o treino montado para você.' }
+        { id: 'mensal', nome: 'Plano mensal', preco: 99, duracaoMin: 60, descricao: 'Valor por mês. Musculação de segunda a sábado, com professor na sala. O pedido marca o primeiro treino.' },
+        { id: 'trimestral', nome: 'Plano trimestral', preco: 267, duracaoMin: 60, descricao: 'Valor dos três meses, pagos de uma vez, com o mês mais barato que no mensal. O pedido marca o primeiro treino.' },
+        { id: 'livre', nome: 'Plano livre mensal', preco: 149, duracaoMin: 60, descricao: 'Valor por mês. Musculação, funcional e pilates, quantas vezes quiser. O pedido marca o primeiro treino.' },
+        { id: 'personal', nome: 'Treino com personal', preco: 69, duracaoMin: 60, descricao: 'Valor por sessão de 1 hora, individual, com o treino montado para você.' }
       ],
       profissionais: [],
       avaliacoes: [],
       cores: { fundo: '#F1F0EC', texto: '#161616', destaque: '#B8141E', apoio: '#4D4B47' },
       agendamento: {
         modo: 'whatsapp',
-        mensagem: 'Olá! Meu nome é {nome}. Quero pedir um horário no studio: {servico}, {dia} às {hora}. Pode confirmar por aqui?'
+        mensagem: 'Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}.'
       },
       textos: {
         heroTitulo: 'Sua primeira aula começa com um pedido.',
@@ -141,7 +141,7 @@
         localTitulo: 'Onde fica',
         faqTitulo: 'Antes de vir',
         faq: [
-          { pergunta: 'Pedir pelo site já marca a aula?', resposta: 'Ainda não. O pedido chega no WhatsApp da academia e o dono confirma pelo WhatsApp. A aula vale depois da confirmação.' },
+          { pergunta: 'Pedir pelo site já marca a aula?', resposta: 'Não. O pedido chega pronto no WhatsApp da academia, com aula, dia e hora. A aula vale depois que a academia confirma.' },
           { pergunta: 'Quanto custa?', resposta: 'A aula experimental e a avaliação são grátis. Os planos estão na tabela, com o valor ao lado de cada um.' },
           { pergunta: 'Preciso levar alguma coisa?', resposta: 'Roupa confortável, tênis e uma garrafa de água. Toalha é bem-vinda.' },
           { pergunta: 'Meu nome e meu WhatsApp ficam salvos?', resposta: 'Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar.' }

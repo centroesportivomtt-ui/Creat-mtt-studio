@@ -87,6 +87,25 @@
     var marca = svg('g', { 'class': 'ra-marca' }, s);
     svg('path', { 'class': 'ra-marca-topo', d: 'M16 30 H184' }, marca);
     svg('path', { 'class': 'ra-marca-ponta', d: 'M10 22 V38 M190 22 V38' }, marca);
+    // rótulo "ALTO" (ACAD-08): diz o que a linha é. Mono de 12 px de tela, no traço de nanquim, à direita,
+    // acima da linha e fora do caminho das anilhas quando a barra trava. O SVG escala com o palco, então o
+    // tamanho em unidades do viewBox é recalculado no redimensionamento (estilo pelo CSSOM, a CSP permite)
+    var alto = svg('text', { 'class': 'ra-marca-rotulo', x: 182, y: 25, 'text-anchor': 'end' }, marca);
+    alto.textContent = 'ALTO';
+    alto.style.fill = 'var(--ritual-linha)';
+    alto.style.fontFamily = 'var(--fonte-dado, ui-monospace, monospace)';
+    alto.style.fontWeight = '700';
+    alto.style.letterSpacing = '0.08em';
+    function medirAlto() {
+      var r = s.getBoundingClientRect();
+      var esc = Math.min(r.width / 200, r.height / 240);
+      if (!(esc > 0)) return;
+      alto.style.fontSize = (12 / esc).toFixed(2) + 'px';
+      alto.setAttribute('y', (30 - 5 / esc).toFixed(2));   // 5 px de tela entre a base do texto e a linha
+    }
+    medirAlto();
+    if ('ResizeObserver' in W) new W.ResizeObserver(medirAlto).observe(s);
+    else W.addEventListener('resize', medirAlto);
     var subir = svg('g', null, s);
     var escala = svg('g', { transform: 'translate(100 164) scale(0.78) translate(-100 -164)' }, subir);
     var barra = desenharBarra(escala);

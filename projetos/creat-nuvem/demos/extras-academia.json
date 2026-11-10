@@ -9,5 +9,43 @@
       "texto": "Pedi a avaliação pelo celular, e o primeiro treino saiu da conversa.",
       "autor": "Aluna de exemplo"
     }
+  ],
+  "precos": {
+    "aula-experimental": 0,
+    "avaliacao": 0,
+    "mensal": 99,
+    "trimestral": 267,
+    "livre": 149,
+    "personal": 69
+  },
+  "galeria": [
+    {
+      "src": "galeria/academia-1.webp",
+      "alt": "Ilustração de exemplo: anilhas de 25, 20, 15 e 10 kg em vermelho, azul, amarelo e verde, encostadas na parede, e a barra no piso de borracha.",
+      "legenda": "Ilustração de exemplo: anilhas e barra.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/academia-2.webp",
+      "alt": "Ilustração de exemplo: suporte de dois andares com halteres sextavados de 10 a 20 kg diante do espelho, toalha e um halter de 8 kg no chão.",
+      "legenda": "Ilustração de exemplo: os halteres.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/academia-3.webp",
+      "alt": "Ilustração de exemplo: gaiola de agachamento azul com a barra carregada nos suportes, banco reto à frente e kettlebell de 16 kg no chão.",
+      "legenda": "Ilustração de exemplo: gaiola, barra e banco.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/academia-4.webp",
+      "alt": "Ilustração de exemplo: sala com janelão, caixote de salto, bola medicinal, corda e kettlebells de 4 a 12 kg em fila no piso de borracha.",
+      "legenda": "Ilustração de exemplo: o espaço de treino.",
+      "largura": 1024,
+      "altura": 1280
+    }
   ]
 }

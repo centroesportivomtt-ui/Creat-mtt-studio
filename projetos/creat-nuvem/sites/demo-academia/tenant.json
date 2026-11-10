@@ -73,28 +73,28 @@
       "nome": "Plano mensal",
       "preco": 99,
       "duracaoMin": 60,
-      "descricao": "Musculação de segunda a sábado, com professor na sala. No pedido, você marca o primeiro treino."
+      "descricao": "Valor por mês. Musculação de segunda a sábado, com professor na sala. O pedido marca o primeiro treino."
     },
     {
       "id": "trimestral",
       "nome": "Plano trimestral",
       "preco": 267,
       "duracaoMin": 60,
-      "descricao": "Três meses de musculação pagos de uma vez, com o valor do mês mais baixo que no mensal."
+      "descricao": "Valor dos três meses, pagos de uma vez, com o mês mais barato que no mensal. O pedido marca o primeiro treino."
     },
     {
       "id": "livre",
-      "nome": "Plano livre",
+      "nome": "Plano livre mensal",
       "preco": 149,
       "duracaoMin": 60,
-      "descricao": "Musculação, funcional e pilates, quantas vezes quiser na semana."
+      "descricao": "Valor por mês. Musculação, funcional e pilates, quantas vezes quiser. O pedido marca o primeiro treino."
     },
     {
       "id": "personal",
       "nome": "Treino com personal",
       "preco": 69,
       "duracaoMin": 60,
-      "descricao": "Sessão individual, com carga e postura ajustadas série por série."
+      "descricao": "Valor por sessão de 1 hora, com carga e postura ajustadas série por série."
     }
   ],
   "profissionais": [],
@@ -107,7 +107,7 @@
   },
   "agendamento": {
     "modo": "whatsapp",
-    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário no studio: {servico}, {dia} às {hora}. Pode confirmar por aqui?"
+    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}."
   },
   "textos": {
     "heroTitulo": "A barra está montada. Falta a sua primeira aula.",
@@ -120,7 +120,7 @@
     "pedidoTitulo": "Peça a sua aula experimental",
     "pedidoNota": "O pedido chega pronto, com modalidade, dia e hora.",
     "ritualDica": "Arraste para enviar",
-    "confirmacaoTitulo": "Barra no alto, pedido pronto",
+    "confirmacaoTitulo": "Ficha pronta",
     "confirmacaoTexto": "Toque em enviar. A aula vale depois que o studio confirma pelo WhatsApp.",
     "letreiroAberto": "Aberto agora · peça a sua aula",
     "letreiroFechado": "Fechado agora · abre {dia} às {hora}",
@@ -129,11 +129,11 @@
     "faq": [
       {
         "pergunta": "Pedir pelo site já marca a aula?",
-        "resposta": "Não. O pedido chega pronto no studio, com modalidade, dia e hora. A aula vale depois da confirmação."
+        "resposta": "Não. O pedido sai pronto, com aula, dia e hora, e a aula vale depois da confirmação. Aqui, ele vai para a Creat. No site da sua academia, vai para você."
       },
       {
         "pergunta": "Quanto custa?",
-        "resposta": "A aula experimental e a avaliação são grátis. Os planos mensal, trimestral e livre estão na tabela, com o valor ao lado de cada um."
+        "resposta": "A aula experimental e a avaliação são grátis. Os planos estão na tabela, com o valor e o período de cada um. São preços de exemplo."
       },
       {
         "pergunta": "Nunca treinei. Posso começar?",
@@ -153,7 +153,7 @@
   "meta": {
     "previa": false,
     "motorVersao": "v1.3",
-    "criadoEm": "2026-11-10T20:00:00.971Z"
+    "criadoEm": "2026-11-10T21:57:11.259Z"
   },
   "fuso": "America/Bahia",
   "recados": [
@@ -164,6 +164,36 @@
     {
       "texto": "Pedi a avaliação pelo celular, e o primeiro treino saiu da conversa.",
       "autor": "Aluna de exemplo"
+    }
+  ],
+  "galeria": [
+    {
+      "src": "galeria/academia-1.webp",
+      "alt": "Ilustração de exemplo: anilhas de 25, 20, 15 e 10 kg em vermelho, azul, amarelo e verde, encostadas na parede, e a barra no piso de borracha.",
+      "legenda": "Ilustração de exemplo: anilhas e barra.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/academia-2.webp",
+      "alt": "Ilustração de exemplo: suporte de dois andares com halteres sextavados de 10 a 20 kg diante do espelho, toalha e um halter de 8 kg no chão.",
+      "legenda": "Ilustração de exemplo: os halteres.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/academia-3.webp",
+      "alt": "Ilustração de exemplo: gaiola de agachamento azul com a barra carregada nos suportes, banco reto à frente e kettlebell de 16 kg no chão.",
+      "legenda": "Ilustração de exemplo: gaiola, barra e banco.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/academia-4.webp",
+      "alt": "Ilustração de exemplo: sala com janelão, caixote de salto, bola medicinal, corda e kettlebells de 4 a 12 kg em fila no piso de borracha.",
+      "legenda": "Ilustração de exemplo: o espaço de treino.",
+      "largura": 1024,
+      "altura": 1280
     }
   ]
 }
