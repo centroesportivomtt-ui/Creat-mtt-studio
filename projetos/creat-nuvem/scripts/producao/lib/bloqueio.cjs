@@ -125,6 +125,14 @@ function versoes(s) {
   const f = fundo(s), l = semLeet(f);
   return [...new Set([f, l, juntar(f), semLeet(juntar(f)), juntar(l)])];
 }
+/* letras soltas reunidas formam uma tira sem espaço ("corteignorers45"): ali a busca é por raiz, sem fronteira de palavra */
+const RE_TIRA = /(?:(?<![a-z0-9@$!|])[a-z0-9@$!|]{1,2}(?:[\s.\-_*·+~'"]+|$)){3,}/g;
+const RE_RAIZ = /ignor|desconsider|disregard|esquec|aprov(?!eit)|approv|publiq|publish|apag|delet|instruc|instruct|prompt|deploy|token|senha|passw|usuari|admin|sistema|system|segred|secret|claude|base44|checkpoint|entidad|execut|marqu|leia|liste|override|bypass|jailbreak/;
+function tiras(s) {
+  const out = [];
+  for (const v of [fundo(s), semLeet(fundo(s))]) for (const m of v.matchAll(RE_TIRA)) out.push(semLeet(m[0].replace(/[^a-z0-9@$!|]/g, '')));
+  return out;
+}
 
 const INJ_FORTE = new RegExp([
   // apagar o contexto
@@ -143,8 +151,12 @@ const INJ_FORTE = new RegExp([
 const INJ_ESTRITO = new RegExp([
   // verbos de comando dirigidos ao sistema
   /\b(aprov(?!eit)\w*|approv\w*|marqu(e|em)|marcar|mark (as|it|this|the)|publiqu\w*|publicar|publica-?lo|publish\w*|poste|postar|apagu\w*|apagar|apaga|delet\w*|exclu(a|am|ir)|remov(a|am|er)|remove|eras\w*|wipe|leia|leiam|ler|read (the|all|users?|data)|liste|listem|listar|list (all|the|users?)|execut(e|em|ar)|exec|rode|rodem|rodar|run (the|this|it|a|all|command)|esquec(a|am|er)|forget)\b/.source,
+  /\b(liber(e|em|ar)|copi(e|em|ar)|revel(e|em|ar)|imprim(a|am|ir)|conced(a|am|er)|grant|dump)\b/.source,
+  /\b(coloqu(e|em)|colocar|ponha|ponham|por|bot(e|em|ar)|suba|subam|subir)\b[\w ]{0,15}\bno ar\b|\b(suba|subam|subir)\b[\w ]{0,10}\b(o site|tudo|isso)\b/.source,
+  /\b(mud(e|em|ar)|alter(e|em|ar)|troqu(e|em)|trocar|change|set)\b[\w ]{0,20}\b(status|estado|pedido|valor|preco|plano|site|order|state)\b/.source,
+  /\b(envi(e|em|ar)|mand(e|em|ar)|mostr(e|em|ar)|exib(a|am|ir)|acess(e|em|ar)|abr(a|am|ir)|send|show|reveal|open)\b[\w ]{0,20}\b(lista|dados|tudo|senhas?|tokens?|segredos?|clientes|usuarios?|e ?mails?|painel|banco|conta|outro app|variaveis|env|users?|data|list)\b/.source,
   // alvos ambíguos fora de um nome de negócio
-  /\b(sistema|segred(o|os)|chaves?|apps?|aplicativo|assistent(e|es)|agent(e|es|s)?|bot|robo|ia|status)\b/.source,
+  /\b(sistema|segred(o|os)|chaves?|apps?|aplicativo|assistent(e|es)|agent(e|es|s)?|bot|robo|ia)\b|\bstatus (do|da|de|para|como)\b/.source,
   // frases de virada
   /\b(voce|vc) (e|eh|agora)\b|\ba partir de agora\b|\bde agora em diante\b|\bo que (lhe|te|voce|vc) (pediram|pediu|disseram|disse|mandaram|mandou|falaram|falou)\b/.source
 ].join('|'));
@@ -164,6 +176,10 @@ function injecao(texto, campo, opc) {
   for (const v of versoes(texto)) {
     const m = v.match(INJ_FORTE) || (n !== 'texto' ? v.match(INJ_ESTRITO) : null);
     if (m) return m[0].trim();
+  }
+  for (const t of tiras(texto)) {
+    const m = t.match(RE_RAIZ);
+    if (m) return `letras soltas: ${t.slice(0, 30)}`;
   }
   return null;
 }
@@ -336,7 +352,19 @@ const SO_INSTRUCAO = new Set(['injecao', 'campo_curto', 'codigo', 'disfarce']);
 function checarPedido(o) {
   if (!o || typeof o !== 'object') return [];
   const pares = ['endereco', 'responsavel', 'horarios'].filter((k) => typeof o[k] === 'string' && o[k]).map((k) => [k, o[k]]);
-  return checar(pares).motivos.filter((m) => SO_INSTRUCAO.has(m.categoria));
+  // endereço que se separa: o bairro já passa pelo portão da entrada do produzir.mjs (código 5); aqui, rua e número.
+  // Endereço que não se separa: o texto inteiro.
+  const e = pares.find(([k]) => k === 'endereco');
+  if (e) {
+    let r = null;
+    try { r = require('../../../assets/endereco.js').analisar(e[1], o.cidade); } catch (x) { r = null; }
+    if (r && r.ok) {
+      pares.splice(pares.indexOf(e), 1, ['endereco.rua', r.valor.rua], ['endereco.numero', r.valor.numero]);
+      const est = estrutura(e[1], 'endereco');      // o alfabeto e o tamanho valem para a linha inteira
+      if (est) return [{ campo: 'endereco', categoria: 'campo_curto', regra: ROTULO.campo_curto, trecho: est.slice(0, 40) }];
+    }
+  }
+  return checar(pares, { estrito: true }).motivos.filter((m) => SO_INSTRUCAO.has(m.categoria));
 }
 
 module.exports = { checar, checarNegocio, checarPedido, injecao, estrutura, versoes, fundo, contato, telefoneAlheio, semDisfarce, limpar, norm, REGRAS, ROTULO, COMUNS };

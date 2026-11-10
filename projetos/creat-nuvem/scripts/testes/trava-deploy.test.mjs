@@ -3,7 +3,8 @@
  * Roda com: npm test
  * Cobre: pegar, renovar, confirmar, soltar, TTL (vencida = livre), recusa com trava alheia, parada geral,
  * teto de 3 deploys por hora, portões do site, ensaio_ok exigido por padrão (o ensaio só com --ensaio e o
- * pedido aberto pelo coordenador), pausa com linhas repetidas nas duas ordens e a linha de comando.
+ * pedido aberto pelo coordenador), pausa com linhas repetidas nas duas ordens, a linha de comando e a
+ * decisão D4 (10/11/2026): remoção fora do teto e registrada à parte; rollback sem esperar o teto.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -245,4 +246,78 @@ test('tipo dados exige atualizar_vagas verde; remoção não exige portão de si
   assert.deepEqual(T.podePublicar({ mapa: mapa([trava]), dono: EU, agora: AGORA, tipo: 'dados', portoes: {} }).faltam, ['atualizar_vagas']);
   assert.equal(T.podePublicar({ mapa: mapa([trava]), dono: EU, agora: AGORA, tipo: 'dados', portoes: { atualizar_vagas: true } }).ok, true);
   assert.equal(T.podePublicar({ mapa: mapa([trava]), dono: EU, agora: AGORA, tipo: 'remocao' }).ok, true);
+});
+
+/* ---------- D4 (decidida pelo coordenador em 10/11/2026): remoção fora do teto; rollback não espera ---------- */
+test('D4: --tipo remocao não espera o teto de 3 por hora, mas continua exigindo a trava própria', () => {
+  const trava = { chave: 'trava_deploy', valor: EU, expira_em: min(20) };
+  const tres = { chave: 'deploys_ultima_hora', valor: JSON.stringify([min(-50), min(-30), min(-5)]) };
+  // rascunho com o teto cheio espera; remoção com o mesmo estado passa
+  assert.equal(T.podePublicar({ mapa: mapa([trava, tres, ENSAIO_OK]), dono: EU, agora: AGORA, tipo: 'rascunho', portoes: PORTOES_OK }).motivo, 'teto_por_hora');
+  const r = T.podePublicar({ mapa: mapa([trava, tres]), dono: EU, agora: AGORA, tipo: 'remocao' });
+  assert.equal(r.ok, true, JSON.stringify(r));
+  assert.equal(r.fora_do_teto, true); assert.equal(r.teto_ignorado, true); assert.equal(r.deploys_na_hora, 3);
+  // sem trava, com trava alheia ou quase vencida: recusa, como qualquer deploy
+  assert.equal(T.podePublicar({ mapa: mapa([tres]), dono: EU, agora: AGORA, tipo: 'remocao' }).motivo, 'trava_nao_gravada');
+  assert.equal(T.podePublicar({ mapa: mapa([{ chave: 'trava_deploy', valor: OUTRO, expira_em: min(20) }, tres]), dono: EU, agora: AGORA, tipo: 'remocao' }).motivo, 'trava_alheia');
+  assert.equal(T.podePublicar({ mapa: mapa([{ chave: 'trava_deploy', valor: EU, expira_em: min(3) }, tres]), dono: EU, agora: AGORA, tipo: 'remocao' }).motivo, 'trava_quase_vencida');
+  // pausa: continua só com --apesar-da-pausa
+  const pausa = { chave: 'pausado', valor: 'sim' };
+  assert.equal(T.podePublicar({ mapa: mapa([trava, tres, pausa]), dono: EU, agora: AGORA, tipo: 'remocao' }).motivo, 'pausado');
+  assert.equal(T.podePublicar({ mapa: mapa([trava, tres, pausa]), dono: EU, agora: AGORA, tipo: 'remocao', apesarDaPausa: true }).ok, true);
+});
+
+test('D4: registrar-deploy --tipo remocao não conta no teto e grava a remoção à parte (deploys_remocao), para auditoria', () => {
+  const trava = { chave: 'trava_deploy', valor: EU, expira_em: min(20) };
+  const dois = { chave: 'deploys_ultima_hora', valor: JSON.stringify([min(-30), min(-5)]) };
+  const g = T.registrarDeploy({ mapa: mapa([trava, dois]), dono: EU, agora: AGORA, tipo: 'remocao', pedido: PEDIDO_TESTE });
+  assert.equal(g.ok, true);
+  assert.deepEqual(g.gravar.map((x) => x.chave), ['deploys_remocao'], 'deploys_ultima_hora não muda');
+  assert.deepEqual(JSON.parse(g.gravar[0].valor), [{ em: min(0), pedido: PEDIDO_TESTE }]);
+  assert.equal(Date.parse(g.gravar[0].expira_em), AGORA + 400 * 24 * 3600 * 1000);
+  // depois da remoção, o próximo deploy comum ainda vê só os 2 de antes: a remoção não tomou vaga
+  let linhas = aplicar([trava, dois, ENSAIO_OK], g.gravar);
+  const r = T.podePublicar({ mapa: mapa(linhas), dono: EU, agora: AGORA + 60000, tipo: 'rascunho', portoes: PORTOES_OK });
+  assert.equal(r.ok, true, JSON.stringify(r)); assert.equal(r.deploys_na_hora, 2);
+  // a segunda remoção acumula; item com mais de 400 dias sai
+  linhas = aplicar(linhas, [{ chave: 'deploys_remocao', valor: JSON.stringify([{ em: new Date(AGORA - 401 * 24 * 3600 * 1000).toISOString(), pedido: 'PA-ANTIGO0001' }, { em: min(0), pedido: PEDIDO_TESTE }]) }]);
+  const g2 = T.registrarDeploy({ mapa: mapa(linhas), dono: EU, agora: AGORA + 120000, tipo: 'remocao' });
+  assert.deepEqual(JSON.parse(g2.gravar[0].valor), [{ em: min(0), pedido: PEDIDO_TESTE }, { em: min(2) }]);
+  // sem --tipo, ou com outro tipo, segue contando no teto como antes
+  assert.deepEqual(T.registrarDeploy({ mapa: mapa([trava, dois]), dono: EU, agora: AGORA, tipo: 'final' }).gravar.map((x) => x.chave), ['deploys_ultima_hora']);
+  assert.throws(() => T.registrarDeploy({ mapa: mapa([trava, { chave: 'deploys_remocao', valor: '{quebrado' }]), dono: EU, agora: AGORA, tipo: 'remocao' }), /deploys_remocao/);
+  // sem trava própria não registra
+  assert.equal(T.registrarDeploy({ mapa: mapa([dois]), dono: EU, agora: AGORA, tipo: 'remocao' }).ok, false);
+});
+
+test('D4: rollback (P8) não espera o teto, não exige portão e conta na hora; pausa só com --apesar-da-pausa', () => {
+  const trava = { chave: 'trava_deploy', valor: EU, expira_em: min(20) };
+  const tres = { chave: 'deploys_ultima_hora', valor: JSON.stringify([min(-50), min(-30), min(-5)]) };
+  const r = T.podePublicar({ mapa: mapa([trava, tres]), dono: EU, agora: AGORA, tipo: 'rollback' });
+  assert.equal(r.ok, true, JSON.stringify(r)); assert.equal(r.teto_ignorado, true);
+  const g = T.registrarDeploy({ mapa: mapa([trava, tres]), dono: EU, agora: AGORA, tipo: 'rollback' });
+  assert.deepEqual(g.gravar.map((x) => x.chave), ['deploys_ultima_hora']);
+  assert.equal(JSON.parse(g.gravar[0].valor).length, 4, 'o rollback entra na conta: os deploys seguintes esperam');
+  assert.equal(T.podePublicar({ mapa: mapa([trava, { chave: 'pausado', valor: 'sim' }]), dono: EU, agora: AGORA, tipo: 'rollback' }).motivo, 'pausado');
+  assert.equal(T.podePublicar({ mapa: mapa([trava, { chave: 'pausado', valor: 'sim' }]), dono: EU, agora: AGORA, tipo: 'rollback', apesarDaPausa: true }).ok, true);
+  assert.equal(T.podePublicar({ mapa: mapa([]), dono: EU, agora: AGORA, tipo: 'rollback' }).motivo, 'trava_nao_gravada');
+});
+
+test('D4 pela linha de comando: remoção com teto cheio sai 0; registrar-deploy --tipo remocao grava deploys_remocao; --tipo inválido sai 1', () => {
+  const dir = fs.mkdtempSync(path.join(process.env.CREAT_TESTE_TMP || os.tmpdir(), 'trava-d4-'));
+  try {
+    const cheio = path.join(dir, 'cheio.json');
+    fs.writeFileSync(cheio, JSON.stringify({ records: [{ chave: 'trava_deploy', valor: EU, expira_em: min(20) }, { chave: 'deploys_ultima_hora', valor: JSON.stringify([min(-50), min(-30), min(-5)]) }] }));
+    const rodar = (...a) => spawnSync(process.execPath, [SCRIPT, ...a, '--agora', new Date(AGORA).toISOString()], { encoding: 'utf8' });
+    const rasc = rodar('pode-publicar', '--dono', EU, '--estado', cheio, '--tipo', 'final');
+    assert.equal(rasc.status, 3); assert.equal(JSON.parse(rasc.stdout).motivo, 'teto_por_hora');
+    const rem = rodar('pode-publicar', '--dono', EU, '--estado', cheio, '--tipo', 'remocao');
+    assert.equal(rem.status, 0, rem.stdout); assert.equal(JSON.parse(rem.stdout).fora_do_teto, true);
+    assert.equal(rodar('pode-publicar', '--dono', EU, '--estado', cheio, '--tipo', 'rollback').status, 0);
+    const reg = rodar('registrar-deploy', '--dono', EU, '--estado', cheio, '--tipo', 'remocao', '--pedido', PEDIDO_TESTE);
+    assert.equal(reg.status, 0, reg.stdout);
+    assert.deepEqual(JSON.parse(reg.stdout).gravar.map((x) => x.chave), ['deploys_remocao']);
+    assert.equal(rodar('registrar-deploy', '--dono', EU, '--estado', cheio, '--tipo', 'qualquer').status, 1);
+    assert.deepEqual(JSON.parse(rodar('registrar-deploy', '--dono', EU, '--estado', cheio).stdout).gravar.map((x) => x.chave), ['deploys_ultima_hora'], 'sem --tipo, como antes');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });

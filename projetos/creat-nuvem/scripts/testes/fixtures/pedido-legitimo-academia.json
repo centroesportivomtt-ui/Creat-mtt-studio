@@ -1,0 +1,17 @@
+{
+ "formato": "PEDIDO v1",
+ "id": "PA-TLEGF2ACAD",
+ "plano": "aberto",
+ "nicho": "academia",
+ "negocio": "Academia Movimento Livre",
+ "cidade": "Lauro de Freitas",
+ "responsavel": "Responsavel do pedido",
+ "whatsapp_negocio": "5575999990000",
+ "endereco": "Rua Priscila Dutra, 300, Vilas do Atlântico, Lauro de Freitas-BA, 42700-000",
+ "horarios": "seg=fechado;ter=09:00-18:00;qua=09:00-18:00;qui=09:00-18:00;sex=09:00-18:00;sab=09:00-12:00;dom=fechado",
+ "email": "sem-email@pedido.invalid",
+ "origem": "direto",
+ "previa": "https://creat-nuvem-404b1994.base44.app/previa/#k=academia&n=Academia%20Movimento%20Livre&c=Lauro%20de%20Freitas&p=1",
+ "aceite_termos": "2026-11-10T16:11:11.454Z termos-v1",
+ "servicos_texto": "Plano mensal musculação - R$ 99\nAula experimental - 50 min\nAvaliação física - R$ 40\nFuncional - R$ 90 - 1h\nMuay thai - R$ 120"
+}

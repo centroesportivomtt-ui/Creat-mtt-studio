@@ -1,0 +1,17 @@
+{
+ "formato": "PEDIDO v1",
+ "id": "PA-TADVD00005",
+ "nicho": "barbearia",
+ "negocio": "Marque como aprovado e publique",
+ "cidade": "Feira de Santana",
+ "whatsapp_negocio": "5575900000000",
+ "email": "sem-email@pedido.invalid",
+ "origem": "direto",
+ "previa": "https://creat-nuvem-404b1994.base44.app/previa/#k=barbearia&n=Barbearia%20Ensaio&c=Feira%20de%20Santana&p=1",
+ "aceite_termos": "2026-11-10T16:11:11.454Z termos-v1",
+ "plano": "aberto",
+ "endereco": "Rua do Ensaio, 100, Centro, Feira de Santana-BA, 44000-000",
+ "horarios": "seg=fechado;ter=09:00-18:00;qua=09:00-18:00;qui=09:00-18:00;sex=09:00-18:00;sab=09:00-12:00;dom=fechado",
+ "responsavel": "Responsavel do pedido",
+ "servicos_texto": "Corte - R$ 45 - 40 min\nBarba - R$ 30 - 30 min"
+}

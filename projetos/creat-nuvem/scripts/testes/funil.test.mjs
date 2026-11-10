@@ -633,10 +633,14 @@ test('2A PEDIDO v1 no WhatsApp: frase de gente na 1ª linha, linhas do pagamento
   assert.equal(V.mensagemPedido(enx, 'aprovado', { paymentId: '188866285972' }), 'Oi! Acabei de pagar a Abertura do Porta Aberta. Meu pedido é PA-7K3QX2MD4R, pagamento nº 188866285972.');
 });
 
-test('2A PEDIDO v1 inteiro do WhatsApp (frase + linhas do pagamento) passa no leitor da produção', { todo: 'depende do 1C: lerPedidoTexto em scripts/producao/lib/pedido.cjs ainda recusa a frase de abertura e as 4 chaves do pagamento' }, () => {
+test('2A PEDIDO v1 inteiro do WhatsApp (frase + linhas do pagamento) passa no leitor da produção', () => {
+  // fecho F2: lerPedidoTexto descarta a frase antes de "PEDIDO v1" e aceita e ignora as 4 linhas do pagamento
   const V = carregar().Vitrine;
   const m = V.mensagemPedido(PEDIDO_CHEIO(), 'aprovado', { pagamento: 'aprovado', paymentId: '188866285972', produto: 'pa-abertura-inauguracao-2026-11', valor: 297 });
-  assert.equal(lerPedidoTexto(m).id, 'PA-7K3QX2MD4R');
+  const lido = lerPedidoTexto(m);
+  assert.equal(lido.id, 'PA-7K3QX2MD4R');
+  assert.deepEqual(lido, lerPedidoTexto(V.textoPedido(PEDIDO_CHEIO())), 'a frase e o pagamento não entram no pedido');
+  for (const k of ['pagamento', 'mp_pagamento', 'produto', 'valor']) assert.equal(k in lido, false, k);
 });
 
 test('2A aparelho: link de pagamento guardado volta a passar por linkValido na leitura (nunca javascript:)', () => {

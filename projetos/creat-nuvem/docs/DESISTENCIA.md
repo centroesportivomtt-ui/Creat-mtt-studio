@@ -37,13 +37,15 @@ Trilho, 10/11/2026. Base: termos, cláusula 6 (Código de Defesa do Consumidor, 
 | 2 | suporte | marca o pedido `desistiu` no painel do app (ou o executor, por `update_entities` com o filtro do estado de antes), com `desistiu_em` = hora do pedido e `estorno_prazo_em` = 5 dias úteis depois (segunda a sexta, sem feriado nacional) | `query_entities` do pedido mostra os dois campos |
 | 3 | executor ou coordenador | tira o site de `public/sites/<slug>/`, o rascunho `public/sites/<slug>--r-<id>/` e a obra `porta-aberta/obras/<slug>--r-<id>/`: `run_command` `rm -rf` em cada caminho, um por um, nunca `public/sites` | `ls public/sites` |
 | 4 | executor ou coordenador | `create_checkpoint` com o nome `executor remocao <pedido_id>` | id do checkpoint |
-| 5 | executor ou coordenador | deploy pelo procedimento P1 a P9, `--tipo remocao`. Com a parada geral ligada, só o coordenador remove, com `--apesar-da-pausa`: a remoção é obrigação legal. O teto de 3 deploys por hora vale também aqui: a remoção pode esperar até 1 hora (decisão pendente D4, EXECUTOR.md seção 10) | saída do deploy |
+| 5 | executor ou coordenador | deploy pelo procedimento P1 a P9, `--tipo remocao`. Com a parada geral ligada, só o coordenador remove, com `--apesar-da-pausa`: a remoção é obrigação legal. **A remoção não conta contra o teto de 3 deploys por hora nem espera por ele** (decisão D4, de 10/11/2026, EXECUTOR.md seção 10): ela só precisa da trava, e fica registrada à parte em `Operacao deploys_remocao` (`registrar-deploy --tipo remocao --pedido <id>`) | saída do deploy e o `gravar` de `deploys_remocao` |
 | 6 | executor ou coordenador | confere o 404: `curl -sL -o /dev/null -w '%{http_code}\n' https://creat-nuvem-404b1994.base44.app/sites/<slug>/` e o mesmo para o rascunho (o `-L` é obrigatório: a hospedagem responde 307 de `/sites/<slug>/` para `/sites/<slug>`, e só o segundo salto dá 404); depois `node scripts/conferir-no-ar.cjs` | `404`, `404` e a última linha da conferência |
 | 7 | **dono** | estorno no Mercado Pago (seção 4), **no mesmo dia do pedido** | `estorno_feito_em` gravado |
 | 8 | **dono** | se já houver assinatura no Stripe, cancelar e estornar a cobrança feita dentro dos 7 dias (seção 4) | assinatura cancelada no painel |
 | 9 | suporte | avisa o cliente que o estorno foi feito, no mesmo canal em que ele pediu | a mensagem enviada |
 
-Se o site não estava no ar ainda (pedido em `pago`, `em_producao` ou `rascunho_enviado`), os passos 3 a 6 valem só para o rascunho e a obra que existirem. A remoção acontece no mesmo dia do pedido.
+Se o site não estava no ar ainda (pedido em `pago`, `em_producao` ou `rascunho_enviado`), os passos 3 a 6 valem só para o rascunho e a obra que existirem.
+
+**Prazo da remoção: no mesmo despertar em que a desistência é lida.** O executor lê a fila a cada despertar (de hora em hora, das 8h às 20h de Salvador, segunda a sábado). O despertar que encontra o pedido em `desistiu` com site, rascunho ou obra no app remove antes de produzir qualquer pedido novo. O teto por hora não segura a remoção (D4). O que ainda pode segurar: a trava de outro dono, que vence sozinha em no máximo 20 minutos; nesse caso o mesmo despertar tenta de novo no fim e, se ainda estiver presa, avisa com `ALERTA:`. Desistência marcada depois do último despertar do dia (20h41 de Salvador) ou no domingo: o coordenador remove no mesmo dia, pelo mesmo procedimento. Se isso não acontecer, ela sai no primeiro despertar seguinte e a promessa "O site sai do ar hoje" do R16 falhou: o despertar abre a mensagem com `ALERTA:` e o suporte avisa o cliente.
 
 ## 4. Estorno: passo do dono, pedido no mesmo dia, com teto de 5 dias úteis rastreado
 
@@ -74,8 +76,12 @@ Qualquer pessoa que tenha deixado dados (cliente, desistente ou quem só preench
 
 1. Suporte confirma o pedido no mesmo canal, com o protocolo (id do pedido, ou a data do contato quando não houver pedido).
 2. No pedido (`PedidoPortaAberta`), o suporte ou o executor apaga os campos pessoais: `negocio`, `whatsapp`, `email`, `cidade`, `servicos_texto`, `fotos` viram vazios, com `$unset` no `update_entities`. Ficam só id, produto, valor, datas, estado e `payment_id`, que são o registro do pagamento (obrigação fiscal e de defesa).
-3. Site no ar de quem pediu: sai pelos passos 3 a 6 da seção 3.
-4. Cópias: nada de cliente fica no repositório (`.gitignore` barra `sites/` de cliente e `pedidos/`). O contêiner de cada sessão some ao fim dela. A conversa do WhatsApp é apagada no aparelho do suporte.
+3. Site no ar de quem pediu: sai pelos passos 3 a 6 da seção 3. O site sai do ar na hora do deploy de remoção.
+4. Cópias, uma por uma, com a verdade sobre cada uma:
+   - **Repositório da Creat** (este, no GitHub): nada de cliente fica nele (`.gitignore` barra `sites/` de cliente e `pedidos/`). Isso vale só para o repositório da Creat.
+   - **Checkpoints e histórico do app** (Base44, app `6aefffe66b684db9404b1994`): cada publicação passa por um `create_checkpoint`, e o app guarda o histórico de versões (git interno do app). A cópia do site removido, do rascunho e da obra **continua existindo nesses checkpoints e no histórico do app**. Ela fica até a plataforma permitir apagar um checkpoint ou o histórico, ou até o coordenador recriar o histórico do app sem ela. Nada disso é público: o histórico não é servido no endereço do site e o app não está ligado a repositório no GitHub (`connected: false`, conferido no P5 de EXECUTOR.md antes de cada deploy). Quem pede para apagar ouve isso com clareza (texto da política de privacidade, seção de eliminação de dados).
+   - **Contêiner de cada sessão:** some ao fim dela.
+   - **Conversa do WhatsApp:** apagada no aparelho do suporte.
 5. Grave a data do atendimento em `Operacao titular_<protocolo>` com `expira_em` de 400 dias, sem nenhum dado pessoal no valor.
 
 ## 6. O que não fazer

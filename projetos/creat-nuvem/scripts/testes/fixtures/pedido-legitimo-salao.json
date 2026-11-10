@@ -1,0 +1,17 @@
+{
+ "formato": "PEDIDO v1",
+ "id": "PA-TLEGF2SALA",
+ "plano": "aberto",
+ "nicho": "salao",
+ "negocio": "Studio Bela & Cia",
+ "cidade": "Vitória da Conquista",
+ "responsavel": "Responsavel do pedido",
+ "whatsapp_negocio": "5575999990000",
+ "endereco": "Av. Olívia Flores, 1200, Candeias, Vitória da Conquista-BA, 45028-610",
+ "horarios": "seg=fechado;ter=09:00-18:00;qua=09:00-18:00;qui=09:00-18:00;sex=09:00-18:00;sab=09:00-12:00;dom=fechado",
+ "email": "sem-email@pedido.invalid",
+ "origem": "direto",
+ "previa": "https://creat-nuvem-404b1994.base44.app/previa/#k=salao&n=Studio%20Bela%20%26%20Cia&c=Vit%C3%B3ria%20da%20Conquista&p=1",
+ "aceite_termos": "2026-11-10T16:11:11.454Z termos-v1",
+ "servicos_texto": "Pé e mão - R$ 50\nRemoção de gel - R$ 30\nEscova progressiva - R$ 180 - 2h\nDesign de sobrancelha - R$ 30\nSelagem - R$ 150"
+}
