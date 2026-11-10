@@ -310,3 +310,28 @@ Pendências do dono (fora do repositório): desligar no Events Manager a corresp
 **Anúncios.** Troca única do texto concluída: 6 anúncios novos ativos (Abertura e plano mensal declarados), 6 antigos pausados, verba e público sem mudança. Detalhe em `marketing/trafego/textos-troca-unica.md`, seção 6.
 
 **Ensaio do executor.** Iniciado às 18:45 UTC num clone limpo do `main` (165 de 165 testes). Resultado linha a linha entra abaixo quando terminar. A tarefa agendada só é criada com o ensaio inteiro verde.
+
+### Ensaio do executor: resultado (10/11/2026, 18:45 a 22:00 UTC)
+
+Dois ensaios em produção, com pedido de teste e dados inventados, conferidos por qa e segurança em separado.
+
+| linha | o que prova | resultado |
+|---|---|---|
+| 1, 1b, 11c | abertura do ensaio, pedido pago de teste, trava sem `ensaio_ok` nega | verde |
+| 2 a 5 | pedido pago vira rascunho no ar, testado, com `noindex` | verde |
+| 6 | aprovação só com o link; o link antigo morre | verde (critério de console ajustado: ignora só os 3 avisos que a hospedagem injeta) |
+| 7 | site final no ar, sem faixa de rascunho, WhatsApp certo | verde |
+| 8 | desistência com remoção do site final | verde |
+| 9, 10, 11 | trava contra duas sessões, pausa geral, volta atrás | verde |
+| 11b | alerta de pagamento a conferir, uma vez só | verde |
+| 12 | limpeza: nada de ensaio no ar nem no app | verde |
+
+Produção ao fim: conferência no ar com 95 certas e 0 com defeito; as 3 demonstrações em 200.
+
+**Achados que entram antes do primeiro cliente real (decisões do coordenador):**
+- **Portão de conteúdo.** Hoje é lista de frases e deixou passar ordens em paráfrase num campo do pedido. Endurecer: verbos de comando dirigidos ao sistema e campos curtos só com texto de negócio. Na dúvida, o pedido vai para revisão humana.
+- **D4, remoção fora do teto.** A remoção por desistência esperou 55 minutos pelo teto de 3 publicações por hora. Decisão: a remoção não conta no teto nem espera por ele.
+- **Desistência e histórico do app.** O site sai do ar, mas o histórico e os pontos de volta do app guardam a cópia. A política de privacidade e o roteiro de desistência passam a dizer isso, com o prazo.
+- **Checkpoint depois de remoção.** O primeiro checkpoint pode sair com o commit antigo. O roteiro agora manda conferir antes de publicar.
+
+Não verificado: um usuário comum logado nas 4 entidades privadas (falta credencial de teste); os passos de dono na desistência real (estorno e aviso ao cliente).
