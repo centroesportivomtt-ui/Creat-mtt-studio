@@ -464,3 +464,14 @@ Fontes principais:
 ## Nota de operação (10/11/2026)
 
 Trocar a segmentação de um conjunto ativo pelo MCP da Meta deixou o conjunto de Feira pausado, sem aviso na resposta (`status_forced_to_paused: false`), e ele ficou cerca de 3 horas sem entregar. Depois de qualquer edição de conjunto, ler o `effective_status` do conjunto e dos anúncios e religar se preciso.
+
+## Leitura de público de 10/11/2026 e ajuste
+
+Primeiras horas (2.002 impressões, 67 cliques, 50 visitas à página, R$ 0,32 por visita; amostra pequena):
+
+- A entrega se espalhou quase por igual entre todas as faixas de 18 a 65+ e os dois gêneros. Com público amplo e otimização por visita à página, a Meta acha quem clica barato, não o dono do negócio.
+- 95% da entrega caiu em Reels do Instagram, com imagem parada.
+
+Ajuste feito nas duas praças, sem mudar verba: sinais de público "Business page admins" (6020530281783) e "Instagram Business Profile Admins" (6297846662583), com os identificadores lidos de um conjunto antigo da própria conta, e faixa de idade sugerida de 23 a 55. Com Advantage+ público ligado, são sugestões, não filtro; a idade mínima continua 18. Os dois conjuntos voltaram a ATIVO depois da edição.
+
+O que realmente filtra o dono vem em duas frentes já em produção: o criativo que escreve o tipo de negócio na primeira linha e dentro da peça, e a troca da otimização para "prévia gerada" (quem digita o nome de um negócio e vira a placa), assim que a medição estiver publicada e conferida.
