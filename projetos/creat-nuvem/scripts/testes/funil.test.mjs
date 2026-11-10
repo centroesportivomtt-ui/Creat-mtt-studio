@@ -417,7 +417,7 @@ test('navegador: /obrigado/ manda Purchase só com o servidor confirmando, event
     assert.equal((await compras(b.pg)).length, 0, 'payment_id já medido');
     assert.deepEqual(b.erros, []);
     await b.ctx.close();
-    // 3) pago fora do horário: o servidor só liga o relógio às 9h do próximo dia de atendimento
+    // 3) pago fora do horário: o servidor só liga o relógio às 11h do próximo dia de atendimento
     const longe = new Date(Date.now() + 90 * H).toISOString();
     const c = await paginaApi(nav, base, { pedido: PEDIDO_CHEIO(), api: {
       confirmarPagamento: { status: 200, json: { ok: true, status: 'pago' } },
@@ -425,7 +425,7 @@ test('navegador: /obrigado/ manda Purchase só com o servidor confirmando, event
     } });
     await c.pg.goto(base + '/obrigado/?collection_status=approved&payment_id=111222334&preference_id=' + PREF.feira);
     await c.pg.waitForFunction(() => document.querySelector('#obrigado-servidor').getAttribute('data-linha') === 'pago_depois');
-    assert.match(await c.pg.textContent('#obrigado-servidor'), /começa às 9h do próximo dia de atendimento/);
+    assert.match(await c.pg.textContent('#obrigado-servidor'), /começa às 11h do próximo dia de atendimento/);
     assert.doesNotMatch(await c.pg.textContent('#obrigado-servidor'), /começou/);
     await c.ctx.close();
     // 4) pendente e teste: nada; sem consentimento: nem o Pixel carrega

@@ -429,7 +429,7 @@ function conferirTexto(onde, texto, opcoes) {
   if (!existe(pj) || !existe(ph) || !existe(pv)) return;
   let sede; try { sede = JSON.parse(ler(pj)).sede; } catch (e) { return; }
   if (!sede) { aviso('conteudo/home.json', 'sem o bloco sede'); return; }
-  const norm = (t) => t.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
+  const norm = (t) => t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
   const html = norm(ler(ph)), js = ler(pv);
   const ps = path.join(RAIZ, '..', '..', 'sede', 'index.html'), sedeHtml = existe(ps) ? ler(ps) : '';
   const m = /var ESTEIRA_AGORA = (\[[\s\S]*?\]);/.exec(js);

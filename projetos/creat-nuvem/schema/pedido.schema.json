@@ -72,7 +72,7 @@
         "utm_source": {"$ref": "#/$defs/utmOpcional"},
         "utm_campaign": {"$ref": "#/$defs/utmOpcional"},
         "utm_content": {"$ref": "#/$defs/utmOpcional"},
-        "termos_versao": {"enum": ["termos-v1"]},
+        "termos_versao": {"enum": ["termos-v1", "termos-v2"]},
         "consentimento_dados": {"const": true},
         "hp": {"description": "Campo isca, escondido de pessoas. Preenchido: o servidor responde ok e não grava.", "type": "string", "maxLength": 0},
         "teste": {"type": "boolean"},

@@ -1537,7 +1537,7 @@
       id: null, segredo: null, plano: d.plano, nicho: d.nicho, negocio: d.negocio, cidade: d.cidade,
       responsavel: d.responsavel, whatsapp_negocio: d.whatsapp_negocio, endereco: d.endereco, horarios: d.horarios, email: d.email,
       origem: origemTexto(estadoBase.utm), previa: RAIZ + 'previa/#' + montarFragmento({ k: d.nicho, n: d.negocio, c: d.cidade, p: estadoBase.p || 1 }, false),
-      aceite_termos: isoComFuso(agora) + ' ' + ((CK && CK.termosVersao) || 'termos-v1'),
+      aceite_termos: isoComFuso(agora) + ' ' + ((CK && CK.termosVersao) || 'termos-v2'),
       produto: CATALOGO[compra.produto] ? compra.produto : null, valor: CATALOGO[compra.produto] ? CATALOGO[compra.produto] : null,
       praca: PRACAS.indexOf(compra.praca) !== -1 ? compra.praca : null,
       link: compra.link && CK && CK.linkValido(compra.link) ? compra.link : null,
@@ -1561,7 +1561,7 @@
       plano: PLANOS.indexOf(p.plano) !== -1 ? p.plano : null, nicho: p.nicho, negocio: p.negocio, cidade: p.cidade,
       whatsapp: p.whatsapp_negocio, email: p.email,
       utm_source: u.utm_source || null, utm_campaign: u.utm_campaign || null, utm_content: u.utm_content || null,
-      termos_versao: (CK && CK.termosVersao) || 'termos-v1', consentimento_dados: true, hp: typeof hp === 'string' ? hp : '', teste: false
+      termos_versao: (CK && CK.termosVersao) || 'termos-v2', consentimento_dados: true, hp: typeof hp === 'string' ? hp : '', teste: false
     };
     ['responsavel', 'endereco', 'horarios'].forEach(function (k) { if (p[k]) c[k] = p[k]; });
     return c;
@@ -1886,7 +1886,7 @@
     confirmando: 'Esta página confere sozinha com o Mercado Pago a cada poucos segundos.',
     registrado: 'Seu pedido está registrado. Quando o pagamento cair, esta página mostra a confirmação.',
     pago: 'O prazo de {prazo} h começou.',
-    pago_depois: 'O pagamento foi confirmado fora do horário de atendimento. O prazo de {prazo} h começa às 9h do próximo dia de atendimento.',
+    pago_depois: 'O pagamento foi confirmado fora do horário de atendimento. O prazo de {prazo} h começa às 11h do próximo dia de atendimento.',
     a_conferir: 'O nosso sistema recebeu o pagamento, e a equipe confere à mão.',
     depois_do_pagamento: 'Recebemos os dados do pedido. Como eles chegaram depois do pagamento, a equipe confere à mão.',
     ja_usado: 'Este pagamento já confirma outro pedido. Fale com o suporte.',
@@ -2175,7 +2175,7 @@
         clearTimeout(confirma.timer); confirma.feito = true;
         desenharRecibo();
         var entrega = j && dataBahia(j.entrega_prevista_em);
-        // o servidor só liga o relógio às 9h do próximo dia de atendimento (pedido-regras.mjs inicioDoRelogio)
+        // fora do horário o servidor liga o relógio às 11h do próximo dia de atendimento (pedido-regras.mjs inicioDoRelogio)
         var fimPrazo = j ? Date.parse(j.prazo_fim) : NaN, horasPrazo = precos && num(precos.prazoHoras) ? precos.prazoHoras : 72;
         var depois = !isNaN(fimPrazo) && fimPrazo - Date.now() > horasPrazo * 3600000 + 60000;
         medirConfirmada();

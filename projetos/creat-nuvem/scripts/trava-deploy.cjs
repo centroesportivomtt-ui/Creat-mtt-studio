@@ -19,11 +19,17 @@
  *                                o botão de parar nunca depende da ordem em que as linhas chegam.
  *   chave "deploys_ultima_hora"  valor = JSON com a lista dos horários ISO dos deploys dos últimos 60 min.
  *                                Teto: 3 deploys por hora, contando todos os donos.
- *   chave "deploys_remocao"      valor = JSON [{em, pedido?}] das remoções (desistência e pedido do titular), para
- *                                auditoria, por 400 dias. Decisão D4 (coordenador, 10/11/2026): --tipo remocao NÃO
- *                                conta contra o teto nem espera por ele (a remoção sai no mesmo despertar em que a
- *                                desistência é lida); continua exigindo a trava. --tipo rollback (P8 de EXECUTOR.md)
- *                                também não espera o teto, mas entra na conta da hora (os deploys seguintes esperam).
+ *   chave "deploy_fora:<tipo>:<pedido>:<ISO>"  uma linha por remoção ou rollback, valor = JSON {em, tipo, pedido, dono},
+ *                                expira_em = agora + 400 dias (auditoria). Uma linha por deploy, e não uma lista que gira:
+ *                                registro falso não apaga registro verdadeiro. Decisão D4 (coordenador, 10/11/2026):
+ *                                --tipo remocao NÃO conta contra o teto comum nem espera por ele; --tipo rollback (P8 de
+ *                                EXECUTOR.md) também não espera, mas entra na conta da hora (os deploys seguintes esperam).
+ *                                Fecho 2 do F2: os dois juntos têm teto próprio, 6 por hora (TETO_FORA_HORA), lido destas
+ *                                linhas (e da lista antiga "deploys_remocao", só lida), para um laço nunca ficar sem limite.
+ *   chave "remocao_pedido:<id>"  gravada por quem marca a desistência (suporte ou coordenador; nunca a sessão executora),
+ *                                valor = desistiu_em, expira_em obrigatório. Sem ela, --tipo remocao --pedido <id> é recusado.
+ *   chave "pausa_excecao"        gravada só pelo coordenador, valor = id do pedido, expira_em obrigatório. Sem ela (vigente,
+ *                                do mesmo --pedido), --apesar-da-pausa não vale e a pausa segura a remoção e o rollback também.
  *   chave "ensaio_ok"            data ISO gravada pelo coordenador quando o ENSAIO de docs/EXECUTOR.md
  *                                passou inteiro. Sem ela, NENHUM rascunho nem site final vai ao ar (padrão fechado).
  *   chave "ensaio_pedido"        id do pedido de teste do ensaio em curso (PA-...), com expira_em obrigatório,
@@ -36,13 +42,17 @@
  *   node scripts/trava-deploy.cjs confirmar    --dono <dono> --estado <estado relido depois de gravar>
  *   node scripts/trava-deploy.cjs pode-publicar --dono <dono> --estado <estado.json> --tipo rascunho|final|remocao|rollback|dados|vitrine
  *                                              [--portoes <portoes.json>] [--ensaio --pedido <PA-id>] [--apesar-da-pausa]
- *     remocao e rollback: sem teto e sem portão; com a pausa ligada, só com --apesar-da-pausa.
+ *     remocao: --pedido obrigatório, Operacao remocao_pedido:<id> vigente e o portão so_remocao (o diff desde o checkpoint
+ *       de antes só apaga arquivos em public/sites/<slug>... e porta-aberta/obras/<slug>--r-...). rollback: o portão
+ *       checkpoint_anterior (o checkpoint de volta é um que o app já publicou). Os dois: fora do teto comum, dentro do teto
+ *       próprio de 6 por hora; com a pausa ligada, só com --apesar-da-pausa E Operacao pausa_excecao do mesmo --pedido.
  *     Padrão FECHADO: rascunho e final exigem ensaio_ok. Só o ensaio (prompt "MODO: ensaio") passa --ensaio.
  *     --cliente-real é aceito e não muda nada (era o opt-in antigo; hoje todo site é tratado como de cliente real).
  *     --ensaio, --cliente-real, --apesar-da-pausa e --ajuda são chaves sem valor: "--ensaio sim" é recusado (código 1).
  *   node scripts/trava-deploy.cjs registrar-deploy --dono <dono> --estado <estado.json> [--tipo <tipo>] [--pedido <PA-id>]
- *     sem --tipo ou com qualquer tipo menos remocao: entra em deploys_ultima_hora (conta no teto).
- *     --tipo remocao: entra só em deploys_remocao (auditoria), com o --pedido quando houver.
+ *     sem --tipo ou com rascunho, final, dados ou vitrine: entra em deploys_ultima_hora (conta no teto).
+ *     --tipo remocao (--pedido obrigatório): grava só a linha deploy_fora:remocao:<pedido>:<ISO> (auditoria e teto próprio).
+ *     --tipo rollback: entra em deploys_ultima_hora (conta na hora) e grava deploy_fora:rollback:<pedido ou sem-pedido>:<ISO>.
  *   node scripts/trava-deploy.cjs soltar       --dono <dono> --estado <estado.json>
  *   Opções: --agora <ISO> (teste) · --ttl-min <1..20> (padrão 20) · --ajuda
  *
@@ -70,7 +80,11 @@ const TIPOS = ['rascunho', 'final', 'remocao', 'rollback', 'dados', 'vitrine'];
 // D4 (10/11/2026): estes tipos não esperam o teto por hora
 const FORA_DO_TETO = new Set(['remocao', 'rollback']);
 const AUDITORIA_DIAS = 400;
-const AUDITORIA_MAX = 200;
+const TETO_FORA_HORA = 6;             // remoção + rollback somados, por hora (fecho 2 do F2)
+const PREFIXO_FORA = 'deploy_fora:';
+// portões que só valem para os tipos fora do teto
+const PORTAO_REMOCAO = 'so_remocao';
+const PORTAO_ROLLBACK = 'checkpoint_anterior';
 const PAUSA_ATIVA = ['sim', 'true', '1', 'pausado'];
 const RE_PEDIDO = /^PA-[0-9A-Z]{10}$/;
 // chaves sem valor: nunca engolem o argumento seguinte
@@ -190,12 +204,59 @@ function ensaioValido(mapa, agora, pedido) {
   return { ok: true };
 }
 
+/* linha vigente, COM validade e sem repetição (as autorizações nunca valem sem prazo) */
+function autorizacao(mapa, agora, chave, valorEsperado) {
+  const l = mapa.get(chave);
+  if (!l || dataValida(l.expira_em) === null || !vigente(l, agora)) return { ok: false, motivo: 'ausente' };
+  if (l._repetida) return { ok: false, motivo: 'duplicada' };
+  if (valorEsperado !== undefined && String(l.valor == null ? '' : l.valor).trim() !== valorEsperado) return { ok: false, motivo: 'outro_pedido' };
+  return { ok: true };
+}
+
+/* remoção pedida: Operacao remocao_pedido:<id> gravada por quem marcou a desistência */
+function remocaoAutorizada(mapa, agora, pedido) {
+  if (typeof pedido !== 'string' || !RE_PEDIDO.test(pedido)) return { ok: false, motivo: 'pedido' };
+  const a = autorizacao(mapa, agora, `remocao_pedido:${pedido}`);
+  return a.ok ? a : { ok: false, motivo: 'remocao_pedido' };
+}
+
+/* --apesar-da-pausa: só com Operacao pausa_excecao do coordenador, vigente, com validade, do mesmo --pedido */
+function excecaoDaPausa(mapa, agora, pedido) {
+  if (typeof pedido !== 'string' || !RE_PEDIDO.test(pedido)) return { ok: false, motivo: 'pausa_excecao_sem_pedido' };
+  const a = autorizacao(mapa, agora, 'pausa_excecao', pedido);
+  return a.ok ? a : { ok: false, motivo: a.motivo === 'outro_pedido' ? 'pausa_excecao_outro_pedido' : 'pausa_excecao' };
+}
+
+/* horários dos deploys fora do teto comum (remoção e rollback) na última hora: as linhas deploy_fora:* e a lista antiga
+   deploys_remocao. Linha ilegível conta como recente (falha fechada: na dúvida, o teto próprio enche, não esvazia). */
+function deploysFora(mapa, agora) {
+  const out = [];
+  const todas = mapa.todas || new Map();
+  for (const [chave, linhas] of todas) {
+    if (!chave.startsWith(PREFIXO_FORA)) continue;
+    for (const l of linhas) {
+      let em = null;
+      try { em = dataValida((typeof l.valor === 'string' ? JSON.parse(l.valor) : l.valor).em); } catch (e) { em = null; }
+      if (em === null) em = dataValida(chave.split(':').slice(3).join(':'));
+      if (em === null) { out.push(agora); continue; }
+      if (em > agora - JANELA_MS && em <= agora + 60000) out.push(em);
+    }
+  }
+  for (const x of remocoesRegistradas(mapa, agora)) { const t = dataValida(x.em); if (t > agora - JANELA_MS && t <= agora + 60000) out.push(t); }
+  return out.sort((a, b) => a - b);
+}
+
 function podePublicar({ mapa, dono, agora, tipo, ensaio = false, pedido, portoes = {}, apesarDaPausa = false }) {
   if (!TIPOS.includes(tipo)) throw new ErroEntrada(`--tipo precisa ser ${TIPOS.join(', ')}`);
   const faltas = [];
   const p = pausado(mapa, agora);
   const excecaoPausa = FORA_DO_TETO.has(tipo);
   if (p && !(excecaoPausa && apesarDaPausa)) return { ok: false, acao: 'pode-publicar', motivo: 'pausado', detalhe: tipo === 'remocao' ? 'remoção durante a pausa só com --apesar-da-pausa (desistência: obrigação legal)' : tipo === 'rollback' ? 'rollback durante a pausa só com --apesar-da-pausa (decisão do coordenador)' : 'Operacao.pausado está ligado' };
+  if (p) {
+    // a chave da linha de comando não basta: o coordenador abre a exceção na entidade, para um pedido e com prazo
+    const ex = excecaoDaPausa(mapa, agora, pedido);
+    if (!ex.ok) return { ok: false, acao: 'pode-publicar', motivo: 'pausado', falta: ex.motivo, detalhe: '--apesar-da-pausa só vale com Operacao pausa_excecao vigente, com expira_em, gravada pelo coordenador com o mesmo id de --pedido' };
+  }
   const c = confirmar({ mapa, dono, agora });
   if (!c.ok) return Object.assign({}, c, { acao: 'pode-publicar' });
   if (c.resta_min < MARGEM_MIN) return { ok: false, acao: 'pode-publicar', motivo: 'trava_quase_vencida', resta_min: c.resta_min, detalhe: 'renove com "pegar" (mesmo dono) antes do deploy' };
@@ -203,6 +264,11 @@ function podePublicar({ mapa, dono, agora, tipo, ensaio = false, pedido, portoes
   if (recentes.length >= TETO_HORA && !FORA_DO_TETO.has(tipo)) {
     const libera = new Date(recentes[recentes.length - TETO_HORA] + JANELA_MS).toISOString();
     return { ok: false, acao: 'pode-publicar', motivo: 'teto_por_hora', deploys_na_hora: recentes.length, teto: TETO_HORA, libera_em: libera };
+  }
+  let fora = [];
+  if (FORA_DO_TETO.has(tipo)) {
+    fora = deploysFora(mapa, agora);
+    if (fora.length >= TETO_FORA_HORA) return { ok: false, acao: 'pode-publicar', motivo: 'teto_fora_por_hora', deploys_fora_na_hora: fora.length, teto_fora: TETO_FORA_HORA, libera_em: new Date(fora[fora.length - TETO_FORA_HORA] + JANELA_MS).toISOString(), detalhe: 'remoção e rollback somados têm teto próprio de 6 por hora: um laço de remoção nunca fica sem limite' };
   }
   if (tipo === 'rascunho' || tipo === 'final') {
     for (const k of PORTOES_SITE) if (portoes[k] !== true) faltas.push(k);
@@ -215,14 +281,22 @@ function podePublicar({ mapa, dono, agora, tipo, ensaio = false, pedido, portoes
       if (!(e && vigente(e, agora) && dataValida(e.valor) !== null)) faltas.push('ensaio_ok');
     }
   }
+  if (tipo === 'remocao') {
+    // o tipo é declarado por quem chama: a remoção só vale com o pedido de remoção gravado e com o diff que só apaga
+    const ra = remocaoAutorizada(mapa, agora, pedido);
+    if (!ra.ok) faltas.push(ra.motivo);
+    if (portoes[PORTAO_REMOCAO] !== true) faltas.push(PORTAO_REMOCAO);
+  }
+  if (tipo === 'rollback' && portoes[PORTAO_ROLLBACK] !== true) faltas.push(PORTAO_ROLLBACK);
   if (tipo === 'dados') for (const k of PORTOES_DADOS) if (portoes[k] !== true) faltas.push(k);
   if (tipo === 'vitrine') for (const k of PORTOES_VITRINE) if (portoes[k] !== true) faltas.push(k);
   if (faltas.length) return { ok: false, acao: 'pode-publicar', motivo: 'portao', faltam: faltas };
   return { ok: true, acao: 'pode-publicar', tipo, dono, ensaio: ensaio && (tipo === 'rascunho' || tipo === 'final') ? true : undefined, deploys_na_hora: recentes.length, teto: TETO_HORA, resta_min: c.resta_min,
-    fora_do_teto: FORA_DO_TETO.has(tipo) ? true : undefined, teto_ignorado: FORA_DO_TETO.has(tipo) && recentes.length >= TETO_HORA ? true : undefined, pausa_ignorada: p && excecaoPausa ? true : undefined };
+    fora_do_teto: FORA_DO_TETO.has(tipo) ? true : undefined, teto_ignorado: FORA_DO_TETO.has(tipo) && recentes.length >= TETO_HORA ? true : undefined, pausa_ignorada: p && excecaoPausa ? true : undefined,
+    deploys_fora_na_hora: FORA_DO_TETO.has(tipo) ? fora.length : undefined, teto_fora: FORA_DO_TETO.has(tipo) ? TETO_FORA_HORA : undefined, pedido: FORA_DO_TETO.has(tipo) && pedido ? pedido : undefined };
 }
 
-/* deploys_remocao: lista de auditoria [{em, pedido?}] dos últimos 400 dias (no máximo 200 itens) */
+/* deploys_remocao: a lista antiga [{em, pedido?}] (só lida, para o teto próprio e a auditoria; nada novo é gravado nela) */
 function remocoesRegistradas(mapa, agora) {
   const l = mapa.get('deploys_remocao');
   if (!l || l.valor == null || l.valor === '') return [];
@@ -233,19 +307,26 @@ function remocoesRegistradas(mapa, agora) {
   return v.filter((x) => x && dataValida(x.em) !== null && dataValida(x.em) > limite).map((x) => (x.pedido ? { em: x.em, pedido: x.pedido } : { em: x.em }));
 }
 
+function linhaFora(tipo, pedido, dono, agora) {
+  const em = new Date(agora).toISOString();
+  return { chave: `${PREFIXO_FORA}${tipo}:${pedido || 'sem-pedido'}:${em}`, valor: JSON.stringify(Object.assign({ em, tipo }, pedido ? { pedido } : {}, { dono })), expira_em: new Date(agora + AUDITORIA_DIAS * 24 * 60 * 60 * 1000).toISOString() };
+}
+
 function registrarDeploy({ mapa, dono, agora, tipo, pedido }) {
   const c = confirmar({ mapa, dono, agora });
   if (!c.ok) return Object.assign({}, c, { acao: 'registrar-deploy' });
   if (tipo !== undefined && !TIPOS.includes(tipo)) throw new ErroEntrada(`--tipo precisa ser ${TIPOS.join(', ')}`);
   if (tipo === 'remocao') {
-    // D4: a remoção não entra em deploys_ultima_hora; fica registrada à parte, para auditoria
-    const item = Object.assign({ em: new Date(agora).toISOString() }, pedido ? { pedido } : {});
-    const lista = remocoesRegistradas(mapa, agora).concat([item]).slice(-AUDITORIA_MAX);
-    return { ok: true, acao: 'registrar-deploy', tipo, fora_do_teto: true, deploys_na_hora: deploysRecentes(mapa, agora).length, remocoes_registradas: lista.length,
-      gravar: [{ chave: 'deploys_remocao', valor: JSON.stringify(lista), expira_em: new Date(agora + AUDITORIA_DIAS * 24 * 60 * 60 * 1000).toISOString() }] };
+    // D4: a remoção não entra em deploys_ultima_hora; fica numa linha própria, para auditoria e para o teto próprio
+    const ra = remocaoAutorizada(mapa, agora, pedido);
+    if (!ra.ok) return { ok: false, acao: 'registrar-deploy', motivo: ra.motivo, detalhe: ra.motivo === 'pedido' ? '--tipo remocao exige --pedido <PA-id>' : 'não há Operacao remocao_pedido:<id> vigente para este pedido' };
+    return { ok: true, acao: 'registrar-deploy', tipo, pedido, fora_do_teto: true, deploys_na_hora: deploysRecentes(mapa, agora).length, deploys_fora_na_hora: deploysFora(mapa, agora).length + 1,
+      gravar: [linhaFora('remocao', pedido, dono, agora)] };
   }
   const lista = deploysRecentes(mapa, agora).concat([agora]).sort((a, b) => a - b).map((t) => new Date(t).toISOString());
-  return { ok: true, acao: 'registrar-deploy', deploys_na_hora: lista.length, gravar: [{ chave: 'deploys_ultima_hora', valor: JSON.stringify(lista), expira_em: new Date(agora + JANELA_MS).toISOString() }] };
+  const gravar = [{ chave: 'deploys_ultima_hora', valor: JSON.stringify(lista), expira_em: new Date(agora + JANELA_MS).toISOString() }];
+  if (tipo === 'rollback') gravar.push(linhaFora('rollback', pedido, dono, agora));
+  return { ok: true, acao: 'registrar-deploy', tipo, deploys_na_hora: lista.length, deploys_fora_na_hora: tipo === 'rollback' ? deploysFora(mapa, agora).length + 1 : undefined, gravar };
 }
 
 function soltar({ mapa, dono, agora }) {
@@ -316,5 +397,5 @@ if (require.main === module) {
   }
 }
 
-module.exports = { pegar, confirmar, podePublicar, registrarDeploy, soltar, linhasDe, lerTrava, pausado, ensaioValido, deploysRecentes, remocoesRegistradas, executar, args, ErroEntrada,
-  TTL_PADRAO_MIN, TETO_HORA, MARGEM_MIN, PORTOES_SITE, PORTOES_DADOS, PORTOES_VITRINE, FORA_DO_TETO };
+module.exports = { pegar, confirmar, podePublicar, registrarDeploy, soltar, linhasDe, lerTrava, pausado, ensaioValido, deploysRecentes, remocoesRegistradas, deploysFora, remocaoAutorizada, excecaoDaPausa, executar, args, ErroEntrada,
+  TTL_PADRAO_MIN, TETO_HORA, TETO_FORA_HORA, MARGEM_MIN, PORTOES_SITE, PORTOES_DADOS, PORTOES_VITRINE, FORA_DO_TETO, PORTAO_REMOCAO, PORTAO_ROLLBACK, PREFIXO_FORA };

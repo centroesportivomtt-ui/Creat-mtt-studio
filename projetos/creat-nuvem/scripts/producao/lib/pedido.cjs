@@ -12,7 +12,8 @@
  * nesta ordem, cada uma opcional e com formato fechado, são aceitas e IGNORADAS: o pagamento vale pelo
  * servidor (webhook do Mercado Pago), nunca pelo que a mensagem diz. Fora do formato = pedido rejeitado.
  * validarPedido roda antes do schema o portão de instrução (lib/bloqueio.cjs, checarPedido) sobre o
- * endereço inteiro, o responsável e os horários, que o portão da entrada do produzir.mjs não recebe:
+ * endereço inteiro, o responsável, os horários e os canais laterais (e-mail, origem e o link da prévia, com
+ * n= igual ao negócio e c= igual à cidade; fecho 2 do F2), que o portão da entrada do produzir.mjs não recebe:
  * disparou, ErroCampo com "instrucao_no_campo" na mensagem (código 1 do produzir.mjs).
  */
 'use strict';
