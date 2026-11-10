@@ -4,7 +4,7 @@
 // Sem import, sem rede, sem banco e sem relógio próprio: a hora sempre entra por parâmetro (milissegundos UTC).
 // Contrato completo: docs/PEDIDO-API.md.
 
-export const VERSAO_REGRAS = 'pa-regras-1A-2026-11-10c';
+export const VERSAO_REGRAS = 'pa-regras-1A-2026-11-10e';
 
 /* ---------- Vocabulário fechado ---------- */
 
@@ -44,9 +44,12 @@ export const ANUNCIOS = Object.freeze([
   'W0-barbearia-v1', 'W0-salao-v1', 'W0-academia-v1', 'W1-barbearia-v1', 'W1-salao-v1', 'W1-academia-v1', 'W2-geral-v1'
 ]);
 
-// Versão dos termos aceita -> sha256 do conteudo/termos.md publicado com essa versão (commit 29bddd5).
+// Versão dos termos aceita -> sha256 do conteudo/termos.md publicado com essa versão.
+// termos-v1: commit 29bddd5. termos-v2: commit ab5a4b4 (cabeçalho "Versão 2 (termos-v2) · 10/11/2026").
+// As duas continuam aceitas: pedido antigo e página que ainda manda v1 são registrados com o hash da v1.
 export const TERMOS = Object.freeze({
-  'termos-v1': '44bbc0ef9c115fcadf11dc581238ddbf20d906ecd627c5ae8db1b63ae3ba8c17'
+  'termos-v1': '44bbc0ef9c115fcadf11dc581238ddbf20d906ecd627c5ae8db1b63ae3ba8c17',
+  'termos-v2': '7ae67e835b8d745b00eb49dc9167bf43f8b50688123393d217cdefc6eb3fb612'
 });
 
 export const LIMITES = Object.freeze({
@@ -550,9 +553,12 @@ export function decidirConfirmacao({ pg, regra1, regra2, agoraMs }) {
 }
 
 /* ---------- Prazo (72 h, horário de atendimento em America/Bahia, UTC-3 o ano todo) ---------- */
+// Regra dos termos v2, cláusula 5: o prazo conta da confirmação do pagamento; pagou fora do horário de atendimento,
+// a confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).
 
 const BAHIA_MS = -3 * 3600 * 1000;
 const HORA = 3600 * 1000;
+const HORA_CONFIRMACAO_FORA = 11;
 
 // Segunda a sábado, 9h às 19h (America/Bahia).
 export function emHorarioComercial(ms) {
@@ -562,14 +568,15 @@ export function emHorarioComercial(ms) {
 }
 
 // Quando o relógio de 72 h começa: na hora da confirmação, se ela cai no horário de atendimento;
-// fora dele, na próxima abertura às 9h (domingo pula para segunda).
+// fora dele, às 11h do próximo dia de atendimento (o instante que os termos fixam para a confirmação).
+// Madrugada de segunda a sábado: 11h do mesmo dia. Depois das 19h: 11h do dia seguinte. Domingo pula para segunda.
 export function inicioDoRelogio(ms) {
   if (emHorarioComercial(ms)) return ms;
   const d = new Date(ms + BAHIA_MS);
   let dia = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
   if (d.getUTCHours() >= 19 || d.getUTCDay() === 0) dia += 24 * HORA;
   if (new Date(dia).getUTCDay() === 0) dia += 24 * HORA;
-  return dia + 9 * HORA - BAHIA_MS;
+  return dia + HORA_CONFIRMACAO_FORA * HORA - BAHIA_MS;
 }
 
 export function prazoFim(confirmadoMs) { return inicioDoRelogio(confirmadoMs) + LIMITES.prazoHoras * HORA; }
@@ -593,9 +600,10 @@ export function dataBahia(ms) {
   return `${d.getUTCFullYear()}-${z(d.getUTCMonth() + 1)}-${z(d.getUTCDate())}`;
 }
 
-export const TEXTO_REGRA_PRAZO = 'O prazo é de 72 horas contadas da confirmação do pagamento. ' +
-  'Se a confirmação chega fora do horário de atendimento (segunda a sábado, das 9h às 19h, horário da Bahia), ' +
-  'as 72 horas começam às 9h do próximo dia de atendimento.';
+// Mesmo texto da cláusula 5 dos termos v2 e das páginas (home, FAQ, /abrir/, /obrigado/), com prazoHoras = 72.
+export const TEXTO_REGRA_PRAZO = 'O prazo de 72 h conta da confirmação do pagamento. ' +
+  'Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. ' +
+  'Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).';
 
 /* ---------- Contador ---------- */
 

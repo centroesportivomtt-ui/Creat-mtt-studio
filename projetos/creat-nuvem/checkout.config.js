@@ -85,12 +85,14 @@
      pagamento pa-teste nunca entra em produção: no app Porta Aberta (pacote 1A) ele só vira teste_ok se algum
      pedido pa-teste tiver o e-mail do pagador; sem isso fica em a_conferir com teste:true, sem aviso nem produção
      (docs/INTEGRACAO-PAGAMENTO.md, "Ponta a ponta").
-     valeAte = expiration_date_to lido na preferência em 10/11/2026. Depois disso o Mercado Pago recusa. */
+     valeAte = 16/11/2026 23:59 (Bahia), a validade que o coordenador aplicou em 10/11/2026
+     (docs/INTEGRACAO-PAGAMENTO.md, linhas 543 e 549). Instante conservador, um minuto antes do planejado
+     (23:59:59): NÃO VERIFICADO contra o GET da preferência no Mercado Pago. Depois disso o Mercado Pago recusa. */
   var TESTE = {
     produto: 'pa-teste',
     valor: 1,
     link: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-b1f51c8f-b3f3-4f5f-a9d8-12052accfebc',
-    valeAte: '2026-11-12T17:27:43Z'
+    valeAte: '2026-11-16T23:59:00-03:00'
   };
 
   // Valor que cada link cobra no Mercado Pago (o Purchase do Pixel usa este valor; scripts/checar.cjs confere com dados/precos.json).
@@ -151,7 +153,7 @@
     contadoresAoVivo: false,
     // Reserva quando dados/precos.json não parseia. scripts/checar.cjs confere que bate com o JSON.
     precosPadrao: { prazoHoras: 72, abertura: 497, planos: { aberto: 147, vitrine: 297 }, anualMesesPagos: 10, bastidores: 67 },
-    termosVersao: 'termos-v1',
+    termosVersao: 'termos-v2',
     linkValido: linkValido,
     whatsappValido: whatsappValido,
     escolherAbertura: escolherAbertura,

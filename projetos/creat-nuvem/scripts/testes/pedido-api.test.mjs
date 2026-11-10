@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import * as R from '../../schema/pedido-regras.mjs';
 
@@ -65,8 +66,41 @@ test('valor fora do catálogo, produto desconhecido, isca, consentimento e campo
   assert.equal(R.validarRegistro({ ...VALIDO, whatsapp: '5500999990000' }).campo, 'whatsapp');
   assert.equal(R.validarRegistro({ ...VALIDO, whatsapp: '557512345678' }).campo, 'whatsapp', 'fixo começando com 1 não existe');
   assert.equal(R.validarRegistro({ ...VALIDO, termos_versao: 'termos-v9' }).campo, 'termos_versao');
+  assert.equal(R.validarRegistro({ ...VALIDO, termos_versao: 'termos-v3' }).campo, 'termos_versao', 'versão que ainda não existe');
+  assert.equal(R.validarRegistro({ ...VALIDO, termos_versao: 'TERMOS-V2' }).campo, 'termos_versao');
+  assert.equal(R.validarRegistro({ ...VALIDO, termos_versao: 'toString' }).campo, 'termos_versao', 'propriedade herdada não vale');
+  assert.equal(R.validarRegistro({ ...VALIDO, termos_versao: ['termos-v2'] }).campo, 'termos_versao');
   assert.equal(R.validarRegistro({ ...VALIDO, hp: 'x' }).isca, true);
   assert.equal(R.validarRegistro({ ...VALIDO, negocio: '<script>' }).campo, 'negocio');
+});
+
+test('termos v1 e v2 passam, cada um com o seu hash; v2 é o sha256 do conteudo/termos.md atual', () => {
+  assert.deepEqual(Object.keys(R.TERMOS), ['termos-v1', 'termos-v2']);
+  const v1 = R.validarRegistro({ ...VALIDO, termos_versao: 'termos-v1' });
+  assert.equal(v1.ok, true);
+  assert.equal(v1.pedido.termos_versao, 'termos-v1');
+  assert.equal(v1.pedido.termos_hash, '44bbc0ef9c115fcadf11dc581238ddbf20d906ecd627c5ae8db1b63ae3ba8c17');
+  const v2 = R.validarRegistro({ ...VALIDO, termos_versao: 'termos-v2' });
+  assert.equal(v2.ok, true);
+  assert.equal(v2.pedido.termos_versao, 'termos-v2');
+  assert.equal(v2.pedido.termos_hash, R.TERMOS['termos-v2']);
+  const bruto = fs.readFileSync(path.join(RAIZ, 'conteudo', 'termos.md'));
+  assert.equal(createHash('sha256').update(bruto).digest('hex'), R.TERMOS['termos-v2'], 'termos.md mudou: suba para termos-v3 com o hash novo');
+  assert.match(bruto.toString('utf8'), /^Versão 2 \(termos-v2\)/m);
+  // A página manda a versão que checkout.config.js diz; o servidor tem de conhecer essa versão.
+  const ck = fs.readFileSync(path.join(RAIZ, 'checkout.config.js'), 'utf8');
+  const versaoPagina = (ck.match(/termosVersao:\s*'([^']+)'/) || [])[1];
+  assert.equal(versaoPagina, 'termos-v2');
+  assert.ok(Object.prototype.hasOwnProperty.call(R.TERMOS, versaoPagina));
+});
+
+test('versão das regras do fecho da onda 2', () => {
+  assert.equal(R.VERSAO_REGRAS, 'pa-regras-1A-2026-11-10e');
+});
+
+test('versão desconhecida dos termos é campo inválido (a rota responde 422 campo termos_versao)', () => {
+  for (const v of ['termos-v0', 'termos-v3', 'termos-v99', '', null, undefined, 2])
+    assert.deepEqual(R.validarRegistro({ ...VALIDO, termos_versao: v }), { ok: false, campo: 'termos_versao' }, String(v));
 });
 
 test('o schema e as regras concordam em todos os exemplos de registro v1', () => {
@@ -165,24 +199,57 @@ test('dentro do horário (terça 10h na Bahia) o relógio começa na hora', () =
   assert.equal(R.dataHoraBahia(R.prazoFim(TER_10H_BAHIA)), '13/11/2026 às 10:00');
 });
 
-test('fora do horário: noite começa às 9h do dia seguinte; madrugada às 9h do mesmo dia', () => {
+// Termos v2, cláusula 5: pagou fora do horário, a confirmação sai até as 11h do próximo dia de atendimento.
+test('fora do horário: noite começa às 11h do dia seguinte; madrugada às 11h do mesmo dia', () => {
   const ter20h = Date.UTC(2026, 10, 10, 23, 0);   // terça 20h Bahia
-  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(ter20h)), '11/11/2026 às 09:00');
+  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(ter20h)), '11/11/2026 às 11:00');
+  assert.equal(R.dataHoraBahia(R.prazoFim(ter20h)), '14/11/2026 às 11:00');
   const qua7h = Date.UTC(2026, 10, 11, 10, 0);    // quarta 7h Bahia
-  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(qua7h)), '11/11/2026 às 09:00');
+  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(qua7h)), '11/11/2026 às 11:00');
+  const qua859 = Date.UTC(2026, 10, 11, 11, 59);  // quarta 8h59 Bahia: ainda fechado
+  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(qua859)), '11/11/2026 às 11:00');
   const ter19h = Date.UTC(2026, 10, 10, 22, 0);   // terça 19h em ponto: já fechado
-  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(ter19h)), '11/11/2026 às 09:00');
+  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(ter19h)), '11/11/2026 às 11:00');
 });
 
-test('sábado à noite e domingo começam segunda às 9h', () => {
+test('nas bordas do horário de atendimento o relógio começa na hora da confirmação', () => {
+  const qua9h = Date.UTC(2026, 10, 11, 12, 0);    // quarta 9h em ponto: aberto
+  assert.equal(R.inicioDoRelogio(qua9h), qua9h);
+  const ter1859 = Date.UTC(2026, 10, 10, 21, 59); // terça 18h59: aberto
+  assert.equal(R.inicioDoRelogio(ter1859), ter1859);
+  assert.equal(R.dataHoraBahia(R.prazoFim(ter1859)), '13/11/2026 às 18:59');
+  const sab10h = Date.UTC(2026, 10, 14, 13, 0);   // sábado 10h: aberto
+  assert.equal(R.inicioDoRelogio(sab10h), sab10h);
+});
+
+test('sábado à noite e domingo começam segunda às 11h', () => {
   const sab20h = Date.UTC(2026, 10, 14, 23, 0);   // sábado 14/11 20h Bahia
-  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(sab20h)), '16/11/2026 às 09:00');
+  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(sab20h)), '16/11/2026 às 11:00');
   const dom15h = Date.UTC(2026, 10, 15, 18, 0);   // domingo 15/11 15h Bahia
   assert.equal(R.emHorarioComercial(dom15h), false);
-  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(dom15h)), '16/11/2026 às 09:00');
-  assert.equal(R.dataHoraBahia(R.prazoFim(dom15h)), '19/11/2026 às 09:00');
+  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(dom15h)), '16/11/2026 às 11:00');
+  assert.equal(R.dataHoraBahia(R.prazoFim(dom15h)), '19/11/2026 às 11:00');
   const dom1h = Date.UTC(2026, 10, 15, 4, 0);     // domingo 15/11 01h Bahia
-  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(dom1h)), '16/11/2026 às 09:00');
+  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(dom1h)), '16/11/2026 às 11:00');
+  const sab3h = Date.UTC(2026, 10, 14, 6, 0);     // sábado 14/11 03h Bahia: 11h do mesmo sábado
+  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(sab3h)), '14/11/2026 às 11:00');
+});
+
+test('TEXTO_REGRA_PRAZO é a cláusula 5 dos termos v2 e a frase das páginas, palavra por palavra', () => {
+  const C = path.join(RAIZ, 'conteudo');
+  const termos = fs.readFileSync(path.join(C, 'termos.md'), 'utf8');
+  const linha = termos.split('\n').find(l => l.startsWith('- O prazo de {{precos.prazoHoras}} h conta da confirmação'));
+  assert.ok(linha, 'cláusula do prazo não encontrada em conteudo/termos.md');
+  const comPrazo = t => t.split('{{precos.prazoHoras}}').join(String(R.LIMITES.prazoHoras));
+  assert.equal(R.TEXTO_REGRA_PRAZO, comPrazo(linha.slice(2)));
+  assert.doesNotMatch(R.TEXTO_REGRA_PRAZO, /começam às 9h/);
+  const j = n => JSON.parse(fs.readFileSync(path.join(C, n), 'utf8'));
+  for (const [nome, t] of [
+    ['home.json', JSON.stringify(j('home.json'))],
+    ['faq.json', JSON.stringify(j('faq.json'))],
+    ['abrir.json', j('abrir.json').garantia.regra],
+    ['obrigado.json', JSON.stringify(j('obrigado.json'))]
+  ]) assert.ok(comPrazo(t).includes(R.TEXTO_REGRA_PRAZO), nome);
 });
 
 test('entrega prevista respeita capacidade_dia; alerta 12 h antes do prazo', () => {
@@ -229,7 +296,7 @@ test('comparação em tempo constante e sha256', async () => {
 
 test('recibo traz produto, valor, meio, número do pagamento, prazo, regra do prazo e termos; sem dado digitado no assunto', () => {
   const m = R.modeloEmailCliente('recibo', { id: 'base44-interno', pedido_id: 'PA-AAAAAAAAAA', produto: 'pa-abertura-inauguracao-2026-11', valor: 297, meio: 'Pix', payment_id: '123456789', prazo_fim: new Date(R.prazoFim(TER_10H_BAHIA)).toISOString(), negocio: 'Barbearia X' });
-  for (const t of ['PA-AAAAAAAAAA', 'R$ 297', 'Pix', '123456789', '13/11/2026 às 10:00', '72 horas', '/termos/']) assert.ok(m.corpo.includes(t), t);
+  for (const t of ['PA-AAAAAAAAAA', 'R$ 297', 'Pix', '123456789', '13/11/2026 às 10:00', R.TEXTO_REGRA_PRAZO, 'até as 11h do próximo dia de atendimento', '/termos/']) assert.ok(m.corpo.includes(t), t);
   assert.equal(m.corpo.includes('base44-interno'), false, 'o id interno do Base44 não aparece');
   assert.equal(m.assunto.includes('Barbearia'), false);
   assert.equal(R.modeloEmailCliente('outro', {}), null);

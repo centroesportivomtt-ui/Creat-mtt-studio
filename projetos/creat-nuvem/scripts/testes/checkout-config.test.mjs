@@ -73,6 +73,21 @@ test('campo teste: pa-teste de R$ 1, link válido do Checkout Pro, com validade 
     assert.notEqual(C.escolherAbertura(o).link, t.link);
 });
 
+test('teste.valeAte: 16/11/2026 23:59 na Bahia, nunca depois da validade aplicada na preferência (23:59:59)', () => {
+  const t = Date.parse(C.teste.valeAte);
+  assert.equal(C.teste.valeAte, '2026-11-16T23:59:00-03:00');
+  assert.equal(new Date(t).toISOString(), '2026-11-17T02:59:00.000Z');
+  assert.ok(t <= Date.parse('2026-11-16T23:59:59.000-03:00'), 'valeAte não pode passar do expiration_date_to aplicado');
+  assert.ok(t > Date.parse('2026-11-12T17:27:43Z'), 'valeAte antigo (12/11) não vale mais');
+});
+
+test('termosVersao é termos-v2 e o servidor conhece essa versão (TERMOS de schema/pedido-regras.mjs)', async () => {
+  assert.equal(C.termosVersao, 'termos-v2');
+  const R = await import(path.join(RAIZ, 'schema', 'pedido-regras.mjs'));
+  assert.ok(Object.prototype.hasOwnProperty.call(R.TERMOS, C.termosVersao));
+  assert.ok(Object.prototype.hasOwnProperty.call(R.TERMOS, 'termos-v1'), 'v1 continua aceita para a página antiga');
+});
+
 test('checar-placeholders passa com links do Mercado Pago e do Stripe no lugar dos marcadores', () => {
   const tmp = fs.mkdtempSync(path.join(process.env.CREAT_TESTE_TMP || os.tmpdir(), 'creat-ck-'));
   try {

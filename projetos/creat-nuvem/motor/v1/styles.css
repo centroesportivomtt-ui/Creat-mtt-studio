@@ -314,6 +314,8 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
 }
 @media (max-width: 379px) {
   .topo .letreiro-texto { font-size: 0.75rem; letter-spacing: -0.01em; }
+  /* a 360 px o selo inteiro cabe em duas linhas, nunca em três */
+  .faixa-demo .selo-demo { padding-inline: 4px; letter-spacing: 0; }
 }
 /* selo "exemplo" no letreiro e no título do horário da demonstração */
 .letreiro .selo { flex: 0 0 auto; font-size: var(--t-micro); line-height: 1.3; }
