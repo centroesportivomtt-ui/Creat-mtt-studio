@@ -1,0 +1,20 @@
+{
+  "id": "PA-7K3QX2MD4R",
+  "segredo": "q1Zr8Xn4Lw0bT6yHc9VfEA",
+  "produto": "pa-teste",
+  "valor": 1,
+  "praca": null,
+  "plano": "vitrine",
+  "nicho": "barbearia",
+  "negocio": "Barbearia Exemplo",
+  "cidade": "Feira de Santana",
+  "whatsapp": "5575999990000",
+  "email": "contato@exemplo.com.br",
+  "utm_source": null,
+  "utm_campaign": null,
+  "utm_content": null,
+  "termos_versao": "termos-v1",
+  "consentimento_dados": true,
+  "hp": "",
+  "teste": true
+}

@@ -84,7 +84,7 @@ CREAT_TESTE_TMP=/tmp npm test
 
 `[LINK_CAKTO_BASTIDORES]` continua travando o deploy da Cloudflare. Para destravar, crie um terceiro Link de pagamento no Mercado Pago, `Bastidores` a **R$ 67**, e cole em `bastidores`. Também serve um Payment Link do Stripe (`buy.stripe.com`). No Base44, a vitrine já funciona com os dois links da Abertura, mesmo com o marcador do bastidores aberto.
 
-Teto de 20 Aberturas de inauguração: o limite de "quantidade máxima" do Mercado Pago é **por link**, e há 7 links de R$ 297 (o padrão de inauguração e os 6 de `linksPorPraca`). A soma das quantidades máximas dos 7 links tem de ser no máximo 20 (`vagasTotal` de `dados/precos.json`). Se não der para dividir assim, o corte é manual e vale para os 7 ao mesmo tempo (ADR-005).
+Teto de 20 Aberturas de inauguração (corrigido em 10/11/2026): os 7 links de R$ 297 são **preferências do Checkout Pro** (`pref_id`), não "Link de pagamento" do painel. Preferência do Checkout Pro **não tem quantidade máxima**; esse campo só existe no Link de pagamento. Portanto não existe "soma dos tetos". A trava real é o vencimento da preferência (`expires` e `expiration_date_to`), aplicado de uma vez nas 7 pela função `portaAbertaFecharPrefs` quando a tarefa executora conta 19 Aberturas pagas (seção "Funções portaAberta* no AutoCreatFlux", abaixo).
 
 Quando a inauguração acabar (20 vagas):
 1. Rode `node scripts/atualizar-vagas.cjs --inauguracao off` (ou ele desliga sozinho na 20ª `--vendeu`). Ele imprime a lista de **todos** os links de preço de inauguração a desativar: `aberturaInauguracao`, os 6 de `linksPorPraca` e os 2 combos do anual da seção abaixo.
@@ -280,7 +280,7 @@ Idempotência:
 
 O Mercado Pago espera 22 s pela resposta e repete a notificação a cada 15 min (documentação de webhooks, lida em 09/11/2026). Por isso a função responde `RECEIVED` rápido, e uma falha no e-mail não vira 503.
 
-O webhook atual é o configurado em "Suas integrações" do Mercado Pago, então o pedido do Porta Aberta chega a ele sem `notification_url` próprio. Antes de abrir as vendas, confira no painel (Suas integrações > Webhooks) que o tópico **Pagamentos** está ligado e aponta para `.../functions/mercadoPagoWebhook`.
+(Plano A antigo; ver a seção "Funções portaAberta* no AutoCreatFlux": quando a preferência traz `notification_url`, o Mercado Pago usa essa URL **no lugar** da configurada no painel, documentação lida em 10/11/2026.) O webhook atual é o configurado em "Suas integrações" do Mercado Pago, então o pedido do Porta Aberta chega a ele sem `notification_url` próprio. Antes de abrir as vendas, confira no painel (Suas integrações > Webhooks) que o tópico **Pagamentos** está ligado e aponta para `.../functions/mercadoPagoWebhook`.
 
 Modelos de e-mail: crie no painel do Base44, onde já estão `BoasVindasCompra` e `Entrega47`.
 - **`PortaAbertaVendaSuporte`**. Assunto: `Venda Porta Aberta: {{produto}} R$ {{valor}}`. Corpo: pedido, nicho, plano, meio, id do pagamento, nome e e-mail do cliente, e a frase "Aguarde o PEDIDO v1 no WhatsApp; se não chegar em 2 h, chame o cliente pelo e-mail".
@@ -466,7 +466,7 @@ export const PA_SUB_TERMS = "termos-v1";
 
 ## Links criados em 09/11/2026 (função isolada `portaAbertaLinks`, executada pela automação do Base44 e apagada em seguida)
 
-Conta Mercado Pago (collector 2189692475, MLB, Pix ativo). Preferências permanentes do Checkout Pro (Pix e cartão até 2x; boleto e caixa eletrônico excluídos; retorno a `/obrigado/?pago=mp&produto=<id>`):
+Conta Mercado Pago (collector 2189692475, MLB, Pix ativo). Preferências do Checkout Pro sem vencimento quando criadas (Pix e cartão até 2x; boleto e caixa eletrônico excluídos; retorno a `/obrigado/?pago=mp&produto=<id>`). O estado lido em 10/11/2026 está na seção "Preferências lidas em 10/11/2026":
 
 | item | valor | link |
 |---|---|---|
@@ -490,7 +490,7 @@ Pendências que continuam: o webhook do AutoCreatFlux ignora estes pagamentos (s
 
 ## Links do plano anual criados em 09/11/2026 (Mercado Pago, Pix ou cartão em até 12x)
 
-Criados por uma função isolada de uso único (`portaAbertaAnual`) no AutoCreatFlux, executada uma vez e apagada, junto com a automação que a chamou. Conta recebedora 2189692475. Links permanentes.
+Criados por uma função isolada de uso único (`portaAbertaAnual`) no AutoCreatFlux, executada uma vez e apagada, junto com a automação que a chamou. Conta recebedora 2189692475. Sem vencimento quando criados (estado em 10/11/2026 na seção seguinte).
 
 | produto | valor | link |
 |---|---|---|
@@ -502,3 +502,97 @@ Criados por uma função isolada de uso único (`portaAbertaAnual`) no AutoCreat
 Regras (decisão D3 do diretor, 10/11/2026): **a página não cobra o anual antes de o site existir.** Em `/abrir/`, quem escolhe o anual paga hoje só a Abertura (link da praça ou padrão) e lê que o plano anual é cobrado no dia em que o site entra no ar, pelo valor mostrado. Nesse dia, a equipe manda o link do anual sozinho (R$ 1.470 ou R$ 2.970, as duas primeiras linhas). O anual segue os termos (cláusula 4 e cláusula 7: devolução proporcional aos meses inteiros não usados).
 
 Os dois combos (Abertura + anual num Pix só) **saíram** do `checkout.config.js` e não devem ser enviados a cliente: cobram o anual antes de o site existir. Ficam listados aqui só para o fim da inauguração: eles usam o preço de inauguração e continuam ativos no Mercado Pago até alguém desativar. `scripts/atualizar-vagas.cjs` os inclui na lista de links a desativar.
+
+## Preferências lidas em 10/11/2026 (pacote 1B, PG-09 e PV-07)
+
+Forja, 10/11/2026. Leitura por GET `https://api.mercadopago.com/checkout/preferences/<id>` feita por uma função isolada e temporária do AutoCreatFlux (`portaAbertaPrefs`), protegida por código de uso único e prazo, que usou o token no lugar e devolveu só campos de configuração (nenhum token, nenhum dado de pagador). A função foi apagada em seguida e hoje responde `404 Backend function 'portaAbertaPrefs' not found or not deployed` nos dois domínios. Foram lidas as 14 preferências do Porta Aberta: as 7 de R$ 297, a de R$ 497, a de Bastidores, as 2 anuais, os 2 combos (Abertura + anual) e a de teste.
+
+| preferência | external_reference | valor | back_urls.success | pending e failure | auto_return | expires | expiration_date_to | notification_url | parcelas |
+|---|---|---|---|---|---|---|---|---|---|
+| `388377b3` Abertura inauguração (padrão) | `pa-abertura-inauguracao-2026-11` | R$ 297 | `/obrigado/?pago=mp&produto=pa-abertura-inauguracao` | iguais à success | `approved` | false | nenhum | nenhuma | 2 |
+| `c33953d5` Abertura inauguração · feira | `pa-abertura-inauguracao-feira-2026-11` | R$ 297 | `/obrigado/?pago=mp&produto=pa-abertura-inauguracao&praca=feira` | iguais à success | `approved` | false | nenhum | nenhuma | 2 |
+| `621eec2b` Abertura inauguração · salvador-rms | `pa-abertura-inauguracao-salvador-rms-2026-11` | R$ 297 | `/obrigado/?pago=mp&produto=pa-abertura-inauguracao&praca=salvador-rms` | iguais à success | `approved` | false | nenhum | nenhuma | 2 |
+| `b41d58df` Abertura inauguração · fortaleza | `pa-abertura-inauguracao-fortaleza-2026-11` | R$ 297 | `/obrigado/?pago=mp&produto=pa-abertura-inauguracao&praca=fortaleza` | iguais à success | `approved` | false | nenhum | nenhuma | 2 |
+| `27ab4073` Abertura inauguração · recife | `pa-abertura-inauguracao-recife-2026-11` | R$ 297 | `/obrigado/?pago=mp&produto=pa-abertura-inauguracao&praca=recife` | iguais à success | `approved` | false | nenhum | nenhuma | 2 |
+| `1b66d83c` Abertura inauguração · petrolina-juazeiro | `pa-abertura-inauguracao-petrolina-juazeiro-2026-11` | R$ 297 | `/obrigado/?pago=mp&produto=pa-abertura-inauguracao&praca=petrolina-juazeiro` | iguais à success | `approved` | false | nenhum | nenhuma | 2 |
+| `88c3e2e4` Abertura inauguração · aracaju | `pa-abertura-inauguracao-aracaju-2026-11` | R$ 297 | `/obrigado/?pago=mp&produto=pa-abertura-inauguracao&praca=aracaju` | iguais à success | `approved` | false | nenhum | nenhuma | 2 |
+| `fc609d62` Abertura (padrão) | `pa-abertura-2026-11` | R$ 497 | `/obrigado/?pago=mp&produto=pa-abertura` | iguais à success | `approved` | false | nenhum | nenhuma | 2 |
+| `ff658538` Bastidores | `pa-bastidores-2026-11` | R$ 67 | `/obrigado/?pago=mp&produto=pa-bastidores` | iguais à success | `approved` | false | nenhum | nenhuma | 2 |
+| `b59a2303` Plano Aberto anual | `pa-anual-aberto-2026-11` | R$ 1.470 | `/obrigado/?pago=mp&produto=pa-anual-aberto` | iguais à success | `approved` | false | nenhum | nenhuma | 12 |
+| `65fb5ba7` Plano Vitrine anual | `pa-anual-vitrine-2026-11` | R$ 2.970 | `/obrigado/?pago=mp&produto=pa-anual-vitrine` | iguais à success | `approved` | false | nenhum | nenhuma | 12 |
+| `78effa57` Combo Abertura + Aberto anual | `pa-combo-aberto-anual-2026-11` | R$ 1.767 | `/obrigado/?pago=mp&produto=pa-combo-aberto-anual` | iguais à success | `approved` | false | nenhum | nenhuma | 12 |
+| `9914ecb8` Combo Abertura + Vitrine anual | `pa-combo-vitrine-anual-2026-11` | R$ 3.267 | `/obrigado/?pago=mp&produto=pa-combo-vitrine-anual` | iguais à success | `approved` | false | nenhum | nenhuma | 12 |
+| `b1f51c8f` Teste (pa-teste) | `pa-teste-2026-11` | R$ 1 | `/obrigado/?pago=mp&produto=pa-teste` | iguais à success | `approved` | true | 2026-11-12T17:27:43.316+00:00 | nenhuma | 2 |
+
+O que a leitura prova:
+- `auto_return` já é `approved` nas 14. O receio do PG-09 (quem paga com cartão fica parado na tela do Mercado Pago) não procede.
+- `back_urls`: success, pending e failure são a **mesma URL** nas 14. A página `/obrigado/` só distingue o resultado pelo `collection_status` que o Mercado Pago acrescenta. Procede.
+- Nenhuma preferência tem `notification_url`. Os pagamentos caem no webhook do painel (`mercadoPagoWebhook`), que os ignora porque o `external_reference` não é um `Order` (conferido no código: `Order.filter({id: external_reference})` devolve 0 linhas e a resposta é `IGNORED`).
+- Vencimento: só a de teste vence (12/11/2026 17:27:43 UTC). **As 7 de R$ 297 não vencem**, e os combos também não. Procede o PV-07.
+- Parcelas: até 2x nas de Abertura, Bastidores e Teste; até 12x nas anuais e nos combos. Não há contradição entre as linhas 469 e 491: são produtos diferentes (confirma o "motivo" do PG-09).
+- Todas têm `metadata.origem = "porta-aberta"` e `metadata.produto`; nenhuma tem `payer`.
+
+### PUT planejado e NÃO aplicado (bloqueado em 10/11/2026)
+
+A alteração foi recusada pelo sistema de permissões da sessão no momento do primeiro PUT (na preferência de teste). Nada foi alterado no Mercado Pago. Nada foi contornado. O que falta, por grupo:
+
+| grupo | preferências | back_urls | auto_return | notification_url | vencimento |
+|---|---|---|---|---|---|
+| inauguração | as 7 de R$ 297 e os 2 combos | a URL atual com `&resultado=aprovado`, `&resultado=recusado` e `&resultado=pendente` (mantém `pago`, `produto` e `praca`) | `approved` | `https://creatmtt.com.br/functions/portaAbertaNotificacao` | `expires=true`, `expiration_date_to=2026-12-10T23:59:59.000-03:00` |
+| permanente | R$ 497, Bastidores, as 2 anuais | idem | `approved` | idem | sem vencimento |
+| teste | `pa-teste` (R$ 1) | idem | `approved` | idem | `expires=true`, `expiration_date_to=2026-11-16T23:59:59.000-03:00` |
+
+Fim da inauguração: `dados/vagas.json` não tem campo de fim. Pela regra do pacote, o vencimento usado é 30 dias à frente (10/12/2026 23:59 de Brasília). A trava das 20 vagas não depende dessa data: ela vem de `portaAbertaFecharPrefs`.
+
+Como aplicar quando houver autorização: o código da função temporária e o código de uso único estão no scratchpad do pacote 1B (fora do repositório). O roteiro é recriar `portaAbertaPrefs`, chamar `modo:"aplicar"` só com a de teste, conferir o GET devolvido, chamar para as outras 13, apagar a função e provar o 404 com `curl`. A função confere que os itens (valor e id) ficaram iguais depois do PUT. Se o Mercado Pago recusar PUT em alguma preferência, ela registra o erro e não recria nada (recriar é da onda 6).
+
+Consequência enquanto o PUT não sai: a `pa-teste` vence em **12/11/2026 17:27 UTC**; as 7 de R$ 297 continuam sem vencimento (a trava das 20 vagas segue funcionando por `portaAbertaFecharPrefs`, que só mexe no vencimento); e os pagamentos continuam sem aviso ao servidor (só `/obrigado/` chama a confirmação).
+
+## Funções portaAberta* no AutoCreatFlux (pacote 1B)
+
+Exceção à regra 11 registrada em `docs/ADR-007-funcoes-portaaberta-no-autocreatflux.md`. Nenhuma função existente foi alterada: o diff contra o checkpoint `6af32505611af499513bdbdc` só tem acréscimos (`PortaAbertaLimite.jsonc` e as 3 funções abaixo). Nenhuma importa módulo do AutoCreatFlux nem toca em `Order`.
+
+| função | tipo | contrato | proteção |
+|---|---|---|---|
+| `portaAbertaVerificar` | pública, `POST` | `{payment_id: "^\d{6,14}$", email_candidato?}` devolve `{aprovado:false}` para pagamento inexistente **ou** que não é do Porta Aberta (mesmo corpo de 18 bytes e tempo mínimo de 1,2 s); para pagamento do Porta Aberta devolve `{aprovado, valor, external_reference, email_confere}`. `aprovado` exige `status=approved`, `BRL`, `live_mode` e o recebedor 2189692475. Nunca devolve e-mail, hash, nome, CPF, meio nem hora | limite gravado em `PortaAbertaLimite`: 60 por hora por origem (chave HMAC com a hora) e 10 por hora por pagamento (trava o teste de vários e-mails contra o mesmo pagamento); passou, `429 {code:"TOO_MANY_ATTEMPTS"}`. Corpo maior que 1 KB: 413; `payment_id` fora do formato ou objeto: 400; método diferente de POST: 405 |
+| `portaAbertaNotificacao` | webhook, `POST` | `?data.id=<id>&type=payment` com `x-signature` e `x-request-id`. Responde `200 {code:"RECEIVED"}` na hora e segue em segundo plano: reconsulta o pagamento por GET, ignora o que não é do Porta Aberta e, se aprovado, chama `POST https://creat-nuvem-404b1994.base44.app/functions/confirmarPagamento {payment_id}` (pacote 1A), com 1 nova tentativa em 20 s | assinatura HMAC com `MERCADOPAGO_WEBHOOK_SECRET` (manifesto `id:<data.id>;request-id:<x-request-id>;ts:<ts>;`), `ts` com tolerância de 5 min (aceita segundos ou milissegundos), comparação em tempo constante, `401` sem corpo. Idempotente: registro em `PortaAbertaLimite` com chave HMAC de (pagamento, status); aprovado fica 30 dias, o resto 1 h. Formato antigo IPN (`?topic=&id=`) não é assinado: `200 IGNORED` sem nenhuma ação |
+| `portaAbertaFecharPrefs` | admin, `POST` | `{codigo?, ensaio?}`. Só antecipa para daqui a 1 min o vencimento das 7 preferências de R$ 297 (lista fixa no código). Confere antes que cada uma é de R$ 297 e `pa-abertura-inauguracao`. `{ensaio:true}` só lê. Devolve `{ok, ensaio, prefs:[{id, ok, expira_em}]}`, sem token | usuário admin do AutoCreatFlux **ou** o código de confirmação (o hash fica no código; o código fica só no workflow que a chama). Sem nenhum dos dois: `403` |
+
+Entidade `PortaAbertaLimite` (`chave` HMAC de 32 hex, `tipo`, `n`, `expira_em`): leitura e escrita só para admin; o anônimo recebe lista vazia na leitura e `403` na criação. Nunca guarda IP, e-mail ou id em claro. Linhas vencidas são apagadas aos poucos a cada chamada.
+
+Limite conhecido: o contador só acrescenta linhas (não perde contagem), mas uma rajada em paralelo antes da primeira linha gravada passa inteira uma vez (medido: 11 chamadas simultâneas passaram, as 3 seguintes deram 429).
+
+Segredo app a app: o MCP do Base44 só grava segredo recebendo o valor na chamada, o que obrigaria o valor a passar pela conversa. Por isso `portaAbertaVerificar` **não** exige segredo do app Porta Aberta. A defesa é a resposta mínima (igual para inexistente e de outro produto), o limite por pagamento e por origem e a ausência de qualquer dado pessoal na saída. Revisão quando houver credencial própria do Mercado Pago no app Porta Aberta (ADR-007).
+
+CORS: o `OPTIONS` das funções responde `access-control-allow-origin: *` pela plataforma (não é configurável na função). Nenhuma delas devolve dado pessoal, então isso não abre leitura de dado.
+
+### notification_url x webhook do painel (fato, documentação lida em 10/11/2026)
+
+Fonte: `https://www.mercadopago.com.br/developers/pt/docs/checkout-pro-preferences/payment-notifications`.
+- **Substitui, não soma.** Texto da página: "As URLs configuradas durante a criação de um pagamento terão prioridade sobre aquelas configuradas através de Suas integrações." Com `notification_url` na preferência, o aviso daquele pagamento vai para `portaAbertaNotificacao`, e o `mercadoPagoWebhook` deixa de recebê-lo (hoje ele já o ignora).
+- **Assinatura da notification_url: a documentação não garante.** A assinatura secreta (`x-signature`) é descrita como recurso da configuração por "Suas integrações" ("validar a origem da notificação através de uma assinatura secreta"); a seção de `notification_url` não fala em assinatura. Por isso a verdade é sempre a reconsulta por GET. Se a compra de teste mostrar que o aviso da `notification_url` chega **sem** `x-signature`, a função responde 401 e o Mercado Pago repete a cada 15 min sem efeito; a confirmação continua pela volta a `/obrigado/`. Nesse caso a correção é aceitar o aviso sem assinatura (ele só dispara um GET, que é a verdade) e manter o 401 só para assinatura presente e errada. **NÃO VERIFICADO**: depende da compra de teste do dono.
+- `ts` vem em milissegundos (exemplo da página: `ts=1742505638683`). O Mercado Pago espera 22 s pela resposta e repete a cada 15 min até receber 200.
+
+## Pedido antes do pagamento e confirmação (D2/D3)
+
+Contrato completo do pedido, das funções do app Porta Aberta e dos estados: `docs/PEDIDO-API.md` (pacote 1A). Aqui fica a parte do pagamento.
+
+**Por que precisa de regra de casamento.** As 7 preferências de R$ 297 são fixas por praça (`external_reference = pa-abertura-inauguracao-<praça>-2026-11`). O pagamento não traz o id de quem comprou. O pedido é gravado no clique em Pagar (`registrarPedido`, estado `aguardando_pagamento`) e o pagamento é casado depois.
+
+**Quem chama o quê.**
+1. `/obrigado/` (volta do Mercado Pago, com `payment_id`) e `portaAbertaNotificacao` (aviso do Mercado Pago) chamam `confirmarPagamento` do app Porta Aberta.
+2. `confirmarPagamento` chama `portaAbertaVerificar` com o `payment_id` e o e-mail do pedido candidato, e só confia no que ela devolve.
+
+**Estados do pedido** (definidos no 1A): `aguardando_pagamento`, `pago`, `a_conferir`, `recusado`, `em_revisao`, `em_producao`, `rascunho_enviado`, `aprovado`, `no_ar`, `desistiu`, `teste_ok`.
+
+**Regras de casamento** (toda regra exige valor e produto do pagamento iguais aos do pedido e pedido criado antes da aprovação; `payment_id` é único: um pagamento confirma um só pedido):
+- Regra 1: `pedido_id` + segredo do pedido válidos + `email_confere: true` viram `pago`.
+- Regra 2: sem `pedido_id`, o **único** pedido `aguardando_pagamento` com `email_confere: true` e mesmo valor vira `pago`.
+- Regra 3: só o valor dentro da janela de 6 h **nunca** promove. Vira `a_conferir`, com o candidato sugerido no e-mail ao suporte, sem recibo e sem produção.
+- `aprovado: false` de `portaAbertaVerificar` nunca promove nada.
+
+**Limite declarado (heurística).** Quem paga com um e-mail diferente do digitado no pedido cai em `a_conferir`. Gatilho para trocar pelo Plano A (uma preferência por pedido, com o `pedido_id` no `external_reference`): **mais de 10% de `a_conferir` nos 20 primeiros pedidos**.
+
+**Pedido de teste.** O link de teste fica em `checkout.config.js`, campo `teste` (`pa-teste`, R$ 1, `valeAte` lido na preferência). Ele não é botão de página e não gera Purchase no Pixel (`valorDaPreferencia` não o conhece; teste em `scripts/testes/checkout-config.test.mjs`). O pagamento `pa-teste` é do Porta Aberta para `portaAbertaVerificar` (devolve `valor: 1`), mas no app Porta Aberta o pedido `pa-teste` nunca vira `pago` nem entra em produção: vira `teste_ok` (pacote 1A). Hoje a preferência vence em 12/11/2026 17:27 UTC; a extensão até 16/11 depende do PUT bloqueado (seção acima). Se não puder ser estendida, cria-se outra de R$ 1 por função isolada, como em 09/11.
+
+**Trava das 20 vagas.** A tarefa executora (pacote 1D, `docs/EXECUTOR.md`) conta as Aberturas pagas. Ao chegar a 19, roda o workflow "Porta Aberta · fechar R$ 297" do AutoCreatFlux, que chama `portaAbertaFecharPrefs`. As 7 preferências de R$ 297 vencem em 1 minuto. Pix já gerado antes disso ainda pode ser pago, então pode haver 1 ou 2 vagas a mais; a casa honra.

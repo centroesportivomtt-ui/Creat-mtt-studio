@@ -40,7 +40,7 @@ for (const arq of fs.readdirSync(pasta).filter(f => /\.(valido|invalido)\.(json|
   const certo = ok === esperado;
   if (!certo) falhas++;
   // Para o motivo, valida de novo só no ramo do oneOf a que o exemplo pertence (mensagem que cita o campo).
-  const ramo = schema === 'pedido' ? (dado.formato ? 'PedidoEntrada' : 'Pedido') : schema === 'evento' ? (dado.evento ? 'EventoAnalytics' : 'EventoPedido') : null;
+  const ramo = schema === 'pedido' ? (dado.formato ? 'PedidoEntrada' : dado.segredo !== undefined ? 'PedidoRegistro' : 'Pedido') : schema === 'evento' ? (dado.evento ? 'EventoAnalytics' : 'EventoPedido') : null;
   const v = ramo ? ajv.getSchema(`${validadores[schema].schema.$id}#/$defs/${ramo}`) : validadores[schema];
   if (!ok) v(dado);
   const erros = (v.errors || validadores[schema].errors || []).filter(e => e.keyword !== 'if');

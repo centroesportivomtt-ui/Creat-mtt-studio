@@ -54,6 +54,25 @@ test('checkout.config.js continua sem segredo e com os marcadores de fábrica', 
   assert.equal(C.whatsappValido(C.whatsappSuporte), true);
 });
 
+test('campo teste: pa-teste de R$ 1, link válido do Checkout Pro, com validade e fora de qualquer botão ou Purchase', () => {
+  const t = C.teste;
+  assert.ok(t && typeof t === 'object', 'CREAT_CHECKOUT.teste ausente');
+  assert.equal(t.produto, 'pa-teste');
+  assert.equal(t.valor, 1);
+  assert.equal(C.linkValido(t.link), true, t.link);
+  assert.match(t.link, /^https:\/\/www\.mercadopago\.com\.br\/checkout\/v1\/redirect\?pref_id=2189692475-[0-9a-f-]{36}$/);
+  assert.ok(Number.isFinite(Date.parse(t.valeAte)), 'valeAte precisa ser data ISO');
+  assert.match(t.valeAte, /Z$|[+-]\d\d:\d\d$/, 'valeAte com fuso explícito');
+  const pref = new URL(t.link).searchParams.get('pref_id');
+  // Nunca é botão da página nem gera Purchase.
+  assert.equal(C.valorDaPreferencia(pref), null);
+  for (const l of Object.values(C.links)) assert.notEqual(l, t.link);
+  for (const l of Object.values(C.linksPorPraca)) assert.notEqual(l, t.link);
+  assert.equal(Object.prototype.hasOwnProperty.call(C.valorDosLinks, 'teste'), false);
+  for (const o of [{ inauguracao: true }, { inauguracao: false }, { inauguracao: true, praca: 'feira' }, { inauguracao: true, praca: 'pa-teste' }])
+    assert.notEqual(C.escolherAbertura(o).link, t.link);
+});
+
 test('checar-placeholders passa com links do Mercado Pago e do Stripe no lugar dos marcadores', () => {
   const tmp = fs.mkdtempSync(path.join(process.env.CREAT_TESTE_TMP || os.tmpdir(), 'creat-ck-'));
   try {

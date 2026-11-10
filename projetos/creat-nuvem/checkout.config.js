@@ -24,13 +24,14 @@
 
    Links de R$ 297 (inauguração): aberturaInauguracao e os 6 de linksPorPraca. Este arquivo é
    público, então quem guardar um deles pode pagar o preço de inauguração depois do fim.
-   - Crie cada link com data de vencimento (Mercado Pago: Link de pagamento > "Data de vencimento").
-   - Teto de vagas: o limite de "quantidade máxima" do Mercado Pago é POR LINK. A soma das quantidades
-     máximas dos 7 links tem de ser no máximo vagasTotal de dados/precos.json (20). Se não der para
-     dividir assim, o corte é manual e vale para TODOS os 7 links ao mesmo tempo (ADR-005).
-   - Quando a inauguração acabar, desative no Mercado Pago os 7 links (e os 2 combos do anual, que não
-     ficam aqui: docs/INTEGRACAO-PAGAMENTO.md) e volte aberturaInauguracao para o marcador e
-     linksPorPraca para {}. scripts/atualizar-vagas.cjs imprime a lista e a rotina diária falha até isso.
+   - São preferências do Checkout Pro (pref_id), não "Link de pagamento". Preferência do Checkout Pro
+     NÃO tem "quantidade máxima" (isso só existe no Link de pagamento do painel). Não existe soma de tetos.
+   - O vencimento é o campo expires/expiration_date_to da preferência (docs/INTEGRACAO-PAGAMENTO.md,
+     seção "Preferências lidas em 10/11/2026").
+   - Teto real das 20 vagas: a função portaAbertaFecharPrefs do AutoCreatFlux vence as 7 preferências de
+     R$ 297 de uma vez; a tarefa executora a chama ao chegar a 19 Aberturas pagas (docs/EXECUTOR.md).
+   - Quando a inauguração acabar, volte aberturaInauguracao para o marcador e linksPorPraca para {}.
+     scripts/atualizar-vagas.cjs imprime a lista e a rotina diária falha até isso.
    - O plano anual NÃO é cobrado aqui: hoje a pessoa paga só a Abertura; o anual é cobrado no dia em
      que o site entra no ar (decisão D3 do diretor, 10/11/2026).
    ===================================================================== */
@@ -77,6 +78,17 @@
     'recife': 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-27ab4073-7c24-402f-b333-f58585dcc6c6',
     'petrolina-juazeiro': 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-1b66d83c-b929-44b6-aa31-979b6efef0e0',
     'aracaju': 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-88c3e2e4-b65b-444e-8e28-bbd5ec4c5ac2'
+  };
+
+  /* Link de TESTE (compra real de R$ 1 do dono, estornada depois). Fica fora de LINKS de propósito:
+     nenhum botão da página usa, valorDaPreferencia não o conhece (nunca gera Purchase no Pixel) e o
+     pedido pa-teste nunca entra em produção (vira teste_ok no app Porta Aberta, pacote 1A).
+     valeAte = expiration_date_to lido na preferência em 10/11/2026. Depois disso o Mercado Pago recusa. */
+  var TESTE = {
+    produto: 'pa-teste',
+    valor: 1,
+    link: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-b1f51c8f-b3f3-4f5f-a9d8-12052accfebc',
+    valeAte: '2026-11-12T17:27:43Z'
   };
 
   // Valor que cada link cobra no Mercado Pago (o Purchase do Pixel usa este valor; scripts/checar.cjs confere com dados/precos.json).
@@ -130,6 +142,7 @@
     links: LINKS,
     linksPorPraca: LINKS_POR_PRACA,
     valorDosLinks: VALOR_DOS_LINKS,
+    teste: TESTE,
     /* Contadores ao vivo ("Restam X vagas", "Resta 1 vaga", "Vagas de produção hoje: X de Y").
        Desligados (decisão D1 do diretor, 10/11/2026) até o número vir de pedido pago gravado em
        servidor. Com false, a página mostra só "preço de inauguração", sem número restante. */

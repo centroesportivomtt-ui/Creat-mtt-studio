@@ -1,10 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:creat-nuvem:schema:pedido:v1",
-  "title": "Pedido (PEDIDO v1 de entrada e registro Pedido da Fase 2)",
-  "description": "Dois formatos com um único vocabulário. PedidoEntrada é o texto PEDIDO v1 (linhas 'chave: valor') convertido em objeto, exatamente com as chaves das linhas. Pedido é o registro que a Fase 2 guarda no D1. Nenhum dos dois tem campo para mensagem de cliente final nem CPF/CNPJ (ficam só no provedor de pagamento: Mercado Pago ou Stripe).",
+  "title": "Pedido (PEDIDO v1 de entrada, registro do servidor no clique de pagar e registro Pedido da Fase 2)",
+  "description": "Três formatos com um único vocabulário. PedidoEntrada é o texto PEDIDO v1 (linhas 'chave: valor') convertido em objeto. PedidoRegistro é o corpo que /abrir/ envia por sendBeacon a POST /api/pa/registrarPedido no clique de pagar (pacote 1A, 10/11/2026; contrato em docs/PEDIDO-API.md; a validação do servidor é schema/pedido-regras.mjs, validarRegistro, que também confere valor igual ao catálogo). Pedido é o registro que a Fase 2 guarda. Nenhum deles tem campo para mensagem de cliente final nem CPF/CNPJ.",
   "oneOf": [
     { "$ref": "#/$defs/PedidoEntrada" },
+    { "$ref": "#/$defs/PedidoRegistro" },
     { "$ref": "#/$defs/Pedido" }
   ],
   "$defs": {
@@ -50,6 +51,38 @@
           "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,3})?)?(Z|[+-]\\d{2}:\\d{2}) termos-v[0-9]+$"
         }
       }
+    },
+    "PedidoRegistro": {
+      "description": "Corpo de registrarPedido. Só cria; id repetido não sobrescreve. 'aceite_em' do navegador é aceito e ignorado (vale a hora do servidor). 'hp' é o campo isca: vazio sempre. teste:true valida e não grava.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "segredo", "produto", "valor", "nicho", "negocio", "cidade", "whatsapp", "email", "termos_versao", "consentimento_dados"],
+      "properties": {
+        "id": {"$ref": "#/$defs/idRegistro"},
+        "segredo": {"description": "128 bits aleatórios do navegador em base64url (22 caracteres, o último em [AQgw]). O servidor guarda só o sha256.", "type": "string", "pattern": "^[A-Za-z0-9_-]{21}[AQgw]$"},
+        "produto": {"$ref": "#/$defs/produtoPA"},
+        "valor": {"description": "Igual ao catálogo do servidor para o produto (pa-abertura-inauguracao-2026-11: 297; pa-abertura-2026-11: 497; pa-teste: 1).", "type": "number"},
+        "praca": {"oneOf": [{"type": "null"}, {"const": ""}, {"enum": ["feira", "salvador-rms", "fortaleza", "recife", "petrolina-juazeiro", "aracaju"]}]},
+        "plano": {"oneOf": [{"type": "null"}, {"const": ""}, {"$ref": "#/$defs/plano"}]},
+        "nicho": {"$ref": "#/$defs/nicho"},
+        "negocio": {"type": "string", "minLength": 1, "maxLength": 40, "pattern": "^[\\p{L}\\p{N} &.'-]+$"},
+        "cidade": {"type": "string", "minLength": 1, "maxLength": 40, "pattern": "^[\\p{L}\\p{N} .'-]+$"},
+        "whatsapp": {"description": "WhatsApp brasileiro só com dígitos: 55, DDD e celular (9 e mais 8) ou fixo (2 a 5 e mais 7).", "type": "string", "pattern": "^55[1-9][1-9](9\\d{8}|[2-5]\\d{7})$"},
+        "email": {"type": "string", "maxLength": 120, "pattern": "^[^\\s@:;<>\"',]{1,64}@[^\\s@:;<>\"',.]{1,63}(\\.[^\\s@:;<>\"',.]{1,63})+$"},
+        "utm_source": {"$ref": "#/$defs/utmOpcional"},
+        "utm_campaign": {"$ref": "#/$defs/utmOpcional"},
+        "utm_content": {"$ref": "#/$defs/utmOpcional"},
+        "termos_versao": {"enum": ["termos-v1"]},
+        "consentimento_dados": {"const": true},
+        "hp": {"description": "Campo isca, escondido de pessoas. Preenchido: o servidor responde ok e não grava.", "type": "string", "maxLength": 0},
+        "teste": {"type": "boolean"},
+        "aceite_em": {"description": "Carimbo do navegador. Aceito e ignorado.", "type": "string", "maxLength": 40}
+      },
+      "allOf": [
+        {"if": {"properties": {"produto": {"const": "pa-abertura-inauguracao-2026-11"}}, "required": ["produto"]}, "then": {"properties": {"valor": {"const": 297}}}},
+        {"if": {"properties": {"produto": {"const": "pa-abertura-2026-11"}}, "required": ["produto"]}, "then": {"properties": {"valor": {"const": 497}}}},
+        {"if": {"properties": {"produto": {"const": "pa-teste"}}, "required": ["produto"]}, "then": {"properties": {"valor": {"const": 1}}}}
+      ]
     },
     "Pedido": {
       "type": "object",
@@ -110,6 +143,10 @@
       "type": "string",
       "pattern": "^PA-[0-9A-HJKMNP-TV-Z]{8}$"
     },
+    "idRegistro": {"description": "Id do pedido gravado no servidor (pacote 1A): 'PA-' e 10 caracteres [0-9A-Z]. O navegador gera com crypto.getRandomValues (recomendado o alfabeto Crockford, que é subconjunto).", "type": "string", "pattern": "^PA-[0-9A-Z]{10}$"},
+    "produtoPA": {"enum": ["pa-abertura-inauguracao-2026-11", "pa-abertura-2026-11", "pa-teste"]},
+    "utmOpcional": {"oneOf": [{"type": "null"}, {"const": ""}, {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$"}]},
+    "estadoRegistro": {"description": "Estados do PedidoPortaAberta no servidor (docs/PEDIDO-API.md).", "enum": ["aguardando_pagamento", "pago", "a_conferir", "recusado", "em_revisao", "em_producao", "rascunho_enviado", "aprovado", "no_ar", "desistiu", "teste_ok"]},
     "plano": { "enum": ["aberto", "vitrine", "aberto_anual", "vitrine_anual"] },
     "nicho": { "enum": ["barbearia", "salao", "academia"] },
     "estado": {
