@@ -1037,9 +1037,8 @@
     if (ctx.ritual && typeof ctx.ritual.montarHeroi === 'function') {
       try { ctx.ritual.montarHeroi($('heroi'), ctx); } catch (er) { if (W.console) W.console.error('[motor] ritual:', er); }
     }
-    modulos.forEach(function (m) {
-      try { m.fn(ctx); } catch (er) { if (W.console) W.console.error('[motor] módulo ' + m.nome + ':', er); }
-    });
+    ctxAtual = ctx;
+    modulos.forEach(rodarModulo);
     vigiarPolegar();
     setInterval(atualizarLetreiro, 60000);
     DOC.addEventListener('visibilitychange', function () { if (!DOC.hidden) atualizarLetreiro(); });
@@ -1049,14 +1048,35 @@
   }
 
   api.iniciar = iniciar;
-  api.registrarModulo = function (nome, fn) { modulos.push({ nome: nome, fn: fn }); };
+  /* Módulo que chega depois do início (script que demorou a baixar) roda na hora, com o mesmo contexto. */
+  var ctxAtual = null;
+  function rodarModulo(m) {
+    try { m.fn(ctxAtual); } catch (er) { if (W.console) W.console.error('[motor] módulo ' + m.nome + ':', er); }
+  }
+  api.registrarModulo = function (nome, fn) {
+    var m = { nome: nome, fn: fn };
+    modulos.push(m);
+    if (ctxAtual) rodarModulo(m);
+  };
   Object.defineProperty(api, 'estado', { get: function () { return estadoAtual; }, enumerable: true });
   raiz.CreatMotor = api;
 
+  /* Início automático. Os sites carregam motor, efeito, som e agendamento com defer: enquanto um script
+     defer roda, readyState já é 'interactive', mas o DOMContentLoaded só dispara depois do ÚLTIMO defer.
+     Iniciar por setTimeout nesse ponto corria na frente de efeito.js e agendamento.js em rede real, e o
+     site abria sem o gesto do nicho e sem o formulário de pedido (achado de 10/11/2026). Por isso:
+     espera o DOMContentLoaded sempre que a página ainda não terminou; 'load' fica de reserva para o caso
+     de o script ter sido injetado depois do DOMContentLoaded. Roda uma vez só. */
+  var autoFeito = false;
   function autoIniciar() {
+    if (autoFeito) return;
+    autoFeito = true;
     if (W.CREAT_SITE && W.CREAT_SITE.manual) return;
     iniciar();
   }
-  if (DOC.readyState === 'loading') DOC.addEventListener('DOMContentLoaded', autoIniciar, { once: true });
-  else setTimeout(autoIniciar, 0);
+  if (DOC.readyState === 'complete') setTimeout(autoIniciar, 0);
+  else {
+    DOC.addEventListener('DOMContentLoaded', autoIniciar, { once: true });
+    W.addEventListener('load', autoIniciar, { once: true });
+  }
 })(typeof window !== 'undefined' ? window : globalThis);

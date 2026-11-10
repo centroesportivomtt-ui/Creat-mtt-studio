@@ -106,3 +106,11 @@ O `_headers` (CSP e cache) é formato da Cloudflare, e o Base44 não o lê. No B
 A Base44 responde todas as páginas com `X-Frame-Options: DENY` e ignora o `_headers`. Página nossa não abre em iframe por endereço: a prévia e a sede embutidas ficavam em branco no ar. Desde 09/11 o `assets/vitrine.js` carrega as duas como documento blob (`carregarNoQuadro`), e a sede lê a query de `window.__creatLocal`.
 
 Antes de publicar qualquer mudança na vitrine, na prévia ou na sede, rode `node scripts/conferir-moldura.cjs`. Ele sobe um servidor com o mesmo bloqueio e falha se a prévia ou a sede ficarem em branco. Teste local sem esse cabeçalho não pega o defeito.
+
+## Início do motor em rede real (10/11/2026)
+
+Os sites carregam `motor.js`, `efeito.js`, `som.js` e `agendamento.js` com `defer`. Em localhost os quatro chegam juntos. Na hospedagem, com latência, o motor iniciava antes dos outros três e o site abria sem o gesto do nicho e sem o formulário de pedido: as demonstrações de barbearia e academia ficaram assim no ar até 10/11. O `motor.js` agora espera o `DOMContentLoaded` (que só dispara depois do último `defer`), com `load` de reserva, e módulo que chega atrasado roda na hora.
+
+Antes de publicar qualquer site ou mudança em `motor/`, rode `node scripts/conferir-boot.cjs` (ou `npm run conferir-boot`). Ele serve cada `dist/<slug>/` com atraso de 0, 350 e 900 ms nos scripts que vêm depois do motor e falha se o formulário ou o gesto não aparecerem. Teste local sem atraso não pega esse defeito.
+
+Cada site publicado tem a própria cópia de `motor/v1/`. Correção no motor exige republicar `public/motor/` (prévia da vitrine) e `public/sites/<slug>/motor/` de todos os sites no ar.
