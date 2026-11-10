@@ -294,3 +294,19 @@ Achados de experiência: WhatsApp flutuante fora da tela enquanto o hero aparece
 Correção achada nesta rodada: o `fbevents.js` da Meta não manda `Access-Control-Allow-Origin`, e o script era carregado com `crossorigin="anonymous"`. O navegador bloqueava o arquivo e o Pixel nunca carregava de verdade (só a fila local). Agora `crossorigin` só vai junto com SRI (PostHog). Conferido no navegador: `fbq.callMethod` existe depois do aceite.
 
 Pendências do dono (fora do repositório): desligar no Events Manager a correspondência avançada automática e as detecções automáticas antes de publicar (roteiro em `docs/MEDICAO-FUNIL.md`); conferir no Mercado Pago o parcelamento de cada link; CPF/CNPJ e endereço comercial.
+
+## 10/11/2026, tarde · decisões do executor, pagamento real e ensaio
+
+**Decisões da seção 10 de `docs/EXECUTOR.md` (registradas pelo coordenador, com a delegação do dono).**
+- **D1, os 4 dados do pedido:** opção (a). O `/abrir/` manda responsável, endereço e horários no registro do pedido (pacote 2A da onda 2). Quem não preencher cai no roteiro manual do suporte. O prazo vale pela regra dos termos: conta da confirmação do pagamento e da chegada dos dados.
+- **D2, conector do Base44:** a tarefa roda na conta atual do dono, com dado mínimo do pedido (resposta "sim" do dono à pergunta P5 da rodada única). As reduções da seção 2 valem: lista de campos sem e-mail e sem responsável, nenhum segredo legível, auditoria das 3 primeiras sessões.
+- **D3, aceite tácito:** desligado até a cláusula entrar nos termos. Rascunho sem resposta só gera aviso ao suporte.
+
+**Pagamento real de teste (R$ 1, Pix, 10/11).**
+- Aprovado em 27 s. O aviso instantâneo do Mercado Pago foi recusado na assinatura. Causa achada: a chave de assinatura guardada tem 64 caracteres sem nenhuma letra nem número (forma registrada no diagnóstico, valor nunca lido). A regravação é um clique do dono e vale também para a operação antiga.
+- A assinatura continua obrigatória. A confirmação saiu pela conciliação por consulta (`portaAbertaConciliar`, a cada 10 min): primeira rodada às 18:30 UTC, pagamento registrado, conferido por ensaio às 18:32 UTC. O dono estornou o R$ 1 em seguida.
+- E-mail ao suporte: passou de 422 para "enviado" às 18:39 UTC, depois da entrada do e-mail de suporte como usuário do app. O resumo do dia chegou à caixa de entrada.
+
+**Anúncios.** Troca única do texto concluída: 6 anúncios novos ativos (Abertura e plano mensal declarados), 6 antigos pausados, verba e público sem mudança. Detalhe em `marketing/trafego/textos-troca-unica.md`, seção 6.
+
+**Ensaio do executor.** Iniciado às 18:45 UTC num clone limpo do `main` (165 de 165 testes). Resultado linha a linha entra abaixo quando terminar. A tarefa agendada só é criada com o ensaio inteiro verde.

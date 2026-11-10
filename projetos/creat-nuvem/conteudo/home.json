@@ -199,7 +199,7 @@
       },
       "vitrine": {
         "nome": "Vitrine",
-        "_selo": "Sem selo de recomendado: o ciclo de posts (docs/VITRINE-POSTS.md) ainda não rodou com cliente real. Decisão do plano de qualidade de 10/11/2026 sobre o Metricool e o plano Vitrine.",
+        "_selo": "Sem selo de destaque: o ciclo de posts (docs/VITRINE-POSTS.md) ainda não rodou com cliente real. Decisão do plano de qualidade de 10/11/2026 sobre o Metricool e o plano Vitrine.",
         "preco": "R$ {{precos.planos.vitrine}}",
         "periodo": "por mês no cartão, ou anual no Pix, a partir do dia em que o site entra no ar",
         "resumo": "O site no ar e 4 posts prontos por mês para o seu Instagram.",

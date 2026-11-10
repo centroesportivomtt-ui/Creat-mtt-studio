@@ -38,7 +38,16 @@
   var PLANOS = ['aberto', 'vitrine', 'aberto_anual', 'vitrine_anual'];
   var UTM = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
   var RE_NOME = /^[\p{L}\p{N} &.'-]+$/u, RE_CIDADE = /^[\p{L}\p{N} .'-]+$/u, RE_UTM = /^[A-Za-z0-9._-]{1,64}$/;
-  var RE_RESP = /^[\p{L} .'-]+$/u, RE_EMAIL = /^[^\s@:;]+@[^\s@:;]+\.[^\s@:;]{2,}$/;
+  // E-mail: a mesma regra do servidor (schema/pedido-regras.mjs RE.email), para o registro nunca voltar 422.
+  var RE_RESP = /^[\p{L} .'-]+$/u, RE_EMAIL = /^[^\s@:;<>"',]{1,64}@[^\s@:;<>"',.]{1,63}(\.[^\s@:;<>"',.]{1,63})+$/;
+  // Pedido no servidor (docs/PEDIDO-API.md): id de 10, segredo de 128 bits, número do pagamento do Mercado Pago.
+  var RE_ID = /^PA-[0-9A-Z]{10}$/, RE_ID_ANTIGO = /^PA-[0-9A-HJKMNP-TV-Z]{8}$/, RE_SEGREDO = /^[A-Za-z0-9_-]{21}[AQgw]$/, RE_PAGAMENTO = /^\d{6,14}$/;
+  var PRACAS = ['feira', 'salvador-rms', 'fortaleza', 'recife', 'petrolina-juazeiro', 'aracaju'];
+  // Produto do catálogo do servidor por chave de link (checkout.config.js) e por produto= da volta do Mercado Pago.
+  var PRODUTO_DA_CHAVE = { aberturaInauguracao: 'pa-abertura-inauguracao-2026-11', aberturaPadrao: 'pa-abertura-2026-11' };
+  var CATALOGO = { 'pa-abertura-inauguracao-2026-11': 297, 'pa-abertura-2026-11': 497, 'pa-teste': 1 };
+  var PRODUTO_DA_VOLTA = { 'pa-abertura-inauguracao': 'pa-abertura-inauguracao-2026-11', 'pa-abertura': 'pa-abertura-2026-11', 'pa-teste': 'pa-teste' };
+  var PORTAL_ASSINANTE = 'https://billing.stripe.com/p/login/7sYbIV5JIe7nfvR09r2cg00';   // docs/INTEGRACAO-PAGAMENTO.md
   var DDD = '11 12 13 14 15 16 17 18 19 21 22 24 27 28 31 32 33 34 35 37 38 41 42 43 44 45 46 47 48 49 51 53 54 55 61 62 63 64 65 66 67 68 69 71 73 74 75 77 79 81 82 83 84 85 86 87 88 89 91 92 93 94 95 96 97 98 99'.split(' ');
   var DIAS_PEDIDO = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];       // ordem do PEDIDO v1
   var DIA_IDX = { dom: 0, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, sab: 6 };   // 0 = domingo (tenant)
@@ -123,6 +132,42 @@
   function abrirExterno(url) {
     var a = el('a', { href: url, target: '_blank', rel: 'noopener noreferrer' });
     a.style.display = 'none'; D.body.appendChild(a); a.click(); a.remove();
+  }
+
+  /* ------------------------------------------------------------ funções do servidor (docs/PEDIDO-API.md)
+     Rotas na mesma origem: /api/pa/<nome>, só POST com JSON, sem cookie. Fora de https (arquivo local, servidor de
+     desenvolvimento) nada é chamado; o teste liga com window.__creatApi = '/api/pa/' antes do script. */
+  var API = (function () {
+    try {
+      if (typeof W.__creatApi === 'string' && /^\/[A-Za-z0-9\/_-]*\/$/.test(W.__creatApi)) return location.origin + W.__creatApi;
+      return location.protocol === 'https:' ? location.origin + '/api/pa/' : null;
+    } catch (e) { return null; }
+  })();
+  // Chamada que espera a resposta. Devolve sempre {status, json}; status 0 = rede, tempo ou sem API.
+  function chamar(nome, corpo, tempoMs) {
+    if (!API || !W.fetch) return Promise.resolve({ status: 0, json: null });
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var tempo = ctrl ? setTimeout(function () { ctrl.abort(); }, tempoMs || 12000) : 0;
+    return fetch(API + nome, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(corpo), credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) {
+        var tipo = (r.headers && r.headers.get && r.headers.get('content-type')) || '';
+        var corpoJ = /json/i.test(tipo) ? r.json().catch(function () { return null; }) : Promise.resolve(null);
+        return corpoJ.then(function (j) { return { status: r.status, json: j && typeof j === 'object' ? j : null }; });
+      }, function () { return { status: 0, json: null }; })
+      .then(function (x) { clearTimeout(tempo); return x; });
+  }
+  // Envio que não espera nem segura a navegação: fetch com keepalive (sobrevive à troca de página); sem ele, sendBeacon.
+  function enviarSolto(nome, corpo) {
+    if (!API) return false;
+    var json = JSON.stringify(corpo);
+    try {
+      if (W.fetch) {
+        fetch(API + nome, { method: 'POST', headers: { 'content-type': 'application/json' }, body: json, credentials: 'omit', cache: 'no-store', keepalive: true, referrerPolicy: 'no-referrer' }).catch(function () {});
+        return true;
+      }
+    } catch (e) {}
+    try { if (navigator.sendBeacon) return navigator.sendBeacon(API + nome, new Blob([json], { type: 'application/json' })); } catch (e) {}
+    return false;
   }
 
   /* ------------------------------------------------------------ fragmento (contrato c) */
@@ -284,14 +329,18 @@
 
   /* ------------------------------------------------------------ botões de checkout (contrato e) */
   // linkEscolhido: link já decidido (ex.: o da praça em /abrir/); sem ele, vale CK.links[chave].
-  function aplicarCheckout(btn, chave, linkEscolhido) {
+  // Desktop (mouse): o pagamento abre em outra aba, porque o Mercado Pago no computador não tem "Voltar à loja" (PG-05).
+  function abaNova() { return !!(W.matchMedia && W.matchMedia('(pointer: fine)').matches); }
+  // emOutraAba: só em /abrir/ no desktop.
+  function aplicarCheckout(btn, chave, linkEscolhido, emOutraAba) {
     if (!btn.hasAttribute('data-rotulo')) btn.setAttribute('data-rotulo', btn.textContent.trim());
     btn.setAttribute('data-checkout', chave);
     var link = linkEscolhido || (CK && CK.links ? CK.links[chave] : null);
     var ok = !!(CK && CK.linkValido(link));
     if (ok) {
       btn.setAttribute('href', link);
-      btn.removeAttribute('target'); btn.removeAttribute('rel');
+      if (emOutraAba) { btn.setAttribute('target', '_blank'); btn.setAttribute('rel', 'noopener noreferrer'); }
+      else { btn.removeAttribute('target'); btn.removeAttribute('rel'); }
       btn.removeAttribute('aria-disabled'); btn.removeAttribute('tabindex');
       btn.textContent = btn.getAttribute('data-rotulo');
     } else if (suporteOk()) {
@@ -372,8 +421,11 @@
     s.onload = aoCarregar || null; s.onerror = function () { fila = []; };
     D.head.appendChild(s);
   }
+  // Só com o "Aceitar" (o aviso de medição promete isso). Chave de exemplo: desligado, nenhuma requisição.
   function iniciarPosthog() {
-    if (!MED.posthogValida || !MED.posthogValida(MED.posthogChave)) return; // chave de exemplo: desligado, nenhuma requisição
+    if (posthogPedido) return;
+    var c = consentimento(); if (!c || !c.pixel) return;
+    if (!MED.posthogValida || !MED.posthogValida(MED.posthogChave)) return;
     posthogPedido = true;
     var iniciar = function () {
       carregarScript(MED.posthogScript, function () {
@@ -438,6 +490,12 @@
     for (var i = 0; i < partes.length - 1; i++) dominios.push('; domain=.' + partes.slice(i).join('.'));
     ['_fbp', '_fbc'].forEach(function (n) { dominios.forEach(function (d) { try { D.cookie = n + '=; Max-Age=0; path=/' + d; } catch (e) {} }); });
   }
+  /* Cookie da hospedagem (b44-visitor-tracking, injetado pelo Base44 no HTML no ar): com a meta
+     base44-visitor-tracking=consent ele só grava base44_referrer_origin e base44_referrer_id (30 dias) depois do
+     'granted' e os apaga com o 'denied'. Fora do Base44 o dataLayer fica sem leitor e nada acontece. */
+  function avisarHospedagem(sim) {
+    try { var dl = W.dataLayer = W.dataLayer || []; dl.push(['consent', 'update', { analytics_storage: sim ? 'granted' : 'denied' }]); } catch (e) {}
+  }
   // Revoga o que já carregou nesta página: o Pixel para de mandar evento e a página recarrega sem terceiros.
   function revogarTerceiros() {
     try { if (W.fbq) W.fbq('consent', 'revoke'); } catch (e) {}
@@ -496,11 +554,74 @@
     return guarda.gravar(CHAVE_ORIGEM, JSON.stringify(u));
   }
 
+  /* ------------------------------------------------------------ contador da Creat (D8, função contar)
+     4 eventos: visita (home), previa, ida_pagamento (abriu /abrir/), clique_pagar. Só nicho, praça (utm_campaign)
+     e anúncio (utm_content): sem cookie, sem identificador, sem dado pessoal. Não depende do aceite do Pixel.
+     Um por evento e nicho em cada carga da página. O link de teste (?teste=pa-teste) não conta. */
+  var contados = {};
+  function corpoContagem(ev, nicho) {
+    var u = {}, o = lerOrigem() || {};
+    ['utm_campaign', 'utm_content'].forEach(function (k) { var v = (utmAtual && utmAtual[k]) || o[k]; if (typeof v === 'string' && RE_UTM.test(v)) u[k] = v; });
+    return { evento: ev, nicho: NICHOS.indexOf(nicho) !== -1 ? nicho : 'outro', praca: u.utm_campaign || '', utm_content: u.utm_content || '' };
+  }
+  function contar(ev, nicho) {
+    if (ENTRADA.teste) return false;
+    var k = ev + ':' + (nicho || '');
+    if (contados[k]) return false;
+    contados[k] = 1;
+    return enviarSolto('contar', corpoContagem(ev, nicho));
+  }
+
   /* ------------------------------------------------------------ endereço limpo antes de medir
      Lê o fragmento (nome, cidade, nicho, plano, utm_*) e a volta do Mercado Pago (query) UMA vez e
      reescreve o endereço sem nome, cidade nem parâmetros do pagamento. As páginas usam ENTRADA. */
   var PARAMS_MP = ['collection_id', 'collection_status', 'payment_id', 'status', 'external_reference', 'payment_type', 'merchant_order_id', 'preference_id', 'site_id', 'processing_mode', 'merchant_account_id'];
-  var ENTRADA = { frag: lerFragmento(''), query: {}, retorno: null, ver: false, preferencias: false };
+  // Só em /obrigado/: o que a volta do Mercado Pago, do Stripe e da aba do desktop trazem. Lido antes de limpar.
+  var PARAMS_VOLTA = ['resultado', 'pago', 'produto', 'praca', 'assinatura', 'plano', 'session_id', 'espera', 'provider', 'order_id', 'product_id'];
+  var ENTRADA = { frag: lerFragmento(''), query: {}, retorno: null, volta: null, ver: false, preferencias: false, teste: false };
+  /* Estado da volta (PG-02, CH-09, PG-03, PG-N1). Nunca confirma pagamento: o servidor confirma (confirmarPagamento).
+     pagamento: aprovado (approved, ou resultado=aprovado, com payment_id numérico) · recusado · pendente · sem_retorno. */
+  function lerVolta(search) {
+    var q; try { q = new URLSearchParams(search || ''); } catch (e) { q = new URLSearchParams(''); }
+    var st = String(q.get('collection_status') || q.get('status') || '').toLowerCase();
+    var res = String(q.get('resultado') || '').toLowerCase();
+    var pid = q.get('payment_id') || '', numerico = /^\d{1,24}$/.test(pid);
+    var produto = q.get('produto'); if (!/^pa-[a-z0-9-]{1,40}$/.test(produto || '')) produto = null;
+    var assin = q.get('assinatura'); if (assin !== 'ok' && assin !== 'cancelada') assin = null;
+    var tipo = q.get('payment_type') || '';
+    var meio = tipo === 'bank_transfer' ? 'pix' : /^(credit_card|debit_card|prepaid_card)$/.test(tipo) ? 'cartao' : tipo === 'account_money' ? 'saldo' : null;
+    var pagamento = 'sem_retorno';
+    if (st === 'approved' || (!st && res === 'aprovado')) pagamento = numerico ? 'aprovado' : 'sem_retorno';
+    else if (/^(rejected|cancelled|refunded|charged_back)$/.test(st) || (!st && res === 'recusado')) pagamento = 'recusado';
+    else if (/^(pending|in_process|in_mediation|authorized)$/.test(st) || (!st && res === 'pendente')) pagamento = 'pendente';
+    var pref = q.get('preference_id') || '';
+    return {
+      tem: !!(st || res || pid || produto || assin || q.get('pago') || q.get('espera')),
+      pagamento: pagamento,
+      paymentId: numerico ? pid : null,
+      preferencia: /^[0-9A-Za-z-]{8,80}$/.test(pref) ? pref : null,
+      meio: meio, produto: produto,
+      praca: PRACAS.indexOf(q.get('praca')) !== -1 ? q.get('praca') : null,
+      assinatura: assin,
+      plano: PLANOS.indexOf(q.get('plano')) !== -1 ? q.get('plano') : null,
+      espera: q.get('espera') === '1'
+    };
+  }
+  // Qual tela do /obrigado/ a volta pede (a do servidor pode trocar depois: pago, teste_ok, rascunho).
+  function estadoDaVolta(v) {
+    if (!v) return 'sem_retorno';
+    if (v.assinatura === 'ok') return 'assinatura_ok';
+    if (v.assinatura === 'cancelada') return 'sem_retorno';
+    if (v.pagamento === 'aprovado') {
+      if (/^pa-anual-(aberto|vitrine)$/.test(v.produto || '')) return 'anual_pago';
+      if (v.produto === 'pa-teste') return 'teste_ok';
+      if (v.produto === 'pa-bastidores') return 'bastidores_pago';
+      return 'aprovado';
+    }
+    if (v.pagamento === 'recusado') return 'recusado';
+    if (v.pagamento === 'pendente') return 'pendente';
+    return v.espera ? 'aguardando' : 'sem_retorno';
+  }
   // Volta do Checkout Pro: aprovado só com status approved E payment_id numérico.
   function lerRetornoMP(search) {
     var q; try { q = new URLSearchParams(search || ''); } catch (e) { return null; }
@@ -519,10 +640,12 @@
     ENTRADA.frag = lerFragmento(location.hash);
     ENTRADA.query = lerUtm(q);
     ENTRADA.retorno = lerRetornoMP(location.search);
+    ENTRADA.volta = lerVolta(location.search);
+    ENTRADA.teste = PAGINA === 'abrir' && q.get('teste') === 'pa-teste';
     ENTRADA.preferencias = location.hash === '#preferencias';
     try { ENTRADA.ver = new URLSearchParams(String(location.hash || '').replace(/^#/, '')).get('ver') === '1'; } catch (e) { ENTRADA.ver = false; }
     var mudou = false;
-    PARAMS_MP.forEach(function (k) { if (q.has(k)) { q.delete(k); mudou = true; } });
+    PARAMS_MP.concat(PAGINA === 'obrigado' ? PARAMS_VOLTA : []).forEach(function (k) { if (q.has(k)) { q.delete(k); mudou = true; } });
     var busca = q.toString(); busca = busca ? '?' + busca : '';
     var hash = location.hash;
     if (PAGINA === 'home') { if (hash) { hash = ''; mudou = true; } }
@@ -573,19 +696,44 @@
     try { apagarDe(W.sessionStorage); } catch (e) {}
     Object.keys(memoria).forEach(function (k) { if (k.indexOf('creat:') === 0) delete memoria[k]; });
     vistoNaSessao = {};
+    avisarHospedagem(false);
     if (terceirosCarregados) revogarTerceiros(); else apagarCookiesMeta();
   }
   function montarConsentimento() {
     var caixa = $('#consentimento');
-    if (!caixa) { if (consentimento()) carregarTerceiros(); return; }
-    // O banner reserva o próprio espaço no fim da página: nada fica escondido atrás dele.
-    var mostrar = function () { caixa.hidden = false; D.body.classList.add('com-consentimento'); D.body.style.setProperty('--altura-consentimento', (caixa.offsetHeight + 24) + 'px'); };
-    var esconder = function () { caixa.hidden = true; D.body.classList.remove('com-consentimento'); };
+    var escolha0 = consentimento();
+    if (escolha0) avisarHospedagem(!!escolha0.pixel);     // a escolha gravada vale também para o cookie da hospedagem
+    if (!caixa) { if (escolha0) carregarTerceiros(); return; }
+    /* O banner reserva o próprio espaço no fim da página (padding do body e scroll-padding), então nada fica
+       escondido atrás dele. Com um formulário na tela vira faixa de até 64 px (is-faixa) e, com o foco num
+       campo, sai da frente (is-digitando): nunca cobre o que a pessoa está preenchendo (CH-05, PG-12). */
+    var medir = function () {
+      if (caixa.hidden) return;
+      var alt = caixa.classList.contains('is-digitando') ? 0 : caixa.offsetHeight + (caixa.classList.contains('is-faixa') ? 8 : 24);
+      D.body.style.setProperty('--altura-consentimento', alt + 'px');
+      D.documentElement.style.scrollPaddingBottom = alt ? alt + 'px' : '';
+    };
+    var mostrar = function () { caixa.hidden = false; caixa.classList.toggle('is-digitando', ehCampo(D.activeElement)); D.body.classList.add('com-consentimento'); medir(); };
+    var esconder = function () { caixa.hidden = true; D.body.classList.remove('com-consentimento'); D.documentElement.style.scrollPaddingBottom = ''; };
+    if ('ResizeObserver' in W) new ResizeObserver(medir).observe(caixa);
+    var formularios = $$('#form-abrir, #form-pedido, #form-teste');
+    if (formularios.length && 'IntersectionObserver' in W) {
+      var naTela = [];
+      var fio = new IntersectionObserver(function (ents) {
+        ents.forEach(function (en) { var i = formularios.indexOf(en.target); if (i !== -1) naTela[i] = en.isIntersecting; });
+        caixa.classList.toggle('is-faixa', naTela.some(Boolean)); medir();
+      }, { threshold: 0 });
+      formularios.forEach(function (fm) { fio.observe(fm); });
+    }
+    var ehCampo = function (x) { return !!(x && x.matches && x.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),select,textarea') && !caixa.contains(x)); };
+    D.addEventListener('focusin', function (e) { if (ehCampo(e.target)) { caixa.classList.add('is-digitando'); medir(); } });
+    D.addEventListener('focusout', function () { setTimeout(function () { if (!ehCampo(D.activeElement)) { caixa.classList.remove('is-digitando'); medir(); } }, 0); });
     var decidir = function (sim) {
       var antes = consentimento();
       guarda.gravar(CHAVE_CONSENT, JSON.stringify({ versao: 1, analytics: true, pixel: sim, clarity: sim, em: new Date().toISOString() }));
+      avisarHospedagem(sim);
       esconder(); aviso(caixa.getAttribute('data-salvo') || 'Preferência salva.');
-      if (sim) { carregarTerceiros(); return; }
+      if (sim) { carregarTerceiros(); iniciarPosthog(); return; }
       // Recusou depois de aceitar: revoga o Pixel desta página, apaga os cookies dele e recarrega sem terceiros.
       if (terceirosCarregados || (antes && antes.pixel)) { revogarTerceiros(); setTimeout(function () { try { location.reload(); } catch (e) {} }, 900); }
     };
@@ -880,11 +1028,19 @@
   }
 
   /* ------------------------------------------------------------ id do pedido */
+  /* Id público e segredo do pedido (docs/PEDIDO-API.md 4.1). O id ('PA-' e 10 Crockford, 256 % 32 = 0, sem viés)
+     vai ao servidor, ao WhatsApp e à tela. O segredo (128 bits em base64url, 22 caracteres) fica só neste aparelho
+     e só viaja no corpo das chamadas ao servidor: nunca na URL, no WhatsApp ou na medição. */
+  function aleatorio(n) { var b = new Uint8Array(n); (W.crypto || W.msCrypto).getRandomValues(b); return b; }
   function novoId() {
-    var A = '0123456789ABCDEFGHJKMNPQRSTVWXYZ', b = new Uint8Array(8), s = 'PA-';
-    (W.crypto || W.msCrypto).getRandomValues(b);
-    for (var i = 0; i < 8; i++) s += A.charAt(b[i] % 32);
+    var A = '0123456789ABCDEFGHJKMNPQRSTVWXYZ', b = aleatorio(10), s = 'PA-';
+    for (var i = 0; i < 10; i++) s += A.charAt(b[i] % 32);
     return s;
+  }
+  function novoSegredo() {
+    var b = aleatorio(16), s = '';
+    for (var i = 0; i < 16; i++) s += String.fromCharCode(b[i]);
+    return W.btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
   function isoComFuso(d) {
     var off = -d.getTimezoneOffset(), sinal = off >= 0 ? '+' : '-', a = Math.abs(off);
@@ -911,6 +1067,7 @@
     if (hashIni.c) campoCidade.value = hashIni.c;
     function contarNome() { var cg = $('#contador-giz'); if (cg) cg.textContent = limparNome(campoNome.value).length + ' de 40'; }
     contarNome();   // nome preenchido pelo código (volta de /abrir/) também atualiza o "X de 40"
+    contar('visita', nichoIni);
 
     function nichoAtual() { var r = $('input[name="nicho"]:checked'); return r ? r.value : null; }
     function estado() {
@@ -1012,7 +1169,7 @@
       var frag = montarFragmento(s, false);
       urlPreviaAtual = RAIZ + 'previa/#' + frag;
       $('#previa-nome').textContent = s.n;
-      frame.title = 'Prévia do site da ' + s.n;
+      frame.title = 'Prévia do site: ' + s.n;   // sem artigo fixo: "da Studio" e "da Salão" quebram (PG-N4)
       carregandoPrevia.hidden = false; frame.style.visibility = 'hidden';
       previa.hidden = false; D.body.classList.add('com-previa');
       fora.forEach(function (x) { if (x) x.setAttribute('inert', ''); });
@@ -1021,6 +1178,7 @@
       if (!history.state || !history.state.previa) history.pushState({ previa: 1 }, '', location.pathname + location.search + '#previa');
       requestAnimationFrame(function () { previa.classList.add('aberta'); $('#previa-fechar').focus(); });
       evento('previa_gerada', { nicho: s.k });
+      contar('previa', s.k);
       pixelViewContent(s.k);
     }
     frame.addEventListener('load', function () {
@@ -1122,8 +1280,8 @@
       ];
       if (ok.indexOf(false) !== -1) { var inv = tForm.querySelector('[aria-invalid="true"]'); if (inv) inv.focus(); return; }
       var s = estado();
-      var modelo = 'Teste do Porta Aberta. Assim chega um pedido de horário no site da {negocio}: "Olá! Quero pedir um horário: {servico}, {dia} às {hora}. Meu nome é (nome do cliente)." No site de verdade, o dono confirma pelo WhatsApp.';
-      if (!s.n) modelo = modelo.replace('no site da {negocio}', 'no seu site');
+      var modelo = 'Teste do Porta Aberta. Assim chega um pedido de horário no seu site ({negocio}): "Olá! Quero pedir um horário: {servico}, {dia} às {hora}. Meu nome é (nome do cliente)." No site de verdade, o dono confirma pelo WhatsApp.';
+      if (!s.n) modelo = modelo.replace(' ({negocio})', '');
       var msg = t(modelo, { negocio: s.n, servico: tServ.value, dia: tDia.value, hora: tHora.value });
       $('#celular-msg').textContent = msg;
       abrirExterno(linkWhats(numero, msg));   // o número só existe aqui, na memória, e no link do próprio WhatsApp
@@ -1135,7 +1293,7 @@
       var s = estado();
       var msg = t('Olá! Quero pedir um horário: {servico}, {dia} às {hora}. Meu nome é (nome do cliente).', { servico: tServ.value || 'Corte', dia: tDia.value || 'amanhã', hora: tHora.value || '10:00' });
       $('#celular-msg').textContent = msg;
-      $('#celular-de').textContent = s.n ? 'Pedido pelo site da ' + s.n : 'Pedido pelo seu site';
+      $('#celular-de').textContent = s.n ? 'Pedido pelo site: ' + s.n : 'Pedido pelo seu site';
       var cel = $('#celular'); cel.hidden = false; cel.classList.remove('chegou'); void cel.offsetWidth; cel.classList.add('chegou');
       somFn('plim');
     });
@@ -1193,6 +1351,19 @@
   /* ======================================================================
      FORMULÁRIO DO PEDIDO (usado em /abrir/ e em /obrigado/ sem dados)
      ====================================================================== */
+  // De 30 em 30 minutos, das 00:00 às 23:30; um valor fora da grade (ex.: 08:45 do preset) entra na ordem.
+  function preencherHoras(sel, valor) {
+    var lista = [];
+    for (var m = 0; m < 24 * 60; m += 30) lista.push(hhmm(m));
+    if (/^([01]\d|2[0-3]):[0-5]\d$/.test(valor || '') && lista.indexOf(valor) === -1) { lista.push(valor); lista.sort(); }
+    sel.textContent = '';
+    lista.forEach(function (v) { sel.appendChild(el('option', { value: v }, v)); });
+    sel.value = lista.indexOf(valor) !== -1 ? valor : '09:00';
+  }
+  function definirHora(sel, valor) {
+    if (sel.tagName === 'SELECT' && !Array.prototype.some.call(sel.options, function (o) { return o.value === valor; })) preencherHoras(sel, valor);
+    else sel.value = valor;
+  }
   function montarHorarios(caixa, semana) {
     caixa.textContent = '';
     DIAS_PEDIDO.forEach(function (d) {
@@ -1205,11 +1376,12 @@
       ck.checked = !!h; rot.appendChild(ck); rot.appendChild(el('span', null, 'Aberto'));
       cab.appendChild(rot); linha.appendChild(cab);
       var horas = el('div', { class: 'dia-horas' });
+      // Lista de horários HH:MM em 24 h (PG-13): o input type=time mostrava "09:00 AM" conforme o aparelho.
       [['abre', 'Abre'], ['fecha', 'Fecha']].forEach(function (par) {
         var l = el('label', { class: 'dia-hora' }); l.appendChild(el('span', null, par[1]));
-        var inp = el('input', { type: 'time', step: '900', id: id + '-' + par[0], 'aria-label': DIA_NOME[idx] + ', ' + par[1].toLowerCase() });
-        inp.value = h ? h[par[0]] : (par[0] === 'abre' ? '09:00' : '18:00');
-        l.appendChild(inp); horas.appendChild(l);
+        var sel = el('select', { id: id + '-' + par[0], 'aria-label': DIA_NOME[idx] + ', ' + par[1].toLowerCase() });
+        preencherHoras(sel, h ? h[par[0]] : (par[0] === 'abre' ? '09:00' : '18:00'));
+        l.appendChild(sel); horas.appendChild(l);
       });
       linha.appendChild(horas);
       var sync = function () { horas.hidden = !ck.checked; linha.classList.toggle('fechado', !ck.checked); };
@@ -1237,7 +1409,7 @@
       var m = /^(\w{3})=(fechado|(\d{2}:\d{2})-(\d{2}:\d{2}))$/.exec(par); if (!m) return;
       var l = caixa.querySelector('[data-dia="' + m[1] + '"]'); if (!l) return;
       var ck = l.querySelector('input[type=checkbox]'); ck.checked = m[2] !== 'fechado';
-      if (m[3]) { l.querySelector('[id$="-abre"]').value = m[3]; l.querySelector('[id$="-fecha"]').value = m[4]; }
+      if (m[3]) { definirHora(l.querySelector('[id$="-abre"]'), m[3]); definirHora(l.querySelector('[id$="-fecha"]'), m[4]); }
       ck.dispatchEvent(new Event('change'));
     });
   }
@@ -1260,6 +1432,8 @@
     var cidade = estadoBase.c || limparNome(v('p-cidade'));
     if (!estadoBase.c) conferir('p-cidade', !cidade ? 'Escreva a cidade do negócio.' : !cidadeValida(cidade) ? 'Use só letras, espaço e estes sinais: . - \'' : '');
     var plano = estadoBase.plano || v('p-plano');
+    // /obrigado/ sem dados: o plano começa em "Escolha o plano" e é obrigatório (PV-N1)
+    if (!estadoBase.plano) conferir('p-plano', PLANOS.indexOf(plano) === -1 ? 'Escolha o plano que você pagou.' : '');
     var resp = limparNome(v('p-responsavel'));
     conferir('p-responsavel', resp.length < 2 || resp.length > 60 || !RE_RESP.test(resp) ? 'Escreva o seu nome para a equipe saber com quem falar.' : '');
     var zapBruto = v('p-whatsapp'), zap = normalizarWhats(zapBruto);
@@ -1302,27 +1476,70 @@
     }
     $$('input,select', f).forEach(function (e) { e.addEventListener('input', function () { if (e.getAttribute('aria-invalid')) marcar(e, ''); }); });
   }
+
+  /* creat:pedido:v1 (contrato f, docs/PEDIDO-API.md). Completo: as chaves do PEDIDO v1 mais segredo, produto, valor,
+     praca, link (o de pagamento, público), paleta, salvo_em e status ('enviado' no clique; 'registrado' quando o
+     servidor confirma). Enxuto (PV-16): assim que consultarPedido responde, ou 7 dias depois, saem responsável,
+     WhatsApp, endereço, horários e e-mail; ficam id, segredo, negócio, nicho, plano, cidade, produto, valor, praca,
+     origem e status, por até 30 dias, para /obrigado/ e o rascunho (aprovarRascunho) acharem o pedido. */
   var CHAVE_PEDIDO = 'creat:pedido:v1';
-  function salvarPedido(d, estadoBase, idExistente) {
-    var agora = new Date();
+  var PESSOAIS = ['responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'previa', 'aceite_termos'];
+  // compra: { produto, valor, praca, link } do botão clicado (ou da volta do pagamento).
+  function salvarPedido(d, estadoBase, reaproveitar, compra) {
+    var agora = new Date(); compra = compra || {};
     var registro = {
-      id: idExistente || novoId(), plano: d.plano, nicho: d.nicho, negocio: d.negocio, cidade: d.cidade,
+      id: null, segredo: null, plano: d.plano, nicho: d.nicho, negocio: d.negocio, cidade: d.cidade,
       responsavel: d.responsavel, whatsapp_negocio: d.whatsapp_negocio, endereco: d.endereco, horarios: d.horarios, email: d.email,
       origem: origemTexto(estadoBase.utm), previa: RAIZ + 'previa/#' + montarFragmento({ k: d.nicho, n: d.negocio, c: d.cidade, p: estadoBase.p || 1 }, false),
       aceite_termos: isoComFuso(agora) + ' ' + ((CK && CK.termosVersao) || 'termos-v1'),
-      paleta: estadoBase.p || 1, salvo_em: agora.toISOString()
+      produto: CATALOGO[compra.produto] ? compra.produto : null, valor: CATALOGO[compra.produto] ? CATALOGO[compra.produto] : null,
+      praca: PRACAS.indexOf(compra.praca) !== -1 ? compra.praca : null,
+      link: compra.link && CK && CK.linkValido(compra.link) ? compra.link : null,
+      paleta: estadoBase.p || 1, salvo_em: agora.toISOString(), status: 'enviado'
     };
+    // Mesmo aparelho e os mesmos dados: o mesmo pedido (o servidor só cria; repetir é inofensivo). Dado mudou: pedido novo,
+    // porque o servidor nunca sobrescreve um id que já existe.
+    var mesmo = reaproveitar && reaproveitar.segredo && RE_ID.test(reaproveitar.id) && !reaproveitar.enxuto &&
+      JSON.stringify(corpoRegistro(Object.assign({}, registro, { id: reaproveitar.id, segredo: reaproveitar.segredo }))) === JSON.stringify(corpoRegistro(reaproveitar));
+    registro.id = mesmo ? reaproveitar.id : novoId();
+    registro.segredo = mesmo ? reaproveitar.segredo : novoSegredo();
+    if (mesmo && reaproveitar.status === 'registrado') registro.status = 'registrado';
     var ok = guarda.gravar(CHAVE_PEDIDO, JSON.stringify(registro));
     return { registro: registro, gravou: ok };
   }
+  // Corpo exato de registrarPedido ($defs/PedidoRegistro). hp: o campo isca do formulário.
+  function corpoRegistro(p, hp) {
+    var u = origemParaUtm(p.origem);
+    var c = {
+      id: p.id, segredo: p.segredo, produto: p.produto, valor: p.valor, praca: PRACAS.indexOf(p.praca) !== -1 ? p.praca : null,
+      plano: PLANOS.indexOf(p.plano) !== -1 ? p.plano : null, nicho: p.nicho, negocio: p.negocio, cidade: p.cidade,
+      whatsapp: p.whatsapp_negocio, email: p.email,
+      utm_source: u.utm_source || null, utm_campaign: u.utm_campaign || null, utm_content: u.utm_content || null,
+      termos_versao: (CK && CK.termosVersao) || 'termos-v1', consentimento_dados: true, hp: typeof hp === 'string' ? hp : '', teste: false
+    };
+    ['responsavel', 'endereco', 'horarios'].forEach(function (k) { if (p[k]) c[k] = p[k]; });
+    return c;
+  }
+  function registravel(p) { return !!(p && !p.enxuto && RE_ID.test(p.id) && RE_SEGREDO.test(p.segredo || '') && CATALOGO[p.produto] === p.valor); }
+  function enxugar(p, status) {
+    var e = {};
+    Object.keys(p).forEach(function (k) { if (PESSOAIS.indexOf(k) === -1) e[k] = p[k]; });
+    e.enxuto = true; e.status = status || 'registrado'; e.registrado_em = e.registrado_em || new Date().toISOString();
+    guarda.gravar(CHAVE_PEDIDO, JSON.stringify(e));
+    return e;
+  }
+  function gravarPedido(p) { guarda.gravar(CHAVE_PEDIDO, JSON.stringify(p)); return p; }
   function lerPedidoSalvo() {
     var p = lerJSONGuardado(CHAVE_PEDIDO);
     if (!p || typeof p !== 'object') return null;
-    var t0 = Date.parse(p.salvo_em);
-    if (isNaN(t0) || Date.now() - t0 > D7) { guarda.apagar(CHAVE_PEDIDO); return null; }
-    var obrig = ['id', 'plano', 'nicho', 'negocio', 'cidade', 'responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'origem', 'previa', 'aceite_termos'];
+    var t0 = Date.parse(p.salvo_em), idade = Date.now() - t0;
+    var novo = RE_ID.test(p.id) && RE_SEGREDO.test(p.segredo || '');
+    if (isNaN(t0) || idade < -FOLGA || idade > D30 || (idade > D7 && !novo)) { guarda.apagar(CHAVE_PEDIDO); return null; }
+    if (!(novo || RE_ID_ANTIGO.test(p.id)) || PLANOS.indexOf(p.plano) === -1 || NICHOS.indexOf(p.nicho) === -1 || typeof p.negocio !== 'string' || !p.negocio) return null;
+    if (p.enxuto) return novo ? p : null;
+    if (idade > D7) return enxugar(p, p.status === 'registrado' ? 'registrado' : 'vencido');   // dado pessoal nunca passa de 7 dias no aparelho
+    var obrig = ['cidade', 'responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'origem', 'previa', 'aceite_termos'];
     for (var i = 0; i < obrig.length; i++) if (typeof p[obrig[i]] !== 'string' || !p[obrig[i]]) return null;
-    if (!/^PA-[0-9A-HJKMNP-TV-Z]{8}$/.test(p.id) || PLANOS.indexOf(p.plano) === -1 || NICHOS.indexOf(p.nicho) === -1) return null;
     return p;
   }
 
@@ -1350,7 +1567,10 @@
     if (!Object.keys(utmAtual).length) utmAtual = lerOrigem() || (salvo ? origemParaUtm(salvo.origem) : {});
     est.utm = utmAtual;
     var f = $('#form-pedido');
-    $('#abrir-titulo').textContent = est.n ? 'Falta pouco para abrir a ' + est.n + '.' : 'Falta pouco para abrir o seu negócio.';
+    // sem artigo fixo (PG-N4): "abrir a Studio Teste" e "abrir a Salão Teste" quebravam
+    $('#abrir-titulo').textContent = est.n ? 'Falta pouco para abrir ' + est.n + '.' : 'Falta pouco para abrir o seu negócio.';
+    contar('ida_pagamento', est.k);
+    var teste = ENTRADA.teste ? montarModoTeste() : null;
     var resumo = $('#abrir-negocio');
     if (est.n && est.k) {
       resumo.hidden = false;
@@ -1388,8 +1608,9 @@
       aplicarPrecos(naTela, D, est.plano);
       $$('[data-v="abrir.total"]').forEach(function (x) { x.textContent = milhar(escolha.total); x.classList.remove('num-carregando'); });
       $('#anual-nota').hidden = !anual;
+      if (teste) { teste.aplicar(botoes, barra); return; }
       var algumOk = false;
-      botoes.forEach(function (b) { if (aplicarCheckout(b, escolha.r ? escolha.r.chave : precos.linkChave, escolha.r ? escolha.r.link : null)) algumOk = true; });
+      botoes.forEach(function (b) { if (aplicarCheckout(b, escolha.r ? escolha.r.chave : precos.linkChave, escolha.r ? escolha.r.link : null, abaNova())) algumOk = true; });
       $('#pagamento-config').hidden = algumOk;
       if (barra) barra.hidden = !algumOk;
       var zapCfg = $('#pagamento-zap');
@@ -1408,6 +1629,14 @@
       });
     });
     lerPrecos().then(function (pr) { precos = pr; atualizarTotal(); });
+    // O que o botão cobra: produto e valor do catálogo do servidor (o mesmo valor do link e da tela).
+    function compraAtual(b) {
+      if (teste) return teste.compra();
+      var chave = b.getAttribute('data-checkout'), produto = PRODUTO_DA_CHAVE[chave] || null;
+      var praca = escolha && escolha.r && escolha.r.praca ? escolha.r.praca : null;
+      if (!praca) { var o = lerOrigem() || utmAtual || {}; if (PRACAS.indexOf(o.utm_campaign) !== -1) praca = o.utm_campaign; }
+      return { produto: produto, valor: produto ? CATALOGO[produto] : null, praca: praca, link: b.getAttribute('href') };
+    }
     var checkoutContado = false;
     botoes.forEach(function (b) {
       b.addEventListener('click', function (e) {
@@ -1416,14 +1645,22 @@
         var r = lerFormPedido(f, est);
         if (!r.ok) { e.preventDefault(); resumoErros(f, r.faltam); return; }
         resumoErros(f, 0);
-        var s = salvarPedido(r.dados, est, salvo && salvo.negocio === r.dados.negocio ? salvo.id : null);
+        var s = salvarPedido(r.dados, est, lerPedidoSalvo(), compraAtual(b));
         if (!s.gravou) aviso('Este navegador não deixa guardar dados no aparelho, por isso a próxima página vai pedir os campos de novo. O pedido funciona do mesmo jeito.');
+        /* PG-05: o pedido vai ao servidor AGORA, sem esperar resposta e sem segurar a ida ao Mercado Pago (fetch com
+           keepalive sobrevive à troca de página). Se a função falhar, /obrigado/ registra de novo com os dados do aparelho. */
+        if (registravel(s.registro)) enviarSolto('registrarPedido', corpoRegistro(s.registro, hpValor()));
         evento('checkout_iniciado', { plano: r.dados.plano, nicho: r.dados.nicho });
         // um por carga da página: clique duplo ou voltar do Mercado Pago e clicar de novo na mesma carga não duplica
-        if (escolha && !checkoutContado) { checkoutContado = true; pixelEvento('InitiateCheckout', { value: escolha.total, currency: 'BRL' }); }
+        if (!teste && escolha && !checkoutContado) { checkoutContado = true; pixelEvento('InitiateCheckout', { value: escolha.total, currency: 'BRL' }); }
+        if (!teste) contar('clique_pagar', r.dados.nicho);
+        // Desktop: o pagamento abriu em outra aba (target=_blank); esta aba vai para /obrigado/ esperando o pagamento.
+        if (b.getAttribute('target') === '_blank' && !e.defaultPrevented) setTimeout(function () { location.assign(RAIZ + 'obrigado/?espera=1'); }, 80);
       });
     });
+    function hpValor() { var h = f.querySelector('#p-site'); return h ? String(h.value || '') : ''; }
     f.addEventListener('submit', function (e) { e.preventDefault(); });
+    lerTextosAbrir();
     montarBarraPagar(barra, $('#pagamento'));
     var esquecer = $('#esquecer');
     if (esquecer) {
@@ -1447,6 +1684,59 @@
     D.addEventListener('focusout', function () { setTimeout(function () { digitando = campo(D.activeElement); aplicar(); }, 0); });
     if ('MutationObserver' in W) new MutationObserver(aplicar).observe(barra, { attributes: true, attributeFilter: ['hidden'] });
     aplicar();
+  }
+
+  /* Link de teste (/abrir/?teste=pa-teste): um único botão "Pagar R$ 1 (teste)" com o link de checkout.config.js
+     (teste), que registra o pedido como pa-teste de R$ 1. Fora de menu e de anúncio; a página já é noindex.
+     Sem InitiateCheckout e sem contador. Vencido (valeAte), o botão fica desligado e diz isso. */
+  function montarModoTeste() {
+    var T = CK && CK.teste;
+    var vale = !!(T && T.produto === 'pa-teste' && T.valor === 1 && CK.linkValido(T.link) && Date.parse(T.valeAte) > Date.now());
+    var nota = $('#modo-teste'); if (nota) nota.hidden = false;
+    var venc = $('#modo-teste-vencido'); if (venc) venc.hidden = vale;
+    return {
+      compra: function () { return { produto: 'pa-teste', valor: 1, praca: null, link: vale ? T.link : null }; },
+      aplicar: function (botoes, barra) {
+        var principal = $('.pagar [data-checkout]');
+        botoes.forEach(function (b) {
+          if (b !== principal) { b.hidden = true; b.setAttribute('aria-disabled', 'true'); b.setAttribute('data-link-ok', '0'); return; }
+          b.setAttribute('data-checkout', 'teste'); b.setAttribute('data-rotulo', 'Pagar R$ 1 (teste)');
+          if (vale) {
+            b.setAttribute('href', T.link); b.setAttribute('data-link-ok', '1');
+            b.removeAttribute('aria-disabled'); b.removeAttribute('tabindex');
+            if (abaNova()) { b.setAttribute('target', '_blank'); b.setAttribute('rel', 'noopener noreferrer'); } else { b.removeAttribute('target'); b.removeAttribute('rel'); }
+            b.textContent = 'Pagar R$ 1 (teste)';
+          } else {
+            b.removeAttribute('href'); b.removeAttribute('target'); b.setAttribute('data-link-ok', '0');
+            b.setAttribute('aria-disabled', 'true'); b.setAttribute('tabindex', '-1');
+            b.textContent = 'O link de teste venceu';
+          }
+        });
+        if (barra) barra.hidden = true;
+        var cfg = $('#pagamento-config'); if (cfg) cfg.hidden = true;
+        $$('[data-v="abrir.total"]').forEach(function (x) { x.textContent = '1'; x.classList.remove('num-carregando'); });
+      }
+    };
+  }
+
+  /* Textos do conteudo/ lidos na hora (copywriter, pacote 2B). Chave que falta ou não é texto: vale o texto do HTML.
+     preencher troca {x} e {{x}} pelos valores conhecidos; marcador sem valor some (nunca vai "{x}" para a tela). */
+  function preencher(s, vars) {
+    return String(s).replace(/\{\{\s*([\w.]+)\s*\}\}|\{([\w.]+)\}/g, function (m, a, b) { var k = a || b; return vars && vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : ''; }).replace(/\s{2,}/g, ' ').trim();
+  }
+  function textoDe(obj, caminho) {
+    var v = obj; caminho.split('.').forEach(function (k) { v = v && typeof v === 'object' ? v[k] : undefined; });
+    return typeof v === 'string' && v.trim() ? v : null;
+  }
+  function lerTextosAbrir() {
+    Promise.all([buscarJSON('conteudo/abrir.json'), lerPrecos()]).then(function (r) {
+      var j = r[0], vars = valoresDe(r[1]); if (!j) return;
+      var trocar = function (sel, chave) { var e = $(sel), s = textoDe(j, chave); if (e && s) { e.textContent = preencher(s, vars); e.hidden = false; } };
+      trocar('#pagar-parcelas', 'pagar.parcelas');
+      trocar('#pagar-recebedor', 'pagar.recebedor');
+      var av = $('#pagar-aviso-texto'), s = textoDe(j, 'pagar.aviso_dados');
+      if (av && s) av.textContent = preencher(s, vars) + ' ';
+    });
   }
 
   /* ======================================================================

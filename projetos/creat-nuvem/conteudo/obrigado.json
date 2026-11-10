@@ -122,7 +122,7 @@
   },
 
   "relogio": {
-    "_regra": "Sem número de contagem parado (nada de 72:00:00). Só o rótulo e a regra; a data de entrega aparece quando consultarPedido devolver prazo_fim.",
+    "_regra": "Sem contador parado na tela. Só o rótulo e a regra; a data de entrega aparece quando consultarPedido devolver prazo_fim.",
     "rotulo": "Prazo: {{precos.prazoHoras}} h a partir da confirmação",
     "texto": "O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).",
     "aguardando": "aguardando a confirmação do pagamento",

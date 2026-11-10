@@ -8,15 +8,28 @@ Verbo (T3), 08/11/2026. Todo texto público do Porta Aberta mora aqui. O HTML n�
 |---|---|---|
 | `home.json` | `/` | seções 1 a 10 da 5.1, na ordem: `seo`, `barra`, `hero`, `previa`, `testeDeVerdade`, `comoFunciona`, `precos`, `sede`, `prova`, `perguntas`, `chamadaFinal`, `rodape` |
 | `faq.json` | `/` seção 9 | `itens[]` com `id`, `pergunta`, `resposta`; 14 perguntas, as 10 do briefing primeiro |
-| `abrir.json` | `/abrir/` | plano, total, 5 campos, aceite, pagamento, garantia, "o que acontece depois", erros dos campos |
-| `obrigado.json` | `/obrigado/` | não afirma pagamento confirmado; o PEDIDO v1 é montado por código |
+| `abrir.json` | `/abrir/` | plano, total, 5 campos, aceite, pagamento, `pagar.recebedor`, `pagar.parcelas` e `pagar.aviso_dados` (linhas coladas no botão Pagar), garantia com `garantia.regra`, "o que acontece depois", erros dos campos |
+| `obrigado.json` | `/obrigado/` | não afirma pagamento pela URL; `estados.{aprovado,a_conferir,conferencia_longa,recusado,pendente,sem_retorno,assinatura_ok,assinatura_cancelada,anual_pago,teste_ok,produto_fora}.{titulo,texto,botao}`, `recibo.*`, `wa.*`, `rascunho.*` (o canal do link do site pronto mora só em `rascunho.canais`), `recebedor`, `desistir`; o PEDIDO v1 é montado por código |
 | `bastidores.json` | `/bastidores/` | `aviso` é a primeira linha visível, antes do preço |
 | `termos.md` | `/termos/` | primeira linha `REVISAO_JURIDICA_PENDENTE`; mostrar a linha na página até o Marcos aprovar |
-| `privacidade.md` | `/privacidade/` | idem |
+| `privacidade.md` | `/privacidade/` | idem. Versão 3 (10/11/2026): descreve o registro do pedido no toque em Pagar e só sobe no mesmo ato da página /abrir/ que faz esse registro (pacote 2A). O antigo rascunho `privacidade-v3.md` foi incorporado aqui e apagado: não rode o `git mv` citado em `docs/PEDIDO-API.md`, seção 10, item 8 |
 | `comum.json` | várias | banner de consentimento, `pagina404`, runtime da prévia, mensagens de WhatsApp da vitrine, lista de espera, erros gerais, estados vazios, carregamento, rótulos de ações |
 | `nichos/barbearia.json`, `nichos/salao.json`, `nichos/academia.json` | presets do motor | `bordao`, `pagina`, `servicos`, `agendamento.mensagem`, `textos` (só chaves da lista branca do schema), `paletas` com nome, `funcionamentoSugerido`, `ritualTextos` |
 
 Chaves que começam com `_` são notas para quem implementa; não vão para a tela.
+
+## Regra única de prazo
+
+A mesma frase, sem mudar uma vírgula, em `home.json` (`precos.abertura.regraPrazo`), `faq.json` (`prazo`), `abrir.json` (`garantia.regra`), `obrigado.json` (`relogio.texto`), `termos.md` (cláusula 5) e `marketing/whatsapp-scripts.md` (R3, F5 e ausência):
+
+> O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).
+
+Termos na versão 2 (`termos-v2`). Mudou o texto de `termos.md`: a versão e o sha256 em `checkout.config.js` (`termosVersao`) e em `schema/pedido-regras.mjs` (`TERMOS`) mudam no mesmo ato, e `abrir.json` `aceite.texto` diz "versão 2".
+
+## Frases marcadas para revisão na onda 4
+
+- `privacidade.md`, seção 1 e seção 7: Google Fonts. Sai quando o pacote 4A hospedar as letras no próprio site.
+- `privacidade.md`, seção 1: "Nas outras páginas (termos, privacidade, bastidores, prévia e sede), ela ainda pode gravá-los". Sai quando essas páginas ganharem a meta `base44-visitor-tracking` com consentimento.
 
 ## Dois tipos de marcador
 

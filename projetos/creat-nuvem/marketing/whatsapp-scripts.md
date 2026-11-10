@@ -265,7 +265,7 @@ Uma etiqueta por estado do pedido (os mesmos estados de `schema/evento.schema.js
 | Viu prévia | mandou link da prévia ou disse que viu |
 | Checkout | disse que vai pagar ou pediu o link |
 | Pago · conferir | mandou o PEDIDO v1 ou pagou pelo link; pagamento ainda não conferido no Mercado Pago |
-| Em produção | pagamento conferido e 4 dados completos; relógio correndo |
+| Em produção | pagamento conferido; prazo correndo (regra única de prazo) |
 | Aguardando aprovação | R7 enviado |
 | No ar | R8 enviado; mensalidade começou |
 | Cobrança D-3 | R9 enviado |
