@@ -27,12 +27,21 @@ export const NICHOS = Object.freeze(['barbearia', 'salao', 'academia']);
 export const PLANOS = Object.freeze(['aberto', 'vitrine', 'aberto_anual', 'vitrine_anual']);
 export const EVENTOS = Object.freeze(['visita', 'previa', 'ida_pagamento', 'clique_pagar']);
 
-// Códigos de anúncio conhecidos (utm_content, marketing/utm.md). Qualquer outro valor conta como 'outro'.
+// Códigos de anúncio conhecidos (utm_content de marketing/utm.md, marketing/trafego/*.md). Qualquer outro valor conta como 'outro'.
+// Lista fechada de propósito: cada código vira no máximo uma linha por dia em ContadorDia (ninguém enche a entidade
+// inventando códigos). O teste 'todo utm_content dos textos de marketing está na lista' falha quando um anúncio novo
+// aparece nos textos sem entrar aqui. v2 = rodada da troca de preço (textos-troca-unica.md).
 export const ANUNCIOS = Object.freeze([
-  'A1-barbearia-v1', 'A1-salao-v1', 'A1-academia-v1', 'B1-salao-v1', 'B1-barbearia-v1', 'C1-barbearia-v1',
-  'A4-barbearia-v1', 'A4-salao-v1', 'A5-geral-v1', 'A6-barbearia-v1', 'C4-geral-v1',
+  'A1-barbearia-v1', 'A1-salao-v1', 'A1-academia-v1', 'A1-barbearia-v2', 'A1-salao-v2', 'A1-academia-v2',
+  'A2-barbearia-v1', 'A3-barbearia-v1', 'A4-barbearia-v1', 'A4-salao-v1', 'A5-geral-v1', 'A6-barbearia-v1',
+  'B1-salao-v1', 'B1-barbearia-v1', 'B1-salao-v2', 'B1-barbearia-v2', 'C1-barbearia-v1', 'C4-geral-v1',
   'F0-geral-v1', 'F1-barbearia-v1', 'F1-barbearia-v2', 'F1-salao-v1', 'F1-academia-v1',
-  'T1-barbearia-v1', 'T1-salao-v1', 'T1-academia-v1', 'V1-geral-v1', 'V2-geral-v1'
+  'G3-barbearia-v1', 'G4-salao-v1', 'G5-academia-v1',
+  'R1-barbearia-v1', 'R1-salao-v1', 'R1-academia-v1', 'R2-barbearia-v1', 'R2-salao-v1', 'R3-geral-v1', 'R4-barbearia-v1',
+  'R7-barbearia-v1', 'R7-salao-v1', 'R8-academia-v1', 'R9-salao-v1',
+  'T1-barbearia-v1', 'T1-salao-v1', 'T1-academia-v1', 'V1-geral-v1', 'V2-geral-v1',
+  'video', 'video-barbearia-v1', 'video-salao-v1', 'video-academia-v1',
+  'W0-barbearia-v1', 'W0-salao-v1', 'W0-academia-v1', 'W1-barbearia-v1', 'W1-salao-v1', 'W1-academia-v1', 'W2-geral-v1'
 ]);
 
 // Versão dos termos aceita -> sha256 do conteudo/termos.md publicado com essa versão (commit 29bddd5).
@@ -45,6 +54,20 @@ export const LIMITES = Object.freeze({
   janelaRegra3Ms: 6 * 3600 * 1000,
   janelaRegra2Ms: 7 * 24 * 3600 * 1000,
   candidatosRegra2: 20,
+  // portaAbertaVerificar (1B) aceita 10 chamadas por hora por pagamento e 60 por hora por origem (o servidor do
+  // Porta Aberta é UMA origem para todos os clientes). Por confirmação: 1 chamada sem e-mail e no máximo 4 com
+  // e-mail (e-mails distintos, mais recentes primeiro). Respostas firmes ficam guardadas 1 h (aprovado) ou 2 min.
+  verificacoesRegra2: 4,
+  verificarHora: 50,
+  verificarAnonHora: 30,
+  cacheVerificarMs: 3600 * 1000,
+  cacheNegativoMs: 2 * 60 * 1000,
+  registrarHora: 30,
+  registrarGlobalHora: 300,
+  registrarGlobalDuroHora: 900,
+  consultarHora: 600,
+  purgaTeto: 2000,
+  aceiteTacitoMs: 7 * 24 * 3600 * 1000,
   prazoHoras: 72,
   alertaAntesMs: 12 * 3600 * 1000,
   aprovacaoValidadeMs: 14 * 24 * 3600 * 1000,
@@ -55,6 +78,7 @@ export const LIMITES = Object.freeze({
 });
 
 export const RE = Object.freeze({
+  // Id gravado pelo servidor: PA- e 10 caracteres. O PEDIDO v1 antigo (8 Crockford) só vale em schema/pedido.schema.json.
   pedidoId: /^PA-[0-9A-Z]{10}$/,
   paymentId: /^\d{6,14}$/,
   // 128 bits em base64url sem preenchimento: 22 caracteres, o último em [AQgw].
@@ -66,7 +90,10 @@ export const RE = Object.freeze({
   // 55 + DDD (dois dígitos de 1 a 9) + celular (9 e mais 8) ou fixo (2 a 5 e mais 7).
   whatsapp: /^55[1-9][1-9](9\d{8}|[2-5]\d{7})$/,
   negocio: /^[\p{L}\p{N} &.'-]{1,40}$/u,
-  cidade: /^[\p{L}\p{N} .'-]{1,40}$/u
+  cidade: /^[\p{L}\p{N} .'-]{1,40}$/u,
+  // Opcionais do registro (o mesmo formato do PEDIDO v1, schema/pedido.schema.json $defs/PedidoEntrada).
+  responsavel: /^[\p{L} .'-]{2,60}$/u,
+  horarios: /^seg=(fechado|([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d);ter=(fechado|([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d);qua=(fechado|([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d);qui=(fechado|([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d);sex=(fechado|([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d);sab=(fechado|([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d);dom=(fechado|([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d)$/
 });
 
 /* ---------- Entrada ---------- */
@@ -84,7 +111,8 @@ export function segredoValido(v) { return typeof v === 'string' && RE.segredo.te
 
 const CHAVES_REGISTRO = Object.freeze([
   'id', 'segredo', 'produto', 'valor', 'praca', 'plano', 'nicho', 'negocio', 'cidade', 'whatsapp', 'email',
-  'utm_source', 'utm_campaign', 'utm_content', 'termos_versao', 'consentimento_dados', 'hp', 'teste', 'aceite_em'
+  'utm_source', 'utm_campaign', 'utm_content', 'termos_versao', 'consentimento_dados', 'hp', 'teste', 'aceite_em',
+  'responsavel', 'endereco', 'horarios'
 ]);
 
 function texto(v, max) {
@@ -138,6 +166,20 @@ export function validarRegistro(corpo) {
   if (corpo.hp !== undefined && typeof corpo.hp !== 'string') return { ok: false, campo: 'hp' };
   if (corpo.teste !== undefined && typeof corpo.teste !== 'boolean') return { ok: false, campo: 'teste' };
   if (corpo.aceite_em !== undefined && (typeof corpo.aceite_em !== 'string' || corpo.aceite_em.length > 40)) return { ok: false, campo: 'aceite_em' };
+  // Opcionais: quem cuida do negócio, endereço (uma linha) e horários. Com os três, o executor produz sem pedir nada
+  // ao cliente pelo WhatsApp (entradaDoRegistro). Vazio ou ausente: null.
+  const opcional = (k, max, re) => {
+    const v = corpo[k];
+    if (v === undefined || v === null || v === '') return { v: null };
+    const t = texto(v, max);
+    return t && (!re || re.test(t)) && t.length >= (k === 'endereco' ? 8 : 2) ? { v: t } : { erro: k };
+  };
+  const extras = {};
+  for (const [k, max, re] of [['responsavel', 60, RE.responsavel], ['endereco', 160, null], ['horarios', 200, RE.horarios]]) {
+    const r = opcional(k, max, re);
+    if (r.erro) return { ok: false, campo: r.erro };
+    extras[k] = r.v;
+  }
   return {
     ok: true,
     teste: corpo.teste === true,
@@ -147,7 +189,8 @@ export function validarRegistro(corpo) {
       id, produto, valor, praca, plano, nicho: corpo.nicho, negocio, cidade, whatsapp, email,
       utm_source: utm.utm_source, utm_campaign: utm.utm_campaign, utm_content: utm.utm_content,
       termos_versao: corpo.termos_versao, termos_hash: TERMOS[corpo.termos_versao],
-      eh_teste: PRODUTOS[produto].teste
+      eh_teste: PRODUTOS[produto].teste,
+      responsavel: extras.responsavel, endereco: extras.endereco, horarios: extras.horarios
     }
   };
 }
@@ -177,6 +220,59 @@ export function pagamentoConfiavel(v) {
   return { produto: ref.produto, praca: ref.praca, valor: PRODUTOS[ref.produto].valor, teste: PRODUTOS[ref.produto].teste, aprovadoEmMs: aprovadoEm };
 }
 
+// Classifica a resposta de portaAbertaVerificar para a resposta pública de confirmarPagamento.
+//  'aprovado'          pagamento aprovado de um produto do catálogo deste servidor (pg preenchido)
+//  'fora_do_catalogo'  aprovado pelo 1B como Porta Aberta, mas referência ou valor que este catálogo não vende
+//                      (Bastidores, anuais, combos): o suporte é avisado e nada é promovido
+//  'nao_aprovado'      inexistente, pendente (Pix ainda não compensado), recusado ou de outro negócio: AINDA CONFERINDO
+export function classificarPagamento(v) {
+  if (!v || typeof v !== 'object' || v.aprovado !== true) return { tipo: 'nao_aprovado', pg: null };
+  const pg = pagamentoConfiavel(v);
+  return pg ? { tipo: 'aprovado', pg } : { tipo: 'fora_do_catalogo', pg: null };
+}
+
+// Quais e-mails de candidatos da Regra 2 vale perguntar ao portaAbertaVerificar.
+// candidatos: pedidos já filtrados por pedidoCasa, do mais recente para o mais antigo.
+// E-mails iguais contam uma vez só (é a mesma pessoa; a resposta vale para todos os pedidos dela).
+// Devolve { emails: [até max, mais recentes primeiro], sobra: e-mails distintos que ficaram sem pergunta }.
+export function escolherVerificacoes(candidatos, max) {
+  const vistos = [];
+  for (const c of Array.isArray(candidatos) ? candidatos : []) {
+    const e = c && typeof c.email === 'string' ? c.email.trim().toLowerCase() : '';
+    if (e && !vistos.includes(e)) vistos.push(e);
+  }
+  const n = Number.isInteger(max) && max >= 0 ? max : LIMITES.verificacoesRegra2;
+  return { emails: vistos.slice(0, n), sobra: Math.max(0, vistos.length - n) };
+}
+
+// Monta a entrada da Regra 2 perguntando ao portaAbertaVerificar só o necessário.
+// candidatos: pedidos que casam (pedidoCasa), mais recentes primeiro. verificar(email): função da rota que chama o 1B
+// e devolve { confere: true|false } ou { transitorio: true } (429, 5xx, rede, tempo). Para no primeiro e-mail que confere
+// (e-mails distintos: só um pode ser o do pagador). Devolve { regra2, chamadas, transitorio }.
+//  transitorio: alguma pergunta falhou e nenhuma conferiu; a rota responde 202 e não muda nada.
+export async function montarRegra2(candidatos, verificar, max) {
+  const lista = Array.isArray(candidatos) ? candidatos : [];
+  const { emails } = escolherVerificacoes(lista, max);
+  const resposta = new Map();
+  let chamadas = 0, transitorio = false, achou = false;
+  for (const e of emails) {
+    if (achou) break;
+    chamadas++;
+    const r = await verificar(e);
+    if (r && r.transitorio) { transitorio = true; continue; }
+    const ok = !!(r && r.confere === true);
+    resposta.set(e, ok);
+    if (ok) achou = true;
+  }
+  const regra2 = lista.map(p => {
+    const e = typeof p.email === 'string' ? p.email.trim().toLowerCase() : '';
+    if (resposta.has(e)) return { pedido: p, emailConfere: resposta.get(e) };
+    // Não perguntado (teto ou parou ao achar): com achado, não pode ser do pagador (outro e-mail).
+    return { pedido: p, emailConfere: achou ? false : null };
+  });
+  return { regra2, chamadas, transitorio: transitorio && !achou };
+}
+
 function msDe(v) { const t = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isNaN(t) ? null : t; }
 
 // O pedido pode receber este pagamento? Mesmo produto, mesmo valor, criado ANTES da aprovação
@@ -195,7 +291,8 @@ export function pedidoCasa(pedido, pg, agoraMs) {
 // Decide o que fazer com um pagamento confirmado. Entrada já buscada pela função (I/O fora daqui):
 //  pg: pagamentoConfiavel(...) ou null
 //  regra1: { pedido, emailConfere } quando veio pedido_id com segredo certo; senão null
-//  regra2: pedidos aguardando_pagamento do mesmo produto e valor, cada um com emailConfere (true/false)
+//  regra2: pedidos aguardando_pagamento do mesmo produto e valor, cada um com emailConfere:
+//          true (confere), false (não confere) ou null (não perguntado: passou do teto de verificações)
 //  agoraMs: hora do servidor
 // Saída: { acao: 'recusar'|'pago'|'teste_ok'|'a_conferir'|'sem_pedido', regra, pedido?, candidatos? }
 // Regra 3 (só valor na janela de 6 h) NUNCA promove: a_conferir, sem recibo e sem produção.
@@ -210,6 +307,9 @@ export function decidirConfirmacao({ pg, regra1, regra2, agoraMs }) {
   const comEmail = lista.filter(c => c.emailConfere === true);
   if (comEmail.length === 1) return promover(comEmail[0].pedido, 2);
   if (comEmail.length > 1) return { acao: 'a_conferir', regra: 2, candidatos: comEmail.map(c => c.pedido.pedido_id) };
+  // Algum candidato ficou sem pergunta e nenhum perguntado conferiu: pode ser ele. Nunca promove; vai ao suporte.
+  const semPergunta = lista.filter(c => c.emailConfere === null || c.emailConfere === undefined);
+  if (semPergunta.length) return { acao: 'a_conferir', regra: 2, candidatos: lista.map(c => c.pedido.pedido_id) };
   const naJanela = lista.filter(c => agoraMs - msDe(c.pedido.criado_em) <= LIMITES.janelaRegra3Ms);
   if (naJanela.length === 1) return { acao: 'a_conferir', regra: 3, pedido: naJanela[0].pedido, candidatos: [naJanela[0].pedido.pedido_id] };
   if (naJanela.length > 1) return { acao: 'a_conferir', regra: 3, candidatos: naJanela.map(c => c.pedido.pedido_id) };
@@ -286,11 +386,12 @@ export function normalizarContagem(corpo) {
 
 export const TRANSICOES = Object.freeze({
   aguardando_pagamento: ['recusado', 'desistiu'],
-  a_conferir: ['pago', 'recusado', 'aguardando_pagamento'],
+  a_conferir: ['pago', 'recusado', 'aguardando_pagamento', 'desistiu'],
   pago: ['em_revisao', 'em_producao', 'desistiu'],
   em_revisao: ['em_producao', 'desistiu'],
   em_producao: ['rascunho_enviado', 'em_revisao', 'desistiu'],
-  rascunho_enviado: ['em_producao', 'desistiu'],
+  // rascunho_enviado -> no_ar é o aceite tácito: só com aceiteTacitoPermitido (7 dias sem resposta) e cláusula nos termos.
+  rascunho_enviado: ['em_producao', 'desistiu', 'no_ar'],
   aprovado: ['no_ar', 'em_producao', 'desistiu'],
   no_ar: ['desistiu'],
   recusado: [],
@@ -299,6 +400,73 @@ export const TRANSICOES = Object.freeze({
 });
 
 export function transicaoPermitida(de, para) { return Object.prototype.hasOwnProperty.call(TRANSICOES, de) && TRANSICOES[de].includes(para); }
+
+// Aceite tácito: rascunho enviado há 7 dias ou mais, sem aprovação. A hora do envio é rascunho_em
+// (gravarRascunho grava); sem ela, deduz de aprovacao_expira_em (envio + 14 dias).
+export function aceiteTacitoPermitido(pedido, agoraMs) {
+  if (!pedido || pedido.status !== 'rascunho_enviado' || pedido.aprovado_em) return false;
+  let enviado = msDe(pedido.rascunho_em);
+  if (enviado === null) {
+    const expira = msDe(pedido.aprovacao_expira_em);
+    if (expira === null) return false;
+    enviado = expira - LIMITES.aprovacaoValidadeMs;
+  }
+  return agoraMs - enviado >= LIMITES.aceiteTacitoMs;
+}
+
+// Campos que o executor (docs/EXECUTOR.md) grava no pedido, além dos do servidor. Todos opcionais.
+export const CAMPOS_EXECUTOR = Object.freeze({
+  motivo_revisao: 'texto', rascunho_em: 'data', no_ar_em: 'data', aprovacao_tacita_em: 'data',
+  garantia_mes_gratis: 'booleano', desistiu_em: 'data', estorno_prazo_em: 'data', estorno_feito_em: 'data',
+  mensalidade_link_em: 'data', lembrete_d3_em: 'data', lembrete_d7_em: 'data', assinatura_confirmada_em: 'data'
+});
+
+// Valida campos do executor para marcarPedido. Devolve { ok, dados } ou { ok: false, campo }.
+export function validarCamposExecutor(campos) {
+  const dados = {};
+  for (const [k, v] of Object.entries(campos || {})) {
+    const tipo = CAMPOS_EXECUTOR[k];
+    if (!tipo) return { ok: false, campo: k };
+    if (v === null) { dados[k] = null; continue; }
+    if (tipo === 'data' && !(typeof v === 'string' && v.length <= 40 && msDe(v) !== null)) return { ok: false, campo: k };
+    if (tipo === 'booleano' && typeof v !== 'boolean') return { ok: false, campo: k };
+    if (tipo === 'texto' && !(typeof v === 'string' && /^[a-z0-9_]{1,40}$/.test(v))) return { ok: false, campo: k };
+    dados[k] = v;
+  }
+  return { ok: true, dados };
+}
+
+/* ---------- Do registro do servidor para o PEDIDO v1 do produzir.mjs (pacote 1C) ---------- */
+
+// p: linha de PedidoPortaAberta (como listarPedidosPagos devolve). origemSite: endereço do site, sem barra no fim.
+// Devolve { entrada, faltam }. entrada segue schema/pedido.schema.json $defs/PedidoEntrada; faltam lista os campos
+// que o comprador não informou no registro (responsavel, endereco, horarios, plano) e que o produzir exige.
+// Nada é inventado: campo ausente fica fora de entrada e entra em faltam.
+export function entradaDoRegistro(p, origemSite) {
+  const faltam = [];
+  if (!p || typeof p !== 'object') return { entrada: null, faltam: ['pedido'] };
+  const utm = [['utm_source', p.utm_source], ['utm_campaign', p.utm_campaign], ['utm_content', p.utm_content]]
+    .filter(([, v]) => typeof v === 'string' && RE.utm.test(v)).map(([k, v]) => k + '=' + v);
+  const base = typeof origemSite === 'string' && /^https:\/\/[A-Za-z0-9.-]+(:[0-9]+)?$/.test(origemSite) ? origemSite : ORIGEM;
+  const entrada = {
+    formato: 'PEDIDO v1',
+    id: p.pedido_id,
+    nicho: p.nicho,
+    negocio: p.negocio,
+    cidade: p.cidade,
+    whatsapp_negocio: p.whatsapp,
+    email: p.email,
+    origem: utm.length ? utm.join(';') : 'direto',
+    previa: base + '/previa/#k=' + encodeURIComponent(p.nicho || '') + '&n=' + encodeURIComponent(p.negocio || '') +
+      (p.cidade ? '&c=' + encodeURIComponent(p.cidade) : '') + '&p=1',
+    aceite_termos: (p.aceite_em || '') + ' ' + (p.termos_versao || '')
+  };
+  for (const k of ['plano', 'responsavel', 'endereco', 'horarios']) {
+    if (typeof p[k] === 'string' && p[k].length) entrada[k] = p[k];
+    else faltam.push(k);
+  }
+  return { entrada, faltam };
+}
 
 /* ---------- Comparação e hash ---------- */
 

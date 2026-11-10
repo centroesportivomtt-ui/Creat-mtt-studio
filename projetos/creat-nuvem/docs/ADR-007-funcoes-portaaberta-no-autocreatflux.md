@@ -12,7 +12,7 @@ O AutoCreatFlux guarda **só** funções com o prefixo `portaAberta*`, sob estas
 
 1. **Isoladas.** Não importam nenhum módulo de `base44/shared/`, não leem nem gravam `Order`, não criam conta de comprador e não mandam e-mail. Nenhuma função existente do AutoCreatFlux é alterada.
 2. **Sem dado pessoal guardado.** A única entidade é `PortaAbertaLimite` (limite de taxa e idempotência): chave HMAC de 32 hex, tipo, contador e validade. Nunca IP, e-mail ou id em claro. Só o papel admin lê ou grava.
-3. **Sem token em trânsito.** O segredo é usado no lugar, pelo nome (`secrets.get`). Nenhuma resposta ou log traz token, e-mail, nome, CPF, meio de pagamento ou hora do pagamento. O dado pessoal do pedido mora no app Porta Aberta (pacote 1A), nunca aqui.
+3. **Sem token em trânsito.** O segredo é usado no lugar, pelo nome (`secrets.get`). Nenhuma resposta ou log traz token, e-mail, nome, CPF ou meio de pagamento. Única exceção, decidida pela segurança em 10/11/2026: `portaAbertaVerificar` devolve `aprovado_em` (hora da aprovação, sem dado pessoal) só para pagamento aprovado do Porta Aberta, porque a regra "pedido criado antes da aprovação" depende dela. O número do pagamento pode aparecer no log de alerta do webhook (não é dado pessoal). O dado pessoal do pedido mora no app Porta Aberta (pacote 1A), nunca aqui.
 4. **Funções temporárias são apagadas** logo após o uso, com prova por `curl` de que respondem 404.
 
 Funções permanentes: `portaAbertaVerificar` (pública), `portaAbertaNotificacao` (webhook) e `portaAbertaFecharPrefs` (admin). Contratos em `docs/INTEGRACAO-PAGAMENTO.md`, seção "Funções portaAberta* no AutoCreatFlux".

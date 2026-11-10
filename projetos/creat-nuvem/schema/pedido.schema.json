@@ -76,7 +76,10 @@
         "consentimento_dados": {"const": true},
         "hp": {"description": "Campo isca, escondido de pessoas. Preenchido: o servidor responde ok e não grava.", "type": "string", "maxLength": 0},
         "teste": {"type": "boolean"},
-        "aceite_em": {"description": "Carimbo do navegador. Aceito e ignorado.", "type": "string", "maxLength": 40}
+        "aceite_em": {"description": "Carimbo do navegador. Aceito e ignorado.", "type": "string", "maxLength": 40},
+        "responsavel": {"description": "Opcional. Quem cuida do negócio (mesmo formato do PEDIDO v1). Com responsavel, endereco, horarios e plano, o executor produz sem pedir dado nenhum pelo WhatsApp (pedido-regras.mjs, entradaDoRegistro).", "oneOf": [{"type": "null"}, {"const": ""}, {"type": "string", "minLength": 2, "maxLength": 60, "pattern": "^[\\p{L} .'-]+$"}]},
+        "endereco": {"description": "Opcional. Uma linha: rua, número, bairro, cidade, UF e CEP.", "oneOf": [{"type": "null"}, {"const": ""}, {"type": "string", "minLength": 8, "maxLength": 160}]},
+        "horarios": {"description": "Opcional. Sete dias, nesta ordem: seg=09:00-18:00;ter=...;dom=fechado.", "oneOf": [{"type": "null"}, {"const": ""}, {"$ref": "#/$defs/PedidoEntrada/properties/horarios"}]}
       },
       "allOf": [
         {"if": {"properties": {"produto": {"const": "pa-abertura-inauguracao-2026-11"}}, "required": ["produto"]}, "then": {"properties": {"valor": {"const": 297}}}},
@@ -139,9 +142,9 @@
       }
     },
     "id": {
-      "description": "Gerado no navegador com crypto.getRandomValues: 'PA-' e 8 caracteres Crockford base32 (sem I, L, O, U).",
+      "description": "Id do pedido. Dois formatos válidos: o do servidor (pacote 1A, 10/11/2026), 'PA-' e 10 caracteres [0-9A-Z], que é o de todo pedido real gravado por registrarPedido; e o antigo do PEDIDO v1 pelo WhatsApp, 'PA-' e 8 caracteres Crockford base32 (sem I, L, O, U). Vale para PedidoEntrada (produzir.mjs) e Pedido.",
       "type": "string",
-      "pattern": "^PA-[0-9A-HJKMNP-TV-Z]{8}$"
+      "anyOf": [ { "pattern": "^PA-[0-9A-HJKMNP-TV-Z]{8}$" }, { "pattern": "^PA-[0-9A-Z]{10}$" } ]
     },
     "idRegistro": {"description": "Id do pedido gravado no servidor (pacote 1A): 'PA-' e 10 caracteres [0-9A-Z]. O navegador gera com crypto.getRandomValues (recomendado o alfabeto Crockford, que é subconjunto).", "type": "string", "pattern": "^PA-[0-9A-Z]{10}$"},
     "produtoPA": {"enum": ["pa-abertura-inauguracao-2026-11", "pa-abertura-2026-11", "pa-teste"]},

@@ -238,3 +238,125 @@ test('recibo traz produto, valor, meio, número do pagamento, prazo, regra do pr
   const r2 = R.modeloEmailCliente('rascunho', { pedido_id: 'PA-AAAAAAAAAA', slug_rascunho: 'barbearia-x-r-abcdefghijkl', token_rascunho: 'x" onclick=' });
   assert.equal(r2.corpo.includes('#t='), false, 'token fora do formato não entra no link');
 });
+
+/* ---------- Correções da conferência da onda 1 (10/11/2026) ---------- */
+
+const require2 = createRequire(import.meta.url);
+function validadorSchema() {
+  const Ajv2020 = require2(require2.resolve('ajv/dist/2020', { paths: [RAIZ] })).default;
+  const addFormats = require2(require2.resolve('ajv-formats', { paths: [RAIZ] })).default;
+  const ajv = new Ajv2020({ allErrors: true, strict: true, strictRequired: false, strictTypes: false });
+  addFormats(ajv);
+  ajv.addSchema(JSON.parse(fs.readFileSync(path.join(RAIZ, 'schema', 'pedido.schema.json'), 'utf8')));
+  return ajv.getSchema('urn:creat-nuvem:schema:pedido:v1#/$defs/PedidoEntrada');
+}
+
+test('PedidoEntrada aceita o id de 10 caracteres do servidor e continua aceitando o de 8 do PEDIDO v1', () => {
+  const entrada = validadorSchema();
+  const txt = fs.readFileSync(path.join(EX, 'pedido.texto.valido.txt'), 'utf8');
+  const { lerPedidoTexto } = require2(path.join(RAIZ, 'scripts', 'producao', 'lib', 'pedido.cjs'));
+  const antigo = lerPedidoTexto(txt);
+  assert.equal(entrada(antigo), true, '8 caracteres Crockford');
+  assert.equal(entrada({ ...antigo, id: 'PA-TESTERLS01' }), true, '10 caracteres [0-9A-Z], como o servidor grava');
+  assert.equal(entrada({ ...antigo, id: 'PA-ABC' }), false);
+  assert.equal(entrada({ ...antigo, id: 'PA-ABCDEFGHIJK' }), false, '11 caracteres');
+});
+
+test('registro com responsavel, endereco e horarios vira PEDIDO v1 que o produzir aceita (validarPedido do 1C), sem inventar nada', () => {
+  const v = R.validarRegistro(ler('pedido.registro-v1-completo.valido.json'));
+  assert.equal(v.ok, true);
+  const linha = { ...v.pedido, pedido_id: v.pedido.id, aceite_em: '2026-11-10T14:00:00.000Z', status: 'pago' };
+  const { entrada, faltam } = R.entradaDoRegistro(linha, 'https://creat-nuvem-404b1994.base44.app');
+  assert.deepEqual(faltam, []);
+  assert.equal(validadorSchema()(entrada), true, 'schema PedidoEntrada');
+  const { validarPedido } = require2(path.join(RAIZ, 'scripts', 'producao', 'lib', 'pedido.cjs'));
+  assert.doesNotThrow(() => validarPedido(entrada), 'validarPedido do produzir.mjs');
+  assert.equal(entrada.whatsapp_negocio, '5575999990000');
+  assert.equal(entrada.aceite_termos, '2026-11-10T14:00:00.000Z termos-v1');
+  assert.equal(entrada.origem, 'utm_source=meta;utm_campaign=feira;utm_content=A1-barbearia-v1');
+  // Registro mínimo (sem os opcionais): nada é inventado, os campos que faltam vêm listados.
+  const m = R.validarRegistro(VALIDO);
+  const r2 = R.entradaDoRegistro({ ...m.pedido, pedido_id: m.pedido.id, plano: null, aceite_em: '2026-11-10T14:00:00.000Z' });
+  assert.deepEqual(r2.faltam, ['plano', 'responsavel', 'endereco', 'horarios']);
+  assert.equal('endereco' in r2.entrada, false);
+  // Opcionais mal formados são recusados com o nome do campo.
+  assert.equal(R.validarRegistro(ler('pedido.registro-v1-horarios-livres.invalido.json')).campo, 'horarios');
+  assert.equal(R.validarRegistro({ ...VALIDO, endereco: 'curto' }).campo, 'endereco');
+  assert.equal(R.validarRegistro({ ...VALIDO, responsavel: 'Nome 123' }).campo, 'responsavel');
+  assert.equal(R.validarRegistro({ ...VALIDO, endereco: '' }).pedido.endereco, null);
+});
+
+test('contador: utm_content=video, R1-barbearia-v1 e a rodada v2 gravam o próprio anúncio', () => {
+  for (const a of ['video', 'R1-barbearia-v1', 'A1-barbearia-v2', 'A1-salao-v2', 'A1-academia-v2']) {
+    assert.equal(R.normalizarContagem({ evento: 'visita', anuncio: a }).anuncio, a, a);
+  }
+  assert.equal(R.normalizarContagem({ evento: 'visita', utm_content: 'video' }).anuncio, 'video', 'vindo como utm_content');
+});
+
+test('todo utm_content concreto dos textos de marketing está na lista ANUNCIOS', () => {
+  const pasta = path.join(RAIZ, 'marketing');
+  const arquivos = [];
+  const andar = d => { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) andar(p); else if (f.name.endsWith('.md')) arquivos.push(p); } };
+  andar(pasta);
+  const fora = new Set();
+  for (const f of arquivos) {
+    for (const m of fs.readFileSync(f, 'utf8').matchAll(/utm_content=([A-Za-z0-9._-]+)/g)) {
+      const c = m[1];
+      if (c.endsWith('-') || ['conferencia', 'teste'].includes(c) || /^R\d$/.test(c)) continue; // modelo com <nicho>, conferência, teste e roteiro sem código
+      if (!R.ANUNCIOS.includes(c)) fora.add(c + ' (' + path.relative(RAIZ, f) + ')');
+    }
+  }
+  assert.deepEqual([...fora], [], 'código de anúncio nos textos e fora de pedido-regras.mjs ANUNCIOS');
+});
+
+test('Regra 2 com 12 candidatos: no máximo 4 perguntas com e-mail ao portaAbertaVerificar, e-mails repetidos contam uma vez', async () => {
+  const candidatos = Array.from({ length: 12 }, (_, i) => pedido({ pedido_id: 'PA-CAND' + String(i).padStart(6, '0'), email: 'c' + (i % 6) + '@exemplo.com' }));
+  let chamadas = 0;
+  const nenhum = await R.montarRegra2(candidatos, async () => { chamadas++; return { confere: false }; }, R.LIMITES.verificacoesRegra2);
+  assert.equal(chamadas, 4);
+  assert.equal(nenhum.chamadas, 4);
+  const d = R.decidirConfirmacao({ pg: pg297(), regra1: null, regra2: nenhum.regra2, agoraMs: TER_10H_BAHIA });
+  assert.equal(d.acao, 'a_conferir', 'candidato não perguntado nunca é dado como não pagador nem promovido');
+  assert.equal(d.candidatos.length, 12);
+  // O pagador é o 2º e-mail: para na 2ª pergunta e promove só os pedidos dele.
+  chamadas = 0;
+  const umSo = await R.montarRegra2(candidatos.slice(0, 6), async e => { chamadas++; return { confere: e === 'c1@exemplo.com' }; }, 4);
+  assert.equal(chamadas, 2);
+  const d2 = R.decidirConfirmacao({ pg: pg297(), regra1: null, regra2: umSo.regra2, agoraMs: TER_10H_BAHIA });
+  assert.equal(d2.acao, 'pago');
+  assert.equal(d2.pedido.email, 'c1@exemplo.com');
+  // Verificação fora do ar (429 ou 5xx) sem nenhum acerto: transitório (a rota responde 202 e não mexe no pedido).
+  const fora = await R.montarRegra2(candidatos.slice(0, 3), async () => ({ transitorio: true }), 4);
+  assert.equal(fora.transitorio, true);
+  const meio = await R.montarRegra2(candidatos.slice(0, 3), async e => (e === 'c0@exemplo.com' ? { transitorio: true } : { confere: e === 'c1@exemplo.com' }), 4);
+  assert.equal(meio.transitorio, false, 'achou o pagador: a falha de outro e-mail não importa');
+  assert.deepEqual(R.escolherVerificacoes([{ email: 'A@x.com' }, { email: 'a@x.com' }, { email: 'b@x.com' }], 4), { emails: ['a@x.com', 'b@x.com'], sobra: 0 });
+});
+
+test('classificarPagamento: aprovado fora do catálogo deste servidor não é "não confirmado"', () => {
+  assert.equal(R.classificarPagamento({ aprovado: false }).tipo, 'nao_aprovado');
+  assert.equal(R.classificarPagamento(null).tipo, 'nao_aprovado');
+  assert.equal(R.classificarPagamento({ aprovado: true, valor: 197, external_reference: 'pa-bastidores-2026-11' }).tipo, 'fora_do_catalogo');
+  assert.equal(R.classificarPagamento({ aprovado: true, valor: 250, external_reference: 'pa-abertura-2026-11' }).tipo, 'fora_do_catalogo');
+  assert.equal(R.classificarPagamento({ aprovado: true, valor: 297, external_reference: 'pa-abertura-inauguracao-feira-2026-11' }).tipo, 'aprovado');
+});
+
+test('a_conferir pode ir a desistiu; aceite tácito só com 7 dias de rascunho sem resposta', () => {
+  assert.equal(R.transicaoPermitida('a_conferir', 'desistiu'), true);
+  assert.equal(R.transicaoPermitida('rascunho_enviado', 'no_ar'), true);
+  const enviado = TER_10H_BAHIA;
+  const p = { status: 'rascunho_enviado', rascunho_em: new Date(enviado).toISOString() };
+  assert.equal(R.aceiteTacitoPermitido(p, enviado + 6 * 24 * H), false);
+  assert.equal(R.aceiteTacitoPermitido(p, enviado + 7 * 24 * H), true);
+  assert.equal(R.aceiteTacitoPermitido({ ...p, aprovado_em: new Date(enviado).toISOString() }, enviado + 8 * 24 * H), false);
+  assert.equal(R.aceiteTacitoPermitido({ status: 'rascunho_enviado', aprovacao_expira_em: new Date(enviado + 14 * 24 * H).toISOString() }, enviado + 7 * 24 * H), true, 'sem rascunho_em, deduz da validade de 14 dias');
+  assert.equal(R.aceiteTacitoPermitido({ status: 'em_producao', rascunho_em: p.rascunho_em }, enviado + 30 * 24 * H), false);
+});
+
+test('campos do executor: só os da lista, com o tipo certo', () => {
+  assert.equal(R.validarCamposExecutor({ no_ar_em: '2026-11-12T10:00:00.000Z', garantia_mes_gratis: true, motivo_revisao: 'faltam_dados' }).ok, true);
+  assert.equal(R.validarCamposExecutor({ garantia_mes_gratis: 'sim' }).campo, 'garantia_mes_gratis');
+  assert.equal(R.validarCamposExecutor({ no_ar_em: 'amanhã' }).campo, 'no_ar_em');
+  assert.equal(R.validarCamposExecutor({ motivo_revisao: 'Texto livre do cliente' }).campo, 'motivo_revisao');
+  assert.equal(R.validarCamposExecutor({ status: 'pago' }).campo, 'status');
+});
