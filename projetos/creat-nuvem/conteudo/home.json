@@ -131,11 +131,11 @@
     "_regra": "Sites-demonstração feitos pela esteira real (scripts/producao/produzir.mjs --demonstracao), com nome fictício e o WhatsApp do Suporte Creat. Não é prova social: nunca dizer que são clientes. Cada site abre com a faixa 'demonstração · nome fictício'.",
     "olho": "Sites-demonstração",
     "titulo": "Veja um site pronto",
-    "texto": "Três sites feitos pela mesma esteira que monta o seu. Os nomes são fictícios e a cidade é Riachão do Jacuípe, na Bahia, onde fica a sede da Creat. No seu, entram o nome, a cidade e o WhatsApp do seu negócio. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat.",
+    "texto": "Três sites feitos pela mesma esteira que monta o seu. Os nomes são fictícios e o endereço é de exemplo, em Feira de Santana (BA). No seu, entram o nome, a cidade e o WhatsApp do seu negócio. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat.",
     "nota": "Feito pela esteira real, nome fictício. Nenhum desses negócios existe.",
     "itens": [
       { "href": "sites/demo-barbearia/", "nicho": "Barbearia", "nome": "Barbearia Navalha Fictícia", "gesto": "Afie a navalha no couro para mandar o pedido.", "botao": "Abrir a barbearia" },
-      { "href": "sites/demo-salao/", "nicho": "Salão e estética", "nome": "Salão Esmalte Fictício", "gesto": "Pinte a unha com o dedo para mandar o pedido.", "botao": "Abrir o salão" },
+      { "href": "sites/demo-salao/", "nicho": "Salão e estética", "nome": "Esmalte & Fio", "gesto": "Pinte a unha com o dedo para mandar o pedido.", "botao": "Abrir o salão" },
       { "href": "sites/demo-academia/", "nicho": "Academia e studio", "nome": "Studio Barra Fictícia", "gesto": "Levante a barra para pedir a aula experimental.", "botao": "Abrir o studio" }
     ]
   },
@@ -261,7 +261,7 @@
     "marcasRotulo": "Negócio na fachada da sede",
     "marcas": [
       { "nome": "Barbearia Navalha Fictícia", "site": "sites/demo-barbearia/" },
-      { "nome": "Salão Esmalte Fictício", "site": "sites/demo-salao/" },
+      { "nome": "Esmalte & Fio", "site": "sites/demo-salao/" },
       { "nome": "Studio Barra Fictícia", "site": "sites/demo-academia/" }
     ],
     "marcaSeuLeitor": " (o seu negócio)",
