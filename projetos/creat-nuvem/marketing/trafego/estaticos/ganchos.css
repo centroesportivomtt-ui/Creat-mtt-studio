@@ -69,4 +69,4 @@ body{font-family:var(--f-texto);color:var(--tinta);-webkit-font-smoothing:antial
 
 /* guia da área segura (só com --guia) */
 .guia{position:absolute;display:none;left:65px;right:65px;top:269px;height:979px;outline:3px dashed #e33;z-index:9}
-.com-guia.f9 .guia{display:block}
+.f9 .com-guia .guia{display:block}
