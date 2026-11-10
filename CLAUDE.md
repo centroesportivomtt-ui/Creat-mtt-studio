@@ -36,7 +36,7 @@ Agentes em `.claude/agents/`, skills da casa em `.claude/skills/`, fluxo que coo
 - `navegador`: Chromium persistente controlado por comandos (`node .claude/skills/navegador/navegar.cjs abrir|ver|clicar|digitar|ler|print|console`) para testar fluxos como uma pessoa.
 - `padrao-de-entrega`: definição de pronto e formato do relatório.
 - `grilling`: interrogatório do plano em rodadas, com resposta recomendada; por dentro, a agência interroga o próprio plano antes de distribuir.
-- `handoff`: passagem de bastão para outra conversa, em página privada, nunca no repositório.
+- `handoff`: passagem de bastão para outra conversa. Por conta própria fica no scratchpad; com o pedido do dono vira página privada. Nunca no repositório.
 - `find-skills`: acha a skill certa (em casa e no skills.sh), confere, lê inteira, revisa e só então traz. Registro em `docs/skills-de-fora.md`.
 - `agent-browser`: o navegador da casa com o método do agent-browser (sessão por tarefa, espera por condição).
 

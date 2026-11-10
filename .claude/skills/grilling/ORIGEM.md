@@ -6,6 +6,14 @@
 - Como chegou aqui: Reel "5 skills mais instaladas" (tiagolemosx, 02/11/2026), indicado pelo dono em 10/11/2026.
 - O que mudou: tradução para português do Brasil, formato sem emoji, limite de 5 perguntas por rodada, modo interno (a agência interroga o próprio plano) e a lista de decisões que só o dono toma.
 
+## Revisão de 10/11/2026
+Revisão de segurança (Muralha) e de uso real (Lupa). Correções aplicadas pela Forja no mesmo dia:
+- Volta a trava do original ("não aja até o usuário confirmar o entendimento"): no modo dono, nada é executado sem o "confirmo"; se ele parar de responder, nada anda.
+- Caixa "só do dono" ampliada: permissões e configuração, instalar ou rodar código de fora, publicar ou ligar tráfego pago, enviar algo a terceiros, git push.
+- Volta o subagente de contexto limpo para buscar fato.
+- Modo interno com regras para agente único, formato F/D no `RELATORIO.md`, documentos em conflito, decisão mista e fato sem fonte.
+- Quarta rodada: no modo dono, fronteira com mais de 5 perguntas manda as 5 que mais destravam o plano, e as outras vão na rodada seguinte; a rodada das decisões só do dono continua inteira.
+
 ## Licença do original (MIT), texto integral
 
 MIT License

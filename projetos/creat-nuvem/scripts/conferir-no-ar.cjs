@@ -98,8 +98,15 @@ function anota(grupo, nome, ok, detalhe) {
       await pg.evaluate(() => scrollTo(0, 0));
       await pg.fill('#nome', nome);
       await pg.keyboard.press('Enter');
-      await pg.waitForTimeout(7000);
-      const quadro = pg.frames().find(f => f.url().startsWith('blob:'));
+      // espera a moldura da prévia existir e o formulário de dentro montar (até 25 s), em vez de tempo fixo
+      const limite = Date.now() + 25000;
+      let quadro = null;
+      while (Date.now() < limite) {
+        quadro = pg.frames().find(f => f.url().startsWith('blob:')) || null;
+        if (quadro && await quadro.evaluate(() => document.querySelectorAll('#pedir-corpo input, #pedir-corpo button, #pedir-corpo select').length > 0).catch(() => false)) break;
+        await pg.waitForTimeout(400);
+      }
+      await pg.waitForTimeout(1500);   // dá tempo de o evento de prévia sair
       let dentro = { nome: false, campos: 0 };
       if (quadro) dentro = await quadro.evaluate(n => ({ nome: document.body.innerText.toLowerCase().includes(n.toLowerCase()), campos: document.querySelectorAll('#pedir-corpo input, #pedir-corpo button, #pedir-corpo select').length }), nome).catch(() => dentro);
       anota('C prévia', `${nicho}: abre com o nome e com o formulário de pedido`, !!quadro && dentro.nome && dentro.campos > 0, `moldura ${!!quadro} · nome ${dentro.nome} · campos ${dentro.campos}`);
@@ -166,7 +173,9 @@ function anota(grupo, nome, ok, detalhe) {
       const ctx = await novoCtx(); const pg = await ctx.newPage();
       try {
         const r = await pg.goto(links[praca], { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await pg.waitForTimeout(7000);
+        // espera pelo conteúdo, não por tempo fixo: a tela do Mercado Pago monta devagar em rede ruim
+        await pg.waitForFunction(() => /R\$\s?\d/.test(document.body.innerText) && /Pix|Cart/i.test(document.body.innerText), null, { timeout: 30000 }).catch(() => {});
+        await pg.waitForTimeout(800);
         const t = (await texto(pg)).replace(/\s+/g, ' ');
         const ok = r.status() === 200 && /Porta Aberta/i.test(t) && /R\$\s?297/.test(t) && /Pix/i.test(t) && /Cart[ãa]o/i.test(t);
         anota('G Mercado Pago', `${praca}: abre com o item, R$ 297, Pix e cartão`, ok, ok ? (t.match(/Porta Aberta[^|]{0,60}/) || [''])[0].trim().slice(0, 70) : `status ${r.status()} · ${t.slice(0, 160)}`);
