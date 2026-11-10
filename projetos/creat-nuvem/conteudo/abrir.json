@@ -1,15 +1,20 @@
 {
-  "_sobre": "Textos de /abrir/. {{plano.*}} é o plano escolhido no fragmento (#plano=aberto|vitrine|aberto_anual|vitrine_anual). {{precos.abertura.atual}} = inauguração se ela vale (ADR-003), senão padrão.",
-
+  "_sobre": "Textos de /abrir/. {{plano.*}} é o plano escolhido no fragmento (#plano=aberto|vitrine|aberto_anual|vitrine_anual). {{precos.abertura.atual}} = inauguração se ela vale (ADR-005), senão padrão. {{abrir.total}} = o que o botão de pagar cobra hoje (Abertura, ou Abertura + anual no combo). Ordem no celular: resumo do preço, dados, garantia, 7 dias, depois do pagamento, botões, quem monta.",
   "seo": {
     "titulo": "Escolha o plano e abra o seu negócio | Creat",
     "descricao": "Veja o total antes de pagar, informe WhatsApp, endereço e horário e pague a Abertura por Pix ou cartão. Mensalidade só com o site no ar."
   },
-
   "titulo": "Falta pouco para abrir a {negocio}.",
   "tituloSemNome": "Falta pouco para abrir o seu negócio.",
   "voltarPrevia": "Voltar para a prévia",
-
+  "cabecalhoDuvidas": "Dúvidas",
+  "progresso": "Nome, tipo de negócio e prévia: pronto. Faltam 2 passos: os dados do negócio e o pagamento.",
+  "resumo": {
+    "mensal": "Hoje: Abertura de R$ {{precos.abertura.atual}}. Mensalidade de R$ {{plano.preco}} só começa com o site no ar.",
+    "anual": "Hoje: Abertura de R$ {{precos.abertura.atual}}. Os 12 meses, R$ {{plano.preco}} no Pix, só começam com o site no ar.",
+    "combo": "Hoje: R$ {{abrir.total}} num Pix só. A Abertura de R$ {{precos.abertura.atual}} e os 12 meses do plano, R$ {{plano.preco}}, que contam a partir do dia em que o site entra no ar.",
+    "risco": "Sem fidelidade. 7 dias para desistir com devolução."
+  },
   "plano": {
     "rotulo": "Seu plano",
     "trocar": "Trocar de plano",
@@ -21,15 +26,17 @@
     },
     "anualNota": "No anual, você paga {{precos.anualMesesPagos}} meses e leva 12, no Pix. Sem fidelidade: se sair antes, devolvemos os meses não usados."
   },
-
   "total": {
     "rotulo": "Total",
     "mensal": "Hoje: R$ {{precos.abertura.atual}} (Abertura). A partir do dia em que o site entrar no ar: R$ {{plano.preco}} por mês. Sem fidelidade.",
     "anual": "Hoje: R$ {{precos.abertura.atual}} (Abertura). A partir do dia em que o site entrar no ar: R$ {{plano.preco}} pelos 12 meses, no Pix. Sem fidelidade.",
-    "inauguracao": "Preço de inauguração. Restam {{precos.abertura.inauguracao.vagasRestantes}} vagas com este valor.",
-    "nadaMais": "Não existe taxa escondida. A anuidade do domínio, se você quiser um, é paga no seu nome ao Registro.br."
+    "inauguracao": "Preço de inauguração.",
+    "nadaMais": "Não existe taxa escondida. A anuidade do domínio, se você quiser um, é paga no seu nome ao Registro.br.",
+    "combo": "Hoje: R$ {{abrir.total}}, num Pix só: a Abertura (R$ {{precos.abertura.atual}}) e os 12 meses do plano (R$ {{plano.preco}}). Os 12 meses contam a partir do dia em que o site entra no ar. Sem fidelidade.",
+    "contador": "Restam {{precos.abertura.inauguracao.vagasRestantes}} vagas com este valor.",
+    "contadorUltima": "Resta 1 vaga com este valor.",
+    "_regraContador": "O contador só aparece com dados/precos.json de até 48 h (ADR-005). O preço de inauguração vale até 7 dias."
   },
-
   "campos": {
     "titulo": "Os dados do seu negócio",
     "texto": "O relógio do prazo começa com 4 dados do pedido: o nome do negócio, que veio da prévia, o WhatsApp, o endereço e o horário. Seu nome e seu e-mail servem para a equipe falar com você e mandar o recibo. Eles não mudam o prazo.",
@@ -53,7 +60,15 @@
       "fechado": "Fechado",
       "abre": "Abre",
       "fecha": "Fecha",
-      "dias": ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]
+      "dias": [
+        "Domingo",
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ]
     },
     "email": {
       "rotulo": "E-mail",
@@ -61,13 +76,11 @@
       "ajuda": "Para o recibo e para os termos. Não mandamos propaganda."
     }
   },
-
   "aceite": {
     "texto": "Li e aceito os Termos de uso (versão 1). Peço o início imediato da produção e sei que tenho 7 dias de arrependimento, com o valor devolvido.",
     "linkTermos": "Ler os Termos de uso",
     "erro": "Marque o aceite para seguir para o pagamento."
   },
-
   "pagamento": {
     "titulo": "Pagamento",
     "pix": "Pagar no Pix",
@@ -76,15 +89,14 @@
     "emConfiguracaoNota": "O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.",
     "seguranca": "O pagamento é feito no Mercado Pago, por Pix ou cartão. A Creat não vê os dados do seu cartão.",
     "semConta": "Sem criar conta.",
-    "salvoNoAparelho": "Seus dados ficam salvos neste aparelho para a próxima página. Você pode apagar a qualquer momento."
+    "salvoNoAparelho": "Seus dados ficam salvos neste aparelho para a próxima página. Você pode apagar a qualquer momento.",
+    "totalHoje": "Total de hoje: R$ {{abrir.total}}"
   },
-
   "garantia": {
     "titulo": "Garantia de prazo",
     "texto": "Seu site fica pronto em até {{precos.prazoHoras}} h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp, endereço e horário. Passou do prazo, o 1º mês do plano é grátis.",
     "fora": "Ficam fora do relógio o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros. Logo e fotos enviados depois entram como melhoria em até 24 h."
   },
-
   "depois": {
     "titulo": "O que acontece depois do pagamento",
     "passos": [
@@ -97,7 +109,6 @@
       "A equipe manda o passo a passo do domínio e do Perfil da Empresa no Google."
     ]
   },
-
   "erros": {
     "responsavel": "Escreva o seu nome para a equipe saber com quem falar.",
     "whatsappVazio": "Digite o WhatsApp que recebe os pedidos, com DDD.",
@@ -107,5 +118,10 @@
     "horarioInvertido": "Em {dia}, o horário de fechar está antes do de abrir. Ajuste para seguir.",
     "email": "Esse e-mail não parece completo. Confira se tem @ e o final, como .com ou .com.br.",
     "resumo": "Faltam {n} campos. Eles estão marcados em vermelho."
-  }
+  },
+  "desistir": {
+    "titulo": "7 dias para desistir com devolução",
+    "texto": "Você tem 7 dias, contados do pagamento, para desistir sem dar motivo, como manda a lei (Código de Defesa do Consumidor, art. 49). O valor volta pelo mesmo meio de pagamento. Sem fidelidade e sem multa para sair. A mensalidade só começa com o site no ar."
+  },
+  "quemMonta": "Mesmos textos de conteudo/home.json quemMonta."
 }

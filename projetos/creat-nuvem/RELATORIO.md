@@ -267,3 +267,12 @@ Para que serve na venda: quem abre a demo vê o objeto do ofício se mexer em me
 - O ponto "não verificado" da revisão continua aberto: fluidez num aparelho real, som dos rituais e celular físico de entrada. No sandbox só há WebGL e Chromium por software.
 
 **Pendências:** (1) Publicar os 3 zips novos antes da vitrine (`docs/PUBLICACAO.md`, seção 0) e depois a vitrine com a `sede/` nova e o `_headers` atualizado. (2) Conferir num celular médio de verdade.
+
+## 10/11/2026 · Fundação do funil para o visitante frio (Pixel)
+
+- **Preço**: inauguração vale com `precos.json` de até 7 dias; "Restam X" e vagas de hoje só até 48 h (ADR-005). A página não volta a R$ 497 sozinha enquanto a oferta de R$ 297 vale.
+- **Medição**: endereço limpo (nome e cidade fora da URL) antes de qualquer medição; Pixel também em `/abrir/` e `/obrigado/` com o consentimento da home; ViewContent na prévia, InitiateCheckout no clique em pagar (saiu da home), Purchase só com volta aprovada e `payment_id`, uma vez por pagamento. Tabela em `docs/MEDICAO-FUNIL.md`.
+- **Praça no pagamento**: origem do primeiro toque (30 dias) escolhe o link de R$ 297 da praça (`linksPorPraca`); anual com inauguração usa os combos de R$ 1.767 e R$ 3.267 só quando o total da tela bate com o link.
+- **Confiança**: objeto `empresa` em `checkout.config.js` (termos, privacidade, rodapés e bloco "Quem monta o seu site"); campo vazio some; `REVISAO_JURIDICA_PENDENTE` só como comentário. `/abrir/` com resumo de preço no topo, garantia, 7 dias e "depois do pagamento" antes dos botões, botão fixo com o total e "Dúvidas" no cabeçalho.
+- **Decisões que contrariam o plano**: (1) os combos anuais entraram no checkout porque a tarefa pediu; o EXPANSAO.md recomenda tirar o anual do checkout de mídia fria. Se o dono preferir, basta apagar `combosAnual` e o anual volta a cobrar só a Abertura hoje. (2) O "Restam X" continua visível com dado de até 48 h, como a tarefa pediu; o EXPANSAO.md quer escondê-lo até o número vir de venda conferida. (3) O título da seção da sede virou "Veja como a equipe trabalha" para não repetir o título do bloco novo "Quem monta o seu site".
+- **Bugs antigos corrigidos de passagem**: termos mostravam `{{precos.prazoHoras}}` e `{{precos.anualMesesPagos}}` crus (regex só aceitava minúscula); o botão de pagar em modo WhatsApp (sem link) era bloqueado pelo próprio clique; a nota do anual em `/abrir/` quebrava o número em linhas.

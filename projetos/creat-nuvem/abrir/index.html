@@ -28,22 +28,34 @@
       <svg viewBox="0 0 64 48" aria-hidden="true"><path d="M14 40a10 10 0 0 1-1-20 14 14 0 0 1 27-6 11 11 0 0 1 13 11 8 8 0 0 1-1 15z" fill="var(--sol)" stroke="var(--linha)" stroke-width="4" stroke-linejoin="round"/><circle cx="26" cy="28" r="2.6" fill="var(--sol-tinta)"/><circle cx="38" cy="28" r="2.6" fill="var(--sol-tinta)"/><path d="M28 34q4 3 8 0" fill="none" stroke="var(--sol-tinta)" stroke-width="3" stroke-linecap="round"/></svg>
       <span>Creat Nuvem</span>
     </a>
-    <a class="btn voltar" data-zap="duvida" href="mailto:mttcreatt@gmail.com"><span data-rotulo-zap>Chamar no WhatsApp</span></a>
+    <a class="link-duvidas" data-zap="duvida" href="mailto:mttcreatt@gmail.com" aria-label="Dúvidas: falar com o Suporte Creat"><span data-rotulo-zap>Dúvidas</span></a>
   </div>
 </header>
 
-<main class="pagina" id="conteudo">
+<main class="pagina pagina-abrir" id="conteudo">
   <div class="cx">
     <span class="olho">Abrir meu negócio</span>
     <h1 id="abrir-titulo">Falta pouco para abrir o seu negócio.</h1>
+    <p class="progresso" id="abrir-progresso" hidden><span class="feito">Nome, tipo de negócio e prévia: pronto.</span> Faltam 2 passos: os dados do negócio e o pagamento.</p>
+
+    <!-- resumo de preço no topo: o mesmo total do botão de pagar -->
+    <section class="resumo-preco" aria-labelledby="resumo-preco-titulo">
+      <h2 class="so-leitor" id="resumo-preco-titulo">Resumo do preço</h2>
+      <p data-carregando-precos>Conferindo os preços de hoje...</p>
+      <p id="resumo-mensal" hidden><strong>Hoje: Abertura de R$ <span data-v="precos.abertura.atual"></span>.</strong> Mensalidade de R$ <span data-v="plano.preco"></span> só começa com o site no ar.</p>
+      <p id="resumo-anual" hidden><strong>Hoje: Abertura de R$ <span data-v="precos.abertura.atual"></span>.</strong> Os 12 meses, R$ <span data-v="plano.preco"></span> no Pix, só começam com o site no ar.</p>
+      <p id="resumo-combo" hidden><strong>Hoje: R$ <span data-v="abrir.total"></span> num Pix só.</strong> A Abertura de R$ <span data-v="precos.abertura.atual"></span> e os 12 meses do plano, R$ <span data-v="plano.preco"></span>, que contam a partir do dia em que o site entra no ar.</p>
+      <p class="menor">Sem fidelidade. 7 dias para desistir com devolução.</p>
+    </section>
+
     <div class="resumo-negocio" id="abrir-negocio" hidden>
       <strong id="abrir-negocio-nome"></strong>
       <span id="abrir-negocio-detalhe"></span>
       <a id="abrir-voltar" href="../">Ver a prévia de novo</a>
     </div>
 
-    <div class="grade-pedido">
-      <form id="form-pedido" novalidate>
+    <div class="grade-pedido grade-abrir">
+      <form id="form-pedido" class="area-form" novalidate>
         <section class="bloco" aria-labelledby="plano-titulo">
           <h2 id="plano-titulo">Seu plano</h2>
           <fieldset class="planos">
@@ -60,7 +72,10 @@
             <p data-carregando-precos>Conferindo os preços de hoje...</p>
             <p id="total-mensal" hidden>Hoje: <strong>R$ <span data-v="precos.abertura.atual"></span></strong> (Abertura). A partir do dia em que o site entrar no ar: <strong>R$ <span data-v="plano.preco"></span></strong> por mês. Sem fidelidade.</p>
             <p id="total-anual" hidden>Hoje: <strong>R$ <span data-v="precos.abertura.atual"></span></strong> (Abertura). A partir do dia em que o site entrar no ar: <strong>R$ <span data-v="plano.preco"></span></strong> pelos 12 meses, no Pix. Sem fidelidade.</p>
-            <p class="menor" data-se="inauguracao" hidden>Preço de inauguração. Restam <span data-v="precos.abertura.inauguracao.vagasRestantes"></span> vagas com este valor.</p>
+            <p id="total-combo" hidden>Hoje: <strong>R$ <span data-v="abrir.total"></span></strong>, num Pix só: a Abertura (R$ <span data-v="precos.abertura.atual"></span>) e os 12 meses do plano (R$ <span data-v="plano.preco"></span>). Os 12 meses contam a partir do dia em que o site entra no ar. Sem fidelidade.</p>
+            <p class="menor" data-se="inauguracao" hidden>Preço de inauguração.</p>
+            <p class="menor" data-se="varias-vagas" hidden>Restam <span data-v="precos.abertura.inauguracao.vagasRestantes"></span> vagas com este valor.</p>
+            <p class="menor" data-se="ultima-vaga" hidden>Resta 1 vaga com este valor.</p>
             <p class="menor">Não existe taxa escondida. A anuidade do domínio, se você quiser um, é paga no seu nome ao Registro.br.</p>
           </div>
         </section>
@@ -124,33 +139,21 @@
               <span>Li e aceito os <a href="../termos/" target="_blank" rel="noopener">Termos de uso (versão 1)</a>. Peço o início imediato da produção e sei que tenho 7 dias de arrependimento, com o valor devolvido.</span>
             </label>
             <span class="erro-solto" id="p-aceite-erro" role="alert" hidden>Marque o aceite para seguir para o pagamento.</span>
+            <p class="resumo-erros" id="p-resumo" role="alert" hidden></p>
           </div>
-        </section>
-
-        <section class="bloco mt-5" aria-labelledby="pagamento-titulo">
-          <h2 id="pagamento-titulo">Pagamento</h2>
-          <p class="resumo-erros" id="p-resumo" role="alert" hidden></p>
-          <div class="pagar">
-            <a class="btn btn-sol btn-g" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Pagar no Pix">Link de pagamento em configuração</a>
-            <a class="btn btn-g" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Cartão em até 2x">Link de pagamento em configuração</a>
-          </div>
-          <div class="bloco-tracejado mt-4" id="pagamento-config">
-            <p>O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.</p>
-            <a class="link-forte" id="pagamento-zap" href="mailto:mttcreatt@gmail.com">Chamar o Suporte Creat no WhatsApp</a>
-          </div>
-          <div class="notas mt-4">
-            <p>O pagamento é feito no Mercado Pago, por Pix ou cartão. A Creat não vê os dados do seu cartão. Sem criar conta.</p>
-            <p>Seus dados ficam salvos neste aparelho para a próxima página. Você pode apagar a qualquer momento.</p>
-          </div>
-          <button class="link-texto" type="button" id="esquecer" hidden>Esquecer meus dados neste aparelho</button>
         </section>
       </form>
 
-      <aside class="lateral" aria-label="Garantia e próximos passos">
+      <!-- No celular, a garantia, os 7 dias e o "depois" vêm ANTES dos botões de pagar. -->
+      <aside class="lateral area-confianca" aria-label="Garantia, desistência e próximos passos">
         <section class="bloco-tracejado" aria-labelledby="garantia-titulo">
           <h2 id="garantia-titulo">Garantia de prazo</h2>
           <p>Seu site fica pronto em até <span data-v="precos.prazoHoras" class="num-carregando"></span> h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp, endereço e horário. Passou do prazo, o 1º mês do plano é grátis.</p>
           <p class="notas mt-3">Ficam fora do relógio o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros. Logo e fotos enviados depois entram como melhoria em até 24 h.</p>
+        </section>
+        <section class="bloco-tracejado" aria-labelledby="desistir-titulo">
+          <h2 id="desistir-titulo">7 dias para desistir com devolução</h2>
+          <p>Você tem 7 dias, contados do pagamento, para desistir sem dar motivo, como manda a lei (Código de Defesa do Consumidor, art. 49). O valor volta pelo mesmo meio de pagamento. Sem fidelidade e sem multa para sair. A mensalidade só começa com o site no ar.</p>
         </section>
         <section class="bloco" aria-labelledby="depois-titulo">
           <h2 id="depois-titulo">O que acontece depois do pagamento</h2>
@@ -165,13 +168,56 @@
           </ol>
         </section>
       </aside>
+
+      <section class="bloco area-pagar" id="pagamento" aria-labelledby="pagamento-titulo">
+        <h2 id="pagamento-titulo">Pagamento</h2>
+        <p class="pagar-total">Total de hoje: <strong>R$ <span data-v="abrir.total" class="num-carregando"></span></strong></p>
+        <div class="pagar">
+          <a class="btn btn-sol btn-g" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Pagar no Pix">Link de pagamento em configuração</a>
+          <a class="btn btn-g" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Cartão em até 2x">Link de pagamento em configuração</a>
+        </div>
+        <div class="bloco-tracejado mt-4" id="pagamento-config">
+          <p>O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.</p>
+          <a class="link-forte" id="pagamento-zap" href="mailto:mttcreatt@gmail.com">Chamar o Suporte Creat no WhatsApp</a>
+        </div>
+        <div class="notas mt-4">
+          <p>O pagamento é feito no Mercado Pago, por Pix ou cartão. A Creat não vê os dados do seu cartão. Sem criar conta.</p>
+          <p>Seus dados ficam salvos neste aparelho para a próxima página. Você pode apagar a qualquer momento.</p>
+        </div>
+        <button class="link-texto" type="button" id="esquecer" hidden>Esquecer meus dados neste aparelho</button>
+      </section>
+
+      <section class="quem-monta area-quem" id="quem-monta" aria-labelledby="quem-titulo">
+        <span class="olho">Quem somos</span>
+        <h2 id="quem-titulo">Quem monta o seu site</h2>
+        <p>A Creat Nuvem é uma equipe de agentes de IA com revisão humana, da <span data-empresa="nome">Creat.MTT Studio</span>, de <span data-empresa="cidade">Riachão do Jacuípe</span> (<span data-empresa="uf">BA</span>)<span data-empresa-opcional="documento" hidden></span><span data-empresa-opcional="endereco" hidden></span>. Atendemos pela internet negócios de qualquer cidade.</p>
+        <ol class="quem-passos">
+          <li><span><b>Você vê e pede.</b> A prévia é grátis. Para abrir, você paga a Abertura e manda os dados do negócio.</span></li>
+          <li><span><b>A equipe monta.</b> Os agentes escrevem e montam o site, e uma pessoa da equipe lê tudo antes de mandar para você.</span></li>
+          <li><span><b>Você aprova.</b> O site só entra no ar com o seu sim, e a mensalidade só começa nesse dia.</span></li>
+        </ol>
+        <p class="quem-contato">Para falar com a gente: <a data-zap="duvida" href="mailto:mttcreatt@gmail.com"><span data-rotulo-zap>WhatsApp do Suporte Creat</span></a> ou <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a>.</p>
+        <ul class="quem-links">
+          <li><a data-link-sede href="../#sede">Ver a sede da Creat<span class="rotulo-exemplo">demonstração</span></a></li>
+          <li><a href="../sites/demo-barbearia/">Barbearia Navalha Fictícia<span class="rotulo-exemplo">exemplo</span></a></li>
+          <li><a href="../sites/demo-salao/">Salão Esmalte Fictício<span class="rotulo-exemplo">exemplo</span></a></li>
+          <li><a href="../sites/demo-academia/">Studio Barra Fictícia<span class="rotulo-exemplo">exemplo</span></a></li>
+        </ul>
+        <p class="notas">Os três sites são demonstrações com nome fictício, feitos pela mesma esteira que monta o seu.</p>
+      </section>
     </div>
   </div>
 </main>
 
+<!-- botão de pagar fixo no rodapé do celular, com o total de hoje -->
+<div class="barra-pagar" id="barra-pagar" hidden>
+  <p class="barra-pagar-total"><span>Total de hoje</span><strong>R$ <span data-v="abrir.total"></span></strong></p>
+  <a class="btn btn-sol" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Pagar no Pix">Link de pagamento em configuração</a>
+</div>
+
 <footer class="rodape-simples">
   <div class="cx">
-    <span>Creat.MTT Studio · <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a></span>
+    <span><span data-empresa="nome">Creat.MTT Studio</span> · <span data-empresa="cidade">Riachão do Jacuípe</span> (<span data-empresa="uf">BA</span>)<span data-empresa-opcional="documento" data-antes=" · " hidden></span> · <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a></span>
     <a href="../termos/">Termos de uso</a>
     <a href="../privacidade/">Privacidade</a>
   </div>

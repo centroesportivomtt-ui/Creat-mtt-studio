@@ -10,8 +10,12 @@
    Regras que este arquivo garante:
    - Nome, cidade, WhatsApp, e-mail e endereço nunca vão para query string
      nem para analytics. O WhatsApp do Teste de verdade nunca é gravado.
-   - dados/*.json com mais de 48 h, ausentes ou inválidos = preço padrão,
-     sem contador e sem inauguração, sem mensagem de erro (ADR-003).
+   - Preço de inauguração (ADR-005, que revisa o ADR-003): vale com precos.json
+     válido, inauguracao.ativa, vagasRestantes > 0 e atualizado_em de até 7 dias.
+     Contadores ("Restam X", "vagas de hoje") só com dado de até 48 h. Fora disso:
+     preço padrão, sem contador, sem mensagem de erro.
+   - Medição: antes de qualquer script de medição, nome e cidade saem do
+     fragmento e o endereço é limpo com history.replaceState (docs/MEDICAO-FUNIL.md).
    - Todo texto vindo de dado entra por textContent, nunca innerHTML.
    ===================================================================== */
 (function () {
@@ -168,12 +172,13 @@
       .catch(function () { return null; })
       .then(function (v) { clearTimeout(tempo); return v; });
   }
-  function fresco(obj, agora) {
+  // janela: H48 (padrão, contadores) ou D7 (preço de inauguração, ADR-005).
+  function fresco(obj, agora, janela) {
     if (!obj || typeof obj.atualizado_em !== 'string') return false;
     var tms = Date.parse(obj.atualizado_em);
     if (isNaN(tms)) return false;
     var dif = (agora || Date.now()) - tms;
-    return dif <= H48 && dif >= -FOLGA;
+    return dif <= (janela || H48) && dif >= -FOLGA;
   }
   function num(v) { return typeof v === 'number' && isFinite(v) && v >= 0; }
   function inteiro(v) { return typeof v === 'number' && Math.floor(v) === v && v >= 0; }
@@ -194,22 +199,28 @@
       var p = r[0], v = r[1], agora = Date.now();
       var pad = (CK && CK.precosPadrao) || { prazoHoras: 72, abertura: 497, planos: { aberto: 147, vitrine: 297 }, anualMesesPagos: 10, bastidores: 67 };
       var base = precosValidos(p) ? p : null;
-      var frescoP = !!base && fresco(p, agora);
-      var frescoV = vagasValidas(v) && fresco(v, agora);
+      var frescoP = !!base && fresco(p, agora, H48);          // contadores
+      var precoVale = !!base && fresco(p, agora, D7);         // preço de inauguração (ADR-005)
+      var frescoV = vagasValidas(v) && fresco(v, agora, H48);
       var padrao = base ? base.abertura.padrao : pad.abertura;
       var links = (CK && CK.links) || {};
       var vale = (CK && CK.linkValido) || function () { return false; };
-      // Inauguração: precos.json E vagas.json frescos (seção 18, item 7), ativa e com vaga.
-      var inaug = (frescoP && frescoV && inauguracaoValida(base.abertura.inauguracao, padrao)) ? base.abertura.inauguracao : null;
+      // Inauguração: precos.json válido e de até 7 dias, ativa e com vaga. Não depende de vagas.json:
+      // a página não volta a R$ 497 sozinha enquanto a oferta segue valendo (a 21ª venda é travada à mão no painel do Mercado Pago).
+      var inaug = (precoVale && inauguracaoValida(base.abertura.inauguracao, padrao)) ? base.abertura.inauguracao : null;
       // Preço e link andam juntos: se só o link padrão é real, a página não mostra o preço de inauguração.
       if (inaug && !vale(links.aberturaInauguracao) && vale(links.aberturaPadrao)) inaug = null;
+      // E o valor do link tem de ser o da tela (checkout.config.js valorDosLinks).
+      var valorLinks = (CK && CK.valorDosLinks) || null;
+      if (inaug && valorLinks && num(valorLinks.aberturaInauguracao) && valorLinks.aberturaInauguracao !== inaug.preco) inaug = null;
       var chave = inaug ? 'aberturaInauguracao' : 'aberturaPadrao';
       return {
         fresco: frescoP,
         prazoHoras: base ? base.prazoHoras : pad.prazoHoras,
         abertura: padrao,
         aberturaAtual: inaug ? inaug.preco : padrao,
-        inauguracao: inaug ? { preco: inaug.preco, vagasTotal: inaug.vagasTotal, vagasRestantes: inaug.vagasRestantes } : null,
+        // vagasRestantes só com dado de até 48 h; mais velho que isso, o "Restam X" some e o preço continua.
+        inauguracao: inaug ? { preco: inaug.preco, vagasTotal: inaug.vagasTotal, vagasRestantes: frescoP ? inaug.vagasRestantes : null } : null,
         planos: base ? { aberto: base.planos.aberto, vitrine: base.planos.vitrine } : pad.planos,
         anualMesesPagos: base ? base.anualMesesPagos : pad.anualMesesPagos,
         bastidores: base && num(base.bastidores) && base.bastidores > 0 ? base.bastidores : pad.bastidores,
@@ -238,7 +249,7 @@
     if (pr.inauguracao) {
       v['precos.abertura.inauguracao.preco'] = milhar(pr.inauguracao.preco);
       v['precos.abertura.inauguracao.vagasTotal'] = milhar(pr.inauguracao.vagasTotal);
-      v['precos.abertura.inauguracao.vagasRestantes'] = milhar(pr.inauguracao.vagasRestantes);
+      if (pr.inauguracao.vagasRestantes !== null) v['precos.abertura.inauguracao.vagasRestantes'] = milhar(pr.inauguracao.vagasRestantes);
     }
     if (pr.vagasHoje) { v['vagas.vagas_hoje'] = milhar(pr.vagasHoje.vagas_hoje); v['vagas.capacidade_dia'] = milhar(pr.vagasHoje.capacidade_dia); }
     if (plano) v['plano.preco'] = milhar({ aberto: pr.planos.aberto, vitrine: pr.planos.vitrine, aberto_anual: anualA, vitrine_anual: anualV }[plano]);
@@ -251,11 +262,12 @@
       var k = e.getAttribute('data-v');
       if (k in v) { e.textContent = v[k]; e.classList.remove('num-carregando'); }
     });
+    var restam = pr.inauguracao ? pr.inauguracao.vagasRestantes : null;   // null = dado com mais de 48 h: sem contador
     var cond = {
       'inauguracao': !!pr.inauguracao,
       'sem-inauguracao': !pr.inauguracao,
-      'varias-vagas': !!pr.inauguracao && pr.inauguracao.vagasRestantes > 1,
-      'ultima-vaga': !!pr.inauguracao && pr.inauguracao.vagasRestantes === 1,
+      'varias-vagas': restam !== null && restam > 1,
+      'ultima-vaga': restam === 1,
       'vagas-hoje': !!pr.vagasHoje && pr.vagasHoje.vagas_hoje > 0,
       'vagas-esgotadas': !!pr.vagasHoje && pr.vagasHoje.vagas_hoje === 0,
       'dados-prontos': true
@@ -265,13 +277,15 @@
   }
 
   /* ------------------------------------------------------------ botões de checkout (contrato e) */
-  function aplicarCheckout(btn, chave) {
+  // linkEscolhido: link já decidido (ex.: por praça ou combo anual em /abrir/); sem ele, vale CK.links[chave].
+  function aplicarCheckout(btn, chave, linkEscolhido) {
     if (!btn.hasAttribute('data-rotulo')) btn.setAttribute('data-rotulo', btn.textContent.trim());
     btn.setAttribute('data-checkout', chave);
-    var link = CK && CK.links ? CK.links[chave] : null;
+    var link = linkEscolhido || (CK && CK.links ? CK.links[chave] : null);
     var ok = !!(CK && CK.linkValido(link));
     if (ok) {
       btn.setAttribute('href', link);
+      btn.removeAttribute('target'); btn.removeAttribute('rel');
       btn.removeAttribute('aria-disabled'); btn.removeAttribute('tabindex');
       btn.textContent = btn.getAttribute('data-rotulo');
     } else if (suporteOk()) {
@@ -374,13 +388,15 @@
     if ('requestIdleCallback' in W) W.requestIdleCallback(iniciar, { timeout: 4000 }); else setTimeout(iniciar, 1500);
   }
 
-  /* Consentimento: Pixel e Clarity só depois do "Aceitar", e só na home
-     (a única página cujo endereço nunca leva nome nem cidade). */
+  /* Consentimento: Pixel e Clarity só depois do "Aceitar" (o banner mora na home; /abrir/ e /obrigado/
+     usam a mesma escolha gravada neste aparelho e nunca carregam nada sem ela). Antes de carregar,
+     iniciar() já tirou nome e cidade do endereço (limparEndereco), então nenhum evento leva dado pessoal na URL. */
   var CHAVE_CONSENT = 'creat:consentimento';
+  var PAGINAS_PIXEL = ['home', 'abrir', 'obrigado'];
   function consentimento() { var c = lerJSONGuardado(CHAVE_CONSENT); return c && c.versao === 1 ? c : null; }
-  var terceirosCarregados = false;
+  var terceirosCarregados = false, pixelLigado = false;
   function carregarTerceiros() {
-    if (terceirosCarregados || PAGINA !== 'home') return;
+    if (terceirosCarregados || PAGINAS_PIXEL.indexOf(PAGINA) === -1) return;
     var c = consentimento(); if (!c || !c.pixel) return;
     terceirosCarregados = true;
     if (MED.pixelValido && MED.pixelValido(MED.metaPixel)) {
@@ -389,6 +405,7 @@
       W.fbq('set', 'autoConfig', false, MED.metaPixel);
       W.fbq('init', MED.metaPixel);
       W.fbq('track', 'PageView');
+      pixelLigado = true;
       carregarScript('https://connect.facebook.net/en_US/fbevents.js');
     }
     if (MED.clarityValido && MED.clarityValido(MED.clarity)) {
@@ -396,9 +413,118 @@
       carregarScript('https://www.clarity.ms/tag/' + MED.clarity);
     }
   }
-  function pixelEvento(nome) { try { if (terceirosCarregados && W.fbq) W.fbq('track', nome); } catch (e) {} }
+
+  /* Eventos padrão do Pixel (docs/MEDICAO-FUNIL.md). Lista fechada de parâmetros por evento:
+     nada de nome, telefone, e-mail ou cidade. Devolve true se o evento saiu. */
+  var PIXEL_PARAMS = {
+    ViewContent: { content_category: function (v) { return NICHOS.indexOf(v) !== -1; }, content_name: function (v) { return v === 'previa'; } },
+    InitiateCheckout: { value: function (v) { return num(v) && v > 0; }, currency: function (v) { return v === 'BRL'; } },
+    Purchase: { value: function (v) { return num(v) && v > 0; }, currency: function (v) { return v === 'BRL'; } }
+  };
+  function filtrarPixel(nome, params) {
+    var regra = PIXEL_PARAMS[nome]; if (!regra) return null;
+    var out = {};
+    Object.keys(regra).forEach(function (k) { if (params && regra[k](params[k])) out[k] = params[k]; });
+    return Object.keys(out).length === Object.keys(regra).length ? out : null;   // parâmetro faltando = não manda
+  }
+  function pixelEvento(nome, params, eventId) {
+    var limpo = filtrarPixel(nome, params); if (!limpo) return false;
+    if (W.__creatPixel) W.__creatPixel.push({ evento: nome, parametros: limpo, eventID: eventId || null }); // inspeção em teste
+    if (!pixelLigado || !W.fbq) return false;
+    try { if (eventId) W.fbq('track', nome, limpo, { eventID: String(eventId) }); else W.fbq('track', nome, limpo); return true; } catch (e) { return false; }
+  }
+  W.__creatPixel = W.__creatPixel || [];
+  // ViewContent: no máximo um por nicho por sessão do navegador (abrir e fechar a prévia não duplica).
+  var vistoNaSessao = {};
+  function pixelViewContent(nicho) {
+    var k = 'creat:px:vc:' + nicho;
+    try { if (sessionStorage.getItem(k)) return; } catch (e) { if (vistoNaSessao[k]) return; }
+    if (pixelEvento('ViewContent', { content_category: nicho, content_name: 'previa' })) {
+      vistoNaSessao[k] = 1; try { sessionStorage.setItem(k, '1'); } catch (e) {}
+    }
+  }
+
+  /* ------------------------------------------------------------ origem do primeiro toque (30 dias)
+     Só utm_source, utm_medium, utm_campaign e utm_content, validados por RE_UTM. Nenhum dado pessoal.
+     Serve para o botão de pagar escolher o link da praça (checkout.config.js linksPorPraca). */
+  var CHAVE_ORIGEM = 'creat:origem:v1', D30 = 30 * 24 * 3600 * 1000;
+  var UTM_ORIGEM = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'];
+  function lerOrigem(agora) {
+    var o = lerJSONGuardado(CHAVE_ORIGEM);
+    if (!o || typeof o !== 'object' || typeof o.em !== 'string') return null;
+    var t0 = Date.parse(o.em), dif = (agora || Date.now()) - t0;
+    if (isNaN(t0) || dif > D30 || dif < -FOLGA) { guarda.apagar(CHAVE_ORIGEM); return null; }
+    var u = {};
+    UTM_ORIGEM.forEach(function (k) { if (typeof o[k] === 'string' && RE_UTM.test(o[k])) u[k] = o[k]; });
+    return Object.keys(u).length ? u : null;
+  }
+  function guardarOrigem(utm, agora) {
+    if (lerOrigem(agora)) return false;           // primeiro toque: não sobrescreve enquanto vale
+    var u = {}, tem = false;
+    UTM_ORIGEM.forEach(function (k) { if (utm && typeof utm[k] === 'string' && RE_UTM.test(utm[k])) { u[k] = utm[k]; tem = true; } });
+    if (!tem) return false;
+    u.em = new Date(agora || Date.now()).toISOString();
+    return guarda.gravar(CHAVE_ORIGEM, JSON.stringify(u));
+  }
+
+  /* ------------------------------------------------------------ endereço limpo antes de medir
+     Lê o fragmento (nome, cidade, nicho, plano, utm_*) e a volta do Mercado Pago (query) UMA vez e
+     reescreve o endereço sem nome, cidade nem parâmetros do pagamento. As páginas usam ENTRADA. */
+  var PARAMS_MP = ['collection_id', 'collection_status', 'payment_id', 'status', 'external_reference', 'payment_type', 'merchant_order_id', 'preference_id', 'site_id', 'processing_mode', 'merchant_account_id'];
+  var ENTRADA = { frag: lerFragmento(''), query: {}, retorno: null };
+  // Volta do Checkout Pro: aprovado só com status approved E payment_id numérico.
+  function lerRetornoMP(search) {
+    var q; try { q = new URLSearchParams(search || ''); } catch (e) { return null; }
+    var pid = q.get('payment_id') || '';
+    var st = q.get('collection_status') || q.get('status') || '';
+    if (!pid && !st) return null;
+    return {
+      aprovado: (q.get('collection_status') === 'approved' || q.get('status') === 'approved') && /^\d{4,24}$/.test(pid),
+      paymentId: /^\d{4,24}$/.test(pid) ? pid : null,
+      preferencia: /^[0-9A-Za-z-]{8,80}$/.test(q.get('preference_id') || '') ? q.get('preference_id') : null
+    };
+  }
+  function semDadosPessoais(f) { return { k: f.k, n: null, c: null, p: f.p, plano: f.plano, utm: f.utm }; }
+  function limparEndereco() {
+    var q = new URLSearchParams(location.search);
+    ENTRADA.frag = lerFragmento(location.hash);
+    ENTRADA.query = lerUtm(q);
+    ENTRADA.retorno = lerRetornoMP(location.search);
+    var mudou = false;
+    PARAMS_MP.forEach(function (k) { if (q.has(k)) { q.delete(k); mudou = true; } });
+    var busca = q.toString(); busca = busca ? '?' + busca : '';
+    var hash = location.hash;
+    if (PAGINA === 'home') { if (hash) { hash = ''; mudou = true; } }
+    else if (ENTRADA.frag.n || ENTRADA.frag.c) {
+      var resto = montarFragmento(semDadosPessoais(ENTRADA.frag), true);
+      hash = resto ? '#' + resto : ''; mudou = true;
+    }
+    if (mudou) { try { history.replaceState(null, '', location.pathname + busca + hash); } catch (e) {} }
+  }
+
+  /* Purchase em /obrigado/: só com volta aprovada do Mercado Pago, valor conhecido do link e uma vez por payment_id. */
+  var CHAVE_COMPRAS = 'creat:px:compras';
+  var CHAVE_CHECKOUT = 'creat:checkout:v1';
+  function medirCompra(retorno) {
+    if (!retorno || !retorno.aprovado || !retorno.paymentId) return 'sem-aprovacao';
+    var feitas = lerJSONGuardado(CHAVE_COMPRAS); if (!Array.isArray(feitas)) feitas = [];
+    if (feitas.indexOf(retorno.paymentId) !== -1) return 'repetida';
+    var valor = CK && CK.valorDaPreferencia ? CK.valorDaPreferencia(retorno.preferencia) : null;
+    if (!num(valor) || !valor) {
+      // sem preference_id na volta: o valor do botão clicado neste aparelho (gravado no clique, vale 7 dias)
+      var ck = lerJSONGuardado(CHAVE_CHECKOUT);
+      if (ck && num(ck.valor) && ck.valor > 0 && Date.now() - Date.parse(ck.em) <= D7) valor = ck.valor;
+    }
+    if (!num(valor) || !valor) return 'sem-valor';
+    if (!pixelEvento('Purchase', { value: valor, currency: 'BRL' }, retorno.paymentId)) return 'sem-pixel';
+    feitas.push(retorno.paymentId);
+    guarda.gravar(CHAVE_COMPRAS, JSON.stringify(feitas.slice(-30)));
+    return 'enviada';
+  }
   function montarConsentimento() {
-    var caixa = $('#consentimento'); if (!caixa) return;
+    var caixa = $('#consentimento');
+    // /abrir/ e /obrigado/ não têm banner: valem a escolha já feita na home (sem escolha, nada carrega).
+    if (!caixa) { if (consentimento()) carregarTerceiros(); return; }
     // O banner reserva o próprio espaço no fim da página: nada fica escondido atrás dele.
     var mostrar = function () { caixa.hidden = false; D.body.classList.add('com-consentimento'); D.body.style.setProperty('--altura-consentimento', (caixa.offsetHeight + 24) + 'px'); };
     var esconder = function () { caixa.hidden = true; D.body.classList.remove('com-consentimento'); };
@@ -432,6 +558,27 @@
         caixa.classList.toggle('is-recuado', naTela);
       }, { threshold: 0.6 }).observe(janela);
     }
+  }
+
+  /* ------------------------------------------------------------ quem presta o serviço (checkout.config.js empresa) */
+  function empresa() {
+    var e = (CK && CK.empresa) || {}, out = {};
+    ['nome', 'cidade', 'uf', 'documento', 'endereco'].forEach(function (k) {
+      var v = typeof e[k] === 'string' ? e[k].replace(/\s+/g, ' ').trim() : '';
+      out[k] = /[\[{]|a informar/i.test(v) ? '' : v;           // marcador esquecido nunca vai para a tela
+    });
+    if (!out.nome) out.nome = 'Creat.MTT Studio';
+    return out;
+  }
+  // [data-empresa="nome|cidade|uf"] recebe o valor; [data-empresa-opcional="documento|endereco"] aparece só com valor.
+  function montarEmpresa() {
+    var e = empresa();
+    $$('[data-empresa]').forEach(function (x) { var v = e[x.getAttribute('data-empresa')]; if (v) x.textContent = v; });
+    $$('[data-empresa-opcional]').forEach(function (x) {
+      var v = e[x.getAttribute('data-empresa-opcional')];
+      x.textContent = v ? (x.getAttribute('data-antes') || ', ') + v : ''; x.hidden = !v;
+    });
+    $$('[data-link-sede]').forEach(function (a) { a.href = urlSede() + '?modo=demo'; });
   }
 
   /* ------------------------------------------------------------ suporte, barra e som */
@@ -683,11 +830,10 @@
      ====================================================================== */
   function paginaHome() {
     var q = new URLSearchParams(location.search);
-    var hashIni = lerFragmento(location.hash);
-    utmAtual = lerUtm(q); if (!Object.keys(utmAtual).length) utmAtual = hashIni.utm;
     // A home nunca guarda nome ou cidade no endereço (Pixel e Clarity podem ler a URL depois do aceite):
-    // lê o fragmento vindo de /abrir/ ou /previa/ e limpa o endereço na hora.
-    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    // iniciar() já leu o fragmento vindo de /abrir/ ou /previa/ e limpou o endereço (limparEndereco).
+    var hashIni = ENTRADA.frag;
+    utmAtual = ENTRADA.query; if (!Object.keys(utmAtual).length) utmAtual = hashIni.utm;
 
     var form = $('#form-abrir'), campoNome = $('#nome'), campoCidade = $('#cidade');
     var caixaNome = campoNome.closest('.campo'), erroNome = $('#nome-erro'), erroNicho = $('#nicho-erro');
@@ -806,6 +952,7 @@
       if (!history.state || !history.state.previa) history.pushState({ previa: 1 }, '', location.pathname + location.search + '#previa');
       requestAnimationFrame(function () { previa.classList.add('aberta'); $('#previa-fechar').focus(); });
       evento('previa_gerada', { nicho: s.k });
+      pixelViewContent(s.k);
     }
     frame.addEventListener('load', function () {
       if (!urlPreviaAtual) return;
@@ -834,7 +981,7 @@
     });
     function irParaAbrir(plano) {
       var s = estado(); s.plano = plano;
-      pixelEvento('InitiateCheckout');
+      // InitiateCheckout não sai daqui: só no clique em pagar de /abrir/, com o valor cobrado.
       location.href = RAIZ + 'abrir/#' + montarFragmento(s, true);
     }
     $('#previa-quero').addEventListener('click', function () { irParaAbrir('vitrine'); });
@@ -1103,12 +1250,27 @@
   /* ======================================================================
      /abrir/
      ====================================================================== */
+  var CHAVE_ABRIR = 'creat:abrir:negocio';   // nome e cidade saem do endereço; a recarga lê daqui (só esta aba)
+  function lerSessao(k) { try { var v = sessionStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  function gravarSessao(k, o) { try { sessionStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }
+  function apagarSessao(k) { try { sessionStorage.removeItem(k); } catch (e) {} }
   function paginaAbrir() {
-    var est = lerFragmento(location.hash);
+    var est = ENTRADA.frag;
+    if (est.n) gravarSessao(CHAVE_ABRIR, { n: est.n, c: est.c, k: est.k });
+    else {
+      var ses = lerSessao(CHAVE_ABRIR);
+      if (ses && typeof ses.n === 'string') {
+        var n0 = limparNome(ses.n), c0 = limparNome(ses.c || '');
+        if (nomeValido(n0)) est.n = n0;
+        if (c0 && cidadeValida(c0)) est.c = c0;
+        if (!est.k && NICHOS.indexOf(ses.k) !== -1) est.k = ses.k;
+      }
+    }
     var salvo = lerPedidoSalvo();
     if (!est.plano) est.plano = 'vitrine';
     utmAtual = est.utm;
-    if (!Object.keys(utmAtual).length && salvo) { utmAtual = origemParaUtm(salvo.origem); est.utm = utmAtual; }
+    if (!Object.keys(utmAtual).length) utmAtual = lerOrigem() || (salvo ? origemParaUtm(salvo.origem) : {});
+    est.utm = utmAtual;
     var f = $('#form-pedido');
     $('#abrir-titulo').textContent = est.n ? 'Falta pouco para abrir a ' + est.n + '.' : 'Falta pouco para abrir o seu negócio.';
     var resumo = $('#abrir-negocio');
@@ -1117,56 +1279,91 @@
       $('#abrir-negocio-nome').textContent = est.n;
       $('#abrir-negocio-detalhe').textContent = ROTULO_NICHO[est.k] + (est.c ? ' · ' + est.c : '');
       $('#abrir-voltar').href = RAIZ + '#' + montarFragmento(est, false);   // a home lê, preenche e limpa o endereço
+      var prog = $('#abrir-progresso'); if (prog) prog.hidden = false;      // veio da prévia: nome, nicho e prévia prontos
     }
     var radios = $$('input[name="plano"]', f);
     radios.forEach(function (r) { r.checked = r.value === est.plano; });
     prepararFormPedido(f, est, salvo && (!est.n || salvo.negocio === est.n) ? salvo : null);
-    var precos = null;
+    var precos = null, escolha = null;
+    var botoes = $$('[data-checkout]');
+    var barra = $('#barra-pagar');
+
+    // Link e total andam juntos: o que a tela mostra é o que o Mercado Pago cobra (checkout.config.js escolherAbertura).
+    function escolher() {
+      var anual = /_anual$/.test(est.plano);
+      var valorPlano = { aberto: precos.planos.aberto, vitrine: precos.planos.vitrine, aberto_anual: precos.planos.aberto * precos.anualMesesPagos, vitrine_anual: precos.planos.vitrine * precos.anualMesesPagos }[est.plano];
+      var origem = lerOrigem() || utmAtual || {};
+      var r = CK && CK.escolherAbertura ? CK.escolherAbertura({ inauguracao: !!precos.inauguracao, plano: est.plano, praca: origem.utm_campaign, totalAnual: anual ? precos.aberturaAtual + valorPlano : null }) : null;
+      return { r: r, anual: anual, combo: !!(r && r.combo), total: r && r.combo ? r.valor : precos.aberturaAtual };
+    }
     function atualizarTotal() {
       if (!precos) return;
-      var anual = /_anual$/.test(est.plano);
-      $('#total-mensal').hidden = anual; $('#total-anual').hidden = !anual;
+      escolha = escolher();
+      var anual = escolha.anual, combo = escolha.combo;
+      $('#total-mensal').hidden = anual; $('#total-anual').hidden = !anual || combo; $('#total-combo').hidden = !combo;
+      $('#resumo-mensal').hidden = anual; $('#resumo-anual').hidden = !anual || combo; $('#resumo-combo').hidden = !combo;
       aplicarPrecos(precos, D, est.plano);
+      $$('[data-v="abrir.total"]').forEach(function (x) { x.textContent = milhar(escolha.total); x.classList.remove('num-carregando'); });
       $('#anual-nota').hidden = !anual;
-    }
-    radios.forEach(function (r) {
-      r.addEventListener('change', function () {
-        est.plano = r.value; somFn('clique');
-        history.replaceState(null, '', location.pathname + location.search + '#' + montarFragmento(est, true));
-        atualizarTotal(); evento('plano_visto', { plano: est.plano, nicho: est.k || undefined });
-      });
-    });
-    var botoes = $$('[data-checkout]', f.parentNode);
-    lerPrecos().then(function (pr) {
-      precos = pr; atualizarTotal();
       var algumOk = false;
-      botoes.forEach(function (b) { if (aplicarCheckout(b, pr.linkChave)) algumOk = true; });
+      botoes.forEach(function (b) { if (aplicarCheckout(b, escolha.r ? escolha.r.chave : precos.linkChave, escolha.r ? escolha.r.link : null)) algumOk = true; });
       $('#pagamento-config').hidden = algumOk;
+      if (barra) barra.hidden = !algumOk;
       var zapCfg = $('#pagamento-zap');
       if (!algumOk && zapCfg) {
         var msg = 'Olá! Quero fechar o plano ' + est.plano.replace('_', ' ') + ' do Porta Aberta, mas o link de pagamento ainda não estava liberado na página.';
         if (suporteOk()) { zapCfg.href = linkWhats(CK.whatsappSuporte, msg); zapCfg.target = '_blank'; zapCfg.rel = 'noopener noreferrer'; }
         else { zapCfg.href = linkEmail('Fechar o plano do Porta Aberta', msg); zapCfg.textContent = 'Falar com o suporte por e-mail'; }
       }
+    }
+    radios.forEach(function (r) {
+      r.addEventListener('change', function () {
+        est.plano = r.value; somFn('clique');
+        // o fragmento guarda só plano, nicho, paleta e utm: nome e cidade nunca voltam para o endereço
+        try { history.replaceState(null, '', location.pathname + location.search + '#' + montarFragmento(semDadosPessoais(est), true)); } catch (e) {}
+        atualizarTotal(); evento('plano_visto', { plano: est.plano, nicho: est.k || undefined });
+      });
     });
+    lerPrecos().then(function (pr) { precos = pr; atualizarTotal(); });
+    var checkoutContado = false;
     botoes.forEach(function (b) {
       b.addEventListener('click', function (e) {
-        if (b.getAttribute('data-link-ok') !== '1') { e.preventDefault(); return; }
+        if (b.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+        if (b.getAttribute('data-link-ok') !== '1') return;   // sem link de pagamento: o botão leva ao WhatsApp do suporte
         var r = lerFormPedido(f, est);
         if (!r.ok) { e.preventDefault(); resumoErros(f, r.faltam); return; }
         resumoErros(f, 0);
         var s = salvarPedido(r.dados, est, salvo && salvo.negocio === r.dados.negocio ? salvo.id : null);
         if (!s.gravou) aviso('Este navegador não deixa guardar dados no aparelho, por isso a próxima página vai pedir os campos de novo. O pedido funciona do mesmo jeito.');
         evento('checkout_iniciado', { plano: r.dados.plano, nicho: r.dados.nicho });
+        if (escolha) {
+          guarda.gravar(CHAVE_CHECKOUT, JSON.stringify({ valor: escolha.total, chave: escolha.r ? escolha.r.chave : null, praca: escolha.r ? escolha.r.praca : null, em: new Date().toISOString() }));
+          // um por carga da página: clique duplo ou voltar do Mercado Pago e clicar de novo na mesma carga não duplica
+          if (!checkoutContado) { checkoutContado = true; pixelEvento('InitiateCheckout', { value: escolha.total, currency: 'BRL' }); }
+        }
       });
     });
-    $('#form-pedido').addEventListener('submit', function (e) { e.preventDefault(); });
+    f.addEventListener('submit', function (e) { e.preventDefault(); });
+    montarBarraPagar(barra, $('#pagamento'));
     var esquecer = $('#esquecer');
     if (esquecer) {
       esquecer.hidden = !salvo;
-      esquecer.addEventListener('click', function () { guarda.apagar(CHAVE_PEDIDO); esquecer.hidden = true; aviso('Pronto. Os dados do pedido saíram deste aparelho.'); });
+      esquecer.addEventListener('click', function () { guarda.apagar(CHAVE_PEDIDO); apagarSessao(CHAVE_ABRIR); esquecer.hidden = true; aviso('Pronto. Os dados do pedido saíram deste aparelho.'); });
     }
     evento('plano_visto', { plano: est.plano, nicho: est.k || undefined });
+  }
+  // Botão de pagar fixo no rodapé (celular e tablet): sai da frente quando a seção Pagamento está na tela
+  // ou quando o teclado está aberto num campo, para nunca cobrir o que a pessoa está digitando.
+  function montarBarraPagar(barra, secao) {
+    if (!barra) return;
+    var naTela = false, digitando = false;
+    var campo = function (t) { return !!(t && t.matches && t.matches('input:not([type=checkbox]):not([type=radio]),select,textarea')); };
+    var aplicar = function () { barra.classList.toggle('recolhida', naTela || digitando); D.body.classList.toggle('com-barra-pagar', !barra.hidden); };
+    if (secao && 'IntersectionObserver' in W) new IntersectionObserver(function (ents) { naTela = ents.some(function (x) { return x.isIntersecting; }); aplicar(); }, { threshold: 0.2 }).observe(secao);
+    D.addEventListener('focusin', function (e) { digitando = campo(e.target); aplicar(); });
+    D.addEventListener('focusout', function () { setTimeout(function () { digitando = campo(D.activeElement); aplicar(); }, 0); });
+    if ('MutationObserver' in W) new MutationObserver(aplicar).observe(barra, { attributes: true, attributeFilter: ['hidden'] });
+    aplicar();
   }
 
   /* ======================================================================
@@ -1178,6 +1375,8 @@
   }
   function paginaObrigado() {
     var precos = null;
+    var lead = $('#obrigado-lead');
+    if (lead && ENTRADA.retorno && ENTRADA.retorno.aprovado) lead.textContent = 'O Mercado Pago aprovou o pagamento. Envie o pedido abaixo; a equipe confere e começa.';
     lerPrecos().then(function (pr) { precos = pr; aplicarPrecos(pr, D); });
     var sem = $('#obrigado-sem-dados'), com = $('#obrigado-pedido');
     // pedido_enviado_pagina: no máximo um por carga, e só com pedido real.
@@ -1257,12 +1456,16 @@
   function renderMarkdown(md, alvo, valores) {
     var linhas = md.replace(/\r/g, '').split('\n');
     if (linhas[0] && linhas[0].trim() === 'REVISAO_JURIDICA_PENDENTE') linhas.shift(); // a página já mostra a linha no topo
+    // Campo de empresa vazio some com a vírgula que o antecede; marcador sem valor vira vazio, nunca "(a informar)".
+    var emp = empresa();
     var trocar = function (s) {
-      return s.replace(/\{\{([a-z._]+)\}\}/g, function (m, k) {
-        if (k === 'contato.email') return emailSuporte();
-        if (k in valores) return valores[k];
-        return '(a informar)';
-      });
+      return s.replace(/,\s*\{\{empresa\.(documento|endereco)\}\}/g, function (m, k) { return emp[k] ? ', ' + emp[k] : ''; })
+        .replace(/\{\{([A-Za-z_][A-Za-z0-9._]*)\}\}/g, function (m, k) {
+          if (k === 'contato.email') return emailSuporte();
+          if (k.indexOf('empresa.') === 0) return emp[k.slice(8)] || '';
+          if (k in valores) return valores[k];
+          return '';
+        });
     };
     var lista = null, par = [];
     var fecharPar = function () { if (par.length) { var p = el('p'); inline(p, trocar(par.join(' '))); alvo.appendChild(p); par = []; } };
@@ -1307,8 +1510,12 @@
 
   /* ------------------------------------------------------------ partida */
   function iniciar() {
+    // 1º: nome e cidade saem do endereço, antes de qualquer medição (Pixel, Clarity, PostHog).
+    limparEndereco();
+    guardarOrigem(Object.keys(ENTRADA.query).length ? ENTRADA.query : ENTRADA.frag.utm);
     ajustarAncoras();
     montarSuporte();
+    montarEmpresa();
     montarSom();
     try {
       if (PAGINA === 'home') paginaHome();
@@ -1318,6 +1525,7 @@
       else if (PAGINA === 'documento') paginaDocumento();
     } finally {
       montarConsentimento();
+      if (PAGINA === 'obrigado') medirCompra(ENTRADA.retorno);
       iniciarPosthog();
       D.documentElement.classList.add('js-pronto');
     }
@@ -1325,7 +1533,8 @@
 
   W.Vitrine = {
     lerPrecos: lerPrecos, lerFragmento: lerFragmento, montarFragmento: montarFragmento, filtrarPropriedades: filtrarPropriedades,
-    beforeSend: beforeSend, normalizarWhats: normalizarWhats, textoPedido: textoPedido, fresco: fresco, raiz: RAIZ
+    beforeSend: beforeSend, normalizarWhats: normalizarWhats, textoPedido: textoPedido, fresco: fresco, raiz: RAIZ,
+    lerRetornoMP: lerRetornoMP, medirCompra: medirCompra, filtrarPixel: filtrarPixel, lerOrigem: lerOrigem, guardarOrigem: guardarOrigem
   };
   if (D.readyState === 'loading') D.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();

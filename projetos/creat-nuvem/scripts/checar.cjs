@@ -17,7 +17,8 @@
       textosPermitidos dentro da lista branca. Textos dos presets em conteudo/nichos.
    3. dados/*.json: formato de precos.json, vagas.json, depoimentos.json;
       CREAT_CHECKOUT.precosPadrao (checkout.config.js) igual a precos.json.
-      Dado com mais de 48 h é só AVISO: a página já cai no preço padrão (ADR-003).
+      Dado velho é só AVISO: mais de 48 h esconde os contadores; precos.json com mais de 7 dias
+      derruba a inauguração para o preço padrão (ADR-003 e ADR-005). Valor dos links = preço da página.
    4. Nenhuma chave "ocupacaoFicticia" fora de schema/ (onde ela é proibida) e
       dos fixtures inválidos.
    5. Textos públicos (HTML da vitrine, conteudo/, marketing/): sem emoji, sem
@@ -235,7 +236,8 @@ function idade(o, onde) {
   if (isNaN(t)) { falha(onde, 'atualizado_em ausente ou não é data ISO'); return; }
   const h = (Date.now() - t) / 3600000;
   if (h < -0.09) falha(onde, 'atualizado_em no futuro');
-  else if (h > 48) aviso(onde, `atualizado_em com ${Math.round(h)} h: a vitrine mostra o preço padrão, sem contador e sem inauguração (rode scripts/atualizar-vagas.cjs)`);
+  else if (h > 7 * 24 && onde.endsWith('precos.json')) aviso(onde, `atualizado_em com ${Math.round(h)} h (mais de 7 dias): a vitrine mostra o preço padrão, sem inauguração e sem contador (ADR-005; rode scripts/atualizar-vagas.cjs)`);
+  else if (h > 48) aviso(onde, `atualizado_em com ${Math.round(h)} h: a vitrine esconde os contadores ("Restam X", vagas de hoje)${onde.endsWith('precos.json') ? '; o preço de inauguração continua até 7 dias (ADR-005)' : ''} (rode scripts/atualizar-vagas.cjs)`);
 }
 let precos = null;
 (function dados() {
@@ -289,6 +291,24 @@ let precos = null;
     if (pp.bastidores !== precos.bastidores) dif.push('bastidores');
     if (dif.length) falha('checkout.config.js', 'precosPadrao diferente de dados/precos.json em: ' + dif.join(', '));
     else ok('checkout.config.js: precosPadrao igual a dados/precos.json');
+  }
+  // O valor de cada link de pagamento tem de bater com o preço que a página mostra (a tela nunca diverge do Mercado Pago).
+  if (precos && C.valorDosLinks) {
+    const vl = C.valorDosLinks, dif = [];
+    if (vl.aberturaPadrao !== precos.abertura.padrao) dif.push(`aberturaPadrao (${vl.aberturaPadrao} x ${precos.abertura.padrao})`);
+    if (precos.abertura.inauguracao && vl.aberturaInauguracao !== precos.abertura.inauguracao.preco) dif.push(`aberturaInauguracao (${vl.aberturaInauguracao} x ${precos.abertura.inauguracao.preco}): a página cai no preço padrão`);
+    if (vl.bastidores !== precos.bastidores) dif.push(`bastidores (${vl.bastidores} x ${precos.bastidores})`);
+    const combos = C.combosAnual || {};
+    for (const [plano, base] of [['aberto_anual', 'aberto'], ['vitrine_anual', 'vitrine']]) {
+      const c = combos[plano]; if (!c) continue;
+      const esperado = precos.abertura.inauguracao.preco + precos.planos[base] * precos.anualMesesPagos;
+      if (c.total !== esperado) dif.push(`combo ${plano} (${c.total} x ${esperado}): a página usa o link da Abertura sozinha`);
+      if (!C.linkValido(c.link)) dif.push(`combo ${plano}: link inválido`);
+    }
+    const praças = Object.keys(C.linksPorPraca || {});
+    praças.forEach((k) => { if (!/^[a-z0-9-]{2,40}$/.test(k) || !C.linkValido(C.linksPorPraca[k])) dif.push(`linksPorPraca.${k} inválido`); });
+    if (dif.length) dif.forEach((m) => aviso('checkout.config.js', 'valor do link diferente da página: ' + m));
+    else ok(`checkout.config.js: valores dos links, ${Object.keys(combos).length} combos anuais e ${praças.length} praças batem com dados/precos.json`);
   }
   // reserva de último caso em assets/vitrine.js (só usada se checkout.config.js não carregar)
   const vj = path.join(RAIZ, 'assets', 'vitrine.js');

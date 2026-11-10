@@ -4,7 +4,7 @@ REVISAO_JURIDICA_PENDENTE
 
 Versão 1 · 08/11/2026
 
-Esta política explica o que a vitrine da Creat Nuvem (as páginas do Porta Aberta) faz com dados pessoais, de acordo com a Lei Geral de Proteção de Dados (Lei 13.709/2018). Controladora: Creat.MTT Studio, {{empresa.documento}}. Contato: {{contato.email}}.
+Esta política explica o que a vitrine da Creat Nuvem (as páginas do Porta Aberta) faz com dados pessoais, de acordo com a Lei Geral de Proteção de Dados (Lei 13.709/2018). Controladora: {{empresa.nome}}, de {{empresa.cidade}} ({{empresa.uf}}), {{empresa.documento}}. Contato: {{contato.email}}.
 
 ## 1. Antes do aceite, nada pessoal
 

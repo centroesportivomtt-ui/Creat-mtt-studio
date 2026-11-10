@@ -69,6 +69,7 @@
 .pagar{display:grid;gap:10px}
 .pagar .btn{width:100%}
 .notas{display:grid;gap:6px;font-size:var(--t-nota);color:var(--apagado)}
+p.notas{display:block} /* parágrafo com números dentro (ex.: anual-nota) não vira grade */
 .link-forte{display:inline-flex;align-items:center;min-height:var(--alvo);font-weight:700}
 .link-texto{background:none;border:0;padding:0 4px;min-height:var(--alvo);font-weight:800;text-decoration:underline;text-underline-offset:.18em;cursor:pointer;color:var(--tinta);text-align:left}
 .lista-numerada{margin:0;padding-left:22px;display:grid;gap:8px}
@@ -118,6 +119,32 @@
 @media (min-width:1000px){
   .grade-pedido{grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr);align-items:start}
   .lateral{position:sticky;top:88px;display:grid;gap:var(--r5)}
+}
+/* /abrir/ para o visitante frio: resumo do preço no topo, garantia e desistência antes dos botões,
+   botão de pagar fixo no rodapé do celular com o total de hoje. */
+.link-duvidas{display:inline-flex;align-items:center;min-height:var(--alvo);padding:0 8px;font-weight:700;font-size:var(--t-menor);text-decoration:underline;white-space:nowrap}
+.progresso{margin-top:var(--r3);font-size:var(--t-nota);color:var(--apagado);max-width:58ch}
+.progresso .feito{font-weight:800;color:var(--ok)}
+.resumo-preco{display:grid;gap:6px;margin-top:var(--r4);padding:var(--r3) var(--r4);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio-p);box-shadow:var(--sombra-p);max-width:62ch}
+.resumo-preco p{font-size:var(--t-corpo)}
+.resumo-preco strong{font-weight:800}
+.resumo-preco .menor{font-size:var(--t-nota);color:var(--apagado)}
+.grade-abrir{grid-template-areas:"form" "confianca" "pagar" "quem"}
+.area-form{grid-area:form}.area-confianca{grid-area:confianca}.area-pagar{grid-area:pagar}.area-quem{grid-area:quem}
+.pagar-total{margin-bottom:var(--r3);font-weight:700}
+.pagar-total strong{font:400 var(--t-h3)/1 var(--f-display)}
+.barra-pagar{position:fixed;left:0;right:0;bottom:0;z-index:var(--z-flutuante);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px var(--gut-d) calc(10px + env(safe-area-inset-bottom, 0px)) var(--gut);background:var(--papel);border-top:var(--borda) solid var(--linha)}
+.barra-pagar-total{display:grid;gap:2px;min-width:0}
+.barra-pagar-total > span{font:500 var(--t-micro)/1.2 var(--f-dado);text-transform:uppercase;letter-spacing:.06em;color:var(--apagado)}
+.barra-pagar-total strong{font:400 24px/1 var(--f-display);white-space:nowrap}
+.barra-pagar .btn{flex:0 1 auto;min-height:52px;padding:10px 22px;font-size:17px}
+.barra-pagar.recolhida{transform:translateY(calc(100% + 8px));visibility:hidden}
+@media (prefers-reduced-motion:no-preference){.barra-pagar{transition:transform var(--duracao-media) var(--curva-saida),visibility 0s}.barra-pagar.recolhida{transition:transform var(--duracao-curta) var(--curva-entrada),visibility 0s var(--duracao-curta)}}
+body.com-barra-pagar{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
+@media (min-width:1000px){
+  .grade-abrir{grid-template-areas:"form confianca" "pagar confianca" "quem quem"}
+  .barra-pagar{display:none}
+  body.com-barra-pagar{padding-bottom:0}
 }
 .mt-3{margin-top:var(--r3)} .mt-4{margin-top:var(--r4)} .mt-5{margin-top:var(--r5)} .mb-4{margin-bottom:var(--r4)}
 .lateral{display:grid;gap:var(--r5);align-content:start}

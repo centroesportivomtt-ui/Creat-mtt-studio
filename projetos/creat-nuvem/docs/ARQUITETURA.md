@@ -16,7 +16,7 @@ Fase 2 grava os MESMOS contratos (TenantConfig v1, Pedido, EventoPedido), sem co
 
 **(c) Fragmento** `previa/#k=&n=&c=&p=&utm_*` (ordem fixa; `/abrir/` põe `plano=` na frente). Escreve com `encodeURIComponent`, lê com `URLSearchParams(location.hash.slice(1))`. Limites: anexo (c). Inválido degrada campo a campo, sem erro e sem `throw`. Só `textContent`. Query string só leva `?nicho=` e `utm_*`.
 
-**(d) Dados** `dados/{precos,vagas,depoimentos,nichos}.json`, `fetch` sem cache, 3 s. Fresco = parseia, formato certo e ≤ 48 h. Senão **fail-closed** (ADR-003): preço padrão, sem contador, sem inauguração, sem aviso. Regras por arquivo: anexo (d).
+**(d) Dados** `dados/{precos,vagas,depoimentos,nichos}.json`, `fetch` sem cache, 3 s. Fresco = parseia, formato certo e ≤ 48 h (contadores); o preço de inauguração vale até 7 dias (ADR-005). Senão **fail-closed** (ADR-003): preço padrão, sem contador, sem inauguração, sem aviso. Regras por arquivo: anexo (d).
 
 **(e) Checkout** `checkout.config.js` → `window.CREAT_CHECKOUT` (sem segredo): `{versao, whatsappSuporte, links, precosPadrao, linkValido(v), whatsappValido(v), lerPrecos(): Promise}`. Botão `<a data-checkout="…">`; link inválido = sem `href`, `aria-disabled`, "Link de pagamento em configuração". Formato e hosts aceitos: anexo (e).
 

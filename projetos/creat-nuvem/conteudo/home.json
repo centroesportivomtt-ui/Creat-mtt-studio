@@ -2,9 +2,10 @@
   "_sobre": "Textos da home / (A Porta), na ordem da seção 5.1 do briefing. Marcadores {{...}} vêm de dados/*.json; {x} é preenchido pela página em tempo de execução. Regras de exibição condicional no README.md desta pasta.",
 
   "seo": {
-    "titulo": "Porta Aberta: seu negócio aberto na internet | Creat",
-    "tituloAlternativo": "Site pronto com pedido de horário no WhatsApp | Creat",
-    "descricao": "Digite o nome do seu negócio e veja o seu site pronto em segundos, com pedido de horário no seu WhatsApp. Sem fidelidade. Só paga se gostar.",
+    "titulo": "Site pronto com pedido de horário no WhatsApp | Creat",
+    "tituloAlternativo": "Site para barbearia, salão e studio em 72 h | Creat",
+    "_tituloAnterior": "Porta Aberta: seu negócio aberto na internet | Creat",
+    "descricao": "Digite o nome do seu negócio e veja o site pronto em segundos, com pedido de horário no WhatsApp. Grátis para ver, sem cadastro e sem fidelidade.",
     "ogTitulo": "Seu negócio aberto na internet.",
     "ogDescricao": "Digite o nome do seu negócio, vire a placa para ABERTO e veja o seu site pronto. Grátis para ver.",
     "ogImagemAlt": "Placa de madeira presa por uma correntinha, virada para o lado ABERTO, com o nome de um negócio escrito a giz."
@@ -16,7 +17,7 @@
     "links": {
       "comoFunciona": "Como funciona",
       "precos": "Preços",
-      "sede": "Sede ao vivo"
+      "sede": "A equipe"
     },
     "whatsapp": "Chamar no WhatsApp",
     "whatsappFlutuante": "Chamar no WhatsApp",
@@ -27,7 +28,9 @@
   "hero": {
     "olho": "Porta Aberta",
     "h1": "Seu negócio aberto na internet.",
-    "subtitulo": "Digite o nome do seu negócio. Em segundos você vê o seu site pronto, testa o pedido no seu próprio WhatsApp e só paga se gostar.",
+    "subtitulo": "Digite o nome do seu negócio. Em segundos você vê o site pronto e testa o pedido no seu próprio WhatsApp. Ver é grátis; você paga para abrir e tem 7 dias para desistir com devolução.",
+    "origem": "Feito pela Creat Nuvem, uma equipe de agentes de IA na Bahia. Uma pessoa da equipe confere cada site antes de ir ao ar. Tudo pela internet, para negócio de qualquer cidade.",
+    "origemLink": "Quem somos",
     "campoRotulo": "Nome do seu negócio",
     "campoExemplo": "Exemplo: Barbearia do Zé",
     "campoAjuda": "O nome fica só neste aparelho até você decidir pedir o site.",
@@ -66,6 +69,7 @@
     "fechar": "Fechar a prévia",
     "testar": "Testar no meu WhatsApp",
     "quero": "Quero este site no ar",
+    "notaQuero": "Ver é grátis. Ao pedir, você paga a Abertura e tem 7 dias para desistir com devolução. Mensalidade só com o site no ar.",
     "selo": "Prévia · os serviços e preços são exemplo",
     "carregando": "Montando o site da {negocio}...",
     "erroCarregar": "A prévia não abriu. Recarregue a página. Se continuar, chame o Suporte Creat no WhatsApp.",
@@ -104,8 +108,8 @@
         "texto": "Escolha o plano e pague a Abertura por Pix ou cartão. Você vê o total antes de pagar. Sem criar conta."
       },
       {
-        "titulo": "Acompanhe na sede",
-        "texto": "Abra a sede da Creat e veja a equipe montando o seu site, com o nome do seu negócio na fachada."
+        "titulo": "Veja como a equipe trabalha",
+        "texto": "Na sede da Creat, uma demonstração mostra cada etapa do trabalho, com o nome do seu negócio na fachada. O andamento real do seu pedido chega no seu WhatsApp."
       },
       {
         "titulo": "No ar, você aprova",
@@ -127,7 +131,7 @@
     "_regra": "Sites-demonstração feitos pela esteira real (scripts/producao/produzir.mjs --demonstracao), com nome fictício e o WhatsApp do Suporte Creat. Não é prova social: nunca dizer que são clientes. Cada site abre com a faixa 'demonstração · nome fictício'.",
     "olho": "Sites-demonstração",
     "titulo": "Veja um site pronto",
-    "texto": "Três sites feitos pela esteira real, a mesma que monta o seu. Nome fictício, cidade de verdade: Riachão do Jacuípe, na Bahia. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat.",
+    "texto": "Três sites feitos pela mesma esteira que monta o seu. Os nomes são fictícios e a cidade é Riachão do Jacuípe, na Bahia, onde fica a sede da Creat. No seu, entram o nome, a cidade e o WhatsApp do seu negócio. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat.",
     "nota": "Feito pela esteira real, nome fictício. Nenhum desses negócios existe.",
     "itens": [
       { "href": "sites/demo-barbearia/", "nicho": "Barbearia", "nome": "Barbearia Navalha Fictícia", "gesto": "Afie a navalha no couro para mandar o pedido.", "botao": "Abrir a barbearia" },
@@ -140,6 +144,9 @@
     "olho": "Preços",
     "titulo": "Um preço para abrir, um plano para manter aberto.",
     "texto": "Você paga a Abertura uma vez. A mensalidade só começa no dia em que o site entra no ar.",
+    "_textoRegra": "texto = enquanto os preços carregam. Depois vale textoInauguracao (inauguração valendo, ADR-005) ou textoPadrao.",
+    "textoInauguracao": "Hoje você paga só a Abertura: R$ {{precos.abertura.inauguracao.preco}} uma vez, preço das {{precos.abertura.inauguracao.vagasTotal}} primeiras vagas (depois, R$ {{precos.abertura.padrao}}). A mensalidade, R$ {{precos.planos.aberto}} no Aberto ou R$ {{precos.planos.vitrine}} no Vitrine, só começa no dia em que o site entra no ar.",
+    "textoPadrao": "Hoje você paga só a Abertura: R$ {{precos.abertura.padrao}} uma vez. A mensalidade, R$ {{precos.planos.aberto}} no Aberto ou R$ {{precos.planos.vitrine}} no Vitrine, só começa no dia em que o site entra no ar.",
 
     "abertura": {
       "nome": "Abertura",
@@ -244,8 +251,8 @@
 
   "sede": {
     "_regra": "Demonstração com nome fictício, sempre marcada. A comanda acende o passo que a sede embutida (sede/?modo=demo) avisa por postMessage; sem a sede carregada, segue o mesmo relógio (6 s; 9 s com movimento reduzido). Sem dado real, sem tempo prometido.",
-    "olho": "Sede ao vivo",
-    "titulo": "Veja quem monta o seu site",
+    "olho": "Sede da Creat",
+    "titulo": "Veja como a equipe trabalha",
     "texto": "Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um organiza, um escreve, outro escolhe as cores, outro testa no celular. Escolha um negócio e veja o pedido passar de mão em mão até o site ir para o ar.",
     "marcasRotulo": "Negócio na fachada da sede",
     "marcas": [
@@ -255,11 +262,11 @@
     ],
     "marcaSeuLeitor": " (o seu negócio)",
     "posterAlt": "Ilha da sede da Creat Nuvem desenhada em 3D, com a equipe de personagens trabalhando nas mesas.",
-    "botao": "Ver ao vivo",
+    "botao": "Abrir a sede",
     "carregando": "Carregando a sede...",
     "legendaDemonstracao": "Demonstração",
     "legenda": "Nome fictício na fachada.",
-    "legendaCelular": " A sede 3D só carrega quando você toca em Ver ao vivo, para poupar dados.",
+    "legendaCelular": " A sede 3D só carrega quando você toca em Abrir a sede, para poupar dados.",
     "legendaCarregada": " Arraste para girar a ilha e toque num personagem.",
     "legendaSeu": "O nome do seu negócio na fachada, só neste aparelho.",
     "comandaOlho": "Pedido de demonstração",
@@ -289,6 +296,23 @@
     "semFluxo": "A equipe espera o próximo pedido."
   },
 
+  "quemMonta": {
+    "_regra": "Bloco 'Quem monta o seu site' (home e /abrir/). Empresa vem de checkout.config.js (empresa); campo vazio some. Sem depoimento, número de clientes ou selo.",
+    "olho": "Quem somos",
+    "titulo": "Quem monta o seu site",
+    "texto": "A Creat Nuvem é uma equipe de agentes de IA com revisão humana, da {{empresa.nome}}, de {{empresa.cidade}} ({{empresa.uf}}), {{empresa.documento}}, {{empresa.endereco}}. Atendemos pela internet negócios de qualquer cidade.",
+    "passos": [
+      { "titulo": "Você vê e pede.", "texto": "A prévia é grátis. Para abrir, você paga a Abertura e manda os dados do negócio." },
+      { "titulo": "A equipe monta.", "texto": "Os agentes escrevem e montam o site, e uma pessoa da equipe lê tudo antes de mandar para você." },
+      { "titulo": "Você aprova.", "texto": "O site só entra no ar com o seu sim, e a mensalidade só começa nesse dia." }
+    ],
+    "contato": "Para falar com a gente: WhatsApp do Suporte Creat ou {{contato.email}}.",
+    "linkSede": "Ver a sede da Creat",
+    "rotuloSede": "demonstração",
+    "rotuloExemplo": "exemplo",
+    "nota": "Os três sites são demonstrações com nome fictício, feitos pela mesma esteira que monta o seu."
+  },
+
   "prova": {
     "_regra": "Seção inteira some se dados/depoimentos.json não tiver item com autorizadoEm. Sem texto de 'em breve'.",
     "olho": "Quem já abriu",
@@ -310,7 +334,7 @@
   },
 
   "rodape": {
-    "titular": "Creat Nuvem é um serviço da Creat.MTT Studio.",
+    "titular": "Creat Nuvem é um serviço da {{empresa.nome}}, de {{empresa.cidade}} ({{empresa.uf}}), {{empresa.documento}}.",
     "suporte": "Suporte: {{contato.email}}",
     "termos": "Termos de uso",
     "privacidade": "Privacidade",

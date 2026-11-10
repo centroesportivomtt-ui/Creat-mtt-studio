@@ -1,6 +1,6 @@
 # ADR-003 · Dado velho ou ausente falha fechado (CDC art. 37)
 
-Status: aceito · 08/11/2026 · Cirro (T1)
+Status: aceito · 08/11/2026 · Cirro (T1) · revisado em parte pelo ADR-005 (10/11/2026): o preço de inauguração vale até 7 dias; os contadores continuam com 48 h.
 
 ## Contexto
 A vitrine mostra preço de inauguração (R$ 297 nas 20 primeiras vagas), vagas restantes e "vagas hoje". Esses números vêm de `dados/precos.json` e `dados/vagas.json`, atualizados por `scripts/atualizar-vagas.cjs`. Se o script parar de rodar, a página continuaria anunciando escassez ou desconto que não existem mais: publicidade enganosa (CDC art. 37) e quebra de confiança, justamente num produto que vende honestidade ("sem amarra").

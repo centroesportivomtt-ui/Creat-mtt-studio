@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Palco dos Reels · Atrás da placa</title>
+<meta name="viewport" content="width=1080">
+<!-- Palco 1080x1920 dos Reels "Atrás da placa" (Órbita, 10/11/2026).
+     Uso: palco.html?reel=R8|R7 (servido por gerar.cjs). A página não anima sozinha: gerar.cjs chama
+     window.quadro(t) para cada quadro de 30 fps e fotografa. Tudo o que é produto vem da captura real
+     (/__tmp/cap/<reel>/...) ou do componente real da placa (ritual/placa.js). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="../../../assets/tokens.css">
+<link rel="stylesheet" href="../../../ritual/placa.css">
+<style>
+:root{--ceu:#CDEBFF;--tinta:#1E1B2E;--sol:#FFC93C;--papel:#FFFDF6;--lousa:#22322D;--giz:#F4F1E6;--madeira:#D39A5B;--madeira-clara:#E6B67B;--madeira-sombra:#7A4B2A;--veio:#9A6438;--linha:#1E1B2E;--apagado:#5E5974;--lasca:#F2ECDD}
+html,body{margin:0;background:var(--ceu);color-scheme:light}
+*{box-sizing:border-box}
+#palco{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--ceu);font-family:Figtree,system-ui,sans-serif;color:var(--tinta)}
+.camada{position:absolute;left:0;top:0;transform-origin:0 0}
+/* janela = a tela do celular (recorte da captura real) */
+#janela{position:absolute;overflow:hidden;background:var(--ceu);border-radius:30px;z-index:5}
+#janela img{position:absolute;left:0;top:0;transform-origin:0 0;image-rendering:auto}
+#vidro{position:absolute;inset:0;background:var(--lousa);opacity:0;pointer-events:none}
+#corpo{position:absolute;z-index:4;background:var(--tinta);border-radius:44px;box-shadow:10px 10px 0 rgba(30,27,46,.35)}
+/* balcão: a soleira da loja; nada de texto aqui (35% de baixo) */
+#balcao{position:absolute;left:-20px;right:-20px;top:1248px;bottom:-20px;z-index:20;background:var(--madeira);border-top:8px solid var(--tinta)}
+#balcao::before{content:"";position:absolute;left:0;right:0;top:0;height:34px;background:var(--madeira-clara);border-bottom:4px solid var(--tinta)}
+#balcao svg{position:absolute;left:0;top:60px}
+/* legenda a giz */
+#legenda{position:absolute;left:65px;right:65px;top:348px;z-index:40;display:flex;justify-content:center}
+.faixa{display:inline-block;max-width:950px;padding:16px 34px 18px;background:var(--sol);color:var(--tinta);border:4px solid var(--tinta);border-radius:20px;box-shadow:10px 10px 0 var(--tinta);
+  font:800 64px/1.13 Figtree,system-ui,sans-serif;letter-spacing:-.5px;text-align:center}
+.faixa k{font-family:"Lilita One",Figtree,sans-serif;font-weight:400;font-size:74px;letter-spacing:.5px;line-height:1.05}
+/* selos de honestidade */
+.selo{position:absolute;z-index:45;font:500 28px/1 "JetBrains Mono",ui-monospace,monospace;color:var(--tinta);background:var(--papel);border:3px solid var(--tinta);border-radius:10px;padding:8px 14px 9px;white-space:nowrap;letter-spacing:-.3px}
+.selo.escuro{background:var(--tinta);color:var(--papel);border-color:var(--papel)}
+/* anéis de toque (giz) */
+#aneis{position:absolute;inset:0;z-index:30;pointer-events:none}
+.anel{position:absolute;width:88px;height:88px;margin:-44px 0 0 -44px}
+/* cena R7: celular escuro às 23h12 */
+#cena{position:absolute;inset:0;z-index:3;transform-origin:0 0}
+#celEscuro{position:absolute;left:240px;top:530px;width:600px;height:900px;background:var(--tinta);border-radius:58px;padding:16px}
+#celEscuro .tela{position:relative;width:100%;height:100%;background:#141A3C;border-radius:44px;overflow:hidden}
+#celEscuro .hora{position:absolute;left:34px;top:22px;font:800 30px/1 Figtree,sans-serif;color:#F4F1FF}
+#notif{position:absolute;left:26px;right:26px;top:70px;background:var(--papel);border:4px solid #05061A;border-radius:28px;padding:20px 24px 22px;box-shadow:6px 6px 0 #05061A}
+#notif .de{display:flex;align-items:center;gap:10px;font:500 25px/1 "JetBrains Mono",monospace;color:var(--apagado)}
+#notif .txt{margin-top:10px;font:800 44px/1.1 Figtree,sans-serif;color:var(--tinta);white-space:nowrap}
+#notif .selo{position:absolute;right:14px;top:-22px;font-size:24px;padding:6px 10px}
+.vib{position:absolute;top:580px;width:60px;height:120px}
+#placaCena{position:absolute;left:240px;top:692px;width:600px;z-index:6}
+#placaCena .gira{transform-origin:48.5% 7.3%}
+/* celular da vitrine para a mensagem (R7) */
+#msg{position:absolute;z-index:7;display:none}
+#msg .tela{position:absolute;left:16px;right:16px;top:16px;background:var(--papel);border-radius:30px;overflow:hidden;padding:22px}
+#msg .cab{display:flex;align-items:center;gap:14px;padding:16px 18px;border:3px solid var(--linha);border-radius:20px;background:var(--ceu);font:800 34px/1.1 Figtree,sans-serif}
+#msg .cab small{display:block;margin-top:6px;font:500 24px/1 "JetBrains Mono",monospace;color:var(--apagado)}
+.faixaTeste{display:inline-block;background:var(--sol);color:var(--tinta);border:3px solid var(--tinta);border-radius:8px;padding:3px 10px 4px;font:700 24px/1.1 "JetBrains Mono",monospace;transform:rotate(-1.5deg);white-space:nowrap}
+#msg .conversa{position:absolute;left:22px;right:22px;top:150px;display:flex;flex-direction:column;align-items:flex-end;gap:14px}
+#msg .balao{max-width:96%;padding:22px 24px 18px;border:3px solid var(--linha);border-radius:26px 26px 8px 26px;background:var(--lasca);font:600 39px/1.34 Figtree,sans-serif;color:var(--tinta);transform-origin:100% 100%}
+#msg .balao small{display:block;margin-top:10px;font:500 22px/1 "JetBrains Mono",monospace;color:var(--apagado);text-align:right}
+/* cartão final */
+#cartao{position:absolute;inset:0;z-index:8;display:none;background:var(--ceu)}
+#placaCartao{position:absolute;left:250px;top:548px;width:580px}
+#chip{position:absolute;left:0;right:0;top:1078px;display:flex;justify-content:center}
+#chip span{background:var(--sol);border:4px solid var(--tinta);border-radius:999px;box-shadow:8px 8px 0 var(--tinta);padding:14px 36px 16px;font:800 46px/1 Figtree,sans-serif}
+#origem{position:absolute;left:65px;right:65px;top:1180px;text-align:center;font:700 34px/1.2 Figtree,sans-serif;color:var(--tinta)}
+/* porta de aço de enrolar (assinatura sonora e visual do fim) */
+#porta{position:absolute;left:0;top:0;width:1080px;height:2000px;z-index:60;display:none;
+  background:repeating-linear-gradient(180deg,#9AA0AC 0 52px,#7C828F 52px 58px,#B5BAC4 58px 64px,#9AA0AC 64px 66px);border-bottom:26px solid var(--tinta)}
+#porta::after{content:"";position:absolute;left:470px;bottom:30px;width:140px;height:22px;background:var(--tinta);border-radius:12px}
+#guia{position:absolute;inset:0;z-index:99;display:none;pointer-events:none}
+.com-guia #guia{display:block}
+</style>
+</head>
+<body>
+<div id="palco">
+  <div id="cena" hidden>
+    <div id="celEscuro"><div class="tela">
+      <div class="hora">23:12</div>
+      <div id="notif">
+        <div class="de"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M4 20l1.4-4A8 8 0 1 1 8.6 19z" fill="#CDEBFF" stroke="#1E1B2E" stroke-width="2.2" stroke-linejoin="round"/></svg>Mensagem · 23:12</div>
+        <div class="txt">Tem horário amanhã?</div>
+        <div class="selo">cena de exemplo</div>
+      </div>
+    </div></div>
+    <svg class="vib" id="vibE" style="left:170px" viewBox="0 0 60 120"><path d="M50 10 Q18 60 50 110" fill="none" stroke="#1E1B2E" stroke-width="8" stroke-linecap="round"/><path d="M28 30 Q10 60 28 90" fill="none" stroke="#1E1B2E" stroke-width="8" stroke-linecap="round"/></svg>
+    <svg class="vib" id="vibD" style="left:850px" viewBox="0 0 60 120"><path d="M10 10 Q42 60 10 110" fill="none" stroke="#1E1B2E" stroke-width="8" stroke-linecap="round"/><path d="M32 30 Q50 60 32 90" fill="none" stroke="#1E1B2E" stroke-width="8" stroke-linecap="round"/></svg>
+    <div id="placaCena"><div class="gira" id="giraCena"><div id="pontoCena"></div></div></div>
+  </div>
+  <div id="corpo" hidden></div>
+  <div id="janela" hidden><img id="tela" alt=""><div id="vidro"></div></div>
+  <div id="msg">
+    <div class="tela">
+      <div class="cab"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M4 20l1.4-4A8 8 0 1 1 8.6 19z" fill="var(--papel)" stroke="var(--linha)" stroke-width="2.2" stroke-linejoin="round"/></svg>
+        <div>Pedido pelo site<small><span class="faixaTeste">número de teste</span></small></div></div>
+      <div class="conversa"><div class="balao" id="balao"></div></div>
+    </div>
+  </div>
+  <div id="cartao">
+    <div id="placaCartao"><div id="pontoCartao"></div></div>
+    <div id="chip"><span>Grátis para ver · Sem cadastro</span></div>
+    <div id="origem">Creat Nuvem · equipe de agentes de IA · Bahia</div>
+  </div>
+  <div id="aneis"></div>
+  <div id="balcao"><svg width="1120" height="600" viewBox="0 0 1120 600" aria-hidden="true">
+    <path d="M40 60 C200 40 360 80 520 58" fill="none" stroke="#9A6438" stroke-width="5" stroke-linecap="round"/>
+    <path d="M640 90 C760 70 900 110 1060 86" fill="none" stroke="#9A6438" stroke-width="5" stroke-linecap="round"/>
+    <path d="M120 230 C300 205 480 250 700 222" fill="none" stroke="#9A6438" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="860" cy="250" rx="26" ry="11" fill="none" stroke="#9A6438" stroke-width="5"/>
+    <path d="M60 420 C260 400 420 440 640 414" fill="none" stroke="#9A6438" stroke-width="5" stroke-linecap="round"/></svg></div>
+  <div id="legenda"></div>
+  <div id="selos"></div>
+  <div id="porta"></div>
+  <svg id="guia" width="1080" height="1920"><rect x="65" y="269" width="950" height="979" fill="none" stroke="#E0245E" stroke-width="4" stroke-dasharray="18 10"/></svg>
+</div>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="filtroGiz" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="r"/><feColorMatrix in="r" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.4 2.0" result="g"/><feComposite in="SourceGraphic" in2="g" operator="in"/></filter>
+</defs></svg>
+<script src="../../../ritual/placa.js"></script>
+<script src="linhas.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Q = new URLSearchParams(location.search), REEL = Q.get('reel') || 'R8';
+  var L = window.LINHAS, R = L[REEL], FPS = L.FPS, G = L.GRADE;
+  var $ = function (s) { return document.querySelector(s); };
+  var meta = null;
+
+  /* ---------- curvas */
+  function cl(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function prog(t, a, b) { return cl((t - a) / (b - a)); }
+  function eio(x) { x = cl(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+  function eout(x) { x = cl(x); return 1 - Math.pow(1 - x, 3); }
+  function ein(x) { x = cl(x); return x * x * x; }
+  function lerp(a, b, k) { return a + (b - a) * k; }
+  function mola(x) { x = cl(x); return 1 - Math.exp(-6.5 * x) * Math.cos(9.5 * x); }  /* passa um pouco e assenta */
+
+  /* ---------- relógio das animações da placa (mesmo método da captura) */
+  var nasc = new WeakMap();
+  function posicionar(t, adiantar) {
+    var ms = t * 1000;
+    document.getAnimations().forEach(function (a) {
+      if (!nasc.has(a)) { nasc.set(a, ms - (adiantar || 0) * 1000); try { a.pause(); } catch (e) {} }
+      var v = ms - nasc.get(a); try { a.currentTime = v < 0 ? 0 : v; } catch (e) {}
+    });
+  }
+
+  /* ---------- legenda e selos */
+  var legAtual = -1, legEl = $('#legenda');
+  function legenda(t) {
+    var i = -1;
+    R.legendas.forEach(function (l, j) { if (t >= l[0] - 1e-6 && t < l[1] - 1e-6) i = j; });
+    if (i !== legAtual) { legAtual = i; legEl.innerHTML = i < 0 ? '' : '<div class="faixa">' + R.legendas[i][2] + '</div>'; }
+    var f = legEl.firstChild; if (!f) return;
+    var ini = R.legendas[i][0];
+    /* escrita a giz: o traço se revela da esquerda para a direita em 320 ms (a 1ª legenda já nasce escrita: é a capa) */
+    var p = ini <= 0 ? 1 : eout(prog(t, ini, ini + 0.32));
+    var a = (p * 112 - 12).toFixed(2);
+    f.style.webkitMaskImage = f.style.maskImage = p >= 1 ? 'none' : 'linear-gradient(90deg,#000 ' + a + '%,transparent ' + (+a + 12) + '%)';
+  }
+  var selosEl = $('#selos');
+  function selos(t) {
+    var html = '';
+    R.selos.forEach(function (s) {
+      if (t < s.t0 - 1e-6 || t >= s.t1 - 1e-6) return;
+      var op = Math.min(1, (t - s.t0) / 0.2 + (s.t0 <= 0 ? 1 : 0));
+      var pos = { 'topo-esq': 'left:65px;top:' + G.seloY + 'px', 'topo-dir': 'right:65px;top:' + G.seloY + 'px',
+                  'baixo-1': 'left:50%;top:1128px;transform:translateX(-50%)', 'baixo-2': 'left:50%;top:1184px;transform:translateX(-50%)' }[s.lugar];
+      html += '<div class="selo" style="' + pos + ';opacity:' + op.toFixed(3) + '">' + s.texto + '</div>';
+    });
+    if (selosEl.__h !== html) { selosEl.innerHTML = html; selosEl.__h = html; }
+  }
+
+  /* ---------- anéis de giz: seguem o ponteiro gravado */
+  var aneisEl = $('#aneis');
+  var ANEL = '<svg viewBox="0 0 88 88" width="88" height="88"><circle cx="44" cy="44" r="38" fill="none" stroke="#1E1B2E" stroke-width="12" opacity=".85"/><circle cx="44" cy="44" r="38" fill="none" stroke="#F4F1E6" stroke-width="6" filter="url(#filtroGiz)"/></svg>';
+  function aneis(lista) {
+    var h = '';
+    lista.forEach(function (a) { if (a.op > 0.01) h += '<div class="anel" style="left:' + a.x.toFixed(1) + 'px;top:' + a.y.toFixed(1) + 'px;opacity:' + a.op.toFixed(3) + ';transform:scale(' + a.s.toFixed(3) + ')">' + ANEL + '</div>'; });
+    aneisEl.innerHTML = h;
+  }
+  /* toque: aparece 120 ms antes, some 220 ms depois */
+  function anelToque(t, tt, x, y) {
+    var dt = t - tt; if (dt < -0.14 || dt > 0.3) return null;
+    if (dt < 0) { var p = eout(prog(t, tt - 0.14, tt)); return { x: x, y: y, op: p, s: 1.3 - 0.3 * p }; }
+    var q = prog(t, tt + 0.06, tt + 0.3); return { x: x, y: y, op: 1 - q, s: 1 + 0.25 * q };
+  }
+
+  /* ---------- janela (tela do celular com a captura real) */
+  var jan = $('#janela'), img = $('#tela'), corpo = $('#corpo');
+  function janela(r, s, ox, oy, src, borda, raio) {
+    jan.hidden = false;
+    jan.style.left = r.x + 'px'; jan.style.top = r.y + 'px'; jan.style.width = r.w + 'px'; jan.style.height = r.h + 'px';
+    jan.style.borderRadius = (raio == null ? 30 : raio) + 'px';
+    img.style.transform = 'translate(' + ox.toFixed(2) + 'px,' + oy.toFixed(2) + 'px) scale(' + (s / 3).toFixed(5) + ')';
+    if (borda > 0.5) {
+      corpo.hidden = false;
+      corpo.style.left = (r.x - borda) + 'px'; corpo.style.top = (r.y - borda) + 'px';
+      corpo.style.width = (r.w + 2 * borda) + 'px'; corpo.style.height = (r.h + 2 * borda + 400) + 'px';
+      corpo.style.borderRadius = ((raio == null ? 30 : raio) + borda) + 'px';
+    } else corpo.hidden = true;
+    if (img.__src !== src) { img.__src = src; img.src = src; return img.decode().catch(function () {}); }
+    return Promise.resolve();
+  }
+  function quadroCap(sessao, t) { return '/__tmp/cap/' + REEL + '/' + sessao + '/' + String(Math.round(t * FPS)).padStart(4, '0') + '.png'; }
+
+  /* ---------- porta de aço + cartão final (os dois Reels) */
+  var cartaoMontado = false;
+  function cartao(t) {
+    var c0 = R.cartao, cEl = $('#cartao'), porta = $('#porta');
+    if (t < c0 - 1e-6) { cEl.style.display = 'none'; porta.style.display = 'none'; return false; }
+    cEl.style.display = 'block'; jan.hidden = true; corpo.hidden = true; $('#cena').hidden = true; $('#msg').style.display = 'none';
+    if (!cartaoMontado) {
+      cartaoMontado = true;
+      CreatPlaca.montar($('#pontoCartao'), { nome: 'Seu negócio' });
+      posicionar(t, 5);
+    }
+    if (!cartao.abriu && t >= c0 + 0.38 - 1e-6) { cartao.abriu = true; CreatPlaca.abrir('botao'); }
+    /* a porta de aço sobe em 0,9 s (com o som), revelando o cartão */
+    var p = prog(t, c0, c0 + 0.9);
+    porta.style.display = p >= 1 ? 'none' : 'block';
+    porta.style.transform = 'translateY(' + (-2040 * eio(p)).toFixed(1) + 'px)';
+    aneis([]);
+    return true;
+  }
+
+  /* ================================================================ R8 */
+  var R8cam = null;
+  function camR8(t) {
+    var m = meta.sessoes, A = m.A.inicio;
+    var cx = A.caixa.x + A.caixa.w / 2, cy = A.caixa.y + A.caixa.h / 2;
+    var WZ = { x: 65, y: G.janelaY, w: 950, h: G.janelaFim - G.janelaY };
+    var sZ = Math.min(WZ.w / A.caixa.w, WZ.h / A.caixa.h);
+    var sP = 1.51, v0 = 112, WP = { x: 540 - 390 * sP / 2, y: 440, w: 390 * sP, h: G.janelaFim - 440 };
+    var k = eio(prog(t, R.camera.recuo[0], R.camera.recuo[1]));
+    var s = lerp(sZ, sP, k);
+    var ax = lerp(WZ.x + WZ.w / 2, WP.x + sP * cx, k), ay = lerp(WZ.y + WZ.h / 2, WP.y + sP * (cy - v0), k);
+    var r = { x: lerp(WZ.x, WP.x, k), y: lerp(WZ.y, WP.y, k), w: lerp(WZ.w, WP.w, k), h: lerp(WZ.h, WP.h, k) };
+    return { s: s, ox: ax - s * cx, oy: ay - s * cy, r: r, borda: 18 * eio(prog(t, R.camera.recuo[0] + 0.25, R.camera.recuo[1])), raio: lerp(24, 34, k) };
+  }
+  function quadroR8(t) {
+    if (cartao(t)) return Promise.resolve();
+    var sess = t < R.sessoes.A.t1 - 1e-6 ? 'A' : 'B';
+    var c = camR8(t);
+    var pr = janela({ x: c.r.x, y: c.r.y, w: c.r.w, h: c.r.h }, c.s, c.ox - c.r.x, c.oy - c.r.y, quadroCap(sess, t), c.borda, c.raio);
+    /* anéis: arraste gravado (sessões A e B) e o toque no dia da prévia */
+    var lista = [], m = meta.sessoes[sess], pont = m.ponteiro || [];
+    var pos = function (x, y) { return { x: c.ox + c.s * x, y: c.oy + c.s * y }; };
+    if (pont.length) {
+      var t0 = pont[0].t, ult = pont[pont.length - 1], tf = ult.t;
+      if (t >= t0 - 0.14 && t <= tf + 0.3) {
+        var atual = pont[0]; pont.forEach(function (p) { if (p.t <= t + 1e-6) atual = p; });
+        var q = pos(atual.x, atual.y);
+        if (t < t0) { var a = eout(prog(t, t0 - 0.14, t0)); lista.push({ x: q.x, y: q.y, op: a, s: 1.3 - 0.3 * a }); }
+        else if (t <= tf) lista.push({ x: q.x, y: q.y, op: 1, s: 1 });
+        else { var b = prog(t, tf + 0.04, tf + 0.3); lista.push({ x: q.x, y: q.y, op: 1 - b, s: 1 + 0.25 * b }); }
+      }
+    }
+    (m.toques || []).forEach(function (q0) { var q = pos(q0.x, q0.y); var a = anelToque(t, q0.t, q.x, q.y); if (a) lista.push(a); });
+    aneis(lista);
+    return pr;
+  }
+
+  /* ================================================================ R7 */
+  var montadoCena = false, lousa0 = null;
+  var WP7 = { x: 160, y: G.janelaY, w: 760, h: G.janelaFim - G.janelaY }, s7 = 760 / 390;
+  function quadroR7(t) {
+    if (cartao(t)) return Promise.resolve();
+    var C = R.cena, cena = $('#cena');
+    /* --- 7 a 10 s: o pedido chega no celular da vitrine */
+    if (t >= R.mensagem - 1e-6) {
+      cena.hidden = true; jan.hidden = true; aneis([]);
+      var msg = $('#msg'), b = 16;
+      msg.style.display = 'block';
+      msg.style.left = (WP7.x - b) + 'px'; msg.style.top = (WP7.y - b) + 'px'; msg.style.width = (WP7.w + 2 * b) + 'px'; msg.style.height = (WP7.h + 2 * b + 400) + 'px';
+      msg.style.background = 'var(--tinta)'; msg.style.borderRadius = '48px'; msg.querySelector('.tela').style.height = (WP7.h + 300) + 'px';
+      var bal = $('#balao');
+      if (!bal.__ok) { bal.__ok = 1; bal.innerHTML = textoMensagem() + '<small>agora · cena de exemplo</small>'; }
+      var p = prog(t, R.mensagem + 0.04, R.mensagem + 0.74), e = mola(p);
+      bal.style.opacity = Math.min(1, p * 2.5).toFixed(3);
+      bal.style.transform = 'translateY(' + (28 * (1 - e)).toFixed(2) + 'px) scale(' + (0.94 + 0.06 * e).toFixed(4) + ')';
+      return Promise.resolve();
+    }
+    $('#msg').style.display = 'none';
+    /* --- 0 a 2,4 s: celular escuro, placa desce, arraste, giro */
+    cena.hidden = false;
+    if (!montadoCena) {
+      montadoCena = true;
+      CreatPlaca.montar($('#pontoCena'), { nome: R.nome });
+      posicionar(t, 5);                     /* o giz já escrito (a placa chega pronta, com o nome) */
+    }
+    /* vibração: arcos que se apagam uma vez (nada piscando) */
+    var vib = 1 - prog(t, 0.15, 0.6);
+    $('#vibE').style.opacity = $('#vibD').style.opacity = vib.toFixed(3);
+    /* descida na corrente com mola e balanço de 6° que se acalma */
+    var d = C.descida, pd = prog(t, d[0], d[1]);
+    var y = t < d[0] ? -1500 : -1500 * (1 - mola(pd));
+    var ang = t < d[0] ? 0 : 6 * Math.exp(-2.4 * (t - d[0])) * Math.sin(2 * Math.PI * (t - d[0]) / 0.95 + 0.6);
+    $('#placaCena').style.transform = 'translateY(' + y.toFixed(1) + 'px)';
+    $('#giraCena').style.transform = 'rotate(' + ang.toFixed(3) + 'deg)';
+    /* arraste com o ponteiro: eventos reais do componente da placa */
+    var A = C.arraste, raiz = document.querySelector('#pontoCena .cp-placa');
+    var br = raiz.getBoundingClientRect(), px = br.left + br.width / 2, py0 = br.top + br.height * (0.32 + 0.667 * 0.55);
+    if (!quadroR7.ap && t >= A.t0 - 1e-6) { quadroR7.ap = { x: px, y: py0 }; raiz.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 7, pointerType: 'touch', isPrimary: true, button: 0, clientX: px, clientY: py0, bubbles: true, cancelable: true })); }
+    var dy = 0;
+    if (quadroR7.ap && !quadroR7.solto) {
+      dy = A.dy * eout(prog(t, A.t0, A.t1));
+      raiz.dispatchEvent(new PointerEvent('pointermove', { pointerId: 7, pointerType: 'touch', isPrimary: true, clientX: quadroR7.ap.x, clientY: quadroR7.ap.y + dy, bubbles: true, cancelable: true }));
+      /* o que o componente desenha no próximo rAF, desenhado já neste quadro (mesma conta de desenharArraste) */
+      var h = br.height, lim = h * (200 / 300) * 0.4, elo = h * (84 / 300), v = dy <= lim ? dy : lim + (dy - lim) * 0.3;
+      document.querySelector('#pontoCena .cp-tabua').style.transform = 'translate3d(0,' + v.toFixed(1) + 'px,0)';
+      document.querySelector('#pontoCena .cp-corrente').style.transform = 'scaleY(' + (1 + v / elo).toFixed(4) + ')';
+      if (t >= A.solta - 1e-6) {
+        quadroR7.solto = { t: t, x: quadroR7.ap.x, y: quadroR7.ap.y + dy };
+        raiz.dispatchEvent(new PointerEvent('pointerup', { pointerId: 7, pointerType: 'touch', isPrimary: true, clientX: quadroR7.ap.x, clientY: quadroR7.ap.y + dy, bubbles: true, cancelable: true }));
+      }
+    }
+    var lista = [];
+    if (quadroR7.ap) {
+      var ay = quadroR7.solto ? quadroR7.solto.y : quadroR7.ap.y + dy;
+      if (!quadroR7.solto) lista.push({ x: quadroR7.ap.x, y: ay, op: 1, s: 1 });
+      else { var bq = prog(t, quadroR7.solto.t + 0.04, quadroR7.solto.t + 0.3); lista.push({ x: quadroR7.solto.x, y: ay, op: 1 - bq, s: 1 + 0.25 * bq }); }
+    } else if (t >= A.t0 - 0.14) { var a0 = eout(prog(t, A.t0 - 0.14, A.t0)); lista.push({ x: px, y: py0, op: a0, s: 1.3 - 0.3 * a0 }); }
+    /* --- atravessar o vidro: a lousa da placa vira a tela da prévia */
+    var V = C.vidro;
+    if (t < V[0] - 1e-6) { cena.style.transform = ''; cena.style.opacity = 1; jan.hidden = true; corpo.hidden = true; aneis(lista); return Promise.resolve(); }
+    if (!lousa0) { cena.style.transform = ''; var lb = document.querySelector('#pontoCena .cp-aberto #cp-lousa').getBoundingClientRect(); lousa0 = { x: lb.left, y: lb.top, w: lb.width, h: lb.height }; }
+    var k = prog(t, V[0], V[1]), kz = ein(k), kj = eio(k);
+    var cxl = lousa0.x + lousa0.w / 2, cyl = lousa0.y + lousa0.h / 2, sc = 1 + 7 * kz;
+    cena.style.transform = 'translate(' + (cxl * (1 - sc)).toFixed(2) + 'px,' + (cyl * (1 - sc)).toFixed(2) + 'px) scale(' + sc.toFixed(4) + ')';
+    cena.style.opacity = (1 - prog(k, 0.45, 0.9)).toFixed(3);
+    /* janela: do retângulo da lousa (já ampliado pelo voo) até a tela do celular */
+    var lz = { x: cxl + (lousa0.x - cxl) * sc, y: cyl + (lousa0.y - cyl) * sc, w: lousa0.w * sc, h: lousa0.h * sc };
+    var ini = { x: lousa0.x, y: lousa0.y, w: lousa0.w, h: lousa0.h };
+    var mix = eio(prog(k, 0, 0.35));       /* no começo a janela acompanha a lousa; depois assenta na tela */
+    var r0 = { x: lerp(ini.x, lz.x, mix * 0.25), y: lerp(ini.y, lz.y, mix * 0.25), w: lerp(ini.w, lz.w, mix * 0.25), h: lerp(ini.h, lz.h, mix * 0.25) };
+    var r = { x: lerp(r0.x, WP7.x, kj), y: lerp(r0.y, WP7.y, kj), w: lerp(r0.w, WP7.w, kj), h: lerp(r0.h, WP7.h, kj) };
+    var s = r.w / 390;
+    $('#vidro').style.opacity = (1 - prog(k, 0.05, 0.4)).toFixed(3);
+    var tc = Math.max(R.sessoes.C.t0, t);
+    var pr = janela(r, s, 0, 0, quadroCap('C', tc), 16 * eio(prog(k, 0.55, 1)), lerp(10, 30, kj));
+    /* toques gravados na prévia */
+    (meta.toques || []).forEach(function (q0) { if (q0.falhou) return; var a = anelToque(t, q0.t, r.x + s * q0.x, r.y + s * q0.y); if (a) lista.push(a); });
+    aneis(lista);
+    return pr;
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function textoMensagem() {
+    var m = meta.mensagem || '';
+    /* o número de teste fica coberto pela faixa */
+    return esc(m).replace(/\(\d{2}\)\s?\d{4,5}-\d{4}/g, '<span class="faixaTeste">número de teste</span>');
+  }
+
+  /* ================================================================ API para gerar.cjs */
+  window.preparar = function () {
+    return fetch('/__tmp/cap/' + REEL + '/meta.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) { meta = j; return document.fonts.ready; })
+      .then(function () { return { reel: REEL, duracao: R.duracao, mensagem: meta.mensagem || null }; });
+  };
+  window.quadro = function (t) {
+    var p = REEL === 'R8' ? quadroR8(t) : quadroR7(t);
+    legenda(t); selos(t);
+    posicionar(t);
+    return Promise.resolve(p).then(function () { return new Promise(function (r) { requestAnimationFrame(function () { r(true); }); }); });
+  };
+})();
+</script>
+</body>
+</html>

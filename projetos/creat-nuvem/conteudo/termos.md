@@ -8,7 +8,7 @@ Estes termos valem para quem contrata o Porta Aberta, o serviço da Creat Nuvem 
 
 ## 1. Quem somos
 
-O Porta Aberta é prestado pela Creat.MTT Studio, {{empresa.documento}}, {{empresa.endereco}}. Contato: {{contato.email}} e o WhatsApp do Suporte Creat que aparece no site.
+O Porta Aberta é prestado pela {{empresa.nome}}, de {{empresa.cidade}} ({{empresa.uf}}), {{empresa.documento}}, {{empresa.endereco}}. Contato: {{contato.email}} e o WhatsApp do Suporte Creat que aparece no site.
 
 ## 2. O que é o serviço
 

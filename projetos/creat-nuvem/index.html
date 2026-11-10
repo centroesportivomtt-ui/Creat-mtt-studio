@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Porta Aberta: seu negócio aberto na internet | Creat</title>
-<meta name="description" content="Digite o nome do seu negócio e veja o seu site pronto em segundos, com pedido de horário no seu WhatsApp. Sem fidelidade. Só paga se gostar.">
+<title>Site pronto com pedido de horário no WhatsApp | Creat</title>
+<meta name="description" content="Digite o nome do seu negócio e veja o site pronto em segundos, com pedido de horário no WhatsApp. Grátis para ver, sem cadastro e sem fidelidade.">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#CDEBFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1D2552" media="(prefers-color-scheme: dark)">
@@ -63,7 +63,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 @media (prefers-reduced-motion:no-preference){.celular.chegou .balao{animation:chega var(--duracao-longa) var(--curva-entrada) both}}
 @keyframes chega{0%{opacity:0;transform:translateY(18px) scale(.96)}100%{opacity:1;transform:none}}
 .celular-vazio{color:var(--apagado);font-size:var(--t-nota);text-align:center;padding:12px}
-/* Sede ao vivo · a empresa em funcionamento
+/* Sede da Creat · a empresa em funcionamento (demonstração)
    Momento-assinatura: o pedido de demonstração passa de mão em mão na sede 3D e, ao mesmo tempo,
    acende o passo na comanda ao lado; quando Trilho publica, o carimbo NO AR bate e o botão
    "Abrir o site pronto" vira amarelo. Celular: comanda embaixo da janela, sede só sob toque. */
@@ -162,6 +162,10 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 .demo-cartao .btn{margin-top:auto;align-self:flex-start}
 .demos-nota{margin-top:var(--r4);font-size:var(--t-nota);color:var(--apagado)}
 @media (min-width:860px){.demos{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.origem{margin-top:var(--r3);font-size:var(--t-nota);color:var(--apagado);max-width:52ch}
+.origem a{font-weight:800;color:var(--tinta);display:inline-flex;align-items:center;min-height:var(--alvo)}
+.previa-nota{grid-column:1 / -1;font-size:13px;line-height:1.35;color:var(--apagado);text-align:center}
+#precos .cab p[data-se]{max-width:var(--medida)}
 </style>
 <script defer src="checkout.config.js"></script>
 <script defer src="assets/som/creat-som.js"></script>
@@ -180,7 +184,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
     <ul class="barra-links">
       <li><a href="#como-funciona">Como funciona</a></li>
       <li><a href="#precos">Preços</a></li>
-      <li><a href="#sede">Sede ao vivo</a></li>
+      <li><a href="#sede">A equipe</a></li>
     </ul>
     <a class="btn barra-zap" data-zap="duvida" href="#perguntas"><span data-rotulo-zap>Chamar no WhatsApp</span></a>
   </div>
@@ -233,7 +237,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
       </div>
 
       <div class="heroi-corpo">
-        <p class="sub">Digite o nome do seu negócio. Em segundos você vê o seu site pronto, testa o pedido no seu próprio WhatsApp e só paga se gostar.</p>
+        <p class="sub">Digite o nome do seu negócio. Em segundos você vê o site pronto e testa o pedido no seu próprio WhatsApp. Ver é grátis; você paga para abrir e tem 7 dias para desistir com devolução.</p>
         <form class="abrir" id="form-abrir" novalidate>
           <div class="campo">
             <label for="nome">Nome do seu negócio</label>
@@ -261,6 +265,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
             <button class="btn btn-sol btn-g" type="submit" data-cta>Abrir meu negócio</button>
             <span class="dica-arrastar" hidden>ou arraste a placa</span>
           </div>
+          <p class="origem">Feito pela Creat Nuvem, uma equipe de agentes de IA na Bahia. Uma pessoa da equipe confere cada site antes de ir ao ar. Tudo pela internet, para negócio de qualquer cidade. <a href="#quem">Quem somos</a></p>
           <div class="espera">
             <p id="espera-rotulo">Chegam depois. Toque para ser avisado:</p>
             <div class="chips" role="group" aria-labelledby="espera-rotulo">
@@ -346,7 +351,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
       <ol class="passos">
         <li><h3>Veja pronto</h3><p>Digite o nome e veja o seu site na hora. Teste o pedido de horário no seu WhatsApp. Ver é grátis.</p></li>
         <li><h3>Pague por Pix</h3><p>Escolha o plano e pague a Abertura por Pix ou cartão. Você vê o total antes de pagar. Sem criar conta.</p></li>
-        <li><h3>Acompanhe na sede</h3><p>Abra a sede da Creat e veja a equipe montando o seu site, com o nome do seu negócio na fachada.</p></li>
+        <li><h3>Veja como a equipe trabalha</h3><p>Na sede da Creat, uma demonstração mostra cada etapa do trabalho, com o nome do seu negócio na fachada. O andamento real do seu pedido chega no seu WhatsApp.</p></li>
         <li><h3>No ar, você aprova</h3><p>Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade.</p></li>
       </ol>
       <div class="de-verdade">
@@ -367,7 +372,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
       <div class="cab">
         <span class="olho">Sites-demonstração</span>
         <h2 id="demo-titulo">Veja um site pronto</h2>
-        <p>Três sites feitos pela esteira real, a mesma que monta o seu. Nome fictício, cidade de verdade: Riachão do Jacuípe, na Bahia. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat.</p>
+        <p>Três sites feitos pela mesma esteira que monta o seu. Os nomes são fictícios e a cidade é Riachão do Jacuípe, na Bahia, onde fica a sede da Creat. No seu, entram o nome, a cidade e o WhatsApp do seu negócio. Abra no celular e peça um horário: o pedido chega no WhatsApp da Creat.</p>
       </div>
       <ul class="demos">
         <li class="demo-cartao">
@@ -393,13 +398,39 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
     </div>
   </section>
 
+  <!-- 5c · QUEM MONTA O SEU SITE (conteudo/home.json quemMonta; empresa em checkout.config.js) -->
+  <section class="secao" id="quem" aria-labelledby="quem-titulo">
+    <div class="cx">
+      <div class="quem-monta" id="quem-monta">
+        <span class="olho">Quem somos</span>
+        <h2 id="quem-titulo">Quem monta o seu site</h2>
+        <p>A Creat Nuvem é uma equipe de agentes de IA com revisão humana, da <span data-empresa="nome">Creat.MTT Studio</span>, de <span data-empresa="cidade">Riachão do Jacuípe</span> (<span data-empresa="uf">BA</span>)<span data-empresa-opcional="documento" hidden></span><span data-empresa-opcional="endereco" hidden></span>. Atendemos pela internet negócios de qualquer cidade.</p>
+        <ol class="quem-passos">
+          <li><span><b>Você vê e pede.</b> A prévia é grátis. Para abrir, você paga a Abertura e manda os dados do negócio.</span></li>
+          <li><span><b>A equipe monta.</b> Os agentes escrevem e montam o site, e uma pessoa da equipe lê tudo antes de mandar para você.</span></li>
+          <li><span><b>Você aprova.</b> O site só entra no ar com o seu sim, e a mensalidade só começa nesse dia.</span></li>
+        </ol>
+        <p class="quem-contato">Para falar com a gente: <a data-zap="duvida" href="#perguntas"><span data-rotulo-zap>WhatsApp do Suporte Creat</span></a> ou <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a>.</p>
+        <ul class="quem-links">
+          <li><a href="#sede">Ver a sede da Creat<span class="rotulo-exemplo">demonstração</span></a></li>
+          <li><a href="sites/demo-barbearia/">Barbearia Navalha Fictícia<span class="rotulo-exemplo">exemplo</span></a></li>
+          <li><a href="sites/demo-salao/">Salão Esmalte Fictício<span class="rotulo-exemplo">exemplo</span></a></li>
+          <li><a href="sites/demo-academia/">Studio Barra Fictícia<span class="rotulo-exemplo">exemplo</span></a></li>
+        </ul>
+        <p class="nota">Os três sites são demonstrações com nome fictício, feitos pela mesma esteira que monta o seu.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- 6 · PREÇOS -->
   <section class="secao" id="precos" aria-labelledby="precos-titulo">
     <div class="cx">
       <div class="cab">
         <span class="olho">Preços</span>
         <h2 id="precos-titulo">Um preço para abrir, um plano para manter aberto.</h2>
-        <p>Você paga a Abertura uma vez. A mensalidade só começa no dia em que o site entra no ar.</p>
+        <p data-carregando-precos>Você paga a Abertura uma vez. A mensalidade só começa no dia em que o site entra no ar.</p>
+        <p data-se="inauguracao" hidden>Hoje você paga só a Abertura: R$ <span data-v="precos.abertura.inauguracao.preco"></span> uma vez, preço das <span data-v="precos.abertura.inauguracao.vagasTotal"></span> primeiras vagas (depois, R$ <span data-v="precos.abertura.padrao"></span>). A mensalidade, R$ <span data-v="precos.planos.aberto"></span> no Aberto ou R$ <span data-v="precos.planos.vitrine"></span> no Vitrine, só começa no dia em que o site entra no ar.</p>
+        <p data-se="sem-inauguracao" hidden>Hoje você paga só a Abertura: R$ <span data-v="precos.abertura.padrao"></span> uma vez. A mensalidade, R$ <span data-v="precos.planos.aberto"></span> no Aberto ou R$ <span data-v="precos.planos.vitrine"></span> no Vitrine, só começa no dia em que o site entra no ar.</p>
       </div>
       <p class="precos-carregando" data-carregando-precos role="status">Conferindo os preços de hoje...</p>
       <div class="precos-grade">
@@ -521,8 +552,8 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
   <section class="secao secao-ceu" id="sede" aria-labelledby="sede-titulo">
     <div class="cx sede-grade">
       <div class="cab">
-        <span class="olho">Sede ao vivo</span>
-        <h2 id="sede-titulo">Veja quem monta o seu site</h2>
+        <span class="olho">Sede da Creat</span>
+        <h2 id="sede-titulo">Veja como a equipe trabalha</h2>
         <p>Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um organiza, um escreve, outro escolhe as cores, outro testa no celular. Escolha um negócio e veja o pedido passar de mão em mão até o site ir para o ar.</p>
       </div>
       <div class="sede-viva">
@@ -537,8 +568,8 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
             <source media="(max-width: 719px)" srcset="assets/img/sede-ilha-640.webp" width="640" height="400">
             <img src="assets/img/sede-ilha.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Ilha da sede da Creat Nuvem desenhada em 3D, com a equipe de personagens trabalhando nas mesas.">
           </picture>
-          <button class="btn btn-sol ver-ao-vivo" type="button" data-ver-ao-vivo>Ver ao vivo</button></div>
-          <figcaption><span data-legenda-marca>Nome fictício na fachada.</span><span class="so-celular" data-legenda-dica> A sede 3D só carrega quando você toca em Ver ao vivo, para poupar dados.</span></figcaption>
+          <button class="btn btn-sol ver-ao-vivo" type="button" data-ver-ao-vivo>Abrir a sede</button></div>
+          <figcaption><span data-legenda-marca>Nome fictício na fachada.</span><span class="so-celular" data-legenda-dica> A sede 3D só carrega quando você toca em Abrir a sede, para poupar dados.</span></figcaption>
         </figure>
       </div>
       <aside class="esteira" id="esteira" aria-labelledby="esteira-titulo" data-etapa="0">
@@ -623,7 +654,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 
 <footer class="rodape">
   <div class="cx">
-    <p>Creat Nuvem é um serviço da Creat.MTT Studio.</p>
+    <p>Creat Nuvem é um serviço da <span data-empresa="nome">Creat.MTT Studio</span>, de <span data-empresa="cidade">Riachão do Jacuípe</span> (<span data-empresa="uf">BA</span>)<span data-empresa-opcional="documento" hidden></span>.</p>
     <p>Suporte: <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a></p>
     <nav aria-label="Rodapé">
       <ul>
@@ -657,6 +688,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
   <div class="previa-base">
     <button class="btn" type="button" id="previa-testar">Testar no meu WhatsApp</button>
     <button class="btn btn-sol" type="button" id="previa-quero">Quero este site no ar</button>
+    <p class="previa-nota">Ver é grátis. Ao pedir, você paga a Abertura e tem 7 dias para desistir com devolução. Mensalidade só com o site no ar.</p>
   </div>
 </section>
 

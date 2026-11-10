@@ -255,6 +255,25 @@ body.com-previa .aviso{bottom:calc(var(--barra-previa) + 16px + env(safe-area-in
   .chamada .painel{grid-template-columns:1fr auto;align-items:center;padding:var(--r6)}
 }
 
+/* ---------------------------------------------------------------- quem monta o seu site (home e /abrir/)
+   Para quem chegou por anúncio e nunca ouviu falar da Creat: quem é, de onde, como falar, 3 passos.
+   Nada de número de clientes, selo ou depoimento: só o que a página prova (sede e sites rotulados). */
+.quem-monta{display:grid;gap:var(--r4);padding:var(--r5);background:var(--ceu);border:var(--borda) solid var(--linha);border-radius:var(--raio)}
+.quem-monta .olho{margin-bottom:0}
+.quem-monta h2{font-size:var(--t-h3)}
+.quem-monta p{max-width:var(--medida)}
+.quem-passos{margin:0;padding:0;list-style:none;display:grid;gap:10px;counter-reset:quem}
+.quem-passos li{counter-increment:quem;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start}
+.quem-passos li::before{content:counter(quem);display:grid;place-items:center;width:36px;height:36px;background:var(--sol);color:var(--sol-tinta);border:var(--borda) solid var(--linha);border-radius:var(--raio-p);font:400 20px/1 var(--f-display)}
+.quem-passos b{font-weight:800}
+.quem-contato a{font-weight:800;overflow-wrap:anywhere}
+.quem-links{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+.quem-links a{display:inline-flex;align-items:center;gap:8px;min-height:var(--alvo);padding:6px 14px;background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio-pilula);font-weight:700;font-size:var(--t-menor);text-decoration:none;color:var(--tinta)}
+@media (hover:hover){.quem-links a:hover{background:var(--sol);color:var(--sol-tinta)}}
+.rotulo-exemplo{font:500 var(--t-micro)/1 var(--f-dado);text-transform:uppercase;letter-spacing:.06em;padding:4px 6px;border:1.5px dashed currentColor;border-radius:6px;opacity:.85}
+.quem-monta .notas,.quem-monta .nota{font-size:var(--t-nota);color:var(--apagado)}
+@media (min-width:860px){.quem-passos{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--r4)}}
+
 /* ---------------------------------------------------------------- movimento reduzido */
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto}
