@@ -105,3 +105,11 @@ ADENDO DE 10/11/2026 (2) · ALARMES NOVOS
 - **Troca de otimização para prévia gerada:** só depois de pelo menos 3 dias de evento e 50 ViewContent somados nas duas praças. Antes disso as campanhas ficam como estão. Regra do dono: nada de virar plano a cada 24 horas.
 - **Identificação da empresa** (nome empresarial, CNPJ e endereço) está no ar em termos, privacidade e rodapés desde 10/11. O prazo de 11/11 às 18h do EXPANSAO.md para esse item está cumprido.
 - **Regra de fala:** nunca informar ao dono valor de saldo da conta de anúncios. Se a cobrança falhar, dizer "falha de cobrança" e o que ele clica.
+
+## Adendo 10/11 (manhã): quem roda o quê
+
+A tarefa diária rodava numa sessão nova, sem acesso à conta de anúncios e sem permissão de gravar no repositório. Em 10/11 ela não leu a Meta, não gravou o diário e só mandou ao dono um aviso de erro. Ficou assim:
+
+- **Vigia do site** (08:43 e 20:43, Bahia, sessão nova, sem acesso a nada além do site): roda `scripts/conferir-no-ar.cjs` a partir do ramo main. Tudo certo: uma linha. Defeito confirmado em duas rodadas: avisa o dono e a sessão principal. Não lê a Meta, não grava nada, não fala de falta de acesso.
+- **Gestor de tráfego** (09:12, Bahia, dentro da sessão principal "Agência de agentes 3D", que tem a conta de anúncios, o site e o repositório): roda esta rotina inteira, do passo 0 ao diário, pausa as campanhas se o site estiver com defeito e responde ao dono no formato curto com o Conselho do Diretor.
+- Se a sessão principal for arquivada, o gestor para. O vigia continua. Nesse caso, recrie o gestor na sessão que assumir (ver a skill `handoff`).
