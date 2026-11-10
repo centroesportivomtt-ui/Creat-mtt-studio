@@ -85,9 +85,11 @@
      pagamento pa-teste nunca entra em produção: no app Porta Aberta (pacote 1A) ele só vira teste_ok se algum
      pedido pa-teste tiver o e-mail do pagador; sem isso fica em a_conferir com teste:true, sem aviso nem produção
      (docs/INTEGRACAO-PAGAMENTO.md, "Ponta a ponta").
-     valeAte = 16/11/2026 23:59 (Bahia), a validade que o coordenador aplicou em 10/11/2026
-     (docs/INTEGRACAO-PAGAMENTO.md, linhas 543 e 549). Instante conservador, um minuto antes do planejado
-     (23:59:59): NÃO VERIFICADO contra o GET da preferência no Mercado Pago. Depois disso o Mercado Pago recusa. */
+     valeAte = 16/11/2026 23:59 (Bahia). docs/INTEGRACAO-PAGAMENTO.md registra a data aplicada pelo coordenador
+     em 10/11/2026 ("validade até 16/11/2026", estado da pa-teste, sem a hora) e o instante PLANEJADO no PUT
+     (expiration_date_to 2026-11-16T23:59:59-03:00, tabela "PUT planejado e NÃO aplicado"). Instante conservador,
+     um minuto antes do planejado: NÃO VERIFICADO contra o GET da preferência no Mercado Pago. Quando alguém ler o
+     expiration_date_to por GET, grave aqui o valor lido. Depois dele o Mercado Pago recusa. */
   var TESTE = {
     produto: 'pa-teste',
     valor: 1,

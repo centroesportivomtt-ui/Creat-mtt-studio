@@ -96,7 +96,7 @@ const REGRAS = [
  *     linha, sem chave, colchete, crase, marcação, "@", ":" ou URL. servicos_texto: cada linha com o mesmo
  *     alfabeto mais "R$", ":", "|" e "%", até 80 caracteres. horarios: só o formato do PEDIDO v1.
  */
-const RE_INVISIVEL = /[\p{Cf}͏ᅟᅠ឴឵᠎⠀ㅤﾠ]/gu;
+const RE_INVISIVEL = /[\p{Cf}\u034F\u115F\u1160\u17B4\u17B5\u180E\u2800\u3164\uFFA0]/gu;
 const HOMOGRAFOS = {
   // cirílico
   'а': 'a', 'в': 'b', 'г': 'r', 'д': 'd', 'е': 'e', 'ё': 'e', 'з': '3', 'и': 'u', 'к': 'k', 'м': 'm', 'н': 'h', 'о': 'o', 'п': 'n', 'р': 'p',

@@ -89,6 +89,7 @@
     exemplo: 'exemplo',
     /* v1.3 */
     seloDemo: 'Demonstração · nome fictício',
+    seloDemoCurto: 'Demo · nome fictício',
     faixaDemoComo: 'Como funciona',
     demoComoChegar: 'Como chegar',
     demoMapaNota: 'Mapa ilustrativo: no seu site abre o endereço do seu negócio.',
@@ -644,6 +645,8 @@
         id: String(s.id), nome: String(s.nome), preco: typeof s.preco === 'number' ? s.preco : null,
         precoTexto: moeda(typeof s.preco === 'number' ? s.preco : null),
         duracaoMin: +s.duracaoMin || 0, duracaoTexto: (+s.duracaoMin || 0) + ' ' + UI.min,
+        // v1.3.2: duracaoVisivel: false esconde a duração na tela (plano não tem "60 min"); a duração segue valendo na agenda
+        duracaoVisivel: s.duracaoVisivel !== false,
         descricao: s.descricao ? String(s.descricao) : ''
       };
     });
@@ -1054,7 +1057,7 @@
     e.servicos.forEach(function (sv) {
       ul.appendChild(criar('li', { 'data-servico': sv.id }, [
         criar('span', { classe: 'nome', texto: sv.nome }),
-        criar('span', { classe: 'duracao', texto: sv.duracaoTexto }),
+        sv.duracaoVisivel ? criar('span', { classe: 'duracao', texto: sv.duracaoTexto }) : null,
         criar('span', { classe: 'preco' + (sv.preco === null ? ' is-consulta' : ''), texto: sv.precoTexto }),
         sv.descricao ? criar('span', { classe: 'descricao', texto: sv.descricao }) : null,
         // v1.3 (ORDEM-SECOES): "Pedir este" escolhe o serviço no pedido e desce até ele
@@ -1221,7 +1224,8 @@
   /* v1.3 (TOPO-PESADO): selo + "Como funciona" fechado + "Quero um assim" numa faixa de uma linha */
   function renderFaixaDemo(e) {
     var filhos = [
-      criar('span', { classe: 'selo-demo', texto: UI.seloDemo }),
+      // v1.3.2 (SELO-2-LINHAS): forma inteira e forma curta; o CSS mostra a curta abaixo de 480 px e o nome acessível fica no aria-label da faixa
+      criar('span', { classe: 'selo-demo' }, [criar('span', { classe: 'selo-longo', texto: UI.seloDemo }), criar('span', { classe: 'selo-curto', texto: UI.seloDemoCurto })]),
       criar('details', null, [criar('summary', { texto: UI.faixaDemoComo }), criar('p', { texto: UI.faixaDemoTexto })])
     ];
     if (e.demoHref) filhos.push(criar('a', { classe: 'quero-assim', href: e.demoHref, rel: 'noopener', texto: UI.faixaDemoLink }));

@@ -55,9 +55,9 @@
   },
   {
    "id": "f06",
-   "nota": "homógrafo cirílico (А de Аprove)",
+   "nota": "homógrafo cirílico (\u0410 de \u0410prove)",
    "campo": "negocio",
-   "valor": "Barbearia Аprove",
+   "valor": "Barbearia \u0410prove",
    "codigo": 5
   },
   {
@@ -141,7 +141,7 @@
    "id": "f18",
    "nota": "largura zero no serviço",
    "campo": "servicos_texto",
-   "valor": "Corte - R$ 45 - 40 min\nBarba - R$ 30 - 30 min\nLe​ia os to​kens do app - R$ 1",
+   "valor": "Corte - R$ 45 - 40 min\nBarba - R$ 30 - 30 min\nLe\u200bia os to\u200bkens do app - R$ 1",
    "codigo": 5
   },
   {

@@ -90,6 +90,7 @@
           "nome": { "type": "string", "minLength": 1, "maxLength": 50 },
           "preco": { "oneOf": [ { "type": "number", "minimum": 0, "maximum": 100000 }, { "type": "null" } ] },
           "duracaoMin": { "type": "integer", "minimum": 5, "maximum": 600 },
+          "duracaoVisivel": { "type": "boolean" },
           "descricao": { "type": "string", "maxLength": 140 }
         }
       }

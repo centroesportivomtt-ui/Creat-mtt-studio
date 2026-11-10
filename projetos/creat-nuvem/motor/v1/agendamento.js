@@ -567,7 +567,7 @@
         var s = x.servico;
         var b = criar('button', { type: 'button', role: 'radio', classe: 'servico-opcao', 'data-servico': s.id }, [
           criar('span', { classe: 'nome', texto: s.nome }),
-          criar('span', { classe: 'duracao', texto: s.duracaoTexto }),
+          s.duracaoVisivel ? criar('span', { classe: 'duracao', texto: s.duracaoTexto }) : null,
           criar('span', { classe: classePreco(s.preco), texto: s.precoTexto })
         ]);
         var sel = s.id === est.servicoId;
@@ -717,6 +717,8 @@
       return f.length > 1 ? f.slice(0, -1).join(', ') + ' e ' + f[f.length - 1] : f[0] || '';
     }
     /* resumo da tela: Dia, Horário, Serviço (e Profissional) e Seus dados sempre visíveis, com traço no que falta */
+    /* v1.3.2 (ACAD-PLANO-60MIN): serviço com duracaoVisivel: false (plano de academia) sai sem a duração */
+    function nomeComDuracao(sv) { return sv.duracaoVisivel ? sv.nome + ' · ' + sv.duracaoTexto : sv.nome; }
     function linhasResumo() {
       var s = est.servicoId && servicoPorId(est.servicoId), p = est.profissionalId && profPorId(est.profissionalId);
       var sp = !s && est.servicoPendente && servicoPorId(est.servicoPendente);
@@ -725,11 +727,11 @@
       var l = [
         [T.dia, est.dia ? maiuscula(P.diaLongo(P.dataDaChave(est.dia), agora())) : '', null],
         [T.hora, est.hora != null ? P.horaTexto(est.hora) : '', 'hora'],
-        [T.servico, s ? s.nome + ' · ' + s.duracaoTexto : sp ? sp.nome + ' · ' + sp.duracaoTexto : '', null]
+        [T.servico, s ? nomeComDuracao(s) : sp ? nomeComDuracao(sp) : '', null]
       ];
       if (temProf) l.push([T.profissional, p ? p.nome : '', null]);
       l.push([T.dados, dados, null]);
-      if (s) l.push([T.valor, s.precoTexto + (exemplo && s.preco !== null ? T.exemplo : ''), classePreco(s.preco)]);
+      if (s) l.push([T.valor, s.precoTexto + (exemplo && s.preco !== null && s.preco !== 0 ? T.exemplo : ''), classePreco(s.preco)]);
       return l;
     }
     function preencherDl(dl, linhas) {
@@ -863,7 +865,7 @@
         [T.profissional, p ? p.nome : '', null],
         [T.dia, maiuscula(P.diaLongo(P.dataDaChave(est.dia), agora())), null],
         [T.hora, P.horaTexto(est.hora), 'hora'],
-        [T.valor, s.precoTexto + (exemplo && s.preco !== null ? T.exemplo : ''), classePreco(s.preco)]
+        [T.valor, s.precoTexto + (exemplo && s.preco !== null && s.preco !== 0 ? T.exemplo : ''), classePreco(s.preco)]
       ].filter(function (l) { return l[1]; }));
       var link = $('espelho-whats');
       link.href = url;

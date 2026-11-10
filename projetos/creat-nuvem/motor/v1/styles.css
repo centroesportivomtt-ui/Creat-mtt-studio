@@ -298,10 +298,14 @@ h2 .selo { margin-left: var(--esp-3); font-size: var(--t-micro); transform: tran
 /* v1.3.1 (QA onda 3, SELO-2-LINHAS): o texto inteiro do selo pede de 180 a 216 px e, a 390 px, sobram
    141 ao lado de "Como funciona" e "Quero um assim". Quando o motor entrega a forma curta junto
    (.selo-curto), abaixo de 480 px ela entra no lugar e o selo fica numa linha; o nome acessível da faixa
-   (aria-label) continua com o texto inteiro. Sem a forma curta, o selo segue em duas linhas balanceadas. */
+   (aria-label) continua com o texto inteiro. Sem a forma curta, o selo segue em duas linhas balanceadas.
+   v1.3.2: a forma curta, com vão e respiro mais justos, cabe numa linha a 390 px nas três fontes de dado;
+   sem nowrap, mais estreito que isso ela quebra em duas linhas balanceadas em vez de passar por cima de
+   "Como funciona" (com nowrap, a 360 px o selo cobria o começo do botão). */
 .selo-demo .selo-curto { display: none; }
 @media (max-width: 479px) {
-  .faixa-demo .selo-demo:has(> .selo-curto) { white-space: nowrap; padding-inline: 6px; }
+  .faixa-demo:has(.selo-curto) { gap: 6px; }
+  .faixa-demo .selo-demo:has(> .selo-curto) { padding-inline: 4px; letter-spacing: 0.01em; }
   .selo-demo:has(> .selo-curto) > .selo-longo { display: none; }
   .selo-demo > .selo-curto { display: inline; }
 }
@@ -1056,6 +1060,26 @@ table.funcionamento { width: 100%; max-width: 28rem; border-collapse: collapse; 
   .espelho::after { bottom: -44px; height: 46px; }
   .espelho h3 { font-size: clamp(1.375rem, 1.2rem + 1vw, 1.75rem); }
   #espelho-novo { margin-top: 0; }
+}
+/* v1.3.2 (QA onda 3, OFERTA-360): a 360 x 740 o espelho oval media 544 px e, depois do envio, só a borda
+   e a primeira linha da oferta entravam na tela com ele. Abaixo de 400 px o espelho fica mais justo
+   (menos ar no alto, título, texto e valor menores, cabo mais curto) e a oferta perde
+   folga, para o título e a linha dela entrarem na tela junto com o espelho. A ficha da academia
+   (rituais.css) mantém o próprio respiro. */
+@media (max-width: 399px) {
+  .espelho {
+    margin-top: var(--esp-4);
+    margin-bottom: calc(var(--esp-6) + 10px);
+    padding: 3rem 1.25rem var(--esp-5);
+    gap: 6px;
+  }
+  .espelho::after { bottom: -34px; height: 36px; }
+  .espelho h3 { font-size: 1.3125rem; }
+  .espelho-texto { font-size: 0.8125rem; line-height: 1.4; max-width: 28ch; }
+  .espelho dl { row-gap: 6px; margin-block: 0; }
+  .espelho .preco { font-size: 1.0625rem; }
+  .oferta-demo { gap: var(--esp-2); padding-top: var(--esp-4); }
+  .oferta-demo .oferta-titulo { font-size: 1.25rem; }
 }
 /* desktop: espelho e oferta lado a lado. O espelho é o objeto; a oferta é a nota presa ao lado dele,
    no meio da altura, já dentro da tela quando o pedido termina. */

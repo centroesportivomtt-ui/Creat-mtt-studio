@@ -382,4 +382,61 @@ test('v1.3 no navegador: cliente sem galeria não tem #trabalhos nem nada da dem
   } finally { await nav.close(); }
 });
 
+/* v1.3.2 (fecho da Lupa, onda 3): duracaoVisivel no estado e no schema; selo com forma longa e curta */
+test('v1.3.2: duracaoVisivel padrão true, false só esconde na tela; o schema aceita o campo opcional', () => {
+  const M = motorV1();
+  const t = fixture('tenant.entregue.valido.json');
+  t.servicos = t.servicos.slice(0, 2).map((s, i) => Object.assign({}, s, i === 1 ? { duracaoVisivel: false } : {}));
+  const e = M.construirEstado(t, { site: { home: HOME, demonstracao: true } });
+  assert.deepEqual(e.servicos.map((s) => s.duracaoVisivel), [true, false]);
+  assert.equal(e.servicos[1].duracaoMin, t.servicos[1].duracaoMin, 'a duração interna continua para a agenda');
+  const schema = JSON.parse(fs.readFileSync(path.join(RAIZ, 'schema', 'tenant.schema.json'), 'utf8'));
+  assert.deepEqual(schema.properties.servicos.items.properties.duracaoVisivel, { type: 'boolean' });
+  assert.ok(!schema.properties.servicos.items.required.includes('duracaoVisivel'), 'campo opcional');
+});
+
+test('v1.3.2 no navegador: selo da faixa numa linha a 390 px (forma curta), nome acessível inteiro; plano sem duração', { skip: !temPlaywright }, async () => {
+  const { buildSite } = require(path.join(RAIZ, 'scripts', 'producao', 'build-site.cjs'));
+  const { chromium } = require(require.resolve('playwright', { paths: [RAIZ] }));
+  const t = fixture('tenant.entregue.valido.json');
+  t.servicos = t.servicos.slice(0, 2).map((s, i) => Object.assign({}, s, i === 1 ? { duracaoVisivel: false } : {}));
+  const pasta = path.join(TMP, 'v132-tenant'); fs.mkdirSync(pasta, { recursive: true });
+  const demo = path.join(TMP, 'v132-demo');
+  buildSite({ tenant: Object.assign({}, t, { slug: 'demo-barbearia', avaliacoes: [] }), destino: demo, saida: TMP, pastaTenant: pasta, precos: null, site: { home: HOME, url: false, demonstracao: true } });
+  const nav = await chromium.launch();
+  try {
+    const pg = await nav.newPage({ viewport: { width: 390, height: 844 } });
+    const erros = []; pg.on('pageerror', (e) => erros.push(String(e)));
+    await pg.goto(pathToFileURL(path.join(demo, 'index.html')).href);
+    await pg.waitForFunction(() => document.documentElement.classList.contains('motor-pronto'));
+    const ler = () => pg.evaluate(() => {
+      const f = document.querySelector('.faixa-demo'), s = f.querySelector('.selo-demo');
+      const vis = (el) => !!el && getComputedStyle(el).display !== 'none';
+      const lh = parseFloat(getComputedStyle(s).lineHeight) || 14;
+      return { aria: f.getAttribute('aria-label'), longo: s.querySelector('.selo-longo').textContent, curto: s.querySelector('.selo-curto').textContent,
+        longoVisivel: vis(s.querySelector('.selo-longo')), curtoVisivel: vis(s.querySelector('.selo-curto')),
+        linhas: Math.round((s.getBoundingClientRect().height - 6) / lh),
+        sobrepoe: s.getBoundingClientRect().right > f.querySelector('summary').getBoundingClientRect().left,
+        duracoes: [...document.querySelectorAll('#lista-precos li')].map((li) => (li.querySelector('.duracao') || {}).textContent || null),
+        scroll: document.documentElement.scrollWidth };
+    });
+    const a = await ler();
+    assert.equal(a.aria, 'Demonstração · nome fictício', 'nome acessível da faixa com o texto inteiro');
+    assert.equal(a.longo, 'Demonstração · nome fictício'); assert.equal(a.curto, 'Demo · nome fictício');
+    assert.equal(a.curtoVisivel && !a.longoVisivel, true, 'a 390 px aparece a forma curta');
+    assert.equal(a.linhas, 1, 'selo numa linha a 390 px');
+    assert.equal(a.sobrepoe, false, 'o selo não passa por cima de "Como funciona"');
+    assert.equal(a.duracoes[0] !== null && a.duracoes[1] === null, true, 'duracaoVisivel: false tira a duração da tabela: ' + JSON.stringify(a.duracoes));
+    assert.ok(a.scroll <= 390);
+    await pg.setViewportSize({ width: 360, height: 740 });
+    const b = await ler();
+    assert.equal(b.sobrepoe, false, 'a 360 px o selo quebra em vez de cobrir o botão');
+    assert.ok(b.linhas <= 2 && b.scroll <= 360);
+    await pg.setViewportSize({ width: 1440, height: 900 });
+    const c = await ler();
+    assert.equal(c.longoVisivel && !c.curtoVisivel, true, 'no desktop, a forma inteira');
+    assert.deepEqual(erros, []);
+  } finally { await nav.close(); }
+});
+
 test.after(() => { if (!process.env.CREAT_TESTE_MANTER) fs.rmSync(TMP, { recursive: true, force: true }); });

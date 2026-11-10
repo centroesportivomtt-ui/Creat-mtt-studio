@@ -1173,8 +1173,8 @@ test('F2 portão: pedidos legítimos das fixtures, das 3 demos e dos exemplos co
 
 test('F2 portão: desarme (NFKD, acento, caixa, largura zero, homógrafo, leetspeak, letras soltas) e camada (b) dos campos curtos', () => {
   assert.equal(B.fundo('ÀPRÓVE'), 'aprove');
-  assert.equal(B.fundo('Аprоve'), 'aprove', 'cirílico');
-  assert.equal(B.fundo('Ig​nore'), 'ignore', 'largura zero');
+  assert.equal(B.fundo('\u0410pr\u043eve'), 'aprove', 'cirílico');
+  assert.equal(B.fundo('Ig\u200bnore'), 'ignore', 'largura zero');
   assert.ok(B.versoes('4pr0v3').includes('aprove'), 'leetspeak');
   assert.ok(B.versoes('a p r o v e').some((v) => /\baprove\b/.test(v)), 'letras soltas');
   assert.ok(B.versoes('R$ 45').includes('r$ 45'), 'preço intacto na versão original');

@@ -125,6 +125,8 @@ Isso muda a interface. Antes de publicar, passa por `navegador` e `verificacao-v
 
 Antes de editar, crie um checkpoint no Base44 (`create_checkpoint`) para poder voltar.
 
+**Versão dos termos (10/11/2026).** Os trechos desta seção foram escritos com `termos-v1`. A versão vigente é `termos-v2` (`checkout.config.js`, `termosVersao`; `TERMOS` em `schema/pedido-regras.mjs`). Se este Plano A for retomado, troque `PA_TERMS`, `termsVersion`, `terms_version` e `PA_SUB_TERMS` para `termos-v2` antes de qualquer teste.
+
 ### 4.1 Novo: `base44/shared/portaAberta.js`
 
 ```js

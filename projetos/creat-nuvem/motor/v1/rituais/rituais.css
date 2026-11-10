@@ -328,7 +328,8 @@
 /* =====================================================================
    RITUAL VIVO (09/11/2026)
    Conceito: o objeto do ofício chega em cena como personagem e, enquanto ninguém mexe,
-   mostra sozinho o gesto inteiro em versão curta; no fim passa a vez: "Arraste você".
+   mostra sozinho o gesto inteiro em versão curta; no fim passa a vez com a dica do gesto
+   (ritualTextos.dicaVez do preset; sem ela, "Arraste o pincel" no salão e "Puxe a barra" na academia).
    Momento-assinatura: a barra despenca no chão e as anilhas tremem no pó de magnésio;
    o vidrinho entra girando e o pincel sai para escorrer o excesso.
    Movimento: a entrada é EM DOIS (12 poses/s, no JS) com antecipação e sobreposição;
@@ -336,7 +337,7 @@
    Só transform e opacity. Movimento reduzido: nada disso nasce (só o estado final).
    ===================================================================== */
 
-/* ---------- a dica passa a vez: "Arraste você" empilhada sobre a dica do palco ---------- */
+/* ---------- a dica passa a vez: a dica do gesto ("Arraste o pincel", "Puxe a barra") empilhada sobre a dica do palco ---------- */
 .ritual-dica.tem-vez { position: relative; }
 .ritual-dica .dica-orig {
   display: inline-flex; align-items: center; gap: var(--esp-2);

@@ -352,6 +352,41 @@ test('navegador: demo, cliente e prévia; turnos; fuso da Bahia num aparelho de 
   } finally { await nav.close(); }
 });
 
+/* v1.3.2 (fecho da Lupa, onda 3): preço 0 é "Grátis", sem "(exemplo)", no espelho e no resumo; serviço com
+   duracaoVisivel: false (plano de academia) aparece sem "60 min" na lista e no resumo, e a duração segue valendo na agenda */
+test('navegador: demo com preço 0 mostra só "Grátis"; duracaoVisivel: false esconde a duração e mantém a agenda', { skip: SEM_PW }, async () => {
+  const t = tenantTeste();
+  t.servicos = [
+    { id: 'aula', nome: 'Aula experimental', duracaoMin: 60, preco: 0, descricao: 'Aula para conhecer.' },
+    { id: 'plano', nome: 'Plano mensal', duracaoMin: 60, preco: 99, duracaoVisivel: false, descricao: 'Valor por mês.' }
+  ];
+  construir('demo-gratis', t, { home: HOME, url: `${HOME}sites/demo-gratis/`, demonstracao: true });
+  const { chromium } = require(require.resolve('playwright', { paths: [RAIZ] }));
+  const nav = await chromium.launch();
+  try {
+    let { ctx, page, erros } = await abrir(nav, 'https://creat.teste/d/demo-gratis/');
+    const tabela = await page.evaluate(() => [...document.querySelectorAll('#lista-precos li')].map((li) => [li.getAttribute('data-servico'), (li.querySelector('.duracao') || {}).textContent || null]));
+    assert.deepEqual(tabela, [['aula', '60 min'], ['plano', null]], 'tabela: o plano sai sem duração');
+    await page.locator('#lista-horarios .horarios:not([hidden]) .horario').first().click();
+    const opcoes = await page.evaluate(() => [...document.querySelectorAll('#lista-servicos .servico-opcao')].map((b) => [b.getAttribute('data-servico'), (b.querySelector('.duracao') || {}).textContent || null]));
+    assert.deepEqual(opcoes, [['aula', '60 min'], ['plano', null]], 'pedido: o plano sai sem duração');
+    await page.click('#lista-servicos .servico-opcao[data-servico="plano"]');
+    const resumo = await page.evaluate(() => [...document.querySelectorAll('#resumo-corpo dd')].map((d) => d.textContent));
+    assert.ok(resumo.includes('Plano mensal'), 'resumo só com o nome do plano: ' + JSON.stringify(resumo));
+    assert.ok(resumo.some((x) => /^R\$\s99\s\(exemplo\)$/.test(x)), 'preço maior que zero continua com "(exemplo)": ' + JSON.stringify(resumo));
+    assert.ok(!resumo.some((x) => /min/.test(x)), JSON.stringify(resumo));
+    assert.equal(await page.evaluate(() => window.TENANT.servicos[1].duracaoMin), 60, 'a duração interna fica no tenant');
+    await ctx.close();
+    ({ ctx, page, erros } = await abrir(nav, 'https://creat.teste/d/demo-gratis/'));
+    await pedir(page, '11900000000', 'aula');
+    const espelho = await page.evaluate(() => [...document.querySelectorAll('#espelho-dados dd')].map((d) => [d.className, d.textContent]));
+    assert.ok(espelho.some(([c, x]) => c === 'preco' && x === 'Grátis'), 'espelho: só "Grátis": ' + JSON.stringify(espelho));
+    assert.ok(!espelho.some(([, x]) => /exemplo/.test(x) && /Grátis/.test(x)), JSON.stringify(espelho));
+    assert.deepEqual(erros, []);
+    await ctx.close();
+  } finally { await nav.close(); }
+});
+
 test('navegador: "Pedir este" antes do horário risca onde o serviço não cabe e não se perde; resumo com traço no que falta', { skip: SEM_PW }, async () => {
   const t = tenantTeste();
   t.servicos = t.servicos.concat([{ id: 'combo', nome: 'Combo', duracaoMin: 120, preco: 90, descricao: 'Corte, barba e sobrancelha.' }]);

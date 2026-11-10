@@ -121,6 +121,38 @@ test('o schema e as regras concordam em todos os exemplos de registro v1', () =>
   }
 });
 
+// Conferência do fecho F1 (corrigir): o schema só aceitava termos-v1, o servidor aceita v1 e v2 e a página manda v2.
+test('o schema aceita exatamente as versões de TERMOS e concorda com as regras em v1 e em v2', () => {
+  const require = createRequire(import.meta.url);
+  const Ajv2020 = require(require.resolve('ajv/dist/2020', { paths: [RAIZ] })).default;
+  const addFormats = require(require.resolve('ajv-formats', { paths: [RAIZ] })).default;
+  const ajv = new Ajv2020({ allErrors: true, strict: true, strictRequired: false, strictTypes: false });
+  addFormats(ajv);
+  const sch = JSON.parse(fs.readFileSync(path.join(RAIZ, 'schema', 'pedido.schema.json'), 'utf8'));
+  assert.deepEqual([...sch.$defs.PedidoRegistro.properties.termos_versao.enum].sort(), Object.keys(R.TERMOS).sort(),
+    'schema/pedido.schema.json $defs/PedidoRegistro.termos_versao tem de listar as mesmas versões de TERMOS');
+  const valida = ajv.compile(sch);
+  const arquivos = fs.readdirSync(EX).filter(f => /^pedido\.registro-v1/.test(f));
+  for (const versao of [...Object.keys(R.TERMOS), 'termos-v3']) {
+    for (const f of arquivos) {
+      const dado = { ...ler(f), termos_versao: versao };
+      const esperado = f.includes('.valido.') && Object.prototype.hasOwnProperty.call(R.TERMOS, versao);
+      assert.equal(valida(dado), esperado, 'schema ' + versao + ' ' + f);
+      const r = R.validarRegistro(dado);
+      assert.equal(r.ok && !r.isca, esperado, 'regras ' + versao + ' ' + f);
+    }
+  }
+});
+
+// A página nunca grava aceite de uma versão que a pessoa não viu: sem CK.termosVersao, a reserva é a versão vigente.
+test('assets/vitrine.js não cai para termos-v1 quando falta CK.termosVersao', () => {
+  const v = fs.readFileSync(path.join(RAIZ, 'assets', 'vitrine.js'), 'utf8');
+  const reservas = [...v.matchAll(/termosVersao\)\s*\|\|\s*'([^']+)'/g)].map(m => m[1]);
+  assert.ok(reservas.length >= 1, 'vitrine.js deixou de ler CK.termosVersao');
+  const vigente = (fs.readFileSync(path.join(RAIZ, 'checkout.config.js'), 'utf8').match(/termosVersao:\s*'([^']+)'/) || [])[1];
+  for (const r of reservas) assert.equal(r, vigente, 'reserva de termos em vitrine.js: ' + r);
+});
+
 /* ---------- Pagamento: o que vem de portaAbertaVerificar ---------- */
 
 test('pagamentoConfiavel: só aprovado, com referência e valor do catálogo', () => {
@@ -250,6 +282,41 @@ test('TEXTO_REGRA_PRAZO é a cláusula 5 dos termos v2 e a frase das páginas, p
     ['abrir.json', j('abrir.json').garantia.regra],
     ['obrigado.json', JSON.stringify(j('obrigado.json'))]
   ]) assert.ok(comPrazo(t).includes(R.TEXTO_REGRA_PRAZO), nome);
+});
+
+// Conferência do fecho F1 (bloqueia): a regra velha ("começa às 9h do próximo dia") sobrou na linha pago_depois de
+// /obrigado/ (assets/vitrine.js). Nenhum texto do site, dos termos ou do e-mail pode dizer 9h para o início do prazo.
+test('nenhum texto do site diz que o prazo começa às 9h do próximo dia (a regra é a das 11h)', () => {
+  const VELHA = /(?:às|as)\s+9\s*h\s+do\s+pr[óo]ximo\s+dia/i;
+  const arquivos = [];
+  for (const d of ['assets', 'conteudo', path.join('conteudo', 'nichos')]) {
+    const dir = path.join(RAIZ, d);
+    if (!fs.existsSync(dir)) continue;
+    for (const f of fs.readdirSync(dir)) if (/\.(js|json|md|html)$/.test(f)) arquivos.push(path.join(dir, f));
+  }
+  arquivos.push(path.join(RAIZ, 'checkout.config.js'), path.join(RAIZ, 'schema', 'pedido-regras.mjs'));
+  assert.ok(arquivos.some(f => f.endsWith('vitrine.js')), 'a varredura tem de incluir assets/vitrine.js');
+  const achados = [];
+  for (const f of arquivos) {
+    fs.readFileSync(f, 'utf8').split('\n').forEach((l, i) => {
+      if (VELHA.test(l)) achados.push(path.relative(RAIZ, f) + ':' + (i + 1) + ': ' + l.trim().slice(0, 140));
+    });
+  }
+  assert.deepEqual(achados, [], 'regra velha das 9h:\n' + achados.join('\n'));
+  // O próprio detector pega a frase velha e deixa passar a nova e o horário de atendimento.
+  assert.match('O prazo de 72 h começa às 9h do próximo dia de atendimento.', VELHA);
+  assert.doesNotMatch(R.TEXTO_REGRA_PRAZO, VELHA);
+  assert.doesNotMatch('O prazo de 72 h começa às 11h do próximo dia de atendimento.', VELHA);
+});
+
+// O relógio recebe o instante em que o servidor grava "pago" (servidor.server.js registrarPago: ms = agora()),
+// não o instante do Pix. Confirmação que chega dentro do horário começa na hora, mesmo se o Pix foi pago no sábado à noite.
+test('confirmação que chega segunda 9h05 começa às 9h05; só confirmação gravada fora do horário vai para as 11h', () => {
+  const seg905 = Date.UTC(2026, 10, 16, 12, 5);   // segunda 16/11 9h05 Bahia
+  assert.equal(R.inicioDoRelogio(seg905), seg905);
+  assert.equal(R.dataHoraBahia(R.prazoFim(seg905)), '19/11/2026 às 09:05');
+  const sab22h = Date.UTC(2026, 10, 15, 1, 0);    // sábado 14/11 22h Bahia, gravado na hora
+  assert.equal(R.dataHoraBahia(R.inicioDoRelogio(sab22h)), '16/11/2026 às 11:00');
 });
 
 test('entrega prevista respeita capacidade_dia; alerta 12 h antes do prazo', () => {

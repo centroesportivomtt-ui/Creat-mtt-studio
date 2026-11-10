@@ -111,9 +111,9 @@
       servicos: [
         { id: 'aula-experimental', nome: 'Aula experimental', preco: 0, duracaoMin: 60, descricao: 'Uma aula para conhecer o espaço, os professores e o ritmo da casa.' },
         { id: 'avaliacao', nome: 'Avaliação para começar', preco: 0, duracaoMin: 45, descricao: 'Conversa com o professor sobre a sua rotina e o seu objetivo, para montar o primeiro treino.' },
-        { id: 'mensal', nome: 'Plano mensal', preco: 99, duracaoMin: 60, descricao: 'Valor por mês. Musculação de segunda a sábado, com professor na sala. O pedido marca o primeiro treino.' },
-        { id: 'trimestral', nome: 'Plano trimestral', preco: 267, duracaoMin: 60, descricao: 'Valor dos três meses, pagos de uma vez, com o mês mais barato que no mensal. O pedido marca o primeiro treino.' },
-        { id: 'livre', nome: 'Plano livre mensal', preco: 149, duracaoMin: 60, descricao: 'Valor por mês. Musculação, funcional e pilates, quantas vezes quiser. O pedido marca o primeiro treino.' },
+        { id: 'mensal', nome: 'Plano mensal', preco: 99, duracaoMin: 60, duracaoVisivel: false, descricao: 'Valor por mês. Musculação de segunda a sábado, com professor na sala. O pedido marca o primeiro treino.' },
+        { id: 'trimestral', nome: 'Plano trimestral', preco: 267, duracaoMin: 60, duracaoVisivel: false, descricao: 'Valor dos três meses, pagos de uma vez, com o mês mais barato que no mensal. O pedido marca o primeiro treino.' },
+        { id: 'livre', nome: 'Plano livre mensal', preco: 149, duracaoMin: 60, duracaoVisivel: false, descricao: 'Valor por mês. Musculação, funcional e pilates, quantas vezes quiser. O pedido marca o primeiro treino.' },
         { id: 'personal', nome: 'Treino com personal', preco: 69, duracaoMin: 60, descricao: 'Valor por sessão de 1 hora, individual, com o treino montado para você.' }
       ],
       profissionais: [],
