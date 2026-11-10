@@ -24,6 +24,8 @@ Agentes em `.claude/agents/`, skills da casa em `.claude/skills/`, fluxo que coo
 | `seguranca` | Muralha | Segurança | auditoria antes de publicar |
 | `devops` | Trilho | DevOps & Deploy | build, CI, deploy |
 
+Nota: `.claude/agents/leitor-pedido.md` e `.claude/agents/redator-pedido.md` são papéis internos da tarefa executora do Porta Aberta (`projetos/creat-nuvem/docs/EXECUTOR.md`, passo (e)), não membros da equipe de 15. Só o executor os chama.
+
 ## Skills da casa (`.claude/skills/`)
 
 - `consciencia`: quem é o dono, o que é 12 de 10, a tese única e o foco em venda. **Leitura obrigatória antes de qualquer tarefa.**
