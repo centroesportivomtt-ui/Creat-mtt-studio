@@ -1,0 +1,16 @@
+{
+  "formato": "PEDIDO v1",
+  "id": "PA-DEM0SA1A",
+  "plano": "vitrine",
+  "nicho": "salao",
+  "negocio": "Salão Esmalte Fictício",
+  "cidade": "Riachão do Jacuípe",
+  "responsavel": "Responsável Fictício",
+  "whatsapp_negocio": "5575981151202",
+  "endereco": "Travessa do Exemplo, s/n, Centro, Riachão do Jacuípe-BA, 44640-000",
+  "horarios": "seg=fechado;ter=09:00-18:30;qua=09:00-18:30;qui=09:00-18:30;sex=09:00-19:00;sab=08:00-17:00;dom=fechado",
+  "email": "demonstracao@exemplo.com.br",
+  "origem": "utm_source=demo;utm_medium=interno;utm_campaign=demos-nov26;utm_content=salao",
+  "previa": "https://creat-nuvem-404b1994.base44.app/previa/#k=salao&n=Sal%C3%A3o%20Esmalte%20Fict%C3%ADcio&c=Riach%C3%A3o%20do%20Jacu%C3%ADpe&p=1",
+  "aceite_termos": "2026-11-09T09:00:00-03:00 termos-v1"
+}

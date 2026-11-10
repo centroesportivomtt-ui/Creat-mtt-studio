@@ -1,0 +1,45 @@
+{
+  "pedido": "PA-DEM0BARB",
+  "hashPedido": "98675eaa2ef42b92a0de7e6e02bb31707d5e0d90c98a839593069dca4481ac07",
+  "em": "2026-11-09T20:10:24.536Z",
+  "status": "pronto_para_aprovacao",
+  "slug": "demo-barbearia",
+  "etapas": [
+    {
+      "n": 1,
+      "nome": "pedido validado e tenant parcial do preset",
+      "status": "ok",
+      "detalhe": "PA-DEM0BARB, barbearia, slug demo-barbearia"
+    },
+    {
+      "n": 2,
+      "nome": "textos pela IA",
+      "status": "ok",
+      "detalhe": "reaproveitados da rodada anterior deste pedido (sem nova chamada)"
+    },
+    {
+      "n": 3,
+      "nome": "validar-tenant",
+      "status": "ok",
+      "detalhe": "schema + regras da casa"
+    },
+    {
+      "n": 4,
+      "nome": "build-site",
+      "status": "ok",
+      "detalhe": "17 arquivos em dist/demo-barbearia/"
+    },
+    {
+      "n": 5,
+      "nome": "teste headless 390 px",
+      "status": "ok",
+      "detalhe": "sem rolagem lateral, menor texto 12px, 2 links wa.me/5575981151202, console limpo"
+    },
+    {
+      "n": 6,
+      "nome": "custo.json e RELATORIO do pedido",
+      "status": "ok",
+      "detalhe": "R$ 0"
+    }
+  ]
+}

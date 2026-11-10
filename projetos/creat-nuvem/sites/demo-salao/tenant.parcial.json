@@ -1,0 +1,158 @@
+{
+  "versao": 1,
+  "slug": "demo-salao",
+  "nicho": "salao",
+  "negocio": {
+    "nome": "Salão Esmalte Fictício",
+    "nomeCurto": "Salão Esmalte Fictício",
+    "bordao": "Escolha o serviço, peça o horário, chegue e relaxe.",
+    "endereco": {
+      "rua": "Travessa do Exemplo",
+      "numero": "s/n",
+      "bairro": "Centro",
+      "cidade": "Riachão do Jacuípe",
+      "uf": "BA",
+      "cep": "44640-000"
+    },
+    "whatsapp": "5575981151202",
+    "telefoneExibicao": "(75) 98115-1202"
+  },
+  "pagina": {
+    "titulo": "Salão Esmalte Fictício · salão em Riachão do Jacuípe",
+    "descricao": "Corte, escova, coloração, unhas e sobrancelha em Riachão do Jacuípe. Escolha o serviço e o horário no site e mande o pedido pelo WhatsApp."
+  },
+  "funcionamento": {
+    "passoMin": 30,
+    "antecedenciaMin": 60,
+    "diasNaFita": 7,
+    "semana": {
+      "0": null,
+      "1": null,
+      "2": {
+        "abre": "09:00",
+        "fecha": "18:30"
+      },
+      "3": {
+        "abre": "09:00",
+        "fecha": "18:30"
+      },
+      "4": {
+        "abre": "09:00",
+        "fecha": "18:30"
+      },
+      "5": {
+        "abre": "09:00",
+        "fecha": "19:00"
+      },
+      "6": {
+        "abre": "08:00",
+        "fecha": "17:00"
+      }
+    }
+  },
+  "servicos": [
+    {
+      "id": "corte",
+      "nome": "Corte",
+      "preco": null,
+      "duracaoMin": 60,
+      "descricao": "Lavagem, corte e finalização do jeito que você pedir."
+    },
+    {
+      "id": "escova",
+      "nome": "Escova",
+      "preco": null,
+      "duracaoMin": 45,
+      "descricao": "Lavagem e escova, lisa ou modelada."
+    },
+    {
+      "id": "coloracao",
+      "nome": "Coloração",
+      "preco": null,
+      "duracaoMin": 120,
+      "descricao": "Cor do fio inteiro ou retoque de raiz. O tom é combinado na hora."
+    },
+    {
+      "id": "manicure",
+      "nome": "Manicure",
+      "preco": null,
+      "duracaoMin": 45,
+      "descricao": "Cutícula, lixa e esmalte da sua escolha."
+    },
+    {
+      "id": "pedicure",
+      "nome": "Pedicure",
+      "preco": null,
+      "duracaoMin": 50,
+      "descricao": "Cuidado dos pés, cutícula e esmalte."
+    },
+    {
+      "id": "sobrancelha",
+      "nome": "Design de sobrancelha",
+      "preco": null,
+      "duracaoMin": 30,
+      "descricao": "Desenho e acabamento com pinça e linha."
+    },
+    {
+      "id": "hidratacao",
+      "nome": "Hidratação",
+      "preco": null,
+      "duracaoMin": 45,
+      "descricao": "Máscara de tratamento para os fios, com escova no final."
+    }
+  ],
+  "profissionais": [],
+  "avaliacoes": [],
+  "cores": {
+    "fundo": "#FBF1EE",
+    "texto": "#2A1418",
+    "destaque": "#A8123A",
+    "apoio": "#6A4A50"
+  },
+  "agendamento": {
+    "modo": "whatsapp",
+    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}. Pode confirmar por aqui?"
+  },
+  "textos": {
+    "heroTitulo": "Seu horário no salão, pedido em um minuto.",
+    "heroSubtitulo": "Escolha o serviço, o dia e o horário. O pedido chega no WhatsApp do salão e o dono confirma pelo WhatsApp.",
+    "manifesto": "Aqui cada horário é pensado para você sair do jeito que pediu. Você escolhe o serviço, o dia e o horário pelo celular, sem ligação e sem fila de mensagem. O pedido chega no WhatsApp do salão e a confirmação vem por lá. Chegue, sente e aproveite.",
+    "servicosTitulo": "Serviços da casa",
+    "servicosNota": "Valores sob consulta: pergunte no WhatsApp da casa antes de pedir o horário.",
+    "equipeTitulo": "Quem atende",
+    "avaliacoesTitulo": "Recados de quem vem",
+    "pedidoTitulo": "Peça o seu horário",
+    "pedidoNota": "O pedido vai para o WhatsApp do salão e o dono confirma pelo WhatsApp.",
+    "ritualDica": "Passe o pincel na unha para enviar",
+    "confirmacaoTitulo": "Pedido pronto para enviar",
+    "confirmacaoTexto": "Toque em enviar no WhatsApp. O horário vale depois que o dono confirma pelo WhatsApp.",
+    "letreiroAberto": "Aberto agora · peça o seu horário",
+    "letreiroFechado": "Fechado agora · abre {dia} às {hora}",
+    "localTitulo": "Onde fica",
+    "faqTitulo": "Antes de pedir",
+    "faq": [
+      {
+        "pergunta": "Pedir pelo site já marca o horário?",
+        "resposta": "Ainda não. O pedido chega no WhatsApp do salão e o dono confirma pelo WhatsApp. O horário vale depois da confirmação."
+      },
+      {
+        "pergunta": "Posso pedir mais de um serviço?",
+        "resposta": "Pode. Escolha o primeiro serviço no site e escreva os outros na mensagem do WhatsApp antes de enviar."
+      },
+      {
+        "pergunta": "A coloração tem o preço da tabela?",
+        "resposta": "O valor final da coloração depende do comprimento e do tom. O salão combina com você pelo WhatsApp."
+      },
+      {
+        "pergunta": "Meu nome e meu WhatsApp ficam salvos?",
+        "resposta": "Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar."
+      }
+    ],
+    "rodapeFrase": "Cadeira pronta, toalha limpa, horário combinado."
+  },
+  "meta": {
+    "previa": false,
+    "motorVersao": "v1",
+    "criadoEm": "2026-11-09T20:10:26.594Z"
+  }
+}

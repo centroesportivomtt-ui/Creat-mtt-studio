@@ -1,0 +1,144 @@
+{
+  "versao": 1,
+  "slug": "demo-barbearia",
+  "nicho": "barbearia",
+  "negocio": {
+    "nome": "Barbearia Navalha Fictícia",
+    "nomeCurto": "Barbearia Navalha Fictícia",
+    "bordao": "Corte no capricho, horário pedido pelo WhatsApp.",
+    "endereco": {
+      "rua": "Rua do Exemplo",
+      "numero": "s/n",
+      "bairro": "Centro",
+      "cidade": "Riachão do Jacuípe",
+      "uf": "BA",
+      "cep": "44640-000"
+    },
+    "whatsapp": "5575981151202",
+    "telefoneExibicao": "(75) 98115-1202"
+  },
+  "pagina": {
+    "titulo": "Barbearia Navalha Fictícia · barbearia em Riachão do Jacuípe",
+    "descricao": "Corte, degradê e barba em Riachão do Jacuípe. Escolha o serviço, o dia e o horário no site e mande o pedido pelo WhatsApp. O dono confirma por lá."
+  },
+  "funcionamento": {
+    "passoMin": 20,
+    "antecedenciaMin": 30,
+    "diasNaFita": 7,
+    "semana": {
+      "0": null,
+      "1": null,
+      "2": {
+        "abre": "08:30",
+        "fecha": "19:30"
+      },
+      "3": {
+        "abre": "08:30",
+        "fecha": "19:30"
+      },
+      "4": {
+        "abre": "08:30",
+        "fecha": "19:30"
+      },
+      "5": {
+        "abre": "08:30",
+        "fecha": "20:00"
+      },
+      "6": {
+        "abre": "08:00",
+        "fecha": "17:00"
+      }
+    }
+  },
+  "servicos": [
+    {
+      "id": "corte",
+      "nome": "Corte",
+      "preco": null,
+      "duracaoMin": 40,
+      "descricao": "Tesoura e máquina, com acabamento na nuca e no pezinho."
+    },
+    {
+      "id": "degrade",
+      "nome": "Degradê",
+      "preco": null,
+      "duracaoMin": 50,
+      "descricao": "Degradê do zero, com a transição fechada na navalha."
+    },
+    {
+      "id": "barba",
+      "nome": "Barba",
+      "preco": null,
+      "duracaoMin": 30,
+      "descricao": "Toalha quente, espuma no pincel e navalha."
+    },
+    {
+      "id": "corte-barba",
+      "nome": "Corte + barba",
+      "preco": null,
+      "duracaoMin": 80,
+      "descricao": "O serviço completo numa passada só."
+    },
+    {
+      "id": "pezinho",
+      "nome": "Pezinho",
+      "preco": null,
+      "duracaoMin": 15,
+      "descricao": "Manutenção rápida do contorno entre um corte e outro."
+    }
+  ],
+  "profissionais": [],
+  "avaliacoes": [],
+  "cores": {
+    "fundo": "#F7F4EF",
+    "texto": "#14213D",
+    "destaque": "#B3261E",
+    "apoio": "#46506A"
+  },
+  "agendamento": {
+    "modo": "whatsapp",
+    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}. Pode confirmar por aqui?"
+  },
+  "textos": {
+    "heroTitulo": "Cadeira de bairro, corte no capricho.",
+    "heroSubtitulo": "Escolha o serviço, o dia e o horário. O pedido chega no WhatsApp da casa e o dono confirma pelo WhatsApp.",
+    "manifesto": "Aqui a navalha passa no couro antes de cada cliente. Você escolhe o corte, o dia e o horário pelo celular, sem ligar e sem esperar alguém atender. O pedido chega no WhatsApp da casa, e a confirmação vem por lá, de gente para gente. Chegou, sentou, saiu alinhado.",
+    "servicosTitulo": "Tabela da casa",
+    "servicosNota": "Valores sob consulta: pergunte no WhatsApp da casa antes de pedir o horário.",
+    "equipeTitulo": "Quem está na cadeira",
+    "avaliacoesTitulo": "Recado no quadro",
+    "pedidoTitulo": "Peça o seu horário",
+    "pedidoNota": "O pedido vai para o WhatsApp da barbearia e o dono confirma pelo WhatsApp.",
+    "ritualDica": "Passe a navalha no couro para enviar",
+    "confirmacaoTitulo": "Pedido pronto para enviar",
+    "confirmacaoTexto": "Toque em enviar no WhatsApp. O horário vale depois que o dono confirma pelo WhatsApp.",
+    "letreiroAberto": "Aberto agora · peça o seu horário",
+    "letreiroFechado": "Fechado agora · abre {dia} às {hora}",
+    "localTitulo": "Onde fica",
+    "faqTitulo": "Antes de pedir",
+    "faq": [
+      {
+        "pergunta": "Pedir pelo site já marca o horário?",
+        "resposta": "Ainda não. O pedido chega no WhatsApp da barbearia e o dono confirma pelo WhatsApp. O horário vale depois da confirmação."
+      },
+      {
+        "pergunta": "Posso pedir corte e barba juntos?",
+        "resposta": "Pode. Escolha Corte + barba na lista de serviços."
+      },
+      {
+        "pergunta": "Como eu pago?",
+        "resposta": "O pagamento é na barbearia. Pergunte no WhatsApp quais formas a casa aceita."
+      },
+      {
+        "pergunta": "Meu nome e meu WhatsApp ficam salvos?",
+        "resposta": "Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar."
+      }
+    ],
+    "rodapeFrase": "Navalha afiada, cadeira limpa, horário combinado."
+  },
+  "meta": {
+    "previa": false,
+    "motorVersao": "v1",
+    "criadoEm": "2026-11-09T20:10:24.536Z"
+  }
+}

@@ -1,0 +1,62 @@
+{
+ "pedido": "PA-9TQ4HN2X",
+ "bordao": "Navalha afiada no Cambuí, horário pedido pelo WhatsApp.",
+ "pagina": {
+  "titulo": "Barbearia Navalha Teste · barbearia no Cambuí, Campinas",
+  "descricao": "Corte, degradê e barba no Cambuí, em Campinas. Escolha o serviço, o dia e o horário e mande o pedido pelo WhatsApp. O dono confirma por lá."
+ },
+ "servicos": [
+  {
+   "id": "corte",
+   "descricao": "Tesoura e máquina, com acabamento na nuca e no pezinho."
+  },
+  {
+   "id": "degrade",
+   "descricao": "Degradê do zero, com a transição fechada na navalha."
+  },
+  {
+   "id": "barba",
+   "descricao": "Toalha quente, espuma no pincel e navalha."
+  },
+  {
+   "id": "corte-barba",
+   "descricao": "Corte e barba na mesma cadeira, numa passada só."
+  },
+  {
+   "id": "pezinho",
+   "descricao": "Contorno em dia entre um corte e outro."
+  }
+ ],
+ "textos": {
+  "heroTitulo": "<img src=x onerror=alert(1)> Corte",
+  "heroSubtitulo": "Escolha o serviço, o dia e o horário. O pedido chega no WhatsApp da Navalha Teste e o dono confirma pelo WhatsApp.",
+  "manifesto": "Na Barbearia Navalha Teste a navalha passa no couro antes de cada cliente. Você escolhe o corte, o dia e o horário pelo celular, sem ligar e sem esperar alguém atender. O pedido chega no WhatsApp da casa e a resposta vem por lá, de gente para gente.",
+  "servicosTitulo": "Tabela da casa",
+  "equipeTitulo": "Quem está na cadeira",
+  "avaliacoesTitulo": "Recado no quadro",
+  "pedidoTitulo": "Peça o seu horário",
+  "pedidoNota": "O pedido vai para o WhatsApp da barbearia e o dono confirma pelo WhatsApp.",
+  "ritualDica": "Passe a navalha no couro para enviar",
+  "confirmacaoTitulo": "Pedido pronto para enviar",
+  "confirmacaoTexto": "Toque em enviar no WhatsApp. O horário vale depois que o dono confirma pelo WhatsApp.",
+  "letreiroAberto": "Aberto agora · peça o seu horário",
+  "letreiroFechado": "Fechado agora · abre {dia} às {hora}",
+  "localTitulo": "Onde fica no Cambuí",
+  "faqTitulo": "Antes de pedir",
+  "faq": [
+   {
+    "pergunta": "Pedir pelo site já marca o horário?",
+    "resposta": "Ainda não. O pedido chega no WhatsApp da barbearia e o dono confirma pelo WhatsApp. O horário vale depois da confirmação."
+   },
+   {
+    "pergunta": "Quanto custa cada serviço?",
+    "resposta": "Os valores são passados pelo WhatsApp da casa. Pergunte antes de pedir o horário."
+   },
+   {
+    "pergunta": "Meu nome e meu WhatsApp ficam salvos?",
+    "resposta": "Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar."
+   }
+  ],
+  "rodapeFrase": "Navalha afiada, cadeira limpa, horário combinado."
+ }
+}

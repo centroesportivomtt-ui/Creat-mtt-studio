@@ -20,6 +20,14 @@
  *   A sessão que publica informa o scratchpad dela pela variável.
  * --demo confere também, na página renderizada, que a faixa é a primeira coisa visível e que a meta robots
  *   é noindex (testar-site exigirFaixaDemo), além de tenant.js com "demonstracao":true.
+ * Modos do pacote 1C (rascunho para aprovação, PV-03, e saída do cliente, PV-10):
+ *   --rascunho     publica dist/<slug>-r-<id>/ (lido de sites/<slug>/rascunho.json) em /sites/<slug>-r-<id>/.
+ *                  Confere que é o build final + faixa (lib/rascunho.cjs conferirRascunho), noindex,
+ *                  robots Disallow, sem sitemap, e testa a faixa e o botão de 44 px a 390 px.
+ *   --aprovado     depois do "Aprovar" do cliente: publica dist/<slug>/ (o MESMO build, sha256 igual ao
+ *                  registrado em rascunho.json) em /sites/<slug>/ e o passo a passo APAGA /sites/<slug>-r-<id>/.
+ *   --saida-dominio publica dist/<slug>-saida/ (build-site --saida-dominio) em /sites/<slug>/.
+ *   O token do rascunho nunca entra no zip, no passo a passo nem na saída deste script.
  * Código: 0 ok · 1 entrada ou dist inválido · 2 ambiente (Playwright, fflate) · 3 teste do site falhou.
  */
 'use strict';
@@ -28,6 +36,7 @@ const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 const C = require('./lib/comum.cjs');
+const R = require('./lib/rascunho.cjs');
 const { urlDoSite } = require('./build-site.cjs');
 const { testarSite } = require('./testar-site.cjs');
 
@@ -38,6 +47,8 @@ const FAIXA_DEMO = /demonstra[çc][ãa]o\s*·\s*nome fict[íi]cio/i;
 const MTIME = new Date('2026-01-01T00:00:00Z');
 // o que build-site.cjs grava; qualquer outra coisa em dist/<slug>/ não vai ao ar
 const LISTA_BRANCA = [/^index\.html$/, /^tenant\.js$/, /^tenant\.json$/, /^robots\.txt$/, /^sitemap\.xml$/, /^motor\/(v1|nichos)\/([A-Za-z0-9_-][A-Za-z0-9._-]*\/)*[A-Za-z0-9._-]+\.(js|css|svg|json|woff2?|png|webp)$/];
+const LISTA_RASCUNHO = [/^rascunho\.js$/, /^rascunho\.css$/];
+const LISTA_SAIDA = [/^index\.html$/, /^robots\.txt$/];
 
 function destinoPadrao() {
   if (process.env.CREAT_PUBLICAR_DESTINO) return process.env.CREAT_PUBLICAR_DESTINO;
@@ -65,9 +76,10 @@ function conferir(pasta, slug, opc) {
   for (const f of ['tenant.json', 'index.html', 'tenant.js']) if (!fs.existsSync(path.join(pasta, f))) throw new C.ErroCampo('dist', `${pasta} não é um build do build-site (falta ${f})`);
   if (!fs.existsSync(path.join(pasta, 'motor', 'v1'))) throw new C.ErroCampo('dist', `${pasta} não é um build do build-site (falta motor/v1/)`);
   const tenant = C.lerJson(path.join(pasta, 'tenant.json'));
-  if (tenant.slug !== slug) throw new C.ErroCampo('tenant.slug', `dist/${slug}/tenant.json diz "${tenant.slug}"`);
+  if (tenant.slug !== slug) throw new C.ErroCampo('tenant.slug', `dist/${path.basename(pasta)}/tenant.json diz "${tenant.slug}"`);
   const arquivos = listar(pasta);
-  const fora = arquivos.filter((r) => !LISTA_BRANCA.some((re) => re.test(r)));
+  const lista = opc.rascunho ? LISTA_BRANCA.concat(LISTA_RASCUNHO) : LISTA_BRANCA;
+  const fora = arquivos.filter((r) => !lista.some((re) => re.test(r)) || (opc.rascunho && r === 'sitemap.xml'));
   if (fora.length) throw new C.ErroLista(`dist/${slug}/ tem arquivos fora da lista branca (não vão ao ar; refaça o build):`, fora.map((r) => ({ campo: r, mensagem: 'fora da lista branca' })));
   const avisos = [];
   const html = fs.readFileSync(path.join(pasta, 'index.html'), 'utf8');
@@ -106,10 +118,12 @@ function zipar(pasta, slug, arquivos, destino) {
   return { zip, sha256: crypto.createHash('sha256').update(buf).digest('hex'), bytes: buf.length, entradas: nomes.length };
 }
 
-function passos(slug, z) {
+function passos(slug, z, extra) {
+  extra = extra || {};
   const titulo = `site-${slug}-${z.sha256.slice(0, 8)}.zip`;
   const url = urlDoSite(slug) || `https://creat-nuvem-404b1994.base44.app/sites/${slug}/`;
-  const baixar = `rm -rf /tmp/s /tmp/s.zip && curl -sSL -o /tmp/s.zip "https://drive.google.com/uc?export=download&id=<ID_DO_DRIVE>" && echo "${z.sha256}  /tmp/s.zip" | sha256sum -c - && python3 -m zipfile -e /tmp/s.zip /tmp/s && test -f /tmp/s/sites/${slug}/index.html && mkdir -p public/sites && rm -rf public/sites/${slug} && cp -r /tmp/s/sites/${slug} public/sites/ && ls public/sites/${slug}`;
+  const apagar = extra.apagarRascunho && R.RE_DIR.test(extra.apagarRascunho) ? ` && rm -rf public/sites/${extra.apagarRascunho}` : '';
+  const baixar = `rm -rf /tmp/s /tmp/s.zip && curl -sSL -o /tmp/s.zip "https://drive.google.com/uc?export=download&id=<ID_DO_DRIVE>" && echo "${z.sha256}  /tmp/s.zip" | sha256sum -c - && python3 -m zipfile -e /tmp/s.zip /tmp/s && test -f /tmp/s/sites/${slug}/index.html && mkdir -p public/sites && rm -rf public/sites/${slug} && cp -r /tmp/s/sites/${slug} public/sites/${apagar} && ls public/sites/${slug}`;
   return [
     `1. Google Drive create_file: title "${titulo}", contentMimeType "application/zip", disableConversionToGoogleType true, parentId "${PASTA_DRIVE}" (pasta "Creat Nuvem"), base64Content "sha256:${z.sha256}:${z.zip}". Guarde o id devolvido (<ID_DO_DRIVE>).`,
     `2. Google Drive share_file: fileId <ID_DO_DRIVE>, permissionId "anyoneWithLink", role "reader".`,
@@ -117,23 +131,83 @@ function passos(slug, z) {
     `   Se sha256sum -c falhar, o Drive devolveu outra coisa (link não público ou página de aviso): pare e refaça o passo 2.`,
     `4. Base44 run_command: git log --oneline -1   (tem de mostrar o auto-commit com public/sites/${slug}; se não mostrar, não siga)`,
     `5. Base44 create_checkpoint (appId ${APP_BASE44}), name "site ${slug} ${z.sha256.slice(0, 8)}".`,
-    `6. Deploy do app (só com o ok do Marcos) e confira: curl -sI ${url} -> 200; curl -s ${url} | grep -c wa.me -> 1 ou mais.`,
+    `6. Deploy do app (portões de docs/PUBLICACAO.md) e confira: curl -sI ${url} -> 200; ${extra.conferir || `curl -s ${url} | grep -c wa.me -> 1 ou mais`}.${apagar ? ` E o rascunho sumiu: curl -sI https://creat-nuvem-404b1994.base44.app/sites/${extra.apagarRascunho}/ -> 404.` : ''}`,
     `7. Depois: Google Drive trash_file <ID_DO_DRIVE> (o zip temporário não precisa ficar público).`
   ];
+}
+
+/* rascunho.json do pedido (sites/<slug>/), conferido; nunca devolve o token */
+function lerRascunho(saida, slug) {
+  const arq = path.join(saida, 'sites', slug, 'rascunho.json');
+  if (!fs.existsSync(arq)) throw new C.ErroCampo('--rascunho', `não achei sites/${slug}/rascunho.json: rode antes "npm run produzir -- --pedido ... --textos ... --rascunho"`);
+  const j = C.lerJson(arq);
+  if (j.slug !== slug || !R.RE_DIR.test(String(j.dir)) || j.dir !== R.dirRascunho(slug, j.id)) throw new C.ErroCampo('rascunho.json', 'slug, id ou pasta fora do formato');
+  return { dir: j.dir, id: j.id, endpoint: j.endpoint, ajuste: j.ajuste, final: j.final || {} };
+}
+
+/* página de saída (build-site --saida-dominio): só index.html + robots.txt, sem script */
+function conferirSaida(pasta, slug) {
+  if (!fs.existsSync(path.join(pasta, 'saida.json'))) throw new C.ErroCampo('--saida-dominio', `não achei dist/${slug}-saida/: rode antes "node scripts/producao/build-site.cjs --saida-dominio <dominio> --slug ${slug}"`);
+  const info = C.lerJson(path.join(pasta, 'saida.json'));
+  if (info.slug !== slug) throw new C.ErroCampo('saida.json', `é do slug ${info.slug}`);
+  const arquivos = listar(pasta).filter((r) => r !== 'saida.json');
+  const fora = arquivos.filter((r) => !LISTA_SAIDA.some((re) => re.test(r)));
+  if (fora.length) throw new C.ErroLista(`dist/${slug}-saida/ tem arquivos fora da lista:`, fora.map((r) => ({ campo: r, mensagem: 'fora da lista branca' })));
+  const html = fs.readFileSync(path.join(pasta, 'index.html'), 'utf8');
+  const erros = [];
+  if (!html.includes(`<meta http-equiv="refresh" content="0; url=${info.url}">`)) erros.push({ campo: 'refresh', mensagem: 'sem meta refresh para o domínio' });
+  if (!html.includes(`<link rel="canonical" href="${info.url}">`)) erros.push({ campo: 'canonical', mensagem: 'sem canonical para o domínio' });
+  if (!html.includes(`href="${info.url}"`) || /<script/i.test(html)) erros.push({ campo: 'index.html', mensagem: 'sem link visível ou com script' });
+  if (erros.length) throw new C.ErroLista(`página de saída ${slug} fora das regras:`, erros);
+  return { info, arquivos };
 }
 
 async function main(argv) {
   const a = C.lerArgs(argv);
   const slug = typeof a.slug === 'string' ? a.slug : '';
-  if (!slug) { console.error('Uso: node scripts/producao/publicar-site.cjs --slug <slug> [--saida <pasta>] [--destino <pasta>] [--demo] [--json]'); return 2; }
+  if (!slug) { console.error('Uso: node scripts/producao/publicar-site.cjs --slug <slug> [--rascunho | --aprovado | --saida-dominio] [--saida <pasta>] [--destino <pasta>] [--demo] [--json]'); return 2; }
   if (!C.SLUG_RE.test(slug)) throw new C.ErroCampo('--slug', `slug inválido "${slug}" (minúsculas, números e hífen, 2 a 40)`);
+  if ([a.rascunho, a.aprovado, a['saida-dominio'], a.demo].filter(Boolean).length > 1) throw new C.ErroCampo('--rascunho', 'use um modo só (--rascunho, --aprovado, --saida-dominio ou --demo)');
   const saida = C.pastaSaida(a);
-  const pasta = path.join(saida, 'dist', slug);
-  const c = conferir(pasta, slug, { demo: !!a.demo });
-  const t = await testarSite(pasta, { whatsapp: c.tenant.negocio.whatsapp, exigirFaixaDemo: !!a.demo });
-  if (!t.ok) { console.error(`FALHOU testar-site em dist/${slug}/:\n  - ${t.falhas.join('\n  - ')}`); return 3; }
-  const z = zipar(pasta, slug, c.arquivos, typeof a.destino === 'string' ? a.destino : destinoPadrao());
-  const r = { slug, url: urlDoSite(slug), zip: z.zip, sha256: z.sha256, bytes: z.bytes, arquivos: z.entradas, teste: { ok: true, menorFontePx: t.medidas.menorFontePx, waMe: t.medidas.waMe.length }, avisos: c.avisos, passos: passos(slug, z) };
+  const destinoZip = () => (typeof a.destino === 'string' ? a.destino : destinoPadrao());
+
+  if (a['saida-dominio']) {
+    const pasta = path.join(saida, 'dist', `${slug}-saida`);
+    const c = conferirSaida(pasta, slug);
+    const z = zipar(pasta, slug, c.arquivos, destinoZip());
+    const r = { slug, modo: 'saida', url: urlDoSite(slug), leva_a: c.info.url, zip: z.zip, sha256: z.sha256, bytes: z.bytes, arquivos: z.entradas, passos: passos(slug, z, { conferir: `curl -s ${urlDoSite(slug) || ''} | grep -c 'http-equiv="refresh"' -> 1` }) };
+    if (a.json) { console.log(JSON.stringify(r, null, 2)); return 0; }
+    console.log(`ok: página de saída de ${slug} leva a ${c.info.url}\nzip: ${z.zip}\nsha256: ${z.sha256}\n\nPasso a passo do chat principal (docs/PUBLICACAO.md):`);
+    r.passos.forEach((p) => console.log(p));
+    return 0;
+  }
+
+  let pasta = path.join(saida, 'dist', slug), nomePublicado = slug, rasc = null, extra = {};
+  // site com rascunho só vai para /sites/<slug>/ pelo caminho da aprovação (o mesmo build que o cliente viu)
+  if (!a.rascunho && !a.aprovado && !a.demo && fs.existsSync(path.join(saida, 'sites', slug, 'rascunho.json'))) {
+    throw new C.ErroCampo('--aprovado', `sites/${slug}/ tem rascunho: publique o rascunho com --rascunho e, depois do "Aprovar" do cliente (status aprovado no pedido), o site com --aprovado`);
+  }
+  if (a.rascunho || a.aprovado) {
+    rasc = lerRascunho(saida, slug);
+    const pastaR = path.join(saida, 'dist', rasc.dir);
+    const pastaF = path.join(saida, 'dist', slug);
+    conferir(pastaF, slug, {});
+    conferir(pastaR, slug, { rascunho: true });
+    const prob = R.conferirRascunho(pastaR, pastaF, C.listarArquivos, { dir: rasc.dir, endpoint: rasc.endpoint, ajuste: rasc.ajuste });
+    const mf = R.manifesto(pastaF, C.listarArquivos);
+    for (const k of new Set([...Object.keys(mf), ...Object.keys(rasc.final)])) if (mf[k] !== rasc.final[k]) prob.push(`dist/${slug}/${k}: mudou depois do rascunho (sha256 diferente do registrado em rascunho.json)`);
+    if (prob.length) throw new C.ErroLista(`rascunho ${rasc.dir} não é o build final + faixa:`, prob.map((m) => ({ campo: 'rascunho', mensagem: m })));
+    if (a.rascunho) { pasta = pastaR; nomePublicado = rasc.dir; extra = { conferir: `curl -s https://creat-nuvem-404b1994.base44.app/sites/${rasc.dir}/ | grep -c 'Rascunho para a sua aprovação' -> 1 e grep -c noindex -> 1` }; }
+    else extra = { apagarRascunho: rasc.dir };
+  }
+  const c = conferir(pasta, slug, { demo: !!a.demo, rascunho: !!a.rascunho });
+  const t = await testarSite(pasta, a.rascunho
+    ? { whatsapp: c.tenant.negocio.whatsapp, waExtras: [R.WHATSAPP_AJUSTE], exigirFaixaRascunho: true }
+    : { whatsapp: c.tenant.negocio.whatsapp, exigirFaixaDemo: !!a.demo });
+  if (!t.ok) { console.error(`FALHOU testar-site em dist/${path.basename(pasta)}/:\n  - ${t.falhas.join('\n  - ')}`); return 3; }
+  const z = zipar(pasta, nomePublicado, c.arquivos, destinoZip());
+  const urlPub = a.rascunho ? `https://creat-nuvem-404b1994.base44.app/sites/${nomePublicado}/` : urlDoSite(slug);
+  const r = { slug, modo: a.rascunho ? 'rascunho' : a.aprovado ? 'aprovado' : a.demo ? 'demo' : 'site', publicado_em: nomePublicado, url: urlPub, zip: z.zip, sha256: z.sha256, bytes: z.bytes, arquivos: z.entradas, teste: { ok: true, menorFontePx: t.medidas.menorFontePx, waMe: t.medidas.waMe.length, botaoAprovarPx: t.medidas.faixaRascunho ? t.medidas.faixaRascunho.botaoAltura : null }, avisos: c.avisos, passos: passos(nomePublicado, z, extra) };
   if (a.json) { console.log(JSON.stringify(r, null, 2)); return 0; }
   c.avisos.forEach((x) => console.log(`aviso: ${x}`));
   console.log(`ok: testar-site passou (390 px, menor texto ${t.medidas.menorFontePx}px, ${t.medidas.waMe.length} links wa.me/${c.tenant.negocio.whatsapp})`);
@@ -152,4 +226,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { conferir, zipar, passos, LISTA_BRANCA, main };
+module.exports = { conferir, conferirSaida, lerRascunho, zipar, passos, LISTA_BRANCA, LISTA_RASCUNHO, main };

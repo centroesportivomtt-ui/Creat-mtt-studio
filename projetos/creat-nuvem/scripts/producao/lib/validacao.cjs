@@ -12,6 +12,7 @@
  *  - chave de textos fora da lista branca do preset;
  *  - termos proibidos: promessa de ganho, "garantido", antes e depois, prova social inventada,
  *    "agenda"/"agendamento", preço escrito em texto, link ou marcação HTML em texto, emoji;
+ *  - (1C) domínio solto, entidade HTML, "@" e telefone diferente do WhatsApp do pedido em texto;
  *  - preço de procedimento de saúde (e qualquer preço em nicho de saúde);
  *  - pedido de horário sem dizer que o dono confirma pelo WhatsApp;
  *  - site entregue com texto de exemplo do preset ("exemplo", "Seu negócio").
@@ -67,6 +68,26 @@ function chavesProibidas(o, caminho, out) {
     chavesProibidas(o[k], c, out);
   }
   return out;
+}
+
+/* domínio solto ("loja.com.br", "x.app"): o regex de PROIBIDOS só pega http e www */
+const DOMINIO = /\b[a-z0-9-]{2,}\.(com|net|org|br|io|app|me|site|online|store|shop|link|ly|co|info|biz|xyz|top|club|page|dev)\b/;
+
+/*
+ * Telefone em texto: qualquer sequência de 8 ou mais dígitos (com espaço, ponto, hífen, parênteses
+ * ou +). CEP (00000-000) não conta. Devolve o número achado se não for o WhatsApp do pedido
+ * (com ou sem 55, com ou sem DDD); null se não há telefone alheio.
+ */
+function telefoneAlheio(txt, whats) {
+  const w = String(whats || '');
+  const aceitos = w ? [w, w.slice(2), w.slice(4)] : [];
+  const semCep = String(txt).replace(/\b\d{5}-\d{3}\b/g, ' ');
+  for (const m of semCep.matchAll(/\+?\(?\d[\d\s().-]{6,}\d/g)) {
+    const dig = m[0].replace(/\D/g, '');
+    if (dig.length < 8) continue;
+    if (!aceitos.includes(dig)) return m[0].trim();
+  }
+  return null;
 }
 
 function hmMin(h) { const m = /^([01][0-9]|2[0-3]):([0-5][0-9])$/.exec(String(h)); return m ? +m[1] * 60 + +m[2] : null; }
@@ -133,6 +154,12 @@ function validarTenant(t, opc) {
   for (const [campo, txt] of textosDoTenant(t)) {
     const n = norm(txt);
     for (const [re, motivo] of PROIBIDOS) if (re.test(n)) { e(campo, `termo proibido: ${motivo}`); break; }
+    // pacote 1C: nada de contato ou código escondido em texto (a página só fala pelo WhatsApp do pedido)
+    if (DOMINIO.test(n)) e(campo, 'endereço de site dentro de texto (link só por código, nunca em texto)');
+    if (/&(#\d+|#x[0-9a-f]+|[a-z]{2,8});/.test(n)) e(campo, 'entidade HTML dentro de texto');
+    if (txt.includes('@')) e(campo, '"@" dentro de texto (e-mail ou perfil não entram em texto)');
+    const tel = telefoneAlheio(txt, neg.whatsapp);
+    if (tel) e(campo, `telefone diferente do WhatsApp do pedido dentro de texto (${tel})`);
     if (EMOJI.test(txt)) e(campo, 'emoji não é aceito');
     const marc = String(txt).match(/\{(\w+)\}/g) || [];
     for (const m of marc) if (!MARCADORES.includes(m.slice(1, -1))) e(campo, `marcador desconhecido ${m} (aceitos: ${MARCADORES.map((x) => `{${x}}`).join(' ')})`);
@@ -163,4 +190,4 @@ function validarTenant(t, opc) {
   return { ok: erros.length === 0, erros };
 }
 
-module.exports = { validarTenant, textosDoTenant, PROIBIDOS, PROCEDIMENTO_SAUDE, NICHOS_SAUDE, norm };
+module.exports = { validarTenant, textosDoTenant, telefoneAlheio, PROIBIDOS, PROCEDIMENTO_SAUDE, NICHOS_SAUDE, norm };

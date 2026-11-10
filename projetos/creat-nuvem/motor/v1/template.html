@@ -7,8 +7,18 @@
     Marcadores: {{TITULO}} {{DESCRICAO}} {{ROBOTS}} {{TEMA_COR}} {{FONTES_HREF}} {{NICHO}} {{MOTOR}}
     e os comentários JSONLD, CANONICAL e NOSCRIPT. Nada de dado de cliente aqui: tudo vem de tenant.js
     (gerado por CreatMotor.scriptTenant). Abre por duplo clique (file://): só scripts clássicos.
+    CSP (pacote 1C, 10/11/2026): vale para todo site de cliente, rascunho e pacote SAIR. Só scripts
+    da mesma origem; nenhum script inline (o JSON-LD é dado, não roda); conexões só com a mesma origem.
+    Afrouxado o mínimo e registrado: style-src aceita o CSS do Google Fonts e UM <style> do motor,
+    o CSS_VIVO de motor/v1/efeito.js, pelo hash; font-src aceita fonts.gstatic.com; style-src-attr
+    aceita SÓ os 9 atributos style da poeira do gesto da academia (motor/v1/rituais/barra.js grava
+    style="--i:..;--dx:.."; o motor é congelado, ADR-001), por hash com 'unsafe-hashes'. Qualquer
+    outro atributo style (ex.: uma camada falsa injetada por cima da página) é bloqueado.
+    Se CSS_VIVO ou a poeira mudarem, build-site.cjs recusa o build até os hashes daqui serem atualizados.
+    frame-ancestors não vale em meta: a hospedagem já manda X-Frame-Options DENY.
   -->
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com 'sha256-EsgTL5Ah6OXo2kfwq7dSLLcmAZQZO1ShHcqo3SLFWbY='; style-src-attr 'unsafe-hashes' 'sha256-lmFgQfdHmG81Qw1Uln1KN1cPmRFtu25Vidy89TGtW/s=' 'sha256-BpTv4k+9Jmcb5zqmGTgx4ck9q7qaFgNHu1PY6tDC+Lk=' 'sha256-I3TJFzNbehzByHETR4Go4Dobp7EK+WK7weXeyzaEMLw=' 'sha256-dSUxP0vcFIPKzPG14DlqhRTvUDcId6gNTMeF1THdcU4=' 'sha256-DjKopOLK4CtHDuuYZmD1Tks5qNxefXNFHDjs3pU6B0A=' 'sha256-nA2goikx6PmiCRG3Eyjk2cJGmeMkI+kBakNefJb1pS8=' 'sha256-SgnG8mu/pg4jdFMEGBh2rUuaDdPxInaJ9jTT72ESmAA=' 'sha256-UZHTVzrIMqOYWBIjT7HJuqpbZvCSW2ukiyPSu7sY2/4=' 'sha256-OlhEnP9PWSTc2skOkKv66gxIGhdNbvlcLxQhA863Px4='; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{{TITULO}}</title>
   <meta name="description" content="{{DESCRICAO}}">

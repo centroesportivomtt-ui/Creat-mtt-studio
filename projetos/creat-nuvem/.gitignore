@@ -1,6 +1,21 @@
 # Saídas da produção (T9). Têm dado pessoal de cliente (pedido.json: e-mail, responsável,
 # WhatsApp, endereço) e builds: nunca vão para o git. Ver docs/relatorio/T9.md.
-sites/
+# Exceção (pacote 1D, 10/11/2026): as demonstrações sites/demo-*/ têm nome fictício e o WhatsApp
+# do Suporte Creat, sem dado pessoal, e passam a ser versionadas. "!sites/" desfaz o "sites/" da
+# raiz do repositório só para esta pasta; "sites/*" volta a ignorar tudo o que há dentro dela.
+# Slug de cliente NUNCA começa com "demo-" (docs/EXECUTOR.md, passo e).
+!sites/
+sites/*
+!sites/demo-*/
+# dentro das demos, só o que reconstrói o site: nada de custo, uso da API, relatório nem print
+sites/demo-*/custo.json
+sites/demo-*/requisicao-ia.json
+sites/demo-*/resposta-ia.json
+sites/demo-*/RELATORIO.md
+sites/demo-*/teste-*.json
+sites/demo-*/*.png
+sites/demo-*/rascunho.json
+sites/demo-*/redator.json
 pedidos/
 # dist/<slug>/ e os zips do SAIR; dist/publico/ é o build público da T10 (já versionado, sem PII)
 dist/*

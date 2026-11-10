@@ -724,6 +724,75 @@ if (bruto[0] === '__servidor') {
     return r;
   }
 
+  // Estado de caixa de marcar, opção ou alternador: do próprio alvo ou, se o alvo é um rótulo, do campo dele.
+  // null quando o alvo não é nenhum desses. v: 'true', 'false' ou 'mixed' (aria) / 'misto' (indeterminate).
+  function ESTADO_MARCA(e) {
+    const c = e.tagName === 'LABEL' ? e.control : e;
+    if (!c) return null;
+    const ty = c.tagName === 'INPUT' ? String(c.type || '').toLowerCase() : '';
+    if (ty === 'checkbox' || ty === 'radio') return { tipo: ty === 'radio' ? 'opcao' : 'caixa', v: ty === 'checkbox' && c.indeterminate ? 'misto' : String(c.checked) };
+    const role = String(c.getAttribute('role') || '').toLowerCase().trim();
+    if (/^(checkbox|switch|radio|menuitemcheckbox|menuitemradio)$/.test(role)) {
+      const v = String(c.getAttribute('aria-checked') || 'false').toLowerCase().trim();
+      return { tipo: /radio/.test(role) ? 'opcao' : role === 'switch' ? 'alternador' : 'caixa', v: v === 'true' || v === 'mixed' ? v : 'false' };
+    }
+    return null;
+  }
+  // A prova da mudança, guardada antes que a página saia: uma promessa que resolve com o estado no "change" do campo
+  // (caixa e opção nativas) ou na troca de aria-checked (alternador e caixa desenhada). O filtro que envia o formulário
+  // ou navega ao mudar tira o campo da página logo depois; a promessa já resolveu antes. O ouvinte é da fase normal,
+  // registrado depois dos da página (onchange no HTML), então a foto sai depois deles: se a página desfaz a marca, a
+  // foto mostra desfeito. Opção nativa que já estava marcada não dispara "change": vale a foto no "click" dela.
+  // Resolve com null depois de "ms" sem mudança. Montada a partir de ESTADO_MARCA para não haver duas regras de estado.
+  // eslint-disable-next-line no-new-func
+  const VIGIAR_MARCA = new Function('e', 'ms', `const EST = ${ESTADO_MARCA.toString()};
+    const c = e.tagName === 'LABEL' ? e.control : e;
+    if (!c) return null;
+    const radioMarcado = c.tagName === 'INPUT' && String(c.type).toLowerCase() === 'radio' && c.checked;
+    return new Promise(res => {
+      let feito = false, ob = null;
+      const sai = v => {
+        if (feito) return; feito = true;
+        try { c.removeEventListener('change', ouvir); c.removeEventListener('click', ouvir); } catch {}
+        try { ob && ob.disconnect(); } catch {}
+        res(v);
+      };
+      const ouvir = () => sai(EST(c));
+      c.addEventListener('change', ouvir);
+      if (radioMarcado) c.addEventListener('click', ouvir);
+      if (c.hasAttribute('role')) { ob = new MutationObserver(() => sai(EST(c))); ob.observe(c, { attributes: true, attributeFilter: ['aria-checked'] }); }
+      setTimeout(() => sai(null), ms);
+    });`);
+
+  // Um ponto do rótulo (relativo ao canto do rótulo) em que o toque cai no próprio rótulo ou num pedaço de texto dele,
+  // nunca num link, botão ou outro campo de dentro. Procura primeiro no texto, depois numa grade sobre o rótulo. null se não há.
+  function PONTO_LIVRE(l) {
+    const ctl = l.control;
+    const INTER = 'a,button,input,select,textarea,summary,details,[role=link],[role=button],[role=checkbox],[role=switch],[role=radio],[role=menuitem],[contenteditable=""],[contenteditable=true],[tabindex]:not([tabindex="-1"]),[onclick]';
+    const livre = h => {
+      if (!h || !(h === l || l.contains(h))) return false;
+      for (let n = h; n && n !== l; n = n.parentElement) { if (n === ctl) return true; if (n.matches(INTER)) return false; }
+      return true;
+    };
+    const naTela = (x, y) => x >= 0 && y >= 0 && x < innerWidth && y < innerHeight;
+    const toque = (x, y) => { let h = document.elementFromPoint(x, y); while (h && h.shadowRoot) { const h2 = h.shadowRoot.elementFromPoint(x, y); if (!h2 || h2 === h) break; h = h2; } return h; };
+    const b = l.getBoundingClientRect(), ox = b.left + l.clientLeft, oy = b.top + l.clientTop;
+    const pts = [];
+    const tw = document.createTreeWalker(l, NodeFilter.SHOW_TEXT);
+    for (let t; (t = tw.nextNode());) {
+      if (!t.data.trim()) continue;
+      const rg = document.createRange(); rg.selectNodeContents(t);
+      for (const q of rg.getClientRects()) {
+        if (q.width < 2 || q.height < 2) continue;
+        const cy = q.top + q.height / 2;
+        pts.push([q.left + q.width / 2, cy], [q.left + Math.min(3, q.width / 3), cy], [q.right - Math.min(3, q.width / 3), cy]);
+      }
+    }
+    for (const fy of [0.5, 0.25, 0.75]) for (const fx of [0.5, 0.1, 0.3, 0.7, 0.9, 0.02, 0.98]) pts.push([b.left + b.width * fx, b.top + b.height * fy]);
+    for (const [x, y] of pts) if (naTela(x, y) && livre(toque(x, y))) return { x: Math.max(0, x - ox), y: Math.max(0, y - oy) };
+    return null;
+  }
+
   // Confere se o centro do alvo recebe o clique ou se outro elemento está por cima.
   function COBERTURA(el) {
     const descrever = h => {
@@ -926,10 +995,81 @@ if (bruto[0] === '__servidor') {
         let r = await cobertura(el, a[0]);
         if (!r.ok && r.tipo === 'coberto' && !r.fora) { await page.waitForTimeout(400); r = await cobertura(el, a[0]); }
         const motivo = r.ok ? '' : r.tipo === 'coberto' && r.por ? `está coberto por ${dado(r.por, 100)}` : r.motivo;
+        // Caixa de marcar, opção ou alternador (o alvo ou o campo do rótulo que é o alvo): guarda o estado e o endereço
+        // antes do clique. Depois, "Clicado" só sai se o estado mudou como a pessoa espera.
+        const fr = el.ownerFrame ? await el.ownerFrame().catch(() => null) : null;
+        const urlDe = () => { const u = [page.url()]; try { if (fr && fr !== page.mainFrame() && !fr.isDetached()) u.push(fr.url()); } catch {} return u; };
+        const u0 = urlDe();
+        const lerMarca = () => el.evaluate(ESTADO_MARCA, undefined, { timeout: 3000 }).catch(() => undefined);
+        const m0 = await lerMarca();
+        // Com caixa, opção ou alternador, a vigia fica armada antes de qualquer clique (ela some se a página sair).
+        const prova = m0 ? el.evaluate(VIGIAR_MARCA, 20000).catch(() => undefined) : null;
+        // txt ={ msg, via }: a mensagem de sucesso e por onde o clique foi (para a mensagem de falha).
         const fim = async (txt) => {
-          await page.waitForTimeout(500);
-          const aba = abasNovas.length > antes ? `\nAbriu uma aba nova: ${endereco(abasNovas[abasNovas.length - 1].url())} (o navegador continua na aba original).` : '';
-          return `${txt}${aba}\n` + await ondeEstou('Agora');
+          if (!m0) {
+            await page.waitForTimeout(500);
+            const aba = abasNovas.length > antes ? `\nAbriu uma aba nova: ${endereco(abasNovas[abasNovas.length - 1].url())} (o navegador continua na aba original).` : '';
+            return `${txt.msg}${aba}\n` + await ondeEstou('Agora');
+          }
+          return conferirMarca(txt);
+        };
+        // A conferência: espera até 1,5 s pelo estado novo. Radio: tem de ficar marcado. Caixa e alternador: tem de mudar.
+        const NOME = { caixa: 'a caixa', opcao: 'a opção', alternador: 'o alternador' };
+        const descEst = (m, v) => m.tipo === 'alternador' ? (v === 'true' ? 'ligado' : v === 'mixed' || v === 'misto' ? 'no meio' : 'desligado')
+          : (v === 'true' ? 'marcada' : v === 'mixed' || v === 'misto' ? 'meio marcada' : 'desmarcada');
+        const deu = m => !!m && (m0.tipo === 'opcao' ? m.v === 'true' : m.v !== m0.v);
+        async function conferirMarca(txt) {
+          let m1, t = Date.now();
+          await page.waitForTimeout(150);
+          for (;;) {
+            m1 = await lerMarca();
+            const mudouUrl = urlDe().join(' ') !== u0.join(' ');
+            if (deu(m1) || m1 === undefined || mudouUrl || abasNovas.length > antes || Date.now() - t > 1500) break;
+            await page.waitForTimeout(150);
+          }
+          // Navegação ou aba nova levam um instante a mais para aparecer: dá o mesmo meio segundo do clique comum.
+          await page.waitForTimeout(350);
+          if (m1 !== undefined) m1 = await lerMarca();
+          const u1 = urlDe();
+          const extras = [];
+          if (u1[0] !== u0[0]) extras.push(`a página navegou para ${endereco(u1[0])}`);
+          else if (u1[1] && u0[1] && u1[1] !== u0[1]) extras.push(`a moldura navegou para ${endereco(u1[1])}`);
+          if (abasNovas.length > antes) extras.push(`abriu outra aba, ${endereco(abasNovas[abasNovas.length - 1].url())} (o navegador continua na aba original)`);
+          const nome = NOME[m0.tipo];
+          const Nome = `${nome[0].toUpperCase()}${nome.slice(1)}`;
+          const ja = m0.tipo === 'opcao' && m0.v === 'true' ? ' (já estava marcada)' : '';
+          // O campo saiu da página (navegação, envio do formulário, redesenho): o estado de agora é desconhecido, não negativo.
+          // Vale a prova guardada no "change"; sem prova, a resposta é neutra e não afirma que não marcou.
+          if (m1 === undefined) {
+            const p = await Promise.race([prova, new Promise(r => setTimeout(() => r(undefined), 300))]);
+            const depois = extras.length ? extras.join('; ') : `${nome} saiu da página (a página redesenhou)`;
+            if (deu(p)) return `${txt.msg} ${Nome} ${ja ? 'continua' : 'ficou'} ${descEst(m0, p.v)}${ja ? ' (já estava)' : ''}, e logo depois ${depois}.\n` + await ondeEstou('Agora');
+            // A foto existe e mostra o estado errado: a página desfez a mudança no próprio "change" (prova negativa de verdade).
+            if (p) throw new Error(`Não ${m0.tipo === 'opcao' ? 'marquei' : m0.tipo === 'alternador' ? (m0.v === 'true' ? 'desliguei' : 'liguei') : (m0.v === 'true' ? 'desmarquei' : 'marquei')} ${a[0]}: a página desfez a mudança na hora do clique (${nome} ficou ${descEst(m0, p.v)}), e logo depois ${depois}.`);
+            const via = /^ entregue/.test(txt.via) ? ' (o clique foi entregue direto ao campo)' : txt.via;
+            return `Cliquei em ${a[0]}${via}, e ${depois} antes que eu conferisse ${nome}; ${nome} não deu sinal de mudança antes disso, mas o estado não foi conferido. Confira na página de agora com "ver" antes de clicar de novo.${/rótulo/.test(txt.via) && extras.length ? ' O rótulo pode ter link, botão ou script que leva para outro lugar.' : ''}\n` + await ondeEstou('Agora');
+          }
+          if (!deu(m1)) {
+            const como = m0.tipo === 'opcao' ? `${nome} continua desmarcada` : `${nome} continua ${descEst(m0, m0.v)}`;
+            // Mensagem numa linha só (o erro sai só com a primeira linha); o endereço vai codificado, fora das marcas.
+            const liga = m0.v === 'true';
+            const verbo = m0.tipo === 'opcao' ? 'marquei' : m0.tipo === 'alternador' ? (liga ? 'desliguei' : 'liguei') : (liga ? 'desmarquei' : 'marquei');
+            throw new Error(`Não ${verbo} ${a[0]}: o clique${txt.via} não mudou ${nome}; ${como}.${extras.length ? ' O que aconteceu: ' + extras.join('; ') + '.' : ''}` +
+              (/rótulo/.test(txt.via) && extras.length ? ' O rótulo tem link, botão ou script que leva para outro lugar.' : ''));
+          }
+          const est = `${Nome} ficou ${descEst(m0, m1.v)}${ja}.`;
+          return `${txt.msg} ${est}${extras.length ? `\nAviso: ${extras.join('; ')}.` : ''}\n` + await ondeEstou('Agora');
+        };
+        // Clique pelo rótulo num ponto do texto que não cai em link, botão ou outro campo de dentro do rótulo.
+        // Sem ponto livre, o clique vai direto ao campo e a resposta diz isso.
+        const clicarRotulo = async (rotEl, prefixo) => {
+          const pos = await rotEl.evaluate(PONTO_LIVRE, undefined, { timeout: 3000 }).catch(() => null);
+          if (!pos) {
+            await el.evaluate(e => { const c = e.tagName === 'LABEL' ? e.control : e; (c || e).click(); });
+            return fim({ msg: `${prefixo} (o rótulo inteiro é link ou botão; o clique foi entregue direto ao campo).`, via: ' entregue direto ao campo' });
+          }
+          try { await rotEl.click({ timeout: 6000, position: pos }); } catch (e) { throw new Error(erroClique(e.message, `${a[0]} (rótulo)`)); }
+          return null;
         };
         // Desabilitado e inerte não se forçam: o clique não faria nada e o "Clicado" seria mentira.
         if (!r.ok && r.tipo === 'desabilitado') throw new Error(`Não cliquei em ${a[0]}: o alvo está desabilitado${o.forcar ? '; nem com --forcar' : ''}. Espere a condição que o habilita.`);
@@ -944,8 +1084,9 @@ if (bruto[0] === '__servidor') {
           if (!rotEl) throw new Error(`Não cliquei em ${a[0]}: o alvo ${motivo}, e o rótulo dele sumiu antes do clique. Rode "ver" de novo.`);
           const rc = await cobertura(rotEl, `${a[0]} (rótulo)`);
           if (!rc.ok) throw new Error(`Não cliquei em ${a[0]}: o rótulo dele ${rc.tipo === 'coberto' && rc.por ? `está coberto por ${dado(rc.por, 100)}` : rc.motivo}${o.forcar ? '; nem com --forcar' : ''}. ${rc.tipo === 'coberto' ? 'Feche o que está por cima e clique de novo.' : 'Espere ele aparecer ou confira se a página o escondeu.'}`);
-          try { await rotEl.click({ timeout: 6000 }); } catch (e) { throw new Error(erroClique(e.message, `${a[0]} (rótulo)`)); }
-          return fim(`Clicado em ${a[0]} (pelo rótulo).`);
+          const direto = await clicarRotulo(rotEl, `Clicado em ${a[0]}`);
+          if (direto) return direto;
+          return fim({ msg: `Clicado em ${a[0]} (pelo rótulo).`, via: ' pelo rótulo' });
         }
         // Invisível também não se força: o clique na coordenada cairia no elemento de baixo, e a pessoa não toca no que não vê.
         if (!r.ok && r.tipo === 'invisivel') throw new Error(`Não cliquei em ${a[0]}: o alvo ${motivo}${o.forcar ? '; nem com --forcar a pessoa consegue tocar nele' : ''}. Espere ele aparecer ou confira se a página o escondeu.`);
@@ -958,12 +1099,18 @@ if (bruto[0] === '__servidor') {
         // então entregamos o evento de clique direto ao alvo e avisamos.
         if (!r.ok && o.forcar) {
           await el.evaluate(e => e.click());
-          return fim(`Clicado em ${a[0]} à força (o alvo ${motivo}; o clique foi entregue direto ao alvo).`);
+          return fim({ msg: `Clicado em ${a[0]} à força (o alvo ${motivo}; o clique foi entregue direto ao alvo).`, via: ' à força' });
+        }
+        // O alvo é o próprio rótulo de uma caixa, opção ou alternador: o toque vai num ponto do rótulo fora de link e botão.
+        if (m0 && await el.evaluate(e => e.tagName === 'LABEL', undefined, { timeout: 3000 }).catch(() => false)) {
+          const direto = await clicarRotulo(el, `Clicado em ${a[0]}`);
+          if (direto) return direto;
+          return fim({ msg: `Clicado em ${a[0]} (no rótulo).`, via: ' no rótulo' });
         }
         // Conferência verde: o clique vai na coordenada, como o dedo da pessoa (com --forcar, sem a espera do Playwright).
         try { await el.click({ timeout: 6000, force: !!o.forcar }); }
         catch (e) { throw new Error(erroClique(e.message, a[0])); }
-        return fim(`Clicado em ${a[0]}.`);
+        return fim({ msg: `Clicado em ${a[0]}.`, via: '' });
       }
       case 'digitar': {
         if (a.length < 2) throw new Error('Uso: digitar <n|seletor> "texto" [--enter]. Texto que começa com -- vai depois de --: digitar 3 -- "--texto".');

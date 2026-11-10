@@ -9,7 +9,25 @@ App `6aefffe66b684db9404b1994`, no ar em https://creat-nuvem-404b1994.base44.app
 
 **Regra de ouro: a publicação da vitrine nunca apaga `public/sites/`.** A pasta tem os sites dos clientes, e eles não existem em `dist/publico/`. Por isso não rode `rm -rf public/*`, `rm -rf public/` nem nenhum `rsync --delete` em `public/`. Apague só os caminhos da lista abaixo, um por um.
 
-Quem executa: o chat principal, pelos MCPs do Google Drive e do Base44. Os agentes só preparam o zip e o passo a passo. Deploy em produção só acontece com o ok do Marcos.
+Quem executa:
+- **Sites de cliente** (rascunho, site final, remoção): a tarefa executora, pelo MCP do Base44, sem Google Drive (`docs/EXECUTOR.md`, procedimento P1 a P9, com `write_file` em vez do zip pelo Drive). Os passos do Drive abaixo continuam valendo para quem publica à mão.
+- **Vitrine, motor e demonstrações:** o coordenador (chat principal), pelos MCPs do Google Drive e do Base44.
+
+## Quem dá o ok do deploy (regra nova, 10/11/2026, pacote 1D)
+
+A regra antiga dizia que todo deploy esperava o ok do Marcos. Ela foi trocada porque punha o dono no meio de cada entrega e travava o prazo de 72 horas (consciência, regra 3: a venda roda sem o dono).
+
+**Site de CLIENTE.** O ok é o conjunto de portões, todos verdes, mais a aprovação do próprio cliente:
+1. portão de conteúdo (`produzir.mjs`, código 5 = para; pacote 1C);
+2. `testar-site.cjs` e `publicar-site.cjs --rascunho` ou `--aprovado` (390 px, console limpo, faixa e botão de 44 px no rascunho);
+3. `conferir-boot.cjs <slug>` (atraso de 0, 350 e 900 ms) e a CSP do template ativa;
+4. a trava de publicação (`scripts/trava-deploy.cjs`: trava própria com TTL de 20 min, parada geral desligada, no máximo 3 deploys por hora, `ensaio_ok` gravado para o primeiro cliente real);
+5. depois do deploy, `conferir-sites-no-ar.cjs --slugs <slug>` e `conferir-no-ar.cjs`; falhou, volta ao checkpoint anterior;
+6. para o site final em `/sites/<slug>/`: a aprovação do cliente (`aprovarRascunho`) ou os 7 dias sem resposta ao rascunho, como os termos dizem.
+
+**Vitrine e motor.** Continua igual: `qa` e `seguranca` aprovam, a ordem "sites primeiro, vitrine depois" (seção 0) e as travas da seção 2. Quem publica é o coordenador, com a trava de publicação (`--tipo vitrine`).
+
+**Remoção** (desistência ou pedido do titular): não espera ok de ninguém. É obrigação legal e sai no mesmo dia (`docs/DESISTENCIA.md`).
 
 ## 0. Ordem obrigatória: sites primeiro, vitrine depois
 
@@ -57,10 +75,10 @@ Passos do chat principal (o script imprime cada um com o hash e o caminho certos
    Se o `sha256sum -c` falhar, o Drive devolveu outra coisa (link ainda privado ou página de aviso). Pare e refaça o passo 2. O `rm -rf` só atinge `public/sites/<slug>`, nunca `public/sites`.
 4. **Base44 `run_command`**: `git log --oneline -1`. Ele precisa mostrar o auto-commit com `public/sites/<slug>`. Se não mostrar, não siga.
 5. **Base44 `create_checkpoint`** com o nome `site <slug> <sha8>`.
-6. **Deploy** do app, com o ok do Marcos. Depois confira: `curl -sI https://creat-nuvem-404b1994.base44.app/sites/<slug>/` precisa voltar 200 e a página precisa ter pelo menos um `wa.me`. Abra também sem a barra final (`/sites/<slug>`). Os caminhos do site são relativos (`motor/...`, `tenant.js`), então sem a barra eles só funcionam se o host redirecionar.
+6. **Deploy** do app, depois de pegar a trava (`node scripts/trava-deploy.cjs pegar`, `pode-publicar`) e com os portões da seção "Quem dá o ok do deploy" verdes. Depois confira: `curl -sI https://creat-nuvem-404b1994.base44.app/sites/<slug>/` precisa voltar 200 e a página precisa ter pelo menos um `wa.me`. Abra também sem a barra final (`/sites/<slug>`). Os caminhos do site são relativos (`motor/...`, `tenant.js`), então sem a barra eles só funcionam se o host redirecionar.
 7. **Drive `trash_file`** no zip temporário.
 
-Para tirar um site do ar: `rm -rf public/sites/<slug>`, depois os passos 4 a 6.
+Para tirar um site do ar: `rm -rf public/sites/<slug>`, depois os passos 4 a 6, e confira o 404. Desistência e pedido do titular seguem `docs/DESISTENCIA.md`.
 
 Endereço padrão: `build-site.cjs` e `produzir.mjs` gravam canonical, sitemap e JSON-LD com `https://creat-nuvem-404b1994.base44.app/sites/<slug>/` e o rodapé com a home `https://creat-nuvem-404b1994.base44.app/`. As variáveis `CREAT_URL_SITES` (com `{slug}`) e `CREAT_HOME` mudam esses endereços, e `0` desliga cada um. O pacote SAIR nunca herda esses endereços.
 
@@ -95,7 +113,7 @@ cd public && rm -rf 404.html _headers abrir assets bastidores checkout.config.js
 - Antes de rodar, compare a lista com a linha `vitrine (topo de public/)` que `montar-publico.cjs` imprimiu. Se for diferente, atualize este documento primeiro. Item novo entra na lista. Item que saiu continua na lista por uma publicação, para ser apagado, e depois sai.
 - `montar-publico.cjs` falha se a vitrine tiver `sites/` na raiz, porque esse caminho apagaria os sites dos clientes.
 - Nada fora da lista é tocado: `public/sites/` e os arquivos do template do Base44 continuam onde estão.
-- Depois do cp: `git log --oneline -1` (auto-commit), `create_checkpoint` ("vitrine <data>") e deploy, com o ok do Marcos. Confira se `/` e `/abrir/` respondem 200 e rode `node scripts/conferir-sites-no-ar.cjs` de novo: os 3 `/sites/demo-*/` precisam voltar 200.
+- Depois do cp: `git log --oneline -1` (auto-commit), `create_checkpoint` ("vitrine <data>") e deploy, com a trava de publicação (`--tipo vitrine`) e o aval de `qa` e `seguranca`. Confira se `/` e `/abrir/` respondem 200 e rode `node scripts/conferir-sites-no-ar.cjs` de novo: os 3 `/sites/demo-*/` precisam voltar 200.
 
 ## O que o Base44 não aplica
 

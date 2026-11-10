@@ -1,45 +1,55 @@
 #!/usr/bin/env node
 /*
- * scripts/producao/produzir.mjs · pedido pago -> site no ar, com o mínimo de mão humana · T9 · Forja
+ * scripts/producao/produzir.mjs · pedido pago -> rascunho para aprovação, com o mínimo de mão humana · T9 · Forja · 1C · Trilho
  *
- * Uso:
- *   node scripts/producao/produzir.mjs --pedido <arquivo PEDIDO v1 (.txt) ou .json> [opções]
+ * Uso (caminho padrão, SEM API paga, decisão D1 de 10/11/2026):
+ *   1. node scripts/producao/produzir.mjs --pedido <arquivo>
+ *        sem textos ainda: grava sites/<slug>/redator.json (só dados conferidos por regex, sem e-mail,
+ *        sem WhatsApp, sem endereço) e para com código 4 (status aguardando_textos).
+ *   2. o agente redator da sessão principal lê redator.json e grava um JSON de textos.
+ *   3. node scripts/producao/produzir.mjs --pedido <arquivo> --textos <json do agente> --rascunho
+ *        aplica os textos pela lista branca, passa pelo portão de conteúdo e pelo validar-tenant, gera
+ *        dist/<slug>/ (o build final) e dist/<slug>-r-<id>/ (o rascunho, cópia com a faixa), testa os
+ *        dois a 390 px e grava sites/<slug>/rascunho.json com o link de aprovação (#t=<token>).
  *
  * Opções:
+ *   --pedido <arq>       PEDIDO v1 (.txt) ou .json. No JSON, "servicos_texto" (opcional) passa pelo parser
+ *                        de regra (lib/servicos.cjs); só a saída estruturada chega ao redator.
+ *   --textos <arq>       textos escritos pelo agente (formato de redator.json). Caminho padrão.
+ *   --rascunho           gera também o rascunho para o cliente aprovar (lib/rascunho.cjs). Rodar de novo
+ *                        o mesmo pedido reaproveita o mesmo endereço e o mesmo token; --novo-rascunho troca.
  *   --saida <pasta>      onde gravar sites/, dist/ (padrão: CREAT_SAIDA ou a pasta do projeto)
  *   --slug <slug>        força o slug (padrão: nome + cidade)
- *   --fixture-ia <arq>   usa a resposta gravada em vez da API (teste, sem rede e sem chave);
- *                        também por CREAT_IA_FIXTURE
- *   --sem-ia             não chama a IA: fica com os textos do preset (contingência; custo zero)
- *   --refazer-textos     chama a IA de novo mesmo se este pedido já tem textos (cobra de novo)
+ *   --sem-ia             fica com os textos do preset (contingência; custo zero)
+ *   --api                caminho antigo por API paga (DESLIGADO por padrão; exige ANTHROPIC_API_KEY e CREAT_CAMBIO)
+ *   --fixture-ia <arq>   resposta gravada no formato da API (teste, sem rede e sem chave); também CREAT_IA_FIXTURE
+ *   --refazer-textos     no caminho por API, chama de novo mesmo se este pedido já tem textos (cobra de novo)
  *   --sem-rodape         tira "Aberto pela Creat" (só com decisão do Marcos; vai para o RELATORIO)
  *   --sem-navegador      pula o teste headless (o RELATORIO marca "não verificado")
- *   --demonstracao       site-demonstração com nome fictício (motor v1.1): faixa "demonstração · nome
- *                        fictício", noindex, sem JSON-LD; o teste headless exige a faixa
+ *   --demonstracao       site-demonstração com nome fictício (motor v1.1)
  *   --sem-sair           não gera o zip do SAIR
  *   --home <url> --url <url>   home da vitrine (rodapé) e URL do site (canonical, sitemap)
  *
- * Variáveis de ambiente (nenhum valor no repositório; nomes no .env.example da T10):
- *   ANTHROPIC_API_KEY   chave do Claude Console (Commercial Terms). Nunca a assinatura Pro,
- *                       nunca o fluxo agencia.js por pedido.
- *   CREAT_MODELO        modelo (padrão claude-sonnet-5-5, o Sonnet vigente)
- *   CREAT_CAMBIO        R$ por US$ para o custo.json (obrigatória quando a IA roda)
+ * Portão de conteúdo (lib/bloqueio.cjs): roda sobre negócio, cidade, bairro e servicos_texto ANTES de
+ * qualquer coisa e sobre todos os textos do tenant DEPOIS do redator. Disparou: status em_revisao em
+ * sites/<slug>/producao.json, motivos em sites/<slug>/revisao.json, código 5, e nada é gerado.
+ *
+ * Variáveis de ambiente (nenhum valor no repositório):
+ *   ANTHROPIC_API_KEY   só no caminho --api (chave do Claude Console). O caminho padrão não usa.
+ *   CREAT_MODELO        modelo do caminho --api (padrão claude-sonnet-5-5)
+ *   CREAT_CAMBIO        R$ por US$ para o custo.json (obrigatória só no caminho --api/fixture)
  *   CREAT_HOME          home da vitrine (padrão https://creat-nuvem-404b1994.base44.app/; "0" = rodapé sem link)
- *   CREAT_URL_SITES     URL dos sites com {slug} (padrão https://creat-nuvem-404b1994.base44.app/sites/{slug}/,
- *                       onde publicar-site.cjs os coloca; "0" = sem canonical nem sitemap)
+ *   CREAT_URL_SITES     URL dos sites com {slug} (padrão https://creat-nuvem-404b1994.base44.app/sites/{slug}/;
+ *                       "0" = sem canonical nem sitemap); o rascunho usa o mesmo modelo com <slug>-r-<id>
+ *   CREAT_APROVAR_URL   caminho da função de aprovação na mesma origem (padrão /api/pa/aprovarRascunho)
  *   CREAT_DOMINIOS      domínios da Creat, separados por vírgula (varredura do SAIR)
  *   CREAT_SAIDA         pasta de saída
  *
- * Fluxo (briefing seção 15): 1 valida o pedido e monta sites/<slug>/tenant.json do preset;
- * 2 UMA chamada à API (saída estruturada; o pedido entra como dado delimitado; sem ferramentas);
- * 3 valida de novo (validar-tenant); 4 build-site -> dist/<slug>/; 5 Playwright a 390 px;
- * 6 custo.json + RELATORIO.md do pedido; 7 zip do SAIR com varredura de domínio.
- * Idempotente: rodar de novo o mesmo pedido não chama a IA outra vez (usa sites/<slug>/textos-ia.json).
- * Custo nunca se perde: assim que a resposta chega, grava resposta-ia.json e custo.json (parcial) antes
- * de interpretar. Se a resposta não servir (refusal, max_tokens, JSON inválido), producao.json fica com
- * status ia_falhou e a rodada seguinte do mesmo pedido PARA até alguém escolher --refazer-textos
- * (nova cobrança) ou --sem-ia. custo.json.chamadas guarda todas as chamadas pagas do pedido.
- * Código: 0 ok · 1 entrada ou tenant inválido · 2 ambiente (chave, dependência) · 3 teste do site falhou.
+ * Idempotente: rodar de novo o mesmo pedido reaproveita sites/<slug>/textos-ia.json (nenhuma chamada nova)
+ * e o mesmo rascunho. No caminho --api o custo nunca se perde (resposta-ia.json e custo.json antes de
+ * interpretar; ia_falhou exige --refazer-textos ou --sem-ia).
+ * Código: 0 ok · 1 entrada ou tenant inválido · 2 ambiente · 3 teste do site falhou ·
+ *         4 aguardando os textos do redator · 5 em revisão (portão de conteúdo).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -56,6 +66,11 @@ const { validarTenant } = require('./lib/validacao.cjs');
 const { buildSite } = require('./build-site.cjs');
 const { testarSite } = require('./testar-site.cjs');
 const { exportarSair } = require('./exportar-sair.cjs');
+const B = require('./lib/bloqueio.cjs');
+const S = require('./lib/servicos.cjs');
+const TX = require('./lib/textos.cjs');
+const R = require('./lib/rascunho.cjs');
+const { textosDoTenant } = require('./lib/validacao.cjs');
 
 class ErroAmbiente extends Error {}
 
@@ -103,7 +118,8 @@ function relatorioPedido(r) {
   for (const e of r.etapas) L.push(`- ${e.n}. ${e.nome}: **${st(e.status)}**${e.detalhe ? ` · ${e.detalhe}` : ''}`);
   L.push('', '## Custo', '');
   const ult = (r.custo.chamadas || []).slice(-1)[0];
-  if (r.custo.custo_ia) L.push(`- ${r.custo.custo_ia.modelo}: ${r.custo.custo_ia.tokens_entrada} tokens de entrada, ${r.custo.custo_ia.tokens_saida} de saída, US$ ${r.custo.custo_ia.usd} = R$ ${r.custo.custo_ia.brl} (câmbio ${r.custo.custo_ia.cambio})${r.custo.origem === 'fixture' ? ' · fixture de teste, nada foi cobrado' : ''}${r.custo.reaproveitado ? ' · textos reaproveitados de uma rodada anterior, sem nova cobrança' : ''}`);
+  if (r.textosOrigem === 'agente') L.push(`- textos escritos por agente da sessão (arquivo --textos, sha256 ${r.textosSha256.slice(0, 12)}): sem API paga, custo de IA R$ 0`);
+  else if (r.custo.custo_ia) L.push(`- ${r.custo.custo_ia.modelo}: ${r.custo.custo_ia.tokens_entrada} tokens de entrada, ${r.custo.custo_ia.tokens_saida} de saída, US$ ${r.custo.custo_ia.usd} = R$ ${r.custo.custo_ia.brl} (câmbio ${r.custo.custo_ia.cambio})${r.custo.origem === 'fixture' ? ' · fixture de teste, nada foi cobrado' : ''}${r.custo.reaproveitado ? ' · textos reaproveitados de uma rodada anterior, sem nova cobrança' : ''}`);
   else if (ult) L.push(`- chamada feita (${ult.modeloCobrado || 'modelo não informado'}, ${ult.tokens ? `${ult.tokens.entrada}+${ult.tokens.saida} tokens` : 'tokens não informados'}), mas o custo **não foi calculado**: ${ult.falha_custo || 'sem detalhe'}`);
   else L.push(`- sem chamada de IA (${r.custo.motivo || 'sem detalhe'})`);
   if (r.custo.total && r.custo.total.chamadas > 1) L.push(`- total deste pedido: ${r.custo.total.chamadas} chamadas pagas, R$ ${r.custo.total.brl}${r.custo.total.sem_preco ? ` (+${r.custo.total.sem_preco} sem preço cadastrado)` : ''}`);
@@ -117,41 +133,83 @@ function relatorioPedido(r) {
   L.push('', '## Saídas', '');
   for (const [k, v] of Object.entries(r.saidas)) L.push(`- ${k}: \`${v}\``);
   if (r.avisos.length) { L.push('', '## Avisos', ''); r.avisos.forEach((a) => L.push(`- ${a}`)); }
-  L.push('', '## Antes de publicar (Marcos aprova)', '');
-  L.push('- Abrir `dist/' + r.tenant.slug + '/index.html` e o print de 390 px; conferir nome, endereço, horários e o número do WhatsApp com o dono.');
-  L.push('- Pedir ao dono os preços reais (ou manter "sob consulta"), Instagram e fotos; entram como alteração.');
-  L.push('- Deploy: comando documentado pela T10 (wrangler), com o token só na variável de ambiente.', '');
+  if (r.rascunho) {
+    L.push('', '## Rascunho para o cliente aprovar', '');
+    L.push(`- Pasta: \`dist/${r.rascunho.dir}/\` (faixa, noindex, robots Disallow, sem sitemap). Endereço: ${r.rascunho.url || '(sem URL: CREAT_URL_SITES=0)'}`);
+    L.push('- O link com o token (#t=) está em `sites/' + r.tenant.slug + '/rascunho.json` (campo link). Não copie o token para relatório, log nem chat.');
+    L.push(`- Publicar o rascunho: \`node scripts/producao/publicar-site.cjs --slug ${r.tenant.slug} --rascunho\`. Depois da aprovação: \`--aprovado\` (publica dist/${r.tenant.slug}/ e apaga o rascunho).`);
+  }
+  L.push('', '## Antes de publicar', '');
+  L.push('- Abrir `dist/' + r.tenant.slug + '/index.html` e o print de 390 px; conferir nome, endereço, horários e o número do WhatsApp.');
+  L.push('- Quem aprova é o cliente, pelo botão do rascunho. Preços reais, Instagram e fotos entram como alteração.');
+  L.push('- Publicação: scripts/producao/publicar-site.cjs (passo a passo em docs/PUBLICACAO.md).', '');
   return L.join('\n');
+}
+
+/* JSON do pedido pode trazer servicos_texto (texto livre do cliente): sai do objeto antes do schema */
+function separarServicosTexto(o) {
+  if (!o || typeof o !== 'object' || !('servicos_texto' in o)) return { pedido: o, servicosTexto: null };
+  const c = Object.assign({}, o);
+  const t = c.servicos_texto;
+  delete c.servicos_texto;
+  return { pedido: c, servicosTexto: t === '' || t === null ? null : t };
+}
+
+/* portão de conteúdo disparou: grava o motivo e para. Nada de tenant, rascunho ou dist. */
+function emRevisao(pastaSite, base, fase, motivos, log) {
+  C.gravarJson(path.join(pastaSite, 'revisao.json'), { pedido: base.pedido, em: base.em, fase, motivos });
+  C.gravarJson(path.join(pastaSite, 'producao.json'), Object.assign({}, base, { status: 'em_revisao', fase, motivos: motivos.map((m) => `${m.campo}: ${m.regra || m.motivo}`) }));
+  log(`\nEM REVISÃO (portão de conteúdo, ${fase}): ${motivos.length} motivo(s) em ${path.join(pastaSite, 'revisao.json')}. Nada foi gerado.`);
+  motivos.forEach((m) => log(`  - ${m.campo}: ${m.regra || m.motivo}${m.trecho ? ` ("${m.trecho}")` : ''}`));
+  return { codigo: 5, status: 'em_revisao', slug: base.slug, pastaSite, motivos };
+}
+
+function urlRascunho(dir) {
+  const modelo = C.modeloUrlSites();
+  return modelo ? modelo.split('{slug}').join(dir).replace(/[?#].*$/, '').replace(/\/?$/, '/') : '';
 }
 
 export async function produzir(argv) {
   const a = C.lerArgs(argv);
   if (!a.pedido || a.pedido === true) throw new C.ErroCampo('--pedido', 'informe o arquivo do pedido (texto PEDIDO v1 ou JSON)');
+  if (a.textos === true || a.textos === '') throw new C.ErroCampo('--textos', 'informe o arquivo JSON com os textos do redator');
   const saida = C.pastaSaida(a);
   const fixture = a['fixture-ia'] || process.env.CREAT_IA_FIXTURE || '';
   const semIa = !!a['sem-ia'];
-  if (fixture) semRede();
+  const arqTextosAgente = typeof a.textos === 'string' ? a.textos : '';
+  const fontes = [arqTextosAgente && '--textos', a.api && '--api', fixture && '--fixture-ia', semIa && '--sem-ia'].filter(Boolean);
+  if (fontes.length > 1) throw new C.ErroCampo(fontes[1], `escolha uma fonte de textos só (veio ${fontes.join(' e ')})`);
+  // sem API: qualquer fetch deste processo é erro (prova de que o caminho padrão não usa rede nem API paga)
+  if (!a.api) semRede();
   const etapas = [], avisos = [];
   const etapa = (n, nome, status, detalhe) => { etapas.push({ n, nome, status, detalhe }); log(`[${n}] ${nome}: ${status}${detalhe ? ` (${detalhe})` : ''}`); };
 
-  // 1. pedido -> tenant parcial
-  const pedido = P.validarPedido(P.lerPedidoArquivo(a.pedido));
+  // 1. pedido -> portão de conteúdo da entrada -> tenant parcial
+  const sep = separarServicosTexto(P.lerPedidoArquivo(a.pedido));
+  const pedido = P.validarPedido(sep.pedido);
   const preset = C.carregarPreset(pedido.nicho);
   const agora = new Date();
-  let tenant = tenantDoPedido(pedido, preset, { agora, slug: a.slug });
+  const servicosParse = sep.servicosTexto !== null ? S.analisar(sep.servicosTexto) : null;
+  let tenant = tenantDoPedido(pedido, preset, { agora, slug: a.slug, servicos: servicosParse && !servicosParse.recusadas.length ? servicosParse.servicos : null });
   const pastaSite = path.join(saida, 'sites', tenant.slug);
-  const hashPedido = crypto.createHash('sha256').update(JSON.stringify(pedido)).digest('hex');
+  const hashPedido = crypto.createHash('sha256').update(JSON.stringify(pedido) + (sep.servicosTexto !== null ? '\n' + JSON.stringify(sep.servicosTexto) : '')).digest('hex');
   const arqProd = path.join(pastaSite, 'producao.json');
   let anterior = null;
   if (fs.existsSync(arqProd)) {
     anterior = C.lerJson(arqProd);
     if (anterior.pedido !== pedido.id) throw new C.ErroCampo('slug', `sites/${tenant.slug}/ já pertence ao pedido ${anterior.pedido}; use --slug para outro endereço`);
   }
+  const baseProd = { pedido: pedido.id, hashPedido, em: agora.toISOString(), slug: tenant.slug };
+  const entrada = [['negocio', pedido.negocio], ['cidade', pedido.cidade], ['endereco.bairro', (tenant.negocio.endereco || {}).bairro || '']];
+  if (sep.servicosTexto !== null) entrada.push(['servicos_texto', String(sep.servicosTexto)]);
+  const g1 = B.checar(entrada);
+  if (servicosParse) servicosParse.recusadas.forEach((x) => g1.motivos.push({ campo: `servicos_texto linha ${x.linha}`, categoria: 'formato', regra: x.motivo, trecho: x.texto.slice(0, 40) }));
+  if (g1.motivos.length) return emRevisao(pastaSite, baseProd, 'entrada', g1.motivos, log);
   C.gravarJson(path.join(pastaSite, 'pedido.json'), pedido);
   C.gravarJson(path.join(pastaSite, 'tenant.parcial.json'), tenant);
-  etapa(1, 'pedido validado e tenant parcial do preset', 'ok', `${pedido.id}, ${pedido.nicho}, slug ${tenant.slug}`);
+  etapa(1, 'pedido validado, portão de conteúdo da entrada e tenant parcial do preset', 'ok', `${pedido.id}, ${pedido.nicho}, slug ${tenant.slug}${servicosParse ? `, ${servicosParse.servicos.length} serviços do cliente` : ''}`);
 
-  // 2. uma chamada à IA (ou fixture, ou reaproveitamento)
+  // 2. textos: agente (padrão) | reaproveitamento | preset | API/fixture (desligado por padrão)
   const modelo = process.env.CREAT_MODELO || IA.MODELO_PADRAO;
   const arqTextos = path.join(pastaSite, 'textos-ia.json');
   const arqCusto = path.join(pastaSite, 'custo.json');
@@ -166,19 +224,27 @@ export async function produzir(argv) {
     sem_preco: cs.filter((c) => !c.custo_ia).length
   });
   let saidaIa = null, custo = { pedido: pedido.id, slug: tenant.slug, em: agora.toISOString(), custo_ia: null, chamadas, total: totais(chamadas) };
+  let textosOrigem = anterior && anterior.textos_origem ? anterior.textos_origem : null, textosSha256 = anterior && anterior.textos_sha256 ? anterior.textos_sha256 : '';
   const mesmoPedido = anterior && anterior.hashPedido === hashPedido;
-  const reaproveitar = mesmoPedido && anterior.status !== 'ia_falhou' && fs.existsSync(arqTextos) && !a['refazer-textos'] && !semIa;
+  const reaproveitar = mesmoPedido && anterior.status !== 'ia_falhou' && fs.existsSync(arqTextos) && !a['refazer-textos'] && !semIa && !arqTextosAgente && !fixture && !a.api;
   if (semIa) {
     custo.motivo = '--sem-ia: textos do preset';
-    etapa(2, 'textos pela IA', 'pulado', '--sem-ia, textos do preset');
+    textosOrigem = 'preset'; textosSha256 = '';
+    etapa(2, 'textos', 'pulado', '--sem-ia, textos do preset');
+  } else if (arqTextosAgente) {
+    const lt = TX.lerTextos(arqTextosAgente, pedido);
+    saidaIa = lt.saida; textosOrigem = 'agente'; textosSha256 = lt.sha256;
+    custo = { pedido: pedido.id, slug: tenant.slug, em: agora.toISOString(), origem: 'agente', custo_ia: null, motivo: 'textos escritos por agente da sessão principal (sem API paga)', chamadas, total: totais(chamadas) };
+    C.gravarJson(arqTextos, saidaIa);
+    etapa(2, 'textos do redator (agente)', 'ok', `arquivo --textos, sha256 ${lt.sha256.slice(0, 12)}, sem API paga`);
   } else if (reaproveitar) {
     saidaIa = C.lerJson(arqTextos);
     if (custoAnterior) custo = Object.assign(custoAnterior, { reaproveitado: true });
-    etapa(2, 'textos pela IA', 'ok', 'reaproveitados da rodada anterior deste pedido (sem nova chamada)');
-  } else if (mesmoPedido && anterior.status === 'ia_falhou' && !a['refazer-textos']) {
+    etapa(2, 'textos', 'ok', 'reaproveitados da rodada anterior deste pedido (sem nova chamada)');
+  } else if (mesmoPedido && anterior.status === 'ia_falhou' && !a['refazer-textos'] && (fixture || a.api)) {
     /* a última chamada foi paga e falhou: refazer cobra de novo, então a decisão é explícita */
-    throw new ErroAmbiente(`a última chamada à IA deste pedido foi cobrada e falhou (${anterior.falha || 'sem detalhe'}); o custo está em sites/${tenant.slug}/custo.json. Para chamar de novo (nova cobrança) use --refazer-textos; para seguir com os textos do preset, --sem-ia.`);
-  } else {
+    throw new ErroAmbiente(`a última chamada à IA deste pedido foi cobrada e falhou (${anterior.falha || 'sem detalhe'}); o custo está em sites/${tenant.slug}/custo.json. Para chamar de novo (nova cobrança) use --refazer-textos; para seguir com os textos do preset, --sem-ia; ou traga os textos do agente com --textos.`);
+  } else if (fixture || a.api) {
     const cambio = Number(process.env.CREAT_CAMBIO);
     if (!(cambio > 0)) throw new ErroAmbiente('CREAT_CAMBIO ausente ou inválido (R$ por US$, ex.: 5.40): o custo em reais é obrigatório no custo.json. Nada foi cobrado.');
     const ped = IA.montarPedidoIA(pedido, tenant, preset);
@@ -202,35 +268,62 @@ export async function produzir(argv) {
       chamada.status = 'falhou'; chamada.falha = e.message;
       custo.parcial = false; custo.falha = e.message;
       C.gravarJson(arqCusto, custo);
-      C.gravarJson(arqProd, { pedido: pedido.id, hashPedido, em: emResp, status: 'ia_falhou', falha: e.message, slug: tenant.slug });
+      C.gravarJson(arqProd, Object.assign({}, baseProd, { em: emResp, status: 'ia_falhou', falha: e.message }));
       throw new ErroAmbiente(`${e.message} A chamada foi cobrada e o custo está gravado em sites/${tenant.slug}/custo.json (resposta em resposta-ia.json). Para chamar de novo (nova cobrança) use --refazer-textos; para seguir com os textos do preset, --sem-ia.`);
     }
     chamada.status = 'ok';
     delete custo.parcial;
+    textosOrigem = origem; textosSha256 = '';
     C.gravarJson(arqTextos, saidaIa);
     etapa(2, 'textos pela IA', 'ok', `${fixture ? 'fixture (sem rede)' : 'API'}: ${chamada.modeloCobrado}, ${ci.tokens.entrada}+${ci.tokens.saida} tokens, ${ci.custo_ia ? `R$ ${ci.custo_ia.brl}` : 'custo NÃO calculado (sem preço do modelo)'}`);
+  } else {
+    /* caminho padrão sem textos ainda: entrega ao redator só o que ele pode ver, e espera */
+    const red = TX.redatorDoPedido(pedido, tenant, preset);
+    C.gravarJson(path.join(pastaSite, 'redator.json'), red);
+    C.gravarJson(arqProd, Object.assign({}, baseProd, { status: 'aguardando_textos' }));
+    log(`\nAGUARDANDO TEXTOS: o redator lê ${path.join(pastaSite, 'redator.json')} e grava o JSON de textos. Depois: node scripts/producao/produzir.mjs --pedido ${a.pedido} --textos <arquivo> --rascunho`);
+    return { codigo: 4, status: 'aguardando_textos', slug: tenant.slug, pastaSite, redator: path.join(pastaSite, 'redator.json') };
   }
   custo.total = totais(chamadas);
   C.gravarJson(arqCusto, custo);
   let ignorados = [];
   if (saidaIa) ({ tenant, ignorados } = IA.aplicarSaida(tenant, saidaIa, preset));
 
-  // 3. valida de novo
+  // 3. portão de conteúdo nos textos e validar-tenant
+  const g2 = B.checar(textosDoTenant(tenant));
+  if (!g2.ok) return emRevisao(pastaSite, Object.assign({}, baseProd, { textos_origem: textosOrigem, textos_sha256: textosSha256 }), 'textos', g2.motivos, log);
   const v = validarTenant(tenant, { preset });
   if (!v.ok) {
     C.gravarJson(path.join(pastaSite, 'tenant.rejeitado.json'), tenant);
-    C.gravarJson(arqProd, { pedido: pedido.id, hashPedido, em: agora.toISOString(), status: 'tenant_rejeitado' });
+    C.gravarJson(arqProd, Object.assign({}, baseProd, { status: 'tenant_rejeitado', textos_origem: textosOrigem, textos_sha256: textosSha256 }));
     throw new C.ErroLista(`Tenant rejeitado pelo validador (sites/${tenant.slug}/tenant.rejeitado.json). Nada foi publicado:`, v.erros);
   }
   C.gravarJson(path.join(pastaSite, 'tenant.json'), tenant);
-  etapa(3, 'validar-tenant', 'ok', 'schema + regras da casa');
+  etapa(3, 'portão de conteúdo e validar-tenant', 'ok', 'lista de bloqueio + schema + regras da casa');
 
-  // 4. build
+  // 4. build (final e, com --rascunho, o rascunho que é cópia dele)
   const site = { home: typeof a.home === 'string' ? a.home : homeDoPedido(), url: a.url, rodape: !a['sem-rodape'], demonstracao: !!a.demonstracao };
   const pastaDist = path.join(saida, 'dist', tenant.slug);
-  const b = buildSite({ tenant, destino: pastaDist, saida, site });
+  const arqRasc = path.join(pastaSite, 'rascunho.json');
+  let rascAnt = null;
+  if (a.rascunho && !a['novo-rascunho'] && fs.existsSync(arqRasc)) {
+    rascAnt = C.lerJson(arqRasc);
+    if (rascAnt.pedido !== pedido.id || !R.RE_ID.test(String(rascAnt.id)) || !R.RE_TOKEN.test(String(rascAnt.token))) rascAnt = null;
+  }
+  if (a.rascunho && rascAnt === null && fs.existsSync(arqRasc)) {
+    // rascunho anterior trocado: o endereço antigo some do disco local (no ar, o executor apaga)
+    try { const velho = C.lerJson(arqRasc); if (velho && R.RE_DIR.test(String(velho.dir))) fs.rmSync(path.join(saida, 'dist', velho.dir), { recursive: true, force: true }); } catch (e) { /* sem rascunho legível */ }
+  }
+  const b = buildSite({ tenant, destino: pastaDist, saida, site, rascunho: a.rascunho ? { id: rascAnt ? rascAnt.id : R.novoId() } : null });
   avisos.push(...b.avisos);
-  etapa(4, 'build-site', 'ok', `${b.arquivos.length} arquivos em dist/${tenant.slug}/`);
+  etapa(4, 'build-site', 'ok', `${b.arquivos.length} arquivos em dist/${tenant.slug}/${b.rascunho ? ` e rascunho em dist/${b.rascunho.dir}/` : ''}`);
+  let rascunho = null;
+  if (b.rascunho) {
+    const token = rascAnt ? rascAnt.token : R.novoToken();
+    const url = urlRascunho(b.rascunho.dir);
+    rascunho = { pedido: pedido.id, slug: tenant.slug, dir: b.rascunho.dir, id: b.rascunho.id, url, token, token_hash: crypto.createHash('sha256').update(token).digest('hex'), link: url ? `${url}#t=${token}` : '', endpoint: b.rascunho.endpoint, ajuste: b.rascunho.ajuste, criado_em: rascAnt ? rascAnt.criado_em : agora.toISOString(), atualizado_em: agora.toISOString(), final: b.rascunho.final };
+    C.gravarJson(arqRasc, rascunho);
+  }
 
   // 5. navegador
   let codigo = 0;
@@ -240,8 +333,14 @@ export async function produzir(argv) {
     try {
       const t = await testarSite(pastaDist, { whatsapp: pedido.whatsapp_negocio, print, exigirRodape: site.rodape && !!site.home, exigirFaixaDemo: site.demonstracao });
       C.gravarJson(path.join(pastaSite, 'teste-site.json'), t);
-      if (t.ok) etapa(5, 'teste headless 390 px', 'ok', `sem rolagem lateral, menor texto ${t.medidas.menorFontePx}px, ${t.medidas.waMe.length} links wa.me/${pedido.whatsapp_negocio}, console limpo`);
+      if (t.ok) etapa(5, 'teste headless 390 px', 'ok', `sem rolagem lateral, menor texto ${t.medidas.menorFontePx}px, ${t.medidas.waMe.length} links wa.me/${pedido.whatsapp_negocio}, console limpo (CSP ativa)`);
       else { etapa(5, 'teste headless 390 px', 'falhou', t.falhas.join(' | ')); codigo = 3; }
+      if (rascunho) {
+        const tr = await testarSite(path.join(saida, 'dist', rascunho.dir), { whatsapp: pedido.whatsapp_negocio, waExtras: [R.WHATSAPP_AJUSTE], exigirFaixaRascunho: true, print: path.join(pastaSite, 'print-390-rascunho.png') });
+        C.gravarJson(path.join(pastaSite, 'teste-rascunho.json'), tr);
+        if (tr.ok) etapa(5, 'teste headless 390 px do rascunho', 'ok', `faixa no topo, botão de aprovar com ${tr.medidas.faixaRascunho.botaoAltura}px, noindex, console limpo`);
+        else { etapa(5, 'teste headless 390 px do rascunho', 'falhou', tr.falhas.join(' | ')); codigo = 3; }
+      }
     } catch (e) {
       if (e.codigo === 2) { etapa(5, 'teste headless 390 px', 'pulado', e.message); avisos.push(e.message); }
       else throw e;
@@ -264,14 +363,16 @@ export async function produzir(argv) {
 
   // 6. custo + relatório
   const saidas = { tenant: `sites/${tenant.slug}/tenant.json`, custo: `sites/${tenant.slug}/custo.json`, site: `dist/${tenant.slug}/index.html` };
+  if (rascunho) { saidas.rascunho = `dist/${rascunho.dir}/index.html`; saidas.link_de_aprovacao = `sites/${tenant.slug}/rascunho.json (campo link)`; }
   if (fs.existsSync(print)) saidas.print = `sites/${tenant.slug}/print-390.png`;
   if (sair) saidas.sair = `dist/${path.basename(sair.zip)}`;
-  etapa(6, 'custo.json e RELATORIO do pedido', 'ok', custo.custo_ia ? `R$ ${custo.custo_ia.brl}` : (chamadas.length ? 'custo da IA NÃO calculado (ver Avisos)' : 'sem IA'));
-  const rel = { pedido, tenant, em: agora.toISOString(), etapas: etapas.slice().sort((x, y) => x.n - y.n), custo, site: b.site, ignorados, saidas, avisos };
+  etapa(6, 'custo.json e RELATORIO do pedido', 'ok', textosOrigem === 'agente' ? 'R$ 0 de IA (agente da sessão)' : custo.custo_ia ? `R$ ${custo.custo_ia.brl}` : (chamadas.length ? 'custo da IA NÃO calculado (ver Avisos)' : 'sem IA'));
+  const rel = { pedido, tenant, em: agora.toISOString(), etapas: etapas.slice().sort((x, y) => x.n - y.n), custo, site: b.site, ignorados, saidas, avisos, textosOrigem, textosSha256, rascunho };
   fs.writeFileSync(path.join(pastaSite, 'RELATORIO.md'), relatorioPedido(rel));
-  C.gravarJson(arqProd, { pedido: pedido.id, hashPedido, em: agora.toISOString(), status: codigo ? 'falhou' : 'pronto_para_aprovacao', slug: tenant.slug, etapas: rel.etapas });
-  log(`\n${codigo ? 'FALHOU' : 'pronto para aprovação'}: ${path.join(pastaSite, 'RELATORIO.md')}`);
-  return { codigo, slug: tenant.slug, pastaSite, pastaDist, sair, custo, etapas: rel.etapas };
+  const status = codigo ? 'falhou' : rascunho ? 'rascunho_pronto' : 'pronto_para_aprovacao';
+  C.gravarJson(arqProd, Object.assign({}, baseProd, { status, textos_origem: textosOrigem, textos_sha256: textosSha256, rascunho: rascunho ? { dir: rascunho.dir, url: rascunho.url, token_hash: rascunho.token_hash } : null, etapas: rel.etapas }));
+  log(`\n${codigo ? 'FALHOU' : rascunho ? `rascunho pronto: dist/${rascunho.dir}/` : 'pronto para aprovação'}: ${path.join(pastaSite, 'RELATORIO.md')}`);
+  return { codigo, status, slug: tenant.slug, pastaSite, pastaDist, sair, custo, etapas: rel.etapas, rascunho: rascunho ? { dir: rascunho.dir, url: rascunho.url } : null };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {

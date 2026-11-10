@@ -11,6 +11,12 @@
  *   modelo sem preço devolve custo_ia null + tokens + falha.
  * - PRECOS e MODELO_PADRAO: NÃO VERIFICADOS contra uma chamada real (vêm do cache da skill claude-api).
  * A chamada em si (SDK oficial @anthropic-ai/sdk) fica em produzir.mjs.
+ *
+ * Pacote 1C (10/11/2026, decisão D1): o caminho PADRÃO não usa API paga. Os textos são escritos por
+ * um agente da sessão principal do Claude Code (tarefa agendada) e chegam por --textos <arquivo>.
+ * O agente recebe o mesmo SYSTEM, o mesmo schema e os mesmos dados minimizados daqui (lib/textos.cjs
+ * monta sites/<slug>/redator.json), e a resposta passa pela MESMA aplicarSaida (lista branca).
+ * A chamada à API continua no código, desligada: só roda com --api (e ANTHROPIC_API_KEY).
  */
 'use strict';
 
@@ -97,6 +103,13 @@ const SYSTEM = [
 
 function semDelimitador(v) { return String(v).replace(/[<>]/g, ' ').replace(/\s+/g, ' ').trim(); }
 
+/* textos de partida do nicho (tom e estrutura, não fato) */
+function partidaDoPreset(preset) {
+  const partida = { bordao: preset.tenantBase.negocio.bordao, pagina: preset.pagina || preset.tenantBase.pagina, servicos: preset.tenantBase.servicos.map((s) => ({ id: s.id, descricao: s.descricao })), textos: {} };
+  for (const k of chavesIA(preset)) if (preset.tenantBase.textos && preset.tenantBase.textos[k] !== undefined) partida.textos[k] = preset.tenantBase.textos[k];
+  return partida;
+}
+
 /* devolve { system, mensagem, schema, dados } */
 function montarPedidoIA(pedido, tenant, preset) {
   const end = tenant.negocio.endereco || {};
@@ -109,8 +122,7 @@ function montarPedidoIA(pedido, tenant, preset) {
     funcionamento: dias.map((d, i) => { const h = tenant.funcionamento.semana[i]; return `${d}: ${h ? `${h.abre} às ${h.fecha}` : 'fechado'}`; }).join('; '),
     servicos: tenant.servicos.map((s) => ({ id: s.id, nome: s.nome, duracaoMin: s.duracaoMin }))
   };
-  const partida = { bordao: preset.tenantBase.negocio.bordao, pagina: preset.pagina || preset.tenantBase.pagina, servicos: preset.tenantBase.servicos.map((s) => ({ id: s.id, descricao: s.descricao })), textos: {} };
-  for (const k of chavesIA(preset)) if (preset.tenantBase.textos && preset.tenantBase.textos[k] !== undefined) partida.textos[k] = preset.tenantBase.textos[k];
+  const partida = partidaDoPreset(preset);
   const mensagem = [
     `Textos de partida do nicho ${dados.nicho} (adapte ao negócio; servem de tom e de estrutura, não de fato):`,
     JSON.stringify(partida, null, 1),
@@ -216,4 +228,4 @@ function resumoResposta(resp) {
   return { id: r.id || null, model: r.model || null, stop_reason: r.stop_reason || null, stop_details: r.stop_details || null, usage: r.usage || null, content: Array.isArray(r.content) ? r.content : [] };
 }
 
-module.exports = { MODELO_PADRAO, PRECOS, COM_FALLBACK, FORA_DA_IA, SYSTEM, chavesIA, schemaSaida, montarPedidoIA, corpoRequisicao, lerResposta, aplicarSaida, custo, resumoResposta };
+module.exports = { MODELO_PADRAO, PRECOS, COM_FALLBACK, FORA_DA_IA, SYSTEM, LIMITES, chavesIA, schemaSaida, partidaDoPreset, montarPedidoIA, corpoRequisicao, lerResposta, aplicarSaida, custo, resumoResposta };

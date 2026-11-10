@@ -16,6 +16,10 @@
  *   - opc.semRodapeViral (pacote SAIR): nenhum link utm_source=rodape nem o texto "Aberto pela Creat".
  *   - opc.exigirFaixaDemo (--demonstracao): a faixa "demonstração · nome fictício" é a primeira coisa
  *     visível da página e a meta robots é noindex.
+ *   - CSP (pacote 1C): toda violação da Content-Security-Policy (evento securitypolicyviolation) é falha.
+ *   - opc.exigirFaixaRascunho (--rascunho): faixa "Rascunho para a sua aprovação. Ainda não está no ar."
+ *     visível no topo ao abrir e depois de rolar até o fim, botão "Aprovar e colocar no ar" com 44 px
+ *     ou mais, meta noindex. opc.waExtras: números aceitos SÓ dentro da faixa (o "Pedir ajuste" da Creat).
  * Código 0 = passou, 3 = falhou, 2 = Playwright ausente.
  */
 'use strict';
@@ -43,6 +47,10 @@ async function testarSite(pasta, opc) {
       externas.push(u);
       return rota.abort('blockedbyclient');
     });
+    await ctx.addInitScript(() => {
+      window.__cspViolacoes = [];
+      document.addEventListener('securitypolicyviolation', (ev) => { window.__cspViolacoes.push(`${ev.violatedDirective} ${ev.blockedURI || 'inline'}`); });
+    });
     const page = await ctx.newPage();
     page.on('console', (m) => { if (m.type() === 'error') erros.push(`console: ${m.text()}`); });
     page.on('pageerror', (e) => erros.push(`exceção: ${e.message}`));
@@ -50,9 +58,28 @@ async function testarSite(pasta, opc) {
     await page.waitForFunction(() => !document.querySelector('.sem-tenant') && document.querySelector('#motor-raiz main'), null, { timeout: 8000 })
       .catch(() => falhas.push('o motor não montou a página em 8 s (#motor-raiz main ausente)'));
     await page.waitForTimeout(400);
+    let fr = null;
+    if (opc.exigirFaixaRascunho) {
+      const medir = () => page.evaluate(() => {
+        const f = document.querySelector('[data-rascunho-faixa]');
+        if (!f) return null;
+        const r = f.getBoundingClientRect(), b = f.querySelector('[data-rascunho-aprovar]');
+        const rb = b ? b.getBoundingClientRect() : null;
+        const topo = document.querySelector('#motor-raiz .topo');
+        const rt = topo ? topo.getBoundingClientRect() : null;
+        return { texto: f.textContent.replace(/\s+/g, ' ').trim(), topo: Math.round(r.top), altura: Math.round(r.height), base: Math.round(r.bottom), topoDoSite: rt ? Math.round(rt.top) : null, botao: b ? b.textContent.trim() : '', botaoAltura: rb ? Math.round(rb.height) : 0, botaoLargura: rb ? Math.round(rb.width) : 0, ajuste: !!f.querySelector('a[data-rascunho-ajuste][href^="https://wa.me/"]') };
+      });
+      const antes = await medir();
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await page.waitForTimeout(300);
+      const depois = await medir();
+      await page.evaluate(() => window.scrollTo(0, 0));
+      fr = antes ? Object.assign({}, antes, { topoDepoisDeRolar: depois ? depois.topo : null, baseDepoisDeRolar: depois ? depois.base : null, topoDoSiteDepoisDeRolar: depois ? depois.topoDoSite : null }) : null;
+    }
     const m = await page.evaluate(() => {
       const de = document.documentElement;
-      const was = [...document.querySelectorAll('a[href*="wa.me/"]')].map((a) => a.getAttribute('href'));
+      const was = [...document.querySelectorAll('a[href*="wa.me/"]')].filter((a) => !a.closest('[data-rascunho-faixa]')).map((a) => a.getAttribute('href'));
+      const wasFaixa = [...document.querySelectorAll('[data-rascunho-faixa] a[href*="wa.me/"]')].map((a) => a.getAttribute('href'));
       let menor = Infinity, onde = '';
       const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
       for (let n = w.nextNode(); n; n = w.nextNode()) {
@@ -72,8 +99,25 @@ async function testarSite(pasta, opc) {
       const creatTexto = /Aberto pela Creat/i.test(document.body.innerText);
       const fx = document.querySelector('[data-demonstracao]');
       const faixa = fx ? { texto: fx.textContent, topo: Math.round(fx.getBoundingClientRect().top), visivel: fx.getBoundingClientRect().height > 1 } : null;
-      return { faixa, scrollW: de.scrollWidth, larg: window.innerWidth, was, menor, onde, ld, robots, titulo: document.title, rodape, creatTexto };
+      return { faixa, scrollW: de.scrollWidth, larg: window.innerWidth, was, wasFaixa, menor, onde, ld, robots, titulo: document.title, rodape, creatTexto, csp: (window.__cspViolacoes || []).slice(0, 20) };
     });
+    for (const v of m.csp) falhas.push(`CSP bloqueou: ${v}`);
+    for (const h of m.wasFaixa) {
+      const num = (String(h).match(/wa\.me\/(\d+)/) || [])[1];
+      if (!(opc.waExtras || []).includes(num)) falhas.push(`wa.me na faixa do rascunho com número ${num} fora da lista`);
+    }
+    if (opc.exigirFaixaRascunho) {
+      if (!fr || !/Rascunho para a sua aprovação\. Ainda não está no ar\./.test(fr.texto)) falhas.push('rascunho sem a faixa "Rascunho para a sua aprovação. Ainda não está no ar."');
+      else {
+        if (fr.topo > 1) falhas.push(`faixa do rascunho fora do topo (${fr.topo}px)`);
+        if (fr.topoDepoisDeRolar === null || fr.topoDepoisDeRolar > 1) falhas.push(`faixa do rascunho some ao rolar (topo ${fr.topoDepoisDeRolar}px)`);
+        if (fr.botao !== 'Aprovar e colocar no ar') falhas.push(`botão de aprovar com outro texto: "${fr.botao}"`);
+        if (fr.botaoAltura < 44 || fr.botaoLargura < 44) falhas.push(`botão de aprovar com ${fr.botaoLargura}x${fr.botaoAltura}px (mínimo 44)`);
+        if (!fr.ajuste) falhas.push('faixa sem o link "Pedir ajuste" no WhatsApp');
+        if (fr.topoDoSiteDepoisDeRolar !== null && fr.topoDoSiteDepoisDeRolar < fr.baseDepoisDeRolar - 1) falhas.push(`a faixa cobre o topo do site ao rolar (topo em ${fr.topoDoSiteDepoisDeRolar}px, faixa até ${fr.baseDepoisDeRolar}px)`);
+      }
+      if (!/noindex/.test(m.robots)) falhas.push('rascunho sem meta robots noindex');
+    }
     if (m.scrollW > m.larg + 1) falhas.push(`rolagem horizontal: scrollWidth ${m.scrollW} > ${m.larg}`);
     if (m.menor < 11) falhas.push(`texto de ${m.menor}px (mínimo 11): ${m.onde}`);
     const previa = /noindex/.test(m.robots);
@@ -102,7 +146,7 @@ async function testarSite(pasta, opc) {
     }
     falhas.push(...erros);
     if (opc.print) { fs.mkdirSync(path.dirname(opc.print), { recursive: true }); await page.screenshot({ path: opc.print, fullPage: true }); }
-    return { ok: falhas.length === 0, falhas, medidas: { rodapeLinks: m.rodape.length, scrollWidth: m.scrollW, largura: m.larg, menorFontePx: m.menor, waMe: m.was, robots: m.robots, titulo: m.titulo, jsonLd: m.ld.length, faixaDemo: !!m.faixa }, rede: { fontes: fontes.length, externasBloqueadas: externas } };
+    return { ok: falhas.length === 0, falhas, medidas: { rodapeLinks: m.rodape.length, scrollWidth: m.scrollW, largura: m.larg, menorFontePx: m.menor, waMe: m.was, robots: m.robots, titulo: m.titulo, jsonLd: m.ld.length, faixaDemo: !!m.faixa, faixaRascunho: fr, cspViolacoes: m.csp.length }, rede: { fontes: fontes.length, externasBloqueadas: externas } };
   } finally { await browser.close(); }
 }
 

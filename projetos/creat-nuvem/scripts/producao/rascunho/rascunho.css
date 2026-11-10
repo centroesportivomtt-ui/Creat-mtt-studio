@@ -1,0 +1,53 @@
+/* scripts/producao/rascunho/rascunho.css · faixa do rascunho para aprovação (pacote 1C)
+   Só existe no rascunho (/sites/<slug>-r-<id>/). O site final não carrega este arquivo.
+   Sem estilo inline: a CSP do template não aceita. */
+/* --rascunho-h: altura da faixa (rascunho.js mede e atualiza; o valor daqui vale até o script rodar).
+   O topo do site (sticky) e os saltos de âncora descem essa altura, para a faixa não cobrir nada. */
+:root { --rascunho-h: 118px; }
+@media (min-width: 720px) { :root { --rascunho-h: 72px; } }
+.topo { top: var(--rascunho-h); }
+html { scroll-padding-top: calc(var(--rascunho-h) + 88px); }
+@media (max-width: 559px) { html { scroll-padding-top: calc(var(--rascunho-h) + 124px); } }
+@media (min-width: 960px) { .agendar-resumo { top: calc(var(--rascunho-h) + 104px); } }
+
+.rascunho-faixa[hidden], .rascunho-faixa [hidden] { display: none !important; }
+.rascunho-faixa {
+  position: -webkit-sticky; position: sticky; top: 0; z-index: 2147483000;
+  box-sizing: border-box; width: 100%; margin: 0;
+  padding: 10px 16px 12px; padding-top: max(10px, env(safe-area-inset-top));
+  background: #1d1a16; color: #fbf7f0;
+  border-bottom: 3px solid #f5c542;
+  font: 500 15px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
+}
+.rascunho-faixa * { box-sizing: border-box; }
+.rascunho-titulo { margin: 0 0 8px; font-size: 15px; }
+.rascunho-titulo strong { font-weight: 700; }
+.rascunho-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rascunho-confirmar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
+.rascunho-pergunta { flex: 1 1 100%; font-size: 14px; }
+.rascunho-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; min-width: 44px; padding: 10px 16px;
+  border-radius: 10px; border: 2px solid #f5c542;
+  font: 700 15px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.rascunho-btn-principal { background: #f5c542; color: #1d1a16; }
+.rascunho-btn-secundario { background: transparent; color: #fbf7f0; border-color: #fbf7f0; }
+.rascunho-btn:disabled { opacity: .55; cursor: not-allowed; }
+.rascunho-btn:focus-visible { outline: 3px solid #8fd3ff; outline-offset: 2px; }
+.rascunho-status { margin: 8px 0 0; font-size: 14px; }
+.rascunho-status:empty { display: none; }
+.rascunho-status[data-tipo="erro"] { color: #ffc9b8; }
+.rascunho-status[data-tipo="ok"] { color: #c8f2c2; }
+.rascunho-faixa[data-estado="aprovado"] { border-bottom-color: #7fd17a; }
+@media (min-width: 720px) {
+  .rascunho-faixa { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+  .rascunho-titulo { margin: 0; flex: 1 1 auto; }
+  .rascunho-status { flex: 1 1 100%; margin-top: 4px; }
+  .rascunho-confirmar { width: auto; }
+  .rascunho-pergunta { flex: 0 1 auto; }
+}
+@media (prefers-reduced-motion: reduce) { .rascunho-faixa, .rascunho-faixa * { transition: none !important; animation: none !important; } }
+@media print { .rascunho-faixa { position: static; box-shadow: none; } }

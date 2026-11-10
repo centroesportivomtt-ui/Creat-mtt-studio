@@ -1,6 +1,43 @@
 # ADR-004 · Executor 24/7 da Fase 2: GitHub Actions privado ou VPS
 
-Trilho (T10), 08/11/2026. Status: **proposto**, decisão final do Marcos (envolve conta e cartão).
+Trilho (T10), 08/11/2026. Status: **substituído pela decisão D1 (10/11/2026)**. O texto original fica abaixo, sem alteração, como histórico.
+
+## Substituído pela D1 (pacote 1C da onda 1, Trilho, 10/11/2026)
+
+**Decisão D1:** quem produz o site é a **sessão principal do Claude Code**, acordada por uma **tarefa agendada** (pacote 1D, `docs/EXECUTOR.md`) que lê a entidade `PedidoPortaAberta` do app Base44. Os textos do site são escritos por **agentes dessa sessão** e gravados num arquivo JSON. Não há API paga, não há GitHub Actions de produção e não há VPS.
+
+Por que a D1 substitui as opções A e B:
+1. **A chamada paga nunca rodou.** O caminho por `ANTHROPIC_API_KEY` só foi exercitado com fixture (achado PV-02). Depender dele para o primeiro pedido pago era apostar a garantia de 72 h numa chamada nunca vista funcionando, e exigia chave do Console e cartão.
+2. **Sem conta nova, sem cartão, sem servidor.** A sessão principal já existe e já é usada pela agência. A opção A pedia repositório privado, Environment com segredos e leitura dos termos do Actions; a B pedia manutenção de máquina. A D1 não pede nada disso.
+3. **Mesma régua de segurança.** O agente redator recebe só `sites/<slug>/redator.json`: nicho, nome, cidade, bairro, funcionamento e serviços estruturados, cada campo conferido por regex (`scripts/producao/lib/textos.cjs`). Nunca e-mail, WhatsApp, responsável, rua, número, CEP, origem ou texto livre bruto. A resposta dele passa pela **mesma lista branca** do caminho por API (`IA.aplicarSaida`), pelo **portão de conteúdo** (`lib/bloqueio.cjs`: ofensa, termo sexual, marca, alegação de saúde, promessa de ganho, injeção, código) e pelo `validar-tenant` (que agora também recusa domínio solto, entidade HTML, `@` e telefone diferente do WhatsApp do pedido). WhatsApp e endereço entram por código, a partir do pedido.
+4. **Quem aprova é o cliente.** `produzir.mjs --rascunho` gera o build final e uma cópia dele com a faixa "Rascunho para a sua aprovação. Ainda não está no ar." em `/sites/<slug>-r-<id>/` (id de 16 caracteres por crypto, noindex, robots Disallow, sem sitemap). O botão "Aprovar e colocar no ar" manda `{slug, token}` a `POST /api/pa/aprovarRascunho` (pacote 1A); o token vem só do `#t=` do link. Aprovado, a tarefa publica o MESMO build em `/sites/<slug>/` e apaga o rascunho (`publicar-site.cjs --aprovado`).
+
+Comandos (todos sem rede e sem chave):
+
+| passo | comando | saída |
+|---|---|---|
+| 1. preparar | `node scripts/producao/produzir.mjs --pedido <arq>` | código 4, `sites/<slug>/redator.json` |
+| 2. escrever | agente redator lê `redator.json` e grava o JSON de textos (com `"pedido": "<id>"`) | arquivo de textos |
+| 3. produzir | `node scripts/producao/produzir.mjs --pedido <arq> --textos <json> --rascunho` | código 0 (`rascunho_pronto`), 1 (inválido), 3 (teste do site), 5 (`em_revisao`) |
+| 4. publicar rascunho | `node scripts/producao/publicar-site.cjs --slug <slug> --rascunho` | zip de `/sites/<slug>-r-<id>/` e o passo a passo |
+| 5. depois do "Aprovar" | `node scripts/producao/publicar-site.cjs --slug <slug> --aprovado` | zip de `/sites/<slug>/` e o passo que apaga o rascunho |
+
+O caminho por API continua no código, **desligado**: só roda com `--api` (e `ANTHROPIC_API_KEY`, `CREAT_CAMBIO`). Se um dia voltar, a régua acima vale igual.
+
+### Origem dos sites de cliente (achado PV-16)
+Hoje a vitrine, `/abrir/`, `/obrigado/` e `/sites/<slug>/` dividem a mesma origem (`creat-nuvem-404b1994.base44.app`), e o Base44 não lê `_headers`.
+- **Agora:** CSP por meta em `motor/v1/template.html`, que vale para todo site de cliente, rascunho e pacote SAIR. Só scripts da mesma origem, nenhum script inline, `connect-src 'self'`, `img-src 'self' data:`, `object-src 'none'`, `base-uri 'none'`, `form-action 'none'`, `frame-src 'none'`, `worker-src 'none'`. Afrouxado o mínimo e registrado no próprio template: o CSS do Google Fonts (`style-src` e `font-src`), UM `<style>` do motor por hash (CSS_VIVO de `efeito.js`) e os 9 atributos `style` da poeira do gesto da academia por hash (`style-src-attr 'unsafe-hashes'`, `rituais/barra.js`). O `build-site.cjs` recusa o build se o motor mudar e os hashes não baterem, e o `testar-site.cjs` trata qualquer violação de CSP como falha. Limite conhecido: CSP por meta não cobre `frame-ancestors` (a hospedagem já manda `X-Frame-Options: DENY`) nem isola o `localStorage` da vitrine; isso só a origem própria resolve.
+- **Regra:** o primeiro site de cliente real só pode ser publicado com essa CSP no `index.html` (o build atual já sai com ela; demos antigas em `dist/demo-*` saem com ela no próximo build).
+- **Depois:** subdomínio próprio para os sites de cliente quando o **D7** (domínio da Creat) sair. Aí `CREAT_URL_SITES` passa a `https://{slug}.<domínio>/` ou a outra origem, e a vitrine deixa de dividir origem com os sites.
+
+### O que não foi verificado (D1)
+- A aprovação em produção: depende das funções do pacote 1A publicadas (`aprovarRascunho`) e do endereço real da função na hospedagem. O botão foi exercitado contra um servidor local que simula a função.
+- O tempo de um pedido de ponta a ponta na tarefa agendada (medir no ensaio do pacote 1D).
+
+---
+
+## Texto original (08/11/2026, proposto)
+
 Pergunta de venda: o pedido pago precisa virar site no ar sem o Marcos acordado. Quem roda o `produzir.mjs` às 3 da manhã?
 
 ## Contexto
