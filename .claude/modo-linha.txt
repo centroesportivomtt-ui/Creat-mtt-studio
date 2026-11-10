@@ -1,0 +1,3 @@
+Regra do dono (Marcos): abra ESTA resposta com a linha
+"Modo recomendado: <modelo> · esforço <baixo|médio|alto|máximo> · Ultracode <ligado|desligado>",
+escolhida para a tarefa deste comando. Se o modo atual já é o ideal, diga que mantém.
