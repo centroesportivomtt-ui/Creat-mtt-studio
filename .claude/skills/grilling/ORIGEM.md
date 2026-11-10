@@ -12,6 +12,7 @@ Revisão de segurança (Muralha) e de uso real (Lupa). Correções aplicadas pel
 - Caixa "só do dono" ampliada: permissões e configuração, instalar ou rodar código de fora, publicar ou ligar tráfego pago, enviar algo a terceiros, git push.
 - Volta o subagente de contexto limpo para buscar fato.
 - Modo interno com regras para agente único, formato F/D no `RELATORIO.md`, documentos em conflito, decisão mista e fato sem fonte.
+- Quarta rodada: no modo dono, fronteira com mais de 5 perguntas manda as 5 que mais destravam o plano, e as outras vão na rodada seguinte; a rodada das decisões só do dono continua inteira.
 
 ## Licença do original (MIT), texto integral
 

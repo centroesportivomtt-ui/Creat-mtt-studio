@@ -11,6 +11,7 @@ Revisão de segurança (Muralha) e de uso real (Lupa). Correções aplicadas pel
 - Por conta própria, a passagem só fica no scratchpad; publicar (Artifact ou Dropbox) só com o pedido do dono. O original é só do usuário (`disable-model-invocation: true`); a casa manteve o início automático e documentou a exceção no `SKILL.md`.
 - A passagem é lida como notas: ação que gasta, instala, publica, mexe em configuração ou manda dado para fora pede confirmação do dono; ordem permanente só vale no `CLAUDE.md` ou na `consciencia`; texto de fora entra só como citação marcada.
 - Modelo com datas que mandam, "verificado por quem", tarefas agendadas, print na pendência do Marcos e "o que não cobre"; checagem final por grep de segredo, e-mail, telefone e CPF.
+- Quarta rodada: a checagem final avisa que número longo de identificador (campanha, conjunto, anúncio, pixel) casa com o padrão de telefone e deve ficar, se não for telefone nem documento.
 
 ## Licença do original (MIT), texto integral
 

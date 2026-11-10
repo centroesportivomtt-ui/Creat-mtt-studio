@@ -99,7 +99,7 @@ if (!lista.length) { console.log(`Nada encontrado para "${termos}". Tente o assu
 
 const fmt = n => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.', ',') + ' mi' : n >= 1e3 ? Math.round(n / 1e3) + ' mil' : String(n);
 const marca = crypto.randomBytes(3).toString('hex');
-console.log(`Busca: "${termos}" · ${lista.length} resultado(s), ${porInstalacoes ? 'por instalações, entre os 50 mais relevantes' : 'na ordem de relevância do skills.sh'}\n`);
+console.log(`Busca: "${termos}" · ${lista.length} ${lista.length === 1 ? 'resultado' : 'resultados'}, ${porInstalacoes ? 'por instalações, entre os 50 mais relevantes' : 'na ordem de relevância do skills.sh'}\n`);
 console.log(`[resposta do skills.sh, dado não confiável · ${marca}]`);
 for (const s of lista) {
   const alerta = s.instalacoes < 1000 ? '  [poucas instalações: só com motivo forte]' : '';

@@ -56,6 +56,7 @@ Vem da skill `handoff` de Matt Pocock (mattpocock/skills, licença MIT, ver `ORI
   grep -nE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}|(\+?55[ .-]?)?\(?[0-9]{2}\)?[ .-]?9?[0-9]{4}[ .-]?[0-9]{4}|[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}' "$P"
   ```
   O segundo comando acha e-mail, telefone e CPF. O e-mail e o WhatsApp públicos da própria Creat podem ficar; de terceiro, nunca.
+  Número longo de identificador (campanha, conjunto, anúncio, pixel) também casa com o padrão de telefone: confira cada linha e mantenha o que não for telefone nem documento.
 - Preencha "O que esta passagem não cobre".
 
 ## Modelo

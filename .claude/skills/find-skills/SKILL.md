@@ -9,7 +9,7 @@ Vem da skill `find-skills` da Vercel Labs (vercel-labs/skills, licença MIT, ver
 
 ## Passo a passo
 
-1. **Olhe em casa primeiro.** `ls .claude/skills/` e a lista de skills da sessão. Se já existe, use. Se quase existe, melhore a nossa.
+1. **Olhe em casa primeiro.** `ls /home/user/Creat-nuvem-VIBE-CODE/.claude/skills/` e a lista de skills da sessão. Se já existe, use. Se quase existe, melhore a nossa.
 2. **Busque no diretório público**, sem nenhum dado do dono, de cliente ou de projeto na busca (só o assunto). **O diretório é em inglês:** traduza o assunto e rode 2 ou 3 variações (ex.: `accessibility`, `a11y`, `web accessibility testing`). Em português vem lixo.
    ```bash
    B="node /home/user/Creat-nuvem-VIBE-CODE/.claude/skills/find-skills/buscar.cjs"
@@ -29,7 +29,7 @@ Vem da skill `find-skills` da Vercel Labs (vercel-labs/skills, licença MIT, ver
      Licença fora da raiz: procure na pasta da skill (`skills/<nome>/LICENSE`) e no `package.json` (`"license"`). Se nada aparecer, descarte.
 4. **Leia tudo, em quarentena**, com `<dono>` e `<repo>` já validados no passo 3. Clone **sem checkout**, fora do projeto, e leia pelo git, sem nenhum arquivo do repositório no disco:
    ```bash
-   Q=/tmp/claude-0/<sessão>/scratchpad/quarentena/<dono>__<repo>      # no scratchpad da sessão, nunca no projeto
+   Q=<scratchpad>/quarentena/<dono>__<repo>      # o scratchpad da sessão (caminho no prompt do sistema), nunca o projeto
    GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 --no-checkout https://github.com/<dono>/<repo> "$Q"
    git -C "$Q" ls-tree -r --name-only HEAD | head -200                  # o que existe
    git -C "$Q" show HEAD:skills/<nome>/SKILL.md                         # lê um arquivo

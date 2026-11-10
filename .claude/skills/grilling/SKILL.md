@@ -18,7 +18,7 @@ Duas regras que não mudam:
 
 ## Modo dono (ele pediu para ser interrogado)
 
-Formato de uma rodada, sem emoji, no máximo 5 perguntas, cada uma curta:
+Formato de uma rodada, sem emoji, no máximo 5 perguntas, cada uma curta. Se a fronteira tiver mais de 5, vão as 5 que mais destravam o plano; as outras entram na rodada seguinte. A exceção é a rodada das decisões só do dono, no modo interno, que vai inteira de uma vez:
 
 ```
 P1 · <título>: <pergunta em uma ou duas frases; opções se houver>

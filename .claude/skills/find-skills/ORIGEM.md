@@ -12,6 +12,7 @@ Revisão de segurança (Muralha) e de uso real (Lupa). Correções aplicadas pel
 - `buscar.cjs`: saída entre marcas de dado não confiável e sem caractere de controle; fonte e link só com formato válido (nada de `..`); erro da API sai com código 1; ordem de relevância do skills.sh por padrão e `--por-instalacoes` (pede 50, ordena, corta); `--limite=N` aceito e valor ruim recusado com código 2; filtro de dado pessoal pega telefone com máscara, CPF com pontos e domínio.
 - `SKILL.md`: busca em inglês com 2 ou 3 variações; critério de estrelas e atividade do original de volta; licença lida antes do clone pelo endereço bruto do GitHub.
 - Segunda e terceira rodadas da Lupa, no mesmo dia: `buscar.cjs` marca a fonte fora do GitHub (um domínio, como `uizze.sh`) com "não traga" e dá o link dela só como referência, porque a quarentena por `git clone` não cobre; o passo 3 do `SKILL.md` recusa essa fonte.
+- Quarta rodada: exemplos de caminho corrigidos (quarentena em `<scratchpad>/quarentena/...`, o scratchpad da sessão; `ls` da casa pelo caminho absoluto); contagem da busca com concordância ("1 resultado").
 
 ## Licença do original (MIT), texto integral
 
