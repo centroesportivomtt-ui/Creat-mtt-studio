@@ -146,3 +146,23 @@ FALHAS: nenhuma
 ```
 
 Os quatro A1 e os dois vídeos trazem os dois valores antes do caractere 125. O B1 também, embora o plano só exija isso dos A1. Nenhum título tem número ou "R$".
+
+---
+
+## 6. Troca feita (10/11/2026)
+
+A troca desta página foi executada uma única vez, por ordem do dono. Mesma arte, mesmo destino, mesma verba; só o texto mudou.
+
+| praça | anúncio | novo (ativo) | antigo (pausado) |
+|---|---|---|---|
+| Feira | A1 barbearia | 120254165315770237 | 120254151686550237 |
+| Feira | A1 salão | 120254165316300237 | 120254151686810237 |
+| Feira | B1 salão | 120254165316600237 | 120254151686970237 |
+| Salvador RMS | A1 barbearia | 120254165317020237 | 120254151687230237 |
+| Salvador RMS | A1 salão | 120254165317560237 | 120254151687430237 |
+| Salvador RMS | B1 salão | 120254165318480237 | 120254151687710237 |
+
+- Novos ativados às 15:02 (Bahia). Os seis saíram da análise aprovados e foram conferidos como ativos às 15:30.
+- Antigos: os dois A1 de Feira pausados às 15:05; os outros quatro às 15:31, depois de cada substituto estar ativo. Em nenhum momento um conjunto ficou sem anúncio.
+- Os dois conjuntos seguem ativos, sem mudança de verba, público ou otimização.
+- Os antigos ficam pausados, não apagados, para a leitura de antes e depois.
