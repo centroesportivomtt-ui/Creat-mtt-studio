@@ -60,7 +60,7 @@ const SEM_FUNCOES = args.includes('--sem-funcoes');
 const CORS_ESTRITO = args.includes('--cors-estrito');
 const EXIGIR_FUNCOES = args.includes('--exigir-funcoes');
 // troque para true no mesmo ato do deploy das funções da onda 1 (docs/ROTINA-DIARIA.md, seção 7)
-const FUNCOES_PUBLICADAS = false;
+const FUNCOES_PUBLICADAS = true;
 const APP_ID = '6aefffe66b684db9404b1994';
 const GRUPO_FUNCOES = 'I funções';
 // linhas de prova (id da plataforma, não é segredo: a regra de acesso é o que protege). Criadas pelo MCP em 10/11/2026.
