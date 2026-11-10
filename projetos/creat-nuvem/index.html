@@ -138,7 +138,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 .preco strong span,.preco s span{font:inherit;color:inherit}
 .cartao-preco .anual{font-size:var(--t-nota)}
 .cartao-preco .regra-prazo{font-size:var(--t-nota);color:var(--apagado);margin-top:calc(-1 * var(--r2))}
-.cartao-preco .anual a{font-weight:700;display:inline-flex;align-items:center;min-height:var(--alvo)}
+.cartao-preco .anual a{font-weight:700;display:inline-block;min-height:var(--alvo);padding-block:10px}
 .precos-extra{display:grid;gap:var(--r5);margin-top:var(--r6)}
 .precos-extra h3{font-size:var(--t-h3);margin-bottom:var(--r3)}
 .precisa ul{margin:0;padding-left:20px;display:grid;gap:6px}
@@ -355,7 +355,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
         <li><h3>Veja pronto</h3><p>Digite o nome e veja o seu site na hora. Teste o pedido de horário no seu WhatsApp. Ver é grátis.</p></li>
         <li><h3>Pague por Pix</h3><p>Escolha o plano e pague a Abertura por Pix ou cartão. Você vê o total antes de pagar. Sem criar conta.</p></li>
         <li><h3>Veja como a equipe trabalha</h3><p>Na sede da Creat, uma demonstração mostra cada etapa do trabalho, com o nome do seu negócio na fachada. O andamento real do seu pedido aparece na página do pedido, e o site pronto chega no seu WhatsApp.</p></li>
-        <li><h3>Você aprova, ele entra no ar</h3><p>Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade. Sem resposta em 7 dias, ele entra no ar como está, e você pode pedir ajustes depois.</p></li>
+        <li><h3>Você aprova, ele entra no ar</h3><p>Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade.</p></li>
       </ol>
       <div class="de-verdade">
         <h3>Como funciona de verdade</h3>
@@ -411,7 +411,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
         <ol class="quem-passos">
           <li><span><b>Você vê e pede.</b> A prévia é grátis. Para abrir, você paga a Abertura e manda os dados do negócio.</span></li>
           <li><span><b>A equipe monta.</b> Os agentes escrevem e montam o site, e uma pessoa da equipe lê tudo antes de mandar para você.</span></li>
-          <li><span><b>Você aprova.</b> O site entra no ar com o seu sim, e a mensalidade só começa nesse dia. Sem resposta em 7 dias, ele entra no ar como está.</span></li>
+          <li><span><b>Você aprova.</b> O site entra no ar com o seu sim, e a mensalidade só começa nesse dia.</span></li>
         </ol>
         <p class="quem-contato">Para falar com a gente: <a data-zap="duvida" href="#perguntas"><span data-rotulo-zap>WhatsApp do Suporte Creat</span></a> ou <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a>.</p>
         <ul class="quem-links">
@@ -514,7 +514,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
               <li>A anuidade do domínio, paga no seu nome ao Registro.br</li>
             </ul>
             <p class="anual"><a href="abrir/#plano=vitrine_anual" data-plano="vitrine_anual">Ou R$ <span class="num-carregando" data-v="precos.anual.vitrine"></span> por 12 meses no Pix: você paga <span data-v="precos.anualMesesPagos"></span> e leva 12. Cobrado quando o site entra no ar.</a></p>
-            <div class="compra"><a class="btn btn-sol btn-bloco" href="abrir/#plano=vitrine" data-plano="vitrine" data-cta>Escolher o Vitrine</a></div>
+            <div class="compra"><a class="btn btn-bloco" href="abrir/#plano=vitrine" data-plano="vitrine" data-cta>Escolher o Vitrine</a></div>
           </div>
         </article>
       </div>

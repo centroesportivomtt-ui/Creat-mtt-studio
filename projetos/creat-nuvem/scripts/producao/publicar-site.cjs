@@ -48,7 +48,8 @@ const FAIXA_DEMO = /demonstra[çc][ãa]o\s*·\s*nome fict[íi]cio/i;
 const MTIME = new Date('2026-01-01T00:00:00Z');
 // o que build-site.cjs grava; qualquer outra coisa em dist/<slug>/ não vai ao ar
 // galeria/ (onda 3): só imagem, e só o que tenant.galeria[].src cita (conferido em conferir())
-const GALERIA = /^galeria\/[A-Za-z0-9][A-Za-z0-9._-]{0,80}\.(webp|avif|jpe?g|png|svg)$/i;
+// igual a GALERIA_RE do build-site e ao RE_FOTO do motor: sem svg, só minúsculas
+const GALERIA = /^galeria\/[a-z0-9][a-z0-9-]{0,60}\.(webp|avif|jpe?g|png)$/;
 const LISTA_BRANCA = [/^index\.html$/, /^tenant\.js$/, /^tenant\.json$/, /^robots\.txt$/, /^sitemap\.xml$/, /^motor\/(v1|nichos)\/([A-Za-z0-9_-][A-Za-z0-9._-]*\/)*[A-Za-z0-9._-]+\.(js|css|svg|json|woff2?|png|webp)$/, GALERIA];
 const LISTA_RASCUNHO = [/^rascunho\.js$/, /^rascunho\.css$/];
 const LISTA_SAIDA = [/^index\.html$/, /^robots\.txt$/];

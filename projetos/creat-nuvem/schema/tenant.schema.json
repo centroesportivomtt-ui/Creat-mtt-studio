@@ -190,7 +190,7 @@
       "enum": ["America/Noronha", "America/Belem", "America/Fortaleza", "America/Recife", "America/Araguaina", "America/Maceio", "America/Bahia", "America/Sao_Paulo", "America/Campo_Grande", "America/Cuiaba", "America/Santarem", "America/Porto_Velho", "America/Boa_Vista", "America/Manaus", "America/Eirunepe", "America/Rio_Branco"]
     },
     "galeria": {
-      "description": "v1.3 (opcional): fotos do site, só da pasta galeria/ do próprio site (nenhuma imagem de terceiro em tempo de execução). O motor mostra a seção 'Trabalhos da casa' com 3 fotos ou mais; na demonstração, cada uma é rotulada 'Foto de exemplo'. Sem galeria, a seção não existe (ADR-006).",
+      "description": "v1.3 (opcional): fotos do site, só da pasta galeria/ do próprio site (nenhuma imagem de terceiro em tempo de execução). O motor mostra a seção 'Trabalhos da casa' com 3 fotos ou mais; na demonstração, alt e legenda começam por 'Foto de exemplo' (foto) ou 'Ilustração de exemplo' (desenho), e o selo de cada imagem repete esse rótulo. Sem galeria, a seção não existe (ADR-006).",
       "type": "array",
       "maxItems": 6,
       "items": {

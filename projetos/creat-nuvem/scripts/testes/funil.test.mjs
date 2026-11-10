@@ -976,7 +976,8 @@ test('2A páginas: meta do b44-visitor-tracking pede consentimento em /, /abrir/
   const ob = fs.readFileSync(path.join(RAIZ, 'obrigado/index.html'), 'utf8');
   // promessas antigas que contradizem os termos v2 (PV-05, PV-11, PV-N2): nenhuma nas páginas que o comprador lê
   const PROIBIDAS = [/recomendad/i, /No ar, você aprova/, /Nada vai ao ar sem/, /Site no ar em até/, /vão pelo seu próprio WhatsApp/, /arrependimento depois do pagamento/,
-    /Endereço do site na Creat/, /só entra no ar com o seu sim/, /andamento do seu pedido chega no seu WhatsApp/, /7 dias de arrependimento/];
+    /Endereço do site na Creat/, /andamento do seu pedido chega no seu WhatsApp/, /7 dias de arrependimento/,
+    /Sem resposta em 7 dias/, /não responder em 7 dias/];   // aceite por silêncio guardado (conteudo/README.md, Textos guardados)
   for (const f of ['index.html', 'abrir/index.html', 'obrigado/index.html']) {
     const html = fs.readFileSync(path.join(RAIZ, f), 'utf8');
     for (const r of PROIBIDAS) assert.doesNotMatch(html, r, f + ': ' + r);
@@ -991,6 +992,14 @@ test('2A páginas: meta do b44-visitor-tracking pede consentimento em /, /abrir/
     assert.ok(m, 'faq ' + it.id);
     assert.equal(semTag(m[1]), it.pergunta, 'pergunta ' + it.id);
     assert.equal(semTag(m[2]), it.resposta.replace(/\{\{precos\.prazoHoras\}\}/g, '72'), 'resposta ' + it.id);
+  }
+  // "Como funciona" e "Quem monta" da home e de /abrir/ = conteudo/home.json (a promessa de aprovação muda num lugar só)
+  const hj = JSON.parse(fs.readFileSync(path.join(RAIZ, 'conteudo/home.json'), 'utf8'));
+  const passos = /<ol class="passos">([\s\S]*?)<\/ol>/.exec(home)[1].match(/<li>[\s\S]*?<\/li>/g).map((li) => [semTag(/<h3>(.*?)<\/h3>/.exec(li)[1]), semTag(/<p>(.*?)<\/p>/.exec(li)[1])]);
+  assert.deepEqual(passos, hj.comoFunciona.passos.map((p) => [p.titulo, p.texto]), 'home: Como funciona');
+  for (const [f, html] of [['index.html', home], ['abrir/index.html', ab]]) {
+    const quem = /<ol class="quem-passos">([\s\S]*?)<\/ol>/.exec(html)[1].match(/<li>[\s\S]*?<\/li>/g).map(semTag);
+    assert.deepEqual(quem, hj.quemMonta.passos.map((p) => p.titulo + ' ' + p.texto), f + ': Quem monta');
   }
   assert.doesNotMatch(ob, /recomendado/i);
   assert.match(ob, /<option value="" selected disabled>Escolha o plano<\/option>/);

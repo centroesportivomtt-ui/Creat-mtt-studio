@@ -32,7 +32,14 @@ const FAIXA = 'demonstração · nome fictício';
 let temPlaywright = true;
 try { require.resolve('playwright', { paths: [RAIZ] }); } catch (e) { temPlaywright = false; }
 
+/* com galeria em demos/extras-<nicho>.json, as imagens versionadas em sites/demo-<nicho>/galeria/ vão junto para a saída */
+function copiarGaleria(k, saida) {
+  const de = path.join(RAIZ, 'sites', `demo-${k}`, 'galeria');
+  if (fs.existsSync(de)) fs.cpSync(de, path.join(saida, 'sites', `demo-${k}`, 'galeria'), { recursive: true });
+}
+
 function produzir(k, extra) {
+  copiarGaleria(k, TMP);
   const e = Object.assign({}, process.env, { CREAT_CAMBIO: '5.4', CREAT_SILENCIO: '1' });
   delete e.ANTHROPIC_API_KEY; delete e.CREAT_URL_SITES; delete e.CREAT_HOME; delete e.CREAT_IA_FIXTURE;
   const slug = `demo-${k}`;
@@ -150,7 +157,96 @@ test('v1.3: validação barra imagem de fora, fuso estranho, recado em site de c
   assert.ok(campos({ recados: [{ texto: 'Ótimo.', autor: 'Ana' }] }).includes('recados'), 'recado de exemplo não entra em site de cliente');
   assert.ok(campos({ slug: 'demo-barbearia', galeria: [{ src: 'galeria/a.png', alt: 'Cadeira', legenda: 'Cadeira' }] }).some((c) => /^galeria\[0\]\.(alt|legenda)$/.test(c)), 'demo sem "Foto de exemplo"');
   assert.ok(campos({ galeria: [{ src: 'galeria/a.png', alt: 'Foto de exemplo de cadeira', legenda: 'Foto de exemplo' }] }).some((c) => c.startsWith('galeria')), 'cliente não publica "foto de exemplo"');
+  assert.ok(campos({ galeria: [{ src: 'galeria/a.png', alt: 'Ilustração de exemplo: cadeira', legenda: 'Ilustração de exemplo: a cadeira' }] }).some((c) => c.startsWith('galeria')), 'cliente não publica "ilustração de exemplo"');
 });
+
+/* achado da conferência (onda 3): as 12 imagens do 3F são desenhos da casa, rotulados "Ilustração de exemplo" (CDC art. 37) */
+const ILUSTRACOES = [1, 2, 3, 4].map((i) => ({ src: `galeria/salao-${i}.webp`, alt: `Ilustração de exemplo: bancada ${i} do salão, com espelho e luz.`, legenda: `Ilustração de exemplo: bancada ${i}.`, largura: 1024, altura: 1280 }));
+
+test('v1.3: galeria de demonstração aceita "Ilustração de exemplo" e o motor mantém o rótulo, sem prefixo duplicado', () => {
+  const t = fixture('tenant.entregue.valido.json');
+  const r = validarTenant(Object.assign({}, t, { slug: 'demo-salao', nicho: t.nicho, galeria: ILUSTRACOES }));
+  assert.deepEqual(r.erros.filter((e) => e.campo.startsWith('galeria')), [], 'demo com ilustração da casa é válida');
+  const semAcento = validarTenant(Object.assign({}, t, { slug: 'demo-salao', galeria: ILUSTRACOES.map((g) => Object.assign({}, g, { alt: g.alt.replace('Ilustração', 'ilustracao') })) }));
+  assert.deepEqual(semAcento.erros.filter((e) => e.campo.startsWith('galeria')), [], 'comparação sem acento e sem caixa');
+  const M = motorV1();
+  const g = M._puro.galeriaDe({ galeria: ILUSTRACOES }, true, false);
+  assert.equal(g.length, 4);
+  for (const [i, x] of g.entries()) {
+    assert.equal(x.rotulo, 'Ilustração de exemplo');
+    assert.equal(x.alt, ILUSTRACOES[i].alt, 'alt fica como veio');
+    assert.equal(x.legenda, ILUSTRACOES[i].legenda, 'legenda fica como veio');
+    assert.doesNotMatch(x.alt + x.legenda, /foto de exemplo/i, 'desenho nunca é chamado de foto');
+    assert.deepEqual([x.largura, x.altura], [1024, 1280]);
+  }
+  const f = M._puro.galeriaDe({ galeria: GALERIA.map((x) => Object.assign({}, x, { alt: 'Cadeira de couro', legenda: '' })) }, true, false);
+  assert.ok(f.every((x) => x.rotulo === 'Foto de exemplo' && x.alt === 'Foto de exemplo: cadeira de couro' && x.legenda === 'Foto de exemplo'), 'sem rótulo no texto, entra "Foto de exemplo"');
+  const cli = M._puro.galeriaDe({ galeria: GALERIA.map((x) => Object.assign({}, x, { alt: 'Cadeira de couro' })) }, false, false);
+  assert.ok(cli.every((x) => x.rotulo === '' && x.alt === 'Cadeira de couro'), 'site de cliente sem rótulo de exemplo');
+});
+
+test('v1.3: preço zero aparece como "Grátis" e o fecho de reserva não promete prazo', () => {
+  const M = motorV1();
+  assert.equal(M._puro.moeda(0), 'Grátis');
+  assert.match(M._puro.moeda(45), /^R\$\s45$/);
+  assert.equal(M._puro.moeda(null), 'sob consulta');
+  const t = fixture('tenant.entregue.valido.json');
+  t.servicos = [Object.assign({}, t.servicos[0], { preco: 0 })].concat(t.servicos.slice(1));
+  const e = M.construirEstado(t, { site: {} });
+  assert.equal(e.servicos[0].precoTexto, 'Grátis');
+  assert.doesNotMatch(e.servicos.map((s) => s.precoTexto).join('|'), /R\$\s?0(?!\d)/);
+  const semFecho = M.construirEstado(fixture('tenant.entregue.valido.json'), { site: { home: HOME, demonstracao: true } }).fecho;
+  assert.equal(semFecho.titulo, 'Este site, com o nome do seu negócio, pronto para você aprovar.');
+  assert.doesNotMatch(semFecho.titulo, /em horas|no ar/, 'regra única de prazo: aprovar em até 72 h vem do build');
+});
+
+/* achado da conferência (onda 3): regerar as demos pela esteira real tem de reproduzir preços e nota */
+test('v1.3: demos/extras-<nicho>.json com precos repõe os preços de exemplo e a nota "Preços de exemplo"', () => {
+  const { tenantDoPedido, extrasDaDemo, NOTA_DEMO_PRECO, NOTA_SEM_PRECO } = require(path.join(RAIZ, 'scripts', 'producao', 'lib', 'tenant.cjs'));
+  const C = require(path.join(RAIZ, 'scripts', 'producao', 'lib', 'comum.cjs'));
+  const P = require(path.join(RAIZ, 'scripts', 'producao', 'lib', 'pedido.cjs'));
+  const d = path.join(TMP, 'extras-precos'); fs.mkdirSync(d, { recursive: true });
+  for (const k of ['barbearia', 'salao', 'academia']) {
+    const repo = JSON.parse(fs.readFileSync(path.join(RAIZ, 'sites', `demo-${k}`, 'tenant.json'), 'utf8'));
+    const precos = Object.fromEntries(repo.servicos.map((s) => [s.id, s.preco]));
+    fs.writeFileSync(path.join(d, `extras-${k}.json`), JSON.stringify({ precos }));
+    const pedido = P.validarPedido(P.lerPedidoArquivo(path.join(DEMOS, `pedido-${k}.txt`)));
+    const opc = { agora: new Date('2026-11-10T12:00:00Z'), slug: `demo-${k}`, demonstracao: true, pastaExtras: d };
+    const t = tenantDoPedido(pedido, C.carregarPreset(k), opc);
+    assert.deepEqual(t.servicos.map((s) => [s.id, s.preco]), repo.servicos.map((s) => [s.id, s.preco]), k);
+    assert.equal(t.textos.servicosNota, NOTA_DEMO_PRECO, k);
+    assert.equal(t.textos.servicosNota, repo.textos.servicosNota, k + ': nota igual à do repositório');
+    assert.ok(!('precos' in t), 'precos não vira campo do tenant');
+    const cli = tenantDoPedido(pedido, C.carregarPreset(k), { agora: opc.agora, pastaExtras: d });
+    assert.ok(cli.servicos.every((s) => s.preco === null) && cli.textos.servicosNota === NOTA_SEM_PRECO, k + ': cliente nunca lê precos de exemplo');
+  }
+  fs.writeFileSync(path.join(d, 'extras-barbearia.json'), JSON.stringify({ precos: { corte: -1 } }));
+  assert.throws(() => extrasDaDemo('barbearia', d), /precos\.corte/);
+  fs.writeFileSync(path.join(d, 'extras-barbearia.json'), JSON.stringify({ precos: { 'nao-existe': 10 } }));
+  const pedido = P.validarPedido(P.lerPedidoArquivo(path.join(DEMOS, 'pedido-barbearia.txt')));
+  assert.throws(() => tenantDoPedido(pedido, C.carregarPreset('barbearia'), { slug: 'demo-barbearia', demonstracao: true, pastaExtras: d }), /nao-existe/);
+});
+
+for (const k of ['barbearia', 'salao', 'academia']) {
+  const extras = (() => { try { return JSON.parse(fs.readFileSync(path.join(DEMOS, `extras-${k}.json`), 'utf8')); } catch (e) { return {}; } })();
+  const falta = !extras.precos ? `demos/extras-${k}.json ainda sem "precos" (pedido ao pacote 3E)` : false;
+  test(`demo-${k}: regerar pela esteira real reproduz servicos e textos de sites/demo-${k}/tenant.json`, { skip: falta }, () => {
+    const saida = path.join(TMP, 'regen');
+    copiarGaleria(k, saida);
+    const e = Object.assign({}, process.env, { CREAT_CAMBIO: '5.4', CREAT_SILENCIO: '1' });
+    delete e.ANTHROPIC_API_KEY; delete e.CREAT_URL_SITES; delete e.CREAT_HOME; delete e.CREAT_IA_FIXTURE;
+    const r = spawnSync(process.execPath, [path.join(RAIZ, 'scripts', 'producao', 'produzir.mjs'),
+      '--pedido', path.join(DEMOS, `pedido-${k}.txt`), '--fixture-ia', path.join(DEMOS, `resposta-ia-${k}.json`),
+      '--slug', `demo-${k}`, '--saida', saida, '--sem-sair', '--demonstracao', '--sem-navegador',
+      '--url', `https://creat-nuvem-404b1994.base44.app/sites/demo-${k}/`, '--home', HOME], { env: e, encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr + r.stdout);
+    const novo = JSON.parse(fs.readFileSync(path.join(saida, 'dist', `demo-${k}`, 'tenant.json'), 'utf8'));
+    const repo = JSON.parse(fs.readFileSync(path.join(RAIZ, 'sites', `demo-${k}`, 'tenant.json'), 'utf8'));
+    assert.deepEqual(novo.servicos, repo.servicos);
+    assert.deepEqual(novo.textos, repo.textos);
+    assert.deepEqual(novo.galeria, repo.galeria);
+  });
+}
 
 test('v1.3: site de cliente nunca herda galeria nem recados do preset; a demo lê demos/extras-<nicho>.json', () => {
   const { tenantDoPedido, extrasDaDemo } = require(path.join(RAIZ, 'scripts', 'producao', 'lib', 'tenant.cjs'));
@@ -233,10 +329,11 @@ test('v1.3 no navegador: cliente sem galeria não tem #trabalhos nem nada da dem
   const t = fixture('tenant.entregue.valido.json');
   const pasta = path.join(TMP, 'v13-tenant'); fs.mkdirSync(path.join(pasta, 'galeria'), { recursive: true });
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==', 'base64');
-  for (const g of GALERIA) fs.writeFileSync(path.join(pasta, g.src), png);
-  const cli = path.join(TMP, 'v13-cliente'), demo = path.join(TMP, 'v13-demo');
+  for (const g of GALERIA.concat(ILUSTRACOES)) fs.writeFileSync(path.join(pasta, g.src), png);
+  const cli = path.join(TMP, 'v13-cliente'), demo = path.join(TMP, 'v13-demo'), ilus = path.join(TMP, 'v13-ilustracao');
   buildSite({ tenant: t, destino: cli, saida: TMP, pastaTenant: pasta, site: { home: HOME, url: false } });
   buildSite({ tenant: Object.assign({}, t, { slug: 'demo-barbearia', galeria: GALERIA, avaliacoes: [], recados: [{ texto: 'Saí do jeito que pedi.', autor: 'Cliente' }] }), destino: demo, saida: TMP, pastaTenant: pasta, precos: null, site: { home: HOME, url: false, demonstracao: true } });
+  buildSite({ tenant: Object.assign({}, t, { slug: 'demo-barbearia', galeria: ILUSTRACOES, avaliacoes: [] }), destino: ilus, saida: TMP, pastaTenant: pasta, precos: null, site: { home: HOME, url: false, demonstracao: true } });
   const nav = await chromium.launch();
   try {
     const pg = await nav.newPage({ viewport: { width: 390, height: 844 } });
@@ -244,7 +341,7 @@ test('v1.3 no navegador: cliente sem galeria não tem #trabalhos nem nada da dem
     const ler = () => pg.evaluate(() => ({
       trabalhos: !!document.getElementById('trabalhos'), fecho: !!document.querySelector('.fecho-demo'), faixa: !!document.querySelector('.faixa-demo'),
       ordem: [...document.querySelectorAll('main > section')].map((s) => s.id), fotos: [...document.querySelectorAll('#trabalhos figure.foto img')].map((i) => [i.getAttribute('alt'), i.getAttribute('loading'), i.getAttribute('width')]),
-      selos: document.querySelectorAll('#trabalhos .selo-foto').length, legenda: (document.querySelector('#trabalhos figcaption') || {}).textContent || '',
+      selos: document.querySelectorAll('#trabalhos .selo-foto').length, textoSelos: [...document.querySelectorAll('#trabalhos .selo-foto')].map((x) => x.textContent), legenda: (document.querySelector('#trabalhos figcaption') || {}).textContent || '',
       recados: (document.querySelector('#recados') || {}).textContent || '', pedirEste: document.querySelectorAll('#lista-precos a.pedir-este').length,
       rodapeHorario: (document.querySelector('.rodape-horario') || {}).textContent || '', rodapeWhats: !!document.querySelector('.rodape-whats a.link-whats-rodape'),
       som: localStorage.getItem('site:' + window.TENANT.slug + ':som'), scroll: document.documentElement.scrollWidth
@@ -271,6 +368,16 @@ test('v1.3 no navegador: cliente sem galeria não tem #trabalhos nem nada da dem
     assert.match(d.recados, /recado de exemplo/);
     assert.equal(d.fecho && d.faixa, true);
     assert.match(d.rodapeHorario, /^Horário de exemplo: terça a sexta, 9h às 20h · sábado, 9h às 18h$/);
+    assert.deepEqual(d.textoSelos, ['Foto de exemplo', 'Foto de exemplo', 'Foto de exemplo']);
+    await pg.goto(pathToFileURL(path.join(ilus, 'index.html')).href);
+    await pg.waitForFunction(() => document.documentElement.classList.contains('motor-pronto'));
+    const il = await ler();
+    assert.equal(il.trabalhos, true);
+    assert.deepEqual(il.fotos.map((f) => f[0]), ILUSTRACOES.map((g) => g.alt), 'alt da ilustração sem "Foto de exemplo:" na frente');
+    assert.ok(il.fotos.every((f) => f[1] === 'lazy' && f[2] === '1024'));
+    assert.deepEqual(il.textoSelos, ILUSTRACOES.map(() => 'Ilustração de exemplo'), 'selo diz o que a imagem é');
+    assert.equal(il.legenda, ILUSTRACOES[0].legenda);
+    assert.ok(il.scroll <= 390);
     assert.deepEqual(erros, []);
   } finally { await nav.close(); }
 });

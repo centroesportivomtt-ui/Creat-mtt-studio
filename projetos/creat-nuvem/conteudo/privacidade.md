@@ -15,7 +15,7 @@ Enquanto você só olha a vitrine e gera a prévia, nada do que você digita é 
 - Guardamos por 30 dias, neste aparelho, de qual anúncio você veio (só a origem, o meio, a campanha e o código do anúncio, sem nada sobre você), para abrir o link de pagamento da sua região. Isso é gravado ao abrir a página, antes de qualquer aceite.
 - A página conta, no servidor da Creat, quantas vezes por dia cada passo acontece (página vista, prévia gerada, abertura de /abrir/ e toque em Pagar), separado só por nicho, praça e código do anúncio. A contagem não usa cookie, não guarda nada no seu aparelho e não grava nome, cidade, WhatsApp, e-mail nem o endereço IP: é um número por dia, somado com o de todas as outras visitas.
 - As letras do site vêm do Google Fonts. Para entregá-las, o Google recebe o endereço IP e os dados do navegador em toda página, sem cookie.
-- A Cloudflare, que fica na frente da hospedagem, grava em toda página um cookie técnico de segurança contra robôs (__cf_bm), que dura até 30 minutos e não serve para medir você.
+- A Cloudflare, que fica na frente da hospedagem, pode enviar um cookie técnico de segurança contra robôs em nome de outro domínio, o da própria hospedagem. O navegador não guarda esse cookie para este site, e ele não serve para medir você.
 - A hospedagem do site (Base44) tem um registro próprio de origem da visita, com os cookies base44_referrer_origin e base44_referrer_id, de até 30 dias. Na página inicial, em /abrir/ e em /obrigado/, ela só grava esses cookies depois que você toca em "Aceitar" no aviso de medição. Nas outras páginas (termos, privacidade, bastidores, prévia e sede), ela ainda pode gravá-los quando você chega de outro site.
 
 ## 2. Medição sem cookie
@@ -48,8 +48,8 @@ Ninguém lê o pedido pela internet: o registro não tem leitura pública, e só
 
 O site guarda neste aparelho, e só neste aparelho:
 
-- O número do pedido e o segredo, para consultar o pedido e aprovar o site pronto: 7 dias.
-- Os dados do formulário, para a página seguinte, até o servidor confirmar que registrou o pedido (no máximo 7 dias). Depois disso ficam só o número do pedido, o segredo, o nome do negócio e o estado.
+- Os dados do formulário (quem cuida do negócio, o WhatsApp, o endereço, os horários e o e-mail), o endereço da sua prévia e a data do aceite: só até o servidor confirmar que registrou o pedido, no máximo 7 dias.
+- O número do pedido e o segredo, para consultar o pedido e aprovar o site pronto, junto com o nome do negócio, a cidade, o nicho, o plano, o produto e o valor, a praça, o link de pagamento, a paleta da prévia, a origem do anúncio e o estado do pedido: até 30 dias desde o toque em Pagar.
 - O nome e a cidade do negócio, na aba de /abrir/: até a aba fechar.
 - De qual anúncio você veio: 30 dias.
 - A sua escolha sobre a medição: 180 dias.

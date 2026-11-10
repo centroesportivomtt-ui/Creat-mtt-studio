@@ -2,7 +2,7 @@ REVISAO_JURIDICA_PENDENTE
 
 # Termos de uso do Porta Aberta
 
-Versão 2 (termos-v2) · 10/11/2026 · substitui a versão 1 (termos-v1, de 08/11/2026). Mudou: o prazo e a hora da confirmação do pagamento, a aprovação do site com prazo de 7 dias para responder, o prazo da devolução na desistência, os posts do plano Vitrine, o domínio e o endereço do site na saída, e a régua de atraso. Quem aceitou a versão 1 continua com ela até ser avisado (cláusula 17).
+Versão 2 (termos-v2) · 10/11/2026 · substitui a versão 1 (termos-v1, de 08/11/2026). Mudou: o prazo e a hora da confirmação do pagamento, a aprovação do site (ele só entra no ar com o seu sim), o prazo da devolução na desistência, os posts do plano Vitrine, o domínio e o endereço do site na saída, e a régua de atraso. Quem aceitou a versão 1 continua com ela até ser avisado (cláusula 17).
 
 Estes termos valem para quem contrata o Porta Aberta, o serviço da Creat Nuvem que monta e mantém no ar o site de um negócio local. Ao marcar o aceite em /abrir/ e pagar a Abertura, você concorda com eles. Escrevemos em linguagem simples de propósito. Se algo não ficar claro, pergunte antes de pagar.
 
@@ -44,7 +44,7 @@ Ver a prévia é grátis e não exige cadastro. A prévia usa serviços, preços
 - Ficam fora do prazo o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros.
 - Se a Creat passar do prazo, o 1º mês do plano é grátis: a mensalidade começa um mês depois do dia em que o site entra no ar.
 
-**Aprovação.** O link do site pronto chega pelo WhatsApp do Suporte Creat e aparece na página do pedido, no aparelho em que você pagou. Você confere, pede os ajustes que quiser e aprova. Se você não responder em 7 dias, o site entra no ar como está e a mensalidade começa nesse dia. Você pode pedir ajustes depois.
+**Aprovação.** O link do site pronto chega pelo WhatsApp do Suporte Creat e aparece na página do pedido, no aparelho em que você pagou. Você confere, pede os ajustes que quiser e aprova. O site só entra no ar com o seu sim, e a mensalidade só começa nesse dia.
 
 ## 6. Direito de arrependimento
 

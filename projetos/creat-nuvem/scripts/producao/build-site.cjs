@@ -191,7 +191,9 @@ function lerPrecos(arq) {
 }
 
 /* ---------- galeria: só os arquivos que o tenant cita ---------- */
-const GALERIA_RE = /^galeria\/[A-Za-z0-9][A-Za-z0-9._-]{0,80}\.(webp|avif|jpe?g|png|svg)$/i;
+// a mesma regra do schema v1.3 e do motor (RE_FOTO): sem svg (executaria script na origem do site),
+// só minúsculas, sem ponto no nome. Foto que o motor não mostraria também não vai ao ar.
+const GALERIA_RE = /^galeria\/[a-z0-9][a-z0-9-]{0,60}\.(webp|avif|jpe?g|png)$/;
 function arquivosDaGaleria(tenant) {
   const g = Array.isArray(tenant && tenant.galeria) ? tenant.galeria : [];
   return g.map((x, i) => ({ i, src: String((x && x.src) || '') }));
@@ -201,7 +203,7 @@ function copiarGaleria(tenant, pastaTenant, destino) {
   if (!lista.length) return [];
   const erros = [];
   for (const x of lista) {
-    if (!GALERIA_RE.test(x.src) || x.src.includes('..')) erros.push({ campo: `galeria[${x.i}].src`, mensagem: `precisa ser "galeria/<arquivo>.webp|avif|jpg|png|svg" (está "${x.src}")` });
+    if (!GALERIA_RE.test(x.src) || x.src.includes('..')) erros.push({ campo: `galeria[${x.i}].src`, mensagem: `precisa ser "galeria/<nome-em-minusculas>.webp|avif|jpg|png" (está "${x.src}")` });
     else if (!pastaTenant || !fs.existsSync(path.join(pastaTenant, x.src)) || !fs.lstatSync(path.join(pastaTenant, x.src)).isFile()) erros.push({ campo: `galeria[${x.i}].src`, mensagem: `arquivo não encontrado em ${pastaTenant ? path.join(pastaTenant, x.src) : '(sem pasta do tenant)'}` });
   }
   if (erros.length) throw new C.ErroLista(`Galeria do tenant ${tenant.slug} com problema:`, erros);
@@ -294,16 +296,17 @@ function buildSite(opc) {
   if (!previa && !site.url) avisos.push('sem URL do site (--url, ou CREAT_URL_SITES diferente de "0"): sem canonical, sem sitemap.xml e sem "url" no JSON-LD');
   if (site.rodape && !site.home) avisos.push('sem home da vitrine (--home, ou CREAT_HOME diferente de "0"): o rodapé "Aberto pela Creat" sai sem link');
 
+  // o comentário de documentação do template cita os marcadores; sem tirá-lo, eles seriam
+  // preenchidos ali dentro também (título e descrição repetidos num comentário do HTML entregue)
+  const template = fs.readFileSync(path.join(C.MOTOR, 'v1', 'template.html'), 'utf8').replace(/[ \t]*<!--(?:(?!-->)[\s\S])*?Marcadores:[\s\S]*?-->\n?/, '');
+  // antes de apagar o destino: CSP recusada não pode deixar meia pasta (que travaria o build seguinte)
+  conferirCsp(template);
   const destino = checarDestino(opc.destino, opc.saida);
   fs.rmSync(destino, { recursive: true, force: true });
   fs.mkdirSync(destino, { recursive: true });
   C.copiarPasta(path.join(C.MOTOR, 'v1'), path.join(destino, 'motor', 'v1'), (a, st) => st.isDirectory() || path.basename(a) !== 'template.html');
   C.copiarPasta(path.join(C.MOTOR, 'nichos'), path.join(destino, 'motor', 'nichos'), (a, st) => st.isDirectory() || /\.(js|css|svg)$/.test(a));
 
-  // o comentário de documentação do template cita os marcadores; sem tirá-lo, eles seriam
-  // preenchidos ali dentro também (título e descrição repetidos num comentário do HTML entregue)
-  const template = fs.readFileSync(path.join(C.MOTOR, 'v1', 'template.html'), 'utf8').replace(/[ \t]*<!--(?:(?!-->)[\s\S])*?Marcadores:[\s\S]*?-->\n?/, '');
-  conferirCsp(template);
   // sem fonte do Google o motor põe href="data:text/css,", que a CSP (style-src sem data:) bloquearia
   // com erro no console; sem fonte não há o que carregar, então a linha sai
   const html = cabecaSocial(M.preencherTemplate(template, tenant, { preset, site, caminhoMotor: 'motor/' }).replace(/[ \t]*<link rel="stylesheet" href="data:text\/css," data-motor-fontes>\n?/, ''), tenant, preset, site, M);

@@ -148,7 +148,6 @@
     esquecido: 'Pronto: seu nome e seu WhatsApp saíram deste aparelho.',
     esquecidoPrevia: 'Pronto: os campos foram limpos. Na prévia nada fica salvo.',
     resumoTitulo: 'Seu pedido',
-    resumoVazio: 'Escolha o dia e o horário. O resto aparece aqui.',
     dia: 'Dia', hora: 'Horário', servico: 'Serviço', profissional: 'Profissional', valor: 'Valor',
     semArrastar: 'Enviar sem arrastar',
     erroNome: 'Escreva seu nome.',
@@ -161,11 +160,17 @@
     abrirWhatsTeste: 'Abrir o teste no meu WhatsApp',
     novo: 'Pedir outro horário',
     deSempre: 'O de sempre',
-    deSempreNota: 'Serviço escolhido. Agora escolha o dia e o horário.',
+    deSempreNota: 'Serviço: {servico}. Agora escolha o dia e o horário.',
     prefixoTeste: TXT.prefixoTeste,
     externoNota: 'Abre a página de horários que o negócio já usa.',
     verTurno: 'Ver {turno} ({n})',
-    servicoPedido: '{servico} escolhido. Agora escolha o dia e o horário.',
+    servicoPedido: 'Serviço: {servico}. Agora escolha o dia e o horário.',
+    naoCabePedido: '{servico} não cabe nesse horário. Escolha outro horário.',
+    naoCabeDia: '{servico} não cabe em nenhum horário desse dia. Escolha outro dia.',
+    horaNaoCabe: '{hora}, {servico} não cabe',
+    trocarServico: 'Ver todos os horários',
+    resumoFalta: 'a escolher',
+    dados: 'Seus dados',
     exemplo: ' (exemplo)'
   };
 
@@ -248,7 +253,7 @@
     var reduz = ctx.reduzMovimento;
     var est = {
       dia: null, hora: null, servicoId: null, profissionalId: null, servicoPendente: null,
-      nome: '', whats: '', tocado: { nome: false, whats: false }, tentou: false, enviando: false
+      nome: '', whats: '', nomeResumo: '', tocado: { nome: false, whats: false }, tentou: false, enviando: false
     };
     var revelado = { profissional: false, dados: false };
     var tiraCriada = false;
@@ -300,6 +305,7 @@
     var escolhas = criar('div', { classe: 'agendar-escolhas' });
     escolhas.appendChild(criar('button', { type: 'button', id: 'atalho-sempre', classe: 'atalho-sempre', hidden: true }));
     escolhas.appendChild(criar('p', { id: 'atalho-nota', classe: 'nota atalho-nota', 'aria-live': 'polite' }));
+    escolhas.appendChild(criar('button', { type: 'button', id: 'largar-servico', classe: 'btn-link largar-servico', hidden: true, texto: T.trocarServico }));
     escolhas.appendChild(passo('passo-dia', T.passoDia, [
       criar('div', { id: 'fita-dias', classe: 'fita-dias', role: 'group', 'aria-labelledby': 'passo-dia-titulo' })
     ]));
@@ -429,7 +435,11 @@
         return;
       }
       var r = P.resumoDia(e.funcionamento, servicos, est.dia, hoje);
-      var valida = false;
+      var valida = false, cabeAlgum = false;
+      /* "Pedir este" antes do horário: o serviço fica guardado e os horários em que ele não cabe saem riscados */
+      var pend = est.servicoPendente ? servicoPorId(est.servicoPendente) : null;
+      var hDia = P.horarioDoDia(e.funcionamento, P.dataDaChave(est.dia).getDay());
+      var fechaR = hDia ? hDia.fecha : null;
       if (turnosDia !== est.dia) { turnosDia = est.dia; turnosAbertos = {}; }
       var grupos = agruparTurnos(r.horarios);
       var aberto = turnoAberto(grupos, r.horarios.indexOf(est.hora) !== -1 ? est.hora : null);
@@ -446,9 +456,12 @@
         var grade = criar('div', { id: idH, classe: 'horarios', hidden: !turnosAbertos[g.id] });
         g.horarios.forEach(function (t) {
           var b = criar('button', { type: 'button', classe: 'horario', 'data-hora': P.minParaHHMM(t) }, [criar('span', { classe: 'hora', texto: P.horaTexto(t) })]);
-          var sel = t === est.hora;
+          var naoCabeAqui = !!pend && (fechaR == null || t + pend.duracaoMin > fechaR);
+          var sel = t === est.hora && !naoCabeAqui;
           if (sel) valida = true;
+          if (!naoCabeAqui) cabeAlgum = true;
           b.setAttribute('aria-pressed', sel ? 'true' : 'false');
+          if (naoCabeAqui) riscarHorario(b, t, pend);
           grade.appendChild(b);
         });
         bloco.appendChild(grade);
@@ -461,6 +474,10 @@
       });
       if (!valida) est.hora = null;
       tabindexHorarios();
+      if (pend && r.horarios.length && !cabeAlgum) {
+        aviso.appendChild(criar('p', { texto: P.fmt(T.naoCabeDia, { servico: pend.nome }) }));
+        mostrar(aviso, true);
+      }
       if (!r.horarios.length) {
         var ehHoje = P.diferencaDias(hoje, r.data) === 0;
         aviso.appendChild(criar('p', { texto: ehHoje ? T.semHorarioHoje : T.semHorarioDia }));
@@ -474,8 +491,19 @@
         mostrar(aviso, true);
       }
     }
-    /* só os horários que estão na tela (turno recolhido fica de fora da navegação por setas) */
-    function botoesHora() { return Array.prototype.slice.call($('lista-horarios').querySelectorAll('.horarios:not([hidden]) .horario')); }
+    /* horário em que o serviço pedido não cabe: visível e riscado, fora do toque e da navegação por setas.
+       Estilo pelo CSSOM (a CSP não aceita atributo style) e com as variáveis do tema. */
+    function riscarHorario(b, t, s) {
+      b.setAttribute('aria-disabled', 'true');
+      b.setAttribute('aria-label', P.fmt(T.horaNaoCabe, { hora: P.horaTexto(t), servico: s.nome }));
+      b.classList.add('is-nao-cabe');
+      b.tabIndex = -1;
+      [['border-style', 'dashed'], ['background', 'transparent'], ['color', 'var(--apagado, var(--tinta-suave))'], ['cursor', 'not-allowed']].forEach(function (x) { b.style.setProperty(x[0], x[1]); });
+      var h = b.querySelector('.hora');
+      if (h) h.style.setProperty('text-decoration', 'line-through');
+    }
+    /* só os horários que estão na tela e que se podem pedir (turno recolhido e horário riscado ficam de fora das setas) */
+    function botoesHora() { return Array.prototype.slice.call($('lista-horarios').querySelectorAll('.horarios:not([hidden]) .horario:not([aria-disabled="true"])')); }
     function abrirTurno(id, foco) {
       turnosAbertos[id] = true;
       var g = $('turno-' + id + '-horarios');
@@ -502,9 +530,14 @@
       tabindexHorarios();
       if (est.servicoPendente) {
         var sp = est.servicoPendente;
-        est.servicoPendente = null;
-        if (cabe(sp)) { est.servicoId = sp; notaAtalho(''); }
-        else notaAtalho(((servicoPorId(sp) || {}).nome || 'Esse serviço') + ' não cabe nesse horário. Escolha outro serviço ou outro horário.');
+        if (cabe(sp)) {
+          est.servicoPendente = null; est.servicoId = sp; notaAtalho('');
+          /* o serviço já está escolhido: os horários voltam sem risco, com o foco no que foi tocado */
+          var focoNaGrade = $('lista-horarios').contains(DOC.activeElement);
+          renderHorarios();
+          if (focoNaGrade) { var bp = $('lista-horarios').querySelector('.horario[aria-pressed="true"]'); if (bp) bp.focus(); }
+        }
+        else notaAtalho(P.fmt(T.naoCabePedido, { servico: (servicoPorId(sp) || {}).nome || 'Esse serviço' }));   // continua guardado
       }
       depoisDeEscolher();
     }
@@ -604,9 +637,13 @@
       var sid = b.getAttribute('data-servico'), pid = b.getAttribute('data-profissional');
       if (pid && profPorId(pid)) est.profissionalId = pid;
       var s = servicoPorId(sid);
-      if (est.hora == null) { est.servicoPendente = sid; notaAtalho(T.deSempreNota); }
-      else if (cabe(sid)) { est.servicoId = sid; notaAtalho(''); }
-      else notaAtalho((s ? s.nome : 'Esse serviço') + ' não cabe nesse horário. Escolha outro horário ou outro serviço.');
+      if (est.hora != null && cabe(sid)) { est.servicoPendente = null; est.servicoId = sid; notaAtalho(''); }
+      else {
+        est.servicoId = null;
+        est.servicoPendente = sid;
+        notaAtalho(P.fmt(est.hora == null ? T.deSempreNota : T.naoCabePedido, { servico: s ? s.nome : 'Esse serviço' }));
+      }
+      renderHorarios();
       depoisDeEscolher();
     }
 
@@ -635,6 +672,10 @@
       if (c && typeof c.whats === 'string') inputWhats.value = P.mascararWhats(P.normalizarWhats(c.whats));
       est.nome = inputNome.value;
       est.whats = P.normalizarWhats(inputWhats.value);
+      est.nomeResumo = est.nome;
+      /* o resumo mostra os dados quando a pessoa sai do campo, não a cada letra */
+      var dadosNoResumo = function () { est.nomeResumo = est.nome; atualizarResumo(); };
+      inputNome.addEventListener('change', dadosNoResumo);
       inputNome.addEventListener('input', function () {
         est.nome = inputNome.value;
         if (est.tocado.nome || est.tentou) mostrarErros(false);
@@ -656,8 +697,10 @@
         if (!previa) armazem.remover('cliente');
         inputNome.value = ''; inputWhats.value = '';
         est.nome = ''; est.whats = ''; anterior = '';
+        est.nomeResumo = '';
         est.tocado = { nome: false, whats: false };
         mostrarErros(false);
+        atualizarResumo();
         renderAtalho();
         $('nota-esquecer').textContent = previa ? T.esquecidoPrevia : T.esquecido;
       });
@@ -673,15 +716,21 @@
       if (temProf && !est.profissionalId) f.push('o profissional');
       return f.length > 1 ? f.slice(0, -1).join(', ') + ' e ' + f[f.length - 1] : f[0] || '';
     }
-    function linhasEscolha() {
+    /* resumo da tela: Dia, Horário, Serviço (e Profissional) e Seus dados sempre visíveis, com traço no que falta */
+    function linhasResumo() {
       var s = est.servicoId && servicoPorId(est.servicoId), p = est.profissionalId && profPorId(est.profissionalId);
-      return [
+      var sp = !s && est.servicoPendente && servicoPorId(est.servicoPendente);
+      /* só o nome, numa linha: o resumo não muda de altura quando a pessoa sai do campo (o botão de enviar fica onde o dedo está) */
+      var dados = P.nomeValido(est.nomeResumo) ? P.colapsar(est.nomeResumo) : '';
+      var l = [
         [T.dia, est.dia ? maiuscula(P.diaLongo(P.dataDaChave(est.dia), agora())) : '', null],
         [T.hora, est.hora != null ? P.horaTexto(est.hora) : '', 'hora'],
-        [T.servico, s ? s.nome + ' · ' + s.duracaoTexto : '', null],
-        [T.profissional, p ? p.nome : '', null],
-        [T.valor, s ? s.precoTexto + (exemplo && s.preco !== null ? T.exemplo : '') : '', classePreco(s ? s.preco : null)]
-      ].filter(function (l) { return l[1]; });
+        [T.servico, s ? s.nome + ' · ' + s.duracaoTexto : sp ? sp.nome + ' · ' + sp.duracaoTexto : '', null]
+      ];
+      if (temProf) l.push([T.profissional, p ? p.nome : '', null]);
+      l.push([T.dados, dados, null]);
+      if (s) l.push([T.valor, s.precoTexto + (exemplo && s.preco !== null ? T.exemplo : ''), classePreco(s.preco)]);
+      return l;
     }
     function preencherDl(dl, linhas) {
       limpar(dl);
@@ -690,12 +739,31 @@
         dl.appendChild(criar('dd', { classe: l[2], texto: l[1] }));
       });
     }
+    var assinaturaResumo = null;
     function atualizarResumo() {
       var c = $('resumo-corpo');
-      limpar(c);
-      var linhas = linhasEscolha();
-      if (!linhas.length) c.appendChild(criar('p', { classe: 'vazio-resumo', texto: T.resumoVazio }));
-      else { var dl = criar('dl'); preencherDl(dl, linhas); c.appendChild(dl); }
+      var linhas = linhasResumo();
+      mostrar($('largar-servico'), !!est.servicoPendente);
+      /* a região é aria-live: só redesenha quando o conteúdo muda (digitar não repete o resumo no leitor de tela) */
+      var assinatura = JSON.stringify(linhas);
+      if (assinatura !== assinaturaResumo) {
+        assinaturaResumo = assinatura;
+        limpar(c);
+        var dl = criar('dl');
+        linhas.forEach(function (l) {
+          dl.appendChild(criar('dt', { texto: l[0] }));
+          if (l[1]) {
+            var cheio = criar('dd', { classe: l[2], texto: l[1] });
+            if (l[0] === T.dados) [['white-space', 'nowrap'], ['overflow', 'hidden'], ['text-overflow', 'ellipsis']].forEach(function (x) { cheio.style.setProperty(x[0], x[1]); });
+            dl.appendChild(cheio);
+            return;
+          }
+          var dd = criar('dd', { classe: 'is-vazio' }, [criar('span', { 'aria-hidden': 'true', texto: '—' }), criar('span', { classe: 'so-leitor', texto: T.resumoFalta })]);
+          dd.style.setProperty('color', 'var(--tinta-suave)');
+          dl.appendChild(dd);
+        });
+        c.appendChild(dl);
+      }
       var pronto = tudoEscolhido();
       mostrar($('bloco-confirmar'), pronto);
       if (pronto) iniciarTira();
@@ -848,7 +916,7 @@
         var v = ev.target.closest && ev.target.closest('[data-ver-turno]');
         if (v) { abrirTurno(v.getAttribute('data-ver-turno'), true); return; }
         var b = ev.target.closest && ev.target.closest('.horario');
-        if (b) selecionarHora(P.hm(b.getAttribute('data-hora')));
+        if (b && b.getAttribute('aria-disabled') !== 'true') selecionarHora(P.hm(b.getAttribute('data-hora')));
       });
       lh.addEventListener('keydown', function (ev) {
         var bs = botoesHora(), i = bs.indexOf(DOC.activeElement);
@@ -892,6 +960,14 @@
       });
 
       $('atalho-sempre').addEventListener('click', usarAtalho);
+      $('largar-servico').addEventListener('click', function () {
+        est.servicoPendente = null;
+        notaAtalho('');
+        renderHorarios();
+        depoisDeEscolher();
+        var b = botoesHora()[0];
+        if (b) b.focus();
+      });
       /* type="submit": clique, Enter nos campos e "Ir" do teclado do celular caem aqui */
       form.addEventListener('submit', function (ev) { ev.preventDefault(); confirmar(); });
       W.addEventListener('ritual:confirmar', function (ev) {
@@ -925,7 +1001,8 @@
       if (est.hora != null && cabe(id)) { est.servicoPendente = null; escolherServico(id, false); notaAtalho(''); return true; }
       est.servicoId = null;
       est.servicoPendente = id;
-      notaAtalho(est.hora != null ? s.nome + ' não cabe nesse horário. Escolha outro horário.' : P.fmt(T.servicoPedido, { servico: s.nome }));
+      notaAtalho(P.fmt(est.hora != null ? T.naoCabePedido : T.servicoPedido, { servico: s.nome }));
+      renderHorarios();
       depoisDeEscolher();
       return true;
     };

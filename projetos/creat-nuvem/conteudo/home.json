@@ -113,7 +113,7 @@
       },
       {
         "titulo": "Você aprova, ele entra no ar",
-        "texto": "Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade. Sem resposta em 7 dias, ele entra no ar como está, e você pode pedir ajustes depois."
+        "texto": "Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade."
       }
     ],
     "deVerdade": {
@@ -308,7 +308,7 @@
     "passos": [
       { "titulo": "Você vê e pede.", "texto": "A prévia é grátis. Para abrir, você paga a Abertura e manda os dados do negócio." },
       { "titulo": "A equipe monta.", "texto": "Os agentes escrevem e montam o site, e uma pessoa da equipe lê tudo antes de mandar para você." },
-      { "titulo": "Você aprova.", "texto": "O site entra no ar com o seu sim, e a mensalidade só começa nesse dia. Sem resposta em 7 dias, ele entra no ar como está." }
+      { "titulo": "Você aprova.", "texto": "O site entra no ar com o seu sim, e a mensalidade só começa nesse dia." }
     ],
     "contato": "Para falar com a gente: WhatsApp do Suporte Creat ou {{contato.email}}.",
     "linkSede": "Ver a sede da Creat",

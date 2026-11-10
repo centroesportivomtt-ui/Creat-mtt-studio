@@ -4,7 +4,7 @@ Verbo (T3), 08/11/2026. Seção 13 do briefing. Para configurar uma vez no app W
 
 Atualizado em 09/11/2026 para os anúncios de `trafego/anuncios-meta.md`: fluxo de fechamento em 5 mensagens (F1 a F5), lembretes 1:1 (L1 e L2), objeções O1 a O8 e etiquetas que a Meta lê. R5 passou a ser o F5; R14 virou O1 a O8; "É robô?" virou R15.
 
-Atualizado em 10/11/2026 (onda 2, pacote 2B): regra única de prazo no R3, no F5 e na ausência; R7 com o prazo de 7 dias para responder ao site pronto; R14 passou a ser a desistência (`/desisto`, o mesmo texto que `docs/DESISTENCIA.md` chama de R16); V1 e V2 para os posts do Vitrine (`docs/VITRINE-POSTS.md`); domínio só "seu" quando o cliente registra um. Termos agora na versão 2 (termos-v2).
+Atualizado em 10/11/2026 (onda 2, pacote 2B): regra única de prazo no R3, no F5 e na ausência; R7 sem aceite por silêncio (o site só entra no ar com o APROVO) e R7b para o aviso de 7 dias sem resposta; a desistência é o R16 (`/desisto`), o mesmo número de `docs/DESISTENCIA.md`. O número R14 fica aposentado, porque já foi o das objeções, hoje O1 a O8; V1 e V2 para os posts do Vitrine (`docs/VITRINE-POSTS.md`); domínio só "seu" quando o cliente registra um. Termos agora na versão 2 (termos-v2).
 
 **Regra única de prazo.** Toda mensagem que fala de prazo usa esta frase, sem mudar nada: "O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado)." A mesma frase está em `conteudo/home.json`, `conteudo/faq.json`, `conteudo/abrir.json`, `conteudo/obrigado.json` e `conteudo/termos.md` (cláusula 5).
 
@@ -142,9 +142,15 @@ Substituído pelo F5 do fluxo de fechamento, que ficou com o atalho `/recebi`. C
 **R7 · Prévia pronta** (`/pronta`)
 > {nome}, o site da {negócio} está pronto para você conferir: {link}
 > Abra, confira e toque em Aprovar e colocar no ar, ou responda APROVO aqui. Se quiser mudar algo, escreva o que é, numa mensagem só. O link vale 14 dias.
-> Se você não responder em 7 dias, o site entra no ar como está e a mensalidade começa nesse dia. Você pode pedir ajustes depois.
+> O site só entra no ar com o seu sim, e a mensalidade só começa nesse dia.
 
-O `{link}` é o link de aprovação de `docs/EXECUTOR.md`, passo (i), item 3 (com o código depois do `#`). Ele não vai para relatório, etiqueta nem outra conversa. Os 7 dias contam do envio desta mensagem (`rascunho_em`); antes deles, o site não vai ao ar sem o APROVO.
+O `{link}` é o link de aprovação de `docs/EXECUTOR.md`, passo (i), item 3 (com o código depois do `#`). Ele não vai para relatório, etiqueta nem outra conversa. O site só vai ao ar com o APROVO ou com o toque em Aprovar: silêncio não aprova. Se a pessoa não responder em 7 dias do envio desta mensagem (`rascunho_em`), o suporte recebe o aviso "rascunho sem resposta há 7 dias" (`docs/EXECUTOR.md`, passo (l)) e manda o R7b, uma vez.
+
+**R7b · Site pronto sem resposta** (`/pronta2`) · uma vez, quando chegar o aviso de 7 dias sem resposta
+> {nome}, o site da {negócio} continua pronto, esperando o seu sim: {link}
+> Ele só entra no ar quando você aprovar. Se quiser mudar algo, escreva aqui o que é, numa mensagem só.
+
+O `{link}` é o mesmo do R7 (vale 14 dias do envio). Passou dos 14 dias: peça um novo link ao suporte (`docs/EXECUTOR.md`, passo (i), item 5) antes de mandar.
 
 **R8 · No ar** (`/noar`)
 > O site está no ar: {link}. A mensalidade começa hoje.
@@ -178,7 +184,7 @@ O `{link}` é o link de aprovação de `docs/EXECUTOR.md`, passo (i), item 3 (co
 
 Nota (08/11/2026): o R13 não promete recompensa. Nenhuma cláusula de `conteudo/termos.md` cobre indicação. A recompensa só entra neste texto depois que o Marcos decidir a regra (quando vale, quem recebe, quantas vezes) e ela for escrita nos termos. O `utm_content={id}` leva o id curto do pedido (`PA-` + 8 caracteres) e aguarda o aval da Muralha para uso no analytics; até lá, o link acima sai sem o parâmetro. Com o aval, acrescente `&utm_content={id}` ao fim.
 
-**R14 · Desistência** (`/desisto`) · na hora em que a pessoa pedir para desistir, dentro dos 7 dias (termos, cláusula 6). É o texto que `docs/DESISTENCIA.md` chama de R16.
+**R16 · Desistência** (`/desisto`) · na hora em que a pessoa pedir para desistir, dentro dos 7 dias (termos, cláusula 6). Mesmo número de `docs/DESISTENCIA.md`.
 > Recebemos o seu pedido de desistência. Protocolo: {id}.
 > Devolvemos o valor em até 5 dias úteis depois do pedido, pelo mesmo meio de pagamento (no Pix, na mesma conta; no cartão, o estorno aparece na fatura conforme o banco).
 > O site sai do ar hoje. Você não precisa fazer mais nada.

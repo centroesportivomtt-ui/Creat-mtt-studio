@@ -17,7 +17,7 @@
  *  - pedido de horário sem dizer que o dono confirma pelo WhatsApp;
  *  - site entregue com texto de exemplo do preset ("exemplo", "Seu negócio");
  *  - (v1.3, ADR-006) galeria[]: alt e legenda passam pelos mesmos termos; na demonstração (slug demo-*)
- *    começam por "Foto de exemplo"; recados[] (recado de exemplo) só em demonstração.
+ *    começam por "Foto de exemplo" ou, para desenho, "Ilustração de exemplo"; recados[] (recado de exemplo) só em demonstração.
  * Demonstração = slug demo-*: o produzir.mjs dá o prefixo "cliente-" a todo slug de cliente que começaria
  * assim (lib/tenant.cjs, slugSeguro), então nenhum site de cliente tem slug demo-*.
  * Todo erro cita o campo. Sem rede.
@@ -162,7 +162,7 @@ function validarTenant(t, opc) {
   if (Array.isArray(t.recados) && t.recados.length && !demonstracao) e('recados', 'recado de exemplo só existe em site-demonstração (slug demo-*); depoimento de cliente vai em avaliacoes[] com origem e aprovadoEm');
   if (demonstracao) (Array.isArray(t.galeria) ? t.galeria : []).forEach((g, i) => {
     if (!g || typeof g !== 'object') return;
-    for (const k of ['alt', 'legenda']) if (typeof g[k] === 'string' && !/^foto de exemplo\b/.test(norm(g[k]))) e(`galeria[${i}].${k}`, 'na demonstração, alt e legenda começam por "Foto de exemplo"');
+    for (const k of ['alt', 'legenda']) if (typeof g[k] === 'string' && !/^(foto|ilustracao) de exemplo\b/.test(norm(g[k]))) e(`galeria[${i}].${k}`, 'na demonstração, alt e legenda começam por "Foto de exemplo" (foto) ou "Ilustração de exemplo" (desenho)');
   });
 
   // 4. termos proibidos, emoji e marcadores
@@ -179,7 +179,7 @@ function validarTenant(t, opc) {
     if (EMOJI.test(txt)) e(campo, 'emoji não é aceito');
     const marc = String(txt).match(/\{(\w+)\}/g) || [];
     for (const m of marc) if (!MARCADORES.includes(m.slice(1, -1))) e(campo, `marcador desconhecido ${m} (aceitos: ${MARCADORES.map((x) => `{${x}}`).join(' ')})`);
-    if (entregue && /\b(precos?|textos?|servicos?|nomes?|horarios?|dados?|fotos?|imagens?|recados?|profissional|profissionais) de exemplo\b|\(exemplo\)/.test(n)) e(campo, 'texto de exemplo do preset num site entregue (troque pelo texto do negócio)');
+    if (entregue && /\b(precos?|textos?|servicos?|nomes?|horarios?|dados?|fotos?|imagens?|ilustracao|ilustracoes|recados?|profissional|profissionais) de exemplo\b|\(exemplo\)/.test(n)) e(campo, 'texto de exemplo do preset num site entregue (troque pelo texto do negócio)');
   }
   if (entregue && /^seu negocio$/.test(norm(neg.nome || ''))) e('negocio.nome', 'nome de exemplo ("Seu negócio") num site entregue');
 

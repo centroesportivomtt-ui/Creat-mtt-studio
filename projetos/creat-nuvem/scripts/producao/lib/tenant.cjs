@@ -5,6 +5,7 @@
  * sem copiar dado nenhum. Só entra o que o pedido traz; o resto vem do preset.
  * Decisão (sem inventar nada): o PEDIDO v1 não traz preços, então todo preço vira null
  * ("sob consulta") e servicosNota diz isso; os preços do preset são só de exemplo da prévia.
+ * Exceção (v1.3): na demonstração, demos/extras-<nicho>.json pode trazer precos de exemplo, e a nota diz isso.
  */
 'use strict';
 const fs = require('fs');
@@ -14,6 +15,7 @@ const { semanaDosHorarios, partesEndereco, fragmentoPrevia } = require('./pedido
 
 const NOTA_SEM_PRECO = 'Valores sob consulta: pergunte no WhatsApp da casa antes de pedir o horário.';
 const NOTA_COM_PRECO = 'Valores informados pela casa. Confira no WhatsApp ao pedir o horário.';
+const NOTA_DEMO_PRECO = 'Preços de exemplo. No seu site entram os seus valores.';
 const NICHOS_SAUDE = ['saude', 'clinica', 'odontologia', 'fisioterapia', 'nutricao', 'estetica-clinica'];
 
 /*
@@ -45,11 +47,11 @@ function slugSeguro(slug, demonstracao) {
 
 /*
  * v1.3 (ADR-006): extras de demonstração. Só com --demonstracao, o arquivo versionado
- * demos/extras-<nicho>.json pode trazer galeria[], profissionais[], recados[] e fuso, que o PEDIDO v1 não
- * tem. Assim "apagar sites/demo-* e gerar de novo a partir de demos/" reproduz o mesmo tenant.json.
+ * demos/extras-<nicho>.json pode trazer galeria[], profissionais[], recados[], fuso e precos ({ id do serviço: número
+ * >= 0 }), que o PEDIDO v1 não tem. Assim "apagar sites/demo-* e gerar de novo a partir de demos/" reproduz o mesmo tenant.json.
  * Site de cliente nunca lê esse arquivo: galeria e recados de exemplo não passam para cliente.
  */
-const CHAVES_EXTRAS = ['galeria', 'profissionais', 'recados', 'fuso'];
+const CHAVES_EXTRAS = ['galeria', 'profissionais', 'recados', 'fuso', 'precos'];
 function extrasDaDemo(nicho, pasta) {
   if (!/^[a-z][a-z0-9-]{1,30}$/.test(String(nicho || ''))) return {};
   const arq = path.join(pasta || path.join(RAIZ, 'demos'), `extras-${nicho}.json`);
@@ -57,6 +59,11 @@ function extrasDaDemo(nicho, pasta) {
   let o;
   try { o = JSON.parse(fs.readFileSync(arq, 'utf8')); } catch (e) { throw new Error(`demos/extras-${nicho}.json ilegível: ${e.message}`); }
   if (!o || typeof o !== 'object' || Array.isArray(o)) throw new Error(`demos/extras-${nicho}.json precisa ser um objeto`);
+  if ('precos' in o) {
+    const p = o.precos;
+    if (!p || typeof p !== 'object' || Array.isArray(p)) throw new Error(`demos/extras-${nicho}.json: precos precisa ser um mapa { id do serviço: número }`);
+    for (const [id, v] of Object.entries(p)) if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(id) || typeof v !== 'number' || !isFinite(v) || v < 0 || v > 100000) throw new Error(`demos/extras-${nicho}.json: precos.${id} precisa ser um número de 0 a 100000`);
+  }
   const fora = Object.keys(o).filter((k) => !CHAVES_EXTRAS.includes(k));
   if (fora.length) throw new Error(`demos/extras-${nicho}.json com chave fora da lista (${CHAVES_EXTRAS.join(', ')}): ${fora.join(', ')}`);
   return JSON.parse(JSON.stringify(o));
@@ -79,10 +86,22 @@ function tenantDoPedido(pedido, preset, opc) {
   t.profissionais = [];
   t.avaliacoes = [];
   delete t.galeria; delete t.recados;   // v1.3: nada de exemplo do preset chega ao cliente
-  if (opc.demonstracao) Object.assign(t, extrasDaDemo(pedido.nicho, opc.pastaExtras));
+  let precoDeExemplo = false;
+  if (opc.demonstracao) {
+    const extras = extrasDaDemo(pedido.nicho, opc.pastaExtras);
+    const precos = extras.precos; delete extras.precos;   // precos não é campo do tenant: vira servicos[].preco
+    Object.assign(t, extras);
+    if (precos) {
+      const fora = Object.keys(precos).filter((id) => !t.servicos.some((s) => s.id === id));
+      if (fora.length) throw new Error(`demos/extras-${pedido.nicho}.json: precos de serviço que a demo não tem: ${fora.join(', ')}`);
+      t.servicos = t.servicos.map((s) => (s.id in precos ? Object.assign({}, s, { preco: precos[s.id] }) : s));
+      precoDeExemplo = true;
+    }
+  }
   const todosComPreco = t.servicos.every((s) => typeof s.preco === 'number');
-  if (t.textos && (preset.textosPermitidos || []).includes('servicosNota')) t.textos.servicosNota = todosComPreco ? NOTA_COM_PRECO : NOTA_SEM_PRECO;
+  // na demonstração com preço em todos os serviços, a nota diz que o preço é de exemplo (achado SEM-PRECO)
+  if (t.textos && (preset.textosPermitidos || []).includes('servicosNota')) t.textos.servicosNota = todosComPreco ? (precoDeExemplo ? NOTA_DEMO_PRECO : NOTA_COM_PRECO) : NOTA_SEM_PRECO;
   return t;
 }
 
-module.exports = { tenantDoPedido, slugSeguro, extrasDaDemo, CHAVES_EXTRAS, RE_SLUG_RESERVADO, NOTA_SEM_PRECO, NOTA_COM_PRECO };
+module.exports = { tenantDoPedido, slugSeguro, extrasDaDemo, CHAVES_EXTRAS, RE_SLUG_RESERVADO, NOTA_SEM_PRECO, NOTA_COM_PRECO, NOTA_DEMO_PRECO };

@@ -24,7 +24,19 @@ A mesma frase, sem mudar uma vírgula, em `home.json` (`precos.abertura.regraPra
 
 > O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).
 
-Termos na versão 2 (`termos-v2`). Mudou o texto de `termos.md`: a versão e o sha256 em `checkout.config.js` (`termosVersao`) e em `schema/pedido-regras.mjs` (`TERMOS`) mudam no mesmo ato, e `abrir.json` `aceite.texto` diz "versão 2".
+Termos na versão 2 (`termos-v2`), sha256 de `termos.md` = `7ae67e835b8d745b00eb49dc9167bf43f8b50688123393d217cdefc6eb3fb612` (10/11/2026, segunda rodada do 2B, sem o aceite por silêncio). O ar ainda serve a versão 1 (`44bbc0ef...`). Mudou o texto de `termos.md`: a versão e o sha256 em `checkout.config.js` (`termosVersao`) e em `schema/pedido-regras.mjs` (`TERMOS`, e o mesmo em `regras.js` do app) mudam no mesmo ato, e `abrir.json` `aceite.texto` diz "versão 2". Ordem do ato: (1) acrescentar `termos-v2` com este sha em `TERMOS`, mantendo `termos-v1`, e publicar a função; (2) trocar `termosVersao` para `termos-v2`; (3) publicar a vitrine. Depois: `curl -s <site>/conteudo/termos.md | sha256sum` igual ao sha acima e um registro de teste com `termos-v2` aceito. Qualquer vírgula mudada em `termos.md` depois disso pede sha novo.
+
+## Textos guardados: ainda não publicar
+
+Aceite por silêncio do site pronto. Hoje o passo (l) de `docs/EXECUTOR.md` não roda: sem resposta em 7 dias, o pedido só gera um aviso ao suporte, e nada vai ao ar. Por isso nenhum texto público promete isso. As frases abaixo só entram no mesmo ato em que o diretor ligar o passo (l), o ensaio provar `marcarPedido` de `rascunho_enviado` para `no_ar` depois de 7 dias, e a revisão jurídica da cobrança que nasce do silêncio for aprovada. Entrar com elas muda `termos.md`, então pede versão e sha novos (`termos-v3`).
+
+| onde | hoje | quando o passo (l) ligar |
+|---|---|---|
+| `termos.md`, cláusula 5, "Aprovação." | O site só entra no ar com o seu sim, e a mensalidade só começa nesse dia. | Se você não responder em 7 dias, o site entra no ar como está e a mensalidade começa nesse dia. Você pode pedir ajustes depois. |
+| `obrigado.json` `rascunho.aviso` | O site só entra no ar com o seu sim. A mensalidade começa nesse dia. | Se você não responder em 7 dias, o site entra no ar como está e a mensalidade começa nesse dia. Você pode pedir ajustes depois. |
+| `abrir.json` `depois.passos[5]` | O site entra no ar com o seu sim. A mensalidade começa neste dia. | acrescentar: Sem resposta em 7 dias, ele entra no ar como está. |
+| `home.json` `comoFunciona.passos[3].texto` e `quemMonta.passos[2].texto` | sem a frase | acrescentar: Sem resposta em 7 dias, ele entra no ar como está. |
+| `marketing/whatsapp-scripts.md`, R7 e R7b | silêncio não aprova; R7b lembra uma vez | voltar a frase dos 7 dias ao R7 e trocar o R7b por um aviso de que o site entra no ar no dia seguinte |
 
 ## Frases marcadas para revisão na onda 4
 

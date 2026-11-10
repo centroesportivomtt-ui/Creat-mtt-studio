@@ -94,15 +94,17 @@
     demoMapaNota: 'Mapa ilustrativo: no seu site abre o endereço do seu negócio.',
     galeriaTitulo: 'Trabalhos da casa',
     fotoExemplo: 'Foto de exemplo',
+    ilustracaoExemplo: 'Ilustração de exemplo',
     recadoExemplo: 'recado de exemplo',
     pedirEste: 'Pedir este',
-    fechoTitulo: 'Este site, com o nome do seu negócio, no ar em horas.',
+    fechoTitulo: 'Este site, com o nome do seu negócio, pronto para você aprovar.',
     fechoBotao: 'Quero este para o meu negócio',
     abertoAte: 'Aberto até {hora}',
     abertoPecaPara: 'Aberto · peça para {dia} às {hora}',
     abreAs: 'Abre às {hora}',
     abreDia: 'Abre {dia} às {hora}',
     sobConsulta: 'sob consulta',
+    gratis: 'Grátis',
     min: 'min',
     folga: 'fechado',
     horarioTitulo: 'Horário da casa',
@@ -204,6 +206,7 @@
   function moeda(v) {
     if (v === null || v === undefined || v === '' || isNaN(+v)) return UI.sobConsulta;
     var n = +v, inteiro = Math.round(n) === n;
+    if (n === 0) return UI.gratis;   // aula experimental e avaliação: "R$ 0" parece erro de quem vende
     try {
       return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: inteiro ? 0 : 2, maximumFractionDigits: 2 }).format(n);
     } catch (e) { return 'R$ ' + (inteiro ? String(n) : n.toFixed(2).replace('.', ',')); }
@@ -524,19 +527,26 @@
 
   /* v1.3 · galeria: só arquivo da própria pasta do site (nenhuma imagem de terceiro em tempo de execução) */
   var RE_FOTO = /^galeria\/[a-z0-9][a-z0-9-]{0,60}\.(webp|avif|jpg|jpeg|png)$/;
-  function prefixoExemplo(t) {
+  /* desenho da casa é "Ilustração de exemplo", foto é "Foto de exemplo": chamar desenho de foto seria afirmação falsa (CDC art. 37) */
+  var RE_ROTULO_EXEMPLO = /^(foto|ilustra[çc][ãa]o) de exemplo\b/i;
+  function rotuloExemplo(t) {
+    var m = RE_ROTULO_EXEMPLO.exec(colapsar(t));
+    return m && /^ilustra/i.test(m[1]) ? UI.ilustracaoExemplo : UI.fotoExemplo;
+  }
+  function prefixoExemplo(t, rotulo) {
     t = colapsar(t);
-    if (/^foto de exemplo\b/i.test(t)) return t;
-    return UI.fotoExemplo + (t ? ': ' + t.charAt(0).toLowerCase() + t.slice(1) : '');
+    if (RE_ROTULO_EXEMPLO.test(t)) return t;
+    return (rotulo || UI.fotoExemplo) + (t ? ': ' + t.charAt(0).toLowerCase() + t.slice(1) : '');
   }
   function galeriaDe(tenant, demonstracao, previa) {
     if (previa || !Array.isArray(tenant.galeria)) return [];
     var lista = tenant.galeria.filter(function (g) { return g && RE_FOTO.test(String(g.src || '')) && colapsar(g.alt); }).slice(0, 6).map(function (g) {
-      var larg = +g.largura, alt = +g.altura;
+      var larg = +g.largura, alt = +g.altura, rotulo = demonstracao ? rotuloExemplo(g.alt) : '';
       return {
         src: String(g.src),
-        alt: demonstracao ? prefixoExemplo(g.alt) : colapsar(g.alt),
-        legenda: demonstracao ? prefixoExemplo(g.legenda || '') : colapsar(g.legenda || ''),
+        rotulo: rotulo,
+        alt: demonstracao ? prefixoExemplo(g.alt, rotulo) : colapsar(g.alt),
+        legenda: demonstracao ? prefixoExemplo(g.legenda || '', rotulo) : colapsar(g.legenda || ''),
         credito: colapsar(g.credito || ''),
         largura: larg >= 16 && larg <= 4000 ? Math.round(larg) : 1280,
         altura: alt >= 16 && alt <= 4000 ? Math.round(alt) : 960
@@ -1068,7 +1078,7 @@
       if (g.credito) cap.appendChild(criar('span', { classe: 'credito', texto: ' · ' + g.credito }));
       s.appendChild(criar('figure', { classe: 'foto' }, [
         img,
-        e.demonstracao ? criar('span', { classe: 'selo selo-foto', 'aria-hidden': 'true', texto: UI.fotoExemplo }) : null,
+        e.demonstracao ? criar('span', { classe: 'selo selo-foto', 'aria-hidden': 'true', texto: g.rotulo || UI.fotoExemplo }) : null,
         cap
       ]));
     });

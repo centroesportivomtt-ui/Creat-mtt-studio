@@ -202,8 +202,16 @@ test('build e publicar: galeria só com o que o tenant cita; tenant sem galeria 
   const d2 = path.join(TMP, 'gal', 'dist2'); fs.mkdirSync(d2, { recursive: true });
   assert.deepEqual(B.copiarGaleria({ slug: 'x' }, pt, d2), []);
   assert.ok(!fs.existsSync(path.join(d2, 'galeria')));
-  for (const ok of ['galeria/a.webp', 'galeria/a.avif', 'galeria/a.jpg', 'galeria/a.jpeg', 'galeria/a.png', 'galeria/a.svg']) assert.ok(PUB.LISTA_BRANCA.some((re) => re.test(ok)), ok);
-  for (const ruim of ['galeria/a.html', 'galeria/../a.webp', 'galeria/sub/a.webp', 'galeria/.a.webp']) assert.ok(!PUB.LISTA_BRANCA.some((re) => re.test(ruim)), ruim);
+  for (const ok of ['galeria/a.webp', 'galeria/a.avif', 'galeria/a.jpg', 'galeria/a.jpeg', 'galeria/a.png', 'galeria/barbearia-1.webp']) {
+    assert.ok(PUB.LISTA_BRANCA.some((re) => re.test(ok)), ok);
+    assert.ok(B.GALERIA_RE.test(ok), ok);
+  }
+  // svg executaria script na origem do site; maiúscula e ponto o schema e o motor (RE_FOTO) não aceitam
+  for (const ruim of ['galeria/a.svg', 'galeria/A.webp', 'galeria/a.WEBP', 'galeria/a.b.webp', 'galeria/a.html', 'galeria/../a.webp', 'galeria/sub/a.webp', 'galeria/.a.webp', 'galeria/-a.webp']) {
+    assert.ok(!PUB.GALERIA.test(ruim), 'publicar: ' + ruim);
+    assert.ok(!B.GALERIA_RE.test(ruim), 'build: ' + ruim);
+  }
+  assert.throws(() => B.copiarGaleria({ slug: 'x', galeria: [{ src: 'galeria/a.svg' }] }, pt, d), /galeria\[0\]\.src/);
   // publicar-site: galeria só com o que o tenant cita, e tudo o que ele cita
   const dp = path.join(TMP, 'gal', 'pub', 'demo-gal');
   fs.mkdirSync(path.join(dp, 'motor', 'v1'), { recursive: true }); fs.mkdirSync(path.join(dp, 'galeria'), { recursive: true });
@@ -308,7 +316,7 @@ test('navegador: demo, cliente e prévia; turnos; fuso da Bahia num aparelho de 
     await page.waitForFunction((antes) => document.querySelector('meta[name="theme-color"][data-barra]').content === antes, barra[0], { timeout: 3000 });
     // "Pedir este": pré-seleciona o serviço
     assert.equal(await page.evaluate(() => window.CreatAgendamento.escolherServico('barba')), true);
-    assert.match(await page.textContent('#atalho-nota'), /Barba escolhido/);
+    assert.equal(await page.textContent('#atalho-nota'), 'Serviço: Barba. Agora escolha o dia e o horário.', 'nota neutra, sem concordância de gênero');
     await page.locator('#lista-horarios .horarios:not([hidden]) .horario').first().click();
     assert.equal(await page.getAttribute('#lista-servicos .servico-opcao[data-servico="barba"]', 'aria-checked'), 'true', 'o serviço pedido antes do horário fica marcado ao escolher o horário');
     const demo = await pedir(page, '11900000000', 'barba');
@@ -339,6 +347,66 @@ test('navegador: demo, cliente e prévia; turnos; fuso da Bahia num aparelho de 
     assert.match(pv.url, /^https:\/\/wa\.me\/5511900000000\?text=/, 'na prévia o pedido vai para o WhatsApp de teste do visitante');
     assert.ok(pv.texto.startsWith('Teste da prévia do site: '), pv.texto);
     assert.doesNotMatch(pv.texto, /Testei a demonstração|Quero saber como ter um site assim/);
+    assert.deepEqual(erros, []);
+    await ctx.close();
+  } finally { await nav.close(); }
+});
+
+test('navegador: "Pedir este" antes do horário risca onde o serviço não cabe e não se perde; resumo com traço no que falta', { skip: SEM_PW }, async () => {
+  const t = tenantTeste();
+  t.servicos = t.servicos.concat([{ id: 'combo', nome: 'Combo', duracaoMin: 120, preco: 90, descricao: 'Corte, barba e sobrancelha.' }]);
+  construir('pend-nav', t, { home: HOME, url: `${HOME}sites/pend-nav/`, rodape: true, demonstracao: true });
+  const { chromium } = require(require.resolve('playwright', { paths: [RAIZ] }));
+  const nav = await chromium.launch();
+  try {
+    const { ctx, page, erros } = await abrir(nav, 'https://creat.teste/d/pend-nav/');
+    const resumo = () => page.evaluate(() => [...document.querySelectorAll('#resumo-corpo dt')].map((dt) => [dt.textContent, dt.nextElementSibling.classList.contains('is-vazio') ? '—' : dt.nextElementSibling.textContent]));
+    // estado vazio: as 4 linhas, com traço no que falta (o dia de hoje já vem marcado)
+    const r0 = await resumo();
+    assert.deepEqual(r0.map((l) => l[0]), ['Dia', 'Horário', 'Serviço', 'Seus dados']);
+    assert.deepEqual(r0.slice(1).map((l) => l[1]), ['—', '—', '—']);
+    assert.equal(await page.locator('#resumo-corpo dd.is-vazio .so-leitor').first().textContent(), 'a escolher', 'o leitor de tela ouve "a escolher", não "travessão"');
+    // Combo (2h) pedido antes do horário: fecha às 20h, então 18h cabe e 18h30 em diante sai riscado
+    assert.equal(await page.evaluate(() => window.CreatAgendamento.escolherServico('combo')), true);
+    assert.equal(await page.textContent('#atalho-nota'), 'Serviço: Combo. Agora escolha o dia e o horário.');
+    assert.equal(await page.locator('#largar-servico').isVisible(), true);
+    assert.match((await resumo())[2][1], /^Combo · /, 'o serviço pedido aparece no resumo');
+    await page.click('[data-ver-turno="noite"]');
+    const noite = await page.evaluate(() => [...document.querySelectorAll('#turno-noite-horarios .horario')].map((b) => [b.getAttribute('data-hora'), b.getAttribute('aria-disabled') === 'true', b.getAttribute('aria-label') || '']));
+    assert.deepEqual(noite.map((x) => [x[0], x[1]]), [['18:00', false], ['18:30', true], ['19:00', true], ['19:30', true]]);
+    assert.match(noite[1][2], /Combo não cabe$/);
+    // tocar num riscado não escolhe nada e não perde o serviço
+    await page.click('#turno-noite-horarios .horario[data-hora="19:30"]', { force: true });
+    assert.equal(await page.getAttribute('#turno-noite-horarios .horario[data-hora="19:30"]', 'aria-pressed'), 'false');
+    assert.equal(await page.locator('#passo-servico').isHidden(), true);
+    assert.equal(await page.textContent('#atalho-nota'), 'Serviço: Combo. Agora escolha o dia e o horário.');
+    // a seta não para em riscado
+    await page.focus('#turno-noite-horarios .horario[data-hora="18:00"]');
+    await page.keyboard.press('ArrowRight');
+    assert.notEqual(await page.evaluate(() => document.activeElement.getAttribute('data-hora')), '18:30');
+    // horário que cabe: o serviço fica marcado e os riscos saem
+    await page.click('#turno-noite-horarios .horario[data-hora="18:00"]');
+    assert.equal(await page.getAttribute('#lista-servicos .servico-opcao[data-servico="combo"]', 'aria-checked'), 'true');
+    assert.equal(await page.locator('#lista-horarios .horario[aria-disabled="true"]').count(), 0);
+    assert.equal(await page.locator('#largar-servico').isHidden(), true);
+    const r1 = await resumo();
+    assert.deepEqual(r1.map((l) => l[0]), ['Dia', 'Horário', 'Serviço', 'Seus dados', 'Valor']);
+    assert.equal(r1[1][1], '18h'); assert.equal(r1[3][1], '—');
+    // o nome entra no resumo ao sair do campo, numa linha só (o WhatsApp não aparece)
+    await page.fill('#cliente-nome', 'TESTE Pixel');
+    await page.fill('#cliente-whats', '11900000000');
+    assert.equal((await resumo())[3][1], 'TESTE Pixel');
+    // com outro horário marcado, o Combo pedido de novo não cabe: o horário sai e "Ver todos os horários" larga o pedido
+    await page.click('#turno-noite-horarios .horario[data-hora="19:30"]');
+    assert.equal(await page.evaluate(() => window.CreatAgendamento.escolherServico('combo')), true);
+    assert.equal(await page.textContent('#atalho-nota'), 'Combo não cabe nesse horário. Escolha outro horário.');
+    assert.equal(await page.getAttribute('#turno-noite-horarios .horario[data-hora="19:30"]', 'aria-disabled'), 'true');
+    assert.equal(await page.locator('#largar-servico').isVisible(), true);
+    await page.click('#largar-servico');
+    assert.equal(await page.locator('#lista-horarios .horario[aria-disabled="true"]').count(), 0);
+    assert.equal(await page.textContent('#atalho-nota'), '');
+    assert.equal(await page.locator('#largar-servico').isHidden(), true);
+    assert.deepEqual(await page.evaluate(() => window.__csp), [], 'nenhuma violação de CSP (riscos pelo CSSOM)');
     assert.deepEqual(erros, []);
     await ctx.close();
   } finally { await nav.close(); }
