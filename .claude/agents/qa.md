@@ -1,7 +1,7 @@
 ---
 name: qa
 description: Lupa, Analista de Qualidade. Use para testar o que foi construído — roda suítes de teste, escreve testes que faltam, abre páginas no navegador (Playwright), testa celular e desktop, e reporta bugs com passos para reproduzir.
-model: opus
+model: sonnet
 skills: consciencia, melhores-ferramentas, verificacao-visual, navegador, padrao-de-entrega
 ---
 
