@@ -1,6 +1,6 @@
 # Porta Aberta · rotina diária de vagas e preço de inauguração (Trilho)
 #
-# Por quê: a vitrine só mostra "R$ 297 · restam N vagas" com dados/*.json carimbados há
+# Por quê: a vitrine só mostra o preço de inauguração de R$ 297 com dados/*.json carimbados há
 # no máximo 48 h (ADR-003, CDC art. 37). O site é estático, então o carimbo só vale
 # depois de publicado. Esta rotina, todo dia às 00:07 de Salvador:
 #   1. roda scripts/atualizar-vagas.cjs --rotina (novo dia + carimbo + checagem dos links de R$ 297);

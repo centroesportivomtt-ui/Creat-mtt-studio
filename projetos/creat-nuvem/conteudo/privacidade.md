@@ -4,7 +4,7 @@ REVISAO_JURIDICA_PENDENTE
 
 Versão 2 · 10/11/2026
 
-Esta política explica o que a vitrine da Creat Nuvem (as páginas do Porta Aberta) faz com dados pessoais, de acordo com a Lei Geral de Proteção de Dados (Lei 13.709/2018). Controladora: {{empresa.nome}}, de {{empresa.cidade}} ({{empresa.uf}}), {{empresa.documento}}. Contato: {{contato.email}}.
+Esta política explica o que a vitrine da Creat Nuvem (as páginas do Porta Aberta) faz com dados pessoais, de acordo com a Lei Geral de Proteção de Dados (Lei 13.709/2018). Controladora: {{empresa.nome}} (nome empresarial {{empresa.razao}}), de {{empresa.cidade}} ({{empresa.uf}}), {{empresa.documento}}. Contato: {{contato.email}}.
 
 ## 1. Antes de qualquer aceite
 
@@ -27,7 +27,7 @@ O Pixel da Meta (medição de anúncios) e o Clarity da Microsoft (mapa de cliqu
 - **Onde aparece o aviso**: na página inicial, em /abrir/ e em /obrigado/, enquanto você não escolher. A sua escolha fica guardada neste aparelho por 180 dias; depois perguntamos de novo.
 - **Pixel da Meta**: roda na página inicial, em /abrir/ e em /obrigado/. Ele manda à Meta estes eventos: PageView (página vista), ViewContent (quando a prévia abre, com o nicho), InitiateCheckout (quando você toca em pagar, com o valor em reais) e Purchase (só quando o Mercado Pago aprova o pagamento, com o valor em reais e o número do pagamento como identificador do evento, para a mesma compra não contar duas vezes). Os eventos que a Creat manda não levam nome, e-mail, telefone, endereço nem cidade. Como todo Pixel, ele envia à Meta o endereço IP, os dados do navegador e o endereço da página (sem nome nem cidade), e grava os cookies próprios da Meta, _fbp e _fbc, que duram até 90 dias.
 - **Clarity**: roda só na página inicial, que não mostra os dados do pedido. O campo do nome do negócio e os lugares que repetem esse nome na tela ficam mascarados na gravação. Nas páginas /abrir/ e /obrigado/, onde estão os dados do pedido, o Clarity não carrega.
-- **Mudar de ideia**: toque em "Preferências de medição", no rodapé de qualquer página. Se você recusar depois de ter aceitado, a página desliga o Pixel, apaga os cookies _fbp e _fbc deste site e recarrega sem nada de terceiros.
+- **Mudar de ideia**: toque em "Preferências de medição", no rodapé da página inicial, da página do pedido, da página de confirmação, dos termos e desta política. Se você recusar depois de ter aceitado, a página desliga o Pixel, apaga os cookies _fbp e _fbc deste site e recarrega sem nada de terceiros.
 
 ## 4. O que fica neste aparelho
 

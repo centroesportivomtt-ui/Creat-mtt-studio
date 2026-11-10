@@ -188,6 +188,7 @@ p{margin:0;text-wrap:pretty}
 .rodape nav ul{display:flex;flex-wrap:wrap;gap:4px 18px;margin:0;padding:0;list-style:none}
 .rodape nav a{display:inline-flex;align-items:center;min-height:var(--alvo);font-weight:700}
 .rodape .discreto{font-size:var(--t-nota);color:var(--apagado)}
+.nq{white-space:nowrap}
 .rodape .discreto a{color:var(--apagado);display:inline-flex;align-items:center;min-height:var(--alvo)}
 
 /* ---------------------------------------------------------------- WhatsApp flutuante */

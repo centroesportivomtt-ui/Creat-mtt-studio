@@ -109,6 +109,9 @@ p.notas{display:block} /* parágrafo com números dentro (ex.: anual-nota) não 
 .rodape-simples{border-top:var(--borda) solid var(--linha);background:var(--ceu);padding:var(--r5) 0 calc(var(--r5) + env(safe-area-inset-bottom, 0px))}
 .rodape-simples .cx{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:center;font-size:var(--t-menor)}
 .rodape-simples a{display:inline-flex;align-items:center;min-height:var(--alvo);font-weight:700}
+.rodape-simples .link-texto{padding:0;font-weight:700;font-size:inherit}
+.rodape-simples .ident{flex-basis:100%;display:flex;flex-wrap:wrap;gap:2px 14px}
+.rodape-simples .ident b{font-weight:700}
 
 @media (min-width:720px){
   .planos{grid-template-columns:1fr 1fr}

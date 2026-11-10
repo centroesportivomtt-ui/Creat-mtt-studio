@@ -8,7 +8,7 @@ Estes termos valem para quem contrata o Porta Aberta, o serviço da Creat Nuvem 
 
 ## 1. Quem somos
 
-O Porta Aberta é prestado pela {{empresa.nome}}, de {{empresa.cidade}} ({{empresa.uf}}), {{empresa.documento}}, {{empresa.endereco}}. Contato: {{contato.email}} e o WhatsApp do Suporte Creat que aparece no site.
+O Porta Aberta é prestado pela {{empresa.nome}} (nome empresarial {{empresa.razao}}), de {{empresa.cidade}} ({{empresa.uf}}), {{empresa.documento}}, {{empresa.endereco}}. Contato: {{contato.email}} e o WhatsApp do Suporte Creat que aparece no site.
 
 ## 2. O que é o serviço
 
@@ -54,7 +54,7 @@ Você tem 7 dias, contados do pagamento, para desistir sem dar motivo (Código d
 ## 7. Mensalidade, cobrança e cancelamento
 
 - A primeira mensalidade só é cobrada a partir do dia em que o site entra no ar.
-- A Abertura é cobrada pelo Mercado Pago, por Pix ou cartão em até 2x; as condições do parcelamento aparecem no Mercado Pago antes de você pagar. O plano anual é cobrado pelo Mercado Pago, no Pix, no dia em que o site entra no ar. A mensalidade no cartão é cobrada pelo Stripe, com renovação automática que você cancela quando quiser. O valor e o dia da cobrança aparecem no link antes de você pagar.
+- A Abertura é cobrada pelo Mercado Pago, por Pix ou cartão. As condições de parcelamento aparecem no Mercado Pago antes de você pagar. O plano anual é cobrado pelo Mercado Pago, no Pix, no dia em que o site entra no ar. A mensalidade no cartão é cobrada pelo Stripe, com renovação automática que você cancela quando quiser. O valor e o dia da cobrança aparecem no link antes de você pagar.
 - Não há fidelidade nem multa. Você cancela quando quiser, pelo WhatsApp do Suporte Creat ou por e-mail. O cancelamento vale para o próximo ciclo; o mês já pago segue até o fim.
 - **Plano anual**: se você cancelar antes de terminar os 12 meses, devolvemos o valor proporcional aos meses inteiros ainda não usados, calculado sobre o preço pago no anual.
 

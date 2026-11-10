@@ -41,7 +41,7 @@ Chaves que começam com `_` são notas para quem implementa; não vão para a te
 | `{{precos.bastidores}}` | **chave nova** a acrescentar em `precos.json` e em `CREAT_CHECKOUT.precosPadrao` (T5) | 67 |
 | `{{contato.email}}` | e-mail de suporte (o mesmo da loja) | mttcreatt@gmail.com |
 | `{{site.url}}` | só em `marketing/`: endereço da home publicada | a definir no deploy |
-| `{{empresa.documento}}`, `{{empresa.endereco}}` | só em `termos.md` e `privacidade.md`: CNPJ (ou CPF) e endereço da Creat.MTT Studio | **o Marcos informa** (Decreto 7.962/2013 pede na página) |
+| `{{empresa.razao}}`, `{{empresa.documento}}`, `{{empresa.endereco}}` | nome empresarial (só em `termos.md` e `privacidade.md`), CNPJ e endereço da creat.MTT Studio, os mesmos de creatmtt.com.br | preenchido em 10/11/2026; antes era **o Marcos informa** (Decreto 7.962/2013 pede na página) |
 
 Formato dos números: inteiro com ponto de milhar (`1.470`), sem "R$" (o texto já traz "R$ "). Horas sem "h" (o texto já traz).
 

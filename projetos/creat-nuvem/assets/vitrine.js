@@ -624,11 +624,11 @@
   /* ------------------------------------------------------------ quem presta o serviço (checkout.config.js empresa) */
   function empresa() {
     var e = (CK && CK.empresa) || {}, out = {};
-    ['nome', 'cidade', 'uf', 'documento', 'endereco'].forEach(function (k) {
+    ['nome', 'razao', 'cidade', 'uf', 'documento', 'endereco'].forEach(function (k) {
       var v = typeof e[k] === 'string' ? e[k].replace(/\s+/g, ' ').trim() : '';
       out[k] = /[\[{]|a informar/i.test(v) ? '' : v;           // marcador esquecido nunca vai para a tela
     });
-    if (!out.nome) out.nome = 'Creat.MTT Studio';
+    if (!out.nome) out.nome = 'creat.MTT Studio';
     return out;
   }
   // [data-empresa="nome|cidade|uf"] recebe o valor; [data-empresa-opcional="documento|endereco"] aparece só com valor.
@@ -637,7 +637,13 @@
     $$('[data-empresa]').forEach(function (x) { var v = e[x.getAttribute('data-empresa')]; if (v) x.textContent = v; });
     $$('[data-empresa-opcional]').forEach(function (x) {
       var v = e[x.getAttribute('data-empresa-opcional')];
-      x.textContent = v ? (x.getAttribute('data-antes') || ', ') + v : ''; x.hidden = !v;
+      x.textContent = ''; x.hidden = !v;
+      if (!v) return;
+      var antes = x.hasAttribute('data-antes') ? x.getAttribute('data-antes') : ', ';
+      if (antes) x.appendChild(D.createTextNode(antes));
+      // documento (CNPJ + número) nunca quebra no meio; endereço quebra normalmente
+      if (x.getAttribute('data-empresa-opcional') === 'documento') { var n = D.createElement('span'); n.className = 'nq'; n.textContent = v; x.appendChild(n); }
+      else x.appendChild(D.createTextNode(v));
     });
     $$('[data-link-sede]').forEach(function (a) { a.href = urlSede() + '?modo=demo'; });
   }
@@ -1536,7 +1542,8 @@
     // Campo de empresa vazio some com a vírgula que o antecede; marcador sem valor vira vazio, nunca "(a informar)".
     var emp = empresa();
     var trocar = function (s) {
-      return s.replace(/,\s*\{\{empresa\.(documento|endereco)\}\}/g, function (m, k) { return emp[k] ? ', ' + emp[k] : ''; })
+      return s.replace(/\s*\(nome empresarial \{\{empresa\.razao\}\}\)/g, function () { return emp.razao ? ' (nome empresarial ' + emp.razao + ')' : ''; })
+        .replace(/,\s*\{\{empresa\.(documento|endereco)\}\}/g, function (m, k) { return emp[k] ? ', ' + emp[k] : ''; })
         .replace(/\{\{([A-Za-z_][A-Za-z0-9._]*)\}\}/g, function (m, k) {
           if (k === 'contato.email') return emailSuporte();
           if (k.indexOf('empresa.') === 0) return emp[k.slice(8)] || '';

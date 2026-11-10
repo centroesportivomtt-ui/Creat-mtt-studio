@@ -82,7 +82,7 @@
   "pagamento": {
     "titulo": "Pagamento",
     "pix": "Pagar no Pix ou cartão",
-    "parcelas": "Pix ou cartão em até 2x; as condições do parcelamento aparecem no Mercado Pago antes de você pagar.",
+    "parcelas": "Pix ou cartão. As condições de parcelamento aparecem no Mercado Pago antes de você pagar.",
     "emConfiguracao": "Link de pagamento em configuração",
     "emConfiguracaoNota": "O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.",
     "seguranca": "O pagamento é feito no Mercado Pago. A Creat não vê os dados do seu cartão.",

@@ -113,9 +113,14 @@
   }
 
   /* Quem presta o serviço. Termos, privacidade, rodapé e o bloco "Quem monta o seu site" leem daqui.
-     Campo vazio some da tela (nunca "(a informar)"). documento e endereco: preencher só com o dado
-     real que o Marcos entregar (ex.: documento 'CNPJ 00.000.000/0001-00'). */
-  var EMPRESA = { nome: 'Creat.MTT Studio', cidade: 'Riachão do Jacuípe', uf: 'BA', documento: '', endereco: '' };
+     Campo vazio some da tela (nunca "(a informar)"). documento e endereco: os mesmos dados que a
+     empresa já publica nas páginas legais de creatmtt.com.br (conferidos em 10/11/2026). */
+  var EMPRESA = {
+    nome: 'creat.MTT Studio', cidade: 'Riachão do Jacuípe', uf: 'BA',
+    razao: '57.068.874 Marcos Marciel de Jesus Coutinho',
+    documento: 'CNPJ 57.068.874/0001-06',
+    endereco: 'Travessa 12 de Outubro, 104, Jatobá, CEP 44640-000'
+  };
 
   var CREAT_CHECKOUT = {
     versao: 1,

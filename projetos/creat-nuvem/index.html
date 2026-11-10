@@ -151,7 +151,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 .chamada .btn-fantasma{color:var(--giz);border-color:var(--giz)}
 .som-botao{min-height:var(--alvo);padding:6px 14px;font-size:var(--t-menor)}
 .rodape .linha-rodape{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
-.rodape button.link-texto{font-size:inherit}
+.rodape button.link-texto{font-size:inherit;padding:0;font-weight:700}
 @media (min-width:720px){.precos-extra{grid-template-columns:1fr 1fr}.precos-extra .agenda-externa{grid-column:1 / -1}}
 /* sites-demonstração: três cartões, um por nicho (tokens de assets/tokens.css) */
 .demos{margin:0;padding:0;list-style:none;display:grid;gap:var(--r4)}
@@ -404,7 +404,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
       <div class="quem-monta" id="quem-monta">
         <span class="olho">Quem somos</span>
         <h2 id="quem-titulo">Quem monta o seu site</h2>
-        <p>A Creat Nuvem é uma equipe de agentes de IA com revisão humana, da <span data-empresa="nome">Creat.MTT Studio</span>, de <span data-empresa="cidade">Riachão do Jacuípe</span> (<span data-empresa="uf">BA</span>)<span data-empresa-opcional="documento" hidden></span><span data-empresa-opcional="endereco" hidden></span>. Atendemos pela internet negócios de qualquer cidade.</p>
+        <p>A Creat Nuvem é uma equipe de agentes de IA com revisão humana, da <span data-empresa="nome">creat.MTT Studio</span>, de <span class="nq"><span data-empresa="cidade">Riachão do Jacuípe</span> (<span data-empresa="uf">BA</span>)</span><span data-empresa-opcional="documento" hidden></span><span data-empresa-opcional="endereco" hidden></span>. Atendemos pela internet negócios de qualquer cidade.</p>
         <ol class="quem-passos">
           <li><span><b>Você vê e pede.</b> A prévia é grátis. Para abrir, você paga a Abertura e manda os dados do negócio.</span></li>
           <li><span><b>A equipe monta.</b> Os agentes escrevem e montam o site, e uma pessoa da equipe lê tudo antes de mandar para você.</span></li>
@@ -483,7 +483,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
               <li>Anúncios pagos</li>
               <li>A anuidade do domínio, paga no seu nome ao Registro.br</li>
             </ul>
-            <p class="anual"><a href="abrir/#plano=aberto_anual" data-plano="aberto_anual">Ou R$ <span class="num-carregando" data-v="precos.anual.aberto"></span> por 12 meses no Pix: você paga <span data-v="precos.anualMesesPagos"></span>.</a></p>
+            <p class="anual"><a href="abrir/#plano=aberto_anual" data-plano="aberto_anual">Ou R$ <span class="num-carregando" data-v="precos.anual.aberto"></span> por 12 meses no Pix: você paga <span data-v="precos.anualMesesPagos"></span> e leva 12. Cobrado quando o site entra no ar.</a></p>
             <div class="compra"><a class="btn btn-bloco" href="abrir/#plano=aberto" data-plano="aberto" data-cta>Escolher o Aberto</a></div>
           </div>
         </article>
@@ -510,7 +510,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
               <li>Página nova, seção nova ou loja virtual (viram orçamento à parte)</li>
               <li>A anuidade do domínio, paga no seu nome ao Registro.br</li>
             </ul>
-            <p class="anual"><a href="abrir/#plano=vitrine_anual" data-plano="vitrine_anual">Ou R$ <span class="num-carregando" data-v="precos.anual.vitrine"></span> por 12 meses no Pix: você paga <span data-v="precos.anualMesesPagos"></span>.</a></p>
+            <p class="anual"><a href="abrir/#plano=vitrine_anual" data-plano="vitrine_anual">Ou R$ <span class="num-carregando" data-v="precos.anual.vitrine"></span> por 12 meses no Pix: você paga <span data-v="precos.anualMesesPagos"></span> e leva 12. Cobrado quando o site entra no ar.</a></p>
             <div class="compra"><a class="btn btn-sol btn-bloco" href="abrir/#plano=vitrine" data-plano="vitrine" data-cta>Escolher o Vitrine</a></div>
           </div>
         </article>
@@ -654,7 +654,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 
 <footer class="rodape">
   <div class="cx">
-    <p>Creat Nuvem é um serviço da <span data-empresa="nome">Creat.MTT Studio</span>, de <span data-empresa="cidade">Riachão do Jacuípe</span> (<span data-empresa="uf">BA</span>)<span data-empresa-opcional="documento" hidden></span>.</p>
+    <p>Creat Nuvem é um serviço da <span data-empresa="nome">creat.MTT Studio</span>, de <span class="nq"><span data-empresa="cidade">Riachão do Jacuípe</span> (<span data-empresa="uf">BA</span>)</span><span data-empresa-opcional="documento" hidden></span>.</p>
     <p>Suporte: <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a></p>
     <nav aria-label="Rodapé">
       <ul>

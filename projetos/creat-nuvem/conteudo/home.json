@@ -193,7 +193,7 @@
           "A anuidade do domínio, paga no seu nome ao Registro.br"
         ],
         "botao": "Escolher o Aberto",
-        "anual": "Ou R$ {{precos.anual.aberto}} por 12 meses no Pix: você paga {{precos.anualMesesPagos}}."
+        "anual": "Ou R$ {{precos.anual.aberto}} por 12 meses no Pix: você paga {{precos.anualMesesPagos}} e leva 12. Cobrado quando o site entra no ar."
       },
       "vitrine": {
         "nome": "Vitrine",
@@ -214,7 +214,7 @@
           "A anuidade do domínio, paga no seu nome ao Registro.br"
         ],
         "botao": "Escolher o Vitrine",
-        "anual": "Ou R$ {{precos.anual.vitrine}} por 12 meses no Pix: você paga {{precos.anualMesesPagos}}."
+        "anual": "Ou R$ {{precos.anual.vitrine}} por 12 meses no Pix: você paga {{precos.anualMesesPagos}} e leva 12. Cobrado quando o site entra no ar."
       }
     },
     "rotuloInclui": "Inclui",

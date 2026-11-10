@@ -348,7 +348,7 @@ test('navegador: /abrir/ limpa nome e cidade do endereço, escolhe o link da pra
     // sem contador numérico na tela (D1) e parcelas explicadas (D7)
     assert.equal(await pg.isVisible('[data-se="varias-vagas"]'), false);
     assert.equal(await pg.isVisible('[data-se="ultima-vaga"]'), false);
-    assert.match(await pg.textContent('#pagar-parcelas'), /Pix ou cartão em até 2x; as condições do parcelamento aparecem no Mercado Pago antes de você pagar/);
+    assert.match(await pg.textContent('#pagar-parcelas'), /Pix ou cartão\. As condições de parcelamento aparecem no Mercado Pago antes de você pagar/);
     assert.equal(await pg.locator('.pagar [data-checkout]').count(), 1);
     await pg.click('label.plano-opcao:has(input[value="vitrine"])');
     // formulário completo e clique em pagar (navegação para o Mercado Pago bloqueada)
