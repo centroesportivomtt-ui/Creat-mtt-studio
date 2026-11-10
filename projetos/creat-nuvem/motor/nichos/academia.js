@@ -6,7 +6,8 @@
  *  - 3 paletas AA nas cores oficiais das anilhas olímpicas (25 kg vermelha, 20 kg azul,
  *    15 kg amarela): assets/tokens.css e docs/DIRECAO.md §8.2 (Paleta, T2), ordem 1, 2, 3 = p=1..3;
  *  - ritual 'barra': levantar a barra carregada do chão até o alto (motor/v1/rituais/barra.js).
- * O pedido é aula experimental ou avaliação. Valores "sob consulta" por padrão (preco: null).
+ * O pedido é aula experimental, avaliação ou o primeiro treino de um plano. Preços são exemplo (0 = grátis);
+ * no site entregue viram null, como nos outros nichos.
  * Fora do preset: promessa de mudar o corpo em prazo, antes e depois, nome de aluno ou de
  * academia real sem autorização por escrito. Sem equipe e sem avaliação de exemplo;
  * nenhum horário ocupado inventado.
@@ -108,12 +109,12 @@
         }
       },
       servicos: [
-        { id: 'aula-experimental', nome: 'Aula experimental', preco: null, duracaoMin: 60, descricao: 'Uma aula para conhecer o espaço, os professores e o ritmo da casa.' },
-        { id: 'avaliacao', nome: 'Avaliação para começar', preco: null, duracaoMin: 45, descricao: 'Conversa com o professor sobre a sua rotina e o seu objetivo, para montar o primeiro treino.' },
-        { id: 'musculacao', nome: 'Musculação', preco: null, duracaoMin: 60, descricao: 'Treino com aparelhos e pesos livres, com professor na sala.' },
-        { id: 'funcional', nome: 'Funcional', preco: null, duracaoMin: 50, descricao: 'Aula em grupo com circuito de exercícios.' },
-        { id: 'pilates', nome: 'Pilates', preco: null, duracaoMin: 50, descricao: 'Aula em turma pequena, no solo ou nos aparelhos.' },
-        { id: 'personal', nome: 'Treino com personal', preco: null, duracaoMin: 60, descricao: 'Treino individual, com horário combinado com o professor.' }
+        { id: 'aula-experimental', nome: 'Aula experimental', preco: 0, duracaoMin: 60, descricao: 'Uma aula para conhecer o espaço, os professores e o ritmo da casa.' },
+        { id: 'avaliacao', nome: 'Avaliação para começar', preco: 0, duracaoMin: 45, descricao: 'Conversa com o professor sobre a sua rotina e o seu objetivo, para montar o primeiro treino.' },
+        { id: 'mensal', nome: 'Plano mensal', preco: 99, duracaoMin: 60, descricao: 'Musculação de segunda a sábado, com professor na sala. No pedido, você marca o primeiro treino.' },
+        { id: 'trimestral', nome: 'Plano trimestral', preco: 267, duracaoMin: 60, descricao: 'Três meses de musculação pagos de uma vez, com o valor do mês mais baixo que no mensal.' },
+        { id: 'livre', nome: 'Plano livre', preco: 149, duracaoMin: 60, descricao: 'Musculação, funcional e pilates, quantas vezes quiser na semana.' },
+        { id: 'personal', nome: 'Treino com personal', preco: 69, duracaoMin: 60, descricao: 'Sessão individual, com o treino montado para você.' }
       ],
       profissionais: [],
       avaliacoes: [],
@@ -125,14 +126,14 @@
       textos: {
         heroTitulo: 'Sua primeira aula começa com um pedido.',
         heroSubtitulo: 'Escolha a aula experimental ou a avaliação, o dia e o horário. O pedido chega no WhatsApp da academia e o dono confirma pelo WhatsApp.',
-        manifesto: 'Aqui a primeira aula serve para você conhecer a casa sem compromisso. Você escolhe a modalidade, o dia e o horário pelo celular, e o pedido chega no WhatsApp da academia. A confirmação vem por lá, com o nome de quem vai te receber. Traga roupa confortável e água.',
-        servicosTitulo: 'Modalidades',
-        servicosNota: 'Valores sob consulta. Pergunte os planos no WhatsApp.',
+        manifesto: 'Aqui ninguém começa pelo plano, começa pela conversa. A primeira aula serve para você conhecer a sala, o professor e o ritmo da casa. Depois dela, você decide com calma o que cabe na sua semana.',
+        servicosTitulo: 'Aulas e planos',
+        servicosNota: 'Preços de exemplo. A academia troca pelos valores da casa antes de o site entrar no ar.',
         equipeTitulo: 'Professores',
         avaliacoesTitulo: 'Recados de quem treina',
         pedidoTitulo: 'Peça a sua aula experimental',
         pedidoNota: 'O pedido vai para o WhatsApp da academia e o dono confirma pelo WhatsApp.',
-        ritualDica: 'Levante a barra para enviar',
+        ritualDica: 'Arraste para enviar',
         confirmacaoTitulo: 'Pedido pronto para enviar',
         confirmacaoTexto: 'Toque em enviar no WhatsApp. A aula vale depois que o dono confirma pelo WhatsApp.',
         letreiroAberto: 'Aberto agora · peça a sua aula',
@@ -141,8 +142,8 @@
         faqTitulo: 'Antes de vir',
         faq: [
           { pergunta: 'Pedir pelo site já marca a aula?', resposta: 'Ainda não. O pedido chega no WhatsApp da academia e o dono confirma pelo WhatsApp. A aula vale depois da confirmação.' },
-          { pergunta: 'Quanto custa?', resposta: 'Os valores e os planos são passados pelo WhatsApp, de acordo com a modalidade e a frequência.' },
-          { pergunta: 'Preciso levar alguma coisa?', resposta: 'Roupa confortável, tênis e uma garrafa de água. Se tiver alguma dúvida sobre a aula, pergunte no WhatsApp.' },
+          { pergunta: 'Quanto custa?', resposta: 'A aula experimental e a avaliação são grátis. Os planos estão na tabela, com o valor ao lado de cada um.' },
+          { pergunta: 'Preciso levar alguma coisa?', resposta: 'Roupa confortável, tênis e uma garrafa de água. Toalha é bem-vinda.' },
           { pergunta: 'Meu nome e meu WhatsApp ficam salvos?', resposta: 'Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar.' }
         ],
         rodapeFrase: 'Barra montada, sala aberta, horário combinado.'

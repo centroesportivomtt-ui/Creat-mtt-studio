@@ -1,0 +1,27 @@
+{
+  "fuso": "America/Bahia",
+  "profissionais": [
+    {
+      "id": "ana-exemplo",
+      "nome": "Ana (exemplo)",
+      "especialidade": "Unhas e cutícula",
+      "bio": "Profissional de exemplo: no seu site, entra a sua equipe."
+    },
+    {
+      "id": "bia-exemplo",
+      "nome": "Bia (exemplo)",
+      "especialidade": "Cor e escova",
+      "bio": "Profissional de exemplo: no seu site, entra a sua equipe."
+    }
+  ],
+  "recados": [
+    {
+      "texto": "Escolhi a cor olhando o meu fio, sem pressa, e saí do jeito que pedi.",
+      "autor": "Cliente de exemplo"
+    },
+    {
+      "texto": "Mão e pé no mesmo horário, pedido pelo celular em um minuto.",
+      "autor": "Cliente de exemplo"
+    }
+  ]
+}

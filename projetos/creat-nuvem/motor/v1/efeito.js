@@ -697,6 +697,26 @@
     }
     if ('ResizeObserver' in W) new ResizeObserver(aoRedimensionar).observe(couro);
     else W.addEventListener('resize', aoRedimensionar);
+    // o texto do herói mudou de altura sem o couro mudar de tamanho (a frase "Afiada." entra, a fonte chega):
+    // com o conteúdo alinhado embaixo, o olho sobe; a navalha e o selo se encaixam de novo, pela mola
+    var tTexto = 0;
+    function aoMudarTexto() {
+      clearTimeout(tTexto);
+      tTexto = setTimeout(function () {
+        if (h.arrasto && h.arrasto.ativo()) return;
+        var antes = couro.clientWidth + 'x' + couro.clientHeight;
+        prepararPalco(); calcularRepouso();
+        if (couro.clientWidth + 'x' + couro.clientHeight !== antes) { medirHero(); desenharHero(); ultimoTam = couro.clientWidth + 'x' + couro.clientHeight; }
+        if (!h.cena) voltarAoRepouso(reduzido());
+        agendarHero();
+      }, 120);
+    }
+    if ('ResizeObserver' in W) {
+      var roTexto = new ResizeObserver(aoMudarTexto);
+      for (var n = couro.firstElementChild; n; n = n.nextElementSibling) {
+        if (n !== canvas && n !== slot && !n.classList.contains('couro-vez')) roTexto.observe(n);
+      }
+    }
 
     // tema ou cores do config mudaram: regera o couro com as cores novas
     var tTema = 0;
@@ -812,10 +832,14 @@
   function medirHero() {
     var h = hero;
     prepararPalco();
-    h.w = Math.max(1, h.couro.clientWidth); h.hgt = Math.max(1, h.couro.clientHeight); h.d = dpr();
-    h.canvas.width = Math.round(h.w * h.d); h.canvas.height = Math.round(h.hgt * h.d);
-    h.base = gerarBase();
-    h.marcas.tamanho(h.w, h.hgt, 1);                    // marcas em 1x: borradas de propósito, 4x mais baratas
+    var w = Math.max(1, h.couro.clientWidth), hg = Math.max(1, h.couro.clientHeight), d = dpr();
+    // o couro só é gerado de novo se o tamanho mudou (gerar custa um quadro longo no celular)
+    if (!h.base || w !== h.w || hg !== h.hgt || d !== h.d) {
+      h.w = w; h.hgt = hg; h.d = d;
+      h.canvas.width = Math.round(h.w * h.d); h.canvas.height = Math.round(h.hgt * h.d);
+      h.base = gerarBase();
+      h.marcas.tamanho(h.w, h.hgt, 1);                  // marcas em 1x: borradas de propósito, 4x mais baratas
+    }
     calcularRepouso();
     if (!h.arrasto || !h.arrasto.ativo()) voltarAoRepouso(true);
   }
@@ -842,7 +866,7 @@
     if (h.arrasto && h.arrasto.ativo()) h.livre = true;
     else {
       var q = encaixar(p.x, p.y, p.r, p.f);
-      if (h.livre && Math.abs(q.x - p.x) < 0.5 && Math.abs(q.y - p.y) < 0.5 && Math.abs(q.r - p.r) < 0.1) h.livre = false;
+      if (h.livre && ((Math.abs(q.x - p.x) < 0.5 && Math.abs(q.y - p.y) < 0.5 && Math.abs(q.r - p.r) < 0.1) || (h.mx.parada(0.5) && h.my.parada(0.5)))) h.livre = false;
       if (!h.livre) p = q;
     }
     h.nav.pose(p.x, p.y, p.r, p.f);

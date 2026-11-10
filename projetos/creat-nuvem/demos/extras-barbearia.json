@@ -1,0 +1,13 @@
+{
+  "fuso": "America/Bahia",
+  "recados": [
+    {
+      "texto": "Pedi o degradê na hora do almoço e sentei na cadeira no horário que escolhi.",
+      "autor": "Cliente de exemplo"
+    },
+    {
+      "texto": "Corte + barba numa passada só, pelo valor que estava na tabela.",
+      "autor": "Cliente de exemplo"
+    }
+  ]
+}

@@ -71,7 +71,8 @@
       pronto: 'Afiada. O pedido está pronto.',
       heroiDica: 'Dá o fio.',
       heroiInstrucao: 'Afiar a navalha: arraste no couro, ou use as setas e a barra de espaço.',
-      heroiPronto: 'Afiada. A cadeira está esperando.'
+      heroiPronto: 'Afiada. A cadeira está esperando.',
+      dicaVez: 'Passe a navalha no couro'
     },
 
     tenantBase: {
@@ -104,8 +105,8 @@
       servicos: [
         { id: 'corte', nome: 'Corte', preco: 45, duracaoMin: 40, descricao: 'Tesoura e máquina, com acabamento na nuca e no pezinho.' },
         { id: 'degrade', nome: 'Degradê', preco: 55, duracaoMin: 50, descricao: 'Degradê do zero, com a transição fechada na navalha.' },
-        { id: 'barba', nome: 'Barba', preco: 40, duracaoMin: 30, descricao: 'Toalha quente, espuma no pincel e navalha.' },
-        { id: 'corte-barba', nome: 'Corte + barba', preco: 85, duracaoMin: 80, descricao: 'O serviço completo numa passada só.' },
+        { id: 'barba', nome: 'Barba', preco: 35, duracaoMin: 30, descricao: 'Toalha quente, espuma no pincel e navalha.' },
+        { id: 'corte-barba', nome: 'Corte + barba', preco: 75, duracaoMin: 80, descricao: 'O serviço completo numa passada só.' },
         { id: 'pezinho', nome: 'Pezinho', preco: 20, duracaoMin: 15, descricao: 'Manutenção rápida do contorno entre um corte e outro.' }
       ],
       profissionais: [],
@@ -118,7 +119,7 @@
       textos: {
         heroTitulo: 'Cadeira de bairro, corte no capricho.',
         heroSubtitulo: 'Escolha o serviço, o dia e o horário. O pedido chega no WhatsApp da casa e o dono confirma pelo WhatsApp.',
-        manifesto: 'Aqui a navalha passa no couro antes de cada cliente. Você escolhe o corte, o dia e o horário pelo celular, sem ligar e sem esperar alguém atender. O pedido chega no WhatsApp da casa, e a confirmação vem por lá, de gente para gente. Chegou, sentou, saiu alinhado.',
+        manifesto: 'Antes de cada cliente, a navalha passa no couro. O corte é conversado antes da primeira passada de máquina, e a nuca é conferida no espelho de mão. Você levanta da cadeira alinhado, sem a pressa de quem tem fila na porta.',
         servicosTitulo: 'Tabela da casa',
         servicosNota: 'Preços de exemplo. O dono troca pelos preços da casa antes de o site entrar no ar.',
         equipeTitulo: 'Quem está na cadeira',
@@ -134,7 +135,7 @@
         faqTitulo: 'Antes de pedir',
         faq: [
           { pergunta: 'Pedir pelo site já marca o horário?', resposta: 'Ainda não. O pedido chega no WhatsApp da barbearia e o dono confirma pelo WhatsApp. O horário vale depois da confirmação.' },
-          { pergunta: 'Posso pedir corte e barba juntos?', resposta: 'Pode. Escolha Corte + barba na lista de serviços.' },
+          { pergunta: 'Quanto custa cada serviço?', resposta: 'O valor está na tabela, ao lado de cada serviço. Corte + barba sai por menos que os dois separados.' },
           { pergunta: 'Como eu pago?', resposta: 'O pagamento é na barbearia. Pergunte no WhatsApp quais formas a casa aceita.' },
           { pergunta: 'Meu nome e meu WhatsApp ficam salvos?', resposta: 'Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar.' }
         ],

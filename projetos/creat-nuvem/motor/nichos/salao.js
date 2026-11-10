@@ -109,11 +109,15 @@
       servicos: [
         { id: 'corte', nome: 'Corte', preco: 70, duracaoMin: 60, descricao: 'Lavagem, corte e finalização do jeito que você pedir.' },
         { id: 'escova', nome: 'Escova', preco: 50, duracaoMin: 45, descricao: 'Lavagem e escova, lisa ou modelada.' },
+        { id: 'progressiva', nome: 'Progressiva', preco: 180, duracaoMin: 180, descricao: 'Alisamento progressivo, com teste de mecha antes e escova no final.' },
         { id: 'coloracao', nome: 'Coloração', preco: 150, duracaoMin: 120, descricao: 'Cor do fio inteiro ou retoque de raiz. O tom é combinado na hora.' },
+        { id: 'mechas', nome: 'Mechas', preco: 220, duracaoMin: 180, descricao: 'Mechas ou luzes no tom que você escolher, com tonalização no final.' },
+        { id: 'hidratacao', nome: 'Hidratação', preco: 80, duracaoMin: 45, descricao: 'Máscara de tratamento para os fios, com escova no final.' },
         { id: 'manicure', nome: 'Manicure', preco: 35, duracaoMin: 45, descricao: 'Cutícula, lixa e esmalte da sua escolha.' },
         { id: 'pedicure', nome: 'Pedicure', preco: 40, duracaoMin: 50, descricao: 'Cuidado dos pés, cutícula e esmalte.' },
+        { id: 'alongamento-gel', nome: 'Alongamento em gel', preco: 150, duracaoMin: 120, descricao: 'Unhas alongadas em gel, no formato e no tamanho que você pedir.' },
         { id: 'sobrancelha', nome: 'Design de sobrancelha', preco: 35, duracaoMin: 30, descricao: 'Desenho e acabamento com pinça e linha.' },
-        { id: 'hidratacao', nome: 'Hidratação', preco: 80, duracaoMin: 45, descricao: 'Máscara de tratamento para os fios, com escova no final.' }
+        { id: 'maquiagem', nome: 'Maquiagem', preco: 90, duracaoMin: 60, descricao: 'Maquiagem para festa, formatura ou ensaio, com a pele preparada antes.' }
       ],
       profissionais: [],
       avaliacoes: [],
@@ -125,7 +129,7 @@
       textos: {
         heroTitulo: 'Seu horário no salão, pedido em um minuto.',
         heroSubtitulo: 'Escolha o serviço, o dia e o horário. O pedido chega no WhatsApp do salão e o dono confirma pelo WhatsApp.',
-        manifesto: 'Aqui cada horário é pensado para você sair do jeito que pediu. Você escolhe o serviço, o dia e o horário pelo celular, sem ligação e sem fila de mensagem. O pedido chega no WhatsApp do salão e a confirmação vem por lá. Chegue, sente e aproveite.',
+        manifesto: 'Aqui a cor é escolhida olhando o seu fio, na luz do espelho. O esmalte leva o tempo de cada camada secar, sem ninguém apressando a próxima. Você sai do jeito que pediu, e não do jeito que deu tempo.',
         servicosTitulo: 'Serviços da casa',
         servicosNota: 'Preços de exemplo. O salão troca pelos preços da casa antes de o site entrar no ar.',
         equipeTitulo: 'Quem atende',
@@ -142,7 +146,7 @@
         faq: [
           { pergunta: 'Pedir pelo site já marca o horário?', resposta: 'Ainda não. O pedido chega no WhatsApp do salão e o dono confirma pelo WhatsApp. O horário vale depois da confirmação.' },
           { pergunta: 'Posso pedir mais de um serviço?', resposta: 'Pode. Escolha o primeiro serviço no site e escreva os outros na mensagem do WhatsApp antes de enviar.' },
-          { pergunta: 'A coloração tem o preço da tabela?', resposta: 'O valor final da coloração depende do comprimento e do tom. O salão combina com você pelo WhatsApp.' },
+          { pergunta: 'Quanto custa a coloração?', resposta: 'O valor está na lista de serviços. Se o tom pedir mais produto, o salão avisa antes de confirmar.' },
           { pergunta: 'Meu nome e meu WhatsApp ficam salvos?', resposta: 'Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar.' }
         ],
         rodapeFrase: 'Cadeira pronta, toalha limpa, horário combinado.'

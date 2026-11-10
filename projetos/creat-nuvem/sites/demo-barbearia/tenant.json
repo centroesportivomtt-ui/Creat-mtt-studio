@@ -5,21 +5,21 @@
   "negocio": {
     "nome": "Barbearia Navalha Fictícia",
     "nomeCurto": "Barbearia Navalha Fictícia",
-    "bordao": "Navalha no couro, cadeira no Centro de Riachão e o horário pedido pelo WhatsApp.",
+    "bordao": "Corte conversado, navalha afiada, cadeira no Centro.",
     "endereco": {
       "rua": "Rua do Exemplo",
       "numero": "s/n",
       "bairro": "Centro",
-      "cidade": "Riachão do Jacuípe",
+      "cidade": "Feira de Santana",
       "uf": "BA",
-      "cep": "44640-000"
+      "cep": "00000-000"
     },
     "whatsapp": "5575981151202",
     "telefoneExibicao": "(75) 98115-1202"
   },
   "pagina": {
-    "titulo": "Barbearia Navalha Fictícia · barbearia em Riachão do Jacuípe",
-    "descricao": "Corte, degradê, barba e pezinho no Centro de Riachão do Jacuípe. Escolha serviço, dia e hora no site e mande o pedido pelo WhatsApp."
+    "titulo": "Barbearia Navalha Fictícia · barbearia em Feira de Santana",
+    "descricao": "Corte, degradê, barba e pezinho no Centro de Feira de Santana, com preço na tabela. Escolha o serviço, o dia e a hora e peça o horário."
   },
   "funcionamento": {
     "passoMin": 20,
@@ -54,35 +54,35 @@
     {
       "id": "corte",
       "nome": "Corte",
-      "preco": null,
+      "preco": 45,
       "duracaoMin": 40,
       "descricao": "Tesoura e máquina no tamanho que você pedir, com nuca e pezinho acertados antes de levantar da cadeira."
     },
     {
       "id": "degrade",
       "nome": "Degradê",
-      "preco": null,
+      "preco": 55,
       "duracaoMin": 50,
       "descricao": "Degradê subindo do zero, com a transição fechada na navalha para não ficar degrau marcado."
     },
     {
       "id": "barba",
       "nome": "Barba",
-      "preco": null,
+      "preco": 35,
       "duracaoMin": 30,
       "descricao": "Barba aparada no tamanho que você pedir e contorno desenhado na navalha no fim."
     },
     {
       "id": "corte-barba",
       "nome": "Corte + barba",
-      "preco": null,
+      "preco": 75,
       "duracaoMin": 80,
-      "descricao": "Corte e barba na mesma cadeira, numa passada só: cabelo e rosto saem alinhados juntos."
+      "descricao": "Corte e barba na mesma cadeira, numa passada só, por menos que os dois separados."
     },
     {
       "id": "pezinho",
       "nome": "Pezinho",
-      "preco": null,
+      "preco": 20,
       "duracaoMin": 15,
       "descricao": "Contorno da nuca, das costeletas e da testa em dia, para o corte durar até a próxima visita."
     }
@@ -100,18 +100,18 @@
     "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}. Pode confirmar por aqui?"
   },
   "textos": {
-    "heroTitulo": "Cadeira no Centro de Riachão, corte no capricho.",
-    "heroSubtitulo": "Escolha o serviço, o dia e a hora aqui mesmo. O pedido chega pronto no WhatsApp da Navalha e o dono confirma pelo WhatsApp, sem ligação e sem esperar alguém atender.",
-    "manifesto": "Antes de cada cliente, a navalha passa no couro. É o jeito da casa dizer que a próxima cadeira é sua e que o corte vai ser feito com calma. Aqui você não precisa ligar nem mandar mensagem perguntando se tem vaga e ficar esperando: escolhe o serviço, o dia e a hora no celular, e o pedido chega no WhatsApp da barbearia já com tudo escrito. O dono responde por lá, de gente para gente. Chegou no Centro, sentou, saiu alinhado.",
+    "heroTitulo": "Cadeira no Centro, corte no capricho.",
+    "heroSubtitulo": "Escolha o serviço, o dia e a hora aqui mesmo. O pedido chega pronto no WhatsApp da barbearia, e a casa confirma por lá.",
+    "manifesto": "Antes de cada cliente, a navalha passa no couro. O corte é conversado antes da primeira passada de máquina, e a nuca é conferida no espelho de mão. Você levanta da cadeira alinhado, sem a pressa de quem tem fila na porta.",
     "servicosTitulo": "Tabela da casa",
-    "servicosNota": "Valores sob consulta: pergunte no WhatsApp da casa antes de pedir o horário.",
+    "servicosNota": "Preços de exemplo. No seu site entram os seus valores.",
     "equipeTitulo": "Quem está na cadeira",
     "avaliacoesTitulo": "Recado no quadro",
     "pedidoTitulo": "Peça o seu horário",
-    "pedidoNota": "O pedido vai pronto para o WhatsApp da barbearia, com serviço, dia e hora. O dono confirma pelo WhatsApp.",
+    "pedidoNota": "O pedido chega pronto, com serviço, dia e hora.",
     "ritualDica": "Passe a navalha no couro para enviar",
     "confirmacaoTitulo": "Navalha afiada, pedido pronto",
-    "confirmacaoTexto": "Toque em enviar no WhatsApp. O horário vale depois que o dono confirma pelo WhatsApp. Se a hora não der, a conversa segue por lá.",
+    "confirmacaoTexto": "Toque em enviar. O horário vale depois que a barbearia confirma pelo WhatsApp.",
     "letreiroAberto": "Aberto agora · peça o seu horário",
     "letreiroFechado": "Fechado agora · abre {dia} às {hora}",
     "localTitulo": "Onde fica no Centro",
@@ -119,30 +119,37 @@
     "faq": [
       {
         "pergunta": "Pedir pelo site já marca o horário?",
-        "resposta": "Ainda não. O pedido chega no WhatsApp da barbearia com serviço, dia e hora, e o dono confirma pelo WhatsApp. O horário vale depois dessa resposta."
+        "resposta": "Não. O pedido chega pronto na barbearia, com serviço, dia e hora. O horário vale depois da confirmação."
       },
       {
         "pergunta": "Quanto custa cada serviço?",
-        "resposta": "Os valores são passados pelo WhatsApp da casa. Pergunte antes de pedir o horário, sem compromisso."
-      },
-      {
-        "pergunta": "Posso pedir corte e barba juntos?",
-        "resposta": "Pode. Escolha Corte + barba na lista e os dois saem na mesma cadeira, numa passada só."
+        "resposta": "O valor está na tabela, ao lado de cada serviço. Corte + barba sai por menos que os dois separados."
       },
       {
         "pergunta": "Como eu pago?",
-        "resposta": "Pergunte no WhatsApp quais formas de pagamento a casa aceita antes de pedir o horário."
+        "resposta": "Na barbearia, depois do corte, no Pix, no cartão ou em dinheiro."
       },
       {
-        "pergunta": "Meu nome e meu WhatsApp ficam salvos?",
-        "resposta": "Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar."
+        "pergunta": "Meus dados ficam salvos?",
+        "resposta": "Seu nome e seu número ficam só neste aparelho, para o próximo pedido sair mais rápido. O botão Esquecer meus dados apaga tudo."
       }
     ],
-    "rodapeFrase": "Navalha no couro e horário pedido pelo WhatsApp."
+    "rodapeFrase": "Toalha quente, espuma no pincel e cadeira limpa."
   },
   "meta": {
     "previa": false,
-    "motorVersao": "v1",
-    "criadoEm": "2026-11-09T20:10:24.536Z"
-  }
+    "motorVersao": "v1.3",
+    "criadoEm": "2026-11-10T19:59:56.773Z"
+  },
+  "fuso": "America/Bahia",
+  "recados": [
+    {
+      "texto": "Pedi o degradê na hora do almoço e sentei na cadeira no horário que escolhi.",
+      "autor": "Cliente de exemplo"
+    },
+    {
+      "texto": "Corte + barba numa passada só, pelo valor que estava na tabela.",
+      "autor": "Cliente de exemplo"
+    }
+  ]
 }
