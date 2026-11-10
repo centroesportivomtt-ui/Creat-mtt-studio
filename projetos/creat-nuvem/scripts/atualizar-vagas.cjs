@@ -20,17 +20,23 @@
                                                             e -1 vaga de inauguração se ela estiver ativa
      node scripts/atualizar-vagas.cjs --entregou            1 pedido entregue: -1 em produção
      node scripts/atualizar-vagas.cjs --inauguracao-restantes 12
+     node scripts/atualizar-vagas.cjs --pagos-inauguracao 3   Aberturas de inauguração pagas contadas no servidor
+                                                            (contarPagos do pacote 1A): vagasRestantes = vagasTotal - N
      node scripts/atualizar-vagas.cjs --inauguracao on|off
      node scripts/atualizar-vagas.cjs --prazo-horas 48      (só depois de medido; briefing seção 2)
-     node scripts/atualizar-vagas.cjs --rotina              o que a rotina diária automática roda
-                                                            (.github/workflows/rotina-vagas.yml): --novo-dia
+     node scripts/atualizar-vagas.cjs --rotina              o que o carimbo diário das 06:30 roda (docs/ROTINA-DIARIA.md,
+                                                            tarefa agendada da sessão principal; o workflow da
+                                                            Cloudflare está obsoleto desde a D9): --novo-dia
                                                             + --confirmar, e FALHA (código 2) se a inauguração
                                                             acabou e algum link de R$ 297 ainda está no
                                                             checkout.config.js
    Opções: --raiz <pasta do projeto> · --simular (mostra o resultado sem gravar)
+   Na rotina diária, --raiz aponta para a cópia dos arquivos do APP no ar (public/dados/*.json e
+   public/checkout.config.js lidos pelo MCP), porque o app é a fonte do estado de produção.
 
    Links de R$ 297 (passo obrigatório): quando a inauguração acaba (0 vaga ou --inauguracao off),
-   TODOS os links do preço de inauguração continuam pagáveis por quem os guardou:
+   TODOS os links do preço de inauguração continuam pagáveis por quem os guardou (são preferências
+   do Checkout Pro, sem quantidade máxima; a trava real é o vencimento por portaAbertaFecharPrefs):
    links.aberturaInauguracao, os 6 de linksPorPraca e os 2 combos do anual (estes não ficam no
    checkout.config.js; estão em docs/INTEGRACAO-PAGAMENTO.md e na lista COMBOS_FORA_DA_PAGINA abaixo).
    O script imprime a lista de links a desativar no Mercado Pago. Depois disso, volte
@@ -53,7 +59,7 @@ const RAIZ = path.resolve(valor('--raiz') || path.join(__dirname, '..'));
 const ARQ_VAGAS = path.join(RAIZ, 'dados', 'vagas.json');
 const ARQ_PRECOS = path.join(RAIZ, 'dados', 'precos.json');
 
-const CONHECIDAS = ['--raiz', '--simular', '--confirmar', '--vagas-hoje', '--em-producao', '--capacidade', '--novo-dia', '--vendeu', '--entregou', '--inauguracao-restantes', '--inauguracao', '--prazo-horas', '--rotina', '--ajuda'];
+const CONHECIDAS = ['--raiz', '--simular', '--confirmar', '--vagas-hoje', '--em-producao', '--capacidade', '--novo-dia', '--vendeu', '--entregou', '--inauguracao-restantes', '--pagos-inauguracao', '--inauguracao', '--prazo-horas', '--rotina', '--ajuda'];
 const desconhecida = args.find((a, i) => a.startsWith('--') && CONHECIDAS.indexOf(a) === -1);
 if (desconhecida) sair(`opção desconhecida: ${desconhecida}. Use --ajuda.`);
 if (tem('--ajuda')) { console.log(fs.readFileSync(__filename, 'utf8').split('*/')[0].replace(/^\/\*|^ {3}/gm, '')); process.exit(0); }
@@ -93,6 +99,14 @@ if (tem('--vendeu')) {
 }
 if (tem('--entregou')) { if (vagas.em_producao > 0) vagas.em_producao -= 1; mudou.push('entrega'); }
 const ir = inteiro('--inauguracao-restantes'); if (ir !== undefined) { inaug.vagasRestantes = ir; mudou.push('inauguracao.vagasRestantes'); }
+// Contagem do servidor (contarPagos, pacote 1A) é a verdade: nunca devolve vaga, só tira.
+const pi = inteiro('--pagos-inauguracao');
+if (pi !== undefined) {
+  if (ir !== undefined) sair('use --pagos-inauguracao ou --inauguracao-restantes, não os dois');
+  if (!Number.isInteger(inaug.vagasTotal) || inaug.vagasTotal < 0) sair('inauguracao.vagasTotal inválido em precos.json');
+  const pelaContagem = Math.max(0, inaug.vagasTotal - pi);
+  if (Number.isInteger(inaug.vagasRestantes) && pelaContagem < inaug.vagasRestantes) { inaug.vagasRestantes = pelaContagem; mudou.push('inauguracao.vagasRestantes (contagem do servidor)'); }
+}
 const io = valor('--inauguracao');
 if (io !== undefined) { if (io !== 'on' && io !== 'off') sair('--inauguracao aceita on ou off'); inaug.ativa = io === 'on'; mudou.push('inauguracao.ativa'); }
 const ph = inteiro('--prazo-horas'); if (ph !== undefined) { if (ph < 1) sair('--prazo-horas precisa ser maior que 0'); precos.prazoHoras = ph; mudou.push('prazoHoras'); }
@@ -141,8 +155,10 @@ function checarLinkInauguracao() {
   const naPagina = linksInauguracaoPublicados();
   if (inaugAntes || naPagina.length) {
     const lista = naPagina.concat(COMBOS_FORA_DA_PAGINA).map(([nome, url]) => '     - ' + nome + (url ? ': ' + url : '')).join('\n');
-    console.error('ATENÇÃO  inauguração encerrada. Passo obrigatório do Marcos:\n' +
-      '  1. Mercado Pago > Seu negócio > Links de pagamento: desative TODOS estes links de preço de inauguração:\n' + lista + '\n' +
+    console.error('ATENÇÃO  inauguração encerrada. Passo obrigatório (ADR-005, revisão de 10/11):\n' +
+      '  1. Estes links são preferências do Checkout Pro, sem quantidade máxima. Feche-as pelo workflow "Porta Aberta · fechar R$ 297"\n' +
+      '     do AutoCreatFlux (função portaAbertaFecharPrefs, docs/EXECUTOR.md passo m). Os 2 combos não estão na lista fixa da função:\n' +
+      '     confira e, se seguirem pagáveis, avise o coordenador. Links de preço de inauguração:\n' + lista + '\n' +
       '  2. Em checkout.config.js, volte links.aberturaInauguracao para o marcador e linksPorPraca para {} e publique.' +
       (naPagina.length ? '\n  Ainda publicados no checkout.config.js: ' + naPagina.map((x) => x[0]).join(', ') + '.' : ''));
   }

@@ -18,7 +18,7 @@ Verbo (T3), 08/11/2026. Para o Marcos subir sem pensar: copie, cole, publique.
 ### Regras que mais pesam neste kit, com o texto da Meta
 
 1. **Atributos pessoais** (dentro de "Privacy Violations and Personal Attributes"): o anúncio não pode afirmar ou insinuar "race, ethnicity, religion, beliefs, age, sexual orientation or practices, gender identity, disability, physical or mental health (including medical conditions), vulnerable financial status, voting status, membership in a trade union, criminal record, or name". Aplicação aqui: nenhum texto pergunta "você é...?", nenhum fala da situação financeira de quem vê, nenhum usa o nome de quem vê. Os textos falam do produto ("digite o nome do seu negócio"), não de quem lê.
-2. **Práticas comerciais proibidas** (29/10/2026): a Meta age contra "misleading or unreasonable pricing", "deceptive subscription practices: enrolling customers in recurring payment plans or subscription services without clear disclosure of terms", "non-delivery", "violation of return or refund policies" e "get rich quick". Aplicação aqui: nenhum texto promete ganho; a mensalidade aparece nos ângulos B e na página antes do pagamento (total visível em /abrir/); o arrependimento de 7 dias e o SAIR estão nos termos; o ângulo A diz "só paga se gostar" e a página mostra Abertura + mensalidade antes de qualquer pagamento.
+2. **Práticas comerciais proibidas** (29/10/2026): a Meta age contra "misleading or unreasonable pricing", "deceptive subscription practices: enrolling customers in recurring payment plans or subscription services without clear disclosure of terms", "non-delivery", "violation of return or refund policies" e "get rich quick". Aplicação aqui: nenhum texto promete ganho; a mensalidade aparece nos ângulos B e na página antes do pagamento (total visível em /abrir/); o arrependimento de 7 dias e o SAIR estão nos termos. Desde 10/11/2026, todo anúncio declara a Abertura e o plano mensal no texto principal e na descrição (ver "Regra de preço no anúncio").
 3. **Relevância**: "The products and services promoted in an ad must match those promoted on the landing page." Aplicação aqui: todo link vai para a home com `?nicho=`, que abre o nicho do anúncio.
 4. **Saúde e bem-estar** (22/07/2026): proíbe, em serviço de corpo ou estética, "statements of inferiority about physical appearance" e "promises of specific outcomes within a set timeframe". Academia ("fitness services, health clubs") e beleza não permanente ("makeup, hair products") ficam fora da restrição de idade. Aplicação aqui: nenhum texto de academia fala de corpo, peso ou prazo de resultado; nenhum texto de salão fala de aparência de quem vê; "pigmentação" (que a Meta trata como procedimento cosmético, 18+) não aparece em anúncio nem na tabela de serviços que o vídeo R1 grava (saiu do preset da barbearia em 08/11/2026).
 5. **Vídeo**: "Videos ... must not use overly disruptive tactics, such as flashing screens." Aplicação: os roteiros não usam tela piscando.
@@ -27,11 +27,37 @@ Verbo (T3), 08/11/2026. Para o Marcos subir sem pensar: copie, cole, publique.
 
 ### Regras da casa (briefing, regra dura 7)
 
-Sem promessa de ganho · sem antes e depois · sem comparação nominal com concorrente · sem afirmar estado negativo de quem vê ("sua barbearia está fechada" é proibido) · sem nome de cliente real sem autorização escrita · sem emoji · sem "agenda", sempre "pedido de horário no seu WhatsApp" · números só por marcador.
+Sem promessa de ganho · sem antes e depois · sem comparação nominal com concorrente · sem afirmar estado negativo de quem vê ("sua barbearia está fechada" é proibido) · sem nome de cliente real sem autorização escrita · sem emoji · sem "agenda", sempre "pedido de horário no seu WhatsApp" · preço só pela regra abaixo.
+
+### Regra de preço no anúncio (revista em 10/11/2026)
+
+**Antes:** "sem preço ou prazo no anúncio". Era escolha da casa, para o anúncio não ficar velho quando o preço mudasse. Não era regra da Meta.
+
+**Agora:** **Abertura e plano mensal declarados no texto principal e na descrição, nunca no título.** Nos anúncios de site, os dois valores terminam antes do caractere 125 do texto principal, para aparecerem antes do "ver mais". Em vídeo, os dois valores vão também queimados na tela, porque o Reels não mostra a descrição.
+
+Por quê:
+- **Meta, M03 de `trafego/anuncios-meta.md`:** os Padrões proíbem "deceptive subscription practices: enrolling customers in recurring payment plans or subscription services without clear disclosure of terms" (Práticas Comerciais Proibidas, alteração de 29/10/2026). O Porta Aberta tem mensalidade; anúncio que a esconde arrisca reprovação e restrição da conta.
+- **CDC, art. 31:** a oferta tem de trazer informação correta, clara e precisa sobre o preço.
+- **CDC, art. 37, § 3º:** publicidade é enganosa por omissão quando deixa de informar dado essencial. Para quem paga todo mês, a mensalidade é dado essencial.
+- **Decreto 7.962/2013, art. 2º:** na contratação pela internet, as condições integrais da oferta e qualquer despesa adicional ficam claras para quem compra.
+- **Auditoria de 10/11/2026 (AN-02):** os A1 no ar diziam que a pessoa só pagava se gostasse e não citavam mensalidade. A página dizia o contrário. Quem descobre a mensalidade só no site se sente enganado.
+
+O que continua proibido:
+- preço ou número no **título**;
+- **prazo** ("72 h", "em 3 dias") em qualquer parte do anúncio, até o ensaio de entrega da onda 1 ficar verde;
+- **"inauguração"**, **"vagas"** ou qualquer escassez, até a trava das 20 vagas estar provada (`trafego/textos-troca-unica.md`, seção 1);
+- valor velho: quando o preço de `dados/precos.json` muda, os anúncios com o valor antigo pausam no mesmo ato e sobem com o novo.
+
+**Bloco de preço** (frase padrão, igual em todo anúncio de site):
+- no texto: "Abertura R$ {{precos.abertura.inauguracao.preco}}, paga uma vez; plano a partir de R$ {{precos.planos.aberto}} por mês, só com o site no ar."
+- na descrição: "Abertura R$ {{precos.abertura.inauguracao.preco}} + plano a partir de R$ {{precos.planos.aberto}} por mês, só com o site no ar."
+- Hoje: R$ 297 e R$ 147. Quando a inauguração acabar, o primeiro valor passa a ser `abertura.padrao`.
+
+Os textos finais dos 6 anúncios no ar, com a contagem e a validação tripla, estão em `trafego/textos-troca-unica.md`. Nos outros textos deste kit, o bloco de preço entra logo depois da primeira frase. Texto sem o bloco não sobe.
 
 ### Resultado da conferência
 
-Cada texto abaixo foi lido contra as 7 regras da Meta e as regras da casa. Todos: **ok**, com as observações de cada ângulo. Marcadores `{{...}}` não vão para o anúncio: o anúncio não cita preço nem prazo, de propósito (preço muda com a inauguração, e preço velho em anúncio contraria o CDC art. 37). Antes de subir, Lupa (T-QA) faz a segunda leitura, como pede o briefing.
+Cada texto abaixo foi lido contra as 7 regras da Meta e as regras da casa. Todos: **ok**, com as observações de cada ângulo. Marcadores `{{...}}` não vão para o anúncio: quem publica troca pelo valor de `dados/precos.json` do dia. O anúncio cita a Abertura e o plano mensal (regra de preço acima) e não cita prazo. A releitura de 10/11/2026 está no "Checklist de política", no fim deste arquivo. Antes de subir, Lupa (T-QA) faz a segunda leitura, como pede o briefing.
 
 ---
 
@@ -46,56 +72,58 @@ Cada texto abaixo foi lido contra as 7 regras da Meta e as regras da casa. Todos
 
 ## Ângulo A · A Prévia
 
-Base do briefing: "Digite o nome do seu negócio e veja o seu site pronto em segundos, com pedido de horário direto no seu WhatsApp. Sem cadastro. Você só paga se gostar." Título base: "Veja seu negócio aberto na internet".
-Observação de política: "só paga se gostar" é verdadeiro porque ver a prévia é grátis e a página mostra Abertura e mensalidade antes de pagar. Não tire o "Sem cadastro" para encurtar: ele explica o grátis.
+Base do briefing (revista em 10/11/2026): primeira frase de até 40 caracteres com o nicho e o WhatsApp, o bloco de preço e "Ver é grátis e sem cadastro. Sem fidelidade e com 7 dias para desistir." Título base: "Veja o site da sua barbearia pronto" (ou do salão, da academia).
+Observação de política: a frase antiga dizia que a pessoa só pagava se gostasse. Era falsa, porque a Abertura é paga antes da produção, e foi aposentada (AN-02). O que é grátis de verdade é ver. Não tire o "sem cadastro" para encurtar: ele explica o grátis.
 
 ### A · barbearia (`?nicho=barbearia`)
 
 Textos principais
-- **A1**: Digite o nome da barbearia e veja o seu site pronto em segundos, com pedido de horário direto no seu WhatsApp. Sem cadastro. Você só paga se gostar.
+- **A1**: Barbearia: site com pedido no WhatsApp. Abertura R$ 297, paga uma vez; plano a partir de R$ 147 por mês, só com o site no ar. Ver é grátis e sem cadastro. Sem fidelidade e com 7 dias para desistir.
 - **A2**: Escreva o nome da barbearia, vire a placa para ABERTO e veja o site com a tabela de serviços e o pedido de horário no WhatsApp. Ver é grátis e sem cadastro.
-- **A3**: O cliente escolhe o corte, o dia e o horário no site, e o pedido chega no seu WhatsApp. Veja o da sua barbearia pronto agora. Sem cadastro, só paga se gostar.
+- **A3**: O cliente escolhe o corte, o dia e o horário no site, e o pedido chega no seu WhatsApp. Veja o da sua barbearia pronto agora. Ver é grátis e sem cadastro.
 
 Títulos
-- Veja seu negócio aberto na internet
-- Vire a placa da barbearia para ABERTO
+- Veja o site da sua barbearia pronto (35, o que está no ar a partir da troca única)
 - O site da barbearia, pronto para ver
+- Veja seu negócio aberto na internet (reserva: não diz "site")
+- Vire a placa da barbearia para ABERTO (reserva: só repete a arte)
 
 Descrições
-- Grátis para ver. Sem cadastro.
-- Pedido de horário no WhatsApp
+- Abertura R$ 297 + plano a partir de R$ 147 por mês, só com o site no ar. (a que vai com o A1)
+- Grátis para ver. Sem cadastro. (só junto de texto que já traz o bloco de preço)
 
 ### A · salão e estética (`?nicho=salao`)
 
 Textos principais
-- **A1**: Digite o nome do salão e veja o seu site pronto em segundos, com pedido de horário direto no seu WhatsApp. Sem cadastro. Você só paga se gostar.
+- **A1**: Salão: site com pedido no WhatsApp. Abertura R$ 297, paga uma vez; plano a partir de R$ 147 por mês, só com o site no ar. Ver é grátis e sem cadastro. Sem fidelidade e com 7 dias para desistir.
 - **A2**: Escreva o nome do salão, vire a placa para ABERTO e veja o site com os serviços e o pedido de horário no WhatsApp. Ver é grátis e sem cadastro.
 - **A3**: A cliente escolhe escova, manicure ou coloração, o dia e o horário no site, e o pedido chega no seu WhatsApp. Veja o do seu salão pronto agora. Sem cadastro.
 
 Títulos
-- Veja seu negócio aberto na internet
-- Vire a placa do salão para ABERTO
+- Veja o site do seu salão pronto (31, o que está no ar a partir da troca única)
 - O site do salão, pronto para ver
+- Veja seu negócio aberto na internet (reserva: não diz "site")
+- Vire a placa do salão para ABERTO (aposentado: CTR de 2,36% contra 4,31% do B1 com a mesma arte, AN-03)
 
 Descrições
-- Grátis para ver. Sem cadastro.
-- Pedido de horário no WhatsApp
+- Abertura R$ 297 + plano a partir de R$ 147 por mês, só com o site no ar. (a que vai com o A1)
+- Grátis para ver. Sem cadastro. (só junto de texto que já traz o bloco de preço)
 
 ### A · academia e studio (`?nicho=academia`)
 
 Textos principais
-- **A1**: Digite o nome da academia ou do studio e veja o seu site pronto em segundos, com pedido de aula experimental direto no seu WhatsApp. Sem cadastro. Você só paga se gostar.
+- **A1**: Academia: site com pedido no WhatsApp. Abertura R$ 297, paga uma vez; plano a partir de R$ 147 por mês, só com o site no ar. Ver é grátis e sem cadastro. Sem fidelidade e com 7 dias para desistir.
 - **A2**: Escreva o nome do studio, vire a placa para ABERTO e veja o site com as modalidades e o pedido de aula experimental no WhatsApp. Ver é grátis e sem cadastro.
 - **A3**: Quem quer começar escolhe a modalidade, o dia e o horário no site, e o pedido de aula experimental chega no seu WhatsApp. Veja o seu pronto agora. Sem cadastro.
 
 Títulos
-- Veja seu negócio aberto na internet
-- Vire a placa da academia para ABERTO
+- Veja o site da sua academia pronto
 - Aula experimental pedida pelo site
+- Veja seu negócio aberto na internet (reserva: não diz "site")
 
 Descrições
-- Grátis para ver. Sem cadastro.
-- Pedido de aula no WhatsApp
+- Abertura R$ 297 + plano a partir de R$ 147 por mês, só com o site no ar. (a que vai com o A1)
+- Grátis para ver. Sem cadastro. (só junto de texto que já traz o bloco de preço)
 
 Observação de política (academia): nenhum texto fala de corpo, peso ou resultado. Não acrescente.
 
@@ -103,56 +131,56 @@ Observação de política (academia): nenhum texto fala de corpo, peso ou result
 
 ## Ângulo B · Sem amarra
 
-Base do briefing: "Site, pedido de horário no WhatsApp e posts todo mês por um preço fechado. Sem fidelidade e sem multa. Se sair, você leva tudo." Título base: "Seu site pronto. Sem amarra."
-Observação de política: o domínio não está incluído (o cliente paga a anuidade ao Registro.br, e sem domínio o site fica no endereço da Creat). Por isso nenhum texto diz "com o domínio no seu nome" para todos; o B2 diz "se tiver domínio próprio, ele fica no seu nome" (prática comercial da Meta e CDC art. 37). "Posts todo mês" é do plano Vitrine; o texto diz "no plano Vitrine" quando cita posts, para não ser lido como incluído em todos os planos (prática de assinatura enganosa). "Preço fechado" é verdadeiro: o preço fica travado por 12 meses (termos, cláusula 4).
+Base do briefing (revista em 10/11/2026, AN-07): o argumento "sem amarra" abre o texto, com "Sem fidelidade e sem multa. Site pronto." (40). Depois vêm o bloco de preço, o pedido de horário no WhatsApp e "Se sair, você leva o site e os arquivos." Título base: "Seu site pronto. Sem amarra."
+Observação de política: nada de "leva tudo", que promete mais do que os termos. Nada de domínio no texto: a cláusula 9 dos termos está sendo reescrita, e só se promete o que já existe. Nada de posts: o primeiro ciclo do plano Vitrine ainda não rodou de verdade (`docs/EXECUTOR.md`). "Preço fechado" sem número saiu: no lugar entra o valor do plano.
 
 ### B · barbearia
 
 Textos principais
-- **B1**: Site da barbearia, pedido de horário no WhatsApp e, no plano Vitrine, posts todo mês, por um preço fechado. Sem fidelidade e sem multa. Se sair, você leva tudo.
-- **B2**: Sem fidelidade e sem multa. Se um dia quiser sair, você leva o site e os arquivos. Se tiver domínio próprio, ele fica no seu nome. Veja o site da sua barbearia pronto antes de decidir.
+- **B1**: Sem fidelidade e sem multa. Site pronto. Abertura R$ 297, paga uma vez; plano mensal a partir de R$ 147, só com o site no ar. O site da barbearia tem pedido de horário no WhatsApp. Se sair, você leva o site e os arquivos. Ver é grátis e sem cadastro.
+- **B2**: Sem fidelidade e sem multa. Se um dia quiser sair, você leva o site e os arquivos. Veja o site da sua barbearia pronto antes de decidir.
 - **B3**: A mensalidade só começa no dia em que o site da barbearia entra no ar. Antes disso, você vê pronto, testa o pedido no seu WhatsApp e aprova.
 
 Títulos
 - Seu site pronto. Sem amarra.
-- Sem fidelidade. Se sair, leva tudo.
+- Sem fidelidade. Se sair, leva o site
 - Saiu? Leva o site e os arquivos
 
 Descrições
-- Sem fidelidade e sem multa
-- Mensalidade só com site no ar
+- Abertura R$ 297 + plano a partir de R$ 147 por mês, só com o site no ar. (a que vai com o B1)
+- Sem fidelidade e sem multa (só junto de texto que já traz o bloco de preço)
 
 ### B · salão e estética
 
 Textos principais
-- **B1**: Site do salão, pedido de horário no WhatsApp e, no plano Vitrine, posts todo mês, por um preço fechado. Sem fidelidade e sem multa. Se sair, você leva tudo.
-- **B2**: Sem fidelidade e sem multa. Se um dia quiser sair, você leva o site e os arquivos. Se tiver domínio próprio, ele fica no seu nome. Veja o site do seu salão pronto antes de decidir.
+- **B1**: Sem fidelidade e sem multa. Site pronto. Abertura R$ 297, paga uma vez; plano mensal a partir de R$ 147, só com o site no ar. O site do salão tem pedido de horário no WhatsApp. Se sair, você leva o site e os arquivos. Ver é grátis e sem cadastro.
+- **B2**: Sem fidelidade e sem multa. Se um dia quiser sair, você leva o site e os arquivos. Veja o site do seu salão pronto antes de decidir.
 - **B3**: A mensalidade só começa no dia em que o site do salão entra no ar. Antes disso, você vê pronto, testa o pedido no seu WhatsApp e aprova.
 
 Títulos
 - Seu site pronto. Sem amarra.
-- Sem fidelidade. Se sair, leva tudo.
+- Sem fidelidade. Se sair, leva o site
 - Saiu? Leva o site e os arquivos
 
 Descrições
-- Sem fidelidade e sem multa
-- Mensalidade só com site no ar
+- Abertura R$ 297 + plano a partir de R$ 147 por mês, só com o site no ar. (a que vai com o B1)
+- Sem fidelidade e sem multa (só junto de texto que já traz o bloco de preço)
 
 ### B · academia e studio
 
 Textos principais
-- **B1**: Site da academia, pedido de aula experimental no WhatsApp e, no plano Vitrine, posts todo mês, por um preço fechado. Sem fidelidade e sem multa. Se sair, você leva tudo.
-- **B2**: Sem fidelidade e sem multa. Se um dia quiser sair, você leva o site e os arquivos. Se tiver domínio próprio, ele fica no seu nome. Veja o site do seu studio pronto antes de decidir.
+- **B1**: Sem fidelidade e sem multa. Site pronto. Abertura R$ 297, paga uma vez; plano mensal a partir de R$ 147, só com o site no ar. O site da academia tem pedido de aula experimental no WhatsApp. Se sair, você leva o site e os arquivos. Ver é grátis e sem cadastro.
+- **B2**: Sem fidelidade e sem multa. Se um dia quiser sair, você leva o site e os arquivos. Veja o site do seu studio pronto antes de decidir.
 - **B3**: A mensalidade só começa no dia em que o site da academia entra no ar. Antes disso, você vê pronto, testa o pedido de aula no seu WhatsApp e aprova.
 
 Títulos
 - Seu site pronto. Sem amarra.
-- Sem fidelidade. Se sair, leva tudo.
+- Sem fidelidade. Se sair, leva o site
 - Saiu? Leva o site e os arquivos
 
 Descrições
-- Sem fidelidade e sem multa
-- Mensalidade só com site no ar
+- Abertura R$ 297 + plano a partir de R$ 147 por mês, só com o site no ar. (a que vai com o B1)
+- Sem fidelidade e sem multa (só junto de texto que já traz o bloco de preço)
 
 ---
 
@@ -219,6 +247,7 @@ Base do briefing: "Pedidos pagos até 15/12 entram no ar antes do Natal. Vagas l
 1. `dados/vagas.json` com `atualizado_em` de até 48 h e `capacidade_dia` medida de verdade (não o valor inicial do arquivo).
 2. A fila cabe: pedidos pagos e não entregues ÷ `capacidade_dia` deixa folga até 18/12 (15/12 + {{precos.prazoHoras}} h).
 3. Data de hoje antes de 15/12. Em 15/12 às 23h59 o ângulo para, sem prorrogar.
+4. Ensaio de entrega da onda 1 verde (sem ele, nenhum prazo entra em anúncio) e o bloco de preço logo depois da primeira frase.
 
 Se qualquer condição falhar, **não suba**. "Vagas limitadas por dia" só é verdade com capacidade real; sem ela, é escassez inventada (CDC art. 37 e "misleading pricing" da Meta).
 Observação: "entram no ar" vale para o site no endereço da Creat. Domínio próprio e Google ficam fora do prazo (termos, cláusula 5); não prometa domínio antes do Natal.
@@ -415,5 +444,39 @@ Respostas: usar a saudação e as respostas rápidas R1, R2 e R14 de `whatsapp-s
 - Foto de pessoa, depoimento, nota ou estrela.
 - Pergunta sobre quem vê ("Você é dono de...?", "Cansado de...?").
 - Antes e depois, de site ou de corpo.
-- Preço ou prazo escrito no anúncio (preço muda com a inauguração; o anúncio fica velho e a página não).
+- Preço ou número no título.
+- Prazo em qualquer parte do anúncio, até o ensaio de entrega da onda 1 ficar verde.
+- "Inauguração", "vagas" ou escassez, até a trava das 20 vagas estar provada.
+- Valor velho: preço que já não é o de `dados/precos.json` (pausar e trocar no mesmo ato).
+- Texto de site sem o bloco de preço (Abertura e plano mensal).
+- A promessa de pagar só depois de gostar (falsa: a Abertura é paga antes da produção).
+- "Leva tudo", domínio e posts em anúncio, até os termos e o ciclo do Vitrine darem lastro.
 - Nome de cliente real sem autorização escrita.
+
+---
+
+## Checklist de política · troca única de 10/11/2026
+
+Revisão dos textos de `trafego/textos-troca-unica.md` (A1 barbearia, A1 salão e B1 salão nas praças Feira e Salvador RMS, e os dois vídeos do segundo ato), feita por Verbo em 10/11/2026 com a contagem em python do mesmo arquivo. A Lupa faz a segunda leitura antes de subir.
+
+| item | regra | A1 barbearia | A1 salão | B1 salão | vídeos |
+|---|---|---|---|---|---|
+| 1 | Sem promessa de ganho, de cliente ou de agenda cheia | ok | ok | ok | ok |
+| 2 | Sem pergunta a quem vê | ok | ok | ok | ok |
+| 3 | Sem afirmar o estado, o negócio ou as finanças de quem vê | ok | ok | ok | ok |
+| 4 | Sem nome de pessoa (de quem vê, de cliente ou do dono) | ok | ok | ok | ok |
+| 5 | Abertura e plano mensal no texto e na descrição | ok | ok | ok | ok, e na faixa queimada |
+| 6 | R$ 297 e R$ 147 antes do caractere 125 | ok (55 e 95) | ok (51 e 91) | ok (56 e 103) | ok |
+| 7 | Nenhum preço ou número no título | ok | ok | ok | ok |
+| 8 | Sem prazo | ok | ok | ok | ok |
+| 9 | Sem "inauguração", "vagas" ou escassez (trava ainda não provada) | ok | ok | ok | ok |
+| 10 | Sem "domínio", sem "leva tudo", sem posts | ok | ok | ok | ok |
+| 11 | Cada promessa tem lastro na página e nos termos | ok: grátis para ver (home), 7 dias (cláusula 6), sem fidelidade (cláusula 7), mensalidade só com o site no ar (cláusula 4 e home) | igual | igual, mais "leva o site e os arquivos" (cláusula 9) | igual ao nicho |
+| 12 | Título com até 40 caracteres e dizendo "site" | ok (35) | ok (31) | ok (28) | ok |
+| 13 | Primeira frase com até 40 caracteres, fechada, com o WhatsApp | ok (39) | ok (35) | ok (40; o WhatsApp vem na terceira frase, porque o B1 abre pelo "sem amarra") | ok |
+| 14 | Botão diz o que acontece | ok (Saiba mais) | ok | ok | ok |
+| 15 | Sem emoji, sem travessão, pt-BR | ok | ok | ok | ok |
+| 16 | Página de destino bate com o anúncio (home com `?nicho=`, mesmo preço) | ok: a home no ar em 10/11/2026 diz "Hoje você paga só a Abertura: R$ 297 uma vez" e mostra os planos de R$ 147 e R$ 297 | ok | ok | ok |
+
+Pendências que não são de texto: a faixa de preço ainda não está queimada em `R7-barbearia-v1.mp4`, e o vídeo de salão não foi gravado. Nenhum dos dois sobe antes disso.
+

@@ -37,7 +37,7 @@ Fechamento no chat: `../whatsapp-scripts.md`, mensagens F1 a F5 e objeções O1 
   - sem promessa de ganho, de clientes ou de agenda cheia;
   - sem pergunta sobre quem vê ("Você é dono de...?", "Cansado de...?");
   - sem afirmar o estado de quem vê nem a situação financeira dele;
-  - sem preço ou prazo no anúncio;
+  - **preço (revisto em 10/11/2026):** Abertura e plano mensal declarados no texto e na descrição, nunca no título; sem prazo; sem "inauguração" nem "vagas" até a trava das 20 vagas estar provada. A regra antiga ("sem preço ou prazo no anúncio") era escolha da casa, não regra da Meta. A razão é o M03 abaixo (assinatura sem divulgação clara é prática proibida pela Meta), o CDC (arts. 31 e 37, § 3º, omissão de dado essencial) e o Decreto 7.962/2013, art. 2º. Texto completo da regra e o bloco de preço em `../anuncios.md`, "Regra de preço no anúncio";
   - sem antes e depois;
   - sem nome de concorrente;
   - sem "agenda": sempre "pedido de horário no seu WhatsApp".
@@ -56,6 +56,8 @@ Fechamento no chat: `../whatsapp-scripts.md`, mensagens F1 a F5 e objeções O1 
   - 896 px livres embaixo (35%);
   - 86 px em cada lado (6%).
   - Os roteiros de `../roteiros-video.md` usam 1080 × 1920 com 250 e 340 px. **Para os vídeos novos, vale esta área.**
+- **Textos M01 a M10, V1 e V2 deste arquivo foram escritos sob a regra antiga.** Nenhum está no ar. Antes de subir qualquer um, o bloco de preço ("Abertura R$ 297, paga uma vez; plano a partir de R$ 147 por mês, só com o site no ar.") entra logo depois da primeira frase, a contagem é refeita e a validação tripla é feita. Nos anúncios de WhatsApp, a descrição continua "Abre uma conversa no WhatsApp", porque a Meta pede que fique claro que o toque abre um chat; ali o preço vai só no texto.
+- Os 6 anúncios no ar (A1 e B1, praças Feira e Salvador RMS) têm os textos finais em `textos-troca-unica.md`.
 - Limites de texto:
   - primeira linha do texto principal até 125 caracteres;
   - título até 40;
@@ -141,7 +143,9 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
   >
   > O cliente escolhe o corte, o dia e o horário no site, e o pedido abre no seu WhatsApp com tudo escrito. Quem confirma é você.
   >
-  > Toque em Enviar mensagem e receba o link para ver o site da sua barbearia pronto, com o nome dela. Ver é grátis e sem cadastro. Você só paga se gostar.
+  > Toque em Enviar mensagem e receba o link para ver o site da sua barbearia pronto, com o nome dela. Ver é grátis e sem cadastro.
+  >
+  > Abertura R$ 297, paga uma vez; plano a partir de R$ 147 por mês, só com o site no ar. Sem fidelidade e com 7 dias para desistir.
 - **Versão Reels** (36/44): Veja o site da sua barbearia pronto.
 - **Título** (31/40): Veja o site da barbearia pronto
 - **Descrição** (29/30): Abre uma conversa no WhatsApp
@@ -210,7 +214,9 @@ Nos anúncios de WhatsApp, o UTM vai no link que a equipe manda no chat (F3 de `
   >
   > Toque em Enviar mensagem. A equipe da Creat manda o link com o nome do seu salão na placa.
   >
-  > Você vira a placa, vê o site pronto e manda um pedido de teste para o seu próprio número. Ver é grátis, e você só paga se gostar.
+  > Você vira a placa, vê o site pronto e manda um pedido de teste para o seu próprio número. Ver é grátis.
+  >
+  > Abertura R$ 297, paga uma vez; plano a partir de R$ 147 por mês, só com o site no ar. Sem fidelidade e com 7 dias para desistir.
 - **Versão Reels** (37/44): O pedido chega assim no seu WhatsApp.
 - **Título** (30/40): O pedido chega no seu WhatsApp
 - **Descrição** (21/30): Grátis e sem cadastro
@@ -434,7 +440,7 @@ Se a pessoa editar a mensagem e não der para saber o anúncio, use `utm_content
 - **Link**: `{{site.url}}/?utm_source=meta&utm_medium=pago&utm_campaign=rt-nov26&utm_content=V1-geral-v1` (sem `?nicho=`: a home volta ao nicho da última visita só se o próprio aparelho guardou)
 - **Público**: prévia gerada sem pagamento, 30 dias.
 - **Formato**: o corpo da seção 5, sem gancho de dor. Quadro 1 com a placa já girando.
-- **Hipótese (sem teste)**: quem gerou prévia já fez o gesto principal. O que falta é saber o preço e a regra da mensalidade, e o texto diz onde isso aparece sem citar valores, que mudam com a inauguração. "Pix ou cartão" só entra quando o checkout do Mercado Pago estiver ligado. Antes disso, tire a frase.
+- **Hipótese (sem teste)**: quem gerou prévia já fez o gesto principal. O que falta é saber o preço e a regra da mensalidade. Pela regra de 10/11/2026, o bloco de preço entra antes de subir, com o valor do dia em `dados/precos.json`. "Pix ou cartão" só entra quando o checkout do Mercado Pago estiver ligado. Antes disso, tire a frase.
 
 ### V2 · `V2-geral-v1` · Imagem · WhatsApp
 

@@ -40,7 +40,9 @@ Ousadia em um lugar só: a placa virando. O resto fica calmo: céu, tinta e um �
 - **Honestidade (regra dura):** nome fictício com o selo "nome fictício" sempre que aparecer; "prévia real" só sobre print verdadeiro, e todo print ou gravação da sede leva "sede da Creat · demonstração" (hoje a sede pública é demonstração; "tela real" sozinho sugere acompanhamento ao vivo, que não existe); número de WhatsApp sempre de teste e coberto pela faixa "número de teste"; sede gravada em `?modo=demo` mantém a legenda "Demonstração" visível.
 
 ### Proibido em todas as peças
-Preço, prazo, promessa de ganho ou de resultado, "agenda", pergunta sobre quem vê ("Você é dono...?", "Cansado de...?"), afirmação sobre o estado do negócio de quem vê, antes e depois, depoimento, estrela, logo do WhatsApp ou da Meta alterado (usar o balão próprio da vitrine), tela piscando, música fora da Sound Collection da Meta, emoji. Fontes: `../anuncios.md` (conferência de 08/11/2026) e Padrões de Publicidade da Meta (lidos em 09/11/2026).
+Preço no título do anúncio ou como chamariz na arte (a regra de 10/11/2026 está logo abaixo), prazo, promessa de ganho ou de resultado, "inauguração" ou "vagas" sem a trava provada, a promessa de pagar só depois de gostar, "agenda", pergunta sobre quem vê ("Você é dono...?", "Cansado de...?"), afirmação sobre o estado do negócio de quem vê, antes e depois, depoimento, estrela, logo do WhatsApp ou da Meta alterado (usar o balão próprio da vitrine), tela piscando, música fora da Sound Collection da Meta, emoji. Fontes: `../anuncios.md` (conferência de 08/11/2026) e Padrões de Publicidade da Meta (lidos em 09/11/2026).
+
+**Preço nas peças (regra de 10/11/2026, `../anuncios.md`, "Regra de preço no anúncio").** O texto principal e a descrição de todo anúncio declaram a Abertura e o plano mensal. Na arte estática, o preço é opcional. No vídeo, ele é obrigatório: no Reels a descrição não aparece e o texto corta em cerca de 40 caracteres, então a faixa "Abertura R$ 297 + plano a partir de R$ 147/mês, só com o site no ar" fica queimada no cartão final. Especificação da faixa em `textos-troca-unica.md`, seção 3.
 
 ---
 
@@ -166,9 +168,9 @@ Para quem: quem para para ler no Feed. Cada card é um passo real do produto; a 
 | 2 | Vire a placa. | placa ABERTO vetorial grande com "Barbearia Navalha Fictícia" em giz, a corrente saindo do topo do card | "Um toque, e ela abre." | nome fictício |
 | 3 | Veja o site pronto. | celular com `previa-barbearia-topo.png` e, sobreposto 30%, `previa-barbearia-pedido.png` | "Serviços, dia e horário. Prévia de exemplo." | prévia real |
 | 4 | Teste no seu WhatsApp. | `whatsapp-pedido-chega.png` + ao fundo, no vidro de uma porta pequena, `sede-ilha.webp` | "O pedido chega como vai chegar do cliente. A equipe que monta o site aparece na sede (demonstração)." | sede da Creat · demonstração |
-| 5 | Só paga se gostar. | quadro final: placa ABERTO + chip "Grátis para ver · Sem cadastro" + botão desenhado "Abrir meu negócio" | "A mensalidade só começa com o site no ar." | — |
+| 5 | Ver é grátis. | quadro final: placa ABERTO + chip "Grátis para ver · Sem cadastro" + botão desenhado "Abrir meu negócio" | "Abertura R$ 297, paga uma vez. Plano a partir de R$ 147/mês, só com o site no ar." | — |
 
-Regras: sem preço (a mensalidade é citada sem valor, como em B3, e a página mostra os valores antes do Pix); seta desenhada à direita nos cards 1 a 4 indicando que continua; o card 1 sozinho já precisa vender (é o único que muita gente vê). Para montar: copie `estaticos/feed-1080x1080.html` cinco vezes, troque o miolo, acrescente a linha em `PECAS` do `renderizar.cjs` e renderize.
+Regras: o card 5 traz a Abertura e o plano mensal com valor, os mesmos do texto do anúncio e da página (regra de 10/11/2026); o título do card não leva número; seta desenhada à direita nos cards 1 a 4 indicando que continua; o card 1 sozinho já precisa vender (é o único que muita gente vê). Para montar: copie `estaticos/feed-1080x1080.html` cinco vezes, troque o miolo, acrescente a linha em `PECAS` do `renderizar.cjs` e renderize.
 
 ---
 

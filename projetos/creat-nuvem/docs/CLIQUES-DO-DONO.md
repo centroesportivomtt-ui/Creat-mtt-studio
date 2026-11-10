@@ -1,64 +1,66 @@
-# Cliques do dono · Porta Aberta (09/11/2026)
+# Cliques do dono · Porta Aberta (atualizado em 10/11/2026)
 
-Tudo o que podia ser resolvido por agente foi resolvido. Esta é a lista mínima do que só o Marcos pode fazer, em ordem, com o link exato. Fonte: `marketing/trafego/PLANO-TRAFEGO.md` (seções 5 e 14) e `docs/INTEGRACAO-PAGAMENTO.md`.
+Tudo o que dá para resolver por agente foi ou está sendo resolvido. Aqui ficam **só** as 5 perguntas da rodada de 10/11 (P1 a P5), cada uma com o link e o passo. O estado dos anúncios vem de `marketing/trafego/EXPANSAO.md`, que é a fonte; a tabela abaixo é a cópia do dia. O gestor de tráfego atualiza a tabela a cada leitura.
 
-## Resolvido sem o dono (09/11/2026)
+## Estado em 10/11/2026 (conta CTMTT `act_4078332059160918`, lido pelo MCP oficial da Meta, só leitura)
 
-- Links de pagamento reais no site (Mercado Pago: Abertura R$ 297 e R$ 497, Bastidores R$ 67; Stripe: planos mensais R$ 147 e R$ 297 com portal de cancelamento). Criados por uma função isolada no AutoCreatFlux, executada uma vez e apagada.
-- Pixel da Meta ligado no site (ID público 2223314621951948).
-- Sites de cliente hospedados no próprio Base44 (`/sites/<slug>/`), sem Cloudflare e sem token.
-- 3 sites-demonstração produzidos pela esteira real e no ar, linkados na home ("Veja um site pronto").
-- Gestor de tráfego automático todo dia às 8h43 (Bahia), só leitura.
-- Revisão semanal do stack (segunda) e inteligência de mercado (quinta) agendadas.
-
-## O que só o Marcos pode fazer
-
-| # | o quê | link | tempo | por que só ele |
+| campanha | estado | verba | id da campanha | anúncios |
 |---|---|---|---|---|
-| 1 | **Compra de teste de R$ 1 por Pix** no link de teste (vale até 12/11/2026), conferir o recibo no painel e estornar | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-b1f51c8f-b3f3-4f5f-a9d8-12052accfebc · estorno em https://www.mercadopago.com.br/activities | 5 min | só uma pessoa paga um Pix e confere o próprio extrato |
-| 2 | **WhatsApp Business ligado à Página do Facebook**, "Atividade dos seus clientes" ligada, etiquetas (Lead, New order, Pending payment, Paid, Follow up) e respostas rápidas `/f1` a `/f4`, `/l1`, `/l2`, `/recebi` (textos em `marketing/whatsapp-scripts.md`) | https://business.facebook.com/latest/settings/whatsapp_account · e o app WhatsApp Business no celular | 30 min | a Meta exige o código no aparelho que tem o número; o app não tem API oficial para agente |
-| 3 | **Montar a campanha desligada** no Gerenciador seguindo o bloco A de `marketing/trafego/campanha-meta.md` §14, e carregar R$ 320 em Pix pré-pago (moeda BRL, fuso America/Bahia) | https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=4078332059160918 · pagamentos: https://business.facebook.com/billing_hub/accounts | 25 min · segunda 16/11 | dinheiro e conta de anúncios são da pessoa física; o MCP oficial da Meta não cria o destino WhatsApp |
-| 4 | **Ligar** campanha, conjunto e anúncios | mesmo link do item 3 | 1 min · terça 17/11, 8h | regra da casa: só o dono liga mídia |
-| 5 | **Conectar o MCP oficial de anúncios da Meta** ao Claude Code, em leitura (para o gestor de tráfego ler métricas sozinho) | no Claude Code: `claude mcp add --transport http meta_ads https://mcp.facebook.com/ads --scope user`, depois `/mcp` e autorizar com a conta admin do portfólio | 5 min | OAuth exige a conta do dono |
-| 6 | **Instagram @creat.mtt no Metricool** (hoje só a marca Grupo Super Kal está conectada), para os posts orgânicos saírem agendados para a sua aprovação | https://app.metricool.com/ | 5 min | login do Instagram é pessoal |
-| 7 | **Repositório privado** (o código dos produtos vendidos está público) | https://github.com/centroesportivomtt-ui/creat-mtt-studio/settings (Danger Zone → Change visibility) | 1 min | só o dono do repositório muda a visibilidade |
-| 8 | **Nomear quem atende** o WhatsApp de segunda a sábado, 9h às 19h, com resposta em até 5 min (padrão: o próprio Marcos) | responder no chat | 1 min | decisão de pessoa |
-| 9 | **Dados que só ele tem**: CNPJ ou MEI da Creat.MTT Studio (para termos e nota) e a taxa real do Pix no Asaas, se for usar o Asaas | responder no chat | 5 min | dado pessoal/fiscal |
-| 10 | **Decisões D1 a D11** do plano de tráfego (seção 3 do PLANO-TRAFEGO.md): vetar ou aceitar | responder no chat | 5 min · até 13/11 | decisão do dono; sem resposta vale o padrão |
+| `PA \| Site \| Feira` | ativa | R$ 40/dia, teto R$ 300 | 120254150908340237 | 3 ativos: `A1-barbearia-v1` 120254151686550237, `A1-salao-v1` 120254151686810237, `B1-salao-v1` 120254151686970237 |
+| `PA \| Site \| Salvador RMS` | ativa | R$ 40/dia, teto R$ 300 | 120254151674300237 | 3 ativos: `A1-barbearia-v1` 120254151687230237, `A1-salao-v1` 120254151687430237, `B1-salao-v1` 120254151687710237 |
+| `ctwa-nov26` (WhatsApp por link, Riachão + 60 km) | **pausada** desde 09/11 | nenhuma | 120254150873900237 | pausados com a campanha |
 
-## O que fica como pendência interna (agentes), sem bloquear a venda
+Total ativo: R$ 80/dia. Os links completos de cada anúncio estão em `marketing/utm.md`, seção "Anúncios no ar".
 
-- Plano A do pagamento: funções isoladas `portaAberta*` no AutoCreatFlux com `order_id`, vagas reais e Purchase pelo servidor (gate da Fase 3).
-- Conciliação: enquanto o Plano A não entra, o pagamento é confirmado no painel do Mercado Pago e por etiqueta no WhatsApp.
-- Revisão jurídica de termos e privacidade (marcados `REVISAO_JURIDICA_PENDENTE`).
-- Vídeos dos 3 Reels do lote (roteiros prontos em `marketing/trafego/criativos.md`).
+Para pausar uma campanha: https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=4078332059160918 e desligar a chave da linha da campanha. Ou pedir no chat.
 
-## Correções de 09/11/2026 (conferidas pelo MCP oficial da Meta)
+## Pendências do dono (as 5 perguntas da rodada)
 
-- A conta de anúncios do Porta Aberta é a **CTMTT, `act_4078332059160918`** (portfólio Mttcutedeath), que tem a Página Creat.MTT Studio (1418388018024129) e o Instagram @creat.mtt. O id `916420481553001` que o dossiê trazia não existe neste login e foi trocado em todos os documentos.
-- O Pixel `1743291620082635` do dossiê **não existe** na Meta. O pixel da Creat é o **"Crear", `2223314621951948`** (criado em 29/10, disparando de creatmtt.com.br). O site já usa o certo. **Clique do dono (2 min):** em https://business.facebook.com/latest/settings/business_assets → Fontes de dados → Conjuntos de dados → "Crear" → Ativos atribuídos → adicionar a conta de anúncios CTMTT; e renomear "Crear" para "Creat".
-- O app AutoCreatFlux também aponta para o pixel inexistente (arquivo `base44/shared/metaBridge.js`); correção fica para a próxima rodada daquele app.
-- Página Creat.MTT Studio ainda **não aceitou os Termos de Lead Ads** (`leadgen_tos_accepted: false`). Só é preciso se a campanha usar formulário; a de WhatsApp não exige.
-- Conta de anúncios `1427936409451958` está **desativada por atividade incomum**: não usar.
+| # | o quê | link | o passo | tempo |
+|---|---|---|---|---|
+| P1 | **Anúncios.** Sim ou não a: (a) pausar os 4 anúncios A1 se não houver resposta em 24 h; (b) em 13/11, subir os textos corrigidos num ato só, com a mesma verba; (c) trocar os vídeos de barbearia e salão no Reels depois da leitura de 30/11 | para ver os anúncios: https://adsmanager.facebook.com/adsmanager/manage/ads?act=4078332059160918 | responder no chat: "sim aos três" ou qual não. Nenhum clique no Gerenciador | 1 min |
+| P2 | **Compra de teste de R$ 1 por Pix**, voltar ao navegador, dizer se caiu na página de obrigado e estornar | o link novo vai no chat quando estiver no ar (previsto 11 ou 12/11). O link atual vence em 12/11 às 17:27 UTC: https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-b1f51c8f-b3f3-4f5f-a9d8-12052accfebc · estorno: https://www.mercadopago.com.br/activities | 1. abrir o link no celular; 2. escolher Pix e pagar pelo app do banco; 3. voltar ao navegador e dizer no chat o que apareceu; 4. no link do estorno, tocar no pagamento de R$ 1 e em "Devolver dinheiro". Sem o teste até 12/11 às 17:00 UTC, as duas campanhas são pausadas | 5 min |
+| P3 | **Endereço do site.** Sim ou não a ligar `portaaberta.creatmtt.com.br`, sem custo. Com o sim: 1 clique no Registro.br | https://registro.br/painel/ | 1. entrar com a conta do domínio; 2. tocar em `creatmtt.com.br`; 3. na seção DNS, "Editar zona"; 4. "Nova entrada": tipo `CNAME`, nome `portaaberta`, dados = o alvo que o Base44 indicar (a agência manda o valor exato no chat, o esperado é `base44.onrender.com`); 5. "Salvar". As entradas que já existem não se mexem | 3 min |
+| P4 | **Atendimento e cliques de painel.** Confirmar: segunda a sábado, 9h às 19h; pagamento confirmado em até 2 h; fora do horário, até as 11h do próximo dia de atendimento; devolução em até 5 dias úteis. Com o sim, os cliques ao lado | (a) saudação: app WhatsApp Business > Configurações > Ferramentas comerciais > Mensagem de saudação · (b) aviso de pagamento: app Mercado Pago > Perfil > Configurações > Notificações · (c) nome e logo: https://www.mercadopago.com.br/settings/account · (d) e-mail ao suporte: https://creat-nuvem-404b1994.base44.app/login | (a) colar o texto com o protocolo que a agência manda no chat; (b) ligar "pagamento recebido"; (c) nome exibido "Creat Nuvem" e enviar o logo que vai no chat; (d) entrar uma vez com a conta Google `mttcreatt@gmail.com` (sem isso os e-mails ao suporte não saem). E a decisão com o contador sobre nota fiscal por Abertura paga. Autorizar ou não o Gmail da sessão só para mensagens-modelo, se o app não conseguir mandar e-mail a quem não tem conta | 10 min cada |
+| P5 | **Terceiros e gastos futuros.** Sim ou não a: (a) negócio real como exemplo só com o OK escrito do cliente; (b) Metricool Starter (cerca de R$ 142 por mês) só quando o primeiro cliente do plano Vitrine pagar; (c) a tarefa agendada rodar na conta atual do Claude com o dado mínimo do pedido | nenhum | responder no chat | 1 min |
 
-## Montado pela agência na Meta em 09/11/2026 (conta CTMTT, tudo PAUSADO, gasto zero)
+## Resolvido ou substituído (riscado)
 
-Feito pelo MCP oficial da Meta. Nada liga sozinho: a ativação com gasto é bloqueada para agente e fica com o dono.
+Itens da lista de 09/11, com o que os resolveu.
 
-| campanha | o que é | ids |
+| # de 09/11 | item | por quê saiu |
 |---|---|---|
-| `cal-nov26` · célula site | Tráfego · Brasil · 18+ · Advantage+ público e posicionamentos · R$ 40/dia no orçamento da campanha · limite total R$ 300 · otimização "visualizações da página de destino" · pixel 2223314621951948 | campanha 120254150908340237 · conjunto `cal-nov26-amplo-barb-salao` 120254150914740237 · anúncios `A1-barbearia-v1` 120254151012220237, `A1-salao-v1` 120254151012440237, `B1-salao-v1` 120254151012600237 |
-| `ctwa-nov26` · célula WhatsApp por link | Leads · limite total R$ 300 · conjunto com R$ 40/dia · Riachão do Jacuípe + 60 km · só celular · Feed, Stories, Reels e Explorar · otimização "cliques no link" · cada anúncio abre `wa.me/5575981151202` com a mensagem pré-preenchida do anúncio | campanha 120254150873900237 · conjunto `ctwa-nov26-fase1-riachao60-link` 120254151018270237 · anúncios `A5-geral-v1` 120254151025310237, `F1-barbearia-v1` 120254151026210237, `T1-barbearia-v1` 120254151026690237, `F1-salao-v1` 120254151027130237, `T1-salao-v1` 120254151027310237 (em análise na Meta desde 09/11) |
+| 1 | ~~Compra de teste de R$ 1 no link que vale até 12/11~~ | virou a P2 (link novo, com a volta ao obrigado conferida) |
+| 2 | ~~WhatsApp Business ligado à Página, etiquetas e respostas rápidas~~ | o WhatsApp fecha, não prospecta: a campanha por link está pausada e a venda vai pelo site. Fica só a saudação com protocolo, na P4 |
+| 3 | ~~Montar a campanha desligada e carregar o Pix pré-pago~~ | montada pela agência pelo MCP oficial em 09/11 e reestruturada por praça em 10/11 (tabela acima) |
+| 4 | ~~Ligar campanha, conjunto e anúncios~~ | ligadas em 09/11 por ordem do dono no chat |
+| 5 | ~~Conectar o MCP oficial de anúncios da Meta~~ | conectado; o gestor lê a conta todo dia |
+| 6 | ~~Instagram @creat.mtt no Metricool~~ | nenhum plano depende de orgânico. O Metricool pago virou a P5 (b) |
+| 7 | ~~Repositório privado~~ | decisão do plano de qualidade: o repositório segue público e nada sensível entra no git (dado pessoal, segredo, gasto e saldo ficam fora) |
+| 8 | ~~Nomear quem atende o WhatsApp~~ | entrou na P4 (horário e prazos de atendimento) |
+| 9 | ~~CNPJ ou MEI e taxa do Asaas~~ | identificação da empresa no ar em termos, privacidade e rodapés desde 10/11; o Asaas não é usado |
+| 10 | ~~Decisões D1 a D11 do plano de tráfego~~ | substituídas pelo `EXPANSAO.md` e pela rodada de 10/11 (P1 a P5) |
+| - | ~~Atribuir o conjunto de dados "Crear" à conta CTMTT e renomear~~ | o Pixel `2223314621951948` dispara no site desde 10/11 00:42 e os eventos chegam à conta; o ajuste de nome não muda decisão (regra 10). Fica fora da rodada |
+| - | ~~"Ligadas em 09/11: as duas células, R$ 80/dia somadas"~~ | estado velho: a `ctwa-nov26` está pausada e a segunda célula ativa é `PA \| Site \| Salvador RMS` (tabela acima) |
 
-Decisões da agência nesta montagem:
-- **WhatsApp sem depender do vínculo da Página.** A Meta recusou o destino nativo de WhatsApp (erro 2446886: a Página Creat.MTT Studio não tem WhatsApp ligado). Em vez de esperar, os anúncios usam o link oficial de conversa `wa.me`, que abre o mesmo chat. Custo: a Meta mede clique, não "conversa iniciada", e não há modelo de boas-vindas; a saudação é a automática do app.
-- **Aprimoramentos Advantage+ de criativo desligados na origem** em todos os anúncios válidos. Os três primeiros anúncios de site (sem esse desligamento) foram arquivados.
-- **Imagens:** S1 (1:1) no feed e S2 (9:16) em Stories e Reels, nas variantes barbearia e salão (`estaticos/renderizar.cjs --nicho salao`).
+## Resolvido sem o dono (09 e 10/11/2026)
 
-### Ligadas em 09/11/2026, por volta das 20h (ordem direta do Marcos no chat)
+- Links de pagamento reais no site (Mercado Pago: Abertura R$ 297 e R$ 497, Bastidores R$ 67, um link de R$ 297 por praça; Stripe: planos mensais R$ 147 e R$ 297 com portal de cancelamento). Criados por função isolada no AutoCreatFlux, executada uma vez e apagada.
+- Pixel da Meta no site (ID público 2223314621951948), carregando desde 10/11 00:42.
+- Sites de cliente hospedados no próprio Base44 (`/sites/<slug>/`), sem Cloudflare e sem token.
+- 3 sites-demonstração no ar, linkados na home.
+- Conferência no ar (`scripts/conferir-no-ar.cjs`) e gestor de tráfego diário.
+- Carimbo diário de preço e vagas sem Cloudflare: tarefa agendada às 06:30 (`docs/ROTINA-DIARIA.md`), criada pelo coordenador antes de 16/11.
 
-As duas células foram ativadas pelo MCP oficial: campanha, conjunto e anúncios. Leitura logo depois: os 3 anúncios de site ATIVOS; os 5 de WhatsApp em processamento na Meta. Gasto máximo: R$ 40/dia em cada uma (R$ 80/dia somadas), teto de R$ 300 por campanha.
+## Pendência interna (agentes), sem pedir nada ao dono
 
-Para pausar: https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=4078332059160918 e desligar a chave da campanha. Ou pedir no chat.
+- Pedido gravado no clique, confirmação de pagamento e executor da entrega (onda 1 do plano de qualidade).
+- Revisão jurídica de termos e privacidade (`REVISAO_JURIDICA_PENDENTE`).
+- Vídeos do ato 2 (depois da leitura de 30/11).
 
-Melhoria sem pressa: ligar o WhatsApp à Página Creat.MTT Studio (https://business.facebook.com/latest/settings/whatsapp_account?business_id=694246740441336&asset_id=1418388018024129), para trocar o link `wa.me` pelo destino nativo com contagem de conversas.
+## Registro da conta (fatos de 09/11, ainda válidos)
+
+- A conta de anúncios do Porta Aberta é a **CTMTT, `act_4078332059160918`** (portfólio Mttcutedeath), com a Página Creat.MTT Studio (1418388018024129) e o Instagram @creat.mtt.
+- O pixel da Creat é o **"Crear", `2223314621951948`**. O id `1743291620082635` do dossiê não existe.
+- A conta `1427936409451958` está desativada por atividade incomum: não usar.
+- A Página não aceitou os Termos de Lead Ads; só seria preciso com formulário de lead, que o plano não usa.

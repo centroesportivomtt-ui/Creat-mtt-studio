@@ -1,3 +1,13 @@
+# OBSOLETO DESDE A D9 (obsoleto desde a D9: 10/11/2026, pacote 1F, Trilho). NÃO LIGAR.
+# O site do Porta Aberta está no Base44, não na Cloudflare. Este workflow publicava com wrangler
+# na Cloudflare e nunca rodou (todas as execuções agendadas saíram "skipped").
+# O carimbo diário de preço e vagas agora é feito pela sessão principal, por tarefa agendada
+# às 06:30 (America/Bahia), publicando em public/dados/ do app Base44 pelo MCP.
+# Roteiro completo: projetos/creat-nuvem/docs/ROTINA-DIARIA.md.
+# Fica no repositório só como histórico, com gatilho manual. Sem gatilho agendado de propósito.
+# Mesmo disparado à mão, o job não roda sem ROTINA_VAGAS_ATIVA=true; não crie essa variável.
+#
+# ---- texto original abaixo, mantido como registro ----
 # Porta Aberta · rotina diária de vagas e preço de inauguração (Trilho)
 #
 # Por quê: a vitrine só mostra o preço de inauguração de R$ 297 com dados/*.json carimbados há
@@ -17,11 +27,10 @@
 # Importante: o contador da inauguração só desce com --vendeu. Depois de cada pedido pago,
 # rode `node scripts/atualizar-vagas.cjs --vendeu` com o repositório atualizado (git pull antes)
 # e faça push; a rotina publica o que estiver no repositório.
-name: Rotina de vagas
+name: Rotina de vagas (obsoleta desde a D9, não usar)
 
 on:
-  schedule:
-    - cron: '7 3 * * *'   # 03:07 UTC = 00:07 em Salvador (UTC-3, sem horário de verão)
+  # gatilho agendado removido na D9 (ver cabeçalho): só disparo manual, que não roda sem ROTINA_VAGAS_ATIVA
   workflow_dispatch:
 
 permissions:

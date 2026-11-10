@@ -5,7 +5,7 @@ Status: aceito · 10/11/2026 · Pixel (frontend) · revisa em parte o ADR-003
 ## Contexto
 Pelo ADR-003, `dados/precos.json` ou `dados/vagas.json` com mais de 48 h derrubavam tudo para o padrão: sem contador e sem inauguração. Na prática, a página voltava a R$ 497 sozinha sempre que a rotina diária atrasava, enquanto a oferta de R$ 297 seguia válida e os anúncios pagos (desde 09/11) prometiam R$ 297. O visitante que chega do anúncio via outro preço na página: atrito de compra e risco de reprovação por divergência entre anúncio e destino.
 
-A trava que importa já existe fora da página: a 21ª venda é bloqueada à mão no painel do Mercado Pago (o link de inauguração tem vencimento e quantidade), então o risco do ADR-003, anunciar desconto que não existe mais, continua coberto por quem opera o link.
+~~A trava que importa já existe fora da página: a 21ª venda é bloqueada à mão no painel do Mercado Pago (o link de inauguração tem vencimento e quantidade), então o risco do ADR-003, anunciar desconto que não existe mais, continua coberto por quem opera o link.~~ **Errado, corrigido em 10/11/2026 (pacote 1F):** os links de R$ 297 são preferências do Checkout Pro, que **não têm quantidade máxima**. A trava real está na seção "Correção de 10/11/2026" no fim deste documento.
 
 ## Decisão
 - **Preço de inauguração** vale com `precos.json` válido, `abertura.inauguracao.ativa: true`, `vagasRestantes > 0` e `atualizado_em` de até **7 dias** (com 5 min de folga para relógio adiantado). Não depende mais de `vagas.json`.
@@ -21,5 +21,23 @@ A trava que importa já existe fora da página: a 21ª venda é bloqueada à mã
 
 ## Revisão de 10/11/2026 (decisões D1 e D2 do diretor, depois da revisão de Crivo, Muralha e Lupa)
 - **Contadores fora da tela (D1).** Nenhum contador numérico ao vivo ("Restam X vagas", "Resta 1 vaga", "Vagas de produção hoje: X de Y") até o número vir de pedido pago gravado em servidor. O código continua, desligado por `checkout.config.js` `contadoresAoVivo: false`; `scripts/checar.cjs` avisa se alguém ligar. A página diz só "preço de inauguração"; os termos explicam a regra (válido para as 20 primeiras Aberturas), sem número restante. O preço de R$ 497 aparece como "depois da inauguração", sem preço riscado (de/por), porque ainda não foi praticado.
-- **O teto de 20 é de todos os links (D2).** Há 7 links de R$ 297 (o padrão de inauguração e os 6 de `linksPorPraca`), e a quantidade máxima do Mercado Pago é por link. A soma das quantidades máximas dos 7 links tem de ser no máximo `vagasTotal` (20); se não der para dividir, o corte é manual e vale para os 7 ao mesmo tempo. Os 2 combos do anual (fora da página desde a decisão D3) também usam o preço de inauguração.
+- ~~**O teto de 20 é de todos os links (D2).** Há 7 links de R$ 297 (o padrão de inauguração e os 6 de `linksPorPraca`), e a quantidade máxima do Mercado Pago é por link. A soma das quantidades máximas dos 7 links tem de ser no máximo `vagasTotal` (20); se não der para dividir, o corte é manual e vale para os 7 ao mesmo tempo.~~ Substituído pela correção abaixo: não existe quantidade máxima em preferência do Checkout Pro. Continua verdadeiro que os 2 combos do anual (fora da página desde a decisão D3) também usam o preço de inauguração.
 - **Fim da inauguração.** `scripts/atualizar-vagas.cjs` lê o `checkout.config.js` como o navegador lê e falha na `--rotina` (código 2) enquanto `aberturaInauguracao` **ou qualquer** link de `linksPorPraca` estiver publicado com a inauguração encerrada. A mensagem de ATENÇÃO lista todos os links a desativar no Mercado Pago, combos incluídos.
+
+## Correção de 10/11/2026 (pacote 1F, Trilho; decisão D9 e árvore de decisões do plano de qualidade)
+
+**Fato.** Os 7 links de R$ 297 (`links.aberturaInauguracao` e os 6 de `linksPorPraca`) e os 2 combos são **preferências do Checkout Pro** (`pref_id`), não "Link de pagamento" do painel. Preferência do Checkout Pro **não tem quantidade máxima**; esse campo só existe no Link de pagamento. A leitura das preferências em 10/11 mostrou `expires: false` nas 7 de R$ 297 e nos combos (`docs/INTEGRACAO-PAGAMENTO.md`, tabela das preferências). Portanto não havia trava na 21ª venda. O texto antigo deste ADR estava errado.
+
+**Trava real das 20 vagas**, em três camadas:
+1. **Contagem no servidor.** A tarefa executora (`docs/EXECUTOR.md`, passo m) conta as Aberturas de inauguração pagas no app Porta Aberta (`contarPagos`, pacote 1A) e grava `Operacao vagas_estado`.
+2. **Fechamento por vencimento.** Ao chegar a **19 pagas**, a executora roda o workflow "Porta Aberta · fechar R$ 297" do AutoCreatFlux, que chama `portaAbertaFecharPrefs` (pacote 1B): o vencimento das 7 preferências de R$ 297 passa para dali a 1 minuto. Pix gerado antes disso ainda pode ser pago, então pode haver 1 ou 2 vagas a mais; a casa honra.
+3. **Página e anúncio.** A executora publica `dados/precos.json` com a inauguração desligada (a página cai sozinha em R$ 497 pela regra deste ADR) e avisa o coordenador, que pausa os anúncios que citam R$ 297.
+
+Reforço: as preferências de R$ 297 ganham vencimento fixo (`expires: true`, `expiration_date_to` em 10/12/2026) pelo PUT do pacote 1B, quando ele sair.
+
+**Continua verdadeiro:**
+- O preço de inauguração na página vale **7 dias** depois do `atualizado_em` de `precos.json` (com 5 min de folga), com `ativa: true` e `vagasRestantes > 0`.
+- Os contadores numéricos valem só com dado de até **48 h**, e seguem desligados (`checkout.config.js` `contadoresAoVivo: false`, decisão D1).
+- Sem carimbo novo, o preço da página cai para R$ 497 sete dias depois do último carimbo. O último carimbo no ar é `2026-11-09T23:45:26Z`, então o prazo duro é **16/11/2026 por volta das 23:50 UTC**. O carimbo diário agora é a tarefa agendada das 06:30 (America/Bahia) da sessão principal, publicando no Base44 (`docs/ROTINA-DIARIA.md`). O workflow da Cloudflare (`.github/workflows/rotina-vagas.yml`) está obsoleto desde a D9.
+- `scripts/atualizar-vagas.cjs --rotina` falha com código 2 enquanto qualquer link de R$ 297 estiver no `checkout.config.js` com a inauguração encerrada. Novo: `--pagos-inauguracao N` aplica a contagem do servidor (`vagasRestantes = vagasTotal - N`, só para baixo).
+
