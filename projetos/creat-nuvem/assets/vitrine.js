@@ -1257,7 +1257,7 @@
       // InitiateCheckout não sai daqui: só no clique em pagar de /abrir/, com o valor cobrado.
       location.href = RAIZ + 'abrir/#' + montarFragmento(s, true);
     }
-    $('#previa-quero').addEventListener('click', function () { irParaAbrir('vitrine'); });
+    $('#previa-quero').addEventListener('click', function () { irParaAbrir('aberto'); });
     // Links de plano: o href no HTML é só "abrir/#plano=..."; nome e cidade entram no clique (nunca ficam no DOM).
     $$('[data-plano]').forEach(function (a) {
       a.addEventListener('click', function (e) { e.preventDefault(); irParaAbrir(a.getAttribute('data-plano')); });
@@ -1610,7 +1610,7 @@
       }
     }
     var salvo = lerPedidoSalvo();
-    if (!est.plano) est.plano = 'vitrine';
+    if (!est.plano) est.plano = 'aberto'; /* o anúncio promete o plano a partir do Aberto: a página abre no mesmo plano */
     utmAtual = est.utm;
     if (!Object.keys(utmAtual).length) utmAtual = lerOrigem() || (salvo ? origemParaUtm(salvo.origem) : {});
     est.utm = utmAtual;
