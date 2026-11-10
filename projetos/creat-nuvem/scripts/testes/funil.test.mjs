@@ -334,7 +334,7 @@ test('navegador: /abrir/ limpa nome e cidade do endereço, escolhe o link da pra
     const href = await pg.getAttribute('.pagar [data-checkout]', 'href');
     assert.equal(href, link(PREF.feira), 'link da praça feira');
     assert.equal(await pg.getAttribute('#barra-pagar [data-checkout]', 'href'), link(PREF.feira));
-    assert.match(await pg.textContent('#resumo-mensal'), /Abertura de R\$ 297\..*R\$ 297 só começa com o site no ar/);
+    assert.match(await pg.textContent('#resumo-mensal'), /Abertura de R\$ 297\..*R\$ 297 por mês no cartão, ou anual no Pix, só começa com o site no ar/);
     // recarregar não traz nome de volta ao endereço e mantém o negócio na tela
     await pg.reload(); await pg.waitForTimeout(300);
     assert.doesNotMatch(pg.url(), /Studio|Feira/);

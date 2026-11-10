@@ -20,7 +20,7 @@ Trilho, 10/11/2026, pacote 2C da onda 2 do plano de qualidade. Roteiro para o co
 ## 1. Regras que valem para os dois atos
 
 1. **Janela.** A única edição significativa antes do congelamento é de **13 a 16/11**. Depois de 16/11 não se cria campanha nova; a leitura de 30/11 usa as campanhas de Tráfego como estão. **De 23 a 29/11 nada é editado** (orçamento, público, local, evento, criativo ou campanha). Nessa semana só existe pausa de emergência.
-2. **Verba igual.** R$ 40 por dia por campanha, R$ 80 por dia no total. A campanha nova copia orçamento, público, local e posicionamento da campanha que substitui. Duas campanhas da mesma praça nunca ficam ligadas juntas além da sessão da troca (senão a verba dobra sem ordem do dono).
+2. **Verba igual.** R$ 40 por dia por campanha, R$ 80 por dia no total. A campanha nova copia orçamento, público, local e posicionamento da campanha que substitui. **Teto: a soma das campanhas ligadas nunca passa de R$ 80 por dia, em nenhum momento.** Duas campanhas da mesma praça só ficam ligadas juntas dentro da sessão da troca, com o coordenador presente, e por no máximo 1 hora. Passou de 1 hora sem os novos aprovados: desliga o novo e tenta no dia seguinte (ato 1, passo 9). Senão a verba dobra sem ordem do dono.
 3. **Ids lidos na hora.** Nenhum id fixo deste repositório é usado para editar. Antes de cada passo, ler pelo MCP oficial da Meta (seção 4) e conferir o nome da campanha, do conjunto e do anúncio.
 4. **Criar pausado.** Todo anúncio, conjunto e campanha nasce **PAUSADO**. Só liga com o "sim" da P1, a validação tripla verde e a conferência no ar verde.
 5. **No máximo 4 anúncios por conjunto.**
@@ -36,7 +36,7 @@ Trilho, 10/11/2026, pacote 2C da onda 2 do plano de qualidade. Roteiro para o co
 **Pré-condições, todas juntas** (faltou uma, o ato desliza dia a dia até 16/11; passou de 16/11, não acontece):
 
 - "Sim" da P1 (b) na rodada única.
-- Ondas 1 e 2 publicadas, com `JORNADA_PUBLICADA = true` em `scripts/conferir-no-ar.cjs` e a conferência no ar verde.
+- Ondas 1 e 2 publicadas e a conferência no ar verde. A conferência descobre sozinha que a vitrine da onda 2 está no ar (linha `info   J · vitrine da onda 2 no ar`); se ela disser "ainda não está no ar", a onda 2 não foi publicada e o ato não começa.
 - Pré-condições do `EXPANSAO.md` (seção Mídia, 13/11): Pixel conferido no Test Events com ViewContent e InitiateCheckout, sem `#` nem dado pessoal na URL; identidade da empresa publicada; links do Mercado Pago por praça em uso; T10 publicado e T12 aprovado.
 - Portão do suporte (`docs/PEDIDO-API.md`, seção 10): a chave `ultimo_email_suporte` diz `enviado`, ou a tarefa executora com aviso ao dono está ligada.
 
@@ -45,12 +45,16 @@ Trilho, 10/11/2026, pacote 2C da onda 2 do plano de qualidade. Roteiro para o co
 1. Ler a conta pelo MCP (seção 4): campanhas `PA | Site | Feira` e `PA | Site | Salvador RMS` ativas, seus conjuntos, os 3 anúncios ativos de cada conjunto e o orçamento de R$ 40 por dia de cada. Anotar os ids lidos.
 2. Montar o JSON da validação no scratchpad (nunca no repositório), com o texto exatamente como vai para o Gerenciador: `node marketing/trafego/validar-anuncio.cjs --exemplo` mostra o formato. Os 6 anúncios do ato 1 são os da tabela da seção 2 de `textos-troca-unica.md`, com os links da seção 4 (com `utm_term={{placement}}`).
 3. Rodar `node marketing/trafego/validar-anuncio.cjs <json>`. Só segue com saída 0.
-4. Rodar `node scripts/conferir-no-ar.cjs`. Só segue com saída 0 e a última linha "ok". Colar a última linha no relatório.
+4. Rodar `node scripts/conferir-no-ar.cjs --exigir-funcoes --exigir-jornada`. Só segue com saída 0, "jornada e cookies 10 de 10 certas" e a última linha começando por "ok". "parcial" não serve: quer dizer que algo ficou sem conferir (o teste logado opcional do usuário comum não conta, e a linha diz isso por escrito). Colar a última linha no relatório.
 5. Criar **pausadas** `PA | Feira | VC` e `PA | Salvador RMS | VC`, otimizadas para ViewContent (decisão do `EXPANSAO.md`, já prevista), cada uma com R$ 40 por dia, um conjunto, e o mesmo público, local e posicionamento das campanhas de Tráfego da mesma praça. As sugestões de público do `EXPANSAO.md` (13/11) entram aqui, nesta mesma edição, e em nenhuma outra.
 6. Criar **pausados** os 3 anúncios de cada conjunto novo (A1 barbearia, A1 salão, B1 salão), com a mesma arte de hoje, o texto da seção 2 de `textos-troca-unica.md`, URL do site `https://creat-nuvem-404b1994.base44.app/` e, em "Parâmetros de URL", `nicho=<nicho>&utm_source=meta&utm_medium=pago&utm_campaign=<feira|salvador-rms>&utm_content=<A1-barbearia-v1|A1-salao-v1|B1-salao-v1>&utm_term={{placement}}`. Aprimoramentos criativos da Meta desligados. Nome do anúncio: `<utm_content> · <praça> 2026-11-<dia>`. Máximo de 4 por conjunto; o vídeo não entra no ato 1.
 7. Ler de novo pelo MCP o que foi criado (texto, título, botão e prévia do Reels, do Stories e do Feed em pt-BR com `ads_get_ad_preview`). Se algo divergir do JSON, corrigir ainda pausado e voltar ao passo 3.
-8. Com o "sim" da P1: ligar as duas campanhas VC.
-9. Esperar a aprovação. Quando os 6 anúncios novos estiverem ACTIVE e sem reprovação, pausar as campanhas de Tráfego `PA | Site | Feira` e `PA | Site | Salvador RMS` (critério da regra 6). Reprovado: não pausar o antigo daquele conjunto, seguir a regra de parar.
+8. Com o "sim" da P1, numa sessão em que o coordenador tem pelo menos 1 hora livre: ligar as duas campanhas VC e anotar a hora (Bahia). A partir daqui o relógio de 1 hora da regra 2 está correndo.
+9. Ficar na sessão e ler pelo MCP a cada 10 minutos o estado efetivo dos 6 anúncios novos. Cada praça é decidida sozinha:
+   - **Os 3 novos da praça ficaram ACTIVE, sem reprovação:** pausar na mesma leitura a campanha de Tráfego daquela praça (`PA | Site | Feira` ou `PA | Site | Salvador RMS`). Ler de novo e confirmar que só uma campanha da praça está ligada.
+   - **Algum novo foi reprovado:** desligar (voltar a PAUSADA) a campanha VC daquela praça na hora, manter a de Tráfego ligada e seguir a regra de parar.
+   - **Deu 1 hora desde o passo 8 e algum novo ainda está "em análise":** desligar (voltar a PAUSADA) a campanha VC daquela praça e manter a de Tráfego ligada. No dia seguinte, ainda dentro da janela (até 16/11), ler de novo: se a Meta já aprovou os anúncios, repetir os passos 4, 8 e 9; se 16/11 passar, a praça fica como está.
+   - Ao sair da sessão, a leitura pelo MCP tem de mostrar no máximo uma campanha ligada por praça e a soma das ligadas em até R$ 80 por dia. Se não mostrar, a sessão não termina.
 10. Ler pelo MCP o estado final: 2 campanhas VC ativas, R$ 40 cada, soma R$ 80; Tráfego pausadas; nenhum anúncio antigo ativo. Atualizar a tabela "Anúncios no ar" de `../utm.md` (pedido ao dono do arquivo) com a leitura nova.
 11. Rodar `node scripts/conferir-no-ar.cjs` mais uma vez com os anúncios novos ativos e colar a última linha.
 12. Registrar no `diario-campanha.csv`: uma linha `fase=publicacao` com a hora da troca em `data_publicacao_funil`, e atualizar a linha "ato 1 (planejado)" para o que de fato aconteceu.
