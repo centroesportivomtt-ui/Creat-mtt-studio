@@ -36,8 +36,9 @@
  *   filter devolvem []. O delete anônimo responde 404 mesmo com a linha existindo (a plataforma esconde o que a regra
  *   de leitura nega), então o critério do delete é "não apagou": um segundo update no mesmo id ainda dá 403.
  *   Sumiu a linha (update 404): é defeito; recrie pelo MCP e troque o id (docs/ROTINA-DIARIA.md).
- * Última linha: "funcionam de ponta a ponta" só sai com o grupo I inteiro conferido. Com qualquer NÃO VERIFICADO
- *   no grupo I ela diz que as funções do pedido NÃO foram conferidas, com o número de itens.
+ * Última linha: "funcionam de ponta a ponta" só sai com o grupo I inteiro conferido. Começa por "ok" só quando
+ *   nada ficou sem conferir além do teste logado opcional do usuário comum; com qualquer outro NÃO VERIFICADO
+ *   (jornada da onda 2 ainda não no ar, rota de função ausente, limite de taxa, --sem-funcoes) começa por "parcial".
  * Toda chamada ao site e às funções leva o cabeçalho X-Conferencia: 1 e a UTM utm_content=conferencia,
  * para o contador próprio descartar a conferência (docs/PEDIDO-API.md, seção 4.4).
  *
@@ -45,7 +46,8 @@
  *   --so-funcoes   só o grupo I (logo depois de publicar as funções, antes das páginas)
  *   --sem-funcoes  pula o grupo I (só enquanto as funções ainda não foram publicadas; anote no relatório)
  *   --exigir-funcoes rota de função ausente é defeito mesmo com FUNCOES_PUBLICADAS = false (uso do coordenador no deploy)
- *   --exigir-jornada falha do grupo J é defeito mesmo com JORNADA_PUBLICADA = false (uso do coordenador no deploy da onda 2)
+ *   --exigir-jornada falha do grupo J é defeito mesmo se o ar ainda não mostra a vitrine da onda 2 (a detecção é
+ *                  automática: meta content="consent" em /obrigado/ ou estados.a_conferir no obrigado.json publicado)
  *   --cors-estrito trata "access-control-allow-origin: *" no OPTIONS como defeito (padrão: aviso, ver grupo I)
  *   Usuário comum (opcional): CONFERENCIA_TOKEN_USUARIO_COMUM no ambiente, com a sessão de um usuário de
  *   papel "user" criado só para isto. O valor nunca é impresso. Sem ele, as 20 tentativas logadas saem
@@ -67,10 +69,12 @@ const CORS_ESTRITO = args.includes('--cors-estrito');
 const EXIGIR_FUNCOES = args.includes('--exigir-funcoes');
 // troque para true no mesmo ato do deploy das funções da onda 1 (docs/ROTINA-DIARIA.md, seção 7)
 const FUNCOES_PUBLICADAS = true;
-// troque para true no mesmo ato da publicação da vitrine da onda 2 (pacotes 2A e 2B): até lá, o que o grupo J
-// acha de errado sai como NÃO VERIFICADO (é o estado anterior à onda, conhecido), para a rotina diária não pausar
-// anúncio por defeito que já tem correção agendada. Daí em diante, falha no grupo J é DEFEITO. --exigir-jornada força o true.
-const JORNADA_PUBLICADA = false;
+// Vitrine da onda 2 (pacotes 2A e 2B): a conferência DESCOBRE SOZINHA se ela já está no ar, sem constante para
+// trocar à mão (esquecer a troca deixava o grupo J mudo e a rotina diária sem pausar anúncio). Sinais, lidos do
+// endereço real a cada rodada: o HTML de /obrigado/ traz <meta name="base44-visitor-tracking" content="consent">,
+// ou o conteudo/obrigado.json publicado traz estados.a_conferir. Qualquer um dos dois: falha no grupo J é DEFEITO.
+// Nenhum dos dois: é o ar anterior à onda, conhecido; o que o grupo J acha sai como NÃO VERIFICADO e a última linha
+// começa por "parcial". --exigir-jornada força DEFEITO mesmo sem os sinais (uso do coordenador no deploy).
 const EXIGIR_JORNADA = args.includes('--exigir-jornada');
 const APP_ID = '6aefffe66b684db9404b1994';
 const GRUPO_FUNCOES = 'I funções';
@@ -91,8 +95,10 @@ function anota(grupo, nome, ok, detalhe) {
 // não verificado: não conta como certo nem como defeito, e aparece no resumo com o motivo
 // itens: quantas conferências ficaram de fora com este registro (entra no número da última linha)
 const naoVerificadas = [];
-function naoVerificado(grupo, nome, motivo, itens = 1) {
-  naoVerificadas.push({ grupo, nome, motivo, itens });
+// foraDasEsperadas: itens que já não entram no número de esperadas (o usuário comum sem token), para o resumo
+// não dizer que deixaram de rodar itens que nem eram esperados
+function naoVerificado(grupo, nome, motivo, itens = 1, foraDasEsperadas = false) {
+  naoVerificadas.push({ grupo, nome, motivo, itens, foraDasEsperadas });
   console.log(`NÃO VERIFICADO ${grupo} · ${nome} | ${motivo}`);
 }
 const avisos = [];
@@ -270,19 +276,30 @@ function aviso(grupo, nome, detalhe) {
 
   /* ---------------- J. jornada depois do pagamento, link de teste e cookies (onda 2, pacote 2C) ---------------- */
   if (!SO_FUNCOES) {
-    const anotaJ = (grupo, nome, ok, detalhe) => {
-      if (ok || JORNADA_PUBLICADA || EXIGIR_JORNADA) return anota(grupo, nome, ok, detalhe);
-      naoVerificado(grupo, nome, `a vitrine da onda 2 ainda não foi publicada (JORNADA_PUBLICADA = false); hoje: ${detalhe}`);
-    };
     // títulos esperados: os publicados (conteudo/obrigado.json no ar); sem eles, os do repositório
-    let textosObrigado = null;
+    let textosObrigado = null, jsonNoAr = null, htmlObrigado = null;
     try {
       const c0 = await novoCtx(); const p0 = await c0.newPage();
       const r0 = await p0.goto(BASE + '/conteudo/obrigado.json', { waitUntil: 'domcontentloaded', timeout: 30000 });
-      if (r0 && r0.status() === 200) textosObrigado = JSON.parse(await r0.text());
+      if (r0 && r0.status() === 200) { jsonNoAr = JSON.parse(await r0.text()); textosObrigado = jsonNoAr; }
+      // o HTML cru, como o servidor entrega (antes de qualquer script mexer no DOM)
+      const r1 = await p0.goto(BASE + '/obrigado/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+      if (r1 && r1.status() === 200) htmlObrigado = await r1.text();
       await c0.close();
-    } catch (e) { /* cai no do repositório */ }
+    } catch (e) { /* cai no do repositório; a detecção abaixo trata o que não leu */ }
     if (!textosObrigado) { try { textosObrigado = JSON.parse(fs.readFileSync(require('path').join(__dirname, '..', 'conteudo', 'obrigado.json'), 'utf8')); } catch (e) { textosObrigado = {}; } }
+    // a vitrine da onda 2 está no ar? (ver EXIGIR_JORNADA no topo) Sem ler nenhum dos dois sinais, conta como
+    // publicada: na dúvida, defeito aparece como defeito (o grupo A já acusa /obrigado/ fora do ar)
+    const sinalMeta = !!htmlObrigado && /<meta\b(?=[^>]*\bname\s*=\s*["']?base44-visitor-tracking\b)(?=[^>]*\bcontent\s*=\s*["']?consent["'\s/>])[^>]*>/i.test(htmlObrigado);
+    const sinalJson = !!(jsonNoAr && jsonNoAr.estados && jsonNoAr.estados.a_conferir);
+    const leuAlgo = htmlObrigado !== null || jsonNoAr !== null;
+    const JORNADA_NO_AR = sinalMeta || sinalJson || !leuAlgo;
+    const comoSoube = EXIGIR_JORNADA ? '--exigir-jornada' : (sinalMeta ? 'meta consent em /obrigado/' : (sinalJson ? 'estados.a_conferir no obrigado.json publicado' : (leuAlgo ? '' : 'sinais ilegíveis, tratado como publicada')));
+    console.log(`info   J · vitrine da onda 2 ${JORNADA_NO_AR || EXIGIR_JORNADA ? `no ar (${comoSoube}): falha no grupo J é DEFEITO` : 'ainda não está no ar (sem meta consent em /obrigado/ e sem estados.a_conferir publicado): falha no grupo J sai como NÃO VERIFICADO'}`);
+    const anotaJ = (grupo, nome, ok, detalhe) => {
+      if (ok || JORNADA_NO_AR || EXIGIR_JORNADA) return anota(grupo, nome, ok, detalhe);
+      naoVerificado(grupo, nome, `a vitrine da onda 2 ainda não está no ar (detecção automática); hoje: ${detalhe}`);
+    };
     const est = (textosObrigado && textosObrigado.estados) || {};
     const limpo = s => String(s || '').replace(/\s+/g, ' ').replace(/[.!]+$/, '').trim().toLowerCase();
     const tituloDe = (k, reserva) => limpo((est[k] && est[k].titulo) || reserva);
@@ -499,7 +516,7 @@ function aviso(grupo, nome, detalhe) {
         }
       }
     }
-    if (!tokComum) naoVerificado(G, 'usuário comum logado nas 4 entidades (22 tentativas)', 'sem CONFERENCIA_TOKEN_USUARIO_COMUM nesta execução; a prova de 10/11 está em docs/PEDIDO-API.md 8.2', 22);
+    if (!tokComum) naoVerificado(G, 'usuário comum logado nas 4 entidades (22 tentativas)', 'sem CONFERENCIA_TOKEN_USUARIO_COMUM nesta execução; a prova de 10/11 está em docs/PEDIDO-API.md 8.2', 22, true);
     await api.dispose();
   }
 
@@ -510,22 +527,37 @@ function aviso(grupo, nome, detalhe) {
   const escopo = SO_FUNCOES ? 'só funções' : (SEM_FUNCOES ? 'vitrine, SEM as funções' : 'vitrine e funções');
   // contagem esperada (cabeçalho): vitrine 64 = A a H 54 + J 10 (menos as praças do Mercado Pago com --sem-mp); funções 41
   const esperadas = (SO_FUNCOES ? 0 : 64 - (SEM_MP ? Object.keys(links).length : 0)) + (SEM_FUNCOES ? 0 : 41 + (process.env.CONFERENCIA_TOKEN_USUARIO_COMUM ? 22 : 0));
-  const naoRodaram = naoVerificadas.reduce((s, n) => s + (n.itens || 1), 0);
+  // não verificadas DENTRO das esperadas (o usuário comum sem token já está fora delas e é dito à parte)
+  const naoRodaram = naoVerificadas.filter(n => !n.foraDasEsperadas).reduce((s, n) => s + (n.itens || 1), 0);
+  const foraNv = naoVerificadas.filter(n => n.foraDasEsperadas).reduce((s, n) => s + (n.itens || 1), 0);
   const jornada = res.filter(r => /^J /.test(r.grupo));
-  console.log(`\n${res.length} conferências no ar (${escopo}; esperadas ${esperadas}${naoRodaram ? `, ${naoRodaram} delas não verificadas` : ''}) · ${res.length - falhas.length} certas · ${falhas.length} com defeito${ext}` + (SO_FUNCOES ? '' : ` · jornada e cookies ${jornada.filter(r => r.ok).length} de ${jornada.length + naoVerificadas.filter(n => /^J /.test(n.grupo)).length} certas`));
+  console.log(`\n${res.length} conferências no ar (${escopo}; esperadas ${esperadas}${naoRodaram ? `, ${naoRodaram} delas não verificadas` : ''}${foraNv ? `; mais ${foraNv} do usuário comum logado, que não rodaram` : ''}) · ${res.length - falhas.length} certas · ${falhas.length} com defeito${ext}` + (SO_FUNCOES ? '' : ` · jornada e cookies ${jornada.filter(r => r.ok).length} de ${jornada.length + naoVerificadas.filter(n => /^J /.test(n.grupo)).length} certas`));
   if (falhas.length) {
     console.error('DEFEITO NO AR. Pause os anúncios, corrija e rode de novo:');
     falhas.forEach(f => console.error(`  - ${f.grupo} · ${f.nome}${f.detalhe ? ' | ' + f.detalhe : ''}`));
     process.exit(1);
   }
   // "funcionam de ponta a ponta" só com o grupo I inteiro conferido (regra 12 da casa)
+  // A última linha começa por "ok" só quando nada ficou sem conferir além do teste logado opcional (usuário comum);
+  // com qualquer outro NÃO VERIFICADO (jornada da onda 2 ainda não no ar, rota ausente, limite de taxa) ela começa
+  // por "parcial", para quem cola só a última linha não ler verde onde não houve prova. A saída continua 0.
   const nvFuncoes = naoVerificadas.filter(n => n.grupo === GRUPO_FUNCOES);
-  const itensFuncoes = nvFuncoes.reduce((s, n) => s + (n.itens || 1), 0);
+  const nvFuncoesReais = nvFuncoes.filter(n => !n.foraDasEsperadas);
+  const itensFuncoes = nvFuncoesReais.reduce((s, n) => s + (n.itens || 1), 0);
   const outrasNv = naoVerificadas.filter(n => n.grupo !== GRUPO_FUNCOES);
+  const nvJornada = outrasNv.filter(n => /^J /.test(n.grupo));
+  const parcial = nvFuncoesReais.length > 0 || outrasNv.length > 0 || SEM_FUNCOES;
+  const pre = parcial ? 'parcial' : 'ok     ';
+  const logado = foraNv ? `; o teste logado do usuário comum (${foraNv} itens) não rodou` : '';
   let final;
-  if (SEM_FUNCOES) final = 'ok     a vitrine no ar funciona para quem chega pelo anúncio; as funções do pedido NÃO foram conferidas (grupo I pulado nesta rodada).';
-  else if (nvFuncoes.length) final = `${SO_FUNCOES ? 'ok     nada com defeito no que respondeu' : 'ok     a vitrine no ar funciona'}; as funções do pedido NÃO foram conferidas (${itensFuncoes} itens: ${nvFuncoes.map(n => n.nome).join('; ')}).`;
-  else final = SO_FUNCOES ? 'ok     as funções no ar respondem e recusam como o contrato manda (vitrine não conferida nesta rodada).'
-    : 'ok     o site no ar, a volta do pagamento, os cookies e as funções funcionam de ponta a ponta para quem chega pelo anúncio.';
-  console.log(final + (outrasNv.length ? ` Atenção: ${outrasNv.length} outro(s) item(ns) NÃO VERIFICADO(S) acima não contam como prova.` : ''));
+  if (SEM_FUNCOES) final = 'a vitrine no ar funciona para quem chega pelo anúncio; as funções do pedido NÃO foram conferidas (grupo I pulado nesta rodada).';
+  else if (nvFuncoesReais.length) final = `${SO_FUNCOES ? 'nada com defeito no que respondeu' : 'a vitrine no ar funciona'}; as funções do pedido NÃO foram todas conferidas (${itensFuncoes} itens: ${nvFuncoesReais.map(n => n.nome).join('; ')})${logado}.`;
+  else if (foraNv) final = `${SO_FUNCOES ? 'as funções no ar responderam ao anônimo como o contrato manda' : 'a vitrine no ar funciona e as funções responderam ao anônimo como o contrato manda'}${logado}.`;
+  else final = SO_FUNCOES ? 'as funções no ar respondem e recusam como o contrato manda (vitrine não conferida nesta rodada).'
+    : 'o site no ar, a volta do pagamento, os cookies e as funções funcionam de ponta a ponta para quem chega pelo anúncio.';
+  const nota = [];
+  if (nvJornada.length) nota.push(`${nvJornada.length} item(ns) da jornada da onda 2 NÃO VERIFICADO(S): a vitrine nova ainda não está no ar`);
+  const outrasSemJ = outrasNv.length - nvJornada.length;
+  if (outrasSemJ) nota.push(`${outrasSemJ} outro(s) item(ns) NÃO VERIFICADO(S) acima`);
+  console.log(`${pre} ${final}${nota.length ? ` Atenção: ${nota.join('; ')}; não contam como prova.` : ''}`);
 })().catch(e => { console.error('erro  ', e); process.exit(2); });

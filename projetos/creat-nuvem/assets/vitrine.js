@@ -1104,6 +1104,11 @@
     var nichoQ = q.get('nicho'); if (nichoQ === 'salão' || nichoQ === 'estetica') nichoQ = 'salao';
     var nichoIni = NICHOS.indexOf(nichoQ) !== -1 ? nichoQ : hashIni.k;
     if (nichoIni) { var r0 = $('input[name="nicho"][value="' + nichoIni + '"]'); if (r0) r0.checked = true; }
+    // Exemplo do campo do nome conforme o nicho (quem chega pelo anúncio de salão não lê "Barbearia do Zé").
+    var EXEMPLO_NOME = { barbearia: 'Exemplo: Barbearia do Zé', salao: 'Exemplo: Studio da Ana', academia: 'Exemplo: Academia Ponto Forte' };
+    function exemploDoNicho(k) { if (EXEMPLO_NOME[k]) campoNome.setAttribute('placeholder', EXEMPLO_NOME[k]); }
+    exemploDoNicho(nichoIni);
+    $$('input[name="nicho"]').forEach(function (r) { r.addEventListener('change', function () { if (r.checked) exemploDoNicho(r.value); }); });
     if (hashIni.n) campoNome.value = hashIni.n;
     if (hashIni.c) campoCidade.value = hashIni.c;
     function contarNome() { var cg = $('#contador-giz'); if (cg) cg.textContent = limparNome(campoNome.value).length + ' de 40'; }
@@ -1577,6 +1582,8 @@
     var novo = RE_ID.test(p.id) && RE_SEGREDO.test(p.segredo || '');
     if (isNaN(t0) || idade < -FOLGA || idade > D30 || (idade > D7 && !novo)) { guarda.apagar(CHAVE_PEDIDO); return null; }
     if (!(novo || RE_ID_ANTIGO.test(p.id)) || PLANOS.indexOf(p.plano) === -1 || NICHOS.indexOf(p.nicho) === -1 || typeof p.negocio !== 'string' || !p.negocio) return null;
+    // o link de pagamento guardado volta a passar pela lista de provedores (nunca javascript: nem destino falso)
+    if (p.link !== undefined && p.link !== null && !(CK && CK.linkValido && CK.linkValido(p.link))) p.link = null;
     if (p.enxuto) return novo ? p : null;
     if (idade > D7) return enxugar(p, p.status === 'registrado' ? 'registrado' : 'vencido');   // dado pessoal nunca passa de 7 dias no aparelho
     var obrig = ['cidade', 'responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'origem', 'previa', 'aceite_termos'];
@@ -1679,18 +1686,27 @@
       return { produto: produto, valor: produto ? CATALOGO[produto] : null, praca: praca, link: b.getAttribute('href') };
     }
     var checkoutContado = false;
+    // Antes de sair para o pagamento: formulário válido, aceite marcado, pedido guardado e enviado ao servidor.
+    // Vale para o clique, o clique do meio e o toque longo ("abrir em nova aba"): nenhum caminho pula o aceite.
+    function prepararIda(e, b) {
+      if (b.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return null; }
+      if (b.getAttribute('data-link-ok') !== '1') return null;   // sem link de pagamento: o botão leva ao WhatsApp do suporte
+      var r = lerFormPedido(f, est);
+      if (!r.ok) { e.preventDefault(); resumoErros(f, r.faltam); return null; }
+      resumoErros(f, 0);
+      var s = salvarPedido(r.dados, est, lerPedidoSalvo(), compraAtual(b));
+      if (!s.gravou) aviso('Este navegador não deixa guardar dados no aparelho, por isso a próxima página vai pedir os campos de novo. O pedido funciona do mesmo jeito.');
+      /* PG-05: o pedido vai ao servidor AGORA, sem esperar resposta e sem segurar a ida ao Mercado Pago (fetch com
+         keepalive sobrevive à troca de página). Se a função falhar, /obrigado/ registra de novo com os dados do aparelho.
+         O registro é idempotente pelo id (docs/PEDIDO-API.md): repetir no toque longo e depois no clique não duplica. */
+      if (registravel(s.registro)) enviarSolto('registrarPedido', corpoRegistro(s.registro, hpValor()));
+      return r;
+    }
     botoes.forEach(function (b) {
+      b.addEventListener('contextmenu', function (e) { prepararIda(e, b); });
+      b.addEventListener('auxclick', function (e) { if (e.button === 1) prepararIda(e, b); });
       b.addEventListener('click', function (e) {
-        if (b.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
-        if (b.getAttribute('data-link-ok') !== '1') return;   // sem link de pagamento: o botão leva ao WhatsApp do suporte
-        var r = lerFormPedido(f, est);
-        if (!r.ok) { e.preventDefault(); resumoErros(f, r.faltam); return; }
-        resumoErros(f, 0);
-        var s = salvarPedido(r.dados, est, lerPedidoSalvo(), compraAtual(b));
-        if (!s.gravou) aviso('Este navegador não deixa guardar dados no aparelho, por isso a próxima página vai pedir os campos de novo. O pedido funciona do mesmo jeito.');
-        /* PG-05: o pedido vai ao servidor AGORA, sem esperar resposta e sem segurar a ida ao Mercado Pago (fetch com
-           keepalive sobrevive à troca de página). Se a função falhar, /obrigado/ registra de novo com os dados do aparelho. */
-        if (registravel(s.registro)) enviarSolto('registrarPedido', corpoRegistro(s.registro, hpValor()));
+        var r = prepararIda(e, b); if (!r) return;
         evento('checkout_iniciado', { plano: r.dados.plano, nicho: r.dados.nicho });
         // um por carga da página: clique duplo ou voltar do Mercado Pago e clicar de novo na mesma carga não duplica
         if (!teste && escolha && !checkoutContado) { checkoutContado = true; pixelEvento('InitiateCheckout', { value: escolha.total, currency: 'BRL' }); }
@@ -1845,6 +1861,8 @@
     aguardando: { olho: 'Pagamento', titulo: 'Termine o pagamento na outra aba', texto: 'Abrimos o Mercado Pago em outra aba. Quando o pagamento aprovar, esta página mostra a confirmação.', botao: 'Abrir o pagamento de novo' },
     assinatura_ok: { olho: 'Assinatura', titulo: 'Assinatura ativa', texto: 'O plano {plano} está ativo. A cobrança se renova todo mês no cartão. Para cancelar ou trocar o cartão, use o portal do assinante, sem multa.', semPlano: 'A assinatura está ativa. A cobrança se renova todo mês no cartão. Para cancelar ou trocar o cartão, use o portal do assinante, sem multa.', botao: 'Abrir o portal do assinante' },
     assinatura_cancelada: { olho: 'Assinatura', titulo: 'A assinatura não foi concluída', texto: 'Nada foi cobrado. Se quiser, tente de novo ou fale com a equipe.', botao: 'Falar com a equipe no WhatsApp' },
+    anual_conferir: { olho: 'Plano anual', titulo: 'O Mercado Pago aprovou o plano anual', texto: 'O Mercado Pago aprovou o pagamento do plano {plano} anual. A equipe confere e fala com você no WhatsApp. Os 12 meses contam do dia em que o site entrou no ar.', semPlano: 'O Mercado Pago aprovou o pagamento do plano anual. A equipe confere e fala com você no WhatsApp. Os 12 meses contam do dia em que o site entrou no ar.', botao: 'Falar com a equipe no WhatsApp' },
+    bastidores_conferir: { olho: 'Bastidores', titulo: 'O Mercado Pago aprovou o Bastidores', texto: 'O Mercado Pago aprovou a compra do Bastidores. A equipe confere e fala com você no WhatsApp para a entrega.', botao: 'Falar com a equipe no WhatsApp' },
     anual_pago: { olho: 'Plano anual', titulo: 'Plano anual pago', texto: 'Recebemos o pagamento do plano {plano} anual. Os 12 meses contam do dia em que o site entrou no ar, e não há outra cobrança nesse período.', semPlano: 'Recebemos o pagamento do plano anual. Os 12 meses contam do dia em que o site entrou no ar, e não há outra cobrança nesse período.', botao: 'Falar com a equipe no WhatsApp' },
     teste_ok: { olho: 'Teste', titulo: 'Teste concluído', texto: 'O pagamento de teste passou. Nada foi produzido e nenhum prazo começou.', botao: 'Voltar para a página inicial' },
     bastidores_pago: { olho: 'Bastidores', titulo: 'Bastidores comprado', texto: 'O Mercado Pago aprovou a compra do Bastidores. O suporte fala com você no WhatsApp para a entrega.', botao: 'Falar com o suporte no WhatsApp' }
@@ -1868,6 +1886,7 @@
     confirmando: 'Esta página confere sozinha com o Mercado Pago a cada poucos segundos.',
     registrado: 'Seu pedido está registrado. Quando o pagamento cair, esta página mostra a confirmação.',
     pago: 'O prazo de {prazo} h começou.',
+    pago_depois: 'O pagamento foi confirmado fora do horário de atendimento. O prazo de {prazo} h começa às 9h do próximo dia de atendimento.',
     a_conferir: 'O nosso sistema recebeu o pagamento, e a equipe confere à mão.',
     depois_do_pagamento: 'Recebemos os dados do pedido. Como eles chegaram depois do pagamento, a equipe confere à mão.',
     ja_usado: 'Este pagamento já confirma outro pedido. Fale com o suporte.',
@@ -1941,6 +1960,9 @@
     function chaveTexto() {
       if (estado === 'aprovado') return foraCatalogo ? 'produto_fora' : esgotado ? 'conferencia_longa' : 'a_conferir';
       if (estado === 'confirmado') return 'aprovado';
+      // anual e Bastidores ainda não têm conferência no servidor: a página só repete o que o Mercado Pago disse
+      if (estado === 'anual_pago') return 'anual_conferir';
+      if (estado === 'bastidores_pago') return 'bastidores_conferir';
       return estado;
     }
     function texto(campo) {
@@ -1959,7 +1981,7 @@
     }
     function chaveZap() {
       var k = chaveTexto();
-      return { aprovado: 'aprovado', a_conferir: 'a_conferir', conferencia_longa: 'a_conferir', produto_fora: 'a_conferir', assinatura_ok: 'assinatura', assinatura_cancelada: 'sem_retorno', anual_pago: 'anual', teste_ok: 'teste', bastidores_pago: 'bastidores' }[k] || k;
+      return { aprovado: 'aprovado', a_conferir: 'a_conferir', conferencia_longa: 'a_conferir', produto_fora: 'a_conferir', assinatura_ok: 'assinatura', assinatura_cancelada: 'sem_retorno', anual_conferir: 'anual', teste_ok: 'teste', bastidores_conferir: 'bastidores' }[k] || k;
     }
     function msgZap() {
       var k = chaveZap(), pv = planoEValor(), v = vars();
@@ -1976,7 +1998,7 @@
       if (estado === 'teste_ok') return { href: RAIZ, fora: false };
       if (familiaAprovado() || /^(assinatura_cancelada|anual_pago|bastidores_pago)$/.test(estado)) return suporte;
       if ((estado === 'recusado' || estado === 'pendente') && produtoSemLink()) return { href: suporte.href, fora: true, rotulo: 'Falar com o suporte no WhatsApp' };
-      if (estado === 'aguardando' && pedido && pedido.link) return { href: pedido.link, fora: true };
+      if (estado === 'aguardando' && pedido && pedido.link && CK && CK.linkValido && CK.linkValido(pedido.link)) return { href: pedido.link, fora: true };
       return { href: hrefAbrir(), fora: false };
     }
 
@@ -2058,6 +2080,8 @@
       if (a.fora) { botao.target = '_blank'; botao.rel = 'noopener noreferrer'; } else { botao.removeAttribute('target'); botao.removeAttribute('rel'); }
       // segundo caminho: na assinatura, o suporte (o botão principal é o portal do assinante)
       secundario.hidden = estado !== 'assinatura_ok';
+      var notasPagar = $('#obrigado-notas-pagar');
+      if (notasPagar) notasPagar.hidden = !(estado === 'pendente' || estado === 'recusado');
       if (!secundario.hidden) { secundario.href = linkZap(msgZap()); secundario.target = '_blank'; secundario.rel = 'noopener noreferrer'; }
       if (zapTopo) { zapTopo.href = linkZap(msgZap()); if (suporteOk()) { zapTopo.target = '_blank'; zapTopo.rel = 'noopener noreferrer'; } }
       desenharRecibo();
@@ -2137,6 +2161,13 @@
         falhou(); if (seguirConsultando()) agendarConsulta();
       });
     }
+    // Purchase da Meta: só quando o SERVIDOR confirma o pagamento (nunca só pela URL), uma vez por payment_id.
+    var compraMedida = false;
+    function medirConfirmada() {
+      if (compraMedida || !volta.paymentId || produtoBase() === 'pa-teste') return;
+      compraMedida = true;
+      medirCompra({ aprovado: true, paymentId: volta.paymentId, preferencia: volta.preferencia });
+    }
     function aoStatus(st, j) {
       if (st === 'teste_ok') { if (estado !== 'teste_ok') { estado = 'teste_ok'; desenhar(); } linha('teste_ok'); return; }
       if (PAGOS.indexOf(st) !== -1) {
@@ -2144,7 +2175,11 @@
         clearTimeout(confirma.timer); confirma.feito = true;
         desenharRecibo();
         var entrega = j && dataBahia(j.entrega_prevista_em);
-        linha('pago', entrega ? 'Entrega prevista: ' + entrega + ' (horário da Bahia).' : '');
+        // o servidor só liga o relógio às 9h do próximo dia de atendimento (pedido-regras.mjs inicioDoRelogio)
+        var fimPrazo = j ? Date.parse(j.prazo_fim) : NaN, horasPrazo = precos && num(precos.prazoHoras) ? precos.prazoHoras : 72;
+        var depois = !isNaN(fimPrazo) && fimPrazo - Date.now() > horasPrazo * 3600000 + 60000;
+        medirConfirmada();
+        linha(depois ? 'pago_depois' : 'pago', entrega ? 'Entrega prevista: ' + entrega + ' (horário da Bahia).' : '');
         if (j && j.prazo_fim) relogio(j.prazo_fim);
         var u = j && typeof j.rascunho_url === 'string' ? j.rascunho_url : '';
         if (u && u.indexOf(location.origin + '/sites/') === 0 && /^[^\s#?]+$/.test(u)) {
@@ -2347,7 +2382,6 @@
       else if (PAGINA === 'documento') paginaDocumento();
     } finally {
       montarConsentimento();
-      if (PAGINA === 'obrigado') medirCompra(ENTRADA.retorno);
       iniciarPosthog();
       D.documentElement.classList.add('js-pronto');
     }

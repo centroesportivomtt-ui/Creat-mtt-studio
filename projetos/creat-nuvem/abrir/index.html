@@ -45,7 +45,7 @@
     <section class="resumo-preco" aria-labelledby="resumo-preco-titulo">
       <h2 class="so-leitor" id="resumo-preco-titulo">Resumo do preço</h2>
       <p data-carregando-precos>Conferindo os preços de hoje...</p>
-      <p id="resumo-mensal" hidden><strong>Hoje: Abertura de R$ <span data-v="abrir.total"></span>.</strong> Mensalidade de R$ <span data-v="plano.preco"></span> só começa com o site no ar.</p>
+      <p id="resumo-mensal" hidden><strong>Hoje: Abertura de R$ <span data-v="abrir.total"></span>.</strong> Mensalidade de R$ <span data-v="plano.preco"></span> por mês no cartão, ou anual no Pix, só começa com o site no ar.</p>
       <p id="resumo-anual" hidden><strong>Hoje: só a Abertura, R$ <span data-v="abrir.total"></span>.</strong> O plano anual, R$ <span data-v="plano.preco"></span> pelos 12 meses, é cobrado no dia em que o site entra no ar, por este valor.</p>
       <p class="menor" data-texto="resumo.risco">Sem fidelidade. 7 dias para desistir, com o valor devolvido.</p>
     </section>
@@ -62,17 +62,17 @@
           <h2 id="plano-titulo">Seu plano</h2>
           <fieldset class="planos">
             <legend class="so-leitor">Trocar de plano</legend>
-            <label class="plano-opcao"><input type="radio" name="plano" value="aberto"><span>Aberto<small>R$ <span data-v="precos.planos.aberto" class="num-carregando"></span> por mês</small></span></label>
-            <label class="plano-opcao"><input type="radio" name="plano" value="vitrine"><span>Vitrine<small>R$ <span data-v="precos.planos.vitrine" class="num-carregando"></span> por mês · recomendado</small></span></label>
-            <label class="plano-opcao"><input type="radio" name="plano" value="aberto_anual"><span>Aberto anual<small>R$ <span data-v="precos.anual.aberto" class="num-carregando"></span> por 12 meses</small></span></label>
-            <label class="plano-opcao"><input type="radio" name="plano" value="vitrine_anual"><span>Vitrine anual<small>R$ <span data-v="precos.anual.vitrine" class="num-carregando"></span> por 12 meses</small></span></label>
+            <label class="plano-opcao"><input type="radio" name="plano" value="aberto"><span>Aberto<small>R$ <span data-v="precos.planos.aberto" class="num-carregando"></span> por mês no cartão</small></span></label>
+            <label class="plano-opcao"><input type="radio" name="plano" value="vitrine"><span>Vitrine<small>R$ <span data-v="precos.planos.vitrine" class="num-carregando"></span> por mês no cartão</small></span></label>
+            <label class="plano-opcao"><input type="radio" name="plano" value="aberto_anual"><span>Aberto anual<small>R$ <span data-v="precos.anual.aberto" class="num-carregando"></span> por 12 meses no Pix</small></span></label>
+            <label class="plano-opcao"><input type="radio" name="plano" value="vitrine_anual"><span>Vitrine anual<small>R$ <span data-v="precos.anual.vitrine" class="num-carregando"></span> por 12 meses no Pix</small></span></label>
           </fieldset>
           <p class="notas mt-3" id="anual-nota" hidden>No anual, você paga <span data-v="precos.anualMesesPagos"></span> meses e leva 12, no Pix. Sem fidelidade: se sair antes, devolvemos os meses não usados.</p>
 
           <div class="total" id="total" aria-live="polite">
             <span class="olho">Total</span>
             <p data-carregando-precos>Conferindo os preços de hoje...</p>
-            <p id="total-mensal" hidden>Hoje: <strong>R$ <span data-v="abrir.total"></span></strong> (Abertura). A partir do dia em que o site entrar no ar: <strong>R$ <span data-v="plano.preco"></span></strong> por mês. Sem fidelidade.</p>
+            <p id="total-mensal" hidden>Hoje: <strong>R$ <span data-v="abrir.total"></span></strong> (Abertura). A partir do dia em que o site entrar no ar: <strong>R$ <span data-v="plano.preco"></span></strong> por mês no cartão, ou anual no Pix. Sem fidelidade.</p>
             <p id="total-anual" hidden>Hoje: <strong>R$ <span data-v="abrir.total"></span></strong>, só a Abertura. O plano anual, <strong>R$ <span data-v="plano.preco"></span></strong> pelos 12 meses, é cobrado no dia em que o site entrar no ar, no Pix. Nada do anual é cobrado antes. Sem fidelidade.</p>
             <p class="menor" data-se="inauguracao" hidden>Preço de inauguração.</p>
             <p class="menor" data-se="varias-vagas" hidden>Restam <span data-v="precos.abertura.inauguracao.vagasRestantes"></span> vagas com este valor.</p>
@@ -138,7 +138,7 @@
             <div class="isca" aria-hidden="true"><label for="p-site">Site</label><input id="p-site" type="text" tabindex="-1" autocomplete="off"></div>
             <label class="aceite" for="p-aceite">
               <input type="checkbox" id="p-aceite" required aria-describedby="p-aceite-erro">
-              <span>Li e aceito os <a href="../termos/" target="_blank" rel="noopener">Termos de uso (versão <span data-termos-versao>1</span>)</a>. Peço o início imediato da produção e sei que tenho 7 dias de arrependimento, com o valor devolvido.</span>
+              <span>Li e aceito os <a href="../termos/" target="_blank" rel="noopener">Termos de uso (versão <span data-termos-versao>1</span>)</a>. Peço o início imediato da produção e sei que tenho 7 dias para desistir, com o valor devolvido.</span>
             </label>
             <span class="erro-solto" id="p-aceite-erro" role="alert" hidden>Marque o aceite para seguir para o pagamento.</span>
             <p class="notas">Ao tocar em Pagar, os dados deste formulário vão para o sistema da Creat, para registrar o pedido. <a href="../privacidade/">Privacidade</a></p>

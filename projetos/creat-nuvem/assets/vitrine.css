@@ -133,8 +133,6 @@ p{margin:0;text-wrap:pretty}
 .cartao-preco h3{font-size:var(--t-h3)}
 .cartao-preco .corpo{display:flex;flex-direction:column;gap:var(--r4);padding:var(--r5);flex:1}
 .cartao-preco .compra{margin-top:auto}
-.cartao-preco.recomendado{border-width:var(--borda-g);box-shadow:var(--sombra-g)}
-.cartao-preco.recomendado header{background:var(--sol);color:var(--sol-tinta)}
 .selo{display:inline-block;margin-bottom:var(--r2);font:500 var(--t-micro)/1 var(--f-dado);letter-spacing:.08em;text-transform:uppercase;border:2px solid currentColor;border-radius:var(--raio-pilula);padding:6px 10px}
 .preco{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;margin-top:var(--r3)}
 .preco strong{font:400 var(--t-preco)/1 var(--f-display)}

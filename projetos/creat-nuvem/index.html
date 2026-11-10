@@ -137,6 +137,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 }
 .preco strong span,.preco s span{font:inherit;color:inherit}
 .cartao-preco .anual{font-size:var(--t-nota)}
+.cartao-preco .regra-prazo{font-size:var(--t-nota);color:var(--apagado);margin-top:calc(-1 * var(--r2))}
 .cartao-preco .anual a{font-weight:700;display:inline-flex;align-items:center;min-height:var(--alvo)}
 .precos-extra{display:grid;gap:var(--r5);margin-top:var(--r6)}
 .precos-extra h3{font-size:var(--t-h3);margin-bottom:var(--r3)}
@@ -353,8 +354,8 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
       <ol class="passos">
         <li><h3>Veja pronto</h3><p>Digite o nome e veja o seu site na hora. Teste o pedido de horário no seu WhatsApp. Ver é grátis.</p></li>
         <li><h3>Pague por Pix</h3><p>Escolha o plano e pague a Abertura por Pix ou cartão. Você vê o total antes de pagar. Sem criar conta.</p></li>
-        <li><h3>Veja como a equipe trabalha</h3><p>Na sede da Creat, uma demonstração mostra cada etapa do trabalho, com o nome do seu negócio na fachada. O andamento real do seu pedido chega no seu WhatsApp.</p></li>
-        <li><h3>No ar, você aprova</h3><p>Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade.</p></li>
+        <li><h3>Veja como a equipe trabalha</h3><p>Na sede da Creat, uma demonstração mostra cada etapa do trabalho, com o nome do seu negócio na fachada. O andamento real do seu pedido aparece na página do pedido, e o site pronto chega no seu WhatsApp.</p></li>
+        <li><h3>Você aprova, ele entra no ar</h3><p>Você recebe o site pronto, confere e aprova. Só então ele entra no ar, e só então começa a mensalidade. Sem resposta em 7 dias, ele entra no ar como está, e você pode pedir ajustes depois.</p></li>
       </ol>
       <div class="de-verdade">
         <h3>Como funciona de verdade</h3>
@@ -362,7 +363,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
         <ul>
           <li>As regras automáticas conferem o número do WhatsApp, os horários, os preços e as palavras que não podem aparecer.</li>
           <li>Uma pessoa da equipe lê o site antes de mandar para você aprovar.</li>
-          <li>Nada vai ao ar sem a sua aprovação.</li>
+          <li>Nada vai ao ar antes de você receber o site para conferir e aprovar.</li>
         </ul>
       </div>
     </div>
@@ -410,7 +411,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
         <ol class="quem-passos">
           <li><span><b>Você vê e pede.</b> A prévia é grátis. Para abrir, você paga a Abertura e manda os dados do negócio.</span></li>
           <li><span><b>A equipe monta.</b> Os agentes escrevem e montam o site, e uma pessoa da equipe lê tudo antes de mandar para você.</span></li>
-          <li><span><b>Você aprova.</b> O site só entra no ar com o seu sim, e a mensalidade só começa nesse dia.</span></li>
+          <li><span><b>Você aprova.</b> O site entra no ar com o seu sim, e a mensalidade só começa nesse dia. Sem resposta em 7 dias, ele entra no ar como está.</span></li>
         </ol>
         <p class="quem-contato">Para falar com a gente: <a data-zap="duvida" href="#perguntas"><span data-rotulo-zap>WhatsApp do Suporte Creat</span></a> ou <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a>.</p>
         <ul class="quem-links">
@@ -449,13 +450,14 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
           <div class="corpo">
             <span class="rotulo-lista">Inclui</span>
             <ul class="lista inclui">
-              <li>Site montado a partir do modelo do seu nicho, com o nome, a cidade e as cores que você escolheu</li>
+              <li>Site montado a partir do modelo do seu nicho, com o nome, a cidade e as cores que você escolheu e com os serviços do modelo, que você ajusta antes de aprovar</li>
               <li>Textos escritos para o seu negócio e conferidos por uma pessoa da equipe</li>
               <li>Pedido de horário que chega no seu WhatsApp</li>
-              <li>Endereço do site na Creat, pronto para usar</li>
+              <li>Endereço do site pronto para usar, sem custo</li>
               <li>Passo a passo para ligar o seu domínio e o seu Perfil da Empresa no Google</li>
-              <li>Site no ar em até <span data-v="precos.prazoHoras" class="num-carregando"></span> h ou o 1º mês do plano grátis</li>
+              <li>Site pronto para você aprovar em até <span data-v="precos.prazoHoras" class="num-carregando"></span> h ou o 1º mês do plano grátis</li>
             </ul>
+            <p class="regra-prazo">O prazo de <span data-v="precos.prazoHoras" class="num-carregando"></span> h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).</p>
             <p class="vagas" data-se="vagas-hoje" hidden>Vagas de produção hoje: <span data-v="vagas.vagas_hoje"></span> de <span data-v="vagas.capacidade_dia"></span>.</p>
             <p class="vagas" data-se="vagas-esgotadas" hidden>As vagas de produção de hoje acabaram. Pedido pago agora entra na fila, e o prazo de <span data-v="precos.prazoHoras"></span> h conta do mesmo jeito.</p>
             <div class="compra"><a class="btn btn-bloco" href="#porta" data-ir-hero data-cta>Ver o meu site primeiro</a></div>
@@ -466,7 +468,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
           <header>
             <h3 id="c-aberto">Aberto</h3>
             <p>O site no ar, cuidado todo mês.</p>
-            <p class="preco"><strong>R$ <span class="num-carregando" data-v="precos.planos.aberto"></span></strong> <span>por mês, a partir do dia em que o site entra no ar</span></p>
+            <p class="preco"><strong>R$ <span class="num-carregando" data-v="precos.planos.aberto"></span></strong> <span>por mês no cartão, ou anual no Pix, a partir do dia em que o site entra no ar</span></p>
           </header>
           <div class="corpo">
             <span class="rotulo-lista">Inclui</span>
@@ -490,18 +492,17 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
           </div>
         </article>
 
-        <article class="cartao-preco recomendado" aria-labelledby="c-vitrine">
+        <article class="cartao-preco" aria-labelledby="c-vitrine">
           <header>
-            <span class="selo">recomendado</span>
             <h3 id="c-vitrine">Vitrine</h3>
-            <p>O site no ar e posts prontos todo mês.</p>
-            <p class="preco"><strong>R$ <span class="num-carregando" data-v="precos.planos.vitrine"></span></strong> <span>por mês, a partir do dia em que o site entra no ar</span></p>
+            <p>O site no ar e 4 posts prontos por mês para o seu Instagram.</p>
+            <p class="preco"><strong>R$ <span class="num-carregando" data-v="precos.planos.vitrine"></span></strong> <span>por mês no cartão, ou anual no Pix, a partir do dia em que o site entra no ar</span></p>
           </header>
           <div class="corpo">
             <span class="rotulo-lista">Inclui</span>
             <ul class="lista inclui">
               <li>Tudo do plano Aberto</li>
-              <li>Posts prontos todo mês para o seu Instagram, aprovados por você</li>
+              <li>4 posts por mês para o seu Instagram, com imagem e legenda, aprovados por você e entregues prontos para você publicar</li>
               <li>Pedido especial respondido em até 4 h úteis, de segunda a sábado, das 9h às 19h</li>
               <li>Link do Instagram no site</li>
             </ul>
@@ -620,19 +621,19 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
       </div>
       <div class="faq">
         <details id="faq-e-ia"><summary>É IA?</summary><div class="resp"><p>É, e a gente diz como. A equipe de agentes de IA da Creat criou o modelo de cada nicho e as regras de qualidade. No seu pedido, a IA escreve os textos, regras automáticas conferem número, horários, preços e palavras proibidas, e uma pessoa da equipe lê o site antes de mandar para você aprovar.</p></div></details>
-        <details id="faq-quem-confere"><summary>Quem confere o meu site?</summary><div class="resp"><p>Duas camadas. Primeiro, regras automáticas: o WhatsApp precisa estar no formato certo, o horário precisa fechar depois de abrir, o site é testado num celular de 390 px sem rolagem lateral. Depois, uma pessoa da equipe lê tudo. Por último, você: nada vai ao ar sem a sua aprovação.</p></div></details>
+        <details id="faq-quem-confere"><summary>Quem confere o meu site?</summary><div class="resp"><p>Duas camadas. Primeiro, regras automáticas: o WhatsApp precisa estar no formato certo, o horário precisa fechar depois de abrir, o site é testado num celular de 390 px sem rolagem lateral. Depois, uma pessoa da equipe lê tudo. Por último, você: o site vai para você conferir e aprovar antes de entrar no ar.</p></div></details>
         <details id="faq-assinatura"><summary>Preciso de outra assinatura?</summary><div class="resp"><p>Não. Hospedagem, IA e ferramentas ficam por conta da Creat. Você só precisa do app WhatsApp Business, que é grátis. Se quiser um domínio .com.br, a anuidade é paga ao Registro.br no seu nome, e a gente mostra o passo a passo.</p></div></details>
         <details id="faq-app-de-horarios"><summary>E se eu já uso agenda?</summary><div class="resp"><p>Pode continuar usando. Se você já marca horários por um aplicativo (Trinks, Booksy ou outro), o botão do seu site abre esse aplicativo em vez do WhatsApp. Basta mandar o link no pedido. Os nomes são só exemplos de ferramenta; a Creat não tem vínculo com nenhuma.</p></div></details>
-        <details id="faq-dominio"><summary>O domínio é meu?</summary><div class="resp"><p>É. O domínio é registrado no seu nome e no seu CPF ou CNPJ, no Registro.br. A Creat nunca guarda a sua senha. Enquanto você não tiver domínio, o site funciona num endereço da Creat.</p></div></details>
-        <details id="faq-cancelar"><summary>E se eu cancelar?</summary><div class="resp"><p>Sem multa e sem fidelidade. Você pede pelo WhatsApp e recebe o SAIR: o site num arquivo que abre direto no computador, com o botão do WhatsApp funcionando, mais os seus textos, fotos e logo. O domínio já é seu. O endereço da Creat redireciona por 30 dias e depois sai.</p></div></details>
-        <details id="faq-prazo"><summary>E se passar do prazo?</summary><div class="resp"><p>O prazo é de <span data-v="precos.prazoHoras"></span> h, contadas da confirmação do pagamento com os 4 dados do pedido: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. O formulário também pede seu nome e seu e-mail, para contato e recibo. Eles não mudam o prazo. Se passar, o 1º mês do plano é grátis. Domínio próprio e verificação do Google ficam fora do relógio, porque dependem de você e de terceiros.</p></div></details>
-        <details id="faq-instagram"><summary>Preciso de Instagram?</summary><div class="resp"><p>Não. O plano Aberto funciona só com o WhatsApp. O Instagram entra no plano Vitrine, que traz posts prontos todo mês para você aprovar.</p></div></details>
+        <details id="faq-dominio"><summary>O domínio é meu?</summary><div class="resp"><p>É, se você registrar um. O domínio .com.br é registrado no seu nome e no seu CPF ou CNPJ, no Registro.br, e a anuidade é paga por você. A gente manda o passo a passo, e a Creat nunca guarda a sua senha. Sem domínio, o site funciona num endereço da Creat, sem custo, enquanto o plano estiver ativo.</p></div></details>
+        <details id="faq-cancelar"><summary>E se eu cancelar?</summary><div class="resp"><p>Sem multa e sem fidelidade. Você pede pelo WhatsApp e recebe o SAIR: o site num arquivo que abre direto no computador, com o botão do WhatsApp funcionando, mais os seus textos, fotos e logo. Se você registrou um domínio, ele continua seu. Por 30 dias, o endereço antigo mostra uma página que leva ao seu domínio. Depois, deixa de existir. Sem domínio, o endereço da Creat deixa de existir quando você sai.</p></div></details>
+        <details id="faq-prazo"><summary>E se passar do prazo?</summary><div class="resp"><p>O site fica pronto para você aprovar em até <span data-v="precos.prazoHoras"></span> h. Se passar, o 1º mês do plano é grátis. O prazo de <span data-v="precos.prazoHoras"></span> h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado). Domínio próprio e verificação do Google ficam fora do relógio, porque dependem de você e de terceiros.</p></div></details>
+        <details id="faq-instagram"><summary>Preciso de Instagram?</summary><div class="resp"><p>Não. O plano Aberto funciona só com o WhatsApp. O Instagram entra no plano Vitrine: 4 posts por mês, com imagem e legenda, que você aprova e publica no seu perfil. Nada é publicado sem o seu sim.</p></div></details>
         <details id="faq-clinica"><summary>Serve para clínica?</summary><div class="resp"><p>Não. Hoje o Porta Aberta não atende esse segmento. Os modelos prontos são para barbearia, salão e estética, academia e studio.</p></div></details>
-        <details id="faq-meus-dados"><summary>E os meus dados?</summary><div class="resp"><p>Antes de você aceitar os termos, a página não guarda nada pessoal: o nome do negócio e o seu WhatsApp de teste ficam só no seu aparelho. Os dados do pedido vão pelo seu próprio WhatsApp para o Suporte Creat. O pagamento e o CPF ou CNPJ ficam com o Mercado Pago (Pix e cartão) ou com o Stripe (mensalidade no cartão). Detalhes na <a href="privacidade/">página de privacidade</a>.</p></div></details>
+        <details id="faq-meus-dados"><summary>E os meus dados?</summary><div class="resp"><p>Enquanto você só vê a prévia, o nome do negócio e o seu WhatsApp de teste ficam no seu aparelho. Quando você toca em Pagar, enviamos à Creat os dados do formulário do pedido para registrá-lo. Se você não pagar, apagamos em 30 dias. O pagamento e o CPF ou CNPJ ficam com o Mercado Pago (Pix e cartão) ou com o Stripe (mensalidade no cartão). Detalhes na <a href="privacidade/">página de privacidade</a>.</p></div></details>
         <details id="faq-pedido-confirmado"><summary>O cliente marca o horário sozinho?</summary><div class="resp"><p>Ele escolhe dia, horário e serviço no site, e o pedido chega pronto no seu WhatsApp. Quem confirma é você, pelo WhatsApp. Assim o site nunca promete um horário que você não pode atender.</p></div></details>
         <details id="faq-alteracoes"><summary>Posso mudar preço e horário depois?</summary><div class="resp"><p>Pode, sem limite de quantidade, pelo WhatsApp: texto, preço, serviço, horário, foto, promoção e equipe. Página nova, seção nova ou loja virtual viram orçamento à parte.</p></div></details>
         <details id="faq-resultado"><summary>Vou ter mais clientes?</summary><div class="resp"><p>Não prometemos número de clientes nem faturamento. O que entregamos é o seu negócio aberto na internet, com um caminho curto para o cliente pedir horário no seu WhatsApp. O resultado depende do seu negócio, da sua região e de como você divulga.</p></div></details>
-        <details id="faq-gostar"><summary>E se eu não gostar do site pronto?</summary><div class="resp"><p>Você pede os ajustes antes de aprovar. E tem 7 dias de arrependimento depois do pagamento: o valor volta para você e o site sai do ar.</p></div></details>
+        <details id="faq-gostar"><summary>E se eu não gostar do site pronto?</summary><div class="resp"><p>Você pede os ajustes antes de aprovar. E tem 7 dias para desistir, contados do pagamento ou da entrega do site para você aprovar, o que vier por último. Devolvemos o valor em até 5 dias úteis depois do pedido, pelo mesmo meio de pagamento (no Pix, na mesma conta; no cartão, o estorno aparece na fatura conforme o banco), e o site sai do ar. Peça pelo WhatsApp do Suporte Creat ou por e-mail: o número do pedido é o seu protocolo.</p></div></details>
       </div>
     </div>
   </section>
