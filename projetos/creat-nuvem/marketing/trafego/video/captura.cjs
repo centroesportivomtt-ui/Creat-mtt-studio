@@ -53,17 +53,22 @@ function servidor() {
 }
 
 /* ---------- controle das animações da página: pausa e posiciona no tempo do vídeo */
-const SEEK = ms => {
+/* g = mapa do giro (linhas.js, GIRO): só o trecho do verso da placa (90° a 270°) ganha 4 quadros; o resto segue o relógio */
+const SEEK = ({ ms, g }) => {
   const w = window, m = w.__nascReel || (w.__nascReel = new WeakMap());
+  const local = u => (u <= g.v90 ? u : u <= g.v90 + g.D ? g.v90 + (u - g.v90) * (g.v270 - g.v90) / g.D : u - g.D + (g.v270 - g.v90));
   for (const a of document.getAnimations()) {
     if (!m.has(a)) { m.set(a, ms); try { a.pause(); } catch (e) {} }
-    const v = ms - m.get(a);
-    try { a.currentTime = v < 0 ? 0 : v; } catch (e) {}
+    let v = ms - m.get(a); if (v < 0) v = 0;
+    const el = a.effect && a.effect.target, cl = el && el.classList;
+    if (cl && (cl.contains('cp-giro') || cl.contains('cp-fechado') || cl.contains('cp-aberto')) && Math.round(a.effect.getTiming().duration) === g.ms) v = local(v);
+    try { a.currentTime = v; } catch (e) {}
   }
 };
+let GIRO_MAPA = null;
 async function posicionar(pg, t) {
   const ms = Math.round(t * 1000 * 1000) / 1000;
-  for (const fr of pg.frames()) { try { await fr.evaluate(SEEK, ms); } catch (e) {} }
+  for (const fr of pg.frames()) { try { await fr.evaluate(SEEK, { ms, g: GIRO_MAPA }); } catch (e) {} }
 }
 
 async function novaPagina(browser, hora, extra) {
@@ -118,6 +123,7 @@ const PRECOS = () => [...document.querySelectorAll('body *')].filter(e => !e.chi
 
 function suave(x) { return x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x); }
 function easeInOut(x) { return x <= 0 ? 0 : x >= 1 ? 1 : (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2); }
+function senoide(x) { return x <= 0 ? 0 : x >= 1 ? 1 : 0.5 - 0.5 * Math.cos(Math.PI * x); }  /* pico de velocidade 1,57x a média */
 function easeOut(x) { return x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3); }
 
 async function fotografar(pg, arq) { await pg.screenshot({ path: arq, clip: { x: 0, y: 0, width: 390, height: 660 }, type: 'png', animations: 'allow', caret: 'initial' }); }
@@ -125,6 +131,7 @@ async function fotografar(pg, arq) { await pg.screenshot({ path: arq, clip: { x:
 /* ------------------------------------------------------------------ R8: sessões A e B (home real) */
 async function capturarR8(browser, base, L, dir, log) {
   const R8 = L.R8, FPS = L.FPS, meta = { sessoes: {} };
+  GIRO_MAPA = { ms: L.GIRO.ms, v90: L.GIRO.v90, v270: L.GIRO.v270, D: L.GIRO.D };
   for (const nomeS of ['A', 'B']) {
     const S = R8.sessoes[nomeS];
     const pasta = path.join(dir, nomeS); fs.mkdirSync(pasta, { recursive: true });
@@ -178,7 +185,7 @@ async function capturarR8(browser, base, L, dir, log) {
           }
         }
         if (fr && rol) {
-          const y = rol.de + (rol.para - rol.de) * easeInOut((t - rol.t0) / (rol.t1 - rol.t0));
+          const y = rol.de + (rol.para - rol.de) * senoide((t - rol.t0) / (rol.t1 - rol.t0));
           await fr.evaluate(y => window.scrollTo(0, y), y);
         }
         if (fr && S.toqueDia && t >= S.toqueDia - 1e-6 && !tocou) {
@@ -211,6 +218,7 @@ async function capturarR8(browser, base, L, dir, log) {
 /* ------------------------------------------------------------------ R7: prévia real da barbearia às 23h12 */
 async function capturarR7(browser, base, L, dir, log) {
   const R7 = L.R7, FPS = L.FPS, S = R7.sessoes.C;
+  GIRO_MAPA = { ms: L.GIRO.ms, v90: L.GIRO.v90, v270: L.GIRO.v270, D: L.GIRO.D };
   const pasta = path.join(dir, 'C'); fs.mkdirSync(pasta, { recursive: true });
   const { ctx, pg, erros } = await novaPagina(browser, R7.hora);
   const frag = '#k=' + R7.nicho + '&n=' + encodeURIComponent(R7.nome) + '&p=1';
@@ -235,17 +243,25 @@ async function capturarR7(browser, base, L, dir, log) {
   const f0 = Math.round(S.t0 * FPS), f1 = Math.round(S.t1 * FPS);
   for (let f = f0; f < f1; f++) {
     const t = f / FPS;
-    /* rolagem inicial até a fita de dias */
-    if (t >= S.rolagem[0] && !feitos.has('rol0')) {
+    /* primeira rolagem: até o nome do negócio (h1 da prévia), que fica parado na tela */
+    if (t >= S.rolagem.t0 - 1e-6 && !feitos.has('rol0')) {
       feitos.add('rol0');
-      const d = await ret('dia');
-      rol = { t0: S.rolagem[0], t1: S.rolagem[1], de: d.sy, para: Math.max(0, d.sy + d.top - 70) };
+      const d = await pg.evaluate(() => { const h = document.querySelector('h1'); return { sy: scrollY, top: h.getBoundingClientRect().top }; });
+      rol = { t0: S.rolagem.t0, t1: S.rolagem.t1, de: d.sy, para: Math.max(0, d.sy + d.top - S.rolagem.y) };
+      (meta.rolagens = meta.rolagens || []).push(Object.assign({ alvo: 'nome' }, rol));
+    }
+    /* corte de montagem: no quadro do salto a página já está no pedido (o palco funde os dois quadros em 0,2 s) */
+    if (S.salto && t >= S.salto.t - 1e-6 && !feitos.has('salto')) {
+      feitos.add('salto'); rol = null;
+      const y = await pg.evaluate(yF => { const f = document.getElementById('fita-dias'); return f.getBoundingClientRect().top + scrollY - yF; }, S.salto.yFita);
+      await pg.evaluate(y => window.scrollTo(0, y), Math.max(0, y));
+      meta.salto = { t, y };
     }
     for (const q of S.toques) {
       if (q.rolarAntes && t >= q.rolarAntes[0] && !feitos.has('rol-' + q.alvo)) {
         feitos.add('rol-' + q.alvo);
         const d = await ret(q.alvo);
-        if (d && (d.top < 60 || d.top + d.h > VIS - 40)) rol = { t0: q.rolarAntes[0], t1: q.rolarAntes[1], de: d.sy, para: Math.max(0, d.sy + d.top - VIS * 0.42) };
+        if (d && (d.top < 60 || d.top + d.h > VIS - 40)) { rol = { t0: q.rolarAntes[0], t1: q.rolarAntes[1], de: d.sy, para: Math.max(0, d.sy + d.top - VIS * 0.42) }; (meta.rolagens = meta.rolagens || []).push(Object.assign({ alvo: q.alvo }, rol)); }
       }
       if (t >= q.t - 1e-6 && !feitos.has('toque-' + q.alvo)) {
         feitos.add('toque-' + q.alvo);
@@ -254,10 +270,12 @@ async function capturarR7(browser, base, L, dir, log) {
         else meta.toques.push({ t, alvo: q.alvo, falhou: true });
       }
     }
-    if (rol && t >= rol.t0) {
-      const y = rol.de + (rol.para - rol.de) * easeInOut((t - rol.t0) / (rol.t1 - rol.t0));
+    /* rolagem só dentro da janela dela: o salto do link "Pedir horário" não pode ser desfeito depois */
+    if (rol && t >= rol.t0 - 1e-6 && t < rol.t1 + 1 / FPS - 1e-6) {
+      const y = rol.de + (rol.para - rol.de) * senoide((t - rol.t0) / (rol.t1 - rol.t0));
       await pg.evaluate(y => window.scrollTo(0, y), y);
     }
+    (meta.rolagemY = meta.rolagemY || {})[f] = await pg.evaluate(() => scrollY);
     await pg.clock.runFor(1000 / FPS);
     await posicionar(pg, t);
     (meta.precos = meta.precos || {})[f] = await pg.evaluate(PRECOS);

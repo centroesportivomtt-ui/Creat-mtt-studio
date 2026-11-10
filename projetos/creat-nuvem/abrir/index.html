@@ -42,9 +42,8 @@
     <section class="resumo-preco" aria-labelledby="resumo-preco-titulo">
       <h2 class="so-leitor" id="resumo-preco-titulo">Resumo do preço</h2>
       <p data-carregando-precos>Conferindo os preços de hoje...</p>
-      <p id="resumo-mensal" hidden><strong>Hoje: Abertura de R$ <span data-v="precos.abertura.atual"></span>.</strong> Mensalidade de R$ <span data-v="plano.preco"></span> só começa com o site no ar.</p>
-      <p id="resumo-anual" hidden><strong>Hoje: Abertura de R$ <span data-v="precos.abertura.atual"></span>.</strong> Os 12 meses, R$ <span data-v="plano.preco"></span> no Pix, só começam com o site no ar.</p>
-      <p id="resumo-combo" hidden><strong>Hoje: R$ <span data-v="abrir.total"></span> num Pix só.</strong> A Abertura de R$ <span data-v="precos.abertura.atual"></span> e os 12 meses do plano, R$ <span data-v="plano.preco"></span>, que contam a partir do dia em que o site entra no ar.</p>
+      <p id="resumo-mensal" hidden><strong>Hoje: Abertura de R$ <span data-v="abrir.total"></span>.</strong> Mensalidade de R$ <span data-v="plano.preco"></span> só começa com o site no ar.</p>
+      <p id="resumo-anual" hidden><strong>Hoje: só a Abertura, R$ <span data-v="abrir.total"></span>.</strong> O plano anual, R$ <span data-v="plano.preco"></span> pelos 12 meses, é cobrado no dia em que o site entra no ar, por este valor.</p>
       <p class="menor">Sem fidelidade. 7 dias para desistir com devolução.</p>
     </section>
 
@@ -70,9 +69,8 @@
           <div class="total" id="total" aria-live="polite">
             <span class="olho">Total</span>
             <p data-carregando-precos>Conferindo os preços de hoje...</p>
-            <p id="total-mensal" hidden>Hoje: <strong>R$ <span data-v="precos.abertura.atual"></span></strong> (Abertura). A partir do dia em que o site entrar no ar: <strong>R$ <span data-v="plano.preco"></span></strong> por mês. Sem fidelidade.</p>
-            <p id="total-anual" hidden>Hoje: <strong>R$ <span data-v="precos.abertura.atual"></span></strong> (Abertura). A partir do dia em que o site entrar no ar: <strong>R$ <span data-v="plano.preco"></span></strong> pelos 12 meses, no Pix. Sem fidelidade.</p>
-            <p id="total-combo" hidden>Hoje: <strong>R$ <span data-v="abrir.total"></span></strong>, num Pix só: a Abertura (R$ <span data-v="precos.abertura.atual"></span>) e os 12 meses do plano (R$ <span data-v="plano.preco"></span>). Os 12 meses contam a partir do dia em que o site entra no ar. Sem fidelidade.</p>
+            <p id="total-mensal" hidden>Hoje: <strong>R$ <span data-v="abrir.total"></span></strong> (Abertura). A partir do dia em que o site entrar no ar: <strong>R$ <span data-v="plano.preco"></span></strong> por mês. Sem fidelidade.</p>
+            <p id="total-anual" hidden>Hoje: <strong>R$ <span data-v="abrir.total"></span></strong>, só a Abertura. O plano anual, <strong>R$ <span data-v="plano.preco"></span></strong> pelos 12 meses, é cobrado no dia em que o site entrar no ar, no Pix. Nada do anual é cobrado antes. Sem fidelidade.</p>
             <p class="menor" data-se="inauguracao" hidden>Preço de inauguração.</p>
             <p class="menor" data-se="varias-vagas" hidden>Restam <span data-v="precos.abertura.inauguracao.vagasRestantes"></span> vagas com este valor.</p>
             <p class="menor" data-se="ultima-vaga" hidden>Resta 1 vaga com este valor.</p>
@@ -173,16 +171,16 @@
         <h2 id="pagamento-titulo">Pagamento</h2>
         <p class="pagar-total">Total de hoje: <strong>R$ <span data-v="abrir.total" class="num-carregando"></span></strong></p>
         <div class="pagar">
-          <a class="btn btn-sol btn-g" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Pagar no Pix">Link de pagamento em configuração</a>
-          <a class="btn btn-g" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Cartão em até 2x">Link de pagamento em configuração</a>
+          <a class="btn btn-sol btn-g" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Pagar no Pix ou cartão" aria-describedby="pagar-parcelas">Link de pagamento em configuração</a>
         </div>
+        <p class="notas mt-3" id="pagar-parcelas">Pix ou cartão em até 2x; as condições do parcelamento aparecem no Mercado Pago antes de você pagar.</p>
         <div class="bloco-tracejado mt-4" id="pagamento-config">
           <p>O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.</p>
           <a class="link-forte" id="pagamento-zap" href="mailto:mttcreatt@gmail.com">Chamar o Suporte Creat no WhatsApp</a>
         </div>
         <div class="notas mt-4">
-          <p>O pagamento é feito no Mercado Pago, por Pix ou cartão. A Creat não vê os dados do seu cartão. Sem criar conta.</p>
-          <p>Seus dados ficam salvos neste aparelho para a próxima página. Você pode apagar a qualquer momento.</p>
+          <p>O pagamento é feito no Mercado Pago. A Creat não vê os dados do seu cartão. Sem criar conta.</p>
+          <p>Seus dados ficam salvos neste aparelho por até 7 dias, para a próxima página. Você pode apagar a qualquer momento.</p>
         </div>
         <button class="link-texto" type="button" id="esquecer" hidden>Esquecer meus dados neste aparelho</button>
       </section>
@@ -212,7 +210,7 @@
 <!-- botão de pagar fixo no rodapé do celular, com o total de hoje -->
 <div class="barra-pagar" id="barra-pagar" hidden>
   <p class="barra-pagar-total"><span>Total de hoje</span><strong>R$ <span data-v="abrir.total"></span></strong></p>
-  <a class="btn btn-sol" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Pagar no Pix">Link de pagamento em configuração</a>
+  <a class="btn btn-sol" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Pagar no Pix ou cartão">Link de pagamento em configuração</a>
 </div>
 
 <footer class="rodape-simples">
@@ -220,8 +218,16 @@
     <span><span data-empresa="nome">Creat.MTT Studio</span> · <span data-empresa="cidade">Riachão do Jacuípe</span> (<span data-empresa="uf">BA</span>)<span data-empresa-opcional="documento" data-antes=" · " hidden></span> · <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a></span>
     <a href="../termos/">Termos de uso</a>
     <a href="../privacidade/">Privacidade</a>
+    <button type="button" class="link-texto" data-preferencias>Preferências de medição</button>
   </div>
 </footer>
+<div class="consentimento" id="consentimento" role="region" aria-label="Medição desta página" data-salvo="Preferência salva. Você muda quando quiser no rodapé, em Preferências de medição." hidden>
+  <p><strong>Medição desta página.</strong> Medimos visitas sem cookie e sem dado pessoal. Com a sua permissão, usamos também o Pixel da Meta para medir anúncios. <a href="../privacidade/">Privacidade</a></p>
+  <div class="botoes">
+    <button class="btn" type="button" data-consentir="sim">Aceitar</button>
+    <button class="btn" type="button" data-consentir="nao">Recusar</button>
+  </div>
+</div>
 <noscript><p class="cx">Esta página precisa de JavaScript para montar o pedido. Ative o JavaScript ou escreva para mttcreatt@gmail.com.</p></noscript>
 </body>
 </html>

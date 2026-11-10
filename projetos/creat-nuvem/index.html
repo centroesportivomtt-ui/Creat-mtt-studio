@@ -201,7 +201,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 
       <div class="palco-placa">
         <div class="porta" aria-hidden="true"></div>
-        <div id="placa" class="ponto-placa">
+        <div id="placa" class="ponto-placa" data-clarity-mask="True">
           <div class="placa-reserva"><svg class="placa-reserva-svg" width="330" height="300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 300" role="img" aria-labelledby="placa-titulo placa-desc">
 <title id="placa-titulo">Placa FECHADO</title>
 <desc id="placa-desc">Placa de madeira presa por correntinha num prego, mostrando FECHADO. Ao virar, mostra ABERTO com o nome do negócio em giz.</desc>
@@ -238,10 +238,10 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 
       <div class="heroi-corpo">
         <p class="sub">Digite o nome do seu negócio. Em segundos você vê o site pronto e testa o pedido no seu próprio WhatsApp. Ver é grátis; você paga para abrir e tem 7 dias para desistir com devolução.</p>
-        <form class="abrir" id="form-abrir" novalidate>
+        <form class="abrir" id="form-abrir" novalidate data-clarity-mask="True">
           <div class="campo">
             <label for="nome">Nome do seu negócio</label>
-            <input id="nome" name="nome" type="text" autocomplete="organization" inputmode="text" maxlength="40" placeholder="Exemplo: Barbearia do Zé" aria-describedby="nome-ajuda nome-erro" enterkeyhint="go" spellcheck="false">
+            <input id="nome" name="nome" data-clarity-mask="True" type="text" autocomplete="organization" inputmode="text" maxlength="40" placeholder="Exemplo: Barbearia do Zé" aria-describedby="nome-ajuda nome-erro" enterkeyhint="go" spellcheck="false">
             <span class="contador-giz" id="contador-giz" aria-hidden="true">0 de 40</span>
             <span class="ajuda" id="nome-ajuda">O nome fica só neste aparelho até você decidir pedir o site.</span>
             <span class="erro" id="nome-erro" role="alert" hidden></span>
@@ -327,7 +327,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
         </div>
       </div>
       <div class="celular-desenho">
-        <div class="celular" id="celular" aria-live="polite" aria-label="Exemplo de mensagem">
+        <div class="celular" id="celular" data-clarity-mask="True" aria-live="polite" aria-label="Exemplo de mensagem">
           <div class="celular-topo" aria-hidden="true"></div>
           <div class="celular-cab">
             <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 20l1.4-4A8 8 0 1 1 8.6 19z" fill="var(--papel)" stroke="var(--linha)" stroke-width="2.2" stroke-linejoin="round"/></svg>
@@ -429,16 +429,16 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
         <span class="olho">Preços</span>
         <h2 id="precos-titulo">Um preço para abrir, um plano para manter aberto.</h2>
         <p data-carregando-precos>Você paga a Abertura uma vez. A mensalidade só começa no dia em que o site entra no ar.</p>
-        <p data-se="inauguracao" hidden>Hoje você paga só a Abertura: R$ <span data-v="precos.abertura.inauguracao.preco"></span> uma vez, preço das <span data-v="precos.abertura.inauguracao.vagasTotal"></span> primeiras vagas (depois, R$ <span data-v="precos.abertura.padrao"></span>). A mensalidade, R$ <span data-v="precos.planos.aberto"></span> no Aberto ou R$ <span data-v="precos.planos.vitrine"></span> no Vitrine, só começa no dia em que o site entra no ar.</p>
+        <p data-se="inauguracao" hidden>Hoje você paga só a Abertura: R$ <span data-v="precos.abertura.inauguracao.preco"></span> uma vez, preço de inauguração (depois, R$ <span data-v="precos.abertura.padrao"></span>). A mensalidade, R$ <span data-v="precos.planos.aberto"></span> no Aberto ou R$ <span data-v="precos.planos.vitrine"></span> no Vitrine, só começa no dia em que o site entra no ar.</p>
         <p data-se="sem-inauguracao" hidden>Hoje você paga só a Abertura: R$ <span data-v="precos.abertura.padrao"></span> uma vez. A mensalidade, R$ <span data-v="precos.planos.aberto"></span> no Aberto ou R$ <span data-v="precos.planos.vitrine"></span> no Vitrine, só começa no dia em que o site entra no ar.</p>
       </div>
       <p class="precos-carregando" data-carregando-precos role="status">Conferindo os preços de hoje...</p>
       <div class="precos-grade">
         <article class="cartao-preco abertura" aria-labelledby="c-abertura">
           <header>
-            <span class="selo" data-se="inauguracao" hidden>Inauguração: preço das <span data-v="precos.abertura.inauguracao.vagasTotal"></span> primeiras vagas</span>
+            <span class="selo" data-se="inauguracao" hidden>Preço de inauguração</span>
             <h3 id="c-abertura">Abertura</h3>
-            <p class="preco" data-se="inauguracao" hidden><strong>R$ <span data-v="precos.abertura.inauguracao.preco"></span></strong> <s>de R$ <span data-v="precos.abertura.padrao"></span></s> <span>uma vez</span></p>
+            <p class="preco" data-se="inauguracao" hidden><strong>R$ <span data-v="precos.abertura.inauguracao.preco"></span></strong> <span>uma vez · depois da inauguração, R$ <span data-v="precos.abertura.padrao"></span></span></p>
             <p class="preco" data-se="sem-inauguracao" hidden><strong>R$ <span data-v="precos.abertura.padrao"></span></strong> <span>uma vez</span></p>
             <p class="preco" data-carregando-precos><strong><span class="num-carregando" data-v="precos.abertura.atual"></span></strong></p>
             <p class="vagas" data-se="varias-vagas" hidden>Restam <span data-v="precos.abertura.inauguracao.vagasRestantes"></span> vagas com este preço.</p>
@@ -557,7 +557,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
         <p>Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um organiza, um escreve, outro escolhe as cores, outro testa no celular. Escolha um negócio e veja o pedido passar de mão em mão até o site ir para o ar.</p>
       </div>
       <div class="sede-viva">
-        <div class="sede-marcas" role="group" aria-label="Negócio na fachada da sede" data-sede-marcas>
+        <div class="sede-marcas" role="group" aria-label="Negócio na fachada da sede" data-sede-marcas data-clarity-mask="True">
           <button class="chip" type="button" aria-pressed="true" data-marca="Barbearia Navalha Fictícia" data-site="sites/demo-barbearia/">Barbearia Navalha Fictícia</button>
           <button class="chip" type="button" aria-pressed="false" data-marca="Salão Esmalte Fictício" data-site="sites/demo-salao/">Salão Esmalte Fictício</button>
           <button class="chip" type="button" aria-pressed="false" data-marca="Studio Barra Fictícia" data-site="sites/demo-academia/">Studio Barra Fictícia</button>
@@ -572,7 +572,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
           <figcaption><span data-legenda-marca>Nome fictício na fachada.</span><span class="so-celular" data-legenda-dica> A sede 3D só carrega quando você toca em Abrir a sede, para poupar dados.</span></figcaption>
         </figure>
       </div>
-      <aside class="esteira" id="esteira" aria-labelledby="esteira-titulo" data-etapa="0">
+      <aside class="esteira" id="esteira" aria-labelledby="esteira-titulo" data-etapa="0" data-clarity-mask="True">
         <div class="esteira-cab">
           <span class="olho">Pedido de demonstração</span>
           <h3 id="esteira-titulo" data-esteira-nome>Barbearia Navalha Fictícia</h3>
@@ -672,7 +672,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 <!-- 3 · PRÉVIA em tela cheia (iframe de previa/) -->
 <section class="previa" id="previa" role="dialog" aria-modal="true" aria-labelledby="previa-rotulo" hidden>
   <div class="previa-topo">
-    <span class="rotulo-previa" id="previa-rotulo">Prévia do seu site · <span id="previa-nome"></span></span>
+    <span class="rotulo-previa" id="previa-rotulo" data-clarity-mask="True">Prévia do seu site · <span id="previa-nome"></span></span>
     <span class="acoes">
       <button class="btn" type="button" id="previa-copiar">copiar link</button>
       <button class="btn" type="button" id="previa-fechar" aria-label="Fechar a prévia">Fechar</button>

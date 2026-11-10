@@ -3,7 +3,7 @@
 # Por quê: a vitrine só mostra "R$ 297 · restam N vagas" com dados/*.json carimbados há
 # no máximo 48 h (ADR-003, CDC art. 37). O site é estático, então o carimbo só vale
 # depois de publicado. Esta rotina, todo dia às 00:07 de Salvador:
-#   1. roda scripts/atualizar-vagas.cjs --rotina (novo dia + carimbo + checagem do link da inauguração);
+#   1. roda scripts/atualizar-vagas.cjs --rotina (novo dia + carimbo + checagem dos links de R$ 297);
 #   2. faz commit dos dois JSON carimbados (o repositório continua sendo a fonte da verdade);
 #   3. publica com wrangler deploy (o build do wrangler.toml roda checar-placeholders + montar-publico);
 #   4. se algo falhar, abre (ou comenta) uma issue "Rotina de vagas falhou" e o GitHub manda e-mail.
@@ -54,7 +54,7 @@ jobs:
           node scripts/atualizar-vagas.cjs --rotina
           rc=$?
           echo "rc=$rc" >> "$GITHUB_OUTPUT"
-          # 2 = carimbou, mas o link da inauguração ainda está publicado com a inauguração encerrada:
+          # 2 = carimbou, mas algum link de R$ 297 (Abertura ou praça) ainda está publicado com a inauguração encerrada:
           # publica mesmo assim (a página já cai no preço padrão) e falha no fim para alertar.
           if [ "$rc" != "0" ] && [ "$rc" != "2" ]; then exit "$rc"; fi
 
@@ -79,7 +79,7 @@ jobs:
       - name: Alertar link da inauguração
         if: ${{ steps.carimbo.outputs.rc == '2' }}
         run: |
-          echo "::error::Inauguração encerrada e link do Asaas ainda no checkout.config.js. Desative o link no Asaas e volte aberturaInauguracao para o marcador."
+          echo "::error::Inauguração encerrada e link(s) de R$ 297 ainda no checkout.config.js. Desative no Mercado Pago todos os links listados no log (Abertura, 6 praças e 2 combos do anual) e volte aberturaInauguracao para o marcador e linksPorPraca para {}."
           exit 1
 
       - name: Abrir issue de falha

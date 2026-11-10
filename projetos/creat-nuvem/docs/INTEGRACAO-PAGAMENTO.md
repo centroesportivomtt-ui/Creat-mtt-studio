@@ -84,10 +84,12 @@ CREAT_TESTE_TMP=/tmp npm test
 
 `[LINK_CAKTO_BASTIDORES]` continua travando o deploy da Cloudflare. Para destravar, crie um terceiro Link de pagamento no Mercado Pago, `Bastidores` a **R$ 67**, e cole em `bastidores`. Também serve um Payment Link do Stripe (`buy.stripe.com`). No Base44, a vitrine já funciona com os dois links da Abertura, mesmo com o marcador do bastidores aberto.
 
+Teto de 20 Aberturas de inauguração: o limite de "quantidade máxima" do Mercado Pago é **por link**, e há 7 links de R$ 297 (o padrão de inauguração e os 6 de `linksPorPraca`). A soma das quantidades máximas dos 7 links tem de ser no máximo 20 (`vagasTotal` de `dados/precos.json`). Se não der para dividir assim, o corte é manual e vale para os 7 ao mesmo tempo (ADR-005).
+
 Quando a inauguração acabar (20 vagas):
-1. Desative o link de R$ 297 no Mercado Pago.
-2. Volte `aberturaInauguracao` para o marcador.
-3. Rode `node scripts/atualizar-vagas.cjs`.
+1. Rode `node scripts/atualizar-vagas.cjs --inauguracao off` (ou ele desliga sozinho na 20ª `--vendeu`). Ele imprime a lista de **todos** os links de preço de inauguração a desativar: `aberturaInauguracao`, os 6 de `linksPorPraca` e os 2 combos do anual da seção abaixo.
+2. Desative cada um no Mercado Pago.
+3. Volte `aberturaInauguracao` para o marcador e `linksPorPraca` para `{}` no `checkout.config.js` e publique. A rotina diária (`--rotina`) falha até isso ser feito.
 
 ### 3.3 Mensalidade no Plano B (Stripe Payment Links, sem código)
 
@@ -497,4 +499,6 @@ Criados por uma função isolada de uso único (`portaAbertaAnual`) no AutoCreat
 | Abertura (inauguração) + Plano Aberto anual | R$ 1.767 | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-78effa57-7b26-4cd5-9617-6d6bc32cce32 |
 | Abertura (inauguração) + Plano Vitrine anual | R$ 3.267 | https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-9914ecb8-0c03-45b7-a9bc-3c36972f372d |
 
-Regras: o anual segue os termos (cláusula do plano anual: devolução proporcional aos meses inteiros não usados). Os dois combos usam o preço de inauguração: desative-os no Mercado Pago quando a 20ª vaga for paga. Estes links são enviados na conversa, depois do "LI E ACEITO"; não entram no `checkout.config.js`.
+Regras (decisão D3 do diretor, 10/11/2026): **a página não cobra o anual antes de o site existir.** Em `/abrir/`, quem escolhe o anual paga hoje só a Abertura (link da praça ou padrão) e lê que o plano anual é cobrado no dia em que o site entra no ar, pelo valor mostrado. Nesse dia, a equipe manda o link do anual sozinho (R$ 1.470 ou R$ 2.970, as duas primeiras linhas). O anual segue os termos (cláusula 4 e cláusula 7: devolução proporcional aos meses inteiros não usados).
+
+Os dois combos (Abertura + anual num Pix só) **saíram** do `checkout.config.js` e não devem ser enviados a cliente: cobram o anual antes de o site existir. Ficam listados aqui só para o fim da inauguração: eles usam o preço de inauguração e continuam ativos no Mercado Pago até alguém desativar. `scripts/atualizar-vagas.cjs` os inclui na lista de links a desativar.

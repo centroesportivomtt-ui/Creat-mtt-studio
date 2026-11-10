@@ -2,7 +2,7 @@ REVISAO_JURIDICA_PENDENTE
 
 # Termos de uso do Porta Aberta
 
-Versão 1 (termos-v1) · 08/11/2026
+Versão 1 (termos-v1) · 08/11/2026 · texto revisto em 10/11/2026 para explicar o preço de inauguração e quando o plano anual é cobrado
 
 Estes termos valem para quem contrata o Porta Aberta, o serviço da Creat Nuvem que monta e mantém no ar o site de um negócio local. Ao marcar o aceite em /abrir/ e pagar a Abertura, você concorda com eles. Escrevemos em linguagem simples de propósito. Se algo não ficar claro, pergunte antes de pagar.
 
@@ -26,10 +26,11 @@ Ver a prévia é grátis e não exige cadastro. A prévia usa serviços, preços
 
 ## 4. Abertura e planos
 
-- **Abertura**: pagamento único de R$ {{precos.abertura.padrao}}. Enquanto houver vagas de inauguração, a Abertura custa R$ {{precos.abertura.inauguracao.preco}}; o preço que vale é o que aparece em /abrir/ no momento do pagamento.
+- **Abertura**: pagamento único de R$ {{precos.abertura.padrao}}.
+- **Preço de inauguração**: R$ {{precos.abertura.inauguracao.preco}} pela Abertura, válido para as {{precos.abertura.inauguracao.vagasTotal}} primeiras Aberturas pagas. Enquanto ele vale, /abrir/ mostra "preço de inauguração"; quando as Aberturas de inauguração acabam, a página passa a mostrar R$ {{precos.abertura.padrao}}. O preço que vale é o que aparece em /abrir/ no momento do pagamento.
 - **Plano Aberto**: R$ {{precos.planos.aberto}} por mês. Inclui hospedagem, pedido de horário no WhatsApp, alterações dentro dos limites da cláusula 10, suporte pelo WhatsApp e ajuda com o domínio e o Perfil da Empresa no Google.
 - **Plano Vitrine**: R$ {{precos.planos.vitrine}} por mês. Inclui tudo do Aberto, posts prontos todo mês para o seu Instagram e prazo menor para pedidos especiais.
-- **Plano anual (opcional)**: 12 meses pelo preço de {{precos.anualMesesPagos}}, pago no Pix.
+- **Plano anual (opcional)**: 12 meses pelo preço de {{precos.anualMesesPagos}}, pago no Pix. No pedido, você paga só a Abertura. O plano anual é cobrado no dia em que o site entra no ar, pelo valor que aparecia em /abrir/ quando você fez o pedido. Nada do anual é cobrado antes de o site existir.
 - O total aparece antes do pagamento. Não há taxa escondida.
 - O preço do seu plano fica travado por 12 meses a partir do dia em que o site entra no ar.
 - Não estão incluídos: anuidade do domínio (paga por você, no seu nome, ao Registro.br), página nova, seção nova, fluxo novo, loja virtual, anúncios pagos e verba de anúncio, e o atendimento das mensagens dos seus clientes.
@@ -53,7 +54,7 @@ Você tem 7 dias, contados do pagamento, para desistir sem dar motivo (Código d
 ## 7. Mensalidade, cobrança e cancelamento
 
 - A primeira mensalidade só é cobrada a partir do dia em que o site entra no ar.
-- A Abertura e o plano anual são cobrados pelo Mercado Pago, por Pix ou cartão. A mensalidade no cartão é cobrada pelo Stripe, com renovação automática que você cancela quando quiser. O valor e o dia da cobrança aparecem no link antes de você pagar.
+- A Abertura é cobrada pelo Mercado Pago, por Pix ou cartão em até 2x; as condições do parcelamento aparecem no Mercado Pago antes de você pagar. O plano anual é cobrado pelo Mercado Pago, no Pix, no dia em que o site entra no ar. A mensalidade no cartão é cobrada pelo Stripe, com renovação automática que você cancela quando quiser. O valor e o dia da cobrança aparecem no link antes de você pagar.
 - Não há fidelidade nem multa. Você cancela quando quiser, pelo WhatsApp do Suporte Creat ou por e-mail. O cancelamento vale para o próximo ciclo; o mês já pago segue até o fim.
 - **Plano anual**: se você cancelar antes de terminar os 12 meses, devolvemos o valor proporcional aos meses inteiros ainda não usados, calculado sobre o preço pago no anual.
 

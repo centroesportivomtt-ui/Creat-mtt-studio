@@ -145,17 +145,19 @@
     "titulo": "Um preço para abrir, um plano para manter aberto.",
     "texto": "Você paga a Abertura uma vez. A mensalidade só começa no dia em que o site entra no ar.",
     "_textoRegra": "texto = enquanto os preços carregam. Depois vale textoInauguracao (inauguração valendo, ADR-005) ou textoPadrao.",
-    "textoInauguracao": "Hoje você paga só a Abertura: R$ {{precos.abertura.inauguracao.preco}} uma vez, preço das {{precos.abertura.inauguracao.vagasTotal}} primeiras vagas (depois, R$ {{precos.abertura.padrao}}). A mensalidade, R$ {{precos.planos.aberto}} no Aberto ou R$ {{precos.planos.vitrine}} no Vitrine, só começa no dia em que o site entra no ar.",
+    "textoInauguracao": "Hoje você paga só a Abertura: R$ {{precos.abertura.inauguracao.preco}} uma vez, preço de inauguração (depois, R$ {{precos.abertura.padrao}}). A mensalidade, R$ {{precos.planos.aberto}} no Aberto ou R$ {{precos.planos.vitrine}} no Vitrine, só começa no dia em que o site entra no ar.",
     "textoPadrao": "Hoje você paga só a Abertura: R$ {{precos.abertura.padrao}} uma vez. A mensalidade, R$ {{precos.planos.aberto}} no Aberto ou R$ {{precos.planos.vitrine}} no Vitrine, só começa no dia em que o site entra no ar.",
 
     "abertura": {
       "nome": "Abertura",
       "precoPadrao": "R$ {{precos.abertura.padrao}}",
       "precoInauguracao": "R$ {{precos.abertura.inauguracao.preco}}",
-      "deInauguracao": "de R$ {{precos.abertura.padrao}}",
-      "seloInauguracao": "Inauguração: preço das {{precos.abertura.inauguracao.vagasTotal}} primeiras vagas",
+      "deInauguracao": "uma vez · depois da inauguração, R$ {{precos.abertura.padrao}}",
+      "_deInauguracao": "Sem preço riscado (de/por): o R$ {{precos.abertura.padrao}} é o preço depois da inauguração, não um preço já praticado.",
+      "seloInauguracao": "Preço de inauguração",
       "contadorInauguracao": "Restam {{precos.abertura.inauguracao.vagasRestantes}} vagas com este preço.",
       "contadorUltima": "Resta 1 vaga com este preço.",
+      "_regraContador": "Contadores desligados (checkout.config.js contadoresAoVivo: false, decisão D1 de 10/11/2026) até o número vir de pedido pago gravado em servidor.",
       "periodo": "uma vez",
       "inclui": [
         "Site montado a partir do modelo do seu nicho, com o nome, a cidade e as cores que você escolheu",

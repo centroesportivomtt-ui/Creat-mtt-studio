@@ -21,7 +21,8 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 #janela{position:absolute;overflow:hidden;background:var(--ceu);border-radius:30px;z-index:5}
 #janela img{position:absolute;left:0;top:0;transform-origin:0 0;image-rendering:auto}
 #mascaras{position:absolute;inset:0;pointer-events:none}
-.masc{position:absolute;display:flex;align-items:center;justify-content:center;background:var(--papel);border:2px solid var(--tinta);border-radius:6px;font:500 19px/1 "JetBrains Mono",monospace;color:var(--apagado);white-space:nowrap}
+/* máscara sobre cada preço de exemplo: 28 px no mínimo (lê no celular) */
+.masc{position:absolute;display:flex;align-items:center;justify-content:center;background:var(--papel);border:3px solid var(--tinta);border-radius:8px;font:700 28px/1 "JetBrains Mono",monospace;letter-spacing:-1.2px;color:var(--tinta);white-space:nowrap}
 #vidro{position:absolute;inset:0;background:var(--lousa);opacity:0;pointer-events:none}
 #corpo{position:absolute;z-index:4;background:var(--tinta);border-radius:44px;box-shadow:10px 10px 0 rgba(30,27,46,.35)}
 /* balcão: a soleira da loja; nada de texto aqui (35% de baixo) */
@@ -33,8 +34,8 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 .faixa{display:inline-block;max-width:950px;padding:16px 34px 18px;background:var(--sol);color:var(--tinta);border:4px solid var(--tinta);border-radius:20px;box-shadow:10px 10px 0 var(--tinta);
   font:800 64px/1.13 Figtree,system-ui,sans-serif;letter-spacing:-.5px;text-align:center}
 .faixa k{font-family:"Lilita One",Figtree,sans-serif;font-weight:400;font-size:74px;letter-spacing:.5px;line-height:1.05}
-/* selos de honestidade */
-.selo{position:absolute;z-index:45;font:500 28px/1 "JetBrains Mono",ui-monospace,monospace;color:var(--tinta);background:var(--papel);border:3px solid var(--tinta);border-radius:10px;padding:8px 14px 9px;white-space:nowrap;letter-spacing:-.3px}
+/* selos de honestidade: 36 px (cerca de 13 pt num celular), tinta cheia, sempre legíveis */
+.selo{position:absolute;z-index:45;font:700 36px/1 "JetBrains Mono",ui-monospace,monospace;color:var(--tinta);background:var(--papel);border:3px solid var(--tinta);border-radius:10px;padding:9px 14px 10px;white-space:nowrap;letter-spacing:-.6px}
 .selo.escuro{background:var(--tinta);color:var(--papel);border-color:var(--papel)}
 /* anéis de toque (giz) */
 #aneis{position:absolute;inset:0;z-index:30;pointer-events:none}
@@ -47,7 +48,7 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 #notif{position:absolute;left:26px;right:26px;top:70px;background:var(--papel);border:4px solid #05061A;border-radius:28px;padding:20px 24px 22px;box-shadow:6px 6px 0 #05061A}
 #notif .de{display:flex;align-items:center;gap:10px;font:500 25px/1 "JetBrains Mono",monospace;color:var(--apagado)}
 #notif .txt{margin-top:10px;font:800 44px/1.1 Figtree,sans-serif;color:var(--tinta);white-space:nowrap}
-#notif .selo{position:absolute;right:14px;top:-22px;font-size:24px;padding:6px 10px}
+#notif .selo{position:absolute;right:14px;top:-34px;font-size:34px;padding:7px 12px 8px;background:var(--sol)}
 .vib{position:absolute;top:580px;width:60px;height:120px}
 #placaCena{position:absolute;left:320px;top:752px;width:440px;z-index:6}
 #placaCena .gira{transform-origin:48.5% 7.3%}
@@ -55,11 +56,12 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 #msg{position:absolute;z-index:7;display:none}
 #msg .tela{position:absolute;left:16px;right:16px;top:16px;background:var(--papel);border-radius:30px;overflow:hidden;padding:22px}
 #msg .cab{display:flex;align-items:center;gap:14px;padding:16px 18px;border:3px solid var(--linha);border-radius:20px;background:var(--ceu);font:800 34px/1.1 Figtree,sans-serif}
-#msg .cab small{display:block;margin-top:8px;font:600 26px/1.2 Figtree,sans-serif;color:var(--apagado)}
-.faixaTeste{display:inline-block;background:var(--sol);color:var(--tinta);border:3px solid var(--tinta);border-radius:8px;padding:3px 10px 4px;font:700 24px/1.1 "JetBrains Mono",monospace;transform:rotate(-1.5deg);white-space:nowrap}
-#msg .conversa{position:absolute;left:22px;right:22px;top:190px;display:flex;flex-direction:column;align-items:flex-end;gap:14px}
+#msg .cab small{display:block;margin-top:8px;font:700 30px/1.2 Figtree,sans-serif;color:var(--tinta)}
+.faixaTeste{display:inline-block;background:var(--sol);color:var(--tinta);border:3px solid var(--tinta);border-radius:8px;padding:4px 12px 6px;font:700 34px/1.1 "JetBrains Mono",monospace;letter-spacing:-.6px;transform:rotate(-1.5deg);white-space:nowrap}
+#msg .seloMsg{position:absolute;right:22px;top:166px;z-index:2;background:var(--sol)}
+#msg .conversa{position:absolute;left:22px;right:22px;top:244px;display:flex;flex-direction:column;align-items:flex-end;gap:14px}
 #msg .balao{max-width:100%;padding:24px 26px 18px;border:3px solid var(--linha);border-radius:26px 26px 8px 26px;background:var(--lasca);font:600 45px/1.3 Figtree,sans-serif;color:var(--tinta);transform-origin:100% 100%}
-#msg .balao small{display:block;margin-top:10px;font:500 22px/1 "JetBrains Mono",monospace;color:var(--apagado);text-align:right}
+#msg .balao small{display:block;margin-top:12px;font:700 30px/1 "JetBrains Mono",monospace;color:var(--tinta);text-align:right}
 /* cartão final */
 #cartao{position:absolute;inset:0;z-index:8;display:none;background:var(--ceu)}
 #placaCartao{position:absolute;left:250px;top:548px;width:580px}
@@ -90,11 +92,12 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     <div id="placaCena"><div class="gira" id="giraCena"><div id="pontoCena"></div></div></div>
   </div>
   <div id="corpo" hidden></div>
-  <div id="janela" hidden><img id="tela" alt=""><div id="mascaras"></div><div id="vidro"></div></div>
+  <div id="janela" hidden><img id="tela" alt=""><img id="telaAntes" alt="" style="opacity:0"><div id="mascaras"></div><div id="vidro"></div></div>
   <div id="msg">
     <div class="tela">
       <div class="cab"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M4 20l1.4-4A8 8 0 1 1 8.6 19z" fill="var(--papel)" stroke="var(--linha)" stroke-width="2.2" stroke-linejoin="round"/></svg>
-        <div>Pedido pelo site<small>Barbearia Navalha Fictícia · <span class="faixaTeste">número de teste</span></small></div></div>
+        <div>Pedido pelo site<small>Barbearia Navalha Fictícia</small></div></div>
+      <div class="selo seloMsg">cena de exemplo</div>
       <div class="conversa"><div class="balao" id="balao"></div></div>
     </div>
   </div>
@@ -138,12 +141,19 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   function mola(x) { x = cl(x); return 1 - Math.exp(-6.5 * x) * Math.cos(9.5 * x); }  /* passa um pouco e assenta */
 
   /* ---------- relógio das animações da placa (mesmo método da captura) */
-  var nasc = new WeakMap();
+  /* o giro da placa usa o mesmo mapa da captura (linhas.js, GIRO): o verso com a nuvem queimada fica 4 quadros */
+  var nasc = new WeakMap(), GIRO = L.GIRO;
+  function ehGiro(a) {
+    var el = a.effect && a.effect.target, cl = el && el.classList;
+    return !!(cl && (cl.contains('cp-giro') || cl.contains('cp-fechado') || cl.contains('cp-aberto')) && Math.round(a.effect.getTiming().duration) === GIRO.ms);
+  }
   function posicionar(t, adiantar) {
     var ms = t * 1000;
     document.getAnimations().forEach(function (a) {
       if (!nasc.has(a)) { nasc.set(a, ms - (adiantar || 0) * 1000); try { a.pause(); } catch (e) {} }
-      var v = ms - nasc.get(a); try { a.currentTime = v < 0 ? 0 : v; } catch (e) {}
+      var v = ms - nasc.get(a); if (v < 0) v = 0;
+      if (ehGiro(a)) v = GIRO.local(v);
+      try { a.currentTime = v; } catch (e) {}
     });
   }
 
@@ -164,8 +174,11 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   function selos(t) {
     var html = '';
     R.selos.forEach(function (s) {
-      if (t < s.t0 - 1e-6 || t >= s.t1 - 1e-6) return;
-      var op = Math.min(1, (t - s.t0) / 0.2 + (s.t0 <= 0 ? 1 : 0));
+      var t0 = s.t0;
+      if (s.naPrevia && meta && meta.sessoes && meta.sessoes[s.naPrevia] && meta.sessoes[s.naPrevia].previaEm != null) t0 = meta.sessoes[s.naPrevia].previaEm;
+      if (t < t0 - 1e-6 || t >= s.t1 - 1e-6) return;
+      /* selo da prévia nasce inteiro no quadro em que a prévia aparece; os outros entram em 0,2 s */
+      var op = s.naPrevia ? 1 : Math.min(1, (t - t0) / 0.2 + (t0 <= 0 ? 1 : 0));
       var pos = { 'topo-esq': 'left:65px;top:' + G.seloY + 'px', 'topo-dir': 'right:65px;top:' + G.seloY + 'px',
                   'baixo-1': 'left:50%;top:1128px;transform:translateX(-50%)', 'baixo-2': 'left:50%;top:1184px;transform:translateX(-50%)' }[s.lugar];
       html += '<div class="selo" style="' + pos + ';opacity:' + op.toFixed(3) + '">' + s.texto + '</div>';
@@ -228,12 +241,27 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 
   /* ================================================================ R8 */
   var R8cam = null;
+  /* a câmera acompanha metade do puxão da tábua no close (arraste gravado na sessão A) */
+  function segueArraste(t) {
+    var A = meta.sessoes.A, pont = A.ponteiro || [], pl = A.inicio.placa;
+    if (!pont.length || t < pont[0].t) return 0;
+    var lim = pl.h * (200 / 300) * 0.4, y0 = pont[0].y, atual = pont[0];
+    pont.forEach(function (p) { if (p.t <= t + 1e-6) atual = p; });
+    var dy = Math.max(0, atual.y - y0), v = dy <= lim ? dy : lim + (dy - lim) * 0.3;
+    var ts = pont[pont.length - 1].t;
+    return t <= ts ? 0.5 * v : 0.5 * v * (1 - eout(prog(t, ts, ts + 0.4)));
+  }
+  /* o celular desce enquanto a placa vira (corrente e prego fora de baixo da legenda) e volta quando a prévia abre */
+  function desceCel(t) {
+    var v = 0; (R.camera.desce || []).forEach(function (d) { if (t >= d[0]) v = lerp(v, d[2], eio(prog(t, d[0], d[1]))); }); return v;
+  }
   function camR8(t) {
-    var m = meta.sessoes, A = m.A.inicio;
-    var cx = A.caixa.x + A.caixa.w / 2, cy = A.caixa.y + A.caixa.h / 2;
-    var WZ = { x: 65, y: G.janelaY, w: 950, h: G.janelaFim - G.janelaY };
-    var sZ = Math.min(WZ.w / A.caixa.w, WZ.h / A.caixa.h);
-    var sP = 1.51, v0 = 112, WP = { x: 540 - 390 * sP / 2, y: 440, w: 390 * sP, h: G.janelaFim - 440 };
+    var m = meta.sessoes, A = m.A.inicio, pl = A.placa;
+    var cx = pl.x + pl.w / 2, cy = pl.y + pl.h / 2 + segueArraste(t);
+    /* close: a placa ocupa ~70% da largura (nome a giz com mais de 40 px) */
+    var WZ = { x: 65, y: 500, w: 950, h: G.janelaFim - 500 };
+    var sZ = R.camera.larguraPlaca * 1080 / pl.w;
+    var sP = 1.51, v0 = 112, WP = { x: 540 - 390 * sP / 2, y: 440 + desceCel(t), w: 390 * sP, h: G.janelaFim - 440 };
     var k = eio(prog(t, R.camera.recuo[0], R.camera.recuo[1]));
     var s = lerp(sZ, sP, k);
     var ax = lerp(WZ.x + WZ.w / 2, WP.x + sP * cx, k), ay = lerp(WZ.y + WZ.h / 2, WP.y + sP * (cy - v0), k);
@@ -264,7 +292,18 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   }
 
   /* ================================================================ R7 */
-  var montadoCena = false, lousa0 = null;
+  var montadoCena = false, lousa0 = null, alvoAprox = null;
+  /* aproximação depois de assentar: a tábua vai ao centro da área útil, em 2x (nome a giz com 40 px) */
+  function aproxima(t) {
+    var Ap = R.cena.aproxima;
+    if (!alvoAprox) {
+      var tb = document.querySelector('#pontoCena .cp-tabua').getBoundingClientRect();
+      alvoAprox = { x: tb.left + tb.width / 2, y: tb.top + tb.height / 2 };
+    }
+    var e = eio(prog(t, Ap[0], Ap[1])), P = lerp(1, Ap[2], e);
+    var tx = lerp(alvoAprox.x, 540, e) - P * alvoAprox.x, ty = lerp(alvoAprox.y, (G.janelaY + G.janelaFim) / 2, e) - P * alvoAprox.y;
+    return { P: P, tx: tx, ty: ty };
+  }
   var WP7 = { x: 160, y: G.janelaY, w: 760, h: G.janelaFim - G.janelaY }, s7 = 760 / 390;
   function quadroR7(t) {
     if (cartao(t)) return Promise.resolve();
@@ -277,7 +316,7 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
       msg.style.left = (WP7.x - b) + 'px'; msg.style.top = (WP7.y - b) + 'px'; msg.style.width = (WP7.w + 2 * b) + 'px'; msg.style.height = (WP7.h + 2 * b + 400) + 'px';
       msg.style.background = 'var(--tinta)'; msg.style.borderRadius = '48px'; msg.querySelector('.tela').style.height = (WP7.h + 300) + 'px';
       var bal = $('#balao');
-      if (!bal.__ok) { bal.__ok = 1; bal.innerHTML = textoMensagem() + '<small>agora · cena de exemplo</small>'; }
+      if (!bal.__ok) { bal.__ok = 1; bal.innerHTML = textoMensagem() + '<small>agora</small>'; }
       var p = prog(t, R.mensagem + 0.04, R.mensagem + 0.74), e = mola(p);
       bal.style.opacity = Math.min(1, p * 2.5).toFixed(3);
       bal.style.transform = 'translateY(' + (28 * (1 - e)).toFixed(2) + 'px) scale(' + (0.94 + 0.06 * e).toFixed(4) + ')';
@@ -326,13 +365,24 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     } else if (t >= A.t0 - 0.14) { var a0 = eout(prog(t, A.t0 - 0.14, A.t0)); lista.push({ x: px, y: py0, op: a0, s: 1.3 - 0.3 * a0 }); }
     /* --- atravessar o vidro: a lousa da placa vira a tela da prévia */
     var V = C.vidro;
-    if (t < V[0] - 1e-6) { cena.style.transform = ''; cena.style.opacity = 1; jan.hidden = true; corpo.hidden = true; aneis(lista); return Promise.resolve(); }
-    if (!lousa0) { cena.style.transform = ''; var lb = document.querySelector('#pontoCena .cp-aberto #cp-lousa').getBoundingClientRect(); lousa0 = { x: lb.left, y: lb.top, w: lb.width, h: lb.height }; }
+    var ap = { P: 1, tx: 0, ty: 0 };
+    if (t >= C.aproxima[0] - 1e-6) { if (!alvoAprox) cena.style.transform = ''; ap = aproxima(t); }
+    /* a mensagem e a hora saem de cena quando a câmera chega na placa (nada de texto subindo para a faixa de cima) */
+    var nt0 = (1 - prog(t, C.aproxima[0], C.aproxima[0] + 0.2)).toFixed(3);
+    $('#notif').style.opacity = nt0; $('#celEscuro .hora').style.opacity = nt0;
+    if (t < V[0] - 1e-6) {
+      jan.style.opacity = 1;
+      cena.style.transform = t < C.aproxima[0] - 1e-6 ? '' : 'translate(' + ap.tx.toFixed(2) + 'px,' + ap.ty.toFixed(2) + 'px) scale(' + ap.P.toFixed(4) + ')';
+      cena.style.opacity = 1; jan.hidden = true; corpo.hidden = true; aneis(lista); return Promise.resolve();
+    }
+    if (!lousa0) { cena.style.transform = 'translate(' + ap.tx.toFixed(2) + 'px,' + ap.ty.toFixed(2) + 'px) scale(' + ap.P.toFixed(4) + ')'; var lb = document.querySelector('#pontoCena .cp-aberto #cp-lousa').getBoundingClientRect(); lousa0 = { x: lb.left, y: lb.top, w: lb.width, h: lb.height }; }
     var k = prog(t, V[0], V[1]), kz = ein(k), kj = eio(k);
     /* o texto da cena de dor sai antes de o voo ampliar (nada de texto passando pelos 14% de cima) */
-    var nt = (1 - prog(k, 0, 0.16)).toFixed(3); $('#notif').style.opacity = nt; $('#celEscuro .hora').style.opacity = nt;
+    /* a janela nasce transparente sobre a lousa: ABERTO e o nome dissolvem no vidro, sem sumir num quadro */
+    jan.style.opacity = prog(k, 0, 0.2).toFixed(3);
     var cxl = lousa0.x + lousa0.w / 2, cyl = lousa0.y + lousa0.h / 2, sc = 1 + 7 * kz;
-    cena.style.transform = 'translate(' + (cxl * (1 - sc)).toFixed(2) + 'px,' + (cyl * (1 - sc)).toFixed(2) + 'px) scale(' + sc.toFixed(4) + ')';
+    /* voo pelo vidro composto com a aproximação: x -> sc*(P*x + tp) + c*(1 - sc) */
+    cena.style.transform = 'translate(' + (sc * ap.tx + cxl * (1 - sc)).toFixed(2) + 'px,' + (sc * ap.ty + cyl * (1 - sc)).toFixed(2) + 'px) scale(' + (sc * ap.P).toFixed(4) + ')';
     cena.style.opacity = (1 - prog(k, 0.45, 0.9)).toFixed(3);
     /* janela: do retângulo da lousa (já ampliado pelo voo) até a tela do celular */
     var lz = { x: cxl + (lousa0.x - cxl) * sc, y: cyl + (lousa0.y - cyl) * sc, w: lousa0.w * sc, h: lousa0.h * sc };
@@ -341,13 +391,22 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     var r0 = { x: lerp(ini.x, lz.x, mix * 0.25), y: lerp(ini.y, lz.y, mix * 0.25), w: lerp(ini.w, lz.w, mix * 0.25), h: lerp(ini.h, lz.h, mix * 0.25) };
     var r = { x: lerp(r0.x, WP7.x, kj), y: lerp(r0.y, WP7.y, kj), w: lerp(r0.w, WP7.w, kj), h: lerp(r0.h, WP7.h, kj) };
     var s = r.w / 390;
-    $('#vidro').style.opacity = (1 - prog(k, 0.05, 0.4)).toFixed(3);
+    $('#vidro').style.opacity = (1 - prog(k, 0.16, 0.45)).toFixed(3);
     var tc = Math.max(R.sessoes.C.t0, t);
     var pr = janela(r, s, 0, 0, quadroCap('C', tc), 16 * eio(prog(k, 0.55, 1)), lerp(10, 30, kj));
     /* sem preço no vídeo: os valores de exemplo da prévia ficam cobertos pelo selo "exemplo" */
     var mh = ''; ((meta.precos || {})[Math.round(tc * FPS)] || []).forEach(function (b) {
-      mh += '<div class="masc" style="left:' + (s * b.x - 6).toFixed(1) + 'px;top:' + (s * b.y - 4).toFixed(1) + 'px;width:' + (s * b.w + 12).toFixed(1) + 'px;height:' + (s * b.h + 8).toFixed(1) + 'px;font-size:' + Math.max(12, Math.min(20, s * b.h * 0.62)).toFixed(1) + 'px">exemplo</div>'; });
+      /* fonte acompanha a escala da janela durante o voo, mas nunca abaixo de 28 px quando a prévia assenta */
+      var fs = Math.max(12, Math.min(28, s * 14.4)), w = Math.max(s * b.w + 12, fs * 4.25 + 10), dir = s * (b.x + b.w) + 6;
+      mh += '<div class="masc" style="left:' + (dir - w).toFixed(1) + 'px;top:' + (s * b.y - 5).toFixed(1) + 'px;width:' + w.toFixed(1) + 'px;height:' + (s * b.h + 10).toFixed(1) + 'px;font-size:' + fs.toFixed(1) + 'px">exemplo</div>'; });
     var mEl = $('#mascaras'); if (mEl.__h !== mh) { mEl.innerHTML = mh; mEl.__h = mh; }
+    /* fusão do corte de montagem (nome -> pedido): o último quadro antes do salto some em 0,2 s por cima do novo */
+    var SJ = R.sessoes.C.salto, ta = $('#telaAntes');
+    if (SJ && t >= SJ.t - 1e-6 && t < SJ.t + SJ.fusao - 1e-6) {
+      var srcA = quadroCap('C', SJ.t - 1 / FPS);
+      ta.style.transform = img.style.transform; ta.style.opacity = (1 - eio(prog(t, SJ.t, SJ.t + SJ.fusao))).toFixed(3);
+      if (ta.__src !== srcA) { ta.__src = srcA; ta.src = srcA; pr = Promise.all([pr, ta.decode().catch(function () {})]); }
+    } else ta.style.opacity = 0;
     /* toques gravados na prévia */
     (meta.toques || []).forEach(function (q0) { if (q0.falhou) return; var a = anelToque(t, q0.t, r.x + s * q0.x, r.y + s * q0.y); if (a) lista.push(a); });
     aneis(lista);

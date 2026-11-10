@@ -298,18 +298,20 @@ let precos = null;
     if (vl.aberturaPadrao !== precos.abertura.padrao) dif.push(`aberturaPadrao (${vl.aberturaPadrao} x ${precos.abertura.padrao})`);
     if (precos.abertura.inauguracao && vl.aberturaInauguracao !== precos.abertura.inauguracao.preco) dif.push(`aberturaInauguracao (${vl.aberturaInauguracao} x ${precos.abertura.inauguracao.preco}): a página cai no preço padrão`);
     if (vl.bastidores !== precos.bastidores) dif.push(`bastidores (${vl.bastidores} x ${precos.bastidores})`);
-    const combos = C.combosAnual || {};
-    for (const [plano, base] of [['aberto_anual', 'aberto'], ['vitrine_anual', 'vitrine']]) {
-      const c = combos[plano]; if (!c) continue;
-      const esperado = precos.abertura.inauguracao.preco + precos.planos[base] * precos.anualMesesPagos;
-      if (c.total !== esperado) dif.push(`combo ${plano} (${c.total} x ${esperado}): a página usa o link da Abertura sozinha`);
-      if (!C.linkValido(c.link)) dif.push(`combo ${plano}: link inválido`);
-    }
     const praças = Object.keys(C.linksPorPraca || {});
     praças.forEach((k) => { if (!/^[a-z0-9-]{2,40}$/.test(k) || !C.linkValido(C.linksPorPraca[k])) dif.push(`linksPorPraca.${k} inválido`); });
     if (dif.length) dif.forEach((m) => aviso('checkout.config.js', 'valor do link diferente da página: ' + m));
-    else ok(`checkout.config.js: valores dos links, ${Object.keys(combos).length} combos anuais e ${praças.length} praças batem com dados/precos.json`);
+    else ok(`checkout.config.js: valores dos links e ${praças.length} praças batem com dados/precos.json`);
   }
+  // Decisão D3 (10/11/2026): a página não cobra o anual antes de o site existir; combo anual não entra no arquivo público.
+  if (C.combosAnual && Object.keys(C.combosAnual).length) falha('checkout.config.js', 'combosAnual publicado: a página não cobra o anual antes de o site entrar no ar (links só em docs/INTEGRACAO-PAGAMENTO.md)');
+  // Decisão D1: contador numérico ao vivo só quando vier de pedido pago gravado em servidor.
+  if (C.contadoresAoVivo === true) aviso('checkout.config.js', 'contadoresAoVivo ligado: "Restam X vagas" e "vagas de hoje" voltam à tela. Só com contagem de pedido pago no servidor (decisão D1)');
+  else ok('checkout.config.js: contadores ao vivo desligados (só "preço de inauguração", sem número restante)');
+  // Decreto 7.962/2013, art. 2º, I e II: CPF ou CNPJ e endereço físico do fornecedor. Vazio = some da tela; não inventar.
+  const emp = C.empresa || {};
+  const faltaEmp = ['documento', 'endereco'].filter((k) => typeof emp[k] !== 'string' || !emp[k].trim());
+  if (faltaEmp.length) aviso('checkout.config.js', `empresa.${faltaEmp.join(' e empresa.')} vazio: termos, privacidade e rodapé ficam sem ${faltaEmp.map((k) => k === 'documento' ? 'CPF ou CNPJ' : 'endereço').join(' e ')} (Decreto 7.962/2013, art. 2º). Pendência do Marcos: preencher só com o dado real`);
   // reserva de último caso em assets/vitrine.js (só usada se checkout.config.js não carregar)
   const vj = path.join(RAIZ, 'assets', 'vitrine.js');
   if (existe(vj) && precos) {

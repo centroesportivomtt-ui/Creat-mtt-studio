@@ -2,9 +2,12 @@
 /* =====================================================================
    Porta Aberta · scripts/atualizar-vagas.cjs (T5 · Pixel)
    Edita dados/vagas.json e dados/precos.json com validação e carimba
-   atualizado_em (agora, UTC). A vitrine só mostra contador e preço de
-   inauguração com dado de até 48 h (regra dura 2, CDC art. 37, ADR-003):
-   rode este script todo dia, mesmo sem mudança, com --confirmar.
+   atualizado_em (agora, UTC). A vitrine mostra o preço de inauguração com
+   precos.json de até 7 dias (ADR-005); passou disso, volta ao preço padrão.
+   Os contadores ao vivo ("Restam X", vagas de hoje) estão desligados na
+   página (checkout.config.js contadoresAoVivo: false, decisão D1) até o número
+   vir de pedido pago gravado em servidor. Rode este script todo dia, mesmo
+   sem mudança, com --confirmar.
 
    Uso (pasta do projeto):
      node scripts/atualizar-vagas.cjs                       mostra o estado e não grava nada
@@ -22,13 +25,17 @@
      node scripts/atualizar-vagas.cjs --rotina              o que a rotina diária automática roda
                                                             (.github/workflows/rotina-vagas.yml): --novo-dia
                                                             + --confirmar, e FALHA (código 2) se a inauguração
-                                                            acabou e o link dela ainda está no checkout.config.js
+                                                            acabou e algum link de R$ 297 ainda está no
+                                                            checkout.config.js
    Opções: --raiz <pasta do projeto> · --simular (mostra o resultado sem gravar)
 
-   Link da inauguração (passo obrigatório): quando a inauguração acaba (0 vaga ou --inauguracao off),
-   o link do Asaas dela continua pagável por quem o guardou. Desative o link no Asaas e volte
-   aberturaInauguracao do checkout.config.js para o marcador. Este script avisa sempre e, com
-   --rotina, falha até isso ser feito.
+   Links de R$ 297 (passo obrigatório): quando a inauguração acaba (0 vaga ou --inauguracao off),
+   TODOS os links do preço de inauguração continuam pagáveis por quem os guardou:
+   links.aberturaInauguracao, os 6 de linksPorPraca e os 2 combos do anual (estes não ficam no
+   checkout.config.js; estão em docs/INTEGRACAO-PAGAMENTO.md e na lista COMBOS_FORA_DA_PAGINA abaixo).
+   O script imprime a lista de links a desativar no Mercado Pago. Depois disso, volte
+   aberturaInauguracao para o marcador e linksPorPraca para {} no checkout.config.js. Com --rotina,
+   a rotina falha enquanto qualquer um deles estiver publicado.
 
    Regras: inteiros >= 0; vagas_hoje <= capacidade_dia; vagasRestantes <= vagasTotal;
    inauguração chega a 0 vaga = desligada sozinha; preço de inauguração < padrão.
@@ -108,22 +115,38 @@ if (!pos(precos.planos.aberto) || !pos(precos.planos.vitrine)) erros.push('plano
 if (!Number.isInteger(precos.anualMesesPagos) || precos.anualMesesPagos < 1 || precos.anualMesesPagos > 12) erros.push('anualMesesPagos');
 if (erros.length) sair('valores inválidos: ' + erros.join('; '));
 
-// Link da inauguração ainda publicado com a inauguração encerrada = R$ 297 pagável depois do fim.
-function linkInauguracaoPublicado() {
+// Links de R$ 297 ainda publicados com a inauguração encerrada = preço de inauguração pagável depois do fim.
+// Os combos do anual saíram da página (decisão D3), mas continuam ativos no Mercado Pago até alguém desativar.
+const COMBOS_FORA_DA_PAGINA = [
+  ['Combo Abertura + Aberto anual (R$ 1.767)', 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-78effa57-7b26-4cd5-9617-6d6bc32cce32'],
+  ['Combo Abertura + Vitrine anual (R$ 3.267)', 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-9914ecb8-0c03-45b7-a9bc-3c36972f372d']
+];
+const publicado = (v) => typeof v === 'string' && /^https:\/\//i.test(v) && v.indexOf('[') === -1;
+// Lê o checkout.config.js como o navegador lê (vm), igual ao scripts/checar.cjs.
+function linksInauguracaoPublicados() {
   let txt = '';
-  try { txt = fs.readFileSync(path.join(RAIZ, 'checkout.config.js'), 'utf8'); } catch (e) { return false; }
-  const m = txt.match(/aberturaInauguracao\s*:\s*(['"])([^'"]*)\1/);
-  return !!(m && /^https:\/\//i.test(m[2]) && m[2].indexOf('[') === -1);
+  try { txt = fs.readFileSync(path.join(RAIZ, 'checkout.config.js'), 'utf8'); } catch (e) { return []; }
+  const vm = require('vm'), j = {}; j.window = j;
+  try { vm.runInContext(txt, vm.createContext(Object.assign(j, { URL, Promise }))); }
+  catch (e) { return [['checkout.config.js não carrega (' + e.message + '); confira à mão', '']]; }
+  const C = j.CREAT_CHECKOUT || {};
+  const out = [];
+  if (C.links && publicado(C.links.aberturaInauguracao)) out.push(['links.aberturaInauguracao', C.links.aberturaInauguracao]);
+  Object.keys(C.linksPorPraca || {}).forEach((k) => { if (publicado(C.linksPorPraca[k])) out.push(['linksPorPraca.' + k, C.linksPorPraca[k]]); });
+  Object.keys(C.combosAnual || {}).forEach((k) => { const c = C.combosAnual[k]; if (c && publicado(c.link)) out.push(['combosAnual.' + k, c.link]); });
+  return out;
 }
 function checarLinkInauguracao() {
   if (inaug.ativa && inaug.vagasRestantes > 0) return true;
-  const publicado = linkInauguracaoPublicado();
-  if (inaugAntes || publicado) {
+  const naPagina = linksInauguracaoPublicados();
+  if (inaugAntes || naPagina.length) {
+    const lista = naPagina.concat(COMBOS_FORA_DA_PAGINA).map(([nome, url]) => '     - ' + nome + (url ? ': ' + url : '')).join('\n');
     console.error('ATENÇÃO  inauguração encerrada. Passo obrigatório do Marcos:\n' +
-      '  1. Asaas > Cobranças > Links de pagamento > link "Abertura inauguração" > Desativar.\n' +
-      '  2. Em checkout.config.js, volte links.aberturaInauguracao para o marcador e publique.');
+      '  1. Mercado Pago > Seu negócio > Links de pagamento: desative TODOS estes links de preço de inauguração:\n' + lista + '\n' +
+      '  2. Em checkout.config.js, volte links.aberturaInauguracao para o marcador e linksPorPraca para {} e publique.' +
+      (naPagina.length ? '\n  Ainda publicados no checkout.config.js: ' + naPagina.map((x) => x[0]).join(', ') + '.' : ''));
   }
-  return !publicado;
+  return !naPagina.length;
 }
 
 function resumo() {
@@ -146,4 +169,4 @@ if (tem('--simular')) { console.log('simulação (nada gravado): ' + resumo()); 
 gravar(ARQ_VAGAS, ordemVagas);
 gravar(ARQ_PRECOS, precos);
 console.log(`gravado em ${agora}: ${resumo()}${mudou.length ? ' · mudou: ' + mudou.join(', ') : ' · só carimbo'}`);
-if (ROTINA && !linkOk) { console.error('erro: link da inauguração ainda publicado com a inauguração encerrada (ver ATENÇÃO acima).'); process.exit(2); }
+if (ROTINA && !linkOk) { console.error('erro: link(s) de R$ 297 ainda publicado(s) no checkout.config.js com a inauguração encerrada (ver ATENÇÃO acima).'); process.exit(2); }

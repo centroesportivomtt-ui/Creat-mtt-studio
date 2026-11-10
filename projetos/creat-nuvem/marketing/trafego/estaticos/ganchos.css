@@ -1,0 +1,65 @@
+/* Conceito: Atrás da placa, parado. A cena que só quem abre o comércio vê,
+   com o nome do ofício pintado como letreiro e o pedido chegando escrito.
+   Momento-assinatura: o TIPO DE NEGÓCIO em letreiro gigante (papel, contorno
+   de nanquim, sombra dura). É a única ousadia; cena, cartão e selos ficam calmos.
+   Layout: 9:16 primeiro. Texto e marca só na área segura (x 65..1015, y 269..1248);
+   os 35% de baixo são só cena (balcão, catraca, porta-esmaltes), sem letra.
+   Tokens herdados de base.css e de projetos/creat-nuvem/assets/tokens.css. */
+:root{
+  --ceu:#CDEBFF; --papel:#FFFDF6; --tinta:#1E1B2E; --apagado:#5E5974; --sol:#FFC93C;
+  --madeira:#D39A5B; --madeira-clara:#E6B67B; --madeira-sombra:#7A4B2A; --veio:#9A6438;
+  --lousa:#22322D; --giz:#F4F1E6; --noite:#111A2C; --aco:#B9C5D3;
+  --f-display:"Lilita One","Arial Rounded MT Bold",sans-serif;
+  --f-texto:"Figtree",system-ui,sans-serif;
+  --f-dado:"JetBrains Mono",ui-monospace,monospace;
+  --borda:6px; --sombra:12px 12px 0 var(--tinta); --sombra-p:7px 7px 0 var(--tinta);
+  /* escala: rótulo 26 · corpo 34 · linha 46 · cartão 58 · letreiro ajustado à largura */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--ceu)}
+body{font-family:var(--f-texto);color:var(--tinta);-webkit-font-smoothing:antialiased}
+.f9 .peca{width:1080px;height:1920px}
+.f1 .peca{width:1080px;height:1080px}
+.peca{position:relative;overflow:hidden;background:var(--ceu)}
+.cena{position:absolute;display:block;overflow:visible}
+
+/* o letreiro: tipo de negócio */
+.nicho{position:absolute;white-space:nowrap;font:400 var(--t,180px)/.86 var(--f-display);letter-spacing:.005em;
+  color:var(--papel);-webkit-text-stroke:calc(var(--t,180px) * .085) var(--tinta);paint-order:stroke fill;
+  text-shadow:calc(var(--t,180px) * .055) calc(var(--t,180px) * .055) 0 var(--tinta);padding:.08em .06em .02em 0}
+.linhas{position:absolute}
+.linha{display:block;width:max-content;white-space:nowrap;font:800 var(--l,46px)/1.16 var(--f-texto);letter-spacing:-.01em}
+.linha + .linha{margin-top:4px}
+.escuro .linha{color:var(--giz)}
+
+/* o celular com o print real */
+.cel{position:absolute;border:12px solid var(--tinta);border-radius:58px;background:var(--tinta);box-shadow:var(--sombra)}
+.cel::before{content:"";position:absolute;z-index:2;left:50%;top:10px;width:30%;height:26px;margin-left:-15%;border-radius:20px;background:var(--tinta)}
+.tela{position:absolute;inset:0;border-radius:46px;overflow:hidden}
+.recorte{overflow:hidden}
+.recorte img{display:block;width:100%}
+
+/* o pedido em giz */
+.cartao{position:absolute;background:var(--lousa);color:var(--giz);border:var(--borda) solid var(--tinta);border-radius:20px;box-shadow:var(--sombra);
+  padding:26px 32px 30px;background-image:radial-gradient(ellipse 40% 18% at 78% 88%,rgba(244,241,230,.08),transparent 70%),radial-gradient(ellipse 30% 14% at 20% 14%,rgba(244,241,230,.07),transparent 70%)}
+.cartao .rot{display:block;font:500 28px/1 var(--f-dado);letter-spacing:.08em;text-transform:uppercase;color:var(--sol);margin-bottom:16px}
+.cartao .c1{display:block;font:700 38px/1.14 var(--f-texto);filter:url(#giz)}
+.cartao .c2{display:block;font:400 64px/1 var(--f-display);margin-top:10px;letter-spacing:.01em;filter:url(#giz)}
+.cartao .traco{display:block;height:6px;margin:14px 0 4px;width:62%;border-radius:4px;background:var(--giz);opacity:.55;filter:url(#giz)}
+
+/* selos e fita */
+.selo{position:absolute;z-index:3;font:500 26px/1 var(--f-dado);letter-spacing:.04em;color:var(--tinta);background:var(--papel);border:4px solid var(--tinta);border-radius:10px;padding:9px 13px 10px;white-space:nowrap;box-shadow:4px 4px 0 var(--tinta)}
+.fita{position:absolute;z-index:3;font:500 26px/1 var(--f-dado);letter-spacing:.04em;color:var(--tinta);white-space:nowrap;padding:12px 30px 13px;
+  background:rgba(255,253,246,.94);clip-path:polygon(0 0,100% 0,97% 20%,100% 40%,97% 60%,100% 80%,97% 100%,0 100%,3% 80%,0 60%,3% 40%,0 20%);
+  filter:drop-shadow(0 3px 0 rgba(30,27,46,.35))}
+
+/* rodapé de marca */
+.rodape{position:absolute;display:flex;align-items:center;gap:12px;white-space:nowrap;font:700 28px/1 var(--f-texto);color:var(--tinta)}
+.rodape svg{width:46px;height:35px;flex:none}
+.rodape span{font-weight:500;color:var(--apagado)}
+.escuro .rodape{color:var(--giz)}
+.escuro .rodape span{color:#B9BED0}
+
+/* guia da área segura (só com --guia) */
+.guia{position:absolute;display:none;left:65px;right:65px;top:269px;height:979px;outline:3px dashed #e33;z-index:9}
+.com-guia.f9 .guia{display:block}

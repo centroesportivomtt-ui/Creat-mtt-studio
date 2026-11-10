@@ -194,10 +194,15 @@ p{margin:0;text-wrap:pretty}
 .zap-flutuante{position:fixed;right:var(--gut-d);bottom:calc(16px + env(safe-area-inset-bottom, 0px));z-index:var(--z-flutuante);min-height:52px;padding:8px 18px 8px 14px;font-size:15px;background:var(--papel)}
 .zap-flutuante svg{width:24px;height:24px}
 body.com-previa .zap-flutuante,body.com-consentimento .zap-flutuante{display:none}
+/* fora da tela enquanto o hero aparece (nunca em cima do campo do nome) e quando cobre um botão principal (vitrine.js) */
+body.heroi-na-tela .zap-flutuante,.zap-flutuante.zap-recolhido{opacity:0;visibility:hidden;pointer-events:none;transform:translateY(12px)}
+@media (prefers-reduced-motion:no-preference){.zap-flutuante{transition:opacity var(--duracao-curta) var(--curva-saida),transform var(--duracao-curta) var(--curva-saida),visibility 0s}body.heroi-na-tela .zap-flutuante,.zap-flutuante.zap-recolhido{transition:opacity var(--duracao-curta) var(--curva-saida),transform var(--duracao-curta) var(--curva-saida),visibility 0s var(--duracao-curta)}}
+@media (prefers-reduced-motion:reduce){body.heroi-na-tela .zap-flutuante,.zap-flutuante.zap-recolhido{transform:none}}
 
 /* ---------------------------------------------------------------- consentimento: aceitar e recusar com o MESMO peso */
 .consentimento{position:fixed;left:var(--gut);right:var(--gut-d);bottom:calc(8px + env(safe-area-inset-bottom, 0px));z-index:var(--z-consentimento);display:grid;gap:var(--r2);max-width:560px;margin-inline:auto;padding:var(--r3) var(--r4);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra)}
 .consentimento p{font-size:var(--t-menor)}
+body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 /* sai da frente da sede embutida (vitrine.js): desce em 200 ms; volta subindo em 260 ms */
 .consentimento{transition:transform 260ms var(--curva-saida),opacity 260ms var(--curva-saida),visibility 0s}
 .consentimento.is-recuado{transform:translateY(calc(100% + 24px));opacity:0;visibility:hidden;transition:transform 200ms cubic-bezier(.4,0,1,1),opacity 200ms cubic-bezier(.4,0,1,1),visibility 0s 200ms}

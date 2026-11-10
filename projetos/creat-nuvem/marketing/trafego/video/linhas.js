@@ -26,35 +26,65 @@
     return out;
   }
 
+  /* ------------------------------------------------------------------ giro da placa: tempo esticado só no verso
+     O componente real (ritual/placa.js, GIRO_MS 600) passa pelo verso com a nuvem queimada (90° a 270°) em ~83 ms,
+     2 quadros a 30 fps: ninguém vê. Na montagem, só esse trecho do tempo local da animação é esticado para 4 quadros
+     (133 ms). A imagem continua sendo a do componente; muda só o relógio. Captura e palco aplicam o mesmo mapa. */
+  function bezier(x1, y1, x2, y2) {
+    function bx(t) { return 3 * x1 * t * (1 - t) * (1 - t) + 3 * x2 * t * t * (1 - t) + t * t * t; }
+    function by(t) { return 3 * y1 * t * (1 - t) * (1 - t) + 3 * y2 * t * t * (1 - t) + t * t * t; }
+    return function (x) { var a = 0, b = 1; for (var i = 0; i < 50; i++) { var m = (a + b) / 2; if (bx(m) < x) a = m; else b = m; } return by((a + b) / 2); };
+  }
+  /* mesmos quadros-chave de girar() em ritual/placa.js */
+  var GO = [0, 0.14, 0.5, 0.74, 0.88, 1], GA = [0, -16, 180, 372, 356, 360];
+  var GE = [[.3, 0, .5, 1], [.55, 0, .75, .6], [.2, .55, .35, 1], [.45, 0, .55, 1], [.45, 0, .55, 1]].map(function (e) { return bezier(e[0], e[1], e[2], e[3]); });
+  function anguloGiro(v) { var x = v / 600; for (var i = 0; i < 5; i++) if (x <= GO[i + 1]) return GA[i] + (GA[i + 1] - GA[i]) * GE[i]((x - GO[i]) / (GO[i + 1] - GO[i])); return 360; }
+  function cruza(alvo, de, ate) { var a = de, b = ate; for (var i = 0; i < 50; i++) { var m = (a + b) / 2; if (anguloGiro(m) < alvo) a = m; else b = m; } return (a + b) / 2; }
+  var v90 = cruza(90, 84, 300), v270 = cruza(270, 300, 444);
+  var GIRO = { ms: 600, v90: v90, v270: v270, D: 4000 / FPS };
+  /* tempo do vídeo desde o nascimento da animação (ms) -> tempo local do componente (ms) */
+  GIRO.local = function (u) { var g = GIRO; if (u <= g.v90) return u; if (u <= g.v90 + g.D) return g.v90 + (u - g.v90) * (g.v270 - g.v90) / g.D; return u - g.D + (g.v270 - g.v90); };
+  GIRO.duracaoVideo = 600 - (v270 - v90) + GIRO.D;
+  /* quadro em que a placa assenta de frente (ângulo chega a 355°): é onde o sino bate */
+  GIRO.assenta = (function () { for (var k = 1; k < 40; k++) { var v = GIRO.local(k * 1000 / FPS); if (v > v270 && anguloGiro(v) >= 355) return k / FPS; } return 0.45; })();
+
   /* ------------------------------------------------------------------ R8 · Vire Você (academia) */
   var nomeR8 = 'Studio Barra Fictícia';
   var R8 = {
     codigo: 'R8', nicho: 'academia', arquivo: 'R8-academia-v1', nome: nomeR8, duracao: 15,
     hora: '2026-11-10T09:12:00-03:00',
-    /* sessão A: abertura em close na página real (0 a 2,4 s). Sessão B: plano-sequência sem corte (2,4 a 12 s). */
+    /* sessão A: abertura em close na página real (0 a 2,4 s). Sessão B: plano-sequência sem corte (3,6 a 12 s). */
     sessoes: {
       /* A segue até 3,6 s: o recuo da câmera revela a MESMA página com a placa em ABERTO (sem salto de estado) */
       A: { t0: 0, t1: 3.6, teclas: teclas(nomeR8, 0.18, 0.045, 0, 1), arraste: { t0: 1.2, t1: 1.46, solta: 1.5, dy: 82 }, relogioParaEm: 1.52 },
-      /* B: corte seco em 3,6 s (clique) e o plano-sequência recomeça do campo vazio */
+      /* B: corte seco em 3,6 s (clique), com a legenda-ponte "Agora, do começo:"; o plano-sequência recomeça do campo vazio */
       B: { t0: 3.6, t1: 12.0, teclas: teclas(nomeR8, 3.92, 0.098, 0.03, 8), arraste: { t0: 6.3, t1: 6.6, solta: 6.66, dy: 82 },
            rolarHome: { t0: 3.62, t1: 3.95, dy: 54 },
-           /* prévia: primeiro para no nome do studio (a promessa "com o nome"), depois desce até o pedido de aula */
-           rolagem: [{ t0: 7.75, t1: 8.5, alvo: 'nome', y: 232 }, { t0: 9.95, t1: 11.05, alvo: 'pedido', y: 200 }], toqueDia: 11.42 }
+           /* prévia: primeiro para no nome do studio (a promessa "com o nome"), depois desce até o pedido de aula.
+              Velocidade máxima de rolagem ~80 px de vídeo por quadro (curva senoidal). */
+           rolagem: [{ t0: 7.75, t1: 8.5, alvo: 'nome', y: 232 }, { t0: 9.8, t1: 11.1, alvo: 'pedido', y: 200 }], toqueDia: 11.42 }
     },
-    camera: { recuo: [2.4, 3.45] },      /* close (2,68x) -> celular (1,43x) */
+    camera: {
+      recuo: [2.4, 3.45],                  /* close na placa (~70% da largura) -> celular (1,51x) */
+      larguraPlaca: 0.70,
+      /* o celular desce 120 px enquanto a placa vira de verdade, para a corrente e o prego saírem de baixo da legenda */
+      desce: [[5.95, 6.28, 120], [7.3, 7.68, 0]]
+    },
     legendas: [
       [0.0, 1.2, 'Digite o <k>nome.</k>'],
       [1.2, 2.4, 'Vire a <k>placa.</k>'],
       [2.4, 3.6, 'Não é animação.<br><k>É a página.</k>'],
-      [3.6, 7.6, 'Sem corte.<br><k>Gravado na página.</k>'],
+      [3.6, 4.2, 'Agora, <k>do começo:</k>'],
+      [4.2, 7.6, 'Sem <k>corte.</k>'],
       [7.6, 12.0, '<k>O site pronto,</k><br>com o nome.'],
       [12.0, 15.0, 'Digite o <k>nome.</k><br>Veja o site pronto']
     ],
     selos: [
       { t0: 0, t1: 3.6, texto: 'Creat Nuvem · Porta Aberta', lugar: 'topo-esq' },
-      { t0: 3.6, t1: 12, texto: 'sem corte · gravado na página', lugar: 'topo-esq' },
+      { t0: 4.2, t1: 12, texto: 'gravado na página', lugar: 'topo-esq' },
       { t0: 0, t1: 12, texto: 'nome fictício', lugar: 'topo-dir' },
-      { t0: 7.7, t1: 12, texto: 'prévia · serviços e preços de exemplo', lugar: 'baixo-2' }
+      /* t0 real = quadro em que a prévia aparece (meta.sessoes.B.previaEm, lido pelo palco) */
+      { t0: 7.33, t1: 12, texto: 'prévia · serviços e preços de exemplo', lugar: 'baixo-2', naPrevia: 'B' }
     ],
     cartao: 12.0
   };
@@ -64,26 +94,32 @@
   var R7 = {
     codigo: 'R7', nicho: 'barbearia', arquivo: 'R7-barbearia-v1', nome: nomeR7, duracao: 15,
     hora: '2026-11-10T23:12:00-03:00',
-    cena: { descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, vidro: [2.42, 2.98] },
+    /* aproxima: depois de assentar, a câmera chega na placa (2x) para o nome a giz ficar legível; vidro: atravessa a lousa */
+    cena: { descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.95, 2.38, 2.0], vidro: [2.6, 3.15] },
     sessoes: {
-      C: { t0: 2.4, t1: 7.0, rolagem: [3.2, 3.9], toques: [
-        { t: 4.25, alvo: 'dia', rolarAntes: null },
-        { t: 5.15, alvo: 'hora', rolarAntes: [4.45, 4.85] },
-        { t: 6.05, alvo: 'servico', rolarAntes: [5.35, 5.75] }
+      /* prévia real: desce até o nome e para (0,8 s); depois um corte de montagem, com fusão de 0,2 s, leva ao pedido
+         (são ~1.400 px de página: rolar isso em menos de 1 s borra). O R7 não promete "sem corte".
+         Dia, hora e serviço com rolagens curtas e senoidais (~80 px de vídeo por quadro no máximo). */
+      C: { t0: 2.4, t1: 7.15, rolagem: { t0: 3.18, t1: 3.65, alvo: 'nome', y: 120 },
+        salto: { t: 4.45, fusao: 0.2, yFita: 118 },
+        toques: [
+        { t: 4.9, alvo: 'dia', rolarAntes: null },
+        { t: 5.65, alvo: 'hora', rolarAntes: [5.05, 5.45] },
+        { t: 6.75, alvo: 'servico', rolarAntes: [5.78, 6.62] }
       ] }
     },
-    mensagem: 7.0,
+    mensagem: 7.15,
     legendas: [
       [0.0, 1.3, '<k>23h12.</k> Um cliente<br>quer horário.'],
-      [1.3, 2.5, 'Vire a <k>placa.</k>'],
-      [2.5, 7.0, 'Pelo site, ele<br><k>mesmo escolhe.</k>'],
-      [7.0, 10.0, 'E o pedido chega<br>no <k>WhatsApp.</k>'],
+      [1.3, 2.6, 'Vire a <k>placa.</k>'],
+      [2.6, 7.15, 'Pelo site, ele<br><k>mesmo escolhe.</k>'],
+      [7.15, 10.0, 'E o pedido chega<br>no <k>WhatsApp.</k>'],
       [10.0, 15.0, 'Digite o <k>nome.</k><br>Veja o site pronto']
     ],
     selos: [
       { t0: 0, t1: 10, texto: 'Creat Nuvem · Porta Aberta', lugar: 'topo-esq' },
       { t0: 0.55, t1: 10, texto: 'nome fictício', lugar: 'topo-dir' },
-      { t0: 2.95, t1: 7.0, texto: 'prévia · serviços e preços de exemplo', lugar: 'baixo-2' }
+      { t0: 3.1, t1: 7.15, texto: 'prévia · serviços e preços de exemplo', lugar: 'baixo-2' }
     ],
     cartao: 10.0
   };
@@ -95,31 +131,31 @@
     e.push({ t: 0.04, voz: 'corrente', forca: 0.8 }, { t: 0.31, voz: 'corrente', forca: 0.55 });
     A.teclas.forEach(function (k) { if (k.ch !== ' ') e.push({ t: k.t, voz: 'giz', forca: 1 }); });
     e.push({ t: A.arraste.t0, voz: 'tic', forca: 1 }, { t: A.arraste.t0 + 0.12, voz: 'rangido', forca: 0.8 });
-    e.push({ t: A.arraste.solta + 0.6, voz: 'sino', forca: 1 });
+    e.push({ t: A.arraste.solta + GIRO.assenta, voz: 'sino', forca: 1 });
     e.push({ t: 3.6, voz: 'clique', forca: 0.7 }, { t: 2.3, voz: 'sala', dur: 9.9 });
     B.teclas.forEach(function (k) { e.push({ t: k.t, voz: 'tecla', forca: 0.55 }); if (k.ch !== ' ') e.push({ t: k.t + 0.004, voz: 'giz', forca: 0.5 }); });
     e.push({ t: B.arraste.t0, voz: 'tic', forca: 1 }, { t: B.arraste.t0 + 0.12, voz: 'rangido', forca: 0.7 });
-    e.push({ t: B.arraste.solta + 0.6, voz: 'sino', forca: 0.95 });
+    e.push({ t: B.arraste.solta + GIRO.assenta, voz: 'sino', forca: 0.95 });
     e.push({ t: 7.6, voz: 'grave', forca: 1 });
     e.push({ t: B.toqueDia, voz: 'tic', forca: 0.9 });
-    e.push({ t: R8.cartao, voz: 'porta', forca: 1 }, { t: R8.cartao + 0.98, voz: 'sino', forca: 0.55 });
+    e.push({ t: R8.cartao, voz: 'porta', forca: 1 }, { t: R8.cartao + 0.4 + GIRO.assenta, voz: 'sino', forca: 0.55 });
     return e;
   }
   function somR7() {
     var e = [], c = R7.cena;
-    e.push({ t: 0, voz: 'rua-noite', dur: 2.9, nivel: 1 });
+    e.push({ t: 0, voz: 'rua-noite', dur: c.vidro[0] + 0.5, nivel: 1 });
     e.push({ t: 0.0, voz: 'vibra', forca: 1 });
     e.push({ t: c.descida[0] + 0.08, voz: 'corrente', forca: 0.85 }, { t: c.descida[0] + 0.3, voz: 'corrente', forca: 0.6 }, { t: c.descida[1] - 0.02, voz: 'corrente', forca: 0.45 });
     e.push({ t: c.arraste.t0, voz: 'tic', forca: 1 }, { t: c.arraste.t0 + 0.12, voz: 'rangido', forca: 0.8 });
-    e.push({ t: c.arraste.solta + 0.6, voz: 'sino', forca: 1 });
-    e.push({ t: 2.5, voz: 'grave', forca: 1 }, { t: 2.4, voz: 'sala', dur: 7.8 });
+    e.push({ t: c.arraste.solta + GIRO.assenta, voz: 'sino', forca: 1 });
+    e.push({ t: c.vidro[0], voz: 'grave', forca: 1 }, { t: 2.4, voz: 'sala', dur: 7.9 });
     R7.sessoes.C.toques.forEach(function (q) { e.push({ t: q.t, voz: 'tic', forca: 0.9 }); });
     e.push({ t: R7.mensagem, voz: 'plim', forca: 1 });
-    e.push({ t: R7.cartao, voz: 'porta', forca: 1 }, { t: R7.cartao + 0.98, voz: 'sino', forca: 0.55 });
+    e.push({ t: R7.cartao, voz: 'porta', forca: 1 }, { t: R7.cartao + 0.4 + GIRO.assenta, voz: 'sino', forca: 0.55 });
     return e;
   }
   R8.som = somR8(); R7.som = somR7();
 
-  var API = { FPS: FPS, SEGURA: SEGURA, GRADE: GRADE, prng: prng, R8: R8, R7: R7 };
+  var API = { FPS: FPS, SEGURA: SEGURA, GRADE: GRADE, prng: prng, GIRO: GIRO, anguloGiro: anguloGiro, R8: R8, R7: R7 };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else raiz.LINHAS = API;
 })(typeof window !== 'undefined' ? window : globalThis);

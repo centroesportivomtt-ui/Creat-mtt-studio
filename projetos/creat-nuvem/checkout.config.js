@@ -22,12 +22,17 @@
      (Checkout Session da assinatura). Host exato.
    - Asaas (asaas.com e subdomínios) e Cakto (cakto.com.br e subdomínios).
 
-   Link da inauguração: este arquivo é público, então quem guardar o link
-   pode pagar o preço de inauguração depois do fim. Crie o link com data de
-   encerramento (Mercado Pago: Link de pagamento > "Data de vencimento"; Asaas:
-   "Quantidade máxima de pagamentos" = vagas restantes). Quando a inauguração
-   acabar, desative o link no provedor e volte aberturaInauguracao para o marcador:
-   scripts/atualizar-vagas.cjs avisa e a rotina diária falha até isso ser feito.
+   Links de R$ 297 (inauguração): aberturaInauguracao e os 6 de linksPorPraca. Este arquivo é
+   público, então quem guardar um deles pode pagar o preço de inauguração depois do fim.
+   - Crie cada link com data de vencimento (Mercado Pago: Link de pagamento > "Data de vencimento").
+   - Teto de vagas: o limite de "quantidade máxima" do Mercado Pago é POR LINK. A soma das quantidades
+     máximas dos 7 links tem de ser no máximo vagasTotal de dados/precos.json (20). Se não der para
+     dividir assim, o corte é manual e vale para TODOS os 7 links ao mesmo tempo (ADR-005).
+   - Quando a inauguração acabar, desative no Mercado Pago os 7 links (e os 2 combos do anual, que não
+     ficam aqui: docs/INTEGRACAO-PAGAMENTO.md) e volte aberturaInauguracao para o marcador e
+     linksPorPraca para {}. scripts/atualizar-vagas.cjs imprime a lista e a rotina diária falha até isso.
+   - O plano anual NÃO é cobrado aqui: hoje a pessoa paga só a Abertura; o anual é cobrado no dia em
+     que o site entra no ar (decisão D3 do diretor, 10/11/2026).
    ===================================================================== */
 (function () {
   'use strict';
@@ -74,15 +79,6 @@
     'aracaju': 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-88c3e2e4-b65b-444e-8e28-bbd5ec4c5ac2'
   };
 
-  /* Combos do plano anual, só com a Abertura de inauguração valendo: um Pix só, com a Abertura e os 12 meses.
-     total = valor cobrado no link. O botão só usa o combo se total = Abertura atual + anual da página; se o
-     preço mudar em dados/precos.json e o link não, a página cai no link da Abertura sozinha (a tela nunca
-     mostra um total diferente do que o Mercado Pago cobra). scripts/checar.cjs confere a soma. */
-  var COMBOS_ANUAL = {
-    aberto_anual: { link: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-78effa57-7b26-4cd5-9617-6d6bc32cce32', total: 1767 },
-    vitrine_anual: { link: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2189692475-9914ecb8-0c03-45b7-a9bc-3c36972f372d', total: 3267 }
-  };
-
   // Valor que cada link cobra no Mercado Pago (o Purchase do Pixel usa este valor; scripts/checar.cjs confere com dados/precos.json).
   var VALOR_DOS_LINKS = { aberturaInauguracao: 297, aberturaPadrao: 497, bastidores: 67 };
 
@@ -90,33 +86,29 @@
     try { var p = new URL(link).searchParams.get('pref_id'); return p && /^[0-9A-Za-z-]{8,80}$/.test(p) ? p : null; } catch (e) { return null; }
   }
 
-  /* Escolhe o link do botão de pagar de /abrir/.
+  /* Escolhe o link do botão de pagar de /abrir/. Hoje a página cobra só a Abertura, em qualquer plano
+     (o anual é cobrado quando o site entra no ar).
      opcoes: { inauguracao: bool (a página está mostrando o preço de inauguração),
-               plano: 'aberto' | 'vitrine' | 'aberto_anual' | 'vitrine_anual',
-               praca: utm_campaign guardada (ou vazio),
-               totalAnual: Abertura atual + 12 meses do plano, como a tela calcula }
-     Devolve { chave, link, praca, combo, valor } ou null se nenhum link é válido. */
+               praca: utm_campaign guardada (ou vazio) }
+     Devolve { chave, link, praca, valor } ou null se nenhum link é válido. valor = o que o link cobra;
+     é o total que a tela mostra. */
   function escolherAbertura(opcoes) {
     var o = opcoes || {};
-    var r = function (chave, link, praca, combo, valor) { return linkValido(link) ? { chave: chave, link: link, praca: praca || null, combo: !!combo, valor: valor } : null; };
-    if (!o.inauguracao) return r('aberturaPadrao', LINKS.aberturaPadrao, null, false, VALOR_DOS_LINKS.aberturaPadrao);
-    var combo = Object.prototype.hasOwnProperty.call(COMBOS_ANUAL, o.plano) ? COMBOS_ANUAL[o.plano] : null;
-    if (combo && linkValido(combo.link) && typeof o.totalAnual === 'number' && o.totalAnual === combo.total) {
-      return r('combo_' + o.plano, combo.link, null, true, combo.total);
-    }
+    var r = function (chave, link, praca, valor) { return linkValido(link) ? { chave: chave, link: link, praca: praca || null, valor: valor } : null; };
+    if (!o.inauguracao) return r('aberturaPadrao', LINKS.aberturaPadrao, null, VALOR_DOS_LINKS.aberturaPadrao);
     var praca = typeof o.praca === 'string' && Object.prototype.hasOwnProperty.call(LINKS_POR_PRACA, o.praca) ? o.praca : null;
-    if (praca && linkValido(LINKS_POR_PRACA[praca])) return r('aberturaInauguracao', LINKS_POR_PRACA[praca], praca, false, VALOR_DOS_LINKS.aberturaInauguracao);
-    return r('aberturaInauguracao', LINKS.aberturaInauguracao, null, false, VALOR_DOS_LINKS.aberturaInauguracao)
-      || r('aberturaPadrao', LINKS.aberturaPadrao, null, false, VALOR_DOS_LINKS.aberturaPadrao);
+    if (praca && linkValido(LINKS_POR_PRACA[praca])) return r('aberturaInauguracao', LINKS_POR_PRACA[praca], praca, VALOR_DOS_LINKS.aberturaInauguracao);
+    return r('aberturaInauguracao', LINKS.aberturaInauguracao, null, VALOR_DOS_LINKS.aberturaInauguracao)
+      || r('aberturaPadrao', LINKS.aberturaPadrao, null, VALOR_DOS_LINKS.aberturaPadrao);
   }
 
-  // Valor cobrado pela preferência que o Mercado Pago devolve na volta (preference_id). null = link desconhecido.
+  // Valor cobrado pela preferência que o Mercado Pago devolve na volta (preference_id). null = link desconhecido
+  // (o Purchase do Pixel só sai com preferência conhecida; nunca com valor adivinhado).
   function valorDaPreferencia(id) {
     if (typeof id !== 'string' || !id) return null;
     var achado = null;
     Object.keys(LINKS).forEach(function (k) { if (prefId(LINKS[k]) === id && k in VALOR_DOS_LINKS) achado = VALOR_DOS_LINKS[k]; });
     Object.keys(LINKS_POR_PRACA).forEach(function (k) { if (prefId(LINKS_POR_PRACA[k]) === id) achado = VALOR_DOS_LINKS.aberturaInauguracao; });
-    Object.keys(COMBOS_ANUAL).forEach(function (k) { if (prefId(COMBOS_ANUAL[k].link) === id) achado = COMBOS_ANUAL[k].total; });
     return achado;
   }
 
@@ -132,8 +124,11 @@
     empresa: EMPRESA,
     links: LINKS,
     linksPorPraca: LINKS_POR_PRACA,
-    combosAnual: COMBOS_ANUAL,
     valorDosLinks: VALOR_DOS_LINKS,
+    /* Contadores ao vivo ("Restam X vagas", "Resta 1 vaga", "Vagas de produção hoje: X de Y").
+       Desligados (decisão D1 do diretor, 10/11/2026) até o número vir de pedido pago gravado em
+       servidor. Com false, a página mostra só "preço de inauguração", sem número restante. */
+    contadoresAoVivo: false,
     // Reserva quando dados/precos.json não parseia. scripts/checar.cjs confere que bate com o JSON.
     precosPadrao: { prazoHoras: 72, abertura: 497, planos: { aberto: 147, vitrine: 297 }, anualMesesPagos: 10, bastidores: 67 },
     termosVersao: 'termos-v1',

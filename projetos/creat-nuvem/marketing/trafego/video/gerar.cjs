@@ -23,7 +23,7 @@ const iQ = args.indexOf('--quadros'), soQuadros = iQ > -1 ? args[iQ + 1].split('
 const log = (...a) => console.log(...a);
 
 /* capa: o quadro mais forte de cada Reel (placa ABERTO com nome e legenda) */
-const CAPA = { R8: 2.3, R7: 2.3 };
+const CAPA = { R8: 2.3, R7: 2.4 };
 
 async function renderPalco(browser, base, reel) {
   const R = L[reel], dir = path.join(TMP, 'quadros', reel);
@@ -66,16 +66,23 @@ async function renderSom(browser, base, reel) {
   buf.write('data', 36); buf.writeUInt32LE(n * 8, 40);
   for (let i = 0; i < n; i++) { buf.writeFloatLE(pcm.L[i], 44 + i * 8); buf.writeFloatLE(pcm.R[i], 48 + i * 8); }
   const bruto = path.join(TMP, reel + '-trilha-bruta.wav'); fs.writeFileSync(bruto, buf);
-  /* loudness: duas passadas do loudnorm (EBU R128) para -14 LUFS integrados, pico real -1,5 dBTP */
-  const saidaMed = require('child_process').spawnSync(FFMPEG, ['-hide_banner', '-nostats', '-i', bruto, '-af', 'loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json', '-f', 'null', '-'], { encoding: 'utf8' });
-  const js = JSON.parse(saidaMed.stderr.slice(saidaMed.stderr.lastIndexOf('{')));
+  /* loudness: duas passadas do loudnorm (EBU R128) para -13 LUFS, depois um limitador com 4x de sobreamostragem em
+     -3 dBFS, que tira cerca de 1,4 LU dos transientes (sino, porta) e deixa o integrado entre -14,5 e -14,7 LUFS. O AAC sobe os
+     picos depois do limitador, então a folga fica do lado de cá; o alvo é pico real abaixo de -2 dBTP no MP4.
+     O número que vale é o medido no MP4 final (montarVideo), não no WAV. */
+  const js = medir(bruto);
   const final = path.join(TMP, reel + '-trilha.wav');
   execFileSync(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-i', bruto, '-af',
-    `loudnorm=I=-14:TP=-1.5:LRA=11:measured_I=${js.input_i}:measured_TP=${js.input_tp}:measured_LRA=${js.input_lra}:measured_thresh=${js.input_thresh}:offset=${js.target_offset}:linear=true,aresample=48000`,
-    '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s16le', final]);
-  const conf = require('child_process').spawnSync(FFMPEG, ['-hide_banner', '-nostats', '-i', final, '-af', 'loudnorm=I=-14:TP=-1.5:print_format=json', '-f', 'null', '-'], { encoding: 'utf8' });
-  const jc = JSON.parse(conf.stderr.slice(conf.stderr.lastIndexOf('{')));
+    `loudnorm=I=-13:TP=-1.5:LRA=11:measured_I=${js.input_i}:measured_TP=${js.input_tp}:measured_LRA=${js.input_lra}:measured_thresh=${js.input_thresh}:offset=${js.target_offset}:linear=true,` + LIMITADOR,
+    '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s24le', final]);
+  const jc = medir(final);
   return { final, antes: js.input_i, depois: jc.input_i, pico: jc.input_tp };
+}
+const LIMITADOR = 'aresample=192000,alimiter=limit=0.7079:attack=1:release=60:level=false,aresample=48000';
+/* mede loudness integrado e pico real (EBU R128) de qualquer arquivo com áudio */
+function medir(arq) {
+  const r = require('child_process').spawnSync(FFMPEG, ['-hide_banner', '-nostats', '-i', arq, '-map', '0:a:0', '-af', 'loudnorm=I=-14:TP=-2:LRA=11:print_format=json', '-f', 'null', '-'], { encoding: 'utf8' });
+  return JSON.parse(r.stderr.slice(r.stderr.lastIndexOf('{')));
 }
 
 function montarVideo(reel) {
@@ -92,11 +99,24 @@ function montarVideo(reel) {
   execFileSync(FFMPEG, [...comum, ...v, '-pass', '1', '-passlogfile', log2, '-an', '-f', 'mp4', '/dev/null'], { cwd: TMP });
   execFileSync(FFMPEG, [...comum, '-i', trilha, ...v, '-pass', '2', '-passlogfile', log2, '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2',
     '-shortest', '-movflags', '+faststart', '-metadata', 'title=' + R.arquivo + ' · Creat Nuvem · Porta Aberta', mp4], { cwd: TMP });
+  /* pico real medido no MP4 (depois do AAC). Acima de -2 dBTP: abaixa o ganho da trilha e refaz só o áudio (vídeo copiado) */
+  let m = medir(mp4), tentativas = 0, ganho = 0;
+  while (parseFloat(m.input_tp) > -2.0 && tentativas < 4) {
+    tentativas++;
+    ganho += -2.15 - parseFloat(m.input_tp);
+    const tmp = path.join(TMP, reel + '-remux.mp4');
+    execFileSync(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-i', mp4, '-i', trilha, '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'copy',
+      '-af', 'volume=' + ganho.toFixed(2) + 'dB', '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2', '-shortest', '-movflags', '+faststart',
+      '-metadata', 'title=' + R.arquivo + ' · Creat Nuvem · Porta Aberta', tmp]);
+    fs.renameSync(tmp, mp4);
+    m = medir(mp4);
+  }
+  const audio = { lufs: parseFloat(m.input_i), dbtp: parseFloat(m.input_tp), lra: parseFloat(m.input_lra), ajustes: tentativas, ganhoExtraDb: +ganho.toFixed(2) };
   /* capa PNG 1080x1920 tirada de um quadro forte */
   const capa = path.join(SAIDA, R.arquivo + '-capa.png');
   fs.copyFileSync(path.join(dir, String(Math.round(CAPA[reel] * L.FPS)).padStart(4, '0') + '.png'), capa);
   const pr = JSON.parse(execFileSync(FFPROBE, ['-v', 'error', '-show_entries', 'format=duration,size:stream=codec_name,profile,width,height,r_frame_rate,pix_fmt,sample_rate,channels', '-of', 'json', mp4]).toString());
-  return { mp4, capa, probe: pr };
+  return { mp4, capa, probe: pr, audio };
 }
 
 (async () => {

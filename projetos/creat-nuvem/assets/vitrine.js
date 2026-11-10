@@ -12,8 +12,10 @@
      nem para analytics. O WhatsApp do Teste de verdade nunca é gravado.
    - Preço de inauguração (ADR-005, que revisa o ADR-003): vale com precos.json
      válido, inauguracao.ativa, vagasRestantes > 0 e atualizado_em de até 7 dias.
-     Contadores ("Restam X", "vagas de hoje") só com dado de até 48 h. Fora disso:
-     preço padrão, sem contador, sem mensagem de erro.
+     Contadores ("Restam X", "vagas de hoje") desligados (checkout.config.js
+     contadoresAoVivo: false, decisão D1) até o número vir de pedido pago gravado em
+     servidor; mesmo ligados, só com dado de até 48 h. Fora disso: preço padrão, sem
+     contador, sem mensagem de erro.
    - Medição: antes de qualquer script de medição, nome e cidade saem do
      fragmento e o endereço é limpo com history.replaceState (docs/MEDICAO-FUNIL.md).
    - Todo texto vindo de dado entra por textContent, nunca innerHTML.
@@ -226,6 +228,7 @@
         bastidores: base && num(base.bastidores) && base.bastidores > 0 ? base.bastidores : pad.bastidores,
         // Só para o texto dos termos (descreve a regra): o preço de inauguração como está no arquivo, mesmo velho.
         inauguracaoTermos: base && base.abertura.inauguracao && num(base.abertura.inauguracao.preco) && base.abertura.inauguracao.preco > 0 ? base.abertura.inauguracao.preco : null,
+        inauguracaoVagasTermos: base && base.abertura.inauguracao && inteiro(base.abertura.inauguracao.vagasTotal) && base.abertura.inauguracao.vagasTotal > 0 ? base.abertura.inauguracao.vagasTotal : null,
         vagasHoje: frescoV ? { vagas_hoje: v.vagas_hoje, capacidade_dia: v.capacidade_dia } : null,
         linkChave: chave,
         linkAbertura: links[chave]
@@ -262,14 +265,17 @@
       var k = e.getAttribute('data-v');
       if (k in v) { e.textContent = v[k]; e.classList.remove('num-carregando'); }
     });
-    var restam = pr.inauguracao ? pr.inauguracao.vagasRestantes : null;   // null = dado com mais de 48 h: sem contador
+    // Contadores ao vivo só com a chave ligada em checkout.config.js (D1: desligada até haver contagem de pedido pago no servidor).
+    var aoVivo = !!(CK && CK.contadoresAoVivo === true);
+    var restam = aoVivo && pr.inauguracao ? pr.inauguracao.vagasRestantes : null;   // null = desligado ou dado com mais de 48 h
+    var hoje = aoVivo ? pr.vagasHoje : null;
     var cond = {
       'inauguracao': !!pr.inauguracao,
       'sem-inauguracao': !pr.inauguracao,
       'varias-vagas': restam !== null && restam > 1,
       'ultima-vaga': restam === 1,
-      'vagas-hoje': !!pr.vagasHoje && pr.vagasHoje.vagas_hoje > 0,
-      'vagas-esgotadas': !!pr.vagasHoje && pr.vagasHoje.vagas_hoje === 0,
+      'vagas-hoje': !!hoje && hoje.vagas_hoje > 0,
+      'vagas-esgotadas': !!hoje && hoje.vagas_hoje === 0,
       'dados-prontos': true
     };
     $$('[data-se]', raiz).forEach(function (e) { e.hidden = !cond[e.getAttribute('data-se')]; });
@@ -277,7 +283,7 @@
   }
 
   /* ------------------------------------------------------------ botões de checkout (contrato e) */
-  // linkEscolhido: link já decidido (ex.: por praça ou combo anual em /abrir/); sem ele, vale CK.links[chave].
+  // linkEscolhido: link já decidido (ex.: o da praça em /abrir/); sem ele, vale CK.links[chave].
   function aplicarCheckout(btn, chave, linkEscolhido) {
     if (!btn.hasAttribute('data-rotulo')) btn.setAttribute('data-rotulo', btn.textContent.trim());
     btn.setAttribute('data-checkout', chave);
@@ -359,7 +365,9 @@
   }
   W.__creatEventos = W.__creatEventos || [];
   function carregarScript(src, aoCarregar, integridade) {
-    var s = el('script', { src: src, async: true, crossorigin: 'anonymous', referrerpolicy: 'no-referrer' });
+    // crossorigin só com SRI (PostHog, que manda CORS). O fbevents.js da Meta não manda Access-Control-Allow-Origin:
+    // com crossorigin="anonymous" o navegador bloqueava o script e o Pixel nunca carregava (visto em 10/11/2026).
+    var s = el('script', { src: src, async: true, crossorigin: integridade ? 'anonymous' : null, referrerpolicy: 'no-referrer' });
     if (integridade) s.integrity = integridade; // SRI: arquivo alterado no CDN = navegador recusa, nada roda na nossa origem
     s.onload = aoCarregar || null; s.onerror = function () { fila = []; };
     D.head.appendChild(s);
@@ -388,12 +396,22 @@
     if ('requestIdleCallback' in W) W.requestIdleCallback(iniciar, { timeout: 4000 }); else setTimeout(iniciar, 1500);
   }
 
-  /* Consentimento: Pixel e Clarity só depois do "Aceitar" (o banner mora na home; /abrir/ e /obrigado/
-     usam a mesma escolha gravada neste aparelho e nunca carregam nada sem ela). Antes de carregar,
-     iniciar() já tirou nome e cidade do endereço (limparEndereco), então nenhum evento leva dado pessoal na URL. */
-  var CHAVE_CONSENT = 'creat:consentimento';
+  /* Consentimento: Pixel e Clarity só depois do "Aceitar". O banner existe na home, em /abrir/ e em
+     /obrigado/ (aparece enquanto não houver escolha gravada) e "Preferências de medição", no rodapé,
+     reabre a escolha. A escolha vale 180 dias; depois some sozinha e o banner pergunta de novo.
+     Antes de carregar, iniciar() já tirou nome e cidade do endereço (limparEndereco).
+     Pixel: home, /abrir/ e /obrigado/. Clarity (gravação de uso): SÓ na home, que não mostra dado
+     do pedido; o campo do nome e o que repete o nome na tela levam data-clarity-mask (D4). */
+  var CHAVE_CONSENT = 'creat:consentimento', D180 = 180 * 24 * 3600 * 1000;
   var PAGINAS_PIXEL = ['home', 'abrir', 'obrigado'];
-  function consentimento() { var c = lerJSONGuardado(CHAVE_CONSENT); return c && c.versao === 1 ? c : null; }
+  var PAGINAS_CLARITY = ['home'];
+  function consentimento(agora) {
+    var c = lerJSONGuardado(CHAVE_CONSENT);
+    if (!c || c.versao !== 1) return null;
+    var t0 = Date.parse(c.em), dif = (agora || Date.now()) - t0;
+    if (isNaN(t0) || dif > D180 || dif < -FOLGA) { guarda.apagar(CHAVE_CONSENT); return null; }
+    return c;
+  }
   var terceirosCarregados = false, pixelLigado = false;
   function carregarTerceiros() {
     if (terceirosCarregados || PAGINAS_PIXEL.indexOf(PAGINA) === -1) return;
@@ -408,10 +426,23 @@
       pixelLigado = true;
       carregarScript('https://connect.facebook.net/en_US/fbevents.js');
     }
-    if (MED.clarityValido && MED.clarityValido(MED.clarity)) {
+    if (PAGINAS_CLARITY.indexOf(PAGINA) !== -1 && MED.clarityValido && MED.clarityValido(MED.clarity)) {
       W.clarity = W.clarity || function () { (W.clarity.q = W.clarity.q || []).push(arguments); };
       carregarScript('https://www.clarity.ms/tag/' + MED.clarity);
     }
+  }
+  // Cookies próprios do Pixel (_fbp, _fbc), apagados ao recusar depois de aceitar e em "Esquecer meus dados".
+  function apagarCookiesMeta() {
+    var dominios = [''], h = location.hostname || '';
+    var partes = h.split('.');
+    for (var i = 0; i < partes.length - 1; i++) dominios.push('; domain=.' + partes.slice(i).join('.'));
+    ['_fbp', '_fbc'].forEach(function (n) { dominios.forEach(function (d) { try { D.cookie = n + '=; Max-Age=0; path=/' + d; } catch (e) {} }); });
+  }
+  // Revoga o que já carregou nesta página: o Pixel para de mandar evento e a página recarrega sem terceiros.
+  function revogarTerceiros() {
+    try { if (W.fbq) W.fbq('consent', 'revoke'); } catch (e) {}
+    pixelLigado = false;
+    apagarCookiesMeta();
   }
 
   /* Eventos padrão do Pixel (docs/MEDICAO-FUNIL.md). Lista fechada de parâmetros por evento:
@@ -429,11 +460,9 @@
   }
   function pixelEvento(nome, params, eventId) {
     var limpo = filtrarPixel(nome, params); if (!limpo) return false;
-    if (W.__creatPixel) W.__creatPixel.push({ evento: nome, parametros: limpo, eventID: eventId || null }); // inspeção em teste
     if (!pixelLigado || !W.fbq) return false;
     try { if (eventId) W.fbq('track', nome, limpo, { eventID: String(eventId) }); else W.fbq('track', nome, limpo); return true; } catch (e) { return false; }
   }
-  W.__creatPixel = W.__creatPixel || [];
   // ViewContent: no máximo um por nicho por sessão do navegador (abrir e fechar a prévia não duplica).
   var vistoNaSessao = {};
   function pixelViewContent(nicho) {
@@ -471,7 +500,7 @@
      Lê o fragmento (nome, cidade, nicho, plano, utm_*) e a volta do Mercado Pago (query) UMA vez e
      reescreve o endereço sem nome, cidade nem parâmetros do pagamento. As páginas usam ENTRADA. */
   var PARAMS_MP = ['collection_id', 'collection_status', 'payment_id', 'status', 'external_reference', 'payment_type', 'merchant_order_id', 'preference_id', 'site_id', 'processing_mode', 'merchant_account_id'];
-  var ENTRADA = { frag: lerFragmento(''), query: {}, retorno: null };
+  var ENTRADA = { frag: lerFragmento(''), query: {}, retorno: null, ver: false, preferencias: false };
   // Volta do Checkout Pro: aprovado só com status approved E payment_id numérico.
   function lerRetornoMP(search) {
     var q; try { q = new URLSearchParams(search || ''); } catch (e) { return null; }
@@ -490,6 +519,8 @@
     ENTRADA.frag = lerFragmento(location.hash);
     ENTRADA.query = lerUtm(q);
     ENTRADA.retorno = lerRetornoMP(location.search);
+    ENTRADA.preferencias = location.hash === '#preferencias';
+    try { ENTRADA.ver = new URLSearchParams(String(location.hash || '').replace(/^#/, '')).get('ver') === '1'; } catch (e) { ENTRADA.ver = false; }
     var mudou = false;
     PARAMS_MP.forEach(function (k) { if (q.has(k)) { q.delete(k); mudou = true; } });
     var busca = q.toString(); busca = busca ? '?' + busca : '';
@@ -502,41 +533,71 @@
     if (mudou) { try { history.replaceState(null, '', location.pathname + busca + hash); } catch (e) {} }
   }
 
-  /* Purchase em /obrigado/: só com volta aprovada do Mercado Pago, valor conhecido do link e uma vez por payment_id. */
+  /* Purchase em /obrigado/: só com volta aprovada do Mercado Pago, preference_id de um link conhecido do
+     checkout.config.js (o valor é o que esse link cobra; nunca valor adivinhado) e uma vez por payment_id.
+     creat:px:compras guarda { id, em } dos últimos 30 pagamentos medidos, cada um por 30 dias.
+     enviar: quem manda o evento (padrão: o Pixel). Os testes passam a própria função; não há global de teste. */
   var CHAVE_COMPRAS = 'creat:px:compras';
-  var CHAVE_CHECKOUT = 'creat:checkout:v1';
-  function medirCompra(retorno) {
+  function lerCompras(agora) {
+    var v = lerJSONGuardado(CHAVE_COMPRAS), t = agora || Date.now();
+    if (!Array.isArray(v)) { if (v !== null) guarda.apagar(CHAVE_COMPRAS); return []; }
+    var ok = v.filter(function (x) { var t0 = x && typeof x.id === 'string' ? Date.parse(x.em) : NaN; return !isNaN(t0) && t - t0 <= D30 && t - t0 >= -FOLGA; });
+    if (ok.length !== v.length) { if (ok.length) guarda.gravar(CHAVE_COMPRAS, JSON.stringify(ok)); else guarda.apagar(CHAVE_COMPRAS); }
+    return ok;
+  }
+  function medirCompra(retorno, enviar) {
     if (!retorno || !retorno.aprovado || !retorno.paymentId) return 'sem-aprovacao';
-    var feitas = lerJSONGuardado(CHAVE_COMPRAS); if (!Array.isArray(feitas)) feitas = [];
-    if (feitas.indexOf(retorno.paymentId) !== -1) return 'repetida';
+    var feitas = lerCompras();
+    if (feitas.some(function (x) { return x.id === retorno.paymentId; })) return 'repetida';
     var valor = CK && CK.valorDaPreferencia ? CK.valorDaPreferencia(retorno.preferencia) : null;
-    if (!num(valor) || !valor) {
-      // sem preference_id na volta: o valor do botão clicado neste aparelho (gravado no clique, vale 7 dias)
-      var ck = lerJSONGuardado(CHAVE_CHECKOUT);
-      if (ck && num(ck.valor) && ck.valor > 0 && Date.now() - Date.parse(ck.em) <= D7) valor = ck.valor;
-    }
     if (!num(valor) || !valor) return 'sem-valor';
-    if (!pixelEvento('Purchase', { value: valor, currency: 'BRL' }, retorno.paymentId)) return 'sem-pixel';
-    feitas.push(retorno.paymentId);
+    var mandar = typeof enviar === 'function' ? enviar : pixelEvento;
+    if (!mandar('Purchase', { value: valor, currency: 'BRL' }, retorno.paymentId)) return 'sem-pixel';
+    feitas.push({ id: retorno.paymentId, em: new Date().toISOString() });
     guarda.gravar(CHAVE_COMPRAS, JSON.stringify(feitas.slice(-30)));
     return 'enviada';
   }
+
+  /* Tudo o que o site guarda neste aparelho começa com "creat:" (localStorage e sessionStorage).
+     Chaves com prazo: creat:pedido:v1 (7 dias), creat:origem:v1 (30 dias), creat:px:compras (30 dias por item),
+     creat:consentimento (180 dias). Elas são conferidas e apagadas ao vencer em toda página que abre. */
+  var CHAVES_LEGADAS = ['creat:checkout:v1'];   // não é mais gravada (D8); some de quem já tinha
+  function limparVencidos() {
+    CHAVES_LEGADAS.forEach(function (k) { guarda.apagar(k); });
+    lerOrigem(); lerCompras(); consentimento();
+    if (typeof lerPedidoSalvo === 'function') lerPedidoSalvo();
+  }
+  function esquecerTudo() {
+    var apagarDe = function (st) { try { for (var i = st.length - 1; i >= 0; i--) { var k = st.key(i); if (k && k.indexOf('creat:') === 0) st.removeItem(k); } } catch (e) {} };
+    try { apagarDe(W.localStorage); } catch (e) {}
+    try { apagarDe(W.sessionStorage); } catch (e) {}
+    Object.keys(memoria).forEach(function (k) { if (k.indexOf('creat:') === 0) delete memoria[k]; });
+    vistoNaSessao = {};
+    if (terceirosCarregados) revogarTerceiros(); else apagarCookiesMeta();
+  }
   function montarConsentimento() {
     var caixa = $('#consentimento');
-    // /abrir/ e /obrigado/ não têm banner: valem a escolha já feita na home (sem escolha, nada carrega).
     if (!caixa) { if (consentimento()) carregarTerceiros(); return; }
     // O banner reserva o próprio espaço no fim da página: nada fica escondido atrás dele.
     var mostrar = function () { caixa.hidden = false; D.body.classList.add('com-consentimento'); D.body.style.setProperty('--altura-consentimento', (caixa.offsetHeight + 24) + 'px'); };
     var esconder = function () { caixa.hidden = true; D.body.classList.remove('com-consentimento'); };
     var decidir = function (sim) {
+      var antes = consentimento();
       guarda.gravar(CHAVE_CONSENT, JSON.stringify({ versao: 1, analytics: true, pixel: sim, clarity: sim, em: new Date().toISOString() }));
       esconder(); aviso(caixa.getAttribute('data-salvo') || 'Preferência salva.');
-      if (sim) carregarTerceiros();
+      if (sim) { carregarTerceiros(); return; }
+      // Recusou depois de aceitar: revoga o Pixel desta página, apaga os cookies dele e recarrega sem terceiros.
+      if (terceirosCarregados || (antes && antes.pixel)) { revogarTerceiros(); setTimeout(function () { try { location.reload(); } catch (e) {} }, 900); }
     };
     $$('[data-consentir]', caixa).forEach(function (b) { b.addEventListener('click', function () { decidir(b.getAttribute('data-consentir') === 'sim'); }); });
-    $$('[data-preferencias]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); mostrar(); var p = $('[data-consentir]', caixa); if (p) p.focus(); }); });
+    var abrirPreferencias = function () { mostrar(); var p = $('[data-consentir]', caixa); if (p) p.focus(); };
+    $$('[data-preferencias]').forEach(function (b) { b.addEventListener('click', function (e) { e.preventDefault(); abrirPreferencias(); }); });
+    // Vindo de "Preferências de medição" em termos/privacidade (link ../#preferencias): abre a escolha.
+    if (ENTRADA.preferencias) { abrirPreferencias(); if (consentimento()) carregarTerceiros(); return; }
     if (consentimento()) { carregarTerceiros(); return; }
-    // O banner não cobre a primeira tela: aparece quando o visitante passa do hero, fecha a prévia
+    // /abrir/ e /obrigado/: sem escolha gravada, o banner aparece logo (quem pulou o da home decide aqui).
+    if (PAGINA !== 'home') { mostrar(); return; }
+    // Home: o banner não cobre a primeira tela. Aparece quando o visitante passa do hero, fecha a prévia
     // ou depois de 25 s. Até lá nada de Pixel nem Clarity (só carregam com o Aceitar).
     var heroi = $('#porta'), mostrado = false;
     var talvez = function () {
@@ -842,6 +903,8 @@
     if (nichoIni) { var r0 = $('input[name="nicho"][value="' + nichoIni + '"]'); if (r0) r0.checked = true; }
     if (hashIni.n) campoNome.value = hashIni.n;
     if (hashIni.c) campoCidade.value = hashIni.c;
+    function contarNome() { var cg = $('#contador-giz'); if (cg) cg.textContent = limparNome(campoNome.value).length + ' de 40'; }
+    contarNome();   // nome preenchido pelo código (volta de /abrir/) também atualiza o "X de 40"
 
     function nichoAtual() { var r = $('input[name="nicho"]:checked'); return r ? r.value : null; }
     function estado() {
@@ -893,7 +956,7 @@
     campoNome.addEventListener('input', function () {
       limparErroNome();
       var n = limparNome(campoNome.value);
-      $('#contador-giz').textContent = n.length + ' de 40';
+      contarNome();
       if (placa && placa.definirNome) { try { placa.definirNome(n.slice(0, 40)); } catch (e) {} }
       if (n && !nomeContado && nichoAtual()) { nomeContado = true; evento('nome_digitado', { nicho: nichoAtual() }); }
     });
@@ -1095,18 +1158,28 @@
       seu: function () { var s = estado(); return s.n && s.k ? { n: s.n, k: s.k } : null; },
       abrirSeu: function () { var s = estado(); if (s.n && s.k) abrirPrevia(); else { var c = $('#nome'); if (c) c.focus(); } }
     });
+    // "Ver a prévia de novo" em /abrir/ manda &ver=1: a prévia abre direto, sem virar a placa outra vez.
+    if (ENTRADA.ver) { var sv = estado(); if (sv.k && sv.n) abrirPrevia(); }
 
-    /* WhatsApp flutuante: some quando um botão principal está na faixa de baixo da tela */
+    /* WhatsApp flutuante: fora da tela enquanto o hero (placa e campo do nome) aparece, para nunca ficar
+       em cima do campo "Nome do seu negócio" (o primeiro toque de quem chega do anúncio); depois, some
+       quando um botão principal está na faixa de baixo da tela. O cabeçalho já tem "Chamar no WhatsApp". */
     var zap = $('.zap-flutuante');
     if (zap && !zap.hidden) {
-      var ctas = $$('[data-cta]'), agendado = false;
+      var ctas = $$('[data-cta]'), agendado = false, heroiNaTela = true;
       var conferir = function () {
         agendado = false;
         var vh = W.innerHeight, zr = zap.getBoundingClientRect(), cobre = false;
         ctas.forEach(function (c) { var r = c.getBoundingClientRect(); if (r.width && r.bottom > zr.top - 12 && r.top < zr.bottom + 12 && r.right > zr.left - 12) cobre = true; });
         zap.classList.toggle('zap-recolhido', cobre || vh < 420);
+        D.body.classList.toggle('heroi-na-tela', heroiNaTela);
       };
       var agendar = function () { if (!agendado) { agendado = true; requestAnimationFrame(conferir); } };
+      var porta = $('#porta');
+      if (porta && 'IntersectionObserver' in W) {
+        new IntersectionObserver(function (ents) { heroiNaTela = ents.some(function (e) { return e.isIntersecting; }); agendar(); }, { threshold: 0 }).observe(porta);
+      } else heroiNaTela = false;
+      D.body.classList.add('heroi-na-tela');
       W.addEventListener('scroll', agendar, { passive: true }); W.addEventListener('resize', agendar); agendar();
     }
   }
@@ -1253,7 +1326,6 @@
   var CHAVE_ABRIR = 'creat:abrir:negocio';   // nome e cidade saem do endereço; a recarga lê daqui (só esta aba)
   function lerSessao(k) { try { var v = sessionStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
   function gravarSessao(k, o) { try { sessionStorage.setItem(k, JSON.stringify(o)); } catch (e) {} }
-  function apagarSessao(k) { try { sessionStorage.removeItem(k); } catch (e) {} }
   function paginaAbrir() {
     var est = ENTRADA.frag;
     if (est.n) gravarSessao(CHAVE_ABRIR, { n: est.n, c: est.c, k: est.k });
@@ -1278,7 +1350,7 @@
       resumo.hidden = false;
       $('#abrir-negocio-nome').textContent = est.n;
       $('#abrir-negocio-detalhe').textContent = ROTULO_NICHO[est.k] + (est.c ? ' · ' + est.c : '');
-      $('#abrir-voltar').href = RAIZ + '#' + montarFragmento(est, false);   // a home lê, preenche e limpa o endereço
+      $('#abrir-voltar').href = RAIZ + '#' + montarFragmento(est, false) + '&ver=1';   // a home lê, preenche, limpa o endereço e abre a prévia
       var prog = $('#abrir-progresso'); if (prog) prog.hidden = false;      // veio da prévia: nome, nicho e prévia prontos
     }
     var radios = $$('input[name="plano"]', f);
@@ -1288,21 +1360,26 @@
     var botoes = $$('[data-checkout]');
     var barra = $('#barra-pagar');
 
-    // Link e total andam juntos: o que a tela mostra é o que o Mercado Pago cobra (checkout.config.js escolherAbertura).
+    // Link e total andam juntos: o total da tela é sempre o valor do link escolhido (checkout.config.js
+    // escolherAbertura). Hoje se paga só a Abertura, em qualquer plano; o anual é cobrado com o site no ar (D3).
     function escolher() {
       var anual = /_anual$/.test(est.plano);
-      var valorPlano = { aberto: precos.planos.aberto, vitrine: precos.planos.vitrine, aberto_anual: precos.planos.aberto * precos.anualMesesPagos, vitrine_anual: precos.planos.vitrine * precos.anualMesesPagos }[est.plano];
       var origem = lerOrigem() || utmAtual || {};
-      var r = CK && CK.escolherAbertura ? CK.escolherAbertura({ inauguracao: !!precos.inauguracao, plano: est.plano, praca: origem.utm_campaign, totalAnual: anual ? precos.aberturaAtual + valorPlano : null }) : null;
-      return { r: r, anual: anual, combo: !!(r && r.combo), total: r && r.combo ? r.valor : precos.aberturaAtual };
+      var r = CK && CK.escolherAbertura ? CK.escolherAbertura({ inauguracao: !!precos.inauguracao, praca: origem.utm_campaign }) : null;
+      var total = r && num(r.valor) && r.valor > 0 ? r.valor : precos.aberturaAtual;   // sem link válido: o pedido fecha pelo WhatsApp
+      return { r: r, anual: anual, total: total };
     }
     function atualizarTotal() {
       if (!precos) return;
       escolha = escolher();
-      var anual = escolha.anual, combo = escolha.combo;
-      $('#total-mensal').hidden = anual; $('#total-anual').hidden = !anual || combo; $('#total-combo').hidden = !combo;
-      $('#resumo-mensal').hidden = anual; $('#resumo-anual').hidden = !anual || combo; $('#resumo-combo').hidden = !combo;
-      aplicarPrecos(precos, D, est.plano);
+      var anual = escolha.anual;
+      $('#total-mensal').hidden = anual; $('#total-anual').hidden = !anual;
+      $('#resumo-mensal').hidden = anual; $('#resumo-anual').hidden = !anual;
+      // A Abertura mostrada é a do link: "preço de inauguração" só aparece se o link escolhido for de inauguração.
+      var deInaug = !!(escolha.r ? escolha.r.chave === 'aberturaInauguracao' : precos.inauguracao);
+      var naTela = {}; for (var k in precos) naTela[k] = precos[k];
+      naTela.aberturaAtual = escolha.total; if (!deInaug) naTela.inauguracao = null;
+      aplicarPrecos(naTela, D, est.plano);
       $$('[data-v="abrir.total"]').forEach(function (x) { x.textContent = milhar(escolha.total); x.classList.remove('num-carregando'); });
       $('#anual-nota').hidden = !anual;
       var algumOk = false;
@@ -1336,11 +1413,8 @@
         var s = salvarPedido(r.dados, est, salvo && salvo.negocio === r.dados.negocio ? salvo.id : null);
         if (!s.gravou) aviso('Este navegador não deixa guardar dados no aparelho, por isso a próxima página vai pedir os campos de novo. O pedido funciona do mesmo jeito.');
         evento('checkout_iniciado', { plano: r.dados.plano, nicho: r.dados.nicho });
-        if (escolha) {
-          guarda.gravar(CHAVE_CHECKOUT, JSON.stringify({ valor: escolha.total, chave: escolha.r ? escolha.r.chave : null, praca: escolha.r ? escolha.r.praca : null, em: new Date().toISOString() }));
-          // um por carga da página: clique duplo ou voltar do Mercado Pago e clicar de novo na mesma carga não duplica
-          if (!checkoutContado) { checkoutContado = true; pixelEvento('InitiateCheckout', { value: escolha.total, currency: 'BRL' }); }
-        }
+        // um por carga da página: clique duplo ou voltar do Mercado Pago e clicar de novo na mesma carga não duplica
+        if (escolha && !checkoutContado) { checkoutContado = true; pixelEvento('InitiateCheckout', { value: escolha.total, currency: 'BRL' }); }
       });
     });
     f.addEventListener('submit', function (e) { e.preventDefault(); });
@@ -1348,7 +1422,10 @@
     var esquecer = $('#esquecer');
     if (esquecer) {
       esquecer.hidden = !salvo;
-      esquecer.addEventListener('click', function () { guarda.apagar(CHAVE_PEDIDO); apagarSessao(CHAVE_ABRIR); esquecer.hidden = true; aviso('Pronto. Os dados do pedido saíram deste aparelho.'); });
+      esquecer.addEventListener('click', function () {
+        esquecerTudo(); esquecer.hidden = true; aviso('Pronto. Tudo o que este site guardou neste aparelho foi apagado.');
+        setTimeout(function () { location.reload(); }, 900);
+      });
     }
     evento('plano_visto', { plano: est.plano, nicho: est.k || undefined });
   }
@@ -1407,7 +1484,7 @@
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, falhou); else falhou();
     });
     $('#esquecer').addEventListener('click', function () {
-      guarda.apagar(CHAVE_PEDIDO); aviso('Pronto. Os dados do pedido saíram deste aparelho.');
+      esquecerTudo(); aviso('Pronto. Tudo o que este site guardou neste aparelho foi apagado.');
       setTimeout(function () { location.reload(); }, 900);
     });
     var p = lerPedidoSalvo();
@@ -1492,6 +1569,8 @@
       var v = valoresDe(pr);
       var pi = pr.inauguracao ? pr.inauguracao.preco : pr.inauguracaoTermos;
       v['precos.abertura.inauguracao.preco'] = pi ? milhar(pi) : '(valor da página /abrir/)';
+      var vt = pr.inauguracao ? pr.inauguracao.vagasTotal : pr.inauguracaoVagasTermos;
+      v['precos.abertura.inauguracao.vagasTotal'] = vt ? milhar(vt) : '20';
       renderMarkdown(md, alvo, v);
     });
   }
@@ -1512,6 +1591,7 @@
   function iniciar() {
     // 1º: nome e cidade saem do endereço, antes de qualquer medição (Pixel, Clarity, PostHog).
     limparEndereco();
+    limparVencidos();
     guardarOrigem(Object.keys(ENTRADA.query).length ? ENTRADA.query : ENTRADA.frag.utm);
     ajustarAncoras();
     montarSuporte();
@@ -1534,7 +1614,8 @@
   W.Vitrine = {
     lerPrecos: lerPrecos, lerFragmento: lerFragmento, montarFragmento: montarFragmento, filtrarPropriedades: filtrarPropriedades,
     beforeSend: beforeSend, normalizarWhats: normalizarWhats, textoPedido: textoPedido, fresco: fresco, raiz: RAIZ,
-    lerRetornoMP: lerRetornoMP, medirCompra: medirCompra, filtrarPixel: filtrarPixel, lerOrigem: lerOrigem, guardarOrigem: guardarOrigem
+    lerRetornoMP: lerRetornoMP, medirCompra: medirCompra, filtrarPixel: filtrarPixel, lerOrigem: lerOrigem, guardarOrigem: guardarOrigem,
+    consentimento: consentimento, esquecerTudo: esquecerTudo, limparVencidos: limparVencidos
   };
   if (D.readyState === 'loading') D.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();

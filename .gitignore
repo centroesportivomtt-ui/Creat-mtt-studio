@@ -15,3 +15,4 @@ dist/
 !.env.example
 .wrangler/
 projetos/creat-nuvem/dist/
+projetos/creat-nuvem/marketing/trafego/saida/prints-ganchos/

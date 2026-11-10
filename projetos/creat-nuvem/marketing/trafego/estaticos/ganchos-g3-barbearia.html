@@ -1,0 +1,112 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="ganchos.css">
+<title>G3 barbearia</title>
+<style>
+/* G3 · BARBEARIA · porta de aço fechada, chave na mão, o site no ar. Cena: de trás do balcão. */
+#porta{filter:blur(2.6px)}
+/* 9:16 */
+.f9 #porta{left:0;top:600px;width:1080px;height:700px}
+.f9 #balcao{left:0;top:1236px;width:1080px;height:684px}
+.f9 #chaves{left:40px;top:1290px;width:440px}
+.f9 #gaveta{left:440px;top:1150px;width:640px}
+.f9 .nicho{left:58px;top:282px;--t:176px}
+.f9 .linhas{left:65px;top:486px}
+.f9 .linha{--l:48px}
+.f9 .cel{left:560px;top:652px;width:432px;height:880px;transform:rotate(3deg)}
+.f9 .cartao{left:65px;top:886px;width:560px;transform:rotate(-2.5deg)}
+.f9 .rodape{left:65px;top:1196px}
+/* 1:1 */
+.f1 #porta{left:0;top:300px;width:1080px;height:560px}
+.f1 #balcao{left:0;top:826px;width:1080px;height:300px}
+.f1 #chaves{left:26px;top:838px;width:300px}
+.f1 #gaveta{left:610px;top:756px;width:470px}
+.f1 .nicho{left:50px;top:40px;--t:132px}
+.f1 .linhas{left:56px;top:198px}
+.f1 .linha{--l:38px}
+.f1 .cel{left:660px;top:58px;width:360px;height:740px;transform:rotate(3deg)}
+.f1 .cartao{left:56px;top:470px;width:540px;transform:rotate(-2.5deg)}
+.f1 .rodape{left:330px;top:1012px}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="giz" x="-5%" y="-20%" width="110%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="7" result="r"/><feColorMatrix in="r" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 2.1" result="g"/><feComposite in="SourceGraphic" in2="g" operator="in"/></filter></svg>
+<div class="peca" id="peca">
+  <!-- porta de aço fechada, desfocada, frestas de luz da manhã -->
+  <svg class="cena" id="porta" viewBox="0 0 1080 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs><pattern id="ripas" width="1080" height="34" patternUnits="userSpaceOnUse"><rect width="1080" height="34" fill="#B9C5D3"/><rect y="0" width="1080" height="7" fill="#D7E0EA"/><rect y="28" width="1080" height="6" fill="#8D9AAC"/></pattern>
+    <linearGradient id="luz" x1="0" x2="1"><stop offset="0" stop-color="#FFF4CC" stop-opacity="0"/><stop offset=".25" stop-color="#FFF4CC"/><stop offset=".8" stop-color="#FFF4CC"/><stop offset="1" stop-color="#FFF4CC" stop-opacity="0"/></linearGradient></defs>
+    <rect x="0" y="0" width="1080" height="700" fill="#A9B6C6"/>
+    <rect x="-10" y="0" width="1100" height="70" fill="#7D8A9D" stroke="#1E1B2E" stroke-width="6"/>
+    <rect x="60" y="70" width="960" height="600" fill="url(#ripas)" stroke="#1E1B2E" stroke-width="6"/>
+    <rect x="70" y="207" width="520" height="5" fill="url(#luz)"/><rect x="420" y="377" width="560" height="5" fill="url(#luz)"/><rect x="130" y="513" width="700" height="6" fill="url(#luz)"/>
+    <rect x="60" y="664" width="960" height="18" fill="#FFF4CC"/>
+    <rect x="20" y="70" width="46" height="630" fill="#7D8A9D" stroke="#1E1B2E" stroke-width="6"/><rect x="1014" y="70" width="46" height="630" fill="#7D8A9D" stroke="#1E1B2E" stroke-width="6"/>
+    <rect x="470" y="610" width="140" height="34" rx="10" fill="#6E7B8E" stroke="#1E1B2E" stroke-width="6"/>
+  </svg>
+  <!-- balcão de madeira -->
+  <svg class="cena" id="balcao" viewBox="0 0 1080 684" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+    <rect x="-10" y="0" width="1100" height="700" fill="#D39A5B" stroke="#1E1B2E" stroke-width="7"/>
+    <rect x="-10" y="4" width="1100" height="20" fill="#E6B67B"/>
+    <g fill="none" stroke="#9A6438" stroke-width="4" stroke-linecap="round"><path d="M30 120 C160 100 260 140 420 118"/><path d="M60 300 C200 280 300 320 470 296"/><path d="M20 470 C150 450 260 490 400 466"/><path d="M40 620 C180 600 280 640 430 616"/></g>
+  </svg>
+  <!-- molho de chaves com o cadeado da porta de aço -->
+  <svg class="cena" id="chaves" viewBox="0 0 440 400" aria-hidden="true">
+    <g transform="rotate(-8 220 200)">
+      <circle cx="120" cy="120" r="64" fill="none" stroke="#1E1B2E" stroke-width="16"/><circle cx="120" cy="120" r="64" fill="none" stroke="#C9D1DB" stroke-width="6"/>
+      <!-- chave 1 -->
+      <g transform="rotate(28 120 120)"><rect x="176" y="106" width="150" height="26" rx="6" fill="#C9D1DB" stroke="#1E1B2E" stroke-width="6"/><path d="M262 132 v18 h16 v-10 h14 v14 h16 v-22" fill="#C9D1DB" stroke="#1E1B2E" stroke-width="6" stroke-linejoin="round"/><circle cx="176" cy="119" r="32" fill="#C9D1DB" stroke="#1E1B2E" stroke-width="7"/><circle cx="166" cy="119" r="9" fill="#1E1B2E"/></g>
+      <!-- chave 2, latão -->
+      <g transform="rotate(78 120 120)"><rect x="176" y="108" width="128" height="22" rx="6" fill="#D9B26A" stroke="#1E1B2E" stroke-width="6"/><path d="M250 130 v16 h12 v-8 h12 v12 h14 v-20" fill="#D9B26A" stroke="#1E1B2E" stroke-width="6" stroke-linejoin="round"/><rect x="150" y="92" width="52" height="54" rx="14" fill="#D9B26A" stroke="#1E1B2E" stroke-width="7"/><circle cx="170" cy="119" r="8" fill="#1E1B2E"/></g>
+      <!-- cadeado aberto -->
+      <path d="M232 214 V168 a46 46 0 0 1 92 0 V182" fill="none" stroke="#1E1B2E" stroke-width="30" stroke-linecap="round"/>
+      <path d="M232 214 V168 a46 46 0 0 1 92 0 V182" fill="none" stroke="#C9D1DB" stroke-width="14" stroke-linecap="round"/>
+      <rect x="196" y="206" width="170" height="150" rx="24" fill="#8C97A6" stroke="#1E1B2E" stroke-width="8"/>
+      <rect x="196" y="206" width="170" height="30" rx="14" fill="#A9B3C0"/>
+      <rect x="196" y="206" width="170" height="150" rx="24" fill="none" stroke="#1E1B2E" stroke-width="8"/>
+      <circle cx="281" cy="270" r="16" fill="#1E1B2E"/><path d="M274 276 h14 l6 40 h-26z" fill="#1E1B2E"/>
+      <path d="M150 182 L208 226" stroke="#1E1B2E" stroke-width="16" stroke-linecap="round"/><path d="M150 182 L208 226" stroke="#C9D1DB" stroke-width="6" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <!-- gaveta do caixa aberta, troco separado, sem valor legível -->
+  <svg class="cena" id="gaveta" viewBox="0 0 640 780" aria-hidden="true">
+    <rect x="30" y="0" width="580" height="170" rx="20" fill="#3B3952" stroke="#1E1B2E" stroke-width="7"/>
+    <rect x="70" y="40" width="200" height="22" rx="8" fill="#2A283C"/>
+    <path d="M30 150 H610 L640 780 H0 Z" fill="#2C2A3A" stroke="#1E1B2E" stroke-width="7" stroke-linejoin="round"/>
+    <g stroke="#1E1B2E" stroke-width="6" stroke-linejoin="round">
+      <path d="M54 186 H182 L178 440 H40 Z" fill="#46435C"/><path d="M196 186 H316 L316 440 H190 Z" fill="#46435C"/><path d="M330 186 H450 L456 440 H330 Z" fill="#46435C"/><path d="M464 186 H592 L606 440 H470 Z" fill="#46435C"/>
+      <rect x="62" y="200" width="104" height="226" rx="6" fill="#9CC9E8"/><rect x="72" y="214" width="104" height="226" rx="6" fill="#B7DBF2"/>
+      <rect x="206" y="210" width="100" height="216" rx="6" fill="#BFD8B0"/>
+      <rect x="340" y="206" width="104" height="220" rx="6" fill="#E9C9A6"/><rect x="348" y="222" width="104" height="216" rx="6" fill="#F1D9BD"/>
+      <rect x="474" y="214" width="110" height="212" rx="6" fill="#D7C6EC"/>
+      <g transform="rotate(-14 260 250)"><rect x="210" y="120" width="104" height="200" rx="6" fill="#CFE5C2"/><circle cx="262" cy="220" r="26" fill="none" stroke-width="5"/></g>
+      <path d="M40 462 H600 L620 740 H20 Z" fill="#46435C"/>
+      <g fill="#C9CED6"><circle cx="110" cy="560" r="34"/><circle cx="150" cy="600" r="34"/><circle cx="260" cy="570" r="30"/><circle cx="300" cy="610" r="30"/><circle cx="410" cy="580" r="32"/><circle cx="520" cy="560" r="30"/><circle cx="545" cy="620" r="30"/></g>
+      <g fill="#D9B26A"><circle cx="130" cy="660" r="30"/><circle cx="380" cy="650" r="30"/><circle cx="470" cy="670" r="28"/></g>
+      <path d="M220 470 V730 M420 470 V730" fill="none"/>
+    </g>
+  </svg>
+
+  <h1 class="nicho" data-fit="964" data-min="90">BARBEARIA</h1>
+  <div class="linhas">
+    <span class="linha" data-fit="950">Porta de aço fechada.</span>
+    <span class="linha" data-fit="950">O site da barbearia, no ar.</span>
+  </div>
+
+  <div class="cel">
+    <div class="tela" style="background:#1B1410" data-print="../saida/prints-ganchos/barbearia-topo.png" data-de="560" data-ate="1592"></div>
+    <span class="fita" style="right:-34px;top:40px;transform:rotate(9deg)">número de teste</span>
+    <span class="selo" data-y="1250" style="left:-26px;transform:rotate(-3deg)">nome fictício</span>
+  </div>
+
+  <div class="cartao">
+    <span class="selo" style="right:-22px;top:-30px;transform:rotate(4deg)">cena de exemplo</span>
+    <span class="rot">Pedido pelo site</span>
+    <span class="c1">encaixe · corte e barba</span>
+    <span class="traco"></span>
+    <span class="c2">hoje 9h</span>
+  </div>
+
+  <div class="rodape"><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M14 40a10 10 0 0 1-1-20 14 14 0 0 1 27-6 11 11 0 0 1 13 11 8 8 0 0 1-1 15z" fill="#FFC93C" stroke="#1E1B2E" stroke-width="4" stroke-linejoin="round"/><circle cx="26" cy="28" r="2.6" fill="#1E1B2E"/><circle cx="38" cy="28" r="2.6" fill="#1E1B2E"/><path d="M28 34q4 3 8 0" fill="none" stroke="#1E1B2E" stroke-width="3" stroke-linecap="round"/></svg>Creat Nuvem<span>· equipe de agentes de IA com revisão humana</span></div>
+  <div class="guia"></div>
+</div>
+<script src="ganchos.js"></script></body></html>

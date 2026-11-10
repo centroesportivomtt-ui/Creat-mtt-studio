@@ -4,7 +4,8 @@
    Só tokens de assets/tokens.css (T2); nenhum valor de cor solto.
    ===================================================================== */
 .pagina{padding:var(--r6) 0 var(--r7)}
-.pagina h1{font-size:var(--t-h2);max-width:22ch}
+.pagina h1{font-size:var(--t-h2);max-width:22ch;overflow-wrap:anywhere}
+.pagina h2,#obrigado-negocio{overflow-wrap:anywhere}   /* nome sem espaço (um @ do Instagram) nunca empurra a página para o lado */
 .pagina .lead{margin-top:var(--r3);font-size:var(--t-lead);color:var(--apagado);max-width:58ch}
 .pagina h2{font-size:var(--t-h3);margin-bottom:var(--r3)}
 .barra-simples .cx{flex-wrap:nowrap}
@@ -141,6 +142,9 @@ p.notas{display:block} /* parágrafo com números dentro (ex.: anual-nota) não 
 .barra-pagar.recolhida{transform:translateY(calc(100% + 8px));visibility:hidden}
 @media (prefers-reduced-motion:no-preference){.barra-pagar{transition:transform var(--duracao-media) var(--curva-saida),visibility 0s}.barra-pagar.recolhida{transition:transform var(--duracao-curta) var(--curva-entrada),visibility 0s var(--duracao-curta)}}
 body.com-barra-pagar{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
+/* com o banner de medição aberto, ele ocupa o rodapé; o botão de pagar continua na seção Pagamento */
+body.com-consentimento .barra-pagar{display:none}
+body.com-consentimento.com-barra-pagar{padding-bottom:var(--altura-consentimento,0px)}
 @media (min-width:1000px){
   .grade-abrir{grid-template-areas:"form confianca" "pagar confianca" "quem quem"}
   .barra-pagar{display:none}
