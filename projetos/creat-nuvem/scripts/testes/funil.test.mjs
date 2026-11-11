@@ -355,7 +355,7 @@ test('navegador: /abrir/ limpa nome e cidade do endereço, escolhe o link da pra
     // formulário completo e clique em pagar (navegação para o Mercado Pago bloqueada)
     await pg.route(/mercadopago\.com\.br/, (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<p>mp</p>' }));
     await pg.fill('#p-responsavel', 'Maria Souza');
-    await pg.fill('#p-whatsapp', '75991234567');
+    await pg.fill('#p-whatsapp', '75900000000');
     await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000');
     await pg.fill('#p-email', 'maria@exemplo.com.br');
     await pg.check('#p-aceite');
@@ -509,7 +509,7 @@ test('navegador: home sem contador, com "preço de inauguração"; WhatsApp flut
     // "Ver a prévia de novo" (vindo de /abrir/) abre a prévia e o contador mostra o tamanho do nome
     await pg.goto(base + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Salvador&p=1');
     await pg.click('#abrir-voltar');
-    await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+    await pg.waitForFunction(() => { const e = document.querySelector('#previa'); return !!e && !e.hidden; });
     assert.equal(await pg.textContent('#previa-nome'), 'Studio Bela');
     assert.equal(await pg.textContent('#contador-giz'), '11 de 40');
     assert.doesNotMatch(pg.url(), /Studio|Salvador|ver=1/);
@@ -546,7 +546,7 @@ const { lerPedidoTexto } = require('../producao/lib/pedido.cjs');
 const PEDIDO_CHEIO = () => ({
   id: 'PA-7K3QX2MD4R', segredo: 'q1Zr8Xn4Lw0bT6yHc9VfEA', produto: 'pa-abertura-inauguracao-2026-11', valor: 297, praca: 'feira',
   link: link(PREF.feira), plano: 'vitrine', nicho: 'salao', negocio: 'Studio Bela & Cia', cidade: 'Feira de Santana',
-  responsavel: 'Maria Souza', whatsapp_negocio: '5575991234567', endereco: 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000',
+  responsavel: 'Maria Souza', whatsapp_negocio: '5575900000000', endereco: 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000',
   horarios: 'seg=09:00-18:00;ter=09:00-18:00;qua=09:00-18:00;qui=09:00-18:00;sex=09:00-18:00;sab=09:00-13:00;dom=fechado',
   email: 'maria@exemplo.com.br', origem: 'utm_source=meta;utm_campaign=feira;utm_content=A1-salao-v1', previa: 'http://x/previa/#k=salao&n=Studio&p=1',
   aceite_termos: '2026-11-10T10:00:00-03:00 termos-v1', paleta: 1, salvo_em: new Date().toISOString(), status: 'enviado'
@@ -660,7 +660,7 @@ test('2A aparelho: dado pessoal sai em 7 dias (id e segredo ficam até 30); pedi
   const e = limpar(V.lerPedidoSalvo());
   assert.equal(e.enxuto, true); assert.equal(e.id, 'PA-7K3QX2MD4R'); assert.equal(e.segredo, 'q1Zr8Xn4Lw0bT6yHc9VfEA');
   for (const k of ['responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'previa', 'aceite_termos']) assert.equal(k in e, false, k);
-  assert.doesNotMatch(ls.getItem('creat:pedido:v1'), /maria@|5575991234567|Rua das Flores|Maria Souza/);
+  assert.doesNotMatch(ls.getItem('creat:pedido:v1'), /maria@|5575900000000|Rua das Flores|Maria Souza/);
   ls.setItem('creat:pedido:v1', JSON.stringify(Object.assign(JSON.parse(ls.getItem('creat:pedido:v1')), { salvo_em: iso(31 * dia) })));
   assert.equal(V.lerPedidoSalvo(), null); assert.equal(ls.getItem('creat:pedido:v1'), null);
   const antigo = Object.assign(PEDIDO_CHEIO(), { id: 'PA-ABCDEFGH', segredo: undefined, salvo_em: iso(8 * dia) });
@@ -697,7 +697,7 @@ async function paginaApi(navegador, base, opcoes = {}) {
 }
 async function preencherAbrir(pg) {
   await pg.fill('#p-responsavel', 'Maria Souza');
-  await pg.fill('#p-whatsapp', '75991234567');
+  await pg.fill('#p-whatsapp', '75900000000');
   await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000');
   await pg.fill('#p-email', 'maria@exemplo.com.br');
   await pg.check('#p-aceite');
@@ -773,7 +773,7 @@ test('2A navegador: aprovado só vira "confirmado" com o servidor; recibo de 3 l
     assert.ok(api.every((a) => !/segredo/.test(a.nome)), 'o segredo só vai no corpo');
     // PV-16: com a resposta do servidor, e-mail, WhatsApp, endereço e responsável saem do aparelho
     const guardado = await pg.evaluate(() => localStorage.getItem('creat:pedido:v1'));
-    assert.doesNotMatch(guardado, /maria@|5575991234567|Rua das Flores|Maria Souza/);
+    assert.doesNotMatch(guardado, /maria@|5575900000000|Rua das Flores|Maria Souza/);
     assert.match(guardado, /"segredo":"q1Zr8Xn4Lw0bT6yHc9VfEA"/);
     assert.equal(await visivel(pg, '#bloco-whats'), false, 'servidor com o pedido: nada de reenviar pelo WhatsApp');
     // recarga: o estado volta da sessão da aba, sem os parâmetros na URL
@@ -826,7 +826,7 @@ test('2A navegador: com registrarPedido bloqueado, Pagar chega ao Mercado Pago e
     await pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&resultado=pendente');
     await pg.waitForFunction(() => /"enxuto":true/.test(localStorage.getItem('creat:pedido:v1') || ''));
     const g = await pg.evaluate(() => localStorage.getItem('creat:pedido:v1'));
-    assert.doesNotMatch(g, /maria@|75991234567|"whatsapp_negocio"|"email"/);
+    assert.doesNotMatch(g, /maria@|75900000000|"whatsapp_negocio"|"email"/);
     await ctx.close();
   } finally { await nav.close(); srv.close(); }
 });
@@ -898,7 +898,7 @@ test('2A navegador: contador manda visita, prévia, ida ao pagamento e clique se
     const { pg, ctx, api } = await paginaApi(nav, base, { consentir: false });
     await pg.goto(base + '/?nicho=salao&utm_source=meta&utm_campaign=feira&utm_content=A1-salao-v1');
     await pg.fill('#nome', 'Studio Bela'); await pg.click('#form-abrir [type=submit]');
-    await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+    await pg.waitForFunction(() => { const e = document.querySelector('#previa'); return !!e && !e.hidden; });
     await pg.goto(base + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Feira%20de%20Santana&p=1');
     await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
     await preencherAbrir(pg);
@@ -909,7 +909,7 @@ test('2A navegador: contador manda visita, prévia, ida ao pagamento e clique se
       assert.deepEqual(Object.keys(c).sort(), ['evento', 'nicho', 'praca', 'utm_content']);
       assert.equal(c.nicho, 'salao'); assert.equal(c.praca, 'feira'); assert.equal(c.utm_content, 'A1-salao-v1');
     }
-    assert.doesNotMatch(JSON.stringify(contagens), /Studio|Maria|maria@|75991234567|Feira de Santana/);
+    assert.doesNotMatch(JSON.stringify(contagens), /Studio|Maria|maria@|75900000000|Feira de Santana/);
     await ctx.close();
   } finally { await nav.close(); srv.close(); }
 });

@@ -459,9 +459,9 @@ test('H1 navegador: /obrigado/ com payment_id e resultado no antigo chega igual 
     assert.ok(!espiao.includes(SEGREDO));
     // limite conhecido (DOMINIO.md): a Navigation Timing guarda o endereço de chegada enquanto a página vive.
     // Nenhum terceiro que a vitrine carrega lê essa entrada (fbevents.js, PostHog e os scripts do Base44, conferido em 11/11).
-    const nav = await pg.evaluate(() => window.__espiaoNav);
-    assert.equal(typeof nav, 'string');
-    t.diagnostic('Navigation Timing do espião ' + (nav.includes('m=v1') ? 'AINDA traz o fragmento de transição (limite do navegador, documentado)' : 'sem o fragmento de transição'));
+    const navTiming = await pg.evaluate(() => window.__espiaoNav);
+    assert.equal(typeof navTiming, 'string');
+    t.diagnostic('Navigation Timing do espião ' + (navTiming.includes('m=v1') ? 'AINDA traz o fragmento de transição (limite do navegador, documentado)' : 'sem o fragmento de transição'));
     // o aceite do antigo não atravessa: o canônico pergunta de novo e nada da Meta carrega antes da resposta
     assert.equal(await pg.evaluate(() => document.querySelector('#consentimento').hidden), false, 'o banner aparece no canônico');
     assert.equal(reg.terceiros.filter((x) => /facebook/.test(x.url)).length, 0, 'sem Pixel antes do aceite daqui');
@@ -647,7 +647,7 @@ test('H1 navegador: link da prévia copiado e link da prévia gravado no pedido 
     await semear(pg, N, { 'creat:consentimento': CONSENT(false) });
     await pg.goto(N + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Salvador&p=2');
     await pg.click('#abrir-voltar');
-    await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+    await pg.waitForFunction(() => { const e = document.querySelector('#previa'); return !!e && !e.hidden; });
     await pg.click('#previa-copiar');
     await pg.waitForFunction(() => navigator.clipboard.readText().then((t) => !!t));
     assert.match(await pg.evaluate(() => navigator.clipboard.readText()), /^https:\/\/nuvem\.creatmtt\.com\.br\/previa\/#k=salao&n=Studio%20Bela&c=Salvador&p=[123]$/);
@@ -690,5 +690,138 @@ test('H1 navegador: sem JavaScript o antigo continua de pé; a vitrine espera a 
     await b.pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'), null, { timeout: 5000 });
     assert.deepEqual(b.reg.erros, []);
     await b.ctx.close()
+  } finally { await nav.close(); }
+});
+
+/* ======================================================================== 3. achados da conferência (rodada 2) */
+
+test('H1 navegador: canônico lento de verdade (6 s): até os 3 s o antigo está inteiro na tela e vivo, sem tela branca, e não troca mais nesta aba', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const { ctx, pg, reg } = await abrir(nav, { atrasoNovo: 6000 });
+    await semear(pg, A, { 'creat:pedido:v1': PEDIDO_CHEIO() });
+    reg.navs.length = 0;
+    const t0 = Date.now();
+    await pg.goto(A + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&resultado=pendente', { waitUntil: 'commit' });
+    // a página nasce escondida (a troca está a caminho) e volta inteira com a recarga dos 2,5 s
+    await pg.waitForFunction((h) => location.hostname === h && !!document.body && document.body.innerText.length > 200 &&
+      getComputedStyle(document.documentElement).visibility === 'visible' && document.documentElement.classList.contains('js-pronto'), HA, { timeout: 6000, polling: 50 });
+    const ms = Date.now() - t0;
+    assert.ok(ms <= 3000, 'o antigo inteiro na tela em ' + ms + ' ms (limite 3 s)');
+    const quadro = await pg.evaluate(() => ({ corpo: document.body.children.length, marca: sessionStorage.getItem('creat:canonico-ficou') }));
+    assert.ok(quadro.corpo > 2, 'corpo com conteúdo'); assert.equal(quadro.marca, '1', 'a aba ficou marcada');
+    await estadoObrigado(pg, 'pendente');
+    assert.equal(await pg.textContent('#pedido-id'), ID, 'o pedido do antigo continua valendo no antigo');
+    // passa o momento em que o canônico responderia: a navegação foi cancelada, a aba fica no antigo
+    await pausa(Math.max(0, 7000 - (Date.now() - t0)));
+    assert.equal(new URL(pg.url()).hostname, HA, 'fica no antigo');
+    assert.deepEqual(reg.navs.map((x) => new URL(x).hostname), [HA, HN, HA], 'antigo, a troca cancelada e a recarga do antigo');
+    // nesta aba o antigo não tenta de novo (sem laço de recarga)
+    reg.navs.length = 0;
+    await pg.goto(A + '/termos/'); await pausa(3200);
+    assert.equal(new URL(pg.url()).hostname, HA); assert.deepEqual(reg.navs.map((x) => new URL(x).hostname), [HA]);
+    assert.deepEqual(reg.erros, []);
+    await ctx.close();
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: fragmento forjado (link colado, vindo de outro site ou passando pelo antigo) não planta pedido nem aceite; a recusa do antigo vence o aceite mais velho do canônico', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const agora = Math.floor(Date.now() / 1000);
+    const ataque = { v: 1, p: { i: 'PA-ATAQUE0001', s: 'Z'.repeat(21) + 'A', pl: 'vitrine', k: 'barbearia', n: 'Pague Aqui 75900000000', st: 'registrado', t: agora - 60 } };
+    assert.ok(C.lerTransicao('m=v1.' + C.paraB64(JSON.stringify(ataque))).pacote, 'o pacote forjado tem formato válido: só a prova do salto o barra');
+    const frag = (o) => 'm=v1.' + C.paraB64(JSON.stringify(o));
+    const q = '?pago=mp&produto=pa-abertura-inauguracao&praca=feira&payment_id=188866285972&resultado=aprovado';
+    // (a) link colado no canônico, sem Referer
+    {
+      const { ctx, pg, reg } = await abrir(nav);
+      await semear(pg, N, {});
+      await pg.goto(N + '/obrigado/' + q + '#' + frag(ataque), { referer: '' });
+      await estadoObrigado(pg, 'a_conferir');
+      assert.doesNotMatch(pg.url(), /m=v1/);
+      const ls = await lerLS(pg, N);
+      assert.equal(ls['creat:pedido:v1'], undefined, 'nada plantado');
+      const conf = reg.api.find((x) => x.nome === 'confirmarPagamento');
+      assert.deepEqual(conf && conf.corpo, { payment_id: '188866285972' }, 'confirmação só com o pagamento, sem id nem segredo de ninguém');
+      assert.equal(reg.api.some((x) => x.nome === 'consultarPedido'), false);
+      assert.deepEqual(reg.erros, []);
+      await ctx.close();
+    }
+    // (b) vindo de outro site (Referer do atacante), com pedido e com aceite forjados
+    for (const [rotulo, pacote] of [['pedido', ataque], ['aceite', { v: 1, c: { x: true, t: agora } }]]) {
+      const { ctx, pg, reg } = await abrir(nav);
+      await semear(pg, N, {});
+      await pg.goto(O + '/__semente');
+      reg.reqs.length = 0;
+      await Promise.all([pg.waitForURL((x) => x.hostname === HN), pg.evaluate((u) => { location.href = u; }, N + '/abrir/#' + frag(pacote) + '~plano=vitrine&k=salao&n=Studio&c=Salvador&p=1')]);
+      await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+      await pausa(600);
+      const chegada = reg.reqs.find((x) => x.nav && x.host === HN);
+      assert.equal(chegada.referer, O + '/', rotulo + ': Referer do outro site');
+      // só o fragmento original fica (a vitrine ainda tira dele o nome e a cidade)
+      assert.equal(new URL(pg.url()).hash, '#plano=vitrine&k=salao&p=1', rotulo + ': só o fragmento original fica');
+      assert.equal(await pg.evaluate(() => document.querySelector('#consentimento').hidden), false, rotulo + ': o banner pergunta');
+      assert.equal(reg.terceiros.filter((x) => /facebook/.test(x.url)).length, 0, rotulo + ': sem Pixel');
+      const ls = await lerLS(pg, N);
+      assert.equal(ls['creat:pedido:v1'], undefined, rotulo + ': sem pedido');
+      assert.equal(ls['creat:consentimento'], undefined, rotulo + ': sem consentimento');
+      assert.deepEqual(reg.erros, [], rotulo);
+      await ctx.close();
+    }
+    // (c) passando pelo antigo: o antigo descarta o pacote que chegou e só leva o dele (aqui, nada)
+    {
+      const { ctx, pg, reg } = await abrir(nav);
+      await semear(pg, A, {}); await semear(pg, N, {});
+      await pg.goto(A + '/termos/#' + frag(ataque) + '~preferencias');
+      await pg.waitForURL((x) => x.hostname === HN);
+      await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+      assert.equal(pg.url(), N + '/termos/#preferencias');
+      assert.equal((await lerLS(pg, N))['creat:pedido:v1'], undefined, 'nada plantado pelo antigo');
+      assert.deepEqual(reg.erros, []);
+      await ctx.close();
+    }
+    // (d) aceitou no canônico há 3 dias, recusou no antigo há 1 h: vale a recusa, e o Pixel não carrega
+    {
+      const { ctx, pg, reg } = await abrir(nav);
+      await semear(pg, N, { 'creat:consentimento': CONSENT(true, new Date(Date.now() - 72 * H).toISOString()) });
+      const recusa = new Date(Math.floor((Date.now() - H) / 1000) * 1000).toISOString();
+      await semear(pg, A, { 'creat:consentimento': CONSENT(false, recusa) });
+      reg.terceiros.length = 0;
+      await pg.goto(A + '/');
+      await pg.waitForURL((x) => x.hostname === HN);
+      await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+      await pausa(800);
+      assert.equal(await pg.evaluate(() => typeof window.fbq), 'undefined');
+      assert.equal(reg.terceiros.filter((x) => /facebook|clarity/.test(x.url)).length, 0, 'recusar nunca vira aceitar');
+      const c = JSON.parse((await lerLS(pg, N))['creat:consentimento']);
+      assert.equal(c.pixel, false); assert.equal(c.em, recusa);
+      assert.deepEqual(reg.erros, []);
+      await ctx.close();
+    }
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: pedido do antigo que nunca chegou ao servidor: no canônico a tela manda ao suporte com o número do pagamento e do pedido', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const { ctx, pg, reg } = await abrir(nav, { api: {
+      confirmarPagamento: { status: 200, json: { ok: true, status: 'pago' } },
+      consultarPedido: { status: 404, json: { ok: false, erro: 'nao_encontrado' } }
+    } });
+    await semear(pg, A, { 'creat:pedido:v1': PEDIDO_CHEIO() });
+    await semear(pg, N, {});
+    await pg.goto(A + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&praca=feira&payment_id=188866285972&resultado=aprovado');
+    await pg.waitForURL((x) => x.hostname === HN);
+    await pg.waitForFunction(() => document.querySelector('#obrigado-servidor').getAttribute('data-linha') === 'nao_encontrado', null, { timeout: 15000 });
+    const linha = await pg.textContent('#obrigado-servidor');
+    assert.match(linha, /suporte/i); assert.match(linha, /188866285972/, 'a linha leva o número do pagamento');
+    assert.equal(await pg.isVisible('#obrigado-servidor'), true);
+    // o pedido enxuto não registra de novo (sem dado pessoal no canônico): a saída é o suporte, com os dois números
+    assert.equal(reg.api.filter((x) => x.nome === 'registrarPedido').length, 0);
+    const zap = await pg.evaluate(() => [...document.querySelectorAll('a[href*="wa.me"]')].filter((a) => a.offsetParent && !a.hidden).map((a) => decodeURIComponent(a.href)));
+    assert.ok(zap.some((h) => h.includes(ID) && h.includes('188866285972')), 'botão visível do WhatsApp com o pedido e o pagamento: ' + zap.map((h) => h.slice(0, 40)).join(' | '));
+    assert.deepEqual(reg.erros, []);
+    await ctx.close();
   } finally { await nav.close(); }
 });

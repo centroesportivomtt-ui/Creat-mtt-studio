@@ -37,7 +37,7 @@ Até 13/11 (horário da Bahia) o `validar-anuncio.cjs` aceita o antigo com o avi
 
 1. Anúncio e preferência guardam a URL inteira. Se o antigo cair, quem clica no anúncio vê erro e quem paga volta para uma página que não existe: o pagamento entra e a pessoa não vê o pedido.
 2. Pix gerado antes da troca pode ser pago dias depois e volta pela URL antiga.
-3. O pedido e o consentimento ficam salvos no aparelho **por endereço**. A página nova leva os dois do antigo ao canônico no fragmento `#m=v1.<...>` (não vai ao servidor nem no Referer). Sem o antigo no ar, essa ponte some.
+3. O pedido e o consentimento ficam salvos no aparelho **por endereço**. A página nova leva do antigo ao canônico, no fragmento `#m=v1.<...>`, o pedido (id, segredo e o enxuto, só até 20/11/2026) e, da escolha de medição, só a recusa. Aceite nunca viaja: o canônico pergunta de novo. O fragmento não vai ao servidor nem no Referer; o salto manda no Referer só a origem do antigo, e o canônico só aceita o pacote com esse Referer (link colado ou vindo de outro site é ignorado). Limites registrados: a URL de chegada, com o fragmento, fica no histórico do navegador do aparelho e em `performance.getEntriesByType('navigation')[0].name` enquanto a página vive (nenhum terceiro que a vitrine carrega lê essa entrada, conferido em 11/11/2026; o Clarity, se for ligado, precisa de nova conferência). O prazo de 20/11 fecha essa janela. Sem o antigo no ar, essa ponte some.
 4. Regra: o antigo continua no ar enquanto houver **qualquer** anúncio ativo, preferência válida ou Pix pendente apontando para ele. O grupo E do `conferir-no-ar.cjs` reprova se o antigo deixar de responder 200.
 
 ## Como voltar atrás
@@ -79,8 +79,8 @@ Até a publicação, o grupo E prova o salto só por simulação local (dois hos
 1. Rode de novo `node scripts/conferir-no-ar.cjs`. Os 3 saltos deixam de sair NÃO VERIFICADO e passam a contar: certo ou defeito.
 2. Em celular real, internet móvel, abra no antigo uma URL de volta do Mercado Pago com `utm_source=teste-<agente>` (ex.: `/obrigado/?payment_id=99999999999&resultado=aprovado&utm_source=teste-trilho`). Tem de chegar ao canônico com caminho, consulta e fragmento.
 3. Confira a ordem dos scripts que o Base44 injeta no `<head>` no ar: `checkout.config.js` e `assets/canonico.js` têm de vir antes de qualquer medição.
-4. Com rede lenta, veja se o primeiro corpo do antigo aparece quando o canônico demora. Não pode haver tela branca.
-5. Não publique antes de o achado de tela branca estar corrigido. Falhou no ar: passo (a) acima, corrige, publica e confere de novo.
+4. Com rede lenta, veja se o primeiro corpo do antigo aparece quando o canônico demora. Se o canônico não responde em 2,5 s, a página cancela a troca e recarrega o antigo inteiro nesta aba (teste "canônico lento de verdade" em `endereco.test.mjs`).
+5. Limite que o código não resolve: se a navegação ao canônico FALHA (DNS que ainda não conhece o CNAME, rede corporativa, certificado, conexão recusada), o navegador mostra a página de erro dele. Antes de ligar o salto em escala, confira o canônico a partir de outros resolvedores (`dig @1.1.1.1 nuvem.creatmtt.com.br`, `dig @8.8.8.8 nuvem.creatmtt.com.br` e um celular em internet móvel de operadora). Falhou no ar: passo (a) acima (`antigos: []`), corrige, publica e confere de novo. Responsável por esse passo de emergência: o coordenador da rodada (Trilho executa a publicação).
 
 ## Como conferir
 

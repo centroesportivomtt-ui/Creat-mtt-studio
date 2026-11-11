@@ -58,6 +58,8 @@ O site guarda neste aparelho, e só neste aparelho:
 
 Cada item com prazo se apaga sozinho quando vence. O botão "Esquecer meus dados neste aparelho", em /abrir/ e em /obrigado/, apaga na hora tudo o que o site guardou neste aparelho, inclusive a sua escolha sobre a medição, e os cookies _fbp e _fbc deste site. Ele não apaga o pedido gravado no servidor: para isso, veja a seção 9.
 
+**Mudança de endereço (desde 11/11/2026).** O site passou a abrir em nuvem.creatmtt.com.br. Quem abre o endereço antigo é levado ao mesmo lugar no novo. Como o navegador guarda os dados acima separados por endereço, até 20/11/2026 a página leva junto o número do pedido, o segredo, o nome do negócio, a cidade, o nicho, o plano, o produto e o estado do pedido, e também a sua recusa da medição, se você recusou. Nada disso inclui quem cuida do negócio, o WhatsApp, o e-mail nem o endereço do negócio. Esses dados vão na parte do endereço da página depois do #, que o navegador não envia a servidor nenhum, e saem da barra de endereço assim que a página nova abre. O navegador ainda pode guardar esse endereço de chegada no histórico deste aparelho até você limpar o histórico. Quem aceitou a medição no endereço antigo vê o aviso de novo no endereço novo.
+
 **Para que usamos e com que base legal** (LGPD, art. 7º):
 
 - Registrar o pedido no toque em Pagar, para ligar o pagamento a você mesmo quando você paga no app do banco e não volta à página: procedimento preliminar ao contrato, a seu pedido (art. 7º, V). Se você não pagar, o pedido é apagado em 30 dias e a Creat não entra em contato com você por causa dele.

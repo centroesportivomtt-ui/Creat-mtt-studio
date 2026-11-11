@@ -422,6 +422,15 @@ cabeçalhos das 6 chamadas          server: cloudflare, access-control-allow-ori
 
 NÃO VERIFICADO: o `rascunho_url` com o host novo numa consulta de verdade (precisa de um pedido real com segredo e rascunho; a leitura do código mostra que ele segue o endereço chamado); o `registrarPedido` de verdade vindo do novo (proibido sem `eh_teste`; mesmo código e mesma trava das outras rotas).
 
+Reconferência no próprio app (11/11/2026, depois da conferência do H3), commit `f2968e7`:
+- `git status --porcelain` vazio; `git log`: `f2968e7` sobre `ccd084c`; `git diff --stat ccd084c f2968e7`: só `src/lib/pa/regras.js` (4 linhas a mais, 2 a menos).
+- `sha256sum src/lib/pa/regras.js` = `10a0465f96055400a2d77dc2595d58ced805a42565c34f16f43db1015d308124`, 46384 bytes: igual a `schema/pedido-regras.mjs`.
+- Lista de checkpoints da plataforma: `6af3c377db3067a148bad505` = commit `f2968e7`, nunca publicado; `6af3c32c57d4bf26ea220951` = commit `ccd084c` (a volta). O publicado é `6af3a7aa82d1d83aba5457b6`, commit `ccd084c`.
+- Busca por `origin|referer|host|x-forwarded|sec-fetch|request.url` em `src/`: nas rotas `/api/pa/*` os cabeçalhos lidos são só `sec-fetch-site`, `x-conferencia`, `content-length`, `cf-connecting-ip` e `x-forwarded-for` (estes dois viram hash do limite de taxa). `request.url` aparece em dois lugares: `consultarPedido` (`rascunho_url`, `recibo.termos`) e `capacidadeDia`. Nenhuma comparação com endereço.
+- O patch opcional de `ORIGEM_SITE` (`servidor.server.js`, fora deste pacote) passa em `git apply --check` dentro do app, sobre `f2968e7`. Não foi aplicado.
+- Se, em produção, `request.url` chegasse com outro host, o `/obrigado/` só esconderia o botão do rascunho: ele só aparece quando `rascunho_url` começa por `location.origin + '/sites/'` (`vitrine.js`). Nenhum link errado aparece. O caminho principal do rascunho é o e-mail, que usa o endereço canônico fixo. A prova de vez vem na primeira consulta real com rascunho, ou na conferência no ar depois do deploy.
+- Duas sondas a mais no novo, sem gravar nada (`GET /api/time/` 200, `GET /api/pa/consultarPedido/` 405). Nenhuma traz `Location`, então não mostram o host que o servidor recebe. Total do pacote: 10 chamadas.
+
 ### 8.7 Correções da conferência da onda 1 (10/11/2026, tarde)
 
 Checkpoints: antes `6af33eee392cd812d1eba5e4`, depois `6af3423f769e842f204702b6`. Rotas antes e depois: as mesmas 13 em `src/routes/api/pa/` (nenhuma criada, nenhuma apagada); entidades: só acréscimo de 15 campos em `PedidoPortaAberta`, regras de acesso iguais. Preview do sandbox (mesmo código que vai ao ar):

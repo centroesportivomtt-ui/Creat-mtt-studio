@@ -38,9 +38,12 @@
      original com history.replaceState, ANTES de qualquer medição ou
      terceiro. O segredo sai da barra, mas o endereço de chegada continua
      no histórico do navegador e em performance.getEntriesByType
-     ('navigation')[0].name enquanto a página viver: nenhum terceiro que
-     a vitrine carrega lê essa entrada (conferido em 11/11/2026), e o
-     prazo do pedido fecha essa janela.
+     ('navigation')[0].name enquanto a página viver. Conferido em
+     11/11/2026 nos arquivos que carregam: fbevents.js e a configuração do
+     Pixel, PostHog 1.447.3 (sem gravação de sessão) e os dois scripts que
+     o Base44 injeta não leem essa entrada. O Clarity está desligado (ID de
+     exemplo) e só iria na home: ligar exige conferir de novo. O prazo do
+     pedido fecha essa janela.
 
    Em qualquer outro lugar (localhost, file://, prévia em moldura, host de
    teste) não faz nada. Sem laço: o canônico nunca redireciona.
