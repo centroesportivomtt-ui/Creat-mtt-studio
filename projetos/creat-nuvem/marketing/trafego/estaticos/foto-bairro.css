@@ -1,0 +1,57 @@
+/* Conceito: Foto de bairro · "A hora que ninguém vê". Uma foto real do minuto
+   que só o dono conhece (a porta subindo, a mão ocupada, o fim do dia) e,
+   colado nela, o título em faixas de papel como etiqueta de balcão.
+   Momento-assinatura: o título em faixas soltas (papel ou tinta, com a palavra
+   da virada em --sol), cada linha uma tira com borda de nanquim e sombra dura,
+   levemente torta, como se alguém tivesse colado na foto. É a única ousadia.
+   A foto fica intocada (sem filtro, sem véu, sem degradê) e o resto é calmo:
+   chip, selo e linha de origem em blocos sólidos pequenos.
+   Layout: 9:16 primeiro. Título no terço calmo de cima da área segura,
+   selo e origem no pé da área segura (x 65..1015, y 269..1248). Os 35% de
+   baixo são só foto. No 4:5 (1080x1350) a foto vertical é recortada pelo
+   ponto de interesse de cada cena; margem de 56 px.
+   Tokens herdados de base.css e de projetos/creat-nuvem/assets/tokens.css. */
+:root{
+  --papel:#FFFDF6; --tinta:#1E1B2E; --sol:#FFC93C; --giz:#F4F1E6; --apagado:#5E5974; --ceu:#CDEBFF;
+  --f-display:"Lilita One","Arial Rounded MT Bold",sans-serif;
+  --f-texto:"Figtree",system-ui,sans-serif;
+  --f-dado:"JetBrains Mono",ui-monospace,monospace;
+  --borda:6px; --sombra:10px 10px 0 var(--tinta); --sombra-p:6px 6px 0 var(--tinta);
+  /* escala: selo 26 · origem 28 · chip 34 · título 84 (feed) e 100 (vertical) */
+  --t:100px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--tinta)}
+body{font-family:var(--f-texto);color:var(--tinta);-webkit-font-smoothing:antialiased}
+.peca{position:relative;overflow:hidden;background:var(--tinta)}
+.f9 .peca{width:1080px;height:1920px}
+.f45 .peca{width:1080px;height:1350px;--t:84px}
+
+/* a foto, inteira e sem tratamento */
+.foto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+
+/* o título em faixas */
+.titulo{position:absolute;display:flex;flex-direction:column;align-items:flex-start;gap:calc(var(--t) * .14)}
+.faixa{display:block;width:max-content;white-space:nowrap;font:400 var(--t)/1 var(--f-display);letter-spacing:-.005em;
+  padding:calc(var(--t) * .13) calc(var(--t) * .2) calc(var(--t) * .09);
+  background:var(--papel);color:var(--tinta);border:var(--borda) solid var(--tinta);border-radius:10px;box-shadow:var(--sombra)}
+.faixa.sol{background:var(--sol);color:var(--tinta)}
+.tinta .faixa{background:var(--tinta);color:var(--giz);border-color:var(--giz);box-shadow:var(--sombra)}
+.tinta .faixa.sol{background:var(--sol);color:var(--tinta);border-color:var(--tinta)}
+.faixa:nth-child(1){transform:rotate(-1.4deg)}
+.faixa:nth-child(2){transform:rotate(.9deg);margin-left:calc(var(--t) * .22)}
+.faixa:nth-child(3){transform:rotate(-.6deg);margin-left:calc(var(--t) * .08)}
+
+/* chip, selo e origem */
+.chip{position:absolute;display:inline-flex;align-items:center;white-space:nowrap;font:800 34px/1 var(--f-texto);background:var(--sol);
+  border:var(--borda) solid var(--tinta);border-radius:999px;padding:18px 28px 19px;box-shadow:var(--sombra-p)}
+.selo{position:absolute;font:500 26px/1 var(--f-dado);letter-spacing:.04em;color:var(--tinta);background:var(--papel);
+  border:4px solid var(--tinta);border-radius:10px;padding:9px 13px 10px;white-space:nowrap;box-shadow:4px 4px 0 var(--tinta)}
+.rodape{position:absolute;display:flex;align-items:center;gap:12px;white-space:nowrap;font:700 28px/1 var(--f-texto);color:var(--tinta);
+  background:var(--papel);border:4px solid var(--tinta);border-radius:12px;padding:10px 18px 10px 12px;box-shadow:4px 4px 0 var(--tinta)}
+.rodape svg{width:46px;height:35px;flex:none}
+.rodape span{font-weight:500;color:var(--apagado)}
+
+/* guia da área segura (só com --guia, só no vertical) */
+.guia{position:absolute;display:none;left:65px;right:65px;top:269px;height:979px;outline:3px dashed #e33;z-index:9}
+.f9 .com-guia .guia{display:block}

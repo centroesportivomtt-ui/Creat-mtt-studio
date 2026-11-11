@@ -1,5 +1,6 @@
 /* Captura quadro a quadro da página REAL (home, prévia) para os Reels "Atrás da placa".
-   Órbita, 10/11/2026. Usado por gerar.cjs; não roda sozinho.
+   Órbita, 10/11/2026; página nova (título pelo nicho, botão "Ver meu site pronto") em 11/11/2026.
+   Usado por gerar.cjs; não roda sozinho. Tipos de captura em CAPTURAS (fim do arquivo): 'home' e 'previa'.
 
    Como fica determinístico sem mexer no site:
    - relógio da página falso (Playwright clock): setTimeout, rAF e Date só andam quando o quadro manda;
@@ -94,13 +95,16 @@ const ESCONDER_ZAP = '.zap-flutuante{display:none !important}html{scroll-behavio
 async function medirHome(pg) {
   return pg.evaluate(() => {
     const r = s => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; };
-    return { caixa: r('.palco-placa'), placa: r('#placa .cp-placa') || r('#placa'), campo: r('#nome'), contador: r('#contador-giz'), botao: r('#abrir-form button[type=submit]') || r('form button[type=submit]'), rolagem: scrollY };
+    return { caixa: r('.palco-placa'), placa: r('#placa .cp-placa') || r('#placa'), campo: r('#nome'), contador: r('#contador-giz'), botao: r('#form-abrir button[type=submit]') || r('form button[type=submit]'),
+      titulo: r('#h1'), tituloTexto: ([...document.querySelectorAll('#h1 .h1-v')].find(e => e.getBoundingClientRect().width > 0) || {}).textContent || '', botaoTexto: ((document.querySelector('#form-abrir button[type=submit]') || {}).textContent || '').trim(), rolagem: scrollY };
   });
 }
 
-/* prepara a home como o visitante do anúncio chega: ?nicho=academia + UTM, nicho marcado, campo em foco */
-async function prepararHome(pg, base, nicho) {
-  await pg.goto(base + '/?nicho=' + nicho + '&utm_source=meta&utm_medium=pago&utm_campaign=feira&utm_content=R8', { waitUntil: 'load' });
+/* prepara a home como o visitante do anúncio chega: ?nicho=<nicho> + UTM, nicho marcado, campo em foco.
+   inicio: { ancora: 'topo' } (página no topo, título do nicho à vista) ou { ancora: '<css>', y } (o elemento fica
+   y px CSS abaixo do topo da janela). */
+async function prepararHome(pg, base, nicho, codigo, inicio) {
+  await pg.goto(base + '/?nicho=' + nicho + '&utm_source=meta&utm_medium=pago&utm_campaign=feira&utm_content=' + codigo, { waitUntil: 'load' });
   await pg.addStyleTag({ content: ESCONDER_ZAP });
   await pg.waitForTimeout(1500);
   await pg.evaluate(() => document.fonts.ready);
@@ -109,8 +113,12 @@ async function prepararHome(pg, base, nicho) {
   /* marca o nicho (o visitante do anúncio de academia toca no chip) */
   await pg.evaluate(k => { const r = document.querySelector('input[name="nicho"][value="' + k + '"]'); if (r && !r.checked) r.click(); }, nicho);
   await pg.clock.runFor(400);
-  /* enquadra: o vidro da vitrine logo abaixo da barra fixa do topo */
-  await pg.evaluate(() => { const c = document.querySelector('.palco-placa'); const h = document.querySelector('header.barra'); const topo = h ? h.getBoundingClientRect().bottom : 0; const y = c.getBoundingClientRect().top + scrollY - topo - 4; window.scrollTo(0, Math.max(0, y)); });
+  /* enquadra (rolagem instantânea, antes do primeiro quadro) */
+  await pg.evaluate(ini => {
+    if (!ini || ini.ancora === 'topo') { window.scrollTo(0, 0); return; }
+    const c = document.querySelector(ini.ancora); if (!c) throw new Error('âncora sumiu da página: ' + ini.ancora);
+    window.scrollTo(0, Math.max(0, c.getBoundingClientRect().top + scrollY - ini.y));
+  }, inicio || null);
   await pg.clock.runFor(200);
   await pg.evaluate(() => { const n = document.querySelector('#nome'); n.focus({ preventScroll: true }); });
   await pg.clock.runFor(200);
@@ -124,19 +132,29 @@ const PRECOS = () => [...document.querySelectorAll('body *')].filter(e => !e.chi
 function suave(x) { return x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x); }
 function easeInOut(x) { return x <= 0 ? 0 : x >= 1 ? 1 : (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2); }
 function senoide(x) { return x <= 0 ? 0 : x >= 1 ? 1 : 0.5 - 0.5 * Math.cos(Math.PI * x); }  /* pico de velocidade 1,57x a média */
+/* rolagem longa: acelera em 25% do tempo, anda constante e freia em 25% (pico 1,33x a média, contra 1,57x da senoide) */
+function trapezio(x, a = 0.25) { if (x <= 0) return 0; if (x >= 1) return 1; const v = 1 / (1 - a); if (x < a) return v * x * x / (2 * a); if (x > 1 - a) return 1 - v * (1 - x) * (1 - x) / (2 * a); return v * (a / 2 + (x - a)); }
 function easeOut(x) { return x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3); }
 
 async function fotografar(pg, arq) { await pg.screenshot({ path: arq, clip: { x: 0, y: 0, width: 390, height: 660 }, type: 'png', animations: 'allow', caret: 'initial' }); }
 
-/* ------------------------------------------------------------------ R8: sessões A e B (home real) */
-async function capturarR8(browser, base, L, dir, log) {
-  const R8 = L.R8, FPS = L.FPS, meta = { sessoes: {} };
+/* ------------------------------------------------------------------ 'home': sessões na página inicial real (R8)
+   Cada sessão (R.sessoes.A, B, ...) abre a home do zero e grava de t0 a t1. Ações possíveis por sessão:
+   teclas (digitação real), arraste (puxão real da placa), rolarHome (rolagem do visitante), toqueBotao (toque real
+   em "Ver meu site pronto"), rolagem (dentro da prévia), toqueDia (dia na prévia), relogioParaEm. */
+async function capturarHome(browser, base, L, reel, dir, log) {
+  const R8 = L[reel], FPS = L.FPS, meta = { sessoes: {} };
   GIRO_MAPA = { ms: L.GIRO.ms, v90: L.GIRO.v90, v270: L.GIRO.v270, D: L.GIRO.D };
-  for (const nomeS of ['A', 'B']) {
-    const S = R8.sessoes[nomeS];
+  for (const nomeS of Object.keys(R8.sessoes)) {
+    const S = JSON.parse(JSON.stringify(R8.sessoes[nomeS]));
     const pasta = path.join(dir, nomeS); fs.mkdirSync(pasta, { recursive: true });
     const { ctx, pg, erros } = await novaPagina(browser, R8.hora);
-    const m0 = await prepararHome(pg, base, R8.nicho);
+    const m0 = await prepararHome(pg, base, R8.nicho, reel, S.inicio);
+    /* trava da página nova: título do nicho e o rótulo novo do botão; o rótulo antigo não pode aparecer */
+    if (!/Ver meu site pronto/.test(m0.botaoTexto) || /Abrir meu neg/i.test(m0.botaoTexto)) throw new Error('botão da home não é "Ver meu site pronto": ' + m0.botaoTexto);
+    if (!/^Veja o site/.test(m0.tituloTexto) || /aberto na internet/i.test(m0.tituloTexto)) throw new Error('título da home não é o novo: ' + m0.tituloTexto);
+    const palavra = { barbearia: 'barbearia', salao: 'salão', academia: 'academia' }[R8.nicho];
+    if (palavra && !m0.tituloTexto.includes(palavra)) throw new Error('título não é o do nicho ' + R8.nicho + ': ' + m0.tituloTexto);
     let px = 0, py = 0;
     const ms = { inicio: m0, ponteiro: [], toques: [] };
     const f0 = Math.round(S.t0 * FPS), f1 = Math.round(S.t1 * FPS);
@@ -146,7 +164,7 @@ async function capturarR8(browser, base, L, dir, log) {
       /* teclas reais */
       while (k < S.teclas.length && S.teclas[k].t <= t + 1e-6) { await pg.keyboard.type(S.teclas[k].ch); k++; }
       /* arraste real da placa (mouse do navegador) */
-      const A = S.arraste;
+      const A = S.arraste || { t0: Infinity };
       if (!apertado && t >= A.t0 - 1e-6) { const pl = (await medirHome(pg)).placa; px = pl.x + pl.w * 0.5; py = pl.y + pl.h * (0.32 + 0.667 * 0.55); /* meio da tábua */ await pg.mouse.move(px, py); await pg.mouse.down(); apertado = true; }
       if (apertado && !soltou) {
         const dy = A.dy * easeOut((t - A.t0) / (A.t1 - A.t0));
@@ -160,6 +178,14 @@ async function capturarR8(browser, base, L, dir, log) {
         const y = ms.rolagemHome + S.rolarHome.dy * easeInOut((t - S.rolarHome.t0) / (S.rolarHome.t1 - S.rolarHome.t0));
         await pg.evaluate(y => window.scrollTo(0, y), y);
         if (t + 1 / FPS > S.rolarHome.t1) ms.depoisRolar = await medirHome(pg);
+      }
+      /* toque real em "Ver meu site pronto": o site vira a placa na hora e abre a prévia 680 ms depois */
+      if (S.toqueBotao != null && t >= S.toqueBotao - 1e-6 && !ms.toqueBotaoFeito) {
+        const b = (await medirHome(pg)).botao;
+        if (!b || b.y < 0 || b.y + b.h > 844) throw new Error('botão fora da janela no toque');
+        const x = b.x + b.w / 2, y = b.y + b.h / 2;
+        await pg.mouse.click(x, y); ms.toques.push({ t, x, y, alvo: 'botao' }); ms.toqueBotaoFeito = true;
+        ms.antesDoToque = { rolagem: await pg.evaluate(() => scrollY) };
       }
       /* sessão A: o relógio da página para logo depois do giro, então a prévia não abre antes do corte em 2,4 s */
       if (S.relogioParaEm != null && t >= S.relogioParaEm) relogioParado = true;
@@ -180,12 +206,12 @@ async function capturarR8(browser, base, L, dir, log) {
               const y = el ? el.getBoundingClientRect().top + scrollY - (yTela - topo) : 1600;
               return { de: scrollY, para: Math.max(0, y), alvo };
             }, { alvo: E.alvo, yTela: E.y, topo: fb.y });
-            rol.t0 = E.t0; rol.t1 = E.t1;
+            rol.t0 = E.t0; rol.t1 = E.t1; rol.curva = E.curva || 'senoide';
             (ms.rolagem = ms.rolagem || []).push(rol);
           }
         }
         if (fr && rol) {
-          const y = rol.de + (rol.para - rol.de) * senoide((t - rol.t0) / (rol.t1 - rol.t0));
+          const y = rol.de + (rol.para - rol.de) * (rol.curva === 'trapezio' ? trapezio : senoide)((t - rol.t0) / (rol.t1 - rol.t0));
           await fr.evaluate(y => window.scrollTo(0, y), y);
         }
         if (fr && S.toqueDia && t >= S.toqueDia - 1e-6 && !tocou) {
@@ -197,16 +223,18 @@ async function capturarR8(browser, base, L, dir, log) {
           if (alvo) {
             const fe = await fr.frameElement(); const fb = await fe.boundingBox();
             const x = fb.x + alvo.x, y = fb.y + alvo.y;
-            if (y < 600) { await pg.mouse.click(x, y); ms.toques.push({ t, x, y }); }
+            if (y < 560) { await pg.mouse.click(x, y); ms.toques.push({ t, x, y, alvo: 'dia' }); }
           }
         }
       }
       if (!relogioParado) await pg.clock.runFor(1000 / FPS);
       await posicionar(pg, t);
       await fotografar(pg, path.join(pasta, String(f).padStart(4, '0') + '.png'));
-      if (f % 30 === 0) log('  R8/' + nomeS + ' ' + t.toFixed(1) + ' s');
+      if (f % 30 === 0) log('  ' + reel + '/' + nomeS + ' ' + t.toFixed(1) + ' s');
     }
     ms.fim = await medirHome(pg).catch(() => null);
+    /* nenhum quadro pode mostrar o rótulo ou o título antigos (a página inteira é lida, inclusive a prévia) */
+    ms.textoAntigo = await pg.evaluate(() => /Abrir meu neg[óo]cio|Seu neg[óo]cio aberto na internet/i.test(document.body.innerText)).catch(() => null);
     ms.erros = erros;
     meta.sessoes[nomeS] = ms;
     await ctx.close();
@@ -215,11 +243,13 @@ async function capturarR8(browser, base, L, dir, log) {
   return meta;
 }
 
-/* ------------------------------------------------------------------ R7: prévia real da barbearia às 23h12 */
-async function capturarR7(browser, base, L, dir, log) {
-  const R7 = L.R7, FPS = L.FPS, S = R7.sessoes.C;
+/* ------------------------------------------------------------------ 'previa': prévia real direta (R7, barbearia às 23h12)
+   Uma sessão (a primeira de R.sessoes): rolagem até o nome, salto de montagem até o pedido e toques em dia, hora e
+   serviço; fora de cena completa o pedido de teste para pegar a mensagem REAL que o site monta. */
+async function capturarPrevia(browser, base, L, reel, dir, log) {
+  const R7 = L[reel], FPS = L.FPS, nomeSessao = Object.keys(R7.sessoes)[0], S = R7.sessoes[nomeSessao];
   GIRO_MAPA = { ms: L.GIRO.ms, v90: L.GIRO.v90, v270: L.GIRO.v270, D: L.GIRO.D };
-  const pasta = path.join(dir, 'C'); fs.mkdirSync(pasta, { recursive: true });
+  const pasta = path.join(dir, nomeSessao); fs.mkdirSync(pasta, { recursive: true });
   const { ctx, pg, erros } = await novaPagina(browser, R7.hora);
   const frag = '#k=' + R7.nicho + '&n=' + encodeURIComponent(R7.nome) + '&p=1';
   await pg.goto(base + '/previa/' + frag, { waitUntil: 'load' });
@@ -280,7 +310,7 @@ async function capturarR7(browser, base, L, dir, log) {
     await posicionar(pg, t);
     (meta.precos = meta.precos || {})[f] = await pg.evaluate(PRECOS);
     await fotografar(pg, path.join(pasta, String(f).padStart(4, '0') + '.png'));
-    if (f % 30 === 0) log('  R7/C ' + t.toFixed(1) + ' s');
+    if (f % 30 === 0) log('  ' + reel + '/' + nomeSessao + ' ' + t.toFixed(1) + ' s');
   }
   /* fora de cena: completa o pedido de teste para pegar a mensagem REAL que o site monta */
   try {
@@ -296,9 +326,13 @@ async function capturarR7(browser, base, L, dir, log) {
   } catch (e) { meta.erroMensagem = e.message; }
   const u = (meta.abertos || []).find(x => /wa\.me/.test(x));
   if (u) { meta.urlWhats = u; meta.mensagem = new URL(u).searchParams.get('text'); }
+  meta.textoAntigo = await pg.evaluate(() => /Abrir meu neg[óo]cio|Seu neg[óo]cio aberto na internet/i.test(document.body.innerText)).catch(() => null);
   fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify(meta, null, 1));
   await ctx.close();
   return meta;
 }
 
-module.exports = { garantirFontes, rotearFontes, servidor, capturarR8, capturarR7, RAIZ, TMP };
+/* registro dos tipos de captura (linhas.js, campo "captura" de cada Reel). R9 a R12: acrescente aqui. */
+const CAPTURAS = { home: capturarHome, previa: capturarPrevia };
+
+module.exports = { garantirFontes, rotearFontes, servidor, CAPTURAS, capturarHome, capturarPrevia, RAIZ, TMP };

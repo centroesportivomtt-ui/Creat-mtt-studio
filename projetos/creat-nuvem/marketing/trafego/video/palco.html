@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <title>Palco dos Reels · Atrás da placa</title>
 <meta name="viewport" content="width=1080">
-<!-- Palco 1080x1920 dos Reels "Atrás da placa" (Órbita, 10/11/2026).
-     Uso: palco.html?reel=R8|R7 (servido por gerar.cjs). A página não anima sozinha: gerar.cjs chama
+<!-- Palco 1080x1920 dos Reels "Atrás da placa" (Órbita, 10/11/2026; faixa de preço e variante com foto em 11/11/2026).
+     Uso: palco.html?reel=R8|R7[&versao=organico|anuncio][&variante=foto&foto=/__tmp/fotos/...] (servido por gerar.cjs). A página não anima sozinha: gerar.cjs chama
      window.quadro(t) para cada quadro de 30 fps e fotografa. Tudo o que é produto vem da captura real
      (/__tmp/cap/<reel>/...) ou do componente real da placa (ritual/placa.js). -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&family=Lilita+One&display=swap">
@@ -68,6 +68,22 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 #chip{position:absolute;left:0;right:0;top:1078px;display:flex;justify-content:center}
 #chip span{background:var(--sol);border:4px solid var(--tinta);border-radius:999px;box-shadow:8px 8px 0 var(--tinta);padding:14px 36px 16px;font:800 46px/1 Figtree,sans-serif}
 #origem{position:absolute;left:65px;right:65px;top:1180px;text-align:center;font:700 34px/1.2 Figtree,sans-serif;color:var(--tinta)}
+/* versão de anúncio: a faixa de preço queimada no cartão (textos-troca-unica.md, seção 3). Figtree 800 a 40 px,
+   tinta sobre papel, contorno de nanquim e sombra dura; a placa encolhe para tudo caber entre y 269 e y 1248 */
+#preco{position:absolute;left:0;right:0;top:948px;display:none;justify-content:center}
+#preco div{background:var(--papel);color:var(--tinta);border:4px solid var(--tinta);border-radius:18px;box-shadow:8px 8px 0 var(--tinta);
+  padding:14px 30px 16px;font:800 40px/1.2 Figtree,system-ui,sans-serif;letter-spacing:-.3px;text-align:center;white-space:nowrap}
+.v-anuncio #preco{display:flex}
+.v-anuncio #placaCartao{left:310px;top:540px;width:460px}
+.v-anuncio #chip{top:1104px}
+.v-anuncio #chip span{font-size:42px;padding:12px 32px 14px}
+.v-anuncio #origem{top:1196px;font-size:32px}
+/* variante com foto real (R7): a foto em tela cheia no primeiro 1,3 s, com câmera lenta (Ken Burns) */
+#foto{position:absolute;inset:0;z-index:21;display:none;overflow:hidden;background:#111}
+#foto img{position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;filter:brightness(.86) saturate(.92)}
+.v-foto #celEscuro{background:none}
+.v-foto #celEscuro .tela{background:none}
+.v-foto #celEscuro .hora,.v-foto #notif .selo,.v-foto .vib{display:none}
 /* porta de aço de enrolar (assinatura sonora e visual do fim) */
 #porta{position:absolute;left:0;top:0;width:1080px;height:2000px;z-index:60;display:none;
   background:repeating-linear-gradient(180deg,#9AA0AC 0 52px,#7C828F 52px 58px,#B5BAC4 58px 64px,#9AA0AC 64px 66px);border-bottom:26px solid var(--tinta)}
@@ -78,6 +94,7 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 </head>
 <body>
 <div id="palco">
+  <div id="foto"><img id="fotoImg" alt=""></div>
   <div id="cena" hidden>
     <div id="celEscuro"><div class="tela">
       <div class="hora">23:12</div>
@@ -104,6 +121,7 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   <div id="cartao">
     <div id="placaCartao"><div id="pontoCartao"></div></div>
     <div id="chip"><span>Grátis para ver · Sem cadastro</span></div>
+    <div id="preco"><div id="precoTexto"></div></div>
     <div id="origem">Creat Nuvem · equipe de agentes de IA · Bahia</div>
   </div>
   <div id="aneis"></div>
@@ -128,8 +146,20 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   'use strict';
   var Q = new URLSearchParams(location.search), REEL = Q.get('reel') || 'R8';
   var L = window.LINHAS, R = L[REEL], FPS = L.FPS, G = L.GRADE;
+  var VERSAO = Q.get('versao') || 'organico', V = L.VERSOES[VERSAO];
+  var VAR = Q.get('variante') && R.variantes ? R.variantes[Q.get('variante')] : null;
   var $ = function (s) { return document.querySelector(s); };
   var meta = null;
+  if (!V) throw new Error('versão desconhecida: ' + VERSAO);
+  if (V.preco) { $('#palco').classList.add('v-anuncio'); $('#precoTexto').innerHTML = L.PRECO.map(function (l) { return l.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }).join('<br>'); }
+  if (VAR) { $('#palco').classList.add('v-foto'); R.selos = R.selos.concat(VAR.selos || []); }
+  /* tempos que dependem da captura: 'previa:B' = quadro em que a prévia apareceu na sessão B */
+  function tt(v) {
+    if (typeof v !== 'string') return v;
+    var m = /^previa:(\w+)$/.exec(v), s = m && meta && meta.sessoes && meta.sessoes[m[1]];
+    if (!s || s.previaEm == null) throw new Error('tempo sem captura: ' + v);
+    return s.previaEm;
+  }
 
   /* ---------- curvas */
   function cl(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
@@ -161,10 +191,10 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   var legAtual = -1, legEl = $('#legenda');
   function legenda(t) {
     var i = -1;
-    R.legendas.forEach(function (l, j) { if (t >= l[0] - 1e-6 && t < l[1] - 1e-6) i = j; });
+    R.legendas.forEach(function (l, j) { if (t >= tt(l[0]) - 1e-6 && t < tt(l[1]) - 1e-6) i = j; });
     if (i !== legAtual) { legAtual = i; legEl.innerHTML = i < 0 ? '' : '<div class="faixa">' + R.legendas[i][2] + '</div>'; }
     var f = legEl.firstChild; if (!f) return;
-    var ini = R.legendas[i][0];
+    var ini = tt(R.legendas[i][0]);
     /* escrita a giz: o traço se revela da esquerda para a direita em 320 ms (a 1ª legenda já nasce escrita: é a capa) */
     var p = ini <= 0 ? 1 : eout(prog(t, ini, ini + 0.32));
     var a = (p * 112 - 12).toFixed(2);
@@ -174,13 +204,14 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   function selos(t) {
     var html = '';
     R.selos.forEach(function (s) {
-      var t0 = s.t0;
-      if (s.naPrevia && meta && meta.sessoes && meta.sessoes[s.naPrevia] && meta.sessoes[s.naPrevia].previaEm != null) t0 = meta.sessoes[s.naPrevia].previaEm;
-      if (t < t0 - 1e-6 || t >= s.t1 - 1e-6) return;
-      /* selo da prévia nasce inteiro no quadro em que a prévia aparece; os outros entram em 0,2 s */
-      var op = s.naPrevia ? 1 : Math.min(1, (t - t0) / 0.2 + (t0 <= 0 ? 1 : 0));
+      var t0 = tt(s.t0), naPrevia = typeof s.t0 === 'string';
+      if (t < t0 - 1e-6 || t >= tt(s.t1) - 1e-6) return;
+      /* selo da prévia nasce inteiro no quadro em que a prévia aparece; os outros entram em 0,2 s; o da foto sai com ela */
+      var op = naPrevia ? 1 : Math.min(1, (t - t0) / 0.2 + (t0 <= 0 ? 1 : 0));
+      if (s.lugar === 'foto' && VAR) op = 1 - prog(t, VAR.ate, VAR.ate + VAR.some);
       var pos = { 'topo-esq': 'left:65px;top:' + G.seloY + 'px', 'topo-dir': 'right:65px;top:' + G.seloY + 'px',
-                  'baixo-1': 'left:50%;top:1128px;transform:translateX(-50%)', 'baixo-2': 'left:50%;top:1184px;transform:translateX(-50%)' }[s.lugar];
+                  'baixo-1': 'left:50%;top:1128px;transform:translateX(-50%)', 'baixo-2': 'left:50%;top:1184px;transform:translateX(-50%)',
+                  'foto': 'left:50%;top:1176px;transform:translateX(-50%);font-size:40px' }[s.lugar];
       html += '<div class="selo" style="' + pos + ';opacity:' + op.toFixed(3) + '">' + s.texto + '</div>';
     });
     if (selosEl.__h !== html) { selosEl.innerHTML = html; selosEl.__h = html; }
@@ -261,7 +292,8 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     /* close: a placa ocupa ~70% da largura (nome a giz com mais de 40 px) */
     var WZ = { x: 65, y: 500, w: 950, h: G.janelaFim - 500 };
     var sZ = R.camera.larguraPlaca * 1080 / pl.w;
-    var sP = 1.51, v0 = 112, WP = { x: 540 - 390 * sP / 2, y: 440 + desceCel(t), w: 390 * sP, h: G.janelaFim - 440 };
+    var Y0 = R.camera.janelaY || 440;
+    var sP = 1.51, v0 = R.camera.topo != null ? R.camera.topo : 112, WP = { x: 540 - 390 * sP / 2, y: Y0 + desceCel(t), w: 390 * sP, h: G.janelaFim - Y0 };
     var k = eio(prog(t, R.camera.recuo[0], R.camera.recuo[1]));
     var s = lerp(sZ, sP, k);
     var ax = lerp(WZ.x + WZ.w / 2, WP.x + sP * cx, k), ay = lerp(WZ.y + WZ.h / 2, WP.y + sP * (cy - v0), k);
@@ -323,6 +355,17 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
       return Promise.resolve();
     }
     $('#msg').style.display = 'none';
+    /* --- variante com foto real: a foto ocupa a tela no primeiro 1,3 s (Ken Burns lento) e some em 0,3 s;
+       a cena (só a placa e o balão) fica por cima da foto enquanto ela existe */
+    if (VAR) {
+      var fo = $('#foto'), fim = VAR.ate + VAR.some;
+      if (t < fim - 1e-6) {
+        var kb = VAR.kb, kk = prog(t, 0, fim), esc = lerp(kb.de, kb.ate, kk);
+        fo.style.display = 'block'; fo.style.opacity = (1 - eio(prog(t, VAR.ate, fim))).toFixed(3);
+        var im = $('#fotoImg'); im.style.transformOrigin = (kb.ox * 100) + '% ' + (kb.oy * 100) + '%'; im.style.transform = 'scale(' + esc.toFixed(5) + ')';
+        cena.style.zIndex = 22;
+      } else { fo.style.display = 'none'; cena.style.zIndex = ''; }
+    }
     /* --- 0 a 2,4 s: celular escuro, placa desce, arraste, giro */
     cena.hidden = false;
     if (!montadoCena) {
@@ -420,12 +463,26 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   }
 
   /* ================================================================ API para gerar.cjs */
+  /* registro dos tipos de palco (linhas.js, campo "palco" de cada Reel). R9 a R12: escreva quadroXxx e registre aqui. */
+  var QUADROS = { home: quadroR8, dor: quadroR7 };
   window.preparar = function () {
-    return fetch('/__tmp/cap/' + REEL + '/meta.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) { meta = j; return document.fonts.ready; })
-      .then(function () { return { reel: REEL, duracao: R.duracao, mensagem: meta.mensagem || null }; });
+    var foto = Q.get('foto'), pf = Promise.resolve();
+    if (VAR) { if (!foto) throw new Error('variante sem foto'); var im = $('#fotoImg'); im.src = foto; pf = im.decode(); }
+    return fetch('/__tmp/cap/' + REEL + '/meta.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) { meta = j; return Promise.all([document.fonts.ready, pf]); })
+      .then(function () {
+        var pr = $('#precoTexto');
+        return { reel: REEL, versao: VERSAO, variante: Q.get('variante'), duracao: R.duracao, mensagem: meta.mensagem || null,
+          previaEm: meta.sessoes && meta.sessoes.B ? meta.sessoes.B.previaEm : null,
+          preco: V.preco ? { texto: pr.innerText, fonte: getComputedStyle(pr).fontFamily, peso: getComputedStyle(pr).fontWeight, px: parseFloat(getComputedStyle(pr).fontSize) } : null };
+      });
+  };
+  window.medirCartao = function () {
+    var r = function (s) { var e = $(s); if (!e || !e.offsetParent) return null; var b = e.getBoundingClientRect(); return { x: Math.round(b.left), y: Math.round(b.top), x1: Math.round(b.right), y1: Math.round(b.bottom) }; };
+    return { legenda: r('#legenda .faixa'), placa: r('#placaCartao'), preco: r('#preco div'), chip: r('#chip span'), origem: r('#origem') };
   };
   window.quadro = function (t) {
-    var p = REEL === 'R8' ? quadroR8(t) : quadroR7(t);
+    var fq = QUADROS[R.palco]; if (!fq) throw new Error('palco desconhecido: ' + R.palco);
+    var p = fq(t);
     legenda(t); selos(t);
     posicionar(t);
     return Promise.resolve(p).then(function () { return new Promise(function (r) { requestAnimationFrame(function () { r(true); }); }); });
