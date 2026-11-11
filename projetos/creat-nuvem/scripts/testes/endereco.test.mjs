@@ -193,6 +193,45 @@ test('H1 o host antigo só existe na lista de antigos, nos arquivos do pacote', 
   }
 });
 
+test('H1 tempo limite: troca que não acontece mostra a página em 2,5 s e libera a vitrine em 8 s; erro dentro do script mostra na hora', () => {
+  const janela = (opcoes = {}) => {
+    const tempos = [], eventos = [], estilo = new Map(), filhos = [];
+    const doc = { documentElement: { style: { setProperty: (k, v) => estilo.set(k, v), removeProperty: (k) => estilo.delete(k) }, appendChild: (x) => filhos.push(x) }, head: { appendChild: (x) => filhos.push(x) }, createElement: () => ({}) };
+    const W = { document: doc, CREAT_ENDERECO: { canonico: N, antigos: [HA] }, localStorage: memoria(), history: { state: null, replaceState() {} },
+      location: Object.assign(loc(A + '/termos/?x=1#k=salao'), { replace: opcoes.replace || (() => {}) }),
+      setTimeout: (f, ms) => tempos.push([ms, f]), dispatchEvent: (e) => eventos.push(e.type) };
+    W.top = W;
+    return { W, tempos, eventos, estilo, filhos };
+  };
+  const j = janela();
+  let destino = null; j.W.location.replace = (u) => { destino = u; };
+  C.estado.mudando = false;
+  C.rodar(j.W);
+  assert.equal(destino, N + '/termos/?x=1#k=salao');
+  assert.equal(C.estado.mudando, true);
+  assert.equal(j.estilo.get('visibility'), 'hidden', 'escondida enquanto troca');
+  assert.equal(j.filhos[0].content, 'no-referrer', 'o salto não leva Referer');
+  assert.deepEqual(j.tempos.map((t) => t[0]), [2500, 8000]);
+  j.tempos[0][1]();
+  assert.equal(j.estilo.has('visibility'), false, 'mostrou em 2,5 s'); assert.deepEqual(j.eventos, []);
+  j.tempos[1][1]();
+  assert.equal(C.estado.mudando, false); assert.deepEqual(j.eventos, ['creat:canonico-ficou'], 'vitrine liberada em 8 s');
+  // location.replace que falha: a página aparece e a vitrine roda na hora (o envoltório do arquivo faz isso no navegador)
+  const k = janela({ replace: () => { throw new Error('bloqueado'); } });
+  C.estado.mudando = false;
+  assert.throws(() => C.rodar(k.W));
+  C.ficar(k.W); C.mostrar(k.W);
+  assert.equal(k.estilo.has('visibility'), false); assert.equal(C.estado.mudando, false); assert.deepEqual(k.eventos, ['creat:canonico-ficou']);
+  // o envoltório de verdade: o arquivo rodado como no navegador, com replace quebrado
+  const vm = require('node:vm');
+  const z = janela({ replace: () => { throw new Error('bloqueado'); } });
+  z.W.window = z.W; z.W.URL = URL; z.W.Event = class { constructor(t) { this.type = t; } };
+  vm.createContext(z.W); vm.runInContext(fs.readFileSync(path.join(RAIZ, 'assets', 'canonico.js'), 'utf8'), z.W);
+  assert.equal(z.estilo.has('visibility'), false, 'erro: a página aparece na hora');
+  assert.equal(z.W.CreatCanonico.mudando, false); assert.deepEqual(z.eventos, ['creat:canonico-ficou']);
+  C.estado.mudando = false;
+});
+
 /* ======================================================================== 2. no navegador */
 let chromium = null;
 try { ({ chromium } = require(require.resolve('playwright', { paths: [RAIZ] }))); } catch (e) { chromium = null; }
@@ -223,7 +262,6 @@ async function abrir(nav, opcoes = {}) {
   await ctx.route('**/*', async (r) => {
     const q = r.request(), u = new URL(q.url());
     if ([HA, HN, HO].includes(u.hostname)) {
-      if (opcoes.prenderNovo && u.hostname === HN) return new Promise(() => {});   // a troca nunca completa
       if (u.pathname === '/__semente') return r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>semente</title><p>semente</p>' });
       if (u.pathname.startsWith('/api/pa/')) {
         const nome = u.pathname.slice('/api/pa/'.length);
@@ -539,7 +577,7 @@ test('H1 navegador: link da prévia copiado e link da prévia gravado no pedido 
   } finally { await nav.close(); }
 });
 
-test('H1 navegador: sem JavaScript o antigo continua de pé; troca que não completa mostra a página e libera a vitrine', { skip: pular }, async () => {
+test('H1 navegador: sem JavaScript o antigo continua de pé; a vitrine espera a troca e só começa com o aviso de que ficou', { skip: pular }, async () => {
   const nav = await chromium.launch();
   try {
     const a = await abrir(nav, { contexto: { javaScriptEnabled: false } });
@@ -552,18 +590,18 @@ test('H1 navegador: sem JavaScript o antigo continua de pé; troca que não comp
       assert.ok((await a.pg.innerText('body')).length > 200, 'conteúdo na tela: ' + p);
     }
     await a.ctx.close();
-    // o novo não responde nunca: a página do antigo fica escondida no máximo 2,5 s e volta sozinha; a vitrine volta em 8 s
-    const b = await abrir(nav, { prenderNovo: true });
-    const t0 = Date.now();
-    await b.pg.goto(A + '/termos/', { waitUntil: 'commit' });
-    await b.pg.waitForFunction(() => !!window.CreatCanonico);
-    assert.equal(await b.pg.evaluate(() => window.CreatCanonico.mudando && getComputedStyle(document.documentElement).visibility), 'hidden', 'escondida enquanto troca');
-    await b.pg.waitForFunction(() => getComputedStyle(document.documentElement).visibility === 'visible', null, { timeout: 5000 });
-    const mostrou = Date.now() - t0;
-    assert.ok(mostrou < 4000, 'mostrou em ' + mostrou + ' ms');
-    await b.pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'), null, { timeout: 12000 });
-    assert.equal(new URL(b.pg.url()).origin, A);
+    // a vitrine espera a troca: com CreatCanonico.mudando, nada inicia (banner, medição, contador) até o aviso de que ficou
+    const b = await abrir(nav);
+    await b.pg.addInitScript(() => {
+      let c; Object.defineProperty(window, 'CreatCanonico', { configurable: true, get: () => c, set: (v) => { c = v; c.mudando = true; } });
+    });
+    await b.pg.goto(O + '/abrir/#plano=vitrine&k=salao&n=Studio&c=Salvador&p=1');
+    await pausa(800);
+    assert.equal(await b.pg.evaluate(() => document.documentElement.classList.contains('js-pronto')), false, 'parada durante a troca');
+    assert.equal(b.reg.api.length, 0, 'nada contado durante a troca');
+    await b.pg.evaluate(() => { window.CreatCanonico.mudando = false; window.dispatchEvent(new Event('creat:canonico-ficou')); });
+    await b.pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'), null, { timeout: 5000 });
     assert.deepEqual(b.reg.erros, []);
-    await b.ctx.close();
+    await b.ctx.close()
   } finally { await nav.close(); }
 });
