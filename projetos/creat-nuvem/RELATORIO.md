@@ -351,3 +351,19 @@ Não verificado: um usuário comum logado nas 4 entidades privadas (falta creden
 **Não verificado:** usuário comum logado nas 4 entidades privadas (22 itens, falta credencial de teste); aparelho iPhone real; compra real pela página nova (o teste de R$ 1 foi feito antes dela).
 
 **Executor:** a tarefa agendada ainda NÃO foi criada. Falta a separação de papéis decidida no fecho (quem tem o conector não lê texto de cliente; leitor e redator isolados). Até lá, pedido pago é produzido à mão pelo coordenador, no mesmo roteiro.
+
+## Publicação de 11/11/2026, 02:59 UTC (23:59 de 10/11 na Bahia): primeira dobra e endereço único
+
+**Por que.** O contador próprio mostrou, entre 23:16 e 01:50 UTC de 10/11, cerca de 55 visitas de anúncio e nenhuma prévia. No celular de 360x640 o campo do nome ficava em y≈795 e o botão em y≈1178, fora da primeira tela, e o título era igual para todo nicho.
+
+**O que entrou.**
+- Primeira dobra: título pelo nicho (`assets/nicho-cedo.js` marca `<html data-nicho>` antes da pintura), campo do nome e botão "Ver meu site pronto" na primeira tela (botão termina em y=537 em 360x640), cabeçalho em uma linha, placa menor abaixo do formulário. Apóstrofo curvo do teclado passa a valer no nome.
+- Endereço único: `assets/canonico.js` leva quem abre `creat-nuvem-404b1994.base44.app` ao mesmo caminho em `nuvem.creatmtt.com.br`, com consulta e fragmento. O pedido só atravessa vindo do antigo e até 20/11; só a recusa de medição viaja. Canonical, og:url e links dos e-mails no canônico (`pa-regras-1A-2026-11-10f`).
+
+**Como foi publicado.** Repositório no commit `07a66a6`; pacote montado no app com a mesma impressão digital do local (133 arquivos, sha256 do manifesto `5fe5a32e…89f2`). App: checkpoint `6af3da0d852a262ba77a3eb5` (git `9f10c71`). Volta: checkpoint `6af3c32c57d4bf26ea220951` (estado anterior, git `ccd084c`).
+
+**Verificado.** Suíte 295 de 295 (294 mais o teste novo da dobra). Revisor, qa e segurança: aprovado com correções, nenhuma que bloqueasse; as três de "corrigir" em código foram aplicadas antes de publicar. No ar: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 125 de 125, jornada e cookies 10 de 10, salto do antigo ao canônico conferido; os 3 sites de demonstração 200 nos dois endereços. Olhado em 360x640 e 390x844: quem abre o endereço antigo com `?nicho=academia` chega ao novo com o título da academia.
+
+**Não verificado.** Aparelho real (iPhone e Android com teclado de verdade); navegador de dentro do Instagram; compra real pela página nova; usuário comum logado (22 itens); `rascunho_url` numa consulta real no endereço novo.
+
+**Fica sabido.** Com o campo na primeira tela, o visitante novo pede a prévia antes de ver o aviso de medição. O `ViewContent` do Pixel vai contar menos do que antes. A medida de decisão passa a ser o contador próprio (`previa` sobre `visita`). Os anúncios continuam apontando para o endereço antigo até o ato de 13/11.
