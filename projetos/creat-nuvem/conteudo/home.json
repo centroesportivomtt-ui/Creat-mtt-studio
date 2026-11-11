@@ -20,6 +20,8 @@
       "sede": "A equipe"
     },
     "whatsapp": "Chamar no WhatsApp",
+    "whatsappCelular": "WhatsApp",
+    "_whatsappCelular": "No celular o cabeçalho fica em uma linha: a parte \"Chamar no\" some e o ícone da casa fica ao lado. Os links da barra vão para o rodapé.",
     "whatsappFlutuante": "Chamar no WhatsApp",
     "whatsappFlutuanteAria": "Chamar o Suporte Creat no WhatsApp",
     "pular": "Pular para o campo do nome"
@@ -27,7 +29,16 @@
 
   "hero": {
     "olho": "Porta Aberta",
-    "h1": "Seu negócio aberto na internet.",
+    "h1": "Veja o site do seu negócio pronto.",
+    "_h1Anterior": "Seu negócio aberto na internet.",
+    "h1PorNicho": {
+      "barbearia": "Veja o site da sua barbearia pronto.",
+      "salao": "Veja o site do seu salão pronto.",
+      "academia": "Veja o site da sua academia pronto."
+    },
+    "_h1PorNicho": "O h1 sem nicho é o que o HTML estático mostra; com ?nicho= (ou #k=) assets/nicho-cedo.js marca <html data-nicho> antes da primeira pintura e o CSS mostra a versão do nicho.",
+    "apoio": "Digite o nome e veja agora. Ver é grátis.",
+    "_subtitulo": "O subtítulo longo desceu para logo abaixo da placa no celular e do formulário no desktop (.heroi-resto).",
     "subtitulo": "Digite o nome do seu negócio. Em segundos você vê o site pronto e testa o pedido no seu próprio WhatsApp. Ver é grátis; você paga para abrir e tem 7 dias para desistir com devolução.",
     "origem": "Feito pela Creat Nuvem, uma equipe de agentes de IA na Bahia. Uma pessoa da equipe confere cada site antes de ir ao ar. Tudo pela internet, para negócio de qualquer cidade.",
     "origemLink": "Quem somos",
@@ -51,7 +62,8 @@
       "outro": "Outro"
     },
     "chipAvisemeSufixo": "avise-me",
-    "botao": "Abrir meu negócio",
+    "botao": "Ver meu site pronto",
+    "_botaoAnterior": "Abrir meu negócio",
     "dica": "ou arraste a placa",
     "placaFechado": "FECHADO",
     "placaAberto": "ABERTO",

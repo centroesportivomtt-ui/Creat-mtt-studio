@@ -717,7 +717,8 @@
     var mostrar = function () { caixa.hidden = false; caixa.classList.toggle('is-digitando', ehCampo(D.activeElement)); D.body.classList.add('com-consentimento'); medir(); };
     var esconder = function () { caixa.hidden = true; D.body.classList.remove('com-consentimento'); D.documentElement.style.scrollPaddingBottom = ''; };
     if ('ResizeObserver' in W) new ResizeObserver(medir).observe(caixa);
-    var formularios = $$('#form-abrir, #form-pedido, #form-teste');
+    var FORMS = '#form-abrir, #form-pedido, #form-teste';
+    var formularios = $$(FORMS);
     // /obrigado/: sempre faixa (PG-12). O recibo e o próximo passo são o que a pessoa veio ver.
     if (PAGINA === 'obrigado') { caixa.classList.add('is-faixa'); formularios = []; }
     if (formularios.length && 'IntersectionObserver' in W) {
@@ -737,7 +738,7 @@
       if (caixa.hidden || !caixa.classList.contains('is-faixa')) { caixa.classList.remove('is-topo', 'is-sem-lugar'); return; }
       var alt = caixa.offsetHeight, vh = W.innerHeight, cab = $('header.barra'), topo = cab ? Math.max(0, cab.getBoundingClientRect().bottom) : 0;
       var cobre = function (a, b) {
-        return $$('#form-abrir, #form-pedido, #form-teste').some(function (fm) {
+        return $$(FORMS).some(function (fm) {
           return $$(CONTROLES, fm).some(function (c) {
             // dentro de <details> fechado o Chromium ainda dá caixa ao campo (content-visibility): não conta
             if (c.closest('details:not([open])') && c.tagName !== 'SUMMARY') return false;
@@ -846,7 +847,13 @@
       var msg = a.getAttribute('data-msg') || textos[tipo] || textos.duvida;
       if (ok) { a.href = linkWhats(CK.whatsappSuporte, msg); a.target = '_blank'; a.rel = 'noopener noreferrer'; }
       else if (a.hasAttribute('data-some-sem-zap')) { a.hidden = true; }
-      else { a.href = linkEmail('Porta Aberta', msg); a.removeAttribute('target'); var r = a.querySelector('[data-rotulo-zap]'); if (r) r.textContent = 'Falar com o suporte'; }
+      else {
+        a.href = linkEmail('Porta Aberta', msg); a.removeAttribute('target'); a.classList.add('sem-zap');
+        var r = a.querySelector('[data-rotulo-zap]');
+        // cabeçalho: no celular aparece só a parte curta ("Suporte"), no desktop a frase inteira
+        if (r && r.querySelector('.barra-zap-longo')) { r.querySelector('.barra-zap-longo').textContent = 'Falar com o '; r.lastChild.textContent = 'Suporte'; }
+        else if (r) r.textContent = 'Falar com o suporte';
+      }
     });
     $$('[data-email-suporte]').forEach(function (a) { a.textContent = emailSuporte(); a.href = 'mailto:' + emailSuporte(); });
   }
@@ -1104,6 +1111,10 @@
     var nichoQ = q.get('nicho'); if (nichoQ === 'salão' || nichoQ === 'estetica') nichoQ = 'salao';
     var nichoIni = NICHOS.indexOf(nichoQ) !== -1 ? nichoQ : hashIni.k;
     if (nichoIni) { var r0 = $('input[name="nicho"][value="' + nichoIni + '"]'); if (r0) r0.checked = true; }
+    // Título da dobra no nicho (assets/nicho-cedo.js já marcou antes da pintura; aqui confirma e segue a troca do chip).
+    function tituloDoNicho(k) { if (NICHOS.indexOf(k) !== -1) D.documentElement.setAttribute('data-nicho', k); }
+    tituloDoNicho(nichoIni);
+    $$('input[name="nicho"]').forEach(function (r) { r.addEventListener('change', function () { if (r.checked) tituloDoNicho(r.value); }); });
     // Exemplo do campo do nome conforme o nicho (quem chega pelo anúncio de salão não lê "Barbearia do Zé").
     var EXEMPLO_NOME = { barbearia: 'Exemplo: Barbearia do Zé', salao: 'Exemplo: Studio da Ana', academia: 'Exemplo: Academia Ponto Forte' };
     function exemploDoNicho(k) { if (EXEMPLO_NOME[k]) campoNome.setAttribute('placeholder', EXEMPLO_NOME[k]); }
@@ -1138,6 +1149,14 @@
     }
     if (!placa) $$('.dica-arrastar').forEach(function (d) { d.hidden = true; });
 
+    // No celular a placa fica logo abaixo do botão, quase fora da tela: ao enviar, ela sobe para a vista e a
+    // pessoa vê a virada para ABERTO com o nome a giz antes da prévia abrir (o ritual não acontece escondido).
+    function mostrarPlaca() {
+      if (!ponto || !ponto.getBoundingClientRect) return;
+      var r = ponto.getBoundingClientRect(), vh = W.innerHeight || 0;
+      if (!r.height || (r.top >= 0 && r.bottom <= vh)) return;
+      try { ponto.scrollIntoView({ block: 'center', behavior: MOV_REDUZIDO.matches ? 'auto' : 'smooth' }); } catch (e) {}
+    }
     function mostrarErroNome(msg) {
       caixaNome.setAttribute('data-estado', 'erro'); erroNome.textContent = msg; erroNome.hidden = false;
       campoNome.setAttribute('aria-invalid', 'true'); campoNome.focus();
@@ -1197,6 +1216,7 @@
       var n = limparNome(campoNome.value);
       if (!n && placa) { try { placa.abrir('botao'); } catch (x) {} mostrarErroNome('Digite o nome do seu negócio para a placa virar.'); return; }
       if (!validarNome() || !validarNicho() || !validarCidade()) return;
+      mostrarPlaca();
       if (placa) { try { placa.definirNome(n); placa.abrir('botao'); return; } catch (x) {} }
       aoAbrirPlaca('botao');
     });

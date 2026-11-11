@@ -50,20 +50,39 @@ p{margin:0;text-wrap:pretty}
 .marca{display:flex;align-items:center;gap:10px;text-decoration:none;min-height:var(--alvo);min-width:0}
 .marca svg{width:40px;height:30px;flex:none}
 .marca span{font-family:var(--f-display);font-size:22px;line-height:1;white-space:nowrap}
-.barra-zap{min-height:var(--alvo);padding:8px 16px;font-size:15px}
+.barra-zap{min-height:var(--alvo);padding:8px 16px;font-size:15px;gap:8px}
+.barra-zap .barra-zap-icone{width:20px;height:20px}
+.barra-zap.sem-zap .barra-zap-icone{display:none}
 .barra-links{order:3;width:100%;display:flex;gap:4px;margin:0 0 6px -10px;padding:0;list-style:none}
 .barra-links a{display:inline-flex;align-items:center;min-height:var(--alvo);padding:0 10px;font-weight:700;font-size:var(--t-menor);text-decoration:none;border-radius:10px}
 .barra-links a:hover{text-decoration:underline}
+/* celular: cabeçalho em UMA linha (logo + WhatsApp curto). A navegação mora no rodapé; nada de menu escondido. */
+@media (max-width:719px){
+  .barra .cx{flex-wrap:nowrap;min-height:56px}
+  .barra-links{display:none}
+  .marca{gap:8px}
+  .marca svg{width:36px;height:27px}
+  .marca span{font-size:20px}
+  .barra-zap{padding:6px 14px;gap:6px}
+  .barra-zap-longo{display:none}
+}
 
 /* ---------------------------------------------------------------- hero */
 .heroi{background:var(--ceu);border-bottom:var(--borda) solid var(--linha);padding:var(--r5) 0 var(--r7);position:relative;overflow:hidden}
-/* ordem no celular: título, placa, subtítulo e formulário (a placa aparece na 1ª tela)
-   marcação esperada: .heroi > .cx > .heroi-cabeca + .palco-placa + .heroi-corpo */
-.heroi .cx{display:grid;gap:var(--r4);grid-template-areas:"cabeca" "placa" "corpo"}
+/* Dobra que converte (11/11/2026): no celular o título do nicho, o campo e o botão cabem na 1ª tela
+   (360x640: botão termina antes de 600 px) e a placa vem logo abaixo, com um pedaço à vista chamando a rolar.
+   Ordem (marcação e tela): .heroi-cabeca + .heroi-corpo (formulário) + .palco-placa + .heroi-resto (texto longo) */
+.heroi .cx{display:grid;gap:var(--r4);grid-template-areas:"cabeca" "corpo" "placa" "resto"}
 .heroi-cabeca{grid-area:cabeca}
 .heroi-corpo{grid-area:corpo}
-.heroi h1{font-size:var(--t-h1);max-width:14ch}
+.heroi-resto{grid-area:resto;display:grid;gap:var(--r4)}
+.heroi h1{font-size:var(--t-h1);max-width:16ch}
+/* título por nicho: <html data-nicho> vem de assets/nicho-cedo.js, antes da primeira pintura; sem JS fica "seu negócio" */
+html[data-nicho] .h1-v[data-v=""]{display:none}
+html[data-nicho="barbearia"] .h1-v[data-v="barbearia"],html[data-nicho="salao"] .h1-v[data-v="salao"],html[data-nicho="academia"] .h1-v[data-v="academia"]{display:inline !important}
+.heroi .apoio{margin-top:var(--r3);font-size:var(--t-lead);font-weight:600;line-height:1.4;max-width:40ch}
 .heroi .sub{font-size:var(--t-lead);max-width:46ch}
+.heroi-resto .origem{margin-top:0}
 /* palco da placa: reserva o espaço antes do JS (sem salto de layout); T6 monta dentro */
 .palco-placa{grid-area:placa;position:relative;display:grid;place-items:start center;height:clamp(250px, 68vw, 320px);margin-inline:auto;width:min(100%, 440px)}
 .palco-placa > :not(.porta){width:min(72%, 320px);margin-top:10px}
@@ -71,6 +90,7 @@ p{margin:0;text-wrap:pretty}
 .porta{position:absolute;inset:0 6% 0;border:var(--borda-g) solid var(--linha);border-bottom-width:8px;border-radius:28px 28px 0 0;background:linear-gradient(160deg, var(--vidro-reflexo) 0 18%, transparent 18% 32%, var(--vidro-reflexo) 32% 36%, transparent 36%) , var(--vidro);z-index:0}
 .porta::after{content:"";position:absolute;left:50%;top:-2px;width:14px;height:14px;transform:translate(-50%,-50%);border-radius:50%;background:var(--corrente);border:3px solid var(--linha)}
 .palco-placa > :not(.porta){position:relative;z-index:1}
+.palco-placa > .dica-palco{display:none}
 
 /* formulário do hero */
 .abrir{display:grid;gap:var(--r4);margin-top:var(--r5);max-width:520px}
@@ -85,6 +105,12 @@ p{margin:0;text-wrap:pretty}
 .campo[data-estado="erro"] input{border-color:var(--alerta);box-shadow:3px 3px 0 var(--alerta)}
 .campo[data-estado="ok"] .ajuda{color:var(--ok)}
 .contador-giz{font:500 var(--t-micro)/1 var(--f-dado);color:var(--apagado);justify-self:end}
+/* campo do nome: o "0 de 40" na linha do rótulo (uma linha a menos na dobra) */
+.campo-nome{grid-template-columns:minmax(0,1fr) auto;align-items:center}
+.campo-nome label{grid-column:1;grid-row:1}
+.campo-nome .contador-giz{grid-column:2;grid-row:1}
+.campo-nome input,.campo-nome .erro{grid-column:1 / -1}
+.nota-nome{font-size:var(--t-nota);color:var(--apagado);margin-top:calc(-1 * var(--r1))}
 
 /* chips de nicho: alvo de 44 px; os ativos são radio, os outros "avise-me" */
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;border:0}
@@ -98,6 +124,24 @@ p{margin:0;text-wrap:pretty}
 .chip-avise::after{content:"avise-me";font:500 11.5px/1 var(--f-dado);text-transform:uppercase;letter-spacing:.06em;margin-left:2px}
 .abrir .btn-sol{justify-self:start}
 .dica-arrastar{font-size:var(--t-nota);color:var(--apagado)}
+
+/* dobra no celular: só o necessário para ver o site; a placa menor logo abaixo do botão */
+@media (max-width:719px){
+  .heroi{padding:var(--r4) 0 var(--r6)}
+  .heroi .olho{display:none}
+  .heroi h1{font-size:clamp(28px, 8.4vw, 40px);max-width:none;line-height:1.08}
+  .heroi .apoio{margin-top:var(--r2);font-size:17px}
+  .abrir{margin-top:0;gap:var(--r3)}
+  .abrir .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .abrir .chip{justify-content:center;text-align:center;min-height:56px;padding:4px 8px;font-size:14px;line-height:1.2;border-radius:var(--raio-p)}
+  .abrir .btn-sol{width:100%}
+  .contador-giz{font-size:var(--t-nota)}
+  .chip-avise::after{font-size:var(--t-nota)}
+  .linha-acao .dica-arrastar{display:none}
+  .palco-placa{height:236px;width:min(100%, 380px)}
+  .palco-placa > :not(.porta){width:min(58%, 230px);margin-top:12px}
+  .palco-placa > .dica-palco{display:block;position:absolute;left:50%;bottom:16px;width:auto;margin:0;transform:translateX(-50%);z-index:2;font-size:var(--t-nota);font-weight:700;color:var(--giz);white-space:nowrap}
+}
 
 /* ---------------------------------------------------------------- prévia em tela cheia */
 .previa{position:fixed;inset:0;z-index:var(--z-previa);display:grid;grid-template-rows:auto 1fr auto;background:var(--fundo)}
@@ -262,7 +306,7 @@ body.com-previa .aviso{bottom:calc(var(--barra-previa) + 16px + env(safe-area-in
 @media (min-width:1000px){
   .barra-links a{font-size:var(--t-corpo)}
   .heroi{padding:var(--r6) 0 calc(var(--r7) + 16px)}
-  .heroi .cx{grid-template-columns:1.05fr .95fr;grid-template-areas:"cabeca placa" "corpo placa";grid-template-rows:auto 1fr;align-items:start;column-gap:var(--r7);row-gap:var(--r4)}
+  .heroi .cx{grid-template-columns:1.05fr .95fr;grid-template-areas:"cabeca placa" "corpo placa" "resto placa";grid-template-rows:auto auto 1fr;align-items:start;column-gap:var(--r7);row-gap:var(--r5)}
   .heroi-cabeca{padding-top:var(--r5)}
   .palco-placa{height:520px;width:100%}
   .palco-placa > :not(.porta){width:min(82%, 420px);margin-top:16px}
