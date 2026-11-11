@@ -161,6 +161,20 @@
         tom(out, t, 1318.5, 0.12, 0.34 * e.forca, 0.004); tom(out, t, 2637, 0.06, 0.06 * e.forca, 0.003);
         tom(out, t + 0.075, 1760, 0.32, 0.4 * e.forca, 0.004); tom(out, t + 0.075, 3520, 0.12, 0.06 * e.forca, 0.003);
       },
+      /* tic de papel (R9): a comanda trocando de mão; um sopro de papel agudo e um toque surdo no balcão */
+      papel: function (t, e) {
+        var out = saida((rnd() - 0.5) * 0.3, 0.1);
+        var f = rajada(out, t, 0.05, 'bandpass', 4200 + rnd() * 600, 0.9, 0.3 * e.forca, 0.002);
+        f.frequency.exponentialRampToValueAtTime(2600, t + 0.05);
+        tom(out, t + 0.004, e.grave ? 150 : 240, 0.05, (e.grave ? 0.26 : 0.14) * e.forca, 0.002, 'sine', e.grave ? 95 : 160);
+      },
+      /* carimbo (R9): batida seca de borracha na madeira, sem eco */
+      carimbo: function (t, e) {
+        var out = saida(0, 0.12);
+        tom(out, t, 120, 0.12, 0.5 * e.forca, 0.002, 'sine', 62);
+        rajada(out, t, 0.03, 'lowpass', 900, 0.8, 0.45 * e.forca, 0.001);
+        rajada(out, t + 0.002, 0.012, 'bandpass', 2400, 1.2, 0.16 * e.forca, 0.001);
+      },
       /* porta de aço de enrolar subindo (0,9 s): lâminas batendo no trilho, ronco do eixo e a trava no fim */
       porta: function (t, e) {
         var out = saida(0, 0.35), du = 0.9;

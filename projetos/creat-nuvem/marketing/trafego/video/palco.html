@@ -83,7 +83,80 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 #foto img{position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;filter:brightness(.86) saturate(.92)}
 .v-foto #celEscuro{background:none}
 .v-foto #celEscuro .tela{background:none}
-.v-foto #celEscuro .hora,.v-foto #notif .selo,.v-foto .vib{display:none}
+/* o selo "cena de exemplo" do balão fica: ele está sobre a foto e vale para a cena inteira (embaixo, a placa o cobriria) */
+.v-foto #celEscuro .hora,.v-foto .vib{display:none}
+/* R9 (cena 'placa'): sem cena de dor; a placa real grande no céu, em close na faixa de giz */
+.c-placa #celEscuro,.c-placa .vib{display:none}
+.c-placa #placaCena{left:230px;top:470px;width:620px}
+/* R12 (cena 'link'): celular claro com um perfil fictício e a página de erro, os dois desenhados pela casa
+   (nenhuma marca de rede social ou de ferramenta real; o link usa o domínio reservado .exemplo) */
+.c-link .vib,.c-link #celEscuro .hora,.c-link #notif{display:none}
+.c-link #celEscuro .tela{background:var(--papel)}
+#perfil,#erro404{display:none;position:absolute;inset:0;color:var(--tinta)}
+.c-link #perfil{display:block}
+.c-link.erro #perfil{display:none}
+.c-link.erro #erro404{display:block;background:#EFEBE1}
+.tela .barra{position:absolute;left:0;right:0;top:0;height:70px;display:flex;align-items:center;justify-content:center;border-bottom:3px solid var(--tinta);font:800 30px/1 Figtree,sans-serif}
+#erro404 .barra{justify-content:flex-start;padding:0 22px;background:var(--papel);font:700 28px/1 "JetBrains Mono",monospace;letter-spacing:-1px}
+.tela .seloCena{position:absolute;right:20px;top:86px;z-index:3;background:var(--sol);font-size:34px;padding:7px 12px 8px}
+#perfil .avatar{position:absolute;left:28px;top:96px;width:132px;height:132px;border-radius:50%;border:5px solid var(--tinta);background:var(--sol);display:flex;align-items:center;justify-content:center;font:400 76px/1 "Lilita One",sans-serif}
+#perfil .nomeP{position:absolute;left:28px;top:252px;font:800 38px/1.1 Figtree,sans-serif}
+#perfil .bio{position:absolute;left:28px;top:304px;font:600 30px/1.25 Figtree,sans-serif}
+#perfil .link{position:absolute;left:28px;top:356px;padding:8px 14px 10px;background:var(--ceu);border:3px solid var(--tinta);border-radius:12px;font:700 28px/1 "JetBrains Mono",monospace;letter-spacing:-1px;text-decoration:underline;text-underline-offset:5px}
+#perfil .grade{position:absolute;left:12px;right:12px;top:440px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#perfil .grade i{display:block;height:176px;border:3px solid var(--tinta);border-radius:6px}
+#erro404 .icone{position:absolute;left:28px;top:96px;width:140px;height:96px}
+#erro404 .tit{position:absolute;left:30px;right:30px;top:204px;font:400 56px/1.04 "Lilita One",sans-serif}
+#erro404 .sub{position:absolute;left:30px;right:30px;top:332px;font:600 30px/1.25 Figtree,sans-serif;color:var(--tinta)}
+/* a placa cai mais baixo que no R7, para o título da página de erro ficar à vista */
+.c-link #placaCena{top:822px}
+/* R9: a comanda do pedido passa de mão em mão; o carimbo NO AR bate nela */
+#comanda{position:absolute;left:150px;top:1004px;width:780px;z-index:9;display:none;background:var(--papel);border:4px solid var(--tinta);border-radius:16px;box-shadow:10px 10px 0 var(--tinta);padding:14px 22px 16px;transform-origin:50% 100%}
+#comanda .cab{display:flex;justify-content:space-between;align-items:center;font:700 28px/1 "JetBrains Mono",monospace;letter-spacing:-.6px}
+#comanda .pts{display:flex;gap:8px}
+#comanda .pts i{display:block;width:24px;height:24px;border-radius:50%;border:3px solid var(--tinta);background:var(--papel)}
+#comanda .pts i.f{background:var(--tinta)}
+#comanda .linha{display:flex;align-items:center;gap:16px;margin-top:12px;font:800 42px/1.05 Figtree,sans-serif;white-space:nowrap}
+#comanda .linha .p{flex:none;width:48px;height:48px;border-radius:50%;border:4px solid var(--tinta)}
+#comanda .linha b{font:400 50px/1 "Lilita One",sans-serif;letter-spacing:.3px}
+#carimbo{position:absolute;z-index:11;left:600px;top:944px;display:none;padding:10px 30px 6px;background:var(--sol);border:7px solid var(--tinta);border-radius:18px;box-shadow:10px 10px 0 var(--tinta);font:400 112px/1 "Lilita One",sans-serif;letter-spacing:2px;white-space:nowrap}
+/* cartão da campanha de conversa (R12): o balão próprio da vitrine indica o chat, sem logo de aplicativo */
+#chatBalao{position:absolute;display:none;left:772px;top:560px;width:170px}
+.k-conversa #chatBalao{display:block}
+.v-anuncio #chatBalao{left:742px;top:552px;width:150px}
+/* R10 (cena 'lousa', palco 'lousa'): lousa grande com três caixas. A capa (#lousaCapa) fica na cena e voa com ela;
+   do outro lado do vidro, #lousaG em tamanho de tela, onde o giz escreve as linhas. Giz com a textura do anel. */
+.c-lousa #celEscuro,.c-lousa .vib{display:none}
+.lousa{position:absolute;background:var(--lousa);border:18px solid var(--madeira);border-radius:22px;box-shadow:inset 0 0 0 4px var(--tinta),0 0 0 4px var(--tinta),10px 10px 0 4px var(--tinta);overflow:hidden}
+#lousaCapa{display:none}
+.c-lousa #lousaCapa{display:block;left:65px;top:356px;width:950px;height:880px}
+#lousaG{display:none;z-index:4}
+.lousa .cx{position:absolute;width:56px;height:56px}
+.lousa .cx svg{position:absolute;left:-6px;top:-6px;width:68px;height:68px;overflow:visible}
+.lousa .vazio{position:absolute;height:6px;border-radius:3px;background:var(--giz);opacity:.22}
+.lousa .lin{position:absolute;left:112px;right:40px;color:var(--giz);white-space:nowrap;filter:url(#filtroGiz)}
+.lousa .lin span{display:inline-block}
+.lousa .rot{font:400 64px/76px "Lilita One",sans-serif;letter-spacing:.5px}
+.lousa .txt{font:800 58px/76px Figtree,sans-serif;letter-spacing:-.3px}
+.lousa .nota{position:absolute;left:30px;right:30px;color:var(--giz);font:800 50px/1.2 Figtree,sans-serif;white-space:nowrap;filter:url(#filtroGiz)}
+.lousa .poeira{position:absolute;height:26px;border-radius:13px;background:var(--giz);opacity:.06}
+.lousa .etiqueta{position:absolute;right:26px;padding:6px 12px 7px;background:var(--lousa);border:3px solid var(--giz);border-radius:10px;color:var(--giz);font:700 28px/1 "JetBrains Mono",monospace;letter-spacing:-.6px}
+/* vão do recorte: cartão de papel com contorno e sombra dura */
+.p-lousa #janela{border:4px solid var(--tinta);box-shadow:10px 10px 0 rgba(8,12,10,.55)}
+#cobertas{position:absolute;inset:0;pointer-events:none}
+.tarja{position:absolute;background:var(--lousa);border:3px solid var(--tinta);border-radius:8px}
+.realce{position:absolute;height:9px;border-radius:5px;background:var(--sol);border:2px solid var(--tinta)}
+.cobreTeste{position:absolute;display:flex;align-items:center;justify-content:center}
+.cobreTeste .faixaTeste{width:calc(100% + 4px);text-align:center;transform:rotate(-1deg)}
+/* R11 (mensagem 'teste'): o celular desenhado pela casa com a mensagem real do teste, no rascunho; o anel segura o
+   enviar (botão próprio da casa, sem logo de aplicativo) e o rascunho sobe como mensagem enviada */
+#rascunho,#enviar{display:none}
+.m-teste #msg .conversa{display:none}
+.m-teste #rascunho{display:block;position:absolute;left:22px;top:236px;width:604px;padding:22px 26px 18px;background:var(--papel);border:3px solid var(--linha);border-radius:26px;font:600 33px/1.3 Figtree,sans-serif;color:var(--tinta);transform-origin:100% 100%}
+#rascunho b{font-weight:800}
+#rascunho small{display:block;margin-top:10px;font:700 28px/1 "JetBrains Mono",monospace;text-align:right}
+#rascunho.enviado{background:var(--lasca);border-radius:26px 26px 8px 26px}
+.m-teste #enviar{display:flex;position:absolute;right:22px;width:100px;height:100px;border-radius:50%;background:var(--sol);border:4px solid var(--tinta);box-shadow:5px 5px 0 var(--tinta);align-items:center;justify-content:center}
 /* porta de aço de enrolar (assinatura sonora e visual do fim) */
 #porta{position:absolute;left:0;top:0;width:1080px;height:2000px;z-index:60;display:none;
   background:repeating-linear-gradient(180deg,#9AA0AC 0 52px,#7C828F 52px 58px,#B5BAC4 58px 64px,#9AA0AC 64px 66px);border-bottom:26px solid var(--tinta)}
@@ -103,19 +176,42 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
         <div class="txt">Tem horário amanhã?</div>
         <div class="selo">cena de exemplo</div>
       </div>
+      <div id="perfil">
+        <div class="barra" id="perfilArroba"></div>
+        <div class="selo seloCena">cena de exemplo</div>
+        <div class="avatar">E</div>
+        <div class="nomeP" id="perfilNome"></div>
+        <div class="bio" id="perfilBio"></div>
+        <div class="link" id="linkBio"></div>
+        <div class="grade"><i style="background:var(--madeira-clara)"></i><i style="background:var(--ceu)"></i><i style="background:var(--lasca)"></i><i style="background:var(--sol)"></i><i style="background:var(--madeira)"></i><i style="background:var(--ceu)"></i></div>
+      </div>
+      <div id="erro404">
+        <div class="barra" id="erroEndereco"></div>
+        <div class="selo seloCena">cena de exemplo</div>
+        <svg class="icone" width="190" height="130" viewBox="0 0 190 130" aria-hidden="true">
+          <g fill="none" stroke="#1E1B2E" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M78 42 L58 42 A23 23 0 0 0 58 88 L78 88"/><path d="M112 42 L132 42 A23 23 0 0 1 132 88 L112 88"/>
+            <path d="M95 8 V24 M95 106 V122 M70 14 L78 28 M120 14 L112 28 M70 116 L78 102 M120 116 L112 102"/></g></svg>
+        <div class="tit">Página não<br>encontrada</div>
+        <div class="sub">O endereço não existe<br>ou saiu do ar.</div>
+      </div>
     </div></div>
     <svg class="vib" id="vibE" style="left:170px" viewBox="0 0 60 120"><path d="M50 10 Q18 60 50 110" fill="none" stroke="#1E1B2E" stroke-width="8" stroke-linecap="round"/><path d="M28 30 Q10 60 28 90" fill="none" stroke="#1E1B2E" stroke-width="8" stroke-linecap="round"/></svg>
     <svg class="vib" id="vibD" style="left:850px" viewBox="0 0 60 120"><path d="M10 10 Q42 60 10 110" fill="none" stroke="#1E1B2E" stroke-width="8" stroke-linecap="round"/><path d="M32 30 Q50 60 32 90" fill="none" stroke="#1E1B2E" stroke-width="8" stroke-linecap="round"/></svg>
+    <div id="lousaCapa" class="lousa"></div>
     <div id="placaCena"><div class="gira" id="giraCena"><div id="pontoCena"></div></div></div>
   </div>
+  <div id="lousaG" class="lousa"></div>
   <div id="corpo" hidden></div>
-  <div id="janela" hidden><img id="tela" alt=""><img id="telaAntes" alt="" style="opacity:0"><div id="mascaras"></div><div id="vidro"></div></div>
+  <div id="janela" hidden><img id="tela" alt=""><img id="telaAntes" alt="" style="opacity:0"><div id="mascaras"></div><div id="cobertas"></div><div id="vidro"></div></div>
   <div id="msg">
     <div class="tela">
       <div class="cab"><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M4 20l1.4-4A8 8 0 1 1 8.6 19z" fill="var(--papel)" stroke="var(--linha)" stroke-width="2.2" stroke-linejoin="round"/></svg>
-        <div>Pedido pelo site<small>Barbearia Navalha Fictícia</small></div></div>
+        <div id="msgCab">Pedido pelo site<small id="msgNome">Barbearia Navalha Fictícia</small></div></div>
       <div class="selo seloMsg">cena de exemplo</div>
       <div class="conversa"><div class="balao" id="balao"></div></div>
+      <div id="rascunho"></div>
+      <div id="enviar"><svg viewBox="0 0 40 40" width="54" height="54" aria-hidden="true"><path d="M7 20 H31 M21 9 L32 20 L21 31" fill="none" stroke="#1E1B2E" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     </div>
   </div>
   <div id="cartao">
@@ -123,7 +219,12 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     <div id="chip"><span>Grátis para ver · Sem cadastro</span></div>
     <div id="preco"><div id="precoTexto"></div></div>
     <div id="origem">Creat Nuvem · equipe de agentes de IA · Bahia</div>
+    <svg id="chatBalao" viewBox="0 0 24 22" aria-hidden="true"><path d="M3.2 19.4l1.3-3.7A8.2 8.2 0 1 1 8 18.6z" fill="#FFFDF6" stroke="#1E1B2E" stroke-width="1.5" stroke-linejoin="round" transform="translate(.6 .6)"/>
+      <path d="M2.6 18.8l1.3-3.7A8.2 8.2 0 1 1 7.4 18z" fill="#FFFDF6" stroke="#1E1B2E" stroke-width="1.4" stroke-linejoin="round"/>
+      <circle cx="8.6" cy="10.6" r="1.25" fill="#1E1B2E"/><circle cx="12.2" cy="10.6" r="1.25" fill="#1E1B2E"/><circle cx="15.8" cy="10.6" r="1.25" fill="#1E1B2E"/></svg>
   </div>
+  <div id="comanda"><div class="cab"><span>comanda do pedido</span><span class="pts" id="comandaPts"></span></div><div class="linha" id="comandaLinha"></div></div>
+  <div id="carimbo">NO AR</div>
   <div id="aneis"></div>
   <div id="balcao"><svg width="1120" height="600" viewBox="0 0 1120 600" aria-hidden="true">
     <path d="M40 60 C200 40 360 80 520 58" fill="none" stroke="#9A6438" stroke-width="5" stroke-linecap="round"/>
@@ -153,6 +254,76 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   if (!V) throw new Error('versão desconhecida: ' + VERSAO);
   if (V.preco) { $('#palco').classList.add('v-anuncio'); $('#precoTexto').innerHTML = L.PRECO.map(function (l) { return l.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }).join('<br>'); }
   if (VAR) { $('#palco').classList.add('v-foto'); R.selos = R.selos.concat(VAR.selos || []); }
+  /* tipo da cena de abertura (R7 'mensagem', R12 'link', R9 'placa') e do cartão final (R12 'conversa') */
+  var CENA = (R.cena && R.cena.tipo) || 'mensagem';
+  $('#palco').classList.add('c-' + CENA);
+  if (R.cartaoTipo === 'conversa') $('#palco').classList.add('k-conversa');
+  if (R.perfil) { $('#perfilArroba').textContent = R.perfil.arroba; $('#perfilNome').textContent = R.nome; $('#perfilBio').textContent = R.perfil.bio; $('#linkBio').textContent = R.perfil.link; $('#erroEndereco').textContent = R.perfil.link; }
+  $('#msgNome').textContent = R.nome;
+  /* R11: a conversa é com o próprio número do dono (de teste): o cabeçalho diz isso, com a faixa por cima do número */
+  if (R.mensagemTipo === 'teste') { $('#palco').classList.add('m-teste'); $('#msgCab').innerHTML = 'Seu WhatsApp<small><span class="faixaTeste">número de teste</span></small>'; }
+  /* R10: lousa grande (capa na cena e a do outro lado do vidro), montada com a mesma grade */
+  var EH_LOUSA = R.palco === 'lousa';
+  if (EH_LOUSA) { $('#palco').classList.add('p-lousa'); montarLousa($('#lousaCapa'), true); montarLousa($('#lousaG'), false); }
+  /* grade da lousa (px dentro da lousa, a partir da borda de madeira): linha 1, linha 2 (duas linhas de texto), linha 3 */
+  function topoLinha(i) { return [10, 98, 264][i]; }
+  function montarLousa(el, capa) {
+    var h = '<i class="poeira" style="left:60px;top:' + (capa ? 470 : 760) + 'px;width:300px"></i><i class="poeira" style="left:520px;top:' + (capa ? 610 : 800) + 'px;width:240px"></i>';
+    R.linhas.forEach(function (l, i) {
+      var y = topoLinha(i);
+      h += '<div class="cx" style="left:28px;top:' + (y + 10) + 'px"><svg viewBox="0 0 68 68"><rect x="6" y="6" width="56" height="56" rx="6" fill="none" stroke="#F4F1E6" stroke-width="6" filter="url(#filtroGiz)"/>' +
+        (capa ? '' : '<path class="tique" d="M16 36 L29 49 L56 14" fill="none" stroke="#F4F1E6" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#filtroGiz)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>') + '</svg></div>';
+      if (capa) { h += '<i class="vazio" style="left:112px;top:' + (y + 66) + 'px;width:' + [620, 700, 460][i] + 'px"></i>'; if (l.quebra) h += '<i class="vazio" style="left:112px;top:' + (y + 142) + 'px;width:560px"></i>'; }
+      else h += '<div class="lin" data-i="' + i + '" style="top:' + y + 'px"><span class="rot">' + esc(l.rotulo) + '</span>' + (l.quebra ? '<br>' : '<span class="txt">&nbsp;</span>') + '<span class="txt">' + esc(l.texto) + '</span></div>';
+    });
+    if (!capa) {
+      h += '<div class="etiqueta" id="etiquetaVao" style="top:' + (R.vao.y - R.lousa.y - 18 - 50) + 'px">recorte da página real</div>';
+      h += '<div class="nota" id="notaLousa" style="top:' + (R.vao.y - R.lousa.y - 18 + 120) + 'px">' + esc(R.nota.texto) + '</div>';
+    }
+    el.innerHTML = capa ? h : '<div class="miolo" style="position:absolute;inset:0">' + h + '</div>';
+  }
+  /* linha que passou da largura da lousa (fonte real carregada): a fonte diminui até caber, nunca abaixo de 52 px */
+  function ajustarLousa() {
+    if (!EH_LOUSA) return;
+    document.querySelectorAll('#lousaG .lin').forEach(function (l) {
+      for (var f = 1; f > 0.8 && l.scrollWidth > l.clientWidth + 1; f -= 0.02)
+        l.querySelectorAll('span').forEach(function (sp) { sp.style.fontSize = (sp.classList.contains('rot') ? 64 : 58) * f + 'px'; });
+    });
+  }
+  function revela(el, p) {
+    el.style.visibility = p <= 0 ? 'hidden' : 'visible';
+    var a = (p * 112 - 12).toFixed(2);
+    el.style.webkitMaskImage = el.style.maskImage = p >= 1 ? 'none' : 'linear-gradient(90deg,#000 ' + a + '%,transparent ' + (+a + 12) + '%)';
+  }
+  /* R10: do outro lado do vidro, a lousa grande. O giz escreve cada linha (rótulo, depois o resto), o tique de "feito"
+     se desenha em 200 ms, e o vão mostra o recorte vivo da página real da linha da vez (entra pela direita em 260 ms,
+     sai pela esquerda em 160 ms). Depois das três, a nota legal em letra menor. */
+  function lousaQuadro(t, k) {
+    var lg = $('#lousaG'), mi = lg.querySelector('.miolo');
+    mi.style.opacity = (k >= 1 ? 1 : prog(k, 0.85, 1)).toFixed(3);
+    R.linhas.forEach(function (l, i) {
+      var ln = lg.querySelector('.lin[data-i="' + i + '"]');
+      var nr = Array.from(l.rotulo).length, nt = Array.from(l.rotulo + ' ' + l.texto).length, meio = l.t0 + (l.t1 - l.t0) * nr / nt;
+      revela(ln.querySelector('.rot'), prog(t, l.t0, meio));
+      ln.querySelectorAll('.txt').forEach(function (e) { revela(e, prog(t, meio, l.t1)); });
+      lg.querySelectorAll('.tique')[i].setAttribute('stroke-dashoffset', (1 - eout(prog(t, l.feito, l.feito + 0.2))).toFixed(4));
+    });
+    revela($('#notaLousa'), prog(t, R.nota.t0, R.nota.t1));
+    var cur = null; R.linhas.forEach(function (l) { if (t >= l.entra - 1e-6 && t < l.sai - 1e-6) cur = l; });
+    var et = $('#etiquetaVao');
+    if (!cur || k < 1) { jan.hidden = true; mascarar([]); cobrir([]); et.style.opacity = 0; return Promise.resolve(); }
+    var S = R.sessoes[cur.recorte], tc = Math.min(Math.max(t, S.t0), S.t1 - 1 / FPS), fq = Math.round(tc * FPS);
+    var VA = R.vao, sv = (VA.w - 8) / 390;
+    var dxs = 1100 * (1 - eout(prog(t, cur.entra, cur.entra + 0.26))) - 1100 * ein(prog(t, cur.sai - 0.16, cur.sai));
+    jan.style.opacity = 1; $('#vidro').style.opacity = 0; $('#telaAntes').style.opacity = 0;
+    var pr = janela(VA, sv, 0, 0, quadroCap(cur.recorte, tc), 0, 16, 3);
+    jan.style.transform = 'translateX(' + dxs.toFixed(1) + 'px)';
+    mascarar([]);
+    var ms = meta.sessoes[cur.recorte] || {};
+    cobrir((ms.precos || {})[fq], sv, 0, 0, (ms.realces || {})[fq], S.realceEm != null ? eio(prog(t, S.realceEm, S.realceEm + 0.4)) : 0);
+    et.style.opacity = (prog(t, cur.entra + 0.12, cur.entra + 0.3) * (1 - prog(t, cur.sai - 0.2, cur.sai - 0.05))).toFixed(3);
+    return pr;
+  }
   /* tempos que dependem da captura: 'previa:B' = quadro em que a prévia apareceu na sessão B */
   function tt(v) {
     if (typeof v !== 'string') return v;
@@ -234,11 +405,11 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 
   /* ---------- janela (tela do celular com a captura real) */
   var jan = $('#janela'), img = $('#tela'), corpo = $('#corpo');
-  function janela(r, s, ox, oy, src, borda, raio) {
+  function janela(r, s, ox, oy, src, borda, raio, dpr) {
     jan.hidden = false;
     jan.style.left = r.x + 'px'; jan.style.top = r.y + 'px'; jan.style.width = r.w + 'px'; jan.style.height = r.h + 'px';
     jan.style.borderRadius = (raio == null ? 30 : raio) + 'px';
-    img.style.transform = 'translate(' + ox.toFixed(2) + 'px,' + oy.toFixed(2) + 'px) scale(' + (s / 3).toFixed(5) + ')';
+    img.style.transform = 'translate(' + ox.toFixed(2) + 'px,' + oy.toFixed(2) + 'px) scale(' + (s / (dpr || 3)).toFixed(5) + ')';
     if (borda > 0.5) {
       corpo.hidden = false;
       corpo.style.left = (r.x - borda) + 'px'; corpo.style.top = (r.y - borda) + 'px';
@@ -248,6 +419,32 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     if (img.__src !== src) { img.__src = src; img.src = src; return img.decode().catch(function () {}); }
     return Promise.resolve();
   }
+  /* sem preço no vídeo: os valores de exemplo da prévia ficam cobertos pelo selo "exemplo" (o único preço do vídeo é a
+     faixa da versão de anúncio). lista em px CSS da captura; s = escala CSS -> palco; dx, dy = deslocamento da imagem na janela */
+  function mascarar(lista, s, dx, dy) {
+    var mh = ''; (lista || []).forEach(function (b) {
+      /* fonte acompanha a escala da janela durante o voo, mas nunca abaixo de 28 px quando a prévia assenta */
+      var fs = Math.max(12, Math.min(28, s * 14.4)), w = Math.max(s * b.w + 12, fs * 4.25 + 10), dir = dx + s * (b.x + b.w) + 6;
+      mh += '<div class="masc" style="left:' + (dir - w).toFixed(1) + 'px;top:' + (dy + s * b.y - 5).toFixed(1) + 'px;width:' + w.toFixed(1) + 'px;height:' + (s * b.h + 10).toFixed(1) + 'px;font-size:' + fs.toFixed(1) + 'px">exemplo</div>'; });
+    var mEl = $('#mascaras'); if (mEl.__h !== mh) { mEl.innerHTML = mh; mEl.__h = mh; }
+  }
+  /* faixas por cima da captura (px CSS da captura): 'número de teste' sobre o campo do WhatsApp (R11), tarja de lousa
+     sobre o valor em reais e sublinhado --sol sob o texto real em destaque (recortes do R10) */
+  function cobrir(lista, s, dx, dy, realces, kr) {
+    var h = '';
+    (lista || []).forEach(function (b) {
+      var x = dx + s * b.x, y = dy + s * b.y, w = s * b.w, hh = s * b.h;
+      if (b.rotulo) h += '<div class="cobreTeste" style="left:' + x.toFixed(1) + 'px;top:' + y.toFixed(1) + 'px;width:' + w.toFixed(1) + 'px;height:' + hh.toFixed(1) + 'px"><span class="faixaTeste">' + esc(b.rotulo) + '</span></div>';
+      else h += '<div class="tarja" style="left:' + (x - 6).toFixed(1) + 'px;top:' + (y - 3).toFixed(1) + 'px;width:' + (w + 12).toFixed(1) + 'px;height:' + (hh + 6).toFixed(1) + 'px"></div>';
+    });
+    /* sublinhado: cresce da esquerda para a direita, uma linha depois da outra (kr de 0 a 1) */
+    var n = (realces || []).length;
+    (realces || []).forEach(function (b, i) {
+      var ki = cl(kr * n - i); if (ki <= 0) return;
+      h += '<div class="realce" style="left:' + (dx + s * b.x - 2).toFixed(1) + 'px;top:' + (dy + s * (b.y + b.h) - 5).toFixed(1) + 'px;width:' + ((s * b.w + 4) * ki).toFixed(1) + 'px"></div>';
+    });
+    var e = $('#cobertas'); if (e.__h !== h) { e.innerHTML = h; e.__h = h; }
+  }
   function quadroCap(sessao, t) { return '/__tmp/cap/' + REEL + '/' + sessao + '/' + String(Math.round(t * FPS)).padStart(4, '0') + '.png'; }
 
   /* ---------- porta de aço + cartão final (os dois Reels) */
@@ -255,15 +452,16 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   function cartao(t) {
     var c0 = R.cartao, cEl = $('#cartao'), porta = $('#porta');
     if (t < c0 - 1e-6) { cEl.style.display = 'none'; porta.style.display = 'none'; return false; }
-    cEl.style.display = 'block'; jan.hidden = true; corpo.hidden = true; $('#cena').hidden = true; $('#msg').style.display = 'none';
+    cEl.style.display = 'block'; jan.hidden = true; corpo.hidden = true; $('#cena').hidden = true; $('#msg').style.display = 'none'; $('#lousaG').style.display = 'none';
     if (!cartaoMontado) {
       cartaoMontado = true;
       CreatPlaca.montar($('#pontoCartao'), { nome: 'Seu negócio' });
       posicionar(t, 5);
     }
     if (!cartao.abriu && t >= c0 + 0.38 - 1e-6) { cartao.abriu = true; CreatPlaca.abrir('botao'); }
-    /* a porta de aço sobe em 0,9 s (com o som), revelando o cartão */
-    var p = prog(t, c0, c0 + 0.9);
+    $('#comanda').style.display = 'none'; $('#carimbo').style.display = 'none';
+    /* a porta de aço sobe em 0,9 s (com o som), revelando o cartão. R9: sem porta (ela já subiu sob o carimbo) */
+    var p = R.cartaoPorta === false ? 1 : prog(t, c0, c0 + 0.9);
     porta.style.display = p >= 1 ? 'none' : 'block';
     porta.style.transform = 'translateY(' + (-2040 * eio(p)).toFixed(1) + 'px)';
     aneis([]);
@@ -292,8 +490,12 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     /* close: a placa ocupa ~70% da largura (nome a giz com mais de 40 px) */
     var WZ = { x: 65, y: 500, w: 950, h: G.janelaFim - 500 };
     var sZ = R.camera.larguraPlaca * 1080 / pl.w;
+    /* R11: começa em close no campo do nome (título do nicho em cima) e vai até a placa */
+    var CZ = R.camera.campo;
+    if (CZ) { var kc = eio(prog(t, CZ.ate, CZ.chega)); sZ = lerp(CZ.s, sZ, kc); cx = lerp(CZ.cx, cx, kc); cy = lerp(CZ.cy, cy, kc); }
     var Y0 = R.camera.janelaY || 440;
-    var sP = 1.51, v0 = R.camera.topo != null ? R.camera.topo : 112, WP = { x: 540 - 390 * sP / 2, y: Y0 + desceCel(t), w: 390 * sP, h: G.janelaFim - Y0 };
+    var tp = R.camera.topo, v0 = tp == null ? 112 : typeof tp === 'number' ? tp : tp[t < R.sessoes.A.t1 - 1e-6 ? 'A' : 'B'];
+    var sP = 1.51, WP = { x: 540 - 390 * sP / 2, y: Y0 + desceCel(t), w: 390 * sP, h: G.janelaFim - Y0 };
     var k = eio(prog(t, R.camera.recuo[0], R.camera.recuo[1]));
     var s = lerp(sZ, sP, k);
     var ax = lerp(WZ.x + WZ.w / 2, WP.x + sP * cx, k), ay = lerp(WZ.y + WZ.h / 2, WP.y + sP * (cy - v0), k);
@@ -302,9 +504,14 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   }
   function quadroR8(t) {
     if (cartao(t)) return Promise.resolve();
+    /* R11: corte seco para o celular da casa com a mensagem real do teste */
+    if (R.mensagem != null && t >= R.mensagem - 1e-6) { corpo.hidden = true; return cenaMensagem(t); }
     var sess = t < R.sessoes.A.t1 - 1e-6 ? 'A' : 'B';
     var c = camR8(t);
     var pr = janela({ x: c.r.x, y: c.r.y, w: c.r.w, h: c.r.h }, c.s, c.ox - c.r.x, c.oy - c.r.y, quadroCap(sess, t), c.borda, c.raio);
+    var fq = Math.round(t * FPS), ms8 = meta.sessoes[sess];
+    mascarar((ms8.precos || {})[fq] || (ms8.precosHome || {})[fq], c.s, c.ox - c.r.x, c.oy - c.r.y);
+    if (ms8.cobrir) cobrir((ms8.cobrir || {})[fq], c.s, c.ox - c.r.x, c.oy - c.r.y);
     /* anéis: arraste gravado (sessões A e B) e o toque no dia da prévia */
     var lista = [], m = meta.sessoes[sess], pont = m.ponteiro || [];
     var pos = function (x, y) { return { x: c.ox + c.s * x, y: c.oy + c.s * y }; };
@@ -323,8 +530,12 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     return pr;
   }
 
-  /* ================================================================ R7 */
-  var montadoCena = false, lousa0 = null, alvoAprox = null;
+  /* ================================================================ R7, R12 ('dor') e R9 ('sede')
+     A mesma abertura (placa real, arraste, giro, aproximação e o voo pelo vidro) com três cenas antes da placa:
+     'mensagem' (R7: celular escuro às 23h12), 'link' (R12: perfil fictício e página de erro) e 'placa' (R9: close de
+     2x na faixa de giz enquanto o nome é escrito). Depois do vidro: a prévia real (R7, R12) ou a sede 3D real (R9). */
+  var montadoCena = false, lousa0 = null, alvoAprox = null, gizPos = null, linkPos = null;
+  var EH_SEDE = R.palco === 'sede';
   /* aproximação depois de assentar: a tábua vai ao centro da área útil, em 2x (nome a giz com 40 px) */
   function aproxima(t) {
     var Ap = R.cena.aproxima;
@@ -337,23 +548,49 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     return { P: P, tx: tx, ty: ty };
   }
   var WP7 = { x: 160, y: G.janelaY, w: 760, h: G.janelaFim - G.janelaY }, s7 = 760 / 390;
+  /* R9: a comanda passa de mão em mão (um plano por agente) e o carimbo NO AR bate nela */
+  function comanda(t) {
+    var cm = $('#comanda'), ca = $('#carimbo');
+    if (!R.comanda || t < R.comanda[0] - 1e-6 || t >= R.comanda[1] - 1e-6) { cm.style.display = 'none'; ca.style.display = 'none'; return; }
+    cm.style.display = 'block';
+    var planos = R.sessoes.S.planos.filter(function (p) { return p.alvo !== 'geral'; });
+    var i = 0; planos.forEach(function (p, j) { if (t >= p.t0 - 1e-6) i = j; });
+    var tFim = planos[planos.length - 1].t1, fim = t >= tFim - 1e-6;
+    var pts = '';
+    for (var j = 0; j < planos.length; j++) pts += '<i class="' + (j < i || fim ? 'f' : '') + '"' + (j === i && !fim ? ' style="background:' + R.equipe[j].cor + '"' : '') + '></i>';
+    var a = R.equipe[i];
+    var linha = fim ? '<i class="p" style="background:var(--sol)"></i><span>Pedido <b>pronto</b></span>'
+      : '<i class="p" style="background:' + a.cor + '"></i><span><b>' + esc(a.nick) + '</b> ' + esc(a.faz) + '</span>';
+    var chave = pts + linha;
+    if (cm.__h !== chave) { cm.__h = chave; $('#comandaPts').innerHTML = pts; $('#comandaLinha').innerHTML = linha; }
+    /* troca de mão: a comanda chega da direita em 180 ms (ease-out); entrada: sobe 70 px em 220 ms */
+    var tp = fim ? tFim : planos[i].t0, q = eout(prog(t, tp, tp + 0.18)), ent = eout(prog(t, R.comanda[0], R.comanda[0] + 0.22));
+    var imp = R.carimbo != null ? Math.max(0, 1 - Math.abs(t - R.carimbo - 0.03) / 0.08) : 0;   /* afunda 6 px no impacto */
+    cm.style.opacity = ent.toFixed(3);
+    cm.style.transform = 'translate(' + (46 * (1 - q)).toFixed(2) + 'px,' + (70 * (1 - ent) + 6 * imp).toFixed(2) + 'px) rotate(' + (1.8 * (1 - q)).toFixed(3) + 'deg)';
+    /* carimbo: cai acelerando (ease-in) em 120 ms, achata no impacto e assenta */
+    if (R.carimbo != null && t >= R.carimbo - 0.12 - 1e-6) {
+      ca.style.display = 'block';
+      var kc = prog(t, R.carimbo - 0.12, R.carimbo), sc = 1, sx = 1, sy = 1;
+      if (t < R.carimbo - 1e-6) sc = lerp(1.9, 1, ein(kc));
+      else { var ks = prog(t, R.carimbo, R.carimbo + 0.16), sq = Math.sin(Math.PI * ks) * (1 - ks); sx = 1 + 0.08 * sq; sy = 1 - 0.1 * sq; }
+      ca.style.opacity = Math.min(1, kc * 3).toFixed(3);
+      ca.style.transform = 'rotate(-8deg) scale(' + (sc * sx).toFixed(4) + ',' + (sc * sy).toFixed(4) + ')';
+    } else ca.style.display = 'none';
+  }
   function quadroR7(t) {
     if (cartao(t)) return Promise.resolve();
     var C = R.cena, cena = $('#cena');
-    /* --- 7 a 10 s: o pedido chega no celular da vitrine */
-    if (t >= R.mensagem - 1e-6) {
-      cena.hidden = true; jan.hidden = true; aneis([]);
-      var msg = $('#msg'), b = 16;
-      msg.style.display = 'block';
-      msg.style.left = (WP7.x - b) + 'px'; msg.style.top = (WP7.y - b) + 'px'; msg.style.width = (WP7.w + 2 * b) + 'px'; msg.style.height = (WP7.h + 2 * b + 400) + 'px';
-      msg.style.background = 'var(--tinta)'; msg.style.borderRadius = '48px'; msg.querySelector('.tela').style.height = (WP7.h + 300) + 'px';
-      var bal = $('#balao');
-      if (!bal.__ok) { bal.__ok = 1; bal.innerHTML = textoMensagem() + '<small>agora</small>'; }
-      var p = prog(t, R.mensagem + 0.04, R.mensagem + 0.74), e = mola(p);
-      bal.style.opacity = Math.min(1, p * 2.5).toFixed(3);
-      bal.style.transform = 'translateY(' + (28 * (1 - e)).toFixed(2) + 'px) scale(' + (0.94 + 0.06 * e).toFixed(4) + ')';
-      return Promise.resolve();
+    /* --- R9, 10,2 a 11,4 s: corte seco para a prévia real do salão no celular */
+    if (R.site != null && t >= R.site - 1e-6) {
+      cena.hidden = true; $('#comanda').style.display = 'none'; $('#carimbo').style.display = 'none'; aneis([]);
+      $('#telaAntes').style.opacity = 0; $('#vidro').style.opacity = 0; jan.style.opacity = 1;
+      var prD = janela(WP7, s7, 0, 0, quadroCap('D', t), 16, 30);
+      mascarar(((meta.sessoes.D || {}).precos || {})[Math.round(t * FPS)], s7, 0, 0);
+      return prD;
     }
+    /* --- 7 a 10 s: o pedido chega no celular da vitrine */
+    if (R.mensagem != null && t >= R.mensagem - 1e-6) return cenaMensagem(t);
     $('#msg').style.display = 'none';
     /* --- variante com foto real: a foto ocupa a tela no primeiro 1,3 s (Ken Burns lento) e some em 0,3 s;
        a cena (só a placa e o balão) fica por cima da foto enquanto ela existe */
@@ -370,17 +607,34 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     cena.hidden = false;
     if (!montadoCena) {
       montadoCena = true;
-      CreatPlaca.montar($('#pontoCena'), { nome: R.nome });
-      posicionar(t, 5);                     /* o giz já escrito (a placa chega pronta, com o nome) */
+      if (CENA === 'placa') CreatPlaca.montar($('#pontoCena'), { nome: '' });   /* R9: o giz escreve o nome em cena */
+      else {
+        CreatPlaca.montar($('#pontoCena'), { nome: R.nome });
+        posicionar(t, 5);                     /* o giz já escrito (a placa chega pronta, com o nome) */
+      }
+    }
+    /* R9: o giz escreve o nome letra a letra (CreatPlaca.definirNome, o mesmo efeito da página ao digitar) */
+    if (C.giz) {
+      var n = 0; C.giz.forEach(function (k) { if (k.t <= t + 1e-6) n = k.i + 1; });
+      var pre = Array.from(R.nome).slice(0, n).join('');
+      if (pre !== quadroR7.giz) { quadroR7.giz = pre; CreatPlaca.definirNome(pre); }
+    }
+    /* R12: o toque no link da bio abre a página de erro (corte seco) */
+    var listaCena = [];
+    if (CENA === 'link') {
+      if (!linkPos) { $('#palco').classList.remove('erro'); cena.style.transform = ''; var lr = $('#linkBio').getBoundingClientRect(); linkPos = { x: lr.left + lr.width * 0.42, y: lr.top + lr.height / 2 }; }
+      $('#palco').classList.toggle('erro', t >= C.erroEm - 1e-6);
+      var al = anelToque(t, C.toqueLink, linkPos.x, linkPos.y); if (al) listaCena.push(al);
     }
     /* vibração: arcos que se apagam uma vez (nada piscando) */
     var vib = 1 - prog(t, 0.15, 0.6);
     $('#vibE').style.opacity = $('#vibD').style.opacity = vib.toFixed(3);
-    /* descida na corrente com mola e balanço de 6° que se acalma */
-    var d = C.descida, pd = prog(t, d[0], d[1]);
-    var y = t < d[0] ? -2400 : -1500 * (1 - mola(pd));
+    /* descida na corrente com mola e balanço de 6° que se acalma. R9: a placa já está pendurada, no fim de um balanço curto */
+    var d = C.descida || [-1, -0.5], pd = prog(t, d[0], d[1]);
+    var y = !C.descida ? 0 : t < d[0] ? -2400 : -1500 * (1 - mola(pd));
     $('#placaCena').style.visibility = t < d[0] - 1e-6 ? 'hidden' : 'visible';
-    var ang = t < d[0] ? 0 : 6 * Math.exp(-2.4 * (t - d[0])) * Math.sin(2 * Math.PI * (t - d[0]) / 0.95 + 0.6);
+    var ang = !C.descida ? 2.2 * Math.exp(-1.4 * t) * Math.sin(2 * Math.PI * t / 1.1 + 1.0)
+      : t < d[0] ? 0 : 6 * Math.exp(-2.4 * (t - d[0])) * Math.sin(2 * Math.PI * (t - d[0]) / 0.95 + 0.6);
     $('#placaCena').style.transform = 'translateY(' + y.toFixed(1) + 'px)';
     $('#giraCena').style.transform = 'rotate(' + ang.toFixed(3) + 'deg)';
     /* arraste com o ponteiro: eventos reais do componente da placa */
@@ -400,7 +654,7 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
         raiz.dispatchEvent(new PointerEvent('pointerup', { pointerId: 7, pointerType: 'touch', isPrimary: true, clientX: quadroR7.ap.x, clientY: quadroR7.ap.y + dy, bubbles: true, cancelable: true }));
       }
     }
-    var lista = [];
+    var lista = listaCena;
     if (quadroR7.ap) {
       var ay = quadroR7.solto ? quadroR7.solto.y : quadroR7.ap.y + dy;
       if (!quadroR7.solto) lista.push({ x: quadroR7.ap.x, y: ay, op: 1, s: 1 });
@@ -413,10 +667,18 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     /* a mensagem e a hora saem de cena quando a câmera chega na placa (nada de texto subindo para a faixa de cima) */
     var nt0 = (1 - prog(t, C.aproxima[0], C.aproxima[0] + 0.2)).toFixed(3);
     $('#notif').style.opacity = nt0; $('#celEscuro .hora').style.opacity = nt0;
+    $('#perfil').style.opacity = nt0; $('#erro404').style.opacity = nt0;
+    /* R9: close de 2x na faixa de giz (o nome sendo escrito) e abertura para a placa inteira */
+    var zc = null;
+    if (C.close && t < C.close.abre - 1e-6) {
+      if (!gizPos) { cena.style.transform = ''; var gb = document.querySelector('#pontoCena .cp-giz-borda').getBoundingClientRect(); gizPos = { x: gb.left + gb.width / 2, y: gb.top + gb.height / 2 }; }
+      var Z = C.close, w = 1 - eio(prog(t, Z.ate, Z.abre)), Pz = lerp(1, Z.zoom, w);
+      zc = 'translate(' + (lerp(gizPos.x, 540, w) - Pz * gizPos.x).toFixed(2) + 'px,' + (lerp(gizPos.y, 860, w) - Pz * gizPos.y).toFixed(2) + 'px) scale(' + Pz.toFixed(4) + ')';
+    }
     if (t < V[0] - 1e-6) {
       jan.style.opacity = 1;
-      cena.style.transform = t < C.aproxima[0] - 1e-6 ? '' : 'translate(' + ap.tx.toFixed(2) + 'px,' + ap.ty.toFixed(2) + 'px) scale(' + ap.P.toFixed(4) + ')';
-      cena.style.opacity = 1; jan.hidden = true; corpo.hidden = true; aneis(lista); return Promise.resolve();
+      cena.style.transform = t < C.aproxima[0] - 1e-6 ? (zc || '') : 'translate(' + ap.tx.toFixed(2) + 'px,' + ap.ty.toFixed(2) + 'px) scale(' + ap.P.toFixed(4) + ')';
+      cena.style.opacity = 1; jan.hidden = true; corpo.hidden = true; if (EH_LOUSA) $('#lousaG').style.display = 'none'; aneis(lista); return Promise.resolve();
     }
     if (!lousa0) { cena.style.transform = 'translate(' + ap.tx.toFixed(2) + 'px,' + ap.ty.toFixed(2) + 'px) scale(' + ap.P.toFixed(4) + ')'; var lb = document.querySelector('#pontoCena .cp-aberto #cp-lousa').getBoundingClientRect(); lousa0 = { x: lb.left, y: lb.top, w: lb.width, h: lb.height }; }
     var k = prog(t, V[0], V[1]), kz = ein(k), kj = eio(k);
@@ -432,19 +694,27 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     var ini = { x: lousa0.x, y: lousa0.y, w: lousa0.w, h: lousa0.h };
     var mix = eio(prog(k, 0, 0.35));       /* no começo a janela acompanha a lousa; depois assenta na tela */
     var r0 = { x: lerp(ini.x, lz.x, mix * 0.25), y: lerp(ini.y, lz.y, mix * 0.25), w: lerp(ini.w, lz.w, mix * 0.25), h: lerp(ini.h, lz.h, mix * 0.25) };
-    var r = { x: lerp(r0.x, WP7.x, kj), y: lerp(r0.y, WP7.y, kj), w: lerp(r0.w, WP7.w, kj), h: lerp(r0.h, WP7.h, kj) };
-    var s = r.w / 390;
+    /* destino: a tela do celular (prévia, R7 e R12) ou a janela da sede (R9, captura de 430 px CSS em escala 2) */
+    var WPX = R.janela || WP7, BASE = EH_SEDE ? R.sessoes.S.janela.w : 390;
+    if (EH_LOUSA) WPX = R.lousa;
+    var r = { x: lerp(r0.x, WPX.x, kj), y: lerp(r0.y, WPX.y, kj), w: lerp(r0.w, WPX.w, kj), h: lerp(r0.h, WPX.h, kj) };
+    /* R10: o vidro dá na lousa grande (não numa tela): ela cresce do retângulo da lousinha da placa até a faixa segura */
+    if (EH_LOUSA) {
+      var lg = $('#lousaG'); lg.style.display = 'block';
+      lg.style.left = r.x.toFixed(2) + 'px'; lg.style.top = r.y.toFixed(2) + 'px'; lg.style.width = r.w.toFixed(2) + 'px'; lg.style.height = r.h.toFixed(2) + 'px';
+      lg.style.opacity = prog(k, 0, 0.2).toFixed(3); lg.style.borderWidth = lerp(6, 18, kj).toFixed(2) + 'px'; lg.style.borderRadius = lerp(10, 22, kj).toFixed(2) + 'px';
+      corpo.hidden = true; aneis(lista);
+      return lousaQuadro(t, k);
+    }
+    var s = r.w / BASE;
     $('#vidro').style.opacity = (1 - prog(k, 0.16, 0.45)).toFixed(3);
-    var tc = Math.max(R.sessoes.C.t0, t);
-    var pr = janela(r, s, 0, 0, quadroCap('C', tc), 16 * eio(prog(k, 0.55, 1)), lerp(10, 30, kj));
+    var SC = R.sessoes.C, tc = Math.max(EH_SEDE ? R.sessoes.S.t0 : SC.t0, t);
+    var pr = janela(r, s, 0, 0, quadroCap(EH_SEDE ? 'S' : 'C', tc), 16 * eio(prog(k, 0.55, 1)), lerp(10, 30, kj), EH_SEDE ? 2 : 3);
     /* sem preço no vídeo: os valores de exemplo da prévia ficam cobertos pelo selo "exemplo" */
-    var mh = ''; ((meta.precos || {})[Math.round(tc * FPS)] || []).forEach(function (b) {
-      /* fonte acompanha a escala da janela durante o voo, mas nunca abaixo de 28 px quando a prévia assenta */
-      var fs = Math.max(12, Math.min(28, s * 14.4)), w = Math.max(s * b.w + 12, fs * 4.25 + 10), dir = s * (b.x + b.w) + 6;
-      mh += '<div class="masc" style="left:' + (dir - w).toFixed(1) + 'px;top:' + (s * b.y - 5).toFixed(1) + 'px;width:' + w.toFixed(1) + 'px;height:' + (s * b.h + 10).toFixed(1) + 'px;font-size:' + fs.toFixed(1) + 'px">exemplo</div>'; });
-    var mEl = $('#mascaras'); if (mEl.__h !== mh) { mEl.innerHTML = mh; mEl.__h = mh; }
+    mascarar(EH_SEDE ? [] : (meta.precos || {})[Math.round(tc * FPS)], s, 0, 0);
+    if (EH_SEDE) comanda(t);
     /* fusão do corte de montagem (nome -> pedido): o último quadro antes do salto some em 0,2 s por cima do novo */
-    var SJ = R.sessoes.C.salto, ta = $('#telaAntes');
+    var SJ = SC && SC.salto, ta = $('#telaAntes');
     if (SJ && t >= SJ.t - 1e-6 && t < SJ.t + SJ.fusao - 1e-6) {
       var srcA = quadroCap('C', SJ.t - 1 / FPS);
       ta.style.transform = img.style.transform; ta.style.opacity = (1 - eio(prog(t, SJ.t, SJ.t + SJ.fusao))).toFixed(3);
@@ -455,6 +725,52 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     aneis(lista);
     return pr;
   }
+  /* celular da vitrine com a mensagem (R7 e R12: o pedido chega; R11 'teste': o rascunho real do teste é enviado) */
+  function cenaMensagem(t) {
+    $('#cena').hidden = true; jan.hidden = true; aneis([]);
+    var msg = $('#msg'), b = 16;
+    msg.style.display = 'block';
+    msg.style.left = (WP7.x - b) + 'px'; msg.style.top = (WP7.y - b) + 'px'; msg.style.width = (WP7.w + 2 * b) + 'px'; msg.style.height = (WP7.h + 2 * b + 400) + 'px';
+    msg.style.background = 'var(--tinta)'; msg.style.borderRadius = '48px'; msg.querySelector('.tela').style.height = (WP7.h + 300) + 'px';
+    if (R.mensagemTipo === 'teste') return mensagemTeste(t);
+    var bal = $('#balao');
+    if (!bal.__ok) { bal.__ok = 1; bal.innerHTML = textoMensagem() + '<small>agora</small>'; }
+    var p = prog(t, R.mensagem + 0.04, R.mensagem + 0.74), e = mola(p);
+    bal.style.opacity = Math.min(1, p * 2.5).toFixed(3);
+    bal.style.transform = 'translateY(' + (28 * (1 - e)).toFixed(2) + 'px) scale(' + (0.94 + 0.06 * e).toFixed(4) + ')';
+    return Promise.resolve();
+  }
+  /* R11: o WhatsApp abre com a mensagem que o site montou (rascunho); o anel pousa e segura o enviar; no plim o rascunho
+     vira mensagem enviada (sobe e encosta à direita, com a mola da casa) */
+  function mensagemTeste(t) {
+    var rs = $('#rascunho'), bt = $('#enviar'), E = R.envio;
+    if (!rs.__ok) {
+      rs.__ok = 1;
+      rs.innerHTML = esc(meta.mensagem || '').replace(/\(\d{2}\)\s?\d{4,5}-\d{4}/g, '<span class="faixaTeste">número de teste</span>')
+        .replace(/(hor[áa]rio: )([^.]+?)(\. Meu nome)/, '$1<b>$2</b>$3') + '<small id="rascunhoHora">rascunho</small>';
+    }
+    var enviado = t >= E.solta - 1e-6;
+    rs.classList.toggle('enviado', enviado);
+    $('#rascunhoHora').textContent = enviado ? 'enviada · agora' : 'rascunho';
+    /* a conversa abre: o rascunho sobe 30 px e aparece em 220 ms */
+    var ab = eout(prog(t, R.mensagem, R.mensagem + 0.22));
+    var desl = 0, sobe = 0, esc2 = 1;
+    if (enviado) { var e = mola(prog(t, E.solta, E.solta + 0.5)); desl = (rs.parentNode.clientWidth - 44 - rs.offsetWidth) * e; sobe = -24 * e; esc2 = 0.97 + 0.03 * e; }
+    rs.style.opacity = ab.toFixed(3);
+    rs.style.transform = 'translate(' + desl.toFixed(2) + 'px,' + (30 * (1 - ab) + sobe).toFixed(2) + 'px) scale(' + esc2.toFixed(4) + ')';
+    bt.style.top = (rs.offsetTop + rs.offsetHeight - 100) + 'px';
+    var some = prog(t, E.solta, E.solta + 0.14);
+    bt.style.opacity = (ab * (1 - some)).toFixed(3);
+    /* o botão afunda 4 px enquanto o anel segura */
+    var segura = t >= E.segura - 1e-6 && t < E.solta - 1e-6;
+    bt.style.transform = 'translate(' + (segura ? 3 : 0) + 'px,' + (segura ? 4 : 0) + 'px)';
+    bt.style.boxShadow = segura ? '2px 1px 0 var(--tinta)' : '';
+    var bb = bt.getBoundingClientRect(), x = bb.left + bb.width / 2, y = bb.top + bb.height / 2, lista = [];
+    if (t >= E.segura - 0.14 && t < E.solta) { var a = eout(prog(t, E.segura - 0.14, E.segura)); lista.push({ x: x, y: y, op: a, s: 1.3 - 0.3 * a }); }
+    else if (t >= E.solta) { var q = prog(t, E.solta + 0.04, E.solta + 0.3); lista.push({ x: x, y: y, op: 1 - q, s: 1 + 0.25 * q }); }
+    aneis(lista);
+    return Promise.resolve();
+  }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function textoMensagem() {
     var m = meta.mensagem || '';
@@ -464,12 +780,13 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 
   /* ================================================================ API para gerar.cjs */
   /* registro dos tipos de palco (linhas.js, campo "palco" de cada Reel). R9 a R12: escreva quadroXxx e registre aqui. */
-  var QUADROS = { home: quadroR8, dor: quadroR7 };
+  var QUADROS = { home: quadroR8, dor: quadroR7, sede: quadroR7, lousa: quadroR7 };
   window.preparar = function () {
     var foto = Q.get('foto'), pf = Promise.resolve();
     if (VAR) { if (!foto) throw new Error('variante sem foto'); var im = $('#fotoImg'); im.src = foto; pf = im.decode(); }
     return fetch('/__tmp/cap/' + REEL + '/meta.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) { meta = j; return Promise.all([document.fonts.ready, pf]); })
       .then(function () {
+        ajustarLousa();
         var pr = $('#precoTexto');
         return { reel: REEL, versao: VERSAO, variante: Q.get('variante'), duracao: R.duracao, mensagem: meta.mensagem || null,
           previaEm: meta.sessoes && meta.sessoes.B ? meta.sessoes.B.previaEm : null,
@@ -478,7 +795,7 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   };
   window.medirCartao = function () {
     var r = function (s) { var e = $(s); if (!e || !e.offsetParent) return null; var b = e.getBoundingClientRect(); return { x: Math.round(b.left), y: Math.round(b.top), x1: Math.round(b.right), y1: Math.round(b.bottom) }; };
-    return { legenda: r('#legenda .faixa'), placa: r('#placaCartao'), preco: r('#preco div'), chip: r('#chip span'), origem: r('#origem') };
+    return { legenda: r('#legenda .faixa'), placa: r('#placaCartao'), preco: r('#preco div'), chip: r('#chip span'), origem: r('#origem'), chat: (function () { var e = $('#chatBalao'); if (getComputedStyle(e).display === 'none') return null; var b = e.getBoundingClientRect(); return { x: Math.round(b.left), y: Math.round(b.top), x1: Math.round(b.right), y1: Math.round(b.bottom) }; })() };
   };
   window.quadro = function (t) {
     var fq = QUADROS[R.palco]; if (!fq) throw new Error('palco desconhecido: ' + R.palco);

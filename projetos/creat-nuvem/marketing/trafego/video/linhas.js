@@ -1,7 +1,7 @@
 /* Linhas do tempo dos Reels "Atrás da placa" (Órbita, 10/11/2026; página nova e faixa de preço em 11/11/2026).
    Fonte única de tempo: a captura da página real (gerar.cjs), o palco (palco.html) e a trilha (som.js)
    leem daqui. Tudo em segundos de vídeo, 30 fps, 1080x1920. Nada depende do relógio da máquina.
-   Roteiros: ../criativos-atras-da-placa.md (R8 · Vire Você; R7 · A Mensagem das 23h).
+   Roteiros: ../criativos-atras-da-placa.md (R7 a R12; R10 · Sem Amarra e R11 · O Pedido Chega no Seu em 11/11/2026).
 
    COMO ACRESCENTAR UM REEL (R9 a R12): copie o bloco de um Reel parecido e preencha
    - codigo, nicho, nichoRotulo e angulo (vão no nome do arquivo final, sem acento: "Reel R9 - Salao - Quem Monta (15s).mp4");
@@ -67,10 +67,11 @@
     hora: '2026-11-11T09:12:00-03:00',
     /* sessão A: abertura em close na placa da página real (0 a 2,4 s) e recuo. Sessão B: plano-sequência sem corte. */
     sessoes: {
-      /* A: a página rolada até o botão ficar 130 px abaixo do topo; o recuo revela o botão "Ver meu site pronto"
-         e a placa em ABERTO logo abaixo dele (a MESMA página, sem salto de estado). O relógio da página para logo
-         depois do giro, então a prévia não abre antes do corte em 3,6 s. */
-      A: { t0: 0, t1: 3.6, inicio: { ancora: '#form-abrir button[type=submit]', y: 130 },
+      /* A: a página rolada até o campo do nome ficar logo abaixo da barra fixa (o navegador rola sozinho até o campo
+         quando se digita fora da vista, então o campo precisa estar à vista) e a placa ainda na tela. O recuo revela o
+         botão "Ver meu site pronto" e a placa em ABERTO logo abaixo dele (a MESMA página, sem salto de estado).
+         O relógio da página para logo depois do giro, então a prévia não abre antes do corte em 3,6 s. */
+      A: { t0: 0, t1: 3.6, inicio: { ancora: '#nome', y: 70 },
            teclas: teclas(nomeR8, 0.18, 0.045, 0, 1), arraste: { t0: 1.2, t1: 1.46, solta: 1.5, dy: 82 }, relogioParaEm: 1.52 },
       /* B: corte seco em 3,6 s (clique), com a legenda-ponte "Agora, do começo:". O plano-sequência recomeça do topo
          da página: título da academia, campo vazio, chip marcado pelo link do anúncio e o botão. O nome é digitado em
@@ -87,7 +88,9 @@
     camera: {
       recuo: [2.4, 3.45],                  /* close na placa (~70% da largura) -> celular (1,51x) */
       larguraPlaca: 0.70,
-      topo: 60,                            /* px CSS do topo da janela da página mostrado (esconde a barra fixa de 58 px) */
+      /* px CSS do topo da janela da página mostrado no fim do recuo, por sessão. A: do campo da cidade à placa.
+         B: do título ao botão (esconde a barra fixa de 58 px). A captura da home fotografa 390x720. */
+      topo: { A: 180, B: 60 },
       janelaY: 480,                        /* topo da tela do celular no vídeo: abaixo da legenda de 1 linha */
       desce: []
     },
@@ -123,8 +126,9 @@
        gerar.cjs recebe a pasta por --fotos ou REELS_FOTOS. Tudo o que vem depois de "difereAte" é idêntico ao R7. */
     variantes: {
       foto: { rotulo: 'variante com foto real', foto: 'Foto Barbearia - maquina na nuca e celular ao lado - vertical 9x16.png',
-              ate: 1.3, some: 0.3, kb: { de: 1.03, ate: 1.11, ox: 0.54, oy: 0.40 }, difereAte: 3.2,
-              selos: [{ t0: 0, t1: 1.6, texto: 'cena de exemplo', lugar: 'foto' }] }
+              capa: 1.1, ate: 1.3, some: 0.3, kb: { de: 1.03, ate: 1.11, ox: 0.54, oy: 0.40 }, difereAte: 3.2,
+              /* o selo "cena de exemplo" é o do balão da mensagem, que fica sobre a foto (palco.html, .v-foto) */
+              selos: [] }
     },
     /* aproxima: depois de assentar, a câmera chega na placa (2x) para o nome a giz ficar legível; vidro: atravessa a lousa */
     cena: { descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.95, 2.38, 2.0], vidro: [2.6, 3.15] },
@@ -132,7 +136,7 @@
       /* prévia real: desce até o nome e para (0,8 s); depois um corte de montagem, com fusão de 0,2 s, leva ao pedido
          (são ~1.400 px de página: rolar isso em menos de 1 s borra). O R7 não promete "sem corte".
          Dia, hora e serviço com rolagens curtas e senoidais (~80 px de vídeo por quadro no máximo). */
-      C: { t0: 2.4, t1: 7.15, rolagem: { t0: 3.18, t1: 3.65, alvo: 'nome', y: 120 },
+      C: { t0: 2.4, t1: 7.15, rolagem: { t0: 3.18, t1: 3.65, alvo: 'nome', y: 120 }, hora: '14h',
         salto: { t: 4.45, fusao: 0.2, yFita: 118 },
         toques: [
         { t: 4.9, alvo: 'dia', rolarAntes: null },
@@ -154,6 +158,197 @@
       { t0: 3.1, t1: 7.15, texto: 'prévia · serviços e preços de exemplo', lugar: 'baixo-2' }
     ],
     cartao: 10.0
+  };
+
+  /* ------------------------------------------------------------------ R9 · Quem Monta (salão), Órbita 11/11/2026
+     Abertura: close 2x na faixa de giz da placa FECHADO real enquanto o giz escreve o nome; a câmera abre em 1,0 s,
+     o anel puxa, a placa vira e a câmera atravessa o vidro: atrás dele está a sede 3D real (sede/index.html?modo=demo)
+     com o nome na fachada. A comanda passa de mão em mão em 7 planos de 0,8 s (cor e apelido reais da sede), o carimbo
+     NO AR bate em 9,1 s e o vídeo corta para a prévia real do salão no celular. Para a faixa de preço da versão de
+     anúncio ficar 3,6 s na tela, os tempos do roteiro original (cartão em 12,5 s) foram puxados para o cartão em 11,4 s. */
+  var nomeSalao = 'Salão Esmalte Fictício';
+  /* comanda: ordem do roteiro; apelido e cor de cada agente vêm da sede (sede/index.html, AGENTS); etapa = passo do
+     ciclo da demonstração em que o agente trabalha (DEMO_ETAPAS) */
+  var EQUIPE = [
+    { id: 'diretor', nick: 'Nimbus', cor: '#FFD23F', faz: 'organiza o pedido', etapa: 0 },
+    { id: 'copywriter', nick: 'Verbo', cor: '#FF9F1C', faz: 'escreve os textos', etapa: 1 },
+    { id: 'designer', nick: 'Paleta', cor: '#FF8FD1', faz: 'escolhe as cores', etapa: 1 },
+    { id: 'frontend', nick: 'Pixel', cor: '#FF6B6B', faz: 'monta o site', etapa: 2 },
+    { id: 'qa', nick: 'Lupa', cor: '#EEF2F7', faz: 'testa no celular', etapa: 3 },
+    { id: 'seguranca', nick: 'Muralha', cor: '#3D4A7A', faz: 'confere a segurança', etapa: 3 },
+    { id: 'devops', nick: 'Trilho', cor: '#8D6E63', faz: 'publica', etapa: 4 }
+  ];
+  var R9 = {
+    codigo: 'R9', nicho: 'salao', nichoRotulo: 'Salao', angulo: 'Quem Monta', nome: nomeSalao, duracao: 15,
+    captura: 'sede', palco: 'sede', capa: 3.2,
+    hora: '2026-11-11T10:12:00-03:00',
+    /* tipo 'placa': sem cena de dor; close de 2x na faixa de giz até 1,0 s, abre até 1,3 s */
+    cena: { tipo: 'placa', giz: teclas(nomeSalao, 0.1, 0.04, 0.008, 9), close: { zoom: 2, ate: 1.0, abre: 1.3 },
+            /* placa maior que no R7: o limiar do componente (40% de 2/3 da altura) é ~150 px, então o puxão é de 190 px */
+            arraste: { t0: 1.34, t1: 1.6, solta: 1.64, dy: 190 }, aproxima: [2.02, 2.42, 2.0], vidro: [2.5, 3.05] },
+    /* janela da sede no palco (px do vídeo) e o tamanho da captura (px CSS, escala 2): 860x562 no vídeo = 1:1 */
+    janela: { x: 110, y: 548, w: 860, h: 562 },
+    sessoes: {
+      S: { tipo: 'sede', t0: 2.5, t1: 10.2, janela: { w: 430, h: 281 }, planos: (function () {
+        var p = [{ alvo: 'geral', t0: 2.5, t1: 3.4, etapa: 0, dentro: 200, dist: 20.5, alvoY: 0.6, de: 0.95, ate: 0.85, gira: -0.08 }];
+        EQUIPE.forEach(function (a, i) { p.push({ alvo: a.id, t0: 3.4 + 0.8 * i, t1: 4.2 + 0.8 * i, etapa: a.etapa, dist: 4.4, sobe: 1.5, de: 1.07, ate: 0.95, gira: 0 }); });
+        /* fim: a comanda cobre o terço de baixo da janela; a câmera olha mais baixo para a fachada ficar acima dela */
+        p.push({ alvo: 'geral', t0: 9.0, t1: 10.2, etapa: 5, dentro: 600, dist: 20.5, alvoY: -2.6, de: 0.84, ate: 0.79, gira: -0.06 });
+        return p;
+      })() },
+      /* prévia real do salão, topo com o nome (a demonstração sites/demo-salao/ mostra nome de cidade e outro nome) */
+      D: { tipo: 'previaTopo', t0: 10.2, t1: 11.4, rolar: { t0: 10.2, t1: 11.4, dy: 70 } }
+    },
+    equipe: EQUIPE, comanda: [3.4, 10.2], carimbo: 9.12, site: 10.2,
+    legendas: [
+      [0.0, 1.3, 'Um nome na <k>placa.</k>'],
+      [1.3, 2.5, 'Agora, atrás<br>da <k>placa.</k>'],
+      [2.5, 3.4, 'Quem monta:<br><k>agentes de IA.</k>'],
+      [3.4, 6.6, 'Cada um faz<br>uma <k>parte.</k>'],
+      [6.6, 9.0, '<k>Testado</k> no celular<br>antes de sair.'],
+      [9.0, 10.2, '<k>No ar.</k>'],
+      [10.2, 11.4, 'O site pronto,<br>no <k>celular.</k>'],
+      [11.4, 15.0, 'Digite o <k>nome.</k><br>Veja o site pronto']
+    ],
+    selos: [
+      { t0: 0, t1: 11.4, texto: 'Creat Nuvem · Porta Aberta', lugar: 'topo-esq' },
+      { t0: 0, t1: 11.4, texto: 'nome fictício', lugar: 'topo-dir' },
+      { t0: 2.5, t1: 10.2, texto: 'sede da Creat · demonstração', lugar: 'baixo-2' },
+      { t0: 10.2, t1: 11.4, texto: 'prévia · serviços e preços de exemplo', lugar: 'baixo-2' }
+    ],
+    /* sem porta de aço no cartão: ela já subiu sob o carimbo (roteiro). A faixa de preço fica 3,6 s na tela. */
+    cartao: 11.4, cartaoPorta: false
+  };
+
+  /* ------------------------------------------------------------------ R12 · O Link da Bio (salão), Órbita 11/11/2026
+     Mesma linha do R7 (palco 'dor', captura 'previa'), com a cena de dor do link da bio desenhada pela casa (perfil
+     fictício e "Página não encontrada", sem marca de ferramenta real) e o cartão final da campanha de conversa. */
+  var R12 = {
+    codigo: 'R12', nicho: 'salao', nichoRotulo: 'Salao', angulo: 'O Link da Bio', nome: nomeSalao, duracao: 15,
+    captura: 'previa', palco: 'dor', capa: 0.7,
+    hora: '2026-11-11T10:12:00-03:00', cliente: 'Camila',
+    perfil: { arroba: '@salaoesmalteficticio', bio: 'Unhas, cabelo e sobrancelha.', link: 'salaoesmalte.exemplo/horario' },
+    cena: { tipo: 'link', toqueLink: 0.3, erroEm: 0.42, descida: [0.8, 1.24], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.95, 2.38, 2.0], vidro: [2.6, 3.15] },
+    sessoes: {
+      /* prévia real do salão: nome, salto de montagem até o pedido, toques no sábado, 14h e Manicure (o serviço real do
+         preset; o roteiro dizia "Pé e mão", que a prévia não tem, e 9h, que fica atrás de "Ver manhã") */
+      C: { t0: 2.4, t1: 7.15, rolagem: { t0: 3.18, t1: 3.65, alvo: 'nome', y: 120 }, hora: '14h', dia: 'sáb', servico: 'Manicure',
+        salto: { t: 4.45, fusao: 0.2, yFita: 118 },
+        toques: [
+          { t: 4.9, alvo: 'dia', rolarAntes: null },
+          { t: 5.65, alvo: 'hora', rolarAntes: [5.05, 5.45] },
+          { t: 6.75, alvo: 'servico', rolarAntes: [5.78, 6.62] }
+        ] }
+    },
+    mensagem: 7.15,
+    legendas: [
+      [0.0, 1.3, 'O link da bio<br>deu em <k>nada.</k>'],
+      [1.3, 2.6, 'Vire a <k>placa.</k>'],
+      [2.6, 7.15, 'Aqui, o link abre<br>o <k>pedido.</k>'],
+      [7.15, 10.0, 'O pedido chega<br>no <k>WhatsApp.</k>'],
+      [10.0, 15.0, 'Toque e receba<br>o link no <k>chat.</k>']
+    ],
+    selos: [
+      { t0: 0, t1: 10, texto: 'Creat Nuvem · Porta Aberta', lugar: 'topo-esq' },
+      { t0: 0, t1: 10, texto: 'nome fictício', lugar: 'topo-dir' },
+      { t0: 3.1, t1: 7.15, texto: 'prévia · serviços e preços de exemplo', lugar: 'baixo-2' }
+    ],
+    /* campanha de conversa (botão Enviar mensagem): cartão com o balão próprio da vitrine indicando o chat */
+    cartao: 10.0, cartaoTipo: 'conversa'
+  };
+
+  /* ------------------------------------------------------------------ R10 · Sem Amarra (barbearia), Órbita 11/11/2026
+     Abertura do R7 com outra cena antes da placa: uma lousa grande com três caixas vazias (o roteiro: "três linhas antes
+     de decidir"). A placa FECHADO real desce na frente, vira, a câmera chega nela e atravessa o vidro: do outro lado,
+     a mesma lousa, agora em tamanho de tela, onde o giz escreve as três linhas. Cada linha tem a prova embaixo, um
+     recorte vivo da home real (captura 'recortes', escala 3): o formulário sem e-mail nem WhatsApp, o plano com
+     "a partir do dia em que o site entra no ar" (valor coberto por tarja de lousa: o preço só aparece na faixa do
+     cartão) e "O contrato em 6 linhas". O texto escrito a giz na lousa é a legenda desse trecho (regra: giz sobre
+     placa --lousa). Cartão em 11,4 s (era 12 s no roteiro) para a faixa de preço ficar 3,1 s inteira na tela. */
+  /* recorte na lousa: o vão de 870x420 px de vídeo mostra 390x188 px CSS da página (2,23 px de vídeo por px CSS,
+     abaixo da captura em escala 3: nada é ampliado) */
+  var VAO = { x: 105, y: 772, w: 870, h: 420 };
+  var R10 = {
+    codigo: 'R10', nicho: 'barbearia', nichoRotulo: 'Barbearia', angulo: 'Sem Amarra', nome: nomeR7, duracao: 15,
+    captura: 'recortes', palco: 'lousa', capa: 0.95,
+    hora: '2026-11-11T10:12:00-03:00',
+    cena: { tipo: 'lousa', descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.95, 2.38, 2.0], vidro: [2.5, 3.0] },
+    /* lousa grande (px do vídeo): a mesma da capa e a do outro lado do vidro */
+    lousa: { x: 65, y: 356, w: 950, h: 880 },
+    vao: VAO,
+    /* as três linhas: rótulo em Lilita One, resto em Figtree 800, giz sobre lousa; o giz escreve de t0 a t1 e o risco de
+       "feito" (com tic) entra em "feito". recorte = sessão da captura mostrada no vão enquanto a linha é a da vez */
+    linhas: [
+      { rotulo: 'Ver:', texto: 'grátis, sem cadastro', t0: 3.05, t1: 3.9, feito: 4.5, recorte: 'R1', entra: 3.0, sai: 4.95 },
+      { rotulo: 'Mensalidade:', texto: 'só com o site no ar', quebra: true, t0: 5.0, t1: 5.95, feito: 6.95, recorte: 'R2', entra: 4.95, sai: 7.55 },
+      { rotulo: 'Fidelidade:', texto: 'nenhuma', t0: 7.6, t1: 8.2, feito: 9.3, recorte: 'R3', entra: 7.55, sai: 9.95 }
+    ],
+    nota: { texto: '7 dias para desistir, pela lei.', t0: 10.0, t1: 10.7 },
+    sessoes: {
+      /* home real de barbearia com o nome já digitado fora de cena; cada recorte enquadra um trecho da página.
+         alvo = elemento que fica "margem" px CSS abaixo do topo do recorte; rolar = rolagem real dentro do recorte;
+         realce = trechos de texto real sublinhados a --sol; o valor em reais é coberto por tarja --lousa */
+      R1: { tipo: 'recorte', t0: 3.0, t1: 4.95, alvo: 'label[for=nome]', margem: 8, rolar: { t0: 3.95, t1: 4.5, alvo: 'label[for=cidade]', margem: 6 } },
+      R2: { tipo: 'recorte', t0: 4.95, t1: 7.55, alvo: '#c-aberto', margem: 14, realce: [{ sel: '#c-aberto ~ .preco', texto: 'a partir do dia em que o site entra no ar' }], realceEm: 5.6 },
+      R3: { tipo: 'recorte', t0: 7.55, t1: 9.95, alvo: '.contrato-bloco h3', margem: 12, realce: [{ sel: '.contrato li:nth-child(1)', texto: 'Sem fidelidade.' }, { sel: '.contrato li:nth-child(2)', texto: 'Sem multa para sair.' }], realceEm: 8.3 }
+    },
+    recorte: { y: 64, alto: Math.round(VAO.h / (VAO.w / 390)) },
+    legendas: [
+      [0.0, 1.3, '<k>Três linhas</k><br>antes de decidir.'],
+      [1.3, 2.6, 'Sem <k>amarra.</k>'],
+      [11.4, 15.0, 'Digite o <k>nome.</k><br>Veja o site pronto']
+    ],
+    selos: [
+      { t0: 0, t1: 11.4, texto: 'Creat Nuvem · Porta Aberta', lugar: 'topo-esq' },
+      { t0: 0.55, t1: 4.95, texto: 'nome fictício', lugar: 'topo-dir' }
+    ],
+    cartao: 11.4
+  };
+
+  /* ------------------------------------------------------------------ R11 · O Pedido Chega no Seu (academia), Órbita 11/11/2026
+     Captura 'home' (como o R8) numa sessão só, sem corte até o envio: close no campo do nome recebendo o nome, a câmera
+     abre para a placa real, o anel puxa, a placa vira, a câmera recua para o celular e a página real desce até "Teste de
+     verdade". O número é de teste (11900000000) e fica coberto pela faixa "número de teste"; serviço, dia e horário são
+     escolhidos nas listas reais; o toque em "Enviar o teste para o meu WhatsApp" monta a mensagem REAL do site (lida do
+     link que o site abre). Depois, o celular desenhado pela casa (sem logo de aplicativo) com essa mensagem: o anel
+     segura o enviar, plim. Cartão da campanha de conversa em 11 s (faixa de preço 3,5 s na tela). */
+  var R11 = {
+    codigo: 'R11', nicho: 'academia', nichoRotulo: 'Academia', angulo: 'O Pedido Chega no Seu', nome: nomeR8, duracao: 15,
+    captura: 'home', palco: 'home', capa: 0.79,
+    hora: '2026-11-11T09:12:00-03:00',
+    sessoes: {
+      /* topo da página nova (título da academia, campo, chip marcado pelo link, botão e placa); a captura fotografa a
+         janela inteira (844 px CSS) porque a placa fica em y 622 a 811 */
+      A: { t0: 0, t1: 7.4, inicio: { ancora: 'topo' }, alto: 844,
+           teclas: teclas(nomeR8, 0.06, 0.032, 0.006, 11), arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 82 }, relogioParaEm: 1.62,
+           /* rolagens reais: alvo fica y px CSS abaixo do topo da janela da página (o celular do vídeo mostra de 330 a 830) */
+           rolarHome: [{ t0: 3.05, t1: 4.05, alvo: '#teste-titulo', y: 402, curva: 'trapezio' }, { t0: 4.8, t1: 5.2, alvo: '#teste-servico', y: 430 }],
+           campo: { t: 4.22, alvo: '#teste-whats', teclas: teclas('11900000000', 4.33, 0.036, 0.006, 12) },
+           escolhas: [{ t: 5.35, alvo: '#teste-servico', valor: 'Aula experimental' }, { t: 5.85, alvo: '#teste-dia', valor: 'amanhã' }, { t: 6.35, alvo: '#teste-hora', valor: '07:00' }],
+           toqueEnviar: { t: 6.95, alvo: '#form-teste button[type=submit]' },
+           cobrir: [{ sel: '#teste-whats', rotulo: 'número de teste' }] }
+    },
+    camera: {
+      /* close no campo (2,65 px de vídeo por px CSS, abaixo da escala 3 da captura) com o título do nicho em cima;
+         de 0,82 a 1,24 s (nome inteiro no campo) a câmera vai para a placa; recuo para o celular de 2,4 a 3,05 s */
+      campo: { s: 2.65, cx: 195, cy: 196, ate: 0.82, chega: 1.24 },
+      recuo: [2.4, 3.05], larguraPlaca: 0.70, topo: { A: 330 }, janelaY: 480, desce: []
+    },
+    /* 7,4 s: corte seco para o celular desenhado pela casa com a mensagem real do teste; o anel segura o enviar */
+    mensagem: 7.4, mensagemTipo: 'teste', envio: { segura: 8.25, solta: 8.75 },
+    legendas: [
+      [0.0, 1.3, 'Digite o nome<br>do <k>negócio.</k>'],
+      [1.3, 2.4, 'Vire a <k>placa.</k>'],
+      [2.4, 4.9, 'Teste o pedido no<br>seu <k>WhatsApp.</k>'],
+      [4.9, 7.4, 'Antes de pagar<br><k>qualquer coisa.</k>'],
+      [7.4, 11.0, 'Do jeito que chega<br>do <k>cliente.</k>'],
+      [11.0, 15.0, 'Toque e receba<br>o link no <k>chat.</k>']
+    ],
+    selos: [
+      { t0: 0, t1: 11.0, texto: 'Creat Nuvem · Porta Aberta', lugar: 'topo-esq' },
+      { t0: 0, t1: 11.0, texto: 'nome fictício', lugar: 'topo-dir' }
+    ],
+    cartao: 11.0, cartaoTipo: 'conversa'
   };
 
   /* ------------------------------------------------------------------ trilha: eventos de som (som.js) */
@@ -187,9 +382,76 @@
     e.push({ t: R7.cartao, voz: 'porta', forca: 1 }, { t: R7.cartao + 0.4 + GIRO.assenta, voz: 'sino', forca: 0.55 });
     return e;
   }
+  function somR9() {
+    var e = [], c = R9.cena;
+    e.push({ t: 0, voz: 'rua', dur: c.vidro[0] + 0.3, nivel: 1 });
+    e.push({ t: 0.03, voz: 'corrente', forca: 0.5 });
+    c.giz.forEach(function (k) { if (k.ch !== ' ') e.push({ t: k.t, voz: 'giz', forca: 0.6 }); });
+    e.push({ t: c.arraste.t0, voz: 'tic', forca: 1 }, { t: c.arraste.t0 + 0.12, voz: 'rangido', forca: 0.8 });
+    e.push({ t: c.arraste.solta + GIRO.assenta, voz: 'sino', forca: 1 });
+    e.push({ t: c.vidro[0], voz: 'grave', forca: 1 }, { t: c.vidro[0], voz: 'sala', dur: 15 - c.vidro[0] });
+    /* um tic de papel a cada corte de plano (a comanda muda de mão); o do Trilho, mais grave */
+    R9.sessoes.S.planos.forEach(function (p, i) { if (i > 0 && p.alvo !== 'geral') e.push({ t: p.t0, voz: 'papel', forca: p.alvo === 'devops' ? 1 : 0.8, grave: p.alvo === 'devops' }); });
+    e.push({ t: 9.0, voz: 'porta', forca: 0.9 }, { t: R9.carimbo, voz: 'carimbo', forca: 0.6 });
+    e.push({ t: R9.cartao + 0.38 + GIRO.assenta, voz: 'sino', forca: 0.45 });
+    return e;
+  }
+  function somR12() {
+    var e = [], c = R12.cena;
+    e.push({ t: 0, voz: 'sala', dur: c.vidro[0] + 0.3 });
+    e.push({ t: c.toqueLink, voz: 'tic', forca: 1 });
+    /* silêncio seco na tela vazia; a corrente entra com a placa */
+    e.push({ t: c.descida[0] + 0.08, voz: 'corrente', forca: 0.85 }, { t: c.descida[0] + 0.3, voz: 'corrente', forca: 0.6 }, { t: c.descida[1] - 0.02, voz: 'corrente', forca: 0.45 });
+    e.push({ t: c.arraste.t0, voz: 'tic', forca: 1 }, { t: c.arraste.t0 + 0.12, voz: 'rangido', forca: 0.8 });
+    e.push({ t: c.arraste.solta + GIRO.assenta, voz: 'sino', forca: 1 });
+    e.push({ t: c.vidro[0], voz: 'grave', forca: 1 }, { t: 2.4, voz: 'sala', dur: 7.9 });
+    R12.sessoes.C.toques.forEach(function (q) { e.push({ t: q.t, voz: 'tic', forca: 0.9 }); });
+    e.push({ t: R12.mensagem, voz: 'plim', forca: 1 });
+    e.push({ t: R12.cartao, voz: 'porta', forca: 1 }, { t: R12.cartao + 0.4 + GIRO.assenta, voz: 'sino', forca: 0.55 });
+    return e;
+  }
+  /* giz escrevendo um texto de t0 a t1: um risco por letra, no compasso da revelação */
+  function gizTexto(e, texto, t0, t1, forca) {
+    var n = Array.from(texto).length;
+    Array.from(texto).forEach(function (ch, i) { if (ch !== ' ') e.push({ t: t0 + (t1 - t0) * (i + 0.5) / n, voz: 'giz', forca: forca }); });
+  }
+  function somR10() {
+    var e = [], c = R10.cena;
+    e.push({ t: 0, voz: 'sala', dur: 15 });
+    /* giz batendo na lousa uma vez (a capa) */
+    e.push({ t: 0.02, voz: 'giz', forca: 1 }, { t: 0.03, voz: 'tic', forca: 0.45 });
+    e.push({ t: c.descida[0] + 0.08, voz: 'corrente', forca: 0.85 }, { t: c.descida[0] + 0.3, voz: 'corrente', forca: 0.6 }, { t: c.descida[1] - 0.02, voz: 'corrente', forca: 0.45 });
+    e.push({ t: c.arraste.t0, voz: 'tic', forca: 1 }, { t: c.arraste.t0 + 0.12, voz: 'rangido', forca: 0.8 });
+    e.push({ t: c.arraste.solta + GIRO.assenta, voz: 'sino', forca: 1 });
+    e.push({ t: c.vidro[0], voz: 'grave', forca: 1 });
+    R10.linhas.forEach(function (l) {
+      var meio = l.t0 + (l.t1 - l.t0) * Array.from(l.rotulo).length / Array.from(l.rotulo + ' ' + l.texto).length;
+      gizTexto(e, l.rotulo, l.t0, meio, 0.75); gizTexto(e, l.texto, meio, l.t1, 0.75);
+      e.push({ t: l.feito, voz: 'tic', forca: 1 }, { t: l.feito + 0.02, voz: 'giz', forca: 0.9 });
+    });
+    gizTexto(e, R10.nota.texto, R10.nota.t0, R10.nota.t1, 0.45);
+    e.push({ t: R10.cartao, voz: 'porta', forca: 1 }, { t: R10.cartao + 0.4 + GIRO.assenta, voz: 'sino', forca: 0.55 });
+    return e;
+  }
+  function somR11() {
+    var e = [], A = R11.sessoes.A;
+    e.push({ t: 0, voz: 'rua', dur: 2.6, nivel: 1 });
+    A.teclas.forEach(function (k) { e.push({ t: k.t, voz: 'tecla', forca: 0.5 }); if (k.ch !== ' ') e.push({ t: k.t + 0.004, voz: 'giz', forca: 0.5 }); });
+    e.push({ t: R11.camera.campo.ate + 0.05, voz: 'corrente', forca: 0.6 });
+    e.push({ t: A.arraste.t0, voz: 'tic', forca: 1 }, { t: A.arraste.t0 + 0.12, voz: 'rangido', forca: 0.8 });
+    e.push({ t: A.arraste.solta + GIRO.assenta, voz: 'sino', forca: 1 });
+    e.push({ t: 2.3, voz: 'sala', dur: 12.7 });
+    e.push({ t: A.campo.t, voz: 'tic', forca: 0.9 });
+    A.campo.teclas.forEach(function (k) { e.push({ t: k.t, voz: 'tecla', forca: 0.45 }); });
+    A.escolhas.forEach(function (q) { e.push({ t: q.t, voz: 'tic', forca: 0.9 }); });
+    e.push({ t: A.toqueEnviar.t, voz: 'tic', forca: 1 }, { t: A.toqueEnviar.t + 0.02, voz: 'grave', forca: 0.8 });
+    e.push({ t: R11.envio.segura, voz: 'tic', forca: 0.8 }, { t: R11.envio.solta, voz: 'plim', forca: 1 });
+    e.push({ t: R11.cartao, voz: 'porta', forca: 1 }, { t: R11.cartao + 0.4 + GIRO.assenta, voz: 'sino', forca: 0.55 });
+    return e;
+  }
   /* tom grave de "lado de dentro" no quadro em que a prévia aparece (medido na captura: meta.sessoes.B.previaEm) */
-  R8.graveEm = 7.53;
-  R8.som = somR8(); R7.som = somR7();
+  R8.graveEm = 7.37;
+  R8.som = somR8(); R7.som = somR7(); R9.som = somR9(); R12.som = somR12(); R10.som = somR10(); R11.som = somR11();
 
   /* ------------------------------------------------------------------ versões de cada Reel
      organico: cartão final como no sistema. anuncio: o mesmo vídeo com a faixa de preço queimada no cartão final
@@ -210,6 +472,6 @@
   function capaArquivo(R) { return semAcento('Reel ' + R.codigo + ' - ' + R.nichoRotulo + ' - ' + R.angulo + ' (' + R.duracao + 's) - capa'); }
 
   var API = { FPS: FPS, SEGURA: SEGURA, GRADE: GRADE, prng: prng, GIRO: GIRO, anguloGiro: anguloGiro, PRECO: PRECO, VERSOES: VERSOES,
-    nomeArquivo: nomeArquivo, capaArquivo: capaArquivo, REELS: ['R7', 'R8'], R8: R8, R7: R7 };
+    nomeArquivo: nomeArquivo, capaArquivo: capaArquivo, REELS: ['R7', 'R8', 'R9', 'R10', 'R11', 'R12'], R8: R8, R7: R7, R9: R9, R10: R10, R11: R11, R12: R12 };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else raiz.LINHAS = API;
 })(typeof window !== 'undefined' ? window : globalThis);

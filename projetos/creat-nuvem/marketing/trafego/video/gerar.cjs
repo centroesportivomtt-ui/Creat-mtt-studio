@@ -150,11 +150,12 @@ function montarVideo(reel, versao, vari) {
     m = medir(mp4);
   }
   const audio = { lufs: parseFloat(m.input_i), dbtp: parseFloat(m.input_tp), lra: parseFloat(m.input_lra), ajustes: tentativas, ganhoExtraDb: +ganho.toFixed(2), volumedetect: picoAmostra(mp4) };
-  /* capa PNG 1080x1920 tirada de um quadro forte (uma por Reel: a versão orgânica sem variante) */
+  /* capa PNG 1080x1920 tirada de um quadro forte (uma por Reel e uma por variante, da versão orgânica) */
   let capa = null;
-  if (versao === 'organico' && !vari) {
-    capa = path.join(SAIDA, L.capaArquivo(R) + '.png');
-    fs.copyFileSync(path.join(dir, nq(Math.round(R.capa * L.FPS))), capa);
+  if (versao === 'organico') {
+    const VAR = vari ? R.variantes[vari] : null;
+    capa = path.join(SAIDA, (VAR ? L.nomeArquivo(R, 'organico', vari) + ' - capa' : L.capaArquivo(R)) + '.png');
+    fs.copyFileSync(path.join(dir, nq(Math.round((VAR ? VAR.capa : R.capa) * L.FPS))), capa);
   }
   const pr = JSON.parse(execFileSync(FFPROBE, ['-v', 'error', '-show_entries', 'format=duration,size:stream=codec_name,profile,width,height,r_frame_rate,pix_fmt,sample_rate,channels', '-of', 'json', mp4]).toString());
   return { mp4, capa, probe: pr, audio };
