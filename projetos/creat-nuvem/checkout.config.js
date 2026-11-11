@@ -140,8 +140,18 @@
     endereco: 'Travessa 12 de Outubro, 104, Jatobá, CEP 44640-000'
   };
 
+  /* Endereço único da vitrine (pacote H1, 11/11/2026). O canônico é o domínio do dono; os antigos continuam no ar
+     (anúncios e volta do Mercado Pago apontam para eles até o ato de 13/11), mas assets/canonico.js leva quem abre
+     um deles ao mesmo caminho no canônico, antes de medir ou gravar. Lista vazia desliga o redirecionamento.
+     Este arquivo é carregado SEM defer, antes de assets/canonico.js, em toda página da vitrine e na prévia. */
+  var ENDERECO = {
+    canonico: 'https://nuvem.creatmtt.com.br',
+    antigos: ['creat-nuvem-404b1994.base44.app']
+  };
+
   var CREAT_CHECKOUT = {
     versao: 1,
+    endereco: ENDERECO,
     whatsappSuporte: '5575981151202',
     emailSuporte: 'mttcreatt@gmail.com',
     empresa: EMPRESA,
@@ -189,6 +199,7 @@
     clarityValido: function (v) { return typeof v === 'string' && /^[a-z0-9]{8,12}$/.test(v); }
   };
 
+  window.CREAT_ENDERECO = ENDERECO;
   window.CREAT_CHECKOUT = CREAT_CHECKOUT;
   window.CREAT_MEDICAO = CREAT_MEDICAO;
 })();

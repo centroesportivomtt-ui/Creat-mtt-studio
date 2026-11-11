@@ -313,13 +313,20 @@ function montador(raizZip) {
       itens.set(destino, { origemAbs: abs });
       return api;
     },
+    // Copia um arquivo de texto passando por um filtro (o texto que vai para o zip, sem tocar na origem).
+    texto(origemRel, destino, filtro) {
+      const abs = path.join(RAIZ, origemRel);
+      if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) { faltas.push(origemRel); return api; }
+      itens.set(destino, { origemAbs: abs, dados: Buffer.from(filtro(fs.readFileSync(abs, 'utf8')), 'utf8') });
+      return api;
+    },
     remover(destino) { itens.delete(destino); return api; },
     tem(destino) { return itens.has(destino); },
     faltas,
     entradas() {
       return [...itens.keys()].sort().map((destino) => {
-        const { origemAbs } = itens.get(destino);
-        return { nome: `${raizZip}/${destino}`, dados: fs.readFileSync(origemAbs), origem: rel(origemAbs) };
+        const { origemAbs, dados } = itens.get(destino);
+        return { nome: `${raizZip}/${destino}`, dados: dados || fs.readFileSync(origemAbs), origem: rel(origemAbs) };
       });
     },
   };
@@ -349,15 +356,35 @@ const AGENTES_15 = [
   'motion-3d', 'pesquisador', 'qa', 'revisor', 'seguranca', 'shader', 'som',
 ].map((a) => `${a}.md`);
 
+// Papéis internos do executor do Porta Aberta (projetos/creat-nuvem/docs/EXECUTOR.md): moram em .claude/agents/ da casa,
+// mas são de outra estrutura (regra 11 da consciência) e nunca entram no zip da agência.
+const RE_PAPEL_INTERNO = /(?:leitor|redator|publicador)-pedido/;
+function claudeMdDoPacote(t) {
+  const fora = t.split('\n').filter((l) => !RE_PAPEL_INTERNO.test(l));
+  return fora.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+// Conferência do zip da agência: só os 15 agentes, nenhum papel interno nem gancho do executor.
+function conferirAgencia(entradas, raizZip) {
+  const erros = [];
+  const agentes = entradas.filter((e) => e.nome.startsWith(`${raizZip}/.claude/agents/`)).map((e) => path.posix.basename(e.nome)).sort();
+  if (JSON.stringify(agentes) !== JSON.stringify(AGENTES_15.slice().sort())) erros.push(`agentes no zip diferentes dos 15: ${agentes.join(', ')}`);
+  for (const e of entradas) {
+    if (e.nome.startsWith(`${raizZip}/.claude/hooks/`)) erros.push(`gancho do executor no zip: ${e.nome}`);
+    if (/\.(md|txt|json|js|cjs|mjs|html)$/.test(e.nome) && RE_PAPEL_INTERNO.test(e.dados.toString('utf8'))) erros.push(`papel interno do executor citado em ${e.nome}`);
+  }
+  return erros;
+}
+
 const PRODUTOS_DEF = [
   {
     id: 'agencia',
     zip: 'creat-nuvem-agencia-15-agentes',
     montar(m) {
-      m.pasta('.claude/agents', '.claude/agents', { exigir: AGENTES_15 });
+      // só os 15: a pasta da casa também tem os papéis internos do executor do Porta Aberta
+      for (const a of AGENTES_15) m.arquivo(`.claude/agents/${a}`, `.claude/agents/${a}`);
       m.pasta('.claude/skills', '.claude/skills');
       m.pasta('.claude/workflows', '.claude/workflows');
-      m.arquivo('CLAUDE.md', 'CLAUDE.md');
+      m.texto('CLAUDE.md', 'CLAUDE.md', claudeMdDoPacote);
       m.arquivo('sede/index.html', 'sede/index.html');
       // Cópia endurecida do servidor (escuta só em 127.0.0.1, trava de caminho com separador).
       // A sede/servidor.cjs da casa não entra no pacote.
@@ -473,6 +500,7 @@ function main() {
   for (const { p, m } of montados) {
     const entradas = m.entradas();
     if (!entradas.length) throw new Error(`[${p.id}] pacote vazio`);
+    if (p.id === 'agencia') for (const a of conferirAgencia(entradas, p.zip)) achados.push(`  [${p.id}] ${a}`);
     for (const a of varrer(entradas)) achados.push(`  [${p.id}] ${a}`);
     pacotes.push({ p, entradas });
   }
@@ -533,4 +561,4 @@ if (require.main === module) {
   try { main(); } catch (e) { console.error('Erro: ' + e.message); process.exit(1); }
 }
 
-module.exports = { crc32, escreverZip, lerZip, varrer, excluido, marcadores, marcadoresExtras };
+module.exports = { crc32, escreverZip, lerZip, varrer, excluido, marcadores, marcadoresExtras, montador, PRODUTOS_DEF, AGENTES_15, conferirAgencia, claudeMdDoPacote };

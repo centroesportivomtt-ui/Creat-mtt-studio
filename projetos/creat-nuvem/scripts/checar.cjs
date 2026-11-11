@@ -41,6 +41,11 @@
       linha exata "Disallow: /sites/*--r-" (rascunhos, ADR-004), não barra o site inteiro nem
       /sites/ inteiro, não barra site final com "-r-" no slug (ex.: barbearia-do-r-feira-de-santana), e não há robots.txt solto na raiz do projeto disputando com ele. Se
       dist/publico/ existir, o robots.txt dele é igual ao texto (montagem velha = FALHA).
+   8. Endereço único (pacote H2, 11/11/2026; docs/DOMINIO.md): a fonte é ENDERECO de
+      scripts/producao/lib/comum.cjs. Se checkout.config.js já traz CREAT_ENDERECO (pacote H1, o salto
+      do antigo no navegador), o canônico dele é o mesmo e a lista de antigos tem o antigo conhecido
+      (FALHA se divergir). Se dist/publico/ existir: nenhum marcador {{HOST}} sobrou em arquivo de texto
+      e o sitemap.xml existe, com todo <loc> no endereço canônico (montagem velha = FALHA).
    ===================================================================== */
 'use strict';
 const fs = require('fs');
@@ -487,6 +492,49 @@ function conferirTexto(onde, texto, opcoes) {
     else if (ler(pr) !== txt) falha(rel(pr), 'diferente de ROBOTS_RAIZ: rode de novo node scripts/montar-publico.cjs');
   }
   if (falhas === antes) ok('robots.txt da raiz: barra só /sites/*--r- (rascunhos), "/" e os sites finais (inclusive com "-r-" no slug) continuam indexáveis');
+})();
+
+(function enderecoUnico() {
+  const antes = falhas;
+  let E;
+  try { E = require(path.join(__dirname, 'producao', 'lib', 'comum.cjs')); } catch (e) { falha('scripts/producao/lib/comum.cjs', 'não carregou: ' + e.message); return; }
+  let host;
+  try { host = E.hostPadrao(); } catch (e) { falha('CREAT_HOST', e.message); return; }
+  const ck = path.join(RAIZ, 'checkout.config.js');
+  if (existe(ck)) {
+    const j = {}; j.window = j;
+    try { vm.runInContext(ler(ck), vm.createContext(Object.assign(j, { URL, Promise }))); } catch (e) { /* a seção 3 já acusa */ }
+    const cfg = j.CREAT_ENDERECO;
+    if (!cfg) aviso('checkout.config.js', 'ainda sem CREAT_ENDERECO (pacote H1): o navegador não leva o antigo ao canônico');
+    else {
+      if (cfg.canonico !== E.ENDERECO.canonico) falha('checkout.config.js', `CREAT_ENDERECO.canonico ${cfg.canonico} diferente de ENDERECO.canonico ${E.ENDERECO.canonico} (lib/comum.cjs)`);
+      const antigo = new URL(E.ENDERECO.antigo).hostname;
+      if (!Array.isArray(cfg.antigos) || !cfg.antigos.includes(antigo)) falha('checkout.config.js', `CREAT_ENDERECO.antigos sem ${antigo}: quem chega pelo anúncio ficaria no antigo`);
+      if (Array.isArray(cfg.antigos) && cfg.antigos.includes(new URL(E.ENDERECO.canonico).hostname)) falha('checkout.config.js', 'CREAT_ENDERECO.antigos inclui o canônico: laço de redirecionamento');
+    }
+  }
+  const pub = path.join(RAIZ, 'dist', 'publico');
+  if (existe(pub)) {
+    const M = require(path.join(__dirname, 'montar-publico.cjs'));
+    const sobra = [];
+    (function andar(d) {
+      for (const n of fs.readdirSync(d)) {
+        const p = path.join(d, n);
+        if (fs.lstatSync(p).isDirectory()) andar(p);
+        else if (/\.(html?|js|css|json|txt|xml|svg|webmanifest)$/i.test(n) && ler(p).includes(M.MARCADOR)) sobra.push(rel(p));
+      }
+    })(pub);
+    if (sobra.length) falha('dist/publico', `sobrou o marcador ${M.MARCADOR}: ${sobra.slice(0, 5).join(', ')}; rode de novo node scripts/montar-publico.cjs`);
+    const sm = path.join(pub, 'sitemap.xml');
+    if (!existe(sm)) falha(rel(sm), 'ausente: rode de novo node scripts/montar-publico.cjs');
+    else {
+      const locs = [...ler(sm).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+      const fora = locs.filter((l) => !l.startsWith(host + '/'));
+      if (!locs.length) falha(rel(sm), 'sem nenhuma página');
+      else if (fora.length) falha(rel(sm), `página fora do endereço canônico ${host}: ${fora.slice(0, 3).join(', ')} (montagem velha: rode de novo node scripts/montar-publico.cjs)`);
+    }
+  }
+  if (falhas === antes) ok(`endereço único: ${host}${existe(pub) ? ' no sitemap e no robots da montagem, sem marcador {{HOST}} sobrando' : ''}`);
 })();
 
 console.log(`\n${falhas ? falhas + ' falha(s)' : 'tudo certo'}${avisos ? ', ' + avisos + ' aviso(s)' : ''}`);

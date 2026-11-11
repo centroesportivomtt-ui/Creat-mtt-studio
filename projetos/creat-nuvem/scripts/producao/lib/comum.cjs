@@ -14,12 +14,28 @@ const SCHEMA = path.join(RAIZ, 'schema');
 const MOTOR = path.join(RAIZ, 'motor');
 
 /*
- * Onde os sites moram (app Base44 "Creat Nuvem", 6aefffe66b684db9404b1994): a vitrine na raiz e
- * cada site entregue em public/sites/<slug>/. Sem domínio próprio, este é o padrão.
- * Variável vazia ou ausente = padrão; "0" desliga (sem canonical/sitemap; rodapé sem link).
+ * ENDEREÇO DA VITRINE: a fonte ÚNICA (pacote H2, 11/11/2026; docs/DOMINIO.md).
+ * O app Base44 "Creat Nuvem" (6aefffe66b684db9404b1994) responde, com o mesmo conteúdo, em dois endereços:
+ *   canonico  https://nuvem.creatmtt.com.br  (domínio do dono, CNAME no Registro.br, verificado em 10/11/2026)
+ *   antigo    https://creat-nuvem-404b1994.base44.app  ("endereço antigo conhecido")
+ * O canônico é o padrão de tudo: home e URL dos sites (build-site, produzir, link-aprovacao, publicar-site),
+ * sitemap e robots da vitrine (montar-publico) e o host das conferências (conferir-no-ar, conferir-sites-no-ar,
+ * validar-anuncio). O antigo NUNCA sai do ar enquanto houver anúncio ou preferência do Mercado Pago apontando
+ * para ele; até o ato de 13/11 (antigoAceitoAte) as conferências o aceitam como "antigo, redireciona".
+ * Nenhum outro arquivo escreve estes endereços: todos leem daqui.
+ * CREAT_HOST (opcional) troca o canônico de uma vez, para voltar atrás sem editar código
+ * (CREAT_HOST=https://creat-nuvem-404b1994.base44.app). Só origem https, sem caminho.
+ * CREAT_HOME e CREAT_URL_SITES continuam valendo por cima: vazia ou ausente = padrão; "0" desliga
+ * (sem canonical/sitemap; rodapé sem link).
  */
-const HOME_PADRAO = 'https://creat-nuvem-404b1994.base44.app/';
-const URL_SITES_PADRAO = 'https://creat-nuvem-404b1994.base44.app/sites/{slug}/';
+const ENDERECO = Object.freeze({
+  canonico: 'https://nuvem.creatmtt.com.br',
+  antigo: 'https://creat-nuvem-404b1994.base44.app',
+  // último dia (horário da Bahia) em que o antigo é aceito como destino de anúncio sem reprovar
+  antigoAceitoAte: '2026-11-13'
+});
+const HOME_PADRAO = ENDERECO.canonico + '/';
+const URL_SITES_PADRAO = ENDERECO.canonico + '/sites/{slug}/';
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])$/;          // o mesmo $defs/slug do tenant.schema.json
 
 function envOuPadrao(nome, padrao) {
@@ -27,10 +43,25 @@ function envOuPadrao(nome, padrao) {
   if (v === undefined || !String(v).trim()) return padrao;
   return String(v).trim() === '0' ? '' : String(v).trim();
 }
+/* origem canônica em uso: CREAT_HOST ou ENDERECO.canonico, sempre sem barra no fim */
+function hostPadrao() {
+  const v = String(process.env.CREAT_HOST || '').trim();
+  if (!v) return ENDERECO.canonico;
+  let u;
+  try { u = new URL(v); } catch (e) { throw new ErroCampo('CREAT_HOST', `URL inválida: ${v}`); }
+  if (u.protocol !== 'https:' || (u.pathname !== '/' && u.pathname !== '') || u.search || u.hash || u.username || u.password) throw new ErroCampo('CREAT_HOST', `precisa ser só a origem https, sem caminho (veio ${v})`);
+  return u.origin;
+}
 /* home da vitrine (link do rodapé "Aberto pela Creat") */
-function homePadrao() { return envOuPadrao('CREAT_HOME', HOME_PADRAO); }
+function homePadrao() { return envOuPadrao('CREAT_HOME', hostPadrao() + '/'); }
 /* modelo da URL dos sites entregues, com {slug} */
-function modeloUrlSites() { return envOuPadrao('CREAT_URL_SITES', URL_SITES_PADRAO); }
+function modeloUrlSites() { return envOuPadrao('CREAT_URL_SITES', hostPadrao() + '/sites/{slug}/'); }
+/* as origens que respondem pela vitrine hoje: a canônica em uso primeiro, depois as outras conhecidas */
+function origensDaVitrine() { return [...new Set([hostPadrao(), ENDERECO.canonico, ENDERECO.antigo])]; }
+/* data de hoje na Bahia (UTC-3, sem horário de verão), AAAA-MM-DD; agora pode vir de teste */
+function hojeNaBahia(agora) { return new Date((agora ? new Date(agora) : new Date()).getTime() - 3 * 3600e3).toISOString().slice(0, 10); }
+/* o endereço antigo ainda vale como destino de anúncio? (até antigoAceitoAte, inclusive). hoje: AAAA-MM-DD opcional */
+function antigoAceito(hoje) { return String(hoje || hojeNaBahia()) <= ENDERECO.antigoAceitoAte; }
 
 class ErroCampo extends Error {
   /* erro de entrada: sempre cita o campo; o CLI imprime e sai com código 1 */
@@ -174,6 +205,6 @@ function listarArquivos(dir) {
 }
 
 module.exports = {
-  RAIZ, SCHEMA, MOTOR, HOME_PADRAO, URL_SITES_PADRAO, SLUG_RE, homePadrao, modeloUrlSites, ErroCampo, ErroLista, lerArgs, pastaSaida, lerJson, gravarJson,
+  RAIZ, SCHEMA, MOTOR, ENDERECO, HOME_PADRAO, URL_SITES_PADRAO, SLUG_RE, hostPadrao, homePadrao, modeloUrlSites, origensDaVitrine, hojeNaBahia, antigoAceito, ErroCampo, ErroLista, lerArgs, pastaSaida, lerJson, gravarJson,
   ajv, validador, REF, errosAjv, carregarPreset, motor, copiarPasta, listarArquivos
 };

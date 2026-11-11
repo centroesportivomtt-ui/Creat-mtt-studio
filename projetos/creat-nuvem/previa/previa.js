@@ -84,6 +84,11 @@
   }
 
   W.addEventListener('hashchange', function () { W.location.reload(); });
-  if (DOC.readyState === 'loading') DOC.addEventListener('DOMContentLoaded', montar, { once: true });
-  else setTimeout(montar, 0);
+  function partida() {
+    if (DOC.readyState === 'loading') DOC.addEventListener('DOMContentLoaded', montar, { once: true });
+    else setTimeout(montar, 0);
+  }
+  // No endereço antigo, ../assets/canonico.js já levou a pessoa ao canônico: a prévia só monta se a troca não acontecer.
+  if (W.CreatCanonico && W.CreatCanonico.mudando) W.addEventListener('creat:canonico-ficou', partida, { once: true });
+  else partida();
 })();

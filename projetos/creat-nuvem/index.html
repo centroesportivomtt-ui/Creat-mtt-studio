@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Endereço único (pacote H1): sem defer e antes de tudo. checkout.config.js traz o endereço canônico;
+     canonico.js leva quem abre o endereço antigo ao mesmo caminho no canônico, antes de medir ou gravar. -->
+<script src="checkout.config.js"></script>
+<script src="assets/canonico.js"></script>
+<link rel="canonical" href="https://nuvem.creatmtt.com.br/">
+<meta property="og:url" content="https://nuvem.creatmtt.com.br/">
 <title>Site pronto com pedido de horário no WhatsApp | Creat</title>
 <meta name="description" content="Digite o nome do seu negócio e veja o site pronto em segundos, com pedido de horário no WhatsApp. Grátis para ver, sem cadastro e sem fidelidade.">
 <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -15,7 +21,10 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:title" content="Seu negócio aberto na internet.">
 <meta property="og:description" content="Digite o nome do seu negócio, vire a placa para ABERTO e veja o seu site pronto. Grátis para ver.">
-<meta property="og:image" content="assets/img/sede-ilha.webp">
+<meta property="og:image" content="https://nuvem.creatmtt.com.br/assets/img/sede-ilha.webp">
+<meta property="og:site_name" content="Creat Nuvem">
+<!-- Dados estruturados: bloco de dados, não é script que roda (a CSP script-src não se aplica). -->
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://nuvem.creatmtt.com.br/#site","url":"https://nuvem.creatmtt.com.br/","name":"Creat Nuvem · Porta Aberta","inLanguage":"pt-BR","publisher":{"@id":"https://nuvem.creatmtt.com.br/#empresa"}},{"@type":"Organization","@id":"https://nuvem.creatmtt.com.br/#empresa","name":"creat.MTT Studio","url":"https://nuvem.creatmtt.com.br/","logo":"https://nuvem.creatmtt.com.br/assets/svg/placa.svg"}]}</script>
 <meta property="og:image:alt" content="Placa de madeira presa por uma correntinha, virada para o lado ABERTO, com o nome de um negócio escrito a giz.">
 <link rel="icon" href="assets/svg/placa.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -170,7 +179,6 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 .previa-nota{grid-column:1 / -1;font-size:13px;line-height:1.35;color:var(--apagado);text-align:center}
 #precos .cab p[data-se]{max-width:var(--medida)}
 </style>
-<script defer src="checkout.config.js"></script>
 <script defer src="assets/som/creat-som.js"></script>
 <script defer src="ritual/placa.js"></script>
 <script defer src="assets/vitrine.js"></script>

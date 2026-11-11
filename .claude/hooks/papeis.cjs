@@ -26,8 +26,9 @@ const CAMPOS_TEXTO = ['pedido_id', 'plano', 'nicho', 'negocio', 'cidade', 'whats
 const LIMITE = { servicos_texto: 4000 };
 const ID = /^PA-(?:[0-9A-HJKMNP-TV-Z]{8}|[0-9A-Z]{10})$/;
 const ID_LIVRE = /^PA-[0-9A-Z]{8,10}$/;
-const SLUG = /^cliente-(?:pa-[a-z0-9]{8,10}|ensaio-[a-z]{4})$/;
-const DIR = /^cliente-(?:pa-[a-z0-9]{8,10}|ensaio-[a-z]{4})--r-[a-z0-9]{12,32}$/;
+// o slug de pedido do executor sai do id (EXECUTOR.md, passo (e), item 2): nada do texto do cliente no endereço
+const SLUG = /^cliente-pa-[a-z0-9]{8,10}$/;
+const DIR = /^cliente-pa-[a-z0-9]{8,10}--r-[a-z0-9]{12,32}$/;
 const REL = /^(?:[a-z0-9_-]{1,40}\/)?[A-Za-z0-9_.-]{1,60}$/;
 const GRAMATICA = {
   'leitor-pedido': /^(ok|falhou: [a-z_]{1,24})$/,
@@ -38,10 +39,17 @@ const CHAVES_TEXTOS = ['pedido', 'bordao', 'pagina', 'servicos', 'textos'];
 
 class Nao extends Error {}
 const no = (m) => { throw new Nao(m); };
-const so = (o, permitidas) => { for (const k of Object.keys(o || {})) if (!permitidas.includes(k)) no('parametro fora da lista: ' + k.slice(0, 30)); };
+const so = (o, permitidas) => { for (const k of Object.keys(o || {})) if (!permitidas.includes(k)) no('parametro fora da lista: ' + k.replace(/[^A-Za-z0-9_]/g, '?').slice(0, 30)); };
 const ehObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 const nomeMcp = (t, f) => t === 'mcp__Base44__' + f || t === 'mcp__claude_ai_Base44__' + f;
-const real = (x) => { try { return fs.realpathSync(x); } catch (e) { return p.resolve(x); } };
+// caminho real: segue links simbólicos até o ancestral que existe (arquivo novo dentro de pasta que é link também conta)
+function real(x) {
+  const a = p.resolve(x);
+  try { return fs.realpathSync(a); } catch (e) {
+    const pai = p.dirname(a);
+    return pai === a ? a : p.join(real(pai), p.basename(a));
+  }
+}
 const projeto = () => { const d = process.env.CLAUDE_PROJECT_DIR; if (!d) no('sem CLAUDE_PROJECT_DIR'); return real(d) + p.sep; };
 const tmps = () => [...new Set([os.tmpdir(), '/tmp'].flatMap((x) => [p.resolve(x) + p.sep, real(x) + p.sep]))];
 
@@ -57,7 +65,8 @@ function caminhoTemporario(f) {
 /* "uma chamada só" por execução do subagente: a vaga é um arquivo criado de forma atômica (link) com o tool_use_id.
    A segunda cópia do gancho (frontmatter + settings) da MESMA chamada acha o mesmo id e segue. */
 function pastaEstado() {
-  const d = p.join(os.tmpdir(), 'pa-papeis-' + (typeof process.getuid === 'function' ? process.getuid() : 'u'));
+  const base = fs.existsSync('/tmp') ? '/tmp' : os.tmpdir();
+  const d = p.join(base, 'pa-papeis-' + (typeof process.getuid === 'function' ? process.getuid() : 'u'));
   fs.mkdirSync(d, { recursive: true, mode: 0o700 });
   return d;
 }
@@ -122,7 +131,7 @@ const PRE = {
       return vaga(j, 'escrita');
     }
     if (t === 'SubagentHandback') return handback('leitor-pedido', i);
-    no('ferramenta fora do papel: ' + String(t).slice(0, 60));
+    no('ferramenta fora do papel: ' + String(t).replace(/[^A-Za-z0-9_]/g, '?').slice(0, 60));
   },
   'redator-pedido'(t, i, j) {
     if (t === 'Read') {
@@ -152,7 +161,7 @@ const PRE = {
       return vaga(j, 'escrita');
     }
     if (t === 'SubagentHandback') return handback('redator-pedido', i);
-    no('ferramenta fora do papel: ' + String(t).slice(0, 60));
+    no('ferramenta fora do papel: ' + String(t).replace(/[^A-Za-z0-9_]/g, '?').slice(0, 60));
   },
   'publicador-pedido'(t, i) {
     const DIST = real(p.join(projeto(), 'projetos', 'creat-nuvem', 'dist')) + p.sep;
@@ -177,6 +186,7 @@ const PRE = {
       const slug = m[2].split('--r-')[0];
       const raiz = m[1] === 'public/sites' ? p.join(DIST, m[2]) : p.join(DIST, slug);
       let igual;
+      if (!real(raiz).startsWith(DIST)) no('pasta de origem fora de dist/');
       if (m[1] === 'porta-aberta/obras' && m[3] === 'MANIFESTO.sha256') {
         const L = [];
         const anda = (x, b) => { for (const n of fs.readdirSync(x).sort()) { const a = p.join(x, n), rr = b ? b + '/' + n : n; if (fs.lstatSync(a).isDirectory()) anda(a, rr); else L.push('./' + rr); } };
@@ -194,7 +204,7 @@ const PRE = {
       return;
     }
     if (t === 'SubagentHandback') return handback('publicador-pedido', i);
-    no('ferramenta fora do papel: ' + String(t).slice(0, 60));
+    no('ferramenta fora do papel: ' + String(t).replace(/[^A-Za-z0-9_]/g, '?').slice(0, 60));
   }
 };
 
@@ -202,7 +212,10 @@ const PRE = {
 const MENSAGEM = {
   'leitor-pedido': (s) => { const m = /^pedido_id: (PA-[0-9A-Z]{8,10})\ncaminho: (\/[^\n]+)$/.exec(s); if (!m || !ID.test(m[1])) return false; caminhoTemporario(m[2]); return p.basename(m[2]) === `linha-${m[1]}.json`; },
   'redator-pedido': (s) => { const m = /^entrada: (\/[^\n]+\/sites\/([a-z0-9-]{1,40})\/redator\.json)\nsaida: (\/[^\n]+\/textos-(PA-[0-9A-Z]{8,10})\.json)$/.exec(s); if (!m || !SLUG.test(m[2])) return false; caminhoTemporario(m[3]); return true; },
-  'publicador-pedido': (s) => { const m = /^dir: ([a-z0-9-]{1,80})\nslug: ([a-z0-9-]{1,40})$/.exec(s); return !!m && DIR.test(m[1]) && SLUG.test(m[2]) && m[1].split('--r-')[0] === m[2]; }
+  'publicador-pedido': (s) => {
+    const m = /^dir: ([a-z0-9-]{1,80})\nslug: ([a-z0-9-]{1,40})\nraiz: (\/[^\n]+)$/.exec(s);
+    return !!m && DIR.test(m[1]) && SLUG.test(m[2]) && m[1].split('--r-')[0] === m[2] && real(m[3]) + p.sep === real(p.join(projeto(), 'projetos', 'creat-nuvem', 'dist')) + p.sep;
+  }
 };
 function preSessao(t, i) {
   if (t !== 'Agent' && t !== 'Task') return;
@@ -213,6 +226,15 @@ function preSessao(t, i) {
   if (i.description !== undefined && (typeof i.description !== 'string' || i.description.length > 80)) no('description fora do formato');
   // em segundo plano a resposta do papel chega por notificação, sem passar pelo gancho post: só em primeiro plano
   if (i.run_in_background !== undefined && i.run_in_background !== false) no('papel so roda em primeiro plano (run_in_background: false)');
+}
+
+/* registro.log: uma linha por decisão (hora, papel, camada, ferramenta, decisão). Só nomes fixos, nenhum valor
+   recebido: a sessão principal pode ler este arquivo no ENSAIO 3 para provar que as duas camadas rodaram. */
+function registrar(papel, camada, ferramenta, decisao) {
+  try {
+    const limpo = (x) => String(x == null ? '' : x).replace(/[^A-Za-z0-9_ :.<>()/-]/g, '?').slice(0, 90);
+    fs.appendFileSync(p.join(pastaEstado(), 'registro.log'), `${new Date().toISOString()} ${limpo(papel)} ${camada} ${limpo(ferramenta)} ${limpo(decisao)}\n`, { mode: 0o600 });
+  } catch (e) { /* o registro nunca decide */ }
 }
 
 function lerEntrada() { const d = fs.readFileSync(0, 'utf8'); const j = JSON.parse(d); if (!ehObj(j)) no('entrada ilegivel'); return j; }
@@ -236,12 +258,17 @@ function principal() {
   if (papelArg && j.agent_type && j.agent_type !== papelArg) { process.stderr.write(`bloqueado pelo papel ${papelArg}: agent_type diferente\n`); process.exit(2); }
 
   if (evento === 'pre') {
+    const camada = papelArg ? 'frontmatter' : 'settings';
+    const ehDoPapel = !!papel || (!j.agent_type && ehObj(j.tool_input) && PAPEIS.includes(j.tool_input.subagent_type));
     try {
       if (papel) PRE[papel](j.tool_name, ehObj(j.tool_input) ? j.tool_input : {}, j);
       else if (!j.agent_type) preSessao(j.tool_name, ehObj(j.tool_input) ? j.tool_input : {});
+      if (ehDoPapel) registrar(papel || 'sessao:' + j.tool_input.subagent_type, camada, j.tool_name, 'segue');
       process.exit(0);
     } catch (e) {
-      process.stderr.write(`bloqueado pelo papel ${papel || 'executor'}: ${e instanceof Nao ? e.message : 'erro no gancho'}\n`);
+      const m = e instanceof Nao ? e.message : 'erro no gancho';
+      registrar(papel || 'sessao', camada, j.tool_name, 'bloqueado: ' + m);
+      process.stderr.write(`bloqueado pelo papel ${papel || 'executor'}: ${m}\n`);
       process.exit(2);
     }
   }

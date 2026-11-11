@@ -5,6 +5,7 @@
    Static Assets pelo wrangler.toml, ou upload estático no Base44).
 
    Uso:  node scripts/montar-publico.cjs          (a partir de projetos/creat-nuvem/)
+         node scripts/montar-publico.cjs --projeto <pasta> --destino <pasta>   (testes: outra fonte, outra saída)
 
    Por que existe:
    - a pasta do projeto tem docs/, scripts/, schema/, marketing/, node_modules/
@@ -19,7 +20,12 @@
    - grava dist/publico/robots.txt (ROBOTS_RAIZ, abaixo): o ÚNICO robots.txt que buscador lê é o
      da raiz do domínio. Ele barra /sites/*--r- (os rascunhos de aprovação, ADR-004) e deixa o resto
      indexável. A proteção principal do rascunho continua sendo a meta noindex do index.html dele.
-     O checar.cjs confere este texto (seção 7 de lá).
+     O checar.cjs confere este texto (seção 7 de lá). Termina com "Sitemap: <endereço canônico>/sitemap.xml".
+   - endereço (pacote H2, 11/11/2026; docs/DOMINIO.md): o host vem de lib/comum.cjs (ENDERECO.canonico,
+     https://nuvem.creatmtt.com.br, ou CREAT_HOST). Com ele:
+       * grava dist/publico/sitemap.xml com as páginas da vitrine que não têm meta robots noindex;
+       * troca o marcador {{HOST}} em todo HTML de dist/publico/ pela origem (sem barra no fim; ficha 4F);
+       * FALHA (código 1) se sobrar "{{HOST}}" em qualquer arquivo de texto da montagem.
 
    Lista branca: só entra o que está em ENTRA. Qualquer pasta nova precisa
    ser acrescentada aqui de propósito. Sem dependências; Node 22.
@@ -29,9 +35,17 @@
 const fs = require('fs');
 const path = require('path');
 
-const PROJETO = path.resolve(__dirname, '..');
+const os = require('os');
+const C = require('./producao/lib/comum.cjs');
+
+const argv = process.argv.slice(2);
+const opt = (n) => { const i = argv.indexOf(n); return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith('--') ? path.resolve(argv[i + 1]) : ''; };
+const PROJETO = opt('--projeto') || path.resolve(__dirname, '..');
 const RAIZ_REPO = path.resolve(PROJETO, '..', '..');
-const DESTINO = path.join(PROJETO, 'dist', 'publico');
+const DESTINO = opt('--destino') || path.join(PROJETO, 'dist', 'publico');
+const NOME_DESTINO = path.relative(PROJETO, DESTINO).startsWith('..') ? DESTINO : path.relative(PROJETO, DESTINO);
+const MARCADOR = '{{HOST}}';
+const TEXTO = /\.(html?|js|css|json|txt|xml|svg|webmanifest)$/i;
 
 // pastas e arquivos da vitrine (relativos a projetos/creat-nuvem/)
 const ENTRA = [
@@ -47,7 +61,36 @@ const SEDE = ['index.html', 'estado-publico.json'];
 // /sites/<slug>--r-<id>/. O slug final nunca tem hífen duplo (slugSeguro em scripts/producao/lib/tenant.cjs), então
 // um site FINAL com o pedaço "-r-" (ex.: "Barbearia do R" em Feira = barbearia-do-r-feira-de-santana) continua
 // indexável. O marcador era "-r-" até o fecho 2 da onda 1 (10/11/2026) e barrava esse site final.
-const ROBOTS_RAIZ = 'User-agent: *\nAllow: /\nDisallow: /sites/*--r-\n';
+function robotsRaiz(host) { return `User-agent: *\nAllow: /\nDisallow: /sites/*--r-\nSitemap: ${host}/sitemap.xml\n`; }
+const ROBOTS_RAIZ = robotsRaiz(C.hostPadrao());
+
+/* sitemap da vitrine: <host>/<pasta>/ de cada index.html de topo sem meta robots noindex (404 nunca entra) */
+function sitemapVitrine(destino, host) {
+  const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const caminhos = [];
+  const candidatos = [['', path.join(destino, 'index.html')]].concat(fs.readdirSync(destino).sort()
+    .filter((n) => n !== 'sites' && fs.statSync(path.join(destino, n)).isDirectory()).map((n) => [n + '/', path.join(destino, n, 'index.html')]));
+  for (const [rel, arq] of candidatos) {
+    if (!fs.existsSync(arq)) continue;
+    const html = fs.readFileSync(arq, 'utf8');
+    const metas = html.match(/<meta\b[^>]*>/gi) || [];
+    const noindex = metas.some((m) => /\bname\s*=\s*["']?(robots|googlebot)\b/i.test(m) && /\bcontent\s*=\s*["'][^"']*noindex/i.test(m));
+    if (!noindex) caminhos.push('/' + rel);
+  }
+  return { caminhos, xml: '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    caminhos.map((c) => `  <url><loc>${esc(host + c)}</loc></url>\n`).join('') + '</urlset>\n' };
+}
+
+/* destino só pode ser apagado se for nova, vazia ou uma montagem anterior; nunca a raiz, a home, o cwd ou o projeto */
+function checarDestino(d) {
+  const contem = (pai, filho) => { const r = path.relative(pai, filho); return r === '' || (!r.startsWith('..') && !path.isAbsolute(r)); };
+  for (const x of [path.parse(d).root, os.homedir(), process.cwd(), PROJETO, RAIZ_REPO]) if (contem(d, path.resolve(x))) throw new Error(`destino recusado: ${d} contém ${x}`);
+  if (!fs.existsSync(d)) return;
+  const st = fs.lstatSync(d);
+  if (!st.isDirectory() || st.isSymbolicLink()) throw new Error(`destino recusado: ${d} não é uma pasta comum`);
+  const itens = fs.readdirSync(d);
+  if (itens.length && !itens.includes('robots.txt')) throw new Error(`destino recusado: ${d} tem arquivos e não é uma montagem anterior (sem robots.txt)`);
+}
 
 function copiar(origem, destino, rel, lista) {
   if (NUNCA.some((r) => r.test(rel))) return;
@@ -62,6 +105,8 @@ function copiar(origem, destino, rel, lista) {
 }
 
 function main() {
+  const HOST = C.hostPadrao();
+  try { checarDestino(DESTINO); } catch (e) { console.log('FALHA  ' + e.message); process.exit(2); }
   fs.rmSync(DESTINO, { recursive: true, force: true });
   fs.mkdirSync(DESTINO, { recursive: true });
   const copiados = [];
@@ -80,14 +125,29 @@ function main() {
       fs.mkdirSync(path.join(DESTINO, 'sede'), { recursive: true });
       fs.writeFileSync(path.join(DESTINO, 'sede', n), JSON.stringify(espera, null, 2) + '\n');
       copiados.push('sede/' + n);
-      console.log('aviso  sede/estado-publico.json ausente: gravei o estado de espera em dist/publico/sede/');
+      console.log(`aviso  sede/estado-publico.json ausente: gravei o estado de espera em ${NOME_DESTINO}/sede/`);
       continue;
     }
     copiar(o, path.join(DESTINO, 'sede', n), 'sede/' + n, copiados);
   }
 
-  fs.writeFileSync(path.join(DESTINO, 'robots.txt'), ROBOTS_RAIZ);
+  // {{HOST}} -> origem canônica em todo HTML; depois, nenhum arquivo de texto pode sobrar com o marcador
+  let trocas = 0;
+  for (const r of copiados.filter((x) => /\.html?$/i.test(x))) {
+    const arq = path.join(DESTINO, r);
+    const html = fs.readFileSync(arq, 'utf8');
+    if (!html.includes(MARCADOR)) continue;
+    trocas += html.split(MARCADOR).length - 1;
+    fs.writeFileSync(arq, html.split(MARCADOR).join(HOST));
+  }
+  fs.writeFileSync(path.join(DESTINO, 'robots.txt'), robotsRaiz(HOST));
   copiados.push('robots.txt');
+  const sm = sitemapVitrine(DESTINO, HOST);
+  fs.writeFileSync(path.join(DESTINO, 'sitemap.xml'), sm.xml);
+  copiados.push('sitemap.xml');
+  const sobra = copiados.filter((r) => TEXTO.test(r) && fs.readFileSync(path.join(DESTINO, r), 'utf8').includes(MARCADOR));
+  if (sobra.length) { console.log(`FALHA  sobrou o marcador ${MARCADOR} (só o HTML é trocado): ${sobra.join(', ')}`); process.exit(1); }
+  console.log(`ok     endereço ${HOST}: ${trocas} marcador(es) ${MARCADOR} trocados; sitemap.xml com ${sm.caminhos.length} página(s): ${sm.caminhos.join(' ')}`);
 
   // CSP da sede: recalcula os hashes dos scripts inline de sede/index.html e grava no
   // _headers de dist/publico/ (o _headers da fonte fica com os valores da última revisão).
@@ -106,7 +166,7 @@ function main() {
     if (iCsp === -1) { console.log('FALHA  _headers sem CSP para /sede/*'); process.exit(1); }
     const antes = linhas[iCsp];
     linhas[iCsp] = antes.replace(/script-src 'self'( 'sha256-[^']+')*/, `script-src 'self' ${hashes.join(' ')}`);
-    if (linhas[iCsp] !== antes) console.log(`aviso  hashes da CSP da sede atualizados em dist/publico/_headers (${hashes.length}); copie para o _headers da fonte`);
+    if (linhas[iCsp] !== antes) console.log(`aviso  hashes da CSP da sede atualizados em ${NOME_DESTINO}/_headers (${hashes.length}); copie para o _headers da fonte`);
     fs.writeFileSync(headersPub, linhas.join('\n'));
   }
 
@@ -120,7 +180,7 @@ function main() {
   const topo = [...new Set(copiados.map((r) => r.split('/')[0]))].sort();
   if (topo.includes('sites')) { console.log('FALHA  a vitrine não pode ter sites/ na raiz: apagaria os sites dos clientes'); process.exit(1); }
   console.log('vitrine (topo de public/): ' + topo.join(' '));
-  console.log(`ok     dist/publico/ montado: ${copiados.length} arquivos, ${(bytes / 1024).toFixed(0)} KB`);
+  console.log(`ok     ${NOME_DESTINO}/ montado: ${copiados.length} arquivos, ${(bytes / 1024).toFixed(0)} KB`);
   // ordem do deploy: a vitrine linka sites/<slug>/; eles precisam estar no ar ANTES dela (docs/PUBLICACAO.md, seção 0)
   const linkados = require('./conferir-sites-no-ar.cjs').slugsDaVitrine(DESTINO);
   if (linkados.length) {
@@ -130,4 +190,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { ROBOTS_RAIZ, ENTRA };
+module.exports = { ROBOTS_RAIZ, ENTRA, robotsRaiz, sitemapVitrine, MARCADOR };

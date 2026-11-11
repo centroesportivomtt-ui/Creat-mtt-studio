@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Endereço único (pacote H1): sem defer e antes de tudo. checkout.config.js traz o endereço canônico;
+     canonico.js leva quem abre o endereço antigo ao mesmo caminho no canônico, antes de medir ou gravar. -->
+<script src="../checkout.config.js"></script>
+<script src="../assets/canonico.js"></script>
+<link rel="canonical" href="https://nuvem.creatmtt.com.br/termos/">
+<meta property="og:url" content="https://nuvem.creatmtt.com.br/termos/">
 <title>Termos de uso do Porta Aberta | Creat</title>
 <meta name="description" content="Termos de uso do Porta Aberta, versão 2: serviço, prazo e garantia, arrependimento, cancelamento e SAIR.">
 <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -16,7 +22,6 @@
 <link rel="stylesheet" href="../assets/tokens.css">
 <link rel="stylesheet" href="../assets/vitrine.css">
 <link rel="stylesheet" href="../abrir/pedido.css">
-<script defer src="../checkout.config.js"></script>
 <script defer src="../assets/vitrine.js"></script>
 </head>
 <body data-pagina="documento">

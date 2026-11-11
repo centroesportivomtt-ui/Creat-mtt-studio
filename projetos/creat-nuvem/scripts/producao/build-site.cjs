@@ -13,8 +13,10 @@
  *   motor/v1/*   e motor/nichos/*  copiados (scripts clássicos: abre com duplo clique)
  *   robots.txt   prévia (meta.previa): Disallow e meta noindex; entregue: Allow + Sitemap
  *   sitemap.xml  só com URL absoluta do site (--url, ou CREAT_URL_SITES com {slug}; padrão
- *                https://creat-nuvem-404b1994.base44.app/sites/{slug}/; CREAT_URL_SITES=0 desliga)
- * Home da vitrine (rodapé): --home, ou CREAT_HOME, ou https://creat-nuvem-404b1994.base44.app/ (CREAT_HOME=0 desliga).
+ *                <endereço canônico>/sites/{slug}/; CREAT_URL_SITES=0 desliga)
+ * Home da vitrine (rodapé): --home, ou CREAT_HOME, ou <endereço canônico>/ (CREAT_HOME=0 desliga).
+ * Endereço canônico: ENDERECO.canonico de lib/comum.cjs (https://nuvem.creatmtt.com.br desde 11/11/2026),
+ *   ou CREAT_HOST. Canonical, og:url, sitemap, JSON-LD, og:image e o link da home nascem nele.
  * Antes de gravar, valida com validar-tenant (schema + regras da casa). Erro cita o campo.
  * --sem-rodape tira "Aberto pela Creat · veja o seu": decisão só do Marcos, fica no RELATORIO do pedido.
  * --demonstracao (motor v1.1): site-demonstração com nome fictício. Faixa "demonstração · nome fictício"

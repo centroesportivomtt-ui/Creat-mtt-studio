@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Endereço único (pacote H1): sem defer e antes de tudo. checkout.config.js traz o endereço canônico;
+     canonico.js leva quem abre o endereço antigo ao mesmo caminho no canônico, antes de medir ou gravar. -->
+<script src="../checkout.config.js"></script>
+<script src="../assets/canonico.js"></script>
+<link rel="canonical" href="https://nuvem.creatmtt.com.br/bastidores/">
+<meta property="og:url" content="https://nuvem.creatmtt.com.br/bastidores/">
 <title>Bastidores: a agência de 15 agentes da Creat | Creat</title>
 <meta name="description" content="Os 15 agentes, as skills e o kit 3D que a Creat usa por dentro, para quem quer montar a própria agência no Claude Code.">
 <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -16,7 +22,6 @@
 <link rel="stylesheet" href="../assets/tokens.css">
 <link rel="stylesheet" href="../assets/vitrine.css">
 <link rel="stylesheet" href="../abrir/pedido.css">
-<script defer src="../checkout.config.js"></script>
 <script defer src="../assets/vitrine.js"></script>
 </head>
 <body data-pagina="bastidores">

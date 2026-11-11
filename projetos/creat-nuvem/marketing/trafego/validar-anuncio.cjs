@@ -8,7 +8,9 @@
  *   MOEDA   todo valor escrito como "R$ 297" (com R$ e espaço), nunca US$ nem valor solto; cada valor igual ao
  *           de dados/precos.json E ao de checkout.config.js; a Abertura vigente e o plano Aberto terminam antes do
  *           caractere 125 do texto principal (o que o Feed mostra antes do "ver mais").
- *   LINK    a URL abre no endereço do site, sem arquivo de CDN nem encurtador, com nicho, utm_source=meta,
+ *   LINK    a URL abre no endereço do site (o canônico de scripts/producao/lib/comum.cjs, https://nuvem.creatmtt.com.br;
+ *           até 13/11 também o antigo creat-nuvem-404b1994.base44.app, com o aviso "antigo, redireciona": aí o link
+ *           é aberto como está E com o host trocado pelo canônico, e os dois têm de passar), sem arquivo de CDN nem encurtador, com nicho, utm_source=meta,
  *           utm_medium=pago, utm_campaign = praça do conjunto, utm_content = código do anúncio e utm_term
  *           (o {{placement}} da Meta). Aberta de verdade em celular Android (agente de usuário real): 200,
  *           título da home, nicho do anúncio marcado, medição da Meta carregada depois do Aceitar, eventos
@@ -20,7 +22,8 @@
  *
  * Uso:
  *   node marketing/trafego/validar-anuncio.cjs <anuncios.json> [--base https://...] [--sem-link] [--trava-provada]
- *        [--prazo-liberado] [--estrito-dobra] [--json saida.json]
+ *        [--prazo-liberado] [--estrito-dobra] [--json saida.json] [--hoje AAAA-MM-DD]
+ *   --hoje            data usada na janela do endereço antigo (padrão: hoje na Bahia); só para teste
  *   --sem-link        só idioma e moeda (rascunho); NUNCA vale para ligar anúncio
  *   --trava-provada   libera "inauguração" no texto (só com a trava das 20 vagas provada: textos-troca-unica.md, seção 1)
  *   --prazo-liberado  libera prazo em horas no texto (só depois do ensaio verde da onda 1)
@@ -39,7 +42,12 @@ const vm = require('vm');
 const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
 const RAIZ = path.join(__dirname, '..', '..');
-const BASE = String(opt('--base', 'https://creat-nuvem-404b1994.base44.app')).replace(/\/$/, '');
+const C = require(path.join(RAIZ, 'scripts', 'producao', 'lib', 'comum.cjs'));
+const BASE = String(opt('--base', C.hostPadrao())).replace(/\/$/, '');
+// endereço antigo conhecido: aceito como destino até ENDERECO.antigoAceitoAte (o ato de 13/11 troca os links)
+const ANTIGO = new URL(C.ENDERECO.antigo);
+const HOJE = /^\d{4}-\d{2}-\d{2}$/.test(String(opt('--hoje', ''))) ? opt('--hoje') : C.hojeNaBahia();
+const ANTIGO_ACEITO = C.antigoAceito(HOJE);
 const SEM_LINK = args.includes('--sem-link');
 const TRAVA_PROVADA = args.includes('--trava-provada');
 const PRAZO_LIBERADO = args.includes('--prazo-liberado');
@@ -63,7 +71,7 @@ const EXEMPLO = {
 };
 if (args.includes('--exemplo')) { console.log(JSON.stringify(EXEMPLO, null, 1)); process.exit(0); }
 
-const arqEntrada = args.find((a, i) => !a.startsWith('--') && !['--base', '--json'].includes(args[i - 1]));
+const arqEntrada = args.find((a, i) => !a.startsWith('--') && !['--base', '--json', '--hoje'].includes(args[i - 1]));
 if (!arqEntrada) { console.error('uso: node marketing/trafego/validar-anuncio.cjs <anuncios.json> (veja --exemplo)'); process.exit(2); }
 
 /* ---------------- listas ---------------- */
@@ -187,8 +195,14 @@ function conferirUrl(a, F) {
   let u;
   try { u = new URL(String(a.url || '').trim()); } catch (e) { return { f: ['URL inválida ou vazia'], abrir: null }; }
   const base = new URL(BASE);
+  const av = [];
+  let antigo = false;
   if (u.protocol !== 'https:') f.push('URL sem https');
   if (HOST_PROIBIDO.test(u.hostname)) f.push(`URL em CDN ou encurtador (${u.hostname}); destino é a página do site`);
+  else if (u.hostname === ANTIGO.hostname && u.hostname !== base.hostname) {
+    if (ANTIGO_ACEITO) { antigo = true; av.push(`endereço antigo: o link está em ${u.hostname}, aceito até ${C.ENDERECO.antigoAceitoAte}; no ato de 13/11 troque para ${base.hostname}${SEM_LINK ? '' : ' (o mesmo link no host novo também foi aberto)'}`); }
+    else f.push(`URL no endereço antigo ${u.hostname} depois de ${C.ENDERECO.antigoAceitoAte}: troque para ${base.hostname} (docs/DOMINIO.md)`);
+  }
   else if (u.hostname !== base.hostname) f.push(`URL em ${u.hostname}, esperado ${base.hostname}`);
   if (ARQUIVO.test(u.pathname)) f.push(`URL aponta para arquivo (${u.pathname}); destino é a rota da página`);
   else if (u.pathname !== '/') f.push(`URL em ${u.pathname}; o anúncio de site leva à home (/)`);
@@ -216,22 +230,29 @@ function conferirUrl(a, F) {
   const estranhos = [...q.keys()].filter(k => !conhecidos.has(k));
   if (estranhos.length) f.push(`parâmetro fora do contrato: ${[...new Set(estranhos)].join(', ')}`);
   const abrir = String(a.url).trim().replace('{{placement}}', POSICIONAMENTO_SIMULADO);
-  return { f, abrir };
+  // anúncio no antigo: abre como está (tem de chegar a uma página que funciona) e com o host do canônico
+  let abrirNovo = null;
+  if (antigo) { const n = new URL(abrir); n.protocol = base.protocol; n.host = base.host; abrirNovo = n.href; }
+  return { f, av, abrir, abrirNovo };
 }
 
 /* ---------------- link aberto de verdade ---------------- */
 async function abrirLink(nav, a, abrir, tituloHome) {
   const f = [], av = [];
-  const ORIGEM = new URL(BASE).origin;
+  // origem do link e a canônica: o salto do antigo para o canônico (pacote H1) é o único caminho aceito para fora
+  const ORIGEM = new URL(abrir).origin, CANON = new URL(BASE).origin;
+  const ACEITAS = [...new Set([ORIGEM, CANON])];
   const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'pt-BR', userAgent: UA });
-  await ctx.route(u => { try { return new URL(u).origin === ORIGEM; } catch (e) { return false; } },
+  await ctx.route(u => { try { return ACEITAS.includes(new URL(u).origin); } catch (e) { return false; } },
     route => route.continue({ headers: Object.assign({}, route.request().headers(), CONF) }));
   const pg = await ctx.newPage();
   const eventosMeta = [], contagens = [], erros = [], quebradas = [];
   let fbArquivo = false, pedidoCancelado = 0;
   pg.on('console', m => { if (m.type() === 'error') erros.push(m.text().slice(0, 140)); });
   pg.on('pageerror', e => erros.push(String(e).slice(0, 140)));
+  const docs = [];
   pg.on('response', r => {
+    try { if (r.request().isNavigationRequest() && r.frame() === pg.mainFrame()) docs.push(r); } catch (e) { /* moldura fechada */ }
     const u = r.url();
     if (r.status() >= 400 && !/facebook\.com\/tr/.test(u)) quebradas.push(r.status() + ' ' + u.slice(0, 100));
     if (/connect\.facebook\.net\/.*fbevents\.js/.test(u) && r.status() === 200) fbArquivo = true;
@@ -243,14 +264,23 @@ async function abrirLink(nav, a, abrir, tituloHome) {
   });
   await pg.route(/\/(api\/pa|functions)\/registrarPedido(\?|$)/, route => { pedidoCancelado++; route.abort(); });
   try {
-    const r = await pg.goto(abrir, { waitUntil: 'networkidle', timeout: 60000, referer: 'https://l.instagram.com/' });
+    // o salto do antigo para o canônico troca o documento no meio do carregamento: "interrompida" não é erro
+    let r = await pg.goto(abrir, { waitUntil: 'networkidle', timeout: 60000, referer: 'https://l.instagram.com/' }).catch(e => { if (/interrupted|ERR_ABORTED|detached/i.test(String(e))) return null; throw e; });
+    if (ORIGEM !== CANON) {
+      await pg.waitForURL(x => x.origin === CANON, { timeout: 8000 }).catch(() => {});
+      await pg.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+      if (new URL(pg.url()).origin === CANON) av.push(`antigo, redireciona: chegou em ${CANON}`);
+      else av.push(`antigo, ainda sem salto para ${CANON} (a página nova ainda não está no ar); a página abriu no antigo`);
+    }
+    // com o salto, vale a última resposta de documento (a do canônico); sem salto, é a do próprio goto
+    if (docs.length) r = docs[docs.length - 1];
     // cadeia de redirecionamento: só no próprio servidor, nunca por CDN
     const saltos = []; let req = r ? r.request().redirectedFrom() : null;
     while (req) { saltos.push(req.url()); req = req.redirectedFrom(); }
-    const fora = saltos.filter(s => new URL(s).origin !== ORIGEM);
+    const fora = saltos.filter(s => !ACEITAS.includes(new URL(s).origin));
     if (!r || r.status() !== 200) f.push(`status ${r ? r.status() : 'sem resposta'}`);
     if (fora.length) f.push(`redireciona por fora do site: ${fora[0].slice(0, 80)}`);
-    if (new URL(pg.url()).origin !== ORIGEM) f.push(`terminou em ${new URL(pg.url()).origin}`);
+    if (!ACEITAS.includes(new URL(pg.url()).origin)) f.push(`terminou em ${new URL(pg.url()).origin}`);
     if (HOST_PROIBIDO.test(new URL(pg.url()).hostname)) f.push('terminou em CDN');
     await pg.waitForTimeout(1200);
     const tela = await pg.evaluate(() => {
@@ -316,16 +346,20 @@ let PRECO_ABERTURA = 297;
     nav = await chromium.launch();
   }
 
-  console.log(`Validação tripla · ${lista.length} anúncio(s) · site ${BASE} · Abertura ${fmt(F.abertura)} · plano ${fmt(F.aberto)} (precos.json = checkout.config.js: ${F.divergencias.length ? 'NÃO' : 'sim'})\n`);
+  console.log(`Validação tripla · ${lista.length} anúncio(s) · site ${BASE}${ANTIGO_ACEITO ? ` (e o antigo ${ANTIGO.hostname}, aceito até ${C.ENDERECO.antigoAceitoAte})` : ''} · Abertura ${fmt(F.abertura)} · plano ${fmt(F.aberto)} (precos.json = checkout.config.js: ${F.divergencias.length ? 'NÃO' : 'sim'})\n`);
   const linhas = [];
   for (const a of lista) {
     const rotulo = `${a.id || '?'} ${a.nome || nomeDoCodigo(a)}`;
     const idioma = conferirIdioma(a);
     const moeda = conferirMoeda(a, F);
     const u = conferirUrl(a, F);
-    let link = u.f.slice(), avisos = [], cancelados = 0;
+    let link = u.f.slice(), avisos = (u.av || []).slice(), cancelados = 0;
     if (SEM_LINK) link.push('NÃO VERIFICADO: rodada com --sem-link');
-    else if (u.abrir) { const r = await abrirLink(nav, a, u.abrir, tituloHome); link = link.concat(r.f); avisos = r.av; cancelados = r.pedidoCancelado; }
+    else if (u.abrir) {
+      const r = await abrirLink(nav, a, u.abrir, tituloHome); link = link.concat(r.f); avisos = avisos.concat(r.av); cancelados = r.pedidoCancelado;
+      // anúncio no antigo: o mesmo link no canônico tem de passar inteiro (é para lá que ele vai no ato de 13/11)
+      if (u.abrirNovo) { const n = await abrirLink(nav, a, u.abrirNovo, tituloHome); link = link.concat(n.f.map(x => `no canônico: ${x}`)); avisos = avisos.concat(n.av.map(x => `no canônico: ${x}`)); cancelados += n.pedidoCancelado; }
+    }
     linhas.push({ rotulo, idioma, moeda, link, avisos, cancelados });
     console.log(`${rotulo}`);
     for (const [col, ff] of [['IDIOMA', idioma], ['MOEDA', moeda], ['LINK', link]]) {
@@ -343,7 +377,7 @@ let PRECO_ABERTURA = 297;
   linhas.forEach(l => console.log(l.rotulo.padEnd(larg) + ' | ' + marca(l.idioma).padEnd(6) + ' | ' + marca(l.moeda).padEnd(5) + ' | ' + marca(l.link)));
   const falhas = linhas.flatMap(l => [['IDIOMA', l.idioma], ['MOEDA', l.moeda], ['LINK', l.link]].flatMap(([c, ff]) => ff.map(x => `${l.rotulo} · ${c} · ${x}`)));
   const nAvisos = linhas.reduce((s, l) => s + l.avisos.length, 0);
-  if (ARQ_JSON) fs.writeFileSync(ARQ_JSON, JSON.stringify({ base: BASE, data: new Date().toISOString(), anuncios: linhas, falhas }, null, 1));
+  if (ARQ_JSON) fs.writeFileSync(ARQ_JSON, JSON.stringify({ base: BASE, hoje: HOJE, antigo_aceito: ANTIGO_ACEITO, data: new Date().toISOString(), anuncios: linhas, falhas }, null, 1));
   if (falhas.length) {
     console.error(`\n${falhas.length} falha(s). Nenhum destes anúncios sobe nem liga até tudo ficar verde:`);
     falhas.forEach(x => console.error('  - ' + x));

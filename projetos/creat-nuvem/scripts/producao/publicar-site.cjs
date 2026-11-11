@@ -54,6 +54,13 @@ const LISTA_BRANCA = [/^index\.html$/, /^tenant\.js$/, /^tenant\.json$/, /^robot
 const LISTA_RASCUNHO = [/^rascunho\.js$/, /^rascunho\.css$/];
 const LISTA_SAIDA = [/^index\.html$/, /^robots\.txt$/];
 
+/* endereço público de uma pasta em /sites/ (site, rascunho <slug>--r-<id>), no modelo de lib/comum.cjs;
+   com CREAT_URL_SITES=0, cai no endereço canônico (o passo a passo sempre precisa de um endereço para conferir) */
+function urlDaPasta(dir) {
+  const modelo = C.modeloUrlSites() || (C.hostPadrao() + '/sites/{slug}/');
+  return modelo.split('{slug}').join(dir).replace(/[?#].*$/, '').replace(/\/?$/, '/');
+}
+
 function destinoPadrao() {
   if (process.env.CREAT_PUBLICAR_DESTINO) return process.env.CREAT_PUBLICAR_DESTINO;
   return fs.mkdtempSync(path.join(os.tmpdir(), 'creat-publicar-'));
@@ -131,7 +138,7 @@ function zipar(pasta, slug, arquivos, destino) {
 function passos(slug, z, extra) {
   extra = extra || {};
   const titulo = `site-${slug}-${z.sha256.slice(0, 8)}.zip`;
-  const url = urlDoSite(slug) || `https://creat-nuvem-404b1994.base44.app/sites/${slug}/`;
+  const url = urlDoSite(slug) || urlDaPasta(slug);
   const apagar = extra.apagarRascunho && R.RE_DIR.test(extra.apagarRascunho) ? ` && rm -rf public/sites/${extra.apagarRascunho}` : '';
   const baixar = `rm -rf /tmp/s /tmp/s.zip && curl -sSL -o /tmp/s.zip "https://drive.google.com/uc?export=download&id=<ID_DO_DRIVE>" && echo "${z.sha256}  /tmp/s.zip" | sha256sum -c - && python3 -m zipfile -e /tmp/s.zip /tmp/s && test -f /tmp/s/sites/${slug}/index.html && mkdir -p public/sites && rm -rf public/sites/${slug} && cp -r /tmp/s/sites/${slug} public/sites/${apagar} && ls public/sites/${slug}`;
   return [
@@ -141,7 +148,7 @@ function passos(slug, z, extra) {
     `   Se sha256sum -c falhar, o Drive devolveu outra coisa (link não público ou página de aviso): pare e refaça o passo 2.`,
     `4. Base44 run_command: git log --oneline -1   (tem de mostrar o auto-commit com public/sites/${slug}; se não mostrar, não siga)`,
     `5. Base44 create_checkpoint (appId ${APP_BASE44}), name "site ${slug} ${z.sha256.slice(0, 8)}".`,
-    `6. Deploy do app (portões de docs/PUBLICACAO.md) e confira: curl -sI ${url} -> 200; ${extra.conferir || `curl -s ${url} | grep -c wa.me -> 1 ou mais`}.${apagar ? ` E o rascunho sumiu: curl -sI https://creat-nuvem-404b1994.base44.app/sites/${extra.apagarRascunho}/ -> 404.` : ''}`,
+    `6. Deploy do app (portões de docs/PUBLICACAO.md) e confira: curl -sI ${url} -> 200; ${extra.conferir || `curl -s ${url} | grep -c wa.me -> 1 ou mais`}.${apagar ? ` E o rascunho sumiu: curl -sIL ${urlDaPasta(extra.apagarRascunho)} -> 404.` : ''}`,
     `7. Depois: Google Drive trash_file <ID_DO_DRIVE> (o zip temporário não precisa ficar público).`
   ];
 }
@@ -207,7 +214,7 @@ async function main(argv) {
     const mf = R.manifesto(pastaF, C.listarArquivos);
     for (const k of new Set([...Object.keys(mf), ...Object.keys(rasc.final)])) if (mf[k] !== rasc.final[k]) prob.push(`dist/${slug}/${k}: mudou depois do rascunho (sha256 diferente do registrado em rascunho.json)`);
     if (prob.length) throw new C.ErroLista(`rascunho ${rasc.dir} não é o build final + faixa:`, prob.map((m) => ({ campo: 'rascunho', mensagem: m })));
-    if (a.rascunho) { pasta = pastaR; nomePublicado = rasc.dir; extra = { conferir: `curl -s https://creat-nuvem-404b1994.base44.app/sites/${rasc.dir}/ | grep -c 'Rascunho para a sua aprovação' -> 1 e grep -c noindex -> 1` }; }
+    if (a.rascunho) { pasta = pastaR; nomePublicado = rasc.dir; extra = { conferir: `curl -s ${urlDaPasta(rasc.dir)} | grep -c 'Rascunho para a sua aprovação' -> 1 e grep -c noindex -> 1` }; }
     else extra = { apagarRascunho: rasc.dir };
   }
   const c = conferir(pasta, slug, { demo: !!a.demo, rascunho: !!a.rascunho });
@@ -216,7 +223,7 @@ async function main(argv) {
     : { whatsapp: c.tenant.negocio.whatsapp, exigirFaixaDemo: !!a.demo });
   if (!t.ok) { console.error(`FALHOU testar-site em dist/${path.basename(pasta)}/:\n  - ${t.falhas.join('\n  - ')}`); return 3; }
   const z = zipar(pasta, nomePublicado, c.arquivos, destinoZip());
-  const urlPub = a.rascunho ? `https://creat-nuvem-404b1994.base44.app/sites/${nomePublicado}/` : urlDoSite(slug);
+  const urlPub = a.rascunho ? urlDaPasta(nomePublicado) : urlDoSite(slug);
   const r = { slug, modo: a.rascunho ? 'rascunho' : a.aprovado ? 'aprovado' : a.demo ? 'demo' : 'site', publicado_em: nomePublicado, url: urlPub, zip: z.zip, sha256: z.sha256, bytes: z.bytes, arquivos: z.entradas, teste: { ok: true, menorFontePx: t.medidas.menorFontePx, waMe: t.medidas.waMe.length, botaoAprovarPx: t.medidas.faixaRascunho ? t.medidas.faixaRascunho.botaoAltura : null }, avisos: c.avisos, passos: passos(nomePublicado, z, extra) };
   if (a.json) { console.log(JSON.stringify(r, null, 2)); return 0; }
   c.avisos.forEach((x) => console.log(`aviso: ${x}`));
@@ -236,4 +243,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { conferir, conferirSaida, lerRascunho, zipar, passos, LISTA_BRANCA, LISTA_RASCUNHO, GALERIA, main };
+module.exports = { conferir, conferirSaida, lerRascunho, zipar, passos, urlDaPasta, LISTA_BRANCA, LISTA_RASCUNHO, GALERIA, main };
