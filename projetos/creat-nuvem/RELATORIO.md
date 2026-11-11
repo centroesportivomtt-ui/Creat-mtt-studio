@@ -387,3 +387,24 @@ Não verificado: um usuário comum logado nas 4 entidades privadas (falta creden
 **Fica sabido.** O portão `conferir-sede-viva.cjs` compara a primeira tela com uma versão de base; depois de um merge com outras mudanças na home, passe `SEDE_BASE=<commit anterior à cena>` para medir só o que a cena acrescenta.
 
 **Não verificado.** Aparelho real (iPhone e Android com teclado de verdade); navegador de dentro do Instagram; compra real; usuário comum logado (22 itens).
+
+## Publicação de 11/11/2026, 09:51 UTC (06:51 na Bahia): compra curta
+
+**Por que.** No ar, em 360x640, o botão de pagar de `/abrir/` ficava a 5.532 px do topo (8,6 telas), depois de 6 campos obrigatórios; o pior era o endereço numa linha só, com CEP no formato exato.
+
+**O que entrou.**
+- `/abrir/`: antes de pagar a pessoa informa WhatsApp, e-mail e o aceite dos termos. Nome do responsável, endereço e horário ficam num bloco recolhido e, vazios, não vão no pedido. O horário de exemplo do nicho só vai com a caixa "Este é o horário do meu negócio" marcada. Ordem: negócio, preço de hoje e mensalidade, o que você leva, campos, aceite, garantia em uma linha, botão. Plano Aberto marcado; os outros em "Trocar de plano". Botão de pagar a cerca de 1.340 px do topo (2 telas).
+- `/obrigado/`: com dado faltando, abre com "Falta pouco para a produção começar" e um botão para mandar pelo WhatsApp do suporte (mensagem só com o número do pedido).
+- Política de privacidade versão 4: dados depois do pagamento e contato do suporte só sobre pedido pago.
+- Aviso de medição em faixa na seção da equipe (correção de 11/11 07:17).
+- Decisão registrada no ADR-009: os termos v2 não mudam; as 72 h continuam contando da confirmação do pagamento, também para pedido sem endereço e horário. Decidido pelo diretor sob delegação, a confirmar com o dono.
+
+**Como foi publicado.** Repositório no commit `3ba885d` (conteúdo do site; `4cf29ec` só ajusta testes); pacote montado no app com a mesma impressão digital do local (145 arquivos, sha256 do manifesto `253e792a…0e90`). App: checkpoint `6af43aa22b6e60a2c4cc0150` (git `e931be1`). Volta: checkpoint `6af416835f4ce863cc5a0304` (git `4648040`).
+
+**Verificado.** Segurança e revisão: aprovado com correções, nenhuma que bloqueasse; todas as de "corrigir" aplicadas. Suíte 317 de 318 na bateria em paralelo (o único vermelho era o teste novo do aviso, por tempo curto; com a folga, `funil.test.mjs` deu 61 de 61). Moldura, boot e portão da cena verdes (o portão 3 vezes seguidas). Antes de publicar: nenhum pedido pago real existia na base (só linhas de teste), então ninguém aceitou a política v3. No ar: pedido de teste `pa-teste` registrado pela página nova só com WhatsApp, e-mail e aceite; o servidor gravou com `endereco`, `horarios` e `responsavel` nulos e `termos-v2`.
+
+No ar, depois: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 125 de 125 e jornada 10 de 10 na segunda rodada (a primeira, logo após o deploy, deu 124: o salto do endereço antigo em `/obrigado/` não aconteceu naquela tentativa; repetido 4 vezes à mão, saltou em 2,2 s todas as vezes); os 3 sites de demonstração 200.
+
+**Fica sabido.** O portão da cena falhava de modo intermitente no passo do rosto: o Tab até o fim da seção tirava o palco da tela e, fora da tela, a cena fica parada de propósito. O portão agora volta ao palco antes. A resposta rápida "Como funciona?" do WhatsApp Business ainda fala em "4 dados": o texto novo está em `marketing/trafego/anuncios-meta.md` e precisa ser trocado no aplicativo.
+
+**Não verificado.** Aparelho real; navegador de dentro do Instagram; compra real; se a equipe consegue gravar endereço e horário pelo painel do app e voltar o pedido para produção (linha 11d do ensaio do executor); usuário comum logado (22 itens).
