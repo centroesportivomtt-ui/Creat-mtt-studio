@@ -425,3 +425,21 @@ No ar, depois: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 125 de
 **Como saber se funcionou.** Regra escrita antes: nas próximas 100 visitas reais de anúncio (praça feira ou salvador-rms, anúncio R7, R9 ou F1), sem outra mudança de página, preço, criativo ou público, só correção de erro. Mede-se prévia pedida sobre visita e, quando o pacote B estiver no ar, toque no exemplo, toque no campo, rolagem e permanência.
 
 **Não verificado.** Aparelho real e o navegador de dentro do Instagram de verdade (só emulação); compra real; usuário comum logado (22 itens); com o exemplo aberto a hospedagem injeta dois scripts que a CSP da própria demonstração recusa (erro de console que já existia ao abrir a demonstração direto).
+
+## Publicação de 11/11/2026, 16:18 UTC (13:18 na Bahia): medição de interesse, privacidade versão 5 e demonstrações sem guardar dados
+
+**Por que.** O contador próprio só sabia que a visita chegou. Com cerca de 370 visitas reais de anúncio e nenhuma prévia pedida, faltava saber se a pessoa sai em segundos, rola, toca no campo ou abre o site de exemplo.
+
+**O que entrou.**
+- A home emite 5 sinais novos pelo mesmo contador sem cookie: `ficou_10s` (10 s com a página na tela, contados da primeira pintura), `rolou` (meia tela, só por gesto), `tocou_nome`, `digitou_nome` (2 letras ou números, sem o texto) e `tocou_exemplo`. Um por carga, sempre depois da visita, nunca por ação do código, nunca com o link de teste.
+- Política de privacidade versão 5: lista os 9 passos contados, o que o site de exemplo guarda e que o "Pedir horário" do exemplo abre o WhatsApp com mensagem para a Creat. Aviso de medição: "Contamos visitas e toques sem cookie."
+- Demonstrações: nome e WhatsApp do pedido de horário ficam só na memória da página e o `:cliente` antigo é apagado ao abrir; a pergunta sobre dados das 3 demonstrações diz isso. O site entregue ao cliente não muda (registro no ADR-006).
+- `checar.cjs` passa a comparar o aviso de medição do JSON com as 3 páginas.
+
+**Como foi publicado.** Repositório no commit `f5179ee`; pacote montado no app com a mesma impressão digital do local (145 arquivos, com as 3 demonstrações, sha256 do manifesto `8c680972…07dc`); `src/lib/pa/regras.js` já era o novo desde 14:19 UTC. App: checkpoint `6af4953ec3e97cec70be456d` (git `066943c`). Volta: checkpoint `6af4795e9cdf34cb5624c4e1` (git `55e6925`).
+
+**Verificado.** Três rodadas de conferência: a primeira aprovou com correções; a revisão extra do último ajuste reprovou (texto das demonstrações contradizendo o motor, política incompleta, teste intermitente, demonstrações fora da conferência de publicação); depois das correções, revisão aprovou e segurança liberou com a condição da conferência de conteúdo no ar. Suíte 336 de 336; moldura, boot e portão da cena verdes. No ar: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 131 de 131, jornada 10 de 10. Conferência de conteúdo no endereço real: nas 3 demonstrações o `agendamento.js` servido tem o texto novo, um `:cliente` plantado some ao abrir, a nota do formulário e a pergunta sobre dados dizem que nada fica salvo; `/privacidade/` renderizada mostra "Versão 5 · 11/11/2026" e as duas frases novas; na home os 5 sinais saem uma vez cada, com corpo de 4 chaves e sem o texto digitado, e abrir o exemplo não conta prévia. O servidor gravou o primeiro `ficou_10s` de visitante real 2 minutos depois do deploy.
+
+**Fica sabido.** No roteiro de conferência, a rolagem sintetizada do navegador de teste não rola a página; o sinal `rolou` só aparece com toque de verdade enviado ponto a ponto. Achados de polimento deixados para a próxima mexida: comentário do `ficou_10s` no `vitrine.js`, exemplo de comando na nota do `PUBLICACAO.md`, `tenant.parcial.json` das demonstrações com a frase do preset.
+
+**Não verificado.** Aparelho real e o navegador de dentro do Instagram (o comportamento de aba escondida e de toque só foi visto em emulação); `ficou_10s` no iPhone; revisão jurídica da política.
