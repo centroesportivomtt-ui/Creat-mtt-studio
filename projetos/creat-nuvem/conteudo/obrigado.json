@@ -89,7 +89,9 @@
     "sem_retorno": "Olá! Estou na página do pedido do Porta Aberta e tenho uma dúvida sobre o pagamento.",
     "a_conferir": "Olá! Paguei a Abertura do Porta Aberta e a página diz que o pagamento está em conferência. Pedido {id}.",
     "assinatura": "Olá! Assinei o plano {plano} do Porta Aberta e tenho uma dúvida.",
-    "pedidoAbertura": "Oi! Acabei de pagar a Abertura do Porta Aberta. Segue o meu pedido:"
+    "pedidoAbertura": "Oi! Acabei de pagar a Abertura do Porta Aberta. Segue o meu pedido:",
+    "faltaDados": "Olá! Paguei a Abertura do Porta Aberta e vou mandar {itens} do pedido {id}.",
+    "_faltaDados": "{itens} = faltaDados.nomes (o endereço e o horário, o endereço ou o horário). Só o número do pedido vai na mensagem; o endereço e o horário a pessoa escreve na conversa."
   },
 
   "rascunho": {
@@ -103,6 +105,24 @@
     "aprovado": "Site aprovado. A equipe põe no ar e avisa no seu WhatsApp.",
     "noAr": "O seu site está no ar.",
     "abrirNoAr": "Abrir o meu site"
+  },
+
+  "faltaDados": {
+    "_sobre": "Bloco de /obrigado/ quando o pedido foi pago sem endereço ou sem horário (compra curta, /abrir/ de 11/11). A produção não monta o site sem eles (docs/EXECUTOR.md, passo (e), Saída 6) e nunca usa endereço ou horário de exemplo. Hoje não existe rota que complete o pedido com o segredo: o caminho é o WhatsApp do Suporte Creat. O prazo dos termos v2 (cláusula 5) conta da confirmação do pagamento; este bloco não diz o contrário.",
+    "titulo": "Falta pouco para a produção começar",
+    "texto": "Para montar o site, a equipe precisa de:",
+    "itens": {
+      "endereco": "O endereço completo: rua, número, bairro, cidade-UF e CEP.",
+      "horarios": "O horário de funcionamento de cada dia da semana."
+    },
+    "botao": "Mandar no WhatsApp do suporte",
+    "botaoEmail": "Mandar por e-mail",
+    "nota": "A mensagem já sai com o número do pedido: complete com o que falta e envie. Já mandou? Não precisa mandar de novo, a equipe grava no pedido.",
+    "nomes": {
+      "ambos": "o endereço e o horário",
+      "endereco": "o endereço",
+      "horarios": "o horário"
+    }
   },
 
   "titulo": "Agora é com a equipe.",

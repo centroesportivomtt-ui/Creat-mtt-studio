@@ -653,8 +653,9 @@ test('H1 navegador: link da prévia copiado e link da prévia gravado no pedido 
     assert.match(await pg.evaluate(() => navigator.clipboard.readText()), /^https:\/\/nuvem\.creatmtt\.com\.br\/previa\/#k=salao&n=Studio%20Bela&c=Salvador&p=[123]$/);
     await pg.goto(N + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Salvador&p=2');
     await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
-    await pg.fill('#p-responsavel', 'Maria Souza'); await pg.fill('#p-whatsapp', '75900000000');
-    await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000'); await pg.fill('#p-email', 'maria@example.com');
+    await pg.fill('#p-whatsapp', '75900000000'); await pg.fill('#p-email', 'maria@example.com');
+    await pg.click('#p-depois summary');   // endereço e nome ficam no bloco recolhido (compra curta)
+    await pg.fill('#p-responsavel', 'Maria Souza'); await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000');
     await pg.check('#p-aceite');
     await Promise.all([pg.waitForURL(/mercadopago/), pg.click('.pagar [data-checkout]')]);
     const ls = await lerLS(pg, N);

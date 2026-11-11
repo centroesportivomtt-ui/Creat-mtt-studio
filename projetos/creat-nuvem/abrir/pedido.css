@@ -143,7 +143,7 @@ p.notas{display:block} /* parágrafo com números dentro (ex.: anual-nota) não 
 .resumo-preco p{font-size:var(--t-corpo)}
 .resumo-preco strong{font-weight:800}
 .resumo-preco .menor{font-size:var(--t-nota);color:var(--apagado)}
-.grade-abrir{grid-template-areas:"form" "confianca" "pagar" "quem"}
+.grade-abrir{grid-template-areas:"form" "pagar" "confianca" "quem"}
 .area-form{grid-area:form}.area-confianca{grid-area:confianca}.area-pagar{grid-area:pagar}.area-quem{grid-area:quem}
 .pagar-total{margin-bottom:var(--r3);font-weight:700}
 .pagar-total strong{font:400 var(--t-h3)/1 var(--f-display)}
@@ -197,3 +197,77 @@ body.com-barra-pagar{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px)
 .sem-dados[open] summary::after{content:"−"}
 .sem-dados summary:focus-visible{outline:3px solid var(--sol);outline-offset:4px;border-radius:6px}
 .relogio .digitos{font-variant-numeric:tabular-nums}
+
+/* =====================================================================
+   /abrir/ curta (11/11/2026): do "Quero este site no ar" ao botão de pagar em até 2 telas de 640 px.
+   Ordem: negócio, preço de hoje (conta), o que você leva, WhatsApp e e-mail, bloco recolhido
+   (endereço, horário, nome), aceite, garantia em uma linha e o botão.
+   ===================================================================== */
+.pagina-abrir{padding-top:var(--r4)}
+.pagina-abrir h1{font-size:clamp(28px, 1.2rem + 2.4vw, 44px);line-height:1.05;text-wrap:balance}
+.pagina-abrir .resumo-negocio{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;margin-top:var(--r3);padding:8px var(--r4);gap:0 12px}
+.pagina-abrir .resumo-negocio strong{grid-column:1 / -1}
+.pagina-abrir .resumo-negocio span{min-width:0}
+.pagina-abrir .resumo-negocio strong{font-size:20px;line-height:1.15}
+.pagina-abrir .resumo-negocio a{min-height:var(--alvo);margin-left:0;font-size:var(--t-nota);text-align:right}
+.pagina-abrir .grade-abrir{margin-top:var(--r4);gap:var(--r4)}
+.area-form{display:grid;gap:var(--r4);align-content:start}
+@media (min-width:1000px){.area-form{gap:var(--r5)}}
+.area-form h2{font-size:19px;line-height:1.15;margin-bottom:6px}
+
+/* (b) preço de hoje: uma conta de duas linhas, como um recibo */
+.conta{padding:var(--r2) var(--r4) 0;background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra-p)}
+.conta-carregando{padding:var(--r3) 0;font-size:var(--t-nota);color:var(--apagado)}
+.conta-linha{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:2px 12px;padding:8px 0}
+.conta-nome{font-size:var(--t-menor);font-weight:800;line-height:1.2}
+.conta-desc{grid-column:1 / -1;font-size:var(--t-nota);line-height:1.35;color:var(--apagado)}
+.conta-linha + .conta-linha{border-top:2px dashed color-mix(in srgb, var(--linha) 35%, transparent)}
+.conta-valor{font:400 28px/1 var(--f-display);white-space:nowrap;color:var(--tinta)}
+.trocar-plano{margin:0 calc(-1 * var(--r4));border-top:var(--borda) solid var(--linha)}
+.trocar-plano summary{display:flex;align-items:center;gap:8px;min-height:var(--alvo);padding:0 var(--r4);font-weight:800;font-size:var(--t-menor);text-decoration:underline;text-underline-offset:.18em;cursor:pointer;list-style:none}
+.trocar-plano summary::-webkit-details-marker{display:none}
+.trocar-plano summary::after{content:"";width:8px;height:8px;margin-left:2px;border-right:3px solid currentColor;border-bottom:3px solid currentColor;transform:translateY(-2px) rotate(45deg)}
+.trocar-plano[open] summary::after{transform:translateY(2px) rotate(-135deg)}
+.trocar-plano summary:focus-visible{outline:3px solid var(--sol);outline-offset:-3px;border-radius:0 0 var(--raio) var(--raio)}
+.trocar-plano > :not(summary){margin-left:var(--r4);margin-right:var(--r4)}
+.trocar-plano > :last-child{margin-bottom:var(--r4)}
+
+/* (c) o que você leva */
+.leva .lista{gap:4px;font-size:var(--t-menor);line-height:1.35}
+.leva .lista li::before{top:.36em}
+
+/* (d) campos indispensáveis */
+.dados .campos{gap:var(--r3)}
+@media (min-width:1000px){.dados .campos{gap:var(--r4)}}
+
+/* bloco recolhido: endereço, horário e nome. Fechado, ocupa uma linha de título e uma de explicação */
+.adiantar{border:var(--borda) dashed var(--apagado);border-radius:var(--raio-p);background:transparent}
+.adiantar summary{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:start;min-height:var(--alvo);padding:8px 14px;cursor:pointer;list-style:none}
+.adiantar summary::-webkit-details-marker{display:none}
+.adiantar summary::after{content:"+";grid-column:2;grid-row:1;font:800 22px/1 var(--f-texto)}
+.adiantar[open] summary::after{content:"\2212"}
+.adiantar summary:focus-visible{outline:3px solid var(--sol);outline-offset:3px}
+.adiantar-titulo{grid-column:1;font-weight:800;font-size:var(--t-menor)}
+.adiantar-texto{grid-column:1 / -1;margin-top:2px;font-size:var(--t-nota);line-height:1.35;color:var(--apagado)}
+.adiantar[open]{background:var(--papel);border-style:solid}
+.adiantar-campos{padding:0 14px 14px}
+.aceite.confirmo{margin-top:4px;font-weight:700}
+.dados .aceite{padding:10px 14px;font-size:var(--t-menor);line-height:1.4}
+
+/* (f) e (g): a garantia encostada no botão */
+.area-pagar{display:grid;align-content:start}
+.area-pagar .pagar-total{margin-bottom:var(--r2)}
+.garantia-curta{margin-bottom:var(--r2);padding-left:22px;position:relative;font-size:var(--t-nota);font-weight:600;line-height:1.35;color:var(--tinta)}
+.garantia-curta::before{content:"";position:absolute;left:2px;top:.3em;width:12px;height:7px;border-left:3px solid var(--ok);border-bottom:3px solid var(--ok);transform:rotate(-45deg)}
+@media (min-width:1000px){
+  .pagina-abrir{padding-top:var(--r6)}
+  .area-pagar{padding:var(--r5);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio)}
+}
+
+/* /obrigado/: endereço e horário que ficaram para depois do pagamento */
+.falta-dados{display:grid;gap:var(--r3);margin-top:var(--r5);padding:var(--r5);max-width:62ch;background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra)}
+.falta-dados h2{margin:0;font-size:var(--t-h3)}
+.falta-dados .lista{font-size:var(--t-corpo)}
+.falta-dados .btn{width:100%;max-width:420px}
+.falta-dados .notas{margin-top:0}
+.falta-lista li::before{content:"";position:absolute;left:6px;top:.6em;width:8px;height:8px;border-radius:50%;background:currentColor}

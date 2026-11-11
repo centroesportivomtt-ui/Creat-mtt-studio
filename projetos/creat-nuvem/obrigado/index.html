@@ -48,6 +48,19 @@
     </div>
     <p class="notas mt-3" id="obrigado-notas-pagar" hidden><span data-texto="recebedor">No Mercado Pago, o recebedor aparece com o CNPJ 57.068.874 (creat.MTT Studio, o mesmo do rodapé).</span> <span data-texto="desistir">Em qualquer meio, vale o nosso prazo de 7 dias para desistir, com o valor devolvido (Termos, cláusula 6).</span></p>
     <p class="obrigado-servidor" id="obrigado-servidor" role="status" aria-live="polite" hidden></p>
+
+    <!-- Compra curta (11/11): endereço e horário que ficaram para depois do pagamento. Hoje nenhuma rota completa o pedido
+         com o segredo (docs/PEDIDO-API.md), então o caminho é o WhatsApp do suporte, com o número do pedido e nada mais. -->
+    <section class="falta-dados" id="obrigado-falta" aria-labelledby="falta-titulo" hidden>
+      <h2 id="falta-titulo" data-texto="faltaDados.titulo">Falta pouco para a produção começar</h2>
+      <p data-texto="faltaDados.texto">Para montar o site, a equipe precisa de:</p>
+      <ul class="lista falta-lista">
+        <li data-falta="endereco" data-texto="faltaDados.itens.endereco">O endereço completo: rua, número, bairro, cidade-UF e CEP.</li>
+        <li data-falta="horarios" data-texto="faltaDados.itens.horarios">O horário de funcionamento de cada dia da semana.</li>
+      </ul>
+      <a class="btn btn-sol btn-g" id="falta-zap" href="mailto:mttcreatt@gmail.com">Mandar no WhatsApp do suporte</a>
+      <p class="notas mt-3" data-texto="faltaDados.nota">A mensagem já sai com o número do pedido: complete com o que falta e envie. Já mandou? Não precisa mandar de novo, a equipe grava no pedido.</p>
+    </section>
     <p class="obrigado-rascunho-texto" id="obrigado-rascunho-texto" hidden></p>
     <a class="btn btn-g mt-3" id="obrigado-rascunho" href="../" hidden>Abrir o site para aprovar</a>
 

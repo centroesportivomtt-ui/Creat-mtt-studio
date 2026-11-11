@@ -10,7 +10,7 @@
 <link rel="canonical" href="https://nuvem.creatmtt.com.br/abrir/">
 <meta property="og:url" content="https://nuvem.creatmtt.com.br/abrir/">
 <title>Escolha o plano e abra o seu negócio | Creat</title>
-<meta name="description" content="Veja o total antes de pagar, informe WhatsApp, endereço e horário e pague a Abertura por Pix ou cartão. Mensalidade só com o site no ar.">
+<meta name="description" content="Veja o total antes de pagar, informe WhatsApp e e-mail e pague a Abertura por Pix ou cartão. Endereço e horário podem ir depois. Mensalidade só com o site no ar.">
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light dark">
@@ -41,54 +41,67 @@
 
 <main class="pagina pagina-abrir" id="conteudo">
   <div class="cx">
-    <span class="olho">Abrir meu negócio</span>
     <h1 id="abrir-titulo">Falta pouco para abrir o seu negócio.</h1>
     <p class="modo-teste" id="modo-teste" role="note" hidden><strong>Link de teste.</strong> Este pagamento é de R$ <span id="modo-teste-valor"></span>, serve só para conferir o caminho do pagamento e não abre site. <span id="modo-teste-vencido" hidden>O link de teste venceu; peça um novo à equipe.</span></p>
-    <p class="progresso" id="abrir-progresso" hidden><span class="feito">Nome, tipo de negócio e prévia: pronto.</span> Faltam 2 passos: os dados do negócio e o pagamento.</p>
 
-    <!-- resumo de preço no topo: o mesmo total do botão de pagar -->
-    <section class="resumo-preco" aria-labelledby="resumo-preco-titulo">
-      <h2 class="so-leitor" id="resumo-preco-titulo">Resumo do preço</h2>
-      <p data-carregando-precos>Conferindo os preços de hoje...</p>
-      <p id="resumo-mensal" hidden><strong>Hoje: Abertura de R$ <span data-v="abrir.total"></span>.</strong> Mensalidade de R$ <span data-v="plano.preco"></span> por mês no cartão, ou anual no Pix, só começa com o site no ar.</p>
-      <p id="resumo-anual" hidden><strong>Hoje: só a Abertura, R$ <span data-v="abrir.total"></span>.</strong> O plano anual, R$ <span data-v="plano.preco"></span> pelos 12 meses, é cobrado no dia em que o site entra no ar, por este valor.</p>
-      <p class="menor" data-texto="resumo.risco">Sem fidelidade. 7 dias para desistir, com o valor devolvido.</p>
-    </section>
-
+    <!-- (a) o negócio que veio da prévia -->
     <div class="resumo-negocio" id="abrir-negocio" hidden>
       <strong id="abrir-negocio-nome"></strong>
       <span id="abrir-negocio-detalhe"></span>
       <a id="abrir-voltar" href="../">Ver a prévia de novo</a>
     </div>
 
+    <!-- Ordem no celular: preço de hoje, o que você leva, campos indispensáveis, aceite, garantia colada ao botão, botão.
+         Endereço, horário e nome ficam no bloco recolhido (#p-depois): o servidor aceita sem eles (docs/PEDIDO-API.md). -->
     <div class="grade-pedido grade-abrir">
       <form id="form-pedido" class="area-form" novalidate>
-        <section class="bloco" aria-labelledby="plano-titulo">
-          <h2 id="plano-titulo">Seu plano</h2>
-          <fieldset class="planos">
-            <legend class="so-leitor">Trocar de plano</legend>
-            <label class="plano-opcao"><input type="radio" name="plano" value="aberto"><span>Aberto<small>R$ <span data-v="precos.planos.aberto" class="num-carregando"></span> por mês no cartão</small></span></label>
-            <label class="plano-opcao"><input type="radio" name="plano" value="vitrine"><span>Vitrine<small>R$ <span data-v="precos.planos.vitrine" class="num-carregando"></span> por mês no cartão</small></span></label>
-            <label class="plano-opcao"><input type="radio" name="plano" value="aberto_anual"><span>Aberto anual<small>R$ <span data-v="precos.anual.aberto" class="num-carregando"></span> por 12 meses no Pix</small></span></label>
-            <label class="plano-opcao"><input type="radio" name="plano" value="vitrine_anual"><span>Vitrine anual<small>R$ <span data-v="precos.anual.vitrine" class="num-carregando"></span> por 12 meses no Pix</small></span></label>
-          </fieldset>
-          <p class="notas mt-3" id="anual-nota" hidden>No anual, você paga <span data-v="precos.anualMesesPagos"></span> meses e leva 12, no Pix. Sem fidelidade: se sair antes, devolvemos os meses não usados.</p>
-
-          <div class="total" id="total" aria-live="polite">
-            <span class="olho">Total</span>
-            <p data-carregando-precos>Conferindo os preços de hoje...</p>
-            <p id="total-mensal" hidden>Hoje: <strong>R$ <span data-v="abrir.total"></span></strong> (Abertura). A partir do dia em que o site entrar no ar: <strong>R$ <span data-v="plano.preco"></span></strong> por mês no cartão, ou anual no Pix. Sem fidelidade.</p>
-            <p id="total-anual" hidden>Hoje: <strong>R$ <span data-v="abrir.total"></span></strong>, só a Abertura. O plano anual, <strong>R$ <span data-v="plano.preco"></span></strong> pelos 12 meses, é cobrado no dia em que o site entrar no ar, no Pix. Nada do anual é cobrado antes. Sem fidelidade.</p>
-            <p class="menor" data-se="inauguracao" hidden>Preço de inauguração.</p>
-            <p class="menor" data-se="varias-vagas" hidden>Restam <span data-v="precos.abertura.inauguracao.vagasRestantes"></span> vagas com este valor.</p>
-            <p class="menor" data-se="ultima-vaga" hidden>Resta 1 vaga com este valor.</p>
-            <p class="menor">Não existe taxa escondida. A anuidade do domínio, se você quiser um, é paga no seu nome ao Registro.br.</p>
+        <!-- (b) preço de hoje: Abertura e mensalidade juntas, números só dos dados -->
+        <section class="conta" aria-labelledby="conta-titulo">
+          <h2 class="so-leitor" id="conta-titulo">Preço de hoje</h2>
+          <p class="conta-carregando" data-carregando-precos>Conferindo os preços de hoje...</p>
+          <div class="conta-linha">
+            <p class="conta-nome" data-texto="conta.hoje">Hoje</p>
+            <p class="conta-valor">R$&nbsp;<span data-v="abrir.total" class="num-carregando"></span></p>
+            <p class="conta-desc"><span data-texto="conta.abertura">Abertura, uma vez</span><span class="conta-inaug" data-se="inauguracao" hidden>. Preço de inauguração; depois, R$&nbsp;<span data-v="precos.abertura.padrao"></span></span></p>
           </div>
+          <div class="conta-linha" id="resumo-mensal">
+            <p class="conta-nome" data-texto="conta.porMes">Por mês</p>
+            <p class="conta-valor">R$&nbsp;<span data-v="plano.preco" class="num-carregando"></span></p>
+            <p class="conta-desc">Plano <span data-plano-nome>Aberto</span>, <span data-texto="conta.soNoAr">só com o site no ar</span>. <span data-texto="conta.meioMensal">No cartão, ou anual no Pix.</span></p>
+          </div>
+          <div class="conta-linha" id="resumo-anual" hidden>
+            <p class="conta-nome" data-texto="conta.comNoAr">No dia em que o site entra no ar</p>
+            <p class="conta-valor">R$&nbsp;<span data-v="plano.preco" class="num-carregando"></span></p>
+            <p class="conta-desc">Plano <span data-plano-nome>Aberto anual</span>, <span data-texto="conta.anual">12 meses no Pix. Nada do anual é cobrado antes.</span></p>
+          </div>
+          <details class="trocar-plano" id="trocar-plano">
+            <summary data-texto="plano.trocar">Trocar de plano</summary>
+            <fieldset class="planos">
+              <legend class="so-leitor">Plano</legend>
+              <label class="plano-opcao"><input type="radio" name="plano" value="aberto"><span>Aberto<small>R$ <span data-v="precos.planos.aberto" class="num-carregando"></span> por mês no cartão</small></span></label>
+              <label class="plano-opcao"><input type="radio" name="plano" value="vitrine"><span>Vitrine<small>R$ <span data-v="precos.planos.vitrine" class="num-carregando"></span> por mês no cartão</small></span></label>
+              <label class="plano-opcao"><input type="radio" name="plano" value="aberto_anual"><span>Aberto anual<small>R$ <span data-v="precos.anual.aberto" class="num-carregando"></span> por 12 meses no Pix</small></span></label>
+              <label class="plano-opcao"><input type="radio" name="plano" value="vitrine_anual"><span>Vitrine anual<small>R$ <span data-v="precos.anual.vitrine" class="num-carregando"></span> por 12 meses no Pix</small></span></label>
+            </fieldset>
+            <p class="notas mt-3" data-texto="plano.diferenca">O Vitrine soma ao Aberto 4 posts por mês para o seu Instagram. Hoje você paga só a Abertura em qualquer plano.</p>
+            <p class="notas mt-3" id="anual-nota" hidden>No anual, você paga <span data-v="precos.anualMesesPagos"></span> meses e leva 12, no Pix. Sem fidelidade: se sair antes, devolvemos os meses não usados.</p>
+          </details>
         </section>
 
-        <section class="bloco mt-5" aria-labelledby="campos-titulo">
-          <h2 id="campos-titulo">Os dados do seu negócio</h2>
-          <p class="notas mb-4" data-texto="campos.texto">Com o nome do negócio, que veio da prévia, o WhatsApp, o endereço e o horário, a equipe monta o site sem precisar perguntar nada. Seu nome e seu e-mail servem para falarmos com você sobre o pedido.</p>
+        <!-- (c) o que você leva: as mesmas frases de conteudo/home.json (abrir.json leva.itens diz de onde) -->
+        <section class="leva" aria-labelledby="leva-titulo">
+          <h2 id="leva-titulo" data-texto="leva.titulo">O que você leva</h2>
+          <ul class="lista inclui" id="leva-lista">
+            <li data-leva="precos.abertura.inclui.5">Site pronto para você aprovar em até <span data-v="precos.prazoHoras"></span> h ou o 1º mês do plano grátis</li>
+            <li data-leva="precos.abertura.inclui.1">Textos escritos para o seu negócio e conferidos por uma pessoa da equipe</li>
+            <li data-leva="precos.abertura.inclui.2">Pedido de horário que chega no seu WhatsApp</li>
+            <li data-leva="precos.planos.aberto.inclui.0">Hospedagem do site</li>
+          </ul>
+        </section>
+
+        <!-- (d) só o indispensável para registrar o pedido -->
+        <section class="dados" aria-labelledby="campos-titulo">
+          <h2 id="campos-titulo" data-texto="campos.titulo">Para registrar o pedido</h2>
           <div class="campos">
             <div class="campo" data-se-falta="n">
               <label for="p-negocio">Nome do seu negócio</label>
@@ -111,46 +124,81 @@
               <span class="erro" role="alert" hidden></span>
             </div>
             <div class="campo">
-              <label for="p-responsavel">Seu nome (responsável)</label>
-              <input id="p-responsavel" type="text" autocomplete="name" maxlength="60" required aria-describedby="p-responsavel-ajuda">
-              <span class="ajuda" id="p-responsavel-ajuda">Quem a equipe chama para aprovar o site.</span>
-              <span class="erro" role="alert" hidden></span>
-            </div>
-            <div class="campo">
-              <label for="p-whatsapp">WhatsApp que recebe os pedidos</label>
+              <label for="p-whatsapp" data-texto="campos.whatsapp.rotulo">WhatsApp que recebe os pedidos</label>
               <input id="p-whatsapp" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="16" placeholder="(11) 9XXXX-XXXX" required aria-describedby="p-whatsapp-ajuda">
-              <span class="ajuda" id="p-whatsapp-ajuda">Com DDD. É para este número que os clientes vão pedir horário.</span>
+              <span class="ajuda" id="p-whatsapp-ajuda" data-texto="campos.whatsapp.ajuda">Com DDD. Os clientes pedem horário por ele.</span>
               <span class="erro" role="alert" hidden></span>
             </div>
             <div class="campo">
-              <label for="p-endereco">Endereço completo</label>
-              <input id="p-endereco" type="text" autocomplete="street-address" maxlength="160" placeholder="Rua, número, bairro, cidade-UF, CEP" required aria-describedby="p-endereco-ajuda">
-              <span class="ajuda" id="p-endereco-ajuda">Exemplo: Rua das Flores, 120, Centro, Campinas-SP, 13010-000. Aparece no site e no link de como chegar.</span>
-              <span class="erro" role="alert" hidden></span>
-            </div>
-            <div class="campo">
-              <span class="rotulo" id="p-horarios-rotulo">Horário de funcionamento</span>
-              <span class="ajuda">Já veio preenchido com o comum do seu nicho. Ajuste os dias e as horas.</span>
-              <div class="horarios" id="p-horarios" role="group" aria-labelledby="p-horarios-rotulo"></div>
-              <span class="erro-solto" id="p-horarios-erro" role="alert" hidden></span>
-            </div>
-            <div class="campo">
-              <label for="p-email">E-mail</label>
+              <label for="p-email" data-texto="campos.email.rotulo">E-mail</label>
               <input id="p-email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="voce@exemplo.com.br" required aria-describedby="p-email-ajuda">
-              <span class="ajuda" id="p-email-ajuda" data-texto="campos.email.ajuda">Para falarmos com você sobre o pedido e mandarmos os termos que você aceitou. Não mandamos propaganda.</span>
+              <span class="ajuda" id="p-email-ajuda" data-texto="campos.email.ajuda">Para os termos e o pedido. Sem propaganda.</span>
               <span class="erro" role="alert" hidden></span>
             </div>
+
+            <!-- o que a produção precisa e não é indispensável para pagar: recolhido, fechado por padrão -->
+            <details class="adiantar" id="p-depois" data-opcional>
+              <summary>
+                <span class="adiantar-titulo" data-texto="adiantar.titulo">Endereço e horário: agora ou depois</span>
+                <span class="adiantar-texto" data-texto="adiantar.texto">Já sabe? Adiante aqui. Se não, pague e mande depois pelo WhatsApp do suporte.</span>
+              </summary>
+              <div class="campos adiantar-campos">
+                <div class="campo">
+                  <label for="p-endereco" data-texto="campos.endereco.rotulo">Endereço completo</label>
+                  <input id="p-endereco" type="text" autocomplete="street-address" maxlength="160" placeholder="Rua, número, bairro, cidade-UF, CEP" aria-describedby="p-endereco-ajuda">
+                  <span class="ajuda" id="p-endereco-ajuda" data-texto="campos.endereco.ajuda">Exemplo: Rua das Flores, 120, Centro, Campinas-SP, 13010-000. Aparece no site e no link de como chegar.</span>
+                  <span class="erro" role="alert" hidden></span>
+                </div>
+                <div class="campo">
+                  <span class="rotulo" id="p-horarios-rotulo" data-texto="campos.horarios.rotulo">Horário de funcionamento</span>
+                  <span class="ajuda" data-texto="adiantar.horariosAjuda">Começa com o comum do seu nicho. Ajuste os dias e as horas e marque a confirmação: sem ela, o horário não vai no pedido.</span>
+                  <div class="horarios" id="p-horarios" role="group" aria-labelledby="p-horarios-rotulo"></div>
+                  <label class="aceite confirmo" for="p-horarios-confirmo"><input type="checkbox" id="p-horarios-confirmo"><span data-texto="adiantar.horariosConfirmo">Este é o horário do meu negócio</span></label>
+                  <span class="erro-solto" id="p-horarios-erro" role="alert" hidden></span>
+                </div>
+                <div class="campo">
+                  <label for="p-responsavel" data-texto="campos.responsavel.rotulo">Seu nome (responsável)</label>
+                  <input id="p-responsavel" type="text" autocomplete="name" maxlength="60" aria-describedby="p-responsavel-ajuda">
+                  <span class="ajuda" id="p-responsavel-ajuda" data-texto="campos.responsavel.ajuda">Quem a equipe chama para aprovar o site.</span>
+                  <span class="erro" role="alert" hidden></span>
+                </div>
+              </div>
+            </details>
+
             <div class="isca" aria-hidden="true"><label for="p-site">Site</label><input id="p-site" type="text" tabindex="-1" autocomplete="off"></div>
+            <!-- (e) aceite dos termos: visível, obrigatório, com a versão de checkout.config.js -->
             <label class="aceite" for="p-aceite">
               <input type="checkbox" id="p-aceite" required aria-describedby="p-aceite-erro">
               <span>Li e aceito os <a href="../termos/" target="_blank" rel="noopener">Termos de uso (versão <span data-termos-versao>2</span>)</a>. Peço o início imediato da produção e sei que tenho 7 dias para desistir, com o valor devolvido.</span>
             </label>
             <span class="erro-solto" id="p-aceite-erro" role="alert" hidden>Marque o aceite para seguir para o pagamento.</span>
-            <p class="notas">Ao tocar em Pagar, os dados deste formulário vão para o sistema da Creat, para registrar o pedido. <a href="../privacidade/">Privacidade</a></p>
             <p class="resumo-erros" id="p-resumo" role="alert" hidden></p>
           </div>
         </section>
       </form>
+
+      <!-- (f) garantia em uma linha colada ao (g) botão de pagar -->
+      <section class="area-pagar" id="pagamento" aria-labelledby="pagamento-titulo">
+        <h2 class="so-leitor" id="pagamento-titulo">Pagamento</h2>
+        <p class="garantia-curta" id="garantia-curta" data-texto="pagar.garantia">7 dias para desistir com devolução. Mensalidade só com o site no ar. Sem fidelidade.</p>
+        <p class="pagar-total">Total de hoje: <strong>R$ <span data-v="abrir.total" class="num-carregando"></span></strong></p>
+        <div class="pagar">
+          <a class="btn btn-sol btn-g" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Pagar no Pix ou cartão" aria-describedby="pagar-parcelas">Link de pagamento em configuração</a>
+        </div>
+        <p class="notas mt-3" id="pagar-parcelas">Pix ou cartão. As condições de parcelamento aparecem no Mercado Pago antes de você pagar.</p>
+        <p class="notas mt-3" id="pagar-recebedor" hidden></p>
+        <p class="notas mt-3 pagar-aviso" id="pagar-aviso-dados"><span id="pagar-aviso-texto">Ao tocar em Pagar, enviamos à Creat os dados deste formulário (nome do negócio, cidade, WhatsApp e e-mail, e também o seu nome, o endereço e o horário se você preencher) para registrar o pedido. Se você não pagar, apagamos em 30 dias. </span><a id="pagar-aviso-link" href="../privacidade/">Ler a política de privacidade</a></p>
+        <div class="bloco-tracejado mt-4" id="pagamento-config">
+          <p>O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.</p>
+          <a class="link-forte" id="pagamento-zap" href="mailto:mttcreatt@gmail.com">Chamar o Suporte Creat no WhatsApp</a>
+        </div>
+        <div class="notas mt-4">
+          <p data-texto="total.nadaMais">Não existe taxa escondida. A anuidade do domínio, se você quiser um, é paga no seu nome ao Registro.br.</p>
+          <p>O pagamento é feito no Mercado Pago. A Creat não vê os dados do seu cartão. Sem criar conta.</p>
+          <p>Uma cópia dos dados fica neste aparelho até o pedido ser registrado, por no máximo 7 dias. Você pode apagar a qualquer momento.</p>
+        </div>
+        <button class="link-texto" type="button" id="esquecer" hidden>Esquecer meus dados neste aparelho</button>
+      </section>
 
       <!-- No celular, a garantia, os 7 dias e o "depois" vêm ANTES dos botões de pagar. -->
       <aside class="lateral area-confianca" aria-label="Garantia, desistência e próximos passos">
@@ -177,26 +225,6 @@
           </ol>
         </section>
       </aside>
-
-      <section class="bloco area-pagar" id="pagamento" aria-labelledby="pagamento-titulo">
-        <h2 id="pagamento-titulo">Pagamento</h2>
-        <p class="pagar-total">Total de hoje: <strong>R$ <span data-v="abrir.total" class="num-carregando"></span></strong></p>
-        <p class="notas mb-4" id="pagar-recebedor" hidden></p>
-        <div class="pagar">
-          <a class="btn btn-sol btn-g" data-checkout="aberturaPadrao" aria-disabled="true" tabindex="-1" data-rotulo="Pagar no Pix ou cartão" aria-describedby="pagar-parcelas">Link de pagamento em configuração</a>
-        </div>
-        <p class="notas mt-3 pagar-aviso" id="pagar-aviso-dados"><span id="pagar-aviso-texto">Ao tocar em Pagar, enviamos à Creat os dados deste formulário (nome do negócio, cidade, seu nome, WhatsApp, e-mail, endereço e horário) para registrar o pedido. Se você não pagar, apagamos em 30 dias. </span><a id="pagar-aviso-link" href="../privacidade/">Ler a política de privacidade</a></p>
-        <p class="notas mt-3" id="pagar-parcelas">Pix ou cartão. As condições de parcelamento aparecem no Mercado Pago antes de você pagar.</p>
-        <div class="bloco-tracejado mt-4" id="pagamento-config">
-          <p>O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.</p>
-          <a class="link-forte" id="pagamento-zap" href="mailto:mttcreatt@gmail.com">Chamar o Suporte Creat no WhatsApp</a>
-        </div>
-        <div class="notas mt-4">
-          <p>O pagamento é feito no Mercado Pago. A Creat não vê os dados do seu cartão. Sem criar conta.</p>
-          <p>Uma cópia dos dados fica neste aparelho até o pedido ser registrado, por no máximo 7 dias. Você pode apagar a qualquer momento.</p>
-        </div>
-        <button class="link-texto" type="button" id="esquecer" hidden>Esquecer meus dados neste aparelho</button>
-      </section>
 
       <section class="quem-monta area-quem" id="quem-monta" aria-labelledby="quem-titulo">
         <span class="olho">Quem somos</span>
