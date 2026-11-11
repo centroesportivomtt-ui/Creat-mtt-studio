@@ -94,8 +94,8 @@ test('termos v1 e v2 passam, cada um com o seu hash; v2 é o sha256 do conteudo/
   assert.ok(Object.prototype.hasOwnProperty.call(R.TERMOS, versaoPagina));
 });
 
-test('versão das regras do fecho da onda 2', () => {
-  assert.equal(R.VERSAO_REGRAS, 'pa-regras-1A-2026-11-10f');
+test('versão das regras: eventos de interesse no contador (11/11/2026)', () => {
+  assert.equal(R.VERSAO_REGRAS, 'pa-regras-1A-2026-11-11a');
 });
 
 test('versão desconhecida dos termos é campo inválido (a rota responde 422 campo termos_versao)', () => {
@@ -340,6 +340,60 @@ test('contador: lista branca fechada, conferência descartada, evento desconheci
   assert.equal(R.normalizarContagem({ evento: 'visita', utm_content: 'conferencia' }).conferencia, true);
   assert.equal(R.normalizarContagem({ evento: 'visita', anuncio: 'conferencia' }).conferencia, true);
   assert.equal(R.normalizarContagem([]), null);
+});
+
+// Eventos de interesse (11/11/2026). O enum de ContadorDia.evento no app tem de ter exatamente esta lista.
+const EVENTOS_FUNIL = ['visita', 'previa', 'ida_pagamento', 'clique_pagar'];
+const EVENTOS_INTERESSE = ['ficou_10s', 'rolou', 'tocou_nome', 'digitou_nome', 'tocou_exemplo'];
+
+test('contador: lista fechada de 9 eventos, na ordem do enum de ContadorDia', () => {
+  assert.deepEqual([...R.EVENTOS], [...EVENTOS_FUNIL, ...EVENTOS_INTERESSE]);
+  assert.ok(Object.isFrozen(R.EVENTOS), 'lista congelada');
+  assert.equal(new Set(R.EVENTOS).size, 9, 'sem repetição');
+  for (const ev of R.EVENTOS) assert.match(ev, /^[a-z0-9_]{3,16}$/, ev);
+});
+
+test('contador: cada evento de interesse é aceito com nicho, praça e anúncio, como a visita', () => {
+  for (const ev of EVENTOS_INTERESSE) {
+    assert.deepEqual(R.normalizarContagem({ evento: ev, nicho: 'barbearia', praca: 'feira', utm_content: 'R7-barbearia-v1' }),
+      { conferencia: false, evento: ev, nicho: 'barbearia', praca: 'feira', anuncio: 'R7-barbearia-v1' }, ev);
+    assert.deepEqual(R.normalizarContagem({ evento: ev, nicho: 'salao', praca: 'salvador-rms', anuncio: 'A1-salao-v1' }),
+      { conferencia: false, evento: ev, nicho: 'salao', praca: 'salvador-rms', anuncio: 'A1-salao-v1' }, ev);
+    // fora das listas vira 'outro', igual aos eventos de hoje
+    assert.deepEqual(R.normalizarContagem({ evento: ev, nicho: 'padaria', praca: 'lisboa', anuncio: 'Z9-nome-do-cliente' }),
+      { conferencia: false, evento: ev, nicho: 'outro', praca: 'outro', anuncio: 'outro' }, ev);
+    // a conferência no ar continua descartada sem gravar
+    assert.deepEqual(R.normalizarContagem({ evento: ev, utm_content: 'conferencia' }), { conferencia: true }, ev);
+    assert.deepEqual(R.normalizarContagem({ evento: ev, anuncio: 'conferencia' }), { conferencia: true }, ev);
+  }
+});
+
+test('contador: evento desconhecido continua recusado (null, nada grava)', () => {
+  for (const ev of ['compra', 'Rolou', 'ROLOU', 'rolou ', ' rolou', 'ficou_10', 'ficou_30s', 'digitou', 'nome', 'tocou-nome',
+    'clique', 'scroll', '', null, undefined, 1, true, ['rolou'], { evento: 'rolou' }, 'visita\u0000', 'tocou_exemplo2'])
+    assert.equal(R.normalizarContagem({ evento: ev, nicho: 'barbearia', praca: 'feira' }), null, JSON.stringify(ev));
+  assert.equal(R.normalizarContagem({ nicho: 'barbearia' }), null, 'sem evento');
+  assert.equal(R.normalizarContagem(null), null);
+  assert.equal(R.normalizarContagem('rolou'), null);
+  assert.equal(R.normalizarContagem(['rolou']), null);
+});
+
+test('contador: nenhum campo novo passa, nem nome, texto digitado, tempo ou identificador', () => {
+  const extras = {
+    nome: 'Barbearia do Zé', texto: 'Ze', valor: 'Barbearia', digitado: 'Barb', cidade: 'Feira de Santana',
+    whatsapp: '75999999999', email: 'a@b.com', ip: '200.1.2.3', ms: 10432, tempo: 12, duracao: 10000, scrollY: 812,
+    id: 'abc', visitante: 'v-123', sessao: 's-1', cookie: '_fbp=fb.1.1', fbp: 'fb.1.1', fbc: 'fb.1.2', ua: 'Mozilla/5.0',
+    url: 'https://nuvem.creatmtt.com.br/?n=Barbearia', referrer: 'https://l.instagram.com/', n: 999, data: '2026-01-01'
+  };
+  for (const ev of R.EVENTOS) {
+    const r = R.normalizarContagem({ evento: ev, nicho: 'barbearia', praca: 'feira', utm_content: 'A1-barbearia-v1', ...extras });
+    assert.deepEqual(Object.keys(r).sort(), ['anuncio', 'conferencia', 'evento', 'nicho', 'praca'], ev);
+    const txt = JSON.stringify(r);
+    for (const v of Object.values(extras)) assert.ok(!txt.includes(String(v)), `${ev}: ${v} vazou`);
+    // o anúncio nunca carrega texto livre: só código da lista ou 'outro'
+    const livre = R.normalizarContagem({ evento: ev, utm_content: 'Barbearia-do-Ze' });
+    assert.equal(livre.anuncio, 'outro', ev);
+  }
 });
 
 /* ---------- Estados, hash e modelos ---------- */

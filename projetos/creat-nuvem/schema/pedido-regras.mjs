@@ -4,7 +4,7 @@
 // Sem import, sem rede, sem banco e sem relógio próprio: a hora sempre entra por parâmetro (milissegundos UTC).
 // Contrato completo: docs/PEDIDO-API.md.
 
-export const VERSAO_REGRAS = 'pa-regras-1A-2026-11-10f';
+export const VERSAO_REGRAS = 'pa-regras-1A-2026-11-11a';
 
 /* ---------- Vocabulário fechado ---------- */
 
@@ -25,7 +25,13 @@ export const PRACAS = Object.freeze(['feira', 'salvador-rms', 'fortaleza', 'reci
 export const PRACAS_CONTADOR = Object.freeze(['feira', 'salvador-rms']);
 export const NICHOS = Object.freeze(['barbearia', 'salao', 'academia']);
 export const PLANOS = Object.freeze(['aberto', 'vitrine', 'aberto_anual', 'vitrine_anual']);
-export const EVENTOS = Object.freeze(['visita', 'previa', 'ida_pagamento', 'clique_pagar']);
+// Os 4 primeiros são o funil de hoje. Os 5 seguintes (11/11/2026) são sinais de interesse, um por carga da página no
+// máximo, com o mesmo corpo {evento, nicho, praca, utm_content}: nenhum leva texto digitado, tempo exato nem identificador.
+// ContadorDia.evento no app é enum fechado: acrescente o nome lá ANTES de copiar este arquivo (docs/PEDIDO-API.md, 4.4).
+export const EVENTOS = Object.freeze([
+  'visita', 'previa', 'ida_pagamento', 'clique_pagar',
+  'ficou_10s', 'rolou', 'tocou_nome', 'digitou_nome', 'tocou_exemplo'
+]);
 
 // Códigos de anúncio conhecidos (utm_content de marketing/utm.md, marketing/trafego/*.md). Qualquer outro valor conta como 'outro'.
 // Lista fechada de propósito: cada código vira no máximo uma linha por dia em ContadorDia (ninguém enche a entidade
