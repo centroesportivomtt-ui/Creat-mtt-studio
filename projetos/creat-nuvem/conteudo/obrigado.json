@@ -113,6 +113,8 @@
     "_sobre": "Bloco de /obrigado/ quando o pedido foi pago sem endereço ou sem horário (compra curta, /abrir/ de 11/11). A produção não monta o site sem eles (docs/EXECUTOR.md, passo (e), Saída 6) e nunca usa endereço ou horário de exemplo. Hoje não existe rota que complete o pedido com o segredo: o caminho é o WhatsApp do Suporte Creat. O prazo dos termos v2 (cláusula 5) conta da confirmação do pagamento; este bloco não diz o contrário.",
     "titulo": "Falta pouco para a produção começar",
     "texto": "A equipe só monta o site com estes dados em mãos. Mande logo pelo WhatsApp do suporte:",
+    "textoEmail": "A equipe só monta o site com estes dados em mãos. Mande logo por e-mail:",
+    "_textoEmail": "Sem o WhatsApp do suporte configurado (checkout.config.js), o botão vira botaoEmail e esta frase entra no lugar de texto (vitrine.js, desenharFalta).",
     "itens": {
       "endereco": "O endereço completo: rua, número, bairro, cidade-UF e CEP.",
       "horarios": "O horário de funcionamento de cada dia da semana."

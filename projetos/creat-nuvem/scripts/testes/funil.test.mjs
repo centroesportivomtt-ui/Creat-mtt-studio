@@ -1600,3 +1600,95 @@ test('compra curta · navegador: /obrigado/ pago sem endereço e horário mostra
     await c.ctx.close();
   } finally { await nav.close(); srv.close(); }
 });
+
+test('compra curta · /abrir/: o título mora no HTML (sem nome e data-com-nome) igual ao abrir.json, sem terceira cópia no JS', () => {
+  const ab = fs.readFileSync(path.join(RAIZ, 'abrir/index.html'), 'utf8');
+  const j = JSON.parse(fs.readFileSync(path.join(RAIZ, 'conteudo/abrir.json'), 'utf8'));
+  const m = /<h1 id="abrir-titulo" data-com-nome="([^"]+)">([^<]+)<\/h1>/.exec(ab);
+  assert.ok(m, 'h1#abrir-titulo com data-com-nome');
+  assert.equal(m[1], j.titulo, 'data-com-nome = abrir.json titulo');
+  assert.equal(m[2], j.tituloSemNome, 'texto do h1 = abrir.json tituloSemNome');
+  assert.doesNotMatch(FONTE_VIT, /TITULO_ABRIR|Falta pouco para abrir as portas/, 'o título não é escrito de novo no vitrine.js');
+});
+
+test('compra curta · navegador: no formulário de /obrigado/ (outro aparelho), o horário de exemplo só vai com a confirmação', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  const Q = '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972';
+  const preencherObrigado = async (pg) => {
+    await pg.selectOption('#p-plano', 'aberto');
+    await pg.fill('#p-negocio', 'TESTE Barbearia');
+    await pg.fill('#p-cidade', 'Campinas');
+    await pg.fill('#p-responsavel', 'Maria Souza');
+    await pg.fill('#p-whatsapp', '75900000000');
+    await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Campinas-SP, 13010-000');
+    await pg.fill('#p-email', 'maria@exemplo.com.br');
+    await pg.check('#p-aceite');
+  };
+  try {
+    // (a) só os campos obrigatórios, sem mexer na grade nem confirmar: não envia, pede a confirmação e leva o foco à caixa
+    let s = await paginaApi(nav, base);
+    await s.pg.goto(base + Q);
+    await s.pg.waitForFunction(() => { const e = document.querySelector('#obrigado-sem-dados'); return e && !e.hidden; });
+    await s.pg.selectOption('#p-nicho', 'barbearia'); await s.pg.waitForTimeout(400);
+    await preencherObrigado(s.pg);
+    assert.equal(await s.pg.isChecked('#p-horarios-confirmo'), false, 'a grade começa com o horário de exemplo, sem confirmação');
+    await s.pg.click('#enviar-dados'); await s.pg.waitForTimeout(200);
+    assert.equal(s.api.filter((a) => a.nome === 'registrarPedido').length, 0, 'o horário de exemplo não vai');
+    assert.equal(await visivel(s.pg, '#p-horarios-erro'), true);
+    assert.match(await s.pg.textContent('#p-horarios-erro'), /Este é o horário do meu negócio/);
+    assert.equal(await s.pg.evaluate(() => document.activeElement.id), 'p-horarios-confirmo');
+    // (b) a pessoa confere e confirma: o erro sai e o pedido vai com o horário, no formato do servidor
+    await s.pg.check('#p-horarios-confirmo');
+    assert.equal(await visivel(s.pg, '#p-horarios-erro'), false, 'confirmou: o erro sai na hora');
+    await s.pg.click('#enviar-dados');
+    await s.pg.waitForFunction(() => document.querySelector('#obrigado-sem-dados').hidden);
+    let reg = s.api.find((a) => a.nome === 'registrarPedido');
+    assert.ok(reg && typeof reg.corpo.horarios === 'string', 'horário confirmado vai');
+    assert.equal(REGRAS.validarRegistro(reg.corpo).ok, true, JSON.stringify(REGRAS.validarRegistro(reg.corpo)));
+    assert.deepEqual(s.erros, []);
+    await s.ctx.close();
+    // (c) mexer num dia confirma sozinho, como em /abrir/; trocar o tipo do negócio redesenha e desmarca
+    s = await paginaApi(nav, base);
+    await s.pg.goto(base + Q);
+    await s.pg.waitForFunction(() => { const e = document.querySelector('#obrigado-sem-dados'); return e && !e.hidden; });
+    await s.pg.selectOption('#p-nicho', 'barbearia'); await s.pg.waitForTimeout(400);
+    await s.pg.selectOption('#h-qua-fecha', '13:00');
+    assert.equal(await s.pg.isChecked('#p-horarios-confirmo'), true, 'mexer no horário confirma');
+    await s.pg.selectOption('#p-nicho', 'salao');
+    await s.pg.waitForFunction(() => !document.querySelector('#p-horarios-confirmo').checked, null, { timeout: 4000 });
+    await s.pg.selectOption('#h-qua-fecha', '13:00');
+    await preencherObrigado(s.pg);
+    await s.pg.click('#enviar-dados');
+    await s.pg.waitForFunction(() => document.querySelector('#obrigado-sem-dados').hidden);
+    reg = s.api.find((a) => a.nome === 'registrarPedido');
+    assert.match(reg.corpo.horarios, /qua=\d{2}:\d{2}-13:00/);
+    assert.equal(reg.corpo.nicho, 'salao');
+    assert.deepEqual(s.erros, []);
+    await s.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('compra curta · navegador: sem o WhatsApp do suporte configurado, "Falta pouco" fala de e-mail no texto e no botão', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const conf = { confirmarPagamento: { status: 200, json: { ok: true } }, consultarPedido: { status: 200, json: { ok: true, status: 'pago', prazo_fim: new Date(Date.now() + 70 * H).toISOString() } } };
+    const a = await paginaApi(nav, base, { pedido: Object.assign(SEM_DEPOIS(), { salvo_em: new Date().toISOString() }), api: conf });
+    await a.pg.route('**/checkout.config.js', async (r) => {
+      const resp = await r.fetch(); const corpo = (await resp.text()).replace(/whatsappSuporte:\s*'\d+'/, "whatsappSuporte: ''");
+      assert.match(corpo, /whatsappSuporte: ''/);
+      await r.fulfill({ response: resp, body: corpo });
+    });
+    await a.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972');
+    await a.pg.waitForFunction(() => document.querySelector('main').getAttribute('data-estado') === 'confirmado');
+    await a.pg.waitForTimeout(300);   // obrigado.json aplicado
+    assert.equal(await visivel(a.pg, '#obrigado-falta'), true);
+    assert.match(await a.pg.getAttribute('#falta-zap', 'href'), /^mailto:/);
+    assert.equal((await a.pg.textContent('#falta-zap')).trim(), 'Mandar por e-mail');
+    assert.match(await a.pg.textContent('#falta-texto'), /Mande logo por e-mail:$/);
+    assert.doesNotMatch(await a.pg.textContent('#obrigado-falta'), /WhatsApp do suporte/, 'nenhuma frase fala de WhatsApp');
+    assert.deepEqual(a.erros, []);
+    await a.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});

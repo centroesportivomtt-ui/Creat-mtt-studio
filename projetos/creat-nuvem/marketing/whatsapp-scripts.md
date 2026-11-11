@@ -245,7 +245,7 @@ Se a inauguração estiver valendo e o `atualizado_em` de `dados/precos.json` ti
 Nunca peça senha, número de cartão nem foto de documento, nem para "provar" nada. O pagamento acontece só na página do Mercado Pago.
 
 **O6 · "Não tenho tempo para isso"** (`/tempo`)
-> Do seu lado são 4 dados por aqui: nome do negócio, WhatsApp que recebe os pedidos, endereço e horário. A equipe monta, e você aprova com um APROVO nesta conversa.
+> Do seu lado é pouco: o nome do negócio e o WhatsApp que recebe os pedidos e, depois do pagamento, o endereço e o horário. A equipe monta, e você aprova com um APROVO nesta conversa.
 > Logo e fotos são opcionais e podem vir depois. A prévia leva segundos: {link da prévia}
 
 **O7 · "Já uso outro aplicativo de horários"** (`/jatenho`) · o cliente pode citar a marca; a resposta não cita.

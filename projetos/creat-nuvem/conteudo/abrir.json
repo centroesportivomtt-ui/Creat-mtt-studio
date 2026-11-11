@@ -13,10 +13,9 @@
   "cabecalhoDuvidasWhatsappAria": "Tirar dúvidas com o Suporte Creat no WhatsApp",
   "_cabecalhoDuvidasWhatsapp": "Só com o WhatsApp do Suporte ativo (vitrine.js montarSuporte, data-rotulo-ok + data-rotulo-ok-fim; até 400 px o fim sai da vista e entra o ícone). Sem ele, o link vai por e-mail e fica Dúvidas.",
   "conta": {
-    "_sobre": "Preço de hoje em duas linhas (Hoje / Por mês), com os números dos dados. A linha da inauguração só aparece com o link de inauguração.",
+    "_sobre": "Preço de hoje em duas linhas (Hoje / Por mês), com os números dos dados. A linha da inauguração só aparece com o link de inauguração, e a frase dela mora no HTML (span.conta-inaug de abrir/index.html, com o valor padrão em data-v), não aqui.",
     "hoje": "Hoje",
     "abertura": "Abertura, uma vez",
-    "inauguracao": "Preço de inauguração; depois, R$ {{precos.abertura.padrao}}",
     "porMes": "Por mês",
     "soNoAr": "só com o site no ar",
     "meioMensal": "No cartão, ou anual no Pix.",
@@ -43,12 +42,6 @@
     "_texto": "Depois do pagamento, a página do pedido (/obrigado/) mostra o bloco faltaDados com o botão do WhatsApp do suporte e o número do pedido.",
     "horariosAjuda": "Começa com o comum do seu nicho. Ajuste os dias e as horas e marque a confirmação: sem ela, o horário não vai no pedido.",
     "horariosConfirmo": "Este é o horário do meu negócio"
-  },
-  "resumo": {
-    "_sobre": "Textos da versão anterior (antes da compra curta). A página usa conta.*.",
-    "mensal": "Hoje: Abertura de R$ {{abrir.total}}. Mensalidade de R$ {{plano.preco}} por mês no cartão, ou anual no Pix, só começa com o site no ar.",
-    "anual": "Hoje: só a Abertura, R$ {{abrir.total}}. O plano anual, R$ {{plano.preco}} pelos 12 meses, é cobrado no dia em que o site entra no ar, por este valor.",
-    "risco": "Sem fidelidade. 7 dias para desistir, com o valor devolvido."
   },
   "plano": {
     "rotulo": "Seu plano",

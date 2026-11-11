@@ -1760,10 +1760,13 @@
     if (!(end === '' && opcional('p-endereco'))) conferir('p-endereco', end.length < 8 || end.length > 160 ? 'Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.'
       : END ? END.mensagem(end, cidade) : (!/\d/.test(end) ? 'Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.' : ''));
     else conferir('p-endereco', '');
-    // Horário no bloco recolhido: começa com o comum do nicho, que NÃO é o horário do cliente. Só vai no pedido com a
-    // confirmação marcada (mexer em qualquer dia marca sozinho). Sem ela, o pedido segue sem horário (nunca o de exemplo).
+    // Horário: a grade começa com o comum do nicho ou o de reserva, que NÃO é o horário do cliente. Só vai no pedido com a
+    // confirmação marcada (mexer em qualquer dia marca sozinho). Sem ela: no bloco recolhido de /abrir/, o pedido segue
+    // sem horário; no formulário de /obrigado/ (horário obrigatório), o envio para e pede a confirmação. Nunca o de exemplo.
     var hCaixa = f.querySelector('#p-horarios'), hErro = f.querySelector('#p-horarios-erro'), hConf = f.querySelector('#p-horarios-confirmo');
-    var h = hConf && !hConf.checked ? { valor: null } : lerHorarios(hCaixa);
+    var h = !hConf || hConf.checked ? lerHorarios(hCaixa)
+      : opcional('p-horarios') ? { valor: null }
+      : { erro: 'Confira o horário de cada dia e marque "Este é o horário do meu negócio".' };
     if (h.erro) { hErro.textContent = h.erro; hErro.hidden = false; faltam++; } else hErro.hidden = true;
     var email = String(v('p-email')).trim();
     conferir('p-email', email.length > 120 || !RE_EMAIL.test(email) ? 'Esse e-mail não parece completo. Confira se tem @ e o final, como .com ou .com.br.' : '');
@@ -1792,6 +1795,9 @@
     var hConf = f.querySelector('#p-horarios-confirmo');
     // mexer em qualquer dia ou hora é dizer "este é o meu horário": a confirmação marca sozinha (o change nativo sobe até a caixa)
     if (hConf) hCaixa.addEventListener('change', function () { hConf.checked = true; if (hConf.closest('.campo')) hConf.closest('.campo').removeAttribute('data-estado'); });
+    // confirmou (pela caixa ou mexendo na grade): o erro "marque a confirmação" sai na hora
+    var hErro0 = f.querySelector('#p-horarios-erro');
+    if (hConf && hErro0) f.addEventListener('change', function () { if (hConf.checked && /Este é o horário/.test(hErro0.textContent)) hErro0.hidden = true; });
     // Redesenhar a grade troca o horário pelo padrão do nicho, que NÃO é o do cliente: a confirmação só fica marcada
     // quando a grade volta com o horário do próprio cliente (o salvo, do mesmo nicho). Em qualquer outro caso, desmarca.
     var aplicarNicho = function (k) { lerNicho(k).then(function (pre) {
@@ -1913,8 +1919,10 @@
     if (!Object.keys(utmAtual).length) utmAtual = lerOrigem() || (salvo ? origemParaUtm(salvo.origem) : {});
     est.utm = utmAtual;
     var f = $('#form-pedido');
-    // sem artigo antes do nome (PG-N4): o nome fica no cartão logo abaixo; o título fala das portas (abrir.json titulo)
-    $('#abrir-titulo').textContent = est.n ? TITULO_ABRIR.comNome : TITULO_ABRIR.semNome;
+    // sem artigo antes do nome (PG-N4): o nome fica no cartão logo abaixo; o título fala das portas. Antes do abrir.json
+    // chegar vale o HTML: o texto do h1 sem nome e data-com-nome com nome (os dois iguais a titulo e tituloSemNome do
+    // abrir.json, conferido em funil.test.mjs), então o título não pisca.
+    var tit0 = $('#abrir-titulo'); if (est.n && tit0.getAttribute('data-com-nome')) tit0.textContent = tit0.getAttribute('data-com-nome');
     contar('ida_pagamento', est.k);
     var teste = ENTRADA.teste ? montarModoTeste() : null;
     var resumo = $('#abrir-negocio');
@@ -2108,7 +2116,6 @@
     var m = /^termos-v(\d{1,3})$/.exec((CK && CK.termosVersao) || '');
     if (m) $$('[data-termos-versao]').forEach(function (x) { x.textContent = m[1]; });
   }
-  var TITULO_ABRIR = { comNome: 'Falta pouco para abrir as portas.', semNome: 'Falta pouco para abrir o seu negócio.' };
   function lerTextosAbrir(est) {
     Promise.all([buscarJSON('conteudo/abrir.json'), lerPrecos(), buscarJSON('conteudo/home.json')]).then(function (r) {
       var j = r[0], vars = valoresDe(r[1]), home = r[2]; if (!j) return;
@@ -2379,6 +2386,14 @@
       var a = $('#falta-zap');
       a.href = linkZap(msg); a.target = '_blank'; a.rel = 'noopener noreferrer';
       a.textContent = suporteOk() ? (fd.botao || 'Mandar no WhatsApp do suporte') : (fd.botaoEmail || 'Mandar por e-mail');
+      // a frase acima do botão acompanha o canal (sem o WhatsApp do suporte, o botão vira e-mail); o data-texto troca
+      // junto, para o aplicarTextos do obrigado.json não voltar a frase do WhatsApp
+      var ft = $('#falta-texto');
+      if (ft) {
+        var chaveFt = suporteOk() ? 'texto' : 'textoEmail';
+        ft.setAttribute('data-texto', 'faltaDados.' + chaveFt);
+        ft.textContent = (typeof fd[chaveFt] === 'string' && fd[chaveFt].trim()) || (chaveFt === 'texto' ? 'A equipe só monta o site com estes dados em mãos. Mande logo pelo WhatsApp do suporte:' : 'A equipe só monta o site com estes dados em mãos. Mande logo por e-mail:');
+      }
       return true;
     }
     function precisaWhats() { return !!(pedido && (familiaAprovado() || estado === 'pendente') && servidorFalhou); }

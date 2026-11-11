@@ -47,7 +47,7 @@
          Fica logo abaixo do título e do texto do estado: é o passo que destrava a produção, com o único botão amarelo da tela. -->
     <section class="falta-dados" id="obrigado-falta" aria-labelledby="falta-titulo" hidden>
       <h2 id="falta-titulo" data-texto="faltaDados.titulo">Falta pouco para a produção começar</h2>
-      <p data-texto="faltaDados.texto">A equipe só monta o site com estes dados em mãos. Mande logo pelo WhatsApp do suporte:</p>
+      <p id="falta-texto" data-texto="faltaDados.texto">A equipe só monta o site com estes dados em mãos. Mande logo pelo WhatsApp do suporte:</p>
       <ul class="lista falta-lista">
         <li data-falta="endereco" data-texto="faltaDados.itens.endereco">O endereço completo: rua, número, bairro, cidade-UF e CEP.</li>
         <li data-falta="horarios" data-texto="faltaDados.itens.horarios">O horário de funcionamento de cada dia da semana.</li>
@@ -197,7 +197,9 @@
             </div>
             <div class="campo">
               <span class="rotulo" id="p-horarios-rotulo">Horário de funcionamento</span>
+              <span class="ajuda">Começa com um horário de exemplo. Ajuste os dias e as horas e marque a confirmação: sem ela, o pedido não segue.</span>
               <div class="horarios" id="p-horarios" role="group" aria-labelledby="p-horarios-rotulo"></div>
+              <label class="aceite confirmo" for="p-horarios-confirmo"><input type="checkbox" id="p-horarios-confirmo" aria-describedby="p-horarios-erro"><span>Este é o horário do meu negócio</span></label>
               <span class="erro-solto" id="p-horarios-erro" role="alert" hidden></span>
             </div>
             <div class="campo">

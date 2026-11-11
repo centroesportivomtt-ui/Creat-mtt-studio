@@ -137,12 +137,6 @@ p.notas{display:block} /* parágrafo com números dentro (ex.: anual-nota) não 
   .link-duvidas.com-zap .ico-zap{display:inline-block}
   .link-duvidas .rotulo-zap-fim{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 }
-.progresso{margin-top:var(--r3);font-size:var(--t-nota);color:var(--apagado);max-width:58ch}
-.progresso .feito{font-weight:800;color:var(--ok)}
-.resumo-preco{display:grid;gap:6px;margin-top:var(--r4);padding:var(--r3) var(--r4);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio-p);box-shadow:var(--sombra-p);max-width:62ch}
-.resumo-preco p{font-size:var(--t-corpo)}
-.resumo-preco strong{font-weight:800}
-.resumo-preco .menor{font-size:var(--t-nota);color:var(--apagado)}
 .grade-abrir{grid-template-areas:"form" "pagar" "confianca" "quem"}
 .area-form{grid-area:form}.area-confianca{grid-area:confianca}.area-pagar{grid-area:pagar}.area-quem{grid-area:quem}
 .pagar-total{margin-bottom:var(--r3);font-weight:700}

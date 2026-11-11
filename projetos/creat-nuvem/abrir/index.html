@@ -41,7 +41,7 @@
 
 <main class="pagina pagina-abrir" id="conteudo">
   <div class="cx">
-    <h1 id="abrir-titulo">Falta pouco para abrir o seu negócio.</h1>
+    <h1 id="abrir-titulo" data-com-nome="Falta pouco para abrir as portas.">Falta pouco para abrir o seu negócio.</h1>
     <p class="modo-teste" id="modo-teste" role="note" hidden><strong>Link de teste.</strong> Este pagamento é de R$ <span id="modo-teste-valor"></span>, serve só para conferir o caminho do pagamento e não abre site. <span id="modo-teste-vencido" hidden>O link de teste venceu; peça um novo à equipe.</span></p>
 
     <!-- (a) o negócio que veio da prévia -->
@@ -201,7 +201,7 @@
         <button class="link-texto" type="button" id="esquecer" hidden>Esquecer meus dados neste aparelho</button>
       </section>
 
-      <!-- No celular, a garantia, os 7 dias e o "depois" vêm ANTES dos botões de pagar. -->
+      <!-- No celular, a ordem é formulário, botão de pagar, garantia e 7 dias, quem somos (grid-template-areas em pedido.css); no desktop, a garantia fica ao lado. -->
       <aside class="lateral area-confianca" aria-label="Garantia, desistência e próximos passos">
         <section class="bloco-tracejado" aria-labelledby="garantia-titulo">
           <h2 id="garantia-titulo">Garantia de prazo</h2>
