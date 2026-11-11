@@ -56,6 +56,13 @@
       "salao": "Salão e estética",
       "academia": "Academia e studio"
     },
+    "_exemplo": "Cartão da primeira tela para quem chega com ?nicho=: um site de demonstração de nome fictício, no lugar onde ficava a Cidade (que desceu para depois do botão). Abre o site no #previa em modo exemplo e não conta prévia. Sem ?nicho= o cartão não aparece.",
+    "exemplo": {
+      "selo": "EXEMPLO · nome fictício",
+      "barbearia": { "nome": "Barbearia Navalha Fictícia", "pilula": "Pedir horário", "linha": "Ver um site de barbearia pronto, sem digitar", "aria": "Ver um site de barbearia pronto, sem digitar. Exemplo com nome fictício." },
+      "salao": { "nome": "Esmalte & Fio", "pilula": "Pedir horário", "linha": "Ver um site de salão pronto, sem digitar", "aria": "Ver um site de salão pronto, sem digitar. Exemplo com nome fictício." },
+      "academia": { "nome": "Studio Barra Fictícia", "pilula": "Aula experimental", "linha": "Ver um site de academia pronto, sem digitar", "aria": "Ver um site de academia pronto, sem digitar. Exemplo com nome fictício." }
+    },
     "nichosEmBreveRotulo": "Chegam depois. Toque para ser avisado:",
     "nichosEmBreve": {
       "pet": "Pet",
@@ -94,7 +101,13 @@
     "carregando": "Montando o seu site... {negocio}",
     "_carregando": "O nome vem numa segunda linha, grande, e a placa da tela de carregamento é a face ABERTO (assets/svg/placa-aberto.svg). Sem artigo fixo antes do nome (PG-N4).",
     "erroCarregar": "A prévia não abriu. Recarregue a página. Se continuar, chame o Suporte Creat no WhatsApp.",
-    "iframeTitulo": "Prévia do site da {negocio}"
+    "iframeTitulo": "Prévia do site da {negocio}",
+    "_exemplo": "Modo exemplo do diálogo (#previa[data-modo=exemplo]): o rótulo da barra é o prefixo seguido do nome fictício do cartão, o carregando é próprio e só existe o botão do nicho. Sem copiar link, sem Testar, sem Quero e sem preço.",
+    "exemplo": {
+      "prefixo": "Exemplo · ",
+      "carregando": "Abrindo o site de exemplo",
+      "botao": { "barbearia": "Ver com o nome da minha barbearia", "salao": "Ver com o nome do meu salão", "academia": "Ver com o nome da minha academia" }
+    }
   },
 
   "testeDeVerdade": {

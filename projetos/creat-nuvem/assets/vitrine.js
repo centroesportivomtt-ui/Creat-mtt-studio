@@ -567,12 +567,14 @@
      Um por evento e nicho em cada carga da página. O link de teste (?teste=pa-teste) não conta. */
   var contados = {};
   function corpoContagem(ev, nicho) {
-    var u = {}, o = lerOrigem() || {};
-    ['utm_campaign', 'utm_content'].forEach(function (k) { var v = (utmAtual && utmAtual[k]) || o[k]; if (typeof v === 'string' && RE_UTM.test(v)) u[k] = v; });
+    var guardada = lerOrigem(), u = {}, o = guardada || {};
+    // voltou pelo "Quero um assim" (utm_source=demo): a origem guardada do anúncio vale mais
+    var atual = utmAtual && utmAtual.utm_source === 'demo' && guardada ? guardada : utmAtual;
+    ['utm_campaign', 'utm_content'].forEach(function (k) { var v = (atual && atual[k]) || o[k]; if (typeof v === 'string' && RE_UTM.test(v)) u[k] = v; });
     return { evento: ev, nicho: NICHOS.indexOf(nicho) !== -1 ? nicho : 'outro', praca: u.utm_campaign || '', utm_content: u.utm_content || '' };
   }
   function contar(ev, nicho) {
-    if (ENTRADA.teste) return false;
+    if (ENTRADA.teste || ENTRADA.semContar) return false;
     var k = ev + ':' + (nicho || '');
     if (contados[k]) return false;
     contados[k] = 1;
@@ -649,6 +651,7 @@
     ENTRADA.retorno = lerRetornoMP(location.search);
     ENTRADA.volta = lerVolta(location.search);
     ENTRADA.teste = PAGINA === 'abrir' && q.get('teste') === 'pa-teste';
+    ENTRADA.semContar = q.get('teste') === 'pa-teste';   // o link de teste não conta em página nenhuma
     ENTRADA.preferencias = location.hash === '#preferencias';
     try { ENTRADA.ver = new URLSearchParams(String(location.hash || '').replace(/^#/, '')).get('ver') === '1'; } catch (e) { ENTRADA.ver = false; }
     var mudou = false;
@@ -741,7 +744,7 @@
     }
     /* A faixa escolhe a borda da tela que não cobre nenhum campo nem botão do formulário: embaixo (padrão) ou logo
        abaixo do cabeçalho. Se as duas cobririam, ela sai da frente até a rolagem liberar uma delas. */
-    var CONTROLES = 'input:not([type=hidden]):not(#p-site),select,textarea,button,.chip,.aceite,summary';
+    var CONTROLES = 'input:not([type=hidden]):not(#p-site),select,textarea,button,.chip,.aceite,summary,.exemplo-site';
     var posAgendada = false, rolando = false, fimRolagem = 0;
     var posicionar = function () {
       posAgendada = false;
@@ -1350,6 +1353,8 @@
     // Título da dobra no nicho (assets/nicho-cedo.js já marcou antes da pintura; aqui confirma e segue a troca do chip).
     function tituloDoNicho(k) { if (NICHOS.indexOf(k) !== -1) D.documentElement.setAttribute('data-nicho', k); else D.documentElement.removeAttribute('data-nicho'); }
     tituloDoNicho(nichoIni);
+    // cartão de exemplo só para quem chegou com o nicho
+    if (NICHOS.indexOf(nichoIni) === -1) D.documentElement.setAttribute('data-sem-exemplo', '');
     $$('input[name="nicho"]').forEach(function (r) { r.addEventListener('change', function () { if (r.checked) tituloDoNicho(r.value); }); });
     // Exemplo do campo do nome conforme o nicho (quem chega pelo anúncio de salão não lê "Barbearia do Zé").
     var EXEMPLO_NOME = { barbearia: 'Exemplo: Barbearia do Zé', salao: 'Exemplo: Studio da Ana', academia: 'Exemplo: Academia Ponto Forte' };
@@ -1466,29 +1471,82 @@
     var previa = $('#previa'), frame = $('#previa-frame'), carregandoPrevia = $('#previa-carregando');
     var fora = [$('header.barra'), $('main'), $('footer.rodape'), $('.zap-flutuante')];
     var urlPreviaAtual = '', linkPreviaAtual = '', focoAntes = null;
-    function abrirPrevia() {
-      var s = estado(); if (!s.k || !s.n) return;
-      var frag = montarFragmento(s, false);
-      urlPreviaAtual = RAIZ + 'previa/#' + frag;          // o quadro abre na mesma origem
-      linkPreviaAtual = enderecoPublico() + 'previa/#' + frag;   // o link copiado nasce no canônico
-      $('#previa-nome').textContent = s.n;
-      var cn = $('#previa-carregando-nome'); if (cn) cn.textContent = s.n;
-      frame.title = 'Prévia do site: ' + s.n;   // sem artigo fixo: "da Studio" e "da Salão" quebram (PG-N4)
+    // Parte 1: só o diálogo e o quadro, sem contar nada (o site de exemplo usa só esta)
+    function mostrarDialogo(url, rotulo) {
+      urlPreviaAtual = url;
+      $('#previa-nome').textContent = rotulo;
       carregandoPrevia.hidden = false; frame.style.visibility = 'hidden';
       previa.hidden = false; D.body.classList.add('com-previa');
       fora.forEach(function (x) { if (x) x.setAttribute('inert', ''); });
       focoAntes = D.activeElement;
-      carregarNoQuadro(frame, urlPreviaAtual);
       if (!history.state || !history.state.previa) history.pushState({ previa: 1 }, '', location.pathname + location.search + '#previa');
       requestAnimationFrame(function () { previa.classList.add('aberta'); $('#previa-fechar').focus(); });
+      try { W.dispatchEvent(new CustomEvent('creat:previa-aberta')); } catch (e) {}
+      carregarNoQuadro(frame, url);
+    }
+    // Prévia com o nome: o único caminho que conta 'previa'
+    function abrirPrevia() {
+      var s = estado(); if (!s.k || !s.n) return;
+      var frag = montarFragmento(s, false);
+      previa.removeAttribute('data-modo'); previa.removeAttribute('data-nicho-exemplo');
+      linkPreviaAtual = enderecoPublico() + 'previa/#' + frag;   // o link copiado nasce no canônico
+      var cn = $('#previa-carregando-nome'); if (cn) cn.textContent = s.n;
+      frame.title = 'Prévia do site: ' + s.n;   // sem artigo fixo: "da Studio" e "da Salão" quebram (PG-N4)
+      mostrarDialogo(RAIZ + 'previa/#' + frag, s.n);   // o quadro abre na mesma origem
       evento('previa_gerada', { nicho: s.k });
       contar('previa', s.k);
       pixelViewContent(s.k);
-      try { W.dispatchEvent(new CustomEvent('creat:previa-aberta')); } catch (e) {}
+    }
+    // Cartão do site de exemplo: modo exemplo, sem previa, previa_gerada nem ViewContent
+    function abrirExemplo(k, cartao) {
+      if (NICHOS.indexOf(k) === -1) return;
+      var nomeEx = cartao.querySelector('.exemplo-nome'), rot = nomeEx ? nomeEx.textContent : '';
+      previa.setAttribute('data-modo', 'exemplo'); previa.setAttribute('data-nicho-exemplo', k);
+      linkPreviaAtual = '';
+      frame.title = 'Site de exemplo: ' + rot;
+      mostrarDialogo(RAIZ + 'sites/demo-' + k + '/', rot);
+    }
+    // "Ver com o nome da minha ...": campo do nome e chip marcado, sem contar nada nem nicho_escolhido
+    var focoPorCodigo = false;   // foco do código (pacote B: não é tocou_nome)
+    function exemploParaNome() {
+      var k = previa.getAttribute('data-nicho-exemplo');
+      fecharPrevia(false);
+      var r = NICHOS.indexOf(k) !== -1 ? $('input[name="nicho"][value="' + k + '"]') : null;
+      if (r && !r.checked) { r.checked = true; tituloDoNicho(k); exemploDoNicho(k); erroNicho.hidden = true; }
+      setTimeout(function () {
+        focoPorCodigo = true;
+        try { campoNome.focus({ preventScroll: true }); } catch (e) { campoNome.focus(); }
+        focoPorCodigo = false;
+        try { caixaNome.scrollIntoView({ block: 'center', behavior: MOV_REDUZIDO.matches ? 'auto' : 'smooth' }); } catch (e) {}
+      }, 60);
+    }
+    $('#previa-exemplo-nome').addEventListener('click', exemploParaNome);
+    $$('[data-exemplo-site]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        abrirExemplo(a.getAttribute('data-nicho-exemplo'), a);
+      });
+    });
+    // "Quero um assim" e rodapé do exemplo (utm_source=demo|rodape) abririam a home no quadro: viram o botão de baixo
+    function vigiarExemplo() {
+      if (previa.getAttribute('data-modo') !== 'exemplo') return;
+      try {
+        var w = frame.contentWindow;
+        if (!w || w.__creatExemplo) return;
+        w.__creatExemplo = 1;
+        w.addEventListener('click', function (e) {
+          var a = e.target && e.target.closest ? e.target.closest('a[href*="utm_source=demo"],a[href*="utm_source=rodape"]') : null;
+          if (!a) return;
+          e.preventDefault(); e.stopPropagation();
+          exemploParaNome();
+        }, true);
+      } catch (x) {}
     }
     frame.addEventListener('load', function () {
       if (!urlPreviaAtual) return;
       carregandoPrevia.hidden = true; frame.style.visibility = '';
+      vigiarExemplo();
     });
     function fecharPrevia(deHistorico) {
       if (previa.hidden) return;

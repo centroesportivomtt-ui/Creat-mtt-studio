@@ -162,7 +162,9 @@ async function print(pg, nome) { await pg.screenshot({ path: path.join(PRINTS, n
     conferir(tn.cena.length === 0, '1. no topo nenhuma requisição a ' + PASTA, tn.cena.join(' '));
     const so = (x, y) => x.filter((u) => y.indexOf(u) === -1);
     conferir(JSON.stringify(tn.lista) === JSON.stringify(ta.lista), '1. no topo a lista de requisições é a mesma da base (' + tn.lista.length + ')', 'a mais: ' + so(tn.lista, ta.lista).join(' ') + ' | a menos: ' + so(ta.lista, tn.lista).join(' '));
-    conferir(tn.botao.rotulo === 'Ver meu site pronto' && tn.botao.baixo <= 600 && tn.botao.baixo === ta.botao.baixo, '1. botão "' + tn.botao.rotulo + '" termina em y ' + tn.botao.baixo + ' (base ' + ta.botao.baixo + ')');
+    // A sede nunca empurra o botão para baixo. Subir é mudança da própria primeira tela (11/11: sem ?nicho= a Cidade
+    // desceu para depois do botão), não da sede.
+    conferir(tn.botao.rotulo === 'Ver meu site pronto' && tn.botao.baixo <= 600 && tn.botao.baixo <= ta.botao.baixo, '1. botão "' + tn.botao.rotulo + '" termina em y ' + tn.botao.baixo + ' (base ' + ta.botao.baixo + ')');
     // o servidor local não comprime: o que conta no ar é o gzip dos arquivos que mudaram (orçamento: HTML +2 KB, JS +3 KB)
     const gz = (b) => zlib.gzipSync(b, { level: 9 }).length;
     const dif = Object.keys(ANTIGOS).map((p) => { const rel = ANTIGOS[p]; return { rel, d: gz(fs.readFileSync(path.join(RAIZ, rel))) - gz(antigo(rel)) }; });

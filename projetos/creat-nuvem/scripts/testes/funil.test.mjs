@@ -1707,3 +1707,287 @@ test('compra curta · navegador: sem o WhatsApp do suporte configurado, "Falta p
     await a.ctx.close();
   } finally { await nav.close(); srv.close(); }
 });
+
+/* ------------------------------------------------------------ site de exemplo na primeira tela (11/11, pacote A)
+   Quem chega com ?nicho= vê, entre os chips e o botão, um cartão "site de exemplo do nicho" que abre sem digitar o
+   site de demonstração dentro do #previa, em modo exemplo. O nome digitado continua sendo o único caminho que conta
+   'previa'. Os sites de demonstração são gerados fora da árvore (dist/): aqui o teste monta os três numa pasta
+   temporária e o servidor os entrega em /sites/demo-<nicho>/, com X-Frame-Options: DENY como a hospedagem. */
+const NICHOS_EX = ['barbearia', 'salao', 'academia'];
+const NOME_EX = { barbearia: 'Barbearia Navalha Fictícia', salao: 'Esmalte & Fio', academia: 'Studio Barra Fictícia' };
+let pastaDemos = null;
+function montarDemos() {
+  if (pastaDemos) return pastaDemos;
+  const os = require('node:os'), { execFileSync } = require('node:child_process');
+  pastaDemos = fs.mkdtempSync(path.join(process.env.CREAT_TESTE_TMP || os.tmpdir(), 'creat-exemplo-'));
+  for (const k of NICHOS_EX) execFileSync(process.execPath, [path.join(RAIZ, 'scripts', 'producao', 'build-site.cjs'), '--tenant', path.join(RAIZ, 'sites', 'demo-' + k, 'tenant.json'), '--destino', path.join(pastaDemos, 'demo-' + k), '--demonstracao'], { stdio: 'pipe' });
+  return pastaDemos;
+}
+function servidorExemplo(opcoes = {}) {
+  const demos = montarDemos();
+  const srv = http.createServer((q, r) => {
+    const p = decodeURIComponent(new URL(q.url, 'http://x').pathname);
+    const md = /^\/sites\/(demo-(?:barbearia|salao|academia))\/(.*)$/.exec(p);
+    let f = md ? path.join(demos, md[1], md[2]) : path.join(RAIZ, p);
+    if (!f.startsWith(md ? demos : RAIZ)) { r.writeHead(403); return r.end(); }
+    if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
+    if (!fs.existsSync(f)) { r.writeHead(404); return r.end(); }
+    const cab = { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' };
+    if (opcoes.deny !== false) cab['x-frame-options'] = 'DENY';
+    if (/dados[\\/](precos|vagas)\.json$/.test(f)) { const o = JSON.parse(fs.readFileSync(f, 'utf8')); o.atualizado_em = new Date(Date.now() - H).toISOString(); r.writeHead(200, cab); return r.end(JSON.stringify(o)); }
+    r.writeHead(200, cab); fs.createReadStream(f).pipe(r);
+  });
+  return new Promise((ok) => srv.listen(0, '127.0.0.1', () => ok(srv)));
+}
+// medidas da primeira tela: cartão visível do nicho, campo, botão e quem cobre o quê
+const MEDIR_DOBRA = () => {
+  const r = (e) => { const b = e.getBoundingClientRect(); return { top: b.top, bottom: b.bottom, h: b.height }; };
+  const cartoes = [...document.querySelectorAll('[data-exemplo-site]')].filter((e) => getComputedStyle(e).display !== 'none');
+  const botao = document.querySelector('#form-abrir [type=submit]');
+  const cobertoPorAviso = (e) => { const b = e.getBoundingClientRect(); return [[.5, .5], [.1, .15], [.9, .15], [.1, .85], [.9, .85]].some(([fx, fy]) => { const x = document.elementFromPoint(b.left + b.width * fx, b.top + b.height * fy); return !!(x && x.closest('#consentimento, #aviso')); }); };
+  return {
+    cartoes: cartoes.map((c) => ({ nicho: c.getAttribute('data-nicho-exemplo'), href: c.getAttribute('href'), ...r(c), coberto: cobertoPorAviso(c) })),
+    nome: r(document.querySelector('#nome')), botao: { ...r(botao), coberto: cobertoPorAviso(botao) },
+    cidadeDepoisDoBotao: !!(botao.compareDocumentPosition(document.querySelector('#cidade')) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(document.querySelector('.nota-nome').compareDocumentPosition(document.querySelector('#cidade')) & Node.DOCUMENT_POSITION_FOLLOWING),
+    exemploNaDobra: /EXEMPLO/.test(document.querySelector('#porta').innerText),
+    lateral: document.documentElement.scrollWidth > innerWidth + 1, vh: innerHeight
+  };
+};
+const contagens = (api) => api.filter((a) => a.nome === 'contar').map((a) => a.corpo);
+
+test('exemplo (a): cartão do nicho inteiro na primeira tela, entre os chips e o botão, sem empurrar o botão para fora (360x640 e 390x844)', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    for (const [w, h] of [[360, 640], [390, 844]]) for (const k of NICHOS_EX) {
+      const { pg, ctx, erros } = await paginaApi(nav, base, { consentir: false, w, h });
+      await pg.goto(base + '/?nicho=' + k + '&utm_source=meta&utm_campaign=feira&utm_content=A1');
+      // antes do JavaScript da página: o cartão já existe na primeira pintura (nicho-cedo.js + CSS)
+      await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+      const m = await pg.evaluate(MEDIR_DOBRA);
+      const onde = `${w}x${h} ${k}`;
+      assert.equal(m.cartoes.length, 1, onde + ': um cartão só');
+      const c = m.cartoes[0];
+      assert.equal(c.nicho, k, onde); assert.equal(c.href, 'sites/demo-' + k + '/', onde);
+      assert.ok(c.h >= 88 && c.h <= 104, onde + ': altura do cartão ' + c.h);
+      assert.ok(c.top >= 0 && c.bottom <= m.vh, onde + ': cartão inteiro na janela');
+      assert.ok(m.nome.top >= 0 && m.nome.bottom <= m.vh, onde + ': campo do nome inteiro na janela');
+      assert.ok(m.nome.bottom < c.top, onde + ': o campo do nome vem antes do cartão');
+      assert.ok(c.bottom < m.botao.top, onde + ': o cartão termina antes do botão');
+      assert.ok(m.botao.bottom <= 545, onde + ': botão até 545 px do topo, hoje ' + m.botao.bottom);
+      assert.equal(m.cidadeDepoisDoBotao, true, onde + ': a Cidade desceu para depois do botão e da nota');
+      assert.equal(m.lateral, false, onde + ': sem rolagem lateral');
+      // texto do cartão >= 11 px
+      const fontes = await pg.$$eval('[data-nicho-exemplo="' + k + '"] .exemplo-selo, [data-nicho-exemplo="' + k + '"] .exemplo-nome, [data-nicho-exemplo="' + k + '"] .exemplo-pilula, [data-nicho-exemplo="' + k + '"] .exemplo-linha', (els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));
+      assert.ok(fontes.every((f) => f >= 11), onde + ': ' + fontes);
+      // aviso de medição na tela (ao tocar no nome) e uma faixa de aviso: nenhum cobre o cartão nem o botão
+      await pg.focus('#nome'); await pg.evaluate(() => document.activeElement.blur());
+      await pg.waitForSelector('#consentimento:not([hidden])'); await pg.waitForTimeout(250);
+      const comAviso = await pg.evaluate(MEDIR_DOBRA);
+      assert.equal(comAviso.cartoes[0].coberto, false, onde + ': aviso de medição sobre o cartão');
+      assert.equal(comAviso.botao.coberto, false, onde + ': aviso de medição sobre o botão');
+      assert.deepEqual(erros, [], onde);
+      await ctx.close();
+    }
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('exemplo (a): com ?nicho=academia aparece o da academia; sem nicho (ou nicho desconhecido) não há cartão nem "EXEMPLO" na primeira tela, nem depois de escolher o chip', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, erros } = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+    await pg.goto(base + '/?nicho=academia');
+    await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+    const a = await pg.evaluate(MEDIR_DOBRA);
+    assert.deepEqual(a.cartoes.map((c) => c.nicho), ['academia']);
+    assert.match(await pg.innerText('[data-nicho-exemplo="academia"]'), /Studio Barra Fictícia[\s\S]*Aula experimental[\s\S]*Ver um site de academia pronto, sem digitar/);
+    assert.equal(a.exemploNaDobra, true);
+    for (const q of ['', '?nicho=pet']) {
+      await pg.goto(base + '/' + q);
+      await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+      const s = await pg.evaluate(MEDIR_DOBRA);
+      assert.deepEqual(s.cartoes, [], (q || 'sem nicho') + ': nenhum cartão');
+      assert.equal(s.exemploNaDobra, false, (q || 'sem nicho') + ': nenhum EXEMPLO na primeira tela');
+      assert.ok(await pg.$$eval('[data-exemplo-site]', (els) => els.every((e) => getComputedStyle(e).display === 'none')));
+      assert.equal(s.cidadeDepoisDoBotao, true);
+      await pg.check('input[name="nicho"][value="salao"]', { force: true });
+      assert.deepEqual((await pg.evaluate(MEDIR_DOBRA)).cartoes, [], (q || 'sem nicho') + ': escolher o chip não faz o cartão surgir');
+    }
+    assert.deepEqual(erros, []);
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('exemplo (b, c, d): toque no cartão abre o site de exemplo no #previa sem contar prévia; "Ver com o nome" volta ao campo; o nome digitado conta visita e prévia', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    for (const k of NICHOS_EX) {
+      const { pg, ctx, api, erros } = await paginaApi(nav, base, { consentir: true, w: 360, h: 640 });
+      const avisos = []; pg.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') avisos.push(m.text()); });
+      await pg.goto(base + '/?nicho=' + k + '&utm_source=meta&utm_campaign=feira&utm_content=A1-' + k);
+      await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+      // CPU 4x mais lenta: o diálogo aparece no mesmo toque, com "Abrindo o site de exemplo"
+      const cdp = await ctx.newCDPSession(pg); await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+      await pg.evaluate(() => { window.__t0 = 0; document.addEventListener('click', () => { window.__t0 = performance.now(); }, true); new MutationObserver(() => { if (!document.querySelector('#previa').hidden && !window.__t1) window.__t1 = performance.now(); }).observe(document.querySelector('#previa'), { attributes: true }); });
+      await pg.click('[data-nicho-exemplo="' + k + '"]');
+      await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+      const t = await pg.evaluate(() => ({ ms: window.__t1 - window.__t0, carregando: !document.querySelector('#previa-carregando').hidden && getComputedStyle(document.querySelector('.carregando-exemplo')).display !== 'none' && getComputedStyle(document.querySelector('.carregando-montando')).display === 'none', texto: document.querySelector('.carregando-exemplo').textContent.trim() }));
+      assert.ok(t.ms >= 0 && t.ms < 300, k + ': diálogo em ' + t.ms + ' ms');
+      assert.equal(t.carregando, true, k + ': carregando do exemplo'); assert.equal(t.texto, 'Abrindo o site de exemplo');
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+      assert.equal(new URL(pg.url()).hash, '#previa', 'Voltar fecha (histórico)');
+      // o quadro abre o site de demonstração do nicho (blob da mesma origem, porque a hospedagem manda DENY)
+      await pg.waitForFunction(() => document.querySelector('#previa-carregando').hidden, null, { timeout: 15000 });
+      const fr = pg.frames().find((f) => f.url().startsWith('blob:'));
+      assert.ok(fr, k + ': moldura blob');
+      await fr.waitForFunction(() => /demonstração/i.test(document.body.innerText), null, { timeout: 10000 });
+      assert.match(await fr.evaluate(() => (window.__creatLocal || {}).base), new RegExp('/sites/demo-' + k + '/$'));
+      const d = await pg.evaluate(() => {
+        const vis = (s) => { const e = document.querySelector(s); return !!e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden'; };
+        return { modo: document.querySelector('#previa').getAttribute('data-modo'), rotulo: document.querySelector('#previa-rotulo').innerText.replace(/\s+/g, ' ').trim(), quero: vis('#previa-quero'), testar: vis('#previa-testar'), copiar: vis('#previa-copiar'), notas: [...document.querySelectorAll('#previa .previa-nota')].some((n) => n.getClientRects().length > 0), botao: vis('#previa-exemplo-nome') ? document.querySelector('#previa-exemplo-nome').innerText.trim() : null, preco: /R\$/.test(document.querySelector('#previa').innerText), foco: document.activeElement && document.activeElement.id };
+      });
+      assert.equal(d.modo, 'exemplo');
+      assert.equal(d.rotulo, 'Exemplo · ' + NOME_EX[k], k + ': rótulo');
+      assert.deepEqual([d.quero, d.testar, d.copiar, d.notas, d.preco], [false, false, false, false, false], k + ': nada de Quero, Testar, copiar link nem preço no exemplo');
+      assert.equal(d.botao, { barbearia: 'Ver com o nome da minha barbearia', salao: 'Ver com o nome do meu salão', academia: 'Ver com o nome da minha academia' }[k]);
+      assert.equal(d.foco, 'previa-fechar');
+      // (b) nenhum 'previa' contado, nenhum ViewContent, nenhum previa_gerada
+      assert.deepEqual(contagens(api).map((c) => c.evento), ['visita'], k + ': o exemplo não conta prévia');
+      assert.ok(!(await filaPixel(pg)).some((a) => a[1] === 'ViewContent'), k + ': sem ViewContent no exemplo');
+      // (c) "Ver com o nome da minha ...": fecha, foco no #nome, chip marcado, nada enviado
+      const antes = api.length;
+      await pg.click('#previa-exemplo-nome');
+      await pg.waitForFunction(() => document.querySelector('#previa').hidden && document.activeElement && document.activeElement.id === 'nome');
+      await pg.waitForTimeout(400);
+      const c = await pg.evaluate((kk) => { const r = document.querySelector('#nome').getBoundingClientRect(); return { chip: document.querySelector('input[name="nicho"][value="' + kk + '"]').checked, foco: document.activeElement.id, naTela: r.top >= 0 && r.bottom <= innerHeight }; }, k);
+      assert.deepEqual(c, { chip: true, foco: 'nome', naTela: true }, k);
+      assert.equal(api.length, antes, k + ': voltar ao campo não envia nada');
+      // (d) nome digitado + Enter: exatamente visita e previa, com a praça do anúncio e sem o nome
+      await pg.fill('#nome', 'Barbearia TESTE Pixel'); await pg.keyboard.press('Enter');
+      await pg.waitForFunction(() => !document.querySelector('#previa').hidden && !document.querySelector('#previa').hasAttribute('data-modo'));
+      await pg.waitForFunction(() => document.querySelector('#previa-carregando').hidden, null, { timeout: 15000 });
+      const n = await pg.evaluate(() => ({ rotulo: document.querySelector('#previa-rotulo').innerText.replace(/\s+/g, ' ').trim(), quero: document.querySelector('#previa-quero').getClientRects().length > 0, botaoEx: document.querySelector('#previa-exemplo-nome').getClientRects().length > 0 }));
+      assert.match(n.rotulo, /Barbearia TESTE Pixel$/); assert.doesNotMatch(n.rotulo, /Exemplo/);
+      assert.equal(n.quero, true); assert.equal(n.botaoEx, false);
+      const cs = contagens(api);
+      assert.deepEqual(cs.map((x) => x.evento), ['visita', 'previa'], k);
+      for (const x of cs) { assert.deepEqual(Object.keys(x).sort(), ['evento', 'nicho', 'praca', 'utm_content']); assert.deepEqual([x.nicho, x.praca, x.utm_content], [k, 'feira', 'A1-' + k]); }
+      assert.doesNotMatch(JSON.stringify(api.map((a) => a.corpo)), /TESTE|Pixel/, 'sem o nome digitado no que sai');
+      assert.ok((await filaPixel(pg)).some((a) => a[1] === 'ViewContent'), 'a prévia com nome continua mandando ViewContent');
+      assert.deepEqual(erros, [], k); assert.deepEqual(avisos.filter((x) => !/Failed to load resource|ERR_/.test(x)), [], k + ': console');
+      await ctx.close();
+    }
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('exemplo (e): "Quero um assim" e o rodapé dentro do site de exemplo não navegam o quadro nem a página e levam ao campo do nome (blob e endereço direto)', { skip: !chromium && 'sem Playwright' }, async () => {
+  for (const deny of [true, false]) {
+    const srv = await servidorExemplo({ deny }), base = 'http://127.0.0.1:' + srv.address().port;
+    const nav = await chromium.launch();
+    try {
+      for (const sel of ['a[href*="utm_source=demo"]', 'a[href*="utm_source=rodape"]']) {
+        const { pg, ctx, api, erros } = await paginaApi(nav, base, { consentir: false });
+        const fora = []; await pg.route(/^https:\/\/nuvem\.creatmtt\.com\.br\//, (r) => { fora.push(r.request().url()); return r.fulfill({ status: 200, contentType: 'text/html', body: '<p>home</p>' }); });
+        await pg.goto(base + '/?nicho=salao');
+        await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+        await pg.click('[data-nicho-exemplo="salao"]');
+        await pg.waitForFunction(() => document.querySelector('#previa-carregando').hidden, null, { timeout: 15000 });
+        const fr = pg.frames().find((f) => f !== pg.mainFrame() && /sites\/demo-salao|^blob:/.test(f.url()));
+        assert.ok(fr, (deny ? 'blob' : 'direto') + ': quadro do exemplo');
+        const urlQuadro = fr.url();
+        await fr.waitForSelector(sel, { state: 'attached', timeout: 10000 });
+        const link = fr.locator(sel).first();
+        await link.scrollIntoViewIfNeeded();
+        await link.click();
+        await pg.waitForFunction(() => document.querySelector('#previa').hidden && document.activeElement && document.activeElement.id === 'nome');
+        await pg.waitForTimeout(400);
+        assert.equal(new URL(pg.url()).origin + new URL(pg.url()).pathname, base + '/', 'a página não saiu');
+        assert.equal(fr.url(), urlQuadro, 'o quadro não navegou');
+        assert.deepEqual(fora, [], 'nada pedido ao endereço da home de produção');
+        assert.equal(await pg.isChecked('input[name="nicho"][value="salao"]'), true);
+        assert.deepEqual(contagens(api).map((c) => c.evento), ['visita']);
+        assert.deepEqual(erros, []);
+        await ctx.close();
+      }
+    } finally { await nav.close(); srv.close(); }
+  }
+});
+
+test('exemplo (f, g): voltando pelo "Quero um assim" (utm_source=demo) com origem de anúncio guardada, a prévia fica na praça do anúncio; ?teste=pa-teste não conta nada', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, api, erros } = await paginaApi(nav, base, { consentir: false });
+    await pg.evaluate(() => localStorage.setItem('creat:origem:v1', JSON.stringify({ utm_source: 'meta', utm_medium: 'paid', utm_campaign: 'feira', utm_content: 'R7-barbearia', em: new Date().toISOString() })));
+    await pg.goto(base + '/?nicho=barbearia&utm_source=demo&utm_medium=ref&utm_campaign=demo-v1&utm_content=barbearia');
+    await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+    await pg.fill('#nome', 'Barbearia TESTE Pixel'); await pg.keyboard.press('Enter');
+    await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+    const cs = contagens(api);
+    assert.deepEqual(cs.map((c) => c.evento), ['visita', 'previa']);
+    for (const c of cs) { assert.equal(c.praca, 'feira'); assert.equal(c.utm_content, 'R7-barbearia'); }
+    assert.doesNotMatch(JSON.stringify(cs), /demo-v1/);
+    await ctx.close();
+    // sem origem guardada, quem chega pelo exemplo fica na praça demo-v1 (fora do denominador da análise)
+    const s = await paginaApi(nav, base, { consentir: false });
+    await s.pg.goto(base + '/?nicho=barbearia&utm_source=demo&utm_medium=ref&utm_campaign=demo-v1&utm_content=barbearia');
+    await s.pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+    assert.deepEqual(contagens(s.api).map((c) => [c.evento, c.praca]), [['visita', 'demo-v1']]);
+    await s.ctx.close();
+    // (g) link de teste: nem visita, nem prévia, nem nada com o exemplo
+    const t = await paginaApi(nav, base, { consentir: false });
+    await t.pg.goto(base + '/?nicho=barbearia&teste=pa-teste');
+    await t.pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+    await t.pg.click('[data-nicho-exemplo="barbearia"]');
+    await t.pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+    await t.pg.click('#previa-exemplo-nome');
+    await t.pg.waitForFunction(() => document.querySelector('#previa').hidden);
+    await t.pg.fill('#nome', 'Barbearia TESTE Pixel'); await t.pg.keyboard.press('Enter');
+    await t.pg.waitForFunction(() => !document.querySelector('#previa').hidden && !document.querySelector('#previa').hasAttribute('data-modo'));
+    await t.pg.waitForTimeout(300);
+    assert.deepEqual(contagens(t.api), [], 'nenhuma contagem com ?teste=pa-teste');
+    assert.deepEqual([...erros, ...t.erros, ...s.erros], []);
+    await t.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('exemplo (h): antes do JavaScript da página o cartão é link comum para sites/demo-<nicho>/, que abre sem erro e não conta nada', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo({ deny: false }), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    for (const k of NICHOS_EX) {
+      const { pg, ctx, api, erros } = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+      await pg.route('**/assets/vitrine.js', (r) => r.abort());   // o JavaScript da home ainda não chegou
+      await pg.goto(base + '/?nicho=' + k);
+      const m = await pg.evaluate(MEDIR_DOBRA);
+      assert.deepEqual(m.cartoes.map((c) => c.nicho), [k], k + ': o cartão aparece na primeira pintura, sem o vitrine.js');
+      assert.ok(m.botao.bottom <= 545, k + ': botão no lugar sem o vitrine.js');
+      await Promise.all([pg.waitForURL(new RegExp('/sites/demo-' + k + '/$')), pg.click('[data-nicho-exemplo="' + k + '"]')]);
+      await pg.waitForFunction(() => /demonstração/i.test(document.body.innerText), null, { timeout: 10000 });
+      assert.deepEqual(contagens(api), [], k + ': o link comum não conta nada');
+      assert.deepEqual(erros, [], k);
+      await ctx.close();
+    }
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('exemplo: textos do cartão e do modo exemplo vêm de conteudo/home.json, sem emoji, sem travessão, sem preço; nenhum estilo inline novo', () => {
+  const home = JSON.parse(fs.readFileSync(path.join(RAIZ, 'conteudo', 'home.json'), 'utf8'));
+  const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8').replace(/&amp;/g, '&');
+  const textos = [home.hero.exemplo.selo, home.previa.exemplo.prefixo.trim(), home.previa.exemplo.carregando, ...Object.values(home.previa.exemplo.botao)];
+  for (const k of NICHOS_EX) { const t = home.hero.exemplo[k]; textos.push(t.nome, t.pilula, t.linha, t.aria); assert.equal(t.nome, NOME_EX[k]); }
+  for (const t of textos) {
+    assert.ok(html.includes(t), 'no index.html: ' + t);
+    assert.doesNotMatch(t, /[–—]|\p{Extended_Pictographic}|R\$|\d/u, t);
+  }
+  const cartoes = html.match(/<a class="exemplo-site"[\s\S]*?<\/a>/g) || [];
+  assert.equal(cartoes.length, 3);
+  for (const c of cartoes) { assert.doesNotMatch(c, /style=|<img|<script|on\w+=/); assert.match(c, /href="sites\/demo-(barbearia|salao|academia)\/"/); }
+  // o cartão fica entre os chips e o botão; a Cidade depois da nota do nome, com id, name e autocomplete de sempre
+  const form = /<form class="abrir" id="form-abrir"[\s\S]*?<\/form>/.exec(html)[0];
+  const pos = (s) => form.indexOf(s);
+  assert.ok(pos('<fieldset class="chips">') < pos('class="exemplo-site"') && pos('class="exemplo-site"') < pos('type="submit"') && pos('class="nota-nome"') < pos('id="cidade"'));
+  assert.match(form, /<input id="cidade" name="cidade" type="text" autocomplete="address-level2" maxlength="40"/);
+});
