@@ -338,13 +338,14 @@ test('navegador: /abrir/ limpa nome e cidade do endereço, escolhe o link da pra
     assert.equal(href, link(PREF.feira), 'link da praça feira');
     assert.equal(await pg.getAttribute('#barra-pagar [data-checkout]', 'href'), link(PREF.feira));
     assert.match(await pg.textContent('#resumo-mensal'), /Por mês\s*R\$\s297\s*Plano Vitrine, só com o site no ar\. No cartão, ou anual no Pix\./);
-    assert.equal(await visivel(pg, '#trocar-plano .planos'), true, 'veio da home com o Vitrine: a lista de planos aparece aberta, com ele marcado');
+    assert.equal(await pg.evaluate(() => document.querySelector('#trocar-plano').open), false, 'veio da home com o Vitrine: a lista de planos fica recolhida, o plano aparece na conta');
     assert.equal(await pg.isChecked('input[name="plano"][value="vitrine"]'), true);
     // recarregar não traz nome de volta ao endereço e mantém o negócio na tela
     await pg.reload(); await pg.waitForTimeout(300);
     assert.doesNotMatch(pg.url(), /Studio|Feira/);
     assert.equal(await pg.textContent('#abrir-negocio-nome'), 'Studio Bela & Cia');
     // anual: hoje só a Abertura (link da praça), com o anual cobrado quando o site entra no ar (D3)
+    await pg.click('#trocar-plano summary');
     await pg.click('label.plano-opcao:has(input[value="aberto_anual"])');
     assert.equal(await pg.getAttribute('.pagar [data-checkout]', 'href'), link(PREF.feira));
     assert.match(await pg.textContent('.pagar-total'), /R\$ 297$/);
@@ -1402,6 +1403,53 @@ test('compra curta · navegador: bloco recolhido preenchido vai no corpo; horár
   } finally { await nav.close(); srv.close(); }
 });
 
+test('compra curta · navegador: a confirmação do horário cai quando a grade é redesenhada com o padrão de outro nicho', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  const HORARIO_CLIENTE = 'seg=08:00-12:00;ter=08:00-12:00;qua=08:00-12:00;qui=08:00-12:00;sex=08:00-12:00;sab=fechado;dom=fechado';
+  const salvoBarbearia = () => Object.assign(PEDIDO_CHEIO(), { nicho: 'barbearia', plano: 'aberto', negocio: 'TESTE Studio Bela', horarios: HORARIO_CLIENTE, salvo_em: new Date().toISOString() });
+  try {
+    // controle: pedido salvo do mesmo nicho, a grade volta com o horário do cliente e a confirmação continua marcada
+    let s = await paginaApi(nav, base, { pedido: salvoBarbearia() });
+    await s.pg.goto(base + '/abrir/#plano=aberto&k=barbearia&n=TESTE%20Studio%20Bela&c=Campinas&p=1');
+    await s.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await s.pg.waitForTimeout(400);
+    assert.equal(await s.pg.isChecked('#p-horarios-confirmo'), true, 'mesmo nicho: o horário é o do cliente');
+    assert.equal(await s.pg.inputValue('#h-seg-abre'), '08:00');
+    await s.ctx.close();
+    // cenário 1: horário confirmado de barbearia, a pessoa troca para salão na prévia com o mesmo nome e abre /abrir/
+    s = await paginaApi(nav, base, { pedido: salvoBarbearia() });
+    await s.pg.goto(base + '/abrir/#plano=aberto&k=salao&n=TESTE%20Studio%20Bela&c=Campinas&p=1');
+    await s.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await s.pg.waitForFunction(() => !document.querySelector('#p-horarios-confirmo').checked, null, { timeout: 4000 });
+    assert.equal(await s.pg.isChecked('#h-seg-aberto'), false, 'a grade é a do salão (padrão: segunda fechada), não a do cliente');
+    await s.pg.fill('#p-endereco', '');
+    await preencherAbrir(s.pg);
+    await Promise.all([s.pg.waitForURL(/mercadopago/), s.pg.click('.pagar [data-checkout]')]);
+    let reg = s.api.find((a) => a.nome === 'registrarPedido');
+    assert.equal('horarios' in reg.corpo, false, 'o padrão do salão não vai como horário do cliente');
+    assert.deepEqual(s.erros, []);
+    await s.ctx.close();
+    // cenário 2: sem nicho da prévia; mexer num dia confirma; trocar o tipo do negócio redesenha e desmarca
+    s = await paginaApi(nav, base);
+    await s.pg.goto(base + '/abrir/#plano=aberto&n=TESTE%20Studio%20Bela&c=Campinas&p=1');
+    await s.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await s.pg.selectOption('#p-nicho', 'barbearia'); await s.pg.waitForTimeout(400);
+    await s.pg.click('#p-depois summary');
+    await s.pg.selectOption('#h-qua-fecha', '13:00');
+    assert.equal(await s.pg.isChecked('#p-horarios-confirmo'), true, 'mexer no horário confirma');
+    await s.pg.selectOption('#p-nicho', 'salao');
+    await s.pg.waitForFunction(() => !document.querySelector('#p-horarios-confirmo').checked, null, { timeout: 4000 });
+    await preencherAbrir(s.pg);
+    await Promise.all([s.pg.waitForURL(/mercadopago/), s.pg.click('.pagar [data-checkout]')]);
+    reg = s.api.find((a) => a.nome === 'registrarPedido');
+    assert.equal(reg.corpo.nicho, 'salao');
+    assert.equal('horarios' in reg.corpo, false, 'o padrão do novo nicho não vai marcado como do cliente');
+    assert.deepEqual(s.erros, []);
+    await s.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
 test('compra curta · navegador 360x640: botão de pagar até 1.400 px do topo, na ordem negócio, preço, o que leva, campos, aceite, garantia e botão', { skip: !chromium && 'sem Playwright' }, async () => {
   const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
   const nav = await chromium.launch();
@@ -1458,7 +1506,7 @@ test('compra curta: "O que você leva" e a garantia vêm dos textos de conteudo/
   }
 });
 
-test('compra curta · navegador: plano escolhido na home continua valendo em /abrir/, com a lista de planos aberta', { skip: !chromium && 'sem Playwright' }, async () => {
+test('compra curta · navegador: plano escolhido na home continua valendo em /abrir/, marcado na conta e com a lista de planos recolhida', { skip: !chromium && 'sem Playwright' }, async () => {
   const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
   const nav = await chromium.launch();
   try {
@@ -1469,8 +1517,25 @@ test('compra curta · navegador: plano escolhido na home continua valendo em /ab
     await Promise.all([pg.waitForURL(/\/abrir\//), pg.evaluate(() => document.querySelector('a[data-plano="vitrine"]').click())]);
     await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
     assert.equal(await pg.isChecked('input[name="plano"][value="vitrine"]'), true);
-    assert.equal(await pg.evaluate(() => document.querySelector('#trocar-plano').open), true, 'a lista aparece aberta');
+    assert.equal(await pg.evaluate(() => document.querySelector('#trocar-plano').open), false, 'a lista fica recolhida: o plano escolhido já está na conta');
     assert.match(await pg.textContent('#resumo-mensal'), /R\$\s297\s*Plano Vitrine/);
+    // o que o Vitrine soma aparece em "O que você leva" (frase de home.json), e some ao trocar para o Aberto
+    const hj = JSON.parse(fs.readFileSync(path.join(RAIZ, 'conteudo/home.json'), 'utf8'));
+    assert.equal(await visivel(pg, '#leva-lista [data-se-plano="vitrine"]'), true);
+    assert.equal((await pg.textContent('#leva-lista [data-se-plano="vitrine"]')).trim(), hj.precos.planos.vitrine.inclui[1]);
+    const fundo = () => pg.evaluate(() => Math.round(document.querySelector('.pagar [data-checkout]').getBoundingClientRect().bottom + scrollY));
+    const fundoVitrine = await fundo();
+    await pg.click('#trocar-plano summary'); await pg.click('label.plano-opcao:has(input[value="aberto"])');
+    await pg.click('#trocar-plano summary');
+    const fundoAberto = await fundo();
+    console.log('# Vitrine vindo da home, 390x844: botão a ' + fundoVitrine + ' px (Aberto: ' + fundoAberto + ' px)');
+    assert.ok(fundoVitrine - fundoAberto <= 100, 'o Vitrine custa só a linha a mais: ' + fundoVitrine + ' x ' + fundoAberto);
+    assert.equal(await visivel(pg, '#leva-lista [data-se-plano="vitrine"]'), false, 'no Aberto, a linha do Vitrine sai');
+    await pg.click('#trocar-plano summary');
+    assert.match(await pg.textContent('#resumo-mensal'), /Plano Aberto/);
+    await pg.click('label.plano-opcao:has(input[value="vitrine_anual"])');
+    assert.equal(await visivel(pg, '#leva-lista [data-se-plano="vitrine"]'), true, 'no Vitrine anual, a linha volta');
+    await pg.click('label.plano-opcao:has(input[value="vitrine"])');
     assert.equal(await pg.textContent('#abrir-negocio-nome'), 'TESTE Studio Bela');
     assert.equal(await pg.isVisible('#p-cidade'), true, 'sem cidade na prévia: o campo aparece, porque o servidor exige');
     await pg.fill('#p-cidade', 'Campinas');
@@ -1499,8 +1564,27 @@ test('compra curta · navegador: /obrigado/ pago sem endereço e horário mostra
     assert.match(texto, /vou mandar o endereço e o horário do pedido PA-7K3QX2MD4R\./);
     assert.doesNotMatch(href, /maria|5575900000000|Rua|segredo|q1Zr8Xn4/i, 'nenhum dado pessoal nem o segredo na URL');
     assert.equal(await a.pg.evaluate(() => document.querySelector('#obrigado-botao').classList.contains('btn-sol')), false, 'um só botão amarelo');
+    assert.equal(await a.pg.textContent('#obrigado-lead'), 'Recebemos o seu pagamento. Guarde o recibo abaixo.', 'sem dizer que a equipe já começou');
+    assert.equal(await visivel(a.pg, '#obrigado-botao'), false, 'o botão do estado (o mesmo WhatsApp do suporte) sai: um só caminho no corpo da página');
+    assert.equal(await a.pg.locator('main a.btn-sol:visible').count(), 1, 'um só link amarelo na tela (o da sede é botão, não WhatsApp)');
+    // o bloco vem logo depois do título e do texto do estado, e o botão dele cabe na primeira tela de 390x844
+    const pos = await a.pg.evaluate(() => {
+      const t = (s) => Math.round(document.querySelector(s).getBoundingClientRect().top + scrollY);
+      return { lead: t('#obrigado-lead'), falta: t('#obrigado-falta'), acoes: t('.obrigado-acoes'), recibo: t('#obrigado-recibo'), zap: Math.round(document.querySelector('#falta-zap').getBoundingClientRect().bottom + scrollY) };
+    });
+    assert.ok(pos.lead < pos.falta && pos.falta < pos.acoes && pos.falta < pos.recibo, JSON.stringify(pos));
+    assert.ok(pos.zap <= 844, 'botão do suporte a ' + pos.zap + ' px do topo');
     assert.deepEqual(a.erros, []);
     await a.ctx.close();
+    // servidor fora do ar: "Enviar pedido no WhatsApp" continua lá, mas secundário (sem o amarelo) enquanto o bloco estiver na tela
+    const d = await paginaApi(nav, base, { pedido: Object.assign(SEM_DEPOIS(), { salvo_em: new Date().toISOString() }), api: { confirmarPagamento: 'abortar', consultarPedido: 'abortar', registrarPedido: 'abortar' } });
+    await d.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972');
+    await d.pg.waitForFunction(() => { const e = document.querySelector('#enviar-pedido'); return e && !e.closest('[hidden]') && !e.hidden; }, null, { timeout: 15000 });
+    assert.equal(await visivel(d.pg, '#obrigado-falta'), true);
+    assert.equal(await d.pg.evaluate(() => document.querySelector('#enviar-pedido').classList.contains('btn-sol')), false, 'Enviar pedido fica secundário');
+    assert.equal(await d.pg.evaluate(() => document.querySelector('#falta-zap').classList.contains('btn-sol')), true);
+    assert.equal(await d.pg.locator('main a.btn-sol:visible').count(), 1, 'um só botão amarelo também com o servidor fora');
+    await d.ctx.close();
     // Pix pendente (ainda não pagou) e pedido completo: sem o bloco
     const b = await paginaApi(nav, base, { pedido: Object.assign(SEM_DEPOIS(), { salvo_em: new Date().toISOString() }) });
     await b.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&resultado=pendente');
@@ -1511,6 +1595,8 @@ test('compra curta · navegador: /obrigado/ pago sem endereço e horário mostra
     await c.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972');
     await c.pg.waitForFunction(() => document.querySelector('main').getAttribute('data-estado') === 'confirmado');
     assert.equal(await visivel(c.pg, '#obrigado-falta'), false);
+    assert.match(await c.pg.textContent('#obrigado-lead'), /a equipe começa o seu site/, 'pedido completo: o texto de sempre');
+    assert.equal(await visivel(c.pg, '#obrigado-botao'), true, 'pedido completo: o botão do estado volta');
     await c.ctx.close();
   } finally { await nav.close(); srv.close(); }
 });

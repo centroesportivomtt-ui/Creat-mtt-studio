@@ -1792,7 +1792,15 @@
     var hConf = f.querySelector('#p-horarios-confirmo');
     // mexer em qualquer dia ou hora é dizer "este é o meu horário": a confirmação marca sozinha (o change nativo sobe até a caixa)
     if (hConf) hCaixa.addEventListener('change', function () { hConf.checked = true; if (hConf.closest('.campo')) hConf.closest('.campo').removeAttribute('data-estado'); });
-    var aplicarNicho = function (k) { lerNicho(k).then(function (pre) { if (pre) { var c = hConf ? hConf.checked : false; montarHorarios(hCaixa, semanaDe(pre)); if (salvo && salvo.horarios && salvo.nicho === k) preencherHorarios(hCaixa, salvo.horarios); if (hConf) hConf.checked = c; } }); };
+    // Redesenhar a grade troca o horário pelo padrão do nicho, que NÃO é o do cliente: a confirmação só fica marcada
+    // quando a grade volta com o horário do próprio cliente (o salvo, do mesmo nicho). Em qualquer outro caso, desmarca.
+    var aplicarNicho = function (k) { lerNicho(k).then(function (pre) {
+      if (!pre) return;
+      var doCliente = !!(salvo && salvo.horarios && salvo.nicho === k);
+      montarHorarios(hCaixa, semanaDe(pre));
+      if (doCliente) preencherHorarios(hCaixa, salvo.horarios);
+      if (hConf) hConf.checked = doCliente;
+    }); };
     if (nicho) aplicarNicho(nicho);
     var sel = f.querySelector('#p-nicho'); if (sel) sel.addEventListener('change', function () { if (NICHOS.indexOf(sel.value) !== -1) aplicarNicho(sel.value); });
     if (salvo) {
@@ -1918,9 +1926,14 @@
     }
     var radios = $$('input[name="plano"]', f);
     radios.forEach(function (r) { r.checked = r.value === est.plano; });
-    // O Aberto vem marcado e os outros ficam em "Trocar de plano". Quem chegou da home com outro plano vê a lista aberta,
-    // com o plano que escolheu marcado.
-    var trocar = $('#trocar-plano'); if (trocar && est.plano !== 'aberto') trocar.open = true;
+    // "Trocar de plano" fica sempre recolhido: quem já escolheu o plano na home o vê marcado na conta ("Plano Vitrine"),
+    // sem a lista de 4 planos entre ele e o botão de pagar. O que o Vitrine soma entra em "O que você leva" ([data-se-plano]).
+    function mostrarPlano() {
+      var base = String(est.plano || '').replace(/_anual$/, '');
+      $$('[data-se-plano]').forEach(function (x) { x.hidden = x.getAttribute('data-se-plano') !== base; });
+      $$('[data-plano-nome]').forEach(function (x) { if (ROTULO_PLANO[est.plano]) x.textContent = ROTULO_PLANO[est.plano]; });
+    }
+    mostrarPlano();
     prepararFormPedido(f, est, salvo && (!est.n || salvo.negocio === est.n) ? salvo : null);
     var precos = null, escolha = null;
     var botoes = $$('[data-checkout]');
@@ -1962,7 +1975,7 @@
     }
     radios.forEach(function (r) {
       r.addEventListener('change', function () {
-        est.plano = r.value; somFn('clique');
+        est.plano = r.value; somFn('clique'); mostrarPlano();
         // o fragmento guarda só plano, nicho, paleta e utm: nome e cidade nunca voltam para o endereço
         try { history.replaceState(null, '', location.pathname + location.search + '#' + montarFragmento(semDadosPessoais(est), true)); } catch (e) {}
         atualizarTotal(); evento('plano_visto', { plano: est.plano, nicho: est.k || undefined });
@@ -2159,7 +2172,7 @@
      confirmando; com a URL dizendo aprovado e o servidor ainda sem resposta, vale "a_conferir" (chaveTexto). */
   var ESTADOS_OBRIGADO = {
     a_conferir: { olho: 'Pagamento', titulo: 'Estamos conferindo o seu pagamento', texto: 'O Mercado Pago avisou o pagamento e a equipe está conferindo. Guarde o número do pagamento abaixo.', botao: 'Falar com o suporte no WhatsApp' },
-    aprovado: { olho: 'Pagamento', titulo: 'Pagamento confirmado', texto: 'Recebemos o seu pagamento, e a equipe começa o seu site. Guarde o recibo abaixo. O link do site pronto chega {canais}.', botao: 'Falar com a equipe no WhatsApp' },
+    aprovado: { olho: 'Pagamento', titulo: 'Pagamento confirmado', texto: 'Recebemos o seu pagamento, e a equipe começa o seu site. Guarde o recibo abaixo. O link do site pronto chega {canais}.', textoFalta: 'Recebemos o seu pagamento. Guarde o recibo abaixo.', botao: 'Falar com a equipe no WhatsApp' },
     conferencia_longa: { olho: 'Pagamento', titulo: 'Seu pagamento está em conferência', texto: 'Esta página parou de consultar para não gastar a sua internet. Guarde o número do pagamento e fale com o suporte: a equipe confere e responde no seu WhatsApp.', botao: 'Falar com o suporte no WhatsApp' },
     produto_fora: { olho: 'Pagamento', titulo: 'Pagamento recebido', texto: 'Recebemos um pagamento que esta página não reconhece. O suporte vai falar com você. Guarde o número do pagamento abaixo.', botao: 'Falar com o suporte no WhatsApp' },
     recusado: { olho: 'Pagamento', titulo: 'O pagamento não passou', texto: 'O banco ou o cartão recusou. Nada foi cobrado.', botao: 'Tentar de novo' },
@@ -2385,6 +2398,8 @@
         var msg = mensagemPedido(pedido, estado, pg, textos && textoDe(textos, 'wa.pedidoAbertura'));
         $('#pedido-texto').textContent = msg;
         var enviar = $('#enviar-pedido'), semZap = $('#sem-zap');
+        var faltaNaTela = !!($('#obrigado-falta') && !$('#obrigado-falta').hidden);
+        enviar.classList.toggle('btn-sol', !faltaNaTela);
         if (suporteOk()) { enviar.href = linkWhats(CK.whatsappSuporte, msg); enviar.target = '_blank'; enviar.rel = 'noopener noreferrer'; enviar.hidden = false; semZap.hidden = true; }
         else { enviar.hidden = true; semZap.hidden = false; var m = $('#sem-zap-email'); m.href = linkEmail('PEDIDO v1 ' + pedido.id, msg); m.textContent = emailSuporte(); }
       }
@@ -2412,9 +2427,14 @@
       if (!secundario.hidden) { secundario.href = linkZap(msgZap()); secundario.target = '_blank'; secundario.rel = 'noopener noreferrer'; }
       if (zapTopo) { zapTopo.href = linkZap(msgZap()); if (suporteOk()) { zapTopo.target = '_blank'; zapTopo.rel = 'noopener noreferrer'; } }
       desenharRecibo();
+      // Com o bloco "Falta pouco" na tela, o botão dele é o único amarelo e o único caminho ao WhatsApp no corpo da página:
+      // o botão do estado (no aprovado, o mesmo WhatsApp do suporte) sai, e "Enviar pedido no WhatsApp" fica secundário.
+      var falta = desenharFalta();
+      // pago e sem endereço ou horário: o texto do estado não diz que a equipe já começou (o bloco logo abaixo diz o que falta)
+      if (falta && chaveTexto() === 'aprovado') lead.textContent = texto('textoFalta');
+      botao.classList.toggle('btn-sol', !falta);
+      botao.hidden = falta;
       desenharPedido();
-      // com o bloco "Falta pouco" na tela, o botão dele é o principal; o do estado fica claro, sem o amarelo
-      botao.classList.toggle('btn-sol', !desenharFalta());
       // Formulário: só quando o pedido não está neste aparelho e a pessoa pagou ou pode ter pagado (nunca em recusado,
       // assinatura, anual, teste, Bastidores nem na espera do desktop). Sem retorno, ele fica fechado.
       var comForm = !pedido && /^(aprovado|confirmado|pendente|sem_retorno)$/.test(estado);

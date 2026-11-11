@@ -11,6 +11,8 @@
     "aprovado": {
       "titulo": "Pagamento confirmado",
       "texto": "Recebemos o seu pagamento, e a equipe começa o seu site. Guarde o recibo abaixo. O link do site pronto chega {canais}.",
+      "textoFalta": "Recebemos o seu pagamento. Guarde o recibo abaixo.",
+      "_textoFalta": "Pago sem endereço ou horário (bloco faltaDados logo abaixo): a equipe ainda não monta o site, então o texto não diz que ela começou.",
       "botao": "Falar com a equipe no WhatsApp"
     },
     "a_conferir": {
@@ -110,7 +112,7 @@
   "faltaDados": {
     "_sobre": "Bloco de /obrigado/ quando o pedido foi pago sem endereço ou sem horário (compra curta, /abrir/ de 11/11). A produção não monta o site sem eles (docs/EXECUTOR.md, passo (e), Saída 6) e nunca usa endereço ou horário de exemplo. Hoje não existe rota que complete o pedido com o segredo: o caminho é o WhatsApp do Suporte Creat. O prazo dos termos v2 (cláusula 5) conta da confirmação do pagamento; este bloco não diz o contrário.",
     "titulo": "Falta pouco para a produção começar",
-    "texto": "Para montar o site, a equipe precisa de:",
+    "texto": "A equipe só monta o site com estes dados em mãos. Mande logo pelo WhatsApp do suporte:",
     "itens": {
       "endereco": "O endereço completo: rua, número, bairro, cidade-UF e CEP.",
       "horarios": "O horário de funcionamento de cada dia da semana."

@@ -31,12 +31,15 @@
       "precos.abertura.inclui.1",
       "precos.abertura.inclui.2",
       "precos.planos.aberto.inclui.0"
-    ]
+    ],
+    "vitrine": "precos.planos.vitrine.inclui.1",
+    "_vitrine": "Uma linha a mais, só com o Vitrine ou o Vitrine anual marcado (li[data-se-plano=vitrine] em abrir/index.html): o que o Vitrine soma ao Aberto."
   },
   "adiantar": {
     "_sobre": "Bloco recolhido (details fechado) com endereço, horário e nome. O servidor aceita o pedido sem eles (docs/PEDIDO-API.md); sem endereço ou horário a produção para e o suporte pede pelo WhatsApp (docs/EXECUTOR.md, passo (e)). O prazo dos termos v2 (cláusula 5) conta da confirmação do pagamento: nada aqui diz que ele espera estes dados.",
     "titulo": "Endereço e horário: agora ou depois",
-    "texto": "Já sabe? Adiante aqui. Se não, pague e mande depois pelo WhatsApp do suporte.",
+    "texto": "O site só é montado com eles. Adiante aqui ou mande logo depois do pagamento, pelo WhatsApp do suporte.",
+    "_textoRegra": "Fato da produção (docs/EXECUTOR.md, passo (e), Saída 6), nunca condição de prazo: a cláusula 5 dos termos v2 conta as 72 h da confirmação do pagamento. Quem manda é o comprador (a política de privacidade v3 não prevê o suporte escrevendo primeiro).",
     "_texto": "Depois do pagamento, a página do pedido (/obrigado/) mostra o bloco faltaDados com o botão do WhatsApp do suporte e o número do pedido.",
     "horariosAjuda": "Começa com o comum do seu nicho. Ajuste os dias e as horas e marque a confirmação: sem ela, o horário não vai no pedido.",
     "horariosConfirmo": "Este é o horário do meu negócio"
