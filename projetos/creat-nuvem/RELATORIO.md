@@ -408,3 +408,20 @@ No ar, depois: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 125 de
 **Fica sabido.** O portão da cena falhava de modo intermitente no passo do rosto: o Tab até o fim da seção tirava o palco da tela e, fora da tela, a cena fica parada de propósito. O portão agora volta ao palco antes. A resposta rápida "Como funciona?" do WhatsApp Business ainda fala em "4 dados": o texto novo está em `marketing/trafego/anuncios-meta.md` e precisa ser trocado no aplicativo.
 
 **Não verificado.** Aparelho real; navegador de dentro do Instagram; compra real; se a equipe consegue gravar endereço e horário pelo painel do app e voltar o pedido para produção (linha 11d do ensaio do executor); usuário comum logado (22 itens).
+
+## Publicação de 11/11/2026, 14:19 UTC (11:19 na Bahia): site de exemplo na primeira tela e contador com 9 eventos
+
+**Por que.** Até 10h30 de 11/11 eram 340 visitas reais de anúncio na vida toda e nenhuma prévia pedida; 57 delas já com a primeira tela nova e o público fechado. O diagnóstico com o navegador de dentro do Instagram (Android e iPhone, rede lenta) não achou defeito: campo e botão aparecem em 1,4 a 4 s e a prévia abre. O anúncio diz "Grátis para ver. Sem cadastro" e a primeira tela mostrava três campos e nenhuma imagem de site; o primeiro site de exemplo ficava 7,6 telas abaixo. Duas causas possíveis, nenhuma provada: a página pede trabalho antes de mostrar algo, ou o público "quem administra página" não é dono de barbearia e salão.
+
+**O que entrou.**
+- Primeira tela (para quem chega com `?nicho=`): entre o tipo de negócio e o botão, um cartão de 88 px do site de exemplo do nicho, com o selo "EXEMPLO · nome fictício", que abre o site de demonstração dentro da prévia sem digitar nada e sem contar `previa`. O campo Cidade desceu para depois do botão. O botão "Ver meu site pronto" continua terminando em 539 px em 360x640.
+- Servidor: a lista fechada de eventos do contador passou de 4 para 9 (`ficou_10s`, `rolou`, `tocou_nome`, `digitou_nome`, `tocou_exemplo`), regras `pa-regras-1A-2026-11-11a`, e o esquema de `ContadorDia.evento` ganhou os 5 valores. A página ainda não emite os 5: isso sai junto com a política de privacidade versão 5 (pacote B).
+- `conferir-no-ar.cjs` ganhou o grupo "C exemplo" (6 conferências).
+
+**Como foi publicado.** Repositório no commit `c337add`; pacote montado no app com a mesma impressão digital do local (145 arquivos, sha256 do manifesto `a5970ff1…6141`); `src/lib/pa/regras.js` igual a `schema/pedido-regras.mjs` (sha256 `e91dbbe2…b30f`, 46.830 bytes). Ordem: esquema da entidade, regras, página. App: checkpoint `6af4795e9cdf34cb5624c4e1` (git `55e6925`). Volta: checkpoint `6af43aa22b6e60a2c4cc0150` (git `e931be1`). O app trouxe sozinho a atualização do pacote da hospedagem de 0.8.59 para 0.8.60.
+
+**Verificado.** Suíte 331 de 331; moldura, boot e portão da cena verdes. Teste, revisão e segurança: aprovado com correções, todas aplicadas (o selo não corta em 320, 360 e 390 px; aviso curto quando o exemplo não abre; o exemplo apaga do aparelho o que gravou ao fechar). No ar: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 131 de 131, jornada e cookies 10 de 10, grupo C exemplo 6 de 6 nos três nichos; os 3 sites de demonstração 200. Telas olhadas no ar em 360x640.
+
+**Como saber se funcionou.** Regra escrita antes: nas próximas 100 visitas reais de anúncio (praça feira ou salvador-rms, anúncio R7, R9 ou F1), sem outra mudança de página, preço, criativo ou público, só correção de erro. Mede-se prévia pedida sobre visita e, quando o pacote B estiver no ar, toque no exemplo, toque no campo, rolagem e permanência.
+
+**Não verificado.** Aparelho real e o navegador de dentro do Instagram de verdade (só emulação); compra real; usuário comum logado (22 itens); com o exemplo aberto a hospedagem injeta dois scripts que a CSP da própria demonstração recusa (erro de console que já existia ao abrir a demonstração direto).
