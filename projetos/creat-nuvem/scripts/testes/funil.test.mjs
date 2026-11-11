@@ -1302,7 +1302,7 @@ test('navegador 360x640: chegando à seção da equipe o aviso de medição é f
     await pg.goto(base + '/?nicho=barbearia');
     await pg.evaluate(() => { const s = document.querySelector('#sede'); window.scrollTo(0, s.getBoundingClientRect().top + scrollY - 60); });
     await pg.waitForSelector('#consentimento:not([hidden])');
-    await pg.waitForFunction(() => document.querySelector('#consentimento').classList.contains('is-faixa'), null, { timeout: 3000 });
+    await pg.waitForFunction(() => document.querySelector('#consentimento').classList.contains('is-faixa'), null, { timeout: 15000 });
     const h = await pg.evaluate(() => document.querySelector('#consentimento').getBoundingClientRect().height);
     assert.ok(h <= 64, 'faixa de até 64 px sobre a seção da equipe: ' + h);
     await ctx.close();

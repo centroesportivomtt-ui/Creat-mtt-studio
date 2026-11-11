@@ -253,9 +253,12 @@ async function print(pg, nome) { await pg.screenshot({ path: path.join(PRINTS, n
     conferir(JSON.stringify(ordem.map((o) => o.q)) === JSON.stringify(esperado), '10. ordem do Tab: chips, Pausar, 7 rostos, Entrar na sede 3D, Abrir o site pronto', ordem.map((o) => o.q).join(' > '));
     conferir(ordem.every((o) => o.foco), '10. foco visível em todos', ordem.filter((o) => !o.foco).map((o) => o.q).join(' '));
     // rosto pelo teclado: pula para o passo dele e pausa com o balão; Esc retoma
+    // o Tab até "Abrir o site pronto" pode ter rolado a página a ponto de tirar o palco da tela; fora da tela a cena
+    // fica parada (motivo "fora") e o balão nunca chega. Volta ao palco antes, como quem está olhando a cena.
+    await irParaPalco(pg); await pg.waitForTimeout(600);
     await pg.focus('.sede-rosto[data-rosto="paleta"]'); await pg.keyboard.press('Enter');
     await pg.waitForFunction(() => { const e = window.__sv.ev.filter((x) => x.n === 'estado').pop(); return e && e.d.pausado && e.d.motivo === 'balao'; }, null, { timeout: 6000 }).catch(() => {});
-    const bal = await pg.evaluate(() => ({ item: (document.querySelector('.esteira-lista li[aria-current="step"]') || {}).getAttribute && document.querySelector('.esteira-lista li[aria-current="step"]').getAttribute('data-agente'), botao: document.querySelector('[data-sede-pausar]').textContent.trim() }));
+    const bal = await pg.evaluate(() => ({ item: (document.querySelector('.esteira-lista li[aria-current="step"]') || {}).getAttribute && document.querySelector('.esteira-lista li[aria-current="step"]').getAttribute('data-agente'), botao: document.querySelector('[data-sede-pausar]').textContent.trim(), ult: window.__sv.ev.filter((x) => x.n === 'estado' || x.n === 'toque').slice(-4).map((x) => x.n + ':' + (x.d.motivo || x.d.agente || '') + (x.d.pausado === false ? ':roda' : '')).join(' '), y: Math.round(scrollY) }));
     conferir(bal.item === 'paleta' && bal.botao === 'Continuar', '10. rosto da Paleta: pula para o passo dela e pausa com o balão', JSON.stringify(bal));
     await print(pg, 'cena-claro-360-balao.png');
     await pg.keyboard.press('Escape'); await pg.waitForTimeout(400);
