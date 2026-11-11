@@ -10,8 +10,8 @@ Este é o contrato que a onda 2 lê. Ele cobre o pedido gravado no clique de pag
 
 **Estado (endereço único, pacote H3, 11/11/2026):**
 - Endereço canônico: `https://nuvem.creatmtt.com.br`. O antigo (`https://creat-nuvem-404b1994.base44.app`) continua no ar e as rotas `/api/pa/*` respondem igual nos dois (seção 8.10). Nenhuma rota confere `Origin`, `Referer` ou `Host`; a única trava de origem é `Sec-Fetch-Site: cross-site` (403), e a página chama sempre `location.origin + '/api/pa/'`, a mesma origem em que foi aberta.
-- Regras: `VERSAO_REGRAS = 'pa-regras-1A-2026-11-10f'`. Única mudança desde a `-10e`: os links dos e-mails ao cliente (`modeloEmailCliente`: recibo, rascunho e mensalidade) usam o endereço canônico. `entradaDoRegistro` continua usando a origem que receber; sem origem https válida, cai no canônico. O sha256 do arquivo está na seção 9.
-- No app: a `-10f` está no sandbox (checkpoint `6af3c377db3067a148bad505`, commit `f2968e7`), **sem deploy**. Produção continua com a `-10e` até o coordenador publicar. Volta: checkpoint `6af3c32c57d4bf26ea220951` (commit `ccd084c`).
+- Regras: `VERSAO_REGRAS = 'pa-regras-1A-2026-11-11a'`. Única mudança desde a `-10f`: a lista fechada `EVENTOS` do contador passa de 4 para 9 nomes, com os 5 sinais de interesse `ficou_10s`, `rolou`, `tocou_nome`, `digitou_nome` e `tocou_exemplo` (seção 4.4). O corpo, a normalização, o teto e a conferência não mudam. O sha256 do arquivo está na seção 9.
+- No app: em 11/11/2026 o sandbox `main` tem a `-10f` (sha256 `10a0465f...`, conferido por `run_command`) e `ContadorDia.evento` com enum de 4 valores (conferido por `list_entity_schemas`). A `-11a` **ainda não foi copiada**. A ordem segura da cópia está na seção 4.4 ("Para publicar os eventos de interesse"). A `-10f` anterior: checkpoint `6af3c377db3067a148bad505` (commit `f2968e7`). Volta: checkpoint `6af3c32c57d4bf26ea220951` (commit `ccd084c`).
 - Termos: o servidor aceita `termos-v1` e `termos-v2` (`TERMOS` em `pedido-regras.mjs`). `termos-v2` = sha256 `7ae67e835b8d745b00eb49dc9167bf43f8b50688123393d217cdefc6eb3fb612` do `conteudo/termos.md` (commit `ab5a4b4`, cabeçalho "Versão 2 (termos-v2)"). `termos-v1` fica aceita porque a página que está no ar e os pedidos antigos mandam v1; cada registro grava o hash da versão que mandou. Versão desconhecida: 422 `campo: termos_versao`. A página nova manda `termos-v2` (`checkout.config.js`, `termosVersao`).
 - Prazo: regra única dos termos v2, cláusula 5 (seção 6). Fora do horário de atendimento, o relógio de 72 h começa às 11h do próximo dia de atendimento, não mais às 9h.
 - Contrato do corpo: `schema/pedido.schema.json` tem de listar em `termos_versao` as mesmas versões de `TERMOS` (`termos-v1` e `termos-v2`); `assets/vitrine.js` não pode cair para `termos-v1` quando faltar `CK.termosVersao`. Os dois testes do fecho F1 falham até os donos desses arquivos aplicarem a troca (patch pronto com o coordenador).
@@ -60,7 +60,7 @@ Os 12 campos do executor e os 3 opcionais do registro estão no esquema desde 10
 
 ### ContadorDia `{data, evento, nicho, praca, anuncio, n}`
 
-`data` em America/Bahia (AAAA-MM-DD). Sem IP, sem cookie, sem dado pessoal.
+`data` em America/Bahia (AAAA-MM-DD). Sem IP, sem cookie, sem dado pessoal. `nicho`, `praca` e `anuncio` são texto no esquema (a lista fechada fica nas regras). `evento` é **enum fechado no esquema da entidade** e tem de ter exatamente os nomes de `EVENTOS` de `pedido-regras.mjs`, na mesma ordem: com a `-11a`, 9 valores (`visita`, `previa`, `ida_pagamento`, `clique_pagar`, `ficou_10s`, `rolou`, `tocou_nome`, `digitou_nome`, `tocou_exemplo`). Em 11/11/2026 o app ainda tem só os 4 primeiros. Se as regras aceitarem um evento que o enum não tem, o `create` falha dentro do `try/catch` da rota e a resposta continua 204: a contagem some sem aviso. Por isso o enum cresce **antes** da cópia das regras.
 
 ### LimiteTaxa `{chave_hash, janela, n, expira_em}`
 
@@ -227,13 +227,35 @@ Limite declarado do casamento: quem paga com e-mail diferente do digitado cai em
 
 Corpo `{evento, nicho, praca, anuncio}` (ou `utm_content` no lugar de `anuncio`). Responde **204 sempre** (403 só para `cross-site`).
 
-- `evento`: `visita`, `previa`, `ida_pagamento`, `clique_pagar`. Outro: descartado.
+- `evento`: lista fechada `EVENTOS` (9 desde a `-11a`). Outro nome, outra caixa (`Rolou`), espaço a mais ou tipo que não seja texto: descartado sem gravar (`normalizarContagem` devolve `null`), como antes.
+  - Funil: `visita` (página vista), `previa` (prévia gerada com nome digitado), `ida_pagamento` (abertura de `/abrir/`), `clique_pagar` (toque em Pagar).
+  - Interesse (11/11/2026): `ficou_10s`, `rolou`, `tocou_nome`, `digitou_nome`, `tocou_exemplo`. Definições exatas e o que cada um responde em `docs/MEDICAO-FUNIL.md`, "Contador próprio (sem aceite)".
+  - Regra dos 9: cada um sai **no máximo uma vez por carga da página**, pela mesma `contar()` da página e com o mesmo corpo `{evento, nicho, praca, utm_content}`. Nenhum campo novo: sem texto digitado, sem tempo exato, sem posição de rolagem, sem identificador, sem cookie. Campo a mais no corpo é ignorado pelo servidor (teste "nenhum campo novo passa" em `pedido-api.test.mjs`). Nada sai no link de teste `?teste=pa-teste`.
 - `nicho`: `barbearia`, `salao`, `academia`; outro vira `outro`. `praca`: `feira`, `salvador-rms`; outra vira `outro`. `anuncio`: lista fechada de códigos conhecidos em `ANUNCIOS` de `pedido-regras.mjs` (53 códigos em 10/11, inclusive `video`, `video-<nicho>-v1`, `R1-*`, `W0/W1-*` e a rodada `v2` de A1 e B1); outro vira `outro`. Lista fechada de propósito: cada código vira no máximo uma linha por dia. O teste "todo utm_content concreto dos textos de marketing está na lista" lê `marketing/**/*.md` e falha quando um anúncio novo aparece nos textos sem entrar na lista: quem cria o anúncio acrescenta o código aqui, roda `npm test` e recopia para `src/lib/pa/regras.js`.
+- Praça e anúncio fora das listas viram `outro` de propósito, inclusive `demo-v1` e `rodape-v1` (quem chega por link de demonstração ou do rodapé). Não acrescente esses valores às listas: a **regra de leitura** do denominador (`docs/MEDICAO-FUNIL.md`, "Quem entra no denominador") soma só praça `feira` ou `salvador-rms` com anúncio `R7-*`, `R9-*` ou `F1-*` e descarta toda linha com praça ou anúncio `outro`.
 - Teto por minuto (60 por origem, 600 no total) que **nunca devolve 429**: passou, aceita e descarta.
 - `utm_content=conferencia` ou cabeçalho `X-Conferencia: 1`: descarta sem gravar. A conferência no ar roda depois de todo deploy e não pode sujar o número.
 - Sem cookie, sem IP, sem log.
 
 O contador mede **ordem de grandeza** (incrementos sem transação podem perder contagens em rajada). Gatilho de verba continua no Gerenciador da Meta.
+
+Limites dos eventos de interesse, ditos antes de ler o número:
+- Cada evento é uma chamada separada (até 6 por visita em vez de 1 a 2). O teto de 60 por minuto por origem é dividido entre eles; no 4G com CGNAT muitos aparelhos dividem a origem, e num pico mais contagens são descartadas sem aviso.
+- Qualquer um consegue inflar qualquer um dos 9 dentro do teto, como já acontece com `visita`. Leia sempre a cadeia em ordem (`ficou_10s` <= `visita`, `digitou_nome` <= `tocou_nome`, `previa` perto ou abaixo de `digitou_nome`; a exceção é quem volta de `/abrir/` com o nome já preenchido pelo código) e desconfie do degrau que quebra a ordem.
+- `ContadorDia` não tem purga nem alerta de volume. Com os 9 eventos, as linhas por dia crescem perto de 2,5 vezes (uma por data, evento, nicho, praça e anúncio).
+- O 204 é igual para tudo: chamada de teste não prova que o evento novo grava.
+
+**Antes, e independente disto: o pacote A** (cartão do site de exemplo na primeira tela) não emite evento novo e não toca no app. É um deploy só do site estático, seguido de `node scripts/conferir-no-ar.cjs` com o grupo "C exemplo" verde nos 3 nichos (cartão de 88 a 104 px com o selo inteiro, toque abre o exemplo dentro do quadro, nenhum `previa`); a última linha da saída vai colada no relatório. Antes do deploy esse grupo sai NÃO VERIFICADO.
+
+**Para publicar os eventos de interesse (coordenador, nesta ordem, nunca outra):**
+0. Pré-requisito do passo 2: `npm test` completo verde no repositório, um arquivo de teste por vez (`CREAT_TESTE_TMP=/tmp node --test scripts/testes/<arquivo>`), na versão que vai ser copiada.
+1. Esquema: `update_entity_schema` de `ContadorDia` acrescentando ao enum de `evento` os 5 valores, depois dos 4 de hoje, sem tirar nenhum e sem mexer em `rls` (só admin), `required` nem nos outros campos. Conferir com `list_entity_schemas`: enum com os 9 valores da seção 2.
+2. Regras: copiar `schema/pedido-regras.mjs` byte a byte para `src/lib/pa/regras.js`; `sha256sum` igual ao da seção 9; build do app; `create_checkpoint`; deploy. `src/routes/api/pa/contar.js` e `servidor.server.js` não mudam.
+3. Página e política juntas: só então a página que emite os 5 eventos e a Versão 5 de `conteudo/privacidade.md` (linha do contador listando os 9 passos; o aviso curto "Contamos visitas sem cookie" da home revisto junto), no mesmo deploy do site. A página nunca emite os 5 antes de a política estar no ar. No mesmo commit da página, atualizar `scripts/testes/funil.test.mjs`: os `deepEqual` das listas de eventos do contador (hoje só `visita`, `previa`, `ida_pagamento`, `clique_pagar`) e o laço do teste "2A contador" que percorre os eventos quebram de propósito quando a página passar a emitir os 5. Depois, `conferir-no-ar.cjs`, com a última linha colada no relatório.
+
+Na ordem errada nada quebra, só perde contagem em silêncio: página nova com regras antigas ganha 204 e não grava; regras novas com enum antigo ganham 204 e o `create` cai no `catch`.
+
+Prova de que gravou (o 204 não prova): `sha256sum src/lib/pa/regras.js` igual ao da seção 9; enum de `ContadorDia.evento` com 9 valores; no dia seguinte à página nova, `query_entities ContadorDia` com linhas de `ficou_10s` ou `rolou`. Conferência sem sujar o número: `curl -sS -o /dev/null -w '%{http_code}\n' -X POST $O/api/pa/contar -d '{"evento":"rolou","utm_content":"conferencia"}'` dá 204 e não grava nada (a conferência é descartada antes do banco).
 
 ### 4.5 `aprovarRascunho`
 
@@ -458,7 +480,7 @@ sha256sum projetos/creat-nuvem/schema/pedido-regras.mjs           # neste reposi
 sha256sum src/lib/pa/regras.js                                     # no app (run_command do MCP do Base44)
 ```
 
-Os dois têm de dar o mesmo valor. Valor depois do endereço único (11/11/2026, `pa-regras-1A-2026-11-10f`: links dos e-mails no endereço canônico): `10a0465f96055400a2d77dc2595d58ced805a42565c34f16f43db1015d308124` nos dois (46384 bytes). Valores anteriores: `18036b75...` (`-10e`, fecho da onda 2: termos-v2 e prazo às 11h), `510ebc77...` (fecho 2 da onda 1; o arquivo trazia a constante `-10c`, embora este texto o chamasse de `-10d`, por isso a letra `d` ficou pulada), `5a5ec057...` (`-10c`), `ac5c9ebc...` (`-10b`), `a51a663c...`. Toda mudança nas regras é feita no repositório, testada com `npm test` e copiada byte a byte para o app.
+Os dois têm de dar o mesmo valor. Valor depois dos eventos de interesse (11/11/2026, `pa-regras-1A-2026-11-11a`: `EVENTOS` com 9 nomes): `e91dbbe250526276aeb3db258db5428973aca0846cf97ec37fd1737489fcb30f` (46830 bytes) no repositório; no app só depois da cópia (seção 4.4). Valores anteriores: `10a0465f96055400a2d77dc2595d58ced805a42565c34f16f43db1015d308124` (`-10f`, 46384 bytes, endereço único: links dos e-mails no endereço canônico; é o que o sandbox do app tinha em 11/11/2026), `18036b75...` (`-10e`, fecho da onda 2: termos-v2 e prazo às 11h), `510ebc77...` (fecho 2 da onda 1; o arquivo trazia a constante `-10c`, embora este texto o chamasse de `-10d`, por isso a letra `d` ficou pulada), `5a5ec057...` (`-10c`), `ac5c9ebc...` (`-10b`), `a51a663c...`. Toda mudança nas regras é feita no repositório, testada com `npm test` e copiada byte a byte para o app.
 
 ## 10. Para ir ao ar (coordenador)
 

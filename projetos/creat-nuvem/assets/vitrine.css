@@ -125,6 +125,36 @@ html[data-nicho="barbearia"] .h1-v[data-v="barbearia"],html[data-nicho="salao"] 
 .abrir .btn-sol{justify-self:start}
 .dica-arrastar{font-size:var(--t-nota);color:var(--apagado)}
 
+/* site de exemplo do nicho (11/11): só com html[data-nicho] da chegada; 88 px, o lugar da Cidade */
+.exemplo-site{display:none;grid-template-rows:auto 1fr;height:88px;min-width:0;margin-top:-1px;border:var(--borda) solid var(--linha);border-radius:var(--raio-p);background:var(--papel);color:var(--tinta);text-decoration:none;overflow:hidden;box-shadow:var(--sombra-p);-webkit-tap-highlight-color:transparent}
+html[data-nicho="barbearia"]:not([data-sem-exemplo]) .exemplo-site[data-nicho-exemplo="barbearia"],
+html[data-nicho="salao"]:not([data-sem-exemplo]) .exemplo-site[data-nicho-exemplo="salao"],
+html[data-nicho="academia"]:not([data-sem-exemplo]) .exemplo-site[data-nicho-exemplo="academia"]{display:grid}
+/* o selo EXEMPLO tem a linha inteira (marca de honestidade, nunca cortado); nome e pílula dividem a segunda */
+.exemplo-faixa{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:6px;padding:5px 10px 5px 12px;background:var(--lousa);color:var(--giz)}
+.exemplo-selo{grid-column:1 / -1;font:500 11px/1.2 var(--f-dado);letter-spacing:.05em;color:var(--giz-apagado);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exemplo-nome{grid-column:1;grid-row:2;font:400 min(17px, 4.6vw)/1.15 var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exemplo-pilula{grid-column:2;grid-row:2;padding:5px 8px;border:2px solid var(--linha);border-radius:var(--raio-pilula);background:var(--sol);color:var(--sol-tinta);font:800 clamp(12px, 3.6vw, 13px)/1 var(--f-texto);white-space:nowrap}
+.exemplo-linha{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:0;padding:0 14px 0 12px;border-top:var(--borda) solid var(--linha);font-weight:800;font-size:14px;line-height:1.15;text-wrap:balance}
+.exemplo-seta{position:relative;flex:none;width:20px;height:2.5px;margin-right:2px;border-radius:2px;background:currentColor}
+.exemplo-seta::after{content:"";position:absolute;right:-1px;top:50%;width:8px;height:8px;border-top:2.5px solid currentColor;border-right:2.5px solid currentColor;transform:translateY(-50%) rotate(45deg)}
+.exemplo-site:focus-visible{outline:3px solid var(--sol);outline-offset:3px;box-shadow:0 0 0 6px var(--linha)}
+.exemplo-site:hover .exemplo-linha{text-decoration:underline;text-underline-offset:.18em}
+@media (prefers-reduced-motion:no-preference){.exemplo-site,.exemplo-seta{transition:transform var(--duracao-curta) var(--curva-saida)}.exemplo-site:active{transform:translate(2px,2px)}.exemplo-site:hover .exemplo-seta{transform:translateX(3px)}}
+
+/* prévia em modo exemplo: sem copiar, Testar, Quero e preço; um botão leva ao nome */
+.rotulo-prefixo-exemplo,.carregando-exemplo,.carregando-falhou,.previa-exemplo-nome,[data-exemplo-botao]{display:none}
+.previa[data-modo="exemplo"] .rotulo-prefixo,.previa[data-modo="exemplo"] .carregando-montando,
+.previa[data-modo="exemplo"] #previa-copiar,.previa[data-modo="exemplo"] #previa-testar,.previa[data-modo="exemplo"] #previa-quero,
+.previa[data-modo="exemplo"] .previa-nota{display:none}
+.previa[data-modo="exemplo"] .rotulo-prefixo-exemplo{display:inline}
+.previa[data-modo="exemplo"] .carregando-exemplo{display:block}
+/* o exemplo não veio: aviso no lugar do carregando, e o botão do nome embaixo é o caminho */
+.previa[data-modo="exemplo"][data-falhou] .carregando-exemplo{display:none}
+.previa[data-modo="exemplo"][data-falhou] .carregando-falhou{display:block;max-width:30ch;text-wrap:balance}
+.previa[data-modo="exemplo"] .previa-exemplo-nome{display:flex;grid-column:1 / -1;justify-content:center;min-height:56px;font-size:17px}
+.previa[data-exemplo-nicho="barbearia"] [data-exemplo-botao="barbearia"],.previa[data-exemplo-nicho="salao"] [data-exemplo-botao="salao"],.previa[data-exemplo-nicho="academia"] [data-exemplo-botao="academia"]{display:inline}
+
 /* dobra no celular: só o necessário para ver o site; a placa menor logo abaixo do botão */
 @media (max-width:719px){
   .heroi{padding:var(--r4) 0 var(--r6)}

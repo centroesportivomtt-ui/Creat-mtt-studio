@@ -487,6 +487,39 @@ function conferirTexto(onde, texto, opcoes) {
   ok(`sede viva: ${nomes.length} textos de conteudo/home.json iguais no index.html / vitrine.js / sede`);
 })();
 
+/* 6b. Site de exemplo da primeira tela (11/11): hero.exemplo e previa.exemplo de conteudo/home.json iguais no
+       index.html (cartão por nicho, aria-label, rótulo, carregando e botão do diálogo em modo exemplo). */
+(function exemploTextos() {
+  const pj = path.join(RAIZ, 'conteudo', 'home.json'), ph = path.join(RAIZ, 'index.html');
+  if (!existe(pj) || !existe(ph)) return;
+  let j; try { j = JSON.parse(ler(pj)); } catch (e) { return; }
+  const ex = j.hero && j.hero.exemplo, pv = j.previa && j.previa.exemplo;
+  if (!ex || !pv) { aviso('conteudo/home.json', 'sem hero.exemplo ou previa.exemplo'); return; }
+  const norm = (t) => t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
+  const html = ler(ph);
+  let n = 0;
+  for (const k of ['barbearia', 'salao', 'academia']) {
+    const re = new RegExp('<a class="exemplo-site" href="sites/demo-' + k + '/" data-exemplo-site data-nicho-exemplo="' + k + '"[^>]*>[\\s\\S]*?</a>');
+    const tag = (re.exec(html) || [''])[0];
+    if (!tag) { falha(rel(ph), `sem o cartão a.exemplo-site de ${k} (href sites/demo-${k}/)`); continue; }
+    const t = ex[k] || {}, txt = (s) => norm((new RegExp('class="' + s + '"[^>]*>([^<]*)<').exec(tag) || ['', ''])[1]);
+    const lab = norm((/aria-label="([^"]*)"/.exec(tag) || ['', ''])[1]);
+    [['exemplo-selo', ex.selo], ['exemplo-nome', t.nome], ['exemplo-pilula', t.pilula], ['exemplo-linha', t.linha]].forEach(([c, v]) => { if (txt(c) !== v) falha(rel(ph), `cartão ${k}: .${c} "${txt(c)}" diferente de conteudo/home.json ("${v}")`); else n++; });
+    if (lab !== t.aria) falha(rel(ph), `cartão ${k}: aria-label diferente de hero.exemplo.${k}.aria`); else n++;
+    const b = norm((new RegExp('data-exemplo-botao="' + k + '">([^<]*)<').exec(html) || ['', ''])[1]);
+    if (b !== (pv.botao || {})[k]) falha(rel(ph), `botão do modo exemplo (${k}) diferente de previa.exemplo.botao.${k}`); else n++;
+  }
+  const pre = norm((/class="rotulo-prefixo-exemplo">([^<]*)</.exec(html) || ['', ''])[1]);
+  if (pre !== pv.prefixo) falha(rel(ph), 'rótulo do modo exemplo diferente de previa.exemplo.prefixo'); else n++;
+  const car = norm((/class="carregando-exemplo">([^<]*)</.exec(html) || ['', ''])[1]);
+  if (car !== pv.carregando) falha(rel(ph), 'carregando do modo exemplo diferente de previa.exemplo.carregando'); else n++;
+  const err = norm((/class="carregando-falhou">([^<]*)</.exec(html) || ['', ''])[1]);
+  if (!pv.erro || err !== pv.erro) falha(rel(ph), 'aviso de falha do modo exemplo diferente de previa.exemplo.erro'); else n++;
+  // nada de preço no modo exemplo e nenhum estilo inline no cartão (CSP)
+  if (/exemplo-site[^>]*style=/.test(html)) falha(rel(ph), 'cartão de exemplo com style inline');
+  ok(`site de exemplo: ${n} textos de conteudo/home.json iguais no index.html`);
+})();
+
 (function robotsRaiz() {
   const onde = 'scripts/montar-publico.cjs ROBOTS_RAIZ';
   const antes = falhas;

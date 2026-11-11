@@ -12,6 +12,8 @@
  *   A. páginas: 200 onde deve, 404 em rota que não existe, sem marcador esquecido na tela
  *   B. home pelo link de anúncio: sem erro de console, sem requisição quebrada, sem rolagem lateral, preço na tela
  *   C. caminho do anúncio nos 3 nichos: digitar o nome, abrir a prévia, nome e formulário dentro da prévia
+ *   C exemplo (pacote A, 11/11): cartão do site de exemplo na primeira tela (88 a 104 px, selo inteiro) e o toque
+ *      abre o site de demonstração dentro do #previa (caminho blob, porque a hospedagem manda DENY), sem contar 'previa'
  *   D. medição: arquivo da Meta carrega de verdade e os eventos PageView e ViewContent SAEM do navegador
  *      (o envio é interceptado e cancelado aqui, para a conferência não sujar os números da conta)
  *   E. demonstrações: 3 cargas de cada, formulário de pedido, gesto do nicho e link de WhatsApp
@@ -37,8 +39,8 @@
  *      pessoal em registrarPedido, contar, consultarPedido, confirmarPagamento, aprovarRascunho, nas 4
  *      entidades privadas, em portaAbertaVerificar e portaAbertaNotificacao (AutoCreatFlux) e no OPTIONS
  *
- * Contagem: A a H são 54 conferências (com as 7 praças de pagamento); E endereço são 20; J são 10; I são 41 (mais 22
- * com o usuário comum). Total esperado: 125 (147 com o usuário comum). Com --sem-funcoes: 84 (as 4 rotas do E
+ * Contagem: A a H são 60 conferências (com as 7 praças de pagamento e os 6 do C exemplo); E endereço são 20; J são 10;
+ * I são 41 (mais 22 com o usuário comum). Total esperado: 131 (153 com o usuário comum). Com --sem-funcoes: 90 (as 4 rotas do E
  * endereço saem NÃO VERIFICADO). Com --so-funcoes: 41.
  * Endereço: --base manda; sem ele, o canônico de lib/comum.cjs (CREAT_HOST troca, para voltar atrás).
  * Linhas de prova (10/11/2026): lista vazia só prova leitura negada se houver linha para ler. Por isso Operacao
@@ -208,6 +210,52 @@ function aviso(grupo, nome, detalhe) {
       anota('B home', `${nicho}: sem erro de console`, errosReais.length === 0, errosReais.slice(0, 3).join(' ; '));
       anota('B home', `${nicho}: sem requisição quebrada`, quebradas.length === 0, [...new Set(quebradas)].slice(0, 3).join(' ; '));
     } catch (e) { anota('B home', `${nicho}: carregou`, false, String(e).slice(0, 160)); }
+    await ctx.close();
+  }
+
+  /* ---------------- C exemplo. site de exemplo da primeira tela (pacote A, 11/11) ----------------
+     Na hospedagem a home, /previa/ e as demos respondem X-Frame-Options: DENY, então o exemplo só abre pelo caminho
+     fetch + blob do carregarNoQuadro. Um defeito ali fica no ar com todos os testes locais verdes. Por nicho, com o
+     link do anúncio: (1) o cartão aparece com 88 a 104 px; (2) o toque abre o diálogo "Exemplo · ", o site de
+     demonstração fica visível dentro do quadro e nenhum 'previa' é enviado ao contador (a chamada é registrada e
+     respondida aqui, sem chegar ao servidor). Sem o cartão no HTML do ar (antes da publicação do pacote A), os 2
+     itens saem NÃO VERIFICADO e a última linha começa por "parcial". */
+  for (const nicho of (PULA_VITRINE ? [] : NICHOS)) {
+    const ctx = await novoCtx(); const pg = await ctx.newPage();
+    const contagens = [];
+    await pg.route(/\/contar(\?|$)/, route => {
+      try { contagens.push((JSON.parse(route.request().postData() || '{}') || {}).evento || '?'); } catch (e) { contagens.push('?'); }
+      route.fulfill({ status: 204, body: '' });
+    });
+    try {
+      await pg.goto(`${BASE}/?nicho=${nicho}&utm_source=meta&utm_medium=pago&utm_campaign=feira&utm_content=conferencia`, { waitUntil: 'networkidle', timeout: 60000 });
+      const sel = `.exemplo-site[data-nicho-exemplo="${nicho}"]`;
+      if (!(await pg.$('[data-exemplo-site]'))) {
+        naoVerificado('C exemplo', `${nicho}: cartão e site de exemplo`, 'o cartão do site de exemplo ainda não está no HTML do ar (pacote A não publicado)', 2);
+      } else {
+        await pg.waitForTimeout(800);
+        const cartao = await pg.evaluate(s => { const c = document.querySelector(s); if (!c) return { h: 0 }; const b = c.getBoundingClientRect(); const selo = c.querySelector('.exemplo-selo'); return { h: Math.round(b.height), naTela: b.top >= 0 && b.bottom <= innerHeight, selo: selo ? selo.textContent : '', seloInteiro: !!selo && selo.scrollWidth <= selo.clientWidth + 0.5 }; }, sel);
+        anota('C exemplo', `${nicho}: cartão na primeira tela, 88 a 104 px, selo inteiro`, cartao.h >= 88 && cartao.h <= 104 && cartao.naTela && /^EXEMPLO/.test(cartao.selo) && cartao.seloInteiro, JSON.stringify(cartao));
+        await pg.tap(sel, { timeout: 8000 });
+        const limite = Date.now() + 25000;
+        let estado = {};
+        while (Date.now() < limite) {
+          estado = await pg.evaluate(() => {
+            const p = document.querySelector('#previa'), fr = document.querySelector('#previa-frame'), car = document.querySelector('#previa-carregando');
+            return { aberto: !!p && !p.hidden, modo: p && p.getAttribute('data-modo'), rotulo: (document.querySelector('#previa-rotulo') || {}).innerText || '', quadroVisivel: !!fr && fr.style.visibility !== 'hidden' && !!car && car.hidden };
+          });
+          if (estado.aberto && estado.quadroVisivel) {
+            const q = pg.frames().find(f => f !== pg.mainFrame() && (f.url().startsWith('blob:') || f.url().includes(`/sites/demo-${nicho}/`)));
+            estado.site = q ? await q.evaluate(() => ({ pronto: document.documentElement.classList.contains('motor-pronto'), texto: document.body ? document.body.innerText.length : 0 })).catch(() => null) : null;
+            if (estado.site && estado.site.pronto && estado.site.texto > 80) break;
+          }
+          await pg.waitForTimeout(400);
+        }
+        await pg.waitForTimeout(1200);   // tempo de um 'previa' indevido sair
+        const ok = estado.aberto && estado.modo === 'exemplo' && /^Exemplo · /.test(estado.rotulo.trim()) && estado.quadroVisivel && !!estado.site && estado.site.pronto && estado.site.texto > 80 && !contagens.includes('previa');
+        anota('C exemplo', `${nicho}: toque abre o site de exemplo no quadro, sem contar prévia`, ok, `diálogo ${estado.aberto} · modo ${estado.modo} · rótulo "${String(estado.rotulo).trim().slice(0, 40)}" · quadro ${estado.quadroVisivel} · site ${JSON.stringify(estado.site)} · contador: ${contagens.join(', ') || 'nada'}`);
+      }
+    } catch (e) { anota('C exemplo', `${nicho}: site de exemplo`, false, String(e).slice(0, 160)); }
     await ctx.close();
   }
 
@@ -693,8 +741,8 @@ function aviso(grupo, nome, detalhe) {
   if (ARQ_JSON) fs.writeFileSync(ARQ_JSON, JSON.stringify({ base: BASE, total: res.length, falhas: falhas.length, nao_verificadas: naoVerificadas, avisos, itens: res }, null, 1));
   const ext = (naoVerificadas.length ? ` · ${naoVerificadas.length} não verificada(s)` : '') + (avisos.length ? ` · ${avisos.length} aviso(s)` : '');
   const escopo = SO_ENDERECO ? `só endereço${SIMULAR ? `, SIMULAÇÃO do salto (${SIMULAR}): prova a conferência, não o ar` : ''}` : SO_FUNCOES ? 'só funções' : (SEM_FUNCOES ? 'vitrine, SEM as funções' : 'vitrine e funções');
-  // contagem esperada (cabeçalho): vitrine 84 = A a H 54 + E endereço 20 + J 10 (menos as praças do Mercado Pago com --sem-mp); funções 41
-  const esperadas = SO_ENDERECO ? 20 : (SO_FUNCOES ? 0 : 84 - (SEM_MP ? Object.keys(links).length : 0)) + (SEM_FUNCOES ? 0 : 41 + (process.env.CONFERENCIA_TOKEN_USUARIO_COMUM ? 22 : 0));
+  // contagem esperada (cabeçalho): vitrine 90 = A a H 60 (C exemplo 6) + E endereço 20 + J 10 (menos as praças do Mercado Pago com --sem-mp); funções 41
+  const esperadas = SO_ENDERECO ? 20 : (SO_FUNCOES ? 0 : 90 - (SEM_MP ? Object.keys(links).length : 0)) + (SEM_FUNCOES ? 0 : 41 + (process.env.CONFERENCIA_TOKEN_USUARIO_COMUM ? 22 : 0));
   // não verificadas DENTRO das esperadas (o usuário comum sem token já está fora delas e é dito à parte)
   const naoRodaram = naoVerificadas.filter(n => !n.foraDasEsperadas).reduce((s, n) => s + (n.itens || 1), 0);
   const foraNv = naoVerificadas.filter(n => n.foraDasEsperadas).reduce((s, n) => s + (n.itens || 1), 0);
@@ -715,6 +763,7 @@ function aviso(grupo, nome, detalhe) {
   const outrasNv = naoVerificadas.filter(n => n.grupo !== GRUPO_FUNCOES);
   const nvJornada = outrasNv.filter(n => /^J /.test(n.grupo));
   const nvEndereco = outrasNv.filter(n => n.grupo === 'E endereço');
+  const nvExemplo = outrasNv.filter(n => n.grupo === 'C exemplo');
   const parcial = nvFuncoesReais.length > 0 || outrasNv.length > 0 || SEM_FUNCOES || SO_ENDERECO;
   const pre = parcial ? 'parcial' : 'ok     ';
   const logado = foraNv ? `; o teste logado do usuário comum (${foraNv} itens) não rodou` : '';
@@ -730,7 +779,9 @@ function aviso(grupo, nome, detalhe) {
   if (nvJornada.length) nota.push(`${nvJornada.length} item(ns) da jornada da onda 2 NÃO VERIFICADO(S): a vitrine nova ainda não está no ar`);
   const nvEndItens = nvEndereco.reduce((s, n) => s + (n.itens || 1), 0);
   if (nvEndItens) nota.push(`${nvEndItens} item(ns) do endereço NÃO VERIFICADO(S)${nvEndereco.some(n => /pacote H1/.test(n.motivo)) ? ': o salto do antigo para o canônico ainda não está no ar' : ''}`);
-  const outrasSemJ = outrasNv.length - nvJornada.length - nvEndereco.length;
+  const nvExItens = nvExemplo.reduce((s, n) => s + (n.itens || 1), 0);
+  if (nvExItens) nota.push(`${nvExItens} item(ns) do site de exemplo NÃO VERIFICADO(S): o cartão ainda não está no ar`);
+  const outrasSemJ = outrasNv.length - nvJornada.length - nvEndereco.length - nvExemplo.length;
   if (outrasSemJ) nota.push(`${outrasSemJ} outro(s) item(ns) NÃO VERIFICADO(S) acima`);
   console.log(`${pre} ${final}${nota.length ? ` Atenção: ${nota.join('; ')}; não contam como prova.` : ''}`);
 })().catch(e => { console.error('erro  ', e); process.exit(2); });
