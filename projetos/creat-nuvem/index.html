@@ -33,6 +33,8 @@
 <link rel="stylesheet" href="assets/tokens.css">
 <link rel="stylesheet" href="assets/vitrine.css">
 <link rel="stylesheet" href="ritual/placa.css">
+<!-- título da dobra no nicho do anúncio antes da primeira pintura (sem defer de propósito; depois das folhas de estilo) -->
+<script src="assets/nicho-cedo.js"></script>
 <style>
 /* Complementos da home (T5). Só tokens de assets/tokens.css; nada de cor solta. */
 .num-carregando{display:inline-block;min-width:2.4em;min-height:.9em;border-radius:6px;background:repeating-linear-gradient(-45deg,var(--lasca) 0 6px,transparent 6px 12px);vertical-align:middle}
@@ -197,7 +199,7 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
       <li><a href="#precos">Preços</a></li>
       <li><a href="#sede">A equipe</a></li>
     </ul>
-    <a class="btn barra-zap" data-zap="duvida" href="#perguntas"><span data-rotulo-zap>Chamar no WhatsApp</span></a>
+    <a class="btn barra-zap" data-zap="duvida" href="#perguntas"><svg class="barra-zap-icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.4-4A8 8 0 1 1 8.6 19z" fill="var(--sol)" stroke="var(--linha)" stroke-width="2.2" stroke-linejoin="round"/><path d="M9.5 9.5c.4 2 2.2 3.8 4.4 4.4" fill="none" stroke="var(--linha)" stroke-width="2" stroke-linecap="round"/></svg><span data-rotulo-zap><span class="barra-zap-longo">Chamar no </span>WhatsApp</span></a>
   </div>
 </header>
 
@@ -207,11 +209,45 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
     <div class="cx">
       <div class="heroi-cabeca">
         <span class="olho">Porta Aberta</span>
-        <h1 id="h1">Seu negócio aberto na internet.</h1>
+        <h1 id="h1"><span class="h1-v" data-v="">Veja o site do seu negócio pronto.</span><span class="h1-v" data-v="barbearia" hidden>Veja o site da sua barbearia pronto.</span><span class="h1-v" data-v="salao" hidden>Veja o site do seu salão pronto.</span><span class="h1-v" data-v="academia" hidden>Veja o site da sua academia pronto.</span></h1>
+        <p class="apoio">Digite o nome e veja agora. Ver é grátis.</p>
+      </div>
+
+      <div class="heroi-corpo">
+        <form class="abrir" id="form-abrir" novalidate data-clarity-mask="True">
+          <div class="campo campo-nome">
+            <label for="nome">Nome do seu negócio</label>
+            <input id="nome" name="nome" data-clarity-mask="True" type="text" autocomplete="organization" inputmode="text" maxlength="40" placeholder="Exemplo: Barbearia do Zé" aria-describedby="nome-ajuda nome-erro" enterkeyhint="go" spellcheck="false">
+            <span class="contador-giz" id="contador-giz" aria-hidden="true">0 de 40</span>
+            <span class="erro" id="nome-erro" role="alert" hidden></span>
+          </div>
+
+          <fieldset class="chips">
+            <legend>Que tipo de negócio?</legend>
+            <label class="chip"><input type="radio" name="nicho" value="barbearia"> Barbearia</label>
+            <label class="chip"><input type="radio" name="nicho" value="salao"> Salão e estética</label>
+            <label class="chip"><input type="radio" name="nicho" value="academia"> Academia e studio</label>
+          </fieldset>
+          <span class="erro" id="nicho-erro" role="alert" hidden>Escolha o tipo do seu negócio para montar o site certo.</span>
+
+          <div class="campo">
+            <label for="cidade">Cidade (opcional)</label>
+            <input id="cidade" name="cidade" type="text" autocomplete="address-level2" maxlength="40" placeholder="Exemplo: Campinas" aria-describedby="cidade-erro">
+            <span class="erro" id="cidade-erro" role="alert" hidden>Use só letras, espaço e estes sinais: . - '</span>
+          </div>
+
+          <div class="linha-acao">
+            <button class="btn btn-sol btn-g" type="submit" data-cta>Ver meu site pronto</button>
+            <span class="dica-arrastar" hidden>ou arraste a placa</span>
+          </div>
+          <p class="nota-nome" id="nome-ajuda">O nome fica só neste aparelho até você decidir pedir o site.</p>
+        </form>
+        <noscript><p class="ajuda">Para ver a prévia do seu site, ative o JavaScript no navegador.</p></noscript>
       </div>
 
       <div class="palco-placa">
         <div class="porta" aria-hidden="true"></div>
+        <span class="dica-arrastar dica-palco" hidden>ou arraste a placa</span>
         <div id="placa" class="ponto-placa" data-clarity-mask="True">
           <div class="placa-reserva"><svg class="placa-reserva-svg" width="330" height="300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 300" role="img" aria-labelledby="placa-titulo placa-desc">
 <title id="placa-titulo">Placa FECHADO</title>
@@ -247,48 +283,18 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
         </div>
       </div>
 
-      <div class="heroi-corpo">
+      <div class="heroi-resto">
         <p class="sub">Digite o nome do seu negócio. Em segundos você vê o site pronto e testa o pedido no seu próprio WhatsApp. Ver é grátis; você paga para abrir e tem 7 dias para desistir com devolução.</p>
-        <form class="abrir" id="form-abrir" novalidate data-clarity-mask="True">
-          <div class="campo">
-            <label for="nome">Nome do seu negócio</label>
-            <input id="nome" name="nome" data-clarity-mask="True" type="text" autocomplete="organization" inputmode="text" maxlength="40" placeholder="Exemplo: Barbearia do Zé" aria-describedby="nome-ajuda nome-erro" enterkeyhint="go" spellcheck="false">
-            <span class="contador-giz" id="contador-giz" aria-hidden="true">0 de 40</span>
-            <span class="ajuda" id="nome-ajuda">O nome fica só neste aparelho até você decidir pedir o site.</span>
-            <span class="erro" id="nome-erro" role="alert" hidden></span>
+        <p class="origem">Feito pela Creat Nuvem, uma equipe de agentes de IA na Bahia. Uma pessoa da equipe confere cada site antes de ir ao ar. Tudo pela internet, para negócio de qualquer cidade. <a href="#quem">Quem somos</a></p>
+        <div class="espera" id="espera-nichos">
+          <p id="espera-rotulo">Chegam depois. Toque para ser avisado:</p>
+          <div class="chips" role="group" aria-labelledby="espera-rotulo">
+            <button type="button" class="chip chip-avise" data-espera="pet" aria-label="Pet, avise-me quando chegar" data-msg="Olá! Tenho um pet shop ou banho e tosa. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Pet</button>
+            <button type="button" class="chip chip-avise" data-espera="restaurante" aria-label="Restaurante, avise-me quando chegar" data-msg="Olá! Tenho um restaurante, marmitaria ou lanchonete. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Restaurante</button>
+            <button type="button" class="chip chip-avise" data-espera="oficina" aria-label="Oficina, avise-me quando chegar" data-msg="Olá! Tenho uma oficina. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Oficina</button>
+            <button type="button" class="chip chip-avise" data-espera="tatuagem" aria-label="Tatuagem, avise-me quando chegar" data-msg="Olá! Tenho um estúdio de tatuagem. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Tatuagem</button>
           </div>
-
-          <fieldset class="chips">
-            <legend>Que tipo de negócio?</legend>
-            <label class="chip"><input type="radio" name="nicho" value="barbearia"> Barbearia</label>
-            <label class="chip"><input type="radio" name="nicho" value="salao"> Salão e estética</label>
-            <label class="chip"><input type="radio" name="nicho" value="academia"> Academia e studio</label>
-          </fieldset>
-          <span class="erro" id="nicho-erro" role="alert" hidden>Escolha o tipo do seu negócio para montar o site certo.</span>
-
-          <div class="campo">
-            <label for="cidade">Cidade (opcional)</label>
-            <input id="cidade" name="cidade" type="text" autocomplete="address-level2" maxlength="40" placeholder="Exemplo: Campinas" aria-describedby="cidade-erro">
-            <span class="erro" id="cidade-erro" role="alert" hidden>Use só letras, espaço e estes sinais: . - '</span>
-          </div>
-
-          <div class="linha-acao">
-            <button class="btn btn-sol btn-g" type="submit" data-cta>Abrir meu negócio</button>
-            <span class="dica-arrastar" hidden>ou arraste a placa</span>
-          </div>
-          <p class="origem">Feito pela Creat Nuvem, uma equipe de agentes de IA na Bahia. Uma pessoa da equipe confere cada site antes de ir ao ar. Tudo pela internet, para negócio de qualquer cidade. <a href="#quem">Quem somos</a></p>
-          <div class="espera">
-            <p id="espera-rotulo">Chegam depois. Toque para ser avisado:</p>
-            <div class="chips" role="group" aria-labelledby="espera-rotulo">
-              <button type="button" class="chip chip-avise" data-espera="pet" aria-label="Pet, avise-me quando chegar" data-msg="Olá! Tenho um pet shop ou banho e tosa. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Pet</button>
-              <button type="button" class="chip chip-avise" data-espera="restaurante" aria-label="Restaurante, avise-me quando chegar" data-msg="Olá! Tenho um restaurante, marmitaria ou lanchonete. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Restaurante</button>
-              <button type="button" class="chip chip-avise" data-espera="oficina" aria-label="Oficina, avise-me quando chegar" data-msg="Olá! Tenho uma oficina. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Oficina</button>
-              <button type="button" class="chip chip-avise" data-espera="tatuagem" aria-label="Tatuagem, avise-me quando chegar" data-msg="Olá! Tenho um estúdio de tatuagem. Quero ser avisado quando o Porta Aberta chegar para o meu nicho.">Tatuagem</button>
-            </div>
-          </div>
-
-        </form>
-        <noscript><p class="ajuda">Para ver a prévia do seu site, ative o JavaScript no navegador.</p></noscript>
+        </div>
       </div>
     </div>
   </section>
@@ -669,6 +675,9 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
     <p>Suporte: <a data-email-suporte href="mailto:mttcreatt@gmail.com">mttcreatt@gmail.com</a></p>
     <nav aria-label="Rodapé">
       <ul>
+        <li><a href="#como-funciona">Como funciona</a></li>
+        <li><a href="#precos">Preços</a></li>
+        <li><a href="#sede">A equipe</a></li>
         <li><a href="termos/">Termos de uso</a></li>
         <li><a href="privacidade/">Privacidade</a></li>
         <li><button type="button" class="link-texto" data-preferencias>Preferências de medição</button></li>
