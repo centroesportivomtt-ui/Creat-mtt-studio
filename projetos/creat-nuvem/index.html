@@ -53,7 +53,6 @@
 .previa-topo .rotulo-previa{display:block;flex:1 1 auto;min-width:0}
 .previa-topo .rotulo-previa::before{display:inline-block;vertical-align:middle;margin-right:8px}
 .previa-topo .btn{padding:6px 12px}
-body.com-previa .consentimento{display:none}
 body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 .consentimento p{font-size:var(--t-nota)}
 @media (max-width:719px){.previa-topo .acoes .btn{font-size:13px;padding:6px 10px}}
@@ -284,7 +283,9 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
       </div>
 
       <div class="heroi-resto">
-        <p class="sub">Digite o nome do seu negócio. Em segundos você vê o site pronto e testa o pedido no seu próprio WhatsApp. Ver é grátis; você paga para abrir e tem 7 dias para desistir com devolução.</p>
+        <p class="sub" data-carregando-precos>Digite o nome do seu negócio. Em segundos você vê o site pronto e testa o pedido no seu próprio WhatsApp. Ver é grátis; você paga para abrir e tem 7 dias para desistir com devolução.</p>
+        <p class="sub" data-se="inauguracao" hidden>Digite o nome do seu negócio e veja o site pronto em segundos. Ver é grátis. Para abrir: Abertura de R$ <span data-v="precos.abertura.inauguracao.preco"></span>, uma vez (preço de inauguração), e mensalidade a partir de R$ <span data-v="precos.planos.aberto"></span>, só com o site no ar. 7 dias para desistir, com devolução.</p>
+        <p class="sub" data-se="sem-inauguracao" hidden>Digite o nome do seu negócio e veja o site pronto em segundos. Ver é grátis. Para abrir: Abertura de R$ <span data-v="precos.abertura.padrao"></span>, uma vez, e mensalidade a partir de R$ <span data-v="precos.planos.aberto"></span>, só com o site no ar. 7 dias para desistir, com devolução.</p>
         <p class="origem">Feito pela Creat Nuvem, uma equipe de agentes de IA na Bahia. Uma pessoa da equipe confere cada site antes de ir ao ar. Tudo pela internet, para negócio de qualquer cidade. <a href="#quem">Quem somos</a></p>
         <div class="espera" id="espera-nichos">
           <p id="espera-rotulo">Chegam depois. Toque para ser avisado:</p>
@@ -338,9 +339,15 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
               <span>Seu número fica só neste aparelho. Ele não é salvo nem enviado para a Creat.</span>
             </p>
             <button class="btn btn-sol btn-g btn-bloco" type="submit" data-cta>Enviar o teste para o meu WhatsApp</button>
-            <p class="ok-msg" id="teste-abriu" role="status" hidden>Abrimos o WhatsApp com o teste. Volte aqui quando quiser escolher o plano.</p>
+            <p class="ok-msg" id="teste-abriu" role="status" hidden>Abrimos o WhatsApp com o teste. Gostou? O botão para pedir o seu site está logo abaixo.</p>
             <button class="link-texto" type="button" id="teste-alternativa" aria-controls="celular">Não abriu? Veja como o pedido chega</button>
           </form>
+        </div>
+        <div class="teste-pedir" id="teste-pedir">
+          <p class="teste-pedir-nome" data-clarity-mask="True" hidden>Seu site: <strong id="teste-pedir-nome"></strong></p>
+          <a class="btn btn-g btn-bloco" id="teste-quero" href="abrir/#plano=aberto" data-plano="aberto" data-cta>Quero este site no ar</a>
+          <p class="teste-pedir-nota" data-se="inauguracao" hidden>Abertura de R$ <span data-v="precos.abertura.inauguracao.preco"></span>, uma vez, e mensalidade a partir de R$ <span data-v="precos.planos.aberto"></span>, só com o site no ar. 7 dias para desistir, com devolução.</p>
+          <p class="teste-pedir-nota" data-se="sem-inauguracao" hidden>Abertura de R$ <span data-v="precos.abertura.padrao"></span>, uma vez, e mensalidade a partir de R$ <span data-v="precos.planos.aberto"></span>, só com o site no ar. 7 dias para desistir, com devolução.</p>
         </div>
       </div>
       <div class="celular-desenho">
@@ -692,23 +699,25 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 <!-- 3 · PRÉVIA em tela cheia (iframe de previa/) -->
 <section class="previa" id="previa" role="dialog" aria-modal="true" aria-labelledby="previa-rotulo" hidden>
   <div class="previa-topo">
-    <span class="rotulo-previa" id="previa-rotulo" data-clarity-mask="True">Prévia do seu site · <span id="previa-nome"></span></span>
+    <span class="rotulo-previa" id="previa-rotulo" data-clarity-mask="True"><span class="rotulo-prefixo">Prévia do seu site · </span><span id="previa-nome"></span></span>
     <span class="acoes">
-      <button class="btn" type="button" id="previa-copiar">copiar link</button>
+      <button class="btn" type="button" id="previa-copiar"><svg class="copiar-icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span class="copiar-texto">copiar link</span></button>
       <button class="btn" type="button" id="previa-fechar" aria-label="Fechar a prévia">Fechar</button>
     </span>
   </div>
   <div class="previa-corpo">
     <iframe id="previa-frame" title="Prévia do site" referrerpolicy="no-referrer"></iframe>
     <div class="carregando" id="previa-carregando" role="status">
-      <img class="placa-mini" src="assets/svg/placa.svg" alt="" width="120" height="109">
-      <p>Montando o site<span class="giz-pontos"></span></p>
+      <img class="placa-mini placa-mini-aberta" src="assets/svg/placa-aberto.svg" alt="" width="120" height="73">
+      <p>Montando o seu site<span class="giz-pontos"></span><span class="carregando-nome" id="previa-carregando-nome" data-clarity-mask="True"></span></p>
     </div>
   </div>
   <div class="previa-base">
-    <button class="btn" type="button" id="previa-testar">Testar no meu WhatsApp</button>
+    <button class="btn btn-fantasma" type="button" id="previa-testar">Testar no meu WhatsApp</button>
     <button class="btn btn-sol" type="button" id="previa-quero">Quero este site no ar</button>
-    <p class="previa-nota">Ver é grátis. Ao pedir, você paga a Abertura e tem 7 dias para desistir com devolução. Mensalidade só com o site no ar.</p>
+    <p class="previa-nota" data-carregando-precos>Ver é grátis. Ao pedir, você paga a Abertura e tem 7 dias para desistir com devolução. Mensalidade só com o site no ar.</p>
+    <p class="previa-nota" data-se="inauguracao" hidden>Hoje: Abertura de R$ <span data-v="precos.abertura.inauguracao.preco"></span>, uma vez (inauguração; depois, R$ <span data-v="precos.abertura.padrao"></span>). Mensalidade a partir de R$ <span data-v="precos.planos.aberto"></span>, só com o site no ar. 7 dias para desistir, com devolução.</p>
+    <p class="previa-nota" data-se="sem-inauguracao" hidden>Hoje: Abertura de R$ <span data-v="precos.abertura.padrao"></span>, uma vez. Mensalidade a partir de R$ <span data-v="precos.planos.aberto"></span>, só com o site no ar. 7 dias para desistir, com devolução.</p>
   </div>
 </section>
 

@@ -343,3 +343,23 @@ body.com-previa .aviso{bottom:calc(var(--barra-previa) + 16px + env(safe-area-in
   *,*::before,*::after{animation-duration:1ms !important;animation-iteration-count:1 !important;animation-delay:0s !important;transition-duration:1ms !important}
   .carregando .placa-mini{animation:none}
 }
+
+/* ---------------------------------------------------------------- mutirão de venda, 11/11 */
+/* Prévia aberta sem escolha de medição: a faixa fica sobre a prévia, logo acima dos dois botões de baixo
+   (vitrine.js mede a barra e grava --base-previa). Nunca cobre "Testar" nem "Quero este site no ar". */
+body.com-previa .consentimento.is-faixa{top:auto;bottom:var(--base-previa,0px);padding-bottom:6px;border-width:var(--borda) 0}
+/* "Testar no meu WhatsApp" é o caminho secundário: sem fundo e sem sombra; o único botão cheio é o de pedir */
+.previa-base #previa-testar{background:transparent;box-shadow:none;font-weight:700}
+/* topo da prévia no celular estreito: "copiar link" vira só o ícone (o texto fica para o leitor de tela) e
+   "Prévia do seu site ·" também, porque a faixa PRÉVIA logo abaixo já diz isso; o nome do negócio cabe inteiro */
+#previa-copiar .copiar-icone{display:none}
+@media (max-width:400px){
+  #previa-copiar{width:var(--alvo);padding:0;flex:none}#previa-copiar .copiar-icone{display:block;width:22px;height:22px}
+  #previa-copiar .copiar-texto,.previa-topo .rotulo-prefixo{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+}
+.carregando .placa-mini-aberta{transform-origin:50% 0}
+.carregando-nome{display:block;margin-top:6px;font:400 var(--t-h3)/1.15 var(--f-display);overflow-wrap:anywhere}
+/* seção "Teste de verdade": o pedido do site logo abaixo do formulário */
+.teste-pedir{display:grid;gap:var(--r2);margin-top:var(--r4)}
+.teste-pedir-nome{font-weight:700;overflow-wrap:anywhere}
+.teste-pedir-nota{font-size:var(--t-nota);color:var(--apagado)}

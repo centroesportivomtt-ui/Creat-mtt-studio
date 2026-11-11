@@ -8,6 +8,9 @@
   "tituloSemNome": "Falta pouco para abrir o seu negócio.",
   "voltarPrevia": "Voltar para a prévia",
   "cabecalhoDuvidas": "Dúvidas",
+  "cabecalhoDuvidasWhatsapp": "Dúvidas no WhatsApp",
+  "cabecalhoDuvidasWhatsappAria": "Tirar dúvidas com o Suporte Creat no WhatsApp",
+  "_cabecalhoDuvidasWhatsapp": "Só com o WhatsApp do Suporte ativo (vitrine.js montarSuporte, data-rotulo-ok + data-rotulo-ok-fim; até 400 px o fim sai da vista e entra o ícone). Sem ele, o link vai por e-mail e fica Dúvidas.",
   "progresso": "Nome, tipo de negócio e prévia: pronto. Faltam 2 passos: os dados do negócio e o pagamento.",
   "resumo": {
     "mensal": "Hoje: Abertura de R$ {{abrir.total}}. Mensalidade de R$ {{plano.preco}} por mês no cartão, ou anual no Pix, só começa com o site no ar.",
