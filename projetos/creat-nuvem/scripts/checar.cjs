@@ -445,6 +445,19 @@ function conferirTexto(onde, texto, opcoes) {
   let agoraJs = null; try { agoraJs = m && vm.runInNewContext(m[1]); } catch (e) {}
   if (!agoraJs) falha(rel(pv), 'não achei ESTEIRA_AGORA');
   else if (JSON.stringify(agoraJs) !== JSON.stringify(sede.agora)) falha(rel(pv), 'ESTEIRA_AGORA diferente de conteudo/home.json sede.agora');
+  // a fita da cena (um texto por passo, 0 a 8): SEDE_LEGENDAS do vitrine.js idêntico a sede.legendas, na ordem
+  const ml = /var SEDE_LEGENDAS = (\[[\s\S]*?\]);/.exec(js);
+  let legJs = null; try { legJs = ml && vm.runInNewContext(ml[1]); } catch (e) {}
+  if (!Array.isArray(sede.legendas) || sede.legendas.length !== 9) falha(rel(pj), 'sede.legendas precisa ter 9 textos, um por passo da cena');
+  else if (!legJs) falha(rel(pv), 'não achei SEDE_LEGENDAS');
+  else if (JSON.stringify(legJs) !== JSON.stringify(sede.legendas)) falha(rel(pv), 'SEDE_LEGENDAS diferente de conteudo/home.json sede.legendas');
+  // o balão de cada personagem mora no index.html (span data-balao da lista), lido pela página e pelo leitor de tela
+  const baloesHtml = {};
+  (ler(ph).match(/<li data-item="\d" data-agente="(\w+)"[\s\S]*?<\/li>/g) || []).forEach((li) => {
+    const ag = /data-agente="(\w+)"/.exec(li)[1], b = /data-balao[^>]*>([\s\S]*?)<\/span>/.exec(li);
+    if (b) baloesHtml[ag] = norm(b[1]).replace(/^[.\s]+/, '').trim();
+  });
+  Object.keys(sede.baloes || {}).forEach((ag) => { if (baloesHtml[ag] !== sede.baloes[ag]) falha(rel(ph), `balão de ${ag} (data-balao) diferente de conteudo/home.json sede.baloes.${ag}`); });
   const nomes = [];
   const conferir = (chave, v) => {
     if (typeof v !== 'string' || !v.trim() || chave.charAt(0) === '_') return;
@@ -462,6 +475,15 @@ function conferirTexto(onde, texto, opcoes) {
   // os passos do index.html vêm em "<b>Nimbus</b> organiza o pedido": sem as tags, um por item de sede.passos
   const lis = (ler(ph).match(/<span class="esteira-quem">([\s\S]*?)<\/span>/g) || []).map((x) => norm(x.replace(/<[^>]+>/g, '')).trim());
   if (JSON.stringify(lis) !== JSON.stringify(sede.passos)) falha(rel(ph), 'passos da comanda (#esteira) diferentes de conteudo/home.json sede.passos');
+  // LGPD (D4): a cena desenha o nome digitado pelo visitante no palco; o Clarity não pode gravar esse texto
+  const palcoTag = (/<div[^>]*\bdata-sede-palco\b[^>]*>/.exec(ler(ph)) || [''])[0];
+  if (!palcoTag) falha(rel(ph), 'sem o div[data-sede-palco] da seção #sede');
+  else if (!/\bdata-clarity-mask="True"/.test(palcoTag)) falha(rel(ph), 'div[data-sede-palco] sem data-clarity-mask="True": o nome do visitante desenhado na cena entraria na gravação do Clarity');
+  ['#esteira', '.sede-marcas'].forEach((q) => {
+    const re = q.charAt(0) === '#' ? new RegExp('<[a-z]+[^>]*\\bid="' + q.slice(1) + '"[^>]*>') : new RegExp('<[a-z]+[^>]*\\bclass="' + q.slice(1) + '"[^>]*>');
+    const t = (re.exec(ler(ph)) || [''])[0];
+    if (!/\bdata-clarity-mask="True"/.test(t)) falha(rel(ph), q + ' sem data-clarity-mask="True" (leva o nome do visitante)');
+  });
   ok(`sede viva: ${nomes.length} textos de conteudo/home.json iguais no index.html / vitrine.js / sede`);
 })();
 

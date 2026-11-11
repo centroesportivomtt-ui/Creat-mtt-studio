@@ -934,12 +934,23 @@
      cabeçalho HTTP: mesma origem, <base> para os caminhos relativos, e o endereço pretendido em
      window.__creatLocal (a query não viaja em URL de blob; o fragmento viaja). Dentro do blob, link
      para página nossa abre na aba inteira e âncora rola a página, porque navegar a moldura para um
-     endereço nosso voltaria a ser bloqueado. Se algo falhar, vale o caminho antigo (endereço direto). */
+     endereço nosso voltaria a ser bloqueado. Se algo falhar, vale o caminho antigo (endereço direto).
+     Sem DENY na resposta (o _headers no ar), a moldura abre pelo endereço: a CSP dele recusa blob: em frame-src. */
   function carregarNoQuadro(fr, url) {
     var u; try { u = new URL(url, location.href); } catch (e) { fr.src = url; return; }
     var direto = function () { try { fr.contentWindow.location.replace(u.href); } catch (e) { fr.src = u.href; } };
     if (!W.fetch || !W.Blob || !W.URL || !URL.createObjectURL || u.origin !== location.origin || location.protocol === 'file:') { direto(); return; }
-    fetch(u.origin + u.pathname, { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('http'); return r.text(); }).then(function (html) {
+    var ctl = W.AbortController ? new AbortController() : null;
+    fetch(u.origin + u.pathname, { credentials: 'same-origin', signal: ctl ? ctl.signal : undefined }).then(function (r) {
+      if (!r.ok) throw new Error('http');
+      var xfo = (r.headers.get('x-frame-options') || '').toLowerCase(), fa = /frame-ancestors\s+'none'/i.test(r.headers.get('content-security-policy') || '');
+      if (xfo.indexOf('deny') === -1 && !fa) { if (ctl) ctl.abort(); direto(); return null; }
+      return r.text();
+    }).then(function (html) {
+      if (html == null) return;
+      var recusa = function (ev) { if (/^blob/.test(ev.blockedURI || '') && /^frame-src|^child-src/.test(ev.violatedDirective || ev.effectiveDirective || '')) { D.removeEventListener('securitypolicyviolation', recusa); direto(); } };
+      D.addEventListener('securitypolicyviolation', recusa);
+      setTimeout(function () { D.removeEventListener('securitypolicyviolation', recusa); }, 10000);
       var base = u.origin + u.pathname.replace(/[^\/]*$/, '');
       var local = JSON.stringify({ search: u.search, hash: u.hash, base: base }).replace(/</g, '\\u003c');
       var inj = '<base href="' + base.replace(/"/g, '%22') + '"><script>window.__creatLocal=' + local + ';' +
@@ -996,86 +1007,271 @@
     }
   }
 
-  /* ------------------------------------------------------------ sede viva (home): janela + comanda
-     A sede embutida (sede/?modo=demo) avisa por postMessage a etapa do ciclo de demonstração
-     ({creatSede:1, tipo:'etapa', etapa:0..5}); a comanda acende o mesmo passo. Antes de a sede
-     carregar (no celular, só sob toque), a comanda segue o mesmo relógio da sede (6 s; 9 s com
-     movimento reduzido). A página manda à sede só {tipo:'marca'} (nome fictício ou o do próprio
-     visitante, nunca para a rede) e {tipo:'visivel'} para pausar o desenho fora da tela. */
+  /* ------------------------------------------------------------ sede viva (home): cena + lista de etapas
+     A cena (window.CreatSedeViva, contrato em scratchpad/sede-viva/plano.md 4.4) só é baixada quando a seção
+     chega a 600 px da tela; roda sozinha com metade do palco na tela e pausa fora dela ou com a aba escondida.
+     Os eventos dela (sedeviva:passo/estado/ciclo/toque/pronta/erro) acendem a lista (aria-current), o rosto
+     atual e o Pausar. Movimento reduzido ou economia de dados: quadro final parado e a lista à vista.
+     "Entrar na sede 3D" troca a cena pela sede 3D de hoje (carregarSede), que avisa por postMessage a etapa
+     0..5 ({creatSede:1, tipo:'etapa'}); a lista acende os itens dessa etapa. O nome digitado pelo visitante
+     só entra na cena por textContent, neste aparelho: nunca em URL, medição ou iframe por este caminho. */
   var ESTEIRA_AGORA = ['Nimbus organiza o pedido', 'Verbo escreve os textos e Paleta escolhe as cores', 'Pixel monta o site',
     'Lupa testa no celular e Muralha confere a segurança', 'Trilho publica o site', 'Site no ar. Pode abrir.'];
-  var ESTEIRA_ULTIMA = ESTEIRA_AGORA.length - 1;     // = DEMO_ETAPAS.length da sede (5 etapas + tudo feito)
+  var ESTEIRA_ULTIMA = ESTEIRA_AGORA.length - 1;     // = DEMO_ETAPAS.length da sede 3D (5 etapas + tudo feito)
+  // Pasta da cena (contrato window.CreatSedeViva). Trocar de cena é só esta linha; rostos: true liga a faixa
+  // rostos.webp da mesma pasta nos 7 botões de rosto (só depois do gatilho de 600 px, classe .sede-perto).
+  var SEDE_CENA = { pasta: 'assets/sede-viva/', rostos: true };
+  var SEDE_LEGENDAS = ['1 de 7 · Nimbus recebe o pedido', '1 de 7 · Nimbus organiza o pedido', '2 de 7 · Verbo escreve os textos',
+    '3 de 7 · Paleta escolhe as cores', '4 de 7 · Pixel monta o site', '5 de 7 · Lupa testa no celular',
+    '6 de 7 · Muralha confere a segurança', '7 de 7 · Você aprovou. Trilho publica.', 'Site no ar. Pode abrir.'];
+  var SEDE_CENA_TEXTOS = {
+    comanda: 'Pedido de demonstração', pedidoSite: 'Site com botão do WhatsApp', fechado: 'FECHADO', aberto: 'ABERTO',
+    carimbo: 'No ar', seloTeste: 'Testado no celular', pausar: 'Pausar', continuar: 'Continuar',
+    reduzido: 'Movimento desligado neste aparelho. As etapas estão na lista abaixo.',
+    rotulo: 'Demonstração animada: a equipe da Creat monta o site de {marca}, nome fictício. As etapas estão na lista a seguir.',
+    rotuloSeu: 'Demonstração animada: a equipe da Creat monta um site de exemplo com o nome do seu negócio. As etapas estão na lista a seguir.',
+    legendaSeu: 'O nome do seu negócio na cena, só neste aparelho.',
+    legenda3d: 'Arraste para girar a ilha e toque num personagem.'
+  };
+  var SEDE_ITENS_DA_ETAPA = [[0], [1, 2], [3], [4, 5], [6], [7]];   // etapa 0..5 da sede 3D -> itens da lista
+  var SEDE_ETAPA_DO_ITEM = [0, 1, 1, 2, 3, 3, 4, 5];
   function montarSedeViva(sec, opc) {
     opc = opc || {};
     var janela = sec && $('#janela-sede', sec), est = sec && $('#esteira', sec), grupo = sec && $('[data-sede-marcas]', sec);
-    if (!janela || !est || !grupo) return;
-    var link = $('[data-esteira-abrir]', est), linkSr = $('[data-esteira-abrir-sr]', est);
+    var palco = janela && $('[data-sede-palco]', janela);
+    if (!janela || !est || !grupo || !palco) return;
+    var T = SEDE_CENA_TEXTOS;
+    var viva = $('.sede-viva', sec), pausarBt = $('[data-sede-pausar]', janela), dica = $('[data-legenda-dica]', janela);
+    var rostos = $$('[data-rosto]', sec), botao3d = $('[data-ver-ao-vivo]', sec);
+    var link = $('[data-esteira-abrir]', sec), linkSr = $('[data-esteira-abrir-sr]', sec);
     var nomeEl = $('[data-esteira-nome]', est), agoraEl = $('[data-esteira-agora]', est), barra = $('[data-esteira-barra]', est);
-    var itens = $$('.esteira-lista li', est), botao = $('[data-ver-ao-vivo]', janela);
-    var fr = null, viaSede = false, esperandoSede = false, visivel = false, relogio = 0, etapa = 0, manual = false, seuNome = '';
-    var PASSO = MOV_REDUZIDO.matches ? 9000 : 6000;
+    var itens = $$('.esteira-lista li', est), baloes = {};
+    itens.forEach(function (li) { var b = $('[data-balao]', li); if (b) baloes[li.getAttribute('data-agente')] = b.textContent.replace(/^[.\s]+/, ''); });
+    var podeCena = !!(W.IntersectionObserver && W.fetch && W.CustomEvent && D.head && D.documentElement.animate);
+    var cena = null, baixou = false, pronta = false, falhou = false, prazo = 0, estaticoAgora = false;
+    var fr = null, modo3d = false, palcoNaTela = false, janelaNaTela = false, secPerto = false;
+    var pausaBalao = false, tocou = false, trocasAuto = 0, somLigado = false, manual = false, seuNome = '', seuNicho = '', itemAtual = 0, relogioLista = 0, trocando = 0;
     var ALVO = location.origin && location.origin !== 'null' ? location.origin : '*';
-    var atual = { marca: '', seu: false };
+    var atual = { nicho: 'barbearia', marca: '', seu: false };
 
-    function pintar(k) {
-      etapa = k; est.setAttribute('data-etapa', String(k));
-      itens.forEach(function (li) {
-        var j = +li.getAttribute('data-passo'), st = j < k ? 'feito' : j === k ? 'agora' : 'fila';
+    function economia() { var c = W.navigator && navigator.connection; return !!(c && c.saveData); }
+    function estatico() { return !!MOV_REDUZIDO.matches || economia(); }
+    function pintarItens(ativos, texto) {
+      var min = Math.min.apply(null, ativos), max = Math.max.apply(null, ativos), agentes = [];
+      itemAtual = max;
+      itens.forEach(function (li, i) {
+        var st = ativos.indexOf(i) !== -1 ? 'agora' : i < min ? 'feito' : 'fila';
         li.setAttribute('data-estado', st);
-        if (st === 'agora') li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
-        var t = $('[data-st]', li); if (t) t.textContent = st === 'fila' ? 'na fila' : st;
+        if (st === 'agora') { li.setAttribute('aria-current', 'step'); agentes.push(li.getAttribute('data-agente')); } else li.removeAttribute('aria-current');
+        var s = $('[data-st]', li); if (s) s.textContent = st === 'fila' ? 'na fila' : st;
       });
-      agoraEl.textContent = ESTEIRA_AGORA[k] || '';
-      barra.style.setProperty('--progresso', Math.round(k / ESTEIRA_ULTIMA * 100) + '%');
+      agoraEl.textContent = texto || '';
+      barra.style.setProperty('--progresso', String(max / (itens.length - 1 || 1)));
+      var fim = max === itens.length - 1;
+      [est, viva].forEach(function (x) { if (fim) x.setAttribute('data-fim', ''); else x.removeAttribute('data-fim'); });
+      rostos.forEach(function (r) { if (agentes.indexOf(r.getAttribute('data-rosto')) !== -1) r.setAttribute('data-atual', ''); else r.removeAttribute('data-atual'); });
     }
-    function parar() { clearInterval(relogio); relogio = 0; }
-    function andar() {
-      parar();
-      if (viaSede || esperandoSede || !visivel || D.hidden) return;
-      relogio = setInterval(function () { pintar((etapa + 1) % (ESTEIRA_ULTIMA + 1)); }, PASSO);
+    // cena falhou com movimento reduzido ou economia: lista no quadro final, "Abrir" em destaque
+    function pintarFim() { pintarItens([itens.length - 1], SEDE_LEGENDAS[8]); }
+    function pintarDica() {
+      if (!dica) return;
+      var partes = [];
+      if (modo3d) partes.push(T.legenda3d);
+      else if (estatico() && pronta) partes.push(T.reduzido);
+      if (atual.seu) partes.push(T.legendaSeu);
+      dica.textContent = partes.join(' ');
+      dica.hidden = !partes.length;
     }
-    function pronta() { return !!(fr && fr.contentWindow && fr.getAttribute('data-pronta') === '1'); }
+    function pintarPausar(pausado) {
+      pausarBt.textContent = pausado ? T.continuar : T.pausar;
+      if (pausado) pausarBt.setAttribute('data-pausado', ''); else pausarBt.removeAttribute('data-pausado');
+    }
+
+    /* ------------------------------ sede 3D (sob toque) */
+    function pronta3d() { return !!(fr && fr.contentWindow && fr.getAttribute('data-pronta') === '1'); }
     function paraSede(msg) {
-      if (!pronta()) return;
+      if (!pronta3d()) return;
       msg.creatSede = 1;
       try { fr.contentWindow.postMessage(msg, ALVO); } catch (e) {}
+    }
+    function entrar3d() {
+      if (fr) return;
+      marcarToque();
+      modo3d = true;
+      var etapa = SEDE_ETAPA_DO_ITEM[itemAtual] || 0;
+      soltarCena(); pararRelogioLista();
+      sec.classList.remove('sede-com-cena', 'sede-estatica'); sec.classList.add('sede-3d');
+      pausarBt.hidden = true;
+      pintarItens(SEDE_ITENS_DA_ETAPA[etapa], ESTEIRA_AGORA[etapa]);
+      var carregada = atual.marca;
+      fr = carregarSede(janela, atual.seu ? seuNome : '', true, function () {
+        fr.setAttribute('data-pronta', '1');
+        pintarDica();
+        paraSede({ tipo: 'visivel', visivel: janelaNaTela && !D.hidden });
+        if (atual.marca !== carregada) paraSede({ tipo: 'marca', marca: atual.marca, reiniciar: true });
+      }, atual.seu ? '' : atual.marca, etapa);
+      try { fr.focus(); } catch (e) {}
+    }
+    W.addEventListener('message', function (ev) {
+      if (!fr || ev.source !== fr.contentWindow || !(ev.origin === location.origin || ev.origin === 'null')) return;
+      var d = ev.data;
+      if (!d || d.creatSede !== 1 || d.tipo !== 'etapa' || typeof d.etapa !== 'number' || d.etapa % 1 || d.etapa < 0 || d.etapa > ESTEIRA_ULTIMA) return;
+      pintarItens(SEDE_ITENS_DA_ETAPA[d.etapa], ESTEIRA_AGORA[d.etapa]);
+      janela.setAttribute('data-sede-pronta', '');   // a sede respondeu: o selo DEMONSTRAÇÃO dela está na tela, o da janela sai
+    });
+
+    /* ------------------------------ cena */
+    function textosCena() {
+      return { legendas: SEDE_LEGENDAS.slice(), comanda: [T.comanda, T.pedidoSite], fechado: T.fechado, aberto: T.aberto,
+        carimbo: T.carimbo, seloTeste: T.seloTeste, baloes: JSON.parse(JSON.stringify(baloes)) };
+    }
+    function soltarCena() {
+      clearTimeout(prazo); prazo = 0;
+      if (cena) { try { cena.destruir(); } catch (e) {} }
+      cena = null; pronta = false; pausaBalao = false;
+    }
+    function cair() {
+      if (falhou || modo3d) return;
+      falhou = true; soltarCena();
+      sec.classList.remove('sede-com-cena', 'sede-estatica');
+      pausarBt.hidden = true;
+      andarLista();
+    }
+    function baixarCena() {
+      if (baixou || modo3d || !podeCena) return;
+      baixou = true;
+      sec.classList.add('sede-perto');
+      if (SEDE_CENA.rostos) sec.classList.add('sede-rostos-img');
+      var faltam = 2, pronto = function () { if (--faltam === 0) montarCena(); };
+      var css = el('link', { rel: 'stylesheet', href: RAIZ + SEDE_CENA.pasta + 'cena.css' });
+      css.addEventListener('load', pronto); css.addEventListener('error', cair);
+      var js = el('script', { src: RAIZ + SEDE_CENA.pasta + 'cena.js' });
+      js.addEventListener('load', pronto); js.addEventListener('error', cair);
+      D.head.appendChild(css); D.head.appendChild(js);
+      prazo = setTimeout(cair, 12000);
+    }
+    function montarCena() {
+      if (cena || modo3d || falhou) return;
+      var api = W.CreatSedeViva;
+      if (!api || api.versao !== 1 || typeof api.montar !== 'function') { cair(); return; }
+      estaticoAgora = estatico();
+      clearTimeout(prazo);
+      try {
+        cena = api.montar(palco, { raiz: RAIZ, negocio: { nicho: atual.nicho, marca: atual.marca }, estatico: estaticoAgora, textos: textosCena(), som: somLigado ? somFn : null });
+      } catch (e) { cena = null; cair(); return; }
+      prazo = setTimeout(function () { if (!pronta) cair(); }, 8000);
+      avisarVisivel();
+    }
+    palco.addEventListener('sedeviva:pronta', function () {
+      if (!cena) return;
+      pronta = true; clearTimeout(prazo);
+      sec.classList.toggle('sede-estatica', estaticoAgora);
+      pausarBt.hidden = estaticoAgora;
+      pintarPausar(false); pintarDica();
+      avisarVisivel();
+    });
+    palco.addEventListener('sedeviva:passo', function (e) {
+      var d = e.detail || {};
+      if (!cena || typeof d.item !== 'number' || d.item < 0 || d.item >= itens.length) return;
+      // troca de negócio no meio do ciclo: a cena desce a porta (passa pelo fim) e recomeça no passo 0;
+      // a lista já foi para o passo 1 e não volta a "Site no ar" no meio da troca
+      if (trocando) { if (d.passo !== 0) return; clearTimeout(trocando); trocando = 0; }
+      pintarItens([d.item], SEDE_LEGENDAS[d.passo] || '');
+    });
+    palco.addEventListener('sedeviva:estado', function (e) {
+      var d = e.detail || {};
+      if (!cena || d.motivo === 'fora' || d.motivo === 'aba') return;
+      pintarPausar(!!d.pausado && (d.motivo === 'usuario' || d.motivo === 'balao'));
+      pausaBalao = !!d.pausado && d.motivo === 'balao';   // Esc só fecha o balão; a pausa do botão termina no Continuar
+    });
+    palco.addEventListener('sedeviva:ciclo', function () {
+      // ninguém tocou na seção: o próximo ciclo mostra outro negócio (no máximo 2 trocas; o nome do visitante fica)
+      if (!cena || tocou || atual.seu || trocasAuto >= 2) return;
+      var chips = $$('.chip:not([data-seu])', grupo), i = chips.indexOf($('.chip[aria-pressed="true"]', grupo));
+      if (i < 0 || !chips.length) return;
+      trocasAuto++;
+      escolher(chips[(i + 1) % chips.length]);
+    });
+    palco.addEventListener('sedeviva:toque', marcarToque);
+    palco.addEventListener('sedeviva:erro', cair);
+    function avisarVisivel() { if (cena) cena.visivel(palcoNaTela && !D.hidden); }
+    function remontar() {
+      if (falhou && !modo3d) { andarLista(); return; }
+      if (!cena || modo3d || falhou || estatico() === estaticoAgora) return;
+      soltarCena(); montarCena();
+    }
+    if (MOV_REDUZIDO.addEventListener) MOV_REDUZIDO.addEventListener('change', remontar);
+    else if (MOV_REDUZIDO.addListener) MOV_REDUZIDO.addListener(remontar);
+
+    // sem a cena (falha ou navegador antigo): a lista anda sozinha, como antes, só com a seção na tela
+    function pararRelogioLista() { clearInterval(relogioLista); relogioLista = 0; }
+    function andarLista() {
+      pararRelogioLista();
+      if (!falhou || cena || modo3d) return;   // só sem a cena (falha ou navegador antigo)
+      if (estatico()) { pintarFim(); return; }
+      if (!secPerto || D.hidden) return;
+      relogioLista = setInterval(function () { var p = (itemAtual + 1) % itens.length; pintarItens([p], SEDE_LEGENDAS[p === 7 ? 8 : p === 0 ? 1 : p + 1]); }, 2600);
+    }
+
+    /* ------------------------------ toque, chips, rostos, Pausar */
+    function marcarToque() {
+      tocou = true;
+      if (!somLigado) { somLigado = true; if (cena) cena.som(somFn); }
     }
     function escolher(btn) {
       if (!btn) return;
       $$('.chip', grupo).forEach(function (b) { b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
       var seu = btn.hasAttribute('data-seu');
-      atual = { marca: seu ? seuNome : btn.getAttribute('data-marca') || '', seu: seu };
+      atual = { nicho: seu ? seuNicho : btn.getAttribute('data-nicho') || 'barbearia', marca: seu ? seuNome : btn.getAttribute('data-marca') || '', seu: seu };
       nomeEl.textContent = atual.marca;
-      var legMarca = $('[data-legenda-marca]', janela);
-      if (legMarca) legMarca.textContent = seu ? 'O nome do seu negócio na fachada, só neste aparelho.' : 'Nome fictício na fachada.';
-      est.classList.remove('trocou'); void est.offsetWidth; est.classList.add('trocou');
+      palco.setAttribute('aria-label', seu ? T.rotuloSeu : T.rotulo.replace('{marca}', atual.marca));
       if (seu) { link.firstChild.textContent = 'Ver a prévia do seu site'; link.setAttribute('href', '#porta'); linkSr.textContent = ''; }
       else {
         link.firstChild.textContent = 'Abrir o site pronto';
         link.setAttribute('href', btn.getAttribute('data-site'));
         linkSr.textContent = ': ' + atual.marca + ' (site-demonstração, nome fictício)';
       }
-      pintar(0);
-      if (pronta()) { viaSede = true; parar(); paraSede({ tipo: 'marca', marca: atual.marca, reiniciar: true }); }
-      else andar();
+      pintarDica();
+      if (modo3d) { pintarItens([0], ESTEIRA_AGORA[0]); paraSede({ tipo: 'marca', marca: atual.marca, reiniciar: true }); }
+      else if (cena) {
+        pintarItens([0], SEDE_LEGENDAS[0]);
+        if (pronta && !estaticoAgora) { clearTimeout(trocando); trocando = setTimeout(function () { trocando = 0; }, 1500); }
+        cena.negocio({ nicho: atual.nicho, marca: atual.marca });
+      }
+      else if (falhou && estatico()) pintarFim();
+      else pintarItens([0], SEDE_LEGENDAS[0]);
     }
-    $$('.chip', grupo).forEach(function (b) { b.addEventListener('click', function () { manual = true; escolher(b); }); });
+    $$('.chip', grupo).forEach(function (b) { b.addEventListener('click', function () { marcarToque(); manual = true; escolher(b); }); });
     link.addEventListener('click', function (e) {
       if (atual.seu && opc.abrirSeu) { e.preventDefault(); opc.abrirSeu(); }
     });
+    rostos.forEach(function (r) {
+      r.addEventListener('click', function () { marcarToque(); if (cena && pronta) cena.focar(r.getAttribute('data-rosto')); });
+    });
+    pausarBt.addEventListener('click', function () {
+      marcarToque();
+      if (!cena) return;
+      if (pausarBt.hasAttribute('data-pausado')) cena.continuar(); else cena.pausar();
+    });
+    sec.addEventListener('keydown', function (e) {
+      if ((e.key === 'Escape' || e.key === 'Esc') && cena && pausaBalao) cena.continuar();
+    });
+    sec.addEventListener('click', function (e) { if (palco.contains(e.target)) marcarToque(); });
+    if (botao3d) botao3d.addEventListener('click', entrar3d);
 
-    // chip com o nome do próprio visitante (digitado no hero; fica só neste aparelho e só vai à sede por postMessage/fragmento)
+    // chip com o nome do próprio visitante (digitado no hero): só para barbearia, salão e academia, que têm site
+    // de exemplo para nascer; o nome fica neste aparelho (textContent na cena, fragmento/postMessage na sede 3D)
     function conferirSeu() {
       var s = opc.seu ? opc.seu() : null, chip = $('[data-seu]', grupo);
-      var n = s && s.n && s.k ? cortar28(s.n) : '';
+      var n = s && s.n && s.k && NICHOS.indexOf(s.k) !== -1 ? cortar28(s.n) : '';
       if (!n) {
         if (chip) { var era = chip.getAttribute('aria-pressed') === 'true'; grupo.removeChild(chip); if (era) escolher($('.chip', grupo)); }
-        seuNome = ''; return;
+        seuNome = ''; seuNicho = ''; return;
       }
-      var mudou = n !== seuNome; seuNome = n;
+      var mudou = n !== seuNome || s.k !== seuNicho; seuNome = n; seuNicho = s.k;
       if (!chip) {
         chip = el('button', { class: 'chip chip-seu', type: 'button', 'aria-pressed': 'false', 'data-seu': '' });
-        chip.addEventListener('click', function () { manual = true; escolher(chip); });
+        chip.addEventListener('click', function () { marcarToque(); manual = true; escolher(chip); });
         grupo.insertBefore(chip, grupo.firstChild);
       }
       chip.textContent = n;
@@ -1083,42 +1279,34 @@
       if (!manual || (mudou && chip.getAttribute('aria-pressed') === 'true')) escolher(chip);
     }
 
-    function abrir() {
-      if (fr) return;
-      var carregada = atual.marca;
-      // enquanto a sede carrega, a comanda segura o passo atual; a sede começa nesse mesmo passo (?etapa=),
-      // então a comanda nunca volta atrás. Trocar de negócio continua recomeçando do zero, de propósito.
-      esperandoSede = true; parar();
-      fr = carregarSede(janela, atual.seu ? seuNome : '', true, function () {
-        esperandoSede = false; viaSede = true; parar();   // daqui em diante quem dita o passo é a sede
-        fr.setAttribute('data-pronta', '1');
-        var dica = $('[data-legenda-dica]', janela); if (dica) { dica.className = ''; dica.textContent = ' Arraste para girar a ilha e toque num personagem.'; }
-        paraSede({ tipo: 'visivel', visivel: visivel });
-        if (atual.marca !== carregada) { viaSede = true; parar(); paraSede({ tipo: 'marca', marca: atual.marca, reiniciar: true }); }
-      }, atual.seu ? '' : atual.marca, etapa);
-    }
-    if (botao) botao.addEventListener('click', abrir);
-    W.addEventListener('message', function (ev) {
-      if (!fr || ev.source !== fr.contentWindow || !(ev.origin === location.origin || ev.origin === 'null')) return;
-      var d = ev.data;
-      if (!d || d.creatSede !== 1 || d.tipo !== 'etapa' || typeof d.etapa !== 'number' || d.etapa % 1 || d.etapa < 0 || d.etapa > ESTEIRA_ULTIMA) return;
-      viaSede = true; parar(); pintar(d.etapa);
-      janela.setAttribute('data-sede-pronta', '');   // a sede respondeu: o selo DEMONSTRAÇÃO dela está na tela, o da janela sai
-    });
-    if ('IntersectionObserver' in W) {
-      var vio = new IntersectionObserver(function (ents) {
+    /* ------------------------------ quando carregar e quando rodar */
+    if (podeCena) {
+      sec.classList.add('sede-com-cena');   // reserva o palco já na carga: nada pula quando a cena chega
+      new IntersectionObserver(function (ents) {
         var v = ents.some(function (e) { return e.isIntersecting; });
-        if (v === visivel) return;
-        visivel = v;
-        if (v) conferirSeu();
-        if (v && ehDesktop()) abrir();
-        paraSede({ tipo: 'visivel', visivel: v });
-        andar();
-      }, { rootMargin: '200px 0px' });
-      vio.observe(sec);
-    } else { visivel = true; }
-    D.addEventListener('visibilitychange', andar);
+        if (v === secPerto) return;
+        secPerto = v;
+        if (v) { conferirSeu(); baixarCena(); }
+        andarLista();
+      }, { rootMargin: '600px 0px' }).observe(sec);
+      new IntersectionObserver(function (ents) {
+        var e = ents[ents.length - 1];
+        palcoNaTela = !!e && e.isIntersecting && e.intersectionRatio >= 0.5;
+        avisarVisivel();
+      }, { threshold: [0, 0.5, 1] }).observe(palco);
+      new IntersectionObserver(function (ents) {
+        var v = ents.some(function (e) { return e.isIntersecting; });
+        if (v === janelaNaTela) return;
+        janelaNaTela = v;
+        paraSede({ tipo: 'visivel', visivel: v && !D.hidden });
+      }, { rootMargin: '200px 0px' }).observe(janela);
+    } else { secPerto = true; falhou = true; }
+    D.addEventListener('visibilitychange', function () {
+      avisarVisivel(); andarLista();
+      paraSede({ tipo: 'visivel', visivel: janelaNaTela && !D.hidden });
+    });
     escolher($('.chip[aria-pressed="true"]', grupo) || $('.chip', grupo));
+    andarLista();
   }
 
   /* ------------------------------------------------------------ id do pedido */
