@@ -513,6 +513,8 @@ function conferirTexto(onde, texto, opcoes) {
   if (pre !== pv.prefixo) falha(rel(ph), 'rótulo do modo exemplo diferente de previa.exemplo.prefixo'); else n++;
   const car = norm((/class="carregando-exemplo">([^<]*)</.exec(html) || ['', ''])[1]);
   if (car !== pv.carregando) falha(rel(ph), 'carregando do modo exemplo diferente de previa.exemplo.carregando'); else n++;
+  const err = norm((/class="carregando-falhou">([^<]*)</.exec(html) || ['', ''])[1]);
+  if (!pv.erro || err !== pv.erro) falha(rel(ph), 'aviso de falha do modo exemplo diferente de previa.exemplo.erro'); else n++;
   // nada de preço no modo exemplo e nenhum estilo inline no cartão (CSP)
   if (/exemplo-site[^>]*style=/.test(html)) falha(rel(ph), 'cartão de exemplo com style inline');
   ok(`site de exemplo: ${n} textos de conteudo/home.json iguais no index.html`);

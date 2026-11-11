@@ -568,13 +568,15 @@
   var contados = {};
   function corpoContagem(ev, nicho) {
     var guardada = lerOrigem(), u = {}, o = guardada || {};
-    // voltou pelo "Quero um assim" (utm_source=demo): a origem guardada do anúncio vale mais
-    var atual = utmAtual && utmAtual.utm_source === 'demo' && guardada ? guardada : utmAtual;
+    /* voltou pelo "Quero um assim" de uma demo (utm_source=demo): a prévia conta na origem guardada do anúncio. A
+       visita não: ela é a segunda carga da mesma pessoa e fica com a campanha da demo (demo-v1, que o servidor grava
+       como praça 'outro'), fora do denominador da leitura (docs/MEDICAO-FUNIL.md). */
+    var atual = utmAtual && utmAtual.utm_source === 'demo' && guardada && ev !== 'visita' ? guardada : utmAtual;
     ['utm_campaign', 'utm_content'].forEach(function (k) { var v = (atual && atual[k]) || o[k]; if (typeof v === 'string' && RE_UTM.test(v)) u[k] = v; });
     return { evento: ev, nicho: NICHOS.indexOf(nicho) !== -1 ? nicho : 'outro', praca: u.utm_campaign || '', utm_content: u.utm_content || '' };
   }
   function contar(ev, nicho) {
-    if (ENTRADA.teste || ENTRADA.semContar) return false;
+    if (ENTRADA.semContar) return false;
     var k = ev + ':' + (nicho || '');
     if (contados[k]) return false;
     contados[k] = 1;
@@ -691,7 +693,8 @@
     return 'enviada';
   }
 
-  /* Tudo o que o site guarda neste aparelho começa com "creat:" (localStorage e sessionStorage).
+  /* Tudo o que o site guarda neste aparelho começa com "creat:" (localStorage e sessionStorage). A exceção é o motor
+     do site de exemplo aberto no #previa (CHAVES_EXEMPLO, abaixo), que a home apaga ao fechar o exemplo.
      Chaves com prazo: creat:pedido:v1 (7 dias), creat:origem:v1 (30 dias), creat:px:compras (30 dias por item),
      creat:consentimento (180 dias). Elas são conferidas e apagadas ao vencer em toda página que abre. */
   var CHAVES_LEGADAS = ['creat:checkout:v1'];   // não é mais gravada (D8); some de quem já tinha
@@ -700,8 +703,16 @@
     lerOrigem(); lerCompras(); consentimento();
     if (typeof lerPedidoSalvo === 'function') lerPedidoSalvo();
   }
+  /* O motor dos sites de exemplo, aberto dentro do #previa (mesma origem), grava site:demo-<nicho>:* (som desligado)
+     e creat-pele (tom de pele do ritual do salão). Não identificam ninguém, e o "Esquecer" apaga também. */
+  var CHAVES_EXEMPLO = /^(site:demo-|creat-pele$)/;
+  function chavesDoExemplo() {
+    var l = [];
+    try { var st = W.localStorage; for (var i = 0; i < st.length; i++) { var k = st.key(i); if (k && CHAVES_EXEMPLO.test(k)) l.push(k); } } catch (e) {}
+    return l;
+  }
   function esquecerTudo() {
-    var apagarDe = function (st) { try { for (var i = st.length - 1; i >= 0; i--) { var k = st.key(i); if (k && k.indexOf('creat:') === 0) st.removeItem(k); } } catch (e) {} };
+    var apagarDe = function (st) { try { for (var i = st.length - 1; i >= 0; i--) { var k = st.key(i); if (k && (k.indexOf('creat:') === 0 || CHAVES_EXEMPLO.test(k))) st.removeItem(k); } } catch (e) {} };
     try { apagarDe(W.localStorage); } catch (e) {}
     try { apagarDe(W.sessionStorage); } catch (e) {}
     Object.keys(memoria).forEach(function (k) { if (k.indexOf('creat:') === 0) delete memoria[k]; });
@@ -940,14 +951,17 @@
      window.__creatLocal (a query não viaja em URL de blob; o fragmento viaja). Dentro do blob, link
      para página nossa abre na aba inteira e âncora rola a página, porque navegar a moldura para um
      endereço nosso voltaria a ser bloqueado. Se algo falhar, vale o caminho antigo (endereço direto).
-     Sem DENY na resposta (o _headers no ar), a moldura abre pelo endereço: a CSP dele recusa blob: em frame-src. */
-  function carregarNoQuadro(fr, url) {
+     Sem DENY na resposta (o _headers no ar), a moldura abre pelo endereço: a CSP dele recusa blob: em frame-src.
+     aoFalhar (opcional): chamado no lugar do endereço direto quando a página não veio (resposta de erro ou rede caída);
+     o site de exemplo usa para mostrar um aviso em vez de tela branca ou do texto cru do 404. */
+  function carregarNoQuadro(fr, url, aoFalhar) {
     var u; try { u = new URL(url, location.href); } catch (e) { fr.src = url; return; }
     var direto = function () { try { fr.contentWindow.location.replace(u.href); } catch (e) { fr.src = u.href; } };
     if (!W.fetch || !W.Blob || !W.URL || !URL.createObjectURL || u.origin !== location.origin || location.protocol === 'file:') { direto(); return; }
     var ctl = W.AbortController ? new AbortController() : null;
+    var falhou = typeof aoFalhar === 'function' ? function () { aoFalhar(); } : direto;
     fetch(u.origin + u.pathname, { credentials: 'same-origin', signal: ctl ? ctl.signal : undefined }).then(function (r) {
-      if (!r.ok) throw new Error('http');
+      if (!r.ok) { falhou(); return null; }
       var xfo = (r.headers.get('x-frame-options') || '').toLowerCase(), fa = /frame-ancestors\s+'none'/i.test(r.headers.get('content-security-policy') || '');
       if (xfo.indexOf('deny') === -1 && !fa) { if (ctl) ctl.abort(); direto(); return null; }
       return r.text();
@@ -969,7 +983,7 @@
       fr.setAttribute('data-blob', b);
       try { fr.contentWindow.location.replace(b + u.hash); } catch (e) { fr.src = b + u.hash; }
       if (antigo) setTimeout(function () { try { URL.revokeObjectURL(antigo); } catch (e) {} }, 5000);
-    }).catch(direto);
+    }).catch(falhou);
   }
 
   /* ------------------------------------------------------------ sede (iframe sob demanda) */
@@ -1472,8 +1486,9 @@
     var fora = [$('header.barra'), $('main'), $('footer.rodape'), $('.zap-flutuante')];
     var urlPreviaAtual = '', linkPreviaAtual = '', focoAntes = null;
     // Parte 1: só o diálogo e o quadro, sem contar nada (o site de exemplo usa só esta)
-    function mostrarDialogo(url, rotulo) {
+    function mostrarDialogo(url, rotulo, aoFalhar) {
       urlPreviaAtual = url;
+      previa.removeAttribute('data-falhou');
       $('#previa-nome').textContent = rotulo;
       carregandoPrevia.hidden = false; frame.style.visibility = 'hidden';
       previa.hidden = false; D.body.classList.add('com-previa');
@@ -1482,13 +1497,13 @@
       if (!history.state || !history.state.previa) history.pushState({ previa: 1 }, '', location.pathname + location.search + '#previa');
       requestAnimationFrame(function () { previa.classList.add('aberta'); $('#previa-fechar').focus(); });
       try { W.dispatchEvent(new CustomEvent('creat:previa-aberta')); } catch (e) {}
-      carregarNoQuadro(frame, url);
+      carregarNoQuadro(frame, url, aoFalhar);
     }
     // Prévia com o nome: o único caminho que conta 'previa'
     function abrirPrevia() {
       var s = estado(); if (!s.k || !s.n) return;
       var frag = montarFragmento(s, false);
-      previa.removeAttribute('data-modo'); previa.removeAttribute('data-nicho-exemplo');
+      previa.removeAttribute('data-modo'); previa.removeAttribute('data-exemplo-nicho'); cargaExemplo++;
       linkPreviaAtual = enderecoPublico() + 'previa/#' + frag;   // o link copiado nasce no canônico
       var cn = $('#previa-carregando-nome'); if (cn) cn.textContent = s.n;
       frame.title = 'Prévia do site: ' + s.n;   // sem artigo fixo: "da Studio" e "da Salão" quebram (PG-N4)
@@ -1497,26 +1512,40 @@
       contar('previa', s.k);
       pixelViewContent(s.k);
     }
+    /* O site de exemplo (motor das demos) grava no aparelho o som desligado (site:demo-<nicho>:som) e, no salão, o tom
+       de pele do ritual (creat-pele). O exemplo não deixa nada: ao fechar, apaga as chaves que não existiam antes de
+       abrir; o "Esquecer meus dados" apaga as duas famílias (esquecerTudo). */
+    var chavesAntesExemplo = null, cargaExemplo = 0;
+    function limparChavesDoExemplo() {
+      if (!chavesAntesExemplo) return;
+      var antes = chavesAntesExemplo; chavesAntesExemplo = null;
+      chavesDoExemplo().forEach(function (k) { if (antes.indexOf(k) === -1) { try { W.localStorage.removeItem(k); } catch (e) {} } });
+    }
     // Cartão do site de exemplo: modo exemplo, sem previa, previa_gerada nem ViewContent
     function abrirExemplo(k, cartao) {
       if (NICHOS.indexOf(k) === -1) return;
       var nomeEx = cartao.querySelector('.exemplo-nome'), rot = nomeEx ? nomeEx.textContent : '';
-      previa.setAttribute('data-modo', 'exemplo'); previa.setAttribute('data-nicho-exemplo', k);
+      previa.setAttribute('data-modo', 'exemplo'); previa.setAttribute('data-exemplo-nicho', k);
       linkPreviaAtual = '';
       frame.title = 'Site de exemplo: ' + rot;
-      mostrarDialogo(RAIZ + 'sites/demo-' + k + '/', rot);
+      if (!chavesAntesExemplo) chavesAntesExemplo = chavesDoExemplo();
+      var minha = ++cargaExemplo;
+      // não veio (erro ou rede caída) ou passou de 20 s: aviso curto; o botão do nome continua embaixo
+      var falhou = function () {
+        if (minha !== cargaExemplo || previa.hidden || previa.getAttribute('data-modo') !== 'exemplo' || carregandoPrevia.hidden) return;
+        previa.setAttribute('data-falhou', '');
+      };
+      setTimeout(falhou, 20000);
+      mostrarDialogo(RAIZ + 'sites/demo-' + k + '/', rot, falhou);
     }
     // "Ver com o nome da minha ...": campo do nome e chip marcado, sem contar nada nem nicho_escolhido
-    var focoPorCodigo = false;   // foco do código (pacote B: não é tocou_nome)
     function exemploParaNome() {
-      var k = previa.getAttribute('data-nicho-exemplo');
+      var k = previa.getAttribute('data-exemplo-nicho');
       fecharPrevia(false);
       var r = NICHOS.indexOf(k) !== -1 ? $('input[name="nicho"][value="' + k + '"]') : null;
       if (r && !r.checked) { r.checked = true; tituloDoNicho(k); exemploDoNicho(k); erroNicho.hidden = true; }
       setTimeout(function () {
-        focoPorCodigo = true;
         try { campoNome.focus({ preventScroll: true }); } catch (e) { campoNome.focus(); }
-        focoPorCodigo = false;
         try { caixaNome.scrollIntoView({ block: 'center', behavior: MOV_REDUZIDO.matches ? 'auto' : 'smooth' }); } catch (e) {}
       }, 60);
     }
@@ -1535,22 +1564,27 @@
         var w = frame.contentWindow;
         if (!w || w.__creatExemplo) return;
         w.__creatExemplo = 1;
-        w.addEventListener('click', function (e) {
+        // clique comum, ctrl/cmd+clique (click) e clique do meio (auxclick): nenhum abre a home em outra aba
+        var vigia = function (e) {
+          if (e.type === 'auxclick' && e.button !== 1) return;
           var a = e.target && e.target.closest ? e.target.closest('a[href*="utm_source=demo"],a[href*="utm_source=rodape"]') : null;
           if (!a) return;
           e.preventDefault(); e.stopPropagation();
           exemploParaNome();
-        }, true);
+        };
+        w.addEventListener('click', vigia, true);
+        w.addEventListener('auxclick', vigia, true);
       } catch (x) {}
     }
     frame.addEventListener('load', function () {
       if (!urlPreviaAtual) return;
-      carregandoPrevia.hidden = true; frame.style.visibility = '';
+      carregandoPrevia.hidden = true; frame.style.visibility = ''; previa.removeAttribute('data-falhou');
       vigiarExemplo();
     });
     function fecharPrevia(deHistorico) {
       if (previa.hidden) return;
       previa.hidden = true; previa.classList.remove('aberta'); D.body.classList.remove('com-previa');
+      limparChavesDoExemplo();
       fora.forEach(function (x) { if (x) x.removeAttribute('inert'); });
       if (placa) { try { placa.reiniciar(); placa.definirNome(limparNome(campoNome.value)); } catch (e) {} }
       if (!deHistorico && history.state && history.state.previa) history.back();
@@ -1558,6 +1592,7 @@
       try { W.dispatchEvent(new CustomEvent('creat:previa-fechada')); } catch (e) {}
     }
     $('#previa-fechar').addEventListener('click', function () { fecharPrevia(false); });
+    W.addEventListener('pagehide', function () { if (!previa.hidden) limparChavesDoExemplo(); });
     W.addEventListener('popstate', function () { if (!previa.hidden) fecharPrevia(true); });
     previa.addEventListener('keydown', function (e) { if (e.key === 'Escape') fecharPrevia(false); });
     $('#previa-copiar').addEventListener('click', function () {

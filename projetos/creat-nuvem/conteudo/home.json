@@ -102,10 +102,11 @@
     "_carregando": "O nome vem numa segunda linha, grande, e a placa da tela de carregamento é a face ABERTO (assets/svg/placa-aberto.svg). Sem artigo fixo antes do nome (PG-N4).",
     "erroCarregar": "A prévia não abriu. Recarregue a página. Se continuar, chame o Suporte Creat no WhatsApp.",
     "iframeTitulo": "Prévia do site da {negocio}",
-    "_exemplo": "Modo exemplo do diálogo (#previa[data-modo=exemplo]): o rótulo da barra é o prefixo seguido do nome fictício do cartão, o carregando é próprio e só existe o botão do nicho. Sem copiar link, sem Testar, sem Quero e sem preço.",
+    "_exemplo": "Modo exemplo do diálogo (#previa[data-modo=exemplo], nicho em data-exemplo-nicho; data-falhou mostra o erro): o rótulo da barra é o prefixo seguido do nome fictício do cartão, o carregando é próprio e só existe o botão do nicho. Sem copiar link, sem Testar, sem Quero e sem preço.",
     "exemplo": {
       "prefixo": "Exemplo · ",
       "carregando": "Abrindo o site de exemplo",
+      "erro": "O site de exemplo não abriu agora. Veja o seu, com o nome do seu negócio, no botão abaixo.",
       "botao": { "barbearia": "Ver com o nome da minha barbearia", "salao": "Ver com o nome do meu salão", "academia": "Ver com o nome da minha academia" }
     }
   },

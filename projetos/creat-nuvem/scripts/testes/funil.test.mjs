@@ -279,13 +279,14 @@ test('prazos: compras medidas vencem em 30 dias, consentimento em 180 dias, chav
   assert.equal(ls.getItem('creat:px:compras'), null, 'lista vazia sai do aparelho');
 });
 
-test('esquecer: apaga todas as chaves "creat:" do localStorage e do sessionStorage, e só elas', () => {
+test('esquecer: apaga todas as chaves "creat:" do localStorage e do sessionStorage, e as do site de exemplo (site:demo-*, creat-pele), e só elas', () => {
   const ctx = carregar(), V = ctx.Vitrine;
-  for (const k of ['creat:pedido:v1', 'creat:origem:v1', 'creat:px:compras', 'creat:consentimento', 'creat:checkout:v1']) ctx.localStorage.setItem(k, '{}');
+  for (const k of ['creat:pedido:v1', 'creat:origem:v1', 'creat:px:compras', 'creat:consentimento', 'creat:checkout:v1', 'site:demo-barbearia:som', 'site:demo-salao:som', 'creat-pele']) ctx.localStorage.setItem(k, '{}');
+  ctx.localStorage.setItem('site:outro-cliente:som', 'fica');
   for (const k of ['creat:abrir:negocio', 'creat:px:vc:salao']) ctx.sessionStorage.setItem(k, '{}');
   ctx.localStorage.setItem('outro-site', 'fica');
   V.esquecerTudo();
-  assert.deepEqual(Array.from(ctx.localStorage._m.keys()), ['outro-site']);
+  assert.deepEqual(Array.from(ctx.localStorage._m.keys()).sort(), ['outro-site', 'site:outro-cliente:som']);
   assert.equal(ctx.sessionStorage.length, 0);
 });
 
@@ -1900,7 +1901,19 @@ test('exemplo (e): "Quero um assim" e o rodapé dentro do site de exemplo não n
         await fr.waitForSelector(sel, { state: 'attached', timeout: 10000 });
         const link = fr.locator(sel).first();
         await link.scrollIntoViewIfNeeded();
-        await link.click();
+        if (deny) {
+          // clique do meio (auxclick) e ctrl+clique em computador: nenhuma aba nova com a home e utm_source=demo
+          const abas = ctx.pages().length;
+          await link.click({ button: 'middle' });
+          await pg.waitForTimeout(300);
+          assert.equal(ctx.pages().length, abas, 'clique do meio não abre aba');
+          if (!(await pg.evaluate(() => document.querySelector('#previa').hidden))) {
+            await link.click({ modifiers: ['Control'] });
+            await pg.waitForTimeout(300);
+            assert.equal(ctx.pages().length, abas, 'ctrl+clique não abre aba');
+          }
+          await pg.waitForFunction(() => document.querySelector('#previa').hidden && document.activeElement && document.activeElement.id === 'nome');
+        } else await link.click();
         await pg.waitForFunction(() => document.querySelector('#previa').hidden && document.activeElement && document.activeElement.id === 'nome');
         await pg.waitForTimeout(400);
         assert.equal(new URL(pg.url()).origin + new URL(pg.url()).pathname, base + '/', 'a página não saiu');
@@ -1915,7 +1928,7 @@ test('exemplo (e): "Quero um assim" e o rodapé dentro do site de exemplo não n
   }
 });
 
-test('exemplo (f, g): voltando pelo "Quero um assim" (utm_source=demo) com origem de anúncio guardada, a prévia fica na praça do anúncio; ?teste=pa-teste não conta nada', { skip: !chromium && 'sem Playwright' }, async () => {
+test('exemplo (f, g): voltando pelo "Quero um assim" (utm_source=demo) com origem de anúncio guardada, a prévia fica na praça do anúncio e a visita não; ?teste=pa-teste não conta nada', { skip: !chromium && 'sem Playwright' }, async () => {
   const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
   const nav = await chromium.launch();
   try {
@@ -1926,11 +1939,12 @@ test('exemplo (f, g): voltando pelo "Quero um assim" (utm_source=demo) com orige
     await pg.fill('#nome', 'Barbearia TESTE Pixel'); await pg.keyboard.press('Enter');
     await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
     const cs = contagens(api);
-    assert.deepEqual(cs.map((c) => c.evento), ['visita', 'previa']);
-    for (const c of cs) { assert.equal(c.praca, 'feira'); assert.equal(c.utm_content, 'R7-barbearia'); }
-    assert.doesNotMatch(JSON.stringify(cs), /demo-v1/);
+    /* a visita é a segunda carga da mesma pessoa: fica com a campanha da demo (o servidor grava praça e anúncio 'outro',
+       e a leitura só soma praça feira ou salvador-rms com anúncio R7-*, R9-* ou F1-*). A prévia fica na origem do anúncio. */
+    assert.deepEqual(cs.map((c) => [c.evento, c.praca, c.utm_content]), [['visita', 'demo-v1', 'barbearia'], ['previa', 'feira', 'R7-barbearia']]);
     await ctx.close();
-    // sem origem guardada, quem chega pelo exemplo fica na praça demo-v1 (fora do denominador da análise)
+    /* sem origem guardada, quem chega pelo exemplo manda a praça demo-v1, que o servidor grava como 'outro'
+       (schema/pedido-regras.mjs, PRACAS_CONTADOR); a leitura descarta toda linha com praça ou anúncio 'outro' */
     const s = await paginaApi(nav, base, { consentir: false });
     await s.pg.goto(base + '/?nicho=barbearia&utm_source=demo&utm_medium=ref&utm_campaign=demo-v1&utm_content=barbearia');
     await s.pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
@@ -1950,6 +1964,63 @@ test('exemplo (f, g): voltando pelo "Quero um assim" (utm_source=demo) com orige
     assert.deepEqual(contagens(t.api), [], 'nenhuma contagem com ?teste=pa-teste');
     assert.deepEqual([...erros, ...t.erros, ...s.erros], []);
     await t.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('exemplo: o site de exemplo não deixa chave no aparelho ao fechar (site:demo-*:som, creat-pele); o que já existia fica', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    for (const [k, antes] of [['salao', {}], ['barbearia', { 'creat-pele': '2', 'site:demo-barbearia:som': 'on' }]]) {
+      const { pg, ctx, erros } = await paginaApi(nav, base, { consentir: false });
+      await pg.goto(base + '/?nicho=' + k);
+      await pg.evaluate((a) => { for (const [c, v] of Object.entries(a)) localStorage.setItem(c, v); }, antes);
+      await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+      const chaves = () => pg.evaluate(() => Object.fromEntries(Object.keys(localStorage).filter((c) => /^(site:demo-|creat-pele$)/.test(c)).map((c) => [c, localStorage.getItem(c)])));
+      await pg.click('[data-nicho-exemplo="' + k + '"]');
+      await pg.waitForFunction(() => document.querySelector('#previa-carregando').hidden, null, { timeout: 15000 });
+      const fr = pg.frames().find((f) => f.url().startsWith('blob:'));
+      await fr.waitForFunction(() => document.documentElement.classList.contains('motor-pronto'), null, { timeout: 10000 });
+      await pg.waitForTimeout(600);
+      const aberto = await chaves();
+      assert.ok(Object.keys(aberto).some((c) => c.startsWith('site:demo-' + k + ':')), k + ': com o exemplo aberto o motor grava (' + JSON.stringify(aberto) + ')');
+      await pg.click('#previa-fechar');
+      await pg.waitForFunction(() => document.querySelector('#previa').hidden);
+      assert.deepEqual(await chaves(), antes, k + ': ao fechar, só o que já existia');
+      assert.deepEqual(erros, [], k);
+      await ctx.close();
+    }
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('exemplo: quando o site de exemplo não abre (404 ou rede caída), o diálogo mostra um aviso curto e o botão do nome, sem tela branca', { skip: !chromium && 'sem Playwright' }, async () => {
+  const home = JSON.parse(fs.readFileSync(path.join(RAIZ, 'conteudo', 'home.json'), 'utf8'));
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    for (const modo of ['404', 'rede']) {
+      const { pg, ctx, api, erros } = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+      await pg.route('**/sites/demo-academia/**', (r) => modo === 'rede' ? r.abort('internetdisconnected') : r.fulfill({ status: 404, contentType: 'text/plain', body: 'Not Found' }));
+      await pg.goto(base + '/?nicho=academia');
+      await pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+      await pg.click('[data-nicho-exemplo="academia"]');
+      await pg.waitForFunction(() => document.querySelector('#previa').hasAttribute('data-falhou'), null, { timeout: 8000 });
+      const v = await pg.evaluate(() => {
+        const vis = (s) => { const e = document.querySelector(s); return !!e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden'; };
+        return { aviso: vis('.carregando-falhou') ? document.querySelector('.carregando-falhou').textContent.trim() : null, abrindo: vis('.carregando-exemplo'), quadro: getComputedStyle(document.querySelector('#previa-frame')).visibility, botao: vis('#previa-exemplo-nome') ? document.querySelector('#previa-exemplo-nome').innerText.trim() : null };
+      });
+      assert.deepEqual(v, { aviso: home.previa.exemplo.erro, abrindo: false, quadro: 'hidden', botao: 'Ver com o nome da minha academia' }, modo);
+      if (modo === '404') await pg.screenshot({ path: path.join(process.env.CREAT_TESTE_TMP || require('node:os').tmpdir(), 'exemplo-falhou-360.png') });
+      await pg.click('#previa-exemplo-nome');
+      await pg.waitForFunction(() => document.querySelector('#previa').hidden && document.activeElement && document.activeElement.id === 'nome');
+      // a prévia com nome depois da falha abre normal, sem o aviso
+      await pg.fill('#nome', 'Academia TESTE Pixel'); await pg.keyboard.press('Enter');
+      await pg.waitForFunction(() => document.querySelector('#previa-carregando').hidden, null, { timeout: 15000 });
+      assert.equal(await pg.evaluate(() => document.querySelector('#previa').hasAttribute('data-falhou')), false);
+      assert.deepEqual(contagens(api).map((c) => c.evento), ['visita', 'previa'], modo);
+      assert.deepEqual(erros, [], modo);
+      await ctx.close();
+    }
   } finally { await nav.close(); srv.close(); }
 });
 
@@ -1976,7 +2047,7 @@ test('exemplo (h): antes do JavaScript da página o cartão é link comum para s
 test('exemplo: textos do cartão e do modo exemplo vêm de conteudo/home.json, sem emoji, sem travessão, sem preço; nenhum estilo inline novo', () => {
   const home = JSON.parse(fs.readFileSync(path.join(RAIZ, 'conteudo', 'home.json'), 'utf8'));
   const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8').replace(/&amp;/g, '&');
-  const textos = [home.hero.exemplo.selo, home.previa.exemplo.prefixo.trim(), home.previa.exemplo.carregando, ...Object.values(home.previa.exemplo.botao)];
+  const textos = [home.hero.exemplo.selo, home.previa.exemplo.prefixo.trim(), home.previa.exemplo.carregando, home.previa.exemplo.erro, ...Object.values(home.previa.exemplo.botao)];
   for (const k of NICHOS_EX) { const t = home.hero.exemplo[k]; textos.push(t.nome, t.pilula, t.linha, t.aria); assert.equal(t.nome, NOME_EX[k]); }
   for (const t of textos) {
     assert.ok(html.includes(t), 'no index.html: ' + t);
