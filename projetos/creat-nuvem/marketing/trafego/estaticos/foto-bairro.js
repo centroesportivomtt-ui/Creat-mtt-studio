@@ -15,8 +15,9 @@ window.PECAS_FOTO = {
     lay9: 'cena', lay45: 'cena', t9: '56px', t45: '72px', cena9: -214, cena45: -120,
     tela: 'M549,1215 L915,1203 Q951,1203 955,1235 Q954,1243 944,1243 L553,1251 Q541,1251 541,1240 L542,1226 Q543,1215 549,1215 Z',
     balao: ['Pedido pelo site', 'Corte, amanhã 14h'],
+    chipT: '32px', // o chip fica à esquerda do celular; em 34 px a sombra encostaria no aro
     colocar: {
-      '9x16': { titulo: [72, 286], rodape: [65, 1086], chip: [65, 1236], balao: [1009, 1070], ponta: [834, 1138] },
+      '9x16': { titulo: [72, 278], rodape: [65, 1086], chip: [65, 1236], balao: [1009, 1070], ponta: [834, 1138] },
       '4x5': { titulo: [60, 142], rodape: [56, 52], chip: [60, 1288], balao: [1018, 1160], ponta: [834, 1232] }
     } },
   'barbearia-3': { nicho: 'Barbearia', n: 3, ideia: 'fim do dia aberto', foto: 'Foto Barbearia - vassoura no fim do dia - vertical 9x16.png',
@@ -70,6 +71,7 @@ window.PECAS_FOTO = {
   if (cena) {
     // posições fixas por formato, decididas sobre a grade da foto (ver o comentário da peça)
     const c = p.colocar[f];
+    if (p.chipT) chip.style.fontSize = p.chipT;
     pos(t, { left: c.titulo[0] + 'px', top: c.titulo[1] + 'px' });
     pos(rod, { left: c.rodape[0] + 'px', top: c.rodape[1] + 'px' });
   } else if (pe && f === '4x5') {
@@ -107,14 +109,16 @@ window.PECAS_FOTO = {
       // a tela do celular acesa: luz espalhada no aro e na mesa, a tela clara e o balão do pedido visto de lado
       const svg = document.createElementNS(NS, 'svg');
       svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'luz-tela'); svg.setAttribute('aria-hidden', 'true');
-      svg.innerHTML = '<defs><filter id="brilho" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="9"/></filter>'
-        + '<linearGradient id="vidro" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#DCEEFA"/><stop offset=".55" stop-color="#F3F9FD"/><stop offset="1" stop-color="#E4F1FA"/></linearGradient>'
+      // tudo levemente desfocado (a foto tem o celular fora do plano de foco), sem contorno de desenho
+      svg.innerHTML = '<defs><filter id="brilho" x="-30%" y="-400%" width="160%" height="900%"><feGaussianBlur stdDeviation="14"/></filter>'
+        + '<filter id="foco" x="-5%" y="-50%" width="110%" height="200%"><feGaussianBlur stdDeviation="1.3"/></filter>'
+        + '<linearGradient id="vidro" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#D9E6EC"/><stop offset=".35" stop-color="#EEF3F2"/><stop offset=".8" stop-color="#F6F5EF"/><stop offset="1" stop-color="#E2E8E9"/></linearGradient>'
         + '<clipPath id="recorte"><path d="' + p.tela + '"/></clipPath></defs>'
-        + '<path d="' + p.tela + '" fill="#EAF6FF" opacity=".55" filter="url(#brilho)"/>'
-        + '<path d="' + p.tela + '" fill="url(#vidro)"/>'
-        + '<g clip-path="url(#recorte)"><path d="M541,1203 L960,1189 L960,1213 L541,1222 Z" fill="#CDEBFF"/>'
-        + '<path d="M705,1232 L905,1225 Q916,1225 917,1231 Q917,1236 906,1236 L707,1243 Q697,1243 697,1238 Q697,1232 705,1232 Z" fill="#F2ECDD" stroke="#1E1B2E" stroke-opacity=".55" stroke-width="1.6"/></g>'
-        + '<path d="' + p.tela + '" fill="none" stroke="#FFFFFF" stroke-opacity=".5" stroke-width="1.4"/>';
+        + '<path d="' + p.tela + '" fill="#F4F8F6" opacity=".45" filter="url(#brilho)"/>'
+        + '<g filter="url(#foco)"><path d="' + p.tela + '" fill="url(#vidro)" opacity=".96"/>'
+        + '<g clip-path="url(#recorte)"><path d="M541,1203 L960,1189 L960,1210 L541,1221 Z" fill="#C9D9DF" opacity=".75"/>'
+        + '<path d="M716,1231 L902,1225 Q912,1225 912,1230 Q912,1235 902,1235 L718,1241 Q708,1241 708,1236 Q708,1231 716,1231 Z" fill="#FFFFFF" opacity=".9"/>'
+        + '<path d="M541,1247 L960,1238 L960,1260 L541,1260 Z" fill="#1E1B2E" opacity=".08"/></g></g>';
       quadro.appendChild(svg);
     }
   }
@@ -135,7 +139,8 @@ window.PECAS_FOTO = {
       + '<path d="M' + bx + ',' + (by - 4) + ' L' + tip[0] + ',' + tip[1] + ' L' + (bx + 44) + ',' + (by - 4) + '" fill="none" stroke="#1E1B2E" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>';
     peca.insertBefore(rabo, bal.nextSibling);
     const r = bal.getBoundingClientRect();
-    pos(selo, { left: Math.round(r.left - base.left - 14) + 'px', top: Math.round(r.top - base.top - 30) + 'px', transform: 'rotate(-3deg)' });
+    // selo pendurado na borda de cima do balão, sem cobrir o rótulo
+    pos(selo, { left: Math.round(r.left - base.left - 14) + 'px', top: Math.round(r.top - base.top - selo.offsetHeight + 8) + 'px', transform: 'rotate(-3deg)' });
     // chip no pé, à esquerda do celular
     const ch = chip.getBoundingClientRect().height;
     pos(chip, { left: c.chip[0] + 'px', top: (c.chip[1] - ch) + 'px' });

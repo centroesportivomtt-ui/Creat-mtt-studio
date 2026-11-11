@@ -150,9 +150,10 @@
     },
     /* aproxima: depois de assentar, a câmera chega na placa (2x) para o nome a giz ficar legível; vidro: atravessa a lousa */
     /* aproxima (conferência de 11/11, "pulo do gato sub-dimensionado"): de 1,3 a 2,2 s a câmera avança na placa com a
-       curva de mola da casa até a tábua ter ~700 px de largura (largura: px de vídeo; antes era 2x só depois de 1,95 s,
+       curva de mola da casa até a madeira da tábua ter ~700 px de largura (largura: px de vídeo do retângulo .cp-tabua, que
+       inclui borda e sombra: 830 dá ~700 px de madeira visível, medido no quadro; antes era 2x só depois de 1,95 s,
        e a placa passava a virada com ~360 px). O voo pelo vidro continua o mesmo movimento. */
-    cena: { descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.3, 2.2, { largura: 700 }], vidro: [2.6, 3.15] },
+    cena: { descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.3, 2.2, { largura: 830 }], vidro: [2.6, 3.15] },
     sessoes: {
       /* prévia real: desce até o nome e para (0,8 s); depois um corte de montagem, com fusão de 0,2 s, leva ao pedido
          (são ~1.400 px de página: rolar isso em menos de 1 s borra). O R7 não promete "sem corte".
@@ -249,7 +250,7 @@
     captura: 'previa', palco: 'dor', capa: 0.7,
     hora: '2026-11-11T10:12:00-03:00', cliente: 'Camila',
     perfil: { arroba: '@salaoesmalteficticio', bio: 'Unhas, cabelo e sobrancelha.', link: 'salaoesmalte.exemplo/horario' },
-    cena: { tipo: 'link', toqueLink: 0.3, erroEm: 0.42, descida: [0.8, 1.24], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.3, 2.2, { largura: 700 }], vidro: [2.6, 3.15] },
+    cena: { tipo: 'link', toqueLink: 0.3, erroEm: 0.42, descida: [0.8, 1.24], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.3, 2.2, { largura: 830 }], vidro: [2.6, 3.15] },
     /* fundo --papel até o cartão (conferência de 11/11: o R12 é o gêmeo mais próximo do R7; o cartão final não muda) */
     fundo: { cor: 'papel' },
     sessoes: {
@@ -298,7 +299,7 @@
        em 0,55 s como antes. Do outro lado do vidro, o giz escreve as linhas 1 e 2 e a 3 já está marcada (pronta). */
     captura: 'recortes', palco: 'lousa', capa: 0.3,
     hora: '2026-11-11T10:12:00-03:00',
-    cena: { tipo: 'lousa', descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.3, 2.2, { largura: 700 }], vidro: [2.5, 3.0] },
+    cena: { tipo: 'lousa', descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.3, 2.2, { largura: 830 }], vidro: [2.5, 3.0] },
     fundo: { cor: 'lousa', balcao: 'oculto', moldura: true },
     /* lousa grande (px do vídeo): a mesma da capa e a do outro lado do vidro */
     lousa: { x: 65, y: 356, w: 950, h: 880 },
