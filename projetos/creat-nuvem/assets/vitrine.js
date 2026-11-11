@@ -732,7 +732,8 @@
       var naTela = [];
       var fio = new IntersectionObserver(function (ents) {
         ents.forEach(function (en) { var i = formularios.indexOf(en.target); if (i !== -1) naTela[i] = en.isIntersecting; });
-        caixa.classList.toggle('is-faixa', naTela.some(Boolean)); medir();
+        var bp = $('#barra-pagar');   // com o botão de pagar no rodapé (/abrir/ no celular) continua faixa, sem piscar
+        caixa.classList.toggle('is-faixa', naTela.some(Boolean) || !!(bp && !bp.hidden && !bp.classList.contains('recolhida') && bp.getBoundingClientRect().height > 0)); medir();
       }, { threshold: 0 });
       formularios.forEach(function (fm) { fio.observe(fm); });
     }
@@ -742,6 +743,18 @@
     var posAgendada = false, rolando = false, fimRolagem = 0;
     var posicionar = function () {
       posAgendada = false;
+      /* Prévia aberta sem escolha: a faixa fica sobre a prévia, logo acima dos dois botões de baixo (CSS
+         body.com-previa); os campos da home, atrás da prévia, não contam. */
+      if (D.body.classList.contains('com-previa') && !caixa.hidden) {
+        var base = $('#previa .previa-base');
+        caixa.classList.add('is-faixa'); caixa.classList.remove('is-topo', 'is-sem-lugar', 'is-digitando');
+        caixa.style.setProperty('--base-previa', (base ? Math.ceil(base.getBoundingClientRect().height) : 0) + 'px');
+        return;
+      }
+      // /abrir/ no celular: o botão fixo de pagar mora no rodapé; com ele lá, o aviso é sempre faixa e nunca fica por cima dele
+      var barraPagar = $('#barra-pagar');
+      var barraNoRodape = !!(barraPagar && !barraPagar.hidden && !barraPagar.classList.contains('recolhida') && barraPagar.getBoundingClientRect().height > 0);
+      if (barraNoRodape && !caixa.hidden) caixa.classList.add('is-faixa');
       if (caixa.hidden || !caixa.classList.contains('is-faixa')) { caixa.classList.remove('is-topo', 'is-sem-lugar'); return; }
       var alt = caixa.offsetHeight, vh = W.innerHeight, cab = $('header.barra'), topo = cab ? Math.max(0, cab.getBoundingClientRect().bottom) : 0;
       var cobre = function (a, b) {
@@ -754,11 +767,13 @@
           });
         });
       };
-      var livreBaixo = !cobre(vh - alt, vh), livreCima = !cobre(topo, topo + alt);
+      var livreBaixo = !barraNoRodape && !cobre(vh - alt, vh), livreCima = !cobre(topo, topo + alt);
+      // digitando o nome na home: em cima, porque no Android o teclado aberto esconde o rodapé
+      var noNome = D.activeElement && D.activeElement.id === 'nome' && PAGINA === 'home';
       // durante a rolagem fica onde está enquanto aquela borda estiver livre (não pula a cada passo);
       // parada, volta para baixo, que é o lugar preferido, se lá estiver livre
       var estaCima = caixa.classList.contains('is-topo');
-      var cima = estaCima && rolando ? livreCima : (!livreBaixo && livreCima);
+      var cima = noNome ? livreCima : estaCima && rolando ? livreCima : (!livreBaixo && livreCima);
       var semLugar = !cima && !livreBaixo;
       caixa.style.setProperty('--topo-consentimento', topo + 'px');
       if (cima !== estaCima && !MOV_REDUZIDO.matches) {   // troca de borda com um esmaecer curto, nunca um salto seco
@@ -774,8 +789,16 @@
       clearTimeout(fimRolagem); fimRolagem = setTimeout(function () { rolando = false; agendarPos(); }, 220);
     }, { passive: true });
     W.addEventListener('resize', agendarPos);
-    var ehCampo = function (x) { return !!(x && x.matches && x.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),select,textarea') && !caixa.contains(x)); };
-    D.addEventListener('focusin', function (e) { if (ehCampo(e.target)) { caixa.classList.add('is-digitando'); medir(); } });
+    W.addEventListener('creat:barra-pagar', agendarPos);
+    W.addEventListener('creat:previa-aberta', function () { medir(); agendarPos(); });
+    W.addEventListener('creat:previa-fechada', agendarPos);
+    // a barra de baixo da prévia muda de altura quando o preço chega (nota de 3 ou 4 linhas): a faixa acompanha
+    var basePrevia = $('#previa .previa-base');
+    if (basePrevia && 'ResizeObserver' in W) new ResizeObserver(agendarPos).observe(basePrevia);
+    /* O campo do nome da home não tira a faixa da frente: é nele que a pessoa decide pedir a prévia, e a faixa
+       (em cima, abaixo do cabeçalho) não cobre o campo nem o botão. Os outros campos seguem com is-digitando. */
+    var ehCampo = function (x) { return !!(x && x.matches && x.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),select,textarea') && !caixa.contains(x) && !(PAGINA === 'home' && x.id === 'nome')); };
+    D.addEventListener('focusin', function (e) { if (ehCampo(e.target)) { caixa.classList.add('is-digitando'); medir(); } else agendarPos(); });
     D.addEventListener('focusout', function () { setTimeout(function () { if (!ehCampo(D.activeElement)) { caixa.classList.remove('is-digitando'); medir(); } }, 0); });
     var decidir = function (sim) {
       var antes = consentimento();
@@ -794,9 +817,11 @@
     if (consentimento()) { carregarTerceiros(); return; }
     // /abrir/ e /obrigado/: sem escolha gravada, o banner aparece logo (quem pulou o da home decide aqui).
     if (PAGINA !== 'home') { mostrar(); return; }
-    // Home: o banner não cobre a primeira tela. Aparece quando o visitante passa do hero, fecha a prévia
-    // ou depois de 25 s. Até lá nada de Pixel nem Clarity (só carregam com o Aceitar).
-    var heroi = $('#porta'), mostrado = false;
+    // Home: o banner não cobre a primeira tela. Aparece quando a pessoa toca no campo do nome ou digita a
+    // primeira letra (antes de pedir a prévia, para a escolha chegar antes do anúncio perder o sinal), quando
+    // passa do hero, fecha a prévia ou depois de 25 s. Nunca bloqueia o envio e nada vem marcado.
+    // Até a escolha, nada de Pixel nem Clarity (só carregam com o Aceitar).
+    var heroi = $('#porta'), mostrado = false, campoNomeHome = $('#nome');
     var talvez = function () {
       if (mostrado) return;
       var limite = heroi ? heroi.offsetTop + heroi.offsetHeight * 0.6 : W.innerHeight * 0.6;
@@ -805,6 +830,8 @@
     var disparar = function () { if (mostrado) return; mostrado = true; W.removeEventListener('scroll', talvez); mostrar(); };
     W.addEventListener('scroll', talvez, { passive: true });
     W.addEventListener('creat:previa-fechada', disparar);
+    W.addEventListener('creat:previa-aberta', disparar);
+    if (campoNomeHome) { campoNomeHome.addEventListener('focus', disparar); campoNomeHome.addEventListener('input', disparar); }
     setTimeout(disparar, 25000);
     // Com a janela da sede na tela, o banner desce e sai da frente: a placa com o nome do negócio fica
     // na parte de baixo da janela. Volta assim que a janela sai. Nada de Pixel/Clarity até a escolha.
@@ -852,7 +879,12 @@
       var tipo = a.getAttribute('data-zap') || 'duvida';
       var textos = { duvida: 'Olá! Vi o Porta Aberta e tenho uma dúvida:', suporte: 'Olá! Já sou cliente do Porta Aberta e preciso de ajuda com o site.' };
       var msg = a.getAttribute('data-msg') || textos[tipo] || textos.duvida;
-      if (ok) { a.href = linkWhats(CK.whatsappSuporte, msg); a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+      if (ok) {
+        a.href = linkWhats(CK.whatsappSuporte, msg); a.target = '_blank'; a.rel = 'noopener noreferrer';
+        // /abrir/: "Dúvidas" diz que abre o WhatsApp só quando ele abre mesmo
+        var rok = a.getAttribute('data-rotulo-ok'), rz = a.querySelector('[data-rotulo-zap]');
+        if (rok && rz) { rz.textContent = rok; if (a.getAttribute('data-aria-ok')) a.setAttribute('aria-label', a.getAttribute('data-aria-ok')); }
+      }
       else if (a.hasAttribute('data-some-sem-zap')) { a.hidden = true; }
       else {
         a.href = linkEmail('Porta Aberta', msg); a.removeAttribute('target'); a.classList.add('sem-zap');
@@ -1243,6 +1275,7 @@
       urlPreviaAtual = RAIZ + 'previa/#' + frag;          // o quadro abre na mesma origem
       linkPreviaAtual = enderecoPublico() + 'previa/#' + frag;   // o link copiado nasce no canônico
       $('#previa-nome').textContent = s.n;
+      var cn = $('#previa-carregando-nome'); if (cn) cn.textContent = s.n;
       frame.title = 'Prévia do site: ' + s.n;   // sem artigo fixo: "da Studio" e "da Salão" quebram (PG-N4)
       carregandoPrevia.hidden = false; frame.style.visibility = 'hidden';
       previa.hidden = false; D.body.classList.add('com-previa');
@@ -1254,6 +1287,7 @@
       evento('previa_gerada', { nicho: s.k });
       contar('previa', s.k);
       pixelViewContent(s.k);
+      try { W.dispatchEvent(new CustomEvent('creat:previa-aberta')); } catch (e) {}
     }
     frame.addEventListener('load', function () {
       if (!urlPreviaAtual) return;
@@ -1276,7 +1310,13 @@
       var falhou = function () { aviso('Não deu para copiar. Toque e segure o endereço do navegador para copiar.'); };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(linkPreviaAtual).then(ok, falhou); else falhou();
     });
+    // Seção "Teste de verdade": o nome do site que a pessoa acabou de ver, ao lado do botão de pedir (só na tela, nunca enviado)
+    function nomeNoTeste() {
+      var s = estado(), el = $('#teste-pedir-nome'); if (!el) return;
+      el.textContent = s.n || ''; el.parentNode.hidden = !s.n;
+    }
     $('#previa-testar').addEventListener('click', function () {
+      nomeNoTeste();
       fecharPrevia(false);
       setTimeout(function () { var s = $('#teste'); s.scrollIntoView({ behavior: MOV_REDUZIDO.matches ? 'auto' : 'smooth', block: 'start' }); $('#teste-whats').focus({ preventScroll: true }); }, 60);
     });
@@ -1362,6 +1402,8 @@
       somFn('plim');
       evento('reserva_teste', { nicho: nichoTeste || 'barbearia' });
       $('#teste-abriu').hidden = false;
+      nomeNoTeste();
+      var tq = $('#teste-quero'); if (tq) tq.classList.add('btn-sol');   // teste feito: pedir o site vira o próximo passo
     });
     $('#teste-alternativa').addEventListener('click', function () {
       var s = estado();
@@ -1763,7 +1805,10 @@
     if (!barra) return;
     var naTela = false, digitando = false;
     var campo = function (t) { return !!(t && t.matches && t.matches('input:not([type=checkbox]):not([type=radio]),select,textarea')); };
-    var aplicar = function () { barra.classList.toggle('recolhida', naTela || digitando); D.body.classList.toggle('com-barra-pagar', !barra.hidden); };
+    var aplicar = function () {
+      barra.classList.toggle('recolhida', naTela || digitando); D.body.classList.toggle('com-barra-pagar', !barra.hidden);
+      try { W.dispatchEvent(new CustomEvent('creat:barra-pagar')); } catch (e) {}
+    };
     if (secao && 'IntersectionObserver' in W) new IntersectionObserver(function (ents) { naTela = ents.some(function (x) { return x.isIntersecting; }); aplicar(); }, { threshold: 0.2 }).observe(secao);
     D.addEventListener('focusin', function (e) { digitando = campo(e.target); aplicar(); });
     D.addEventListener('focusout', function () { setTimeout(function () { digitando = campo(D.activeElement); aplicar(); }, 0); });

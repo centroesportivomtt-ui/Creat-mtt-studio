@@ -148,9 +148,9 @@ p.notas{display:block} /* parágrafo com números dentro (ex.: anual-nota) não 
 .barra-pagar.recolhida{transform:translateY(calc(100% + 8px));visibility:hidden}
 @media (prefers-reduced-motion:no-preference){.barra-pagar{transition:transform var(--duracao-media) var(--curva-saida),visibility 0s}.barra-pagar.recolhida{transition:transform var(--duracao-curta) var(--curva-entrada),visibility 0s var(--duracao-curta)}}
 body.com-barra-pagar{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
-/* com o banner de medição aberto, ele ocupa o rodapé; o botão de pagar continua na seção Pagamento */
-body.com-consentimento .barra-pagar{display:none}
-body.com-consentimento.com-barra-pagar{padding-bottom:var(--altura-consentimento,0px)}
+/* Com o aviso de medição aberto, o botão de pagar continua no rodapé: a faixa vai para cima (vitrine.js,
+   posicionar) e o aviso "Preferência salva" sobe acima da barra, sem cobrir o botão. */
+@media (max-width:999px){body.com-barra-pagar .aviso{bottom:calc(84px + env(safe-area-inset-bottom, 0px))}}
 @media (min-width:1000px){
   .grade-abrir{grid-template-areas:"form confianca" "pagar confianca" "quem quem"}
   .barra-pagar{display:none}

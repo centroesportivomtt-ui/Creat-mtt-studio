@@ -469,7 +469,10 @@ test('navegador: em /abrir/ sem escolha o banner aparece; aceitar liga o Pixel e
     await pg.goto(base + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&p=1'); await pg.waitForTimeout(300);
     assert.equal(await pg.isVisible('#consentimento'), true, 'quem pulou o banner da home decide aqui');
     assert.equal(await pg.evaluate(() => typeof window.fbq), 'undefined', 'nada carrega antes do Aceitar');
-    assert.equal(await pg.isVisible('#barra-pagar'), false, 'banner e barra de pagar não se sobrepõem');
+    // mutirão 11/11: o botão fixo de pagar não some com o banner; a faixa fica em cima e não cobre a barra
+    assert.equal(await pg.isVisible('#barra-pagar'), true, 'botão de pagar visível mesmo sem a escolha de medição');
+    const sobre = await pg.evaluate(() => { const c = document.querySelector('#consentimento').getBoundingClientRect(), b = document.querySelector('#barra-pagar').getBoundingClientRect(); return c.bottom > b.top && c.top < b.bottom; });
+    assert.equal(sobre, false, 'banner e barra de pagar não se sobrepõem');
     await pg.click('#consentimento [data-consentir="sim"]');
     assert.ok((await filaPixel(pg)).some((a) => a[1] === 'PageView'));
     assert.equal(await pg.isVisible('#consentimento'), false);
@@ -1092,5 +1095,84 @@ test('dobra no celular 360x640: título do nicho na chegada, campo e botão sem 
     assert.equal(await b.pg.getAttribute('html', 'data-nicho'), null);
     assert.match((await b.pg.innerText('h1')).replace(/\s+/g, ' ').trim(), /^Veja o site do seu negócio pronto\.$/);
     await b.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('mutirão 11/11 · 360x640: aviso de medição ao tocar no nome, sobre a prévia sem cobrir os botões; preço junto do "Quero"; Testar secundário; pedir depois do teste; pagar visível em /abrir/', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  const livre = (sel) => { const e = document.querySelector(sel), r = e.getBoundingClientRect(); return [[.5, .5], [.15, .25], [.85, .25], [.15, .75], [.85, .75]].every(([fx, fy]) => { const x = document.elementFromPoint(r.left + r.width * fx, r.top + r.height * fy); return !!x && !x.closest('#consentimento') && (x === e || e.contains(x)); }); };
+  try {
+    const { pg, ctx, erros } = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+    await pg.goto(base + '/?nicho=barbearia');
+    await pg.waitForTimeout(300);
+    assert.equal(await pg.isVisible('#consentimento'), false, 'a primeira tela abre sem o aviso');
+    // o toque no campo do nome mostra a faixa, que não cobre o campo, os chips, a cidade nem o botão
+    await pg.focus('#nome');
+    await pg.waitForSelector('#consentimento:not([hidden])');
+    const f = await pg.evaluate(() => { const c = document.querySelector('#consentimento'); return { faixa: c.classList.contains('is-faixa'), vis: getComputedStyle(c).visibility, h: c.getBoundingClientRect().height }; });
+    assert.equal(f.faixa, true); assert.equal(f.vis, 'visible', 'com o foco no nome a faixa continua na tela'); assert.ok(f.h <= 64, 'faixa de até 64 px: ' + f.h);
+    await pg.keyboard.type('TESTE Barbearia do Ze');
+    assert.deepEqual(await pg.evaluate(COBERTOS, '#form-abrir'), [], 'a faixa não cobre campo nem botão');
+    assert.equal(await pg.evaluate(() => getComputedStyle(document.querySelector('#consentimento')).visibility), 'visible', 'digitando o nome a faixa segue visível');
+    // nada vem marcado, nada carrega antes da escolha, Aceitar e Recusar têm o mesmo peso
+    assert.equal(await pg.evaluate(() => localStorage.getItem('creat:consentimento')), null);
+    assert.equal(await pg.evaluate(() => typeof window.fbq), 'undefined');
+    const pesos = await pg.$$eval('#consentimento [data-consentir]', (bs) => bs.map((b) => [getComputedStyle(b).backgroundColor, Math.round(b.getBoundingClientRect().height)]));
+    assert.deepEqual(pesos[0], pesos[1], 'Aceitar e Recusar iguais');
+    // enviar o nome sem escolher não é bloqueado; a faixa fica sobre a prévia, acima dos dois botões
+    await pg.keyboard.press('Enter');
+    await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+    await pg.waitForTimeout(400);
+    const p = await pg.evaluate(() => { const c = document.querySelector('#consentimento').getBoundingClientRect(), b = document.querySelector('.previa-base').getBoundingClientRect(); return { vis: getComputedStyle(document.querySelector('#consentimento')).visibility, disp: getComputedStyle(document.querySelector('#consentimento')).display, cBottom: c.bottom, cTop: c.top, bTop: b.top }; });
+    assert.equal(p.disp !== 'none' && p.vis === 'visible', true, 'a faixa continua visível sobre a prévia');
+    assert.ok(p.cBottom <= p.bTop + 1 && p.cTop > 52, 'a faixa fica entre o topo e a barra de baixo: ' + JSON.stringify(p));
+    assert.equal(await pg.evaluate(livre, '#previa-quero'), true, '"Quero este site no ar" livre');
+    assert.equal(await pg.evaluate(livre, '#previa-testar'), true, '"Testar no meu WhatsApp" livre');
+    // preço na decisão: Abertura e mensalidade juntas, vindas do dado (nunca escritas no HTML)
+    const nota = (await pg.innerText('.previa-base')).replace(/\s+/g, ' ');
+    assert.match(nota, /Abertura de R\$ 297, uma vez \(inauguração; depois, R\$ 497\)\. Mensalidade a partir de R\$ 147, só com o site no ar\. 7 dias para desistir, com devolução\./);
+    // Testar é secundário; o único botão cheio é o de pedir
+    assert.equal(await pg.evaluate(() => document.querySelector('#previa-testar').classList.contains('btn-sol')), false);
+    assert.equal(await pg.evaluate(() => getComputedStyle(document.querySelector('#previa-testar')).boxShadow), 'none');
+    // topo: o nome inteiro cabe em 360 ("copiar link" vira ícone de 44 px, com o nome para o leitor de tela) e a tela de carregamento mostra o nome
+    const topo = await pg.evaluate(() => { const c = document.querySelector('#previa-copiar'), cr = c.getBoundingClientRect(), r = document.querySelector('#previa-rotulo'); return { copiar: Math.round(cr.width) >= 44 && Math.round(cr.height) >= 44, nomeCopiar: c.textContent.trim(), cabe: r.scrollWidth <= r.clientWidth + 1 && r.getBoundingClientRect().right <= cr.left, carregando: document.querySelector('#previa-carregando-nome').textContent }; });
+    assert.deepEqual(topo, { copiar: true, nomeCopiar: 'copiar link', cabe: true, carregando: 'TESTE Barbearia do Ze' });
+    // Recusar é um toque e não carrega o Pixel
+    await pg.click('#consentimento [data-consentir="nao"]');
+    assert.equal(await pg.isVisible('#consentimento'), false);
+    assert.equal(JSON.parse(await pg.evaluate(() => localStorage.getItem('creat:consentimento'))).pixel, false);
+    assert.equal(await pg.evaluate(() => typeof window.fbq), 'undefined');
+    // "Testar" leva ao teste, e logo abaixo dele está o pedido do site, com o nome e o preço completo
+    await pg.click('#previa-testar'); await pg.waitForTimeout(300);
+    assert.equal(await pg.innerText('#teste-pedir-nome'), 'TESTE Barbearia do Ze');
+    assert.match((await pg.innerText('#teste-pedir')).replace(/\s+/g, ' '), /Abertura de R\$ 297, uma vez, e mensalidade a partir de R\$ 147, só com o site no ar/);
+    await Promise.all([pg.waitForURL(/\/abrir\/#/), pg.click('#teste-quero')]);
+    assert.match(pg.url(), /plano=aberto/);
+    assert.deepEqual(erros, []);
+    await ctx.close();
+    // sem preço carregado: a nota volta ao texto sem número (falha fechada, nunca valor fixo no HTML)
+    const s = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+    await s.pg.route(/dados\/precos\.json/, (r) => r.fulfill({ status: 404, body: '' }));
+    await s.pg.goto(base + '/?nicho=barbearia'); await s.pg.waitForTimeout(400);
+    const html = await s.pg.evaluate(() => [...document.querySelectorAll('.previa-nota')].map((e) => e.outerHTML).join(''));
+    assert.doesNotMatch(html, /R\$\s*\d/);
+    await s.ctx.close();
+    // /abrir/ sem escolha: o botão fixo de pagar fica visível e a faixa não o cobre
+    const a = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+    await a.pg.goto(base + '/abrir/#plano=aberto&k=barbearia&n=TESTE%20Barbearia%20do%20Ze'); await a.pg.waitForTimeout(500);
+    assert.equal(await a.pg.isVisible('#consentimento'), true);
+    assert.equal(await a.pg.isVisible('#barra-pagar'), true);
+    assert.equal(await a.pg.evaluate(livre, '#barra-pagar .btn'), true, 'o botão de pagar não fica atrás da faixa');
+    for (const y of [400, 900, 1500]) {
+      await a.pg.evaluate((yy) => window.scrollTo(0, yy), y); await a.pg.waitForTimeout(300);
+      const vis = await a.pg.evaluate(() => getComputedStyle(document.querySelector('#barra-pagar')).visibility === 'visible');
+      if (vis) assert.equal(await a.pg.evaluate(livre, '#barra-pagar .btn'), true, '/abrir/ y=' + y);
+    }
+    // "Dúvidas" diz WhatsApp quando abre o WhatsApp
+    const zap = await a.pg.evaluate(() => { const l = document.querySelector('.link-duvidas'); return { txt: l.textContent.trim(), wa: /wa\.me|whatsapp/.test(l.href) }; });
+    assert.equal(zap.txt, zap.wa ? 'Dúvidas no WhatsApp' : 'Falar com o suporte');
+    assert.deepEqual(a.erros, []);
+    await a.ctx.close();
   } finally { await nav.close(); srv.close(); }
 });
