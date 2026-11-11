@@ -150,10 +150,10 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
    (fundo() no script); a capa é só a linha 3 já escrita e marcada, grande, acima de onde a placa desce */
 .c-lousa #lousaCapa{display:block;left:0;top:0;width:1080px;height:1920px;background:none;border:0;border-radius:0;box-shadow:none}
 .capaLin{position:absolute;left:65px;right:65px;display:flex;align-items:center;justify-content:center;gap:26px;color:var(--giz);white-space:nowrap;filter:url(#filtroGiz)}
-.capaLin .cx{position:relative;flex:none;width:72px;height:72px}
-.capaLin .cx svg{left:-8px;top:-8px;width:88px;height:88px}
-.capaLin .rot{font:400 86px/1 "Lilita One",sans-serif;letter-spacing:.5px}
-.capaLin .txt{font:800 78px/1 Figtree,sans-serif;letter-spacing:-.4px;margin-left:-6px}
+#lousaCapa .capaLin .cx{position:relative;flex:none;width:72px;height:72px}
+#lousaCapa .capaLin .cx svg{left:-8px;top:-8px;width:88px;height:88px}
+#lousaCapa .capaLin .rot{font:400 86px/1 "Lilita One",sans-serif;letter-spacing:.5px}
+#lousaCapa .capaLin .txt{font:800 78px/1 Figtree,sans-serif;letter-spacing:-.4px;margin-left:-6px}
 #lousaG{display:none;z-index:4}
 .p-lousa #lousaG{box-shadow:none}
 .lousa .cx{position:absolute;width:56px;height:56px}
@@ -780,6 +780,7 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     var nt0 = (1 - prog(t, C.aproxima[0], C.aproxima[0] + 0.2)).toFixed(3);
     if (!(VAR && VAR.tela)) $('#notif').style.opacity = nt0; $('#celEscuro .hora').style.opacity = nt0;
     $('#perfil').style.opacity = nt0; $('#erro404').style.opacity = nt0;
+    var cLin = document.querySelector('#lousaCapa .capaLin'); if (cLin) cLin.style.opacity = nt0;   /* R10: a linha da capa sai quando a câmera avança */
     /* R9: close de 2x na faixa de giz (o nome sendo escrito) e abertura para a placa inteira */
     var zc = null;
     if (C.close && t < C.close.abre - 1e-6) {
