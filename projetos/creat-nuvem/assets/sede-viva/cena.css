@@ -11,6 +11,8 @@
 .sv-mundo .sv-corpo{pointer-events:auto}
 .sv-abs{position:absolute;left:0;top:0}
 .sv-svg{position:absolute;display:block;overflow:visible}
+/* a pagina tem img,svg{max-width:100%;height:auto}: dentro da cena o tamanho e sempre o declarado */
+.sv-mundo svg,.sv-mundo img{max-width:none;max-height:none}
 
 /* ceu e chao */
 .sv-nuvem{position:absolute;width:78px;height:35px}

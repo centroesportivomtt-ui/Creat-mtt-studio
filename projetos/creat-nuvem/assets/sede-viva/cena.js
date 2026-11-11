@@ -21,7 +21,7 @@
   function uso(id, cls, pai, x, y, wd, ht, cor) {
     var s = document.createElementNS(NS, 'svg'); s.setAttribute('class', 'sv-svg' + (cls ? ' ' + cls : ''));
     s.setAttribute('width', wd); s.setAttribute('height', ht); s.setAttribute('aria-hidden', 'true'); s.setAttribute('focusable', 'false');
-    s.style.left = x + 'px'; s.style.top = y + 'px'; if (cor) s.style.color = cor;
+    s.style.left = x + 'px'; s.style.top = y + 'px'; s.style.width = wd + 'px'; s.style.height = ht + 'px'; if (cor) s.style.color = cor;
     var u = document.createElementNS(NS, 'use'); u.setAttribute('href', '#' + id); s.appendChild(u);
     var vb = { 'sv-corda': '0 0 40 26' }[id]; if (vb) { s.setAttribute('viewBox', vb); s.setAttribute('preserveAspectRatio', 'none'); }
     if (pai) pai.appendChild(s); return s;
@@ -255,7 +255,7 @@
 
       // camera
       cam_(0, 1, 0, 0, 0, 0); cam_(1200, 1, 0, 0, 0, 0); cam_(1550, 1.06, 150, 200, 150, 200); cam_(2600, 1.06, 150, 200, 150, 200);
-      cam_(2950, 1.42, 176, 128, 180, 170); cam_(4500, 1.42, 176, 128, 180, 170); cam_(4900, 1.22, 215, 190, 180, 175);
+      cam_(2950, 1.42, 176, 128, 180, 212); cam_(4500, 1.42, 176, 128, 180, 212); cam_(4900, 1.22, 215, 190, 180, 175);
       cam_(6300, 1.22, 215, 190, 180, 175); cam_(6700, 1.2, 215, 200, 180, 180); cam_(8500, 1.2, 215, 200, 180, 180);
       cam_(8850, 1.22, 150, 215, 180, 180); cam_(10300, 1.22, 150, 215, 180, 180); cam_(10650, 1.16, 220, 190, 180, 175);
       cam_(11800, 1.16, 220, 190, 180, 175); cam_(12250, 1, 0, 0, 0, 0);
@@ -265,6 +265,7 @@
       PASSOS.forEach(function (p, i) { var f = refs.fitas[i]; L.add(f, 0, { o: p.de ? 0 : 1 }, DEG); if (p.de) L.add(f, p.de, { o: 1 }, DEG); if (p.ate < CICLO) L.add(f, p.ate, { o: 0 }, DEG); });
 
       // passo 0 e 1 - Nimbus chega com a comanda, prende no celular e levanta a porta de aco
+      // a comanda presa fica em x 198 e escala .84: no plano aberto passa entre o selo Demonstracao e o Pausar da pagina (faixa de cima)
       var N = A.nimbus;
       L.add(N.vira, 0, { sx: 1 }, DEG);
       andar(N, 60, [-50, 306, 1], [92, 306, 1], 3, 240, 300, 18);
@@ -272,9 +273,9 @@
       L.add(N.pula, 1080, { sx: 1, sy: 1 }); L.add(N.pula, 1160, { sx: 1.1, sy: 0.9 }); L.add(N.pula, 1260, { sx: 0.94, sy: 1.08 }); L.add(N.pula, 1400, { sx: 1, sy: 1 });
       L.add(refs.mao, 0, { x: 16, y: -40, r: -6, o: 1 }); L.add(refs.mao, 1120, { x: 16, y: -40, r: -6 }, MOLA); L.add(refs.mao, 1250, { x: 2, y: -64, r: 2 });
       L.add(refs.mao, 1300, { o: 1 }, DEG); L.add(refs.mao, 1301, { o: 0 }, DEG); L.add(refs.mao, 15960, { o: 0 }, DEG); L.add(refs.mao, 15961, { x: 16, y: -40, r: -6, o: 1 }, DEG);
-      L.add(refs.cx, 0, { x: 92 }); L.add(refs.cx, 1300, { x: 92 }, LIN); L.add(refs.cx, 1600, { x: 180 }); L.add(refs.cx, 15960, { x: 180 }, DEG); L.add(refs.cx, 15961, { x: 92 });
+      L.add(refs.cx, 0, { x: 92 }); L.add(refs.cx, 1300, { x: 92 }, LIN); L.add(refs.cx, 1600, { x: 198 }); L.add(refs.cx, 15960, { x: 198 }, DEG); L.add(refs.cx, 15961, { x: 92 });
       L.add(refs.cy, 0, { y: 244, s: 0.68, r: 0, o: 0 }, DEG); L.add(refs.cy, 1300, { y: 244, s: 0.68, r: 2, o: 1 }, E_OUT);
-      L.add(refs.cy, 1450, { y: 6, s: 0.92, r: -10 }, E_IN); L.add(refs.cy, 1600, { y: 36, sx: 1.16, sy: 0.84, r: -3 }, E_OUT); L.add(refs.cy, 1720, { s: 1 });
+      L.add(refs.cy, 1450, { y: 6, s: 0.92, r: -10 }, E_IN); L.add(refs.cy, 1600, { y: 36, sx: 0.97, sy: 0.7, r: -3 }, E_OUT); L.add(refs.cy, 1720, { s: 0.84 });
       L.add(refs.cy, 15400, { y: 36, r: -3, o: 1 }, E_IN); L.add(refs.cy, 15720, { y: 112, r: 26, o: 0 }, DEG); L.add(refs.cy, 15960, { y: 244, s: 0.68, r: 0, o: 0 });
       som(1600, 'clique');
       L.add(refs.vara, 0, { x: 20, y: -28, o: 0, r: -25, s: 0.6 }, DEG); L.add(refs.vara, 1440, { o: 1, r: -25, s: 0.7 }, MOLA); L.add(refs.vara, 1600, { r: 0, s: 1 });

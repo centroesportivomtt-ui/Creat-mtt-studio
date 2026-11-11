@@ -174,6 +174,9 @@ async function print(pg, nome) { await pg.screenshot({ path: path.join(PRINTS, n
     conferir(pr && pr.t - t0 <= 4000, '2. cena pronta ' + (pr ? ((pr.t - t0) / 1000).toFixed(2) + ' s' : 'nunca') + ' depois de a seção entrar na tela (teto 4 s)');
     const bCena = a.reqs.filter(naPasta).reduce((s, u) => s + (a.bytes[u] || 0), 0);
     conferir(bCena <= 900 * 1024, '2. peso da cena ' + (bCena / 1024).toFixed(1) + ' KB (meta 300 KB, falha dura em 900 KB)');
+    // a regra img,svg{max-width:100%} do vitrine.css zerava os desenhos da cena (escada, lápis, lupa, celular): todos têm tamanho
+    const zerados = await pg.evaluate(() => [...document.querySelectorAll('.sv-mundo svg')].filter((s) => !s.closest('.sv-sprite')).filter((s) => { const b = s.getBoundingClientRect(); return !b.width || !b.height; }).map((s) => (s.querySelector('use') || s).getAttribute('href') || s.getAttribute('class')));
+    conferir(zerados.length === 0, '2. todo desenho da cena tem tamanho na página (a regra img,svg da home não vaza para a cena)', zerados.join(' '));
     if (bCena > 300 * 1024) console.log('        aviso: acima da meta de 300 KB');
     const tPronta = Date.now();
     const quando = (s) => pg.waitForTimeout(Math.max(0, s * 1000 - (Date.now() - tPronta)));
