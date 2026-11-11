@@ -196,7 +196,7 @@ html[data-nicho="barbearia"] .h1-v[data-v="barbearia"],html[data-nicho="salao"] 
 
 /* ---------------------------------------------------------------- sede ao vivo (janela de vidro de noite) */
 .janela-sede{position:relative;margin:0;background:var(--vidro);border:var(--borda-g) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra-g);overflow:hidden;color:var(--giz)}
-.janela-sede img,.janela-sede canvas{width:100%;aspect-ratio:16/10;object-fit:cover}
+.janela-sede [data-poster] img,.janela-sede > canvas{width:100%;aspect-ratio:16/10;object-fit:cover} /* nunca o que a cena desenha dentro de [data-sede-palco] (classes sv-*) */
 .janela-sede .ver-ao-vivo{position:absolute;left:50%;bottom:var(--r4);transform:translateX(-50%)}
 .janela-sede figcaption{padding:var(--r3) var(--r4);font-size:var(--t-nota);border-top:var(--borda) solid var(--linha);background:var(--vidro)}
 .selo-demo{position:absolute;top:var(--r3);left:var(--r3);font:500 var(--t-micro)/1 var(--f-dado);text-transform:uppercase;letter-spacing:.08em;padding:6px 10px;border-radius:8px;background:var(--giz);color:var(--lousa);border:2px solid var(--linha)}
@@ -314,7 +314,6 @@ body.com-previa .aviso{bottom:calc(var(--barra-previa) + 16px + env(safe-area-in
   .passos li{padding:80px var(--r5) var(--r5)}
   .precos-grade{grid-template-columns:1fr 1fr 1fr;align-items:stretch}
   .precos-grade .abertura{grid-column:auto}
-  .sede-grade{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--r6);align-items:center}
   .chamada .painel{grid-template-columns:1fr auto;align-items:center;padding:var(--r6)}
 }
 

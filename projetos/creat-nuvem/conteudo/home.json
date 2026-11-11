@@ -266,25 +266,31 @@
   },
 
   "sede": {
-    "_regra": "Demonstração com nome fictício, sempre marcada. A comanda acende o passo que a sede embutida (sede/?modo=demo) avisa por postMessage; sem a sede carregada, segue o mesmo relógio (6 s; 9 s com movimento reduzido). Sem dado real, sem tempo prometido.",
+    "_regra": "Demonstração com nome fictício, sempre marcada com o selo. A cena (assets/sede-viva/) só baixa quando a seção chega perto da tela, roda sozinha e pausa fora dela; movimento reduzido e economia de dados mostram o quadro final parado e a lista. A lista de etapas acende o passo da cena (ou da sede 3D, sob toque). Sem dado real, sem tempo prometido, nunca 'ao vivo'.",
     "olho": "Sede da Creat",
     "titulo": "Veja como a equipe trabalha",
-    "texto": "Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um organiza, um escreve, outro escolhe as cores, outro testa no celular. Escolha um negócio e veja o pedido passar de mão em mão até o site ir para o ar.",
-    "marcasRotulo": "Negócio na fachada da sede",
+    "texto": "Cada personagem faz uma parte do site. Escolha um negócio e veja o pedido passar de mão em mão até a placa virar para aberto.",
+    "marcasRotulo": "Negócio da demonstração",
     "marcas": [
-      { "nome": "Barbearia Navalha Fictícia", "site": "sites/demo-barbearia/" },
-      { "nome": "Esmalte & Fio", "site": "sites/demo-salao/" },
-      { "nome": "Studio Barra Fictícia", "site": "sites/demo-academia/" }
+      {
+        "nome": "Barbearia Navalha Fictícia",
+        "site": "sites/demo-barbearia/"
+      },
+      {
+        "nome": "Esmalte & Fio",
+        "site": "sites/demo-salao/"
+      },
+      {
+        "nome": "Studio Barra Fictícia",
+        "site": "sites/demo-academia/"
+      }
     ],
     "marcaSeuLeitor": " (o seu negócio)",
-    "posterAlt": "Ilha da sede da Creat Nuvem desenhada em 3D, com a equipe de personagens trabalhando nas mesas.",
-    "botao": "Abrir a sede",
+    "botao": "Entrar na sede 3D",
     "carregando": "Carregando a sede...",
     "legendaDemonstracao": "Demonstração",
-    "legenda": "Nome fictício na fachada.",
-    "legendaCelular": " A sede 3D só carrega quando você toca em Abrir a sede, para poupar dados.",
-    "legendaCarregada": " Arraste para girar a ilha e toque num personagem.",
-    "legendaSeu": "O nome do seu negócio na fachada, só neste aparelho.",
+    "legendaCarregada": "Arraste para girar a ilha e toque num personagem.",
+    "legendaSeu": "O nome do seu negócio na cena, só neste aparelho.",
     "comandaOlho": "Pedido de demonstração",
     "passos": [
       "Nimbus organiza o pedido",
@@ -303,13 +309,50 @@
       "Trilho publica o site",
       "Site no ar. Pode abrir."
     ],
-    "status": { "feito": "feito", "agora": "agora", "fila": "na fila" },
+    "status": {
+      "feito": "feito",
+      "agora": "agora",
+      "fila": "na fila"
+    },
     "carimbo": "No ar",
     "abrirSite": "Abrir o site pronto",
     "abrirSiteLeitor": ": {marca} (site-demonstração, nome fictício)",
     "abrirSeu": "Ver a prévia do seu site",
-    "notaDemonstracao": "Demonstração: é assim que a equipe aparece quando há um pedido em produção. Os nomes são fictícios e nenhum desses negócios existe.",
-    "semFluxo": "A equipe espera o próximo pedido."
+    "notaDemonstracao": "Demonstração com nomes fictícios. Esses negócios não existem.",
+    "notaEsteira": "É assim que a equipe aparece quando há um pedido em produção. Os nomes são fictícios e nenhum desses negócios existe.",
+    "semFluxo": "A equipe espera o próximo pedido.",
+    "legendas": [
+      "1 de 7 · Nimbus recebe o pedido",
+      "1 de 7 · Nimbus organiza o pedido",
+      "2 de 7 · Verbo escreve os textos",
+      "3 de 7 · Paleta escolhe as cores",
+      "4 de 7 · Pixel monta o site",
+      "5 de 7 · Lupa testa no celular",
+      "6 de 7 · Muralha confere a segurança",
+      "7 de 7 · Você aprovou. Trilho publica.",
+      "Site no ar. Pode abrir."
+    ],
+    "baloes": {
+      "nimbus": "Eu leio o seu pedido e divido o trabalho entre a equipe.",
+      "verbo": "Escrevo o título, os serviços e os preços com o que você mandou no pedido.",
+      "paleta": "Escolho as cores e as letras que combinam com o seu negócio.",
+      "pixel": "Monto as partes do site e o botão que abre o seu WhatsApp.",
+      "lupa": "Abro o site num celular e toco em cada botão para ver se funciona.",
+      "muralha": "Confiro a segurança do site antes de ele ir para o ar.",
+      "trilho": "Depois que você aprova, eu publico e confiro se o site abre no endereço certo."
+    },
+    "cena": {
+      "comanda": "Pedido de demonstração",
+      "pedidoSite": "Site com botão do WhatsApp",
+      "fechado": "FECHADO",
+      "aberto": "ABERTO",
+      "seloTeste": "Testado no celular",
+      "pausar": "Pausar",
+      "continuar": "Continuar",
+      "reduzido": "Movimento desligado neste aparelho. As etapas estão na lista abaixo.",
+      "rotulo": "Demonstração animada: a equipe da Creat monta o site de {marca}, nome fictício. As etapas estão na lista a seguir.",
+      "rotuloSeu": "Demonstração animada: a equipe da Creat monta um site de exemplo com o nome do seu negócio. As etapas estão na lista a seguir."
+    }
   },
 
   "quemMonta": {

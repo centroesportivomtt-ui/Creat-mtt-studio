@@ -12,6 +12,9 @@
  *    e /obrigado/, link da praça no botão de pagar, Purchase sem duplicar na recarga, Clarity só na home,
  *    banner e revogação em /abrir/, contadores fora da tela, nome longo sem rolagem lateral, WhatsApp
  *    flutuante fora do campo do nome e "Ver a prévia de novo" abrindo a prévia.
+ * 6. Sede viva (#sede): negocios.json da cena igual aos tenant.json, contrato da cena (passos, sem innerHTML/eval/
+ *    texto próprio) e, no navegador, nada baixado no topo, cena tocando sozinha ao entrar, pausa fora da tela,
+ *    troca de negócio e movimento reduzido sem nada rodando. O portão completo é scripts/conferir-sede-viva.cjs.
  * vitrine.js roda num contexto vm com um DOM mínimo; nenhuma rede.
  */
 import test from 'node:test';
@@ -1092,5 +1095,114 @@ test('dobra no celular 360x640: título do nicho na chegada, campo e botão sem 
     assert.equal(await b.pg.getAttribute('html', 'data-nicho'), null);
     assert.match((await b.pg.innerText('h1')).replace(/\s+/g, ' ').trim(), /^Veja o site do seu negócio pronto\.$/);
     await b.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+/* ------------------------------------------------------------ 6. sede viva (seção #sede da home) */
+const PASTA_CENA = (/var SEDE_CENA = \{ pasta: '([^']+)'/.exec(FONTE_VIT) || [])[1];
+
+test('sede viva: a pasta da cena está no vitrine.js e o negocios.json dela bate com sites/demo-*/tenant.json', () => {
+  assert.ok(PASTA_CENA && /^assets\/[a-z-]+\/$/.test(PASTA_CENA), 'SEDE_CENA.pasta');
+  const neg = JSON.parse(fs.readFileSync(path.join(RAIZ, PASTA_CENA, 'negocios.json'), 'utf8')).negocios;
+  const preco = (v) => (+v === 0 ? 'Grátis' : 'R$ ' + v);   // a regra do motor.js: 0 vira "Grátis"
+  const esp = (x) => String(x).replace(/\s/g, ' ');            // o Intl separa "R$" do número com espaço fixo
+  for (const k of ['barbearia', 'salao', 'academia']) {
+    const t = JSON.parse(fs.readFileSync(path.join(RAIZ, 'sites', 'demo-' + k, 'tenant.json'), 'utf8'));
+    const n = neg[k];
+    assert.equal(n.marca, t.negocio.nome, k + ': marca');
+    assert.equal(n.titulo, t.textos.heroTitulo, k + ': título');
+    assert.equal(n.botao, t.textos.pedidoTitulo, k + ': botão');
+    assert.deepEqual(n.servicos.map((s) => s.nome), t.servicos.slice(0, 2).map((s) => s.nome), k + ': serviços');
+    assert.deepEqual(n.servicos.map((s) => esp(s.preco)), t.servicos.slice(0, 2).map((s) => preco(s.preco)), k + ': preços');
+    for (const c of ['fundo', 'texto', 'destaque', 'apoio']) assert.equal(n.cores[c], t.cores[c], k + ': cor ' + c);
+  }
+  // o chip de cada negócio aponta para o nicho certo e o site certo
+  const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
+  for (const k of ['barbearia', 'salao', 'academia']) assert.match(html, new RegExp('data-nicho="' + k + '" data-marca="[^"]+" data-site="sites/demo-' + k + '/"'));
+});
+
+test('sede viva: cena.js sem innerHTML, eval, endereço de fora nem texto em português, e passos contíguos de 0 a 16000', () => {
+  const js = fs.readFileSync(path.join(RAIZ, PASTA_CENA, 'cena.js'), 'utf8');
+  assert.doesNotMatch(js, /innerHTML|outerHTML|insertAdjacentHTML|\beval\(|new Function|https?:\/\/(?!www\.w3\.org\/)/);
+  assert.doesNotMatch(js, /[À-ÿ]/, 'todo texto visível vem da página (opc.textos) ou do negocios.json');
+  // só transform e opacity: conferido por dentro no teste da cena (scripts/testes/sede-viva-cena.test.mjs)
+  const ctx = { window: {}, document: {} }; ctx.window = ctx;
+  vm.createContext(ctx); vm.runInContext(js, ctx);
+  const P = ctx.CreatSedeViva.PASSOS;
+  assert.equal(ctx.CreatSedeViva.CICLO_MS, 16000);
+  assert.equal(P.length, 9);
+  P.forEach((p, i) => { assert.equal(p.passo, i); if (i) assert.equal(p.de, P[i - 1].ate); });
+  assert.equal(P[0].de, 0); assert.equal(P[8].ate, 16000);
+  assert.deepEqual(Array.from(P, (p) => p.item), [0, 0, 1, 2, 3, 4, 5, 6, 7]);
+  // a lista da página tem um item por "item" da cena, na mesma ordem dos agentes
+  const html = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
+  const lis = Array.from(html.matchAll(/<li data-item="(\d)" data-agente="(\w+)"/g), (m) => [+m[1], m[2]]);
+  assert.deepEqual(lis.map((l) => l[0]), [0, 1, 2, 3, 4, 5, 6, 7]);
+  P.slice(0, 8).forEach((p) => assert.equal(lis[p.item][1], p.agente));
+});
+
+test('navegador: sede viva não carrega antes, toca sozinha ao entrar na tela, pausa fora, troca de negócio e respeita movimento reduzido', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  const abrirCtx = async (reduzido) => {
+    const ctx = await nav.newContext({ viewport: { width: 360, height: 640 }, isMobile: true, hasTouch: true, reducedMotion: reduzido ? 'reduce' : 'no-preference' });
+    await ctx.route(/^https:\/\//, (r) => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    await ctx.addInitScript(() => { try { localStorage.setItem('creat:consentimento', JSON.stringify({ versao: 1, analytics: false, pixel: false, clarity: false, em: new Date().toISOString() })); } catch (e) {} });
+    const pg = await ctx.newPage();
+    const erros = [], cena = [];
+    pg.on('pageerror', (e) => erros.push(e.message));
+    pg.on('request', (q) => { if (new URL(q.url()).pathname.startsWith('/' + PASTA_CENA)) cena.push(q.url()); });
+    return { ctx, pg, erros, cena };
+  };
+  const irAoPalco = (pg) => pg.evaluate(() => { const c = document.querySelector('#sede .sede-marcas'); window.scrollTo({ top: c.getBoundingClientRect().top + scrollY - 76, behavior: 'instant' }); });
+  const rodando = (pg) => pg.evaluate(() => document.querySelector('[data-sede-palco]').getAnimations({ subtree: true }).filter((a) => a.playState === 'running').length);
+  const itemAtual = (pg) => pg.evaluate(() => { const li = document.querySelector('.esteira-lista li[aria-current="step"]'); return li ? +li.getAttribute('data-item') : -1; });
+  try {
+    const { ctx, pg, erros, cena } = await abrirCtx(false);
+    await pg.goto(base + '/');
+    await pg.waitForTimeout(1500);
+    assert.deepEqual(cena, [], 'no topo nada da cena é baixado');
+    assert.equal(await pg.$('.sv-mundo'), null);
+    await irAoPalco(pg);
+    await pg.waitForSelector('[data-sede-palco] .sv-mundo', { timeout: 8000 });
+    assert.ok(cena.length > 0, 'a cena baixa quando a seção chega');
+    // toca sozinha: sem toque nenhum, a lista sai do item 0 (Nimbus) e chega ao Verbo
+    await pg.waitForFunction(() => { const li = document.querySelector('.esteira-lista li[aria-current="step"]'); return li && +li.getAttribute('data-item') >= 1; }, null, { timeout: 6000 });
+    assert.ok((await rodando(pg)) > 0, 'animações rodando com o palco na tela');
+    assert.equal(await pg.isVisible('#janela-sede .selo-demo'), true, 'selo Demonstração à vista');
+    assert.equal(await pg.isHidden('[data-sede-pausar]'), false, 'Pausar à vista com movimento');
+    // fora da tela pausa; de volta, continua
+    await pg.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    await pg.waitForFunction(() => document.querySelector('[data-sede-palco]').getAnimations({ subtree: true }).every((a) => a.playState !== 'running'), null, { timeout: 3000 });
+    await irAoPalco(pg);
+    await pg.waitForFunction(() => document.querySelector('[data-sede-palco]').getAnimations({ subtree: true }).some((a) => a.playState === 'running'), null, { timeout: 3000 });
+    // troca de negócio: recomeça no item 0 com o site do salão e o link do salão
+    await pg.click('.sede-marcas .chip[data-nicho="salao"]');
+    assert.equal(await itemAtual(pg), 0, 'trocar de negócio recomeça no passo 1');
+    assert.equal(await pg.getAttribute('.chip[data-nicho="salao"]', 'aria-pressed'), 'true');
+    assert.equal(await pg.getAttribute('[data-esteira-abrir]', 'href'), 'sites/demo-salao/');
+    assert.match(await pg.getAttribute('[data-sede-palco]', 'aria-label'), /Esmalte & Fio, nome fictício/);
+    await pg.waitForFunction(() => /Cadeira pronta e esmalte aberto no Centro\./.test(document.querySelector('[data-sede-palco]').textContent.replace(/\s+/g, ' ')), null, { timeout: 3000 });
+    assert.deepEqual(erros, []);
+    await ctx.close();
+
+    // movimento reduzido: nada roda, quadro final (ABERTO), lista à vista, sem Pausar; o chip troca o site parado
+    const r = await abrirCtx(true);
+    await r.pg.goto(base + '/');
+    await irAoPalco(r.pg);
+    await r.pg.waitForSelector('[data-sede-palco] .sv-mundo', { timeout: 8000 });
+    await r.pg.waitForFunction(() => document.querySelector('#sede').classList.contains('sede-estatica'), null, { timeout: 8000 });
+    await r.pg.waitForTimeout(600);
+    assert.equal(await rodando(r.pg), 0);
+    assert.match(await r.pg.textContent('[data-sede-palco]'), /ABERTO/);
+    assert.equal(await r.pg.isHidden('[data-sede-pausar]'), true);
+    assert.ok(await r.pg.evaluate(() => document.querySelector('#esteira').getBoundingClientRect().width > 100), 'lista de etapas à vista');
+    assert.equal(await itemAtual(r.pg), 7, 'o quadro parado é o fim: site no ar');
+    await r.pg.click('.sede-marcas .chip[data-nicho="academia"]');
+    await r.pg.waitForFunction(() => /A barra está montada\./.test(document.querySelector('[data-sede-palco]').textContent), null, { timeout: 3000 });
+    await r.pg.waitForTimeout(150);   // a regra global de movimento reduzido (vitrine.css) deixa transições de 1 ms: um quadro e acabou
+    assert.equal(await rodando(r.pg), 0);
+    assert.deepEqual(r.erros, []);
+    await r.ctx.close();
   } finally { await nav.close(); srv.close(); }
 });

@@ -76,10 +76,13 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 @media (prefers-reduced-motion:no-preference){.celular.chegou .balao{animation:chega var(--duracao-longa) var(--curva-entrada) both}}
 @keyframes chega{0%{opacity:0;transform:translateY(18px) scale(.96)}100%{opacity:1;transform:none}}
 .celular-vazio{color:var(--apagado);font-size:var(--t-nota);text-align:center;padding:12px}
-/* Sede da Creat · a empresa em funcionamento (demonstração)
-   Momento-assinatura: o pedido de demonstração passa de mão em mão na sede 3D e, ao mesmo tempo,
-   acende o passo na comanda ao lado; quando Trilho publica, o carimbo NO AR bate e o botão
-   "Abrir o site pronto" vira amarelo. Celular: comanda embaixo da janela, sede só sob toque. */
+/* Sede da Creat · a equipe trabalhando (demonstração)
+   Conceito: canteiro no celular. Os 7 personagens montam o site em cima de um celular, como pedreiros numa obra:
+   cada gesto vira na hora um pedaço visível do site (assets/sede-viva/, carregado 600 px antes da seção).
+   Momento-assinatura: Trilho vira a plaquinha de FECHADO para ABERTO e a comanda ganha o carimbo NO AR.
+   Layout: no celular, título, chips, palco 1:1 e rostos numa tela só; no desktop, palco à esquerda e lista à direita.
+   A lista de etapas (aside.esteira) fica para o leitor de tela enquanto a cena roda e volta à vista sem JS,
+   com falha da cena, com movimento reduzido ou economia de dados. */
 .sede-grade{display:grid;gap:var(--r5)}
 .sede-grade .cab{margin-bottom:0}
 .sede-grade .cab p{max-width:var(--medida)}
@@ -95,22 +98,40 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 }
 .sede-marcas .chip-seu{border-style:dashed}
 .sede-marcas .chip-seu[aria-pressed="true"]{border-style:solid}
-.janela-sede{min-height:0}
-.sede-palco{position:relative}
+#sede .janela-sede{min-height:0;display:none}
+#sede.sede-com-cena .janela-sede,#sede.sede-3d .janela-sede{display:block}
+.sede-palco{position:relative;aspect-ratio:1/1;overflow:hidden;contain:layout paint;background:var(--ceu);cursor:pointer}
+#sede.sede-3d .sede-palco,#sede.sede-3d .sede-pausar,#sede.sede-3d .sede-rostos{display:none}
 .janela-sede iframe{display:block;width:100%;aspect-ratio:16/10;border:0;background:var(--vidro)}
 .janela-sede .sede-carregando{position:absolute;inset:0;min-height:0;background:var(--vidro);color:var(--giz)}
-.janela-sede .selo-demo{z-index:2}
-.janela-sede .ver-ao-vivo{z-index:2}
-.sede-nota{margin-top:var(--r3);font-size:var(--t-nota);color:var(--apagado)}
-@media (min-width:1000px) and (pointer:fine){.janela-sede .so-celular{display:none}}
+.janela-sede .selo-demo{z-index:3}
+#sede.sede-3d .janela-sede[data-sede-pronta] > .selo-demo{display:none} /* a sede 3D respondeu: o selo DEMONSTRAÇÃO dela está na tela */
+.sede-pausar{position:absolute;top:10px;right:10px;z-index:3;display:inline-flex;align-items:center;gap:7px;min-width:var(--alvo);min-height:var(--alvo);padding:0 13px;border:var(--borda) solid var(--linha);border-radius:var(--raio-pilula);background:var(--papel);color:var(--tinta);font:800 14px/1 var(--f-texto);box-shadow:var(--sombra-p);cursor:pointer}
+.sede-pausar::before{content:"";width:10px;height:12px;border-inline:3.5px solid currentColor;box-sizing:border-box}
+.sede-pausar[data-pausado]::before{width:0;height:0;border-inline:0;border-block:6.5px solid transparent;border-left:10px solid currentColor}
+.sede-pausar:focus-visible,.sede-rosto:focus-visible,#sede .ver-ao-vivo:focus-visible,#sede .esteira-abrir:focus-visible{outline:3px solid var(--sol);outline-offset:3px;box-shadow:0 0 0 6px var(--linha)}
+.janela-sede .sede-dica:empty,.janela-sede .sede-dica[hidden]{display:none}
+.sede-rostos{display:none;justify-content:space-between;gap:4px;padding-bottom:8px}
+#sede.sede-com-cena .sede-rostos{display:flex}
+.sede-rosto{--ag:var(--agente-nimbus);position:relative;flex:0 0 var(--alvo);width:var(--alvo);height:var(--alvo);padding:0;border-radius:50%;border:var(--borda) solid var(--linha);background:var(--ag) no-repeat 0 0/308px 44px;background-origin:border-box;color:#1E1B2E;font:400 19px/1 var(--f-display);cursor:pointer;box-shadow:var(--sombra-p);display:grid;place-items:center}
+.sede-rosto[data-atual]{transform:translateY(-4px);box-shadow:var(--sombra)}
+.sede-rosto[data-atual]::after{content:"";position:absolute;left:10px;right:10px;bottom:-12px;height:6px;border-radius:3px;background:var(--sol);border:1.5px solid var(--linha)}
+.sede-rosto[data-rosto="verbo"]{--ag:var(--agente-verbo)}.sede-rosto[data-rosto="paleta"]{--ag:var(--agente-paleta)}.sede-rosto[data-rosto="pixel"]{--ag:var(--agente-pixel)}
+.sede-rosto[data-rosto="lupa"]{--ag:var(--agente-lupa)}.sede-rosto[data-rosto="muralha"]{--ag:var(--agente-muralha);color:#FFFDF6}.sede-rosto[data-rosto="trilho"]{--ag:var(--agente-trilho);color:#FFFDF6}
+#sede.sede-perto.sede-rostos-img .sede-rosto{background-image:url(assets/sede-viva/rostos.webp);background-position:calc(-44px * var(--i)) 0;color:transparent}
+.sede-acoes{display:grid;gap:var(--r3)}
+.sede-acoes .btn{width:100%}
+#sede.sede-3d .ver-ao-vivo{display:none}
+.sede-viva[data-fim] .esteira-abrir{background:var(--sol);color:var(--sol-tinta);box-shadow:var(--sombra)}
+.sede-nota{font-size:var(--t-nota);color:var(--apagado)}
 .esteira{min-width:0;display:flex;flex-direction:column;gap:var(--r4);padding:var(--r5);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra)}
+@media (max-width:999px){#sede.sede-com-cena:not(.sede-estatica) .esteira{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}}
 .esteira-cab{padding-bottom:var(--r4);border-bottom:var(--borda) dashed var(--linha)}
 .esteira-cab .olho{margin-bottom:var(--r1)}
 .esteira-cab h3{font:400 var(--t-h3)/1.1 var(--f-display);text-wrap:balance;overflow-wrap:anywhere}
 .esteira-agora{margin-top:var(--r2);font-weight:800;min-height:1.55em}
 .esteira-trilho{margin-top:var(--r3);height:12px;border:2px solid var(--linha);border-radius:var(--raio-pilula);background:var(--lasca);overflow:hidden}
-.esteira-trilho span{display:block;height:100%;width:var(--progresso,0%);background:var(--sol);border-right:2px solid var(--linha)}
-.esteira[data-etapa="0"] .esteira-trilho span{border-right-color:transparent}
+.esteira-trilho span{display:block;height:100%;width:100%;transform-origin:0 50%;transform:scaleX(var(--progresso,0));background:var(--sol);border-right:2px solid var(--linha)}
 .esteira-lista{margin:0;padding:0;list-style:none;display:grid;gap:4px}
 .esteira-lista li{--ag:var(--agente-nimbus);display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:40px;padding:6px 12px 6px 8px;border:2px solid transparent;border-radius:var(--raio-p);color:var(--apagado)}
 .esteira-lista li i{width:18px;height:18px;border-radius:50%;background:var(--ag);border:2.5px solid var(--linha)}
@@ -123,25 +144,20 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
 .esteira-lista li[data-estado="agora"] b{color:var(--sol-tinta)}
 .esteira-lista li[data-estado="agora"] i{box-shadow:0 0 0 3px var(--papel)}
 .esteira-lista [data-agente="verbo"]{--ag:var(--agente-verbo)}.esteira-lista [data-agente="paleta"]{--ag:var(--agente-paleta)}.esteira-lista [data-agente="pixel"]{--ag:var(--agente-pixel)}
-.esteira-lista [data-agente="lupa"]{--ag:var(--agente-lupa)}.esteira-lista [data-agente="muralha"]{--ag:var(--agente-muralha)}.esteira-lista [data-agente="trilho"]{--ag:var(--agente-trilho)}
-.janela-sede[data-sede-pronta] > .selo-demo{display:none} /* só quando a sede já mandou a 1ª etapa: aí o selo DEMONSTRAÇÃO dela está na tela */
+.esteira-lista [data-agente="lupa"]{--ag:var(--agente-lupa)}.esteira-lista [data-agente="muralha"]{--ag:var(--agente-muralha)}.esteira-lista [data-agente="trilho"]{--ag:var(--agente-trilho)}.esteira-lista [data-agente="todos"]{--ag:var(--sol)}
 .esteira-fim{display:flex;flex-wrap:wrap;align-items:center;gap:var(--r3) var(--r4);margin-top:auto}
-.esteira-carimbo{order:2;font:400 22px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04em;color:var(--ok);border:3px solid currentColor;border-radius:8px;padding:6px 10px 4px;transform:rotate(-7deg);visibility:hidden}
-.esteira[data-etapa="5"] .esteira-carimbo{visibility:visible}
-.esteira[data-etapa="5"] .esteira-abrir{background:var(--sol);color:var(--sol-tinta);box-shadow:var(--sombra)}
+.esteira-carimbo{font:400 22px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04em;color:var(--ok);border:3px solid currentColor;border-radius:8px;padding:6px 10px 4px;transform:rotate(-7deg);visibility:hidden}
+.esteira[data-fim] .esteira-carimbo{visibility:visible}
 .esteira-nota{font-size:var(--t-nota);color:var(--apagado)}
 @media (prefers-reduced-motion:no-preference){
-  .esteira-trilho span{transition:width var(--duracao-longa) var(--curva-saida)}
-  .esteira-lista li,.esteira-lista b,.esteira-abrir{transition:background-color var(--duracao-media) var(--curva-saida),color var(--duracao-media) var(--curva-saida),box-shadow var(--duracao-media) var(--curva-saida),border-color var(--duracao-media) var(--curva-saida),transform var(--duracao-curta) var(--curva-saida)}
-  .esteira-lista li[data-estado="agora"] i{animation:esteira-pulo 1.1s var(--curva-balanco) infinite}
-  .esteira[data-etapa="5"] .esteira-carimbo{animation:esteira-carimbo var(--duracao-giro) var(--curva-mola) both}
-  .esteira.trocou .esteira-cab h3{animation:esteira-troca var(--duracao-media) var(--curva-entrada) both}
+  .esteira-trilho span{transition:transform var(--duracao-longa) var(--curva-saida)}
+  .esteira-lista li,.esteira-lista b,.sede-rosto,.esteira-abrir{transition:background-color var(--duracao-media) var(--curva-saida),color var(--duracao-media) var(--curva-saida),box-shadow var(--duracao-media) var(--curva-saida),border-color var(--duracao-media) var(--curva-saida),transform var(--duracao-curta) var(--curva-saida)}
+  .esteira[data-fim] .esteira-carimbo{animation:esteira-carimbo var(--duracao-giro) var(--curva-mola) both}
 }
-@keyframes esteira-pulo{0%,100%{transform:translateY(0)}45%{transform:translateY(-4px)}}
 @keyframes esteira-carimbo{0%{opacity:0;transform:rotate(-18deg) scale(1.6)}100%{opacity:1;transform:rotate(-7deg) scale(1)}}
-@keyframes esteira-troca{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+@media (min-width:720px){.sede-acoes{grid-template-columns:auto auto;justify-content:start}.sede-acoes .btn{width:auto}}
 @media (min-width:1000px){
-  .sede-grade{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-areas:"cab cab" "viva esteira";gap:var(--r5) var(--r6);align-items:stretch}
+  .sede-grade{grid-template-columns:minmax(0,520px) minmax(0,1fr);grid-template-areas:"cab cab" "viva esteira";gap:var(--r5) var(--r6);align-items:start}
   .sede-grade .cab{grid-area:cab}
   .sede-viva{grid-area:viva;align-content:start}
   .esteira{grid-area:esteira}
@@ -565,51 +581,62 @@ body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
     </div>
   </section>
 
-  <!-- 7 · SEDE AO VIVO: a empresa em funcionamento (conteudo/home.json sede). Demonstração, nome fictício. -->
+  <!-- 7 · SEDE: a equipe trabalhando (conteudo/home.json sede). Demonstração, nome fictício. -->
   <section class="secao secao-ceu" id="sede" aria-labelledby="sede-titulo">
     <div class="cx sede-grade">
       <div class="cab">
         <span class="olho">Sede da Creat</span>
         <h2 id="sede-titulo">Veja como a equipe trabalha</h2>
-        <p>Esta é a sede da Creat. Cada personagem é uma etapa do trabalho: um organiza, um escreve, outro escolhe as cores, outro testa no celular. Escolha um negócio e veja o pedido passar de mão em mão até o site ir para o ar.</p>
+        <p>Cada personagem faz uma parte do site. Escolha um negócio e veja o pedido passar de mão em mão até a placa virar para aberto.</p>
       </div>
       <div class="sede-viva">
-        <div class="sede-marcas" role="group" aria-label="Negócio na fachada da sede" data-sede-marcas data-clarity-mask="True">
-          <button class="chip" type="button" aria-pressed="true" data-marca="Barbearia Navalha Fictícia" data-site="sites/demo-barbearia/">Barbearia Navalha Fictícia</button>
-          <button class="chip" type="button" aria-pressed="false" data-marca="Esmalte &amp; Fio" data-site="sites/demo-salao/">Esmalte &amp; Fio</button>
-          <button class="chip" type="button" aria-pressed="false" data-marca="Studio Barra Fictícia" data-site="sites/demo-academia/">Studio Barra Fictícia</button>
+        <div class="sede-marcas" role="group" aria-label="Negócio da demonstração" data-sede-marcas data-clarity-mask="True">
+          <button class="chip" type="button" aria-pressed="true" data-nicho="barbearia" data-marca="Barbearia Navalha Fictícia" data-site="sites/demo-barbearia/">Barbearia Navalha Fictícia</button>
+          <button class="chip" type="button" aria-pressed="false" data-nicho="salao" data-marca="Esmalte &amp; Fio" data-site="sites/demo-salao/">Esmalte &amp; Fio</button>
+          <button class="chip" type="button" aria-pressed="false" data-nicho="academia" data-marca="Studio Barra Fictícia" data-site="sites/demo-academia/">Studio Barra Fictícia</button>
         </div>
         <figure class="janela-sede" id="janela-sede">
           <span class="selo-demo">Demonstração</span>
-          <div class="sede-palco"><picture data-poster>
-            <source media="(max-width: 719px)" srcset="assets/img/sede-ilha-640.webp" width="640" height="400">
-            <img src="assets/img/sede-ilha.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Ilha da sede da Creat Nuvem desenhada em 3D, com a equipe de personagens trabalhando nas mesas.">
-          </picture>
-          <button class="btn btn-sol ver-ao-vivo" type="button" data-ver-ao-vivo>Abrir a sede</button></div>
-          <figcaption><span data-legenda-marca>Nome fictício na fachada.</span><span class="so-celular" data-legenda-dica> A sede 3D só carrega quando você toca em Abrir a sede, para poupar dados.</span></figcaption>
+          <div class="sede-palco" data-sede-palco role="img" aria-label="Demonstração animada: a equipe da Creat monta o site de Barbearia Navalha Fictícia, nome fictício. As etapas estão na lista a seguir."></div>
+          <button class="sede-pausar" type="button" data-sede-pausar hidden>Pausar</button>
+          <figcaption class="sede-dica" data-legenda-dica hidden></figcaption>
         </figure>
+        <div class="sede-rostos" role="group" aria-label="Quem faz cada parte do site" data-sede-rostos>
+          <button class="sede-rosto" type="button" data-rosto="nimbus" style="--i:0" aria-label="Nimbus organiza o pedido" aria-describedby="balao-nimbus"><span aria-hidden="true">N</span></button>
+          <button class="sede-rosto" type="button" data-rosto="verbo" style="--i:1" aria-label="Verbo escreve os textos" aria-describedby="balao-verbo"><span aria-hidden="true">V</span></button>
+          <button class="sede-rosto" type="button" data-rosto="paleta" style="--i:2" aria-label="Paleta escolhe as cores" aria-describedby="balao-paleta"><span aria-hidden="true">P</span></button>
+          <button class="sede-rosto" type="button" data-rosto="pixel" style="--i:3" aria-label="Pixel monta o site" aria-describedby="balao-pixel"><span aria-hidden="true">P</span></button>
+          <button class="sede-rosto" type="button" data-rosto="lupa" style="--i:4" aria-label="Lupa testa no celular" aria-describedby="balao-lupa"><span aria-hidden="true">L</span></button>
+          <button class="sede-rosto" type="button" data-rosto="muralha" style="--i:5" aria-label="Muralha confere a segurança" aria-describedby="balao-muralha"><span aria-hidden="true">M</span></button>
+          <button class="sede-rosto" type="button" data-rosto="trilho" style="--i:6" aria-label="Trilho publica" aria-describedby="balao-trilho"><span aria-hidden="true">T</span></button>
+        </div>
+        <div class="sede-acoes">
+          <button class="btn ver-ao-vivo" type="button" data-ver-ao-vivo>Entrar na sede 3D</button>
+          <a class="btn esteira-abrir" href="sites/demo-barbearia/" data-esteira-abrir>Abrir o site pronto<span class="so-leitor" data-esteira-abrir-sr>: Barbearia Navalha Fictícia (site-demonstração, nome fictício)</span></a>
+        </div>
+        <p class="sede-nota">Demonstração com nomes fictícios. Esses negócios não existem.</p>
       </div>
-      <aside class="esteira" id="esteira" aria-labelledby="esteira-titulo" data-etapa="0" data-clarity-mask="True">
+      <aside class="esteira" id="esteira" aria-labelledby="esteira-titulo" data-clarity-mask="True">
         <div class="esteira-cab">
           <span class="olho">Pedido de demonstração</span>
           <h3 id="esteira-titulo" data-esteira-nome>Barbearia Navalha Fictícia</h3>
-          <p class="esteira-agora" data-esteira-agora>Nimbus organiza o pedido</p>
+          <p class="esteira-agora" data-esteira-agora>1 de 7 · Nimbus recebe o pedido</p>
           <div class="esteira-trilho" aria-hidden="true"><span data-esteira-barra></span></div>
         </div>
         <ol class="esteira-lista">
-          <li data-passo="0" data-agente="nimbus"><i aria-hidden="true"></i><span class="esteira-quem"><b>Nimbus</b> organiza o pedido</span><span class="esteira-st" data-st>agora</span></li>
-          <li data-passo="1" data-agente="verbo"><i aria-hidden="true"></i><span class="esteira-quem"><b>Verbo</b> escreve os textos</span><span class="esteira-st" data-st>na fila</span></li>
-          <li data-passo="1" data-agente="paleta"><i aria-hidden="true"></i><span class="esteira-quem"><b>Paleta</b> escolhe as cores</span><span class="esteira-st" data-st>na fila</span></li>
-          <li data-passo="2" data-agente="pixel"><i aria-hidden="true"></i><span class="esteira-quem"><b>Pixel</b> monta o site</span><span class="esteira-st" data-st>na fila</span></li>
-          <li data-passo="3" data-agente="lupa"><i aria-hidden="true"></i><span class="esteira-quem"><b>Lupa</b> testa no celular</span><span class="esteira-st" data-st>na fila</span></li>
-          <li data-passo="3" data-agente="muralha"><i aria-hidden="true"></i><span class="esteira-quem"><b>Muralha</b> confere a segurança</span><span class="esteira-st" data-st>na fila</span></li>
-          <li data-passo="4" data-agente="trilho"><i aria-hidden="true"></i><span class="esteira-quem"><b>Trilho</b> publica</span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-item="0" data-agente="nimbus" data-estado="agora" aria-current="step"><i aria-hidden="true"></i><span><span class="esteira-quem"><b>Nimbus</b> organiza o pedido</span><span class="so-leitor" data-balao id="balao-nimbus">. Eu leio o seu pedido e divido o trabalho entre a equipe.</span></span><span class="esteira-st" data-st>agora</span></li>
+          <li data-item="1" data-agente="verbo" data-estado="fila"><i aria-hidden="true"></i><span><span class="esteira-quem"><b>Verbo</b> escreve os textos</span><span class="so-leitor" data-balao id="balao-verbo">. Escrevo o título, os serviços e os preços com o que você mandou no pedido.</span></span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-item="2" data-agente="paleta" data-estado="fila"><i aria-hidden="true"></i><span><span class="esteira-quem"><b>Paleta</b> escolhe as cores</span><span class="so-leitor" data-balao id="balao-paleta">. Escolho as cores e as letras que combinam com o seu negócio.</span></span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-item="3" data-agente="pixel" data-estado="fila"><i aria-hidden="true"></i><span><span class="esteira-quem"><b>Pixel</b> monta o site</span><span class="so-leitor" data-balao id="balao-pixel">. Monto as partes do site e o botão que abre o seu WhatsApp.</span></span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-item="4" data-agente="lupa" data-estado="fila"><i aria-hidden="true"></i><span><span class="esteira-quem"><b>Lupa</b> testa no celular</span><span class="so-leitor" data-balao id="balao-lupa">. Abro o site num celular e toco em cada botão para ver se funciona.</span></span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-item="5" data-agente="muralha" data-estado="fila"><i aria-hidden="true"></i><span><span class="esteira-quem"><b>Muralha</b> confere a segurança</span><span class="so-leitor" data-balao id="balao-muralha">. Confiro a segurança do site antes de ele ir para o ar.</span></span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-item="6" data-agente="trilho" data-estado="fila"><i aria-hidden="true"></i><span><span class="esteira-quem"><b>Trilho</b> publica</span><span class="so-leitor" data-balao id="balao-trilho">. Depois que você aprova, eu publico e confiro se o site abre no endereço certo.</span></span><span class="esteira-st" data-st>na fila</span></li>
+          <li data-item="7" data-agente="todos" data-estado="fila"><i aria-hidden="true"></i><span><b>Site no ar.</b> Pode abrir.</span><span class="esteira-st" data-st>na fila</span></li>
         </ol>
         <div class="esteira-fim">
           <span class="esteira-carimbo" aria-hidden="true">No ar</span>
-          <a class="btn esteira-abrir" href="sites/demo-barbearia/" data-esteira-abrir>Abrir o site pronto<span class="so-leitor" data-esteira-abrir-sr>: Barbearia Navalha Fictícia (site-demonstração, nome fictício)</span></a>
+          <p class="esteira-nota">É assim que a equipe aparece quando há um pedido em produção. Os nomes são fictícios e nenhum desses negócios existe.</p>
         </div>
-        <p class="esteira-nota">Demonstração: é assim que a equipe aparece quando há um pedido em produção. Os nomes são fictícios e nenhum desses negócios existe.</p>
       </aside>
     </div>
   </section>
