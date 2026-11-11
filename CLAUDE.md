@@ -24,6 +24,8 @@ Agentes em `.claude/agents/`, skills da casa em `.claude/skills/`, fluxo que coo
 | `seguranca` | Muralha | Segurança | auditoria antes de publicar |
 | `devops` | Trilho | DevOps & Deploy | build, CI, deploy |
 
+**Reforços de venda (contratados em 11/11 por ordem do dono):** `trafego` (Vento, Gestor de Tráfego Pago: conta de anúncios, criativos no ar, orçamento dentro do teto), `conversao` (Funil, Especialista em Conversão: onde o visitante desiste e o que corrigir primeiro) e `vendas` (Balcão, Vendas e Atendimento: prepara a venda direta do dono e as respostas; não envia mensagem). Entram em todo mutirão de venda.
+
 Nota: `.claude/agents/leitor-pedido.md`, `.claude/agents/redator-pedido.md` e `.claude/agents/publicador-pedido.md` são papéis internos da tarefa executora do Porta Aberta (`projetos/creat-nuvem/docs/EXECUTOR.md`, passo (e) e P4.2), não membros da equipe de 15. Só o executor os chama. Os guardas deles ficam em `.claude/hooks/papeis.cjs`, ligados no frontmatter de cada um e em `.claude/settings.json`. Não entram no zip da loja.
 
 ## Skills da casa (`.claude/skills/`)

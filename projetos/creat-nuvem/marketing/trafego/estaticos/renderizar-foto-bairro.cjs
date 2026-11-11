@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Renderiza a linha "Foto de bairro" (9 peças x vertical 1080x1920 e feed 1080x1350) pelo mesmo caminho de
 // renderizar.cjs (servidor local + Playwright + screenshot de #peca) e confere as regras duras:
-// texto e marca dentro da área segura do 9:16, corpo >= 28 px, selos >= 26 px, nada vazando, nada sobreposto,
+// texto, marca e balão do pedido dentro da área segura do 9:16, corpo >= 28 px, selos >= 26 px, nada vazando, nada sobreposto,
 // as 3 fontes carregadas e nome de arquivo sem acento.
 // As fotos ficam FORA do repositório: passe a pasta com --fotos.
 // node renderizar-foto-bairro.cjs --fotos <pasta das fotos aprovadas> --saida <pasta> [--guia] [--so barbearia-1]
@@ -41,14 +41,15 @@ let falhas = 0;
       const { regras, nome } = await pg.evaluate(({ f, w, h }) => {
         const out = [], base = document.getElementById('peca').getBoundingClientRect();
         const seg = f === '9x16' ? { x0: 65, x1: 1015, y0: 269, y1: 1248 } : { x0: 24, x1: w - 24, y0: 24, y1: h - 24 };
-        const els = [...document.querySelectorAll('.faixa,.chip,.selo,.rodape')];
+        const els = [...document.querySelectorAll('.faixa,.chip,.selo,.rodape,.balao:not([hidden])')];
         const caixas = els.map(el => {
           // caixa visível inclui a sombra dura (10 px na faixa, 6 no chip, 4 no selo e na origem)
-          const r = el.getBoundingClientRect(), s = el.classList.contains('faixa') ? 10 : el.classList.contains('chip') ? 6 : 4;
+          const r = el.getBoundingClientRect(), s = el.classList.contains('faixa') ? 10 : el.classList.contains('chip') || el.classList.contains('balao') ? 6 : 4;
           return { el, x0: r.left - base.left, y0: r.top - base.top, x1: r.right - base.left + s, y1: r.bottom - base.top + s };
         });
         caixas.forEach(c => {
-          const fs = parseFloat(getComputedStyle(c.el).fontSize), n = c.el.className + ' "' + c.el.textContent.trim().slice(0, 22) + '"';
+          // o balão vale pelo menor texto de dentro
+          const fs = c.el.classList.contains('balao') ? Math.min(...[...c.el.children].map(k => parseFloat(getComputedStyle(k).fontSize))) : parseFloat(getComputedStyle(c.el).fontSize), n = c.el.className + ' "' + c.el.textContent.trim().slice(0, 22) + '"';
           const min = c.el.classList.contains('selo') ? 26 : 28;
           if (fs < min) out.push('pequeno ' + fs + 'px ' + n);
           if (c.x0 < seg.x0 - .5 || c.x1 > seg.x1 + .5 || c.y0 < seg.y0 - .5 || c.y1 > seg.y1 + .5) out.push('fora da area ' + n + ' [' + [c.x0, c.y0, c.x1, c.y1].map(Math.round) + ']');
@@ -56,7 +57,10 @@ let falhas = 0;
         const naoFaixa = caixas.filter(c => !c.el.classList.contains('faixa'));
         const titulo = document.querySelector('.titulo').getBoundingClientRect();
         const tc = { x0: titulo.left - base.left, y0: titulo.top - base.top, x1: titulo.right - base.left + 10, y1: titulo.bottom - base.top + 10 };
+        // o selo preso ao canto do balão é de propósito (é o selo da cena)
+        const preso = (a, c) => a.el && [a.el, c.el].some(e => e.classList.contains('selo')) && [a.el, c.el].some(e => e.classList.contains('balao'));
         [tc, ...naoFaixa].forEach((a, i, arr) => arr.slice(i + 1).forEach(c => {
+          if (preso(a, c)) return;
           if (a.x0 < c.x1 && c.x0 < a.x1 && a.y0 < c.y1 && c.y0 < a.y1) out.push('sobreposto ' + (a.el ? a.el.className : 'titulo') + ' x ' + c.el.className);
         }));
         return { regras: out, nome: document.title };

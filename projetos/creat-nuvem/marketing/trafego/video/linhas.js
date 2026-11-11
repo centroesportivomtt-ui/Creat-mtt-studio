@@ -86,12 +86,16 @@
            rolagem: [{ t0: 7.5, t1: 7.95, alvo: 'nome', y: 176 }, { t0: 8.55, t1: 10.75, alvo: 'pedido', y: 150, curva: 'trapezio' }], toqueDia: 11.02 }
     },
     camera: {
-      recuo: [2.4, 3.45],                  /* close na placa (~70% da largura) -> celular (1,51x) */
+      /* close na placa (~70% da largura) -> celular (1,51x). Conferência de 11/11: no recuo de 2,4 a 3,4 s a faixa da
+         legenda de 2 linhas ("Não é animação. / É a página.", até y ~550) cobria o botão "Ver meu site pronto". Agora o
+         recuo é rápido e com saída suave (ease-out, 0,54 s) e a tela do celular da sessão A começa em y 575, abaixo da
+         legenda: o botão fica inteiro de 2,7 s a 3,6 s (y ~626 a ~711) com a placa logo abaixo dele. */
+      recuo: [2.4, 2.94], curva: 'eout',
       larguraPlaca: 0.70,
-      /* px CSS do topo da janela da página mostrado no fim do recuo, por sessão. A: do campo da cidade à placa.
-         B: do título ao botão (esconde a barra fixa de 58 px). A captura da home fotografa 390x720. */
-      topo: { A: 180, B: 60 },
-      janelaY: 480,                        /* topo da tela do celular no vídeo: abaixo da legenda de 1 linha */
+      /* px CSS do topo da janela da página mostrado no fim do recuo, por sessão. A: do botão à placa (o campo da cidade
+         fica fora do quadro). B: do título ao botão (esconde a barra fixa de 58 px). A captura da home fotografa 390x720. */
+      topo: { A: 300, B: 60 },
+      janelaY: { A: 575, B: 480 },         /* topo da tela do celular no vídeo: A abaixo da legenda de 2 linhas, B da de 1 */
       desce: []
     },
     legendas: [
@@ -118,20 +122,37 @@
   var nomeR7 = 'Barbearia Navalha Fictícia';
   var R7 = {
     codigo: 'R7', nicho: 'barbearia', nichoRotulo: 'Barbearia', angulo: 'A Mensagem das 23h', nome: nomeR7, duracao: 15,
-    captura: 'previa', palco: 'dor', capa: 2.4,
+    /* capa = o gancho novo (11/11, conferência): relógio 23:12 grande e a notificação, antes de a placa descer */
+    captura: 'previa', palco: 'dor', capa: 0.3,
     hora: '2026-11-11T23:12:00-03:00',
+    /* fundo da noite até o sino: do lado de fora é 23h12; no quadro do sino o fundo corta seco para --ceu (do lado de
+       dentro está aberto). O balcão fica escurecido enquanto é noite. */
+    fundo: { cor: 'tinta', balcao: 'escuro', ate: 'sino' },
     /* TESTE DE CENA REAL (rota da economia, 11/11/2026): o primeiro 1,3 s usa uma foto realista aprovada em tela cheia,
        com câmera lenta (Ken Burns) e o selo "cena de exemplo"; a placa cai na frente da foto no mesmo tempo do
        original (assenta em ABERTO antes de 2,4 s, regra fixa do gesto). A foto não entra no repositório (público):
        gerar.cjs recebe a pasta por --fotos ou REELS_FOTOS. Tudo o que vem depois de "difereAte" é idêntico ao R7. */
     variantes: {
+      /* Conferência de 11/11 (direção criativa): a dor agora é a que a foto mostra (mão na máquina, pedido no
+         celular), sem "23h12" sobre uma foto de dia. A foto sobe ~260 px (escala 1,46 a 1,52 com origem em (1080,
+         1370) da caixa de 1080x1920; menos que isso deixaria um vão embaixo) e o celular da bancada fica em y ~1104 a
+         ~1178: a tela dele acende e o balão sai dela, com a vibração do R7. De 1,3 s até o sino a foto fica atrás da
+         placa, escurecida a 35% (véu --tinta a 65%), e no quadro do sino corta seco para o céu. Tela do celular da
+         bancada na caixa da foto (antes da escala), cantos lidos da foto aprovada: tela. */
       foto: { rotulo: 'variante com foto real', foto: 'Foto Barbearia - maquina na nuca e celular ao lado - vertical 9x16.png',
-              capa: 1.1, ate: 1.3, some: 0.3, kb: { de: 1.03, ate: 1.11, ox: 0.54, oy: 0.40 }, difereAte: 3.2,
+              capa: 0.5, ate: 1.3, escurece: [1.3, 1.6, 0.65], corte: 'sino',
+              kb: { de: 1.46, ate: 1.52, ox: 1080, oy: 1370, dy: -260 },
+              tela: [[610, 1369], [1074, 1363], [1080, 1412], [607, 1416]], balao: { sai: [0.08, 0.5], y: 846 },
+              legenda: [0.0, 1.3, 'Mão na <k>máquina.</k><br>Pedido no celular.'], de: 'Mensagem · agora',
+              difereAte: 3.2,
               /* o selo "cena de exemplo" é o do balão da mensagem, que fica sobre a foto (palco.html, .v-foto) */
               selos: [] }
     },
     /* aproxima: depois de assentar, a câmera chega na placa (2x) para o nome a giz ficar legível; vidro: atravessa a lousa */
-    cena: { descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.95, 2.38, 2.0], vidro: [2.6, 3.15] },
+    /* aproxima (conferência de 11/11, "pulo do gato sub-dimensionado"): de 1,3 a 2,2 s a câmera avança na placa com a
+       curva de mola da casa até a tábua ter ~700 px de largura (largura: px de vídeo; antes era 2x só depois de 1,95 s,
+       e a placa passava a virada com ~360 px). O voo pelo vidro continua o mesmo movimento. */
+    cena: { descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.3, 2.2, { largura: 700 }], vidro: [2.6, 3.15] },
     sessoes: {
       /* prévia real: desce até o nome e para (0,8 s); depois um corte de montagem, com fusão de 0,2 s, leva ao pedido
          (são ~1.400 px de página: rolar isso em menos de 1 s borra). O R7 não promete "sem corte".
@@ -228,7 +249,9 @@
     captura: 'previa', palco: 'dor', capa: 0.7,
     hora: '2026-11-11T10:12:00-03:00', cliente: 'Camila',
     perfil: { arroba: '@salaoesmalteficticio', bio: 'Unhas, cabelo e sobrancelha.', link: 'salaoesmalte.exemplo/horario' },
-    cena: { tipo: 'link', toqueLink: 0.3, erroEm: 0.42, descida: [0.8, 1.24], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.95, 2.38, 2.0], vidro: [2.6, 3.15] },
+    cena: { tipo: 'link', toqueLink: 0.3, erroEm: 0.42, descida: [0.8, 1.24], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.3, 2.2, { largura: 700 }], vidro: [2.6, 3.15] },
+    /* fundo --papel até o cartão (conferência de 11/11: o R12 é o gêmeo mais próximo do R7; o cartão final não muda) */
+    fundo: { cor: 'papel' },
     sessoes: {
       /* prévia real do salão: nome, salto de montagem até o pedido, toques no sábado, 14h e Manicure (o serviço real do
          preset; o roteiro dizia "Pé e mão", que a prévia não tem, e 9h, que fica atrás de "Ver manhã") */
@@ -270,9 +293,13 @@
   var VAO = { x: 105, y: 772, w: 870, h: 420 };
   var R10 = {
     codigo: 'R10', nicho: 'barbearia', nichoRotulo: 'Barbearia', angulo: 'Sem Amarra', nome: nomeR7, duracao: 15,
-    captura: 'recortes', palco: 'lousa', capa: 0.95,
+    /* Conferência de 11/11: o quadro 1 já mostra o motivo. A linha mais forte vem escrita a giz, grande, com o tique de
+       feito ("Fidelidade: nenhuma.") numa lousa em tela cheia (sem céu nem balcão até o cartão); a placa desce na frente
+       em 0,55 s como antes. Do outro lado do vidro, o giz escreve as linhas 1 e 2 e a 3 já está marcada (pronta). */
+    captura: 'recortes', palco: 'lousa', capa: 0.3,
     hora: '2026-11-11T10:12:00-03:00',
-    cena: { tipo: 'lousa', descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.95, 2.38, 2.0], vidro: [2.5, 3.0] },
+    cena: { tipo: 'lousa', descida: [0.55, 1.05], arraste: { t0: 1.3, t1: 1.56, solta: 1.6, dy: 126 }, aproxima: [1.3, 2.2, { largura: 700 }], vidro: [2.5, 3.0] },
+    fundo: { cor: 'lousa', balcao: 'oculto', moldura: true },
     /* lousa grande (px do vídeo): a mesma da capa e a do outro lado do vidro */
     lousa: { x: 65, y: 356, w: 950, h: 880 },
     vao: VAO,
@@ -281,7 +308,8 @@
     linhas: [
       { rotulo: 'Ver:', texto: 'grátis, sem cadastro', t0: 3.05, t1: 3.9, feito: 4.5, recorte: 'R1', entra: 3.0, sai: 4.95 },
       { rotulo: 'Mensalidade:', texto: 'só com o site no ar', quebra: true, t0: 5.0, t1: 5.95, feito: 6.95, recorte: 'R2', entra: 4.95, sai: 7.55 },
-      { rotulo: 'Fidelidade:', texto: 'nenhuma', t0: 7.6, t1: 8.2, feito: 9.3, recorte: 'R3', entra: 7.55, sai: 9.95 }
+      /* pronta: já escrita e marcada desde o quadro 1; em "feito" o tique pulsa (com o tic) enquanto o recorte é a prova */
+      { rotulo: 'Fidelidade:', texto: 'nenhuma', t0: 7.6, t1: 8.2, feito: 9.3, recorte: 'R3', entra: 7.55, sai: 9.95, pronta: true }
     ],
     nota: { texto: '7 dias para desistir, pela lei.', t0: 10.0, t1: 10.7 },
     sessoes: {
@@ -290,11 +318,14 @@
          realce = trechos de texto real sublinhados a --sol; o valor em reais é coberto por tarja --lousa */
       R1: { tipo: 'recorte', t0: 3.0, t1: 4.95, alvo: 'label[for=nome]', margem: 8, rolar: { t0: 3.95, t1: 4.5, alvo: 'label[for=cidade]', margem: 6 } },
       R2: { tipo: 'recorte', t0: 4.95, t1: 7.55, alvo: '#c-aberto', margem: 14, realce: [{ sel: '#c-aberto ~ .preco', texto: 'a partir do dia em que o site entra no ar' }], realceEm: 5.6 },
-      R3: { tipo: 'recorte', t0: 7.55, t1: 9.95, alvo: '.contrato-bloco h3', margem: 12, realce: [{ sel: '.contrato li:nth-child(1)', texto: 'Sem fidelidade.' }, { sel: '.contrato li:nth-child(2)', texto: 'Sem multa para sair.' }], realceEm: 8.3 }
+      /* corta: o vão termina logo abaixo do último realce ("Sem multa para sair."). A linha 3 do contrato, "O domínio fica
+         no seu nome.", não entra em vídeo pago enquanto a cláusula 9 dos termos estiver sendo reescrita
+         (textos-troca-unica.md, AN-07). Quando o coordenador confirmar a cláusula no ar, apague "corta" e gere de novo. */
+      R3: { tipo: 'recorte', t0: 7.55, t1: 9.95, alvo: '.contrato-bloco h3', margem: 12, realce: [{ sel: '.contrato li:nth-child(1)', texto: 'Sem fidelidade.' }, { sel: '.contrato li:nth-child(2)', texto: 'Sem multa para sair.' }], realceEm: 8.3, corta: 14 }
     },
     recorte: { y: 64, alto: Math.round(VAO.h / (VAO.w / 390)) },
     legendas: [
-      [0.0, 1.3, '<k>Três linhas</k><br>antes de decidir.'],
+      [0.0, 1.3, 'Sem <k>fidelidade.</k><br>Sem multa.'],
       [1.3, 2.6, 'Sem <k>amarra.</k>'],
       [11.4, 15.0, 'Digite o <k>nome.</k><br>Veja o site pronto']
     ],
@@ -314,7 +345,7 @@
      segura o enviar, plim. Cartão da campanha de conversa em 11 s (faixa de preço 3,5 s na tela). */
   var R11 = {
     codigo: 'R11', nicho: 'academia', nichoRotulo: 'Academia', angulo: 'O Pedido Chega no Seu', nome: nomeR8, duracao: 15,
-    captura: 'home', palco: 'home', capa: 0.79,
+    captura: 'home', palco: 'home', capa: 0,
     hora: '2026-11-11T09:12:00-03:00',
     sessoes: {
       /* topo da página nova (título da academia, campo, chip marcado pelo link, botão e placa); a captura fotografa a
@@ -331,7 +362,11 @@
     camera: {
       /* close no campo (2,65 px de vídeo por px CSS, abaixo da escala 3 da captura) com o título do nicho em cima;
          de 0,82 a 1,24 s (nome inteiro no campo) a câmera vai para a placa; recuo para o celular de 2,4 a 3,05 s */
-      campo: { s: 2.65, cx: 195, cy: 196, ate: 0.82, chega: 1.24 },
+      /* Conferência de 11/11: de 0 a 0,5 s, close no título do nicho ("Veja o site da sua academia pronto.", 3,85 px
+         de vídeo por px CSS: o maior que mantém o título inteiro entre x 65 e x 1015; "academia pronto." com ~112 px
+         de altura, contra ~77 antes). De 0,5 a 0,78 s a câmera desce para o campo, já com o chip "Academia e studio"
+         marcado logo abaixo dele; a digitação segue como antes. titulo.cx/cy = centro do quadro em px CSS da página. */
+      campo: { s: 2.65, cx: 195, cy: 262, de: 0.5, ate0: 0.78, ate: 0.86, chega: 1.24, titulo: { s: 3.85, cx: 139.5, cy: 155.6 } },
       recuo: [2.4, 3.05], larguraPlaca: 0.70, topo: { A: 330 }, janelaY: 480, desce: []
     },
     /* 7,4 s: corte seco para o celular desenhado pela casa com a mensagem real do teste; o anel segura o enviar */
@@ -425,6 +460,8 @@
     e.push({ t: c.arraste.solta + GIRO.assenta, voz: 'sino', forca: 1 });
     e.push({ t: c.vidro[0], voz: 'grave', forca: 1 });
     R10.linhas.forEach(function (l) {
+      /* linha pronta (já escrita no quadro 1): sem giz; só o tic do pulso do tique, em "feito" */
+      if (l.pronta) { e.push({ t: l.feito, voz: 'tic', forca: 1 }); return; }
       var meio = l.t0 + (l.t1 - l.t0) * Array.from(l.rotulo).length / Array.from(l.rotulo + ' ' + l.texto).length;
       gizTexto(e, l.rotulo, l.t0, meio, 0.75); gizTexto(e, l.texto, meio, l.t1, 0.75);
       e.push({ t: l.feito, voz: 'tic', forca: 1 }, { t: l.feito + 0.02, voz: 'giz', forca: 0.9 });

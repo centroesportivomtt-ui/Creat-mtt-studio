@@ -145,7 +145,7 @@ async function fotografar(pg, arq, alto = 660) { await pg.screenshot({ path: arq
    Cada sessão (R.sessoes.A, B, ...) abre a home do zero e grava de t0 a t1. Ações possíveis por sessão:
    teclas (digitação real), arraste (puxão real da placa), rolarHome (rolagem do visitante), toqueBotao (toque real
    em "Ver meu site pronto"), rolagem (dentro da prévia), toqueDia (dia na prévia), relogioParaEm. */
-/* R10 e R11: o campo "Cidade (opcional)" tem o exemplo "Exemplo: Campinas", e nome de cidade é proibido nos criativos.
+/* R8, R10 e R11: o campo "Cidade (opcional)" tem o exemplo "Exemplo: Campinas", e nome de cidade é proibido nos criativos.
    Única intervenção visual além do botão flutuante: o texto de exemplo desse campo fica transparente (o rótulo fica). */
 const SEM_CIDADE_EXEMPLO = '#cidade::placeholder{color:transparent !important}';
 /* link do WhatsApp que o site abre (âncora com target _blank): a rota guarda o endereço e devolve página vazia, nada sai */
@@ -175,8 +175,12 @@ async function capturarHome(browser, base, L, reel, dir, log) {
     const whats = [], ms0 = {};
     if (S.toqueEnviar) { await segurarWhats(ctx, whats); await ctx.addInitScript(RECUSA_GUARDADA); }
     const m0 = await prepararHome(pg, base, R8.nicho, reel, S.inicio);
+    /* toda sessão da home (R8 e R11): o exemplo "Exemplo: Campinas" do campo Cidade fica transparente (nome de cidade
+       é proibido nos criativos; o rótulo "Cidade (opcional)" fica). Conferido abaixo, antes do primeiro quadro. */
+    await pg.addStyleTag({ content: SEM_CIDADE_EXEMPLO });
+    ms0.cidadeExemplo = await pg.evaluate(() => { const c = document.querySelector('#cidade'); return c ? getComputedStyle(c, '::placeholder').color : null; });
+    if (ms0.cidadeExemplo && !/rgba\(0, 0, 0, 0\)|transparent/.test(ms0.cidadeExemplo)) throw new Error('o exemplo do campo Cidade continua visível: ' + ms0.cidadeExemplo);
     if (S.toqueEnviar) {
-      await pg.addStyleTag({ content: SEM_CIDADE_EXEMPLO });
       await pg.evaluate(PRENDER_ANCORA);
       /* "Teste de verdade": as listas reais de serviço e dia do nicho precisam estar montadas antes do primeiro quadro.
          O site só monta as listas quando a seção chega perto da tela (IntersectionObserver): a página desce até ela

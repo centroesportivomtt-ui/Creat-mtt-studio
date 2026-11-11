@@ -51,6 +51,17 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 #notif .selo{position:absolute;right:14px;top:-34px;font-size:34px;padding:7px 12px 8px;background:var(--sol)}
 .vib{position:absolute;top:580px;width:60px;height:120px}
 #placaCena{position:absolute;left:320px;top:752px;width:440px;z-index:6}
+/* R7 (cena 'mensagem', conferência de 11/11): a noite. Celular a 70% da largura, tela de bloqueio com o relógio 23:12
+   grande (Lilita One, --giz) e a notificação logo abaixo. A placa FECHADO desce na frente do relógio. */
+.c-mensagem #celEscuro{z-index:1;left:162px;top:575px;width:756px;height:1000px;border:5px solid var(--apagado);border-radius:64px}
+.c-mensagem #celEscuro .tela{border-radius:48px}
+.c-mensagem #celEscuro .hora{left:0;right:0;top:34px;text-align:center;font:400 220px/1 "Lilita One",sans-serif;letter-spacing:4px;color:var(--giz)}
+.c-mensagem #notif{left:34px;right:34px;top:300px}
+.c-mensagem .vib{top:650px}
+.c-mensagem:not(.v-foto) #vibE{left:82px !important}
+.c-mensagem:not(.v-foto) #vibD{left:938px !important}
+.c-mensagem #placaCena{top:590px}
+.noite .vib path{stroke:var(--giz)}
 #placaCena .gira{transform-origin:48.5% 7.3%}
 /* celular da vitrine para a mensagem (R7) */
 #msg{position:absolute;z-index:7;display:none}
@@ -80,11 +91,17 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 .v-anuncio #origem{top:1196px;font-size:32px}
 /* variante com foto real (R7): a foto em tela cheia no primeiro 1,3 s, com câmera lenta (Ken Burns) */
 #foto{position:absolute;inset:0;z-index:21;display:none;overflow:hidden;background:#111}
-#foto img{position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;filter:brightness(.86) saturate(.92)}
-.v-foto #celEscuro{background:none}
-.v-foto #celEscuro .tela{background:none}
+#foto img,#fotoTela{position:absolute;left:0;top:0;width:1080px;height:1920px}
+#foto img{object-fit:cover;filter:brightness(.86) saturate(.92)}
+/* a tela do celular da bancada acende (cor chapada --ceu, recortada no contorno da tela da foto) e acompanha a escala */
+#fotoTela{background:var(--ceu);opacity:0}
+#fotoVeu{position:absolute;inset:0;background:var(--tinta);opacity:0}
+.v-foto #celEscuro{left:0;top:0;width:1080px;height:1920px;padding:0;border:0;border-radius:0;background:none}
+.v-foto #celEscuro .tela{background:none;border-radius:0}
 /* o selo "cena de exemplo" do balão fica: ele está sobre a foto e vale para a cena inteira (embaixo, a placa o cobriria) */
-.v-foto #celEscuro .hora,.v-foto .vib{display:none}
+.v-foto #celEscuro .hora{display:none}
+.v-foto #notif{left:150px;right:auto;width:780px;transform-origin:50% 50%}
+.v-foto .vib path{stroke:var(--papel)}
 /* R9 (cena 'placa'): sem cena de dor; a placa real grande no céu, em close na faixa de giz */
 .c-placa #celEscuro,.c-placa .vib{display:none}
 .c-placa #placaCena{left:230px;top:470px;width:620px}
@@ -129,8 +146,16 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 .c-lousa #celEscuro,.c-lousa .vib{display:none}
 .lousa{position:absolute;background:var(--lousa);border:18px solid var(--madeira);border-radius:22px;box-shadow:inset 0 0 0 4px var(--tinta),0 0 0 4px var(--tinta),10px 10px 0 4px var(--tinta);overflow:hidden}
 #lousaCapa{display:none}
-.c-lousa #lousaCapa{display:block;left:65px;top:356px;width:950px;height:880px}
+/* lousa em tela cheia (conferência de 11/11): o fundo do palco vira --lousa com moldura de madeira na borda da tela
+   (fundo() no script); a capa é só a linha 3 já escrita e marcada, grande, acima de onde a placa desce */
+.c-lousa #lousaCapa{display:block;left:0;top:0;width:1080px;height:1920px;background:none;border:0;border-radius:0;box-shadow:none}
+.capaLin{position:absolute;left:65px;right:65px;display:flex;align-items:center;justify-content:center;gap:26px;color:var(--giz);white-space:nowrap;filter:url(#filtroGiz)}
+.capaLin .cx{position:relative;flex:none;width:72px;height:72px}
+.capaLin .cx svg{left:-8px;top:-8px;width:88px;height:88px}
+.capaLin .rot{font:400 86px/1 "Lilita One",sans-serif;letter-spacing:.5px}
+.capaLin .txt{font:800 78px/1 Figtree,sans-serif;letter-spacing:-.4px;margin-left:-6px}
 #lousaG{display:none;z-index:4}
+.p-lousa #lousaG{box-shadow:none}
 .lousa .cx{position:absolute;width:56px;height:56px}
 .lousa .cx svg{position:absolute;left:-6px;top:-6px;width:68px;height:68px;overflow:visible}
 .lousa .vazio{position:absolute;height:6px;border-radius:3px;background:var(--giz);opacity:.22}
@@ -167,7 +192,7 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
 </head>
 <body>
 <div id="palco">
-  <div id="foto"><img id="fotoImg" alt=""></div>
+  <div id="foto"><img id="fotoImg" alt=""><div id="fotoTela"></div><div id="fotoVeu"></div></div>
   <div id="cena" hidden>
     <div id="celEscuro"><div class="tela">
       <div class="hora">23:12</div>
@@ -253,7 +278,26 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   var meta = null;
   if (!V) throw new Error('versão desconhecida: ' + VERSAO);
   if (V.preco) { $('#palco').classList.add('v-anuncio'); $('#precoTexto').innerHTML = L.PRECO.map(function (l) { return l.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }).join('<br>'); }
-  if (VAR) { $('#palco').classList.add('v-foto'); R.selos = R.selos.concat(VAR.selos || []); }
+  if (VAR) {
+    $('#palco').classList.add('v-foto'); R.selos = R.selos.concat(VAR.selos || []);
+    /* a dor que a foto mostra: legenda do primeiro 1,3 s e o balão sem hora */
+    if (VAR.legenda) R.legendas = [VAR.legenda].concat(R.legendas.slice(1));
+    if (VAR.de) { var deEl = $('#notif .de'); deEl.lastChild.textContent = VAR.de; }
+    if (VAR.tela) $('#fotoTela').style.clipPath = 'polygon(' + VAR.tela.map(function (p) { return p[0] + 'px ' + p[1] + 'px'; }).join(',') + ')';
+  }
+  /* fundo de cada Reel até o cartão (conferência de 11/11: 50% de cada quadro era o mesmo céu e balcão em todos).
+     R7: noite até o sino; R10: lousa em tela cheia, sem balcão; R12: --papel. R8, R9 e R11: céu e balcão. */
+  function fundo(t) {
+    var F = R.fundo, pa = $('#palco'), bal = $('#balcao');
+    var fim = !F ? 0 : F.ate === 'sino' ? R.cena.arraste.solta + L.GIRO.assenta : F.ate != null ? F.ate : R.cartao;
+    var ativo = !!F && t < fim - 1e-6;
+    pa.style.background = ativo ? 'var(--' + F.cor + ')' : '';
+    pa.style.boxShadow = ativo && F.moldura ? 'inset 0 0 0 18px var(--madeira),inset 0 0 0 22px var(--tinta)' : '';
+    pa.classList.toggle('noite', ativo && F.cor === 'tinta');
+    bal.style.filter = ativo && F.balcao === 'escuro' ? 'brightness(.42)' : '';
+    bal.style.display = ativo && F.balcao === 'oculto' ? 'none' : '';
+  }
+  fundo.sino = function () { return R.cena.arraste.solta + L.GIRO.assenta; };
   /* tipo da cena de abertura (R7 'mensagem', R12 'link', R9 'placa') e do cartão final (R12 'conversa') */
   var CENA = (R.cena && R.cena.tipo) || 'mensagem';
   $('#palco').classList.add('c-' + CENA);
@@ -268,6 +312,14 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   /* grade da lousa (px dentro da lousa, a partir da borda de madeira): linha 1, linha 2 (duas linhas de texto), linha 3 */
   function topoLinha(i) { return [10, 98, 264][i]; }
   function montarLousa(el, capa) {
+    /* capa (quadro 1): só a linha pronta (a mais forte), já escrita e marcada, grande, acima de onde a placa desce */
+    if (capa) {
+      var lp = R.linhas.filter(function (l) { return l.pronta; })[0] || R.linhas[R.linhas.length - 1];
+      el.innerHTML = '<div class="capaLin" style="top:596px"><span class="cx"><svg viewBox="0 0 68 68"><rect x="6" y="6" width="56" height="56" rx="6" fill="none" stroke="#F4F1E6" stroke-width="6"/>' +
+        '<path d="M16 36 L29 49 L56 14" fill="none" stroke="#F4F1E6" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
+        '<span class="rot">' + esc(lp.rotulo) + '</span><span class="txt">' + esc(lp.texto) + '</span></div>';
+      return;
+    }
     var h = '<i class="poeira" style="left:60px;top:' + (capa ? 470 : 760) + 'px;width:300px"></i><i class="poeira" style="left:520px;top:' + (capa ? 610 : 800) + 'px;width:240px"></i>';
     R.linhas.forEach(function (l, i) {
       var y = topoLinha(i);
@@ -285,6 +337,9 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   /* linha que passou da largura da lousa (fonte real carregada): a fonte diminui até caber, nunca abaixo de 52 px */
   function ajustarLousa() {
     if (!EH_LOUSA) return;
+    var cl0 = document.querySelector('#lousaCapa .capaLin');
+    if (cl0) for (var g = 1; g > 0.7 && cl0.scrollWidth > cl0.clientWidth + 1; g -= 0.02)
+      cl0.querySelectorAll('.rot,.txt').forEach(function (sp) { sp.style.fontSize = (sp.classList.contains('rot') ? 86 : 78) * g + 'px'; });
     document.querySelectorAll('#lousaG .lin').forEach(function (l) {
       for (var f = 1; f > 0.8 && l.scrollWidth > l.clientWidth + 1; f -= 0.02)
         l.querySelectorAll('span').forEach(function (sp) { sp.style.fontSize = (sp.classList.contains('rot') ? 64 : 58) * f + 'px'; });
@@ -304,6 +359,15 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     R.linhas.forEach(function (l, i) {
       var ln = lg.querySelector('.lin[data-i="' + i + '"]');
       var nr = Array.from(l.rotulo).length, nt = Array.from(l.rotulo + ' ' + l.texto).length, meio = l.t0 + (l.t1 - l.t0) * nr / nt;
+      var cx = lg.querySelectorAll('.cx')[i];
+      /* linha pronta (vista primeiro, no quadro 1): já escrita e marcada; em "feito" o tique pulsa uma vez (com o tic) */
+      if (l.pronta) {
+        revela(ln.querySelector('.rot'), 1); ln.querySelectorAll('.txt').forEach(function (e) { revela(e, 1); });
+        lg.querySelectorAll('.tique')[i].setAttribute('stroke-dashoffset', '0');
+        var pu = prog(t, l.feito, l.feito + 0.28);
+        cx.style.transform = pu > 0 && pu < 1 ? 'scale(' + (1 + 0.2 * Math.sin(Math.PI * pu)).toFixed(4) + ')' : '';
+        return;
+      }
       revela(ln.querySelector('.rot'), prog(t, l.t0, meio));
       ln.querySelectorAll('.txt').forEach(function (e) { revela(e, prog(t, meio, l.t1)); });
       lg.querySelectorAll('.tique')[i].setAttribute('stroke-dashoffset', (1 - eout(prog(t, l.feito, l.feito + 0.2))).toFixed(4));
@@ -316,10 +380,17 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     var VA = R.vao, sv = (VA.w - 8) / 390;
     var dxs = 1100 * (1 - eout(prog(t, cur.entra, cur.entra + 0.26))) - 1100 * ein(prog(t, cur.sai - 0.16, cur.sai));
     jan.style.opacity = 1; $('#vidro').style.opacity = 0; $('#telaAntes').style.opacity = 0;
+    var ms = meta.sessoes[cur.recorte] || {};
+    /* recorte cortado logo abaixo do último realce (R10, linha 3: o domínio fica fora do vídeo pago, AN-07) */
+    if (S.corta != null) {
+      var rl = (ms.realces || {})[fq] || [], fundoR = 0;
+      rl.forEach(function (b) { fundoR = Math.max(fundoR, b.y + b.h); });
+      if (!fundoR) throw new Error('recorte com corte sem realce medido no quadro ' + fq);
+      VA = { x: VA.x, y: VA.y, w: VA.w, h: Math.min(VA.h, Math.round((fundoR + S.corta) * sv)) };
+    }
     var pr = janela(VA, sv, 0, 0, quadroCap(cur.recorte, tc), 0, 16, 3);
     jan.style.transform = 'translateX(' + dxs.toFixed(1) + 'px)';
     mascarar([]);
-    var ms = meta.sessoes[cur.recorte] || {};
     cobrir((ms.precos || {})[fq], sv, 0, 0, (ms.realces || {})[fq], S.realceEm != null ? eio(prog(t, S.realceEm, S.realceEm + 0.4)) : 0);
     et.style.opacity = (prog(t, cur.entra + 0.12, cur.entra + 0.3) * (1 - prog(t, cur.sai - 0.2, cur.sai - 0.05))).toFixed(3);
     return pr;
@@ -492,11 +563,17 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     var sZ = R.camera.larguraPlaca * 1080 / pl.w;
     /* R11: começa em close no campo do nome (título do nicho em cima) e vai até a placa */
     var CZ = R.camera.campo;
-    if (CZ) { var kc = eio(prog(t, CZ.ate, CZ.chega)); sZ = lerp(CZ.s, sZ, kc); cx = lerp(CZ.cx, cx, kc); cy = lerp(CZ.cy, cy, kc); }
-    var Y0 = R.camera.janelaY || 440;
-    var tp = R.camera.topo, v0 = tp == null ? 112 : typeof tp === 'number' ? tp : tp[t < R.sessoes.A.t1 - 1e-6 ? 'A' : 'B'];
+    if (CZ) {
+      /* R11 (11/11): antes do campo, close no título do nicho; em CZ.de a câmera desce até o campo (chip logo abaixo) */
+      var zs = CZ.s, zx = CZ.cx, zy = CZ.cy, TT = CZ.titulo;
+      if (TT) { var k0 = eio(prog(t, CZ.de, CZ.ate0)); zs = lerp(TT.s, CZ.s, k0); zx = lerp(TT.cx, CZ.cx, k0); zy = lerp(TT.cy, CZ.cy, k0); }
+      var kc = eio(prog(t, CZ.ate, CZ.chega)); sZ = lerp(zs, sZ, kc); cx = lerp(zx, cx, kc); cy = lerp(zy, cy, kc);
+    }
+    var sess = t < R.sessoes.A.t1 - 1e-6 ? 'A' : 'B', JY = R.camera.janelaY;
+    var Y0 = JY == null ? 440 : typeof JY === 'number' ? JY : JY[sess];
+    var tp = R.camera.topo, v0 = tp == null ? 112 : typeof tp === 'number' ? tp : tp[sess];
     var sP = 1.51, WP = { x: 540 - 390 * sP / 2, y: Y0 + desceCel(t), w: 390 * sP, h: G.janelaFim - Y0 };
-    var k = eio(prog(t, R.camera.recuo[0], R.camera.recuo[1]));
+    var k = (R.camera.curva === 'eout' ? eout : eio)(prog(t, R.camera.recuo[0], R.camera.recuo[1]));
     var s = lerp(sZ, sP, k);
     var ax = lerp(WZ.x + WZ.w / 2, WP.x + sP * cx, k), ay = lerp(WZ.y + WZ.h / 2, WP.y + sP * (cy - v0), k);
     var r = { x: lerp(WZ.x, WP.x, k), y: lerp(WZ.y, WP.y, k), w: lerp(WZ.w, WP.w, k), h: lerp(WZ.h, WP.h, k) };
@@ -537,13 +614,22 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   var montadoCena = false, lousa0 = null, alvoAprox = null, gizPos = null, linkPos = null;
   var EH_SEDE = R.palco === 'sede';
   /* aproximação depois de assentar: a tábua vai ao centro da área útil, em 2x (nome a giz com 40 px) */
+  /* curva de mola da casa (tokens.css, --curva-mola: cubic-bezier(.34,1.56,.64,1)): passa ~10% e assenta */
+  var molaCasa = (function (x1, y1, x2, y2) {
+    function bx(u) { return 3 * x1 * u * (1 - u) * (1 - u) + 3 * x2 * u * u * (1 - u) + u * u * u; }
+    function by(u) { return 3 * y1 * u * (1 - u) * (1 - u) + 3 * y2 * u * u * (1 - u) + u * u * u; }
+    return function (x) { x = cl(x); var a = 0, b = 1; for (var i = 0; i < 40; i++) { var m = (a + b) / 2; if (bx(m) < x) a = m; else b = m; } return by((a + b) / 2); };
+  })(0.34, 1.56, 0.64, 1);
+  /* aproxima: [t0, t1, zoom] (R9: 2x, eio) ou [t0, t1, { largura }] (R7, R10, R12 desde 11/11): a câmera avança até a
+     tábua ter "largura" px de vídeo, com a mola da casa, durante o arraste e o giro */
   function aproxima(t) {
     var Ap = R.cena.aproxima;
     if (!alvoAprox) {
       var tb = document.querySelector('#pontoCena .cp-tabua').getBoundingClientRect();
-      alvoAprox = { x: tb.left + tb.width / 2, y: tb.top + tb.height / 2 };
+      alvoAprox = { x: tb.left + tb.width / 2, y: tb.top + tb.height / 2, w: tb.width };
     }
-    var e = eio(prog(t, Ap[0], Ap[1])), P = lerp(1, Ap[2], e);
+    var porLargura = typeof Ap[2] === 'object', alvoP = porLargura ? Ap[2].largura / alvoAprox.w : Ap[2];
+    var e = (porLargura ? molaCasa : eio)(prog(t, Ap[0], Ap[1])), P = lerp(1, alvoP, e);
     var tx = lerp(alvoAprox.x, 540, e) - P * alvoAprox.x, ty = lerp(alvoAprox.y, (G.janelaY + G.janelaFim) / 2, e) - P * alvoAprox.y;
     return { P: P, tx: tx, ty: ty };
   }
@@ -594,13 +680,35 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     $('#msg').style.display = 'none';
     /* --- variante com foto real: a foto ocupa a tela no primeiro 1,3 s (Ken Burns lento) e some em 0,3 s;
        a cena (só a placa e o balão) fica por cima da foto enquanto ela existe */
+    /* (11/11) a foto sobe ~260 px (escala em torno de (ox, oy) e translação dy) para o celular da bancada ficar na
+       área segura; a tela dele acende e o balão sai dela; de 1,3 s até o sino a foto fica atrás da placa com um véu
+       --tinta; no quadro do sino, corte seco para o céu (nada de dupla exposição) */
     if (VAR) {
-      var fo = $('#foto'), fim = VAR.ate + VAR.some;
+      var fo = $('#foto'), fim = VAR.corte === 'sino' ? fundo.sino() : VAR.ate + (VAR.some || 0);
       if (t < fim - 1e-6) {
-        var kb = VAR.kb, kk = prog(t, 0, fim), esc = lerp(kb.de, kb.ate, kk);
-        fo.style.display = 'block'; fo.style.opacity = (1 - eio(prog(t, VAR.ate, fim))).toFixed(3);
-        var im = $('#fotoImg'); im.style.transformOrigin = (kb.ox * 100) + '% ' + (kb.oy * 100) + '%'; im.style.transform = 'scale(' + esc.toFixed(5) + ')';
+        var kb = VAR.kb, kk = prog(t, 0, fim), escK = lerp(kb.de, kb.ate, kk);
+        fo.style.display = 'block'; fo.style.opacity = VAR.corte === 'sino' ? 1 : (1 - eio(prog(t, VAR.ate, fim))).toFixed(3);
+        var tf = 'translate(0px,' + (kb.dy || 0) + 'px) scale(' + escK.toFixed(5) + ')', org = kb.ox + 'px ' + kb.oy + 'px';
+        if (kb.ox <= 1) org = (kb.ox * 100) + '% ' + (kb.oy * 100) + '%';
+        [$('#fotoImg'), $('#fotoTela')].forEach(function (el) { el.style.transformOrigin = org; el.style.transform = tf; });
+        var E = VAR.escurece; $('#fotoVeu').style.opacity = E ? (E[2] * eio(prog(t, E[0], E[1]))).toFixed(3) : 0;
         cena.style.zIndex = 22;
+        if (VAR.tela) {
+          /* a tela acende no quadro 1 (o pedido acabou de chegar) e o balão sai dela com a mola da casa */
+          $('#fotoTela').style.opacity = 0.94;
+          var pc = VAR.tela.reduce(function (s, p) { return [s[0] + p[0] / VAR.tela.length, s[1] + p[1] / VAR.tela.length]; }, [0, 0]);
+          var cxp = kb.ox + (pc[0] - kb.ox) * escK, cyp = kb.oy + (pc[1] - kb.oy) * escK + (kb.dy || 0);
+          var nf = $('#notif'), B = VAR.balao;
+          nf.style.top = B.y + 'px';
+          var bw = 780, bh = nf.offsetHeight || 150, ncx = 150 + bw / 2, ncy = B.y + bh / 2;
+          var eb = molaCasa(prog(t, B.sai[0], B.sai[1])), sb = lerp(0.18, 1, eb);
+          nf.style.opacity = Math.min(1, prog(t, B.sai[0], B.sai[0] + 0.12)).toFixed(3) * (1 - prog(t, R.cena.aproxima[0], R.cena.aproxima[0] + 0.2));
+          nf.style.transform = 'translate(' + ((cxp - ncx) * (1 - eb)).toFixed(2) + 'px,' + ((cyp - ncy) * (1 - eb)).toFixed(2) + 'px) scale(' + sb.toFixed(4) + ')';
+          /* vibração ((  )): um arco de cada lado da ponta esquerda do celular e um acima dele */
+          var xl = kb.ox + (VAR.tela[3][0] - kb.ox) * escK, xr = kb.ox + (VAR.tela[1][0] - kb.ox) * escK;
+          $('#vibE').style.cssText = 'left:' + (xl - 78).toFixed(1) + 'px;top:' + (cyp - 60).toFixed(1) + 'px';
+          $('#vibD').style.cssText = 'left:' + Math.min(xr - 40, 990).toFixed(1) + 'px;top:' + (cyp - 150).toFixed(1) + 'px;transform:rotate(-55deg)';
+        }
       } else { fo.style.display = 'none'; cena.style.zIndex = ''; }
     }
     /* --- 0 a 2,4 s: celular escuro, placa desce, arraste, giro */
@@ -638,15 +746,20 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     $('#placaCena').style.transform = 'translateY(' + y.toFixed(1) + 'px)';
     $('#giraCena').style.transform = 'rotate(' + ang.toFixed(3) + 'deg)';
     /* arraste com o ponteiro: eventos reais do componente da placa */
+    /* a câmera (aproximação) já vale neste quadro: os anéis seguem o ponto da placa na tela. O arraste é mandado ao
+       componente em px da cena sem zoom (ele só usa a diferença desde o toque, medida com a placa sem zoom) */
+    var ap = { P: 1, tx: 0, ty: 0 };
+    if (t >= C.aproxima[0] - 1e-6) { if (!alvoAprox) cena.style.transform = ''; ap = aproxima(t); }
+    var naTela = function (x, y) { return { x: ap.P * x + ap.tx, y: ap.P * y + ap.ty }; };
     var A = C.arraste, raiz = document.querySelector('#pontoCena .cp-placa');
     var br = raiz.getBoundingClientRect(), px = br.left + br.width / 2, py0 = br.top + br.height * (0.32 + 0.667 * 0.55);
-    if (!quadroR7.ap && t >= A.t0 - 1e-6) { quadroR7.ap = { x: px, y: py0 }; raiz.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 7, pointerType: 'touch', isPrimary: true, button: 0, clientX: px, clientY: py0, bubbles: true, cancelable: true })); }
+    if (!quadroR7.ap && t >= A.t0 - 1e-6) { quadroR7.ap = { x: px, y: py0, h: br.height }; raiz.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 7, pointerType: 'touch', isPrimary: true, button: 0, clientX: px, clientY: py0, bubbles: true, cancelable: true })); }
     var dy = 0;
     if (quadroR7.ap && !quadroR7.solto) {
       dy = A.dy * eout(prog(t, A.t0, A.t1));
       raiz.dispatchEvent(new PointerEvent('pointermove', { pointerId: 7, pointerType: 'touch', isPrimary: true, clientX: quadroR7.ap.x, clientY: quadroR7.ap.y + dy, bubbles: true, cancelable: true }));
       /* o que o componente desenha no próximo rAF, desenhado já neste quadro (mesma conta de desenharArraste) */
-      var h = br.height, lim = h * (200 / 300) * 0.4, elo = h * (84 / 300), v = dy <= lim ? dy : lim + (dy - lim) * 0.3;
+      var h = quadroR7.ap.h, lim = h * (200 / 300) * 0.4, elo = h * (84 / 300), v = dy <= lim ? dy : lim + (dy - lim) * 0.3;
       document.querySelector('#pontoCena .cp-tabua').style.transform = 'translate3d(0,' + v.toFixed(1) + 'px,0)';
       document.querySelector('#pontoCena .cp-corrente').style.transform = 'scaleY(' + (1 + v / elo).toFixed(4) + ')';
       if (t >= A.solta - 1e-6) {
@@ -657,16 +770,15 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
     var lista = listaCena;
     if (quadroR7.ap) {
       var ay = quadroR7.solto ? quadroR7.solto.y : quadroR7.ap.y + dy;
-      if (!quadroR7.solto) lista.push({ x: quadroR7.ap.x, y: ay, op: 1, s: 1 });
-      else { var bq = prog(t, quadroR7.solto.t + 0.04, quadroR7.solto.t + 0.3); lista.push({ x: quadroR7.solto.x, y: ay, op: 1 - bq, s: 1 + 0.25 * bq }); }
+      var qa = naTela(quadroR7.solto ? quadroR7.solto.x : quadroR7.ap.x, ay);
+      if (!quadroR7.solto) lista.push({ x: qa.x, y: qa.y, op: 1, s: 1 });
+      else { var bq = prog(t, quadroR7.solto.t + 0.04, quadroR7.solto.t + 0.3); lista.push({ x: qa.x, y: qa.y, op: 1 - bq, s: 1 + 0.25 * bq }); }
     } else if (t >= A.t0 - 0.14) { var a0 = eout(prog(t, A.t0 - 0.14, A.t0)); lista.push({ x: px, y: py0, op: a0, s: 1.3 - 0.3 * a0 }); }
     /* --- atravessar o vidro: a lousa da placa vira a tela da prévia */
     var V = C.vidro;
-    var ap = { P: 1, tx: 0, ty: 0 };
-    if (t >= C.aproxima[0] - 1e-6) { if (!alvoAprox) cena.style.transform = ''; ap = aproxima(t); }
     /* a mensagem e a hora saem de cena quando a câmera chega na placa (nada de texto subindo para a faixa de cima) */
     var nt0 = (1 - prog(t, C.aproxima[0], C.aproxima[0] + 0.2)).toFixed(3);
-    $('#notif').style.opacity = nt0; $('#celEscuro .hora').style.opacity = nt0;
+    if (!(VAR && VAR.tela)) $('#notif').style.opacity = nt0; $('#celEscuro .hora').style.opacity = nt0;
     $('#perfil').style.opacity = nt0; $('#erro404').style.opacity = nt0;
     /* R9: close de 2x na faixa de giz (o nome sendo escrito) e abertura para a placa inteira */
     var zc = null;
@@ -703,6 +815,8 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
       var lg = $('#lousaG'); lg.style.display = 'block';
       lg.style.left = r.x.toFixed(2) + 'px'; lg.style.top = r.y.toFixed(2) + 'px'; lg.style.width = r.w.toFixed(2) + 'px'; lg.style.height = r.h.toFixed(2) + 'px';
       lg.style.opacity = prog(k, 0, 0.2).toFixed(3); lg.style.borderWidth = lerp(6, 18, kj).toFixed(2) + 'px'; lg.style.borderRadius = lerp(10, 22, kj).toFixed(2) + 'px';
+      /* lousa em tela cheia: a moldura da lousinha some no voo e a lousa grande vira o próprio fundo */
+      if (R.fundo && R.fundo.moldura) lg.style.borderColor = 'rgba(211,154,91,' + (1 - kj).toFixed(3) + ')';
       corpo.hidden = true; aneis(lista);
       return lousaQuadro(t, k);
     }
@@ -800,7 +914,7 @@ html,body{margin:0;background:var(--ceu);color-scheme:light}
   window.quadro = function (t) {
     var fq = QUADROS[R.palco]; if (!fq) throw new Error('palco desconhecido: ' + R.palco);
     var p = fq(t);
-    legenda(t); selos(t);
+    legenda(t); selos(t); fundo(t);
     posicionar(t);
     return Promise.resolve(p).then(function () { return new Promise(function (r) { requestAnimationFrame(function () { r(true); }); }); });
   };
