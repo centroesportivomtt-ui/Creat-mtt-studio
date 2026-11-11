@@ -12,7 +12,8 @@
 //   8. fora da tela: pausada; de volta: roda
 //   9. movimento reduzido e economia de dados: nenhuma animação rodando, ABERTO na cena, lista à vista, chips trocam o site
 //  10. teclado: chips, Pausar, 7 rostos, Entrar na sede 3D, Abrir o site pronto, nessa ordem, com foco visível
-//  11. Entrar na sede 3D: a moldura da sede entra na janela (servida como a hospedagem de hoje: X-Frame-Options DENY)
+//  11. Entrar na sede 3D: a moldura da sede entra na janela, servida como a hospedagem de hoje (X-Frame-Options DENY,
+//      moldura blob) e como o _headers manda (CSP do /* na home, CSP do /sede/* na sede, moldura pelo endereço)
 //  12. nenhum erro de console e nenhuma violação de CSP
 const fs = require('fs'), path = require('path'), http = require('http'), os = require('os'), zlib = require('zlib'), { execFileSync } = require('child_process');
 let chromium;
@@ -27,6 +28,14 @@ const headers = fs.readFileSync(path.join(RAIZ, '_headers'), 'utf8');
 const CSP = (/^\/\*\s*\n\s+Content-Security-Policy:\s*(.+)$/m.exec(headers) || [])[1];
 if (!CSP) { console.log('AMBIENTE  não achei a CSP do /* no _headers'); process.exit(2); }
 const CSP_LOCAL = CSP.replace(/\s*upgrade-insecure-requests/, '');   // servidor local é http
+// CSP do bloco "/sede/*", com os hashes dos scripts inline recalculados de sede/index.html (como o montar-publico.cjs faz)
+const CSP_SEDE = (() => {
+  const l = (/^\/sede\/\*\s*\n(?:\s+!.*\n)*\s+Content-Security-Policy:\s*(.+)$/m.exec(headers) || [])[1];
+  if (!l) { console.log('AMBIENTE  não achei a CSP do /sede/* no _headers'); process.exit(2); }
+  const html = fs.readFileSync(path.resolve(__dirname, '../../../sede/index.html'), 'utf8'), hs = [], re = /<script([^>]*)>([\s\S]*?)<\/script>/gi;
+  let m; while ((m = re.exec(html))) if (!/\bsrc\s*=/.test(m[1]) && m[2].length) hs.push(`'sha256-${require('crypto').createHash('sha256').update(m[2], 'utf8').digest('base64')}'`);
+  return l.replace(/script-src 'self'( 'sha256-[^']+')*/, `script-src 'self' ${hs.join(' ')}`).replace(/\s*upgrade-insecure-requests/, '');
+})();
 // pasta da cena: a que o vitrine.js carrega hoje (duble ou a da Órbita)
 const VIT = fs.readFileSync(path.join(RAIZ, 'assets', 'vitrine.js'), 'utf8');
 const PASTA = (/var SEDE_CENA = \{ pasta: '([^']+)'/.exec(VIT) || [])[1];
@@ -54,7 +63,7 @@ function servidor(usarBase, comoHoje) {
     if (!f.startsWith(RAIZ) && !f.startsWith(SEDE)) { r.writeHead(403); return r.end(); }
     if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
     if (!fs.existsSync(f)) { r.writeHead(404, cab); return r.end(); }
-    if (p.startsWith('/sede/') && !comoHoje) { cab['content-security-policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/three@0.160.0/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net/npm/three@0.160.0/"; cab['referrer-policy'] = 'no-referrer'; }
+    if (p.startsWith('/sede/') && !comoHoje) { cab['content-security-policy'] = CSP_SEDE; cab['referrer-policy'] = 'no-referrer'; }
     r.writeHead(200, Object.assign({ 'content-type': MIME[path.extname(f)] || 'application/octet-stream' }, cab));
     fs.createReadStream(f).pipe(r);
   });
@@ -259,10 +268,12 @@ async function print(pg, nome) { await pg.screenshot({ path: path.join(PRINTS, n
     conferir(csp.length === 0 && tn.csp.length === 0 && !errs.some((e) => /Content Security Policy/i.test(e)), '12. nenhuma violação de CSP', csp.concat(tn.csp).join(' | '));
     await a.ctx.close();
 
-    /* 11. sede 3D sob toque, como a hospedagem de hoje serve (X-Frame-Options: DENY, moldura blob, sem a CSP do _headers) */
-    {
-      const c = await abrir(nav, PROD, { semLentidao: true });
-      await c.pg.goto(PROD + '/', { waitUntil: 'load' });
+    /* 11. sede 3D sob toque, nos dois jeitos de servir:
+       hoje (X-Frame-Options DENY, sem CSP): a moldura entra como blob;
+       com o _headers no ar (CSP do /* na home, SAMEORIGIN, CSP do /sede/*): a moldura abre /sede/ pelo endereço */
+    for (const [srv, nome, blob] of [[PROD, 'como a hospedagem de hoje', true], [NOVO, 'com a CSP do _headers', false]]) {
+      const c = await abrir(nav, srv, { semLentidao: true });
+      await c.pg.goto(srv + '/', { waitUntil: 'load' });
       await irParaPalco(c.pg);
       await c.pg.waitForSelector('.sv-mundo', { timeout: 10000 }).catch(() => {});
       await c.pg.click('[data-ver-ao-vivo]');
@@ -270,15 +281,16 @@ async function print(pg, nome) { await pg.screenshot({ path: path.join(PRINTS, n
       await c.pg.waitForTimeout(9000);
       const fr = c.pg.frames().filter((f) => f !== c.pg.mainFrame()).pop();
       let info = {};
-      if (fr) info = await fr.evaluate(() => ({ canvas: !!document.querySelector('canvas') })).catch((e) => ({ erro: e.message.split('\n')[0] }));
+      if (fr) info = await fr.evaluate(() => ({ canvas: !!document.querySelector('canvas'), url: location.protocol + '//' + location.pathname })).catch((e) => ({ erro: e.message.split('\n')[0] }));
+      const jeito = fr ? (fr.url().startsWith('blob:') ? 'blob' : new URL(fr.url()).pathname.startsWith('/sede/') ? 'endereço' : fr.url().slice(0, 40)) : 'nenhuma';
       const sem = await c.pg.evaluate(() => ({ cena: document.querySelector('.sv-mundo') ? 1 : 0, rodando: document.querySelector('[data-sede-palco]').getAnimations({ subtree: true }).length, lista: document.querySelector('#esteira').getBoundingClientRect().width > 100 }));
-      conferir(!!fr && info.canvas && sem.cena === 0 && sem.rodando === 0 && sem.lista, '11. Entrar na sede 3D: a cena sai, a moldura da sede entra com o 3D e a lista fica à vista', JSON.stringify({ moldura: !!fr, info, sem }));
-      await print(c.pg, 'cena-claro-360-sede3d.png');
+      conferir(!!fr && info.canvas && jeito === (blob ? 'blob' : 'endereço') && sem.cena === 0 && sem.rodando === 0 && sem.lista, '11. ' + nome + ': Entrar na sede 3D tira a cena, a moldura (' + jeito + ') entra com o 3D e a lista fica à vista', JSON.stringify({ jeito, info, sem }));
+      await print(c.pg, 'cena-claro-360-sede3d-' + (blob ? 'hoje' : 'headers') + '.png');
       const e11 = c.erros.filter((x) => !/favicon|Failed to load resource/.test(x));
-      conferir(e11.length === 0, '11. nenhum erro de console com a sede 3D', e11.join(' | '));
+      const v11 = await c.pg.evaluate(() => window.__csp);
+      conferir(e11.length === 0 && v11.length === 0, '11. ' + nome + ': nenhum erro de console nem violação de CSP com a sede 3D', e11.concat(v11).join(' | '));
       await c.ctx.close();
     }
-    if (!/frame-src[^;]*blob:/.test(CSP)) console.log("aviso   a CSP do /* no _headers tem frame-src 'self' sem blob:. Se ela for ao ar, a moldura blob da prévia e da sede 3D\n        (carregarNoQuadro, para hospedagem com X-Frame-Options: DENY) é bloqueada. Não é deste pacote; hoje a hospedagem não manda essa CSP.");
 
     /* 9. movimento reduzido e economia de dados */
     for (const modo of ['reduzido', 'economia']) {

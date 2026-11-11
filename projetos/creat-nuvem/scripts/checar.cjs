@@ -475,6 +475,15 @@ function conferirTexto(onde, texto, opcoes) {
   // os passos do index.html vêm em "<b>Nimbus</b> organiza o pedido": sem as tags, um por item de sede.passos
   const lis = (ler(ph).match(/<span class="esteira-quem">([\s\S]*?)<\/span>/g) || []).map((x) => norm(x.replace(/<[^>]+>/g, '')).trim());
   if (JSON.stringify(lis) !== JSON.stringify(sede.passos)) falha(rel(ph), 'passos da comanda (#esteira) diferentes de conteudo/home.json sede.passos');
+  // LGPD (D4): a cena desenha o nome digitado pelo visitante no palco; o Clarity não pode gravar esse texto
+  const palcoTag = (/<div[^>]*\bdata-sede-palco\b[^>]*>/.exec(ler(ph)) || [''])[0];
+  if (!palcoTag) falha(rel(ph), 'sem o div[data-sede-palco] da seção #sede');
+  else if (!/\bdata-clarity-mask="True"/.test(palcoTag)) falha(rel(ph), 'div[data-sede-palco] sem data-clarity-mask="True": o nome do visitante desenhado na cena entraria na gravação do Clarity');
+  ['#esteira', '.sede-marcas'].forEach((q) => {
+    const re = q.charAt(0) === '#' ? new RegExp('<[a-z]+[^>]*\\bid="' + q.slice(1) + '"[^>]*>') : new RegExp('<[a-z]+[^>]*\\bclass="' + q.slice(1) + '"[^>]*>');
+    const t = (re.exec(ler(ph)) || [''])[0];
+    if (!/\bdata-clarity-mask="True"/.test(t)) falha(rel(ph), q + ' sem data-clarity-mask="True" (leva o nome do visitante)');
+  });
   ok(`sede viva: ${nomes.length} textos de conteudo/home.json iguais no index.html / vitrine.js / sede`);
 })();
 

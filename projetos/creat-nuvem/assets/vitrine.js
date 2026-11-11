@@ -895,12 +895,23 @@
      cabeçalho HTTP: mesma origem, <base> para os caminhos relativos, e o endereço pretendido em
      window.__creatLocal (a query não viaja em URL de blob; o fragmento viaja). Dentro do blob, link
      para página nossa abre na aba inteira e âncora rola a página, porque navegar a moldura para um
-     endereço nosso voltaria a ser bloqueado. Se algo falhar, vale o caminho antigo (endereço direto). */
+     endereço nosso voltaria a ser bloqueado. Se algo falhar, vale o caminho antigo (endereço direto).
+     Sem DENY na resposta (o _headers no ar), a moldura abre pelo endereço: a CSP dele recusa blob: em frame-src. */
   function carregarNoQuadro(fr, url) {
     var u; try { u = new URL(url, location.href); } catch (e) { fr.src = url; return; }
     var direto = function () { try { fr.contentWindow.location.replace(u.href); } catch (e) { fr.src = u.href; } };
     if (!W.fetch || !W.Blob || !W.URL || !URL.createObjectURL || u.origin !== location.origin || location.protocol === 'file:') { direto(); return; }
-    fetch(u.origin + u.pathname, { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('http'); return r.text(); }).then(function (html) {
+    var ctl = W.AbortController ? new AbortController() : null;
+    fetch(u.origin + u.pathname, { credentials: 'same-origin', signal: ctl ? ctl.signal : undefined }).then(function (r) {
+      if (!r.ok) throw new Error('http');
+      var xfo = (r.headers.get('x-frame-options') || '').toLowerCase(), fa = /frame-ancestors\s+'none'/i.test(r.headers.get('content-security-policy') || '');
+      if (xfo.indexOf('deny') === -1 && !fa) { if (ctl) ctl.abort(); direto(); return null; }
+      return r.text();
+    }).then(function (html) {
+      if (html == null) return;
+      var recusa = function (ev) { if (/^blob/.test(ev.blockedURI || '') && /^frame-src|^child-src/.test(ev.violatedDirective || ev.effectiveDirective || '')) { D.removeEventListener('securitypolicyviolation', recusa); direto(); } };
+      D.addEventListener('securitypolicyviolation', recusa);
+      setTimeout(function () { D.removeEventListener('securitypolicyviolation', recusa); }, 10000);
       var base = u.origin + u.pathname.replace(/[^\/]*$/, '');
       var local = JSON.stringify({ search: u.search, hash: u.hash, base: base }).replace(/</g, '\\u003c');
       var inj = '<base href="' + base.replace(/"/g, '%22') + '"><script>window.__creatLocal=' + local + ';' +
@@ -1000,7 +1011,7 @@
     var podeCena = !!(W.IntersectionObserver && W.fetch && W.CustomEvent && D.head && D.documentElement.animate);
     var cena = null, baixou = false, pronta = false, falhou = false, prazo = 0, estaticoAgora = false;
     var fr = null, modo3d = false, palcoNaTela = false, janelaNaTela = false, secPerto = false;
-    var tocou = false, trocasAuto = 0, somLigado = false, manual = false, seuNome = '', seuNicho = '', itemAtual = 0, relogioLista = 0, trocando = 0;
+    var pausaBalao = false, tocou = false, trocasAuto = 0, somLigado = false, manual = false, seuNome = '', seuNicho = '', itemAtual = 0, relogioLista = 0, trocando = 0;
     var ALVO = location.origin && location.origin !== 'null' ? location.origin : '*';
     var atual = { nicho: 'barbearia', marca: '', seu: false };
 
@@ -1021,6 +1032,8 @@
       [est, viva].forEach(function (x) { if (fim) x.setAttribute('data-fim', ''); else x.removeAttribute('data-fim'); });
       rostos.forEach(function (r) { if (agentes.indexOf(r.getAttribute('data-rosto')) !== -1) r.setAttribute('data-atual', ''); else r.removeAttribute('data-atual'); });
     }
+    // cena falhou com movimento reduzido ou economia: lista no quadro final, "Abrir" em destaque
+    function pintarFim() { pintarItens([itens.length - 1], SEDE_LEGENDAS[8]); }
     function pintarDica() {
       if (!dica) return;
       var partes = [];
@@ -1076,7 +1089,7 @@
     function soltarCena() {
       clearTimeout(prazo); prazo = 0;
       if (cena) { try { cena.destruir(); } catch (e) {} }
-      cena = null; pronta = false;
+      cena = null; pronta = false; pausaBalao = false;
     }
     function cair() {
       if (falhou || modo3d) return;
@@ -1130,6 +1143,7 @@
       var d = e.detail || {};
       if (!cena || d.motivo === 'fora' || d.motivo === 'aba') return;
       pintarPausar(!!d.pausado && (d.motivo === 'usuario' || d.motivo === 'balao'));
+      pausaBalao = !!d.pausado && d.motivo === 'balao';   // Esc só fecha o balão; a pausa do botão termina no Continuar
     });
     palco.addEventListener('sedeviva:ciclo', function () {
       // ninguém tocou na seção: o próximo ciclo mostra outro negócio (no máximo 2 trocas; o nome do visitante fica)
@@ -1143,6 +1157,7 @@
     palco.addEventListener('sedeviva:erro', cair);
     function avisarVisivel() { if (cena) cena.visivel(palcoNaTela && !D.hidden); }
     function remontar() {
+      if (falhou && !modo3d) { andarLista(); return; }
       if (!cena || modo3d || falhou || estatico() === estaticoAgora) return;
       soltarCena(); montarCena();
     }
@@ -1153,7 +1168,9 @@
     function pararRelogioLista() { clearInterval(relogioLista); relogioLista = 0; }
     function andarLista() {
       pararRelogioLista();
-      if (!falhou || cena || modo3d || !secPerto || D.hidden || estatico()) return;   // só sem a cena (falha ou navegador antigo)
+      if (!falhou || cena || modo3d) return;   // só sem a cena (falha ou navegador antigo)
+      if (estatico()) { pintarFim(); return; }
+      if (!secPerto || D.hidden) return;
       relogioLista = setInterval(function () { var p = (itemAtual + 1) % itens.length; pintarItens([p], SEDE_LEGENDAS[p === 7 ? 8 : p === 0 ? 1 : p + 1]); }, 2600);
     }
 
@@ -1182,6 +1199,7 @@
         if (pronta && !estaticoAgora) { clearTimeout(trocando); trocando = setTimeout(function () { trocando = 0; }, 1500); }
         cena.negocio({ nicho: atual.nicho, marca: atual.marca });
       }
+      else if (falhou && estatico()) pintarFim();
       else pintarItens([0], SEDE_LEGENDAS[0]);
     }
     $$('.chip', grupo).forEach(function (b) { b.addEventListener('click', function () { marcarToque(); manual = true; escolher(b); }); });
@@ -1197,7 +1215,7 @@
       if (pausarBt.hasAttribute('data-pausado')) cena.continuar(); else cena.pausar();
     });
     sec.addEventListener('keydown', function (e) {
-      if ((e.key === 'Escape' || e.key === 'Esc') && cena && pausarBt.hasAttribute('data-pausado')) cena.continuar();
+      if ((e.key === 'Escape' || e.key === 'Esc') && cena && pausaBalao) cena.continuar();
     });
     sec.addEventListener('click', function (e) { if (palco.contains(e.target)) marcarToque(); });
     if (botao3d) botao3d.addEventListener('click', entrar3d);
