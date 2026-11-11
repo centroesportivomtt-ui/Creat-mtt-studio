@@ -1,0 +1,99 @@
+/* Sede viva: o canteiro no celular (Orbita, 11/11). So classes sv-*; a pagina nunca estiliza estas classes.
+   Espaco interno fixo de 360x360 escalado ao palco pelo cena.js. So transform e opacity sao animados. */
+.sv-mundo{position:absolute;left:0;top:0;width:360px;height:360px;transform-origin:0 0;overflow:hidden;
+  background:var(--ceu,#CDEBFF);font-family:var(--f-texto,"Figtree",system-ui,sans-serif);color:#1E1B2E;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;contain:layout paint;cursor:default}
+.sv-mundo *,.sv-mundo *::before,.sv-mundo *::after{box-sizing:border-box}
+.sv-sprite{position:absolute;width:0;height:0;overflow:hidden}
+.sv-cam,.sv-camada{position:absolute;left:0;top:0;width:360px;height:360px;transform-origin:0 0}
+.sv-camada{pointer-events:none}
+.sv-mundo .sv-abs,.sv-mundo .sv-svg,.sv-tela{pointer-events:none}
+.sv-mundo .sv-corpo{pointer-events:auto}
+.sv-abs{position:absolute;left:0;top:0}
+.sv-svg{position:absolute;display:block;overflow:visible}
+
+/* ceu e chao */
+.sv-nuvem{position:absolute;width:78px;height:35px}
+.sv-ilha{position:absolute;left:-30px;top:262px;width:420px;height:101px}
+.sv-mundo .sv-chao-dark{display:none}
+
+/* celular */
+.sv-cel{position:absolute;left:0;top:0;transform-origin:180px 296px}
+.sv-cel-corpo{left:113px;top:51px;width:140px;height:248px}
+.sv-rolo{position:absolute;left:118px;top:57px;width:124px;height:14px;transform-origin:62px 2px}
+.sv-tela{position:absolute;left:121px;top:70px;width:118px;height:212px;border-radius:6px;overflow:hidden;background:#FFFFFF;
+  font-family:var(--f-texto,"Figtree",system-ui,sans-serif);color:#1E1B2E;contain:layout paint}
+.sv-porta{position:absolute;left:0;top:0;width:118px;height:212px}
+.sv-borda,.sv-borda-cheia{position:absolute;inset:0;border-radius:6px;pointer-events:none}
+.sv-borda{border:1.6px dashed #8E8AA0}
+.sv-borda-cheia{border:2.4px solid #FFC93C;box-shadow:inset 0 0 0 1px #1E1B2E}
+
+/* mini site */
+.sv-s-mancha{position:absolute;width:280px;height:280px;border-radius:50%;margin:-140px 0 0 -140px}
+.sv-s-barra{position:absolute;left:0;top:0;width:118px;height:12px;background:#ECE9F2;border-bottom:1px solid #D2CEDC}
+.sv-s-url{position:absolute;left:4px;top:2.5px;width:110px;height:7px;border-radius:4px;background:#FFFFFF}
+.sv-s-url i{position:absolute;top:3px;height:1.4px;border-radius:1px;background:#B7B2C4}
+.sv-s-cad{position:absolute;left:6px;top:2.6px;width:6px;height:7px}
+.sv-s-topo{position:absolute;left:0;top:12px;width:118px;height:16px;overflow:hidden}
+.sv-s-topo b{position:absolute;inset:0;display:block;padding:0 6px;font:800 6.4px/16px var(--f-texto,"Figtree",sans-serif);color:#FFFFFF;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em}
+.sv-s-corpo{position:absolute;left:7px;top:33px;width:104px;display:flex;flex-direction:column;align-items:stretch}
+.sv-s-titulo{position:relative;font:400 12px/13px var(--f-display,"Lilita One",sans-serif);letter-spacing:.005em;margin:0;overflow:visible}
+.sv-s-titulo-cor{position:absolute;left:0;top:0;width:100%}
+.sv-s-tampa{position:absolute;left:0;height:15px;background:#FFFFFF}
+.sv-s-serv{margin-top:4px;display:flex;flex-direction:column;gap:1px}
+.sv-s-linha{display:flex;justify-content:space-between;align-items:baseline;height:11px;padding:0 1px;border-bottom:1px dotted #CFCADB;
+  font:600 7.4px/10px var(--f-texto,"Figtree",sans-serif)}
+.sv-s-linha b{font-weight:800}
+.sv-s-gal{margin-top:5px;display:flex;justify-content:space-between;height:57px}
+.sv-s-foto{position:relative;width:49px;height:57px}
+.sv-s-foto img{display:block;width:49px;height:57px;object-fit:cover;border-radius:4px;border:1.6px solid #1E1B2E}
+.sv-s-botao{position:relative;margin-top:6px;height:19px;border-radius:10px;background:#1FA855;border:1.6px solid #1E1B2E;box-shadow:1.6px 1.6px 0 #1E1B2E;
+  font:800 6.6px/16px var(--f-texto,"Figtree",sans-serif);color:#FFFFFF;text-align:center;white-space:nowrap;overflow:hidden;padding:0 4px;
+  display:flex;align-items:center;justify-content:center}
+.sv-s-botao.sv-s-botao-2{white-space:normal;font-size:6.2px;line-height:6.8px;padding:0 8px}
+.sv-s-selo{position:relative;align-self:center;margin-top:4px;height:11px;padding:0 6px;border-radius:6px;background:#FFC93C;border:1.2px solid #1E1B2E;
+  font:800 6px/9px var(--f-texto,"Figtree",sans-serif);color:#1E1B2E;white-space:nowrap}
+.sv-s-esq{position:absolute;border:1.2px dashed #9C98AE;border-radius:4px}
+.sv-s-visto{position:absolute;width:20px;height:20px}
+
+/* objetos */
+.sv-plaq{position:absolute;left:0;top:0;transform-origin:0 0}
+.sv-plaq-face{position:absolute;left:-36px;top:20px;width:72px;height:40px}
+.sv-plaq-face span{position:absolute;left:2px;top:9px;width:66px;text-align:center;font:400 12.5px/22px var(--f-display,"Lilita One",sans-serif);
+  color:#1E1B2E;letter-spacing:.04em}
+.sv-plaq-fechado{color:#D39A5B}
+.sv-plaq-aberto{color:#FFC93C}
+.sv-comanda{position:absolute;left:-48px;top:-29px;width:96px;height:58px;transform-origin:48px 29px}
+.sv-comanda p{position:absolute;left:5px;width:84px;margin:0;text-align:center;color:#1E1B2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv-comanda .sv-c1{top:10px;font:700 5.6px/7px var(--f-texto,"Figtree",sans-serif);letter-spacing:.04em;text-transform:uppercase;color:#5E5974}
+.sv-comanda .sv-c2{top:19px;white-space:normal;font:400 9.6px/10px var(--f-display,"Lilita One",sans-serif);max-height:20px}
+.sv-comanda .sv-c3{top:40px;font:600 5.8px/7px var(--f-texto,"Figtree",sans-serif)}
+.sv-carimbo{position:absolute;left:52px;top:28px;padding:1px 5px;border:2px solid #C0392B;border-radius:4px;color:#C0392B;background:rgba(255,253,246,.85);
+  font:400 10px/12px var(--f-display,"Lilita One",sans-serif);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+
+/* atores */
+.sv-ator{position:absolute;left:0;top:0;width:0;height:0;cursor:pointer}
+.sv-ator-sombra{position:absolute;left:-26px;top:-6px;width:52px;height:12px}
+.sv-pula,.sv-vira{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0}
+.sv-corpo{position:absolute;left:-38px;top:-88px;width:80px;height:96px;overflow:hidden;transform-origin:38px 88px}
+.sv-quadros{position:absolute;left:0;top:0;width:80px;height:288px;background-repeat:no-repeat;background-size:560px 288px}
+.sv-toque{position:absolute;left:-30px;top:-84px;width:60px;height:84px}
+.sv-mao{position:absolute;left:0;top:0;transform-origin:0 0}
+.sv-ativo{z-index:380!important}
+
+/* legenda (fita) e balao */
+.sv-fita{position:absolute;left:180px;top:336px;width:0;height:0}
+.sv-fita-papel{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;padding:4px 12px 5px;border-radius:9px;
+  background:#FFFDF6;border:2.5px solid #1E1B2E;box-shadow:3px 3px 0 #1E1B2E;font:800 14.5px/18px var(--f-texto,"Figtree",sans-serif);color:#1E1B2E}
+.sv-fita-fim{background:#FFC93C}
+.sv-balao{position:absolute;left:24px;top:52px;width:312px;padding:10px 13px 11px;border-radius:14px;background:#FFFDF6;border:2.5px solid #1E1B2E;
+  box-shadow:4px 4px 0 #1E1B2E;font:600 15px/1.35 var(--f-texto,"Figtree",sans-serif);color:#1E1B2E;opacity:0;pointer-events:none;
+  transition:opacity .18s ease-out,transform .22s cubic-bezier(.2,.9,.3,1.25);transform:translateY(6px) scale(.97)}
+.sv-balao b{display:block;font:400 17px/1.1 var(--f-display,"Lilita One",sans-serif);margin-bottom:3px}
+.sv-balao.sv-aberto{opacity:1;transform:none;pointer-events:auto;cursor:pointer}
+
+/* noite: a mesma ilha, um pouco mais escura; personagens e objetos ficam com as cores de dia */
+@media (prefers-color-scheme:dark){:root:not([data-tema="claro"]) .sv-ilha,:root:not([data-tema="claro"]) .sv-nuvem{filter:brightness(.78) saturate(.9)}}
+:root[data-tema="escuro"] .sv-ilha,:root[data-tema="escuro"] .sv-nuvem{filter:brightness(.78) saturate(.9)}
+@media (prefers-reduced-motion:reduce){.sv-balao{transition:none}}
