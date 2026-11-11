@@ -883,7 +883,14 @@
         a.href = linkWhats(CK.whatsappSuporte, msg); a.target = '_blank'; a.rel = 'noopener noreferrer';
         // /abrir/: "Dúvidas" diz que abre o WhatsApp só quando ele abre mesmo
         var rok = a.getAttribute('data-rotulo-ok'), rz = a.querySelector('[data-rotulo-zap]');
-        if (rok && rz) { rz.textContent = rok; if (a.getAttribute('data-aria-ok')) a.setAttribute('aria-label', a.getAttribute('data-aria-ok')); }
+        if (rok && rz) {
+          rz.textContent = rok;
+          // o fim do rótulo ("no WhatsApp") fica num span próprio: em tela estreita ele sai da vista e o ícone fala por ele
+          var fim = a.getAttribute('data-rotulo-ok-fim');
+          if (fim) { var sf = D.createElement('span'); sf.className = 'rotulo-zap-fim'; sf.textContent = ' ' + fim; rz.appendChild(sf); }
+          a.classList.add('com-zap');
+          if (a.getAttribute('data-aria-ok')) a.setAttribute('aria-label', a.getAttribute('data-aria-ok'));
+        }
       }
       else if (a.hasAttribute('data-some-sem-zap')) { a.hidden = true; }
       else {

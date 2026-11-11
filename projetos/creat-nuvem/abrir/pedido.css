@@ -130,6 +130,13 @@ p.notas{display:block} /* parágrafo com números dentro (ex.: anual-nota) não 
 /* /abrir/ para o visitante frio: resumo do preço no topo, garantia e desistência antes dos botões,
    botão de pagar fixo no rodapé do celular com o total de hoje. */
 .link-duvidas{display:inline-flex;align-items:center;min-height:var(--alvo);padding:0 8px;font-weight:700;font-size:var(--t-menor);text-decoration:underline;white-space:nowrap}
+/* "Dúvidas no WhatsApp" espremia a marca até 400 px (Creat Nuve em 360). Ali o fim sai da vista, o ícone fala por ele e o nome acessível segue inteiro */
+.link-duvidas{flex:none;gap:6px}
+.link-duvidas .ico-zap{display:none;width:18px;height:18px;flex:none}
+@media (max-width:400px){
+  .link-duvidas.com-zap .ico-zap{display:inline-block}
+  .link-duvidas .rotulo-zap-fim{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+}
 .progresso{margin-top:var(--r3);font-size:var(--t-nota);color:var(--apagado);max-width:58ch}
 .progresso .feito{font-weight:800;color:var(--ok)}
 .resumo-preco{display:grid;gap:6px;margin-top:var(--r4);padding:var(--r3) var(--r4);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio-p);box-shadow:var(--sombra-p);max-width:62ch}
