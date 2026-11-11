@@ -1747,22 +1747,34 @@
     var plano = estadoBase.plano || v('p-plano');
     // /obrigado/ sem dados: o plano começa em "Escolha o plano" e é obrigatório (PV-N1)
     if (!estadoBase.plano) conferir('p-plano', PLANOS.indexOf(plano) === -1 ? 'Escolha o plano que você pagou.' : '');
+    // Bloco recolhido de /abrir/ ([data-opcional], compra curta de 11/11): nome, endereço e horário podem ir depois do
+    // pagamento (o servidor aceita sem eles, docs/PEDIDO-API.md). Vazio = o pedido segue sem o campo; preenchido = a
+    // validação de sempre. Fora dele (formulário de /obrigado/ sem dados), os três continuam obrigatórios.
+    var opcional = function (id) { var e = f.querySelector('#' + id); return !!(e && e.closest('[data-opcional]')); };
     var resp = limparNome(v('p-responsavel'));
-    conferir('p-responsavel', resp.length < 2 || resp.length > 60 || !RE_RESP.test(resp) ? 'Escreva o seu nome para a equipe saber com quem falar.' : '');
+    if (!(resp === '' && opcional('p-responsavel'))) conferir('p-responsavel', resp.length < 2 || resp.length > 60 || !RE_RESP.test(resp) ? 'Escreva o seu nome para a equipe saber com quem falar.' : '');
+    else conferir('p-responsavel', '');
     var zapBruto = v('p-whatsapp'), zap = normalizarWhats(zapBruto);
     conferir('p-whatsapp', !soDigitos(zapBruto) ? 'Digite o WhatsApp que recebe os pedidos, com DDD.' : !zap ? 'Esse número não parece um celular com DDD. Confira e digite de novo, por exemplo (11) 9XXXX-XXXX.' : '');
     var end = limparNome(v('p-endereco'));
     // mesma regra da produção (assets/endereco.js): endereço aceito aqui nunca trava depois do pagamento
     var END = window.CreatEndereco;
-    conferir('p-endereco', end.length < 8 || end.length > 160 ? 'Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.'
+    if (!(end === '' && opcional('p-endereco'))) conferir('p-endereco', end.length < 8 || end.length > 160 ? 'Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.'
       : END ? END.mensagem(end, cidade) : (!/\d/.test(end) ? 'Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.' : ''));
-    var hCaixa = f.querySelector('#p-horarios'), h = lerHorarios(hCaixa), hErro = f.querySelector('#p-horarios-erro');
+    else conferir('p-endereco', '');
+    // Horário: a grade começa com o comum do nicho ou o de reserva, que NÃO é o horário do cliente. Só vai no pedido com a
+    // confirmação marcada (mexer em qualquer dia marca sozinho). Sem ela: no bloco recolhido de /abrir/, o pedido segue
+    // sem horário; no formulário de /obrigado/ (horário obrigatório), o envio para e pede a confirmação. Nunca o de exemplo.
+    var hCaixa = f.querySelector('#p-horarios'), hErro = f.querySelector('#p-horarios-erro'), hConf = f.querySelector('#p-horarios-confirmo');
+    var h = !hConf || hConf.checked ? lerHorarios(hCaixa)
+      : opcional('p-horarios') ? { valor: null }
+      : { erro: 'Confira o horário de cada dia e marque "Este é o horário do meu negócio".' };
     if (h.erro) { hErro.textContent = h.erro; hErro.hidden = false; faltam++; } else hErro.hidden = true;
     var email = String(v('p-email')).trim();
     conferir('p-email', email.length > 120 || !RE_EMAIL.test(email) ? 'Esse e-mail não parece completo. Confira se tem @ e o final, como .com ou .com.br.' : '');
     var aceite = f.querySelector('#p-aceite'), aErro = f.querySelector('#p-aceite-erro');
     if (!aceite.checked) { aErro.hidden = false; faltam++; } else aErro.hidden = true;
-    dados = { plano: plano, nicho: nicho, negocio: negocio, cidade: cidade, responsavel: resp, whatsapp_negocio: zap, endereco: end, horarios: h.valor, email: email };
+    dados = { plano: plano, nicho: nicho, negocio: negocio, cidade: cidade, responsavel: resp || null, whatsapp_negocio: zap, endereco: end || null, horarios: h.valor || null, email: email };
     return { ok: faltam === 0, faltam: faltam, dados: dados };
   }
   function resumoErros(f, n) {
@@ -1770,7 +1782,10 @@
     if (!n) { r.hidden = true; return; }
     r.textContent = n === 1 ? 'Falta 1 campo. Ele está marcado em vermelho.' : 'Faltam ' + n + ' campos. Eles estão marcados em vermelho.';
     r.hidden = false;
-    var inv = f.querySelector('[aria-invalid="true"]') || (f.querySelector('#p-aceite-erro:not([hidden])') && f.querySelector('#p-aceite'));
+    var hErr = f.querySelector('#p-horarios-erro:not([hidden])');
+    var inv = f.querySelector('[aria-invalid="true"]') || (hErr && f.querySelector('#p-horarios-confirmo')) || (f.querySelector('#p-aceite-erro:not([hidden])') && f.querySelector('#p-aceite'));
+    // erro dentro do bloco recolhido: abre o bloco antes de levar o foco (campo fechado não recebe foco)
+    var bloco = inv && inv.closest('details'); if (bloco && !bloco.open) bloco.open = true;
     if (inv) inv.focus();
   }
   function prepararFormPedido(f, estadoBase, salvo) {
@@ -1779,13 +1794,29 @@
     var hCaixa = f.querySelector('#p-horarios');
     montarHorarios(hCaixa, SEMANA_RESERVA);
     var nicho = estadoBase.k || (salvo && salvo.nicho);
-    var aplicarNicho = function (k) { lerNicho(k).then(function (pre) { if (pre) { montarHorarios(hCaixa, semanaDe(pre)); if (salvo && salvo.horarios && salvo.nicho === k) preencherHorarios(hCaixa, salvo.horarios); } }); };
+    var hConf = f.querySelector('#p-horarios-confirmo');
+    // mexer em qualquer dia ou hora é dizer "este é o meu horário": a confirmação marca sozinha (o change nativo sobe até a caixa)
+    if (hConf) hCaixa.addEventListener('change', function () { hConf.checked = true; if (hConf.closest('.campo')) hConf.closest('.campo').removeAttribute('data-estado'); });
+    // confirmou (pela caixa ou mexendo na grade): o erro "marque a confirmação" sai na hora
+    var hErro0 = f.querySelector('#p-horarios-erro');
+    if (hConf && hErro0) f.addEventListener('change', function () { if (hConf.checked && /Este é o horário/.test(hErro0.textContent)) hErro0.hidden = true; });
+    // Redesenhar a grade troca o horário pelo padrão do nicho, que NÃO é o do cliente: a confirmação só fica marcada
+    // quando a grade volta com o horário do próprio cliente (o salvo, do mesmo nicho). Em qualquer outro caso, desmarca.
+    var aplicarNicho = function (k) { lerNicho(k).then(function (pre) {
+      if (!pre) return;
+      var doCliente = !!(salvo && salvo.horarios && salvo.nicho === k);
+      montarHorarios(hCaixa, semanaDe(pre));
+      if (doCliente) preencherHorarios(hCaixa, salvo.horarios);
+      if (hConf) hConf.checked = doCliente;
+    }); };
     if (nicho) aplicarNicho(nicho);
     var sel = f.querySelector('#p-nicho'); if (sel) sel.addEventListener('change', function () { if (NICHOS.indexOf(sel.value) !== -1) aplicarNicho(sel.value); });
     if (salvo) {
       var pre = { 'p-responsavel': salvo.responsavel, 'p-endereco': salvo.endereco, 'p-email': salvo.email, 'p-whatsapp': salvo.whatsapp_negocio ? mascaraBR(salvo.whatsapp_negocio.slice(2)) : '', 'p-negocio': salvo.negocio, 'p-cidade': salvo.cidade };
       Object.keys(pre).forEach(function (id) { var e = f.querySelector('#' + id); if (e && pre[id] && !e.value) e.value = pre[id]; });
-      if (salvo.horarios) preencherHorarios(hCaixa, salvo.horarios);
+      if (salvo.horarios) { preencherHorarios(hCaixa, salvo.horarios); if (hConf) hConf.checked = true; }
+      // a pessoa já tinha adiantado algo neste aparelho: o bloco recolhido abre e mostra
+      var dep = f.querySelector('#p-depois'); if (dep && (salvo.responsavel || salvo.endereco || salvo.horarios)) dep.open = true;
     }
     $$('input,select', f).forEach(function (e) { e.addEventListener('input', function () { if (e.getAttribute('aria-invalid')) marcar(e, ''); }); });
   }
@@ -1796,6 +1827,7 @@
      WhatsApp, endereço, horários e e-mail; ficam id, segredo, negócio, nicho, plano, cidade, produto, valor, praca,
      origem e status, por até 30 dias, para /obrigado/ e o rascunho (aprovarRascunho) acharem o pedido. */
   var CHAVE_PEDIDO = 'creat:pedido:v1';
+  var FALTAM_PRODUCAO = ['endereco', 'horarios'];   // sem eles o site não sai (EXECUTOR.md passo (e), Saída 6); o nome não trava nada
   var PESSOAIS = ['responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'previa', 'aceite_termos'];
   // compra: { produto, valor, praca, link } do botão clicado (ou da volta do pagamento).
   function salvarPedido(d, estadoBase, reaproveitar, compra) {
@@ -1808,7 +1840,9 @@
       produto: CATALOGO[compra.produto] ? compra.produto : null, valor: CATALOGO[compra.produto] ? CATALOGO[compra.produto] : null,
       praca: PRACAS.indexOf(compra.praca) !== -1 ? compra.praca : null,
       link: compra.link && CK && CK.linkValido(compra.link) ? compra.link : null,
-      paleta: estadoBase.p || 1, salvo_em: agora.toISOString(), status: 'enviado'
+      paleta: estadoBase.p || 1, salvo_em: agora.toISOString(), status: 'enviado',
+      // o que a produção ainda precisa (só nomes de campo, nunca o valor): /obrigado/ pede pelo WhatsApp do suporte
+      faltam: FALTAM_PRODUCAO.filter(function (k) { return !d[k]; })
     };
     // Mesmo aparelho e os mesmos dados: o mesmo pedido (o servidor só cria; repetir é inofensivo). Dado mudou: pedido novo,
     // porque o servidor nunca sobrescreve um id que já existe.
@@ -1851,10 +1885,15 @@
     if (!(novo || RE_ID_ANTIGO.test(p.id)) || PLANOS.indexOf(p.plano) === -1 || NICHOS.indexOf(p.nicho) === -1 || typeof p.negocio !== 'string' || !p.negocio) return null;
     // o link de pagamento guardado volta a passar pela lista de provedores (nunca javascript: nem destino falso)
     if (p.link !== undefined && p.link !== null && !(CK && CK.linkValido && CK.linkValido(p.link))) p.link = null;
+    if (!Array.isArray(p.faltam)) p.faltam = undefined;
+    else p.faltam = p.faltam.filter(function (k) { return FALTAM_PRODUCAO.indexOf(k) !== -1; });
     if (p.enxuto) return novo ? p : null;
     if (idade > D7) return enxugar(p, p.status === 'registrado' ? 'registrado' : 'vencido');   // dado pessoal nunca passa de 7 dias no aparelho
-    var obrig = ['cidade', 'responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'origem', 'previa', 'aceite_termos'];
+    var obrig = ['cidade', 'whatsapp_negocio', 'email', 'origem', 'previa', 'aceite_termos'];
     for (var i = 0; i < obrig.length; i++) if (typeof p[obrig[i]] !== 'string' || !p[obrig[i]]) return null;
+    // nome, endereço e horário podem ter ficado para depois do pagamento (compra curta): texto ou nada, nunca outro tipo
+    var depois = ['responsavel', 'endereco', 'horarios'];
+    for (var j = 0; j < depois.length; j++) { var x = p[depois[j]]; if (x !== undefined && x !== null && (typeof x !== 'string')) return null; if (x === '') p[depois[j]] = null; }
     return p;
   }
 
@@ -1882,8 +1921,10 @@
     if (!Object.keys(utmAtual).length) utmAtual = lerOrigem() || (salvo ? origemParaUtm(salvo.origem) : {});
     est.utm = utmAtual;
     var f = $('#form-pedido');
-    // sem artigo fixo (PG-N4): "abrir a Studio Teste" e "abrir a Salão Teste" quebravam
-    $('#abrir-titulo').textContent = est.n ? 'Falta pouco para abrir ' + est.n + '.' : 'Falta pouco para abrir o seu negócio.';
+    // sem artigo antes do nome (PG-N4): o nome fica no cartão logo abaixo; o título fala das portas. Antes do abrir.json
+    // chegar vale o HTML: o texto do h1 sem nome e data-com-nome com nome (os dois iguais a titulo e tituloSemNome do
+    // abrir.json, conferido em funil.test.mjs), então o título não pisca.
+    var tit0 = $('#abrir-titulo'); if (est.n && tit0.getAttribute('data-com-nome')) tit0.textContent = tit0.getAttribute('data-com-nome');
     contar('ida_pagamento', est.k);
     var teste = ENTRADA.teste ? montarModoTeste() : null;
     var resumo = $('#abrir-negocio');
@@ -1892,10 +1933,17 @@
       $('#abrir-negocio-nome').textContent = est.n;
       $('#abrir-negocio-detalhe').textContent = ROTULO_NICHO[est.k] + (est.c ? ' · ' + est.c : '');
       $('#abrir-voltar').href = RAIZ + '#' + montarFragmento(est, false) + '&ver=1';   // a home lê, preenche, limpa o endereço e abre a prévia
-      var prog = $('#abrir-progresso'); if (prog) prog.hidden = false;      // veio da prévia: nome, nicho e prévia prontos
     }
     var radios = $$('input[name="plano"]', f);
     radios.forEach(function (r) { r.checked = r.value === est.plano; });
+    // "Trocar de plano" fica sempre recolhido: quem já escolheu o plano na home o vê marcado na conta ("Plano Vitrine"),
+    // sem a lista de 4 planos entre ele e o botão de pagar. O que o Vitrine soma entra em "O que você leva" ([data-se-plano]).
+    function mostrarPlano() {
+      var base = String(est.plano || '').replace(/_anual$/, '');
+      $$('[data-se-plano]').forEach(function (x) { x.hidden = x.getAttribute('data-se-plano') !== base; });
+      $$('[data-plano-nome]').forEach(function (x) { if (ROTULO_PLANO[est.plano]) x.textContent = ROTULO_PLANO[est.plano]; });
+    }
+    mostrarPlano();
     prepararFormPedido(f, est, salvo && (!est.n || salvo.negocio === est.n) ? salvo : null);
     var precos = null, escolha = null;
     var botoes = $$('[data-checkout]');
@@ -1914,7 +1962,6 @@
       if (!precos) return;
       escolha = escolher();
       var anual = escolha.anual;
-      $('#total-mensal').hidden = anual; $('#total-anual').hidden = !anual;
       $('#resumo-mensal').hidden = anual; $('#resumo-anual').hidden = !anual;
       // A Abertura mostrada é a do link: "preço de inauguração" só aparece se o link escolhido for de inauguração.
       var deInaug = !!(escolha.r ? escolha.r.chave === 'aberturaInauguracao' : precos.inauguracao);
@@ -1923,6 +1970,7 @@
       aplicarPrecos(naTela, D, est.plano);
       $$('[data-v="abrir.total"]').forEach(function (x) { x.textContent = milhar(escolha.total); x.classList.remove('num-carregando'); });
       $('#anual-nota').hidden = !anual;
+      $$('[data-plano-nome]').forEach(function (x) { x.textContent = ROTULO_PLANO[est.plano] || ''; });
       if (teste) { teste.aplicar(botoes, barra); return; }
       var algumOk = false;
       botoes.forEach(function (b) { if (aplicarCheckout(b, escolha.r ? escolha.r.chave : precos.linkChave, escolha.r ? escolha.r.link : null, abaNova())) algumOk = true; });
@@ -1937,7 +1985,7 @@
     }
     radios.forEach(function (r) {
       r.addEventListener('change', function () {
-        est.plano = r.value; somFn('clique');
+        est.plano = r.value; somFn('clique'); mostrarPlano();
         // o fragmento guarda só plano, nicho, paleta e utm: nome e cidade nunca voltam para o endereço
         try { history.replaceState(null, '', location.pathname + location.search + '#' + montarFragmento(semDadosPessoais(est), true)); } catch (e) {}
         atualizarTotal(); evento('plano_visto', { plano: est.plano, nicho: est.k || undefined });
@@ -1984,7 +2032,7 @@
     });
     function hpValor() { var h = f.querySelector('#p-site'); return h ? String(h.value || '') : ''; }
     f.addEventListener('submit', function (e) { e.preventDefault(); });
-    lerTextosAbrir();
+    lerTextosAbrir(est);
     montarBarraPagar(barra, $('#pagamento'));
     var esquecer = $('#esquecer');
     if (esquecer) {
@@ -2070,10 +2118,19 @@
     var m = /^termos-v(\d{1,3})$/.exec((CK && CK.termosVersao) || '');
     if (m) $$('[data-termos-versao]').forEach(function (x) { x.textContent = m[1]; });
   }
-  function lerTextosAbrir() {
-    Promise.all([buscarJSON('conteudo/abrir.json'), lerPrecos()]).then(function (r) {
-      var j = r[0], vars = valoresDe(r[1]); if (!j) return;
+  function lerTextosAbrir(est) {
+    Promise.all([buscarJSON('conteudo/abrir.json'), lerPrecos(), buscarJSON('conteudo/home.json')]).then(function (r) {
+      var j = r[0], vars = valoresDe(r[1]), home = r[2]; if (!j) return;
       aplicarTextos(j, vars);
+      var tit = $('#abrir-titulo'), ts = textoDe(j, est && est.n ? 'titulo' : 'tituloSemNome');
+      if (tit && ts && ts.indexOf('{') === -1) tit.textContent = ts;
+      // "O que você leva": a frase mora em conteudo/home.json (o caminho está no data-leva); sem ela, fica a do HTML
+      if (home) $$('[data-leva]').forEach(function (li) {
+        var s = textoDe(home, li.getAttribute('data-leva'));
+        var marcas = s ? (s.match(/\{\{\s*[\w.]+\s*\}\}/g) || []) : [];
+        var falta = marcas.some(function (m) { return !vars[m.replace(/[{}\s]/g, '')]; });
+        if (s && !falta) li.textContent = preencher(s, vars);
+      });
       var trocar = function (sel, chave) { var e = $(sel), s = textoDe(j, chave); if (e && s) { e.textContent = preencher(s, vars); e.hidden = false; } };
       trocar('#pagar-parcelas', 'pagar.parcelas');
       trocar('#pagar-recebedor', 'pagar.recebedor');
@@ -2088,12 +2145,14 @@
   /* ======================================================================
      /obrigado/
      ====================================================================== */
+  var OPCIONAIS_V1 = ['responsavel', 'endereco', 'horarios'];
   var CHAVES_PEDIDO_V1 = ['id', 'plano', 'nicho', 'negocio', 'cidade', 'responsavel', 'whatsapp_negocio', 'endereco', 'horarios', 'email', 'origem', 'previa', 'aceite_termos'];
   /* PEDIDO v1 (contrato g). pg (opcional): as linhas do pagamento depois de aceite_termos (PG-N2), cada uma só com
      valor conhecido: pagamento (aprovado|pendente|recusado|sem_retorno), mp_pagamento (número válido), produto, valor. */
   function textoPedido(p, pg) {
     var linha = function (k, v) { return k + ': ' + String(v).replace(/[\r\n]+/g, ' ').trim(); };
-    var l = ['PEDIDO v1'].concat(CHAVES_PEDIDO_V1.map(function (k) { return linha(k, p[k]); }));
+    // campo que ficou para depois do pagamento não entra (nunca "endereco: undefined"); a produção marca a falta e espera
+    var l = ['PEDIDO v1'].concat(CHAVES_PEDIDO_V1.filter(function (k) { return !(OPCIONAIS_V1.indexOf(k) !== -1 && (p[k] === null || p[k] === undefined || p[k] === '')); }).map(function (k) { return linha(k, p[k]); }));
     if (pg) {
       if (/^(aprovado|pendente|recusado|sem_retorno)$/.test(pg.pagamento || '')) l.push(linha('pagamento', pg.pagamento));
       if (RE_PAGAMENTO.test(pg.paymentId || '')) l.push(linha('mp_pagamento', pg.paymentId));
@@ -2122,7 +2181,7 @@
      confirmando; com a URL dizendo aprovado e o servidor ainda sem resposta, vale "a_conferir" (chaveTexto). */
   var ESTADOS_OBRIGADO = {
     a_conferir: { olho: 'Pagamento', titulo: 'Estamos conferindo o seu pagamento', texto: 'O Mercado Pago avisou o pagamento e a equipe está conferindo. Guarde o número do pagamento abaixo.', botao: 'Falar com o suporte no WhatsApp' },
-    aprovado: { olho: 'Pagamento', titulo: 'Pagamento confirmado', texto: 'Recebemos o seu pagamento, e a equipe começa o seu site. Guarde o recibo abaixo. O link do site pronto chega {canais}.', botao: 'Falar com a equipe no WhatsApp' },
+    aprovado: { olho: 'Pagamento', titulo: 'Pagamento confirmado', texto: 'Recebemos o seu pagamento, e a equipe começa o seu site. Guarde o recibo abaixo. O link do site pronto chega {canais}.', textoFalta: 'Recebemos o seu pagamento. Guarde o recibo abaixo.', botao: 'Falar com a equipe no WhatsApp' },
     conferencia_longa: { olho: 'Pagamento', titulo: 'Seu pagamento está em conferência', texto: 'Esta página parou de consultar para não gastar a sua internet. Guarde o número do pagamento e fale com o suporte: a equipe confere e responde no seu WhatsApp.', botao: 'Falar com o suporte no WhatsApp' },
     produto_fora: { olho: 'Pagamento', titulo: 'Pagamento recebido', texto: 'Recebemos um pagamento que esta página não reconhece. O suporte vai falar com você. Guarde o número do pagamento abaixo.', botao: 'Falar com o suporte no WhatsApp' },
     recusado: { olho: 'Pagamento', titulo: 'O pagamento não passou', texto: 'O banco ou o cartão recusou. Nada foi cobrado.', botao: 'Tentar de novo' },
@@ -2311,6 +2370,34 @@
       $('#recibo-nota').textContent = rot('nota', 'O comprovante oficial é o que o Mercado Pago manda para o e-mail que você usou lá.');
       recibo.hidden = !(mostrar && algum);
     }
+    // Endereço e horário que ficaram para depois do pagamento (pedido.faltam, só nomes de campo): botão do suporte com o
+    // número do pedido. Só depois do pagamento (aprovado na URL ou confirmado pelo servidor), nunca no Pix pendente.
+    function desenharFalta() {
+      var caixa = $('#obrigado-falta'); if (!caixa) return false;
+      var itens = pedido && Array.isArray(pedido.faltam) ? pedido.faltam.filter(function (k) { return k === 'endereco' || k === 'horarios'; }) : [];
+      var mostrar = itens.length > 0 && familiaAprovado();
+      caixa.hidden = !mostrar;
+      if (!mostrar) return false;
+      $$('[data-falta]', caixa).forEach(function (x) { x.hidden = itens.indexOf(x.getAttribute('data-falta')) === -1; });
+      var fd = (textos && textos.faltaDados) || {}, nomes = fd.nomes || {};
+      var quais = itens.length === 2 ? (nomes.ambos || 'o endereço e o horário') : itens[0] === 'endereco' ? (nomes.endereco || 'o endereço') : (nomes.horarios || 'o horário');
+      var modelo = (textos && textos.wa && typeof textos.wa.faltaDados === 'string' && textos.wa.faltaDados.trim()) || 'Olá! Paguei a Abertura do Porta Aberta e vou mandar {itens} do pedido {id}.';
+      var id = RE_ID.test(pedido.id) || RE_ID_ANTIGO.test(pedido.id) ? pedido.id : '';
+      if (!id) modelo = modelo.replace(/ do pedido \{id\}/, '');
+      var msg = preencher(modelo, { itens: quais, id: id });
+      var a = $('#falta-zap');
+      a.href = linkZap(msg); a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.textContent = suporteOk() ? (fd.botao || 'Mandar no WhatsApp do suporte') : (fd.botaoEmail || 'Mandar por e-mail');
+      // a frase acima do botão acompanha o canal (sem o WhatsApp do suporte, o botão vira e-mail); o data-texto troca
+      // junto, para o aplicarTextos do obrigado.json não voltar a frase do WhatsApp
+      var ft = $('#falta-texto');
+      if (ft) {
+        var chaveFt = suporteOk() ? 'texto' : 'textoEmail';
+        ft.setAttribute('data-texto', 'faltaDados.' + chaveFt);
+        ft.textContent = (typeof fd[chaveFt] === 'string' && fd[chaveFt].trim()) || (chaveFt === 'texto' ? 'A equipe só monta o site com estes dados em mãos. Mande logo pelo WhatsApp do suporte:' : 'A equipe só monta o site com estes dados em mãos. Mande logo por e-mail:');
+      }
+      return true;
+    }
     function precisaWhats() { return !!(pedido && (familiaAprovado() || estado === 'pendente') && servidorFalhou); }
     function desenharPedido() {
       var mostrar = !!pedido && /^(aprovado|confirmado|pendente|aguardando|sem_retorno)$/.test(estado);
@@ -2328,6 +2415,8 @@
         var msg = mensagemPedido(pedido, estado, pg, textos && textoDe(textos, 'wa.pedidoAbertura'));
         $('#pedido-texto').textContent = msg;
         var enviar = $('#enviar-pedido'), semZap = $('#sem-zap');
+        var faltaNaTela = !!($('#obrigado-falta') && !$('#obrigado-falta').hidden);
+        enviar.classList.toggle('btn-sol', !faltaNaTela);
         if (suporteOk()) { enviar.href = linkWhats(CK.whatsappSuporte, msg); enviar.target = '_blank'; enviar.rel = 'noopener noreferrer'; enviar.hidden = false; semZap.hidden = true; }
         else { enviar.hidden = true; semZap.hidden = false; var m = $('#sem-zap-email'); m.href = linkEmail('PEDIDO v1 ' + pedido.id, msg); m.textContent = emailSuporte(); }
       }
@@ -2355,6 +2444,13 @@
       if (!secundario.hidden) { secundario.href = linkZap(msgZap()); secundario.target = '_blank'; secundario.rel = 'noopener noreferrer'; }
       if (zapTopo) { zapTopo.href = linkZap(msgZap()); if (suporteOk()) { zapTopo.target = '_blank'; zapTopo.rel = 'noopener noreferrer'; } }
       desenharRecibo();
+      // Com o bloco "Falta pouco" na tela, o botão dele é o único amarelo e o único caminho ao WhatsApp no corpo da página:
+      // o botão do estado (no aprovado, o mesmo WhatsApp do suporte) sai, e "Enviar pedido no WhatsApp" fica secundário.
+      var falta = desenharFalta();
+      // pago e sem endereço ou horário: o texto do estado não diz que a equipe já começou (o bloco logo abaixo diz o que falta)
+      if (falta && chaveTexto() === 'aprovado') lead.textContent = texto('textoFalta');
+      botao.classList.toggle('btn-sol', !falta);
+      botao.hidden = falta;
       desenharPedido();
       // Formulário: só quando o pedido não está neste aparelho e a pessoa pagou ou pode ter pagado (nunca em recusado,
       // assinatura, anual, teste, Bastidores nem na espera do desktop). Sem retorno, ele fica fechado.

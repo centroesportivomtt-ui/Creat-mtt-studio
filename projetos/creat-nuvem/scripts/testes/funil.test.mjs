@@ -337,16 +337,20 @@ test('navegador: /abrir/ limpa nome e cidade do endereço, escolhe o link da pra
     const href = await pg.getAttribute('.pagar [data-checkout]', 'href');
     assert.equal(href, link(PREF.feira), 'link da praça feira');
     assert.equal(await pg.getAttribute('#barra-pagar [data-checkout]', 'href'), link(PREF.feira));
-    assert.match(await pg.textContent('#resumo-mensal'), /Abertura de R\$ 297\..*R\$ 297 por mês no cartão, ou anual no Pix, só começa com o site no ar/);
+    assert.match(await pg.textContent('#resumo-mensal'), /Por mês\s*R\$\s297\s*Plano Vitrine, só com o site no ar\. No cartão, ou anual no Pix\./);
+    assert.equal(await pg.evaluate(() => document.querySelector('#trocar-plano').open), false, 'veio da home com o Vitrine: a lista de planos fica recolhida, o plano aparece na conta');
+    assert.equal(await pg.isChecked('input[name="plano"][value="vitrine"]'), true);
     // recarregar não traz nome de volta ao endereço e mantém o negócio na tela
     await pg.reload(); await pg.waitForTimeout(300);
     assert.doesNotMatch(pg.url(), /Studio|Feira/);
     assert.equal(await pg.textContent('#abrir-negocio-nome'), 'Studio Bela & Cia');
     // anual: hoje só a Abertura (link da praça), com o anual cobrado quando o site entra no ar (D3)
+    await pg.click('#trocar-plano summary');
     await pg.click('label.plano-opcao:has(input[value="aberto_anual"])');
     assert.equal(await pg.getAttribute('.pagar [data-checkout]', 'href'), link(PREF.feira));
     assert.match(await pg.textContent('.pagar-total'), /R\$ 297$/);
-    assert.match(await pg.textContent('#resumo-anual'), /só a Abertura, R\$ 297\..*R\$ 1\.470 pelos 12 meses, é cobrado no dia em que o site entra no ar/);
+    assert.match(await pg.textContent('#resumo-anual'), /No dia em que o site entra no ar\s*R\$\s1\.470\s*Plano Aberto anual, 12 meses no Pix\. Nada do anual é cobrado antes\./);
+    assert.equal(await visivel(pg, '#resumo-mensal'), false, 'no anual, a linha do mês sai');
     assert.equal(await pg.textContent('#barra-pagar strong'), 'R$ 297');
     // sem contador numérico na tela (D1) e parcelas explicadas (D7)
     assert.equal(await pg.isVisible('[data-se="varias-vagas"]'), false);
@@ -357,11 +361,7 @@ test('navegador: /abrir/ limpa nome e cidade do endereço, escolhe o link da pra
     await pg.click('label.plano-opcao:has(input[value="vitrine"])');
     // formulário completo e clique em pagar (navegação para o Mercado Pago bloqueada)
     await pg.route(/mercadopago\.com\.br/, (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<p>mp</p>' }));
-    await pg.fill('#p-responsavel', 'Maria Souza');
-    await pg.fill('#p-whatsapp', '75900000000');
-    await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000');
-    await pg.fill('#p-email', 'maria@exemplo.com.br');
-    await pg.check('#p-aceite');
+    await preencherAbrir(pg, { completo: true });
     const antes = await filaPixel(pg);
     await Promise.all([pg.waitForURL(/mercadopago/), pg.click('.pagar [data-checkout]')]);
     // a fila do fbq fica na página que saiu: o registro de teste guarda o evento antes da navegação
@@ -373,8 +373,7 @@ test('navegador: /abrir/ limpa nome e cidade do endereço, escolhe o link da pra
     await pg2.goto(base + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&p=1&utm_campaign=salvador-rms');
     await pg2.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
     await pg2.fill('#p-cidade', 'Salvador');
-    await pg2.fill('#p-responsavel', 'Maria Souza'); await pg2.fill('#p-whatsapp', '71991234567');
-    await pg2.fill('#p-endereco', 'Rua A, 10, Centro, Salvador-BA, 40000-000'); await pg2.fill('#p-email', 'maria@exemplo.com.br'); await pg2.check('#p-aceite');
+    await pg2.fill('#p-whatsapp', '71991234567'); await pg2.fill('#p-email', 'maria@exemplo.com.br'); await pg2.check('#p-aceite');
     await pg2.evaluate(() => { document.querySelectorAll('[data-checkout]').forEach((a) => a.addEventListener('click', (e) => e.preventDefault())); });
     await pg2.click('.pagar [data-checkout]'); await pg2.click('.pagar [data-checkout]');
     const ic = (await filaPixel(pg2)).filter((a) => a[1] === 'InitiateCheckout');
@@ -701,11 +700,17 @@ async function paginaApi(navegador, base, opcoes = {}) {
   if (opcoes.pedido) await pg.evaluate((p) => localStorage.setItem('creat:pedido:v1', JSON.stringify(p)), opcoes.pedido);
   return { pg, ctx, erros, api };
 }
-async function preencherAbrir(pg) {
-  await pg.fill('#p-responsavel', 'Maria Souza');
+// Só o indispensável (compra curta): WhatsApp, e-mail e aceite. completo: abre o bloco recolhido e adianta nome,
+// endereço e horário (com a confirmação do horário marcada).
+async function preencherAbrir(pg, opcoes = {}) {
   await pg.fill('#p-whatsapp', '75900000000');
-  await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000');
   await pg.fill('#p-email', 'maria@exemplo.com.br');
+  if (opcoes.completo) {
+    if (!(await pg.evaluate(() => document.querySelector('#p-depois').open))) await pg.click('#p-depois summary');
+    await pg.fill('#p-responsavel', 'Maria Souza');
+    await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000');
+    await pg.check('#p-horarios-confirmo');
+  }
   await pg.check('#p-aceite');
 }
 const visivel = (pg, s) => pg.evaluate((x) => { const e = document.querySelector(x); return !!(e && !e.closest('[hidden]') && e.getClientRects().length); }, s);
@@ -996,7 +1001,7 @@ test('2A páginas: meta do b44-visitor-tracking pede consentimento nas 8 página
     for (const r of PROIBIDAS) assert.doesNotMatch(html, r, f + ': ' + r);
   }
   const ab = fs.readFileSync(path.join(RAIZ, 'abrir/index.html'), 'utf8');
-  assert.ok((ab.match(/no cartão, ou anual no Pix/g) || []).length >= 2, '/abrir/ diz "no cartão, ou anual no Pix" no resumo e no total (PV-06)');
+  assert.ok((ab.match(/No cartão, ou anual no Pix/g) || []).length >= 1, '/abrir/ diz "No cartão, ou anual no Pix" na conta do preço (PV-06)');
   // FAQ da home = conteudo/faq.json, palavra por palavra (o texto que a pessoa lê é o do conteúdo)
   const home = fs.readFileSync(path.join(RAIZ, 'index.html'), 'utf8');
   const semTag = (t) => t.replace(/<span data-v="precos\.prazoHoras"><\/span>/g, '72').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
@@ -1301,5 +1306,404 @@ test('navegador 360x640: chegando à seção da equipe o aviso de medição é f
     const h = await pg.evaluate(() => document.querySelector('#consentimento').getBoundingClientRect().height);
     assert.ok(h <= 64, 'faixa de até 64 px sobre a seção da equipe: ' + h);
     await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+/* ======================================================================
+   Compra curta (11/11/2026): do "Quero este site no ar" ao botão de pagar em até 2 telas de 640 px.
+   Antes de pagar, só o indispensável do contrato (docs/PEDIDO-API.md): nicho, negócio e cidade (da prévia), WhatsApp,
+   e-mail e aceite. Nome, endereço e horário ficam num bloco recolhido e, vazios, não vão no corpo. /obrigado/ pede
+   o que faltou pelo WhatsApp do suporte (não há rota que complete o pedido com o segredo).
+   ====================================================================== */
+const SEM_DEPOIS = () => { const p = PEDIDO_CHEIO(); delete p.responsavel; p.endereco = null; p.horarios = null; p.faltam = ['endereco', 'horarios']; return p; };
+
+test('compra curta: pedido sem nome, endereço e horário passa no servidor, fica no aparelho e vira PEDIDO v1 sem "undefined"', () => {
+  const ctx = carregar(), V = ctx.Vitrine;
+  const corpo = limpar(V.corpoRegistro(SEM_DEPOIS(), ''));
+  for (const k of ['responsavel', 'endereco', 'horarios']) assert.equal(k in corpo, false, k + ' fora do corpo');
+  assert.equal(REGRAS.validarRegistro(corpo).ok, true, JSON.stringify(REGRAS.validarRegistro(corpo)));
+  ctx.localStorage.setItem('creat:pedido:v1', JSON.stringify(Object.assign(SEM_DEPOIS(), { salvo_em: iso(1 * H) })));
+  const lido = limpar(V.lerPedidoSalvo());
+  assert.equal(lido.id, 'PA-7K3QX2MD4R', '/obrigado/ acha o pedido sem endereço e horário');
+  assert.deepEqual(lido.faltam, ['endereco', 'horarios']);
+  const txt = V.textoPedido(lido);
+  assert.doesNotMatch(txt, /undefined|null|endereco|horarios|responsavel/);
+  const prod = lerPedidoTexto(txt);
+  assert.equal(prod.id, 'PA-7K3QX2MD4R'); assert.equal('endereco' in prod, false, 'a produção vê a falta, nunca um endereço inventado');
+  // enxuto (depois do ack do servidor): os nomes do que falta ficam, os dados pessoais saem
+  ctx.localStorage.setItem('creat:pedido:v1', JSON.stringify(Object.assign(SEM_DEPOIS(), { salvo_em: iso(8 * 24 * H) })));
+  const e = limpar(V.lerPedidoSalvo());
+  assert.equal(e.enxuto, true); assert.deepEqual(e.faltam, ['endereco', 'horarios']);
+  // tipo errado no aparelho não passa
+  ctx.localStorage.setItem('creat:pedido:v1', JSON.stringify(Object.assign(SEM_DEPOIS(), { salvo_em: iso(1 * H), endereco: { rua: 'x' } })));
+  assert.equal(V.lerPedidoSalvo(), null);
+});
+
+test('compra curta · navegador: só com WhatsApp, e-mail e aceite, Pagar registra o pedido sem endereço nem horário e vai ao Mercado Pago', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, api, erros } = await paginaApi(nav, base);
+    await pg.goto(base + '/abrir/#plano=aberto&k=barbearia&n=TESTE%20Barbearia%20do%20Ze&c=Campinas&p=1');
+    await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    assert.equal(await pg.evaluate(() => document.querySelector('#p-depois').open), false, 'bloco do depois fechado');
+    assert.equal(await pg.isVisible('#p-endereco'), false); assert.equal(await pg.isVisible('#p-responsavel'), false);
+    assert.equal(await pg.isVisible('#p-cidade'), false, 'cidade veio da prévia: sem campo');
+    await preencherAbrir(pg);
+    await Promise.all([pg.waitForURL(/mercadopago/), pg.click('.pagar [data-checkout]')]);
+    const reg = api.find((a) => a.nome === 'registrarPedido');
+    assert.ok(reg, 'o pedido foi registrado no clique');
+    assert.equal(REGRAS.validarRegistro(reg.corpo).ok, true, JSON.stringify(REGRAS.validarRegistro(reg.corpo)));
+    for (const k of ['responsavel', 'endereco', 'horarios']) assert.equal(k in reg.corpo, false, k + ' não vai com o bloco fechado');
+    assert.equal(reg.corpo.plano, 'aberto'); assert.equal(reg.corpo.cidade, 'Campinas'); assert.equal(reg.corpo.whatsapp, '5575900000000');
+    assert.equal(reg.corpo.termos_versao, carregar().CREAT_CHECKOUT.termosVersao); assert.equal(reg.corpo.consentimento_dados, true);
+    await pg.goto(base + '/termos/');
+    assert.deepEqual(await pg.evaluate(() => JSON.parse(localStorage.getItem('creat:pedido:v1')).faltam), ['endereco', 'horarios']);
+    assert.deepEqual(erros, []);
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('compra curta · navegador: bloco recolhido preenchido vai no corpo; horário de exemplo sem confirmação não vai; endereço errado trava e abre o bloco', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    // (a) aberto e com endereço, mas sem mexer no horário: o horário do nicho não vai (seria dado de exemplo)
+    let s = await paginaApi(nav, base);
+    await s.pg.goto(base + '/abrir/#plano=aberto&k=barbearia&n=TESTE%20Barbearia&c=Campinas&p=1');
+    await s.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await s.pg.click('#p-depois summary');
+    await s.pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Campinas-SP, 13010-000');
+    await preencherAbrir(s.pg);
+    await Promise.all([s.pg.waitForURL(/mercadopago/), s.pg.click('.pagar [data-checkout]')]);
+    let reg = s.api.find((a) => a.nome === 'registrarPedido');
+    assert.equal(reg.corpo.endereco, 'Rua das Flores, 120, Centro, Campinas-SP, 13010-000');
+    assert.equal('horarios' in reg.corpo, false, 'horário do nicho sem confirmação não vai');
+    assert.equal(REGRAS.validarRegistro(reg.corpo).ok, true);
+    await s.ctx.close();
+    // (b) mexer num dia marca a confirmação: endereço, horário e nome vão, no formato do servidor
+    s = await paginaApi(nav, base);
+    await s.pg.goto(base + '/abrir/#plano=aberto&k=barbearia&n=TESTE%20Barbearia&c=Campinas&p=1');
+    await s.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await s.pg.click('#p-depois summary');
+    await s.pg.waitForTimeout(300);   // horário do nicho montado
+    await s.pg.fill('#p-responsavel', 'Maria Souza');
+    await s.pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Campinas-SP, 13010-000');
+    if (!(await s.pg.isChecked('#h-dom-aberto'))) await s.pg.check('#h-dom-aberto');
+    await s.pg.selectOption('#h-dom-fecha', '13:00');
+    assert.equal(await s.pg.isChecked('#p-horarios-confirmo'), true, 'mexer no horário confirma');
+    await preencherAbrir(s.pg);
+    await Promise.all([s.pg.waitForURL(/mercadopago/), s.pg.click('.pagar [data-checkout]')]);
+    reg = s.api.find((a) => a.nome === 'registrarPedido');
+    assert.equal(reg.corpo.responsavel, 'Maria Souza');
+    assert.match(reg.corpo.horarios, /dom=\d{2}:\d{2}-13:00$/);
+    assert.equal(REGRAS.validarRegistro(reg.corpo).ok, true, JSON.stringify(REGRAS.validarRegistro(reg.corpo)));
+    await s.pg.goto(base + '/termos/');
+    assert.deepEqual(await s.pg.evaluate(() => JSON.parse(localStorage.getItem('creat:pedido:v1')).faltam), []);
+    await s.ctx.close();
+    // (c) endereço incompleto com o bloco fechado: a validação de sempre trava, abre o bloco e leva o foco ao campo
+    s = await paginaApi(nav, base);
+    await s.pg.goto(base + '/abrir/#plano=aberto&k=barbearia&n=TESTE%20Barbearia&c=Campinas&p=1');
+    await s.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await s.pg.click('#p-depois summary'); await s.pg.fill('#p-endereco', 'Rua A'); await s.pg.click('#p-depois summary');
+    await preencherAbrir(s.pg);
+    await s.pg.click('.pagar [data-checkout]');
+    await s.pg.waitForTimeout(200);
+    assert.doesNotMatch(s.pg.url(), /mercadopago/);
+    assert.equal(await s.pg.evaluate(() => document.querySelector('#p-depois').open), true, 'o bloco abre para mostrar o erro');
+    assert.equal(await s.pg.evaluate(() => document.activeElement.id), 'p-endereco');
+    assert.equal(s.api.filter((a) => a.nome === 'registrarPedido').length, 0);
+    assert.deepEqual(s.erros, []);
+    await s.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('compra curta · navegador: a confirmação do horário cai quando a grade é redesenhada com o padrão de outro nicho', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  const HORARIO_CLIENTE = 'seg=08:00-12:00;ter=08:00-12:00;qua=08:00-12:00;qui=08:00-12:00;sex=08:00-12:00;sab=fechado;dom=fechado';
+  const salvoBarbearia = () => Object.assign(PEDIDO_CHEIO(), { nicho: 'barbearia', plano: 'aberto', negocio: 'TESTE Studio Bela', horarios: HORARIO_CLIENTE, salvo_em: new Date().toISOString() });
+  try {
+    // controle: pedido salvo do mesmo nicho, a grade volta com o horário do cliente e a confirmação continua marcada
+    let s = await paginaApi(nav, base, { pedido: salvoBarbearia() });
+    await s.pg.goto(base + '/abrir/#plano=aberto&k=barbearia&n=TESTE%20Studio%20Bela&c=Campinas&p=1');
+    await s.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await s.pg.waitForTimeout(400);
+    assert.equal(await s.pg.isChecked('#p-horarios-confirmo'), true, 'mesmo nicho: o horário é o do cliente');
+    assert.equal(await s.pg.inputValue('#h-seg-abre'), '08:00');
+    await s.ctx.close();
+    // cenário 1: horário confirmado de barbearia, a pessoa troca para salão na prévia com o mesmo nome e abre /abrir/
+    s = await paginaApi(nav, base, { pedido: salvoBarbearia() });
+    await s.pg.goto(base + '/abrir/#plano=aberto&k=salao&n=TESTE%20Studio%20Bela&c=Campinas&p=1');
+    await s.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await s.pg.waitForFunction(() => !document.querySelector('#p-horarios-confirmo').checked, null, { timeout: 4000 });
+    assert.equal(await s.pg.isChecked('#h-seg-aberto'), false, 'a grade é a do salão (padrão: segunda fechada), não a do cliente');
+    await s.pg.fill('#p-endereco', '');
+    await preencherAbrir(s.pg);
+    await Promise.all([s.pg.waitForURL(/mercadopago/), s.pg.click('.pagar [data-checkout]')]);
+    let reg = s.api.find((a) => a.nome === 'registrarPedido');
+    assert.equal('horarios' in reg.corpo, false, 'o padrão do salão não vai como horário do cliente');
+    assert.deepEqual(s.erros, []);
+    await s.ctx.close();
+    // cenário 2: sem nicho da prévia; mexer num dia confirma; trocar o tipo do negócio redesenha e desmarca
+    s = await paginaApi(nav, base);
+    await s.pg.goto(base + '/abrir/#plano=aberto&n=TESTE%20Studio%20Bela&c=Campinas&p=1');
+    await s.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await s.pg.selectOption('#p-nicho', 'barbearia'); await s.pg.waitForTimeout(400);
+    await s.pg.click('#p-depois summary');
+    await s.pg.selectOption('#h-qua-fecha', '13:00');
+    assert.equal(await s.pg.isChecked('#p-horarios-confirmo'), true, 'mexer no horário confirma');
+    await s.pg.selectOption('#p-nicho', 'salao');
+    await s.pg.waitForFunction(() => !document.querySelector('#p-horarios-confirmo').checked, null, { timeout: 4000 });
+    await preencherAbrir(s.pg);
+    await Promise.all([s.pg.waitForURL(/mercadopago/), s.pg.click('.pagar [data-checkout]')]);
+    reg = s.api.find((a) => a.nome === 'registrarPedido');
+    assert.equal(reg.corpo.nicho, 'salao');
+    assert.equal('horarios' in reg.corpo, false, 'o padrão do novo nicho não vai marcado como do cliente');
+    assert.deepEqual(s.erros, []);
+    await s.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('compra curta · navegador 360x640: botão de pagar até 1.400 px do topo, na ordem negócio, preço, o que leva, campos, aceite, garantia e botão', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, erros } = await paginaApi(nav, base, { w: 360, h: 640 });
+    await pg.goto(base + '/abrir/#plano=aberto&k=barbearia&n=Barbearia%20do%20Teste&c=Campinas&p=1');
+    await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    await pg.evaluate(() => document.fonts.ready); await pg.waitForTimeout(300);
+    const m = await pg.evaluate(() => {
+      const topo = (s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().top + scrollY) : -1; };
+      const b = document.querySelector('.pagar [data-checkout]').getBoundingClientRect();
+      return {
+        fundo: Math.round(b.bottom + scrollY), largura: document.documentElement.scrollWidth,
+        aviso: !document.querySelector('#consentimento').hidden, barra: !document.querySelector('#barra-pagar').hidden,
+        ordem: ['#abrir-negocio', '.conta', '.leva', '#p-whatsapp', '#p-email', '#p-depois', '#p-aceite', '#garantia-curta', '.pagar [data-checkout]'].map(topo),
+        leva: document.querySelectorAll('#leva-lista li').length, aberto: document.querySelector('#trocar-plano').open
+      };
+    });
+    console.log('# compra curta: borda de baixo do botão de pagar em 360x640 = ' + m.fundo + ' px (antes: 5.532 no ar)');
+    assert.equal(m.aviso, false, 'sem aviso de medição aberto');
+    assert.ok(m.fundo <= 1400, 'botão a ' + m.fundo + ' px do topo');
+    assert.equal(m.largura, 360, 'sem rolagem lateral');
+    assert.equal(m.barra, true, 'a barra fixa Total de hoje / Pagar continua');
+    assert.deepEqual([...m.ordem].sort((a, b) => a - b), m.ordem, 'ordem: ' + m.ordem.join(', '));
+    assert.ok(m.ordem.every((y) => y > 0));
+    assert.ok(m.leva >= 3 && m.leva <= 5);
+    assert.equal(m.aberto, false, 'Aberto marcado e os outros planos recolhidos');
+    assert.equal(await pg.isChecked('input[name="plano"][value="aberto"]'), true);
+    assert.equal(await pg.textContent('#garantia-curta'), '7 dias para desistir com devolução. Mensalidade só com o site no ar. Sem fidelidade.');
+    assert.equal(await pg.textContent('#abrir-titulo'), 'Falta pouco para abrir as portas.', 'sem artigo antes do nome');
+    // preço da conta = dados: Abertura de hoje e a mensalidade do Aberto, juntas
+    assert.match(await pg.textContent('.conta'), /Hoje\s*R\$\s297\s*Abertura, uma vez\. Preço de inauguração; depois, R\$\s497\s*Por mês\s*R\$\s147\s*Plano Aberto, só com o site no ar/);
+    assert.deepEqual(erros, []);
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('compra curta: "O que você leva" e a garantia vêm dos textos de conteudo/ (home.json e abrir.json), sem item inventado', () => {
+  const hj = JSON.parse(fs.readFileSync(path.join(RAIZ, 'conteudo/home.json'), 'utf8'));
+  const aj = JSON.parse(fs.readFileSync(path.join(RAIZ, 'conteudo/abrir.json'), 'utf8'));
+  const ab = fs.readFileSync(path.join(RAIZ, 'abrir/index.html'), 'utf8');
+  const caminho = (o, c) => c.split('.').reduce((v, k) => (v == null ? v : v[k]), o);
+  const lis = [...ab.matchAll(/<li data-leva="([^"]+)">([\s\S]*?)<\/li>/g)];
+  assert.deepEqual(lis.map((x) => x[1]), aj.leva.itens, 'abrir.json leva.itens = data-leva do HTML');
+  for (const [, c, html] of lis) {
+    const t = caminho(hj, c);
+    assert.equal(typeof t, 'string', c);
+    assert.equal(html.replace(/<span data-v="precos\.prazoHoras"><\/span>/g, '{{precos.prazoHoras}}').replace(/<[^>]+>/g, '').trim(), t, c);
+  }
+  assert.match(ab, new RegExp('data-texto="pagar.garantia">' + aj.pagar.garantia.replace(/\./g, '\\.') + '<'));
+  // prazo honesto: os termos v2 contam as 72 h do pagamento; nada diz que o prazo espera endereço ou horário
+  for (const t of [ab, JSON.stringify(aj), fs.readFileSync(path.join(RAIZ, 'obrigado/index.html'), 'utf8'), fs.readFileSync(path.join(RAIZ, 'conteudo/obrigado.json'), 'utf8')]) {
+    assert.doesNotMatch(t, /prazo[^.]{0,60}(depende|conta|começa)[^.]{0,40}(endere|horário)/i);
+  }
+});
+
+test('compra curta · navegador: plano escolhido na home continua valendo em /abrir/, marcado na conta e com a lista de planos recolhida', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, api, erros } = await paginaApi(nav, base);
+    await pg.goto(base + '/?nicho=salao');
+    await pg.fill('#nome', 'TESTE Studio Bela'); await pg.click('#form-abrir [type=submit]');
+    await pg.waitForFunction(() => { const e = document.querySelector('#previa'); return !!e && !e.hidden; });
+    await Promise.all([pg.waitForURL(/\/abrir\//), pg.evaluate(() => document.querySelector('a[data-plano="vitrine"]').click())]);
+    await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
+    assert.equal(await pg.isChecked('input[name="plano"][value="vitrine"]'), true);
+    assert.equal(await pg.evaluate(() => document.querySelector('#trocar-plano').open), false, 'a lista fica recolhida: o plano escolhido já está na conta');
+    assert.match(await pg.textContent('#resumo-mensal'), /R\$\s297\s*Plano Vitrine/);
+    // o que o Vitrine soma aparece em "O que você leva" (frase de home.json), e some ao trocar para o Aberto
+    const hj = JSON.parse(fs.readFileSync(path.join(RAIZ, 'conteudo/home.json'), 'utf8'));
+    assert.equal(await visivel(pg, '#leva-lista [data-se-plano="vitrine"]'), true);
+    assert.equal((await pg.textContent('#leva-lista [data-se-plano="vitrine"]')).trim(), hj.precos.planos.vitrine.inclui[1]);
+    const fundo = () => pg.evaluate(() => Math.round(document.querySelector('.pagar [data-checkout]').getBoundingClientRect().bottom + scrollY));
+    const fundoVitrine = await fundo();
+    await pg.click('#trocar-plano summary'); await pg.click('label.plano-opcao:has(input[value="aberto"])');
+    await pg.click('#trocar-plano summary');
+    const fundoAberto = await fundo();
+    console.log('# Vitrine vindo da home, 390x844: botão a ' + fundoVitrine + ' px (Aberto: ' + fundoAberto + ' px)');
+    assert.ok(fundoVitrine - fundoAberto <= 100, 'o Vitrine custa só a linha a mais: ' + fundoVitrine + ' x ' + fundoAberto);
+    assert.equal(await visivel(pg, '#leva-lista [data-se-plano="vitrine"]'), false, 'no Aberto, a linha do Vitrine sai');
+    await pg.click('#trocar-plano summary');
+    assert.match(await pg.textContent('#resumo-mensal'), /Plano Aberto/);
+    await pg.click('label.plano-opcao:has(input[value="vitrine_anual"])');
+    assert.equal(await visivel(pg, '#leva-lista [data-se-plano="vitrine"]'), true, 'no Vitrine anual, a linha volta');
+    await pg.click('label.plano-opcao:has(input[value="vitrine"])');
+    assert.equal(await pg.textContent('#abrir-negocio-nome'), 'TESTE Studio Bela');
+    assert.equal(await pg.isVisible('#p-cidade'), true, 'sem cidade na prévia: o campo aparece, porque o servidor exige');
+    await pg.fill('#p-cidade', 'Campinas');
+    await preencherAbrir(pg);
+    await Promise.all([pg.waitForURL(/mercadopago/), pg.click('.pagar [data-checkout]')]);
+    assert.equal(api.find((a) => a.nome === 'registrarPedido').corpo.plano, 'vitrine');
+    assert.deepEqual(erros, []);
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('compra curta · navegador: /obrigado/ pago sem endereço e horário mostra "Falta pouco" com o WhatsApp do suporte e só o número do pedido', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const conf = { confirmarPagamento: { status: 200, json: { ok: true } }, consultarPedido: { status: 200, json: { ok: true, status: 'pago', prazo_fim: new Date(Date.now() + 70 * H).toISOString() } } };
+    const a = await paginaApi(nav, base, { pedido: Object.assign(SEM_DEPOIS(), { salvo_em: new Date().toISOString() }), api: conf });
+    await a.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972');
+    await a.pg.waitForFunction(() => document.querySelector('main').getAttribute('data-estado') === 'confirmado');
+    assert.equal(await visivel(a.pg, '#obrigado-falta'), true);
+    assert.match(await a.pg.textContent('#falta-titulo'), /Falta pouco para a produção começar/);
+    assert.equal(await visivel(a.pg, '[data-falta="endereco"]'), true); assert.equal(await visivel(a.pg, '[data-falta="horarios"]'), true);
+    const href = await a.pg.getAttribute('#falta-zap', 'href');
+    const texto = decodeURIComponent(href.replace(/^[^?]*\?(text|body)=/, '').replace(/^.*&body=/, ''));
+    assert.match(href, /^(https:\/\/wa\.me\/\d+\?text=|mailto:)/);
+    assert.match(texto, /vou mandar o endereço e o horário do pedido PA-7K3QX2MD4R\./);
+    assert.doesNotMatch(href, /maria|5575900000000|Rua|segredo|q1Zr8Xn4/i, 'nenhum dado pessoal nem o segredo na URL');
+    assert.equal(await a.pg.evaluate(() => document.querySelector('#obrigado-botao').classList.contains('btn-sol')), false, 'um só botão amarelo');
+    assert.equal(await a.pg.textContent('#obrigado-lead'), 'Recebemos o seu pagamento. Guarde o recibo abaixo.', 'sem dizer que a equipe já começou');
+    assert.equal(await visivel(a.pg, '#obrigado-botao'), false, 'o botão do estado (o mesmo WhatsApp do suporte) sai: um só caminho no corpo da página');
+    assert.equal(await a.pg.locator('main a.btn-sol:visible').count(), 1, 'um só link amarelo na tela (o da sede é botão, não WhatsApp)');
+    // o bloco vem logo depois do título e do texto do estado, e o botão dele cabe na primeira tela de 390x844
+    const pos = await a.pg.evaluate(() => {
+      const t = (s) => Math.round(document.querySelector(s).getBoundingClientRect().top + scrollY);
+      return { lead: t('#obrigado-lead'), falta: t('#obrigado-falta'), acoes: t('.obrigado-acoes'), recibo: t('#obrigado-recibo'), zap: Math.round(document.querySelector('#falta-zap').getBoundingClientRect().bottom + scrollY) };
+    });
+    assert.ok(pos.lead < pos.falta && pos.falta < pos.acoes && pos.falta < pos.recibo, JSON.stringify(pos));
+    assert.ok(pos.zap <= 844, 'botão do suporte a ' + pos.zap + ' px do topo');
+    assert.deepEqual(a.erros, []);
+    await a.ctx.close();
+    // servidor fora do ar: "Enviar pedido no WhatsApp" continua lá, mas secundário (sem o amarelo) enquanto o bloco estiver na tela
+    const d = await paginaApi(nav, base, { pedido: Object.assign(SEM_DEPOIS(), { salvo_em: new Date().toISOString() }), api: { confirmarPagamento: 'abortar', consultarPedido: 'abortar', registrarPedido: 'abortar' } });
+    await d.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972');
+    await d.pg.waitForFunction(() => { const e = document.querySelector('#enviar-pedido'); return e && !e.closest('[hidden]') && !e.hidden; }, null, { timeout: 15000 });
+    assert.equal(await visivel(d.pg, '#obrigado-falta'), true);
+    assert.equal(await d.pg.evaluate(() => document.querySelector('#enviar-pedido').classList.contains('btn-sol')), false, 'Enviar pedido fica secundário');
+    assert.equal(await d.pg.evaluate(() => document.querySelector('#falta-zap').classList.contains('btn-sol')), true);
+    assert.equal(await d.pg.locator('main a.btn-sol:visible').count(), 1, 'um só botão amarelo também com o servidor fora');
+    await d.ctx.close();
+    // Pix pendente (ainda não pagou) e pedido completo: sem o bloco
+    const b = await paginaApi(nav, base, { pedido: Object.assign(SEM_DEPOIS(), { salvo_em: new Date().toISOString() }) });
+    await b.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&resultado=pendente');
+    await b.pg.waitForFunction(() => document.querySelector('main').getAttribute('data-estado') === 'pendente');
+    assert.equal(await visivel(b.pg, '#obrigado-falta'), false);
+    await b.ctx.close();
+    const c = await paginaApi(nav, base, { pedido: Object.assign(PEDIDO_CHEIO(), { faltam: [] }), api: conf });
+    await c.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972');
+    await c.pg.waitForFunction(() => document.querySelector('main').getAttribute('data-estado') === 'confirmado');
+    assert.equal(await visivel(c.pg, '#obrigado-falta'), false);
+    assert.match(await c.pg.textContent('#obrigado-lead'), /a equipe começa o seu site/, 'pedido completo: o texto de sempre');
+    assert.equal(await visivel(c.pg, '#obrigado-botao'), true, 'pedido completo: o botão do estado volta');
+    await c.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('compra curta · /abrir/: o título mora no HTML (sem nome e data-com-nome) igual ao abrir.json, sem terceira cópia no JS', () => {
+  const ab = fs.readFileSync(path.join(RAIZ, 'abrir/index.html'), 'utf8');
+  const j = JSON.parse(fs.readFileSync(path.join(RAIZ, 'conteudo/abrir.json'), 'utf8'));
+  const m = /<h1 id="abrir-titulo" data-com-nome="([^"]+)">([^<]+)<\/h1>/.exec(ab);
+  assert.ok(m, 'h1#abrir-titulo com data-com-nome');
+  assert.equal(m[1], j.titulo, 'data-com-nome = abrir.json titulo');
+  assert.equal(m[2], j.tituloSemNome, 'texto do h1 = abrir.json tituloSemNome');
+  assert.doesNotMatch(FONTE_VIT, /TITULO_ABRIR|Falta pouco para abrir as portas/, 'o título não é escrito de novo no vitrine.js');
+});
+
+test('compra curta · navegador: no formulário de /obrigado/ (outro aparelho), o horário de exemplo só vai com a confirmação', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  const Q = '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972';
+  const preencherObrigado = async (pg) => {
+    await pg.selectOption('#p-plano', 'aberto');
+    await pg.fill('#p-negocio', 'TESTE Barbearia');
+    await pg.fill('#p-cidade', 'Campinas');
+    await pg.fill('#p-responsavel', 'Maria Souza');
+    await pg.fill('#p-whatsapp', '75900000000');
+    await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Campinas-SP, 13010-000');
+    await pg.fill('#p-email', 'maria@exemplo.com.br');
+    await pg.check('#p-aceite');
+  };
+  try {
+    // (a) só os campos obrigatórios, sem mexer na grade nem confirmar: não envia, pede a confirmação e leva o foco à caixa
+    let s = await paginaApi(nav, base);
+    await s.pg.goto(base + Q);
+    await s.pg.waitForFunction(() => { const e = document.querySelector('#obrigado-sem-dados'); return e && !e.hidden; });
+    await s.pg.selectOption('#p-nicho', 'barbearia'); await s.pg.waitForTimeout(400);
+    await preencherObrigado(s.pg);
+    assert.equal(await s.pg.isChecked('#p-horarios-confirmo'), false, 'a grade começa com o horário de exemplo, sem confirmação');
+    await s.pg.click('#enviar-dados'); await s.pg.waitForTimeout(200);
+    assert.equal(s.api.filter((a) => a.nome === 'registrarPedido').length, 0, 'o horário de exemplo não vai');
+    assert.equal(await visivel(s.pg, '#p-horarios-erro'), true);
+    assert.match(await s.pg.textContent('#p-horarios-erro'), /Este é o horário do meu negócio/);
+    assert.equal(await s.pg.evaluate(() => document.activeElement.id), 'p-horarios-confirmo');
+    // (b) a pessoa confere e confirma: o erro sai e o pedido vai com o horário, no formato do servidor
+    await s.pg.check('#p-horarios-confirmo');
+    assert.equal(await visivel(s.pg, '#p-horarios-erro'), false, 'confirmou: o erro sai na hora');
+    await s.pg.click('#enviar-dados');
+    await s.pg.waitForFunction(() => document.querySelector('#obrigado-sem-dados').hidden);
+    let reg = s.api.find((a) => a.nome === 'registrarPedido');
+    assert.ok(reg && typeof reg.corpo.horarios === 'string', 'horário confirmado vai');
+    assert.equal(REGRAS.validarRegistro(reg.corpo).ok, true, JSON.stringify(REGRAS.validarRegistro(reg.corpo)));
+    assert.deepEqual(s.erros, []);
+    await s.ctx.close();
+    // (c) mexer num dia confirma sozinho, como em /abrir/; trocar o tipo do negócio redesenha e desmarca
+    s = await paginaApi(nav, base);
+    await s.pg.goto(base + Q);
+    await s.pg.waitForFunction(() => { const e = document.querySelector('#obrigado-sem-dados'); return e && !e.hidden; });
+    await s.pg.selectOption('#p-nicho', 'barbearia'); await s.pg.waitForTimeout(400);
+    await s.pg.selectOption('#h-qua-fecha', '13:00');
+    assert.equal(await s.pg.isChecked('#p-horarios-confirmo'), true, 'mexer no horário confirma');
+    await s.pg.selectOption('#p-nicho', 'salao');
+    await s.pg.waitForFunction(() => !document.querySelector('#p-horarios-confirmo').checked, null, { timeout: 4000 });
+    await s.pg.selectOption('#h-qua-fecha', '13:00');
+    await preencherObrigado(s.pg);
+    await s.pg.click('#enviar-dados');
+    await s.pg.waitForFunction(() => document.querySelector('#obrigado-sem-dados').hidden);
+    reg = s.api.find((a) => a.nome === 'registrarPedido');
+    assert.match(reg.corpo.horarios, /qua=\d{2}:\d{2}-13:00/);
+    assert.equal(reg.corpo.nicho, 'salao');
+    assert.deepEqual(s.erros, []);
+    await s.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('compra curta · navegador: sem o WhatsApp do suporte configurado, "Falta pouco" fala de e-mail no texto e no botão', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const conf = { confirmarPagamento: { status: 200, json: { ok: true } }, consultarPedido: { status: 200, json: { ok: true, status: 'pago', prazo_fim: new Date(Date.now() + 70 * H).toISOString() } } };
+    const a = await paginaApi(nav, base, { pedido: Object.assign(SEM_DEPOIS(), { salvo_em: new Date().toISOString() }), api: conf });
+    await a.pg.route('**/checkout.config.js', async (r) => {
+      const resp = await r.fetch(); const corpo = (await resp.text()).replace(/whatsappSuporte:\s*'\d+'/, "whatsappSuporte: ''");
+      assert.match(corpo, /whatsappSuporte: ''/);
+      await r.fulfill({ response: resp, body: corpo });
+    });
+    await a.pg.goto(base + '/obrigado/?pago=mp&produto=pa-abertura-inauguracao&collection_status=approved&payment_id=188866285972');
+    await a.pg.waitForFunction(() => document.querySelector('main').getAttribute('data-estado') === 'confirmado');
+    await a.pg.waitForTimeout(300);   // obrigado.json aplicado
+    assert.equal(await visivel(a.pg, '#obrigado-falta'), true);
+    assert.match(await a.pg.getAttribute('#falta-zap', 'href'), /^mailto:/);
+    assert.equal((await a.pg.textContent('#falta-zap')).trim(), 'Mandar por e-mail');
+    assert.match(await a.pg.textContent('#falta-texto'), /Mande logo por e-mail:$/);
+    assert.doesNotMatch(await a.pg.textContent('#obrigado-falta'), /WhatsApp do suporte/, 'nenhuma frase fala de WhatsApp');
+    assert.deepEqual(a.erros, []);
+    await a.ctx.close();
   } finally { await nav.close(); srv.close(); }
 });

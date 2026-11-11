@@ -1,25 +1,52 @@
 {
-  "_sobre": "Textos de /abrir/. {{plano.*}} é o plano escolhido no fragmento (#plano=aberto|vitrine|aberto_anual|vitrine_anual). {{precos.abertura.atual}} = inauguração se ela vale (ADR-005), senão padrão. {{abrir.total}} = o valor do link de pagamento escolhido (hoje, sempre só a Abertura; o anual é cobrado no dia em que o site entra no ar, decisão D3). Ordem no celular: resumo do preço, dados, garantia, 7 dias, depois do pagamento, botões, quem monta.",
+  "_sobre": "Textos de /abrir/. {{plano.*}} é o plano escolhido no fragmento (#plano=aberto|vitrine|aberto_anual|vitrine_anual). {{precos.abertura.atual}} = inauguração se ela vale (ADR-005), senão padrão. {{abrir.total}} = o valor do link de pagamento escolhido (hoje, sempre só a Abertura; o anual é cobrado no dia em que o site entra no ar, decisão D3). Ordem no celular (compra curta, 11/11/2026): cartão do negócio, preço de hoje (conta), o que você leva, WhatsApp e e-mail, bloco recolhido com endereço, horário e nome (adiantar), aceite, garantia em uma linha (pagar.garantia) e o botão de pagar; depois, garantia de prazo, 7 dias, o que acontece depois e quem monta. Meta: borda de baixo do botão a no máximo 1.400 px do topo em 360x640 (scripts/testes/funil.test.mjs).",
   "seo": {
     "titulo": "Escolha o plano e abra o seu negócio | Creat",
-    "descricao": "Veja o total antes de pagar, informe WhatsApp, endereço e horário e pague a Abertura por Pix ou cartão. Mensalidade só com o site no ar."
+    "descricao": "Veja o total antes de pagar, informe WhatsApp e e-mail e pague a Abertura por Pix ou cartão. Endereço e horário podem ir depois. Mensalidade só com o site no ar."
   },
-  "titulo": "Falta pouco para abrir a {negocio}.",
+  "titulo": "Falta pouco para abrir as portas.",
+  "_titulo": "Sem o nome no título (PG-N4: nenhum artigo serve para todo nome). O nome do negócio fica no cartão logo abaixo, com Ver a prévia de novo.",
   "tituloSemNome": "Falta pouco para abrir o seu negócio.",
   "voltarPrevia": "Voltar para a prévia",
   "cabecalhoDuvidas": "Dúvidas",
   "cabecalhoDuvidasWhatsapp": "Dúvidas no WhatsApp",
   "cabecalhoDuvidasWhatsappAria": "Tirar dúvidas com o Suporte Creat no WhatsApp",
   "_cabecalhoDuvidasWhatsapp": "Só com o WhatsApp do Suporte ativo (vitrine.js montarSuporte, data-rotulo-ok + data-rotulo-ok-fim; até 400 px o fim sai da vista e entra o ícone). Sem ele, o link vai por e-mail e fica Dúvidas.",
-  "progresso": "Nome, tipo de negócio e prévia: pronto. Faltam 2 passos: os dados do negócio e o pagamento.",
-  "resumo": {
-    "mensal": "Hoje: Abertura de R$ {{abrir.total}}. Mensalidade de R$ {{plano.preco}} por mês no cartão, ou anual no Pix, só começa com o site no ar.",
-    "anual": "Hoje: só a Abertura, R$ {{abrir.total}}. O plano anual, R$ {{plano.preco}} pelos 12 meses, é cobrado no dia em que o site entra no ar, por este valor.",
-    "risco": "Sem fidelidade. 7 dias para desistir, com o valor devolvido."
+  "conta": {
+    "_sobre": "Preço de hoje em duas linhas (Hoje / Por mês), com os números dos dados. A linha da inauguração só aparece com o link de inauguração, e a frase dela mora no HTML (span.conta-inaug de abrir/index.html, com o valor padrão em data-v), não aqui.",
+    "hoje": "Hoje",
+    "abertura": "Abertura, uma vez",
+    "porMes": "Por mês",
+    "soNoAr": "só com o site no ar",
+    "meioMensal": "No cartão, ou anual no Pix.",
+    "comNoAr": "No dia em que o site entra no ar",
+    "anual": "12 meses no Pix. Nada do anual é cobrado antes."
+  },
+  "leva": {
+    "titulo": "O que você leva",
+    "_itens": "Caminhos em conteudo/home.json: o texto mora lá (Abertura e plano Aberto; o Vitrine inclui tudo do Aberto). Mudou lá, muda aqui sozinho.",
+    "itens": [
+      "precos.abertura.inclui.5",
+      "precos.abertura.inclui.1",
+      "precos.abertura.inclui.2",
+      "precos.planos.aberto.inclui.0"
+    ],
+    "vitrine": "precos.planos.vitrine.inclui.1",
+    "_vitrine": "Uma linha a mais, só com o Vitrine ou o Vitrine anual marcado (li[data-se-plano=vitrine] em abrir/index.html): o que o Vitrine soma ao Aberto."
+  },
+  "adiantar": {
+    "_sobre": "Bloco recolhido (details fechado) com endereço, horário e nome. O servidor aceita o pedido sem eles (docs/PEDIDO-API.md); sem endereço ou horário a produção para e o suporte pede pelo WhatsApp (docs/EXECUTOR.md, passo (e)). O prazo dos termos v2 (cláusula 5) conta da confirmação do pagamento: nada aqui diz que ele espera estes dados.",
+    "titulo": "Endereço e horário: agora ou depois",
+    "texto": "O site só é montado com eles. Adiante aqui ou mande logo depois do pagamento, pelo WhatsApp do suporte.",
+    "_textoRegra": "Fato da produção (docs/EXECUTOR.md, passo (e), Saída 6), nunca condição de prazo: a cláusula 5 dos termos v2 conta as 72 h da confirmação do pagamento. Quem manda é o comprador. A política de privacidade v4 (seção 7) permite ao suporte escrever ao comprador pago sobre os dados que faltam (roteiro R-dados), mas a página não promete esse passo.",
+    "_texto": "Depois do pagamento, a página do pedido (/obrigado/) mostra o bloco faltaDados com o botão do WhatsApp do suporte e o número do pedido.",
+    "horariosAjuda": "Começa com o comum do seu nicho. Ajuste os dias e as horas e marque a confirmação: sem ela, o horário não vai no pedido.",
+    "horariosConfirmo": "Este é o horário do meu negócio"
   },
   "plano": {
     "rotulo": "Seu plano",
     "trocar": "Trocar de plano",
+    "diferenca": "O Vitrine soma ao Aberto 4 posts por mês para o seu Instagram. Hoje você paga só a Abertura em qualquer plano.",
     "opcoes": {
       "aberto": "Aberto · R$ {{precos.planos.aberto}} por mês no cartão",
       "vitrine": "Vitrine · R$ {{precos.planos.vitrine}} por mês no cartão",
@@ -39,8 +66,8 @@
     "_regraContador": "Contadores desligados (checkout.config.js contadoresAoVivo: false, decisão D1) até o número vir de pedido pago gravado em servidor. Mesmo ligados, só com dados/precos.json de até 48 h. O preço de inauguração vale até 7 dias (ADR-005)."
   },
   "campos": {
-    "titulo": "Os dados do seu negócio",
-    "texto": "Com o nome do negócio, que veio da prévia, o WhatsApp, o endereço e o horário, a equipe monta o site sem precisar perguntar nada. Seu nome e seu e-mail servem para falarmos com você sobre o pedido.",
+    "titulo": "Para registrar o pedido",
+    "_texto": "Antes de pagar, só o indispensável: WhatsApp e e-mail (nome, tipo e cidade vêm da prévia; o campo aparece só se faltar).",
     "responsavel": {
       "rotulo": "Seu nome (responsável)",
       "ajuda": "Quem a equipe chama para aprovar o site."
@@ -48,7 +75,7 @@
     "whatsapp": {
       "rotulo": "WhatsApp que recebe os pedidos",
       "exemplo": "(11) 9XXXX-XXXX",
-      "ajuda": "Com DDD. É para este número que os clientes vão pedir horário."
+      "ajuda": "Com DDD. Os clientes pedem horário por ele."
     },
     "endereco": {
       "rotulo": "Endereço completo",
@@ -74,7 +101,7 @@
     "email": {
       "rotulo": "E-mail",
       "exemplo": "voce@exemplo.com.br",
-      "ajuda": "Para falarmos com você sobre o pedido e mandarmos os termos que você aceitou. Não mandamos propaganda."
+      "ajuda": "Para os termos e o pedido. Sem propaganda."
     }
   },
   "aceite": {
@@ -100,7 +127,9 @@
     "_sobre": "Linhas coladas no botão Pagar de /abrir/ (pacote 2A). recebedor fica logo acima do primeiro botão; parcelas logo abaixo; aviso_dados ao lado do botão, com o link para /privacidade/ em linkPrivacidade. O CNPJ é o mesmo de checkout.config.js empresa.documento (CNPJ 57.068.874/0001-06); o nome pessoal do titular não entra aqui.",
     "recebedor": "No Mercado Pago, o recebedor aparece com o CNPJ 57.068.874 (creat.MTT Studio, o mesmo do rodapé).",
     "parcelas": "Pix ou cartão, sem criar conta no Mercado Pago. As condições de parcelamento aparecem lá antes de você pagar. Em qualquer meio, vale o nosso prazo de 7 dias para desistir, com o valor devolvido (Termos, cláusula 6).",
-    "aviso_dados": "Ao tocar em Pagar, enviamos à Creat os dados deste formulário (nome do negócio, cidade, seu nome, WhatsApp, e-mail, endereço e horário) para registrar o pedido. Se você não pagar, apagamos em 30 dias.",
+    "aviso_dados": "Ao tocar em Pagar, enviamos à Creat os dados deste formulário (nome do negócio, cidade, WhatsApp e e-mail, e também o seu nome, o endereço e o horário se você preencher) para registrar o pedido. Se você não pagar, apagamos em 30 dias.",
+    "garantia": "7 dias para desistir com devolução. Mensalidade só com o site no ar. Sem fidelidade.",
+    "_garantia": "Uma linha colada ao botão de pagar. Termos v2: cláusula 6 (7 dias, devolução) e cláusula 7 (primeira mensalidade só com o site no ar; sem fidelidade nem multa).",
     "linkPrivacidade": "Ler a política de privacidade",
     "botaoTeste": "Pagar R$ 1 (teste)"
   },

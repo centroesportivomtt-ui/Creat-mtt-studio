@@ -391,7 +391,7 @@ A Meta revisa este texto junto com o anúncio (Meta Blueprint, Padrões de Publi
 |---|---|
 | Quero ver o meu site pronto | F2 de `../whatsapp-scripts.md` (pergunta o nome do negócio) |
 | Quanto custa? | R2 (Abertura e mensalidade juntas, com a regra de que a mensalidade só começa com o site no ar) |
-| Como funciona? | "Você me diz o nome do negócio, eu mando o link e você vê o site pronto com o pedido de horário no seu WhatsApp. Se gostar, paga a Abertura por Pix ou cartão, manda 4 dados e a equipe deixa o site pronto para você aprovar em até {{precos.prazoHoras}} h." |
+| Como funciona? | "Você me diz o nome do negócio, eu mando o link e você vê o site pronto com o pedido de horário no seu WhatsApp. Se gostar, paga a Abertura por Pix ou cartão e manda o endereço e o horário do negócio. O prazo de {{precos.prazoHoras}} h para o site ficar pronto para você aprovar conta da confirmação do pagamento." |
 
 **Mensagem pré-preenchida, uma por anúncio.** A pessoa pode editar, mas a maioria envia como está. É assim que a equipe sabe de qual anúncio veio a conversa enquanto não houver a API oficial.
 

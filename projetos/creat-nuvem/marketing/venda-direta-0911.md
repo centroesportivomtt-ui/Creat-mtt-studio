@@ -101,7 +101,7 @@ Conta: Abertura R$ 297 + Vitrine anual R$ 2.970 = R$ 3.267 numa venda. Abertura 
 
 > Pagamento confirmado, {nome}. Obrigado pela confiança.
 > Agora me mande 4 dados: o nome do negócio como está na fachada, o WhatsApp que recebe os pedidos, o endereço e o horário de funcionamento.
-> Com os 4 aqui, o site fica pronto para você aprovar em até 72 h. Logo e fotos são opcionais e podem vir depois.
+> O prazo de 72 h para o site ficar pronto para você aprovar conta da confirmação do pagamento. Logo e fotos são opcionais e podem vir depois.
 > Você acompanha a equipe montando o seu site por este link: {link_da_sede}
 
 ## Objeções
