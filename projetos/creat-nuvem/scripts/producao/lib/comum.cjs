@@ -58,6 +58,50 @@ function homePadrao() { return envOuPadrao('CREAT_HOME', hostPadrao() + '/'); }
 function modeloUrlSites() { return envOuPadrao('CREAT_URL_SITES', hostPadrao() + '/sites/{slug}/'); }
 /* as origens que respondem pela vitrine hoje: a canônica em uso primeiro, depois as outras conhecidas */
 function origensDaVitrine() { return [...new Set([hostPadrao(), ENDERECO.canonico, ENDERECO.antigo])]; }
+
+/*
+ * Onde o canônico ainda é TEXTO FIXO fora daqui (não segue CREAT_HOST): canonical, og:url, og:image e JSON-LD
+ * das 6 páginas indexáveis (pacote H1), CREAT_ENDERECO.canonico do checkout.config.js e ORIGEM dos e-mails em
+ * schema/pedido-regras.mjs (copiado byte a byte para src/lib/pa/regras.js do app). O checar.cjs exige que cada
+ * um seja igual a ENDERECO.canonico: se o canônico mudar aqui, nenhum fica para trás em silêncio.
+ * Devolve [{ arquivo, onde, valor }]; valor null = não achou (também é defeito).
+ */
+const PAGINAS_COM_ENDERECO = Object.freeze(['index.html', 'abrir/index.html', 'obrigado/index.html', 'termos/index.html', 'privacidade/index.html', 'bastidores/index.html']);
+function enderecosFixos(raiz) {
+  const base = raiz || RAIZ;
+  const achados = [];
+  const ler = (rel) => { try { return fs.readFileSync(path.join(base, rel), 'utf8'); } catch (e) { return null; } };
+  for (const rel of PAGINAS_COM_ENDERECO) {
+    const h = ler(rel);
+    if (h === null) { achados.push({ arquivo: rel, onde: 'arquivo', valor: null }); continue; }
+    const um = (onde, re, obrigatorio) => { const m = h.match(re); if (m || obrigatorio) achados.push({ arquivo: rel, onde, valor: m ? m[1] : null }); };
+    um('canonical', /<link\s+rel="canonical"\s+href="([^"]*)"/i, true);
+    um('og:url', /<meta\s+property="og:url"\s+content="([^"]*)"/i, true);
+    um('og:image', /<meta\s+property="og:image"\s+content="([^"]*)"/i, false);
+    for (const m of h.matchAll(/<script\s+type="application\/ld\+json">([\s\S]*?)<\/script>/gi)) {
+      let j;
+      try { j = JSON.parse(m[1]); } catch (e) { achados.push({ arquivo: rel, onde: 'JSON-LD', valor: null }); continue; }
+      (function andar(x, chave) {
+        if (typeof x === 'string') { if (/^https?:\/\//.test(x) && !/^https:\/\/schema\.org/.test(x)) achados.push({ arquivo: rel, onde: 'JSON-LD ' + chave, valor: x }); }
+        else if (x && typeof x === 'object') for (const k of Object.keys(x)) { if (k !== 'sameAs') andar(x[k], Array.isArray(x) ? chave : k); }   // sameAs aponta para fora (redes)
+      })(j, '');
+    }
+  }
+  const ck = ler('checkout.config.js');
+  const mc = ck && ck.match(/canonico:\s*'([^']*)'/);
+  achados.push({ arquivo: 'checkout.config.js', onde: 'CREAT_ENDERECO.canonico', valor: mc ? mc[1] : null });
+  const rg = ler('schema/pedido-regras.mjs');
+  const mo = rg && rg.match(/^const ORIGEM = '([^']*)';/m);
+  achados.push({ arquivo: 'schema/pedido-regras.mjs', onde: 'ORIGEM', valor: mo ? mo[1] : null });
+  return achados;
+}
+/* o achado segue o canônico? ORIGEM e CREAT_ENDERECO.canonico são a origem pura; o resto, origem + caminho */
+function enderecoFixoCerto(a, canonico) {
+  if (typeof a.valor !== 'string') return false;
+  const c = canonico || ENDERECO.canonico;
+  if (a.onde === 'ORIGEM' || a.onde === 'CREAT_ENDERECO.canonico') return a.valor === c;
+  return a.valor.startsWith(c + '/');
+}
 /* data de hoje na Bahia (UTC-3, sem horário de verão), AAAA-MM-DD; agora pode vir de teste */
 function hojeNaBahia(agora) { return new Date((agora ? new Date(agora) : new Date()).getTime() - 3 * 3600e3).toISOString().slice(0, 10); }
 /* o endereço antigo ainda vale como destino de anúncio? (até antigoAceitoAte, inclusive). hoje: AAAA-MM-DD opcional */
@@ -205,6 +249,6 @@ function listarArquivos(dir) {
 }
 
 module.exports = {
-  RAIZ, SCHEMA, MOTOR, ENDERECO, HOME_PADRAO, URL_SITES_PADRAO, SLUG_RE, hostPadrao, homePadrao, modeloUrlSites, origensDaVitrine, hojeNaBahia, antigoAceito, ErroCampo, ErroLista, lerArgs, pastaSaida, lerJson, gravarJson,
+  RAIZ, SCHEMA, MOTOR, ENDERECO, HOME_PADRAO, URL_SITES_PADRAO, SLUG_RE, hostPadrao, homePadrao, modeloUrlSites, origensDaVitrine, PAGINAS_COM_ENDERECO, enderecosFixos, enderecoFixoCerto, hojeNaBahia, antigoAceito, ErroCampo, ErroLista, lerArgs, pastaSaida, lerJson, gravarJson,
   ajv, validador, REF, errosAjv, carregarPreset, motor, copiarPasta, listarArquivos
 };

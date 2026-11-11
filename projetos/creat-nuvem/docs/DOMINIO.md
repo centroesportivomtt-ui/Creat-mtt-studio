@@ -8,8 +8,9 @@ Atualizado em 11/11/2026 (pacote H2, Trilho). Decisão do coordenador: o endere�
 |---|---|---|
 | 10/11/2026 | O dono criou no Registro.br, zona `creatmtt.com.br`, a entrada `CNAME` de nome `nuvem` para `base44.onrender.com`. Sem custo. | clique P3 de `docs/CLIQUES-DO-DONO.md`, marcado como feito |
 | 10/11/2026 | Domínio personalizado verificado no app Base44 `6aefffe66b684db9404b1994`, com cadeado. | `conferir-no-ar.cjs`, grupo E: certificado do emissor WE1, válido, 89 dias de prazo em 11/11 |
-| 11/11/2026 | O canônico virou o padrão de tudo, num lugar só: `ENDERECO` em `scripts/producao/lib/comum.cjs`. Os outros scripts leem de lá. | `scripts/testes/endereco-montagem.test.mjs` (12 testes, inclusive "nenhum outro script escreve o endereço") |
+| 11/11/2026 | O canônico virou o padrão de tudo, num lugar só: `ENDERECO` em `scripts/producao/lib/comum.cjs`. Os outros scripts leem de lá. | `scripts/testes/endereco-montagem.test.mjs` (inclusive "nenhum outro script escreve o endereço") |
 | 11/11/2026 | A vitrine (sitemap, robots), os sites e as demos (canonical, og:url, sitemap, robots, link da home), o link de aprovação do rascunho, o pedido montado pelo executor (prévia) e o passo a passo do `publicar-site` nascem no canônico. | `npm test`, `checar.cjs` ("endereço único") |
+| 11/11/2026 | Onde o canônico ainda é texto fixo fora de `comum.cjs` (canonical, og:url, og:image e JSON-LD das 6 páginas indexáveis, `CREAT_ENDERECO.canonico` do `checkout.config.js` e `ORIGEM` dos e-mails em `schema/pedido-regras.mjs`), uma trava compara com `ENDERECO.canonico`. Se o canônico mudar e um deles ficar para trás, reprova. | `checar.cjs` ("endereço único", 21 endereços fixos), `enderecosFixos()` de `comum.cjs`, `endereco-montagem.test.mjs` e `endereco.test.mjs` (os dois leem o canônico de `comum.cjs`) |
 | 11/11/2026 | A página nova (pacote H1, `assets/canonico.js`, configuração `CREAT_ENDERECO {canonico, antigos}` em `checkout.config.js`) leva quem abre o antigo ao mesmo caminho no canônico, com consulta e fragmento, antes de medir, gravar ou pedir consentimento. **Ainda não publicada em 11/11 01:40Z.** | grupo E do `conferir-no-ar.cjs`: os 3 saltos saem NÃO VERIFICADO até a publicação; depois, saem ok ou defeito |
 
 Os sites em `/sites/<slug>/` (motor congelado, ADR-001) **não** ganham redirecionamento. Eles respondem nos dois endereços e só passam a nascer com o canônico em canonical, og:url, sitemap e link da home.
@@ -41,7 +42,24 @@ Até 13/11 (horário da Bahia) o `validar-anuncio.cjs` aceita o antigo com o avi
 
 ## Como voltar atrás
 
-Tudo em código lê `ENDERECO` de `lib/comum.cjs`. Para voltar ao antigo sem editar nada:
+O canônico aparece em quatro lugares. `CREAT_HOST` só cobre o primeiro: os scripts e a montagem. Os outros três são texto fixo e só mudam editando o arquivo e publicando.
+
+| lugar | o que lê o canônico | segue `CREAT_HOST`? |
+|---|---|---|
+| `ENDERECO` em `scripts/producao/lib/comum.cjs` | montagem (sitemap, robots), sites e demos novos, conferências, validador de anúncio, link de aprovação, prévia do executor | sim |
+| `CREAT_ENDERECO` em `checkout.config.js` | o salto do antigo ao canônico (`assets/canonico.js`) e o link da prévia que a vitrine copia | não |
+| as 6 páginas indexáveis (`index`, `abrir`, `obrigado`, `termos`, `privacidade`, `bastidores`) | canonical, og:url, og:image e JSON-LD | não |
+| `ORIGEM` em `schema/pedido-regras.mjs`, copiado byte a byte para `src/lib/pa/regras.js` do app | os links dos e-mails ao cliente e ao suporte (obrigado, termos, aprovação do rascunho) | não |
+
+O `checar.cjs` exige que os quatro sejam iguais a `ENDERECO.canonico`. Faça a volta nesta ordem. Entre os passos (b) e (d) o `checar.cjs` reprova de propósito: ele aponta o que ainda falta trocar.
+
+**(a) Emergência: desligar o salto.** Em `checkout.config.js`, deixe `antigos: []` em `CREAT_ENDERECO` e publique a vitrine. O antigo para de levar ao canônico; os dois endereços seguem servindo o mesmo conteúdo. É o que resolve uma tela branca ou um laço no salto. O `checar.cjs` avisa ("salto DESLIGADO de propósito"), não reprova. Não tire o `canonico` do `CREAT_ENDERECO`: sem ele a configuração fica inválida e a vitrine cai num caminho que o H1 não documenta.
+
+**(b) As 6 páginas.** Troque canonical, og:url, og:image e JSON-LD para o endereço de destino. Publique.
+
+**(c) Os e-mails.** Troque `ORIGEM` em `schema/pedido-regras.mjs`, copie o arquivo byte a byte para `src/lib/pa/regras.js` do app e publique o app (compare os dois `sha256sum`, `docs/PEDIDO-API.md`). Até lá, os recibos seguem com links no canônico antigo.
+
+**(d) A fonte dos scripts.** Para um teste rápido sem editar nada, `CREAT_HOST` troca o padrão dos scripts e da montagem:
 
 ```bash
 cd projetos/creat-nuvem
@@ -50,7 +68,19 @@ node scripts/montar-publico.cjs          # sitemap e robots no antigo
 node scripts/conferir-no-ar.cjs          # conferência no antigo
 ```
 
-Os sites gerados com `CREAT_HOST` saem com canonical e home no antigo. Para desligar o salto da vitrine, o pacote H1 tira `nuvem.creatmtt.com.br` de `canonico` em `CREAT_ENDERECO` (`checkout.config.js`) e publica de novo; o canônico nunca redireciona, então não há laço. Para voltar de vez, troque `ENDERECO.canonico` em `lib/comum.cjs` e rode `npm test`. O DNS não precisa mudar: os dois endereços continuam ligados ao mesmo app. **Não apague** a entrada `CNAME nuvem` no Registro.br.
+Para voltar de vez, troque `ENDERECO.canonico` (e `ENDERECO.antigo`, se o papel dos dois se inverter) em `lib/comum.cjs`, troque `CREAT_ENDERECO.canonico` no `checkout.config.js` para o mesmo valor e rode `npm test` e `node scripts/checar.cjs`. Os sites já entregues ficam com o canonical que tinham; os novos nascem no endereço de destino.
+
+O DNS não precisa mudar: os dois endereços continuam ligados ao mesmo app. **Não apague** a entrada `CNAME nuvem` no Registro.br.
+
+## Depois de publicar a página nova
+
+Até a publicação, o grupo E prova o salto só por simulação local (dois hosts por roteamento, `endereco.test.mjs`). Isso não é prova de produção. Depois de publicar:
+
+1. Rode de novo `node scripts/conferir-no-ar.cjs`. Os 3 saltos deixam de sair NÃO VERIFICADO e passam a contar: certo ou defeito.
+2. Em celular real, internet móvel, abra no antigo uma URL de volta do Mercado Pago com `utm_source=teste-<agente>` (ex.: `/obrigado/?payment_id=99999999999&resultado=aprovado&utm_source=teste-trilho`). Tem de chegar ao canônico com caminho, consulta e fragmento.
+3. Confira a ordem dos scripts que o Base44 injeta no `<head>` no ar: `checkout.config.js` e `assets/canonico.js` têm de vir antes de qualquer medição.
+4. Com rede lenta, veja se o primeiro corpo do antigo aparece quando o canônico demora. Não pode haver tela branca.
+5. Não publique antes de o achado de tela branca estar corrigido. Falhou no ar: passo (a) acima, corrige, publica e confere de novo.
 
 ## Como conferir
 
@@ -66,5 +96,5 @@ Antes da publicação da página nova, os 3 saltos (`/`, `/abrir/?nicho=barbeari
 ## Fica para a onda 4 (ficha 4F)
 
 - `checar.cjs`: `node --check` de todos os `.cjs` de `.claude/skills` (não tem a ver com o endereço).
-- O marcador `{{HOST}}` já é trocado e travado na montagem, mas as páginas ainda não o usam (são do pacote H1). Quando uma página precisar do endereço no HTML, ela usa `{{HOST}}`.
+- O marcador `{{HOST}}` já é trocado e travado na montagem, mas as páginas ainda não o usam (são do pacote H1). Até lá, a trava dos endereços fixos do `checar.cjs` impede que elas fiquem para trás. Trocar o HTML por `{{HOST}}` tiraria o passo (b) da volta.
 - Verificar o domínio novo na Meta antes dos anúncios novos e trocar os links do Stripe e do portal, no ato do coordenador.

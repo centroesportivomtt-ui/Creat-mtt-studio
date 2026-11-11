@@ -6,7 +6,7 @@ Trilho, 10/11/2026. Substitui o workflow da Cloudflare (`.github/workflows/rotin
 
 A página só mostra o preço de inauguração (R$ 297) com `dados/precos.json` carimbado há no máximo 7 dias (ADR-005). O carimbo só vale depois de publicado no app Base44.
 
-- Último carimbo no ar: `2026-11-09T23:45:26Z` (lido em 10/11 em `https://creat-nuvem-404b1994.base44.app/dados/precos.json` e em `public/dados/precos.json` do app).
+- Último carimbo no ar: `2026-11-09T23:45:26Z` (lido em 10/11 em `https://creat-nuvem-404b1994.base44.app/dados/precos.json` e em `public/dados/precos.json` do app). Desde 11/11 a leitura é no canônico, `https://nuvem.creatmtt.com.br/dados/precos.json` (`docs/DOMINIO.md`); o antigo serve o mesmo arquivo.
 - **Prazo duro: 16/11/2026, por volta das 23:50 UTC (20:50 em Salvador).** Sem carimbo novo até lá, a página passa a mostrar R$ 497 enquanto os anúncios e os links de pagamento seguem em R$ 297. Anúncio e destino com preços diferentes.
 - O primeiro carimbo deve rodar **à mão, logo depois de a tarefa ser criada**, sem esperar as 06:30 do dia seguinte (seção 7).
 
@@ -50,7 +50,7 @@ Você é o carimbo diário do Porta Aberta, da Creat Nuvem. Português do Brasil
 
 ## 4. Roteiro, passo a passo
 
-Variáveis: `APP=6aefffe66b684db9404b1994`, `O=https://creat-nuvem-404b1994.base44.app`, `P=projetos/creat-nuvem`, `TMP` = pasta temporária da sessão (fora do repositório), `DONO=carimbo:<AAAA-MM-DDTHH:MM>` (UTC).
+Variáveis: `APP=6aefffe66b684db9404b1994`, `O=https://nuvem.creatmtt.com.br` (canônico desde 11/11, o mesmo do `docs/EXECUTOR.md`; o antigo `creat-nuvem-404b1994.base44.app` continua no ar com o mesmo conteúdo, `docs/DOMINIO.md`), `P=projetos/creat-nuvem`, `TMP` = pasta temporária da sessão (fora do repositório), `DONO=carimbo:<AAAA-MM-DDTHH:MM>` (UTC).
 
 1. **Idade do que está no ar.** `curl -sS $O/dados/precos.json` e anote `atualizado_em` (é o "antes").
 2. **Pausa e trava.** `query_entities` `Operacao` `{chave: {$in: ["pausado","trava_deploy","deploys_ultima_hora","vagas_estado"]}}` e salve em `$TMP/operacao.json`. Pausado ligado: pare (prompt, item 6).
@@ -93,7 +93,7 @@ Regra de idade (usada pelo gestor e por quem ler o alerta): até 30 horas, norma
 1. Ensaio verde da onda 1 (`docs/EXECUTOR.md` seção 9) e a linha `trava_deploy` criada em `Operacao`.
 2. Merge do branch de trabalho no `main` (a tarefa lê os scripts do repositório da sessão principal).
 3. Criar a tarefa: `create_trigger` com `name: "Porta Aberta · carimbo diário"`, `cron_expression: "CRON_TZ=America/Bahia 30 6 * * *"`, sem `create_new_session_on_fire`, `connectors: ["Base44"]`, `initiation: "human_schedule"` e o prompt da seção 3.
-4. Disparar uma vez na hora (`fire_trigger`) e conferir `curl -sS https://creat-nuvem-404b1994.base44.app/dados/precos.json` com a data nova. **Limite: 16/11/2026 23:45 UTC.**
+4. Disparar uma vez na hora (`fire_trigger`) e conferir `curl -sS https://nuvem.creatmtt.com.br/dados/precos.json` com a data nova. **Limite: 16/11/2026 23:45 UTC.**
 5. No mesmo ato do deploy das funções da onda 1, trocar `FUNCOES_PUBLICADAS = false` para `true` em `scripts/conferir-no-ar.cjs` e rodar `node scripts/conferir-no-ar.cjs --so-funcoes --exigir-funcoes`. Colar a última linha no relatório. A frase "funcionam de ponta a ponta" só sai com o grupo I inteiro conferido; se a última linha disser "as funções do pedido NÃO foram conferidas (N itens)", ninguém escreve "funcionando".
 6. Linhas de prova da conferência (não apagar): `Operacao` com `chave: "prova_conferencia"` e `PedidoPortaAberta` com `pedido_id: "PA-PROVACONF1"` (`eh_teste: true`, `produto: "pa-teste"`, valor 0, sem dado pessoal, fora de toda contagem). A conferência exige que o update anônimo no id delas dê 403, o que só acontece com a linha existindo, enquanto list e filter devolvem `[]`. Se ela acusar "a linha de prova sumiu": `create_checkpoint`, recriar a linha pelo MCP com os mesmos campos, conferir com `query_entities` e trocar o id em `LINHAS_DE_PROVA` no script. Limpeza de pedidos de teste nunca leva estas duas linhas.
 

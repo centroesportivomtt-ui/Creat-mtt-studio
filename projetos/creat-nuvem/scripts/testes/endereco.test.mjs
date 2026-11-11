@@ -26,7 +26,10 @@ const { ENTRA } = require(path.join(RAIZ, 'scripts', 'montar-publico.cjs'));
 const FONTE_CK = fs.readFileSync(path.join(RAIZ, 'checkout.config.js'), 'utf8');
 const FONTE_VIT = fs.readFileSync(path.join(RAIZ, 'assets', 'vitrine.js'), 'utf8');
 
-const HA = 'creat-nuvem-404b1994.base44.app', HN = 'nuvem.creatmtt.com.br', HO = 'outro.exemplo';
+// o canônico e o antigo vêm da fonte única (ENDERECO de scripts/producao/lib/comum.cjs): se ela mudar, as páginas
+// que ficaram para trás reprovam aqui, e não passam por terem sido conferidas contra uma constante do próprio teste
+const { ENDERECO } = require(path.join(RAIZ, 'scripts', 'producao', 'lib', 'comum.cjs'));
+const HA = new URL(ENDERECO.antigo).hostname, HN = new URL(ENDERECO.canonico).hostname, HO = 'outro.exemplo';
 const A = 'https://' + HA, N = 'https://' + HN, O = 'https://' + HO;
 const SEGREDO = 'q1Zr8Xn4Lw0bT6yHc9VfEA', ID = 'PA-7K3QX2MD4R';
 const PREF_FEIRA = '2189692475-c33953d5-4c69-4bc9-8de8-0ff4d7dfbeff';
@@ -36,29 +39,36 @@ const H = 3600 * 1000;
 const PEDIDO_CHEIO = (o = {}) => Object.assign({
   id: ID, segredo: SEGREDO, produto: 'pa-abertura-inauguracao-2026-11', valor: 297, praca: 'feira',
   link: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=' + PREF_FEIRA, plano: 'vitrine', nicho: 'salao', negocio: 'Studio Bela & Cia', cidade: 'Feira de Santana',
-  responsavel: 'Maria Souza', whatsapp_negocio: '5575991234567', endereco: 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000',
+  responsavel: 'Maria Souza', whatsapp_negocio: '5575900000000', endereco: 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000',
   horarios: 'seg=09:00-18:00;ter=09:00-18:00;qua=09:00-18:00;qui=09:00-18:00;sex=09:00-18:00;sab=09:00-13:00;dom=fechado',
-  email: 'maria@exemplo.com.br', origem: 'utm_source=meta;utm_campaign=feira;utm_content=A1-salao-v1', previa: N + '/previa/#k=salao&n=Studio&p=1',
+  email: 'maria@example.com', origem: 'utm_source=meta;utm_campaign=feira;utm_content=A1-salao-v1', previa: N + '/previa/#k=salao&n=Studio&p=1',
   aceite_termos: '2026-11-10T10:00:00-03:00 termos-v2', paleta: 1, salvo_em: new Date(Date.now() - H).toISOString(), status: 'enviado'
 }, o);
 const EM = new Date(Math.floor((Date.now() - 2 * H) / 1000) * 1000).toISOString();
-const CONSENT = (pixel) => ({ versao: 1, analytics: true, pixel, clarity: pixel, em: EM });
-const PESSOAIS = /Maria Souza|5575991234567|maria@exemplo|Rua das Flores|seg=09/;
+const CONSENT = (pixel, em = EM) => ({ versao: 1, analytics: true, pixel, clarity: pixel, em });
+// Depois do prazo do pedido (20/11/2026), os testes de navegador injetam um prazo de amanhã para continuar valendo.
+const PRAZO_TESTE = Date.now() > C.PRAZO_PEDIDO ? new Date(Date.now() + 24 * H).toISOString() : null;
+const DEPOIS_DO_PRAZO = Math.floor(C.PRAZO_PEDIDO / 1000) + 60;
+const PESSOAIS = /Maria Souza|5575900000000|maria@example|Rua das Flores|seg=09/;
 
 // Memória de localStorage simples, para a parte sem navegador.
 function memoria(inicial = {}) {
   const m = new Map(Object.entries(inicial));
   return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), _m: m };
 }
-const cfg = () => C.configuracao({ canonico: N, antigos: [HA] });
+const cfg = () => C.configuracao({ canonico: N, antigos: [HA], prazo_pedido: PRAZO_TESTE || undefined });
 const loc = (u) => { const x = new URL(u); return { pathname: x.pathname, search: x.search, hash: x.hash, hostname: x.hostname, protocol: x.protocol }; };
 const fragDe = (url) => url.slice(url.indexOf('#') + 1);
 
 /* ======================================================================== 1. sem navegador */
 
 test('H1 configuração: canônico https sem caminho; o próprio canônico nunca entra na lista de antigos (sem laço)', () => {
-  assert.deepEqual(cfg(), { origem: N, host: HN, antigos: [HA] });
-  assert.deepEqual(C.configuracao({ canonico: N, antigos: [HA, HN, 'Ruim Host', 3] }).antigos, [HA]);
+  assert.deepEqual(C.configuracao({ canonico: N, antigos: [HA] }), { origem: N, host: HN, antigos: [HA], prazo: C.PRAZO_PEDIDO });
+  assert.deepEqual(C.configuracao({ canonico: N, antigos: [HA, HN, HN + '.', 'Ruim Host', 3] }).antigos, [HA]);
+  assert.deepEqual(C.configuracao({ canonico: N, antigos: [HA + '.'] }).antigos, [HA], 'ponto final some da lista');
+  assert.equal(C.PRAZO_PEDIDO, Date.parse('2026-11-20T23:59:59-03:00'), 'o pedido atravessa até o fim de 20/11 (Bahia)');
+  assert.equal(C.configuracao({ canonico: N, antigos: [HA], prazo_pedido: '2026-11-15T00:00:00-03:00' }).prazo, Date.parse('2026-11-15T00:00:00-03:00'));
+  assert.equal(C.configuracao({ canonico: N, antigos: [HA], prazo_pedido: 'amanhã' }).prazo, C.PRAZO_PEDIDO, 'prazo ruim vale o padrão');
   for (const ruim of ['http://' + HN, N + '/x', N + ':8443', 'https://u:s@' + HN, N + '/?a=1', 'nada', '']) assert.equal(C.configuracao({ canonico: ruim, antigos: [HA] }), null, ruim);
   assert.equal(C.configuracao(null), null);
   assert.equal(C.configuracao({ canonico: N }), null);
@@ -106,6 +116,13 @@ test('H1 pacote: só id, segredo e o enxuto do pedido e a escolha de medição; 
   const velho = memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO({ id: 'PA-ABCDEFGH', segredo: undefined })), 'creat:consentimento': JSON.stringify(Object.assign(CONSENT(true), { em: new Date(Date.now() - 181 * 24 * H).toISOString() })) });
   assert.equal(C.montarPacote(velho), '');
   assert.equal(C.montarPacote(memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO({ salvo_em: new Date(Date.now() - 31 * 24 * H).toISOString() })) })), '');
+  // da escolha de medição só a RECUSA viaja; aceite fica no antigo e o canônico pergunta de novo
+  const aceito = C.lerTransicao(C.montarPacote(memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO()), 'creat:consentimento': JSON.stringify(CONSENT(true)) }))).pacote;
+  assert.equal('c' in aceito, false, 'aceite não viaja');
+  assert.equal(C.montarPacote(memoria({ 'creat:consentimento': JSON.stringify(CONSENT(true)) })), '', 'só aceite: nada a levar');
+  // depois do prazo o pedido não viaja mais; a recusa continua
+  const depois = C.montarPacote(memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO({ salvo_em: new Date(C.PRAZO_PEDIDO - H).toISOString() })), 'creat:consentimento': JSON.stringify(CONSENT(false, new Date(C.PRAZO_PEDIDO - H).toISOString())) }), DEPOIS_DO_PRAZO);
+  assert.deepEqual(Object.keys(JSON.parse(C.deB64(depois.slice(5)))).sort(), ['c', 'v'], 'depois do prazo: só a recusa');
   // cidade fora da regra sai sozinha; o pedido continua
   const p2 = C.lerTransicao(C.montarPacote(memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO({ cidade: '<b>x</b>' })) }))).pacote.p;
   assert.equal('c' in p2, false); assert.equal(p2.i, ID);
@@ -117,7 +134,7 @@ test('H1 pacote: falha fechada em formato, tamanho, chave extra, tipo, id, segre
   assert.ok(C.lerTransicao(f(bom)).pacote, 'o bom passa');
   const ruins = {
     'chave extra no topo': Object.assign({}, bom, { z: 1 }),
-    'chave extra no pedido': { v: 1, p: Object.assign({}, bom.p, { whatsapp: '5575991234567' }) },
+    'chave extra no pedido': { v: 1, p: Object.assign({}, bom.p, { whatsapp: '5575900000000' }) },
     'versão 2': Object.assign({}, bom, { v: 2 }),
     'sem nada': { v: 1 },
     'id curto': { v: 1, p: Object.assign({}, bom.p, { i: 'PA-ABCDEFGH' }) },
@@ -132,6 +149,8 @@ test('H1 pacote: falha fechada em formato, tamanho, chave extra, tipo, id, segre
     'data no futuro': { v: 1, p: Object.assign({}, bom.p, { t: Math.floor(Date.now() / 1000) + 3600 }) },
     'data velha': { v: 1, p: Object.assign({}, bom.p, { t: Math.floor(Date.now() / 1000) - 31 * 86400 }) },
     'consentimento texto': { v: 1, c: { x: 'true', t: Math.floor(Date.now() / 1000) } },
+    'consentimento aceito (aceite nunca vem de endereço)': { v: 1, c: { x: true, t: Math.floor(Date.now() / 1000) } },
+    'pedido com aceite junto': { v: 1, p: bom.p, c: { x: true, t: Math.floor(Date.now() / 1000) } },
     'consentimento com chave extra': { v: 1, c: { x: true, t: Math.floor(Date.now() / 1000), y: 1 } },
     'lista': [bom],
     'protótipo': '{"v":1,"__proto__":{"x":1},"c":{"x":true,"t":' + Math.floor(Date.now() / 1000) + '}}',
@@ -139,25 +158,52 @@ test('H1 pacote: falha fechada em formato, tamanho, chave extra, tipo, id, segre
   };
   for (const [nome, o] of Object.entries(ruins)) assert.equal(C.lerTransicao(f(o)).pacote, null, nome);
   assert.equal(C.lerTransicao('m=v1.' + 'A'.repeat(C.MAX_B64 + 1)).pacote, null, 'gigante');
+  const pertoDoPrazo = Object.assign({}, bom.p, { t: Math.floor(C.PRAZO_PEDIDO / 1000) - 3600 });
+  assert.equal(C.lerTransicao(f({ v: 1, p: pertoDoPrazo }), DEPOIS_DO_PRAZO).pacote, null, 'pedido depois do prazo');
+  assert.ok(C.lerTransicao(f({ v: 1, p: pertoDoPrazo }), DEPOIS_DO_PRAZO - 120).pacote, 'o mesmo pedido antes do prazo passa');
+  assert.ok(C.lerTransicao(f({ v: 1, c: { x: false, t: DEPOIS_DO_PRAZO } }), DEPOIS_DO_PRAZO + 60).pacote, 'a recusa continua depois do prazo');
   assert.equal(C.lerTransicao('m=v1.@@@~k=salao').pacote, null, 'fora do alfabeto');
   assert.equal(C.lerTransicao('m=v1.@@@~k=salao').original, 'k=salao', 'o original sobrevive ao pacote ruim');
   assert.equal(C.lerTransicao('m=v9.QUFB').pacote, null, 'versão desconhecida');
   assert.equal(C.lerTransicao('k=salao'), null, 'fragmento comum não é transição');
 });
 
-test('H1 aplicar: o do canônico vence; só grava onde está vago; pedido gravado é enxuto e o leitor da vitrine aceita', async () => {
-  const pac = C.lerTransicao(C.montarPacote(memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO()), 'creat:consentimento': JSON.stringify(CONSENT(true)) }))).pacote;
+test('H1 aplicar: só com o Referer do salto; o pedido do canônico vence; recusar nunca vira aceitar', () => {
+  const agora = Math.floor(Date.now() / 1000), c = cfg();
+  const pac = C.lerTransicao(C.montarPacote(memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO()), 'creat:consentimento': JSON.stringify(CONSENT(false)) }), agora, c.prazo), agora, c.prazo).pacote;
+  assert.ok(pac && pac.p && pac.c);
+  // sem a prova do salto nada entra (fragmento colado, mandado por mensagem ou vindo de outro site)
+  const semProva = memoria();
+  assert.deepEqual(C.aplicar(pac, semProva), { pedido: false, consentimento: false });
+  assert.deepEqual(C.aplicar(pac, semProva, 'sim'), { pedido: false, consentimento: false }, 'só true conta');
+  assert.equal(semProva._m.size, 0);
+  // a prova: Referer exatamente igual à origem do antigo (o salto manda só a origem)
+  for (const ok of [A + '/', 'https://' + HA + './', 'https://' + HN + './']) assert.equal(C.veioDoAntigo(c, ok), true, ok);
+  for (const ruim of ['', A, A + '/termos/', A + '/?x=1', N + '/', O + '/', 'https://atacante.exemplo/', 'http://' + HA + '/', 'https://' + HA + '.atacante.exemplo/']) assert.equal(C.veioDoAntigo(c, ruim), false, ruim);
   const vazio = memoria();
-  assert.deepEqual(C.aplicar(pac, vazio), { pedido: true, consentimento: true });
+  assert.deepEqual(C.aplicar(pac, vazio, true), { pedido: true, consentimento: true });
   const p = JSON.parse(vazio.getItem('creat:pedido:v1'));
-  assert.equal(p.enxuto, true); assert.equal(p.id, ID); assert.equal(p.segredo, SEGREDO);
+  assert.equal(p.enxuto, true); assert.equal(p.id, ID); assert.equal(p.segredo, SEGREDO); assert.equal(p.veio_do_endereco_antigo, true);
   assert.doesNotMatch(vazio.getItem('creat:pedido:v1'), PESSOAIS);
-  assert.equal(JSON.parse(vazio.getItem('creat:consentimento')).pixel, true);
-  const outro = PEDIDO_CHEIO({ id: 'PA-AAAAAAAAAA' });
-  const cheio = memoria({ 'creat:pedido:v1': JSON.stringify(outro), 'creat:consentimento': JSON.stringify(CONSENT(false)) });
-  assert.deepEqual(C.aplicar(pac, cheio), { pedido: false, consentimento: false });
+  assert.equal(JSON.parse(vazio.getItem('creat:consentimento')).pixel, false);
+  assert.equal(JSON.parse(vazio.getItem('creat:consentimento')).em, EM, 'o prazo de 180 dias continua do dia da recusa');
+  // pedido do canônico vence
+  const cheio = memoria({ 'creat:pedido:v1': JSON.stringify(PEDIDO_CHEIO({ id: 'PA-AAAAAAAAAA' })) });
+  assert.equal(C.aplicar(pac, cheio, true).pedido, false);
   assert.equal(JSON.parse(cheio.getItem('creat:pedido:v1')).id, 'PA-AAAAAAAAAA');
-  assert.equal(JSON.parse(cheio.getItem('creat:consentimento')).pixel, false);
+  // recusa do antigo (há 2 h) contra aceite do canônico: o aceite mais velho cai; o mais novo fica
+  const aceiteVelho = memoria({ 'creat:consentimento': JSON.stringify(CONSENT(true, new Date(Date.now() - 72 * H).toISOString())) });
+  assert.equal(C.aplicar(pac, aceiteVelho, true).consentimento, true);
+  assert.equal(JSON.parse(aceiteVelho.getItem('creat:consentimento')).pixel, false, 'recusa mais nova vence aceite mais velho');
+  const aceiteNovo = memoria({ 'creat:consentimento': JSON.stringify(CONSENT(true, new Date(Date.now() - 60 * 1000).toISOString())) });
+  assert.equal(C.aplicar(pac, aceiteNovo, true).consentimento, false);
+  assert.equal(JSON.parse(aceiteNovo.getItem('creat:consentimento')).pixel, true, 'aceite dado depois da recusa fica');
+  const recusaDaqui = memoria({ 'creat:consentimento': JSON.stringify(CONSENT(false, new Date(Date.now() - 72 * H).toISOString())) });
+  assert.equal(C.aplicar(pac, recusaDaqui, true).consentimento, false, 'recusa daqui fica como está');
+  // aceite forjado nunca grava, nem com a prova do salto: o pacote inteiro cai
+  const forjado = C.lerTransicao('m=v1.' + C.paraB64(JSON.stringify({ v: 1, c: { x: true, t: agora } })));
+  assert.equal(forjado.pacote, null);
+  const v2 = memoria(); assert.deepEqual(C.aplicar(forjado.pacote, v2, true), { pedido: false, consentimento: false }); assert.equal(v2._m.size, 0);
 });
 
 test('H1 <head>: checkout.config.js e canonico.js sem defer antes de qualquer outro script e folha de estilo, nas 8 páginas e na prévia', () => {
@@ -193,35 +239,60 @@ test('H1 o host antigo só existe na lista de antigos, nos arquivos do pacote', 
   }
 });
 
-test('H1 tempo limite: troca que não acontece mostra a página em 2,5 s e libera a vitrine em 8 s; erro dentro do script mostra na hora', () => {
+test('H1 tempo limite: sem resposta do canônico em 2,5 s, cancela, marca a aba e recarrega o antigo inteiro; sem marca possível só mostra; erro mostra na hora', () => {
   const janela = (opcoes = {}) => {
-    const tempos = [], eventos = [], estilo = new Map(), filhos = [];
+    const tempos = [], eventos = [], estilo = new Map(), filhos = [], feitos = [];
     const doc = { documentElement: { style: { setProperty: (k, v) => estilo.set(k, v), removeProperty: (k) => estilo.delete(k) }, appendChild: (x) => filhos.push(x) }, head: { appendChild: (x) => filhos.push(x) }, createElement: () => ({}) };
-    const W = { document: doc, CREAT_ENDERECO: { canonico: N, antigos: [HA] }, localStorage: memoria(), history: { state: null, replaceState() {} },
-      location: Object.assign(loc(A + '/termos/?x=1#k=salao'), { replace: opcoes.replace || (() => {}) }),
-      setTimeout: (f, ms) => tempos.push([ms, f]), dispatchEvent: (e) => eventos.push(e.type) };
+    const ss = opcoes.ss === 'quebrado' ? { getItem() { throw new Error('bloqueado'); }, setItem() { throw new Error('bloqueado'); } } : (opcoes.ss || memoria());
+    const W = { document: doc, CREAT_ENDERECO: { canonico: N, antigos: [HA] }, localStorage: memoria(), sessionStorage: ss, history: { state: null, replaceState() {} },
+      location: Object.assign(loc(opcoes.url || A + '/termos/?x=1#k=salao'), { replace: opcoes.replace || ((u) => feitos.push(['replace', u])), reload: () => feitos.push(['reload']) }),
+      stop: () => feitos.push(['stop']), setTimeout: (f, ms) => tempos.push([ms, f]), dispatchEvent: (e) => eventos.push(e.type) };
+    if (opcoes.nomeTravado) Object.defineProperty(W, 'name', { get: () => '', set() {} }); else W.name = opcoes.nome || '';
     W.top = W;
-    return { W, tempos, eventos, estilo, filhos };
+    return { W, tempos, eventos, estilo, filhos, feitos };
   };
   const j = janela();
-  let destino = null; j.W.location.replace = (u) => { destino = u; };
   C.estado.mudando = false;
   C.rodar(j.W);
-  assert.equal(destino, N + '/termos/?x=1#k=salao');
+  assert.deepEqual(j.feitos, [['replace', N + '/termos/?x=1#k=salao']]);
   assert.equal(C.estado.mudando, true);
   assert.equal(j.estilo.get('visibility'), 'hidden', 'escondida enquanto troca');
-  assert.equal(j.filhos[0].content, 'no-referrer', 'o salto não leva Referer');
+  assert.equal(j.filhos[0].content, 'origin', 'o salto leva no Referer só a origem do antigo');
   assert.deepEqual(j.tempos.map((t) => t[0]), [2500, 8000]);
   j.tempos[0][1]();
-  assert.equal(j.estilo.has('visibility'), false, 'mostrou em 2,5 s'); assert.deepEqual(j.eventos, []);
+  assert.equal(j.W.sessionStorage.getItem(C.MARCA), '1', 'a aba fica marcada');
+  assert.deepEqual(j.feitos.slice(1), [['stop'], ['reload']], 'cancela a navegação pendente e recarrega o antigo');
+  assert.equal(j.estilo.has('visibility'), false, 'mostrou em 2,5 s');
   j.tempos[1][1]();
-  assert.equal(C.estado.mudando, false); assert.deepEqual(j.eventos, ['creat:canonico-ficou'], 'vitrine liberada em 8 s');
-  // location.replace que falha: a página aparece e a vitrine roda na hora (o envoltório do arquivo faz isso no navegador)
-  const k = janela({ replace: () => { throw new Error('bloqueado'); } });
+  assert.equal(C.estado.mudando, false); assert.deepEqual(j.eventos, ['creat:canonico-ficou'], 'rede de proteção de 8 s, se a recarga não vier');
+  // depois da recarga: com a marca, o antigo abre inteiro e não tenta de novo nesta aba
+  const r = janela({ ss: j.W.sessionStorage });
+  C.rodar(r.W);
+  assert.deepEqual(r.feitos, []); assert.equal(r.estilo.has('visibility'), false); assert.equal(C.estado.mudando, false); assert.deepEqual(r.tempos, []);
+  // sessionStorage bloqueado: a marca vai no nome da janela, que sobrevive à recarga
+  const q = janela({ ss: 'quebrado' });
+  C.rodar(q.W); q.tempos[0][1]();
+  assert.equal(q.W.name, C.MARCA); assert.deepEqual(q.feitos.slice(1), [['stop'], ['reload']]);
+  const q2 = janela({ ss: 'quebrado', nome: C.MARCA });
+  C.rodar(q2.W); assert.deepEqual(q2.feitos, [], 'com a marca no nome, não troca');
   C.estado.mudando = false;
+  // nenhuma marca possível: recarregar voltaria a trocar (laço). Só mostra e libera a vitrine
+  const t = janela({ ss: 'quebrado', nomeTravado: true });
+  C.rodar(t.W); t.tempos[0][1]();
+  assert.deepEqual(t.feitos.map((x) => x[0]), ['replace'], 'sem recarga sem marca');
+  assert.equal(t.estilo.has('visibility'), false); assert.equal(C.estado.mudando, false); assert.deepEqual(t.eventos, ['creat:canonico-ficou']);
+  // host com ponto final: o antigo e o próprio canônico vão ao canônico sem ponto
+  for (const u of ['https://' + HA + './obrigado/?payment_id=1', 'https://' + HN + './obrigado/?payment_id=1']) {
+    const d = janela({ url: u }); C.estado.mudando = false; C.rodar(d.W);
+    assert.deepEqual(d.feitos, [['replace', N + '/obrigado/?payment_id=1']], u);
+  }
+  C.estado.mudando = false;
+  // location.replace que falha: a página aparece e a vitrine roda na hora; o temporizador de 2,5 s não recarrega depois
+  const k = janela({ replace: () => { throw new Error('bloqueado'); } });
   assert.throws(() => C.rodar(k.W));
   C.ficar(k.W); C.mostrar(k.W);
   assert.equal(k.estilo.has('visibility'), false); assert.equal(C.estado.mudando, false); assert.deepEqual(k.eventos, ['creat:canonico-ficou']);
+  k.tempos[0][1](); assert.deepEqual(k.feitos, [], 'nada de recarga depois do erro');
   // o envoltório de verdade: o arquivo rodado como no navegador, com replace quebrado
   const vm = require('node:vm');
   const z = janela({ replace: () => { throw new Error('bloqueado'); } });
@@ -259,20 +330,24 @@ async function abrir(nav, opcoes = {}) {
     reg.reqs.push({ url: q.url(), referer: q.headers().referer || '', nav: principal, host: new URL(q.url()).hostname });
     if (principal) reg.navs.push(q.url());   // documentos carregados na aba (replaceState não conta)
   });
-  await ctx.route('**/*', async (r) => {
-    const q = r.request(), u = new URL(q.url());
-    if ([HA, HN, HO].includes(u.hostname)) {
+  await ctx.route('**/*', async (r) => { try { await rotear(r); } catch (e) { if (!/cancel|handled|closed|destroyed|Target/i.test(String(e && e.message))) throw e; } });
+  async function rotear(r) {
+    const q = r.request(), u = new URL(q.url()), hn = u.hostname.replace(/\.$/, '');
+    if ([HA, HN, HO].includes(hn)) {
+      // canônico lento ou fora: o documento do novo demora (a navegação pode ser cancelada no meio)
+      if (opcoes.atrasoNovo && hn === HN && q.isNavigationRequest()) await pausa(opcoes.atrasoNovo);
       if (u.pathname === '/__semente') return r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>semente</title><p>semente</p>' });
       if (u.pathname.startsWith('/api/pa/')) {
         const nome = u.pathname.slice('/api/pa/'.length);
         let corpo = null; try { corpo = JSON.parse(q.postData() || 'null'); } catch (e) { corpo = 'invalido'; }
-        reg.api.push({ host: u.hostname, nome, corpo });
+        reg.api.push({ host: hn, nome, corpo });
         const resp = opcoes.api && opcoes.api[nome];
         if (resp) return r.fulfill({ status: resp.status, contentType: 'application/json', body: JSON.stringify(resp.json || {}) });
         if (nome === 'contar') return r.fulfill({ status: 204, body: '' });
         return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(nome === 'consultarPedido' ? { ok: true, status: 'aguardando_pagamento' } : nome === 'confirmarPagamento' ? { ok: false, motivo: 'nao_confirmado' } : { ok: true }) });
       }
-      if (opcoes.config && u.pathname === '/checkout.config.js') return r.fulfill({ status: 200, contentType: 'text/javascript', body: FONTE_CK.replace("antigos: ['" + HA + "']", 'antigos: ' + JSON.stringify(opcoes.config)) });
+      const prazo = opcoes.prazo || PRAZO_TESTE;
+      if ((opcoes.config || prazo) && u.pathname === '/checkout.config.js') return r.fulfill({ status: 200, contentType: 'text/javascript', body: FONTE_CK.replace("antigos: ['" + HA + "']", 'antigos: ' + JSON.stringify(opcoes.config || [HA]) + (prazo ? ', prazo_pedido: ' + JSON.stringify(prazo) : '')) });
       const f = arquivo(u.pathname);
       const cab = opcoes.csp ? { 'content-security-policy': CSP } : {};
       if (!f) return r.fulfill({ status: 404, headers: Object.assign({ 'content-type': MIME['.html'] }, cab), body: fs.readFileSync(path.join(RAIZ, '404.html')) });
@@ -285,10 +360,10 @@ async function abrir(nav, opcoes = {}) {
     // terceiro: registra o endereço, o Referer e o endereço da página no momento da requisição
     let naHora = ''; try { naHora = q.frame().url(); } catch (e) {}
     reg.terceiros.push({ url: q.url(), referer: q.headers().referer || '', naHora, tipo: q.resourceType() });
-    if (u.hostname === 'terceiro.exemplo' && u.pathname === '/espiao.js') return r.fulfill({ status: 200, contentType: 'text/javascript', body: 'window.__espiao=location.href;(new Image()).src="https://terceiro.exemplo/px?u="+encodeURIComponent(location.href);' });
+    if (u.hostname === 'terceiro.exemplo' && u.pathname === '/espiao.js') return r.fulfill({ status: 200, contentType: 'text/javascript', body: 'window.__espiao=location.href;try{window.__espiaoNav=performance.getEntriesByType("navigation")[0].name}catch(e){};(new Image()).src="https://terceiro.exemplo/px?u="+encodeURIComponent(location.href);' });
     if (/mercadopago\.com\.br$/.test(u.hostname)) return r.fulfill({ status: 200, contentType: 'text/html', body: '<p>mp</p>' });
     return r.fulfill({ status: 200, contentType: /fonts\.googleapis/.test(u.hostname) ? 'text/css' : 'text/javascript', body: '' });
-  });
+  }
   const pg = await ctx.newPage();
   pg.on('pageerror', (e) => reg.erros.push(e.message));
   pg.on('console', (m) => { if (m.type() === 'error') reg.console.push(m.text()); });
@@ -353,7 +428,7 @@ test('H1 navegador: antigo com utm vai ao novo com utm, mesmo caminho e fragment
   } finally { await nav.close(); }
 });
 
-test('H1 navegador: /obrigado/ com payment_id e resultado no antigo chega igual no novo e acha o pedido salvo no antigo; o segredo nunca vaza', { skip: pular }, async () => {
+test('H1 navegador: /obrigado/ com payment_id e resultado no antigo chega igual no novo e acha o pedido salvo no antigo; o segredo nunca vaza; o aceite não atravessa', { skip: pular }, async (t) => {
   const nav = await chromium.launch();
   try {
     const prazo = new Date(Date.now() + 71 * H).toISOString();
@@ -370,6 +445,7 @@ test('H1 navegador: /obrigado/ com payment_id e resultado no antigo chega igual 
     await estadoObrigado(pg, 'aprovado');
     const chegada = reg.reqs.find((x) => x.nav && x.host === HN);
     assert.equal(new URL(chegada.url).pathname + new URL(chegada.url).search, '/obrigado/' + q, 'a consulta chega igual no novo');
+    assert.equal(chegada.referer, A + '/', 'o salto leva no Referer só a origem do antigo');
     assert.equal(await pg.textContent('#pedido-id'), ID, 'o pedido salvo no antigo aparece no novo');
     assert.equal(await pg.textContent('#obrigado-negocio'), 'Studio Bela & Cia');
     const conf = reg.api.find((x) => x.nome === 'confirmarPagamento');
@@ -381,8 +457,19 @@ test('H1 navegador: /obrigado/ com payment_id e resultado no antigo chega igual 
     assert.ok(espiao && espiao.startsWith(N + '/obrigado/'), 'o espião rodou: ' + espiao);
     assert.doesNotMatch(espiao, /m=v1/);
     assert.ok(!espiao.includes(SEGREDO));
-    assert.ok(reg.terceiros.some((t) => /connect\.facebook\.net/.test(t.url)), 'o Pixel carregou (consentimento veio do antigo)');
-    assert.ok(reg.terceiros.some((t) => /terceiro\.exemplo\/px/.test(t.url)));
+    // limite conhecido (DOMINIO.md): a Navigation Timing guarda o endereço de chegada enquanto a página vive.
+    // Nenhum terceiro que a vitrine carrega lê essa entrada (fbevents.js, PostHog e os scripts do Base44, conferido em 11/11).
+    const nav = await pg.evaluate(() => window.__espiaoNav);
+    assert.equal(typeof nav, 'string');
+    t.diagnostic('Navigation Timing do espião ' + (nav.includes('m=v1') ? 'AINDA traz o fragmento de transição (limite do navegador, documentado)' : 'sem o fragmento de transição'));
+    // o aceite do antigo não atravessa: o canônico pergunta de novo e nada da Meta carrega antes da resposta
+    assert.equal(await pg.evaluate(() => document.querySelector('#consentimento').hidden), false, 'o banner aparece no canônico');
+    assert.equal(reg.terceiros.filter((x) => /facebook/.test(x.url)).length, 0, 'sem Pixel antes do aceite daqui');
+    await pg.click('#consentimento [data-consentir="sim"]');
+    await pg.waitForFunction(() => typeof window.fbq === 'function');
+    await pausa(500);
+    assert.ok(reg.terceiros.some((x) => /connect\.facebook\.net/.test(x.url)), 'o Pixel carregou com o aceite dado no canônico');
+    assert.ok(reg.terceiros.some((x) => /terceiro\.exemplo\/px/.test(x.url)));
     semSegredo(reg, 'obrigado');
     // no novo: pedido enxuto, sem dado pessoal; no antigo: nada apagado
     const novo = await lerLS(pg, N);
@@ -474,7 +561,7 @@ test('H1 navegador: fragmento de transição malformado, gigante ou com chave ex
     const casos = {
       malformado: 'm=v1.@@@~k=salao&p=2',
       gigante: 'm=v1.' + C.paraB64(JSON.stringify(Object.assign({}, bom, { lixo: 'x'.repeat(5000) }))) + '~k=salao&p=2',
-      'chave extra': 'm=v1.' + C.paraB64(JSON.stringify({ v: 1, p: Object.assign({}, bom.p, { whatsapp: '5575991234567' }) })) + '~k=salao&p=2',
+      'chave extra': 'm=v1.' + C.paraB64(JSON.stringify({ v: 1, p: Object.assign({}, bom.p, { whatsapp: '5575900000000' }) })) + '~k=salao&p=2',
       'json quebrado': 'm=v1.' + C.paraB64('{"v":1,"p":') + '~k=salao&p=2',
       'versão nova': 'm=v2.' + C.paraB64(JSON.stringify(bom)) + '~k=salao&p=2'
     };
@@ -566,8 +653,8 @@ test('H1 navegador: link da prévia copiado e link da prévia gravado no pedido 
     assert.match(await pg.evaluate(() => navigator.clipboard.readText()), /^https:\/\/nuvem\.creatmtt\.com\.br\/previa\/#k=salao&n=Studio%20Bela&c=Salvador&p=[123]$/);
     await pg.goto(N + '/abrir/#plano=vitrine&k=salao&n=Studio%20Bela&c=Salvador&p=2');
     await pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]').getAttribute('data-link-ok') === '1');
-    await pg.fill('#p-responsavel', 'Maria Souza'); await pg.fill('#p-whatsapp', '75991234567');
-    await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000'); await pg.fill('#p-email', 'maria@exemplo.com.br');
+    await pg.fill('#p-responsavel', 'Maria Souza'); await pg.fill('#p-whatsapp', '75900000000');
+    await pg.fill('#p-endereco', 'Rua das Flores, 120, Centro, Feira de Santana-BA, 44001-000'); await pg.fill('#p-email', 'maria@example.com');
     await pg.check('#p-aceite');
     await Promise.all([pg.waitForURL(/mercadopago/), pg.click('.pagar [data-checkout]')]);
     const ls = await lerLS(pg, N);

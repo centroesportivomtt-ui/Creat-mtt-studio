@@ -211,7 +211,7 @@ Link do F3 para esta campanha:
 {{site.url}}/?nicho=<barbearia|salao|academia>&utm_source=meta&utm_medium=pago&utm_campaign=ctwa-nov26&utm_content=<código do anúncio>
 ```
 
-Enquanto não houver domínio próprio, `{{site.url}}` é `https://creat-nuvem-404b1994.base44.app`.
+Desde 11/11/2026, `{{site.url}}` é o domínio próprio `https://nuvem.creatmtt.com.br` (`docs/DOMINIO.md`). Os anúncios que já estão no ar ainda apontam para o endereço antigo `https://creat-nuvem-404b1994.base44.app` e trocam no ato de 13/11; anúncio novo nasce no canônico.
 
 - **Qual anúncio trouxe a conversa:** pela mensagem pré-preenchida, que é diferente em cada anúncio (tabela da seção 6 de `anuncios-meta.md`, mais a linha F0 do §11 abaixo).
 - **Pessoa editou a mensagem:** use `W0-<nicho>-v1`.

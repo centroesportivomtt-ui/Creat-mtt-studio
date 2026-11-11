@@ -276,3 +276,41 @@ test('conferir-no-ar: o host padrão das conferências vem da fonte única e o g
   const cs = fs.readFileSync(path.join(RAIZ, 'scripts', 'conferir-sites-no-ar.cjs'), 'utf8');
   assert.match(cs, /C\.origensDaVitrine\(\)/);
 });
+
+/* achado da conferência (H2, "corrigir"): o canônico também é texto fixo em 6 páginas, no checkout.config.js e na
+   ORIGEM dos e-mails. enderecosFixos() lê os três; o checar.cjs reprova o que não for igual a ENDERECO.canonico. */
+test('endereços fixos fora de comum.cjs: os 6 HTML, o checkout.config.js e a ORIGEM dos e-mails seguem ENDERECO.canonico', () => {
+  const C = require(path.join(RAIZ, 'scripts', 'producao', 'lib', 'comum.cjs'));
+  const a = C.enderecosFixos();
+  assert.deepEqual(a.filter((x) => !C.enderecoFixoCerto(x)), []);
+  for (const p of C.PAGINAS_COM_ENDERECO) for (const onde of ['canonical', 'og:url']) assert.ok(a.some((x) => x.arquivo === p && x.onde === onde), `${p} ${onde}`);
+  assert.ok(a.some((x) => x.arquivo === 'index.html' && x.onde === 'og:image'));
+  assert.ok(a.filter((x) => x.arquivo === 'index.html' && x.onde.startsWith('JSON-LD')).length >= 3, 'JSON-LD da home lido');
+  assert.equal(a.find((x) => x.onde === 'ORIGEM').valor, C.ENDERECO.canonico);
+  assert.equal(a.find((x) => x.onde === 'CREAT_ENDERECO.canonico').valor, C.ENDERECO.canonico);
+  assert.match(fs.readFileSync(path.join(RAIZ, 'scripts', 'checar.cjs'), 'utf8'), /E\.enderecosFixos\(RAIZ\)/, 'o checar.cjs usa a mesma leitura');
+});
+
+test('endereços fixos: página, JSON-LD ou ORIGEM que ficou no endereço velho, ou sem canonical, é acusada', () => {
+  const C = require(path.join(RAIZ, 'scripts', 'producao', 'lib', 'comum.cjs'));
+  const r = path.join(TMP, 'fixos');
+  for (const rel of [...C.PAGINAS_COM_ENDERECO, 'checkout.config.js', 'schema/pedido-regras.mjs']) {
+    fs.mkdirSync(path.dirname(path.join(r, rel)), { recursive: true });
+    fs.copyFileSync(path.join(RAIZ, rel), path.join(r, rel));
+  }
+  const trocar = (rel, de, para) => { const f = path.join(r, rel); const s = fs.readFileSync(f, 'utf8'); assert.ok(s.includes(de), rel + ': ' + de); fs.writeFileSync(f, s.replace(de, para)); };
+  assert.deepEqual(C.enderecosFixos(r).filter((x) => !C.enderecoFixoCerto(x)), [], 'cópia fiel passa');
+  trocar('termos/index.html', `<link rel="canonical" href="${NOVO}/termos/">`, `<link rel="canonical" href="${ANTIGO}/termos/">`);
+  trocar('index.html', `"logo":"${NOVO}/`, `"logo":"${ANTIGO}/`);
+  trocar('schema/pedido-regras.mjs', `const ORIGEM = '${NOVO}';`, `const ORIGEM = '${ANTIGO}';`);
+  trocar('bastidores/index.html', `<meta property="og:url" content="${NOVO}/bastidores/">`, '');
+  const ruins = C.enderecosFixos(r).filter((x) => !C.enderecoFixoCerto(x)).map((x) => `${x.arquivo} ${x.onde} ${x.valor}`).sort();
+  assert.deepEqual(ruins, [
+    'bastidores/index.html og:url null',
+    `index.html JSON-LD logo ${ANTIGO}/assets/svg/placa.svg`,
+    `schema/pedido-regras.mjs ORIGEM ${ANTIGO}`,
+    `termos/index.html canonical ${ANTIGO}/termos/`
+  ]);
+  // o canônico mudou em comum.cjs e as páginas não: todas acusadas
+  assert.ok(C.enderecosFixos().filter((x) => !C.enderecoFixoCerto(x, 'https://outro.exemplo')).length === C.enderecosFixos().length);
+});

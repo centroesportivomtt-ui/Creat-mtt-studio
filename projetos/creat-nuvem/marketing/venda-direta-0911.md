@@ -76,7 +76,7 @@ Escrito pelo Verbo e conferido pela Lupa para a noite de 09/11. A lista de negó
 
 1. **Manda o nome do seu negócio. Eu devolvo o site pronto, com o nome na placa.** · imagem: Arte S2 placa ABERTO 1080x1920 · Caixa de perguntas: "Qual o nome do seu negócio?" (a cada resposta, gere a prévia e mande o link no direct de quem respondeu)
 2. **O cliente escolhe o serviço, o dia e o horário. O pedido chega no WhatsApp do dono.** · imagem: Print no celular da prévia real de barbearia, com a placa virada para ABERTO · Enquete: "Qual é o seu negócio?" com as opções Barbearia, Salão e Academia (quem votar recebe a prévia do nicho no direct)
-3. **Ver é grátis e sem cadastro. Vire a placa para ABERTO e teste o pedido no seu próprio celular.** · imagem: Prints lado a lado das prévias reais de salão e de academia · Link: https://creat-nuvem-404b1994.base44.app/?utm_source=instagram&utm_medium=organico&utm_campaign=stories-0911 com o texto "Ver o meu site"
+3. **Ver é grátis e sem cadastro. Vire a placa para ABERTO e teste o pedido no seu próprio celular.** · imagem: Prints lado a lado das prévias reais de salão e de academia · Link: https://nuvem.creatmtt.com.br/?utm_source=instagram&utm_medium=organico&utm_campaign=stories-0911 com o texto "Ver o meu site"
 4. **20 vagas de inauguração: Abertura R$ 297 (depois R$ 497). Mensalidade de R$ 147 ou R$ 297, só com o site no ar.** · imagem: Arte S2 placa ABERTO 1080x1920, com a placa já em ABERTO · Link: https://wa.me/5575981151202?text=Quero%20ver%20o%20site%20do%20meu%20neg%C3%B3cio com o texto "Falar com o Marcos"
 
 ## Fechamento
@@ -138,7 +138,7 @@ Conta: Abertura R$ 297 + Vitrine anual R$ 2.970 = R$ 3.267 numa venda. Abertura 
 
 > A mensalidade só começa no dia em que o site entra no ar, e você sai quando quiser, sem multa e sem fidelidade.
 > Ao sair, leva o site num arquivo que abre no computador, os seus arquivos e, se tiver domínio próprio, ele continua no seu nome.
-> Está tudo nos termos: https://creat-nuvem-404b1994.base44.app/termos/
+> Está tudo nos termos: https://nuvem.creatmtt.com.br/termos/
 
 ## Roteiro da noite
 

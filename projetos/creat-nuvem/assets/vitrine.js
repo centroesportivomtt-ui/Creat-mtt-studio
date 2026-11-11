@@ -1900,7 +1900,7 @@
     recusado_servidor: 'O Mercado Pago não confirmou este pagamento. Fale com o suporte.',
     desistiu: 'Este pedido foi cancelado.',
     sem_servidor: 'Não conseguimos falar com o nosso sistema agora. Envie o pedido pelo WhatsApp abaixo; a equipe confere à mão.',
-    nao_encontrado: 'Não achamos este pedido no nosso sistema. Envie o pedido pelo WhatsApp abaixo.'
+    nao_encontrado: 'Não achamos este pedido no nosso sistema. Fale com o suporte no WhatsApp abaixo: a mensagem já leva o número do pedido, e a equipe confere à mão.'
   };
   var NOME_PRODUTO = {
     'pa-abertura-inauguracao': 'Abertura do Porta Aberta, preço de inauguração', 'pa-abertura': 'Abertura do Porta Aberta',
@@ -2017,7 +2017,7 @@
       linhaAtual = chave;
       if (!chave) { linhaServ.hidden = true; linhaServ.textContent = ''; return; }
       var s = preencher(LINHAS_SERVIDOR[chave], vars());
-      if (/^(ja_usado|recusado_servidor)$/.test(chave) && volta.paymentId) s += ' Número do pagamento: ' + volta.paymentId + '.';
+      if (/^(ja_usado|recusado_servidor|nao_encontrado)$/.test(chave) && volta.paymentId) s += ' Número do pagamento: ' + volta.paymentId + '.';
       if (extra) s += ' ' + extra;
       linhaServ.textContent = s; linhaServ.hidden = false;
       linhaServ.setAttribute('data-linha', chave);

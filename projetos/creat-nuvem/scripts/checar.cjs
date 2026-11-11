@@ -44,8 +44,12 @@
    8. Endereço único (pacote H2, 11/11/2026; docs/DOMINIO.md): a fonte é ENDERECO de
       scripts/producao/lib/comum.cjs. Se checkout.config.js já traz CREAT_ENDERECO (pacote H1, o salto
       do antigo no navegador), o canônico dele é o mesmo e a lista de antigos tem o antigo conhecido
-      (FALHA se divergir). Se dist/publico/ existir: nenhum marcador {{HOST}} sobrou em arquivo de texto
-      e o sitemap.xml existe, com todo <loc> no endereço canônico (montagem velha = FALHA).
+      (FALHA se divergir; lista vazia é o interruptor de voltar atrás e só AVISA). O canônico escrito como
+      texto fixo fora de comum.cjs (canonical, og:url, og:image e JSON-LD das 6 páginas indexáveis,
+      CREAT_ENDERECO.canonico e ORIGEM dos e-mails em schema/pedido-regras.mjs; enderecosFixos() de
+      comum.cjs) é igual a ENDERECO.canonico (FALHA se um ficar para trás). Se dist/publico/ existir:
+      nenhum marcador {{HOST}} sobrou em arquivo de texto e o sitemap.xml existe, com todo <loc> no
+      endereço canônico (montagem velha = FALHA).
    ===================================================================== */
 'use strict';
 const fs = require('fs');
@@ -509,9 +513,16 @@ function conferirTexto(onde, texto, opcoes) {
     else {
       if (cfg.canonico !== E.ENDERECO.canonico) falha('checkout.config.js', `CREAT_ENDERECO.canonico ${cfg.canonico} diferente de ENDERECO.canonico ${E.ENDERECO.canonico} (lib/comum.cjs)`);
       const antigo = new URL(E.ENDERECO.antigo).hostname;
-      if (!Array.isArray(cfg.antigos) || !cfg.antigos.includes(antigo)) falha('checkout.config.js', `CREAT_ENDERECO.antigos sem ${antigo}: quem chega pelo anúncio ficaria no antigo`);
+      // lista vazia é o interruptor documentado (docs/DOMINIO.md, "Como voltar atrás", passo a): avisa, não reprova
+      if (Array.isArray(cfg.antigos) && !cfg.antigos.length) aviso('checkout.config.js', 'CREAT_ENDERECO.antigos vazio: o salto do antigo ao canônico está DESLIGADO de propósito (docs/DOMINIO.md, "Como voltar atrás")');
+      else if (!Array.isArray(cfg.antigos) || !cfg.antigos.includes(antigo)) falha('checkout.config.js', `CREAT_ENDERECO.antigos sem ${antigo}: quem chega pelo anúncio ficaria no antigo`);
       if (Array.isArray(cfg.antigos) && cfg.antigos.includes(new URL(E.ENDERECO.canonico).hostname)) falha('checkout.config.js', 'CREAT_ENDERECO.antigos inclui o canônico: laço de redirecionamento');
     }
+  }
+  // o canônico escrito como texto fixo fora de comum.cjs (6 páginas, checkout.config.js, ORIGEM dos e-mails) tem de ser o mesmo
+  const fixos = E.enderecosFixos(RAIZ);
+  for (const a of fixos.filter((x) => !E.enderecoFixoCerto(x))) {
+    falha(a.arquivo, a.valor === null ? `${a.onde}: não achei o endereço` : `${a.onde} ${a.valor} fora de ENDERECO.canonico ${E.ENDERECO.canonico} (lib/comum.cjs)${a.arquivo === 'schema/pedido-regras.mjs' ? '; troque também src/lib/pa/regras.js do app, byte a byte' : ''}`);
   }
   const pub = path.join(RAIZ, 'dist', 'publico');
   if (existe(pub)) {
@@ -534,7 +545,7 @@ function conferirTexto(onde, texto, opcoes) {
       else if (fora.length) falha(rel(sm), `página fora do endereço canônico ${host}: ${fora.slice(0, 3).join(', ')} (montagem velha: rode de novo node scripts/montar-publico.cjs)`);
     }
   }
-  if (falhas === antes) ok(`endereço único: ${host}${existe(pub) ? ' no sitemap e no robots da montagem, sem marcador {{HOST}} sobrando' : ''}`);
+  if (falhas === antes) ok(`endereço único: ${host}; ${fixos.length} endereços fixos (6 páginas, checkout.config.js, ORIGEM dos e-mails) iguais a ENDERECO.canonico${existe(pub) ? '; canônico no sitemap e no robots da montagem, sem marcador {{HOST}} sobrando' : ''}`);
 })();
 
 console.log(`\n${falhas ? falhas + ' falha(s)' : 'tudo certo'}${avisos ? ', ' + avisos + ' aviso(s)' : ''}`);
