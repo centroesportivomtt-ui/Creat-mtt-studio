@@ -1,11 +1,11 @@
 # Publicação no app Base44 "Creat Nuvem"
 
-App `6aefffe66b684db9404b1994`, no ar em https://creat-nuvem-404b1994.base44.app. Os arquivos estáticos ficam em `public/` do app:
+App `6aefffe66b684db9404b1994`, no ar no endereço canônico **https://nuvem.creatmtt.com.br** (domínio do dono, desde 11/11/2026) e, com o mesmo conteúdo, no endereço antigo https://creat-nuvem-404b1994.base44.app, que **nunca sai do ar** enquanto houver anúncio ou preferência do Mercado Pago apontando para ele. O que mudou, o que ainda aponta para o antigo e como voltar atrás: `docs/DOMINIO.md`. O endereço vem de um lugar só (`ENDERECO` em `scripts/producao/lib/comum.cjs`); `CREAT_HOST` troca tudo de uma vez. Os arquivos estáticos ficam em `public/` do app:
 
 | o quê | onde, no app | endereço |
 |---|---|---|
-| vitrine Porta Aberta (`dist/publico/`, montada por `scripts/montar-publico.cjs`) | `public/<caminhos da vitrine>` | `https://creat-nuvem-404b1994.base44.app/` |
-| site de cliente ou demo (`dist/<slug>/`, gerado por `produzir.mjs` / `build-site.cjs`) | `public/sites/<slug>/` | `https://creat-nuvem-404b1994.base44.app/sites/<slug>/` |
+| vitrine Porta Aberta (`dist/publico/`, montada por `scripts/montar-publico.cjs`) | `public/<caminhos da vitrine>` | `https://nuvem.creatmtt.com.br/` (o antigo leva ao mesmo caminho no canônico, pelo `assets/canonico.js`) |
+| site de cliente ou demo (`dist/<slug>/`, gerado por `produzir.mjs` / `build-site.cjs`) | `public/sites/<slug>/` | `https://nuvem.creatmtt.com.br/sites/<slug>/` (também responde no antigo; sem salto, motor congelado) |
 
 **Regra de ouro: a publicação da vitrine nunca apaga `public/sites/`.** A pasta tem os sites dos clientes, e eles não existem em `dist/publico/`. Por isso não rode `rm -rf public/*`, `rm -rf public/` nem nenhum `rsync --delete` em `public/`. Apague só os caminhos da lista abaixo, um por um.
 
@@ -38,7 +38,7 @@ A home tem a seção `#sites-demo` com 3 botões relativos: `sites/demo-barbeari
    ```bash
    node scripts/conferir-sites-no-ar.cjs     # ou: npm run conferir-sites-no-ar
    ```
-   Ela lê os links `sites/<slug>/` de `dist/publico/`, faz `curl -L` em `https://creat-nuvem-404b1994.base44.app/sites/<slug>/` e exige 200, pelo menos um `wa.me` e, nos `demo-*`, a faixa "demonstração · nome fictício". Saída 0 libera a vitrine. Saída 1 bloqueia: **não publique a vitrine** e volte à seção 1 para os slugs que falharam.
+   Ela lê os links `sites/<slug>/` de `dist/publico/`, faz `curl -L` em `https://nuvem.creatmtt.com.br/sites/<slug>/` e no antigo `https://creat-nuvem-404b1994.base44.app/sites/<slug>/` e exige 200 nos dois, pelo menos um `wa.me` e, nos `demo-*`, a faixa "demonstração · nome fictício". Saída 0 libera a vitrine. Saída 1 bloqueia: **não publique a vitrine** e volte à seção 1 para os slugs que falharam.
 3. **Depois do deploy da vitrine**, rode a trava de novo e confira os 3 URLs com 200.
 
 Se os 3 sites e a vitrine forem no mesmo deploy: faça os passos 1 a 5 da seção 1 para cada demo, depois o `cp` da vitrine (seção 2), um só checkpoint e um só deploy. Depois do deploy, rode a trava. Se ela falhar, a vitrine já está no ar com botões quebrados: corrija os sites na hora ou volte o checkpoint anterior.
@@ -75,12 +75,12 @@ Passos do chat principal (o script imprime cada um com o hash e o caminho certos
    Se o `sha256sum -c` falhar, o Drive devolveu outra coisa (link ainda privado ou página de aviso). Pare e refaça o passo 2. O `rm -rf` só atinge `public/sites/<slug>`, nunca `public/sites`.
 4. **Base44 `run_command`**: `git log --oneline -1`. Ele precisa mostrar o auto-commit com `public/sites/<slug>`. Se não mostrar, não siga.
 5. **Base44 `create_checkpoint`** com o nome `site <slug> <sha8>`.
-6. **Deploy** do app, depois de pegar a trava (`node scripts/trava-deploy.cjs pegar`, `pode-publicar`) e com os portões da seção "Quem dá o ok do deploy" verdes. Depois confira: `curl -sI https://creat-nuvem-404b1994.base44.app/sites/<slug>/` precisa voltar 200 e a página precisa ter pelo menos um `wa.me`. Abra também sem a barra final (`/sites/<slug>`). Os caminhos do site são relativos (`motor/...`, `tenant.js`), então sem a barra eles só funcionam se o host redirecionar.
+6. **Deploy** do app, depois de pegar a trava (`node scripts/trava-deploy.cjs pegar`, `pode-publicar`) e com os portões da seção "Quem dá o ok do deploy" verdes. Depois confira: `curl -sI https://nuvem.creatmtt.com.br/sites/<slug>/` precisa voltar 200 e a página precisa ter pelo menos um `wa.me`. Abra também sem a barra final (`/sites/<slug>`). Os caminhos do site são relativos (`motor/...`, `tenant.js`), então sem a barra eles só funcionam se o host redirecionar.
 7. **Drive `trash_file`** no zip temporário.
 
 Para tirar um site do ar: `rm -rf public/sites/<slug>`, depois os passos 4 a 6, e confira o 404. Desistência e pedido do titular seguem `docs/DESISTENCIA.md`.
 
-Endereço padrão: `build-site.cjs` e `produzir.mjs` gravam canonical, sitemap e JSON-LD com `https://creat-nuvem-404b1994.base44.app/sites/<slug>/` e o rodapé com a home `https://creat-nuvem-404b1994.base44.app/`. As variáveis `CREAT_URL_SITES` (com `{slug}`) e `CREAT_HOME` mudam esses endereços, e `0` desliga cada um. O pacote SAIR nunca herda esses endereços.
+Endereço padrão: `build-site.cjs` e `produzir.mjs` gravam canonical, og:url, sitemap e JSON-LD com `https://nuvem.creatmtt.com.br/sites/<slug>/` e o rodapé com a home `https://nuvem.creatmtt.com.br/` (fonte única `ENDERECO` em `lib/comum.cjs`). `CREAT_HOST` troca a origem de tudo de uma vez (é o "voltar atrás", `docs/DOMINIO.md`); as variáveis `CREAT_URL_SITES` (com `{slug}`) e `CREAT_HOME` mudam cada endereço por cima, e `0` desliga cada um. O pacote SAIR nunca herda esses endereços.
 
 ## 2. Vitrine
 
@@ -139,7 +139,7 @@ Cada site publicado tem a própria cópia de `motor/v1/`. Correção no motor ex
 node scripts/conferir-no-ar.cjs          # ou: npm run conferir-no-ar
 ```
 
-São 54 conferências no endereço de produção, em celular com agente de usuário de Android real: páginas (200 e 404), caminho do anúncio nos 3 nichos (nome, prévia, formulário dentro da prévia), medição (o arquivo da Meta carrega e os eventos saem do navegador; o envio é cancelado para não sujar a conta), demonstrações em 3 cargas cada, botão de pagar por praça e os 7 links no Mercado Pago (abre, mostra o item, R$ 297, Pix e cartão; não paga), identificação da empresa e sede.
+Ela confere no endereço canônico (`https://nuvem.creatmtt.com.br`; `--base` troca). Grupo E (endereço, desde 11/11): o canônico responde 200 com cadeado nas 8 páginas e nas 3 demos, `/api/pa/contar` e `/api/pa/confirmarPagamento` respondem nos dois endereços, o antigo continua 200 e o canônico nunca redireciona; quando a página nova estiver publicada (o HTML do canônico cita `assets/canonico.js` ou traz `window.CREAT_ENDERECO`), abrir o antigo num navegador tem de levar ao canônico com caminho, consulta e fragmento em `/`, `/abrir/?nicho=barbearia&utm_source=teste-pixel` e `/obrigado/?payment_id=99999999999&resultado=aprovado`. Antes da publicação esses 3 saem como NÃO VERIFICADO e não reprovam. São, além do grupo E, as conferências no endereço de produção, em celular com agente de usuário de Android real: páginas (200 e 404), caminho do anúncio nos 3 nichos (nome, prévia, formulário dentro da prévia), medição (o arquivo da Meta carrega e os eventos saem do navegador; o envio é cancelado para não sujar a conta), demonstrações em 3 cargas cada, botão de pagar por praça e os 7 links no Mercado Pago (abre, mostra o item, R$ 297, Pix e cartão; não paga), identificação da empresa e sede.
 
 - Saída 0: pode dizer que está publicado. Cole a última linha no relatório.
 - Saída 1: **defeito no ar**. Pause as campanhas que levam ao site, corrija, publique e rode de novo. Só então religue.

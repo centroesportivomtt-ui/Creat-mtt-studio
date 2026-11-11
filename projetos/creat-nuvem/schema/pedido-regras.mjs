@@ -4,7 +4,7 @@
 // Sem import, sem rede, sem banco e sem relógio próprio: a hora sempre entra por parâmetro (milissegundos UTC).
 // Contrato completo: docs/PEDIDO-API.md.
 
-export const VERSAO_REGRAS = 'pa-regras-1A-2026-11-10e';
+export const VERSAO_REGRAS = 'pa-regras-1A-2026-11-10f';
 
 /* ---------- Vocabulário fechado ---------- */
 
@@ -728,7 +728,9 @@ export async function sha256Hex(textoEntrada) {
 
 /* ---------- Modelos de e-mail (texto fixo, sem dado digitado pelo cliente no assunto) ---------- */
 
-const ORIGEM = 'https://creat-nuvem-404b1994.base44.app';
+// Endereço canônico (decisão do coordenador, 11/11/2026, pacote H3): os links dos e-mails ao cliente e ao suporte
+// apontam sempre para o endereço novo. O antigo (o do Base44) continua no ar e leva ao novo.
+const ORIGEM = 'https://nuvem.creatmtt.com.br';
 const reais = v => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
 // p é o registro PedidoPortaAberta (pedido_id é o número público; o id interno do Base44 nunca aparece no texto).

@@ -10,5 +10,5 @@ endereco: Rua do Exemplo, s/n, Centro, Feira de Santana-BA, 00000-000
 horarios: seg=fechado;ter=08:30-19:30;qua=08:30-19:30;qui=08:30-19:30;sex=08:30-20:00;sab=08:00-17:00;dom=fechado
 email: demonstracao@exemplo.com.br
 origem: utm_source=demo;utm_medium=interno;utm_campaign=demos-nov26;utm_content=barbearia
-previa: https://creat-nuvem-404b1994.base44.app/previa/#k=barbearia&n=Barbearia%20Navalha%20Fict%C3%ADcia&c=Feira%20de%20Santana&p=2
+previa: https://nuvem.creatmtt.com.br/previa/#k=barbearia&n=Barbearia%20Navalha%20Fict%C3%ADcia&c=Feira%20de%20Santana&p=2
 aceite_termos: 2026-11-09T09:00:00-03:00 termos-v1

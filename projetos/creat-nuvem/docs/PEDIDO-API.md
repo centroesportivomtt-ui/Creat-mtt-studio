@@ -2,14 +2,16 @@
 
 Este é o contrato que a onda 2 lê. Ele cobre o pedido gravado no clique de pagar, a confirmação do pagamento sem dar o pagamento a quem não pagou, o contador, a aprovação do rascunho e as funções internas do executor.
 
-- App: Base44 "Creat Nuvem" `6aefffe66b684db9404b1994` (TanStack Start). As funções são rotas de servidor em `src/routes/api/pa/*.js`, na mesma origem do site: `https://creat-nuvem-404b1994.base44.app/api/pa/<nome>`.
+- App: Base44 "Creat Nuvem" `6aefffe66b684db9404b1994` (TanStack Start). As funções são rotas de servidor em `src/routes/api/pa/*.js`, na mesma origem do site: `https://nuvem.creatmtt.com.br/api/pa/<nome>` (endereço canônico desde 11/11/2026). O endereço antigo `https://creat-nuvem-404b1994.base44.app/api/pa/<nome>` é o mesmo app e responde igual (seção 8.10).
 - Regras puras: `schema/pedido-regras.mjs` neste repositório, copiado **byte a byte** para `src/lib/pa/regras.js` no app. O revisor compara os dois `sha256sum` (seção 9).
 - Corpo de `registrarPedido`: `schema/pedido.schema.json`, `$defs/PedidoRegistro`. Exemplos em `schema/exemplos/pedido.registro-v1*.json`.
 - Testes: `npm test` roda `scripts/testes/pedido-api.test.mjs` (regras, casamento, ataques, prazo, contador).
 - Nada aqui está publicado. As rotas só vão ao ar no próximo deploy do app, feito pelo coordenador (seção 10).
 
-**Estado (fecho da onda 2, 10/11/2026):**
-- Regras: `VERSAO_REGRAS = 'pa-regras-1A-2026-11-10e'`. O sha256 do arquivo está na seção 9.
+**Estado (endereço único, pacote H3, 11/11/2026):**
+- Endereço canônico: `https://nuvem.creatmtt.com.br`. O antigo (`https://creat-nuvem-404b1994.base44.app`) continua no ar e as rotas `/api/pa/*` respondem igual nos dois (seção 8.10). Nenhuma rota confere `Origin`, `Referer` ou `Host`; a única trava de origem é `Sec-Fetch-Site: cross-site` (403), e a página chama sempre `location.origin + '/api/pa/'`, a mesma origem em que foi aberta.
+- Regras: `VERSAO_REGRAS = 'pa-regras-1A-2026-11-10f'`. Única mudança desde a `-10e`: os links dos e-mails ao cliente (`modeloEmailCliente`: recibo, rascunho e mensalidade) usam o endereço canônico. `entradaDoRegistro` continua usando a origem que receber; sem origem https válida, cai no canônico. O sha256 do arquivo está na seção 9.
+- No app: a `-10f` está no sandbox (checkpoint `6af3c377db3067a148bad505`, commit `f2968e7`), **sem deploy**. Produção continua com a `-10e` até o coordenador publicar. Volta: checkpoint `6af3c32c57d4bf26ea220951` (commit `ccd084c`).
 - Termos: o servidor aceita `termos-v1` e `termos-v2` (`TERMOS` em `pedido-regras.mjs`). `termos-v2` = sha256 `7ae67e835b8d745b00eb49dc9167bf43f8b50688123393d217cdefc6eb3fb612` do `conteudo/termos.md` (commit `ab5a4b4`, cabeçalho "Versão 2 (termos-v2)"). `termos-v1` fica aceita porque a página que está no ar e os pedidos antigos mandam v1; cada registro grava o hash da versão que mandou. Versão desconhecida: 422 `campo: termos_versao`. A página nova manda `termos-v2` (`checkout.config.js`, `termosVersao`).
 - Prazo: regra única dos termos v2, cláusula 5 (seção 6). Fora do horário de atendimento, o relógio de 72 h começa às 11h do próximo dia de atendimento, não mais às 9h.
 - Contrato do corpo: `schema/pedido.schema.json` tem de listar em `termos_versao` as mesmas versões de `TERMOS` (`termos-v1` e `termos-v2`); `assets/vitrine.js` não pode cair para `termos-v1` quando faltar `CK.termosVersao`. Os dois testes do fecho F1 falham até os donos desses arquivos aplicarem a troca (patch pronto com o coordenador).
@@ -168,7 +170,7 @@ Uso em `/obrigado/` (contrato para a onda 2, 2A), com `id` e `segredo` do `local
 
 Corpo `{payment_id, pedido_id?, segredo?, teste?}`. Chamado por `/obrigado/` na volta do Mercado Pago (com `payment_id` da URL e `pedido_id` + `segredo` do aparelho) e pela notificação do Mercado Pago (pacote 1B, só `payment_id`).
 
-Fluxo do pagamento: `docs/INTEGRACAO-PAGAMENTO.md`, seção "Pedido antes do pagamento e confirmação (D2/D3)". Endereço certo da rota: `https://creat-nuvem-404b1994.base44.app/api/pa/confirmarPagamento` (rota de servidor do app, não `/functions/...`).
+Fluxo do pagamento: `docs/INTEGRACAO-PAGAMENTO.md`, seção "Pedido antes do pagamento e confirmação (D2/D3)". Endereço certo da rota: `https://nuvem.creatmtt.com.br/api/pa/confirmarPagamento` (rota de servidor do app, não `/functions/...`). O `portaAbertaNotificacao` e o `portaAbertaConciliar` do AutoCreatFlux chamam hoje `https://creat-nuvem-404b1994.base44.app/api/pa/confirmarPagamento`, que é a mesma rota do mesmo app e continua respondendo: não precisa mudar (`docs/INTEGRACAO-PAGAMENTO.md`, seção "Endereço novo").
 
 Chama `portaAbertaVerificar` (1B) `POST {payment_id, email_candidato?}` e só confia em `{aprovado: true, valor, external_reference, email_confere?, aprovado_em?}`. `external_reference` vira produto e praça (`pa-abertura-inauguracao-<praça>-2026-11` casa com `pa-abertura-inauguracao-2026-11`). Valor fora do catálogo, referência desconhecida ou `aprovado:false`: recusa.
 
@@ -338,6 +340,8 @@ aprovar slug inexistente -> 403 {"ok":false,"erro":"negado"} · GET -> 405
 
 A borda do Base44 acrescenta `access-control-allow-origin` sozinha: em produção, qualquer resposta com cabeçalho `Origin` sai com `*` (visto em `/api/time` em 10/11), e o `OPTIONS` de pré-voo é respondido pela borda com `*`. No preview, a borda devolve o `Origin` recebido. As rotas mandam `access-control-allow-origin: https://creat-nuvem-404b1994.base44.app`, mas no preview a borda sobrescreve. **Não há como a rota tirar esse cabeçalho.**
 
+Em produção, 11/11/2026 (seção 8.10): as respostas de `contar`, `confirmarPagamento` e `consultarPedido` saem com `access-control-allow-origin: *` **nos dois endereços**, e não com o valor da rota. Ou seja, `ORIGEM_SITE` de `src/lib/pa/servidor.server.js` (ainda o endereço antigo) não chega ao navegador e não decide nada. Chamada da mesma origem não usa CORS, então a página no endereço novo chama as rotas do endereço novo sem depender desse cabeçalho.
+
 Por que isso não abre o pedido: (1) toda chamada de navegador vinda de outro site leva `Sec-Fetch-Site: cross-site` e é recusada antes de qualquer leitura ou escrita; (2) nenhuma resposta pública traz dado pessoal; `consultarPedido` exige o segredo de 128 bits; (3) as rotas não usam cookie, então não há credencial a vazar. Depois do deploy, conferir no endereço de produção (seção 10, passo 3) se o cabeçalho próprio vale lá.
 
 ### 8.5 E-mail
@@ -396,6 +400,28 @@ rotina com um pendente de pagamento real: pago pela faixa do servidor, registro 
 
 NÃO VERIFICADO aqui: o caminho com pagamento aprovado de verdade (não existe pagamento aprovado de teste até o dono pagar a `pa-teste`); a rotina com token de admin no preview (o workflow roda no app publicado, onde as rotas ainda dão 404).
 
+### 8.10 Endereço único (pacote H3, 11/11/2026, 01:20 UTC)
+
+Leitura do código do app (só leitura, `src/routes/api/pa/*.js` e `src/lib/pa/*.js` no commit `ccd084c`):
+- Nenhuma rota lê `Origin`, `Referer` ou `Host`. A trava de origem é só `ehCrossSite` (`Sec-Fetch-Site: cross-site` dá 403), nas 5 rotas públicas (`registrarPedido`, `contar`, `confirmarPagamento`, `consultarPedido`, `aprovarRascunho`); as internas exigem admin. Chamada de servidor para servidor (o webhook do 1B) não manda esse cabeçalho e passa.
+- Limite de taxa: a chave é `sal da hora | escopo | cf-connecting-ip` (ou a cadeia de `x-forwarded-for`, ou global). O host não entra. Quem alterna os dois endereços cai no mesmo contador.
+- Host usado como dado em dois lugares, e os dois seguem o endereço chamado: `consultarPedido` monta `rascunho_url` e `recibo.termos` com `new URL(request.url).origin`; `capacidadeDia` lê `/dados/vagas.json` do próprio endereço chamado (o arquivo é o mesmo nos dois; se falhar, vale 3).
+- Host fixo: `ORIGEM_SITE` em `servidor.server.js` (cabeçalho CORS, sem efeito em produção, seção 8.4) e `ORIGEM` em `regras.js` (links dos e-mails, agora o canônico).
+- A página: `public/assets/vitrine.js` monta a API com `location.origin + '/api/pa/'`. Aberta no novo, chama o novo.
+
+Sondas no ar, 8 chamadas no total, nenhuma grava pedido (`contar` com `X-Conferencia: 1` e `utm_content=conferencia`; `confirmarPagamento` com `teste:true`, que não deixa `pendente_`; `consultarPedido` com id e segredo inventados), mesmas chamadas nos dois endereços, com `Origin` do próprio endereço e `Sec-Fetch-Site: same-origin`:
+
+```
+                                   antigo (base44.app)                    novo (nuvem.creatmtt.com.br)
+contar                             204                                    204
+confirmarPagamento 99999999999     200 {"ok":false,"motivo":"nao_confirmado"}   200 {"ok":false,"motivo":"nao_confirmado"}
+consultarPedido PA-ZZZZZZZZZZ      404 {"ok":false,"erro":"nao_encontrado"}     404 {"ok":false,"erro":"nao_encontrado"}
+GET /dados/vagas.json              200 capacidade_dia 3                   200 capacidade_dia 3
+cabeçalhos das 6 chamadas          server: cloudflare, access-control-allow-origin: *, vary: Origin, TLS válido (ssl_verify_result 0) nos dois
+```
+
+NÃO VERIFICADO: o `rascunho_url` com o host novo numa consulta de verdade (precisa de um pedido real com segredo e rascunho; a leitura do código mostra que ele segue o endereço chamado); o `registrarPedido` de verdade vindo do novo (proibido sem `eh_teste`; mesmo código e mesma trava das outras rotas).
+
 ### 8.7 Correções da conferência da onda 1 (10/11/2026, tarde)
 
 Checkpoints: antes `6af33eee392cd812d1eba5e4`, depois `6af3423f769e842f204702b6`. Rotas antes e depois: as mesmas 13 em `src/routes/api/pa/` (nenhuma criada, nenhuma apagada); entidades: só acréscimo de 15 campos em `PedidoPortaAberta`, regras de acesso iguais. Preview do sandbox (mesmo código que vai ao ar):
@@ -422,7 +448,7 @@ sha256sum projetos/creat-nuvem/schema/pedido-regras.mjs           # neste reposi
 sha256sum src/lib/pa/regras.js                                     # no app (run_command do MCP do Base44)
 ```
 
-Os dois têm de dar o mesmo valor. Valor depois do fecho da onda 2 (10/11/2026, `pa-regras-1A-2026-11-10e`: termos-v2 e prazo às 11h): `18036b7550fb3d4be52679666cbaea9d87d3c447e19baceac6c8d26403a753f4` nos dois. Valores anteriores: `510ebc77...` (fecho 2 da onda 1; o arquivo trazia a constante `-10c`, embora este texto o chamasse de `-10d`, por isso a letra `d` ficou pulada), `5a5ec057...` (`-10c`), `ac5c9ebc...` (`-10b`), `a51a663c...`. Toda mudança nas regras é feita no repositório, testada com `npm test` e copiada byte a byte para o app.
+Os dois têm de dar o mesmo valor. Valor depois do endereço único (11/11/2026, `pa-regras-1A-2026-11-10f`: links dos e-mails no endereço canônico): `10a0465f96055400a2d77dc2595d58ced805a42565c34f16f43db1015d308124` nos dois (46384 bytes). Valores anteriores: `18036b75...` (`-10e`, fecho da onda 2: termos-v2 e prazo às 11h), `510ebc77...` (fecho 2 da onda 1; o arquivo trazia a constante `-10c`, embora este texto o chamasse de `-10d`, por isso a letra `d` ficou pulada), `5a5ec057...` (`-10c`), `ac5c9ebc...` (`-10b`), `a51a663c...`. Toda mudança nas regras é feita no repositório, testada com `npm test` e copiada byte a byte para o app.
 
 ## 10. Para ir ao ar (coordenador)
 
@@ -431,7 +457,7 @@ Os dois têm de dar o mesmo valor. Valor depois do fecho da onda 2 (10/11/2026, 
 3. Conferência no ar das funções (com `teste:true` e `utm_content=conferencia`, nada grava):
 
 ```bash
-O=https://creat-nuvem-404b1994.base44.app
+O=https://nuvem.creatmtt.com.br                 # canônico; repita o bloco com O=https://creat-nuvem-404b1994.base44.app (o antigo responde igual)
 curl -sS -X POST $O/api/pa/registrarPedido -H 'content-type: application/json' -d @projetos/creat-nuvem/schema/exemplos/pedido.registro-v1-teste.valido.json   # {"ok":true}
 curl -sS -o /dev/null -w '%{http_code}\n' -X POST $O/api/pa/contar -d '{"evento":"visita","utm_content":"conferencia"}'                      # 204
 curl -sS -X POST $O/api/pa/confirmarPagamento -d '{"payment_id":"99999999999"}'                                                           # {"ok":false,"motivo":"nao_confirmado"}

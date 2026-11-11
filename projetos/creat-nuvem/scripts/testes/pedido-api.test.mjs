@@ -95,7 +95,7 @@ test('termos v1 e v2 passam, cada um com o seu hash; v2 é o sha256 do conteudo/
 });
 
 test('versão das regras do fecho da onda 2', () => {
-  assert.equal(R.VERSAO_REGRAS, 'pa-regras-1A-2026-11-10e');
+  assert.equal(R.VERSAO_REGRAS, 'pa-regras-1A-2026-11-10f');
 });
 
 test('versão desconhecida dos termos é campo inválido (a rota responde 422 campo termos_versao)', () => {
@@ -373,6 +373,37 @@ test('recibo traz produto, valor, meio, número do pagamento, prazo, regra do pr
   assert.equal(r2.corpo.includes('#t='), false, 'token fora do formato não entra no link');
 });
 
+test('endereço único (H3): todo link dos e-mails aponta para https://nuvem.creatmtt.com.br e nenhum para o endereço antigo', () => {
+  const NOVO = 'https://nuvem.creatmtt.com.br';
+  const base = { pedido_id: 'PA-AAAAAAAAAA', produto: 'pa-abertura-inauguracao-2026-11', valor: 297, meio: 'Pix', payment_id: '123456789', prazo_fim: new Date(R.prazoFim(TER_10H_BAHIA)).toISOString(), plano: 'essencial', slug_rascunho: 'barbearia-x--r-abcdefghijkl', token_rascunho: 'q1Zr8Xn4Lw0bT6yHc9VfEA' };
+  const esperado = {
+    recibo: [NOVO + '/obrigado/', NOVO + '/termos/'],
+    rascunho: [NOVO + '/sites/barbearia-x--r-abcdefghijkl/#t=q1Zr8Xn4Lw0bT6yHc9VfEA', NOVO + '/termos/'],
+    mensalidade: [NOVO + '/termos/'],
+  };
+  for (const [modelo, links] of Object.entries(esperado)) {
+    const m = R.modeloEmailCliente(modelo, base);
+    for (const l of links) assert.ok(m.corpo.includes(l), modelo + ': ' + l);
+    const todos = m.corpo.match(/https?:\/\/[^\s]+/g) || [];
+    assert.ok(todos.length >= 1, modelo + ' tem link');
+    for (const u of todos) assert.ok(u.startsWith(NOVO + '/'), modelo + ': link fora do endereço novo: ' + u);
+    assert.equal(m.corpo.includes('base44.app'), false, modelo + ' sem o endereço antigo');
+  }
+  // O segredo do pedido nunca aparece em e-mail, nem com o campo presente no registro.
+  const comSegredo = R.modeloEmailCliente('recibo', { ...base, segredo: 'AAAAAAAAAAAAAAAAAAAAAA' });
+  assert.equal(comSegredo.corpo.includes('AAAAAAAAAAAAAAAAAAAAAA'), false);
+});
+
+test('endereço único (H3): entradaDoRegistro usa a origem que vier e, sem origem válida, cai no endereço novo', () => {
+  const v = R.validarRegistro(VALIDO);
+  const linha = { ...v.pedido, pedido_id: v.pedido.id, aceite_em: '2026-11-10T14:00:00.000Z' };
+  assert.ok(R.entradaDoRegistro(linha, 'https://creat-nuvem-404b1994.base44.app').entrada.previa.startsWith('https://creat-nuvem-404b1994.base44.app/previa/#k='), 'aceita o antigo, se vier');
+  assert.ok(R.entradaDoRegistro(linha, 'https://nuvem.creatmtt.com.br').entrada.previa.startsWith('https://nuvem.creatmtt.com.br/previa/#k='));
+  assert.ok(R.entradaDoRegistro(linha, 'http://localhost:8080').entrada.previa.startsWith('https://nuvem.creatmtt.com.br/previa/'), 'http cai no padrão');
+  assert.ok(R.entradaDoRegistro(linha, 'https://x.test/barra/').entrada.previa.startsWith('https://nuvem.creatmtt.com.br/previa/'), 'com caminho cai no padrão');
+  assert.ok(R.entradaDoRegistro(linha).entrada.previa.startsWith('https://nuvem.creatmtt.com.br/previa/'), 'sem origem cai no padrão');
+});
+
 /* ---------- Correções da conferência da onda 1 (10/11/2026) ---------- */
 
 const require2 = createRequire(import.meta.url);
@@ -400,7 +431,7 @@ test('registro com responsavel, endereco e horarios vira PEDIDO v1 que o produzi
   const v = R.validarRegistro(ler('pedido.registro-v1-completo.valido.json'));
   assert.equal(v.ok, true);
   const linha = { ...v.pedido, pedido_id: v.pedido.id, aceite_em: '2026-11-10T14:00:00.000Z', status: 'pago' };
-  const { entrada, faltam } = R.entradaDoRegistro(linha, 'https://creat-nuvem-404b1994.base44.app');
+  const { entrada, faltam } = R.entradaDoRegistro(linha, 'https://nuvem.creatmtt.com.br');
   assert.deepEqual(faltam, []);
   assert.equal(validadorSchema()(entrada), true, 'schema PedidoEntrada');
   const { validarPedido } = require2(path.join(RAIZ, 'scripts', 'producao', 'lib', 'pedido.cjs'));

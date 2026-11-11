@@ -53,8 +53,10 @@
  *   ANTHROPIC_API_KEY   só no caminho --api (chave do Claude Console). O caminho padrão não usa.
  *   CREAT_MODELO        modelo do caminho --api (padrão claude-sonnet-5-5)
  *   CREAT_CAMBIO        R$ por US$ para o custo.json (obrigatória só no caminho --api/fixture)
- *   CREAT_HOME          home da vitrine (padrão https://creat-nuvem-404b1994.base44.app/; "0" = rodapé sem link)
- *   CREAT_URL_SITES     URL dos sites com {slug} (padrão https://creat-nuvem-404b1994.base44.app/sites/{slug}/;
+ *   CREAT_HOST          origem canônica (padrão ENDERECO.canonico de lib/comum.cjs, https://nuvem.creatmtt.com.br;
+ *                       docs/DOMINIO.md); CREAT_HOST=<endereço antigo> volta atrás de uma vez
+ *   CREAT_HOME          home da vitrine (padrão <origem canônica>/; "0" = rodapé sem link)
+ *   CREAT_URL_SITES     URL dos sites com {slug} (padrão <origem canônica>/sites/{slug}/;
  *                       "0" = sem canonical nem sitemap); o rascunho usa o mesmo modelo com <slug>--r-<id>
  *   CREAT_APROVAR_URL   caminho da função de aprovação na mesma origem (padrão /api/pa/aprovarRascunho)
  *   CREAT_DOMINIOS      domínios da Creat, separados por vírgula (varredura do SAIR)

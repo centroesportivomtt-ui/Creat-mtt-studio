@@ -517,9 +517,13 @@ const SO_INSTRUCAO = new Set(['injecao', 'campo_curto', 'codigo', 'disfarce', 't
 /* o que o executor põe no lugar do que a sessão não lê (EXECUTOR.md, passo (e)) */
 const RESPONSAVEL_NEUTRO = 'Responsavel do pedido';
 const EMAIL_NEUTRO = 'sem-email@pedido.invalid';
-/* servidores da prévia que não passam pelo portão: o app da Creat, o domínio de exemplo dos contratos e CREAT_DOMINIOS */
+/* servidores da prévia que não passam pelo portão: os endereços da vitrine (canônico, antigo e CREAT_HOST, da fonte
+   única ENDERECO de lib/comum.cjs; docs/DOMINIO.md), o domínio de exemplo dos contratos e CREAT_DOMINIOS */
 function hostConhecido(h) {
-  const base = ['creat-nuvem-404b1994.base44.app', 'dominio-a-confirmar.invalid'].concat(String(process.env.CREAT_DOMINIOS || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean));
+  const C = require('./comum.cjs');
+  let vitrine;
+  try { vitrine = C.origensDaVitrine(); } catch (x) { vitrine = [C.ENDERECO.canonico, C.ENDERECO.antigo]; }
+  const base = vitrine.map((o) => new URL(o).hostname).concat(['dominio-a-confirmar.invalid']).concat(String(process.env.CREAT_DOMINIOS || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean));
   return base.some((d) => h === d || h.endsWith('.' + d));
 }
 function lateral(v) { return String(v).replace(/[._+=;@-]+/g, ' ').trim(); }

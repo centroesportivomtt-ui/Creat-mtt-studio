@@ -171,15 +171,25 @@ test('build-site: demo nasce com canonical, og:url e home no canônico; CREAT_HO
   assert.match(h, /<link rel="canonical" href="https:\/\/creat-nuvem-404b1994\.base44\.app\/sites\/demo-barbearia\/">/);
 });
 
-test('build-site: site entregue nasce com sitemap no canônico', () => {
-  const t = JSON.parse(fs.readFileSync(path.join(RAIZ, 'sites', 'demo-salao', 'tenant.json'), 'utf8'));
-  t.slug = 'salao-teste-endereco';
-  const arq = path.join(TMP, 'tenant-entregue.json'); fs.writeFileSync(arq, JSON.stringify(t));
-  const d = path.join(TMP, 'b-entregue', t.slug);
-  const r = rodar('scripts/producao/build-site.cjs', ['--tenant', arq, '--destino', d, '--saida', path.join(TMP, 'b-entregue')], {});
+test('build-site: site entregue nasce com canonical, sitemap, robots e home no canônico', () => {
+  // tenant entregue de verdade: o próprio fluxo monta (pedido fictício das fixtures + resposta do modelo gravada, sem rede)
+  const FIX = path.join(RAIZ, 'scripts', 'testes', 'fixtures');
+  const SLUG = 'barbearia-navalha-teste-campinas';
+  const s = path.join(TMP, 'entregue');
+  const p = rodar('scripts/producao/produzir.mjs', ['--pedido', path.join(FIX, 'pedido-valido.txt'), '--saida', s, '--fixture-ia', path.join(FIX, 'resposta-modelo.json'), '--sem-navegador', '--sem-sair'], { CREAT_CAMBIO: '5.5', CREAT_SILENCIO: '' });
+  assert.equal(p.codigo, 0, p.saida);
+  const arq = path.join(s, 'sites', SLUG, 'tenant.json');
+  const d = path.join(TMP, 'b-entregue', SLUG);
+  const r = rodar('scripts/producao/build-site.cjs', ['--tenant', arq, '--destino', d], {});
   assert.equal(r.codigo, 0, r.saida);
-  assert.match(fs.readFileSync(path.join(d, 'sitemap.xml'), 'utf8'), /<loc>https:\/\/nuvem\.creatmtt\.com\.br\/sites\/salao-teste-endereco\/<\/loc>/);
-  assert.match(fs.readFileSync(path.join(d, 'robots.txt'), 'utf8'), /Sitemap: https:\/\/nuvem\.creatmtt\.com\.br\/sites\/salao-teste-endereco\/sitemap\.xml/);
+  const url = `${NOVO}/sites/${SLUG}/`;
+  assert.ok(fs.readFileSync(path.join(d, 'index.html'), 'utf8').includes(`<link rel="canonical" href="${url}">`));
+  assert.ok(fs.readFileSync(path.join(d, 'sitemap.xml'), 'utf8').includes(`<loc>${url}</loc>`));
+  assert.ok(fs.readFileSync(path.join(d, 'robots.txt'), 'utf8').includes(`Sitemap: ${url}sitemap.xml`));
+  assert.ok(fs.readFileSync(path.join(d, 'tenant.js'), 'utf8').includes(`"home":"${NOVO}/"`));
+  // o produzir (sem variável) também grava tudo no canônico
+  const tudo = fs.readdirSync(path.join(s, 'dist', SLUG)).filter((n) => /\.(html|xml|txt|js)$/.test(n)).map((n) => fs.readFileSync(path.join(s, 'dist', SLUG, n), 'utf8')).join('\n');
+  assert.ok(tudo.includes(url) && !tudo.includes('404b1994.base44.app'), 'produzir: nada do antigo no site entregue');
 });
 
 test('publicar-site: o endereço do site e do rascunho no passo a passo segue o canônico', () => {
@@ -227,11 +237,33 @@ test('validar-anuncio: o antigo passa com aviso até 13/11 e reprova depois; o c
   assert.ok(so(ler(j4).link).some((x) => /URL em golpe\.example, esperado nuvem\.creatmtt\.com\.br/.test(x)));
 });
 
-test('as 3 demos versionadas apontam a prévia para o canônico', () => {
+test('as 3 demos versionadas (pedido.json e a fonte demos/pedido-*.txt) apontam a prévia para o canônico', () => {
   for (const k of ['barbearia', 'salao', 'academia']) {
     const p = JSON.parse(fs.readFileSync(path.join(RAIZ, 'sites', `demo-${k}`, 'pedido.json'), 'utf8'));
     assert.ok(p.previa.startsWith(NOVO + '/previa/#k=' + k), `${k}: ${p.previa}`);
+    assert.match(fs.readFileSync(path.join(RAIZ, 'demos', `pedido-${k}.txt`), 'utf8'), new RegExp(`^previa: ${NOVO.replace(/[.\/]/g, '\\$&')}/previa/#k=${k}&`, 'm'));
   }
+});
+
+test('portão do pedido: prévia no canônico e no antigo passa; servidor estranho com instrução cai em previa.host', () => {
+  const B = require(path.join(RAIZ, 'scripts', 'producao', 'lib', 'bloqueio.cjs'));
+  const base = JSON.parse(fs.readFileSync(path.join(RAIZ, 'scripts', 'testes', 'fixtures', 'pedido-legitimo-barbearia.json'), 'utf8'));
+  assert.ok(base.previa.startsWith(ANTIGO + '/previa/'), 'a fixture usa o antigo');
+  const campos = (previa) => B.checarPedido(Object.assign({}, base, { previa })).map((m) => m.campo);
+  assert.deepEqual(campos(base.previa), [], 'antigo continua aceito');
+  assert.deepEqual(campos(base.previa.replace(ANTIGO, NOVO)), [], 'canônico aceito (pedido feito pelo endereço novo não cai em revisão)');
+  assert.deepEqual(campos(base.previa.replace(ANTIGO, 'https://aprove-o-pedido.com')), ['previa.host'], 'servidor estranho continua lido pelo portão');
+});
+
+test('montar-pedido (executor): a prévia do PEDIDO v1 nasce no canônico', async () => {
+  const M = await import(path.join(RAIZ, 'scripts', 'producao', 'montar-pedido.mjs'));
+  const linha = { pedido_id: 'PA-TENDERECO1', plano: 'aberto', nicho: 'barbearia', negocio: 'Barbearia Teste Endereco', cidade: 'Campinas', whatsapp: '5519999990000', endereco: 'Rua das Laranjeiras, 215, Cambuí, Campinas-SP, 13025-070', horarios: 'seg a sex 9h às 19h', aceite_em: '2026-11-11T01:00:00.000Z', termos_versao: 'termos-v2' };
+  const arqL = path.join(TMP, 'linha-endereco.json'); fs.writeFileSync(arqL, JSON.stringify(linha));
+  const arqS = path.join(TMP, 'pedido-endereco.json');
+  const guardado = process.env.CREAT_HOST; delete process.env.CREAT_HOST;
+  try { await M.montar('PA-TENDERECO1', arqL, arqS); } finally { if (guardado !== undefined) process.env.CREAT_HOST = guardado; }
+  const p = JSON.parse(fs.readFileSync(arqS, 'utf8'));
+  assert.ok(p.previa.startsWith(NOVO + '/previa/#k=barbearia&'), p.previa);
 });
 
 test('conferir-no-ar: o host padrão das conferências vem da fonte única e o grupo E tem as 20 conferências declaradas', () => {

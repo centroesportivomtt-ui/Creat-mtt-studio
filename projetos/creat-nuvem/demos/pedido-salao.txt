@@ -10,5 +10,5 @@ endereco: Travessa do Exemplo, s/n, Centro, Feira de Santana-BA, 00000-000
 horarios: seg=fechado;ter=09:00-18:30;qua=09:00-18:30;qui=09:00-18:30;sex=09:00-19:00;sab=08:00-17:00;dom=fechado
 email: demonstracao@exemplo.com.br
 origem: utm_source=demo;utm_medium=interno;utm_campaign=demos-nov26;utm_content=salao
-previa: https://creat-nuvem-404b1994.base44.app/previa/#k=salao&n=Esmalte%20%26%20Fio&c=Feira%20de%20Santana&p=1
+previa: https://nuvem.creatmtt.com.br/previa/#k=salao&n=Esmalte%20%26%20Fio&c=Feira%20de%20Santana&p=1
 aceite_termos: 2026-11-09T09:00:00-03:00 termos-v1

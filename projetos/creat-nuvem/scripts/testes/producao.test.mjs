@@ -407,22 +407,22 @@ function rodarCom(script, args, vars) {
   return { codigo: r.status, saida: (r.stdout || '') + (r.stderr || '') };
 }
 
-test('endereço padrão: sem variável, o site entregue aponta para o app Base44 em /sites/<slug>/; "0" desliga', () => {
+test('endereço padrão: sem variável, o site entregue aponta para o endereço canônico (docs/DOMINIO.md) em /sites/<slug>/; "0" desliga', () => {
   const arq = path.join(pasta('padrao-tenant'), 't.json');
   C.gravarJson(arq, base);
   const d = pasta('padrao-dist');
   assert.equal(rodar('build-site.cjs', ['--tenant', arq, '--destino', d]).codigo, 0);
-  const url = `https://creat-nuvem-404b1994.base44.app/sites/${base.slug}/`;
+  const url = `https://nuvem.creatmtt.com.br/sites/${base.slug}/`;
   const html = fs.readFileSync(path.join(d, 'index.html'), 'utf8');
   assert.ok(html.includes(`<link rel="canonical" href="${url}">`), 'canonical no endereço padrão');
   assert.match(fs.readFileSync(path.join(d, 'sitemap.xml'), 'utf8'), new RegExp(`<loc>${url.replace(/[.\/]/g, '\\$&')}</loc>`));
-  assert.ok(fs.readFileSync(path.join(d, 'tenant.js'), 'utf8').includes('"home":"https://creat-nuvem-404b1994.base44.app/"'), 'rodapé com a home padrão');
+  assert.ok(fs.readFileSync(path.join(d, 'tenant.js'), 'utf8').includes('"home":"https://nuvem.creatmtt.com.br/"'), 'rodapé com a home padrão');
   const d0 = pasta('padrao-dist-0');
   const r0 = rodarCom('build-site.cjs', ['--tenant', arq, '--destino', d0], { CREAT_URL_SITES: '0', CREAT_HOME: '0' });
   assert.equal(r0.codigo, 0, r0.saida);
   assert.match(r0.saida, /sem URL do site/);
   assert.ok(!fs.existsSync(path.join(d0, 'sitemap.xml')));
-  assert.doesNotMatch(fs.readFileSync(path.join(d0, 'tenant.js'), 'utf8'), /base44\.app/, 'CREAT_HOME=0 e CREAT_URL_SITES=0: nada aponta para o app');
+  assert.doesNotMatch(fs.readFileSync(path.join(d0, 'tenant.js'), 'utf8'), /base44\.app|nuvem\.creatmtt/, 'CREAT_HOME=0 e CREAT_URL_SITES=0: nada aponta para o app');
   const dx = pasta('padrao-dist-x');
   assert.equal(rodarCom('build-site.cjs', ['--tenant', arq, '--destino', dx], { CREAT_URL_SITES: 'https://{slug}.exemplo.com.br/' }).codigo, 0);
   assert.ok(fs.readFileSync(path.join(dx, 'index.html'), 'utf8').includes(`href="https://${base.slug}.exemplo.com.br/"`));
@@ -435,7 +435,7 @@ test('publicar-site: confere dist, testa, gera zip sites/<slug>/ reprodutível e
   assert.equal(r.codigo, 0, r.saida);
   const o = JSON.parse(r.saida);
   assert.match(o.sha256, /^[0-9a-f]{64}$/);
-  assert.equal(o.url, `https://creat-nuvem-404b1994.base44.app/sites/${SLUG}/`);
+  assert.equal(o.url, `https://nuvem.creatmtt.com.br/sites/${SLUG}/`);
   const { unzipSync } = require(require.resolve('fflate', { paths: [RAIZ] }));
   const nomes = Object.keys(unzipSync(new Uint8Array(fs.readFileSync(o.zip))));
   assert.ok(nomes.includes(`sites/${SLUG}/index.html`) && nomes.includes(`sites/${SLUG}/motor/v1/motor.js`));
@@ -656,7 +656,7 @@ test('1C --rascunho: dist/<slug>--r-<16>/ é o build final + faixa, noindex, Dis
   assert.match(j.dir, new RegExp(`^${SLUG}--r-[a-z0-9]{16}$`));
   assert.match(j.dir, RS.RE_DIR);
   assert.match(j.token, /^[A-Za-z0-9_-]{21}[AQgw]$/, 'formato RE.segredo do 1A');
-  assert.equal(j.link, `https://creat-nuvem-404b1994.base44.app/sites/${j.dir}/#t=${j.token}`);
+  assert.equal(j.link, `https://nuvem.creatmtt.com.br/sites/${j.dir}/#t=${j.token}`);
   assert.equal(j.token_hash, require('node:crypto').createHash('sha256').update(j.token).digest('hex'));
   const dR = path.join(s, 'dist', j.dir), dF = path.join(s, 'dist', SLUG);
   const h = fs.readFileSync(path.join(dR, 'index.html'), 'utf8');
@@ -1017,7 +1017,7 @@ test('1C conferência: link-aprovacao.cjs gera token novo para o slug_rascunho, 
   const o = JSON.parse(r.saida);
   const tok = o.link.split('#t=')[1];
   assert.match(tok, RS.RE_TOKEN); assert.notEqual(tok, j.token);
-  assert.equal(o.link, `https://creat-nuvem-404b1994.base44.app/sites/${j.dir}/#t=${tok}`);
+  assert.equal(o.link, `https://nuvem.creatmtt.com.br/sites/${j.dir}/#t=${tok}`);
   assert.equal(o.token_hash, require('node:crypto').createHash('sha256').update(tok).digest('hex'));
   assert.equal(o.gravado, null); assert.equal(C.lerJson(arq).token, j.token, 'sem --saida, nada muda no disco');
   // mesmo contêiner: atualiza o rascunho.json

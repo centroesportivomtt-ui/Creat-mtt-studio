@@ -21,6 +21,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
 
 export const CAMPOS_TEXTO = ['pedido_id', 'plano', 'nicho', 'negocio', 'cidade', 'whatsapp', 'endereco', 'horarios', 'servicos_texto', 'aceite_em', 'termos_versao', 'utm_source', 'utm_campaign', 'utm_content'];
 const LIMITE = { servicos_texto: 4000 };
@@ -28,7 +29,8 @@ const LIMITE_PADRAO = 2000;
 const MAX_BYTES = 64 * 1024;
 const RE_ID = /^PA-(?:[0-9A-HJKMNP-TV-Z]{8}|[0-9A-Z]{10})$/;
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const ORIGEM = 'https://creat-nuvem-404b1994.base44.app';
+/* origem da prévia: o endereço canônico da fonte única (lib/comum.cjs, ENDERECO; CREAT_HOST volta atrás) */
+const C = createRequire(import.meta.url)('./lib/comum.cjs');
 
 class Entrada extends Error {}
 
@@ -54,7 +56,7 @@ export async function montar(idEsperado, arqLinha, arqSaida) {
   if (!st.isFile() || st.size > MAX_BYTES) throw new Entrada();
   const linha = conferirLinha(JSON.parse(fs.readFileSync(arqLinha, 'utf8')), idEsperado);
   const R = await import(pathToFileURL(path.join(RAIZ, 'schema', 'pedido-regras.mjs')).href);
-  const { entrada, faltam } = R.entradaDoRegistro(linha, ORIGEM);
+  const { entrada, faltam } = R.entradaDoRegistro(linha, C.hostPadrao());
   if (!entrada) throw new Entrada();
   // a sessão não lê e-mail nem nome do responsável: o produzir não usa os dois no site
   entrada.email = 'sem-email@pedido.invalid';

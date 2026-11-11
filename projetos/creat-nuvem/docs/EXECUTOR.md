@@ -117,7 +117,7 @@ Campos que este roteiro grava e que o 1A ainda não lista na seção 2 do PEDIDO
 
 ## 5. O roteiro a cada despertar
 
-Variáveis da sessão: `APP=6aefffe66b684db9404b1994`, `O=https://creat-nuvem-404b1994.base44.app`, `P=projetos/creat-nuvem`, `TMP` = pasta temporária da sessão (fora do repositório), `DONO=executor:<hora>`.
+Variáveis da sessão: `APP=6aefffe66b684db9404b1994`, `O=https://nuvem.creatmtt.com.br` (o endereço canônico desde 11/11/2026, docs/DOMINIO.md; o antigo `https://creat-nuvem-404b1994.base44.app` continua no ar e responde igual, mas toda checagem e todo link saem do canônico), `P=projetos/creat-nuvem`, `TMP` = pasta temporária da sessão (fora do repositório), `DONO=executor:<hora>`.
 
 Preparação, uma vez por despertar: `cd $P && npm ci && npx playwright install chromium && npm test`. `npm test` falhou: pare, nada de produção, `ALERTA: npm test falhou no main`. Depois, `claude --version` (tem de ser 2.1.295 ou mais, por causa do `onFailure: "block"` dos ganchos dos papéis) e `test -s ../../.claude/hooks/papeis.cjs; echo $?` (0). Versão menor, comando ausente ou gancho ausente: pare, nada de produção, `ALERTA: ganchos dos papéis sem garantia neste contêiner`.
 
