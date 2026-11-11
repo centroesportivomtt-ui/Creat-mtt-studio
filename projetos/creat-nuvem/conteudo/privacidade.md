@@ -2,7 +2,7 @@ REVISAO_JURIDICA_PENDENTE
 
 # Política de privacidade do Porta Aberta
 
-Versão 3 · 10/11/2026 · vale a partir da página /abrir/ que registra o pedido no servidor da Creat no toque em Pagar
+Versão 4 · 11/11/2026 · vale a partir da página /abrir/ em que quem cuida do negócio, o endereço e o horário são opcionais antes do pagamento
 
 Esta política explica o que a vitrine da Creat Nuvem (as páginas do Porta Aberta) faz com dados pessoais, de acordo com a Lei Geral de Proteção de Dados (Lei 13.709/2018). Controladora: {{empresa.nome}} (nome empresarial {{empresa.razao}}), de {{empresa.cidade}} ({{empresa.uf}}), {{empresa.documento}}. Contato: {{contato.email}}.
 
@@ -33,11 +33,13 @@ O Pixel da Meta (medição de anúncios) e o Clarity da Microsoft (mapa de cliqu
 
 ## 4. O pedido: quando os dados saem do seu aparelho
 
-Em /abrir/, você preenche: quem cuida do negócio, o WhatsApp que recebe os pedidos, o endereço do negócio, o horário de funcionamento e o e-mail, e escolhe o plano. O nome do negócio, a cidade e o nicho vêm da prévia. **Esses dados saem do seu aparelho num momento só: quando você marca o aceite dos termos e toca em Pagar.** Nesse toque, a página registra o pedido no servidor da Creat e abre o Mercado Pago. Se você parar antes desse toque, nada sai do aparelho. O aviso ao lado do botão Pagar diz isso antes de você tocar.
+Em /abrir/, você preenche o WhatsApp que recebe os pedidos e o e-mail, e escolhe o plano. O nome do negócio, a cidade e o nicho vêm da prévia; sem prévia, você os preenche ali. Quem cuida do negócio, o endereço do negócio e o horário de funcionamento são opcionais antes do pagamento: ficam num bloco recolhido e só vão no pedido se você os preencher. **Os dados do pedido que você preenche em /abrir/ saem do seu aparelho num momento só: quando você marca o aceite dos termos e toca em Pagar.** Nesse toque, a página registra o pedido no servidor da Creat e abre o Mercado Pago. Se você parar antes desse toque, nada sai do aparelho. O aviso ao lado do botão Pagar diz isso antes de você tocar.
+
+**Endereço e horário depois do pagamento.** Sem o endereço e o horário, a equipe não monta o site. Se você não os informar em /abrir/, a página /obrigado/ mostra, depois do pagamento, um botão para você mandá-los pelo WhatsApp do Suporte Creat (ou por e-mail, quando o WhatsApp do suporte não estiver disponível). Quem abre essa conversa é você. A mensagem já sai com o número do pedido, e o endereço e o horário você escreve na conversa. Uma pessoa da equipe grava esses dados no pedido, no painel do servidor, para montar o site. Gravados, eles ficam no pedido, no servidor, com as mesmas regras de acesso e de prazo dos outros dados do pedido (esta seção e a seção 8). A conversa segue a regra das conversas no WhatsApp (seções 7 e 8).
 
 O que fica gravado no pedido, no servidor:
 
-- Do negócio: nome, cidade, nicho, praça e plano escolhidos, quem cuida do negócio, endereço e horários.
+- Do negócio: nome, cidade, nicho, praça e plano escolhidos e, se você informou (em /abrir/ ou depois do pagamento, pelo suporte), quem cuida do negócio, endereço e horários.
 - De contato: o WhatsApp e o e-mail que você informou.
 - Do anúncio: de onde você veio (origem, campanha e código do anúncio), sem nada sobre você.
 - Do aceite: a versão e o código de conferência (hash) dos termos aceitos, e a data e a hora do aceite pelo relógio do servidor (não a do seu aparelho).
@@ -63,7 +65,7 @@ Cada item com prazo se apaga sozinho quando vence. O botão "Esquecer meus dados
 **Para que usamos e com que base legal** (LGPD, art. 7º):
 
 - Registrar o pedido no toque em Pagar, para ligar o pagamento a você mesmo quando você paga no app do banco e não volta à página: procedimento preliminar ao contrato, a seu pedido (art. 7º, V). Se você não pagar, o pedido é apagado em 30 dias e a Creat não entra em contato com você por causa dele.
-- Produzir o site, falar com você sobre o pedido e cobrar a mensalidade: execução do contrato (art. 7º, V).
+- Produzir o site (inclusive receber pelo suporte o endereço e o horário que faltaram e gravá-los no pedido), falar com você sobre o pedido e cobrar a mensalidade: execução do contrato (art. 7º, V).
 - Guardar o que a lei fiscal e a de consumo exigem: cumprimento de obrigação legal (art. 7º, II).
 - Limitar tentativas repetidas e robôs (seção 5): legítimo interesse da Creat em manter o serviço no ar e seguro (art. 7º, IX), com o mínimo de dado e apagado em horas.
 
@@ -93,7 +95,7 @@ Só com quem precisa para o serviço funcionar:
 - Google, que entrega as letras do site (Google Fonts) e recebe o endereço IP.
 - Meta (WhatsApp e, se você aceitar, Pixel) e Microsoft (Clarity, quando ligado, só na página inicial e se você aceitar).
 
-**Conversa no WhatsApp.** Quando você chama o Suporte Creat no WhatsApp, a conversa é respondida e guardada por até 90 dias depois do último contato (seção 8). A Creat nunca inicia contato com quem só testou a prévia ou não pagou. A única mensagem que a Creat manda sem conversa aberta é o aviso de chegada de nicho, para quem pediu esse aviso, e ela para quando a pessoa responde PARAR.
+**Conversa no WhatsApp.** Quando você chama o Suporte Creat no WhatsApp, a conversa é respondida e guardada por até 90 dias depois do último contato (seção 8). A Creat nunca inicia contato com quem só testou a prévia ou não pagou. Sem conversa aberta, a Creat só escreve em dois casos. O primeiro é o aviso de chegada de nicho, para quem pediu esse aviso, e ele para quando a pessoa responde PARAR. O segundo é o pedido pago: uma pessoa do Suporte Creat pode escrever, pelo número oficial do suporte, ao WhatsApp ou ao e-mail informados no pedido, só sobre esse pedido, por exemplo para pedir o endereço e o horário que faltam para montar o site. Base legal: execução do contrato (LGPD, art. 7º, V). Essa mensagem é escrita e enviada por uma pessoa da equipe, nunca por robô.
 
 Alguns desses fornecedores tratam dados fora do Brasil (Base44, Cloudflare, Anthropic, Google, Meta, Microsoft e Stripe). Nesses casos, a transferência segue as regras da LGPD e da ANPD para transferência internacional (LGPD, art. 33).
 

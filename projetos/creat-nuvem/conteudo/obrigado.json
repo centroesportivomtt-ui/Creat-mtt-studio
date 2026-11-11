@@ -119,7 +119,7 @@
     },
     "botao": "Mandar no WhatsApp do suporte",
     "botaoEmail": "Mandar por e-mail",
-    "nota": "A mensagem já sai com o número do pedido: complete com o que falta e envie. Já mandou? Não precisa mandar de novo, a equipe grava no pedido.",
+    "nota": "A mensagem já sai com o número do pedido: complete com o que falta e envie. Já mandou? Não precisa mandar de novo: a equipe responde nessa mesma conversa.",
     "nomes": {
       "ambos": "o endereço e o horário",
       "endereco": "o endereço",
