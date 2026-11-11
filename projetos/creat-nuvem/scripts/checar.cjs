@@ -37,6 +37,8 @@
    Chaves JSON (ex.: "agendamento", "agendaExterna") não são texto público.
    6. Seção #sede da home: os textos de conteudo/home.json (sede.*) iguais no index.html, no
       assets/vitrine.js (ESTEIRA_AGORA na mesma ordem) ou na sede/index.html.
+      6c. Aviso de medição: consentimento.texto e textoCurto de conteudo/comum.json iguais a .cons-longo e
+      .cons-curto do index.html, de abrir/ e de obrigado/.
    7. robots.txt da raiz (ROBOTS_RAIZ de scripts/montar-publico.cjs): tem "User-agent: *" e a
       linha exata "Disallow: /sites/*--r-" (rascunhos, ADR-004), não barra o site inteiro nem
       /sites/ inteiro, não barra site final com "-r-" no slug (ex.: barbearia-do-r-feira-de-santana), e não há robots.txt solto na raiz do projeto disputando com ele. Se
@@ -518,6 +520,33 @@ function conferirTexto(onde, texto, opcoes) {
   // nada de preço no modo exemplo e nenhum estilo inline no cartão (CSP)
   if (/exemplo-site[^>]*style=/.test(html)) falha(rel(ph), 'cartão de exemplo com style inline');
   ok(`site de exemplo: ${n} textos de conteudo/home.json iguais no index.html`);
+})();
+
+/* 6c. Aviso de medição (11/11): consentimento.texto e consentimento.textoCurto de conteudo/comum.json iguais ao texto
+       de .cons-longo e .cons-curto no index.html, em abrir/ e em obrigado/. Do HTML sai o título em <strong> e o link
+       "Privacidade" do fim; o resto tem de ser o texto da fonte, palavra por palavra. */
+(function consentimentoTextos() {
+  const pj = path.join(RAIZ, 'conteudo', 'comum.json');
+  if (!existe(pj)) return;
+  let c; try { c = JSON.parse(ler(pj)).consentimento; } catch (e) { falha(rel(pj), 'não li o JSON'); return; }
+  if (!c || typeof c.texto !== 'string' || typeof c.textoCurto !== 'string') { falha(rel(pj), 'sem consentimento.texto ou consentimento.textoCurto'); return; }
+  const norm = (t) => t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  const limpo = (p) => norm(p.replace(/<strong>[\s\S]*?<\/strong>/g, '').replace(/<a\b[^>]*>[\s\S]*?<\/a>/g, '').replace(/<[^>]+>/g, ''));
+  const antes = falhas;
+  let n = 0;
+  for (const pag of ['index.html', 'abrir/index.html', 'obrigado/index.html']) {
+    const ph = path.join(RAIZ, pag);
+    if (!existe(ph)) { falha(pag, 'página ausente'); continue; }
+    const html = ler(ph);
+    for (const [classe, chave] of [['cons-longo', 'texto'], ['cons-curto', 'textoCurto']]) {
+      const ms = [...html.matchAll(new RegExp('<p class="' + classe + '">([\\s\\S]*?)</p>', 'g'))];
+      if (ms.length !== 1) { falha(pag, `${ms.length} parágrafo(s) p.${classe}; esperava 1`); continue; }
+      const t = limpo(ms[0][1]);
+      if (t !== norm(c[chave])) falha(pag, `p.${classe} "${t}" diferente de conteudo/comum.json consentimento.${chave} ("${norm(c[chave])}")`);
+      else n++;
+    }
+  }
+  if (falhas === antes) ok(`aviso de medição: ${n} textos (longo e curto, nas 3 páginas) iguais a conteudo/comum.json consentimento`);
 })();
 
 (function robotsRaiz() {

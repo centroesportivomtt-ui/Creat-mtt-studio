@@ -10,16 +10,16 @@
       "rua": "Rua do Exemplo",
       "numero": "s/n",
       "bairro": "Centro",
-      "cidade": "Riachão do Jacuípe",
+      "cidade": "Feira de Santana",
       "uf": "BA",
-      "cep": "44640-000"
+      "cep": "00000-000"
     },
     "whatsapp": "5575981151202",
     "telefoneExibicao": "(75) 98115-1202"
   },
   "pagina": {
-    "titulo": "Barbearia Navalha Fictícia · barbearia em Riachão do Jacuípe",
-    "descricao": "Corte, degradê e barba em Riachão do Jacuípe. Escolha o serviço, o dia e o horário no site e mande o pedido pelo WhatsApp. O dono confirma por lá."
+    "titulo": "Barbearia Navalha Fictícia · barbearia em Feira de Santana",
+    "descricao": "Corte, degradê e barba em Feira de Santana. Escolha o serviço, o dia e o horário no site e mande o pedido pelo WhatsApp. O dono confirma por lá."
   },
   "funcionamento": {
     "passoMin": 20,
@@ -54,35 +54,35 @@
     {
       "id": "corte",
       "nome": "Corte",
-      "preco": null,
+      "preco": 45,
       "duracaoMin": 40,
       "descricao": "Tesoura e máquina, com acabamento na nuca e no pezinho."
     },
     {
       "id": "degrade",
       "nome": "Degradê",
-      "preco": null,
+      "preco": 55,
       "duracaoMin": 50,
       "descricao": "Degradê do zero, com a transição fechada na navalha."
     },
     {
       "id": "barba",
       "nome": "Barba",
-      "preco": null,
+      "preco": 35,
       "duracaoMin": 30,
       "descricao": "Toalha quente, espuma no pincel e navalha."
     },
     {
       "id": "corte-barba",
       "nome": "Corte + barba",
-      "preco": null,
+      "preco": 75,
       "duracaoMin": 80,
       "descricao": "O serviço completo numa passada só."
     },
     {
       "id": "pezinho",
       "nome": "Pezinho",
-      "preco": null,
+      "preco": 20,
       "duracaoMin": 15,
       "descricao": "Manutenção rápida do contorno entre um corte e outro."
     }
@@ -97,14 +97,14 @@
   },
   "agendamento": {
     "modo": "whatsapp",
-    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}. Pode confirmar por aqui?"
+    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}."
   },
   "textos": {
     "heroTitulo": "Cadeira de bairro, corte no capricho.",
     "heroSubtitulo": "Escolha o serviço, o dia e o horário. O pedido chega no WhatsApp da casa e o dono confirma pelo WhatsApp.",
-    "manifesto": "Aqui a navalha passa no couro antes de cada cliente. Você escolhe o corte, o dia e o horário pelo celular, sem ligar e sem esperar alguém atender. O pedido chega no WhatsApp da casa, e a confirmação vem por lá, de gente para gente. Chegou, sentou, saiu alinhado.",
+    "manifesto": "Antes de cada cliente, a navalha passa no couro. O corte é conversado antes da primeira passada de máquina, e a nuca é conferida no espelho de mão. Você levanta da cadeira alinhado, sem a pressa de quem tem fila na porta.",
     "servicosTitulo": "Tabela da casa",
-    "servicosNota": "Valores sob consulta: pergunte no WhatsApp da casa antes de pedir o horário.",
+    "servicosNota": "Preços de exemplo. No seu site entram os seus valores.",
     "equipeTitulo": "Quem está na cadeira",
     "avaliacoesTitulo": "Recado no quadro",
     "pedidoTitulo": "Peça o seu horário",
@@ -119,11 +119,11 @@
     "faq": [
       {
         "pergunta": "Pedir pelo site já marca o horário?",
-        "resposta": "Ainda não. O pedido chega no WhatsApp da barbearia e o dono confirma pelo WhatsApp. O horário vale depois da confirmação."
+        "resposta": "Não. O pedido chega pronto no WhatsApp da barbearia, com serviço, dia e hora. O horário vale depois que a casa confirma."
       },
       {
-        "pergunta": "Posso pedir corte e barba juntos?",
-        "resposta": "Pode. Escolha Corte + barba na lista de serviços."
+        "pergunta": "Quanto custa cada serviço?",
+        "resposta": "O valor está na tabela, ao lado de cada serviço. Corte + barba sai por menos que os dois separados."
       },
       {
         "pergunta": "Como eu pago?",
@@ -138,7 +138,48 @@
   },
   "meta": {
     "previa": false,
-    "motorVersao": "v1",
-    "criadoEm": "2026-11-09T20:10:24.536Z"
-  }
+    "motorVersao": "v1.3",
+    "criadoEm": "2026-11-11T15:44:58.301Z"
+  },
+  "fuso": "America/Bahia",
+  "recados": [
+    {
+      "texto": "Pedi o degradê na hora do almoço e sentei na cadeira no horário que escolhi.",
+      "autor": "Cliente de exemplo"
+    },
+    {
+      "texto": "Corte + barba numa passada só, pelo valor que estava na tabela.",
+      "autor": "Cliente de exemplo"
+    }
+  ],
+  "galeria": [
+    {
+      "src": "galeria/barbearia-1.webp",
+      "alt": "Ilustração de exemplo: cadeira de barbeiro de couro vermelho com capitonê, sob luz pendente, ao lado do poste listrado e do espelho, em piso xadrez.",
+      "legenda": "Ilustração de exemplo: a cadeira da casa.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/barbearia-2.webp",
+      "alt": "Ilustração de exemplo: navalha aberta sobre a tira de couro de afiar, com tesoura, pincel de barba e pente numa toalha, vistos de cima.",
+      "legenda": "Ilustração de exemplo: navalha, couro e tesoura.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/barbearia-3.webp",
+      "alt": "Ilustração de exemplo: bancada de madeira com gavetas e espelho grande, máquina, borrifador e potes em cima, poste listrado na parede.",
+      "legenda": "Ilustração de exemplo: a bancada e o espelho.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/barbearia-4.webp",
+      "alt": "Ilustração de exemplo: prateleiras com pomadas, loção, pote de vidro com pentes no líquido azul, toalhas dobradas e tigela de espuma com pincel.",
+      "legenda": "Ilustração de exemplo: produtos e toalhas.",
+      "largura": 1024,
+      "altura": 1280
+    }
+  ]
 }

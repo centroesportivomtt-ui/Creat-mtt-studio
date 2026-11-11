@@ -1,8 +1,8 @@
 {
-  "bordao": "Unha, fio e sobrancelha no Centro de Riachão, com o horário pedido pelo WhatsApp.",
+  "bordao": "Unha, fio e sobrancelha no Centro, sem pressa.",
   "pagina": {
-    "titulo": "Salão Esmalte Fictício · salão em Riachão do Jacuípe",
-    "descricao": "Corte, escova, coloração, unhas e sobrancelha no Centro de Riachão do Jacuípe. Escolha serviço, dia e hora e mande o pedido pelo WhatsApp."
+    "titulo": "Salão Esmalte & Fio · salão em Feira de Santana",
+    "descricao": "Corte, escova, progressiva, mechas, unhas e sobrancelha no Centro de Feira de Santana, com preço na lista. Escolha o serviço, o dia e a hora."
   },
   "servicos": [
     {
@@ -14,8 +14,20 @@
       "descricao": "Lavagem e escova lisa ou modelada, para um compromisso ou para começar a semana."
     },
     {
+      "id": "progressiva",
+      "descricao": "Alisamento progressivo do fio, com teste de mecha antes e escova no final."
+    },
+    {
       "id": "coloracao",
       "descricao": "Cor do fio inteiro ou retoque de raiz. O tom é escolhido junto com você, olhando o seu fio na hora."
+    },
+    {
+      "id": "mechas",
+      "descricao": "Mechas ou luzes no tom que combina com você, com tonalização no final."
+    },
+    {
+      "id": "hidratacao",
+      "descricao": "Máscara de tratamento aplicada mecha a mecha no fio."
     },
     {
       "id": "manicure",
@@ -26,26 +38,30 @@
       "descricao": "Cuidado dos pés com cutícula, lixa e esmalte, para sair do salão já de sandália."
     },
     {
+      "id": "alongamento-gel",
+      "descricao": "Unhas alongadas em gel, no formato e no tamanho que você pedir."
+    },
+    {
       "id": "sobrancelha",
       "descricao": "Desenho e acabamento com pinça e linha, respeitando o formato do seu rosto."
     },
     {
-      "id": "hidratacao",
-      "descricao": "Máscara de tratamento aplicada mecha a mecha no fio."
+      "id": "maquiagem",
+      "descricao": "Maquiagem para festa, formatura ou ensaio, com a pele preparada antes."
     }
   ],
   "textos": {
-    "heroTitulo": "Cadeira pronta e esmalte aberto no Centro de Riachão.",
-    "heroSubtitulo": "Escolha o serviço, o dia e a hora. O pedido chega no WhatsApp do Esmalte já escrito e o salão confirma pelo WhatsApp. Sem ligação e sem fila de mensagem.",
-    "manifesto": "No Esmalte, cada horário é pensado para você sair do jeito que pediu, e não do jeito que deu tempo. Por isso o pedido começa aqui: você escolhe o serviço, o dia e a hora no celular, sem ligar e sem ficar esperando resposta para saber se tem vaga. O pedido chega no WhatsApp do salão com tudo escrito, e a confirmação vem por lá. No dia, é só chegar no Centro, sentar e escolher a cor.",
+    "heroTitulo": "Cadeira pronta e esmalte aberto no Centro.",
+    "heroSubtitulo": "Escolha o dia, a hora e o serviço. O pedido chega pronto no WhatsApp do salão, sem ligação e sem fila de mensagem.",
+    "manifesto": "Aqui a cor é escolhida olhando o seu fio, na luz do espelho. O esmalte leva o tempo de cada camada secar, sem ninguém apressando a próxima. Você sai do jeito que pediu, e não do jeito que deu tempo.",
     "servicosTitulo": "Serviços da casa",
     "equipeTitulo": "Quem atende",
     "avaliacoesTitulo": "Recados de quem vem",
     "pedidoTitulo": "Peça o seu horário",
-    "pedidoNota": "O pedido vai para o WhatsApp do salão com serviço, dia e hora. O salão confirma pelo WhatsApp.",
-    "ritualDica": "Passe o pincel na unha para enviar",
+    "pedidoNota": "O pedido chega pronto, com serviço, dia e hora.",
+    "ritualDica": "Pincele a unha para enviar",
     "confirmacaoTitulo": "Esmalte passado, pedido pronto",
-    "confirmacaoTexto": "Toque em enviar no WhatsApp. O horário vale depois que o salão confirma pelo WhatsApp.",
+    "confirmacaoTexto": "Toque em enviar. O horário vale depois que o salão confirma pelo WhatsApp.",
     "letreiroAberto": "Aberto agora · peça o seu horário",
     "letreiroFechado": "Fechado agora · abre {dia} às {hora}",
     "localTitulo": "Onde fica no Centro",
@@ -53,21 +69,21 @@
     "faq": [
       {
         "pergunta": "Pedir pelo site já marca o horário?",
-        "resposta": "Ainda não. O pedido chega no WhatsApp do salão e o salão confirma pelo WhatsApp. O horário vale depois da confirmação."
+        "resposta": "Não. O pedido sai pronto, com serviço, dia e hora, e o horário vale depois da confirmação. Aqui, ele vai para a Creat. No site do seu salão, vai para você."
       },
       {
         "pergunta": "Posso pedir mais de um serviço?",
-        "resposta": "Pode. Escolha o primeiro serviço no site e escreva os outros na mensagem do WhatsApp antes de enviar, como mão e pé no mesmo horário."
+        "resposta": "Pode. Escolha o primeiro no site e escreva os outros na mensagem antes de enviar, como mão e pé no mesmo horário."
       },
       {
         "pergunta": "Quanto custa a coloração?",
-        "resposta": "O salão passa o valor da coloração pelo WhatsApp antes de você confirmar."
+        "resposta": "O valor está na lista de serviços. Se o tom pedir mais produto, o salão avisa antes de confirmar."
       },
       {
-        "pergunta": "Meu nome e meu WhatsApp ficam salvos?",
-        "resposta": "Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar."
+        "pergunta": "Meus dados ficam salvos?",
+        "resposta": "Nesta demonstração, não: seu nome e seu número somem quando a página fecha. No site de um negócio de verdade, ficam só no aparelho de quem pede, e o botão Esquecer meus dados apaga."
       }
     ],
-    "rodapeFrase": "Esmalte aberto e horário pedido pelo WhatsApp."
+    "rodapeFrase": "Toalha limpa, pincel lavado e cadeira pronta."
   }
 }

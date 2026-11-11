@@ -1312,9 +1312,11 @@ test('navegador 360x640: chegando à seção da equipe o aviso de medição é f
     await pg.goto(base + '/?nicho=barbearia');
     await pg.evaluate(() => { const s = document.querySelector('#sede'); window.scrollTo(0, s.getBoundingClientRect().top + scrollY - 60); });
     await pg.waitForSelector('#consentimento:not([hidden])');
-    await pg.waitForFunction(() => document.querySelector('#consentimento').classList.contains('is-faixa'), null, { timeout: 15000 });
-    const h = await pg.evaluate(() => document.querySelector('#consentimento').getBoundingClientRect().height);
-    assert.ok(h <= 64, 'faixa de até 64 px sobre a seção da equipe: ' + h);
+    // espera a condição completa (classe e altura juntas), não uma medida só: o layout da faixa assenta depois da classe
+    const faixa = () => { const c = document.querySelector('#consentimento'); return c.classList.contains('is-faixa') && c.getBoundingClientRect().height <= 64; };
+    const ok = await pg.waitForFunction(faixa, null, { timeout: 15000 }).then(() => true, () => false);
+    const estado = await pg.evaluate(() => { const c = document.querySelector('#consentimento'); return { classes: c.className, altura: c.getBoundingClientRect().height }; });
+    assert.ok(ok, 'faixa de até 64 px sobre a seção da equipe em até 15 s: ' + JSON.stringify(estado));
     await ctx.close();
   } finally { await nav.close(); srv.close(); }
 });

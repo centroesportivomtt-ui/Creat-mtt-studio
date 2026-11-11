@@ -133,6 +133,8 @@ Antes de publicar qualquer site ou mudança em `motor/`, rode `node scripts/conf
 
 Cada site publicado tem a própria cópia de `motor/v1/`. Correção no motor exige republicar `public/motor/` (prévia da vitrine) e `public/sites/<slug>/motor/` de todos os sites no ar.
 
+**Nota (11/11/2026): motor e demonstrações andam juntos.** Mudança em `motor/` exige reconstruir as 3 demonstrações (`node scripts/producao/build-site.cjs --slug demo-<k> --demonstracao`, com `k` = barbearia, salao e academia) e publicá-las no mesmo deploy da vitrine. Depois do deploy, confira no ar que o `/sites/demo-*/motor/v1/agendamento.js` servido nas 3 demos tem o texto novo (por exemplo, `curl -s https://nuvem.creatmtt.com.br/sites/demo-barbearia/motor/v1/agendamento.js | grep -c '<trecho novo>'` maior que 0). Sem isso, a vitrine nova sobe com demos que ainda rodam o motor antigo.
+
 ## Depois de todo deploy: conferência no ar (obrigatória desde 10/11/2026)
 
 ```bash

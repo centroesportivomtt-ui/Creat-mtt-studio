@@ -37,3 +37,6 @@ Produção (`scripts/producao/lib/tenant.cjs`): galeria e recados do preset nunc
 - Sites de cliente no ar continuam abrindo com o tenant atual. Ao republicar o `motor/` deles, ganham o letreiro curto, a tabela antes do pedido com "Pedir este", o relógio do negócio, o rodapé corrigido e o som desligado por padrão. Nenhum ganha galeria, fecho ou faixa de demonstração.
 - Prova: `scripts/testes/demonstracao.test.mjs` (tenant com e sem galeria, tenant antigo válido, cliente sem galeria não gera seção nem pasta, compra do nicho, fuso, letreiro, rodapé).
 - Limite aceito: a galeria só aparece com 3 fotos ou mais; com menos, a seção não existe.
+
+## Registro de mudanças compatíveis
+- 11/11/2026: na demonstração, nome e WhatsApp do pedido ficam só na memória da página e o `:cliente` antigo é apagado ao abrir; o site entregue não muda. Mudança compatível sob v1.3.0, achado da segurança.

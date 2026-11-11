@@ -186,7 +186,7 @@
       },
       {
         "pergunta": "Meus dados ficam salvos?",
-        "resposta": "Seu nome e seu número ficam só neste aparelho, para o próximo pedido sair mais rápido. O botão Esquecer meus dados apaga tudo."
+        "resposta": "Nesta demonstração, não: seu nome e seu número somem quando a página fecha. No site de um negócio de verdade, ficam só no aparelho de quem pede, e o botão Esquecer meus dados apaga."
       }
     ],
     "rodapeFrase": "Toalha limpa, pincel lavado e cadeira pronta."
@@ -194,7 +194,7 @@
   "meta": {
     "previa": false,
     "motorVersao": "v1.3",
-    "criadoEm": "2026-11-10T21:57:09.149Z"
+    "criadoEm": "2026-11-11T15:45:00.443Z"
   },
   "fuso": "America/Bahia",
   "recados": [

@@ -1,13 +1,16 @@
 {
   "pedido": "PA-DEM0ACAD",
-  "hashPedido": "ff5082242c677d87cfa285a13f1b69a74fe51b02af45f7a7de517d0fa5f24188",
-  "em": "2026-11-09T20:10:28.196Z",
-  "status": "pronto_para_aprovacao",
+  "hashPedido": "b1ff4a7271e004106f1d7c27f5ef6d3f9912792e95959c5662d431fd2fdd9463",
+  "em": "2026-11-11T15:45:02.333Z",
   "slug": "demo-academia",
+  "status": "pronto_para_aprovacao",
+  "textos_origem": "fixture",
+  "textos_sha256": "",
+  "rascunho": null,
   "etapas": [
     {
       "n": 1,
-      "nome": "pedido validado e tenant parcial do preset",
+      "nome": "pedido validado, portão de conteúdo da entrada e tenant parcial do preset",
       "status": "ok",
       "detalhe": "PA-DEM0ACAD, academia, slug demo-academia"
     },
@@ -15,25 +18,25 @@
       "n": 2,
       "nome": "textos pela IA",
       "status": "ok",
-      "detalhe": "reaproveitados da rodada anterior deste pedido (sem nova chamada)"
+      "detalhe": "fixture (sem rede): claude-sonnet-5-5, 0+0 tokens, R$ 0"
     },
     {
       "n": 3,
-      "nome": "validar-tenant",
+      "nome": "portão de conteúdo e validar-tenant",
       "status": "ok",
-      "detalhe": "schema + regras da casa"
+      "detalhe": "lista de bloqueio + schema + regras da casa"
     },
     {
       "n": 4,
       "nome": "build-site",
       "status": "ok",
-      "detalhe": "17 arquivos em dist/demo-academia/"
+      "detalhe": "21 arquivos em dist/demo-academia/"
     },
     {
       "n": 5,
       "nome": "teste headless 390 px",
       "status": "ok",
-      "detalhe": "sem rolagem lateral, menor texto 12px, 2 links wa.me/5575981151202, console limpo"
+      "detalhe": "sem rolagem lateral, menor texto 11px, 2 links wa.me/5575981151202, console limpo (CSP ativa)"
     },
     {
       "n": 6,
