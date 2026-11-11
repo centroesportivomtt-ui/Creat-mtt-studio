@@ -64,7 +64,8 @@
   }
   function t(str, vars) { return String(str).replace(/\{(\w+)\}/g, function (m, k) { return vars && vars[k] !== undefined ? vars[k] : m; }); }
   function milhar(n) { var s = String(Math.round(n)); return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
-  function limparNome(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
+  /* Teclado de celular troca ' por ’ sozinho: "D’Ávila" tem de valer como "D'Ávila" (achado da conferência, 11/11). */
+  function limparNome(v) { return String(v || '').replace(/[\u2018\u2019\u02BC\u00B4`]/g, "'").replace(/\s+/g, ' ').trim(); }
   function nomeValido(v) { return v.length >= 1 && v.length <= 40 && RE_NOME.test(v); }
   function cidadeValida(v) { return v.length >= 1 && v.length <= 40 && RE_CIDADE.test(v); }
   function cortar28(v) { if (v.length <= 28) return v; var c = v.slice(0, 28); var i = c.lastIndexOf(' '); return (i > 8 ? c.slice(0, i) : c).trim(); }
@@ -1118,7 +1119,7 @@
     var nichoIni = NICHOS.indexOf(nichoQ) !== -1 ? nichoQ : hashIni.k;
     if (nichoIni) { var r0 = $('input[name="nicho"][value="' + nichoIni + '"]'); if (r0) r0.checked = true; }
     // Título da dobra no nicho (assets/nicho-cedo.js já marcou antes da pintura; aqui confirma e segue a troca do chip).
-    function tituloDoNicho(k) { if (NICHOS.indexOf(k) !== -1) D.documentElement.setAttribute('data-nicho', k); }
+    function tituloDoNicho(k) { if (NICHOS.indexOf(k) !== -1) D.documentElement.setAttribute('data-nicho', k); else D.documentElement.removeAttribute('data-nicho'); }
     tituloDoNicho(nichoIni);
     $$('input[name="nicho"]').forEach(function (r) { r.addEventListener('change', function () { if (r.checked) tituloDoNicho(r.value); }); });
     // Exemplo do campo do nome conforme o nicho (quem chega pelo anúncio de salão não lê "Barbearia do Zé").

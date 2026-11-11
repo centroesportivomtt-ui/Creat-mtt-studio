@@ -1057,3 +1057,40 @@ test('2A navegador: o exemplo do campo do nome segue o nicho do anúncio', { ski
     await ctx.close();
   } finally { await nav.close(); srv.close(); }
 });
+
+/* Primeira dobra (11/11/2026): em produção, cerca de 55 visitas de anúncio e nenhuma prévia, porque o campo do nome
+   ficava fora da primeira tela do celular. Este teste trava o que a dobra nova garante. */
+test('dobra no celular 360x640: título do nicho na chegada, campo e botão sem rolar, apóstrofo do teclado vale e a prévia conta', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, api } = await paginaApi(nav, base, { consentir: false });
+    await pg.setViewportSize({ width: 360, height: 640 });
+    await pg.goto(base + '/?nicho=salao&utm_source=meta&utm_campaign=feira&utm_content=A1-salao-v1');
+    assert.equal(await pg.getAttribute('html', 'data-nicho'), 'salao');
+    const visiveis = await pg.$$eval('h1 .h1-v, h1 [data-h1]', (els) => els.filter((e) => e.offsetParent !== null).map((e) => e.textContent.trim()));
+    const h1 = (await pg.innerText('h1')).replace(/\s+/g, ' ').trim();
+    assert.match(h1, /^Veja o site do seu salão pronto\.$/, 'o título fala do nicho do anúncio: ' + h1 + ' ' + JSON.stringify(visiveis));
+    const m = await pg.evaluate(() => {
+      const c = document.querySelector('#nome').getBoundingClientRect(), b = document.querySelector('#form-abrir [type=submit]').getBoundingClientRect();
+      return { campoTopo: c.top, campoBaixo: c.bottom, botaoBaixo: b.bottom, botaoAlt: b.height, rotulo: document.querySelector('#form-abrir [type=submit]').textContent.trim(), lateral: document.documentElement.scrollWidth > innerWidth + 1 };
+    });
+    assert.ok(m.campoTopo > 0 && m.campoBaixo < 640, 'campo do nome inteiro na primeira tela');
+    assert.ok(m.botaoBaixo <= 600, 'botão inteiro na primeira tela: ' + m.botaoBaixo);
+    assert.ok(m.botaoAlt >= 48, 'alvo de toque do botão');
+    assert.equal(m.rotulo, 'Ver meu site pronto');
+    assert.equal(m.lateral, false, 'sem rolagem lateral');
+    await pg.fill('#nome', 'Studio D’Ávila'); await pg.keyboard.press('Enter');
+    await pg.waitForFunction(() => { const e = document.querySelector('#previa'); return !!e && !e.hidden; });
+    assert.equal(await pg.innerText('#previa-nome'), "Studio D'Ávila", 'o apóstrofo curvo do teclado vira o reto');
+    assert.deepEqual(api.filter((a) => a.nome === 'contar').map((a) => a.corpo.evento), ['visita', 'previa']);
+    await ctx.close();
+    // nicho desconhecido e sem nicho: título genérico, sem marca no <html>
+    const b = await paginaApi(nav, base, { consentir: false });
+    await b.pg.setViewportSize({ width: 360, height: 640 });
+    await b.pg.goto(base + '/?nicho=pet');
+    assert.equal(await b.pg.getAttribute('html', 'data-nicho'), null);
+    assert.match((await b.pg.innerText('h1')).replace(/\s+/g, ' ').trim(), /^Veja o site do seu negócio pronto\.$/);
+    await b.ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
