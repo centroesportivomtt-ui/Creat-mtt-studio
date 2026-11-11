@@ -266,6 +266,7 @@ function injecao(texto, campo, opc) {
    (cirílico, grego, cherokee, versalete, armênio...) vai para revisão, sem depender da tabela de homógrafos. */
 const LAT = 'A-Za-zÀ-ÖØ-öø-ÿĀ-ſ';
 const RE_CURTO_OK = new RegExp(`^[${LAT}0-9 .,'’&()/+ºª°-]+$`);
+const RE_NOME_SERVICO_OK = new RegExp(`^[${LAT}0-9 .,'’&()/+ºª°%-]+$`);
 const RE_SERVICO_OK = new RegExp(`^[${LAT}0-9 .,'’&()/+ºª°:|%$–-]+$`);
 const RE_ENDERECO_OK = new RegExp(`^[${LAT}0-9 .,'’&()/+ºª°:–-]+$`);
 const RE_RESPONSAVEL_OK = new RegExp(`^[${LAT} .'’-]{2,60}$`);
@@ -273,6 +274,10 @@ const RE_LETRA_OUTRA = /\p{L}/u;
 const RE_LATINA = new RegExp(`[${LAT}]`);
 function fora(l, re) { return [...new Set([...l].filter((c) => !re.test(c)))].join(' ').slice(0, 20); }
 function foraDoAlfabeto(l) { return [...l].some((c) => RE_LETRA_OUTRA.test(c) && !RE_LATINA.test(c)); }
+/* textos do redator e demais textos longos (nível "texto"): só a regra de alfabeto, depois do NFKC do limpar.
+   Letra de outro alfabeto no lugar da latina ("Pаgamento" com "а" cirílico) vai para revisão. ºª são do português. */
+const RE_LATINA_TEXTO = new RegExp(`[${LAT}ºª]`);
+function letrasForaDoAlfabeto(l) { return [...new Set([...l].filter((c) => RE_LETRA_OUTRA.test(c) && !RE_LATINA_TEXTO.test(c)))]; }
 const RE_HORARIOS_OK = /^(seg|ter|qua|qui|sex|sab|dom)=(fechado|\d{2}:\d{2}-\d{2}:\d{2})(;(seg|ter|qua|qui|sex|sab|dom)=(fechado|\d{2}:\d{2}-\d{2}:\d{2})){6}$/;
 
 /* palavras de ligação: não contam como palavra de conteúdo nem como "minúscula" de frase */
@@ -318,7 +323,8 @@ function estrutura(texto, campo) {
     if (/[\r\n]/.test(l)) return 'quebra de linha';
     if (l.length > 60) return `${l.length} caracteres (máximo 60)`;
     if (foraDoAlfabeto(l)) return 'letra fora do alfabeto latino: ' + fora(l, RE_CURTO_OK);
-    if (!RE_CURTO_OK.test(l)) return 'caractere fora de letras, números e pontuação simples: ' + fora(l, RE_CURTO_OK);
+    const reOk = /^servicos\[\d+\]\.nome$/.test(campo) ? RE_NOME_SERVICO_OK : RE_CURTO_OK;
+    if (!reOk.test(l)) return 'caractere fora de letras, números e pontuação simples: ' + fora(l, reOk);
     if (l.trim().split(/\s+/).length > 8) return 'mais de 8 palavras';
     if (/(^|\s)(https?|www)\b|\.(com|br|net|org|app|io|me)\b/i.test(l)) return 'parece endereço de site';
     return formaDoNome(l, campo);
@@ -370,7 +376,8 @@ const ROTULO = {
   contato: 'endereço de site, e-mail ou telefone dentro de texto (contato só por código, nunca em texto)',
   disfarce: 'caractere invisível ou de inversão de texto',
   formato: 'texto que cita outro negócio (o título e os textos falam só do negócio do pedido)',
-  tamanho: 'instrucao_no_campo: texto longo demais para o portão (mais de 5000 caracteres)'
+  tamanho: 'instrucao_no_campo: texto longo demais para o portão (mais de 5000 caracteres)',
+  alfabeto: 'instrucao_no_campo: letra fora do alfabeto latino num texto (letra de outro alfabeto parecida com a latina)'
 };
 
 /*
@@ -434,6 +441,10 @@ function checar(pares, opc) {
     }
     const est = estrutura(texto, campo);
     if (est) add(campo, 'campo_curto', est);
+    if (nivel(campo, opc) === 'texto') {
+      const outras = letrasForaDoAlfabeto(limpar(texto));
+      if (outras.length) add(campo, 'alfabeto', outras.map((c) => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')).join(' '));
+    }
     const c = contato(n, opc.whatsapp);
     if (c) add(campo, 'contato', c);
   }

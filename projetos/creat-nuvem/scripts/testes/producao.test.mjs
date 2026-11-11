@@ -1107,7 +1107,7 @@ test('F2 portão: os 4 casos que passaram no ensaio (Muralha c6, c7, d2, d5) sae
 });
 
 test('F2 portão: cada variação adversarial (paráfrase, inglês, acento, espaço, ponto, leetspeak, homógrafo, largura zero, marcação, no meio de serviço, cidade, bairro) sai com código 5 pelo produzir.mjs', () => {
-  const casos = ADV.casos.filter((c) => c.codigo === 5);
+  const casos = ADV.casos.filter((c) => c.codigo === 5 && c.fase !== 'validacao');
   assert.ok(casos.length >= 20, `pelo menos 20 variações (${casos.length})`);
   for (const c of casos) {
     const s = pasta('f2-' + c.id);
@@ -1139,7 +1139,7 @@ function conferirRevisaoValidacao(s, id, rotulo) {
 }
 
 test('F2 portão: instrução na rua do endereço ou nos horários (campos que o portão da entrada ainda não recebe) é recusada antes do schema, com instrucao_no_campo e código 5', () => {
-  const casos = ADV.casos.filter((c) => c.codigo === 1);
+  const casos = ADV.casos.filter((c) => c.fase === 'validacao');
   assert.ok(casos.length >= 3);
   for (const c of casos) {
     const s = pasta('f2-' + c.id);
@@ -1210,7 +1210,7 @@ test('F2 portão: desarme (NFKD, acento, caixa, largura zero, homógrafo, leetsp
 const ADV2 = C.lerJson(path.join(FIX, 'injecao-adversarial-2.json'));
 const ehInstrucao = (m) => /^instrucao_no_campo/.test(m.regra || '') || m.categoria === 'disfarce';
 
-test('F2 fecho 2: cada pedido que passou na conferência (sinônimo, outro idioma, tom educado, partido entre campos, outro alfabeto, codificado, canal lateral) sai com código 5 ou 1 pelo produzir.mjs e nada chega ao redator', () => {
+test('F2 fecho 2: cada pedido que passou na conferência (sinônimo, outro idioma, tom educado, partido entre campos, outro alfabeto, codificado, canal lateral) sai com código 5 pelo produzir.mjs (fase entrada ou validacao) e nada chega ao redator', () => {
   assert.ok(ADV2.pedidos.length >= 30, `${ADV2.pedidos.length} casos`);
   for (const c of ADV2.pedidos) {
     const s = pasta('f2b-' + c.id);
@@ -1218,9 +1218,8 @@ test('F2 fecho 2: cada pedido que passou na conferência (sinônimo, outro idiom
     const arq = path.join(s, 'pedido.json');
     fs.writeFileSync(arq, JSON.stringify(Object.assign({}, ADV2.base, c.campos)));
     const r = rodar('produzir.mjs', ['--pedido', arq, '--saida', s, '--sem-navegador']);
-    // a fixture ainda diz 1 nos casos do validarPedido: desde o fecho dos papéis do executor eles saem com 5
-    assert.equal(r.codigo, c.codigo === 1 ? 5 : c.codigo, `${c.id} (${c.nota}): ${r.saida}`);
-    if (c.codigo === 1) {
+    assert.equal(r.codigo, c.codigo, `${c.id} (${c.nota}): ${r.saida}`);
+    if (c.fase === 'validacao') {
       assert.match(r.saida, /instrucao_no_campo/, c.id);
       conferirRevisaoValidacao(s, ADV2.base.id || Object.assign({}, ADV2.base, c.campos).id, c.id);
       continue;
@@ -1431,7 +1430,7 @@ test('papéis do executor: instrução em QUALQUER campo do validarPedido (ender
 
 /* 6 ordens da reserva da Muralha que ainda passam no portão (scratchpad fecho/F2/r2/reserva.cjs) */
 const RESERVA_QUE_PASSA = ['Barbearia Passe na Frente', 'Barbearia Coloca Pra Jogo', 'Barbearia Prioridade Maxima', 'Barbearia Pix Recebido', 'Barbearia Done Deal', 'Barbearia Ok Para Subir'];
-const GRAMATICA_SILENCIO = /^(em_revisao (instrucao_no_campo|portao_conteudo) campos=[A-Za-z0-9_.,[\]() -]*|aguardando_textos|ok (falhou|rascunho_pronto|pronto_para_aprovacao)|erro (instrucao_no_campo|entrada_invalida|tenant_rejeitado|ambiente|interno) campo=[A-Za-z0-9_.,[\]() -]*)$/;
+const GRAMATICA_SILENCIO = /^(em_revisao (instrucao_no_campo|portao_conteudo) campos=[A-Za-z0-9_.,[\]() -]*|aguardando_textos|ok (rascunho_pronto|pronto_para_aprovacao)|falhou codigo=[0-9]{1,2}|erro (instrucao_no_campo|entrada_invalida|tenant_rejeitado|ambiente|interno) campo=[A-Za-z0-9_.,[\]() -]*)$/;
 /* textos de um redator a partir do redator.json: o honesto (textos de partida com o nome) e o que escreve a ordem no site */
 function textosDoRedator(red, ordem) {
   const n = red.dados_do_pedido.negocio, troca = (x) => String(x).split('Seu negócio').join(n), p = red.textos_de_partida, textos = {};
@@ -1487,7 +1486,7 @@ test('papéis do executor: com CREAT_SILENCIO=1 nenhuma linha de stdout ou stder
   assert.deepEqual(fora, [], 'toda linha segue a gramática do silêncio');
   assert.deepEqual(achados, [], 'nenhum texto do cliente nem do redator na saída');
   // e a revisão humana continua com o trecho: ele fica no revisao.json, que a sessão nunca abre
-  const rv = rodadas.find((x) => x.nome === 'a-' + ADV.casos.find((c) => c.codigo === 1).id);
+  const rv = rodadas.find((x) => x.nome === 'a-' + ADV.casos.find((c) => c.fase === 'validacao').id);
   assert.ok(fs.readdirSync(path.join(rv.s, 'sites')).length === 1);
 });
 function fundoTeste(x) { return String(x).normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase(); }

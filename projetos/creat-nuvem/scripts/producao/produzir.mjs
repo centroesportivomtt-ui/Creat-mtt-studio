@@ -42,8 +42,11 @@
  *   em_revisao <classe> campos=<nomes>      (código 5; classe instrucao_no_campo ou portao_conteudo)
  *   aguardando_textos                       (código 4)
  *   erro <classe> campo=<nome>              (códigos 1 e 2; classe instrucao_no_campo, entrada_invalida,
- *                                            tenant_rejeitado, ambiente ou interno)
- *   ok <status>                             (código 0 ou 3)
+ *                                            tenant_rejeitado, ambiente ou interno). instrucao_no_campo só sai
+ *                                            aqui, com código 1, num pedido sem id válido (campo=id): sem id não
+ *                                            há pasta segura para o revisao.json. Com id válido, é sempre código 5.
+ *   ok rascunho_pronto | ok pronto_para_aprovacao   (código 0)
+ *   falhou codigo=<n>                       (código 3, teste do site, ou 1, pacote SAIR; nada a publicar)
  * Nome de campo que não é da lista conhecida sai como "outro" (no PEDIDO v1 em texto a chave é do cliente).
  *
  * Variáveis de ambiente (nenhum valor no repositório):
@@ -99,7 +102,8 @@ function classeRevisao(motivos) { return motivos.some((m) => /^instrucao_no_camp
 function linhaSilenciosa(r) {
   if (r.codigo === 5) return `em_revisao ${classeRevisao(r.motivos || [])} campos=${[...new Set((r.motivos || []).map((m) => campoSeguro(m.campo)))].join(',')}`;
   if (r.codigo === 4) return 'aguardando_textos';
-  return `ok ${r.status === 'falhou' ? 'falhou' : r.status === 'rascunho_pronto' ? 'rascunho_pronto' : 'pronto_para_aprovacao'}`;
+  if (r.codigo !== 0 || r.status === 'falhou') return `falhou codigo=${Number.isInteger(r.codigo) ? r.codigo : 1}`;
+  return `ok ${r.status === 'rascunho_pronto' ? 'rascunho_pronto' : 'pronto_para_aprovacao'}`;
 }
 function erroSilencioso(e) {
   const m = String((e && e.message) || '');

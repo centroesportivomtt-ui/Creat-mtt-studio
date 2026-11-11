@@ -26,7 +26,7 @@ const RE = {
   bairro: /^[\p{L}\p{N} .'-]{1,60}$/u,
   nicho: /^[a-z][a-z0-9-]{1,30}$/,
   servicoId: /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/,
-  servicoNome: /^[\p{L}][\p{L}\p{N} &+'/.,()-]{0,49}$/u,
+  servicoNome: /^[\p{L}][\p{L}\p{N} &+'/.,()%-]{0,49}$/u,
   funcionamento: /^(domingo|segunda|terça|quarta|quinta|sexta|sábado): (fechado|\d{2}:\d{2} às \d{2}:\d{2})(; (domingo|segunda|terça|quarta|quinta|sexta|sábado): (fechado|\d{2}:\d{2} às \d{2}:\d{2})){6}$/u
 };
 
