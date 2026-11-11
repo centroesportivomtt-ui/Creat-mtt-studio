@@ -8,6 +8,9 @@
  *  - Nunca promete confirmação: o texto diz que o dono confirma pelo WhatsApp.
  *  - Não existe horário "ocupado": o motor não conhece a agenda do dono e não inventa.
  *  - Dados do cliente final só no aparelho ('site:<slug>:cliente'), com "Esquecer meus dados".
+ *  - Demonstração (11/11/2026, achado da Muralha): nome e WhatsApp ficam só na memória da página, nunca no
+ *    aparelho (a demo é aberta por visitante de anúncio, às vezes em aparelho dividido). Ao abrir, a demo apaga
+ *    o ':cliente' que versões anteriores tenham deixado.
  *  - Prévia (meta.previa = true): o último campo é o WhatsApp de TESTE do visitante; o número
  *    fica só na memória da página (nem localStorage, nem analytics, nem postMessage).
  *  - Site entregue: abre wa.me/<negocio.whatsapp>.
@@ -143,10 +146,12 @@
     whatsTeste: 'Seu WhatsApp para receber o teste',
     whatsExemplo: '({ddd}) 91234-5678',     // {ddd} = DDD do WhatsApp do negócio (11 se não houver)
     privacidade: 'Seu nome e seu WhatsApp ficam só neste aparelho, para preencher mais rápido da próxima vez.',
+    privacidadeDemo: 'Nesta demonstração, seu nome e seu WhatsApp não ficam salvos: somem quando a página fecha.',
     privacidadePrevia: 'Na prévia, o pedido vai para o seu próprio WhatsApp. No site no ar, vai para o WhatsApp do negócio. Seu número não é salvo nem enviado para ninguém.',
     esquecer: 'Esquecer meus dados',
     esquecido: 'Pronto: seu nome e seu WhatsApp saíram deste aparelho.',
     esquecidoPrevia: 'Pronto: os campos foram limpos. Na prévia nada fica salvo.',
+    esquecidoDemo: 'Pronto: os campos foram limpos. Na demonstração nada fica salvo.',
     resumoTitulo: 'Seu pedido',
     dia: 'Dia', hora: 'Horário', servico: 'Serviço', profissional: 'Profissional', valor: 'Valor',
     semArrastar: 'Enviar sem arrastar',
@@ -274,15 +279,18 @@
     function profPorId(id) { return profs.filter(function (p) { return p.id === id; })[0] || null; }
     function maiuscula(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
 
-    /* ---------- dados guardados (só site entregue) ---------- */
+    /* ---------- dados guardados (só site entregue; na demonstração, só na memória da página) ---------- */
+    var clienteNaMemoria = null;
+    if (demo) { try { armazem.remover('cliente'); } catch (er) {} }
     function lerCliente() {
       if (previa) return null;
+      if (demo) return clienteNaMemoria;
       try {
         var o = JSON.parse(armazem.ler('cliente') || 'null');
         return o && typeof o === 'object' ? o : null;
       } catch (er) { return null; }
     }
-    function gravarCliente(o) { if (!previa) armazem.gravar('cliente', JSON.stringify(o)); }
+    function gravarCliente(o) { if (previa) return; if (demo) clienteNaMemoria = o; else armazem.gravar('cliente', JSON.stringify(o)); }
 
     /* ---------- marcação ---------- */
     function passo(id, legenda, filhos, escondido) {
@@ -323,7 +331,7 @@
       campo('cliente-nome', T.nome, { name: 'nome', type: 'text', autocomplete: previa ? 'off' : 'name', maxlength: '60', required: true }),
       campo('cliente-whats', previa ? T.whatsTeste : T.whats, { name: 'whats', type: 'tel', inputmode: 'tel', autocomplete: previa ? 'off' : 'tel-national', placeholder: whatsExemplo, required: true }),
       criar('div', { classe: 'privacidade' }, [
-        criar('p', { classe: 'nota', id: 'nota-privacidade', texto: previa ? T.privacidadePrevia : T.privacidade }),
+        criar('p', { classe: 'nota', id: 'nota-privacidade', texto: previa ? T.privacidadePrevia : demo ? T.privacidadeDemo : T.privacidade }),
         criar('button', { type: 'button', id: 'esquecer-dados', classe: 'btn-esquecer', 'aria-describedby': 'nota-privacidade', texto: T.esquecer }),
         criar('p', { classe: 'nota', id: 'nota-esquecer', 'aria-live': 'polite' })
       ])
@@ -694,7 +702,7 @@
       });
       inputWhats.addEventListener('blur', function () { est.tocado.whats = true; mostrarErros(false); });
       $('esquecer-dados').addEventListener('click', function () {
-        if (!previa) armazem.remover('cliente');
+        if (!previa) { clienteNaMemoria = null; armazem.remover('cliente'); }
         inputNome.value = ''; inputWhats.value = '';
         est.nome = ''; est.whats = ''; anterior = '';
         est.nomeResumo = '';
@@ -702,7 +710,7 @@
         mostrarErros(false);
         atualizarResumo();
         renderAtalho();
-        $('nota-esquecer').textContent = previa ? T.esquecidoPrevia : T.esquecido;
+        $('nota-esquecer').textContent = previa ? T.esquecidoPrevia : demo ? T.esquecidoDemo : T.esquecido;
       });
     }
 

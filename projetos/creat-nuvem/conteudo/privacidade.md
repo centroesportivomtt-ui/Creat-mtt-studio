@@ -2,7 +2,7 @@ REVISAO_JURIDICA_PENDENTE
 
 # Política de privacidade do Porta Aberta
 
-Versão 4 · 11/11/2026 · vale a partir da página /abrir/ em que quem cuida do negócio, o endereço e o horário são opcionais antes do pagamento
+Versão 5 · 11/11/2026 · vale a partir da página inicial que conta mais passos da visita (10 segundos na tela, rolagem, campo do nome e site de exemplo)
 
 Esta política explica o que a vitrine da Creat Nuvem (as páginas do Porta Aberta) faz com dados pessoais, de acordo com a Lei Geral de Proteção de Dados (Lei 13.709/2018). Controladora: {{empresa.nome}} (nome empresarial {{empresa.razao}}), de {{empresa.cidade}} ({{empresa.uf}}), {{empresa.documento}}. Contato: {{contato.email}}.
 
@@ -13,7 +13,8 @@ Enquanto você só olha a vitrine e gera a prévia, nada do que você digita é 
 - O nome do negócio, a cidade e o nicho que você digita para a prévia ficam só na memória da página. Eles não aparecem no endereço da página: assim que a página abre, ela tira esses dados do endereço. Em /abrir/, o nome e a cidade ficam também na aba aberta (armazenamento da sessão do navegador), para a página não perdê-los se você recarregar. Somem quando a aba é fechada.
 - O WhatsApp que você digita no Teste de verdade fica só na memória da página. Ele abre o seu próprio WhatsApp e não é salvo nem enviado para a Creat.
 - Guardamos por 30 dias, neste aparelho, de qual anúncio você veio (só a origem, o meio, a campanha e o código do anúncio, sem nada sobre você), para abrir o link de pagamento da sua região. Isso é gravado ao abrir a página, antes de qualquer aceite.
-- A página conta, no servidor da Creat, quantas vezes por dia cada passo acontece (página vista, prévia gerada, abertura de /abrir/ e toque em Pagar), separado só por nicho, praça e código do anúncio. A contagem não usa cookie, não guarda nada no seu aparelho e não grava nome, cidade, WhatsApp, e-mail nem o endereço IP: é um número por dia, somado com o de todas as outras visitas.
+- A página conta, no servidor da Creat, quantas vezes por dia cada passo acontece: página vista, página na tela por 10 segundos ou mais, rolagem da página, toque no campo do nome do negócio, começo da digitação nesse campo, abertura do site de exemplo, prévia gerada, abertura de /abrir/ e toque em Pagar. A soma é separada só por nicho (o tipo de negócio), praça e código do anúncio. Do campo do nome, a contagem leva só o fato de alguém ter começado a digitar: o que você digita não sai da página. A contagem não usa cookie, não guarda nada no seu aparelho, não identifica quem visitou e não grava nome, cidade, WhatsApp, e-mail nem o endereço IP: é um número por dia, somado com o de todas as outras visitas.
+- Os sites de exemplo (de barbearia, salão e academia, com nome fictício) guardam neste aparelho que o som deles começa desligado, o tema claro ou escuro, se você trocar, e, no de salão, o tom de pele sorteado para o desenho da mão. O nome e o WhatsApp que você digita no "Pedir horário" de um exemplo não são guardados no aparelho: ficam só na memória da página e somem quando ela fecha (se uma versão anterior do exemplo os tiver guardado, o exemplo apaga ao abrir). Quando o exemplo abre dentro da página inicial, a página apaga isso ao fechar o exemplo ou ao sair dela. Quando ele abre em tela cheia, ou se a página fechar sem tempo de apagar, isso fica até você tocar em "Esquecer meus dados neste aparelho".
 - As letras do site vêm do Google Fonts. Para entregá-las, o Google recebe o endereço IP e os dados do navegador em toda página, sem cookie.
 - A Cloudflare, que fica na frente da hospedagem, pode enviar um cookie técnico de segurança contra robôs em nome de outro domínio, o da própria hospedagem. O navegador não guarda esse cookie para este site, e ele não serve para medir você.
 - A hospedagem do site (Base44) tem um registro próprio de origem da visita, com os cookies base44_referrer_origin e base44_referrer_id, de até 30 dias. Na página inicial, em /abrir/ e em /obrigado/, ela só grava esses cookies depois que você toca em "Aceitar" no aviso de medição. Nas outras páginas (termos, privacidade, bastidores, prévia e sede), ela ainda pode gravá-los quando você chega de outro site.
@@ -57,6 +58,8 @@ O site guarda neste aparelho, e só neste aparelho:
 - A sua escolha sobre a medição: 180 dias.
 - O número dos últimos pagamentos já medidos pelo Pixel (no máximo 30), para não contar a mesma compra duas vezes: 30 dias cada um.
 - Se a prévia de um nicho já foi contada nesta aba: até a aba fechar.
+- A sua escolha de som da página e, na prévia de salão, o tom de pele sorteado para o desenho da mão: até você tocar em "Esquecer meus dados neste aparelho".
+- O que um site de exemplo guarda (seção 1): até você fechar o exemplo aberto na página inicial; aberto em tela cheia, até você tocar em "Esquecer meus dados neste aparelho".
 
 Cada item com prazo se apaga sozinho quando vence. O botão "Esquecer meus dados neste aparelho", em /abrir/ e em /obrigado/, apaga na hora tudo o que o site guardou neste aparelho, inclusive a sua escolha sobre a medição, e os cookies _fbp e _fbc deste site. Ele não apaga o pedido gravado no servidor: para isso, veja a seção 9.
 

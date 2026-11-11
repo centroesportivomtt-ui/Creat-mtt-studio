@@ -562,16 +562,18 @@
   }
 
   /* ------------------------------------------------------------ contador da Creat (D8, função contar)
-     4 eventos: visita (home), previa, ida_pagamento (abriu /abrir/), clique_pagar. Só nicho, praça (utm_campaign)
-     e anúncio (utm_content): sem cookie, sem identificador, sem dado pessoal. Não depende do aceite do Pixel.
+     Funil: visita (home), previa, ida_pagamento (abriu /abrir/), clique_pagar. Interesse (só na home, depois da
+     visita): ficou_10s, rolou, tocou_nome, digitou_nome, tocou_exemplo. Só nicho, praça (utm_campaign) e anúncio
+     (utm_content): sem cookie, sem identificador, sem dado pessoal, sem texto digitado. Não depende do aceite do Pixel.
      Um por evento e nicho em cada carga da página. O link de teste (?teste=pa-teste) não conta. */
-  var contados = {};
+  var contados = {}, INTERESSE = ['ficou_10s', 'rolou', 'tocou_nome', 'digitou_nome', 'tocou_exemplo'];
   function corpoContagem(ev, nicho) {
     var guardada = lerOrigem(), u = {}, o = guardada || {};
     /* voltou pelo "Quero um assim" de uma demo (utm_source=demo): a prévia conta na origem guardada do anúncio. A
        visita não: ela é a segunda carga da mesma pessoa e fica com a campanha da demo (demo-v1, que o servidor grava
-       como praça 'outro'), fora do denominador da leitura (docs/MEDICAO-FUNIL.md). */
-    var atual = utmAtual && utmAtual.utm_source === 'demo' && guardada && ev !== 'visita' ? guardada : utmAtual;
+       como praça 'outro'), fora do denominador da leitura (docs/MEDICAO-FUNIL.md). Os 5 de interesse seguem a visita. */
+    var daCarga = ev === 'visita' || INTERESSE.indexOf(ev) !== -1;
+    var atual = utmAtual && utmAtual.utm_source === 'demo' && guardada && !daCarga ? guardada : utmAtual;
     ['utm_campaign', 'utm_content'].forEach(function (k) { var v = (atual && atual[k]) || o[k]; if (typeof v === 'string' && RE_UTM.test(v)) u[k] = v; });
     return { evento: ev, nicho: NICHOS.indexOf(nicho) !== -1 ? nicho : 'outro', praca: u.utm_campaign || '', utm_content: u.utm_content || '' };
   }
@@ -1381,6 +1383,61 @@
     contarNome();   // nome preenchido pelo código (volta de /abrir/) também atualiza o "X de 40"
     contar('visita', nichoIni);
 
+    /* Interesse (pacote B): cada passo no máximo uma vez por carga, pelo contar() da visita. Nunca o texto, o tempo
+       nem a posição. Ouvintes passivos; nenhum relógio vivo depois de contar. Foco e rolagem do código não contam. */
+    var focoPorCodigo = false, gestoEm = 0;
+    function focarPorCodigo(el, op) { focoPorCodigo = true; try { el.focus(op); } catch (e) {} focoPorCodigo = false; }
+    function focarNome(op) { focarPorCodigo(campoNome, op); }
+    function rolagemDoCodigo() { gestoEm = 0; }
+    function interesse(ev) { contar(ev, nichoIni); }
+    if (!ENTRADA.semContar) medirInteresse();
+    function medirInteresse() {
+      var P = { passive: true }, agora = function () { return performance.now(); };
+      // ficou_10s: 10 s somados com a página pintada e a aba visível. Sem histórico de visibilidade (Safari): desde aqui
+      var somado = 0, desde = 0, relogio, visivel = function () { return D.visibilityState === 'visible' && !D.prerendering; };
+      try {
+        var pe = performance, pv = function (t) { return pe.getEntriesByType(t); }, fcp = pv('paint').filter(function (x) { return x.name === 'first-contentful-paint'; })[0];
+        if (fcp && visivel() && PerformanceObserver.supportedEntryTypes.indexOf('visibility-state') !== -1 && !pv('visibility-state').some(function (x) { return x.name === 'hidden'; })) somado = Math.max(0, agora() - Math.max(fcp.startTime, pv('navigation')[0].activationStart || 0));
+      } catch (e) {}
+      var passo = function () {
+        var t = agora();
+        if (desde) somado += t - desde;
+        desde = 0; clearTimeout(relogio);
+        if (somado >= 1e4) { D.removeEventListener('visibilitychange', passo); D.removeEventListener('prerenderingchange', passo); return interesse('ficou_10s'); }
+        if (visivel()) { desde = t; relogio = setTimeout(passo, 1e4 - somado); }
+      };
+      D.addEventListener('visibilitychange', passo); D.addEventListener('prerenderingchange', passo);
+      passo();
+      // rolou: meia tela numa rolagem nascida de gesto (dedo, roda, tecla ou barra)
+      var y0 = null, marcar = function (e) { if (e.isTrusted) gestoEm = Date.now(); };
+      var ouvintes = {
+        wheel: marcar,
+        pointerdown: function (e) { if (e.target === D.documentElement) marcar(e); },
+        keydown: function (e) { if (/^(Page|Arrow)(Down|Up)$|^(End|Home| )$/.test(e.key) && !(e.target.closest && e.target.closest('input,textarea,select,button,[contenteditable]'))) marcar(e); },
+        touchstart: function (e) { var t = e.touches && e.touches[0]; y0 = t ? t.clientY : null; },
+        touchmove: function (e) { var t = e.touches && e.touches[0]; if (t && y0 !== null && Math.abs(t.clientY - y0) > 10) marcar(e); },
+        scroll: function () {
+          var t = Date.now();
+          if (!gestoEm || t - gestoEm > 1000) return;
+          gestoEm = t;   // a inércia continua o mesmo gesto
+          if (innerHeight && scrollY >= innerHeight / 2) { ouvir('remove'); interesse('rolou'); }
+        }
+      };
+      var ouvir = function (m) { for (var k in ouvintes) W[m + 'EventListener'](k, ouvintes[k], P); };
+      ouvir('add');
+      // tocou_nome: toque ou foco de verdade; digitou_nome: 2 letras ou números (quem digita também tocou)
+      var deJanela = false, tocou = function () { interesse('tocou_nome'); };
+      caixaNome.addEventListener('click', function (e) { if (e.isTrusted) tocou(); }, P);
+      campoNome.addEventListener('blur', function () { deJanela = !D.hasFocus(); }, P);
+      campoNome.addEventListener('focus', function (e) { if (e.isTrusted && !focoPorCodigo && !deJanela) tocou(); deJanela = false; }, P);
+      campoNome.addEventListener('input', function (e) {
+        if (!e.isTrusted) return;
+        tocou();
+        if (campoNome.value.replace(/[^\p{L}\p{N}]/gu, '').length > 1) interesse('digitou_nome');
+      }, P);
+      $$('[data-exemplo-site]').forEach(function (a) { a.addEventListener('click', function (e) { if (e.isTrusted) interesse('tocou_exemplo'); }, P); });
+    }
+
     function nichoAtual() { var r = $('input[name="nicho"]:checked'); return r ? r.value : null; }
     function estado() {
       var n = limparNome(campoNome.value), c = limparNome(campoCidade.value);
@@ -1410,11 +1467,12 @@
       if (!ponto || !ponto.getBoundingClientRect) return;
       var r = ponto.getBoundingClientRect(), vh = W.innerHeight || 0;
       if (!r.height || (r.top >= 0 && r.bottom <= vh)) return;
+      rolagemDoCodigo();
       try { ponto.scrollIntoView({ block: 'center', behavior: MOV_REDUZIDO.matches ? 'auto' : 'smooth' }); } catch (e) {}
     }
     function mostrarErroNome(msg) {
       caixaNome.setAttribute('data-estado', 'erro'); erroNome.textContent = msg; erroNome.hidden = false;
-      campoNome.setAttribute('aria-invalid', 'true'); campoNome.focus();
+      campoNome.setAttribute('aria-invalid', 'true'); focarNome();
     }
     function limparErroNome() { caixaNome.removeAttribute('data-estado'); erroNome.hidden = true; campoNome.removeAttribute('aria-invalid'); }
     function validarNome() {
@@ -1545,7 +1603,8 @@
       var r = NICHOS.indexOf(k) !== -1 ? $('input[name="nicho"][value="' + k + '"]') : null;
       if (r && !r.checked) { r.checked = true; tituloDoNicho(k); exemploDoNicho(k); erroNicho.hidden = true; }
       setTimeout(function () {
-        try { campoNome.focus({ preventScroll: true }); } catch (e) { campoNome.focus(); }
+        focarNome({ preventScroll: true });
+        rolagemDoCodigo();
         try { caixaNome.scrollIntoView({ block: 'center', behavior: MOV_REDUZIDO.matches ? 'auto' : 'smooth' }); } catch (e) {}
       }, 60);
     }
@@ -1588,7 +1647,7 @@
       fora.forEach(function (x) { if (x) x.removeAttribute('inert'); });
       if (placa) { try { placa.reiniciar(); placa.definirNome(limparNome(campoNome.value)); } catch (e) {} }
       if (!deHistorico && history.state && history.state.previa) history.back();
-      if (focoAntes && focoAntes.focus) focoAntes.focus();
+      if (focoAntes && focoAntes.focus) focarPorCodigo(focoAntes);
       try { W.dispatchEvent(new CustomEvent('creat:previa-fechada')); } catch (e) {}
     }
     $('#previa-fechar').addEventListener('click', function () { fecharPrevia(false); });
@@ -1608,7 +1667,7 @@
     $('#previa-testar').addEventListener('click', function () {
       nomeNoTeste();
       fecharPrevia(false);
-      setTimeout(function () { var s = $('#teste'); s.scrollIntoView({ behavior: MOV_REDUZIDO.matches ? 'auto' : 'smooth', block: 'start' }); $('#teste-whats').focus({ preventScroll: true }); }, 60);
+      setTimeout(function () { var s = $('#teste'); rolagemDoCodigo(); s.scrollIntoView({ behavior: MOV_REDUZIDO.matches ? 'auto' : 'smooth', block: 'start' }); $('#teste-whats').focus({ preventScroll: true }); }, 60);
     });
     function irParaAbrir(plano) {
       var s = estado(); s.plano = plano;
@@ -1621,7 +1680,7 @@
       a.addEventListener('click', function (e) { e.preventDefault(); irParaAbrir(a.getAttribute('data-plano')); });
     });
     $$('[data-ir-hero]').forEach(function (a) {
-      a.addEventListener('click', function (e) { e.preventDefault(); $('#porta').scrollIntoView({ behavior: MOV_REDUZIDO.matches ? 'auto' : 'smooth' }); campoNome.focus({ preventScroll: true }); });
+      a.addEventListener('click', function (e) { e.preventDefault(); rolagemDoCodigo(); $('#porta').scrollIntoView({ behavior: MOV_REDUZIDO.matches ? 'auto' : 'smooth' }); focarNome({ preventScroll: true }); });
     });
 
     /* teste de verdade */
@@ -1726,7 +1785,7 @@
     });
     montarSedeViva($('#sede'), {
       seu: function () { var s = estado(); return s.n && s.k ? { n: s.n, k: s.k } : null; },
-      abrirSeu: function () { var s = estado(); if (s.n && s.k) abrirPrevia(); else { var c = $('#nome'); if (c) c.focus(); } }
+      abrirSeu: function () { var s = estado(); if (s.n && s.k) abrirPrevia(); else focarNome(); }
     });
     // "Ver a prévia de novo" em /abrir/ manda &ver=1: a prévia abre direto, sem virar a placa outra vez.
     if (ENTRADA.ver) { var sv = estado(); if (sv.k && sv.n) abrirPrevia(); }

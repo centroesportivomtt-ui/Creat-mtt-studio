@@ -328,6 +328,20 @@ test('navegador: demo, cliente e prévia; turnos; fuso da Bahia num aparelho de 
     const valor = await page.evaluate(() => [...document.querySelectorAll('#espelho-dados dd')].map((d) => [d.className, d.textContent]));
     assert.ok(valor.some(([c, t]) => c === 'preco is-consulta' && /sob consulta/.test(t)), JSON.stringify(valor));
     assert.deepEqual(await page.evaluate(() => window.__csp), [], 'nenhuma violação de CSP (estilos pelo CSSOM)');
+    // demonstração (achado da Muralha, 11/11): nome e WhatsApp só na memória da página, nunca no aparelho
+    const chavesCliente = () => page.evaluate(() => Object.keys(localStorage).filter((k) => /:cliente$/.test(k)));
+    assert.deepEqual(await chavesCliente(), [], 'a demo não grava :cliente no aparelho');
+    assert.match(await page.textContent('#nota-privacidade'), /^Nesta demonstração, seu nome e seu WhatsApp não ficam salvos/);
+    // ':cliente' deixado pela versão do pacote A: a demo apaga ao abrir
+    await page.evaluate(() => localStorage.setItem(Object.keys(localStorage).find((k) => /^site:.+:som$/.test(k)).replace(/som$/, 'cliente'), JSON.stringify({ nome: 'TESTE Antigo', whats: '11900000000', servicoId: 'barba' })));
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForSelector('#lista-horarios .horarios:not([hidden]) .horario', { timeout: 10000 });
+    assert.deepEqual(await chavesCliente(), [], 'a demo apaga o :cliente antigo ao abrir');
+    assert.equal(await page.inputValue('#cliente-nome'), '', 'e não preenche com ele');
+    await page.locator('#lista-horarios .horarios:not([hidden]) .horario').first().click();
+    await page.locator('#lista-servicos .servico-opcao:not([aria-disabled="true"])').first().click();
+    await page.click('#esquecer-dados');
+    assert.equal(await page.textContent('#nota-esquecer'), 'Pronto: os campos foram limpos. Na demonstração nada fica salvo.');
     assert.deepEqual(erros, []);
     await ctx.close();
 
@@ -338,6 +352,7 @@ test('navegador: demo, cliente e prévia; turnos; fuso da Bahia num aparelho de 
     assert.doesNotMatch(cli.url + cli.texto, /5575981151202|Testei a demonstração|Quero saber como ter um site assim|Simulação/);
     assert.match(cli.texto, /^Olá! Meu nome é TESTE Pixel\. Quero pedir um horário: .+, quarta, 11\/11 às /);
     assert.equal(await page.evaluate(() => document.getElementById('whats-flutuante').getAttribute('href')), `https://wa.me/${WHATS_CLIENTE}`);
+    assert.equal(await page.evaluate(() => Object.keys(localStorage).filter((k) => /^site:.+:cliente$/.test(k)).length), 1, 'o site entregue continua guardando no aparelho');
     assert.deepEqual(erros, []);
     await ctx.close();
 

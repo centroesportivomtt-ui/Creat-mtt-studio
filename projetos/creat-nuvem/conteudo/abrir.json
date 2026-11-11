@@ -38,7 +38,7 @@
     "_sobre": "Bloco recolhido (details fechado) com endereço, horário e nome. O servidor aceita o pedido sem eles (docs/PEDIDO-API.md); sem endereço ou horário a produção para e o suporte pede pelo WhatsApp (docs/EXECUTOR.md, passo (e)). O prazo dos termos v2 (cláusula 5) conta da confirmação do pagamento: nada aqui diz que ele espera estes dados.",
     "titulo": "Endereço e horário: agora ou depois",
     "texto": "O site só é montado com eles. Adiante aqui ou mande logo depois do pagamento, pelo WhatsApp do suporte.",
-    "_textoRegra": "Fato da produção (docs/EXECUTOR.md, passo (e), Saída 6), nunca condição de prazo: a cláusula 5 dos termos v2 conta as 72 h da confirmação do pagamento. Quem manda é o comprador. A política de privacidade v4 (seção 7) permite ao suporte escrever ao comprador pago sobre os dados que faltam (roteiro R-dados), mas a página não promete esse passo.",
+    "_textoRegra": "Fato da produção (docs/EXECUTOR.md, passo (e), Saída 6), nunca condição de prazo: a cláusula 5 dos termos v2 conta as 72 h da confirmação do pagamento. Quem manda é o comprador. A política de privacidade, desde a v4 (seção 7), permite ao suporte escrever ao comprador pago sobre os dados que faltam (roteiro R-dados), mas a página não promete esse passo.",
     "_texto": "Depois do pagamento, a página do pedido (/obrigado/) mostra o bloco faltaDados com o botão do WhatsApp do suporte e o número do pedido.",
     "horariosAjuda": "Começa com o comum do seu nicho. Ajuste os dias e as horas e marque a confirmação: sem ela, o horário não vai no pedido.",
     "horariosConfirmo": "Este é o horário do meu negócio"

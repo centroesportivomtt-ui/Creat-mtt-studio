@@ -31,6 +31,10 @@ const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const FONTE_CK = fs.readFileSync(path.join(RAIZ, 'checkout.config.js'), 'utf8');
 const FONTE_VIT = fs.readFileSync(path.join(RAIZ, 'assets', 'vitrine.js'), 'utf8');
 const H = 3600 * 1000;
+// eventos do contador: os 4 do funil e os 5 de interesse (pacote B). ficou_10s depende do relógio e sai das listas exatas.
+const FUNIL = ['visita', 'previa', 'ida_pagamento', 'clique_pagar'];
+const INTERESSE = ['ficou_10s', 'rolou', 'tocou_nome', 'digitou_nome', 'tocou_exemplo'];
+const semRelogio = (cs) => cs.filter((c) => c.evento !== 'ficou_10s');
 
 const PREF = {
   inaug: '2189692475-388377b3-87f4-43db-b88c-af75b6ce6526',
@@ -619,7 +623,12 @@ test('2A contador: corpo do contar sem dado pessoal, aceito pelo normalizarConta
   const c = limpar(V.corpoContagem('clique_pagar', 'salao'));
   assert.deepEqual(c, { evento: 'clique_pagar', nicho: 'salao', praca: 'feira', utm_content: 'A1-salao-v1' });
   assert.deepEqual(limpar(REGRAS.normalizarContagem(c)), { conferencia: false, evento: 'clique_pagar', nicho: 'salao', praca: 'feira', anuncio: 'A1-salao-v1' });
-  for (const ev of ['visita', 'previa', 'ida_pagamento', 'clique_pagar']) assert.ok(REGRAS.normalizarContagem(limpar(V.corpoContagem(ev, 'barbearia'))), ev);
+  for (const ev of [...FUNIL, ...INTERESSE]) {
+    const n = REGRAS.normalizarContagem(limpar(V.corpoContagem(ev, 'barbearia')));
+    assert.ok(n, ev); assert.equal(n.evento, ev);
+    assert.deepEqual(Object.keys(limpar(V.corpoContagem(ev, 'barbearia'))).sort(), ['evento', 'nicho', 'praca', 'utm_content'], ev);
+  }
+  assert.deepEqual([...REGRAS.EVENTOS].sort(), [...FUNIL, ...INTERESSE].sort(), 'a página só manda o que a lista fechada do servidor aceita');
   assert.equal(limpar(V.corpoContagem('visita', 'clinica')).nicho, 'outro');
 });
 
@@ -916,7 +925,7 @@ test('2A navegador: contador manda visita, prévia, ida ao pagamento e clique se
     await preencherAbrir(pg);
     await Promise.all([pg.waitForURL(/mercadopago/), pg.click('.pagar [data-checkout]')]);
     const contagens = api.filter((a) => a.nome === 'contar').map((a) => a.corpo);
-    assert.deepEqual(contagens.map((c) => c.evento), ['visita', 'previa', 'ida_pagamento', 'clique_pagar']);
+    assert.deepEqual(semRelogio(contagens).map((c) => c.evento), ['visita', 'tocou_nome', 'digitou_nome', 'previa', 'ida_pagamento', 'clique_pagar']);
     for (const c of contagens) {
       assert.deepEqual(Object.keys(c).sort(), ['evento', 'nicho', 'praca', 'utm_content']);
       assert.equal(c.nicho, 'salao'); assert.equal(c.praca, 'feira'); assert.equal(c.utm_content, 'A1-salao-v1');
@@ -1095,7 +1104,7 @@ test('dobra no celular 360x640: título do nicho na chegada, campo e botão sem 
     await pg.fill('#nome', 'Studio D’Ávila'); await pg.keyboard.press('Enter');
     await pg.waitForFunction(() => { const e = document.querySelector('#previa'); return !!e && !e.hidden; });
     assert.equal(await pg.innerText('#previa-nome'), "Studio D'Ávila", 'o apóstrofo curvo do teclado vira o reto');
-    assert.deepEqual(api.filter((a) => a.nome === 'contar').map((a) => a.corpo.evento), ['visita', 'previa']);
+    assert.deepEqual(semRelogio(api.filter((a) => a.nome === 'contar').map((a) => a.corpo)).map((c) => c.evento), ['visita', 'tocou_nome', 'digitou_nome', 'previa']);
     await ctx.close();
     // nicho desconhecido e sem nicho: título genérico, sem marca no <html>
     const b = await paginaApi(nav, base, { consentir: false });
@@ -1855,16 +1864,16 @@ test('exemplo (b, c, d): toque no cartão abre o site de exemplo no #previa sem 
       assert.equal(d.botao, { barbearia: 'Ver com o nome da minha barbearia', salao: 'Ver com o nome do meu salão', academia: 'Ver com o nome da minha academia' }[k]);
       assert.equal(d.foco, 'previa-fechar');
       // (b) nenhum 'previa' contado, nenhum ViewContent, nenhum previa_gerada
-      assert.deepEqual(contagens(api).map((c) => c.evento), ['visita'], k + ': o exemplo não conta prévia');
+      assert.deepEqual(semRelogio(contagens(api)).map((c) => c.evento), ['visita', 'tocou_exemplo'], k + ': o exemplo não conta prévia');
       assert.ok(!(await filaPixel(pg)).some((a) => a[1] === 'ViewContent'), k + ': sem ViewContent no exemplo');
       // (c) "Ver com o nome da minha ...": fecha, foco no #nome, chip marcado, nada enviado
-      const antes = api.length;
+      const antes = semRelogio(contagens(api)).length + api.filter((a) => a.nome !== 'contar').length;
       await pg.click('#previa-exemplo-nome');
       await pg.waitForFunction(() => document.querySelector('#previa').hidden && document.activeElement && document.activeElement.id === 'nome');
       await pg.waitForTimeout(400);
       const c = await pg.evaluate((kk) => { const r = document.querySelector('#nome').getBoundingClientRect(); return { chip: document.querySelector('input[name="nicho"][value="' + kk + '"]').checked, foco: document.activeElement.id, naTela: r.top >= 0 && r.bottom <= innerHeight }; }, k);
       assert.deepEqual(c, { chip: true, foco: 'nome', naTela: true }, k);
-      assert.equal(api.length, antes, k + ': voltar ao campo não envia nada');
+      assert.equal(semRelogio(contagens(api)).length + api.filter((a) => a.nome !== 'contar').length, antes, k + ': voltar ao campo não envia nada (o foco posto pelo código não conta tocou_nome)');
       // (d) nome digitado + Enter: exatamente visita e previa, com a praça do anúncio e sem o nome
       await pg.fill('#nome', 'Barbearia TESTE Pixel'); await pg.keyboard.press('Enter');
       await pg.waitForFunction(() => !document.querySelector('#previa').hidden && !document.querySelector('#previa').hasAttribute('data-modo'));
@@ -1873,7 +1882,7 @@ test('exemplo (b, c, d): toque no cartão abre o site de exemplo no #previa sem 
       assert.match(n.rotulo, /Barbearia TESTE Pixel$/); assert.doesNotMatch(n.rotulo, /Exemplo/);
       assert.equal(n.quero, true); assert.equal(n.botaoEx, false);
       const cs = contagens(api);
-      assert.deepEqual(cs.map((x) => x.evento), ['visita', 'previa'], k);
+      assert.deepEqual(semRelogio(cs).map((x) => x.evento), ['visita', 'tocou_exemplo', 'tocou_nome', 'digitou_nome', 'previa'], k);
       for (const x of cs) { assert.deepEqual(Object.keys(x).sort(), ['evento', 'nicho', 'praca', 'utm_content']); assert.deepEqual([x.nicho, x.praca, x.utm_content], [k, 'feira', 'A1-' + k]); }
       assert.doesNotMatch(JSON.stringify(api.map((a) => a.corpo)), /TESTE|Pixel/, 'sem o nome digitado no que sai');
       assert.ok((await filaPixel(pg)).some((a) => a[1] === 'ViewContent'), 'a prévia com nome continua mandando ViewContent');
@@ -1920,7 +1929,7 @@ test('exemplo (e): "Quero um assim" e o rodapé dentro do site de exemplo não n
         assert.equal(fr.url(), urlQuadro, 'o quadro não navegou');
         assert.deepEqual(fora, [], 'nada pedido ao endereço da home de produção');
         assert.equal(await pg.isChecked('input[name="nicho"][value="salao"]'), true);
-        assert.deepEqual(contagens(api).map((c) => c.evento), ['visita']);
+        assert.deepEqual(semRelogio(contagens(api)).map((c) => c.evento), ['visita', 'tocou_exemplo']);
         assert.deepEqual(erros, []);
         await ctx.close();
       }
@@ -1941,14 +1950,15 @@ test('exemplo (f, g): voltando pelo "Quero um assim" (utm_source=demo) com orige
     const cs = contagens(api);
     /* a visita é a segunda carga da mesma pessoa: fica com a campanha da demo (o servidor grava praça e anúncio 'outro',
        e a leitura só soma praça feira ou salvador-rms com anúncio R7-*, R9-* ou F1-*). A prévia fica na origem do anúncio. */
-    assert.deepEqual(cs.map((c) => [c.evento, c.praca, c.utm_content]), [['visita', 'demo-v1', 'barbearia'], ['previa', 'feira', 'R7-barbearia']]);
+    // os 5 de interesse são da carga, como a visita: ficam na campanha da demo, e a cadeia não passa da visita na praça
+    assert.deepEqual(semRelogio(cs).map((c) => [c.evento, c.praca, c.utm_content]), [['visita', 'demo-v1', 'barbearia'], ['tocou_nome', 'demo-v1', 'barbearia'], ['digitou_nome', 'demo-v1', 'barbearia'], ['previa', 'feira', 'R7-barbearia']]);
     await ctx.close();
     /* sem origem guardada, quem chega pelo exemplo manda a praça demo-v1, que o servidor grava como 'outro'
        (schema/pedido-regras.mjs, PRACAS_CONTADOR); a leitura descarta toda linha com praça ou anúncio 'outro' */
     const s = await paginaApi(nav, base, { consentir: false });
     await s.pg.goto(base + '/?nicho=barbearia&utm_source=demo&utm_medium=ref&utm_campaign=demo-v1&utm_content=barbearia');
     await s.pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
-    assert.deepEqual(contagens(s.api).map((c) => [c.evento, c.praca]), [['visita', 'demo-v1']]);
+    assert.deepEqual(semRelogio(contagens(s.api)).map((c) => [c.evento, c.praca]), [['visita', 'demo-v1']]);
     await s.ctx.close();
     // (g) link de teste: nem visita, nem prévia, nem nada com o exemplo
     const t = await paginaApi(nav, base, { consentir: false });
@@ -2017,7 +2027,7 @@ test('exemplo: quando o site de exemplo não abre (404 ou rede caída), o diálo
       await pg.fill('#nome', 'Academia TESTE Pixel'); await pg.keyboard.press('Enter');
       await pg.waitForFunction(() => document.querySelector('#previa-carregando').hidden, null, { timeout: 15000 });
       assert.equal(await pg.evaluate(() => document.querySelector('#previa').hasAttribute('data-falhou')), false);
-      assert.deepEqual(contagens(api).map((c) => c.evento), ['visita', 'previa'], modo);
+      assert.deepEqual(semRelogio(contagens(api)).map((c) => c.evento), ['visita', 'tocou_exemplo', 'tocou_nome', 'digitou_nome', 'previa'], modo);
       assert.deepEqual(erros, [], modo);
       await ctx.close();
     }
@@ -2061,4 +2071,206 @@ test('exemplo: textos do cartão e do modo exemplo vêm de conteudo/home.json, s
   const pos = (s) => form.indexOf(s);
   assert.ok(pos('<fieldset class="chips">') < pos('class="exemplo-site"') && pos('class="exemplo-site"') < pos('type="submit"') && pos('class="nota-nome"') < pos('id="cidade"'));
   assert.match(form, /<input id="cidade" name="cidade" type="text" autocomplete="address-level2" maxlength="40"/);
+});
+
+/* ------------------------------------------------------------ interesse na home (11/11, pacote B)
+   5 eventos novos pelo mesmo contar() da visita: ficou_10s, rolou, tocou_nome, digitou_nome e tocou_exemplo. Cada um
+   no máximo uma vez por carga, só na home, nunca antes da visita, nunca no link de teste, nunca disparado pelo código
+   (foco do erro, "Ver com o nome", rolagem para a placa, clique ou evento sintético) e sem nenhum dado pessoal. */
+const contaDe = (cs) => cs.reduce((o, c) => { o[c.evento] = (o[c.evento] || 0) + 1; return o; }, {});
+const prontoJs = (pg) => pg.waitForFunction(() => document.documentElement.classList.contains('js-pronto'));
+// rolagem com o dedo de verdade (toque sintetizado pelo Chromium, com touchstart e touchmove confiáveis)
+async function rolarComDedo(pg, ctx, dist) {
+  const cdp = await ctx.newCDPSession(pg);
+  const n = Math.ceil(dist / 20);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 180, y: 600 }] });
+  for (let i = 1; i <= n; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 180, y: 600 - i * 20 }] }); await new Promise((ok) => setTimeout(ok, 16)); }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.detach();
+}
+
+test('interesse (B): cada um dos 5 sai uma vez por carga, depois da visita, com o corpo de sempre e sem o que foi digitado', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, api, erros } = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+    const avisos = []; pg.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') avisos.push(m.text()); });
+    await pg.clock.install();
+    await pg.goto(base + '/?nicho=barbearia&utm_source=meta&utm_campaign=feira&utm_content=R7-barbearia');
+    await prontoJs(pg);
+    assert.deepEqual(semRelogio(contagens(api)).map((c) => c.evento), ['visita'], 'na chegada só a visita');
+    // tocou_nome: o toque no campo; tocar de novo, sair e voltar não repete
+    await pg.click('#nome'); await pg.click('.nota-nome'); await pg.click('#nome'); await pg.click('label[for="nome"]');
+    assert.deepEqual(contaDe(semRelogio(contagens(api))), { visita: 1, tocou_nome: 1 });
+    // digitou_nome: só com 2 letras ou números; sinais e uma letra só não contam; continuar digitando não repete
+    await pg.keyboard.type('& .'); await pg.keyboard.type('B');
+    assert.equal(contaDe(contagens(api)).digitou_nome, undefined, 'sinais e uma letra não contam');
+    await pg.keyboard.type('arbearia TESTE Lupa');
+    assert.equal(contaDe(contagens(api)).digitou_nome, 1);
+    await pg.keyboard.press('Backspace'); await pg.keyboard.type('a de novo');
+    // rolou: meia tela com o dedo ou a roda; menos que isso não conta; depois não repete
+    await pg.mouse.move(180, 400); await pg.mouse.wheel(0, 150); await pg.waitForTimeout(200);
+    assert.equal(contaDe(contagens(api)).rolou, undefined, '150 px não é meia tela de 640');
+    await rolarComDedo(pg, ctx, 420);
+    await pg.waitForFunction(() => scrollY >= innerHeight / 2);
+    await pg.waitForTimeout(200);
+    assert.equal(contaDe(contagens(api)).rolou, 1, 'o dedo passou de meia tela');
+    await pg.mouse.wheel(0, -900); await pg.waitForTimeout(150); await pg.mouse.wheel(0, 900); await pg.waitForTimeout(200);
+    // tocou_exemplo: o toque no cartão, uma vez, mesmo abrindo o exemplo duas vezes
+    await pg.evaluate(() => scrollTo(0, 0));
+    for (let i = 0; i < 2; i++) {
+      await pg.click('[data-nicho-exemplo="barbearia"]');
+      await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+      await pg.click('#previa-fechar');
+      await pg.waitForFunction(() => document.querySelector('#previa').hidden);
+    }
+    // ficou_10s: dez segundos com a aba visível, uma vez; o relógio não fica vivo depois
+    await pg.clock.runFor(11000);
+    await pg.waitForTimeout(100);
+    await pg.clock.runFor(30000);
+    await pg.waitForTimeout(100);
+    const cs = contagens(api);
+    assert.deepEqual(contaDe(cs), { visita: 1, tocou_nome: 1, digitou_nome: 1, rolou: 1, tocou_exemplo: 1, ficou_10s: 1 }, JSON.stringify(cs.map((c) => c.evento)));
+    assert.equal(cs[0].evento, 'visita', 'nada antes da visita');
+    for (const c of cs) {
+      assert.deepEqual(Object.keys(c).sort(), ['evento', 'nicho', 'praca', 'utm_content'], c.evento);
+      assert.deepEqual([c.nicho, c.praca, c.utm_content], ['barbearia', 'feira', 'R7-barbearia'], c.evento);
+    }
+    assert.ok(api.every((a) => a.nome === 'contar'), 'a home só fala com o contador');
+    assert.doesNotMatch(JSON.stringify(api.map((a) => a.corpo)), /TESTE|Lupa|arbearia T|de novo/, 'o texto digitado nunca sai da página');
+    assert.deepEqual(erros, []); assert.deepEqual(avisos.filter((x) => !/Failed to load resource|ERR_/.test(x)), [], 'console limpo');
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('interesse (B): ficou_10s só soma o tempo com a aba visível', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, api } = await paginaApi(nav, base, { consentir: false });
+    await pg.clock.install();
+    await pg.goto(base + '/?nicho=salao&utm_source=meta&utm_campaign=feira&utm_content=R9-salao');
+    await prontoJs(pg);
+    const aba = (estado) => pg.evaluate((e) => { Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => e }); Object.defineProperty(document, 'hidden', { configurable: true, get: () => e === 'hidden' }); document.dispatchEvent(new Event('visibilitychange')); }, estado);
+    await aba('hidden');
+    await pg.clock.runFor(60000); await pg.waitForTimeout(100);
+    assert.equal(contaDe(contagens(api)).ficou_10s, undefined, 'um minuto em segundo plano não conta');
+    await aba('visible');
+    await pg.clock.runFor(4000); await pg.waitForTimeout(100);
+    assert.equal(contaDe(contagens(api)).ficou_10s, undefined, 'ainda não somou 10 s visível');
+    await pg.clock.runFor(7000); await pg.waitForTimeout(100);
+    assert.equal(contaDe(contagens(api)).ficou_10s, 1);
+    await aba('hidden'); await aba('visible'); await pg.clock.runFor(30000); await pg.waitForTimeout(100);
+    assert.equal(contaDe(contagens(api)).ficou_10s, 1, 'esconder e mostrar de novo não repete');
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('interesse (B): nada é contado pelo que o código faz (foco do erro, "Ver com o nome", ir ao topo, rolagem, clique e eventos sintéticos)', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx, api, erros } = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+    await pg.goto(base + '/?nicho=salao&utm_source=meta&utm_campaign=feira&utm_content=R9-salao');
+    await prontoJs(pg);
+    // enviar vazio: o código põe o foco no campo com o erro (e a placa sobe)
+    await pg.click('#form-abrir [type=submit]');
+    await pg.waitForFunction(() => document.activeElement && document.activeElement.id === 'nome' && !document.querySelector('#nome-erro').hidden);
+    await pg.click('.nota-nome');
+    // "Ver o meu site primeiro" (lá embaixo): o código rola para o topo e foca o nome
+    await pg.locator('[data-ir-hero]:visible').first().click();
+    await pg.waitForFunction(() => document.activeElement && document.activeElement.id === 'nome');
+    await pg.waitForTimeout(700);
+    await pg.click('.nota-nome');
+    // cartão clicado pelo código abre o exemplo, mas não conta; "Ver com o nome" foca o campo pelo código
+    await pg.evaluate(() => document.querySelector('[data-nicho-exemplo="salao"]').click());
+    await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+    await pg.click('#previa-exemplo-nome');
+    await pg.waitForFunction(() => document.querySelector('#previa').hidden && document.activeElement && document.activeElement.id === 'nome');
+    await pg.waitForTimeout(300);
+    // texto posto pelo código, eventos sintéticos de digitação, roda, dedo e tecla, e rolagem pelo código
+    await pg.evaluate(() => {
+      const c = document.querySelector('#nome');
+      c.value = 'Salão TESTE Código'; c.dispatchEvent(new Event('input', { bubbles: true }));
+      c.dispatchEvent(new FocusEvent('focus')); c.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      window.dispatchEvent(new WheelEvent('wheel', { deltaY: 900 }));
+      try { window.dispatchEvent(new TouchEvent('touchstart')); window.dispatchEvent(new TouchEvent('touchmove')); } catch (e) {}
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown', bubbles: true }));
+      scrollTo(0, 3000);
+      document.querySelector('#planos, footer').scrollIntoView();
+    });
+    await pg.waitForTimeout(400);
+    await pg.evaluate(() => scrollTo(0, 0));
+    await pg.waitForTimeout(200);
+    assert.deepEqual(semRelogio(contagens(api)).map((c) => c.evento), ['visita'], 'só a visita: nada veio de gesto da pessoa');
+    // a mesma página conta assim que a pessoa toca de verdade
+    await pg.click('#nome');
+    assert.deepEqual(semRelogio(contagens(api)).map((c) => c.evento), ['visita', 'tocou_nome']);
+    assert.deepEqual(erros, []);
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('interesse (B): com o contador recusando (403, 500, rede caída ou lento) a página faz o mesmo, sem erro e sem esperar', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    let referencia = null;
+    for (const resp of [null, { status: 403 }, { status: 500 }, 'abortar', { atraso: 4000 }]) {
+      const rotulo = JSON.stringify(resp);
+      const { pg, ctx, api, erros } = await paginaApi(nav, base, { consentir: false, w: 360, h: 640, api: resp ? { contar: resp } : {} });
+      await pg.goto(base + '/?nicho=academia&utm_source=meta&utm_campaign=feira&utm_content=F1-academia');
+      await prontoJs(pg);
+      const t0 = Date.now();
+      await pg.click('[data-nicho-exemplo="academia"]');
+      await pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+      const msDialogo = Date.now() - t0;
+      await pg.click('#previa-exemplo-nome');
+      await pg.waitForFunction(() => document.querySelector('#previa').hidden && document.activeElement && document.activeElement.id === 'nome');
+      await pg.keyboard.type('Academia TESTE Lupa');
+      await pg.mouse.move(180, 400); await pg.mouse.wheel(0, 500); await pg.waitForTimeout(250);
+      await pg.evaluate(() => scrollTo(0, 0));
+      await pg.focus('#nome'); await pg.keyboard.press('Enter');
+      await pg.waitForFunction(() => !document.querySelector('#previa').hidden && !document.querySelector('#previa').hasAttribute('data-modo'));
+      await pg.waitForFunction(() => document.querySelector('#previa-carregando').hidden, null, { timeout: 15000 });
+      const estado = await pg.evaluate(() => ({ rotulo: document.querySelector('#previa-rotulo').innerText.replace(/\s+/g, ' ').trim(), quero: document.querySelector('#previa-quero').getClientRects().length > 0, porta: document.querySelector('#porta').innerText.replace(/\s+/g, ' ').trim() }));
+      const tentados = semRelogio(contagens(api)).map((c) => c.evento);
+      assert.deepEqual(tentados, ['visita', 'tocou_exemplo', 'tocou_nome', 'digitou_nome', 'rolou', 'previa'], rotulo);
+      assert.ok(msDialogo < 1500, rotulo + ': o toque não espera o contador (' + msDialogo + ' ms)');
+      assert.deepEqual(erros, [], rotulo);
+      if (!referencia) referencia = estado; else assert.deepEqual(estado, referencia, rotulo + ': página igual à do contador que aceita');
+      await ctx.close();
+    }
+  } finally { await nav.close(); srv.close(); }
+});
+
+test('interesse (B): nada com o link de teste, e nada disto fora da home (/abrir/ só conta ida_pagamento)', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidorExemplo(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const t = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+    await t.pg.clock.install();
+    await t.pg.goto(base + '/?nicho=barbearia&teste=pa-teste&utm_source=meta&utm_campaign=feira&utm_content=R7-barbearia');
+    await prontoJs(t.pg);
+    await t.pg.click('#nome'); await t.pg.keyboard.type('Barbearia TESTE Lupa');
+    await rolarComDedo(t.pg, t.ctx, 500); await t.pg.waitForTimeout(200);
+    await t.pg.evaluate(() => scrollTo(0, 0));
+    await t.pg.click('[data-nicho-exemplo="barbearia"]');
+    await t.pg.waitForFunction(() => !document.querySelector('#previa').hidden);
+    await t.pg.click('#previa-fechar');
+    await t.pg.clock.runFor(15000); await t.pg.waitForTimeout(100);
+    assert.deepEqual(contagens(t.api), [], 'nenhuma contagem com ?teste=pa-teste');
+    assert.deepEqual(t.erros, []);
+    await t.ctx.close();
+    const a = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+    await a.pg.clock.install();
+    await a.pg.goto(base + '/abrir/?utm_source=meta&utm_campaign=feira&utm_content=R7-barbearia#plano=aberto&k=barbearia&n=Barbearia%20TESTE&p=1');
+    await a.pg.waitForFunction(() => document.querySelector('.pagar [data-checkout]'));
+    await a.pg.click('#p-whatsapp'); await a.pg.keyboard.type('75900000000');
+    await a.pg.mouse.move(180, 400); await a.pg.mouse.wheel(0, 700); await a.pg.waitForTimeout(200);
+    await a.pg.clock.runFor(15000); await a.pg.waitForTimeout(100);
+    assert.deepEqual(contagens(a.api).map((c) => c.evento), ['ida_pagamento']);
+    assert.deepEqual(a.erros, []);
+    await a.ctx.close();
+  } finally { await nav.close(); srv.close(); }
 });

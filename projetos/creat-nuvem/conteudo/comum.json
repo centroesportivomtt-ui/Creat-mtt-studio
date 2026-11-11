@@ -3,8 +3,8 @@
 
   "consentimento": {
     "titulo": "Medição desta página",
-    "texto": "A Creat conta as visitas sem cookie e sem guardar o seu IP. A hospedagem registra o acesso técnico. Com a sua permissão, usamos o Pixel da Meta para medir os anúncios, e a hospedagem guarda de onde você veio.",
-    "textoCurto": "Contamos visitas sem cookie. Pixel da Meta só com o seu sim.",
+    "texto": "A Creat conta as visitas e alguns passos delas (como rolar a página ou tocar num campo), sem cookie e sem guardar o seu IP. A hospedagem registra o acesso técnico. Com a sua permissão, usamos o Pixel da Meta para medir os anúncios, e a hospedagem guarda de onde você veio.",
+    "textoCurto": "Contamos visitas e toques sem cookie. Pixel da Meta só com o seu sim.",
     "_texto": "Verdadeiro só com a meta base44-visitor-tracking=consent no head da página (pacote 2A) e a conferência de cookies com Referer externo verde. Se o Clarity ou o PostHog forem ligados, o texto muda no mesmo ato (privacidade, seções 2 e 3). textoCurto é a faixa de até 64 px quando há formulário na tela.",
     "aceitar": "Aceitar a medição de anúncios",
     "recusar": "Recusar",
