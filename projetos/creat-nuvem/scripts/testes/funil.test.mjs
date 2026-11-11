@@ -1288,3 +1288,18 @@ test('navegador: sede viva não carrega antes, toca sozinha ao entrar na tela, p
     await r.ctx.close();
   } finally { await nav.close(); srv.close(); }
 });
+
+test('navegador 360x640: chegando à seção da equipe o aviso de medição é faixa, não a caixa grande por cima da cena', { skip: !chromium && 'sem Playwright' }, async () => {
+  const srv = await servidor(), base = 'http://127.0.0.1:' + srv.address().port;
+  const nav = await chromium.launch();
+  try {
+    const { pg, ctx } = await paginaApi(nav, base, { consentir: false, w: 360, h: 640 });
+    await pg.goto(base + '/?nicho=barbearia');
+    await pg.evaluate(() => { const s = document.querySelector('#sede'); window.scrollTo(0, s.getBoundingClientRect().top + scrollY - 60); });
+    await pg.waitForSelector('#consentimento:not([hidden])');
+    await pg.waitForFunction(() => document.querySelector('#consentimento').classList.contains('is-faixa'), null, { timeout: 3000 });
+    const h = await pg.evaluate(() => document.querySelector('#consentimento').getBoundingClientRect().height);
+    assert.ok(h <= 64, 'faixa de até 64 px sobre a seção da equipe: ' + h);
+    await ctx.close();
+  } finally { await nav.close(); srv.close(); }
+});

@@ -367,3 +367,21 @@ Não verificado: um usuário comum logado nas 4 entidades privadas (falta creden
 **Não verificado.** Aparelho real (iPhone e Android com teclado de verdade); navegador de dentro do Instagram; compra real pela página nova; usuário comum logado (22 itens); `rascunho_url` numa consulta real no endereço novo.
 
 **Fica sabido.** Com o campo na primeira tela, o visitante novo pede a prévia antes de ver o aviso de medição. O `ViewContent` do Pixel vai contar menos do que antes. A medida de decisão passa a ser o contador próprio (`previa` sobre `visita`). Os anúncios continuam apontando para o endereço antigo até o ato de 13/11.
+
+## Publicação de 11/11/2026, 07:17 UTC (04:17 na Bahia): caminho de compra e cena viva da equipe
+
+**Por que.** Com a primeira dobra corrigida, o teste no ar mostrou que o preço só aparecia depois de "Quero este site no ar", que o aviso de medição chegava depois da prévia e que a seção "Veja como a equipe trabalha" ficava parada. O dono pediu a seção com movimento, mostrando a equipe trabalhando.
+
+**O que entrou.**
+- Caminho de compra: aviso de medição em faixa no primeiro toque no campo do nome; na prévia, "Testar no meu WhatsApp" como passo secundário, "Quero este site no ar" como passo principal e o preço de hoje logo abaixo (Abertura, mensalidade, 7 dias), vindo do arquivo de preços; topo da prévia cabe o nome em telas de até 400 px; em `/abrir/` a barra de pagar não fica atrás do aviso; cabeçalho "Dúvidas no WhatsApp".
+- Cena viva da equipe (`assets/sede-viva/`): os personagens montam o site do negócio em cima de um celular, em 7 passos e 16 s, tocando sozinha quando entra na tela, com Pausar, troca de negócio pelos três botões e versão parada para movimento reduzido e economia de dados. Carrega só 600 px antes da seção (cerca de 226 KB) e não pesa na primeira tela.
+
+**Como foi publicado.** Repositório no commit `1c60c12`; pacote montado no app com a mesma impressão digital do local (145 arquivos, sha256 do manifesto `83ba3083…50d2`). App: checkpoint `6af416835f4ce863cc5a0304` (git `4648040`). Volta: checkpoint `6af3da0d852a262ba77a3eb5` (git `9f10c71`).
+
+**Verificado.** Suíte 306 de 306; moldura e boot verdes; portão da cena (`conferir-sede-viva.cjs`) verde com 59,8 quadros por segundo em celular com CPU 4x mais lenta, sem erro de console nem violação de CSP. No ar: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 125 de 125, jornada e cookies 10 de 10; os 3 sites de demonstração 200 nos dois endereços. Olhado no ar em 360x640: campo do nome com a faixa do aviso, prévia com os dois botões e o preço, seção da equipe.
+
+**Achado depois de publicar, corrigido no repositório e ainda não no ar.** Chegando à seção da equipe sem ter escolhido a medição, a caixa grande do aviso cobria os botões de negócio e o topo da cena até a cena ocupar 60% da tela. Agora a seção conta como formulário para o aviso, que vira faixa de até 64 px (teste novo em `funil.test.mjs`). Entra na próxima publicação, junto da página de compra curta.
+
+**Fica sabido.** O portão `conferir-sede-viva.cjs` compara a primeira tela com uma versão de base; depois de um merge com outras mudanças na home, passe `SEDE_BASE=<commit anterior à cena>` para medir só o que a cena acrescenta.
+
+**Não verificado.** Aparelho real (iPhone e Android com teclado de verdade); navegador de dentro do Instagram; compra real; usuário comum logado (22 itens).

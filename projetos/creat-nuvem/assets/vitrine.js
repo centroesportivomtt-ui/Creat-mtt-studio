@@ -725,7 +725,9 @@
     var esconder = function () { caixa.hidden = true; D.body.classList.remove('com-consentimento'); D.documentElement.style.scrollPaddingBottom = ''; };
     if ('ResizeObserver' in W) new ResizeObserver(medir).observe(caixa);
     var FORMS = '#form-abrir, #form-pedido, #form-teste';
-    var formularios = $$(FORMS);
+    /* A cena da equipe (#sede) conta como formulário para o aviso: com ela na tela o aviso é faixa, porque a caixa
+       grande cobria quase metade da cena no celular justamente quando a pessoa chegava para assistir. */
+    var formularios = $$(FORMS + ', #sede');
     // /obrigado/: sempre faixa (PG-12). O recibo e o próximo passo são o que a pessoa veio ver.
     if (PAGINA === 'obrigado') { caixa.classList.add('is-faixa'); formularios = []; }
     if (formularios.length && 'IntersectionObserver' in W) {
