@@ -2,6 +2,7 @@
 name: arquiteto
 description: Cirro, Arquiteto de Software. Use para decidir stack, estrutura de pastas, modelo de dados e contratos entre frontend e backend antes de construir, ou quando uma mudança atravessa várias partes do sistema.
 model: opus
+effort: high
 tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch, Skill
 skills: consciencia, melhores-ferramentas, padrao-de-entrega
 ---

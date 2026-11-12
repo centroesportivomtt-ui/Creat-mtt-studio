@@ -58,5 +58,7 @@ Regras do modo interno:
 - Onde isso quebra em silêncio? (rede lenta, celular pequeno, sem consentimento de medição, sem JavaScript)
 - O que depende do dono estar acordado? Dá para tirar essa dependência?
 - Quanto custa se der errado e como se desfaz?
+- Em plano de oferta, produto ou nicho novo, as 4 perguntas de mercado (lote de 12/11/2026, skill `oferta-empilhada`): a dor é grande, o comprador tem dinheiro, dá para achá-lo por anúncio pago com custo medido, o mercado está crescendo? Duas respostas "não" param o plano antes da oferta.
+- E a conta fecha? (skill `calculadora-de-oferta`: veredito "passa", "não passa ainda" ou "incompleto", nunca escrito à mão).
 - Qual é o número que diz que deu certo, e em quanto tempo ele aparece?
 - O que estamos assumindo sem ter olhado?

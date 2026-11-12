@@ -43,6 +43,11 @@ Nota: `.claude/agents/leitor-pedido.md`, `.claude/agents/redator-pedido.md` e `.
 - `handoff`: passagem de bastão para outra conversa. Por conta própria fica no scratchpad; com o pedido do dono vira página privada. Nunca no repositório.
 - `find-skills`: acha a skill certa (em casa e no skills.sh), confere, lê inteira, revisa e só então traz. Registro em `docs/skills-de-fora.md`.
 - `agent-browser`: o navegador da casa com o método do agent-browser (sessão por tarefa, espera por condição).
+- `estudar-referencia`: o processo fixo quando o dono manda um vídeo ou post de referência de qualquer nicho (ler, transcrever, olhar quadros, classificar, separar diferencial de modismo, trazer pelo caminho seguro, responder curto, registrar em `docs/referencias/README.md`).
+- `edicao-de-video`: o processo de edição do bruto à entrega no Dropbox, com o pulo do gato, o portão de áudio e a ferramenta de inventário `edicao-de-video/ingerir.py`.
+- `painel-de-objecoes`: compradores simulados para achar objeção, frase e gancho antes de anunciar ou editar (hipótese, nunca previsão). Vem do founder-skill (MIT).
+- `calculadora-de-oferta`: a conta da oferta em reais, com CAC, mensalidade, LTV, teto de CAC e veredito calculado. Vem do founder-skill (MIT).
+- `oferta-empilhada`: montar a oferta (obstáculos, bônus que matam objeção, garantia com custo, equação de valor). Vem do founder-skill (MIT).
 
 ## Automações recorrentes
 
@@ -54,6 +59,10 @@ Nota: `.claude/agents/leitor-pedido.md`, `.claude/agents/redator-pedido.md` e `.
 O dono delegou a escolha dos modos. O Claude decide sozinho e registra, sem perguntar:
 - **Dentro da agência (automático de verdade):** modelo e esforço de cada agente são escolhidos por tarefa. Criar, desenhar, construir e escrever para vender → Opus, esforço alto ou máximo. Ler, revisar, auditar, pesquisar e sintetizar → Sonnet, esforço médio/alto. Verificação adversarial → esforço alto. Isso está nos arquivos de `.claude/agents/` e nos workflows e não depende do dono.
 - **Orquestração:** qualquer trabalho com mais de uma etapa roda pela agência (workflow), por autorização permanente do dono ("execute tudo da forma que verificar ser melhor"). Conversa, decisão e ajustes pequenos rodam direto, sem agentes, para poupar cota.
+- **Tabela de esforço (no frontmatter de cada agente, campo `effort`, desde 12/11):** `criativo` e `copywriter` máximo; construtores (`designer`, `frontend`, `backend`, `motion-3d`, `shader`, `som`), `arquiteto`, `diretor`, `trafego`, `conversao`, `vendas`, `revisor` e `seguranca` alto; `qa`, `pesquisador`, `devops`, `leitor-pedido` e `publicador-pedido` médio; `redator-pedido` alto. Sem o campo, o subagente herda o esforço da sessão, e a regra não fica garantida.
+- **Nível zero:** o que é mecânico (renomear no padrão do Dropbox, montar pastas, contar, conferir nomes, extrair metadado de vídeo) vira script e não gasta modelo. Haiku só para triagem mecânica que não cria nem decide; nunca para texto de venda, roteiro, edição ou revisão.
+- **Um escritor por arquivo:** toda tarefa declara os arquivos que escreve; duas tarefas da mesma onda com arquivo em comum rodam em série (`agencia.js`, sublotes). `package.json` e lockfile só com o `devops`.
+- **Lições com prova:** `criativo`, `copywriter`, `motion-3d`, `som`, `trafego` e `qa` têm `memory: local` (grava em `.claude/agent-memory-local/`, fora do git). Só entra lição com prova; nunca dado de cliente, gasto ou segredo. Nunca `memory: project`, que gravaria no repositório público.
 - **O que o Claude não consegue trocar:** o modelo e o esforço do chat principal e o botão Ultracode são controles do app. Por isso o Claude sempre diz ao dono o que deixar selecionado (regra abaixo).
 
 ## Linha de modo em TODA resposta (regra do dono, 10/11)
@@ -96,6 +105,7 @@ O dono delegou a escolha dos modos. O Claude decide sozinho e registra, sem perg
 
 ## Vídeo (creat.MTT)
 
+- Processo completo, do bruto à entrega: skill `edicao-de-video`. Vídeo ou post que o dono manda como referência, de qualquer nicho: skill `estudar-referencia`, registro em `docs/referencias/README.md`.
 - Todo vídeo precisa ter um "pulo do gato": edição premium, pegada de cinema. A reação esperada de quem assiste é "como eles conseguiram fazer isso?". Isso vale para legendas animadas, tipografia cinematográfica, transições criativas, cor profissional, sound design diferenciado e música com ducking sob a fala.
 - Áudio gravado sem microfone passa por limpeza de voz com IA, sem artefatos.
 - **Nunca** colocar vídeos ou arquivos pesados no computador do dono. Tudo é processado na nuvem, e a entrega é feita por link clicável do **Dropbox** do dono, nunca como anexo.

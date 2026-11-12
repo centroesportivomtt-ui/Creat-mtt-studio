@@ -3,6 +3,7 @@ name: leitor-pedido
 description: 'Papel interno do executor do Porta Aberta (não é membro da equipe). A sessão executora chama este subagente no passo (e), item 1, de projetos/creat-nuvem/docs/EXECUTOR.md, com um pedido_id e um caminho de arquivo. Ele lê UMA linha de PedidoPortaAberta com CAMPOS_TEXTO, grava a linha nesse caminho e responde só "ok" ou "falhou: <classe>". Use só assim, nunca para outra leitura.'
 tools: mcp__Base44__query_entities, Write
 model: sonnet
+effort: medium
 maxTurns: 4
 omitClaudeMd: true
 hooks:

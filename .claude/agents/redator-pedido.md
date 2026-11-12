@@ -3,6 +3,7 @@ name: redator-pedido
 description: 'Papel interno do executor do Porta Aberta (não é membro da equipe). A sessão executora chama este subagente no passo (e), item 4, de projetos/creat-nuvem/docs/EXECUTOR.md, com o caminho de sites/<slug>/redator.json (gravado pelo produzir.mjs depois do portão) e o caminho de saída. Ele escreve os textos do site no formato que o produzir.mjs --textos espera, grava um JSON e responde só "ok". Sem MCP, sem shell, sem rede.'
 tools: Read, Write
 model: opus
+effort: high
 maxTurns: 6
 omitClaudeMd: true
 hooks:

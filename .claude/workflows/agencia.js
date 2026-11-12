@@ -139,27 +139,49 @@ if (comConceito) {
 // ── Briefing ────────────────────────────────────────────────────────────────
 phase('Briefing')
 const plano = await agent(
-  `Briefing do cliente:\n\n${briefing}\n\n${conceito ? `Conceito criativo aprovado (todas as tarefas devem servir a ele, inclusive o momento-assinatura):\n${conceito}\n\n` : ''}Leia o repositório e monte o plano em ondas. Tarefas da mesma onda não podem tocar os mesmos arquivos. Limite: ${maxTarefas} tarefas no total; prefira menos tarefas maiores a muitas pequenas.`,
+  `Briefing do cliente:\n\n${briefing}\n\n${conceito ? `Conceito criativo aprovado (todas as tarefas devem servir a ele, inclusive o momento-assinatura):\n${conceito}\n\n` : ''}Leia o repositório e monte o plano em ondas. Tarefas da mesma onda não podem tocar os mesmos arquivos, e toda tarefa declara em "arquivos" tudo o que escreve (se duas cruzarem, o fluxo roda as duas em série). package.json e lockfile só com o devops. Limite: ${maxTarefas} tarefas no total; prefira menos tarefas maiores a muitas pequenas.`,
   { label: 'nimbus:plano', agentType: 'diretor', schema: PLANO },
 )
 if (!plano) throw new Error('O Diretor não conseguiu montar o plano.')
 const totalTarefas = plano.ondas.reduce((n, o) => n + o.tarefas.length, 0)
 log(`Plano: ${plano.resumo} · ${plano.ondas.length} ondas · ${totalTarefas} tarefas`)
 
+// ── Um escritor por arquivo (ideia do Ruflo, 12/11/2026) ────────────────────
+// Tarefas da mesma onda que tocam o mesmo arquivo (ou um arquivo dentro de uma pasta que a outra toca) não
+// rodam juntas: a onda é quebrada em sublotes em série; dentro de cada sublote, tudo em paralelo.
+// Tarefa sem lista de arquivos roda sozinha, porque não dá para provar que não cruza com as outras.
+const normaliza = a => String(a).trim().replace(/^\.\//, '').replace(/\/+$/, '')
+const cruza = (a, b) => a.some(x => b.some(y => x === y || x.startsWith(y + '/') || y.startsWith(x + '/')))
+function sublotes(tarefas) {
+  const lotes = []
+  for (const t of tarefas) {
+    const arqs = (t.arquivos || []).map(normaliza).filter(Boolean)
+    const lote = arqs.length ? lotes.find(l => l.arqs !== null && !cruza(l.arqs, arqs)) : null
+    if (lote) { lote.tarefas.push(t); lote.arqs.push(...arqs) } else lotes.push({ tarefas: [t], arqs: arqs.length ? [...arqs] : null })
+  }
+  return lotes.map(l => l.tarefas)
+}
+const MANIFESTO = /(^|\/)(package\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|requirements\.txt)$/
+
 // ── Construção: ondas em sequência, tarefas da onda em paralelo ─────────────
 phase('Construção')
 const entregas = []
 for (const onda of plano.ondas) {
-  log(`Onda "${onda.nome}": ${onda.tarefas.map(t => t.responsavel).join(', ')}`)
+  for (const t of onda.tarefas) {
+    if (t.responsavel !== 'devops' && (t.arquivos || []).some(a => MANIFESTO.test(normaliza(a)))) log(`Atenção: ${t.id} (${t.responsavel}) toca manifesto ou lockfile; a regra é só o devops mexer neles.`)
+  }
+  const lotes = sublotes(onda.tarefas)
+  log(`Onda "${onda.nome}": ${onda.tarefas.map(t => t.responsavel).join(', ')}${lotes.length > 1 ? ` · ${lotes.length} sublotes por arquivo em comum` : ''}`)
+  for (const lote of lotes) {
   const resultados = await pipeline(
-    onda.tarefas,
+    lote,
     t => agent(
       `Projeto: ${plano.resumo}\n${conceito ? `Conceito: ${conceito}\n` : ''}\nSua tarefa (${t.id}): ${t.titulo}\n\n${t.instrucoes}\n\nArquivos sob sua responsabilidade: ${t.arquivos.join(', ') || 'a definir'}. Não edite arquivos de outras tarefas.\n\n${RELATORIO}\n\nAo terminar, relate em poucas linhas o que fez e como verificar.`,
       { label: `${t.responsavel}:${t.id}`, phase: 'Construção', agentType: t.responsavel },
     ),
     (relato, t) => agent(
       `Revise a entrega da tarefa ${t.id} ("${t.titulo}") feita por ${t.responsavel}.\nArquivos: ${t.arquivos.join(', ')}\nRelato do especialista:\n${relato}\n\nAprove se está correta e completa. Caso contrário, liste ajustes objetivos.`,
-      { label: `crivo:${t.id}`, phase: 'Construção', agentType: 'revisor', schema: VEREDITO, effort: 'medium' },
+      { label: `crivo:${t.id}`, phase: 'Construção', agentType: 'revisor', schema: VEREDITO },
     ).then(v => ({ t, relato, v })),
     async ({ t, relato, v }) => {
       if (!v || v.aprovado || !v.ajustes.length) return { t, relato, aprovado: true }
@@ -171,6 +193,7 @@ for (const onda of plano.ondas) {
     },
   )
   entregas.push(...resultados.filter(Boolean))
+  }
 }
 
 // ── QA: três lentes diferentes procuram problemas ───────────────────────────

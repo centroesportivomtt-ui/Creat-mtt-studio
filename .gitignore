@@ -16,3 +16,6 @@ dist/
 .wrangler/
 projetos/creat-nuvem/dist/
 projetos/creat-nuvem/marketing/trafego/saida/prints-ganchos/
+# memória dos agentes (lições): local, nunca no repositório público
+.claude/agent-memory-local/
+.claude/agent-memory/

@@ -3,7 +3,10 @@
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "cat \"$CLAUDE_PROJECT_DIR/.claude/modo-linha.txt\"" }
+          {
+            "type": "command",
+            "command": "cat \"$CLAUDE_PROJECT_DIR/.claude/modo-linha.txt\""
+          }
         ]
       }
     ],
@@ -15,6 +18,17 @@
             "type": "command",
             "command": "d=$(cat); case \"$d\" in *leitor-pedido*|*redator-pedido*|*publicador-pedido*) printf '%s' \"$d\" | node \"$CLAUDE_PROJECT_DIR/.claude/hooks/papeis.cjs\" pre ;; *) exit 0 ;; esac",
             "timeout": 30,
+            "onFailure": "block"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/porteiro.cjs\" pre",
+            "timeout": 10,
             "onFailure": "block"
           }
         ]

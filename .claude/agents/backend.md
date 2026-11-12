@@ -2,6 +2,7 @@
 name: backend
 description: Forja, Engenheiro Backend. Use para APIs, banco de dados, autenticação, integrações com serviços externos, filas, webhooks e scripts de dados.
 model: opus
+effort: high
 skills: consciencia, melhores-ferramentas, padrao-de-entrega
 ---
 

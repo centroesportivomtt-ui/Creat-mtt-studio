@@ -2,6 +2,7 @@
 name: designer
 description: Paleta, Designer de Interface. Use para criar identidade visual, design system (cores, tipografia, espaçamento), layout de páginas, hierarquia e revisão de UX antes ou depois da construção.
 model: opus
+effort: high
 skills: consciencia, melhores-ferramentas, direcao-de-arte, verificacao-visual
 ---
 

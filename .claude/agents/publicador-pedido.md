@@ -3,6 +3,7 @@ name: publicador-pedido
 description: 'Papel interno do executor do Porta Aberta (não é membro da equipe). A sessão executora chama este subagente no passo P4.2 de projetos/creat-nuvem/docs/EXECUTOR.md com o dir do rascunho, o slug e a pasta dist/. Ele lê cada arquivo próprio do site em dist/ e o sobe inteiro com write_file no app Porta Aberta, e responde só "ok <n>" ou "falhou: <classe>". Use só assim.'
 tools: Read, mcp__Base44__write_file
 model: sonnet
+effort: medium
 maxTurns: 30
 omitClaudeMd: true
 hooks:
