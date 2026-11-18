@@ -187,9 +187,9 @@ def mixar(edl: dict, voz: np.ndarray, trilha: np.ndarray, fx: np.ndarray, fontes
         stems[nome] = str(p)
     fm = np.interp(tt, t, fala) > 0.5
     margem = None
-    if fm.any():
-        rv_ = np.sqrt(np.mean(vz[fm] ** 2))
-        rt_ = np.sqrt(np.mean((trilha + fx)[fm] ** 2)) + 1e-12
+    if fm.any():                                            # margem na banda da fala (o grave do bumbo não mascara a voz)
+        rv_ = np.sqrt(np.mean(sosfilt(sosb, voz)[fm] ** 2))
+        rt_ = np.sqrt(np.mean(sosfilt(sosb, (trilha + fx + amb).mean(1))[fm] ** 2)) + 1e-12
         margem = round(float(20 * np.log10(rv_ / rt_)), 1)
     return {"mix": str(saida / "mix.wav"), "stems": stems, "lufs": round(float(meter.integrated_loudness(mix.astype(np.float64))), 2),
             "true_peak_db": round(true_peak_db(mix), 2), "ganho_total_db": round(20 * np.log10(gt), 2), "voz_sobre_cama_db": margem,

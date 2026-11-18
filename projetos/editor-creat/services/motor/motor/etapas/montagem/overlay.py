@@ -64,7 +64,8 @@ def camadas_legenda(edl: dict) -> list[dict]:
                 txt = f"*{txt}*"
             palavras.append({"p": txt, "i": round(w[0], 3), "f": round(w[1], 3), "quebra": k > 0 and k % 3 == 0})
         camadas.append({"id": f"leg{n + 1}", "modelo": lg.get("modelo", "legenda"), "de": round(de, 3), "ate": round(ate, 3),
-                        "props": {"palavras": palavras, "y": lg.get("y", 0.62), "porPagina": 3}})
+                        "props": {"palavras": palavras, "y": lg.get("y", 0.62), "porPagina": 3,
+                                  "tamanho": lg.get("tamanho", 94), "largura": 0.72}})
     return camadas
 
 
