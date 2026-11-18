@@ -26,6 +26,9 @@ falante (JSON pequenos) ficam no Volume `editor-motor-estado`, criado sozinho no
 4. No fim, o terminal mostra a URL da função `api`, no formato `https://<sua-conta>--editor-motor-api.modal.run`.
    Teste: `curl -H "Authorization: Bearer <MOTOR_TOKEN>" <URL>/v1/saude` deve responder `{"ok": true, ...}` com
    `armazenamento: r2`. Essa URL é o `MOTOR_URL` do site.
+   Conferência por dentro (só leitura, nada pago): `curl -H "Authorization: Bearer <MOTOR_TOKEN>" <URL>/v1/conferir`
+   devolve, por serviço (banco, r2, modal, cerebro, variaveis), `ok | falhou | desligado` com o motivo e o tempo.
+   `?escrita=1` também grava e apaga um objeto minúsculo `.conferir/<ts>` no R2. Nenhum valor de chave sai na resposta.
 5. Custos: `api` e `trabalhar` só ligam quando há uso (scale to zero); `vigia` roda a cada 5 min por poucos segundos;
    `render_gpu` (L4) só entra com `EDITOR_RENDER=modal` e filme acima de `EDITOR_GPU_LIMITE_S` (padrão 120 s
    equivalentes: duração x fator de resolução, 4K = 4).

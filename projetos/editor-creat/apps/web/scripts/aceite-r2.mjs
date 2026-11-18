@@ -212,7 +212,9 @@ async function principal() {
   const origem = path.join(SCRATCH, nomeArquivo);
   fs.writeFileSync(origem, randomBytes(TAMANHO));
   const hashOrigem = await sha256(origem);
+  const hidratou = page.waitForResponse((r) => r.url().includes('/api/envio-r2/config'), { timeout: 20000 }); // o componente montou
   await page.goto(`${BASE}/projetos/${pid}`);
+  await hidratou;
   await page.waitForSelector('[data-teste=entrada-arquivo]', { state: 'attached', timeout: 20000 });
   errosConsole.length = 0;
 
@@ -232,6 +234,7 @@ async function principal() {
       if (confirmadas >= 3) { interrompidoEm = v; break; }
       await dormir(20);
     }
+    if (!interrompidoEm) throw new Error(`o envio não andou: "${(await page.textContent('[data-envio]').catch(() => ''))?.slice(0, 200)}" · R2 ${JSON.stringify((await estadoR2()).operacoes)} · console ${errosConsole.slice(0, 4).join(" | ")} · url ${page.url()} · desabilitado ${await page.isDisabled("[data-teste=entrada-arquivo]").catch((e) => e.message)}`);
     antesRecarga = await estadoR2();
     viuRepeticao = antesRecarga.derrubadas === 1;
     await page.reload(); // interrompe as partes em curso

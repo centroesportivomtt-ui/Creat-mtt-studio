@@ -25,7 +25,8 @@ export default async function selo(ctx, c) {
   img.src = p.logo; await img.decode().catch(() => {});
   // auto-ajuste (zona segura, ctx.caber): o cartão termina na coluna de botões. As três linhas que não cabem ao lado da
   // logo encolhem e quebram (título em até 3 linhas, apoios em até 2); o que cabe fica igual.
-  const util = ctx.W - ctx.ZONA.direita - x - 22 - 28 - 6 - img.offsetWidth - 22 - 2;
+  // (+4: o cartão pode encostar até 4 px além da coluna, dentro da tolerância do QA, como sempre encostou)
+  const util = ctx.W - ctx.ZONA.direita - x - 22 - 28 - 6 - img.offsetWidth - 22 + 4;
   const linha = (pai, txt, fonte, px, ls, min, piso, n, css, cls = "") => {
     const r = ctx.caber(txt ?? "", { fonte, ls, largura: util, max: px, min, piso, linhas: n, maiusculas: cls === "mk-display" });
     const e = el("div", cls, pai, { ...css, ...(cls ? { fontSize: r.px + "px" } : { font: `${fonte.split(" ")[0]} ${r.px}px ${fonte.split(" ").slice(1).join(" ")}` }), ...(r.quebrou ? { whiteSpace: "pre" } : {}) });

@@ -46,6 +46,15 @@ export default function chip(ctx, c) {
   }
 
   const nome = el("div", "mk-display", textos, { fontSize: pxNome + "px", lineHeight: "0.95", overflow: "hidden", paddingBottom: "4px" });
+  // a máscara do nome (overflow) aparava o acento (Á, Ã, É) e a cedilha: a área de recorte cresce para cima (e para baixo,
+  // só se houver cedilha/vírgula) com margem negativa do mesmo tamanho, então o layout e o nome sem acento ficam iguais
+  const nomeU = (p.nome ?? "").toUpperCase();
+  const ext = Math.round(0.24 * pxNome);
+  if (/[^\x00-\x7F]/.test(nomeU)) for (const e of [textos, nome]) Object.assign(e.style, { paddingTop: ext + "px", marginTop: -ext + "px" });
+  if (/[ÇQJ,;]/.test(nomeU)) {
+    Object.assign(nome.style, { paddingBottom: 4 + ext + "px", marginBottom: -ext + "px" });
+    Object.assign(textos.style, { paddingBottom: ext + "px", marginBottom: -ext + "px" });
+  }
   const letras = [];
   [...(p.nome ?? "")].forEach((ch, i) => {
     if (i === quebraNome) el("br", "", nome);
@@ -71,7 +80,8 @@ export default function chip(ctx, c) {
   tl.fromTo(cs.no, { x: -26, y: -26, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 0.42, ease: EASE.chegada }, t0);
   tl.fromTo(cs.se, { x: 26, y: 26, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 0.42, ease: EASE.chegada }, t0 + 0.04);
   if (selo) tl.fromTo(selo, { scale: 0.2, rotation: -90 }, { scale: 1, rotation: 0, duration: 0.5, ease: EASE.mola }, t0 + 0.1);
-  tl.fromTo(letras, { yPercent: 110 }, { yPercent: 0, duration: 0.5, ease: EASE.chegada, stagger: ctx.DUR.letra }, t0 + 0.16);
+  // stagger de 1 quadro por letra; só o nome que não terminaria de entrar antes da saída entra inteiro em 0,6 s
+  tl.fromTo(letras, { yPercent: 110 }, { yPercent: 0, duration: 0.5, ease: EASE.chegada, stagger: t0 + 0.16 + ctx.DUR.letra * letras.length + 0.5 > c.ate - 0.3 ? Math.min(ctx.DUR.letra, 0.6 / Math.max(1, letras.length)) : ctx.DUR.letra }, t0 + 0.16);
   tl.fromTo(cargo, { opacity: 0, filter: "blur(6px)", x: -10 }, { opacity: 1, filter: "blur(0px)", x: 0, duration: 0.35, ease: EASE.chegada }, t0 + 0.34);
   ctx.cue(t0 + 0.06, "chip", -8);
 

@@ -235,3 +235,48 @@ def test_roteador_cumpre_protocolo_render(dados):
     assert isinstance(RenderRoteador(config.carregar()), Render)
     assert all(hasattr(RenderModal, m) for m in ("planos", "overlay", "compor")) and RenderModal.nome == "modal"
     json.dumps(RenderRoteador.__doc__)
+
+
+# ---------------------------------------------------------------- NVENC (contêiner GPU) e ligação na montagem
+def test_nvenc_so_muda_a_linha_de_comando_com_a_variavel(monkeypatch):
+    from motor.etapas.montagem import planos as PL
+    from motor.etapas.montagem.comum import Meta
+    m = Meta(640, 360, 30.0, 0.0, 300, 10.0, 0, "tv", True, False)
+    monkeypatch.delenv("EDITOR_NVENC", raising=False)
+    cpu_enc, cpu_ler = PL.cmd_encode(270, 480, 30, "/tmp/x.mp4", nice=0), PL.cmd_leitura("/a.mp4", m, 10, 5, "null", 3, nice=0)
+    assert "libx264" in cpu_enc and "-crf" in cpu_enc and "h264_nvenc" not in cpu_enc
+    assert "-hwaccel" not in cpu_ler
+    # a CPU continua idêntica à linha de antes da GPU existir
+    assert cpu_enc == ["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", "270x480", "-r", "30",
+                       "-i", "-", "-vf", "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p", "-c:v", "libx264", "-preset",
+                       "veryfast", "-crf", "14", "-g", "30", "-threads", "2", "-colorspace", "bt709", "-color_primaries", "bt709",
+                       "-color_trc", "bt709", "-color_range", "tv", "-f", "mp4", "/tmp/x.mp4"]
+    monkeypatch.setenv("EDITOR_NVENC", "1")
+    gpu_enc, gpu_ler = PL.cmd_encode(270, 480, 30, "/tmp/x.mp4", nice=0), PL.cmd_leitura("/a.mp4", m, 10, 5, "null", 3, nice=0)
+    assert "h264_nvenc" in gpu_enc and "libx264" not in gpu_enc and "-crf" not in gpu_enc
+    assert gpu_ler[gpu_ler.index("-hwaccel") + 1] == "cuda" and gpu_ler.index("-hwaccel") < gpu_ler.index("-i")
+    assert [x for x in gpu_ler if x not in ("-hwaccel", "cuda")] == cpu_ler
+    monkeypatch.setenv("EDITOR_NVENC", "0")
+    assert PL.cmd_encode(270, 480, 30, "/tmp/x.mp4", nice=0) == cpu_enc
+
+
+def test_montagem_usa_o_roteador_e_registra_a_decisao(dados, monkeypatch):
+    import motor.etapas.montagem as M
+    from motor.provedores import render_roteador as RR
+    chamadas = []
+
+    def falso(edl, fontes, cache, *, cfg=None, **kw):
+        chamadas.append(kw)
+        RR.renderizar_planos.ultima = {"alvo": "cpu", "usado": "cpu", "motivo": "teste"}
+        raise RuntimeError("parar aqui")
+    monkeypatch.setattr(RR, "renderizar_planos", falso)
+    monkeypatch.setattr(M.OV, "renderizar", lambda *a, **k: {})
+    monkeypatch.setattr(M, "validar_edl", lambda edl: None)
+    monkeypatch.setattr(M.VZ, "montar_voz", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("sem áudio")))
+    from motor import config
+    with pytest.raises(RuntimeError, match="parar aqui"):
+        M.montar({"planos": [], "fontes": {}}, dados / "t", None, config.carregar())
+    assert chamadas and {"workers", "nice", "janela", "progresso"} <= set(chamadas[0])
+    import inspect
+    fonte = inspect.getsource(M.montar)
+    assert "RR.renderizar_planos" in fonte and '"render_planos": render_planos' in fonte

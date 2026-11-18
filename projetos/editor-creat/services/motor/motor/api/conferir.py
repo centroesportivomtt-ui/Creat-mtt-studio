@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import os
 import re
+import threading
 import time
 from typing import Callable
 
@@ -206,10 +207,34 @@ def _prazo() -> float:
         return 8.0
 
 
+def _em_thread(fn: Callable[[], str]) -> asyncio.Future:
+    """Roda fn numa thread daemon própria (não no executor padrão): uma checagem travada não segura a resposta nem o
+    desligamento do processo."""
+    loop = asyncio.get_running_loop()
+    fut = loop.create_future()
+
+    def entregar(res, erro):
+        if not fut.done():
+            fut.set_exception(erro) if erro is not None else fut.set_result(res)
+
+    def alvo():
+        try:
+            res, erro = fn(), None
+        except BaseException as e:  # noqa: BLE001
+            res, erro = None, e
+        try:
+            loop.call_soon_threadsafe(entregar, res, erro)
+        except RuntimeError:        # o laço já fechou (prazo vencido e resposta enviada)
+            pass
+
+    threading.Thread(target=alvo, daemon=True, name="conferir").start()
+    return fut
+
+
 async def _rodar(fn: Callable[[], str], prazo: float) -> dict:
     t0 = time.monotonic()
     try:
-        detalhe = await asyncio.wait_for(asyncio.to_thread(fn), prazo)
+        detalhe = await asyncio.wait_for(_em_thread(fn), prazo)
         estado = "ok"
     except Desligado as e:
         estado, detalhe = "desligado", str(e)
