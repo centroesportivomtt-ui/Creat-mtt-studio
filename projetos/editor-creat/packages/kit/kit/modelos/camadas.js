@@ -10,7 +10,12 @@ export default function camadas(ctx, c) {
     const pl = el("div", "", g, { position: "absolute", inset: "0", background: i === n - 1 ? "rgba(218,41,28,0.92)" : "rgba(14,14,16,0.86)", borderRadius: "10px",
       border: "3px solid " + (i === n - 1 ? "#FF5A4A" : "rgba(245,184,77,0.9)"), boxShadow: "0 18px 30px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", gap: "16px", padding: "0 22px", boxSizing: "border-box" });
     const nn = el("div", "", pl, { font: "700 20px 'JetBrains Mono'", color: i === n - 1 ? "#fff" : "#F5B84D", letterSpacing: "0.08em" }); nn.textContent = String(i + 1).padStart(2, "0");
-    const tx = el("div", "mk-display", pl, { fontSize: "46px", lineHeight: "1" }); tx.textContent = rot;
+    // auto-ajuste (zona segura, ctx.caber): o rótulo fica dentro da placa (400 px - respiros - número); o que não cabe a
+    // 46 px encolhe e quebra em até 2 linhas na altura da placa; o que cabe fica igual
+    const util = 400 - 44 - 16 - 30;
+    const r = ctx.caber(rot, { largura: util, max: 46, min: 30, piso: 20, linhas: 2, altura: 80, lh: 1, maiusculas: true });
+    const tx = el("div", "mk-display", pl, { fontSize: r.px + "px", lineHeight: "1", ...(r.quebrou ? { whiteSpace: "pre" } : {}) });
+    tx.textContent = r.quebrou || r.cortado ? r.linhas.join("\n") : rot;
     return g;
   });
   ctx.aCada((t) => {

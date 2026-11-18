@@ -97,12 +97,19 @@ class EnvioR2 {
   private rodada = { cancelado: false };
   private pausadoPor: 'usuario' | 'rede' | null = null;
   private terminado = false;
+  private erroFinal: string | null = null;
   private ultimoAviso = 0;
   private amostra = { t: 0, b: 0, v: 0 };
   private soltar: () => void = () => {};
 
   constructor(private arquivo: File, private projeto: string, private lsChave: string, private simultaneas: number, private o: Ouvintes) {
     this.reg = lsLer(lsChave);
+  }
+
+  private falhar(msg: string): false {
+    this.erroFinal = msg;
+    this.o.estado('erro', msg);
+    return false;
   }
 
   private get total() { return this.arquivo.size; }
@@ -185,6 +192,7 @@ class EnvioR2 {
   async continuar(primeira = false) {
     if (this.terminado) return;
     this.pausadoPor = null;
+    this.erroFinal = null;
     this.rodada.cancelado = true;
     for (const c of this.emCurso.values()) c.xhr.abort(); // sobra da rodada anterior: o ListParts diz o que ficou
     const rodada = (this.rodada = { cancelado: false });
@@ -198,7 +206,7 @@ class EnvioR2 {
       this.avisarProgresso(true);
       const trabalhadores = Array.from({ length: Math.min(this.simultaneas, Math.max(1, this.fila.length)) }, () => this.trabalhar(rodada));
       await Promise.all(trabalhadores);
-      if (rodada.cancelado || this.pausadoPor) return;
+      if (rodada.cancelado || this.pausadoPor || this.erroFinal) return;
       if (this.feitas.size < this.nPartes) {
         this.o.estado('erro', 'O envio parou depois de várias tentativas. Toque em continuar (ou escolha o mesmo arquivo de novo).');
         return;
@@ -261,21 +269,18 @@ class EnvioR2 {
         const url = await this.urlDa(n, novaUrl);
         r = await this.put(url, n);
       } catch (e) {
-        if (e instanceof ErroEnvio && e.status !== 0 && e.status < 500) { this.o.estado('erro', e.message); return false; }
+        if (e instanceof ErroEnvio && e.status !== 0 && e.status < 500) return this.falhar(e.message);
         r = { status: 0, etag: null };
       }
       if (r.status === -1 || rodada.cancelado || this.pausadoPor) return false;
       if (r.status >= 200 && r.status < 300) {
-        if (!r.etag) {
-          this.o.estado('erro', 'O armazenamento não mostrou o ETag da parte (CORS do bucket sem ExposeHeaders: ETag). Veja docs/R2-ENVIO.md.');
-          return false;
-        }
+        if (!r.etag) return this.falhar('O armazenamento não mostrou o ETag da parte (CORS do bucket sem ExposeHeaders: ETag). Veja docs/R2-ENVIO.md.');
         this.feitas.set(n, { parte: n, etag: r.etag, bytes: this.bytesDe(n) });
         this.urls.delete(n);
         this.avisarProgresso(true);
         return true;
       }
-      if (r.status === 404) { this.o.estado('erro', 'Este envio expirou no armazenamento. Escolha o arquivo de novo para começar.'); lsApagar(this.lsChave); return false; }
+      if (r.status === 404) { lsApagar(this.lsChave); return this.falhar('Este envio expirou no armazenamento. Toque em continuar para começar de novo.'); }
       novaUrl = r.status === 403 || r.status === 400; // URL vencida ou recusada: assina de novo
       this.avisarProgresso(true);
       if (!navigator.onLine) { this.pausar('rede'); return false; }

@@ -54,6 +54,7 @@ export default function legenda(ctx, c) {
       textAlign: "center", whiteSpace: "normal", fontSize: tam + "px", lineHeight: "1.0", transform: "translateY(-50%)",
     });
     const ini = pag[0].i;
+    const entradas = [];
     const fim = n < paginas.length - 1 ? paginas[n + 1][0].i : Math.max(pag[pag.length - 1].f, c.ate - 0.05);
     tl.set(caixa, { display: "none" }, c.de);
     tl.set(caixa, { display: "block" }, ini);
@@ -69,7 +70,8 @@ export default function legenda(ctx, c) {
       // entrada: opacidade 1 já no 1º quadro; anima escala, subida e blur
       tl.set(s, { opacity: 0 }, c.de);
       tl.set(s, { opacity: 1 }, w.i);
-      tl.fromTo(s, { scale: 1.22, y: 14, filter: "blur(8px)" }, { scale: 1, y: 0, filter: "blur(0px)", duration: DUR.palavra, ease: EASE.chegadaForte, immediateRender: false }, w.i);
+      // a escala de entrada (1,22) é decidida depois de medir a página (ver caberPagina)
+      entradas.push([s, w.i]);
       // ativa: âmbar enquanto é a palavra falada; depois volta a branco (palavra-chave continua âmbar)
       tl.set(s, { color: "#F5B84D" }, w.i);
       const sai = k < pag.length - 1 ? pag[k + 1].i : null;
@@ -78,9 +80,9 @@ export default function legenda(ctx, c) {
     });
     // auto-ajuste (zona segura): palavra maior que a largura (ELETRODOMÉSTICOS em destaque) ou página alta demais
     // encolhem a página inteira (tudo nela está em em); página que cabe fica igual
-    caberPagina(caixa);
+    caberPagina(caixa, entradas);
   });
-  function caberPagina(caixa) {
+  function caberPagina(caixa, entradas) {
     const Z = ctx.ZONA, altMax = 2 * Math.min(yc - Z.topo, H - Z.base - yc);
     caixa.style.display = "block";
     let px = tam;
@@ -91,6 +93,13 @@ export default function legenda(ctx, c) {
       if (f >= 0.999 || px <= 40) break;
       px = Math.max(40, Math.floor(px * Math.min(f, 0.98)));
       caixa.style.fontSize = px + "px";
+    }
+    // palavra que, crescida a 1,22 a partir do centro, passaria da zona entra com escala menor
+    for (const [s, ti] of entradas) {
+      const r = s.getBoundingClientRect();
+      const folga = Math.max(0, Math.min(r.left - Z.esquerda, W - Z.direita - r.right));
+      const s0 = Math.min(1.22, 1 + (2 * folga) / Math.max(1, r.width));
+      tl.fromTo(s, { scale: s0, y: 14, filter: "blur(8px)" }, { scale: 1, y: 0, filter: "blur(0px)", duration: DUR.palavra, ease: EASE.chegadaForte, immediateRender: false }, ti);
     }
     caixa.style.display = "none";
   }
