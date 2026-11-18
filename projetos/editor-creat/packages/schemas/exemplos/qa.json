@@ -1,0 +1,28 @@
+{
+ "versao": "1",
+ "projeto": "p_demo",
+ "video": "saidas/p_demo/v1/final.mp4",
+ "aprovado": false,
+ "checagens": [
+  {
+   "id": "lufs",
+   "ok": true,
+   "bloqueia": true,
+   "valor": -14.2
+  },
+  {
+   "id": "frase_repetida",
+   "ok": false,
+   "bloqueia": true,
+   "valor": {
+    "frase": "vai competir",
+    "vezes": 7
+   },
+   "detalhe": "Frase repetida no stem de ambiente: tom de sala tirado de trecho com voz.",
+   "evidencia": [
+    "qa/p_demo/v1/tom_sala.wav"
+   ]
+  }
+ ],
+ "tempo_s": 41.0
+}

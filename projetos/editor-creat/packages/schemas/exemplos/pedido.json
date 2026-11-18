@@ -1,0 +1,20 @@
+{
+ "versao": "1",
+ "projeto": "p_demo",
+ "texto": "Reel do evento de hoje mostrando a equipe trabalhando, termina chamando no direct.",
+ "tipo_video": "auto",
+ "destino": [
+  "reels"
+ ],
+ "formato": "9:16",
+ "duracao_alvo": 45,
+ "obrigatorio": [
+  "logo creat.MTT animada no fecho",
+  "@creat.mtt"
+ ],
+ "proibido": [
+  "nome de terceiros na legenda"
+ ],
+ "referencias": [],
+ "ajustes_de": null
+}

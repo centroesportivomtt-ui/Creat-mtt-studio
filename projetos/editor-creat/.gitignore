@@ -1,0 +1,14 @@
+node_modules/
+.next/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.env
+.env.local
+dados/
+*.mp4
+*.mov
+*.wav
+*.npy
+packages/kit/stills/

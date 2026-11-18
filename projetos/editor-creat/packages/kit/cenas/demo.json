@@ -1,0 +1,220 @@
+{
+  "nome": "creatMTT-MOTION-KIT-DEMO",
+  "formato": {
+    "w": 1080,
+    "h": 1920,
+    "fps": 30
+  },
+  "duracao": 14.5,
+  "cor": "#0B0B0C",
+  "camadas": [
+    {
+      "id": "fundoA",
+      "modelo": "fundo",
+      "de": 0,
+      "ate": 2.45,
+      "props": {
+        "tipo": "grafite",
+        "brilho": "245,184,77",
+        "forca": 0.2,
+        "centro": [
+          0.35,
+          0.44
+        ]
+      }
+    },
+    {
+      "id": "gancho",
+      "modelo": "gancho",
+      "de": 0,
+      "ate": 2.45,
+      "props": {
+        "sobrelinha": "// creat.MTT · motion",
+        "linhas": [
+          "ISSO NÃO",
+          "FOI EDITADO"
+        ],
+        "troca": {
+          "de": "EDITADO",
+          "para": "ESCRITO",
+          "em": 0.62,
+          "dur": 0.36
+        },
+        "y": 0.44
+      }
+    },
+    {
+      "id": "fundoB",
+      "modelo": "fundo",
+      "de": 2.45,
+      "ate": 7.45,
+      "props": {
+        "tipo": "codigo",
+        "arquivo": "kit/modelos/heroi.js",
+        "velocidade": 90,
+        "brilho": "245,184,77",
+        "forca": 0.1,
+        "centro": [
+          0.5,
+          0.58
+        ],
+        "tinta": 0.13,
+        "calma": [
+          0.53,
+          0.63
+        ]
+      }
+    },
+    {
+      "id": "legenda",
+      "modelo": "legenda",
+      "de": 2.45,
+      "ate": 7.0,
+      "props": {
+        "texto": "cada quadro | deste vídeo | é uma linha | de *código*. | rodando | na *nuvem*.",
+        "inicio": 0.18,
+        "ritmo": 0.3,
+        "y": 0.58
+      }
+    },
+    {
+      "id": "chip",
+      "modelo": "chip",
+      "de": 3.0,
+      "ate": 6.75,
+      "props": {
+        "nome": "CREAT NUVEM",
+        "cargo": "15 agentes · motion em código"
+      }
+    },
+    {
+      "id": "fundoC",
+      "modelo": "fundo",
+      "de": 6.9,
+      "ate": 10.6,
+      "props": {
+        "tipo": "grafite",
+        "brilho": "218,41,28",
+        "forca": 0.2,
+        "centro": [
+          0.5,
+          0.5
+        ],
+        "grao": 0.06
+      }
+    },
+    {
+      "id": "heroi",
+      "modelo": "heroi",
+      "de": 6.9,
+      "ate": 9.8,
+      "props": {
+        "alvo": "aba71",
+        "tamanho": 560,
+        "cy": 0.5,
+        "forma": 0.25,
+        "some": 9.62
+      }
+    },
+    {
+      "id": "hud",
+      "modelo": "hud",
+      "de": 2.45,
+      "ate": 10.5,
+      "props": {
+        "rotulo": "CREAT NUVEM // MOTION KIT",
+        "linhas": [
+          "CADA QUADRO = f(t)"
+        ]
+      }
+    },
+    {
+      "id": "fundoD",
+      "modelo": "fundo",
+      "de": 10.4,
+      "ate": 14.5,
+      "props": {
+        "tipo": "grafite",
+        "brilho": "218,41,28",
+        "forca": 0.17,
+        "centro": [
+          0.5,
+          0.42
+        ]
+      }
+    },
+    {
+      "id": "fecho",
+      "modelo": "fecho",
+      "de": 10.5,
+      "ate": 14.5,
+      "props": {
+        "cta": [
+          "MANDA NO",
+          "*DIRECT*."
+        ],
+        "apoio": "conta o que você quer vender",
+        "y": 0.53
+      }
+    },
+    {
+      "id": "t1",
+      "modelo": "transicao",
+      "de": 2.27,
+      "ate": 2.72,
+      "props": {
+        "tipo": "whip",
+        "corte": 2.45,
+        "sai": [
+          "fundoA",
+          "gancho"
+        ],
+        "entra": [
+          "fundoB"
+        ]
+      }
+    },
+    {
+      "id": "t2",
+      "modelo": "transicao",
+      "de": 6.9,
+      "ate": 7.45,
+      "props": {
+        "tipo": "mascara",
+        "entra": [
+          "fundoC",
+          "heroi"
+        ],
+        "angulo": 14
+      }
+    },
+    {
+      "id": "t3",
+      "modelo": "transicao",
+      "de": 9.56,
+      "ate": 11.0,
+      "props": {
+        "tipo": "aba71",
+        "tamanho": 560,
+        "cy": 0.5,
+        "sai": [
+          "fundoC",
+          "heroi",
+          "hud"
+        ],
+        "entra": [
+          "fundoD",
+          "fecho"
+        ]
+      }
+    }
+  ],
+  "som": {
+    "musica": {
+      "arquivo": "music/b_epic_hiphop_soundrider.wav",
+      "inicio": 9.31,
+      "ganho": -15,
+      "credito": "\"Epic Hip-Hop\", Soundrider/Dope, CC BY 3.0 (jamendo.com/track/1670662); o drop cai no impacto do gancho (1,0 s)"
+    }
+  }
+}

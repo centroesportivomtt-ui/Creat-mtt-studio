@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creatmtt.local/schemas/direcao.schema.json",
+  "title": "Direção (saída do cérebro)",
+  "description": "A ÚNICA coisa que o Claude escreve por vídeo: decisões, por id do catálogo, sem tempos de quadro, sem palavras de legenda, sem código. O resolvedor (motor/etapas/resolvedor.py) expande isto no EDL de montagem. Meta: <= 4 000 tokens de saída. Usado como output_config.format (structured outputs) na API.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["versao", "tipo_video", "modelo", "duracao_alvo", "conceito", "blocos", "trilha", "fecho"],
+  "properties": {
+    "versao": { "const": "1" },
+    "tipo_video": { "enum": ["evento", "empresa", "daily_vlog", "anuncio", "depoimento", "bastidor"] },
+    "modelo": { "type": "string", "description": "Modelo de vídeo (template) do catálogo." },
+    "duracao_alvo": { "type": "number", "minimum": 5, "maximum": 600 },
+    "vel_fala": { "type": "number", "minimum": 1.0, "maximum": 1.25, "default": 1.1, "description": "Aceleração da fala (1,08 a 1,15 normalmente)." },
+    "conceito": { "type": "string", "maxLength": 300, "description": "A ideia do vídeo em uma frase (o 'pulo do gato')." },
+    "alem_do_pedido": { "type": "array", "maxItems": 5, "items": { "type": "string", "maxLength": 200 }, "description": "O que a direção faz a mais do que foi pedido." },
+    "gancho": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["texto_tela"],
+      "properties": {
+        "texto_tela": { "type": "array", "items": { "type": "string", "maxLength": 40 }, "maxItems": 4 },
+        "troca": { "type": ["object", "null"], "additionalProperties": false, "properties": { "risca": { "type": "string" }, "para": { "type": "string" } } }
+      }
+    },
+    "blocos": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 14,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "funcao", "intensidade", "falas", "cobertura", "saida"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^B[0-9]{1,2}$" },
+          "funcao": { "enum": ["gancho", "contexto", "prova", "bastidor", "virada", "climax", "emocao", "oferta", "convite"] },
+          "intensidade": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "falas": {
+            "type": "array",
+            "description": "Falas na ordem em que entram. 'de'/'ate' = primeiras/últimas palavras do trecho (o resolvedor acha os tempos por palavra).",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id"],
+              "properties": {
+                "id": { "type": "string", "pattern": "^F[0-9]{2,3}\\.[0-9]+$" },
+                "de": { "type": ["string", "null"], "maxLength": 60 },
+                "ate": { "type": ["string", "null"], "maxLength": 60 },
+                "corrigir": { "type": ["object", "null"], "additionalProperties": { "type": "string" }, "description": "Correções de legenda confirmadas {'voando': 'Ruan'}." },
+                "imagem": { "enum": ["falante", "cobertura", "misto"], "default": "misto" }
+              }
+            }
+          },
+          "cobertura": {
+            "type": "array",
+            "description": "B-roll por momento do catálogo.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["m"],
+              "properties": {
+                "m": { "type": "string", "pattern": "^M[0-9]{2,3}\\.[0-9]+$" },
+                "sobre": { "type": ["string", "null"], "description": "Id da fala sob a qual entra (null = entre falas / na música)." },
+                "dur": { "type": ["number", "null"], "minimum": 0.3, "maximum": 8 },
+                "efeito": { "enum": ["nenhum", "punch", "lento", "rampa", "congela", "janela", "atras"], "default": "nenhum" }
+              }
+            }
+          },
+          "texto_tela": { "type": "array", "maxItems": 4, "items": { "type": "string", "maxLength": 40 } },
+          "chips": { "type": "array", "maxItems": 3, "items": { "type": "object", "additionalProperties": false, "required": ["nome"], "properties": { "nome": { "type": "string", "maxLength": 40 }, "funcao": { "type": "string", "maxLength": 50 }, "sobre": { "type": ["string", "null"] } } } },
+          "saida": { "enum": ["corte_batida", "whip", "mascara", "aba71", "impacto", "match", "flash", "fade"] }
+        }
+      }
+    },
+    "trilha": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clima"],
+      "properties": {
+        "id": { "type": ["string", "null"] },
+        "clima": { "type": "string", "maxLength": 80 },
+        "curva": { "type": "array", "items": { "type": "integer", "minimum": 1, "maximum": 5 }, "description": "Intensidade por bloco (curva emocional de verdade, não loop)." },
+        "drop_em": { "type": ["string", "null"], "description": "Id do bloco onde a música explode." }
+      }
+    },
+    "fecho": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cta"],
+      "properties": {
+        "cta": { "type": "string", "maxLength": 40 },
+        "apoio": { "type": ["string", "null"], "maxLength": 60 },
+        "arroba": { "type": ["string", "null"] },
+        "logo_cliente": { "type": ["string", "null"], "description": "Chave da marca em memoria/marcas (nunca logo de baixa resolução)." }
+      }
+    },
+    "riscos": { "type": "array", "maxItems": 6, "items": { "type": "string", "maxLength": 200 }, "description": "Dúvidas que o QA deve checar (palavra incerta, rosto de terceiro, tela legível)." }
+  }
+}

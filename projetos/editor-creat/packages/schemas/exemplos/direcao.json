@@ -1,0 +1,82 @@
+{
+ "versao": "1",
+ "tipo_video": "bastidor",
+ "modelo": "evento-reel",
+ "duracao_alvo": 10,
+ "vel_fala": 1.1,
+ "conceito": "A equipe chega e o salão vira palco: o dono apresenta, o lugar responde.",
+ "alem_do_pedido": [
+  "Gancho com troca de palavra no quadro 0"
+ ],
+ "gancho": {
+  "texto_tela": [
+   "NÃO É SÓ",
+   "FILMAR."
+  ],
+  "troca": {
+   "risca": "FILMAR",
+   "para": "CONTAR"
+  }
+ },
+ "blocos": [
+  {
+   "id": "B1",
+   "funcao": "gancho",
+   "intensidade": 4,
+   "falas": [
+    {
+     "id": "F01.1",
+     "de": "o pessoal",
+     "ate": "aqui",
+     "corrigir": null,
+     "imagem": "falante"
+    }
+   ],
+   "cobertura": [],
+   "texto_tela": [],
+   "chips": [
+    {
+     "nome": "MARCOS",
+     "funcao": "creat.MTT",
+     "sobre": "F01.1"
+    }
+   ],
+   "saida": "whip"
+  },
+  {
+   "id": "B2",
+   "funcao": "convite",
+   "intensidade": 5,
+   "falas": [],
+   "cobertura": [
+    {
+     "m": "M01.2",
+     "sobre": null,
+     "dur": 3.0,
+     "efeito": "punch"
+    }
+   ],
+   "texto_tela": [],
+   "chips": [],
+   "saida": "aba71"
+  }
+ ],
+ "trilha": {
+  "id": "t_energia_104",
+  "clima": "energia crescente",
+  "curva": [
+   4,
+   5
+  ],
+  "drop_em": "B2"
+ },
+ "fecho": {
+  "cta": "MANDA NO DIRECT.",
+  "apoio": "a gente cobre o seu evento",
+  "arroba": "@creat.mtt",
+  "logo_cliente": null
+ },
+ "riscos": [
+  "'creat' transcrito com confiança 0,7: conferir"
+ ]
+}

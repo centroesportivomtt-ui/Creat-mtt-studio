@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creatmtt.local/schemas/catalogo.schema.json",
+  "title": "Catálogo compacto do projeto",
+  "description": "Resumo de TODO o material do projeto, feito para o cérebro (Claude) decidir sem ver vídeo. Montado de forma determinística a partir das análises (frente B, motor/etapas/catalogo.py). O cérebro recebe a forma TEXTO (catalogo.txt, ver ARQUITETURA.md §4.2), nunca este JSON; o JSON serve para o resolvedor mapear ids -> tempos. Orçamento: o texto cabe em 15 000 tokens de entrada.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["versao", "projeto", "orcamento", "clipes"],
+  "properties": {
+    "versao": { "const": "1" },
+    "projeto": { "type": "string" },
+    "orcamento": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokens_estimados", "limite"],
+      "properties": {
+        "tokens_estimados": { "type": "integer" },
+        "limite": { "type": "integer", "default": 15000 },
+        "cortes": { "type": "array", "items": { "type": "string" }, "description": "O que foi resumido/cortado para caber (ex.: 'falas de F3 truncadas em 14 palavras')." }
+      }
+    },
+    "clipes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "arquivo", "dur", "momentos", "falas"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^C[0-9]{2,3}$", "description": "Id curto do clipe no catálogo (C01...)." },
+          "arquivo": { "type": "string", "description": "Id do arquivo (analise.arquivo.id)." },
+          "nome": { "type": "string" },
+          "dur": { "type": "number" },
+          "resumo": { "type": "string", "maxLength": 240 },
+          "pessoas": { "type": "string", "maxLength": 160 },
+          "camera": { "type": "string", "maxLength": 80, "description": "estável | tremido 0-40 s | selfie..." },
+          "ambientes": { "type": "array", "items": { "type": "string" } },
+          "momentos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "t0", "t1", "tipo", "nota"],
+              "properties": {
+                "id": { "type": "string", "pattern": "^M[0-9]{2,3}\\.[0-9]+$" },
+                "t0": { "type": "number" }, "t1": { "type": "number" },
+                "tipo": { "type": "string" },
+                "nota": { "type": "integer", "minimum": 1, "maximum": 5 },
+                "desc": { "type": "string", "maxLength": 140 }
+              }
+            }
+          },
+          "falas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "t0", "t1", "texto"],
+              "properties": {
+                "id": { "type": "string", "pattern": "^F[0-9]{2,3}\\.[0-9]+$" },
+                "t0": { "type": "number" }, "t1": { "type": "number" },
+                "falante": { "type": ["string", "null"] },
+                "texto": { "type": "string", "description": "Texto exato (ou truncado com '…' quando o orçamento apertar)." },
+                "truncado": { "type": "boolean", "default": false },
+                "energia": { "type": ["number", "null"], "description": "0-1: quanto a fala é enérgica (para gancho)." }
+              }
+            }
+          }
+        }
+      }
+    },
+    "trilhas": {
+      "type": "array",
+      "description": "Trilhas disponíveis na biblioteca (id, clima, bpm, duração).",
+      "items": { "type": "object", "additionalProperties": false, "required": ["id", "bpm", "dur"], "properties": { "id": { "type": "string" }, "clima": { "type": "string" }, "bpm": { "type": "number" }, "dur": { "type": "number" } } }
+    },
+    "modelos": { "type": "array", "items": { "type": "string" }, "description": "Modelos de vídeo (templates) disponíveis: evento-reel, empresa-institucional, daily-vlog, anuncio-produto..." }
+  }
+}

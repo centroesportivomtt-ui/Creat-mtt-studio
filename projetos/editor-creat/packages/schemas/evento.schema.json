@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creatmtt.local/schemas/evento.schema.json",
+  "title": "Evento de status (status ao vivo no site)",
+  "description": "Linha da tabela eventos do motor, enviada ao site por SSE em GET /v1/projetos/{id}/eventos.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "projeto", "ts", "tipo"],
+  "properties": {
+    "id": { "type": "integer" },
+    "projeto": { "type": "string" },
+    "ts": { "type": "string", "format": "date-time" },
+    "tipo": { "enum": ["projeto_criado", "arquivo_recebido", "etapa_inicio", "etapa_progresso", "etapa_fim", "etapa_erro", "estado", "versao_pronta", "qa_reprovado", "entregue"] },
+    "etapa": { "type": ["string", "null"], "enum": [null, "ingest", "analise", "catalogo", "direcao", "montagem", "qa", "entrega"] },
+    "alvo": { "type": ["string", "null"], "description": "Id do arquivo ou da versão." },
+    "progresso": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "estado": { "type": ["string", "null"], "description": "Estado novo do projeto quando tipo=estado." },
+    "mensagem": { "type": ["string", "null"], "description": "Texto curto em pt-BR para a tela." },
+    "dados": { "type": ["object", "null"] }
+  }
+}

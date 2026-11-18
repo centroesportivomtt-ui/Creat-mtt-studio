@@ -1,0 +1,177 @@
+{
+ "versao": "1",
+ "arquivo": {
+  "id": "a001",
+  "projeto": "p_demo",
+  "nome": "20261115_095318.mov",
+  "chave": "entrada/p_demo/a001.mov",
+  "bytes": 734003200,
+  "sha256": null,
+  "gravado_em": "2026-11-15T09:53:18-03:00"
+ },
+ "midia": {
+  "duracao": 12.0,
+  "tem_video": true,
+  "tem_audio": true,
+  "w": 2160,
+  "h": 3840,
+  "rotacao": -90,
+  "fps": 30,
+  "codec_video": "hevc",
+  "codec_audio": "aac",
+  "hdr": false,
+  "gop": 1.0
+ },
+ "derivados": {
+  "audio_wav": "derivados/p_demo/a001/audio.wav",
+  "proxy_480": null,
+  "folha": "derivados/p_demo/a001/folha.jpg",
+  "quadros_chave": [
+   {
+    "t": 0.0,
+    "chave": "derivados/p_demo/a001/kf/0000.jpg"
+   },
+   {
+    "t": 1.0,
+    "chave": "derivados/p_demo/a001/kf/0001.jpg"
+   }
+  ]
+ },
+ "transcricao": {
+  "provedor": "faster-whisper",
+  "modelo": "small",
+  "idioma": "pt",
+  "vad": false,
+  "segmentos": [
+   {
+    "s": 0.4,
+    "e": 3.1,
+    "texto": "o pessoal da creat tá aqui",
+    "falante": "MARCOS",
+    "conf": 0.86,
+    "palavras": [
+     [
+      0.4,
+      0.7,
+      "o",
+      0.9
+     ],
+     [
+      0.7,
+      1.2,
+      "pessoal",
+      0.95
+     ],
+     [
+      1.2,
+      1.4,
+      "da",
+      0.9
+     ],
+     [
+      1.4,
+      1.9,
+      "creat",
+      0.7
+     ],
+     [
+      1.9,
+      2.2,
+      "tá",
+      0.9
+     ],
+     [
+      2.2,
+      3.1,
+      "aqui",
+      0.97
+     ]
+    ]
+   }
+  ]
+ },
+ "sinais": {
+  "energia": {
+   "passo": 0.01,
+   "chave": "derivados/p_demo/a001/energia.npy",
+   "picos": [
+    [
+     5.2,
+     -8.5
+    ]
+   ],
+   "fala_pct": 0.62
+  },
+  "tremor": {
+   "passo": 1.0,
+   "media_px": 14.2,
+   "trechos": [
+    [
+     6.0,
+     12.0,
+     31.0
+    ]
+   ]
+  },
+  "cenas": [
+   {
+    "t0": 0,
+    "t1": 6.0,
+    "ambiente": "mesa",
+    "luz": 0.42
+   },
+   {
+    "t0": 6.0,
+    "t1": 12.0,
+    "ambiente": "salao",
+    "luz": 0.28
+   }
+  ],
+  "rostos": [
+   {
+    "t": 0.0,
+    "caixas": [
+     [
+      0.41,
+      0.22,
+      0.18,
+      0.1,
+      0.93
+     ]
+    ]
+   }
+  ],
+  "telas": []
+ },
+ "visao": {
+  "provedor": "fixture",
+  "resumo": "Dono fala para a câmera na mesa e depois anda pelo salão.",
+  "pessoas": "MARCOS 0-6 s",
+  "camera": "estável 0-6 s; tremido 6-12 s",
+  "serve_para": "bastidor",
+  "momentos": [
+   {
+    "t0": 0.4,
+    "t1": 3.1,
+    "tipo": "fala_dono",
+    "desc": "Dono apresenta a equipe olhando para a câmera",
+    "nota": 5,
+    "emocao": "confiante"
+   },
+   {
+    "t0": 6.0,
+    "t1": 12.0,
+    "tipo": "broll",
+    "desc": "Salão cheio com luz neon",
+    "nota": 3,
+    "emocao": null
+   }
+  ]
+ },
+ "tempos": {
+  "ingest": 2.1,
+  "transcricao": 3.4,
+  "sinais": 1.2,
+  "visao": 0.0
+ }
+}
