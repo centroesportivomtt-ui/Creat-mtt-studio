@@ -1,0 +1,8 @@
+{
+  "name": "@editor-creat/schemas",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Contratos (JSON Schema 2020-12) entre site, motor e etapas do Editor creat.MTT.",
+  "files": ["*.schema.json", "exemplos/"],
+  "scripts": { "validar": "python3 py/validar.py" }
+}

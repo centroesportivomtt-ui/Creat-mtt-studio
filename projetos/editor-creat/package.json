@@ -1,0 +1,14 @@
+{
+  "name": "editor-creat",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Editor de vídeo da creat.MTT: site (apps/web), motor Python (services/motor), motion kit e contratos.",
+  "packageManager": "pnpm@9.15.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "web": "pnpm --filter @editor-creat/web dev",
+    "aceite:web": "pnpm --filter @editor-creat/web aceite",
+    "contratos": "python3 packages/schemas/py/validar.py",
+    "teste:motor": "cd services/motor && nice -n 5 python3 -m pytest -q -m 'not pago'"
+  }
+}

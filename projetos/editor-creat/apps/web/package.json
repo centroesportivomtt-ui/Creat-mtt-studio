@@ -1,0 +1,13 @@
+{
+  "name": "@editor-creat/web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Site do Editor creat.MTT (frente D): login, envio retomável, projetos, status ao vivo e player.",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "motor-falso": "node scripts/motor-falso.mjs",
+    "aceite": "node scripts/aceite.mjs"
+  }
+}
