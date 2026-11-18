@@ -1,0 +1,7 @@
+{
+ "prompt": "3D Pixar-style animated character on a perfectly flat solid chroma-key green background, locked-off static camera, no camera movement, no zoom. The friendly man briefly drops his arms to his sides, then firmly crosses his arms again over his chest with a proud, confident posture, gives a small nod and a big warm closed smile straight to the camera, then holds still, breathing gently. Short, smooth, natural character animation with weight and follow-through. Keep exactly the same face, same short curly black hair, same black polo shirt with yellow trim and the super kal logo, same gold wristwatch and same body proportions for the whole shot.",
+ "image_url": "https://d3snorpfx4xhv8.cloudfront.net/9ff86c6b-3cfb-4ebf-8903-63256683522e/df14d833-aec6-4c79-90a1-b5ac13503a66.jpeg",
+ "duration": 5,
+ "cfg_scale": 0.6,
+ "negative_prompt": "morphing face, face change, different person, changing hair, straight hair, changing skin tone, changing shirt, changing collar colour, logo distortion, new text, letters appearing, extra fingers, deformed hands, fused fingers, extra arms, extra people, camera movement, zoom, pan, camera shake, background change, gradient background, shadow on background, floor, flicker, motion blur smear, melting, talking, realistic photo, live action, 2D, talking, speaking, mouth moving"
+}

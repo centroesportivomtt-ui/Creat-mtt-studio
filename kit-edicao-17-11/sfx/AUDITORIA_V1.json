@@ -1,0 +1,232 @@
+{
+ "total_eventos": 58,
+ "sons_distintos": 23,
+ "repetidos": {
+  "whoosh_curto": {
+   "vezes": 10,
+   "tempos": [
+    7.79,
+    16.134,
+    19.658,
+    22.232,
+    34.192,
+    50.41,
+    56.663,
+    63.125,
+    83.673,
+    95.57
+   ]
+  },
+  "swish": {
+   "vezes": 8,
+   "tempos": [
+    13.653,
+    35.792,
+    54.577,
+    62.216,
+    65.762,
+    73.75,
+    74.61,
+    96.25
+   ]
+  },
+  "pop_legenda": {
+   "vezes": 6,
+   "tempos": [
+    3.12,
+    16.734,
+    22.3,
+    44.882,
+    63.2,
+    91.85
+   ]
+  },
+  "hit_boom_grave": {
+   "vezes": 4,
+   "tempos": [
+    2.92,
+    71.49,
+    88.898,
+    105.175
+   ]
+  },
+  "tick_ui": {
+   "vezes": 4,
+   "tempos": [
+    50.61,
+    90.078,
+    90.578,
+    91.078
+   ]
+  },
+  "riser_2s": {
+   "vezes": 3,
+   "tempos": [
+    1.92,
+    48.337,
+    75.91
+   ]
+  },
+  "bip_senha": {
+   "vezes": 3,
+   "tempos": [
+    8.99,
+    41.657,
+    44.682
+   ]
+  },
+  "shimmer": {
+   "vezes": 2,
+   "tempos": [
+    0.0,
+    105.2
+   ]
+  },
+  "whoosh_longo": {
+   "vezes": 2,
+   "tempos": [
+    68.707,
+    105.175
+   ]
+  },
+  "laser_zap": {
+   "vezes": 2,
+   "tempos": [
+    75.91,
+    89.778
+   ]
+  },
+  "sub_drop": {
+   "vezes": 2,
+   "tempos": [
+    75.91,
+    88.898
+   ]
+  }
+ },
+ "de_banco_reaproveitado_do_filme_da_drako": [
+  "glitch_digital",
+  "hit_boom_grave",
+  "pop_legenda",
+  "riser_2s",
+  "stamp_carimbo",
+  "swish",
+  "tick_ui",
+  "whoosh_curto",
+  "whoosh_longo"
+ ],
+ "eventos_com_som_de_banco": 39,
+ "sintetizados_no_computador": [
+  "baque_porta",
+  "bip_senha",
+  "chuva_forte",
+  "chuva_leve",
+  "laser_zap",
+  "limpador",
+  "moto_passando",
+  "obturador",
+  "relampago_trovao",
+  "shimmer",
+  "shimmer_curto",
+  "sub_drop",
+  "trovao_distante"
+ ],
+ "eventos_sintetizados": 18,
+ "gravacoes_reais": [
+  "porta_real_abre"
+ ],
+ "eventos_reais": 1,
+ "fora_da_perspectiva_da_cena": [
+  {
+   "som": "laser_zap",
+   "t": [
+    75.91,
+    89.778
+   ],
+   "motivo": "laser de pista é silencioso; o som não existe no mundo da cena"
+  },
+  {
+   "som": "glitch_digital",
+   "t": [
+    28.317
+   ],
+   "motivo": "TV de oferta não faz ruído de glitch"
+  },
+  {
+   "som": "limpador",
+   "t": [
+    58.663
+   ],
+   "motivo": "tocava sobre o P24 (perfil do Ruan), em que o limpador não aparece; e era sintetizado"
+  },
+  {
+   "som": "relampago_trovao",
+   "t": [
+    59.8
+   ],
+   "motivo": "trovão forte colado num flash de edição, sem clarão real na imagem; sintetizado"
+  },
+  {
+   "som": "chuva_forte / chuva_leve / trovao_distante",
+   "t": [
+    54.9,
+    91.6,
+    54.763
+   ],
+   "motivo": "chuva e trovão recriados por síntese, sem a perspectiva de dentro do carro (o dono pediu para não recriar sons)"
+  },
+  {
+   "som": "moto_passando",
+   "t": [
+    22.0
+   ],
+   "motivo": "moto sintetizada por cima de um plano que já tem as motos reais"
+  },
+  {
+   "som": "bip_senha",
+   "t": [
+    8.99,
+    41.657,
+    44.682
+   ],
+   "motivo": "mesmo bip em 3 lugares diferentes (monitor do CT, balcão do açougue, corte), sem mudar com o ambiente"
+  },
+  {
+   "som": "pop_legenda / tick_ui / swish",
+   "t": "21 eventos",
+   "motivo": "som de interface em cada texto que entra: não pertence à cena e cansa pela repetição"
+  },
+  {
+   "som": "whoosh_curto",
+   "t": "10 eventos",
+   "motivo": "o mesmo whoosh em todas as transições, inclusive na porta (16,13), onde o som certo é a própria porta"
+  }
+ ],
+ "troca_proposta": {
+  "whoosh_curto": "um timbre diferente por transição: wh_camiseta_rapido (7,79) · wh_corda_chicote (19,66) · wh_ar_suave + moto_passa_rua (22,23) · wh_camiseta_medio (34,19) · wh_luva_curto (50,41) · wh_rajada_folhas (56,66) · wh_couro (63,13) · wh_baqueta_seco (83,67) · wh_corda_gira (95,57); no match da porta (16,13) NÃO usar whoosh: só porta_ct_encosta + porta real",
+  "swish": "cortar a maioria (texto entrando não precisa de som toda vez); onde ficar: wh_alca (chip), wh_isopor_textura (risca EM -> NO), wh_vassoura_longo/trena_hud (relógio)",
+  "pop_legenda": "cortar (7 pops iguais em chips é a repetição mais audível); no máximo kal_pop_discreto 1x, na plaquinha do Kal",
+  "bip_senha": "3 usos do mesmo bip sintético -> fila_bip_monitor (8,99, monitor do CT) · fila_botao_e_chamada_loja (41,66, botão do açougue) · o 3º (44,68) sai",
+  "hit_boom_grave": "4 usos -> manter no máximo 1 (logo final); nos outros o impacto vem da música ou de porta_pesada_fecha / trovao_ronco_grave",
+  "riser_2s": "3 usos do mesmo riser -> usar o riser da própria trilha (ela já tem em 54,8-55,7) ou wh_rajada_folhas ao contrário 1x",
+  "tick_ui": "4 ticks iguais -> trena_hud 1x no primeiro e nada nos seguintes (a tipografia entra na batida)",
+  "sub_drop": "2 usos -> 1 (em \"Isso é comunicação!\")",
+  "laser_zap": "cortar: laser de pista não faz som (som que não existe no mundo da cena); deixar a música e o ambiente real do salão",
+  "whoosh_longo": "2 usos -> wh_vara_grave (placa SALA DE POSE) e wh_corda_gira (garrafa na lente)",
+  "shimmer": "2 usos (abre e fecha): aceitável como assinatura da logo, mas é sintético; avaliar trocar por nota da própria trilha",
+  "shimmer_curto": "idem",
+  "glitch_digital": "cortar (flash de TV não faz som)",
+  "stamp_carimbo": "cortar ou trocar por porta_pesada_fecha baixinho; carimbo é som de banco",
+  "trovao_distante": "trovao_longe_estrada (gravação real, filtrada para dentro do carro)",
+  "relampago_trovao": "só se houver clarão na imagem: trovao_perto_com_chuva; senão cortar",
+  "chuva_forte": "chuva_parabrisa_dentro_12s (gravada de dentro de um carro) somada ao som real do plano",
+  "chuva_leve": "chuva_fina_rua_8s (real)",
+  "limpador": "limpador_dentro_2x, e só em plano em que o limpador aparece (na v1 tocava sobre o perfil do Ruan)",
+  "moto_passando": "moto_passa_rua / moto_cruza_esq_dir (moto 175 cc real) por baixo do som real do plano",
+  "baque_porta": "porta_ct_encosta (porta real) + porta_real_fecha",
+  "obturador": "manter só se o congelamento da pose continuar; é sintético: procurar obturador real ou cortar",
+  "porta_real_abre": "manter (som real do IMG_5159)",
+  "porta_real_fecha": "manter"
+ },
+ "regra_para_a_v2": "cada arquivo da sfx2 marcado usar_1x entra uma única vez; nenhum som em texto de legenda; transição com som só quando há movimento que o justifique; ambientes de biblioteca sempre SOMADOS ao som real do plano, nunca no lugar dele"
+}
