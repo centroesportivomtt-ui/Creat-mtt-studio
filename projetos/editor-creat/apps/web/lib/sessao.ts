@@ -110,12 +110,12 @@ export function mesmaOrigem(req: Request): boolean {
 
 // Tentativas de senha por IP (memória do processo): 8 a cada 10 min.
 const tentativas = new Map<string, number[]>();
-export function podeTentar(ip: string, agora = Date.now()): boolean {
+export function podeTentar(ip: string, limite = 8, agora = Date.now()): boolean {
   const janela = 10 * 60 * 1000;
   const lista = (tentativas.get(ip) ?? []).filter((t) => agora - t < janela);
   tentativas.set(ip, lista);
-  if (tentativas.size > 5000) tentativas.clear();
-  return lista.length < 8;
+  if (tentativas.size > 5000) { const g = tentativas.get('*todas*'); tentativas.clear(); if (g) tentativas.set('*todas*', g); }
+  return lista.length < limite;
 }
 export function registrarTentativa(ip: string, agora = Date.now()) {
   tentativas.set(ip, [...(tentativas.get(ip) ?? []), agora]);

@@ -19,6 +19,7 @@ Com o motor de verdade: `MOTOR_URL=http://127.0.0.1:8787` e o mesmo `MOTOR_TOKEN
 ```bash
 cd apps/web && pnpm install && pnpm aceite        # build + start + Playwright; ~75 s nesta máquina
 pnpm aceite --sem-build --manter                  # reaproveita o build; mantém dados e logs para olhar
+                                                  # (precisa de um build anterior: sem a pasta .next falha com "não subiu")
 ```
 
 O aceite gera senha, segredo e token na hora (nada fica salvo), sobe o motor falso e o site e confere:

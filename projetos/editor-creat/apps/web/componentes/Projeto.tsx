@@ -18,11 +18,23 @@ function tc(ms: number) {
 }
 const hora = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-function lerQa(qa: unknown): { aprovado?: boolean; checagens: { id: string; ok: boolean }[] } | null {
+type Checagem = { id: string; ok: boolean; bloqueia?: boolean; detalhe?: string };
+// O motor grava em versoes.qa um JSON curto (aprovado + checagens); aceita string ou objeto.
+function lerQa(qa: unknown): { aprovado?: boolean; checagens: Checagem[] } | null {
   let v = qa;
   if (typeof v === 'string') { try { v = JSON.parse(v); } catch { return null; } }
   if (!v || typeof v !== 'object' || !Array.isArray((v as { checagens?: unknown }).checagens)) return null;
-  return v as { aprovado?: boolean; checagens: { id: string; ok: boolean }[] };
+  return v as { aprovado?: boolean; checagens: Checagem[] };
+}
+// Estados da VERSÃO (diferentes dos do projeto).
+const ROTULO_VERSAO: Record<string, string> = {
+  montando: 'montando', montada: 'conferindo', aprovada_qa: 'aprovada no QA', reprovada_qa: 'reprovada no QA',
+  entregue: 'entregue', reprovada: 'reprovada por você', erro: 'erro',
+};
+function classeVersao(estado: string): string {
+  if (estado === 'entregue' || estado === 'aprovada_qa') return 'chip chip--ok';
+  if (estado === 'reprovada' || estado === 'reprovada_qa' || estado === 'erro') return 'chip chip--erro';
+  return 'chip chip--vivo';
 }
 const NOME_CHECAGEM: Record<string, string> = {
   frase_repetida: 'frase repetida', tom_sala_sem_voz: 'tom de sala', logo_100: 'logo a 100%', lufs: 'LUFS', true_peak: 'pico',
@@ -134,7 +146,9 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   const aberto = ESTADOS_ABERTOS.includes(p.estado);
   const fechado = Boolean(p.dados?.envio_fechado);
   const versoes = [...(p.versoes ?? [])].reverse();
-  const assistir = versoes.find((v) => v.video) ?? null;
+  // Regra do dono: nunca mostrar versão com erro conhecido. Só a versão ENTREGUE (QA aprovado) toca e baixa.
+  const assistir = versoes.find((v) => v.estado === 'entregue' && v.video) ?? null;
+  const emProducao = versoes.find((v) => v.estado !== 'entregue' && v.estado !== 'reprovada') ?? null;
   const diario = [...eventos].filter((e) => e.mensagem).slice(-12).reverse();
 
   return (
@@ -233,7 +247,11 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
               <video key={assistir.id} className="player" controls playsInline preload="metadata" data-teste="player" data-versao={assistir.id}
                 src={`/api/motor/v1/arquivos/${assistir.video}#t=0.1`} aria-label={`Versão ${assistir.id}`} />
             ) : (
-              <div className="player-vazio"><p>A primeira versão aparece aqui assim que passar no QA.</p></div>
+              <div className="player-vazio"><p>{
+                emProducao?.estado === 'reprovada_qa' ? `A conferência automática reprovou a ${emProducao.id.toUpperCase()}; ela não vai para o player.`
+                  : emProducao?.estado === 'erro' ? `A ${emProducao.id.toUpperCase()} parou com erro; veja o motivo no diário da ilha.`
+                  : emProducao ? `A ${emProducao.id.toUpperCase()} está em produção e aparece aqui só depois de passar no QA.`
+                  : 'A versão aparece aqui só depois de passar no QA.'}</p></div>
             )}
             {versoes.length > 0 && (
               <ul className="versoes">
@@ -319,21 +337,26 @@ function LinhaVersao({ v, aoReprovar }: { v: Versao; aoReprovar: (motivo: string
   const [motivo, setMotivo] = useState('');
   const qa = lerQa(v.qa);
   const ok = qa?.checagens.filter((c) => c.ok).length ?? 0;
-  const estado = v.estado === 'entregue' || v.estado === 'aprovada' ? 'chip chip--ok' : v.estado === 'reprovada' ? 'chip chip--erro' : 'chip chip--vivo';
+  const estado = classeVersao(v.estado);
+  const entregue = v.estado === 'entregue';
+  const podeReprovar = ['entregue', 'reprovada_qa', 'erro'].includes(v.estado);
   return (
     <li className="versao" data-versao={v.id}>
       <div className="versao__linha">
         <span className="versao__nome">{v.id.toUpperCase()}</span>
-        <span className={estado}>{v.estado}</span>
+        <span className={estado} data-estado-versao={v.estado}>{ROTULO_VERSAO[v.estado] ?? v.estado}</span>
       </div>
       {qa && (
         <>
           <p className="aviso">QA {ok}/{qa.checagens.length} {qa.aprovado ? 'aprovado' : 'com pendência'}</p>
-          <ul className="qa">{qa.checagens.map((c) => <li key={c.id} data-ok={c.ok}>{c.ok ? '✓' : '✕'} {NOME_CHECAGEM[c.id] ?? c.id}</li>)}</ul>
+          <ul className="qa">{qa.checagens.map((c) => <li key={c.id} data-ok={c.ok} title={c.detalhe || undefined}>{c.ok ? '✓' : '✕'} {NOME_CHECAGEM[c.id] ?? c.id}</li>)}</ul>
+          {qa.checagens.filter((c) => !c.ok && c.bloqueia !== false && c.detalhe).slice(0, 3).map((c) => (
+            <p className="aviso" key={`d-${c.id}`} style={{ overflowWrap: 'anywhere' }}>{NOME_CHECAGEM[c.id] ?? c.id}: {c.detalhe}</p>
+          ))}
         </>
       )}
       {v.reprovacao && <p className="aviso">Reprovada: “{v.reprovacao}”</p>}
-      {v.video && v.estado !== 'reprovada' && (
+      {podeReprovar && (
         aberto ? (
           <form className="form" style={{ gap: 8, maxWidth: 'none' }} onSubmit={async (e) => {
             e.preventDefault();
@@ -353,7 +376,7 @@ function LinhaVersao({ v, aoReprovar }: { v: Versao; aoReprovar: (motivo: string
           </form>
         ) : (
           <div className="linha-acoes" style={{ marginTop: 0 }}>
-            <a className="botao botao--fantasma botao--pequeno" href={`/api/motor/v1/arquivos/${v.video}`} download>Baixar</a>
+            {entregue && v.video && <a className="botao botao--fantasma botao--pequeno" href={`/api/motor/v1/arquivos/${v.video}`} download data-teste="baixar">Baixar</a>}
             <button className="botao botao--perigo botao--pequeno" type="button" onClick={() => setAberto(true)}>Reprovar com motivo</button>
           </div>
         )

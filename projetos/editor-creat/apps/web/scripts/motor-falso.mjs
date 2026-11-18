@@ -123,7 +123,7 @@ async function rodarVersao(p) {
       { id: 'formato', ok: true, bloqueia: true, valor: '1080x1920 30fps H.264' },
     ],
   });
-  versao.estado = 'aprovada';
+  versao.estado = 'aprovada_qa';
   emitir(p.id, 'versao_pronta', { alvo: v, mensagem: `Versão ${v} pronta e aprovada no QA.` });
   await etapa(p, 'entrega', v, ['Gerando link e capa…']);
   versao.estado = 'entregue';
@@ -163,6 +163,12 @@ function servirArquivo(req, res, chave) {
   if (!chaveValida(chave)) return falha(res, 422, 'chave inválida');
   const f = path.join(ARM, chave);
   if (!f.startsWith(ARM + path.sep) || !fs.existsSync(f) || !fs.statSync(f).isFile()) return falha(res, 404, 'arquivo não encontrado');
+  // igual ao motor real: vídeo de versão só sai depois de entregue (QA aprovado)
+  const ms = /^saidas\/([^/]+)\/([^/]+)\/(final\.mp4|mix\.wav|stems\/.*|capa\.jpg)$/.exec(chave);
+  if (ms) {
+    const ver = projetos.get(ms[1])?.versoes.find((x) => x.id === ms[2]);
+    if (!ver || ver.estado !== 'entregue') return falha(res, 403, 'esta versão ainda não passou na conferência automática (QA)');
+  }
   const tam = fs.statSync(f).size;
   const tipo = f.endsWith('.mp4') ? 'video/mp4' : f.endsWith('.json') ? 'application/json' : f.endsWith('.jpg') ? 'image/jpeg' : 'application/octet-stream';
   const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
