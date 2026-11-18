@@ -39,3 +39,12 @@ Atualize este arquivo a cada passo concluído (a máquina reinicia sem aviso). F
 - 18/11 · forja · aceites de novo: A 35/35 (1 de 5 rodadas 34/35 por meta de tempo sob carga), B 30/30, C 31/31 (301 s), D 18/18; pytest 121 ok.
 - 18/11 · forja · E2E fase 1 pelo site (`python -m motor.ferramentas.e2e_fase1`): 14/14, relógio do dono 187 s para 22,3 s de filme (montagem 143 s, QA 32 s). Tentativa 1 reprovada no QA com razão (gancho2 fora da zona segura → kit corrigido; corte sem fecho → fixture com fecho).
 - Relatório: `FASE1_RELATORIO.md`. Próximo: fase 2 (filme inteiro com cérebro real, falante, R2 direto, Modal), ver §5 do relatório.
+
+## Fase 2 (branch claude/editor-creat-fase2) — 18/11
+Tudo em modo fixture, sem gastar nada e sem tocar em serviço real. Chaves só por variável de ambiente (lista em `.env.example` e `DEPLOY.md`).
+- [x] 1 · Modal e Vercel: `services/motor/deploy/modal_app.py` (api, trabalhar, vigia, render_gpu), `render_modal.py` real, `render_roteador.py` (CPU/GPU pelo peso do filme; montagem já passa por ele), `EDITOR_SEM_ESTADO`, `vercel.json`, proxy do motor com SSE com batimento, rota `GET /v1/conferir` (só leitura, mascara segredos), `DEPLOY.md`. NVENC só se prova em GPU real.
+- [x] 2 · Supabase: `banco_pg.py` (adaptador com a mesma interface; fila com `SKIP LOCKED`), migration em `supabase/` com RLS fechado, login Supabase no site com lista de permissão obrigatória (`EDITOR_EMAILS_PERMITIDOS`). Suíte inteira passa nos dois bancos. Limite: o logout só vale no processo (lista de revogados em memória); com poucos e-mails liberados o risco é baixo, trocar `EDITOR_SEGREDO_SESSAO` invalida tudo.
+- [x] 3 · Envio direto e retomável ao R2: multipart pré-assinado, retomada por ListParts, falso S3 com SigV4 e CORS (`scripts/r2-falso.mjs`), `docs/R2-CORS.json`. Aceite do R2 36/36. Nada foi testado contra o R2 real.
+- [x] 4 · Falante: `falante_voz.py` (numpy/scipy, sem rede), `cadastrar_falante`, campos opcionais no contrato; catálogo +1,09% de tokens. Só testado com vozes sintéticas: falta cadastrar perfis reais e calibrar.
+- [x] 5 · QA de zona segura do kit: `zona.json` como fonte única, verificador `zona.cjs`, `ctx.caber()` em `nucleo.js`. 17 modelos × 9 casos: de 39 casos fora (11 modelos) para 0.
+- Abertos: memória da casa, trilhas e perfis de falante ficam no Volume do Modal (transição; `fcntl` não trava entre contêineres); NVENC e GPU reais; `conferir` rodando no ar; testes com R2/Supabase/Modal reais depois que o dono colar as chaves.

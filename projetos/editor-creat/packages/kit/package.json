@@ -4,14 +4,26 @@
   "version": "1.1.0",
   "description": "Motion kit da creat.MTT (HTML + GSAP + Three.js) renderizado quadro a quadro por Chromium e ffmpeg. Copiado do kit estendido de 17/11 (V2).",
   "license": "UNLICENSED",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "render": "node ferramentas/render.cjs",
     "folha": "node ferramentas/render.cjs --folha",
     "checar": "node ferramentas/checar.cjs",
-    "som": "node ferramentas/som.cjs"
+    "som": "node ferramentas/som.cjs",
+    "zona": "node ferramentas/zona.cjs"
   },
-  "dependencies": { "gsap": "3.12.5", "three": "0.160.0" },
-  "peerDependencies": { "playwright": ">=1.40" },
-  "peerDependenciesMeta": { "playwright": { "optional": true } }
+  "dependencies": {
+    "gsap": "3.12.5",
+    "three": "0.160.0"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.40"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  }
 }
