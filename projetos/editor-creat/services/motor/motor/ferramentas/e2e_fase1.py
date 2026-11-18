@@ -37,7 +37,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--clipe", default=str(DRAKO / "seg" / "1016_50_0.mov"))
     ap.add_argument("--edl", default=str(DRAKO / "V2" / "edl.json"))
-    ap.add_argument("--ate", default="15.23", help="só o começo do filme (s), numa fronteira de plano")
+    ap.add_argument("--ate", default="15.23", help="começo do filme até aqui (s, fronteira de plano) + o fecho original")
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--dir", default=os.environ.get("E2E_DIR", "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/e2e-fase1"))
     ap.add_argument("--porta-web", type=int, default=3017)
@@ -179,9 +179,9 @@ def main(argv=None) -> int:
             vs = next(s for s in pr["streams"] if s["codec_type"] == "video")
             rel["final"] = {"caminho": str(final), "w": vs["width"], "h": vs["height"], "fps": vs["r_frame_rate"],
                             "dur": float(pr["format"]["duration"]), "bytes": final.stat().st_size}
-            ok("final 1080x1920 com a duração do EDL", vs["width"] == 1080 and vs["height"] == 1920 and abs(float(pr["format"]["duration"]) - float(a.ate)) < 0.2,
-               f"{vs['width']}x{vs['height']} {float(pr['format']['duration']):.2f} s")
             edl = json.loads((dados / "armazenamento" / "saidas" / pid / ent["id"] / "edl.json").read_text())
+            ok("final 1080x1920 com a duração do EDL", vs["width"] == 1080 and vs["height"] == 1920 and abs(float(pr["format"]["duration"]) - edl["duracao"]) < 0.2,
+               f"{vs['width']}x{vs['height']} {float(pr['format']['duration']):.2f} s (EDL {edl['duracao']:.2f} s: começo até {a.ate} s + fecho original)")
             ok("o clipe enviado pelo site entrou no filme", bool(edl["origem"].get("fontes_do_envio")), str(edl["origem"].get("fontes_do_envio")))
             q = ent.get("qa_resumo") or {}
             ok("QA aprovado antes da entrega", q.get("aprovado") is True, f"falhas {q.get('falhas')} avisos {[x['id'] for x in q.get('avisos', [])]}")

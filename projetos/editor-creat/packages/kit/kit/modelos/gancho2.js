@@ -2,15 +2,20 @@
 // Fase B: "É SOBRE" + palavra âmbar que troca no tempo da fala. Tudo função pura de t.
 // props: y (fração), a:{linhas:[..], risca:"ESTÁTICOS", riscaEm, sai}, b:{entra, topo:"É SOBRE", trocas:[{t, p}], fim:{t, p}}, largura
 export default function gancho2(ctx, c) {
-  const { el, W, H, ajustar, prog, ease, blurDirecional } = ctx;
-  const p = c.props, yc = H * (p.y ?? 0.55), larg = W * (p.largura ?? 0.80);
+  const { el, W, H, ajustar, prog, ease, blurDirecional, ZONA } = ctx;
+  const z = ZONA ?? { direita: 120, esquerda: 60 };
+  // Zona segura (QA zona_segura): o bloco inteiro, com o ponto final e o risco, fica entre x 60 e 960
+  // (a coluna de botões do Reels começa em 960). Antes o ponto era somado depois do ajuste e invadia a coluna.
+  const p = c.props, yc = H * (p.y ?? 0.55);
+  const larg = Math.min(W * (p.largura ?? 0.80), W - z.direita - z.esquerda - 40);
+  const esq = Math.max(z.esquerda + 20, Math.min((W - larg) / 2 - 30, W - z.direita - 20 - larg));
   const eo = ease("expo.out"), p4 = ease("power4.out"), pin = ease("power3.in");
   el("div", "", c.el, { position: "absolute", left: "50%", top: yc + "px", width: "1500px", height: "1100px", transform: "translate(-50%,-50%)",
     background: "radial-gradient(closest-side, rgba(0,0,0,0.50), rgba(0,0,0,0.28) 55%, rgba(0,0,0,0) 100%)" });
   // ---- fase A
-  const A = el("div", "", c.el, { position: "absolute", left: (W - larg) / 2 - 30 + "px", top: "0px", width: larg + "px" });
+  const A = el("div", "", c.el, { position: "absolute", left: esq + "px", top: "0px", width: larg + "px" });
   const linhasA = p.a.linhas.map((txt) => {
-    const tam = ajustar(txt.replace(/\./g, ""), "Anton", larg, 250, 90);
+    const tam = ajustar(txt, "Anton", larg * 0.96, 250, 90);   // mede COM o ponto; 4% de folga para o risco (104%)
     const ln = el("div", "mk-display mk-sombra", A, { fontSize: tam + "px", lineHeight: "0.96", position: "relative", display: "table" });
     const ponto = /\.$/.test(txt);
     ln.textContent = txt.replace(/\.$/, "");

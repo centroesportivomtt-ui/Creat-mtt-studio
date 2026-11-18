@@ -173,7 +173,7 @@ def _dirigir_com_edl_fixo(ctx, arm, indice, chave, correcao) -> dict:
     edl = edl_fixo.carregar(edl_fixo.ativo())
     ate = os.environ.get("EDITOR_CEREBRO_EDL_ATE", "").strip()
     if ate:
-        edl = edl_fixo.prefixo(edl, float(ate))
+        edl = edl_fixo.corte_curto(edl, float(ate))
     arquivos = [dict(r) for r in ctx.con.execute("SELECT nome, chave FROM arquivos WHERE projeto=? AND estado='analisado'", (p,))]
     edl, trocadas = edl_fixo.para_o_projeto(edl, p, arquivos)
     import validar

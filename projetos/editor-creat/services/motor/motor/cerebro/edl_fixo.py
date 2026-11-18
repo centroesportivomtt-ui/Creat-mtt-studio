@@ -3,8 +3,8 @@
     EDITOR_CEREBRO=fixture  EDITOR_CEREBRO_EDL=<edl.json>  [EDITOR_CEREBRO_EDL_ATE=15.23]
 
 A "resposta do cérebro" é um EDL já aprovado (o V2 de 17/11, por exemplo). Se for um EDL legado (V1/V2), é convertido
-por ferramentas.edl_legado. Com _ATE, vale só o começo do filme (corte de prefixo: nada muda de lugar, o que passa do
-fim é aparado ou sai). As fontes cujo arquivo tem o mesmo nome de um arquivo enviado ao projeto passam a ler do
+por ferramentas.edl_legado. Com _ATE, vale o começo do filme até ATE e, colado nele, o FECHO original (a cauda depois
+do último plano: pilha, transição e logo com @creat.mtt) — um "corte curto" que ainda termina com o convite. As fontes cujo arquivo tem o mesmo nome de um arquivo enviado ao projeto passam a ler do
 armazenamento do projeto (é assim que o clipe enviado pelo site entra no filme).
 """
 from __future__ import annotations
@@ -82,3 +82,52 @@ def para_o_projeto(edl: dict, projeto: str, arquivos: list[dict]) -> tuple[dict,
             f["chave"] = por_nome[nome]
             trocadas.append(fid)
     return e, trocadas
+
+
+def cauda_padrao(edl: dict) -> float | None:
+    """Início do fecho: fim do último plano, quando o filme termina só com motion (pilha/transição/logo)."""
+    fim_planos = max((p["t1"] for p in edl["planos"]), default=0.0)
+    tem_fecho = any(m["modelo"].startswith("fecho") and m["de"] >= fim_planos - 0.5 for m in edl.get("motion", []))
+    return round(fim_planos, 4) if tem_fecho and fim_planos < edl["duracao"] - 0.5 else None
+
+
+def corte_curto(edl: dict, ate: float, cauda: float | None = None) -> dict:
+    """Começo [0, ate] + cauda [cauda, fim] deslocada para começar em ate. Sem cauda (filme sem fecho), é só o prefixo."""
+    cauda = cauda_padrao(edl) if cauda is None else cauda
+    ate = float(ate)
+    if cauda is None or cauda <= ate:
+        return prefixo(edl, ate)
+    orig = edl
+    e = prefixo(orig, ate)
+    d = ate - cauda                                     # deslocamento (negativo) da cauda
+    dentro = lambda t: t >= cauda - 0.05               # noqa: E731
+    e["duracao"] = round(orig["duracao"] + d, 4)
+    e["planos"] += [dict(p, t0=round(p["t0"] + d, 4), t1=round(p["t1"] + d, 4)) for p in orig["planos"] if dentro(p["t0"])]
+    e["voz"] += [dict(v, t0=round(v["t0"] + d, 4), t1=round(v["t1"] + d, 4)) for v in orig.get("voz", []) if dentro(v["t0"])]
+    for m in orig.get("motion", []):
+        if not dentro(m["de"]):
+            continue
+        m = copy.deepcopy(m)
+        m["de"], m["ate"] = round(m["de"] + d, 4), round(m["ate"] + d, 4)
+        if m["modelo"] == "legenda":
+            for w in m["props"].get("palavras", []):
+                for k in ("i", "f"):
+                    if k in w:
+                        w[k] = round(w[k] + d, 4)
+        e["motion"].append(m)
+    if isinstance(e.get("legendas"), dict):
+        e["legendas"]["palavras"] += [[round(w[0] + d, 4), round(w[1] + d, 4), *w[2:]] for w in orig["legendas"].get("palavras", []) if dentro(w[0])]
+    e["sfx"] += [dict(x, t=round(x["t"] + d, 4)) for x in orig.get("sfx", []) if dentro(x["t"])]
+    e["fx"] += [dict(x, t=round(x["t"] + d, 4)) for x in orig.get("fx", []) if "t" in x and dentro(x["t"])]
+    tr = e.get("trilha")
+    if isinstance(tr, dict) and tr.get("emendas"):
+        # música: até ATE como estava; em ATE, emenda no ponto da música que tocava no começo da cauda (o acorde final cai na logo)
+        seg = [x for x in tr["emendas"] if x[0] <= cauda][-1]
+        s_c = seg[1] + (cauda - seg[0])
+        tr["emendas"] = [x for x in tr["emendas"] if x[0] < ate] + [[round(ate, 4), round(s_c, 4), seg[2], 0.04]]
+        if tr.get("acorde_final"):
+            tr["acorde_final"] = round(tr["acorde_final"] + d, 4)
+    usadas = {p["fonte"] for p in e["planos"]} | {v["fonte"] for v in e["voz"]}
+    e["fontes"] = {k: v for k, v in orig["fontes"].items() if k in usadas}
+    e["origem"]["corte_curto"] = {"ate": ate, "cauda": cauda}
+    return e
