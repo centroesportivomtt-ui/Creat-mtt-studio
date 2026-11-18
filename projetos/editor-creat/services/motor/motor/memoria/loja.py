@@ -99,6 +99,16 @@ class Loja:
 
     # ---------- reprovação do dono -> regra + checagem ----------
     def registrar_reprovacao(self, projeto: str, versao: str, motivo: str, *, cerebro=None) -> dict:
+        """Ler-alterar-gravar das regras com trava de arquivo: duas reprovações ao mesmo tempo não perdem uma."""
+        import fcntl
+        with open(self.raiz / ".trava", "a+") as trava:
+            fcntl.flock(trava, fcntl.LOCK_EX)
+            try:
+                return self._registrar_reprovacao(projeto, versao, motivo, cerebro=cerebro)
+            finally:
+                fcntl.flock(trava, fcntl.LOCK_UN)
+
+    def _registrar_reprovacao(self, projeto: str, versao: str, motivo: str, *, cerebro=None) -> dict:
         motivo = " ".join(motivo.split())
         if not motivo:
             raise ValueError("motivo vazio")
