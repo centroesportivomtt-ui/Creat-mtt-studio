@@ -58,7 +58,8 @@
               "properties": {
                 "id": { "type": "string", "pattern": "^F[0-9]{2,3}\\.[0-9]+$" },
                 "t0": { "type": "number" }, "t1": { "type": "number" },
-                "falante": { "type": ["string", "null"] },
+                "falante": { "type": ["string", "null"], "description": "MARCOS | RUAN | XANDE | OUTRO | DESCONHECIDO (provedor de falante) ou rótulo livre do legado (F1...); null = sem rótulo." },
+                "falante_conf": { "type": "number", "minimum": 0, "maximum": 1, "description": "Menor confiança do rótulo entre os trechos da fala (só quando o provedor rotulou). No texto: < 0,7 sai como MARCOS~." },
                 "texto": { "type": "string", "description": "Texto exato (ou truncado com '…' quando o orçamento apertar)." },
                 "truncado": { "type": "boolean", "default": false },
                 "energia": { "type": ["number", "null"], "description": "0-1: quanto a fala é enérgica (para gancho)." }

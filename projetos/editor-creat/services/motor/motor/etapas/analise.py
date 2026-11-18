@@ -5,6 +5,8 @@ Sub-etapas, cada uma com cache próprio (um reinício no meio não refaz a trans
 2. transcrição pelo provedor efetivo (faster-whisper SEM VAD por padrão) -> transcricao.json (cache por assinatura);
    segmentos sobre silêncio e frases-fantasma do Whisper são descartados;
 3. sinais visuais locais nos quadros-chave (tremor, cenas, rostos, telas);
+3b. falante de cada trecho (provedor `falante`: voz | fixture | desligado). Falha do falante nunca derruba a análise:
+   vira aviso em analise.falante e os trechos seguem sem rótulo. Mudou só o perfil de voz? Só o rótulo é refeito;
 4. visão: momentos (heurísticos no local; Haiku/Gemini quando ligados e com chave);
 5. validação no schema e gravação atômica; `analise.ok` guarda a assinatura (idempotência).
 """
@@ -164,6 +166,67 @@ def validar_analise(obj: dict) -> None:
         raise ErroDefinitivo("análise fora do contrato: " + "; ".join(erros[:5]))
 
 
+def _falante(cfg):
+    """Provedor de falante (nunca reaproveitado entre análises: os perfis podem ter sido cadastrados no meio)."""
+    try:
+        return provedor("falante", cfg), None
+    except Exception as e:  # noqa: BLE001
+        log.warning("falante '%s' indisponível (%s); análise segue sem rótulo", getattr(cfg, "falante", "?"), e)
+        return None, f"provedor de falante indisponível ({type(e).__name__})"
+
+
+def _limpar_rotulo(seg: dict) -> dict:
+    """Tira o rótulo posto por um provedor de falante (mantém o 'falante' de diarização da transcrição, se houver)."""
+    seg = dict(seg)
+    if seg.pop("falante_metodo", None) is not None:
+        seg["falante"] = None
+    seg.pop("falante_confianca", None)
+    return seg
+
+
+def rotular_falantes(prov, aviso: str | None, wav: Path | None, tr: dict, contexto: dict) -> tuple[dict, dict | None]:
+    """Aplica o provedor de falante aos segmentos. Devolve (transcrição, resumo para analise.falante ou None)."""
+    segs = [_limpar_rotulo(s) for s in tr["segmentos"]]
+    if prov is None or not getattr(prov, "ativo", False):
+        return {**tr, "segmentos": segs}, ({"provedor": getattr(prov, "nome", "?"), "aviso": aviso} if aviso else None)
+    try:
+        rotulos = prov.rotular(wav, segs, contexto)
+        if len(rotulos) != len(segs):
+            raise ValueError(f"{len(rotulos)} rótulos para {len(segs)} trechos")
+        for s, r in zip(segs, rotulos):
+            if r:
+                s.update(falante=r["falante"], falante_confianca=round(float(r["falante_confianca"]), 3), falante_metodo=r["falante_metodo"])
+    except Exception as e:  # noqa: BLE001 - o rótulo é bônus; a análise não cai por ele
+        log.warning("falante '%s' falhou (%s: %s); análise segue sem rótulo", prov.nome, type(e).__name__, e)
+        segs = [_limpar_rotulo(s) for s in segs]
+        aviso = f"falante falhou ({type(e).__name__}); trechos sem rótulo"
+    cont: dict[str, int] = {}
+    for s in segs:
+        if s.get("falante_metodo"):
+            cont[s["falante"]] = cont.get(s["falante"], 0) + 1
+    info = {"provedor": prov.nome, "assinatura": prov.assinatura(), "perfis": sorted(getattr(prov, "perfis", {}) or {}),
+            "contagem": cont, "aviso": aviso}
+    return {**tr, "segmentos": segs}, info
+
+
+def _so_falante(arm, base: str, sig: str, sig_base: str, fal, aviso, ing) -> dict:
+    """Análise já pronta e só o falante mudou (perfil novo, provedor trocado): refaz só o rótulo, sem visão nem transcrição."""
+    t0 = time.time()
+    obj = arm.ler_json(f"{base}/analise.json")
+    der = obj["derivados"]
+    wav = arm.caminho_local(der["audio_wav"]) if der.get("audio_wav") else None
+    obj["transcricao"], info = rotular_falantes(fal, aviso, wav, obj["transcricao"],
+                                                {"arquivo": ing["arquivo"]["nome"], "rostos": obj["sinais"].get("rostos", [])})
+    obj.pop("falante", None)
+    if info:
+        obj["falante"] = info
+    obj.setdefault("tempos", {})["analise_falante"] = round(time.time() - t0, 3)
+    validar_analise(obj)
+    arm.gravar_json(f"{base}/analise.json", obj)
+    arm.gravar_bytes(f"{base}/analise.ok", json.dumps({"assinatura": sig, "base": sig_base}).encode())
+    return {"so_falante": True, "falas": len(obj["transcricao"]["segmentos"]), "segundos": obj["tempos"]["analise_falante"]}
+
+
 @etapa("analise")
 def analise(ctx: Contexto) -> dict:
     con, cfg, arm, p, a = ctx.con, ctx.cfg, ctx.armazenamento, ctx.projeto, ctx.alvo
@@ -177,11 +240,18 @@ def analise(ctx: Contexto) -> dict:
     d_proj = json.loads((con.execute("SELECT dados FROM projetos WHERE id=?", (p,)).fetchone() or {"dados": "{}"})["dados"] or "{}")
     dicas = DICAS_CASA + [str(x) for x in d_proj.get("dicas", [])][:30]
     tr_modelo = getattr(tr_prov, "modelo", "-")
-    sig = assinatura(ALGO, ing["assinatura"], tr_prov.nome, tr_modelo, vis_prov.nome, ",".join(dicas))
+    sig_base = assinatura(ALGO, ing["assinatura"], tr_prov.nome, tr_modelo, vis_prov.nome, ",".join(dicas))
+    fal, fal_aviso = _falante(cfg)
+    # falante desligado (ou 'voz' sem perfil cadastrado) não muda a assinatura: análises antigas seguem válidas
+    sig = assinatura(sig_base, "falante", fal.nome, fal.assinatura()) if fal is not None and fal.ativo else sig_base
     if arm.existe(f"{base}/analise.json") and arm.existe(f"{base}/analise.ok"):
         try:
-            if json.loads(arm.caminho_local(f"{base}/analise.ok").read_text())["assinatura"] == sig:
+            ok = json.loads(arm.caminho_local(f"{base}/analise.ok").read_text())
+            if ok["assinatura"] == sig:
                 return {"pulado": True}
+            if ok.get("base", ok["assinatura"]) == sig_base:
+                ctx.progresso(0.5, "Identificando quem fala (perfis de voz mudaram)")
+                return _so_falante(arm, base, sig, sig_base, fal, fal_aviso, ing)
         except (ValueError, KeyError, OSError):
             pass
 
@@ -232,6 +302,15 @@ def analise(ctx: Contexto) -> dict:
     sinais = {"energia": {"passo": PASSO_ENERGIA, "chave": f"{base}/energia.npy", "picos": pk, "fala_pct": fp}, **sinais}
     tempos["analise_sinais"] = round(time.time() - t2, 2)
 
+    # 3b. falante (quem fala em cada trecho)
+    t4 = time.time()
+    info_fal = None
+    if wav is not None and tr["segmentos"]:
+        ctx.progresso(0.85, "Identificando quem fala")
+        tr, info_fal = rotular_falantes(fal, fal_aviso, wav, tr, {"arquivo": ing["arquivo"]["nome"], "rostos": sinais.get("rostos", [])})
+    if info_fal:                                   # desligado: a análise sai igual à de antes
+        tempos["analise_falante"] = round(time.time() - t4, 3)
+
     # 4. visão (momentos)
     t3 = time.time()
     ctx.progresso(0.9, "Marcando os momentos")
@@ -246,9 +325,11 @@ def analise(ctx: Contexto) -> dict:
 
     obj = {"versao": "1", "arquivo": ing["arquivo"], "midia": midia, "derivados": der,
            "transcricao": tr, "sinais": sinais, "visao": visao, "tempos": tempos}
+    if info_fal:
+        obj["falante"] = info_fal
     validar_analise(obj)
     arm.gravar_json(f"{base}/analise.json", obj)
-    arm.gravar_bytes(f"{base}/analise.ok", json.dumps({"assinatura": sig}).encode())
+    arm.gravar_bytes(f"{base}/analise.ok", json.dumps({"assinatura": sig, "base": sig_base}).encode())
     n_pal = sum(len(s.get("palavras", [])) for s in tr["segmentos"])
     ctx.progresso(1.0, f"Análise pronta: {len(tr['segmentos'])} falas, {len((visao or {}).get('momentos', []))} momentos")
     return {"falas": len(tr["segmentos"]), "palavras": n_pal, "segundos": tempos["analise_total"]}

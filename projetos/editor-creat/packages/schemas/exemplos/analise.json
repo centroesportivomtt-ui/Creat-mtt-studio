@@ -47,7 +47,9 @@
     "s": 0.4,
     "e": 3.1,
     "texto": "o pessoal da creat tá aqui",
-    "falante": "MARCOS",
+    "falante": "marcos",
+    "falante_confianca": 0.93,
+    "falante_metodo": "voz",
     "conf": 0.86,
     "palavras": [
      [
@@ -168,10 +170,18 @@
    }
   ]
  },
+ "falante": {
+  "provedor": "voz",
+  "assinatura": "3f9c0a1b2d4e5f60",
+  "perfis": ["marcos", "ruan", "xande"],
+  "contagem": {"marcos": 1},
+  "aviso": null
+ },
  "tempos": {
   "ingest": 2.1,
   "transcricao": 3.4,
   "sinais": 1.2,
+  "falante": 0.02,
   "visao": 0.0
  }
 }
