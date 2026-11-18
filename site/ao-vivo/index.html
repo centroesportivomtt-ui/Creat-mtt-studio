@@ -51,8 +51,17 @@
 
   <section class="panel login" id="login" hidden aria-labelledby="loginH">
     <h2 id="loginH">Entrar na sede</h2>
-    <p>Digite o seu e-mail. Chega um link de acesso; abra-o neste mesmo aparelho.</p>
-    <form id="loginForm"><input id="email" type="email" required autocomplete="email" placeholder="seu@email.com" aria-label="E-mail"><button class="go" type="submit">Enviar link</button></form>
+    <form id="senhaForm">
+      <div id="senhaEmailBox"><input id="senhaEmail" type="email" autocomplete="username" placeholder="seu@email.com" aria-label="E-mail"></div>
+      <input id="senha" type="password" autocomplete="current-password" placeholder="Sua senha" aria-label="Senha">
+      <button class="go" type="submit">Entrar</button>
+    </form>
+    <p><button class="tbtn" id="trocarEmail" type="button" hidden>Usar outro e-mail</button></p>
+    <p id="senhaMsg" role="status"></p>
+    <details class="semsenha">
+      <summary>Ainda sem senha? Receber link por e-mail</summary>
+      <form id="loginForm"><input id="email" type="email" required autocomplete="email" placeholder="seu@email.com" aria-label="E-mail"><button class="go" type="submit">Enviar link</button></form>
+    </details>
     <p id="loginMsg" role="status"></p>
   </section>
 
