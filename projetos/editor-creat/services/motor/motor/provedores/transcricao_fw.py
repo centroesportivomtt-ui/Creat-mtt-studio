@@ -64,6 +64,14 @@ def segmentar_palavras(palavras: list[list], pausa: float = 0.8, max_s: float = 
     return segs
 
 
+def ler_16k(wav: pathlib.Path):
+    import subprocess
+
+    import numpy as np
+    r = subprocess.run(["ffmpeg", "-v", "error", "-i", str(wav), "-f", "f32le", "-ac", "1", "-ar", "16000", "-"], capture_output=True, check=True)
+    return np.frombuffer(r.stdout, dtype=np.float32)
+
+
 class FasterWhisper:
     nome = "faster-whisper"
 
@@ -83,8 +91,9 @@ class FasterWhisper:
     def transcrever(self, wav: pathlib.Path, *, idioma: str = "pt", palavras: bool = True, dicas: list[str] | None = None,
                     progresso=None) -> dict:
         m = self._carregar()
+        audio = ler_16k(wav)   # PyAV desta máquina é incompatível com o decode_audio do faster-whisper: ffmpeg direto
         segs, info = m.transcribe(
-            str(wav), language=idioma, task="transcribe", beam_size=self.beam, word_timestamps=palavras,
+            audio, language=idioma, task="transcribe", beam_size=self.beam, word_timestamps=palavras,
             vad_filter=False, condition_on_previous_text=False,
             hotwords=" ".join(dicas) if dicas else None,
         )

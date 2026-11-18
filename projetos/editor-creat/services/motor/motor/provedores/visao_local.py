@@ -239,9 +239,9 @@ def momentos_heuristicos(ctx: dict) -> dict:
         else:
             frases.append({"s": s["s"], "e": s["e"], "texto": s["texto"]})
     for f in frases:
-        rosto = _tem_rosto(rostos, f["s"], f["e"], 0.15)
+        rosto = _tem_rosto(rostos, f["s"], f["e"], 0.05)
         pal = f["texto"].split()
-        desc = ("fala para a câmera" if rosto else "fala fora de quadro") + ": «" + " ".join(pal[:8]) + ("…" if len(pal) > 8 else "") + "»"
+        desc = ("fala com rosto em quadro" if rosto else "fala fora de quadro") + ": «" + " ".join(pal[:8]) + ("…" if len(pal) > 8 else "") + "»"
         nota = 4 if rosto else 3
         if _tremido(trechos, f["s"], f["e"]):
             nota -= 1
