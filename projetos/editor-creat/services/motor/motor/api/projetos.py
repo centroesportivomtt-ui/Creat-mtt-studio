@@ -86,6 +86,7 @@ class NovoArquivo(BaseModel):
     chave: str = Field(min_length=1, max_length=512)
     nome: str = Field(min_length=1, max_length=255)
     bytes: int = Field(ge=0)
+    etag: Optional[str] = Field(default=None, max_length=80)   # envio direto ao R2: o site manda o ETag do objeto
 
 
 class Importacao(BaseModel):
@@ -167,6 +168,10 @@ def registrar_arquivo(pid: str, corpo: NovoArquivo):
         real = arm.tamanho(corpo.chave)
         if corpo.bytes and corpo.bytes != real:
             raise HTTPException(409, f"tamanho não confere: o envio diz {corpo.bytes} bytes, o armazenamento tem {real}")
+        if corpo.etag and hasattr(arm, "stat"):
+            etag = str(arm.stat(corpo.chave).get("etag") or "").strip('"')
+            if etag and corpo.etag.strip('"') != etag:
+                raise HTTPException(409, "o arquivo no armazenamento não é o que o envio terminou (ETag diferente)")
         aid, novo = importar.registrar_arquivo(con, pid, nome, corpo.chave, real)
         return {"id": aid, "novo": novo, "chave": corpo.chave, "bytes": real}
 
@@ -321,11 +326,12 @@ def servir_arquivo(chave: str, range: Optional[str] = Header(default=None)):
     _liberado(chave)
     if arm is None or not arm.existe(chave):
         raise HTTPException(404, "arquivo não encontrado")
-    if getattr(arm, "nome", "") != "local":
+    remoto = getattr(arm, "nome", "") != "local"
+    if remoto and not hasattr(arm, "abrir_faixa"):
         return RedirectResponse(arm.url(chave), status_code=307)
-    caminho = arm.caminho_local(chave)
-    total = caminho.stat().st_size
-    tipo, extra = _cabecalhos_tipo(caminho.name)
+    caminho = None if remoto else arm.caminho_local(chave)
+    total = arm.tamanho(chave) if remoto else caminho.stat().st_size
+    tipo, extra = _cabecalhos_tipo(chave.rsplit("/", 1)[-1])
     ini, fim, status = 0, total - 1, 200
     if range:
         m = _RE_RANGE.match(range.strip())
@@ -342,6 +348,10 @@ def servir_arquivo(chave: str, range: Optional[str] = Header(default=None)):
     tamanho = fim - ini + 1
 
     def ler():
+        if remoto:          # R2: só a faixa pedida sai do bucket (o site repassa o Range; o proxy não segue redirecionamento)
+            if tamanho > 0:
+                yield from arm.abrir_faixa(chave, ini, fim)
+            return
         with open(caminho, "rb") as f:
             f.seek(ini)
             falta = tamanho

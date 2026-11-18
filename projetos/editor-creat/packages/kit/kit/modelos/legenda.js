@@ -76,7 +76,24 @@ export default function legenda(ctx, c) {
       if (sai !== null && !w.chave) tl.to(s, { color: "#FFFFFF", duration: 0.1, ease: "none", immediateRender: false }, sai);
       s.classList.add("mk-leg");
     });
+    // auto-ajuste (zona segura): palavra maior que a largura (ELETRODOMÉSTICOS em destaque) ou página alta demais
+    // encolhem a página inteira (tudo nela está em em); página que cabe fica igual
+    caberPagina(caixa);
   });
+  function caberPagina(caixa) {
+    const Z = ctx.ZONA, altMax = 2 * Math.min(yc - Z.topo, H - Z.base - yc);
+    caixa.style.display = "block";
+    let px = tam;
+    for (let k = 0; k < 6; k++) {
+      const spans = [...caixa.children];
+      const maior = Math.max(...spans.map((e) => e.offsetWidth + 0.24 * parseFloat(getComputedStyle(e).fontSize)));
+      const f = Math.min(1, larg / maior, altMax / caixa.offsetHeight);
+      if (f >= 0.999 || px <= 40) break;
+      px = Math.max(40, Math.floor(px * Math.min(f, 0.98)));
+      caixa.style.fontSize = px + "px";
+    }
+    caixa.style.display = "none";
+  }
   function gsap_inicial(caixa) { caixa.style.display = "none"; }
 
   ctx.cue(lista[0].i, "legenda-entra", -14);

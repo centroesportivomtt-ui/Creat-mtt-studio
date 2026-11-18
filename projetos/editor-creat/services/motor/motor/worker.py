@@ -4,10 +4,15 @@ uso:  python -m motor.worker                 (todas as etapas, roda para sempre)
       python -m motor.worker --ate-ocioso    (sai quando a fila esvazia: testes de aceitação)
       python -m motor.worker --etapas ingest,analise
 Rode com nice -n 5 (a máquina é dividida). Vários workers podem rodar ao mesmo tempo (a fila é atômica).
+
+Na nuvem (deploy/modal_app.py) o worker é SEM ESTADO LOCAL (EDITOR_SEM_ESTADO=1): fila e eventos no Postgres, arquivos
+no R2, disco só como rascunho (/tmp). `checar_sem_estado` recusa subir se faltar um dos dois, e `acordar_remoto` dispara
+a função Modal `trabalhar` (worker até ocioso) quando a API enfileira algo (EDITOR_MODAL_WORKER=1).
 """
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import socket
 import threading
@@ -17,6 +22,9 @@ import traceback
 from motor import banco, config, pipeline
 from motor.etapas import Contexto, ErroDefinitivo, carregar_todas, obter
 from motor.provedores import armazenamento_de
+
+log = logging.getLogger("motor.worker")
+APP_MODAL = os.environ.get("EDITOR_MODAL_APP", "editor-motor").strip() or "editor-motor"
 
 
 class _Batimento:
@@ -54,6 +62,7 @@ class _Batimento:
 
 
 def _transacao(con, fn):
+    """Tudo ou nada. No Postgres o adaptador (banco_pg) traduz BEGIN IMMEDIATE para BEGIN + trava consultiva."""
     con.execute("BEGIN IMMEDIATE")
     try:
         r = fn()
@@ -123,6 +132,89 @@ def _sair_de_transacao(con) -> None:
             pass
 
 
+# ---------------------------------------------------------------- nuvem (sem estado local)
+def _eh_postgres(destino) -> bool:
+    return isinstance(destino, str) and destino.startswith(("postgres://", "postgresql://"))
+
+
+def checar_sem_estado(cfg) -> list[str]:
+    """Com EDITOR_SEM_ESTADO=1 (contêiner da Modal: o disco some a cada reinício), recusa subir se algum estado ainda
+    iria para o disco local. Devolve os avisos (não fatais); levanta RuntimeError com a lista do que falta."""
+    if os.environ.get("EDITOR_SEM_ESTADO", "") != "1":
+        return []
+    faltas, avisos = [], []
+    if cfg.provedor_efetivo("armazenamento") != "r2":
+        faltas.append("armazenamento não é o R2 (EDITOR_ARMAZENAMENTO=r2 + R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET)")
+    if not _eh_postgres(cfg.banco):
+        faltas.append("banco não é o Postgres (EDITOR_BANCO=postgres + DATABASE_URL)")
+    if not (cfg.motor_token or "").strip():
+        faltas.append("MOTOR_TOKEN vazio (o motor fica na internet)")
+    if faltas:
+        raise RuntimeError("motor sem estado local (EDITOR_SEM_ESTADO=1) recusou subir: " + "; ".join(faltas))
+    if not os.environ.get("EDITOR_MEMORIA"):
+        avisos.append("EDITOR_MEMORIA vazio: a memória (regras do dono) iria para dentro da imagem e se perderia")
+    for a in avisos:
+        log.warning(a)
+    return avisos
+
+
+_DISPARO = {"ultimo": 0.0, "timer": None}
+_TRAVA_DISPARO = threading.Lock()
+
+
+def _pendentes(cfg) -> int:
+    con = banco.conectar(cfg.banco)
+    try:
+        r = con.execute("SELECT COUNT(*) AS n FROM jobs WHERE estado='pendente'").fetchone()
+        try:
+            return int(r["n"])
+        except (TypeError, KeyError, IndexError):
+            return int(r[0])
+    finally:
+        con.close()
+
+
+def _spawn_trabalhar() -> None:
+    import modal   # só existe no contêiner da Modal (ou com o extra 'modal')
+    modal.Function.from_name(APP_MODAL, "trabalhar").spawn()
+
+
+def acordar_remoto(cfg, *, contar=None, spawn=None) -> bool:
+    """Com EDITOR_MODAL_WORKER=1, dispara a função `trabalhar` se há job pendente. No máximo um disparo a cada
+    EDITOR_MODAL_WORKER_INTERVALO s (padrão 15); dentro do intervalo, agenda UMA nova checagem para o fim dele
+    (um job que chega logo depois de um worker sair não espera o agendamento de segurança). Nunca levanta."""
+    if os.environ.get("EDITOR_MODAL_WORKER", "") != "1":
+        return False
+    contar = contar or _pendentes
+    spawn = spawn or _spawn_trabalhar
+    intervalo = float(os.environ.get("EDITOR_MODAL_WORKER_INTERVALO", "15") or 15)
+    with _TRAVA_DISPARO:
+        falta = _DISPARO["ultimo"] + intervalo - time.monotonic()
+        if falta > 0:
+            if _DISPARO["timer"] is None:
+                def depois():
+                    with _TRAVA_DISPARO:
+                        _DISPARO["timer"] = None
+                    acordar_remoto(cfg, contar=contar, spawn=spawn)
+                t = threading.Timer(falta + 0.05, depois)
+                t.daemon = True
+                _DISPARO["timer"] = t
+                t.start()
+            return False
+    try:
+        if contar(cfg) <= 0:
+            return False
+        with _TRAVA_DISPARO:
+            _DISPARO["ultimo"] = time.monotonic()
+        spawn()
+        return True
+    except Exception as e:  # noqa: BLE001 - o agendamento de segurança (modal.Period) recolhe depois
+        with _TRAVA_DISPARO:
+            _DISPARO["ultimo"] = 0.0
+        log.warning("não consegui acordar o worker na Modal (%s: %s)", type(e).__name__, e)
+        return False
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ate-ocioso", action="store_true")
@@ -130,6 +222,7 @@ def main(argv=None) -> int:
     ap.add_argument("--espera", type=float, default=1.0)
     a = ap.parse_args(argv)
     cfg = config.carregar()
+    checar_sem_estado(cfg)
     if cfg.nice:
         try:
             os.nice(cfg.nice)

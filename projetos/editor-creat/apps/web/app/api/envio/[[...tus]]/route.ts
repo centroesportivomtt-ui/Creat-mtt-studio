@@ -7,6 +7,7 @@ import { Server, type Upload } from '@tus/server';
 import { FileStore } from '@tus/file-store';
 import { chaveFinal, extensao, pastaEnvio, raizArmazenamento, RE_PROJETO } from '@/lib/armazenamento';
 import { motorJson } from '@/lib/motor';
+import { modoR2 } from '@/lib/r2';
 import { mesmaOrigem, sessaoDaRequisicao } from '@/lib/sessao';
 
 export const runtime = 'nodejs';
@@ -65,8 +66,13 @@ const g = globalThis as unknown as { __tusEditor?: Promise<Server> };
 const servidor = () => (g.__tusEditor ??= criarServidor());
 
 async function tratar(req: Request): Promise<Response> {
-  if (!sessaoDaRequisicao(req)) return new Response('entre com a senha de novo', { status: 401 });
+  if (!(await sessaoDaRequisicao(req))) return new Response('entre com a senha de novo', { status: 401 });
   if (req.method !== 'HEAD' && req.method !== 'GET' && !mesmaOrigem(req)) return new Response('origem não permitida', { status: 403 });
+  if (modoR2()) {
+    // Em produção (Vercel) não há disco: o navegador manda direto ao R2 por /api/envio-r2 (docs/R2-ENVIO.md).
+    return new Response('envio pelo site desligado: com EDITOR_ARMAZENAMENTO=r2 o arquivo vai direto ao R2 (/api/envio-r2); recarregue a página',
+      { status: 410, headers: { 'content-type': 'text/plain; charset=utf-8', 'Tus-Resumable': '1.0.0' } });
+  }
   const s = await servidor();
   return s.handleWeb(req as Parameters<Server['handleWeb']>[0]);
 }

@@ -1,8 +1,13 @@
-// Sessão do Editor creat.MTT: senha única (scrypt) + cookie HttpOnly assinado (HMAC-SHA256).
-// Formato do hash (EDITOR_SENHA_HASH): scrypt:N:r:p:salBase64:hashBase64  (gere com `pnpm senha`).
-// Cookie: v1.<expira-em-segundos>.<nonce>.<assinatura base64url> — sem estado no servidor.
+// Sessão do Editor creat.MTT. Dois modos de entrar (EDITOR_AUTH), a mesma sessão: cookie HttpOnly assinado (HMAC-SHA256).
+// - senha (padrão): senha única em scrypt. Hash (EDITOR_SENHA_HASH): scrypt:N:r:p:salBase64:hashBase64 (`pnpm senha`).
+//   Cookie: v1.<expira-em-segundos>.<nonce>.<assinatura base64url>.
+// - supabase: e-mail + senha no Supabase Auth (lib/supabase.ts), só para quem está em EDITOR_EMAILS_PERMITIDOS.
+//   Cookie: v2.<expira>.<nonce>.<e-mail base64url>.<assinatura>. A lista é conferida de novo a CADA requisição:
+//   tirou o e-mail da lista, a sessão cai na hora. Cookie de um modo não vale no outro.
+// "Sair" revoga o nonce no processo (globalThis); trocar EDITOR_SEGREDO_SESSAO derruba todas as sessões.
 import { createHmac, randomBytes, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from 'node:crypto';
 import { cookies, headers } from 'next/headers';
+import { configSupabase, emailPermitido, emailsPermitidos, normalizarEmail } from '@/lib/supabase';
 
 export const COOKIE = 'ec_sessao';
 const DURACAO_S = 30 * 24 * 3600; // 30 dias: o dono usa no celular e não quer digitar senha toda hora
@@ -11,11 +16,27 @@ function scrypt(senha: string, sal: Buffer, tamanho: number, opcoes: ScryptOptio
   return new Promise((ok, falha) => scryptCb(senha, sal, tamanho, opcoes, (e, k) => (e ? falha(e) : ok(k))));
 }
 
-export function configuracaoPronta(): { ok: boolean; falta: string[] } {
+export type ModoAuth = 'senha' | 'supabase';
+
+/** EDITOR_AUTH: 'senha' (padrão) | 'supabase'. Valor desconhecido = null (o login recusa e avisa). */
+export function modoAuth(): ModoAuth | null {
+  const m = (process.env.EDITOR_AUTH ?? '').trim().toLowerCase();
+  if (m === '' || m === 'senha') return 'senha';
+  if (m === 'supabase') return 'supabase';
+  return null;
+}
+
+export function configuracaoPronta(): { ok: boolean; falta: string[]; modo: ModoAuth | null } {
   const falta: string[] = [];
-  if (!lerHash()) falta.push('EDITOR_SENHA_HASH');
+  const modo = modoAuth();
+  if (modo === null) falta.push("EDITOR_AUTH válido ('senha' ou 'supabase')");
+  if (modo === 'senha' && !lerHash()) falta.push('EDITOR_SENHA_HASH');
+  if (modo === 'supabase') {
+    if (!configSupabase()) falta.push('SUPABASE_URL (https) e SUPABASE_ANON_KEY');
+    if (emailsPermitidos().size === 0) falta.push('EDITOR_EMAILS_PERMITIDOS (sem a lista ninguém entra)');
+  }
   if ((process.env.EDITOR_SEGREDO_SESSAO ?? '').length < 32) falta.push('EDITOR_SEGREDO_SESSAO (32+ caracteres)');
-  return { ok: falta.length === 0, falta };
+  return { ok: falta.length === 0, falta, modo };
 }
 
 function lerHash() {
@@ -51,27 +72,76 @@ function assinar(corpo: string): string {
   return createHmac('sha256', segredo()).update(corpo).digest('base64url');
 }
 
-export function criarToken(agora = Date.now()): { valor: string; maxAge: number } {
-  const corpo = `v1.${Math.floor(agora / 1000) + DURACAO_S}.${randomBytes(9).toString('base64url')}`;
+/** Sessão nova. No modo supabase, `email` é obrigatório (vai assinado no cookie). */
+export function criarToken(agora = Date.now(), email?: string): { valor: string; maxAge: number } {
+  const expira = Math.floor(agora / 1000) + DURACAO_S;
+  const nonce = randomBytes(9).toString('base64url');
+  let corpo = `v1.${expira}.${nonce}`;
+  if (modoAuth() === 'supabase') {
+    const e = normalizarEmail(email);
+    if (!e) throw new Error('sessão do modo supabase precisa do e-mail');
+    corpo = `v2.${expira}.${nonce}.${Buffer.from(e).toString('base64url')}`;
+  }
   return { valor: `${corpo}.${assinar(corpo)}`, maxAge: DURACAO_S };
 }
 
-export function tokenValido(valor: string | undefined | null, agora = Date.now()): boolean {
-  if (!valor || valor.length > 200) return false;
+type Sessao = { versao: 'v1' | 'v2'; expira: number; nonce: string; email: string | null };
+
+/** Confere assinatura, validade, modo, revogação e (modo supabase) a lista de permissão. */
+export function lerSessao(valor: string | undefined | null, agora = Date.now()): Sessao | null {
+  if (!valor || valor.length > 600) return null;
   const i = valor.lastIndexOf('.');
-  if (i < 0) return false;
+  if (i < 0) return null;
   const corpo = valor.slice(0, i);
   const assinatura = Buffer.from(valor.slice(i + 1));
-  const [versao, expira] = corpo.split('.');
-  if (versao !== 'v1' || !/^\d+$/.test(expira ?? '')) return false;
+  const partes = corpo.split('.');
+  const [versao, expira, nonce] = partes;
+  if (!/^\d+$/.test(expira ?? '') || !nonce) return null;
+  const modo = modoAuth();
+  if (!((modo === 'senha' && versao === 'v1' && partes.length === 3) || (modo === 'supabase' && versao === 'v2' && partes.length === 4))) return null;
   let esperado: Buffer;
   try {
     esperado = Buffer.from(assinar(corpo));
   } catch {
-    return false;
+    return null;
   }
-  if (assinatura.length !== esperado.length || !timingSafeEqual(assinatura, esperado)) return false;
-  return Number(expira) * 1000 > agora;
+  if (assinatura.length !== esperado.length || !timingSafeEqual(assinatura, esperado)) return null;
+  if (Number(expira) * 1000 <= agora || revogado(nonce, agora)) return null;
+  let email: string | null = null;
+  if (versao === 'v2') {
+    email = normalizarEmail(Buffer.from(partes[3], 'base64url').toString('utf8'));
+    if (!email || !emailPermitido(email)) return null;
+  }
+  return { versao: versao as Sessao['versao'], expira: Number(expira), nonce, email };
+}
+
+export function tokenValido(valor: string | undefined | null, agora = Date.now()): boolean {
+  return lerSessao(valor, agora) !== null;
+}
+
+// Revogação ("Sair"): nonce → expiração, em globalThis (rotas e páginas do Next podem ter cópias deste módulo).
+// Vive no processo: um reinício esquece a lista; para derrubar tudo de vez, troque EDITOR_SEGREDO_SESSAO.
+const G = globalThis as unknown as { __ecRevogados?: Map<string, number> };
+function revogados(): Map<string, number> {
+  G.__ecRevogados ??= new Map();
+  return G.__ecRevogados;
+}
+function revogado(nonce: string, agora: number): boolean {
+  const ate = revogados().get(nonce);
+  return ate !== undefined && ate * 1000 > agora;
+}
+export function revogarToken(valor: string | undefined | null, agora = Date.now()) {
+  const s = lerSessao(valor, agora);
+  if (!s) return;
+  const m = revogados();
+  if (m.size > 10000) for (const [k, ate] of m) if (ate * 1000 <= agora) m.delete(k);
+  m.set(s.nonce, s.expira);
+}
+
+/** E-mail da sessão atual (modo supabase) ou null. */
+export async function emailDaSessao(): Promise<string | null> {
+  const c = await cookies();
+  return lerSessao(c.get(COOKIE)?.value)?.email ?? null;
 }
 
 /** Para Server Components e rotas: há sessão válida no cookie? */

@@ -14,28 +14,53 @@ export default function gancho2(ctx, c) {
     background: "radial-gradient(closest-side, rgba(0,0,0,0.50), rgba(0,0,0,0.28) 55%, rgba(0,0,0,0) 100%)" });
   // ---- fase A
   const A = el("div", "", c.el, { position: "absolute", left: esq + "px", top: "0px", width: larg + "px" });
-  const linhasA = p.a.linhas.map((txt) => {
-    const tam = ajustar(txt, "Anton", larg * 0.96, 250, 90);   // mede COM o ponto; 4% de folga para o risco (104%)
-    const ln = el("div", "mk-display mk-sombra", A, { fontSize: tam + "px", lineHeight: "0.96", position: "relative", display: "table" });
-    const ponto = /\.$/.test(txt);
-    ln.textContent = txt.replace(/\.$/, "");
-    if (ponto) { const pt = el("span", "mk-ponto", ln); pt.textContent = "."; }
-    return ln;
-  });
+  // auto-ajuste (zona segura, ctx.caber): a linha que não cabe a 90 px quebra em até 4 linhas; a que cabe fica igual
+  const autoA = (txt) => {
+    const t = ajustar(txt, "Anton", larg * 0.96, 250, 90);   // mede COM o ponto; 4% de folga para o risco (104%)
+    if (ctx.medir(txt, "Anton", t) <= larg * 0.96 + 0.5) return { px: t, linhas: [txt] };
+    return ctx.caber(txt, { largura: larg * 0.96, max: 250, min: 90, piso: 44, linhas: 4 });
+  };
+  const linhasA = [], porLinha = [];
+  for (const txt of p.a.linhas) {
+    const r = autoA(txt), minhas = [];
+    r.linhas.forEach((sub) => {
+      const ln = el("div", "mk-display mk-sombra", A, { fontSize: r.px + "px", lineHeight: "0.96", position: "relative", display: "table" });
+      const ponto = /\.$/.test(sub);
+      ln.textContent = sub.replace(/\.$/, "");
+      if (ponto) { const pt = el("span", "mk-ponto", ln); pt.textContent = "."; }
+      linhasA.push(ln); minhas.push(ln);
+    });
+    porLinha.push({ txt, els: minhas });
+  }
   A.style.top = yc - A.offsetHeight / 2 + "px";
-  const alvo = linhasA.find((l) => l.textContent.replace(".", "") === p.a.risca);
-  const risco = el("div", "", alvo, { position: "absolute", left: "-2%", top: "46%", width: "104%", height: "0.11em", background: "#FF1A1A", transformOrigin: "0 50%", boxShadow: "0 2px 10px rgba(0,0,0,0.5)" });
+  // a linha riscada é a que o autor escreveu igual a `risca` (com ou sem o ponto final); quebrada, o risco vai em cada pedaço.
+  // Antes comparava o textContent sem o PRIMEIRO ponto e quebrava ("R$ 12.999,90" virava "R$ 12999,90" e o modelo caía).
+  const sem = (x) => String(x ?? "").replace(/\.$/, "");
+  const alvos = (porLinha.find((l) => sem(l.txt) === sem(p.a.risca)) ?? { els: [] }).els;
+  const riscos = alvos.map((alvo) => el("div", "", alvo, { position: "absolute", left: "-2%", top: "46%", width: "104%", height: "0.11em", background: "#FF1A1A", transformOrigin: "0 50%", boxShadow: "0 2px 10px rgba(0,0,0,0.5)" }));
   // ---- fase B
   const B = el("div", "", c.el, { position: "absolute", left: "0", top: "0", width: W + "px", textAlign: "center" });
-  const topo = el("div", "mk-display mk-sombra", B, { position: "absolute", left: "0", width: "100%", top: yc - 250 + "px", fontSize: "120px" });
-  topo.textContent = p.b.topo;
+  // fase B centrada em x = W/2: metade útil até a coluna de botões = W/2 - direita (420 px em 1080)
+  const meiaB = W / 2 - z.direita;
+  const centrado = (txt, max, min, linhas, largura = 2 * meiaB) => ctx.caber(txt, { largura, max, min, piso: Math.min(min, 40), linhas });
+  const esc = (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const linhasHtml = (ls, ponto) => ls.map((l, i) => (ponto && i === ls.length - 1 ? esc(l).replace(/\.$/, '<span class="mk-ponto">.</span>') : esc(l))).join("<br>");
+  const rTopo = centrado(p.b.topo, 120, 64, 2);
+  const topo = el("div", "mk-display mk-sombra", B, { position: "absolute", left: "0", width: "100%", top: yc - 250 - (rTopo.linhas.length - 1) * rTopo.px * 0.92 + "px", fontSize: rTopo.px + "px" });
+  topo.innerHTML = linhasHtml(rTopo.linhas, false);
   const slots = p.b.trocas.map((tr) => {
-    const tam = ajustar(tr.p, "Anton", larg, 230, 80);
+    let tam = ajustar(tr.p, "Anton", larg, 230, 80), ls = [tr.p];
+    if (ctx.medir(tr.p, "Anton", tam) > larg + 0.5) { const r = centrado(tr.p, 230, 80, 3, larg); tam = r.px; ls = r.linhas; }
     const s = el("div", "mk-display mk-sombra", B, { position: "absolute", left: "0", width: "100%", top: yc - 110 + "px", fontSize: tam + "px", color: "#F5B84D", lineHeight: "1" });
-    s.textContent = tr.p; s.dataset.h = tam; return s;
+    s.innerHTML = linhasHtml(ls, false); s.dataset.h = tam;
+    // entrada com escala 1,28: encolhe para a palavra crescida não passar da coluna de botões
+    const w = Math.max(...ls.map((l) => ctx.medir(l, "Anton", tam)));
+    s.dataset.s0 = String(Math.max(1, Math.min(1.28, (2 * meiaB) / Math.max(1, w))));
+    return s;
   });
-  const fim = el("div", "mk-display mk-sombra", B, { position: "absolute", left: "0", width: "100%", top: yc + 150 + "px", fontSize: "92px" });
-  fim.innerHTML = p.b.fim.p.replace(/\.$/, '<span class="mk-ponto">.</span>');
+  const rFim = centrado(p.b.fim.p, 92, 52, 2);
+  const fim = el("div", "mk-display mk-sombra", B, { position: "absolute", left: "0", width: "100%", top: yc + 150 + "px", fontSize: rFim.px + "px" });
+  fim.innerHTML = linhasHtml(rFim.linhas, /\.$/.test(p.b.fim.p));
   ctx.aCada((t) => {
     const tb = p.b.entra;
     // A: parada desde o quadro 0; risco; sai para cima
@@ -44,8 +69,8 @@ export default function gancho2(ctx, c) {
     A.style.transform = `translateY(${-ks * 220}px) scale(${1 - ks * 0.12})`;
     A.style.opacity = String(1 - ks);
     A.style.filter = ks > 0 ? `blur(${ks * 10}px)` : "";
-    risco.style.transform = `scaleX(${p4(prog(t, p.a.riscaEm, 0.16))})`;
-    alvo.style.color = t >= p.a.riscaEm + 0.1 ? "rgba(255,255,255,0.62)" : "";
+    for (const r of riscos) r.style.transform = `scaleX(${p4(prog(t, p.a.riscaEm, 0.16))})`;
+    for (const a of alvos) a.style.color = t >= p.a.riscaEm + 0.1 ? "rgba(255,255,255,0.62)" : "";
     // B
     B.style.display = t >= tb ? "" : "none";
     const kt = eo(prog(t, tb, 0.22));
@@ -55,7 +80,7 @@ export default function gancho2(ctx, c) {
       if (t < t0 || t >= t1 + 0.12) { s.style.opacity = "0"; return; }
       const ke = p4(prog(t, t0, 0.14)), kx = pin(prog(t, t1, 0.12));
       s.style.opacity = String(1 - kx);
-      s.style.transform = `translateY(${(1 - ke) * 26 - kx * 70}px) scale(${1 + (1 - ke) * 0.28})`;
+      s.style.transform = `translateY(${(1 - ke) * 26 - kx * 70}px) scale(${1 + (1 - ke) * (+s.dataset.s0 - 1)})`;
       s.style.filter = ke < 1 ? `blur(${(1 - ke) * 10}px)` : (kx > 0 ? `blur(${kx * 8}px)` : "");
     });
     const kf = eo(prog(t, p.b.fim.t, 0.25));

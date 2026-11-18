@@ -19,8 +19,10 @@ export default function heroi(ctx, c) {
   // 1) desenha o alvo num canvas e amostra a grade
   const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   const g = cv.getContext("2d");
+  let caixaAlvo; // [esq, topo, dir, base] do desenho final: vira a caixa declarada que o QA de zona mede (data-mk-zona)
   if ((p.alvo ?? "aba71") === "aba71") {
     const x0 = W / 2 - S / 2, y0 = cy - S / 2, r = S * 0.09;
+    caixaAlvo = [x0, y0, x0 + S, y0 + S];
     g.fillStyle = "#DA291C"; g.beginPath(); g.roundRect(x0, y0, S, S, r); g.fill();
     // "c" em Montserrat Black, como o .mk-aba do DOM. A linha de base segue a conta do CSS (line-height 0.8):
     // topo da linha + (0.8 em - (ascendente + descendente)) / 2 + ascendente, para a partícula cair no pixel do DOM.
@@ -38,6 +40,8 @@ export default function heroi(ctx, c) {
     const fs = ctx.ajustar(tx, "Anton", W * 0.8, 400);
     g.fillStyle = "#FFFFFF"; g.font = `${fs}px Anton`; g.textAlign = "center"; g.textBaseline = "middle";
     g.fillText(tx, W / 2, cy);
+    const mt = g.measureText(tx);
+    caixaAlvo = [W / 2 - mt.actualBoundingBoxLeft, cy - mt.actualBoundingBoxAscent, W / 2 + mt.actualBoundingBoxRight, cy + mt.actualBoundingBoxDescent];
   }
   const px = g.getImageData(0, 0, W, H).data;
   const alvo = [], cor = [];
@@ -131,6 +135,10 @@ export default function heroi(ctx, c) {
   });
   scene.add(new THREE.Points(geo, mat));
 
+  // caixa declarada: o canvas não tem caixa de texto no DOM, então o modelo diz onde a forma pousa
+  const declarada = el("div", "", c.el, { position: "absolute", left: caixaAlvo[0] + "px", top: caixaAlvo[1] + "px", width: caixaAlvo[2] - caixaAlvo[0] + "px", height: caixaAlvo[3] - caixaAlvo[1] + "px", pointerEvents: "none" });
+  declarada.dataset.mkZona = "forma do heroi";
+
   // 3) contador de partículas (rótulo em mono, conta enquanto formam)
   let rot = null;
   if (p.contador !== false) {
@@ -144,6 +152,7 @@ export default function heroi(ctx, c) {
     if (t < c.de || t >= c.ate) return;
     const k = prog(t, ini, fim - ini);
     uni.uP.value = k; uni.uT.value = t;
+    declarada.dataset.mkZonaAtiva = k >= 0.5 && !(p.some && t >= p.some + 0.16) ? "1" : "0";
     const kc = fCam(prog(t, c.de, fim - c.de));
     // câmera: começa alta e longe (a galáxia inteira se lê como espiral), desce e termina de frente a d0
     const ang = (1 - kc) * 0.5, dist = d0 * (1.55 - 0.55 * kc), alt = (1 - kc) * 2600;
