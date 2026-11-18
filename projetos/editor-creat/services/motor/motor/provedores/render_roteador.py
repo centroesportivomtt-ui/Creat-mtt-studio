@@ -75,7 +75,7 @@ def fator_resolucao(edl: dict, fontes=None, resolucoes: dict | None = None) -> f
 def decidir(edl: dict, cfg, fontes=None, *, resolucoes: dict | None = None) -> Decisao:
     dur = duracao_do_edl(edl)
     lim = limite_s()
-    efetivo = cfg.provedor_efetivo("render")
+    efetivo = cfg.provedor_efetivo("render") if hasattr(cfg, "provedor_efetivo") else "cpu"   # cfg simplificado (testes)
     if efetivo != "modal":
         pedido = getattr(cfg, "render", "cpu")
         motivo = ("GPU desligada (EDITOR_RENDER=cpu)" if pedido != "modal"

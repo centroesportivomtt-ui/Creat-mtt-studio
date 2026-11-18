@@ -20,7 +20,9 @@
 // sombra do texto e cantoneiras encostadas no limite). Isentos (fundo, transicao) vêm de kit/zona.json.
 // Instantes: a cada "amostra_quadros" quadros (3, como o motor), mais o início, o meio e o fim de cada tween da timeline
 // e o último quadro da camada. --rapido: casos RAPIDOS de casos.cjs, a cada 9 quadros + tweens.
-// Aviso (não reprova): "corte", texto recortado na horizontal por overflow (ex.: nome que some dentro da placa).
+// Aviso (não reprova): "corte", texto que NUNCA aparece inteiro no caso: o menor recorte da tinta (overflow/clip-path)
+// entre todos os instantes em que ele está visível passa de 2 px (nome que some dentro da placa, til do Ã aparado pela
+// linha). Revelação e saída por máscara têm algum instante com o texto inteiro, então não contam.
 const fs = require("fs");
 const path = require("path");
 const { RAIZ, abrir, lerComp, args } = require("./comum.cjs");
@@ -104,7 +106,9 @@ function medirNaPagina([id, comPecas, alfaMin, alfaTexto]) {
     for (const c of lista) {
       const q = [c.x ? c.b[0] : -1e9, c.y ? c.b[1] : -1e9, c.x ? c.b[2] : 1e9, c.y ? c.b[3] : 1e9];
       const n = inter(r, q);
+      // corte na horizontal (fim da palavra) e na vertical (acento e descendente aparados por overflow/line-height)
       if (c.x) cortado = Math.max(cortado, (r[2] - r[0]) - Math.max(0, n[2] - n[0]));
+      if (c.y) cortado = Math.max(cortado, (r[3] - r[1]) - Math.max(0, n[3] - n[1]));
       r = n;
       if (vazio(r)) return { b: null, cortado };
     }
@@ -113,7 +117,9 @@ function medirNaPagina([id, comPecas, alfaMin, alfaTexto]) {
   const itens = [], cortes = [];
   // 1) texto
   const tw = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
+  let ordem = -1;
   for (let n = tw.nextNode(); n; n = tw.nextNode()) {
+    ordem++;
     const txt = n.nodeValue;
     if (!txt.trim()) continue;
     const pai = n.parentElement;
@@ -133,7 +139,7 @@ function medirNaPagina([id, comPecas, alfaMin, alfaTexto]) {
       // tinta: do topo da área de conteúdo, desce (ascendente da fonte - ascendente real) e para no descendente real
       const b = [r.left, r.top + Math.max(0, fa - m.actualBoundingBoxAscent) * s, r.right, r.top + Math.min(fa + fd, fa + m.actualBoundingBoxDescent) * s];
       const { b: v, cortado } = aplicar(b, lista);
-      if (cortado > 2 + Math.max(0, parseFloat(cs.letterSpacing) || 0)) cortes.push({ txt: mostra.trim().slice(0, 40), px: Math.round(cortado) });
+      cortes.push({ no: ordem, txt: mostra.trim().slice(0, 40), px: Math.round(cortado), limiar: 2 + Math.max(0, parseFloat(cs.letterSpacing) || 0) });
       if (v) itens.push({ tipo: "texto", txt: mostra.trim().slice(0, 40), b: v });
     }
   }
@@ -213,7 +219,12 @@ async function medirCena(comp, { rapido = false, comPecas = () => true } = {}) {
         const v = vazamento(it.b, W, H);
         if (!pior || v.px > pior.px) pior = { ...v, tipo: it.tipo, txt: it.txt, caixa: it.b.map(Math.round) };
       }
-      for (const k of r.cortes) { const v = cortes.get(k.txt) ?? { px: 0, n: 0 }; v.px = Math.max(v.px, k.px); v.n++; cortes.set(k.txt, v); }
+      // por nó de texto, o MENOR corte entre os instantes em que ele aparece: revelação e saída por máscara têm algum
+      // instante com o texto inteiro (corte 0); só o que nunca aparece inteiro é corte de verdade
+      // (a chave é a ordem do nó na camada: o texto que decodifica troca de conteúdo a cada quadro)
+      const vistos = new Map();
+      for (const k of r.cortes) { const v = vistos.get(k.no); if (!v || k.px - k.limiar > v.px) vistos.set(k.no, { px: k.px - k.limiar, txt: k.txt }); }
+      for (const [no, v] of vistos) { const a = cortes.get(no); if (!a || v.px < a.px) cortes.set(no, v); }
       instantes.push({ t: +(t - c.de).toFixed(3), medidos: r.itens.length, ok: !pior || pior.px <= Z.tolerancia, ...(pior ? { vazamento: pior } : {}) });
     }
     const fora = instantes.filter((i) => !i.ok);
@@ -221,8 +232,7 @@ async function medirCena(comp, { rapido = false, comPecas = () => true } = {}) {
     res[c.id] = {
       modelo: c.modelo, ok: fora.length === 0, instantes_medidos: instantes.length, instantes_fora: fora.length,
       pior: pior ? { t: pior.t, ...pior.vazamento } : null,
-      // corte permanente: o mesmo texto recortado em pelo menos metade dos instantes (revelação por máscara é passageira)
-      cortes: [...cortes].filter(([, v]) => v.n >= instantes.length / 2).map(([txt, v]) => ({ txt, px: v.px, instantes: v.n })),
+      cortes: [...cortes.values()].filter((v) => v.px > 0).map((v) => ({ txt: v.txt, px: Math.round(v.px) })),
       instantes,
     };
   }

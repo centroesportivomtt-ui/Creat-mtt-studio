@@ -25,25 +25,41 @@ export default function chip(ctx, c) {
   // largura útil para o texto = placa - respiros - selo
   const util = largMax - 26 - 40 - (selo ? 92 + 26 : 0);
   const txtNome = (p.nome ?? "") + (p.ponto !== false ? "." : "");
-  const pxNome = Math.max(44, Math.min(74, Math.floor((74 * util) / Math.max(1, medir(txtNome.toUpperCase(), "Anton", 74) * 1.01))));
+  let pxNome = Math.max(44, Math.min(74, Math.floor((74 * util) / Math.max(1, medir(txtNome.toUpperCase(), "Anton", 74) * 1.01))));
+  // auto-ajuste (ctx.caber): nome que não cabe nem a 44 px quebra em 2 linhas (antes a placa recortava o nome em silêncio)
+  let quebraNome = -1; // índice do caractere onde começa a 2ª linha
+  if (medir(txtNome.toUpperCase(), "Anton", pxNome) * 1.01 > util + 0.5) {
+    const r = ctx.caber(txtNome, { largura: util / 1.01, max: 74, min: 44, piso: 30, linhas: 2, maiusculas: true });
+    pxNome = r.px;
+    if (r.quebrou) quebraNome = r.linhas[0].length + 1;
+  }
   const txtCargo = p.cargoCru ? (p.cargo ?? "") : (p.cargo ?? "").toUpperCase();
   const regua = document.createElement("canvas").getContext("2d");
   const largCargo = (px) => { regua.font = `500 ${px}px Inter`; return regua.measureText(txtCargo).width; };
   let pxCargo = 27;
   while (pxCargo > 18 && largCargo(pxCargo) + 0.16 * pxCargo * txtCargo.length > util) pxCargo--;
+  // cargo que não cabe nem a 18 px vai para 2 linhas; só o que passar disso leva reticências
+  let linhasCargo = null;
+  if (largCargo(pxCargo) + 0.16 * pxCargo * txtCargo.length > util) {
+    const r = ctx.caber(txtCargo, { fonte: p.cargoCru ? "900 Inter" : "500 Inter", ls: p.cargoCru ? 0.10 : 0.16, largura: util, max: 18, min: 18, piso: 16, linhas: 2 });
+    pxCargo = r.px; linhasCargo = r.linhas;
+  }
 
   const nome = el("div", "mk-display", textos, { fontSize: pxNome + "px", lineHeight: "0.95", overflow: "hidden", paddingBottom: "4px" });
   const letras = [];
-  for (const ch of p.nome ?? "") {
+  [...(p.nome ?? "")].forEach((ch, i) => {
+    if (i === quebraNome) el("br", "", nome);
+    if (i === quebraNome - 1 && ch === " ") return; // o espaço da quebra não vira letra no começo da 2ª linha
     const s = el("span", "", nome, { display: "inline-block", whiteSpace: "pre" });
     s.textContent = ch; letras.push(s);
-  }
+  });
   if (p.ponto !== false) { const pt = el("span", "mk-ponto", nome, { display: "inline-block" }); pt.textContent = "."; letras.push(pt); }
   const cargo = el("div", "", textos, {
     font: `500 ${pxCargo}px/1.2 'Inter', sans-serif`, letterSpacing: p.cargoCru ? "0.10em" : "0.16em", textTransform: p.cargoCru ? "none" : "uppercase", fontWeight: p.cargoCru ? "900" : "500",
     color: "var(--mk-destaque)", marginTop: "10px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
   });
   cargo.textContent = p.cargo ?? "";
+  if (linhasCargo) { cargo.style.whiteSpace = "pre"; cargo.textContent = linhasCargo.join("\n"); }
   const cs = cantos(caixa, { arm: 30, esp: 6, folga: 12 });
 
   // posição vertical: o pedido, ou a base da placa no limite da zona segura

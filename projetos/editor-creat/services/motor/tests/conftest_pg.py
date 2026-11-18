@@ -89,10 +89,14 @@ def _subir():
 
 
 # ---------------- plugin: a suíte inteira no Postgres ----------------
+# Testes que conferem justamente o caso "sem Postgres configurado": aqui não recebem o banco.
+SEM_POSTGRES = {"test_sem_estado_recusa_disco_local"}
+
+
 @pytest.fixture(autouse=True)
-def _postgres_por_teste(monkeypatch):
+def _postgres_por_teste(request, monkeypatch):
     url, _ = subir_cluster()
-    if url is None:
+    if url is None or request.node.originalname in SEM_POSTGRES:
         yield
         return
     nome = "s_" + uuid.uuid4().hex[:12]

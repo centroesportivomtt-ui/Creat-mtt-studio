@@ -37,11 +37,18 @@ export default function heroi(ctx, c) {
     g.fillStyle = "#000000"; g.beginPath(); g.arc(dx, dy, dr, 0, 7); g.fill();
   } else {
     const tx = (p.texto ?? "CREAT").toUpperCase();
-    const fs = ctx.ajustar(tx, "Anton", W * 0.8, 400);
+    // auto-ajuste (zona segura, ctx.caber): texto que não cabe numa linha a 60 px vira até 3 linhas (o que cabe fica igual)
+    let fs = ctx.ajustar(tx, "Anton", W * 0.8, 400), linhas = [tx];
+    if (ctx.medir(tx, "Anton", fs) > W * 0.8 + 0.5) { const r = ctx.caber(tx, { largura: W * 0.8, max: 400, min: 60, piso: 40, linhas: 3 }); fs = r.px; linhas = r.linhas; }
     g.fillStyle = "#FFFFFF"; g.font = `${fs}px Anton`; g.textAlign = "center"; g.textBaseline = "middle";
-    g.fillText(tx, W / 2, cy);
-    const mt = g.measureText(tx);
-    caixaAlvo = [W / 2 - mt.actualBoundingBoxLeft, cy - mt.actualBoundingBoxAscent, W / 2 + mt.actualBoundingBoxRight, cy + mt.actualBoundingBoxDescent];
+    caixaAlvo = [Infinity, Infinity, -Infinity, -Infinity];
+    linhas.forEach((ln, i) => {
+      const y = cy + (i - (linhas.length - 1) / 2) * fs * 0.98;
+      g.fillText(ln, W / 2, y);
+      const mt = g.measureText(ln);
+      caixaAlvo = [Math.min(caixaAlvo[0], W / 2 - mt.actualBoundingBoxLeft), Math.min(caixaAlvo[1], y - mt.actualBoundingBoxAscent),
+        Math.max(caixaAlvo[2], W / 2 + mt.actualBoundingBoxRight), Math.max(caixaAlvo[3], y + mt.actualBoundingBoxDescent)];
+    });
   }
   const px = g.getImageData(0, 0, W, H).data;
   const alvo = [], cor = [];
