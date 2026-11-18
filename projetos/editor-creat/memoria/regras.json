@@ -1,0 +1,181 @@
+{
+ "versao": "1",
+ "regras": [
+  {
+   "id": "r_retencao",
+   "texto": "Retenção sempre: gancho nos 2 primeiros segundos, nada de ar morto, novidade para o olho ou o ouvido a cada 2-4 s, cada bloco puxa o seguinte, final com convite claro. Entre bonito e interessante, vence o interessante.",
+   "origem": "dono 10/11/2026",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_alem",
+   "texto": "Interpretar além do pedido: o pedido é o piso. Proponha a versão mais ousada que venda a creat.MTT (campo alem_do_pedido), com ousadia na forma e verdade no conteúdo.",
+   "origem": "dono 10/11/2026",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_fala_base",
+   "texto": "Em reel da creat.MTT (bastidor, evento), a fala do Marcos para a câmera é a base; imagens do dia entram como prova por cima.",
+   "origem": "dono 11/11/2026",
+   "data": "2026-11-17",
+   "tipos": [
+    "evento",
+    "bastidor",
+    "daily_vlog"
+   ]
+  },
+  {
+   "id": "r_so_dito",
+   "texto": "Legenda só do que foi dito de fato. Palavra incerta fica fora. Correção de legenda só quando confirmada (campo corrigir), nunca para mudar o sentido.",
+   "origem": "GUIA 17/11",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_nome_terceiro",
+   "texto": "Nunca escrever nome próprio de terceiros (médico, atleta, ganhador) em legenda, chip ou texto de tela; use a função (UROLOGISTA, COMPETIDOR). Marcos, Ruan e Xande podem ter chip com nome.",
+   "origem": "GUIA 17/11",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_fatos",
+   "texto": "Não inventar fatos, números ou resultados. Número em tela só se foi dito na fala ou é verdade medida do projeto.",
+   "origem": "GUIA 17/11",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_chips_equipe",
+   "texto": "Marcos, Ruan e Xande aparecem com chip na primeira aparição (MARCOS · creat.MTT etc.). A imagem nunca contradiz a fala: quando a fala cita o Ruan, mostre o Ruan ou mantenha o falante.",
+   "origem": "dono 17/11/2026",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_ruan",
+   "texto": "O nome é RUAN (o dono às vezes fala 'Juan'). Na fala do Marcos em 17/11 'voando na filmagem' é 'RUAN na filmagem'.",
+   "origem": "dono 17/11/2026",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_marca",
+   "texto": "A marca se escreve creat.MTT (creat sem E). Arroba confirmado: @creat.mtt. O fecho termina com a logo da creat.MTT animada e o convite.",
+   "origem": "dono 17/11/2026",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_logo_cliente",
+   "texto": "Logo de cliente nunca em baixa qualidade: só a marca oficial em alta da memória (fecho.logo_cliente = chave da marca); se não houver, deixe null.",
+   "origem": "dono 17/11/2026",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_trilha",
+   "texto": "Trilha com curva emocional de verdade (curva por bloco, um drop), não loop; corte na batida; transições de impacto (whip, máscara, aba71, impacto) com som casado, não corte seco em todo bloco.",
+   "origem": "dono 17/11/2026",
+   "data": "2026-11-17",
+   "tipos": [
+    "evento",
+    "bastidor"
+   ]
+  },
+  {
+   "id": "r_vel",
+   "texto": "Acelerar a fala 1,08x a 1,15x quando ajudar (vel_fala), sem mudar o tom.",
+   "origem": "dono",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_tom_sala",
+   "texto": "Tom de sala nunca vem de trecho com voz (lição 'vai competir' em laço, 17/11). O resolvedor escolhe sozinho um trecho sem fala.",
+   "origem": "dono 17/11/2026",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_dados",
+   "texto": "Telas, crachás e listas com dados de terceiros não podem ficar legíveis: prefira plano sem dado legível ou marque em riscos para desfocar.",
+   "origem": "GUIA 17/11",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_alturas",
+   "texto": "Com os três juntos, o Marcos é o mais alto (1,80 m; Xande e Ruan ~1,73 m). Personagens em desenho só na forma aprovada.",
+   "origem": "dono 11/11/2026",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_falas_curtas",
+   "texto": "Use de/ate para cortar muletas e repetições ('né', 'aí', falso começo) e começar onde a fala está limpa; prefira frases completas.",
+   "origem": "GUIA 17/11",
+   "data": "2026-11-17",
+   "tipos": null
+  },
+  {
+   "id": "r_aba71",
+   "texto": "Assinatura da casa: etiqueta vermelha ABA 71; a transição aba71 leva para a logo no fecho. Abas de navegador como linguagem visual quando o assunto é a creat (70 abas abertas na cabeça).",
+   "origem": "dono",
+   "data": "2026-11-17",
+   "tipos": [
+    "bastidor",
+    "empresa"
+   ]
+  }
+ ],
+ "vocabulario": [
+  {
+   "de": "create",
+   "para": "creat",
+   "origem": "dono 17/11/2026"
+  },
+  {
+   "de": "creit",
+   "para": "creat",
+   "origem": "dono 17/11/2026"
+  },
+  {
+   "de": "crete",
+   "para": "creat",
+   "origem": "dono 17/11/2026"
+  },
+  {
+   "de": "critch",
+   "para": "creat",
+   "origem": "dono 17/11/2026"
+  },
+  {
+   "de": "criê",
+   "para": "creat",
+   "origem": "dono 17/11/2026"
+  },
+  {
+   "de": "contamtt",
+   "para": "MTT",
+   "origem": "dono 17/11/2026"
+  },
+  {
+   "de": "creat.mtt",
+   "para": "creat.MTT",
+   "origem": "dono 17/11/2026"
+  },
+  {
+   "de": "create.mtt",
+   "para": "creat.MTT",
+   "origem": "dono 17/11/2026"
+  },
+  {
+   "de": "juan",
+   "para": "Ruan",
+   "origem": "dono 17/11/2026"
+  }
+ ]
+}

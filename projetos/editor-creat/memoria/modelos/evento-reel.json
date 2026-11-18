@@ -1,0 +1,147 @@
+{
+ "ritmo": {
+  "t0": 0.2,
+  "gap_fala": 0.1,
+  "gap_bloco": 0.22,
+  "pausa_max": 0.28,
+  "folga_in": 0.06,
+  "folga_out": 0.09,
+  "corte_na_batida": true
+ },
+ "gancho": {
+  "modelo": "gancho",
+  "dur": 2.3,
+  "sobrelinha": "// creat.MTT",
+  "y": 0.42
+ },
+ "chip": {
+  "modelo": "chip",
+  "dur": 2.6,
+  "cargo": "creat.MTT"
+ },
+ "texto_tela": {
+  "modelo": "rotulo",
+  "dur": 2.2,
+  "x": 60,
+  "y": 330
+ },
+ "legenda": {
+  "modelo": "legenda",
+  "y": 0.62,
+  "conf_min": 0.5,
+  "enfase": [
+   "creat",
+   "mtt",
+   "qualidade",
+   "sistema",
+   "automação",
+   "automacao",
+   "evento",
+   "energia",
+   "inteligência",
+   "inteligencia",
+   "abas",
+   "comunicação",
+   "comunicacao"
+  ]
+ },
+ "fecho": {
+  "modelo": "fecho",
+  "dur": 3.6,
+  "logo": "assets/marca/logo_creatMTT_claro.png"
+ },
+ "transicoes": {
+  "corte_batida": null,
+  "whip": {
+   "fx": "whip",
+   "dur": 0.26,
+   "sfx": "whip"
+  },
+  "mascara": {
+   "fx": "mascara",
+   "dur": 0.4,
+   "sfx": "mascara"
+  },
+  "aba71": {
+   "fx": "aba71",
+   "dur": 1.0,
+   "sfx": "abre"
+  },
+  "impacto": {
+   "fx": "impacto",
+   "dur": 0.2,
+   "sfx": "impacto"
+  },
+  "match": {
+   "fx": "match",
+   "dur": 0.2,
+   "sfx": null
+  },
+  "flash": {
+   "fx": "flash",
+   "dur": 0.12,
+   "sfx": "risco"
+  },
+  "fade": {
+   "fx": "fade",
+   "dur": 0.5,
+   "sfx": null
+  }
+ },
+ "intensidade": {
+  "1": {
+   "zoom": 1.0
+  },
+  "2": {
+   "zoom": 1.0
+  },
+  "3": {
+   "zoom": 1.06
+  },
+  "4": {
+   "zoom": 1.12
+  },
+  "5": {
+   "zoom": 1.18,
+   "fx": "bloom"
+  }
+ },
+ "sfx": {
+  "gancho": "abre",
+  "troca": "risco",
+  "chip": "chip",
+  "texto_tela": "embaralha",
+  "cta": "cta",
+  "drop": "impacto"
+ },
+ "cobertura": {
+  "dur_padrao": 2.0,
+  "lento_vel": 0.5,
+  "som_direto_db": {
+   "torcida": -14,
+   "impacto": -12,
+   "levantamento": -14,
+   "premiacao": -16
+  }
+ },
+ "trilha": {
+  "ganho_db": -14,
+  "ducking": {
+   "db": 10,
+   "desce": 0.4,
+   "sobe": 0.55
+  }
+ },
+ "tom_sala": {
+  "db": -48,
+  "min_s": 1.5
+ },
+ "estab_px": 4.0,
+ "id": "evento-reel",
+ "nome": "Reel de evento / bastidor",
+ "tipos": [
+  "evento",
+  "bastidor"
+ ],
+ "descricao": "Fala do dono como base, prova do dia por cima, chips da equipe, abas, fecho com logo animada."
+}
