@@ -39,3 +39,10 @@ Atualize este arquivo a cada passo concluído (a máquina reinicia sem aviso). F
 - 18/11 · forja · aceites de novo: A 35/35 (1 de 5 rodadas 34/35 por meta de tempo sob carga), B 30/30, C 31/31 (301 s), D 18/18; pytest 121 ok.
 - 18/11 · forja · E2E fase 1 pelo site (`python -m motor.ferramentas.e2e_fase1`): 14/14, relógio do dono 187 s para 22,3 s de filme (montagem 143 s, QA 32 s). Tentativa 1 reprovada no QA com razão (gancho2 fora da zona segura → kit corrigido; corte sem fecho → fixture com fecho).
 - Relatório: `FASE1_RELATORIO.md`. Próximo: fase 2 (filme inteiro com cérebro real, falante, R2 direto, Modal), ver §5 do relatório.
+
+## Fase 2 · item 5 (QA de kit) — 18/11
+- Cena de estresse `packages/kit/cenas/estresse-textos-longos.json`: gancho, chip, legenda, rótulo, checklist e stats com textos longos e posições ruins. Rodada inicial: **15 falhas de zona segura** (gancho a 977 px; rótulo a x 1287; stats a x 980).
+- Corrigido no kit: `gancho` aceita fonte até 34 px (antes parava em 60 e vazava); `rotulo`, `stats` e `checklist` agora prendem x e largura na zona (x 60 a 960) e o rótulo quebra linha em vez de vazar.
+- Depois: `checar.cjs` na cena de estresse e na demo, **tudo dentro das regras**.
+- Achado aberto: `*destaque*` só vale por palavra; `*PARA NUNCA*` (duas palavras) imprime os asteriscos. Usar `*PARA* *NUNCA*` ou suportar frase no `palavras()`.
+- Lição do Reel 17/11 para o catálogo de transições: transição por luminância (`luma`) abre buracos no rosto de pessoa real (pele clara some antes da sombra). Para plano de rosto usar fusão limpa; `luma` só para cenário sem pessoa em primeiro plano.

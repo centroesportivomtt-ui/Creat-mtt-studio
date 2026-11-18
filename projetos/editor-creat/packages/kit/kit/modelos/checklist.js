@@ -3,7 +3,7 @@
 export default function checklist(ctx, c) {
   const { el, tl, EASE, aba, prog, ease } = ctx;
   const p = c.props, t0 = c.de, w = p.w ?? 400;
-  const card = el("div", "mk-chip", c.el, { position: "absolute", left: (p.x ?? 60) + "px", top: (p.y ?? 420) + "px", width: w + "px", boxSizing: "border-box", padding: "22px 24px 24px",
+  const card = el("div", "mk-chip", c.el, { position: "absolute", left: Math.max(ctx.ZONA.esquerda, Math.min(p.x ?? 60, ctx.W - ctx.ZONA.direita - 260)) + "px", top: (p.y ?? 420) + "px", width: Math.min(w, ctx.W - ctx.ZONA.direita - Math.max(ctx.ZONA.esquerda, Math.min(p.x ?? 60, ctx.W - ctx.ZONA.direita - 260))) + "px", boxSizing: "border-box", padding: "22px 24px 24px",
     background: "rgba(14,14,16,0.86)", borderRadius: "10px", borderTop: "5px solid #FF1A1A", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" });
   const cab = el("div", "", card, { display: "flex", alignItems: "center", gap: "14px" });
   aba(cab, 44, { position: "relative", flex: "0 0 auto" });

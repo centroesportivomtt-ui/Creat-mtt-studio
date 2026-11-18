@@ -6,7 +6,11 @@ export default function rotulo(ctx, c) {
   const cor = p.cor === "vermelho" ? "#FF1A1A" : "#F5B84D";
   const card = el("div", "mk-chip", c.el, { position: "absolute", top: (p.y ?? 400) + "px", display: "flex", alignItems: "center", gap: "14px", padding: "14px 22px 14px 18px",
     background: "rgba(14,14,16,0.84)", borderRadius: "8px", borderLeft: `5px solid ${cor}`, boxShadow: "0 14px 36px rgba(0,0,0,0.35)", whiteSpace: "nowrap" });
-  if (p.direita) card.style.right = (ctx.W - p.x) + "px"; else card.style.left = (p.x ?? 60) + "px";
+  // Zona segura: o cartão nunca passa de x 960 (coluna de botões) nem de x 60; texto longo quebra de linha em vez de vazar.
+  const zD = ctx.W - ctx.ZONA.direita, zE = ctx.ZONA.esquerda;
+  if (p.direita) { const xr = Math.min(p.x, zD); card.style.right = (ctx.W - xr) + "px"; card.style.maxWidth = (xr - zE) + "px"; }
+  else { const xl = Math.max(zE, Math.min(p.x ?? 60, zD - 260)); card.style.left = xl + "px"; card.style.maxWidth = (zD - xl) + "px"; }
+  card.style.whiteSpace = "normal"; card.style.boxSizing = "border-box";
   let pt = null;
   if (p.ponto !== false) pt = el("div", "", card, { width: "16px", height: "16px", borderRadius: "50%", background: cor, flex: "0 0 auto" });
   const tx = el("div", "", card, {});

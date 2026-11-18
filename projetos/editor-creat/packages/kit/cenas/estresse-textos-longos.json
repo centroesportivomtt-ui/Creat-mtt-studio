@@ -1,0 +1,118 @@
+{
+ "nome": "estresse",
+ "formato": {
+  "w": 1080,
+  "h": 1920,
+  "fps": 30
+ },
+ "duracao": 13,
+ "cor": "#0B0B0C",
+ "camadas": [
+  {
+   "id": "fundo1",
+   "modelo": "fundo",
+   "de": 0,
+   "ate": 2,
+   "props": {
+    "tipo": "grafite",
+    "brilho": "245,184,77",
+    "forca": 0.2,
+    "centro": [
+     0.5,
+     0.5
+    ]
+   }
+  },
+  {
+   "id": "gancho1",
+   "modelo": "gancho",
+   "de": 0,
+   "ate": 2,
+   "props": {
+    "linhas": [
+     "A OPERAÇÃO DO DIA INTEIRO",
+     "NÃO *PARA NUNCA* MESMO NO DILÚVIO."
+    ],
+    "y": 0.44
+   }
+  },
+  {
+   "id": "chip1",
+   "modelo": "chip",
+   "de": 2,
+   "ate": 4,
+   "props": {
+    "nome": "Alexandre Henrique de Oliveira Santos",
+    "cargo": "Diretor de operações e criação da creat.MTT Studio",
+    "aba": true,
+    "ponto": true
+   }
+  },
+  {
+   "id": "legenda2",
+   "modelo": "legenda",
+   "de": 4,
+   "ate": 6.4,
+   "props": {
+    "texto": "ESTAMOS FINALIZANDO | O DIA COM HAMBÚRGUER | *ELITE DRAKO GYM*",
+    "y": 0.6,
+    "tamanho": 104
+   }
+  },
+  {
+   "id": "rotulo1",
+   "modelo": "rotulo",
+   "de": 6.4,
+   "ate": 8.4,
+   "props": {
+    "x": 600,
+    "y": 500,
+    "titulo": "A VISÃO DA creat.MTT · CONCEITO",
+    "sub": "BRIEFING · o que o espaço pede para o novo negócio",
+    "cor": "ambar"
+   }
+  },
+  {
+   "id": "checklist1",
+   "modelo": "checklist",
+   "de": 8.4,
+   "ate": 10.8,
+   "props": {
+    "x": 560,
+    "y": 520,
+    "w": 400,
+    "titulo": "BRIEFING · o que o espaço pede",
+    "sub": "EXCLUSIVIDADE E DIFERENCIAL",
+    "itens": [
+     {
+      "t": 8.8,
+      "rot": "PAREDE DE CORDAS COM PINTURA NEON"
+     },
+     {
+      "t": 9.4,
+      "rot": "SAMAMBAIA E PLANTAS NO SALÃO"
+     }
+    ]
+   }
+  },
+  {
+   "id": "stats1",
+   "modelo": "stats",
+   "de": 10.8,
+   "ate": 13,
+   "props": {
+    "x": 560,
+    "y": 520,
+    "w": 420,
+    "titulo": "BASTIDORES DO DIA",
+    "itens": [
+     {
+      "n": 17,
+      "rot": "PEÇAS PRODUZIDAS\nEM UM ÚNICO DIA"
+     }
+    ],
+    "rodape": "creat.MTT STUDIO · SUPER KAL · ELITE DRAKO"
+   }
+  }
+ ]
+}
