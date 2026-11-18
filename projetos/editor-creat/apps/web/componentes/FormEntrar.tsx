@@ -23,6 +23,7 @@ export default function FormEntrar() {
 
   return (
     <form className="entrar__form" onSubmit={entrar} noValidate>
+      <input type="text" name="usuario" autoComplete="username" value="creat.MTT" readOnly hidden />
       <label className="campo">
         <span className="campo__rotulo">Senha da casa</span>
         <input className="entrada" name="senha" type="password" autoComplete="current-password" required

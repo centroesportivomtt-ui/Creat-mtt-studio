@@ -34,16 +34,23 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   const [p, setP] = useState(inicial);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [conectado, setConectado] = useState(false);
-  const [agora, setAgora] = useState(() => Date.now());
+  const [agora, setAgora] = useState<number | null>(null); // só no navegador: evita diferença servidor x cliente
   const [erro, setErro] = useState('');
   const recarga = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ultimoEstado = useRef<{ estado: string; t: number } | null>(null);
 
   const recarregar = useCallback(() => {
     if (recarga.current) clearTimeout(recarga.current);
     recarga.current = setTimeout(async () => {
+      const pedidoEm = performance.now();
       const r = await fetch(`/api/motor/v1/projetos/${inicial.id}`, { cache: 'no-store' }).catch(() => null);
-      if (r?.ok) setP(await r.json());
-      else if (r?.status === 401) window.location.assign('/entrar');
+      if (r?.ok) {
+        const novo = (await r.json()) as TProjeto;
+        // Resposta atrasada não desfaz um estado que chegou depois pelo SSE.
+        const u = ultimoEstado.current;
+        if (u && u.t > pedidoEm) novo.estado = u.estado;
+        setP(novo);
+      } else if (r?.status === 401) window.location.assign('/entrar');
     }, 250);
   }, [inicial.id]);
 
@@ -57,7 +64,10 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       if (vistos.has(e.id)) return;
       vistos.add(e.id);
       setEventos((l) => [...l, e].slice(-400));
-      if (e.estado) setP((x) => ({ ...x, estado: e.estado! }));
+      if (e.estado) {
+        ultimoEstado.current = { estado: e.estado, t: performance.now() };
+        setP((x) => ({ ...x, estado: e.estado! }));
+      }
       if (['arquivo_recebido', 'etapa_fim', 'estado', 'versao_pronta', 'entregue', 'qa_reprovado', 'etapa_erro'].includes(e.tipo)) recarregar();
     };
     for (const t of ['projeto_criado', 'arquivo_recebido', 'etapa_inicio', 'etapa_progresso', 'etapa_fim', 'etapa_erro', 'estado', 'versao_pronta', 'qa_reprovado', 'entregue', 'message']) {
@@ -83,14 +93,15 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     if (!p.dados?.envio_fechado) return null;
     return marcas.lendo ?? marcas.dirigindo ?? null;
   }, [p.dados, marcas]);
-  const fimRelogio = p.estado === 'entregue' ? (marcas.entregue ?? null) : null;
+  const fimRelogio = p.estado === 'entregue' ? (marcas.entregue ?? Date.parse(p.atualizado)) : null;
   const correndo = inicioRelogio !== null && fimRelogio === null && !['erro', 'reprovado_qa'].includes(p.estado);
   useEffect(() => {
+    setAgora(Date.now());
     if (!correndo) return;
     const t = setInterval(() => setAgora(Date.now()), 1000);
     return () => clearInterval(t);
   }, [correndo]);
-  const decorrido = inicioRelogio === null ? 0 : (fimRelogio ?? agora) - inicioRelogio;
+  const decorrido = inicioRelogio === null ? 0 : fimRelogio !== null ? fimRelogio - inicioRelogio : agora === null ? 0 : agora - inicioRelogio;
 
   // ---------- trilha ----------
   const indiceAtual = Math.max(0, ESTADOS.indexOf(p.estado as (typeof ESTADOS)[number]));
