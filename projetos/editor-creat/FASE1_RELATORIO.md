@@ -48,6 +48,8 @@ Cada item tem teste que reproduz o cenário da revisão: `services/motor/tests/t
 | D · site | `cd apps/web && pnpm aceite` | **18/18**, verificação visual 4×4 telas sem erro | 78 s |
 | **E2E fase 1 pelo site** | `python -m motor.ferramentas.e2e_fase1` | **14/14** | 187 s |
 
+Ordem dos testes: os aceites A, C e D rodaram depois das correções da revisão. O B rodou depois da mudança no `reprovar`. As três mudanças posteriores (`gancho2` na zona segura, fixture de EDL e trava da memória) estão cobertas pelo pytest de 121 testes e pelo E2E, que renderizou o `gancho2` novo. O aceite C não foi repetido depois delas, para poupar disco.
+
 Observação: `test_download_retomavel` e `test_zip_so_midia_e_sem_zip_slip` falham quando a máquina tem menos de 0,5 GB livres. É a trava de disco do importador funcionando. Com espaço liberado, passam.
 
 ## 3. Teste ponta a ponta da fase 1 (pelo site, motor real, cérebro fixture)
