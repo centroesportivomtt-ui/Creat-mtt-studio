@@ -6,8 +6,8 @@
   "packageManager": "pnpm@9.15.0",
   "engines": { "node": ">=22" },
   "scripts": {
-    "web": "pnpm --filter @editor-creat/web dev",
-    "aceite:web": "pnpm --filter @editor-creat/web aceite",
+    "web": "cd apps/web && pnpm dev",
+    "aceite:web": "cd apps/web && pnpm install && pnpm aceite",
     "contratos": "python3 packages/schemas/py/validar.py",
     "teste:motor": "cd services/motor && nice -n 5 python3 -m pytest -q -m 'not pago'"
   }

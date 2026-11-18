@@ -19,9 +19,13 @@ Atualize este arquivo a cada passo concluído (a máquina reinicia sem aviso). F
   - Próximo (B): ligar o teste pago com autorização do dono; casos novos a cada filme aprovado; `count_tokens` oficial quando houver chave.
 - [ ] C · motor: montagem e QA — aceite `python -m motor.ferramentas.aceite_c`
   - 18/11 · C · EM ANDAMENTO (Forja). Ordem: kit (beginFrame + workers) → montagem (planos, voz, trilha, mix, overlay, fx, comp) → qa → entrega/versoes → edl_legado → aceite_c. Para continuar: `git log --oneline | grep 'frente C'` e seguir a ordem.
-- [ ] D · site mínimo — aceite `cd apps/web && pnpm aceite`
+- [x] D · site mínimo — aceite `cd apps/web && pnpm install && pnpm aceite` **18/18 ok** (18/11)
+  - 18/11 · D · Next.js 15.5.28 + React 19.1.10 (versões fixas), instalado **isolado** (`apps/web/pnpm-workspace.yaml` próprio: não toca no `node_modules` do kit). Login por senha única (scrypt) + cookie HttpOnly assinado (HMAC, 30 dias, limite de tentativas, POST de outra origem recusado); servidor tus (`@tus/server` 2.4.6 + file-store) grava em `armazenamento/.envio/` e no fim move para `entrada/<p>/` e registra no motor; proxy autenticado `/api/motor/v1/...` (lista fechada, Range e SSE em streaming); telas entrar/projetos/novo/projeto (material, pedido, ilha ao vivo com o relógio dos 30 minutos, versões com player, QA e reprovar com motivo); PWA; `scripts/motor-falso.mjs` (API §4.6 simulada). Detalhes: `apps/web/README.md`.
+  - Tempos do aceite (s): build 22 · envio 300 MB com interrupção e retomada 1,6-3,4 (loopback) · status até entregue 6 (motor falso, passo 450 ms) · verificação visual 4×4 telas 28 · total 76.
+  - Próximo (D): `@tus/s3-store` quando `EDITOR_ARMAZENAMENTO=r2`; envio em segundo plano no celular; pedido por áudio; testar contra o motor real (A+B+C) com o mesmo `EDITOR_DADOS`.
 
 ## Notas
 - O pacote `drako/turbo/` está sendo feito por outro processo: não editar; a frente C importa/copia quando estiver pronto.
 - FastAPI ainda não está instalado nesta máquina (`pip install fastapi`); pytest foi instalado em 18/11.
 - 18/11 · B · mudança de contrato (dona B): `direcao...falas[].corrigir` agora é lista `[{de, para}]` (structured outputs não aceitam chaves livres); `analise.derivados.trechos` opcional (material cortado em trechos). Exemplos continuam válidos; `test_fila` + `test_contratos` verdes. Novas variáveis em `.env.example`: `EDITOR_MEMORIA`, `EDITOR_TRILHAS`, `EDITOR_AUTORIZADO_PAGO`.
+- 18/11 · D · `apps/web` tem `pnpm-workspace.yaml` próprio (instalação isolada); por isso o script da raiz `aceite:web` passou a ser `cd apps/web && pnpm install && pnpm aceite`. Novas variáveis só de desenvolvimento no `.env.example`: `MOTOR_FALSO_PORTA`, `MOTOR_FALSO_PASSO_MS`.

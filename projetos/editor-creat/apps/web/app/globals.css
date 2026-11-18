@@ -147,9 +147,9 @@ textarea.entrada { min-height: 120px; resize: vertical; line-height: 1.45; }
 /* ---------- entrar ---------- */
 .entrar { min-height: 100dvh; display: grid; place-items: center; padding: var(--r5) var(--r4); }
 .entrar__caixa { width: min(100%, 420px); display: grid; gap: var(--r5); }
-.entrar__tc { font: 700 14px/1 var(--fonte-dado); color: var(--cor-ambar-tinta); letter-spacing: 0.06em; }
-.entrar__titulo { font: 400 clamp(56px, 18vw, 96px)/0.88 var(--fonte-display); text-transform: uppercase; }
-.entrar__titulo em { font-style: normal; color: var(--cor-ambar); }
+.entrar__tc { font: 700 14px/1 var(--fonte-dado); color: var(--cor-ambar-tinta); letter-spacing: 0.06em; margin-bottom: var(--r3); }
+.entrar__titulo { font: 400 clamp(56px, 18vw, 96px)/1 var(--fonte-display); text-transform: uppercase; }
+.entrar__titulo em { font-style: normal; color: var(--cor-ambar-tinta); } /* âmbar escuro no claro: contraste AA */
 .entrar__form { display: grid; gap: var(--r3); }
 
 /* ---------- lista de projetos ---------- */
@@ -194,10 +194,13 @@ textarea.entrada { min-height: 120px; resize: vertical; line-height: 1.45; }
 
 /* ---------- projeto ---------- */
 .mesa { display: grid; gap: var(--r4); }
+/* Depois que o envio fecha, a sala de projeção sobe para o topo no celular: o dono quer ver o relógio e o vídeo. */
+.mesa[data-editando='true'] .mesa__projecao { order: -1; }
 @media (min-width: 960px) {
   .mesa { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: start; gap: var(--r5); }
-  .mesa__projecao { position: sticky; top: 88px; }
+  .mesa[data-editando='true'] .mesa__projecao { order: 0; }
 }
+.material-fechado { display: flex; align-items: center; gap: var(--r2); font-size: 15px; color: var(--cor-tinta-2); }
 
 /* relógio dos 30 minutos (momento-assinatura) */
 .relogio { position: relative; overflow: hidden; }
@@ -206,7 +209,7 @@ textarea.entrada { min-height: 120px; resize: vertical; line-height: 1.45; }
   font: 400 clamp(64px, 19vw, 112px)/0.9 var(--fonte-display); letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums; color: var(--cor-tinta);
 }
-.relogio__tc[data-correndo='true'] { color: var(--cor-ambar); }
+.relogio__tc[data-correndo='true'] { color: var(--cor-ambar-tinta); }
 .relogio__meta { font: 700 13px/1.3 var(--fonte-dado); color: var(--cor-tinta-2); text-align: right; }
 .regua { position: relative; height: 34px; margin-top: var(--r3); }
 .regua__trilho { position: absolute; left: 0; right: 0; top: 10px; height: 6px; border-radius: 3px; background: var(--cor-superficie-2); }

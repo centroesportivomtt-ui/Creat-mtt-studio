@@ -149,12 +149,18 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
 
       {erro && <p className="erro" role="alert" style={{ marginBottom: 16 }}>{erro}</p>}
 
-      <div className="mesa">
+      <div className="mesa" data-editando={!aberto}>
         <div className="mesa__mesa">
           <section className="cartao" aria-labelledby="t-material">
             <h2 className="cartao__titulo" id="t-material"><span className="num">01</span> Material</h2>
-            <Envio projeto={p.id} parteMB={parteMB} aberto={aberto} aoConcluir={recarregar} />
-            <Importar aberto={aberto} aoImportar={(url) => postar('/importar', { url })} />
+            {aberto ? (
+              <>
+                <Envio projeto={p.id} parteMB={parteMB} aberto={aberto} aoConcluir={recarregar} />
+                <Importar aberto={aberto} aoImportar={(url) => postar('/importar', { url })} />
+              </>
+            ) : (
+              <p className="material-fechado">Envio fechado: o editor está trabalhando com este material. Material novo entra numa nova versão.</p>
+            )}
             {p.arquivos.length > 0 && (
               <ul className="arquivos" aria-label="Arquivos no projeto">
                 {p.arquivos.map((a) => (
@@ -165,12 +171,12 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
                 ))}
               </ul>
             )}
-            <div className="linha-acoes">
+            {aberto && <div className="linha-acoes">
               <button type="button" className="botao botao--fantasma" disabled={!p.arquivos.length || fechado || !aberto}
                 onClick={() => postar('/fechar-envio')} data-teste="fechar-envio">
-                {fechado ? 'Envio fechado' : 'Terminei de enviar'}
+                {fechado ? 'Envio fechado, aguardando o pedido' : 'Terminei de enviar'}
               </button>
-            </div>
+            </div>}
           </section>
 
           <section className="cartao" aria-labelledby="t-pedido">
@@ -225,7 +231,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
             <h2 className="cartao__titulo" id="t-versoes"><span className="num">04</span> Versões</h2>
             {assistir ? (
               <video key={assistir.id} className="player" controls playsInline preload="metadata" data-teste="player" data-versao={assistir.id}
-                src={`/api/motor/v1/arquivos/${assistir.video}`} aria-label={`Versão ${assistir.id}`} />
+                src={`/api/motor/v1/arquivos/${assistir.video}#t=0.1`} aria-label={`Versão ${assistir.id}`} />
             ) : (
               <div className="player-vazio"><p>A primeira versão aparece aqui assim que passar no QA.</p></div>
             )}
