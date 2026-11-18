@@ -23,6 +23,11 @@ ETAPAS_DE_ARQUIVO = ("ingest", "analise")
 ESTADOS_FINAIS = ("entregue", "erro", "reprovado_qa")
 
 
+def _cerebro_fixo(d: dict) -> bool:
+    """A última direção veio de um cérebro fixture (não muda nada ao 'corrigir')."""
+    return str(d.get("cerebro_ultimo", "")).startswith("fixture")
+
+
 def pronto_para_dirigir(con, projeto: str) -> bool:
     """Envio fechado + pedido + todo arquivo lido. Arquivo que falhou de vez (vídeo corrompido) fica de fora com aviso,
     em vez de travar o projeto para sempre; precisa sobrar pelo menos um arquivo lido."""
@@ -55,6 +60,10 @@ def depois(con, job: dict, saida: dict | None) -> None:
         banco.enfileirar(con, "direcao", projeto, entrada=saida, prioridade=2)
     elif etapa == "direcao":
         versao = saida.get("versao") or "v1"
+        if saida.get("cerebro"):
+            d = _dados(con, projeto)
+            d["cerebro_ultimo"] = saida["cerebro"]
+            con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), projeto))
         banco.enfileirar(con, "montagem", projeto, versao, prioridade=2)
         banco.mudar_estado(con, projeto, "montando", f"Direção pronta. Montando a versão {versao}.")
     elif etapa == "montagem":
@@ -66,13 +75,16 @@ def depois(con, job: dict, saida: dict | None) -> None:
         else:
             d = _dados(con, projeto)
             n = int(d.get("correcoes_auto", 0))
+            if _cerebro_fixo(d):
+                n = MAX_CORRECOES_AUTOMATICAS   # fixture devolve a mesma direção: refazer gastaria 2 renders à toa
             if n < MAX_CORRECOES_AUTOMATICAS:
                 d["correcoes_auto"] = n + 1
                 con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), projeto))
                 banco.enfileirar(con, "direcao", projeto, entrada={"corrigir_qa": saida, "versao_anterior": alvo}, prioridade=1)
                 banco.emitir(con, projeto, "qa_reprovado", etapa="qa", alvo=alvo, mensagem="A conferência achou problema; corrigindo sozinho.", dados=saida)
             else:
-                banco.mudar_estado(con, projeto, "reprovado_qa", "A conferência reprovou 3 vezes. Precisa de olho humano.")
+                banco.mudar_estado(con, projeto, "reprovado_qa", "A conferência reprovou e o ajuste automático não resolveu. Precisa de olho humano."
+                                   if not _cerebro_fixo(d) else "A conferência reprovou (cérebro fixture não corrige sozinho). Precisa de olho humano.")
     elif etapa == "entrega":
         banco.mudar_estado(con, projeto, "entregue", "Vídeo pronto.")
         banco.emitir(con, projeto, "entregue", etapa="entrega", alvo=alvo, dados=saida)

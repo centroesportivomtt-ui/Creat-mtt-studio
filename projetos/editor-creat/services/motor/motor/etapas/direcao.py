@@ -124,13 +124,16 @@ def rodar(ctx) -> dict:
     chave = _hash(orcamento.estimar_tokens(cat_txt), armazem_b_hash(cat_txt), pedido, correcao)
     feito = indice["por_entrada"].get(chave)
     if feito and arm.existe(f"saidas/{p}/{feito}/edl.json"):
-        return {"versao": feito, "reaproveitada": True}
+        return {"versao": feito, "reaproveitada": True, "cerebro": ctx.cfg.cerebro}
     if correcao and correcao.get("versao_anterior"):
         n_ant = int(str(correcao["versao_anterior"]).lstrip("v") or 0)
         try:
             correcao["direcao_anterior"] = arm.ler_json(f"projetos/{p}/direcao_{n_ant}.json")
         except FileNotFoundError:
             pass
+    from motor.cerebro import edl_fixo
+    if ctx.cfg.cerebro == "fixture" and edl_fixo.ativo():
+        return _dirigir_com_edl_fixo(ctx, arm, indice, chave, correcao)
     loja = Loja()
     analises = {}
     for k in arm.listar(f"derivados/{p}/"):
@@ -156,7 +159,40 @@ def rodar(ctx) -> dict:
     banco.emitir(ctx.con, p, "etapa_progresso", etapa="direcao", alvo=v, progresso=1.0,
                  mensagem=f"Direção pronta ({r['edl']['duracao']:.0f} s, {len(r['edl']['voz'])} trechos de fala). Custo: US$ {total['custo_usd']:.2f}.",
                  dados={"tokens": total, "avisos": r["avisos"][:5]})
-    return {"versao": v, "duracao": r["edl"]["duracao"], "tokens_saida": total["saida"], "custo_usd": total["custo_usd"]}
+    return {"versao": v, "duracao": r["edl"]["duracao"], "tokens_saida": total["saida"], "custo_usd": total["custo_usd"], "cerebro": cerebro.nome}
+
+
+def _dirigir_com_edl_fixo(ctx, arm, indice, chave, correcao) -> dict:
+    """Fixture de EDL (EDITOR_CEREBRO_EDL): a 'resposta do cérebro' é um EDL pronto. Zero token. Correção automática do
+    QA não existe aqui (o EDL é fixo): reprovação vai direto para o dono."""
+    import os
+    from motor.cerebro import edl_fixo
+    p = ctx.projeto
+    if correcao and correcao.get("corrigir_qa"):
+        raise ErroDefinitivo("cérebro fixture (EDL fixo) não corrige sozinho o que o QA reprovou")
+    edl = edl_fixo.carregar(edl_fixo.ativo())
+    ate = os.environ.get("EDITOR_CEREBRO_EDL_ATE", "").strip()
+    if ate:
+        edl = edl_fixo.prefixo(edl, float(ate))
+    arquivos = [dict(r) for r in ctx.con.execute("SELECT nome, chave FROM arquivos WHERE projeto=? AND estado='analisado'", (p,))]
+    edl, trocadas = edl_fixo.para_o_projeto(edl, p, arquivos)
+    import validar
+    erros = validar.erros("edl", edl)
+    if erros:
+        raise ErroDefinitivo("EDL fixo fora do schema: " + "; ".join(erros[:3]))
+    n = int(indice.get("ultima", 0)) + 1
+    v = f"v{n}"
+    edl["origem"].update({"versao": v, "cerebro": "fixture-edl", "fontes_do_envio": trocadas})
+    arm.gravar_json(f"saidas/{p}/{v}/edl.json", edl)
+    arm.gravar_json(f"projetos/{p}/uso_{n}.json", {"versao": v, "chamadas": [], "total": {"entrada": 0, "saida": 0, "custo_usd": 0.0},
+                                                    "cerebro": "fixture-edl"})
+    indice["por_entrada"][chave] = v
+    indice["ultima"] = n
+    arm.gravar_json(f"projetos/{p}/direcoes.json", indice)
+    ctx.con.execute("INSERT OR REPLACE INTO versoes (id, projeto, estado, criado) VALUES (?,?,?,?)", (v, p, "montando", banco.agora_iso()))
+    banco.emitir(ctx.con, p, "etapa_progresso", etapa="direcao", alvo=v, progresso=1.0,
+                 mensagem=f"Direção pronta (EDL fixo, {edl['duracao']:.0f} s, {len(edl['voz'])} trechos de fala; {len(trocadas)} fonte(s) do envio). Custo: US$ 0,00.")
+    return {"versao": v, "duracao": edl["duracao"], "tokens_saida": 0, "custo_usd": 0.0, "fontes_do_envio": trocadas, "cerebro": "fixture-edl"}
 
 
 def armazem_b_hash(txt: str) -> str:
