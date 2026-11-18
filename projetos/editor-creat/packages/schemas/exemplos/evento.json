@@ -1,0 +1,12 @@
+{
+ "id": 12,
+ "projeto": "p_demo",
+ "ts": "2026-11-18T15:20:00Z",
+ "tipo": "etapa_progresso",
+ "etapa": "montagem",
+ "alvo": "v1",
+ "progresso": 0.42,
+ "estado": null,
+ "mensagem": "Renderizando os planos (26 de 61)",
+ "dados": null
+}

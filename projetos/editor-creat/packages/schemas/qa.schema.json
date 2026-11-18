@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creatmtt.local/schemas/qa.schema.json",
+  "title": "Relatório de QA automático",
+  "description": "Saída da etapa qa (frente C). Uma versão só é entregue com aprovado=true. Cada reprovação do dono vira uma checagem nova aqui (memória).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["versao", "projeto", "video", "aprovado", "checagens"],
+  "properties": {
+    "versao": { "const": "1" },
+    "projeto": { "type": "string" },
+    "video": { "type": "string", "description": "Chave do vídeo conferido." },
+    "aprovado": { "type": "boolean" },
+    "checagens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "ok", "bloqueia"],
+        "properties": {
+          "id": { "enum": ["frase_repetida", "tom_sala_sem_voz", "logo_100", "lufs", "true_peak", "quadros_pretos", "legenda_x_fala", "zona_segura", "legenda_sobre_rosto", "formato", "duracao", "sincronia", "telas_desfocadas", "regra_memoria"] },
+          "ok": { "type": "boolean" },
+          "bloqueia": { "type": "boolean" },
+          "valor": {},
+          "detalhe": { "type": "string" },
+          "evidencia": { "type": "array", "items": { "type": "string" }, "description": "Chaves de quadros/trechos para olhar." }
+        }
+      }
+    },
+    "tempo_s": { "type": "number" }
+  }
+}

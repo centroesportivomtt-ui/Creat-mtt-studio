@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creatmtt.local/schemas/edl.schema.json",
+  "title": "EDL de montagem",
+  "description": "Fonte única da montagem (frente C). Gerado pelo resolvedor a partir da direção + catálogo + análises; nunca escrito à mão pelo cérebro. Unifica os edl.json reais de 17/11 (V1: planos/voz/sfx/fx; V2: pecas/segs/planos/eventos). Tempos em SEGUNDOS: t0/t1 = linha do tempo do filme; s0/s1 = tempo da fonte (original). A montagem quantiza em quadros.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["versao", "projeto", "formato", "duracao", "fontes", "voz", "planos", "motion", "legendas", "trilha", "sfx", "master"],
+  "$defs": {
+    "kf": { "type": "array", "description": "[u, zoom, cx, cy] com u = 0..1 dentro do plano (V1 kf / V2 z0,z1,cx,cy).", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 } },
+    "evt": { "type": "array", "description": "[u, dur, força]", "items": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 } }
+  },
+  "properties": {
+    "versao": { "const": "1" },
+    "projeto": { "type": "string" },
+    "origem": { "type": "object", "additionalProperties": true, "description": "Rastreio: id da direção, hash do catálogo, modelo/cérebro usados, tokens." },
+    "formato": {
+      "type": "object", "additionalProperties": false, "required": ["w", "h", "fps"],
+      "properties": { "w": { "type": "integer" }, "h": { "type": "integer" }, "fps": { "type": "number" } }
+    },
+    "duracao": { "type": "number", "minimum": 1 },
+    "vel_fala": { "type": "number", "default": 1.0 },
+    "blocos": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": false, "required": ["id", "t0", "t1"], "properties": { "id": { "type": "string" }, "funcao": { "type": "string" }, "intensidade": { "type": "integer" }, "t0": { "type": "number" }, "t1": { "type": "number" } } }
+    },
+    "fontes": {
+      "type": "object",
+      "description": "id do clipe -> de onde ler.",
+      "additionalProperties": {
+        "type": "object", "additionalProperties": false, "required": ["chave"],
+        "properties": {
+          "chave": { "type": "string", "description": "Chave no armazenamento ou caminho absoluto (fixtures)." },
+          "audio": { "type": ["string", "null"] },
+          "offset": { "type": "number", "default": 0, "description": "tempo_fonte = offset + tempo_no_arquivo (trechos cortados)." },
+          "rotacao": { "type": "integer", "default": 0 },
+          "fps": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "voz": {
+      "type": "array",
+      "description": "Peças de fala (V2 pecas / V1 voz). A voz é a espinha: planos e música se encaixam nela.",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "fonte", "s0", "s1", "t0", "t1"],
+        "properties": {
+          "id": { "type": "string" },
+          "bloco": { "type": ["string", "null"] },
+          "fala": { "type": ["string", "null"], "description": "Id da fala no catálogo." },
+          "fonte": { "type": "string" },
+          "s0": { "type": "number" }, "s1": { "type": "number" },
+          "t0": { "type": "number" }, "t1": { "type": "number" },
+          "vel": { "type": "number", "default": 1.0 },
+          "ganho_db": { "type": "number", "default": 0 },
+          "limpeza": { "type": "object", "additionalProperties": false, "properties": { "atenuacao_db": { "type": "number", "default": 15 }, "mistura": { "type": "number", "default": 0.8 } } },
+          "texto": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "planos": {
+      "type": "array",
+      "description": "Imagem (V1 planos / V2 planos.json).",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "t0", "t1", "fonte", "s0"],
+        "properties": {
+          "id": { "type": "string" },
+          "bloco": { "type": ["string", "null"] },
+          "t0": { "type": "number" }, "t1": { "type": "number" },
+          "fonte": { "type": "string" },
+          "s0": { "type": "number" },
+          "vel": { "type": "number", "default": 1.0 },
+          "rampa": { "type": "array", "description": "[[u, s_fonte], ...] remapeamento de tempo (V1 ts).", "items": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 } },
+          "enquadre": { "$ref": "#/$defs/kf" },
+          "estab": { "enum": ["auto", "sim", "nao"], "default": "auto" },
+          "cor": { "type": "string", "default": "neutro", "description": "Look por ambiente (salao, mesa, corredor, claro, laranja, palco, frio, sala...)." },
+          "som_direto_db": { "type": ["number", "null"], "description": "Som do próprio plano como textura (V1 nat)." },
+          "flash": { "$ref": "#/$defs/evt" },
+          "tremor": { "$ref": "#/$defs/evt" },
+          "desfocar": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 }, "description": "Caixas normalizadas a desfocar (telas com dados de terceiros)." },
+          "janela": { "type": ["object", "null"], "description": "PiP/janela-aba (V2 janelas): {x,y,w,h,titulo}." },
+          "mblur": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "motion": {
+      "type": "array",
+      "description": "Camadas do kit (mesmo contrato de packages/kit/cenas/*.json -> camadas).",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "modelo", "de", "ate", "props"],
+        "properties": { "id": { "type": "string" }, "modelo": { "type": "string" }, "de": { "type": "number" }, "ate": { "type": "number" }, "props": { "type": "object" } }
+      }
+    },
+    "legendas": {
+      "type": "object", "additionalProperties": false, "required": ["palavras"],
+      "properties": {
+        "modelo": { "type": "string", "default": "legenda" },
+        "y": { "type": "number", "default": 0.62 },
+        "palavras": { "type": "array", "description": "[t0, t1, texto, ênfase 0/1] na linha do tempo do filme. Só palavra dita e confirmada.", "items": { "type": "array", "minItems": 3, "maxItems": 4 } }
+      }
+    },
+    "fx": {
+      "type": "array",
+      "description": "Transições e efeitos de impacto (V1 fx / V2 whips).",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["tipo", "t"],
+        "properties": {
+          "tipo": { "enum": ["whip", "mascara", "aba71", "impacto", "bloom", "leak", "zoomt", "gagueira", "rush", "foto", "flash", "match", "fade"] },
+          "t": { "type": "number" }, "dur": { "type": "number" }, "forca": { "type": "number" }, "dir": { "type": "number" }, "nome": { "type": "string" }
+        }
+      }
+    },
+    "trilha": {
+      "type": "object", "additionalProperties": false, "required": ["chave"],
+      "properties": {
+        "chave": { "type": ["string", "null"] },
+        "bpm": { "type": ["number", "null"] },
+        "fase": { "type": "number", "default": 0, "description": "Tempo (s) da 1a batida no arquivo." },
+        "emendas": { "type": "array", "description": "[t_filme, s_trilha_de, s_trilha_ate, xf]: trechos da trilha na ordem (V1 trilha2 / V2 corte km).", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 } },
+        "ganho_db": { "type": "number", "default": -14 },
+        "ducking": { "type": "object", "additionalProperties": false, "properties": { "db": { "type": "number", "default": 10 }, "desce": { "type": "number", "default": 0.4 }, "sobe": { "type": "number", "default": 0.55 } } },
+        "acorde_final": { "type": ["number", "null"], "description": "t do filme onde o acorde final cai (logo)." }
+      }
+    },
+    "sfx": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": false, "required": ["t", "som"], "properties": { "t": { "type": "number" }, "som": { "type": "string" }, "g": { "type": "number", "default": -8 }, "pan": { "type": "number", "default": 0 } } }
+    },
+    "tom_sala": {
+      "type": ["object", "null"], "additionalProperties": false, "required": ["fonte", "s0", "s1"],
+      "properties": { "fonte": { "type": "string" }, "s0": { "type": "number" }, "s1": { "type": "number" }, "db": { "type": "number", "default": -48 } },
+      "description": "Trecho SEM voz (o QA confere transcrevendo o stem; lição do laço 'vai competir')."
+    },
+    "master": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "lufs": { "type": "number", "default": -14 }, "tp": { "type": "number", "default": -1.0 }, "crf": { "type": "integer", "default": 17 } }
+    },
+    "qa": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "logos": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["t", "chave"], "properties": { "t": { "type": "number" }, "chave": { "type": "string" } } } },
+        "falas_confirmadas": { "type": "array", "items": { "type": "string" } },
+        "riscos": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

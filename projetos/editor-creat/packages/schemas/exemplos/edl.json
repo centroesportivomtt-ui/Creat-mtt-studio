@@ -1,0 +1,266 @@
+{
+ "versao": "1",
+ "projeto": "p_demo",
+ "origem": {
+  "direcao": "d001",
+  "cerebro": "fixture"
+ },
+ "formato": {
+  "w": 1080,
+  "h": 1920,
+  "fps": 30
+ },
+ "duracao": 10.0,
+ "vel_fala": 1.1,
+ "blocos": [
+  {
+   "id": "B1",
+   "funcao": "gancho",
+   "intensidade": 4,
+   "t0": 0.0,
+   "t1": 3.0
+  },
+  {
+   "id": "B2",
+   "funcao": "convite",
+   "intensidade": 5,
+   "t0": 3.0,
+   "t1": 10.0
+  }
+ ],
+ "fontes": {
+  "a001": {
+   "chave": "entrada/p_demo/a001.mov",
+   "audio": "derivados/p_demo/a001/audio.wav",
+   "offset": 0,
+   "rotacao": -90,
+   "fps": 30
+  }
+ },
+ "voz": [
+  {
+   "id": "V1",
+   "bloco": "B1",
+   "fala": "F01.1",
+   "fonte": "a001",
+   "s0": 0.35,
+   "s1": 3.15,
+   "t0": 0.2,
+   "t1": 2.75,
+   "vel": 1.1,
+   "ganho_db": 0,
+   "limpeza": {
+    "atenuacao_db": 15,
+    "mistura": 0.8
+   },
+   "texto": "o pessoal da creat tá aqui"
+  }
+ ],
+ "planos": [
+  {
+   "id": "P1",
+   "bloco": "B1",
+   "t0": 0.0,
+   "t1": 3.0,
+   "fonte": "a001",
+   "s0": 0.2,
+   "vel": 1.1,
+   "enquadre": [
+    [
+     0,
+     1.15,
+     0.5,
+     0.4
+    ],
+    [
+     1,
+     1.22,
+     0.5,
+     0.4
+    ]
+   ],
+   "estab": "auto",
+   "cor": "mesa",
+   "som_direto_db": null,
+   "flash": [
+    [
+     0,
+     0.4,
+     0.1
+    ]
+   ]
+  },
+  {
+   "id": "P2",
+   "bloco": "B2",
+   "t0": 3.0,
+   "t1": 6.0,
+   "fonte": "a001",
+   "s0": 6.5,
+   "vel": 1.0,
+   "enquadre": [
+    [
+     0,
+     1.1,
+     0.5,
+     0.5
+    ],
+    [
+     1,
+     1.35,
+     0.5,
+     0.45
+    ]
+   ],
+   "estab": "sim",
+   "cor": "salao",
+   "som_direto_db": -8
+  }
+ ],
+ "motion": [
+  {
+   "id": "gancho",
+   "modelo": "gancho",
+   "de": 0,
+   "ate": 2.9,
+   "props": {
+    "linhas": [
+     "NÃO É SÓ",
+     "FILMAR."
+    ],
+    "troca": {
+     "de": "FILMAR",
+     "para": "CONTAR",
+     "em": 1.2,
+     "dur": 0.36
+    },
+    "y": 0.44
+   }
+  },
+  {
+   "id": "chip1",
+   "modelo": "chip",
+   "de": 0.4,
+   "ate": 2.8,
+   "props": {
+    "nome": "MARCOS",
+    "funcao": "creat.MTT"
+   }
+  },
+  {
+   "id": "fecho",
+   "modelo": "fecho",
+   "de": 6.0,
+   "ate": 10.0,
+   "props": {
+    "cta": "MANDA NO DIRECT.",
+    "apoio": "@creat.mtt"
+   }
+  }
+ ],
+ "legendas": {
+  "modelo": "legenda",
+  "y": 0.62,
+  "palavras": [
+   [
+    0.2,
+    0.47,
+    "o",
+    0
+   ],
+   [
+    0.47,
+    0.93,
+    "pessoal",
+    0
+   ],
+   [
+    0.93,
+    1.11,
+    "da",
+    0
+   ],
+   [
+    1.11,
+    1.56,
+    "creat",
+    1
+   ],
+   [
+    1.56,
+    1.84,
+    "tá",
+    0
+   ],
+   [
+    1.84,
+    2.65,
+    "aqui",
+    0
+   ]
+  ]
+ },
+ "fx": [
+  {
+   "tipo": "whip",
+   "t": 3.0,
+   "dur": 0.3,
+   "dir": 1
+  },
+  {
+   "tipo": "aba71",
+   "t": 6.0,
+   "dur": 0.8
+  }
+ ],
+ "trilha": {
+  "chave": null,
+  "bpm": 104,
+  "fase": 0,
+  "emendas": [],
+  "ganho_db": -14,
+  "ducking": {
+   "db": 10,
+   "desce": 0.4,
+   "sobe": 0.55
+  },
+  "acorde_final": 6.3
+ },
+ "sfx": [
+  {
+   "t": 0.0,
+   "som": "hit_boom_grave",
+   "g": -9,
+   "pan": 0
+  },
+  {
+   "t": 2.9,
+   "som": "whoosh_curto",
+   "g": -10,
+   "pan": 0.2
+  }
+ ],
+ "tom_sala": {
+  "fonte": "a001",
+  "s0": 9.0,
+  "s1": 11.5,
+  "db": -48
+ },
+ "master": {
+  "lufs": -14,
+  "tp": -1.0,
+  "crf": 17
+ },
+ "qa": {
+  "logos": [
+   {
+    "t": 8.0,
+    "chave": "marca/creatmtt_claro.png"
+   }
+  ],
+  "falas_confirmadas": [],
+  "riscos": [
+   "'creat' com confiança 0,7"
+  ]
+ }
+}

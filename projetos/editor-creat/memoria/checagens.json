@@ -1,0 +1,86 @@
+{
+ "versao": "1",
+ "checagens": [
+  {
+   "id": "c_arroba_fecho",
+   "executor": "edl",
+   "tipo": "fecho_contem",
+   "params": {
+    "texto": "@creat.mtt"
+   },
+   "descricao": "O fecho mostra o arroba confirmado @creat.mtt.",
+   "origem": "dono 17/11/2026",
+   "gravidade": "bloqueia"
+  },
+  {
+   "id": "c_marca_sem_e",
+   "executor": "edl",
+   "tipo": "legenda_proibida",
+   "params": {
+    "palavras": [
+     "create",
+     "creit",
+     "crete",
+     "critch"
+    ]
+   },
+   "descricao": "A marca na legenda é creat (sem E).",
+   "origem": "dono 17/11/2026",
+   "gravidade": "bloqueia"
+  },
+  {
+   "id": "c_voando",
+   "executor": "edl",
+   "tipo": "legenda_proibida",
+   "params": {
+    "palavras": [
+     "voando"
+    ]
+   },
+   "descricao": "'voando na filmagem' é 'RUAN na filmagem'.",
+   "origem": "dono 17/11/2026",
+   "gravidade": "bloqueia"
+  },
+  {
+   "id": "c_tom_sala",
+   "executor": "qa",
+   "tipo": "tom_sala_sem_voz",
+   "params": {},
+   "descricao": "Tom de sala sem voz (transcrever o stem de ambiente).",
+   "origem": "dono 17/11/2026",
+   "gravidade": "bloqueia"
+  },
+  {
+   "id": "c_frase_repetida",
+   "executor": "qa",
+   "tipo": "frase_repetida",
+   "params": {
+    "min_palavras": 3,
+    "min_vezes": 3
+   },
+   "descricao": "Frase repetida no mix é defeito até prova em contrário.",
+   "origem": "dono 17/11/2026",
+   "gravidade": "bloqueia"
+  },
+  {
+   "id": "c_logo_100",
+   "executor": "qa",
+   "tipo": "logo_100",
+   "params": {},
+   "descricao": "Logo em tela cheia conferida a 100% em quadro 1080x1920.",
+   "origem": "dono 17/11/2026",
+   "gravidade": "bloqueia"
+  },
+  {
+   "id": "c_vazio",
+   "executor": "edl",
+   "tipo": "vazio_max_s",
+   "params": {
+    "s": 1.2
+   },
+   "descricao": "Nenhum vazio sem voz, sem efeito e sem texto maior que 1,2 s (ar morto).",
+   "origem": "dono 10/11/2026",
+   "gravidade": "aviso"
+  }
+ ]
+}

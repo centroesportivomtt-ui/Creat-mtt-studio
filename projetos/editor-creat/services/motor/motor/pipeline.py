@@ -1,0 +1,144 @@
+"""Encadeamento das etapas. Chamado pelo worker depois que um job termina bem.
+
+Fluxo (ARQUITETURA.md §3):
+  arquivo registrado -> ingest(arquivo) -> analise(arquivo)
+  [todas as análises prontas + envio fechado + pedido] -> catalogo -> direcao -> montagem(versao) -> qa(versao)
+  qa aprovado -> entrega(versao)      qa reprovado -> direcao de novo com o relatório (até 2 vezes) -> senão 'reprovado_qa'
+"""
+from __future__ import annotations
+
+import json
+
+from motor import banco
+
+MAX_CORRECOES_AUTOMATICAS = 2
+
+
+def _dados(con, projeto: str) -> dict:
+    r = con.execute("SELECT dados FROM projetos WHERE id=?", (projeto,)).fetchone()
+    return json.loads(r["dados"]) if r else {}
+
+
+ETAPAS_DE_ARQUIVO = ("ingest", "analise")
+ESTADOS_FINAIS = ("entregue", "erro", "reprovado_qa")
+
+
+def _cerebro_fixo(d: dict) -> bool:
+    """A última direção veio de um cérebro fixture (não muda nada ao 'corrigir')."""
+    return str(d.get("cerebro_ultimo", "")).startswith("fixture")
+
+
+def pronto_para_dirigir(con, projeto: str) -> bool:
+    """Envio fechado + pedido + todo arquivo lido. Arquivo que falhou de vez (vídeo corrompido) fica de fora com aviso,
+    em vez de travar o projeto para sempre; precisa sobrar pelo menos um arquivo lido."""
+    d = _dados(con, projeto)
+    if not d.get("envio_fechado") or not d.get("pedido"):
+        return False
+    r = con.execute("""SELECT SUM(estado='analisado') lidos, SUM(estado NOT IN ('analisado','falhou')) pendentes
+                       FROM arquivos WHERE projeto=?""", (projeto,)).fetchone()
+    return (r["pendentes"] or 0) == 0 and (r["lidos"] or 0) > 0
+
+
+def tentar_dirigir(con, projeto: str) -> bool:
+    if pronto_para_dirigir(con, projeto):
+        banco.enfileirar(con, "catalogo", projeto, prioridade=3)
+        banco.mudar_estado(con, projeto, "dirigindo", "Material lido. Montando o catálogo para a direção.")
+        return True
+    return False
+
+
+def depois(con, job: dict, saida: dict | None) -> None:
+    etapa, projeto, alvo = job["etapa"], job["projeto"], job.get("alvo")
+    saida = saida or {}
+    if etapa == "ingest":
+        con.execute("UPDATE arquivos SET estado='ingerido' WHERE projeto=? AND id=?", (projeto, alvo))
+        banco.enfileirar(con, "analise", projeto, alvo, prioridade=4)
+    elif etapa == "analise":
+        con.execute("UPDATE arquivos SET estado='analisado' WHERE projeto=? AND id=?", (projeto, alvo))
+        tentar_dirigir(con, projeto)
+    elif etapa == "catalogo":
+        banco.enfileirar(con, "direcao", projeto, entrada=saida, prioridade=2)
+    elif etapa == "direcao":
+        versao = saida.get("versao") or "v1"
+        if saida.get("cerebro"):
+            d = _dados(con, projeto)
+            d["cerebro_ultimo"] = saida["cerebro"]
+            con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), projeto))
+        banco.enfileirar(con, "montagem", projeto, versao, prioridade=2)
+        banco.mudar_estado(con, projeto, "montando", f"Direção pronta. Montando a versão {versao}.")
+    elif etapa == "montagem":
+        banco.enfileirar(con, "qa", projeto, alvo, prioridade=1)
+        banco.mudar_estado(con, projeto, "conferindo", "Conferência automática (áudio, logo, legendas, zona segura).")
+    elif etapa == "qa":
+        if saida.get("aprovado"):
+            banco.enfileirar(con, "entrega", projeto, alvo, prioridade=1)
+        else:
+            d = _dados(con, projeto)
+            n = int(d.get("correcoes_auto", 0))
+            if _cerebro_fixo(d):
+                n = MAX_CORRECOES_AUTOMATICAS   # fixture devolve a mesma direção: refazer gastaria 2 renders à toa
+            if n < MAX_CORRECOES_AUTOMATICAS:
+                d["correcoes_auto"] = n + 1
+                con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), projeto))
+                banco.enfileirar(con, "direcao", projeto, entrada={"corrigir_qa": saida, "versao_anterior": alvo}, prioridade=1)
+                banco.emitir(con, projeto, "qa_reprovado", etapa="qa", alvo=alvo, mensagem="A conferência achou problema; corrigindo sozinho.", dados=saida)
+            else:
+                banco.mudar_estado(con, projeto, "reprovado_qa", "A conferência reprovou e o ajuste automático não resolveu. Precisa de olho humano."
+                                   if not _cerebro_fixo(d) else "A conferência reprovou (cérebro fixture não corrige sozinho). Precisa de olho humano.")
+    elif etapa == "entrega":
+        banco.mudar_estado(con, projeto, "entregue", "Vídeo pronto.")
+        banco.emitir(con, projeto, "entregue", etapa="entrega", alvo=alvo, dados=saida)
+
+
+def falha_definitiva(con, job: dict, mensagem: str) -> None:
+    """Job que não vai mais ser tentado. Arquivo: fica de fora (com aviso) e o projeto segue com o resto.
+    Qualquer outra etapa: o projeto vai para 'erro' com a mensagem (o relógio do site para e o dono vê o motivo)."""
+    etapa, projeto, alvo = job["etapa"], job["projeto"], job.get("alvo")
+    msg = (mensagem or "").strip().splitlines()[-1][:300] if mensagem else "falhou"
+    if etapa in ETAPAS_DE_ARQUIVO and alvo not in (None, "-"):
+        con.execute("UPDATE arquivos SET estado='falhou' WHERE projeto=? AND id=?", (projeto, alvo))
+        nome = con.execute("SELECT nome FROM arquivos WHERE projeto=? AND id=?", (projeto, alvo)).fetchone()
+        banco.emitir(con, projeto, "aviso", etapa=etapa, alvo=alvo,
+                     mensagem=f"O arquivo {nome['nome'] if nome else alvo} não pôde ser lido e ficou de fora: {msg}")
+        r = con.execute("SELECT SUM(estado='analisado') lidos, SUM(estado NOT IN ('analisado','falhou')) pendentes "
+                        "FROM arquivos WHERE projeto=?", (projeto,)).fetchone()
+        if (r["pendentes"] or 0) == 0 and not (r["lidos"] or 0) and _dados(con, projeto).get("envio_fechado"):
+            banco.mudar_estado(con, projeto, "erro", "Nenhum arquivo do envio pôde ser lido. Mande o material de novo.")
+        else:
+            tentar_dirigir(con, projeto)
+        return
+    if etapa in ("montagem", "qa", "entrega") and alvo not in (None, "-"):
+        con.execute("UPDATE versoes SET estado='erro' WHERE projeto=? AND id=? AND estado!='entregue'", (projeto, alvo))
+    banco.mudar_estado(con, projeto, "erro", f"A etapa {etapa} falhou de vez: {msg}")
+
+
+def reconciliar(con) -> int:
+    """Roda no start do worker. Se a máquina caiu entre 'concluir' e 'depois' (antes da transação única), um projeto
+    pode ter ficado parado com o último job 'feito' e nada na fila. Para cada projeto aberto e parado, reaplica o
+    'depois' do job feito mais recente (idempotente: enfileirar não duplica; etapas pulam o que já têm)."""
+    n = 0
+    abertos = con.execute(f"SELECT id FROM projetos WHERE estado NOT IN ({','.join('?' * len(ESTADOS_FINAIS))})", ESTADOS_FINAIS).fetchall()
+    for p in abertos:
+        pid = p["id"]
+        ativo = con.execute("SELECT 1 FROM jobs WHERE projeto=? AND estado IN ('pendente','rodando') LIMIT 1", (pid,)).fetchone()
+        if ativo:
+            continue
+        j = con.execute("SELECT * FROM jobs WHERE projeto=? AND estado='feito' ORDER BY atualizado DESC LIMIT 1", (pid,)).fetchone()
+        if j is None:
+            continue
+        job = dict(j)
+        job["entrada"] = json.loads(job["entrada"] or "{}")
+        saida = json.loads(job["saida"]) if job.get("saida") else {}
+        if job["etapa"] == "entrega":
+            est = con.execute("SELECT estado FROM projetos WHERE id=?", (pid,)).fetchone()["estado"]
+            if est == "dirigindo":       # o dono reprovou depois da entrega: a nova direção já foi pedida pela rota
+                continue
+        con.execute("BEGIN IMMEDIATE")
+        try:
+            depois(con, job, saida)
+            con.execute("COMMIT")
+        except Exception:
+            con.execute("ROLLBACK")
+            raise
+        n += 1
+    return n

@@ -1,0 +1,7 @@
+{
+ "prompt": "3D Pixar-style animated character on a perfectly flat solid chroma-key green background, locked-off static camera, no camera movement. The friendly man uncrosses his arms, confidently points with his right hand toward the left edge of the frame, glances that way, then turns back to the camera with a warm smile and gives a big thumbs up with the same hand. Short, smooth, natural character animation with weight. Keep exactly the same face, same short curly black hair, same black polo shirt with yellow trim and the super kal logo, same gold wristwatch and same body proportions for the whole shot.",
+ "image_url": "https://d3snorpfx4xhv8.cloudfront.net/9ff86c6b-3cfb-4ebf-8903-63256683522e/4c591b7d-e5b7-4937-9f95-f9ecdcca0179.jpeg",
+ "duration": 5,
+ "cfg_scale": 0.6,
+ "negative_prompt": "morphing face, face change, different person, changing hair, straight hair, changing skin tone, changing shirt, changing collar colour, logo distortion, new text, letters appearing, extra fingers, deformed hands, fused fingers, extra arms, extra people, camera movement, zoom, pan, camera shake, background change, gradient background, shadow on background, floor, flicker, motion blur smear, melting, talking, realistic photo, live action, 2D"
+}

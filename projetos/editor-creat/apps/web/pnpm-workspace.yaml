@@ -1,0 +1,5 @@
+# apps/web é instalado isolado (não mexe no node_modules das outras frentes).
+packages:
+  - "."
+supportedArchitectures:
+  libc: [glibc]

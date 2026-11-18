@@ -1,0 +1,673 @@
+{
+ "chave_clique_perto": {
+  "arquivo": "chave_clique_perto.wav",
+  "dur": 0.47,
+  "pico_dbfs": -9.0,
+  "rms_dbfs": -44.1,
+  "evento": "clique do polegar na chave (IMG_5169 q17-18, t=0,567-0,600 s)",
+  "ancora_s": 0.205,
+  "perspectiva": "perto e seco (20 cm), sem reverb",
+  "usar_1x": true,
+  "fontes": [
+   "3maze - Buttons and Switches/button_on_off_064.wav",
+   "Varazuvi - California Foley/Key19.wav (molho de chaves, -15 dB, antes do clique)"
+  ],
+  "tratamento": "passa-alta 350 Hz, estéreo fechado; o molho mexe 0,2 s antes do clique"
+ },
+ "chave_clique_seco_so": {
+  "arquivo": "chave_clique_seco_so.wav",
+  "dur": 0.145,
+  "pico_dbfs": -9.0,
+  "rms_dbfs": -39.1,
+  "evento": "só o clique (para o congelamento de 2 a 3 quadros)",
+  "ancora_s": 0.005,
+  "perspectiva": "perto e seco",
+  "fontes": [
+   "3maze - Buttons and Switches/button_on_off_064.wav"
+  ],
+  "tratamento": "passa-alta 350 Hz"
+ },
+ "carro_travas_longe": {
+  "arquivo": "carro_travas_longe.wav",
+  "dur": 1.225,
+  "pico_dbfs": -17.0,
+  "rms_dbfs": -41.0,
+  "evento": "tranco das travas elétricas do carro preto (pisca 1, IMG_5170 t=1,802 s)",
+  "ancora_s": 0.12,
+  "perspectiva": "do outro lado da rua (~12 m): passa-baixa 3,2 kHz, tapa nas fachadas, 35 ms de atraso do som já podem ser somados na montagem",
+  "fontes": [
+   "Ivo Vicic - Land Rover Defender TDI 300/56 Interior_Front_door lock button_lock unlock_mono _position 02.wav (trecho 3,14-3,62 s)"
+  ],
+  "tratamento": "gravação real de trava de porta; filtros + resposta de rua"
+ },
+ "carro_bip_longe": {
+  "arquivo": "carro_bip_longe.wav",
+  "dur": 0.92,
+  "pico_dbfs": -19.0,
+  "rms_dbfs": -42.1,
+  "evento": "bip curto de confirmação (SUBSTITUTO: não é o bip do próprio carro; o áudio original do IMG_5170 não tem bip audível)",
+  "ancora_s": 0.01,
+  "perspectiva": "do outro lado da rua, com tapa das fachadas",
+  "fontes": [
+   "SHhh! Listen SFX Libraries - Optometrist Equipment/Auto Refractor,Scanning,Pneumatic,Beeps (bip piezo real de 2,15 kHz, 60 ms, trecho 1,955-2,13 s)"
+  ],
+  "tratamento": "passa-alta 700 Hz, passa-baixa 5,2 kHz, resposta de rua",
+  "aviso": "é um bip eletrônico real, mas de outro aparelho; se o dono preferir sem bip, usar só carro_travas_longe"
+ },
+ "carro_toque_buzina_longe": {
+  "arquivo": "carro_toque_buzina_longe.wav",
+  "dur": 0.895,
+  "pico_dbfs": -18.0,
+  "rms_dbfs": -36.4,
+  "evento": "alternativa ao bip: toque curtíssimo de buzina (carros que confirmam a trava pela buzina)",
+  "ancora_s": 0.01,
+  "perspectiva": "do outro lado da rua",
+  "fontes": [
+   "Dramatic Cat - Audi Q7/VEHHorn_Audi Q7 EXTERIOR Horn Short And Long MONO (0,05-0,20 s)"
+  ],
+  "tratamento": "corte de 150 ms com queda natural, filtros + resposta de rua",
+  "aviso": "alternativa; usar OU o bip OU a buzina, nunca os dois"
+ },
+ "carro_trancando_longe": {
+  "arquivo": "carro_trancando_longe.wav",
+  "dur": 1.27,
+  "pico_dbfs": -16.0,
+  "rms_dbfs": -39.3,
+  "evento": "composto pronto: travas + bip, para cair no pisca 1 (t=1,802 s do IMG_5170)",
+  "ancora_s": 0.16499999999999998,
+  "perspectiva": "do outro lado da rua; 45 ms de atraso do ar já embutidos; somar ao ambiente real do IMG_5170 (sem fala de 0,8 s em diante)",
+  "fontes": [
+   "carro_travas_longe",
+   "carro_bip_longe"
+  ],
+  "tratamento": "soma",
+  "usar_1x": true
+ },
+ "carro_bip2_longe": {
+  "arquivo": "carro_bip2_longe.wav",
+  "dur": 0.89,
+  "pico_dbfs": -23.0,
+  "rms_dbfs": -43.3,
+  "evento": "pisca 2 (t=2,902 s): segundo bip, mais curto e mais fraco (outra tomada do mesmo aparelho, não é cópia do primeiro)",
+  "ancora_s": 0.01,
+  "perspectiva": "do outro lado da rua",
+  "fontes": [
+   "SHhh! Listen SFX Libraries - Optometrist Equipment/Auto Refractor... (trecho 3,615-3,76 s)"
+  ],
+  "tratamento": "idem carro_bip_longe",
+  "aviso": "opcional: o corte do pisca 2 pode ir só com a música"
+ },
+ "porta_ct_encosta": {
+  "arquivo": "porta_ct_encosta.wav",
+  "dur": 0.972,
+  "pico_dbfs": -6.0,
+  "rms_dbfs": -32.7,
+  "evento": "porta do CT encostando = corte do match da porta",
+  "ancora_s": 0.02,
+  "perspectiva": "a 1,5 m, sala pequena",
+  "fontes": [
+   "3maze - Doors, Locks and Drawers/door_close_003.wav"
+  ],
+  "tratamento": "resposta de sala pequena a -14 dB",
+  "obs": "somar ao som real da porta (build/audio/sfx/porta_real_fecha.wav), que continua valendo"
+ },
+ "porta_ct_macaneta": {
+  "arquivo": "porta_ct_macaneta.wav",
+  "dur": 1.152,
+  "pico_dbfs": -10.0,
+  "rms_dbfs": -38.9,
+  "evento": "maçaneta girando (abertura, quando o Ruan entra)",
+  "ancora_s": 0.05,
+  "perspectiva": "perto, sala pequena",
+  "fontes": [
+   "Sonic Bat - Videogame Foley Essentials Vol. I/SBvfe1_Door Handle D 002.wav"
+  ],
+  "tratamento": "resposta de sala a -16 dB"
+ },
+ "porta_ct_abre": {
+  "arquivo": "porta_ct_abre.wav",
+  "dur": 1.022,
+  "pico_dbfs": -8.0,
+  "rms_dbfs": -33.0,
+  "evento": "porta abrindo (trinco + folha)",
+  "ancora_s": 0.02,
+  "perspectiva": "perto, sala pequena",
+  "fontes": [
+   "3maze - Doors, Locks and Drawers/door_open_004.wav"
+  ],
+  "tratamento": "resposta de sala"
+ },
+ "porta_pesada_fecha": {
+  "arquivo": "porta_pesada_fecha.wav",
+  "dur": 0.9,
+  "pico_dbfs": -5.0,
+  "rms_dbfs": -21.5,
+  "evento": "porta pesada fechando (peso para o match da porta ou para a entrada na academia)",
+  "ancora_s": 0.02,
+  "perspectiva": "perto",
+  "fontes": [
+   "3maze - Doors/door_big_close_001.wav"
+  ],
+  "tratamento": "passa-baixa 6 kHz"
+ },
+ "porta_carro_fecha_fora": {
+  "arquivo": "porta_carro_fecha_fora.wav",
+  "dur": 0.67,
+  "pico_dbfs": -6.0,
+  "rms_dbfs": -27.4,
+  "evento": "porta do carro batendo por fora (saída do Super Kal para a estrada)",
+  "ancora_s": 0.07,
+  "perspectiva": "ao lado do carro, na rua",
+  "fontes": [
+   "Carlo Ascrizzi - Race Cars Essential Library/Car Door_OpenClose_Exterior_01.M.wav (1,33-2,0 s)"
+  ],
+  "tratamento": "só corte"
+ },
+ "porta_carro_abre_fora": {
+  "arquivo": "porta_carro_abre_fora.wav",
+  "dur": 0.62,
+  "pico_dbfs": -12.0,
+  "rms_dbfs": -34.2,
+  "evento": "porta do carro abrindo por fora",
+  "ancora_s": 0.07,
+  "perspectiva": "ao lado do carro",
+  "fontes": [
+   "Carlo Ascrizzi - Race Cars Essential Library/Car Door_OpenClose_Exterior_01.M.wav (0,18-0,80 s)"
+  ],
+  "tratamento": "só corte"
+ },
+ "porta_carro_fecha_dentro": {
+  "arquivo": "porta_carro_fecha_dentro.wav",
+  "dur": 0.743,
+  "pico_dbfs": -7.0,
+  "rms_dbfs": -27.4,
+  "evento": "porta do carro batendo, ouvida de dentro (entra no plano do carro na chuva)",
+  "ancora_s": 0.06,
+  "perspectiva": "dentro da cabine: abafado e curto",
+  "fontes": [
+   "SoundBits - Cars - Mad Mustang Mercury/VEHDoor_Car Foley Car Door Open and Close Exterior 04 Perspective A (1,80-2,45 s)"
+  ],
+  "tratamento": "passa-baixa 3,5 kHz + resposta de cabine"
+ },
+ "chuva_parabrisa_dentro_12s": {
+  "arquivo": "chuva_parabrisa_dentro_12s.wav",
+  "dur": 12.0,
+  "pico_dbfs": -8.0,
+  "rms_dbfs": -32.6,
+  "evento": "dilúvio no para-brisa (planos de estrada)",
+  "perspectiva": "de dentro do carro: gotas grossas no vidro (gravado de dentro de um carro)",
+  "laco": "pode emendar com crossfade de 1 s",
+  "fontes": [
+   "Sound Ex Machina - RAIN CITY/Heavy rain drops on a car window, steady, recorded indoors, loop.wav (30-42 s)"
+  ],
+  "tratamento": "só corte e fades",
+  "obs": "somar ao som real do plano (IMG_5183 / v_183901), não substituir"
+ },
+ "chuva_cabine_motor_10s": {
+  "arquivo": "chuva_cabine_motor_10s.wav",
+  "dur": 10.0,
+  "pico_dbfs": -14.0,
+  "rms_dbfs": -22.5,
+  "evento": "cama alternativa: cabine com chuva e motor em marcha lenta",
+  "perspectiva": "de dentro do carro",
+  "fontes": [
+   "Ivo Vicic - Land Rover Defender TDI 300/108 Interior_traffic light stop_urban rain.wav (10-20 s)"
+  ],
+  "tratamento": "só corte"
+ },
+ "pista_molhada_carro_cruza": {
+  "arquivo": "pista_molhada_carro_cruza.wav",
+  "dur": 5.9,
+  "pico_dbfs": -12.0,
+  "rms_dbfs": -32.6,
+  "evento": "carro vindo no sentido contrário na pista molhada (os faróis do v_183901 0,3-4,9 s)",
+  "ancora_s": 1.95,
+  "perspectiva": "ouvido de dentro do carro com vidro fechado: passa-baixa 2,6 kHz",
+  "fontes": [
+   "Soundholder - Cars In Motion - Wet Asphalt/wet asphalt 28 medium speed passby long stereo D100.wav"
+  ],
+  "tratamento": "passa-baixa; a âncora é o instante em que o carro cruza"
+ },
+ "pista_molhada_pocas": {
+  "arquivo": "pista_molhada_pocas.wav",
+  "dur": 6.5,
+  "pico_dbfs": -12.0,
+  "rms_dbfs": -33.2,
+  "evento": "pneus em poças (plano de estrada alagada, IMG_5183 33-47 s)",
+  "perspectiva": "de dentro do carro",
+  "fontes": [
+   "Soundholder - Cars In Motion - Wet Asphalt/slush asphalt 11 medium speed puddles stereo D100.wav"
+  ],
+  "tratamento": "passa-baixa 3,2 kHz"
+ },
+ "limpador_dentro_2x": {
+  "arquivo": "limpador_dentro_2x.wav",
+  "dur": 2.5,
+  "pico_dbfs": -12.0,
+  "rms_dbfs": -27.1,
+  "evento": "limpador do para-brisa, duas passadas (o limpador aparece em v_183901 e no IMG_5183 39-47 s)",
+  "ancora_s": 0.37,
+  "perspectiva": "de dentro do carro (gravação interna real)",
+  "fontes": [
+   "Articulated Sounds - Japanese Compact Car - Nissan Versa Note/CAR Front Windshield Wiper, 2x Short 02, Nissan Note, INT.wav"
+  ],
+  "tratamento": "só corte",
+  "obs": "casar a 1ª passada com a passada visível do limpador"
+ },
+ "chuva_telhado_forte_8s": {
+  "arquivo": "chuva_telhado_forte_8s.wav",
+  "dur": 8.0,
+  "pico_dbfs": -12.0,
+  "rms_dbfs": -37.2,
+  "evento": "chuva forte no telhado, ouvida de dentro (chegada em Valente \"choveu muito\"; BRABUS LOUNGE \"tá chovendo muito\", 895-905 s)",
+  "perspectiva": "interior, chuva na cobertura",
+  "fontes": [
+   "Game Audio Factory - GAFSFX04 - Liquids Materials/GAF SFX04 - LIQUIDS - Hard rain, plexiglas ceiling, inside, hard drops.wav"
+  ],
+  "tratamento": "só corte"
+ },
+ "chuva_fina_rua_8s": {
+  "arquivo": "chuva_fina_rua_8s.wav",
+  "dur": 8.0,
+  "pico_dbfs": -22.0,
+  "rms_dbfs": -36.8,
+  "evento": "chuvisco no Rota (\"está uma chuvinha\", IMG_5226 12,9-17,8 s)",
+  "perspectiva": "externa, rua, chuva fina",
+  "fontes": [
+   "PMSFX - EMPTY CITY RAIN/PM_ECR_1 Rain, City, Light, Thunder, Peel.wav (6,5-14,5 s, trecho sem trovão)"
+  ],
+  "tratamento": "só corte"
+ },
+ "trovao_longe_estrada": {
+  "arquivo": "trovao_longe_estrada.wav",
+  "dur": 6.2,
+  "pico_dbfs": -9.0,
+  "rms_dbfs": -36.7,
+  "evento": "trovão distante ao entrar na estrada",
+  "ancora_s": 0.25,
+  "perspectiva": "de dentro do carro: passa-baixa 1,4 kHz",
+  "fontes": [
+   "Soundrangers – Thunder/thunder_mountainous_distant_03.wav"
+  ],
+  "tratamento": "passa-baixa",
+  "usar_1x": true
+ },
+ "trovao_perto_com_chuva": {
+  "arquivo": "trovao_perto_com_chuva.wav",
+  "dur": 6.0,
+  "pico_dbfs": -4.0,
+  "rms_dbfs": -26.9,
+  "evento": "raio perto com chuva (SÓ se houver clarão na imagem ou flash de transição)",
+  "ancora_s": 0.4,
+  "perspectiva": "externa, perto",
+  "fontes": [
+   "InspectorJ - 44.1 General Library/Thunder_Very-Close_Rain_08.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true,
+  "aviso": "não vi relâmpago real nos planos; se não houver flash na imagem, não usar (som fora do que está na tela)"
+ },
+ "trovao_ronco_grave": {
+  "arquivo": "trovao_ronco_grave.wav",
+  "dur": 4.25,
+  "pico_dbfs": -8.0,
+  "rms_dbfs": -26.8,
+  "evento": "ronco grave de trovão (transição para o dilúvio, por baixo da música)",
+  "ancora_s": 0.1,
+  "perspectiva": "distante, grave",
+  "fontes": [
+   "Soundopolis - Natures Fury_Thunder/Thunder_Rumble_Mid_Fienup_024.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "fila_bip_monitor": {
+  "arquivo": "fila_bip_monitor.wav",
+  "dur": 0.582,
+  "pico_dbfs": -16.0,
+  "rms_dbfs": -29.0,
+  "evento": "senha 011 -> 012 no monitor do CT (IMG_5160)",
+  "ancora_s": 0.005,
+  "perspectiva": "alto-falante do PC a 1 m, sala pequena",
+  "fontes": [
+   "Sergey Eybog - Handheld Tranceivers/Walkie Talkie,AEG Voxtel,Power On,Power Off,Beeps,Series.wav (bip real de 1,3 kHz, 160 ms)"
+  ],
+  "tratamento": "corte + resposta de sala",
+  "aviso": "o som verdadeiro do sistema não foi gravado; é um bip eletrônico real de outro aparelho"
+ },
+ "fila_botao_e_chamada_loja": {
+  "arquivo": "fila_botao_e_chamada_loja.wav",
+  "dur": 3.128,
+  "pico_dbfs": -12.0,
+  "rms_dbfs": -44.5,
+  "evento": "\"apertar o botão\" (IMG_5172 41-48 s): botão real + toque de chamada do próximo número",
+  "ancora_s": 0.012,
+  "perspectiva": "botão perto (balcão); o toque vem do alto, com o salão do mercado em volta",
+  "fontes": [
+   "3maze - Buttons and Switches/switch_on_042.wav",
+   "Justsoundeffects - Doors/BELLDoor-INT_Door Bell Low Tone_JSE_DO_Distance Stereo.wav (campainha real gravada à distância, 1,03-2,55 s)"
+  ],
+  "tratamento": "botão seco; toque com resposta de salão"
+ },
+ "fila_chamada_loja_so": {
+  "arquivo": "fila_chamada_loja_so.wav",
+  "dur": 2.968,
+  "pico_dbfs": -14.0,
+  "rms_dbfs": -29.8,
+  "evento": "só o toque de chamada (senha virando no telão/TV do açougue)",
+  "ancora_s": 0.03,
+  "perspectiva": "do alto, salão do mercado",
+  "fontes": [
+   "Justsoundeffects - Doors/BELLDoor-INT_Door Bell Low Tone (1,03-2,55 s)"
+  ],
+  "tratamento": "passa-alta 300 Hz + resposta de salão"
+ },
+ "fila_botao_so": {
+  "arquivo": "fila_botao_so.wav",
+  "dur": 0.4,
+  "pico_dbfs": -10.0,
+  "rms_dbfs": -37.1,
+  "evento": "só o botão do açougueiro",
+  "ancora_s": 0.012,
+  "perspectiva": "perto, seco",
+  "fontes": [
+   "3maze - Buttons and Switches/switch_on_042.wav"
+  ],
+  "tratamento": "nenhum"
+ },
+ "kal_sobe_tecido": {
+  "arquivo": "kal_sobe_tecido.wav",
+  "dur": 0.56,
+  "pico_dbfs": -18.0,
+  "rms_dbfs": -38.2,
+  "evento": "Kal sobe por trás da plaquinha (aparição 1)",
+  "ancora_s": 0.05,
+  "perspectiva": "perto, pequeno: tecido de algodão",
+  "fontes": [
+   "3maze - The Closet/shake_clothing_001.wav",
+   "TheWorkRoom Audio Post - Cloths & Sponges Foley/Cloth 61.wav (3,10-3,50 s)"
+  ],
+  "tratamento": "soma, nível baixo"
+ },
+ "kal_cruza_bracos": {
+  "arquivo": "kal_cruza_bracos.wav",
+  "dur": 0.69,
+  "pico_dbfs": -19.0,
+  "rms_dbfs": -36.7,
+  "evento": "Kal cruza os braços",
+  "ancora_s": 0.15,
+  "perspectiva": "perto, pequeno",
+  "fontes": [
+   "TheWorkRoom Audio Post - Cloths & Sponges Foley/Cloth 61.wav (0,10-0,60 s)",
+   "SoundBits - Tiny Transitions 2/Scrape_Cloth_10.wav"
+  ],
+  "tratamento": "soma"
+ },
+ "kal_aponta_joinha": {
+  "arquivo": "kal_aponta_joinha.wav",
+  "dur": 0.25,
+  "pico_dbfs": -18.0,
+  "rms_dbfs": -37.2,
+  "evento": "Kal aponta para a tela / faz joinha (aparição 2)",
+  "ancora_s": 0.14,
+  "perspectiva": "perto, pequeno",
+  "fontes": [
+   "Shapeforms - Hit & Punch/CLOTHING_MATERIAL_MOVEMENT_08.wav",
+   "TheWorkRoom Audio Post - Cloths & Sponges Foley/Cloth 61.wav (5,05-5,16 s)"
+  ],
+  "tratamento": "soma"
+ },
+ "kal_pop_discreto": {
+  "arquivo": "kal_pop_discreto.wav",
+  "dur": 0.12,
+  "pico_dbfs": -20.0,
+  "rms_dbfs": -38.7,
+  "evento": "pop leve quando a plaquinha/balão do Kal aparece",
+  "ancora_s": 0.003,
+  "perspectiva": "perto, discreto (não é pop de desenho: é estalo real, abafado)",
+  "fontes": [
+   "Membrans - Pops Sound Pack 01/Pop 41.wav"
+  ],
+  "tratamento": "passa-baixa 3,5 kHz, -20 dB de pico"
+ },
+ "kal_soco_bora": {
+  "arquivo": "kal_soco_bora.wav",
+  "dur": 0.67,
+  "pico_dbfs": -13.0,
+  "rms_dbfs": -27.8,
+  "evento": "soco \"BORA PRA CIMA!\" (aparição 3): o whip vertical nasce do punho",
+  "ancora_s": 0.31,
+  "perspectiva": "perto, pequeno; o impacto é um baque de luva, sem exagero",
+  "fontes": [
+   "Soundholder - Swipes And Whooshes/swipes and whooshes tshirt fast and short swings stereo ORTF 8040.wav (5,18-5,70 s)",
+   "Stuart Duffield - Soccer SFX/Keeper_Punch_01.wav (luva do goleiro socando a bola)",
+   "3maze - The Closet/shake_clothing_001.wav"
+  ],
+  "tratamento": "golpe de camiseta + baque de luva com passa-baixa 2,2 kHz",
+  "usar_1x": true
+ },
+ "wh_camiseta_rapido": {
+  "arquivo": "wh_camiseta_rapido.wav",
+  "dur": 0.48,
+  "pico_dbfs": -10.0,
+  "rms_dbfs": -26.0,
+  "evento": "whip curto (rosto -> tela das senhas)",
+  "ancora_s": 0.087,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "Soundholder - Swipes And Whooshes/tshirt fast and short swings (0,30-0,78 s)"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_camiseta_medio": {
+  "arquivo": "wh_camiseta_medio.wav",
+  "dur": 0.72,
+  "pico_dbfs": -10.0,
+  "rms_dbfs": -26.7,
+  "evento": "whip médio (speed ramp do corredor)",
+  "ancora_s": 0.119,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "Soundholder - Swipes And Whooshes/tshirt fast and short swings (9,20-9,92 s)"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_corda_chicote": {
+  "arquivo": "wh_corda_chicote.wav",
+  "dur": 0.45,
+  "pico_dbfs": -11.0,
+  "rms_dbfs": -33.3,
+  "evento": "chicote seco (whip pelo batente da porta)",
+  "ancora_s": 0.078,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "SoundBits - Just Whoosh 3/Swoosh_Rope_Whip_075.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_luva_curto": {
+  "arquivo": "wh_luva_curto.wav",
+  "dur": 0.4,
+  "pico_dbfs": -12.0,
+  "rms_dbfs": -34.3,
+  "evento": "passagem curta e abafada (jump cut com punch-in)",
+  "ancora_s": 0.089,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "Airborne Sound - Organic Whooshes/Whoosh,Organic,Fabric,Glove,Airy,Breathy,Punchy.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_vara_grave": {
+  "arquivo": "wh_vara_grave.wav",
+  "dur": 0.72,
+  "pico_dbfs": -10.0,
+  "rms_dbfs": -24.3,
+  "evento": "whoosh grave (mergulho na placa SALA DE POSE)",
+  "ancora_s": 0.163,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "SoundBits - Just Whoosh 3/Whoosh_Rod_Pole_022.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_couro": {
+  "arquivo": "wh_couro.wav",
+  "dur": 0.54,
+  "pico_dbfs": -10.0,
+  "rms_dbfs": -30.4,
+  "evento": "whoosh de couro (entrada na academia, pose)",
+  "ancora_s": 0.215,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "SoundBits - Just Whoosh 3/Whoosh_Cloth_Leather_Fight_174.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_rajada_folhas": {
+  "arquivo": "wh_rajada_folhas.wav",
+  "dur": 1.55,
+  "pico_dbfs": -11.0,
+  "rms_dbfs": -28.0,
+  "evento": "rajada de vento com folhas (rua/hora azul -> estrada)",
+  "ancora_s": 0.458,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "Articulated Sounds - Magic Elements vol.1/MAGIC AIR Large Whoosh, Swirl, Wind Gust, Foliage 01.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_ar_suave": {
+  "arquivo": "wh_ar_suave.wav",
+  "dur": 0.52,
+  "pico_dbfs": -13.0,
+  "rms_dbfs": -29.7,
+  "evento": "ar suave (entrada de selo de lugar)",
+  "ancora_s": 0.152,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "Airborne Sound - Airy Whooshes/Whoosh,Sound Design,Airy,Full,Forceful,Soft.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_vassoura_longo": {
+  "arquivo": "wh_vassoura_longo.wav",
+  "dur": 0.55,
+  "pico_dbfs": -14.0,
+  "rms_dbfs": -31.0,
+  "evento": "varrida longa e fina (linha do tempo / relógio avançando)",
+  "ancora_s": 0.21,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "Soundholder - Swipes And Whooshes/broom long stick slow and long swings (12,0-12,55 s)"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_baqueta_seco": {
+  "arquivo": "wh_baqueta_seco.wav",
+  "dur": 0.22,
+  "pico_dbfs": -12.0,
+  "rms_dbfs": -31.3,
+  "evento": "corte seco e rápido (impact frame)",
+  "ancora_s": 0.078,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "Justsoundeffects - Transition Whooshes Vol. 1/SWSH_Woodstick Swish 03_JSE_TW1.wav (0,10-0,32 s)"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_corda_gira": {
+  "arquivo": "wh_corda_gira.wav",
+  "dur": 0.94,
+  "pico_dbfs": -12.0,
+  "rms_dbfs": -32.3,
+  "evento": "corda girando (zoom through / garrafa cobrindo a lente)",
+  "ancora_s": 0.332,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "SoundBits - Tiny Transitions/Whoosh_Source_Rope_03.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_isopor_textura": {
+  "arquivo": "wh_isopor_textura.wav",
+  "dur": 0.75,
+  "pico_dbfs": -14.0,
+  "rms_dbfs": -32.6,
+  "evento": "textura arrastada (risca EM -> NO ROTA; agenda riscando \"remarcada\")",
+  "ancora_s": 0.286,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "Airborne Sound - Organic Whooshes/Whoosh,Organic,Styrofoam,Plank,Airy,Smooth,Texture,1.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "trena_hud": {
+  "arquivo": "trena_hud.wav",
+  "dur": 0.65,
+  "pico_dbfs": -16.0,
+  "rms_dbfs": -32.7,
+  "evento": "trena correndo (HUD do relógio / cadeado fechando)",
+  "ancora_s": 0.434,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "SoundBits - Tiny Transitions 2/Measuring-Tape_06.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "wh_alca": {
+  "arquivo": "wh_alca.wav",
+  "dur": 0.42,
+  "pico_dbfs": -13.0,
+  "rms_dbfs": -29.0,
+  "evento": "alça/zíper curto (chip entrando)",
+  "ancora_s": 0.202,
+  "perspectiva": "transição (movimento de câmera)",
+  "fontes": [
+   "Airborne Sound - Organic Whooshes/Whoosh,Organic,Fabric,Strap,Zip,High,Stagger,Pushy.wav"
+  ],
+  "tratamento": "só corte",
+  "usar_1x": true
+ },
+ "moto_cruza_esq_dir": {
+  "arquivo": "moto_cruza_esq_dir.wav",
+  "dur": 4.0,
+  "pico_dbfs": -9.0,
+  "rms_dbfs": -29.4,
+  "evento": "moto cruzando na frente do carro, da esquerda para a direita (IMG_5170: moto azul 1,60-2,67 s; serve de wipe)",
+  "ancora_s": 2.0,
+  "perspectiva": "na calçada, do outro lado da rua; panorâmica esquerda->direita em 1,1 s",
+  "fontes": [
+   "Bombay Sonic - Yamaha Rajdoot 175cc/Rajdoot,motorcycle,approach,by,away,fast,rattle 02.wav (3,6-7,6 s)"
+  ],
+  "tratamento": "corte + panorâmica",
+  "obs": "moto pequena de 175 cc, parecida com as da rua; o áudio real do IMG_5170 tem as motos, usar este só como reforço por baixo"
+ },
+ "moto_passa_rua": {
+  "arquivo": "moto_passa_rua.wav",
+  "dur": 4.0,
+  "pico_dbfs": -11.0,
+  "rms_dbfs": -31.7,
+  "evento": "moto passando na rua do Super Kal (IMG_5168 2,9-4,6 s)",
+  "ancora_s": 2.0,
+  "perspectiva": "na calçada",
+  "fontes": [
+   "Bombay Sonic - Yamaha Rajdoot 175cc/... (3,6-7,6 s)"
+  ],
+  "tratamento": "corte",
+  "aviso": "mesma fonte de moto_cruza_esq_dir: usar um OU outro"
+ }
+}

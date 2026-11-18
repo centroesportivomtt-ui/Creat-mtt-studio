@@ -1,0 +1,44 @@
+// Ponte entre a página e o renderizador: window.__mk.montar(comp, {alfa}) e window.__mk.seek(t).
+import { criarPalco } from "./nucleo.js";
+import fundo from "./modelos/fundo.js";
+import gancho from "./modelos/gancho.js";
+import legenda from "./modelos/legenda.js";
+import chip from "./modelos/chip.js";
+import transicao from "./modelos/transicao.js";
+import hud from "./modelos/hud.js";
+import fecho from "./modelos/fecho.js";
+import heroi from "./modelos/heroi.js";
+import abas from "./modelos/abas.js";
+import gancho2 from "./modelos/gancho2.js";
+import selo from "./modelos/selo.js";
+import checklist from "./modelos/checklist.js";
+import rotulo from "./modelos/rotulo.js";
+import camadas from "./modelos/camadas.js";
+import stats from "./modelos/stats.js";
+import pilha from "./modelos/pilha.js";
+import fecho2 from "./modelos/fecho2.js";
+
+const modelos = { fundo, gancho, legenda, chip, transicao, hud, fecho, heroi, abas, gancho2, selo, checklist, rotulo, camadas, stats, pilha, fecho2 };
+
+async function fontes() {
+  await Promise.all([
+    document.fonts.load('100px "Anton"'),
+    document.fonts.load('500 40px "Inter"'),
+    document.fonts.load('900 40px "Inter"'),
+    document.fonts.load('700 40px "JetBrains Mono"'),
+    document.fonts.load('900 40px "Montserrat"'),
+  ]);
+  await document.fonts.ready;
+}
+
+let palco = null;
+window.__mk = {
+  async montar(comp, opcoes = {}) {
+    await fontes();
+    palco = await criarPalco(comp, modelos, opcoes);
+    palco.seek(0);
+    return { duracao: palco.duracao, fps: palco.fps, w: palco.W, h: palco.H, cues: palco.cues, qa: palco.qa, zona: palco.zona };
+  },
+  seek(t) { palco.seek(t); },
+};
+window.__mkPronto = true;

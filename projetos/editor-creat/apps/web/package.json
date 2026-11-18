@@ -1,0 +1,32 @@
+{
+  "name": "@editor-creat/web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Site do Editor creat.MTT (frente D): login, envio retomável, projetos, status ao vivo e player.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "tipos": "tsc --noEmit",
+    "motor-falso": "node scripts/motor-falso.mjs",
+    "senha": "node scripts/gerar-senha.mjs",
+    "aceite": "node scripts/aceite.mjs"
+  },
+  "dependencies": {
+    "@tus/file-store": "2.1.1",
+    "@tus/server": "2.4.6",
+    "next": "15.5.28",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "tus-js-client": "4.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/react": "19.1.17",
+    "@types/react-dom": "19.1.11",
+    "playwright": "1.63.0",
+    "typescript": "5.9.3"
+  }
+}

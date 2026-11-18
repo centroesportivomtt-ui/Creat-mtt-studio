@@ -1,0 +1,569 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://creatmtt.local/schemas/analise.schema.json",
+  "title": "Análise de um arquivo",
+  "description": "Tudo o que a leitura automática sabe sobre UM arquivo enviado. Gerado pelas etapas ingest + analise (frente A). É a matéria-prima do catálogo compacto (frente B) e da montagem (frente C). Séries longas (energia, tremor) ficam em arquivos à parte, apontados por chave.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "versao",
+    "arquivo",
+    "midia",
+    "derivados",
+    "transcricao",
+    "sinais"
+  ],
+  "properties": {
+    "versao": {
+      "const": "1"
+    },
+    "arquivo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "projeto",
+        "nome",
+        "chave",
+        "bytes"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Id curto e estável do arquivo no projeto (ex.: a003). Vira o prefixo dos ids do catálogo."
+        },
+        "projeto": {
+          "type": "string"
+        },
+        "nome": {
+          "type": "string",
+          "description": "Nome original (no celular do dono = data e hora da gravação)."
+        },
+        "chave": {
+          "type": "string",
+          "description": "Chave do original no armazenamento (local|r2)."
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gravado_em": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Data/hora da gravação (metadado ou nome do arquivo)."
+        }
+      }
+    },
+    "midia": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "duracao",
+        "tem_video",
+        "tem_audio"
+      ],
+      "properties": {
+        "duracao": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tem_video": {
+          "type": "boolean"
+        },
+        "tem_audio": {
+          "type": "boolean"
+        },
+        "w": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Largura JÁ com a rotação aplicada."
+        },
+        "h": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "rotacao": {
+          "type": "integer",
+          "enum": [
+            0,
+            90,
+            180,
+            270,
+            -90
+          ]
+        },
+        "fps": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "codec_video": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "codec_audio": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hdr": {
+          "type": "boolean",
+          "default": false
+        },
+        "gop": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Intervalo medio entre quadros-chave (s)."
+        }
+      }
+    },
+    "derivados": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "audio_wav",
+        "quadros_chave"
+      ],
+      "properties": {
+        "audio_wav": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Chave do WAV 48 kHz mono (base da transcrição e do mix)."
+        },
+        "proxy_480": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Proxy leve para o player do site (opcional; gerado quando sobra CPU ou pela GPU)."
+        },
+        "folha": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Folha de contato JPG dos quadros-chave (entrada da visão)."
+        },
+        "quadros_chave": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "t",
+              "chave"
+            ],
+            "properties": {
+              "t": {
+                "type": "number"
+              },
+              "chave": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "trechos": {
+          "type": "array",
+          "description": "Trechos do original disponíveis quando o arquivo chegou cortado (legado de 17/11: seg/indice.json). tempo_fonte = ini + tempo_no_arquivo. Vazio/ausente = o arquivo inteiro está em arquivo.chave.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "chave",
+              "ini"
+            ],
+            "properties": {
+              "chave": {
+                "type": "string"
+              },
+              "ini": {
+                "type": "number"
+              },
+              "fim": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "transcricao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provedor",
+        "modelo",
+        "idioma",
+        "segmentos"
+      ],
+      "properties": {
+        "provedor": {
+          "enum": [
+            "faster-whisper",
+            "parakeet",
+            "scribe",
+            "fixture",
+            "nenhum"
+          ]
+        },
+        "modelo": {
+          "type": "string"
+        },
+        "idioma": {
+          "type": "string",
+          "default": "pt"
+        },
+        "vad": {
+          "type": "boolean",
+          "description": "Deve ser false: VAD derruba fala gritada ou sobre música (pesquisa C)."
+        },
+        "segmentos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "s",
+              "e",
+              "texto"
+            ],
+            "properties": {
+              "s": {
+                "type": "number"
+              },
+              "e": {
+                "type": "number"
+              },
+              "texto": {
+                "type": "string"
+              },
+              "falante": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Rótulo do falante (MARCOS, RUAN, XANDE, F1, F2...) quando a identificação existir."
+              },
+              "conf": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "palavras": {
+                "type": "array",
+                "description": "[início, fim, texto, confiança]",
+                "items": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "minItems": 4,
+                  "maxItems": 4
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sinais": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "energia",
+        "tremor",
+        "cenas",
+        "rostos"
+      ],
+      "properties": {
+        "energia": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "passo",
+            "chave"
+          ],
+          "properties": {
+            "passo": {
+              "type": "number",
+              "description": "s por amostra (0,01 a 0,1)."
+            },
+            "chave": {
+              "type": "string",
+              "description": "Série RMS em dB (arquivo .npy ou .json)."
+            },
+            "picos": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "description": "[t, dB] dos picos (grito, aplauso, barra no chão)."
+            },
+            "fala_pct": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        },
+        "tremor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "passo",
+            "media_px"
+          ],
+          "properties": {
+            "passo": {
+              "type": "number"
+            },
+            "media_px": {
+              "type": "number",
+              "description": "Deslocamento médio entre quadros-chave vizinhos, em px a 1080 de largura."
+            },
+            "trechos": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "description": "[t0, t1, px] dos trechos tremidos."
+            }
+          }
+        },
+        "cenas": {
+          "type": "array",
+          "description": "Cortes de cena / mudanças de ambiente.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "t0",
+              "t1"
+            ],
+            "properties": {
+              "t0": {
+                "type": "number"
+              },
+              "t1": {
+                "type": "number"
+              },
+              "ambiente": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Rótulo de cor por ambiente (salao, mesa, corredor, sala, externo...)."
+              },
+              "luz": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Luminância média 0-1."
+              }
+            }
+          }
+        },
+        "rostos": {
+          "type": "array",
+          "description": "Rostos por quadro-chave (para reenquadre 9:16 e para legenda não cobrir rosto).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "t",
+              "caixas"
+            ],
+            "properties": {
+              "t": {
+                "type": "number"
+              },
+              "caixas": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 4,
+                  "maxItems": 5
+                },
+                "description": "[x, y, w, h, (conf)] normalizados 0-1."
+              }
+            }
+          }
+        },
+        "telas": {
+          "type": "array",
+          "description": "Áreas com tela/crachá/documento legível (dados de terceiros: desfocar).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "t0",
+              "t1",
+              "caixa"
+            ],
+            "properties": {
+              "t0": {
+                "type": "number"
+              },
+              "t1": {
+                "type": "number"
+              },
+              "caixa": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              }
+            }
+          }
+        }
+      }
+    },
+    "visao": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "provedor",
+        "resumo",
+        "momentos"
+      ],
+      "properties": {
+        "provedor": {
+          "enum": [
+            "local",
+            "claude-leve",
+            "gemini",
+            "fixture"
+          ]
+        },
+        "resumo": {
+          "type": "string"
+        },
+        "pessoas": {
+          "type": "string"
+        },
+        "camera": {
+          "type": "string"
+        },
+        "serve_para": {
+          "type": "string"
+        },
+        "momentos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "t0",
+              "t1",
+              "tipo",
+              "desc",
+              "nota"
+            ],
+            "properties": {
+              "t0": {
+                "type": "number"
+              },
+              "t1": {
+                "type": "number"
+              },
+              "tipo": {
+                "type": "string",
+                "description": "fala_dono, fala_evento, broll, torcida, levantamento, emocao, premiacao, app_tela, impacto, produto, ambiente, outro..."
+              },
+              "desc": {
+                "type": "string"
+              },
+              "nota": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "emocao": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "tempos": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "Segundos gastos por sub-etapa (medição das metas)."
+    }
+  }
+}

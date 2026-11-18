@@ -1,0 +1,39 @@
+[project]
+name = "editor-motor"
+version = "0.1.0"
+description = "Motor do Editor creat.MTT: leitura automática, direção (Claude), montagem, QA e entrega de vídeo."
+requires-python = ">=3.11"
+dependencies = [
+  "jsonschema>=4.20",
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "soundfile>=0.12",
+  "pyloudnorm>=0.1.1",
+  "opencv-python-headless>=4.9",
+  "pillow>=10",
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+transcricao = ["faster-whisper>=1.2.1"]
+parakeet = ["sherpa-onnx>=1.10"]
+cerebro = ["anthropic>=0.70"]
+r2 = ["boto3>=1.34"]
+voz = ["deepfilternet>=0.5.6"]
+teste = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "real: usa material real do scratchpad (pula se não existir)",
+  "pago: chama provedor pago (só roda com a chave E autorização do dono)",
+  "lento: mais de 60 s",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["motor*"]

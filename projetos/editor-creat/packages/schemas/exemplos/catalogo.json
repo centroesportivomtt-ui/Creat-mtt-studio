@@ -1,0 +1,67 @@
+{
+ "versao": "1",
+ "projeto": "p_demo",
+ "orcamento": {
+  "tokens_estimados": 180,
+  "limite": 15000,
+  "cortes": []
+ },
+ "clipes": [
+  {
+   "id": "C01",
+   "arquivo": "a001",
+   "nome": "20261115_095318.mov",
+   "dur": 12.0,
+   "resumo": "Dono fala para a câmera na mesa e depois anda pelo salão.",
+   "pessoas": "MARCOS 0-6 s",
+   "camera": "estável 0-6; tremido 6-12",
+   "ambientes": [
+    "mesa",
+    "salao"
+   ],
+   "momentos": [
+    {
+     "id": "M01.1",
+     "t0": 0.4,
+     "t1": 3.1,
+     "tipo": "fala_dono",
+     "nota": 5,
+     "desc": "Dono apresenta a equipe olhando para a câmera"
+    },
+    {
+     "id": "M01.2",
+     "t0": 6.0,
+     "t1": 12.0,
+     "tipo": "broll",
+     "nota": 3,
+     "desc": "Salão cheio com luz neon"
+    }
+   ],
+   "falas": [
+    {
+     "id": "F01.1",
+     "t0": 0.4,
+     "t1": 3.1,
+     "falante": "MARCOS",
+     "texto": "o pessoal da creat tá aqui",
+     "truncado": false,
+     "energia": 0.6
+    }
+   ]
+  }
+ ],
+ "trilhas": [
+  {
+   "id": "t_energia_104",
+   "clima": "energia, hip-hop",
+   "bpm": 104,
+   "dur": 120
+  }
+ ],
+ "modelos": [
+  "evento-reel",
+  "empresa-institucional",
+  "daily-vlog",
+  "anuncio-produto"
+ ]
+}

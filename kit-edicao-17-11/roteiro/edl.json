@@ -1,0 +1,8003 @@
+{
+ "versao": "v2 (rodada 2, 18/11/2026): AJUSTES 4 a 10 do dono",
+ "fps": 30,
+ "w": 1080,
+ "h": 1920,
+ "titulo": "creat.MTT · Um dia de trabalho na máxima (17/11)",
+ "planos": [
+  {
+   "id": "P01",
+   "clip": "IMG_5159",
+   "src_in": 1.7,
+   "src_out": 4.62,
+   "vel": 1.0,
+   "t0": 0.0,
+   "t1": 2.92,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.4,
+    0.55
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.06
+    ],
+    [
+     0.95,
+     1.0
+    ],
+    [
+     1.3,
+     1.0
+    ],
+    [
+     2.92,
+     1.08
+    ]
+   ],
+   "cor": "ct",
+   "estabilizar": false,
+   "nota": "Porta preta fechada (1.70-2.70) vira tela do selo 'creat.MTT STUDIO · EM PRODUÇÃO' e do gancho; a porta abre em 2.75 e o RUAN entra com joinha (4.0-4.4). Fala 'Fala, pessoal!' (3.40-4.52). O 1º quadro já lê o gancho.",
+   "bloco": "B1",
+   "status": "v1",
+   "hora_gravacao": "16:41:00",
+   "quem": "RUAN",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P01.mp4)"
+  },
+  {
+   "id": "P02",
+   "clip": "IMG_5159",
+   "src_in": 9.5,
+   "src_out": 15.1,
+   "vel": 1.15,
+   "t0": 2.92,
+   "t1": 7.79,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.5,
+    0.32
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.12
+    ],
+    [
+     0.4,
+     1.0
+    ],
+    [
+     3.5,
+     1.0
+    ],
+    [
+     3.7,
+     1.15
+    ],
+    [
+     4.8,
+     1.15
+    ]
+   ],
+   "cor": "ct",
+   "estabilizar": false,
+   "nota": "Corte seco escondido por punch-in. Selo de lugar CT MTT · A BASE entra aqui. Insert do monitor (IMG_5160 26.6-28.4) em 'criando um sistema'. Punch-in em 'sistema de fila'.",
+   "bloco": "B1",
+   "status": "v1",
+   "hora_gravacao": "16:41:00",
+   "quem": "RUAN",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P02.mp4)"
+  },
+  {
+   "id": "P03",
+   "clip": "IMG_5160",
+   "src_in": 36.8,
+   "src_out": 39.49,
+   "vel": 1.1,
+   "t0": 7.79,
+   "t1": 10.235,
+   "fala": true,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.55,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.1
+    ],
+    [
+     2.4,
+     1.22
+    ]
+   ],
+   "cor": "ct",
+   "estabilizar": true,
+   "nota": "Monitor com o sistema (Fila do Açougue Super Kal: AÇOUGUE 1 = 011, AÇOUGUE 2 = 012, PRÓXIMA SENHA 013, 19 pessoas em espera) e o dedo do Ruan. A tela vira motion (V01).",
+   "bloco": "B1",
+   "status": "v1",
+   "hora_gravacao": "16:42:37",
+   "quem": "RUAN",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P03.mp4)"
+  },
+  {
+   "id": "P04",
+   "clip": "IMG_5161",
+   "src_in": 2.62,
+   "src_out": 3.8,
+   "vel": 1.1,
+   "t0": 10.235,
+   "t1": 11.308,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.5,
+    0.3
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.18
+    ],
+    [
+     1.0,
+     1.1
+    ]
+   ],
+   "cor": "ct",
+   "estabilizar": false,
+   "nota": "Jump cut com punch-in.",
+   "bloco": "B1",
+   "status": "v1",
+   "hora_gravacao": "16:44:32",
+   "quem": "RUAN",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P04.mp4)"
+  },
+  {
+   "id": "P06",
+   "clip": "IMG_5161",
+   "src_in": 13.52,
+   "src_out": 16.1,
+   "vel": 1.1,
+   "t0": 11.308,
+   "t1": 13.653,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.5,
+    0.32
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     1.0,
+     1.12
+    ],
+    [
+     2.3,
+     1.12
+    ]
+   ],
+   "cor": "ct",
+   "estabilizar": false,
+   "nota": "Ruan aponta pra câmera e gira para a porta. Fim de fala 15.94.",
+   "bloco": "B1",
+   "status": "v1",
+   "hora_gravacao": "16:44:32",
+   "quem": "RUAN",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P06.mp4)"
+  },
+  {
+   "id": "P07",
+   "clip": "IMG_5161",
+   "src_in": 16.1,
+   "src_out": 19.45,
+   "vel": 1.35,
+   "t0": 13.653,
+   "t1": 16.134,
+   "fala": false,
+   "enquadre": "livre",
+   "foco_xy": [
+    0.45,
+    0.55
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     2.0,
+     1.04
+    ],
+    [
+     2.48,
+     1.65
+    ]
+   ],
+   "cor": "ct",
+   "estabilizar": false,
+   "nota": "SACADA DA PORTA (saída). Ruan abre a porta (folha preta na borda esquerda 16.8-17.4), atravessa o vão (18.2-18.8) e a porta fecha (19.0-19.45). Corte em 19.45. Ponto real da folha medido no render da v1: x 0,20 / y 0,66.",
+   "bloco": "B1",
+   "status": "v1",
+   "hora_gravacao": "16:44:32",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P07.mp4)"
+  },
+  {
+   "id": "P08",
+   "clip": "v_164647",
+   "src_in": 0.0,
+   "src_out": 3.7,
+   "vel": 1.05,
+   "t0": 16.134,
+   "t1": 19.658,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.35
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.3
+    ],
+    [
+     0.45,
+     1.0
+    ]
+   ],
+   "cor": "ct",
+   "estabilizar": true,
+   "nota": "SACADA DA PORTA (entrada): do outro lado da porta aparece o MARCOS no corredor. Em 3.5-3.7 a câmera atravessa o batente branco = gancho do whip para a loja do CT.",
+   "bloco": "B1",
+   "status": "v1",
+   "hora_gravacao": "16:46:47",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P08.mp4)"
+  },
+  {
+   "id": "P50",
+   "clip": "v_164647",
+   "src_in": 18.18,
+   "src_out": 22.8,
+   "vel": 1.15,
+   "t0": 19.658,
+   "t1": 23.675,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.32
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.08
+    ],
+    [
+     0.35,
+     1.0
+    ],
+    [
+     3.4,
+     1.05
+    ]
+   ],
+   "cor": "ct",
+   "estabilizar": true,
+   "nota": "NOVO. Marcos dentro da loja de suplementos do CT (a base), de óculos escuros, dizendo o plano do dia. O MAPA DE ROTA / AGENDA se desenha embaixo, nó por nó, na palavra. 'Seleto' termina em 22.72 (energia do áudio); silêncio limpo antes (17.80-18.20).",
+   "bloco": "B1",
+   "status": "novo",
+   "hora_gravacao": "16:46:47",
+   "quem": "MARCOS"
+  },
+  {
+   "id": "P09",
+   "clip": "v_164913",
+   "src_in": 4.92,
+   "src_out": 7.88,
+   "vel": 1.15,
+   "t0": 23.675,
+   "t1": 26.249,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.45,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "ct",
+   "estabilizar": true,
+   "nota": "Selfie dos dois na fachada do CENTRO ESPORTIVO (o CT); quem fala é o Marcos, o Ruan segura o celular. 'Partiu' dispara a linha do mapa: CT MTT -> SUPER KAL.",
+   "bloco": "B1",
+   "status": "v1",
+   "hora_gravacao": "16:49:13",
+   "quem": "MARCOS",
+   "reuso": "mesmo corte da v1 (cor e estabilização prontas); muda só a cauda/entrada porque a transição vizinha mudou de tipo ou duração"
+  },
+  {
+   "id": "P10",
+   "clip": "IMG_5168",
+   "src_in": 2.86,
+   "src_out": 4.6,
+   "vel": 1.0,
+   "t0": 26.249,
+   "t1": 27.989,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.55,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rua_dia",
+   "estabilizar": true,
+   "nota": "Ruan na rua com as motos. Relógio vira 16H55; a logo oficial do Super Kal começa a se montar em 'Super Kal'.",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "16:57:06",
+   "quem": "RUAN",
+   "reuso": "mesmo corte da v1 (cor e estabilização prontas); muda só a cauda/entrada porque a transição vizinha mudou de tipo ou duração"
+  },
+  {
+   "id": "P54",
+   "clip": "IMG_5168",
+   "src_in": 18.34,
+   "src_out": 24.32,
+   "vel": 1.1,
+   "t0": 27.989,
+   "t1": 33.425,
+   "fala": true,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     5.4,
+     1.0
+    ]
+   ],
+   "cor": "rua_dia",
+   "estabilizar": true,
+   "nota": "NOVO. Ruan aponta a fachada (18.4-20.3), a câmera vai para a frente da loja (20.2-22.1) e entra (23+). Continua direto no P11 (mesma tomada, mesma velocidade; a emenda 24.32 é contígua). A logo oficial pousa em 'logomarca' e o KAL sobe em 'mascote' (aparição 1 de 3). Silêncio limpo antes (18.02-18.40) e depois (23.75-24.30).",
+   "bloco": "B2",
+   "status": "novo",
+   "hora_gravacao": "16:57:06",
+   "quem": "RUAN"
+  },
+  {
+   "id": "P11",
+   "clip": "IMG_5168",
+   "src_in": 24.32,
+   "src_out": 29.1,
+   "vel": 1.1,
+   "t0": 33.425,
+   "t1": 37.77,
+   "fala": true,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     4.3,
+     1.1
+    ]
+   ],
+   "cor": "interno_loja",
+   "estabilizar": true,
+   "nota": "As TVs da loja no ar (super kal NOVIDADE, HORTIFRUTI, OMO). As telas viram motion (V03).",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "16:57:06",
+   "quem": "RUAN",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P11.mp4)"
+  },
+  {
+   "id": "P12",
+   "clip": "IMG_5168",
+   "src_in": 66.6,
+   "src_out": 73.65,
+   "vel": 1.2,
+   "t0": 37.77,
+   "t1": 43.645,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "interno_loja",
+   "estabilizar": true,
+   "nota": "Rosto do Ruan e depois as TVs (68-72). Tipografia cinética PENSADO / CRIADO / RESULTADO.",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "16:57:06",
+   "quem": "RUAN",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P12.mp4)"
+  },
+  {
+   "id": "P55",
+   "clip": "IMG_5169",
+   "src_in": 0.0,
+   "src_out": 0.733,
+   "vel": 1.0,
+   "t0": 43.645,
+   "t1": 44.378,
+   "fala": false,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.84,
+    0.45
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     0.5,
+     1.05
+    ],
+    [
+     0.567,
+     1.4
+    ],
+    [
+     0.733,
+     1.48
+    ]
+   ],
+   "cor": "interno_loja",
+   "estabilizar": false,
+   "nota": "NOVO (AJUSTE 9). Close da mão do Ruan com a chave no balcão do caixa. Polegar afunda no q17 (0,567 s); LED azul acende no q18 (0,600 s). Do q18 em diante o quadro CONGELA (4 quadros de linha = 0,133 s) com punch-in no botão. O anel de sinal nasce do LED e atravessa o corte.",
+   "bloco": "B2",
+   "status": "novo",
+   "congela": {
+    "de_rel": 0.6,
+    "src_t": 0.6,
+    "quadro": 18,
+    "dur": 0.133
+   },
+   "hora_gravacao": "16:58:43"
+  },
+  {
+   "id": "P56",
+   "clip": "IMG_5170",
+   "src_in": 1.415,
+   "src_out": 2.967,
+   "vel": 1.09,
+   "t0": 44.378,
+   "t1": 45.802,
+   "fala": false,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.22,
+    0.66
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     0.6,
+     1.0
+    ],
+    [
+     0.66,
+     1.1
+    ],
+    [
+     0.8,
+     1.04
+    ],
+    [
+     1.42,
+     1.08
+    ]
+   ],
+   "cor": "rua_dia",
+   "estabilizar": true,
+   "nota": "NOVO (AJUSTE 9). Carro preto do outro lado da rua. A moto azul cruza (1.60-2.67) = wipe natural de entrada; pisca 1 aparece inteiro em 2.068 (impact frame âmbar); pisca 2 acende em 2.902 e o corte vem 2 quadros depois. Velocidade 1.09: clique -> pisca 1 -> pisca 2 ficam a 1,5 tempo um do outro (0,765 s a 117,6 bpm).",
+   "bloco": "B2",
+   "status": "novo",
+   "hora_gravacao": "16:58:54"
+  },
+  {
+   "id": "P13",
+   "clip": "IMG_5172",
+   "src_in": 0.2,
+   "src_out": 2.6,
+   "vel": 1.5,
+   "t0": 45.802,
+   "t1": 47.402,
+   "fala": false,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.5,
+    0.45
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "interno_loja",
+   "estabilizar": true,
+   "nota": "Travelling pelo corredor atrás do Ruan, rumo ao açougue (speed ramp). Entra na batida do pisca 2.",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "16:59:32",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P13.mp4)"
+  },
+  {
+   "id": "P14",
+   "clip": "IMG_5172",
+   "src_in": 34.9,
+   "src_out": 38.77,
+   "vel": 1.15,
+   "t0": 47.402,
+   "t1": 50.767,
+   "fala": true,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.5,
+    0.45
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "interno_loja",
+   "estabilizar": true,
+   "nota": "Balcão do açougue com clientes. O painel do sistema (réplica do monitor) abre na parede branca de cima: 'a TV ali em cima' (V05).",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "16:59:32",
+   "quem": "RUAN",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P14.mp4)"
+  },
+  {
+   "id": "P15",
+   "clip": "IMG_5172",
+   "src_in": 40.62,
+   "src_out": 47.25,
+   "vel": 1.2,
+   "t0": 50.767,
+   "t1": 56.292,
+   "fala": true,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.5,
+    0.5
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "interno_loja",
+   "estabilizar": true,
+   "nota": "Clientes no balcão. Em 'apertar o botão' a próxima senha (013) salta para a frente; o KAL aponta para o painel e faz joinha (aparição 2 de 3).",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "16:59:32",
+   "quem": "RUAN",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P15.mp4)"
+  },
+  {
+   "id": "P16",
+   "clip": "IMG_5173",
+   "src_in": 121.88,
+   "src_out": 125.9,
+   "vel": 1.1,
+   "t0": 56.292,
+   "t1": 59.947,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.5,
+    0.32
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     3.5,
+     1.12
+    ]
+   ],
+   "cor": "interno_escritorio",
+   "estabilizar": false,
+   "nota": "Voz do cliente: homem da camisa Super Kal que cuida do açougue. SEM NOME (não foi dito com clareza).",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "17:08:36",
+   "quem": "SUPER_KAL_ACOUGUE",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P16.mp4)"
+  },
+  {
+   "id": "P17",
+   "clip": "IMG_5178",
+   "src_in": 15.14,
+   "src_out": 17.42,
+   "vel": 1.1,
+   "t0": 59.947,
+   "t1": 62.02,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rua_azul",
+   "estabilizar": true,
+   "nota": "Marcos andando na rua na hora azul. Título DESAFIO.",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "17:48:16",
+   "quem": "MARCOS",
+   "reuso": "mesmo corte da v1 (cor e estabilização prontas); muda só a cauda/entrada porque a transição vizinha mudou de tipo ou duração"
+  },
+  {
+   "id": "P19",
+   "clip": "IMG_5178",
+   "src_in": 44.64,
+   "src_out": 46.32,
+   "vel": 1.1,
+   "t0": 62.02,
+   "t1": 63.547,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rua_azul_reflexo",
+   "estabilizar": false,
+   "nota": "Plano assinatura do bloco: Marcos debruçado no teto do carro, céu e rosto refletidos.",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "17:48:16",
+   "quem": "MARCOS",
+   "reuso": "mesmo corte da v1 (cor e estabilização prontas); muda só a cauda/entrada porque a transição vizinha mudou de tipo ou duração"
+  },
+  {
+   "id": "P51",
+   "clip": "IMG_5178",
+   "src_in": 46.76,
+   "src_out": 48.06,
+   "vel": 1.1,
+   "t0": 63.547,
+   "t1": 64.729,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.08
+    ],
+    [
+     1.18,
+     1.1
+    ]
+   ],
+   "cor": "rua_azul_reflexo",
+   "estabilizar": false,
+   "nota": "NOVO. Mesmo plano do teto do carro (jump cut escondido por punch-in). É a PROVA de que a Igreja Matriz ficou para depois: a agenda do dia entra e empurra a igreja para REMARCADA. Corte em 48.06, no vão de 60 ms antes de 'fazer' (a palavra 'capturação' fica fora).",
+   "bloco": "B2",
+   "status": "novo",
+   "hora_gravacao": "17:48:16",
+   "quem": "MARCOS"
+  },
+  {
+   "id": "P20",
+   "clip": "IMG_5178",
+   "src_in": 49.95,
+   "src_out": 51.45,
+   "vel": 1.1,
+   "t0": 64.729,
+   "t1": 66.093,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rua_azul_reflexo",
+   "estabilizar": false,
+   "nota": "Na agenda, VALENTE · ELITE DRAKO acende como 'AGORA'.",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "17:48:16",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P20.mp4)"
+  },
+  {
+   "id": "P21",
+   "clip": "IMG_5178",
+   "src_in": 66.8,
+   "src_out": 68.65,
+   "vel": 1.05,
+   "t0": 66.093,
+   "t1": 67.855,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     1.7,
+     1.1
+    ]
+   ],
+   "cor": "rua_azul_reflexo",
+   "estabilizar": false,
+   "nota": "Termina com a mão na cabeça (despedida). Título EM ROTA.",
+   "bloco": "B2",
+   "status": "v1",
+   "hora_gravacao": "17:48:16",
+   "quem": "MARCOS",
+   "reuso": "mesmo corte da v1 (cor e estabilização prontas); muda só a cauda/entrada porque a transição vizinha mudou de tipo ou duração"
+  },
+  {
+   "id": "P58",
+   "clip": "IMG_5178",
+   "src_in": 72.55,
+   "src_out": 74.0,
+   "vel": 1.0,
+   "t0": 67.855,
+   "t1": 69.305,
+   "fala": false,
+   "enquadre": "livre",
+   "foco_xy": [
+    0.5,
+    0.45
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     1.45,
+     1.06
+    ]
+   ],
+   "cor": "rua_azul",
+   "estabilizar": true,
+   "nota": "NOVO. Fachada do Super Kal na hora azul, em bokeh (a própria câmera do dia, logo depois da fala; sem rosto em primeiro plano; sem fala entre 71.25 e 75.25). Placa limpa para a aparição 3 do KAL: o soco 'BORA PRA CIMA!' dispara o whip vertical para a estrada.",
+   "bloco": "B2",
+   "status": "novo",
+   "hora_gravacao": "17:48:16"
+  },
+  {
+   "id": "P70",
+   "clip": "IMG_5183",
+   "src_in": 36.71,
+   "src_out": 38.17,
+   "vel": 1.0,
+   "t0": 69.305,
+   "t1": 70.765,
+   "fala": false,
+   "enquadre": "livre",
+   "foco_xy": [
+    0.5,
+    0.42
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "estrada_noite",
+   "estabilizar": true,
+   "nota": "NOVO (troca os P22/P23 tremidos da v1). Estrada amarela na névoa, gotas no vidro: janela mais firme do bruto (0,65 px). Já tratado: build/cenas/chuva/final/d3.mp4 (offset 3.13-4.59). Mapa: a linha RIACHÃO DO JACUÍPE -> VALENTE corre e o relógio salta 17H50 -> 18H40.",
+   "bloco": "B3",
+   "status": "novo",
+   "tratado": {
+    "arquivo": "build/cenas/chuva/final2/d4.mp4",
+    "offset_in": 3.13,
+    "offset_out": 4.59,
+    "nota": "24 fps tocado quadro a quadro em 30 fps (1,25x): sem quadro repetido"
+   },
+   "hora_gravacao": "18:37:50"
+  },
+  {
+   "id": "P71",
+   "clip": "IMG_5186",
+   "src_in": 38.98,
+   "src_out": 43.34,
+   "vel": 1.1,
+   "t0": 70.765,
+   "t1": 74.729,
+   "fala": true,
+   "enquadre": "livre",
+   "foco_xy": [
+    0.5,
+    0.45
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "estrada_noite",
+   "estabilizar": false,
+   "nota": "NOVO. VOZ SOBRE A ESTRADA: a fala do Marcos (gravada em Valente, 18:59) narra a chuva; a imagem deste plano NÃO aparece, é coberta 100% pelos inserts I02, I03 e I04. Continua sem corte de áudio no P26 (43.34 em diante, mesma velocidade).",
+   "bloco": "B3",
+   "status": "novo",
+   "imagem": "coberta pelos inserts I03+I04 (I03 comeca dentro do P70, em 70.405)",
+   "hora_gravacao": "18:59:45",
+   "quem": "MARCOS"
+  },
+  {
+   "id": "P26",
+   "clip": "IMG_5186",
+   "src_in": 43.34,
+   "src_out": 45.7,
+   "vel": 1.1,
+   "t0": 74.729,
+   "t1": 76.874,
+   "fala": true,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.5,
+    0.55
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "valente_academia",
+   "estabilizar": true,
+   "nota": "Marcos aponta a placa CUIDADO PISO MOLHADO (45 s). Entra no clarão do relâmpago real. Título DILÚVIO.",
+   "bloco": "B4",
+   "status": "v1",
+   "hora_gravacao": "18:59:45",
+   "quem": "MARCOS",
+   "reuso": "mesmo corte da v1 (cor e estabilização prontas); muda só a cauda/entrada porque a transição vizinha mudou de tipo ou duração"
+  },
+  {
+   "id": "P72",
+   "clip": "IMG_5186",
+   "src_in": 89.6,
+   "src_out": 91.0,
+   "vel": 1.0,
+   "t0": 76.874,
+   "t1": 78.274,
+   "fala": false,
+   "enquadre": "livre",
+   "foco_xy": [
+    0.5,
+    0.45
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     1.4,
+     1.06
+    ]
+   ],
+   "cor": "valente_academia",
+   "estabilizar": true,
+   "nota": "NOVO. Geral da academia com o neon vermelho, sem rosto em primeiro plano (trecho depois do fim da fala, 89.0; áudio só de ambiente). É a PLACA do selo 'CHEGAMOS EM VALENTE' + dragão da Elite Drako: o selo precisa de respiro e o P27 é um close de rosto que não deixa espaço.",
+   "bloco": "B4",
+   "status": "novo",
+   "hora_gravacao": "18:59:45"
+  },
+  {
+   "id": "P27",
+   "clip": "v_185741",
+   "src_in": 2.06,
+   "src_out": 4.1,
+   "vel": 1.1,
+   "t0": 78.274,
+   "t1": 80.129,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.45,
+    0.3
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "valente_academia",
+   "estabilizar": true,
+   "nota": "Selfie do Marcos na loja da academia (o rosto ocupa o quadro até y 1110). O selo de Valente fica recolhido na faixa de baixo e pulsa em 'Elite Drako Gym'.",
+   "bloco": "B4",
+   "status": "v1",
+   "hora_gravacao": "18:57:41",
+   "quem": "MARCOS",
+   "reuso": "mesmo corte da v1 (cor e estabilização prontas); muda só a cauda/entrada porque a transição vizinha mudou de tipo ou duração"
+  },
+  {
+   "id": "P28",
+   "clip": "v_185741",
+   "src_in": 7.52,
+   "src_out": 11.62,
+   "vel": 1.1,
+   "t0": 80.129,
+   "t1": 83.856,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.5,
+    0.3
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     3.4,
+     1.0
+    ],
+    [
+     3.7,
+     1.25
+    ]
+   ],
+   "cor": "valente_academia",
+   "estabilizar": true,
+   "nota": "Termina na placa SALA DE POSE (11 s). MODO OPERAÇÃO (o modo deste bloco).",
+   "bloco": "B4",
+   "status": "v1",
+   "hora_gravacao": "18:57:41",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P28.mp4)"
+  },
+  {
+   "id": "P29",
+   "clip": "v_185741",
+   "src_in": 59.0,
+   "src_out": 64.8,
+   "vel": 1.15,
+   "t0": 83.856,
+   "t1": 88.899,
+   "fala": true,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.5,
+    0.45
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "valente_academia",
+   "estabilizar": true,
+   "nota": "Sala de pose: Marcos faz a pose nos espelhos (62-64). Impact frame + quadro congelado espelhado em src 62.2 (já feito na base da v1).",
+   "bloco": "B4",
+   "status": "v1",
+   "hora_gravacao": "18:57:41",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P29.mp4)"
+  },
+  {
+   "id": "P30",
+   "clip": "IMG_5186",
+   "src_in": 77.34,
+   "src_out": 79.5,
+   "vel": 1.0,
+   "t0": 88.899,
+   "t1": 91.059,
+   "fala": true,
+   "enquadre": "livre",
+   "foco_xy": [
+    0.5,
+    0.5
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "valente_academia",
+   "estabilizar": true,
+   "nota": "Plano geral da academia (neon vermelho). 'MÁXIMO' ecoa o 'na máxima' do gancho.",
+   "bloco": "B4",
+   "status": "v1",
+   "hora_gravacao": "18:59:45",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P30.mp4)"
+  },
+  {
+   "id": "P60",
+   "clip": "v_210219",
+   "src_in": 856.95,
+   "src_out": 858.75,
+   "vel": 1.0,
+   "t0": 91.059,
+   "t1": 92.859,
+   "fala": false,
+   "enquadre": "livre",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ],
+    [
+     1.8,
+     1.08
+    ]
+   ],
+   "cor": "noturno_prospeccao",
+   "estabilizar": true,
+   "nota": "NOVO (troca o P31, que abria num rosto borrado). Mesa de luz e o canhão que abre em estrela azul no escuro (857.0-858.7): placa do título BRABUS LOUNGE. Áudio da fonte mudo (fala de terceiros a partir de 858.2).",
+   "bloco": "B5",
+   "status": "novo",
+   "hora_gravacao": "21:02:19"
+  },
+  {
+   "id": "P32",
+   "clip": "v_210219",
+   "src_in": 153.34,
+   "src_out": 156.25,
+   "vel": 1.1,
+   "t0": 92.859,
+   "t1": 95.504,
+   "fala": true,
+   "enquadre": "acao",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "noturno_prospeccao",
+   "estabilizar": true,
+   "nota": "Marcos no meio das luzes (155.9-157 de frente). A leitura da creat.MTT sobre o espaço.",
+   "bloco": "B5",
+   "status": "v1",
+   "hora_gravacao": "21:02:19",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P32.mp4)"
+  },
+  {
+   "id": "P61",
+   "clip": "v_210219",
+   "src_in": 767.52,
+   "src_out": 772.8,
+   "vel": 1.2,
+   "t0": 95.504,
+   "t1": 99.904,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.5,
+    0.35
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "noturno_prospeccao",
+   "estabilizar": true,
+   "nota": "NOVO (AJUSTE 8, trecho T2). Quem está montando o espaço lista o que falta. 0,8 s ao vivo no rosto dele; depois a imagem é a VISÃO (V09): quadro real base_2, blueprint sobe do chão, notas de briefing na palavra, luz acende em 'neon'. SEM NOME na tela.",
+   "bloco": "B5",
+   "status": "novo",
+   "hora_gravacao": "21:02:19",
+   "quem": "BRABUS_LOUNGE"
+  },
+  {
+   "id": "P62",
+   "clip": "v_210219",
+   "src_in": 773.74,
+   "src_out": 775.5,
+   "vel": 1.2,
+   "t0": 99.904,
+   "t1": 101.371,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.5,
+    0.35
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "noturno_prospeccao",
+   "estabilizar": true,
+   "nota": "NOVO (T2, 2ª parte: pula o silêncio 772.8-773.7). Imagem = conceito_2 (V09), que tem exatamente plantas e samambaias pendentes. Corte em 775.50, no vão antes da palavra seguinte.",
+   "bloco": "B5",
+   "status": "novo",
+   "hora_gravacao": "21:02:19",
+   "quem": "BRABUS_LOUNGE"
+  },
+  {
+   "id": "P63",
+   "clip": "v_210219",
+   "src_in": 841.56,
+   "src_out": 849.0,
+   "vel": 1.2,
+   "t0": 101.371,
+   "t1": 107.571,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.5,
+    0.35
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "noturno_prospeccao",
+   "estabilizar": true,
+   "nota": "NOVO (AJUSTE 8, trecho T3: a frase que o dono citou). Abre ao vivo nele (0,85 s), vira a VISÃO (V10: base_3 -> blueprint -> luz acende em 'o diferencial' -> conceito_3 com gente dançando) e volta ao vivo em 'já é outra parada' (a câmera real já está no rosto do RUAN, ouvindo). SEM NOME na tela.",
+   "bloco": "B5",
+   "status": "novo",
+   "hora_gravacao": "21:02:19",
+   "quem": "BRABUS_LOUNGE"
+  },
+  {
+   "id": "P35",
+   "clip": "v_210219",
+   "src_in": 484.52,
+   "src_out": 485.4,
+   "vel": 1.0,
+   "t0": 107.571,
+   "t1": 108.451,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.5,
+    0.3
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.2
+    ],
+    [
+     0.88,
+     1.05
+    ]
+   ],
+   "cor": "noturno_prospeccao",
+   "estabilizar": true,
+   "nota": "Marcos em close (borrado de movimento = energia). Impacto: o drop do bloco.",
+   "bloco": "B5",
+   "status": "v1",
+   "hora_gravacao": "21:02:19",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P35.mp4)"
+  },
+  {
+   "id": "P36",
+   "clip": "v_210219",
+   "src_in": 599.6,
+   "src_out": 601.6,
+   "vel": 1.0,
+   "t0": 108.451,
+   "t1": 110.451,
+   "fala": false,
+   "enquadre": "livre",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "noturno_prospeccao",
+   "estabilizar": true,
+   "nota": "Lasers atravessando a fumaça (áudio da fonte mudo: fala de terceiros). Checklist IMAGEM · DIVULGAÇÃO · GESTÃO.",
+   "bloco": "B5",
+   "status": "v1",
+   "hora_gravacao": "21:02:19",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P36.mp4)"
+  },
+  {
+   "id": "P37",
+   "clip": "IMG_5226",
+   "src_in": 1.34,
+   "src_out": 2.35,
+   "vel": 1.0,
+   "t0": 110.451,
+   "t1": 111.461,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.35
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rota_noite",
+   "estabilizar": true,
+   "nota": "Agradecimento no balcão do Rota (Marcos com o refri e o saco 'CHEGOU').",
+   "bloco": "B6",
+   "status": "v1",
+   "hora_gravacao": "23:27:31",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P37.mp4)"
+  },
+  {
+   "id": "P38",
+   "clip": "IMG_5226",
+   "src_in": 13.14,
+   "src_out": 16.2,
+   "vel": 1.1,
+   "t0": 111.461,
+   "t1": 114.243,
+   "fala": true,
+   "enquadre": "rosto",
+   "foco_xy": [
+    0.5,
+    0.35
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rota_noite",
+   "estabilizar": true,
+   "nota": "Selfie com o Ruan em close e o saco 'CHEGOU' (os hambúrgueres).",
+   "bloco": "B6",
+   "status": "v1",
+   "hora_gravacao": "23:27:31",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P38.mp4)"
+  },
+  {
+   "id": "P39",
+   "clip": "IMG_5226",
+   "src_in": 68.74,
+   "src_out": 70.5,
+   "vel": 1.0,
+   "t0": 114.243,
+   "t1": 116.003,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rota_noite",
+   "estabilizar": true,
+   "nota": "Os dois com os lanches. Payoff EM ROTA -> NO ROTA.",
+   "bloco": "B6",
+   "status": "v1",
+   "hora_gravacao": "23:27:31",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P39.mp4)"
+  },
+  {
+   "id": "P40",
+   "clip": "IMG_5226",
+   "src_in": 80.7,
+   "src_out": 82.5,
+   "vel": 1.05,
+   "t0": 116.003,
+   "t1": 117.717,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rota_noite",
+   "estabilizar": true,
+   "nota": "",
+   "bloco": "B6",
+   "status": "v1",
+   "hora_gravacao": "23:27:31",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P40.mp4)"
+  },
+  {
+   "id": "P41",
+   "clip": "IMG_5226",
+   "src_in": 87.5,
+   "src_out": 90.4,
+   "vel": 1.1,
+   "t0": 117.717,
+   "t1": 120.353,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rota_noite",
+   "estabilizar": true,
+   "nota": "Selo creat.MTT STUDIO BASTIDORES na palavra 'bastidores'.",
+   "bloco": "B6",
+   "status": "v1",
+   "hora_gravacao": "23:27:31",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P41.mp4)"
+  },
+  {
+   "id": "P42",
+   "clip": "IMG_5226",
+   "src_in": 92.06,
+   "src_out": 93.12,
+   "vel": 1.0,
+   "t0": 120.353,
+   "t1": 121.413,
+   "fala": true,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rota_noite",
+   "estabilizar": true,
+   "nota": "",
+   "bloco": "B6",
+   "status": "v1",
+   "hora_gravacao": "23:27:31",
+   "quem": "MARCOS",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P42.mp4)"
+  },
+  {
+   "id": "P43",
+   "clip": "IMG_5226",
+   "src_in": 96.6,
+   "src_out": 99.4,
+   "vel": 1.15,
+   "t0": 121.413,
+   "t1": 123.848,
+   "fala": false,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.4
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "rota_noite",
+   "estabilizar": true,
+   "nota": "Brinde com as garrafas; a garrafa cobre a lente (99 s) = cortina para a logo.",
+   "bloco": "B6",
+   "status": "v1",
+   "hora_gravacao": "23:27:31",
+   "reuso": "arquivo da v1 serve como está (build/video/planos/P43.mp4)"
+  },
+  {
+   "id": "P44",
+   "clip": "CARTAO_FECHO",
+   "src_in": 0.0,
+   "src_out": 4.4,
+   "vel": 1.0,
+   "t0": 123.848,
+   "t1": 129.148,
+   "fala": false,
+   "enquadre": "centro",
+   "foco_xy": [
+    0.5,
+    0.5
+   ],
+   "zoom": [
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "cor": "marca",
+   "estabilizar": false,
+   "nota": "ALTERADO (2,4 -> 4,4 s). Cartão final: mapa do ecossistema do dia (a creat.MTT no centro ligando os pontos; Igreja e Seleto como REMARCADA / PRÓXIMA ROTA) que colapsa na logo oficial creat.MTT STUDIO + SEGUE A @creat.mtt.",
+   "bloco": "B6",
+   "status": "alterado"
+  }
+ ],
+ "inserts": [
+  {
+   "id": "I01",
+   "sobre": "P02",
+   "clip": "IMG_5160",
+   "src_in": 26.6,
+   "src_out": 28.4,
+   "vel": 1.0,
+   "t0": 4.085,
+   "t1": 5.885,
+   "cor": "ct",
+   "estabilizar": true,
+   "audio": "nenhum (a voz do P02 continua)",
+   "status": "v1",
+   "nota": "Mão do Ruan no teclado e dedo no monitor: o sistema sendo criado."
+  },
+  {
+   "id": "I03",
+   "sobre": "P70+P71",
+   "clip": "v_183901",
+   "src_in": 13.85,
+   "src_out": 15.05,
+   "vel": 1.0,
+   "t0": 70.405,
+   "t1": 71.605,
+   "cor": "estrada_noite",
+   "estabilizar": true,
+   "status": "novo",
+   "tratado": {
+    "arquivo": "build/cenas/chuva/final2/c2.mp4",
+    "offset_in": 0.05,
+    "offset_out": 1.25
+   },
+   "audio": "nenhum da imagem; cama de chuva continua",
+   "nota": "Perfil do RUAN no escuro, luz do painel (firme: 1,75 px; preto preservado). O respiro humano entre dois planos de pista."
+  },
+  {
+   "id": "I04",
+   "sobre": "P71",
+   "clip": "v_183901",
+   "src_in": 24.816,
+   "src_out": 27.94,
+   "vel": 1.0,
+   "t0": 71.605,
+   "t1": 74.729,
+   "cor": "estrada_noite",
+   "estabilizar": true,
+   "status": "novo",
+   "tratado": {
+    "arquivo": "build/cenas/chuva/final2/b4.mp4",
+    "offset_in": 0.216,
+    "offset_out": 3.34
+   },
+   "audio": "nenhum da imagem; cama de chuva continua",
+   "eventos": {
+    "limpador": [
+     26.92,
+     27.3
+    ],
+    "relampago_1": [
+     27.5,
+     27.54
+    ],
+    "ceu_aceso": [
+     27.57,
+     27.84
+    ],
+    "relampago_pico": 27.903,
+    "corte": 27.94
+   },
+   "nota": "Pista alagada com os faróis vindo, duas passadas do limpador (26.92 e 27.30) e RELÂMPAGO REAL: 1º clarão em 27.50-27.54 (o quadro inteiro fica lilás), céu aceso até 27.84 e pico em 27.903 (luma média 190 contra 67 do plano). O corte para Valente cai 1 quadro depois do pico (27.94): o clarão de verdade É a transição. Visto em direcao/v2chk/ch/b3_jan.jpg. O relatório da chuva dizia que não havia relâmpago: há. Janela um pouco menos firme que a 24.87-26.33 (minha medida: 7 a 9 px contra 4 a 6): conferir; se passar de 8 px, reestabilizar só esta janela com py/estabiliza_chuva.py. NÃO passar denoise temporal forte nos quadros do clarão (borra o flash)."
+  }
+ ],
+ "transicoes": [
+  {
+   "entre": [
+    "P01",
+    "P02"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Corte no fim do joinha; punch-in 1.12 esconde o salto. O impacto vem da trilha.",
+   "corte_t": 2.92
+  },
+  {
+   "entre": [
+    "P02",
+    "P03"
+   ],
+   "tipo": "whip",
+   "tipo_base": "whip",
+   "dur": 0.24,
+   "som": "wh_camiseta_rapido",
+   "nota": "Chicote para a direita: do rosto para a tela das senhas.",
+   "corte_t": 7.79
+  },
+  {
+   "entre": [
+    "P03",
+    "P04"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "No respiro.",
+   "corte_t": 10.235
+  },
+  {
+   "entre": [
+    "P04",
+    "P06"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Jump cut com troca de escala (1.10 -> 1.00).",
+   "corte_t": 11.308
+  },
+  {
+   "entre": [
+    "P06",
+    "P07"
+   ],
+   "tipo": "speed_ramp",
+   "tipo_base": "speed_ramp",
+   "dur": 0.4,
+   "som": "",
+   "nota": "Ruan gira para a porta: 1.10 -> 1.35 sem corte visível (mesmo clipe contínuo). Só o som real da sala.",
+   "corte_t": 13.653
+  },
+  {
+   "entre": [
+    "P07",
+    "P08"
+   ],
+   "tipo": "match_porta",
+   "tipo_base": "match_porta",
+   "dur": 0.5,
+   "som": "porta_ct_encosta + porta_real_fecha (build/audio/sfx)",
+   "nota": "MOMENTO-ASSINATURA 1 (igual à v1, já renderizado e conferido): a folha preta toma a tela, vira máscara de luma e o Marcos aparece de dentro do preto. SEM whoosh: o som é a própria porta.",
+   "corte_t": 16.134
+  },
+  {
+   "entre": [
+    "P08",
+    "P50"
+   ],
+   "tipo": "whip",
+   "tipo_base": "whip",
+   "dur": 0.24,
+   "som": "wh_corda_chicote",
+   "nota": "A câmera do P08 atravessa o batente branco (fonte 3.5-3.7): a segunda porta do dia vira chicote para dentro da loja do CT (mesmo clipe, 14 s depois).",
+   "corte_t": 19.658
+  },
+  {
+   "entre": [
+    "P50",
+    "P09"
+   ],
+   "tipo": "whip",
+   "tipo_base": "whip",
+   "dur": 0.24,
+   "som": "wh_luva_curto",
+   "nota": "Da loja para a fachada do CT (os dois juntos).",
+   "corte_t": 23.675
+  },
+  {
+   "entre": [
+    "P09",
+    "P10"
+   ],
+   "tipo": "mapa",
+   "tipo_base": "zoom_through",
+   "dur": 0.5,
+   "som": "wh_ar_suave",
+   "nota": "VINHETA DE ROTA: o cartão do mapa abre em tela cheia, a linha corre do nó CT MTT ao nó SUPER KAL, a câmera mergulha no nó e sai na rua do Super Kal. Por baixo, a base faz um zoom_through.",
+   "corte_t": 26.249
+  },
+  {
+   "entre": [
+    "P10",
+    "P54"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Mesma tomada 14 s depois; a logo do Super Kal que está se montando atravessa o corte e segura a continuidade.",
+   "corte_t": 27.989
+  },
+  {
+   "entre": [
+    "P54",
+    "P11"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Emenda contígua (24.32) no mesmo take e na mesma velocidade. Troca de escala 1.00 -> 1.06 no 1º quadro do P11 para esconder diferença de estabilização entre os dois arquivos; conferir a emenda quadro a quadro.",
+   "corte_t": 33.425
+  },
+  {
+   "entre": [
+    "P11",
+    "P12"
+   ],
+   "tipo": "flash",
+   "tipo_base": "flash",
+   "dur": 0.12,
+   "som": "",
+   "nota": "Flash branco de 4 quadros casado com a TV acesa. Sem som (TV não faz barulho).",
+   "corte_t": 37.77
+  },
+  {
+   "entre": [
+    "P12",
+    "P55"
+   ],
+   "tipo": "speed_ramp",
+   "tipo_base": "speed_ramp",
+   "dur": 0.3,
+   "som": "",
+   "nota": "ACELERA E TRAVA: a saída do P12 acelera até x4 nos últimos 0,15 s (já embutida no P12.mp4 da v1) e bate seco no close parado da chave. O P55 entra em velocidade normal, SEM quadro de fusão. A TRILHA PARA aqui (stop-time de 3 tempos): só o balcão e a chave.",
+   "corte_t": 43.645
+  },
+  {
+   "entre": [
+    "P55",
+    "P56"
+   ],
+   "tipo": "sinal",
+   "tipo_base": "corte",
+   "dur": 0.2,
+   "som": "moto real do plano + moto_cruza_esq_dir por baixo",
+   "nota": "MATCH DO SINAL: o anel que nasceu do LED atravessa o corte e continua no ar da rua até o carro. A moto azul que cruza é o wipe natural de entrada.",
+   "corte_t": 44.378
+  },
+  {
+   "entre": [
+    "P56",
+    "P13"
+   ],
+   "tipo": "impact",
+   "tipo_base": "impact",
+   "dur": 0.1,
+   "som": "wh_camiseta_medio",
+   "nota": "Pisca 2 acende = 2 quadros âmbar (impact frame com a cor do pisca) e o corte. O corredor entra em speed ramp (a entrada de x4 até 1.5x já está embutida no P13.mp4 da v1: manter o arquivo) na cabeça do compasso: a trilha VOLTA aqui.",
+   "corte_t": 45.802
+  },
+  {
+   "entre": [
+    "P13",
+    "P14"
+   ],
+   "tipo": "zoom_through",
+   "tipo_base": "zoom_through",
+   "dur": 0.3,
+   "som": "",
+   "nota": "Fim do corredor = balcão do açougue.",
+   "corte_t": 47.402
+  },
+  {
+   "entre": [
+    "P14",
+    "P15"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "",
+   "corte_t": 50.767
+  },
+  {
+   "entre": [
+    "P15",
+    "P16"
+   ],
+   "tipo": "impact",
+   "tipo_base": "impact",
+   "dur": 0.1,
+   "som": "",
+   "nota": "Impact frame de 2 quadros no fim do toque de chamada; entra a voz do cliente.",
+   "corte_t": 56.292
+  },
+  {
+   "entre": [
+    "P16",
+    "P17"
+   ],
+   "tipo": "luma",
+   "tipo_base": "luma",
+   "dur": 0.5,
+   "som": "",
+   "nota": "Do escritório branco para a rua na hora azul (claro -> azul). A trilha cai para pad: respiro.",
+   "corte_t": 59.947
+  },
+  {
+   "entre": [
+    "P17",
+    "P19"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Corte no respiro com troca de escala (sem whip: a hora azul é o momento calmo).",
+   "corte_t": 62.02
+  },
+  {
+   "entre": [
+    "P19",
+    "P51"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Mesmo plano: punch-in 1.00 -> 1.08.",
+   "corte_t": 63.547
+  },
+  {
+   "entre": [
+    "P51",
+    "P20"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "wh_isopor_textura",
+   "nota": "Mesmo plano: volta a 1.00. O som é o risco da agenda (a igreja sendo empurrada para REMARCADA), não o corte.",
+   "corte_t": 64.729
+  },
+  {
+   "entre": [
+    "P20",
+    "P21"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Punch-in no 'em rota'.",
+   "corte_t": 66.093
+  },
+  {
+   "entre": [
+    "P21",
+    "P58"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Na batida: da despedida do Marcos para a fachada do Super Kal em bokeh (a câmera dele mesmo, segundos depois).",
+   "corte_t": 67.855
+  },
+  {
+   "entre": [
+    "P58",
+    "P70"
+   ],
+   "tipo": "whip_vertical",
+   "tipo_base": "whip",
+   "dur": 0.3,
+   "som": "kal_soco_bora + wh_rajada_folhas",
+   "nota": "MOMENTO-ASSINATURA 2: o soco do Kal (pequeno, no canto) empurra o quadro inteiro para cima; a estrada na chuva entra por baixo, com blur vertical de até 300 px. O whip NASCE do punho.",
+   "corte_t": 69.305
+  },
+  {
+   "entre": [
+    "P70",
+    "P71"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "limpador_dentro_2x",
+   "nota": "Corte seco para o plano do limpador (insert I02); a voz do Marcos entra 0,1 s depois.",
+   "corte_t": 70.765
+  },
+  {
+   "entre": [
+    "P71",
+    "P26"
+   ],
+   "tipo": "relampago_real",
+   "tipo_base": "flash",
+   "dur": 0.15,
+   "som": "trovao_perto_com_chuva",
+   "nota": "MOMENTO-ASSINATURA 3: o relâmpago de VERDADE do v_183901 (pico em 27.903) é a transição. O quadro mais claro do clarão segura 2 quadros como flash azulado e abre em Valente. O trovão estala no corte e a cauda fica -8 dB sob a fala.",
+   "corte_t": 74.729
+  },
+  {
+   "entre": [
+    "P26",
+    "P72"
+   ],
+   "tipo": "whip",
+   "tipo_base": "whip",
+   "dur": 0.24,
+   "som": "wh_couro",
+   "nota": "Da placa do piso molhado para o geral vermelho da academia: a chegada.",
+   "corte_t": 76.874
+  },
+  {
+   "entre": [
+    "P72",
+    "P27"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Na batida. O selo de Valente encolhe do centro para a faixa de baixo e atravessa o corte.",
+   "corte_t": 78.274
+  },
+  {
+   "entre": [
+    "P27",
+    "P28"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "",
+   "corte_t": 80.129
+  },
+  {
+   "entre": [
+    "P28",
+    "P29"
+   ],
+   "tipo": "zoom_through",
+   "tipo_base": "zoom_through",
+   "dur": 0.35,
+   "som": "wh_vara_grave",
+   "nota": "Mergulho na placa SALA DE POSE e sai dentro da sala espelhada.",
+   "corte_t": 83.856
+  },
+  {
+   "entre": [
+    "P29",
+    "P30"
+   ],
+   "tipo": "speed_ramp",
+   "tipo_base": "speed_ramp",
+   "dur": 0.4,
+   "som": "",
+   "nota": "Depois do freeze, acelera para o geral vermelho da academia.",
+   "corte_t": 88.899
+  },
+  {
+   "entre": [
+    "P30",
+    "P60"
+   ],
+   "tipo": "luma",
+   "tipo_base": "luma",
+   "dur": 0.5,
+   "som": "wh_vassoura_longo",
+   "nota": "O neon vermelho apaga e o relógio varre 19H00 -> 21H00 (o som é o do relógio correndo): BRABUS LOUNGE.",
+   "corte_t": 91.059
+  },
+  {
+   "entre": [
+    "P60",
+    "P32"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Na batida do drop.",
+   "corte_t": 92.859
+  },
+  {
+   "entre": [
+    "P32",
+    "P61"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "",
+   "corte_t": 95.504
+  },
+  {
+   "entre": [
+    "P61",
+    "P62"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Invisível: a imagem é a VISÃO (V09), que continua por cima; no áudio some 0,94 s de silêncio.",
+   "corte_t": 99.904
+  },
+  {
+   "entre": [
+    "P62",
+    "P63"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "Volta ao real: do conceito para o rosto de quem fala (a luz do conceito 'apaga' em 4 quadros).",
+   "corte_t": 101.371
+  },
+  {
+   "entre": [
+    "P63",
+    "P35"
+   ],
+   "tipo": "impact",
+   "tipo_base": "impact",
+   "dur": 0.1,
+   "som": "sub grave da própria trilha (1 uso no filme)",
+   "nota": "Impact frame + tremida de 3 quadros no 'Isso é comunicação!'. O filtro da trilha abre aqui.",
+   "corte_t": 107.571
+  },
+  {
+   "entre": [
+    "P35",
+    "P36"
+   ],
+   "tipo": "flash",
+   "tipo_base": "flash",
+   "dur": 0.12,
+   "som": "",
+   "nota": "Sem som de laser: laser de pista não faz barulho.",
+   "corte_t": 108.451
+  },
+  {
+   "entre": [
+    "P36",
+    "P37"
+   ],
+   "tipo": "luma",
+   "tipo_base": "luma",
+   "dur": 0.6,
+   "som": "chuva_fina_rua_8s",
+   "nota": "A fumaça branca vira a luz do Rota (23:27). Entra o chuvisco real da rua.",
+   "corte_t": 110.451
+  },
+  {
+   "entre": [
+    "P37",
+    "P38"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "",
+   "corte_t": 111.461
+  },
+  {
+   "entre": [
+    "P38",
+    "P39"
+   ],
+   "tipo": "whip",
+   "tipo_base": "whip",
+   "dur": 0.2,
+   "som": "wh_baqueta_seco",
+   "nota": "",
+   "corte_t": 114.243
+  },
+  {
+   "entre": [
+    "P39",
+    "P40"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "",
+   "corte_t": 116.003
+  },
+  {
+   "entre": [
+    "P40",
+    "P41"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "",
+   "corte_t": 117.717
+  },
+  {
+   "entre": [
+    "P41",
+    "P42"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "",
+   "corte_t": 120.353
+  },
+  {
+   "entre": [
+    "P42",
+    "P43"
+   ],
+   "tipo": "corte",
+   "tipo_base": "corte",
+   "dur": 0.0,
+   "som": "",
+   "nota": "",
+   "corte_t": 121.413
+  },
+  {
+   "entre": [
+    "P43",
+    "P44"
+   ],
+   "tipo": "luma",
+   "tipo_base": "luma",
+   "dur": 0.4,
+   "som": "wh_corda_gira + brinde real",
+   "nota": "A garrafa cobre a lente (fonte 99.0) = cortina escura; o mapa do dia nasce de dentro dela.",
+   "corte_t": 123.848
+  }
+ ],
+ "legendas": [
+  {
+   "t0": 1.92,
+   "t1": 2.48,
+   "texto": "Fala,",
+   "palavras": [
+    {
+     "p": "Fala,",
+     "i": 1.92,
+     "f": 2.48
+    }
+   ],
+   "destaque": [
+    "FALA"
+   ],
+   "estilo": "fala",
+   "plano": "P01"
+  },
+  {
+   "t0": 2.48,
+   "t1": 2.82,
+   "texto": "pessoal!",
+   "palavras": [
+    {
+     "p": "pessoal!",
+     "i": 2.48,
+     "f": 2.82
+    }
+   ],
+   "destaque": [
+    "PESSOAL"
+   ],
+   "estilo": "fala",
+   "plano": "P01"
+  },
+  {
+   "t0": 2.99,
+   "t1": 3.459,
+   "texto": "Nesse momento eu",
+   "palavras": [
+    {
+     "p": "Nesse",
+     "i": 2.99,
+     "f": 3.094
+    },
+    {
+     "p": "momento",
+     "i": 3.094,
+     "f": 3.337
+    },
+    {
+     "p": "eu",
+     "i": 3.337,
+     "f": 3.459
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P02"
+  },
+  {
+   "t0": 3.459,
+   "t1": 4.52,
+   "texto": "estou aqui criando",
+   "palavras": [
+    {
+     "p": "estou",
+     "i": 3.459,
+     "f": 3.581
+    },
+    {
+     "p": "aqui",
+     "i": 3.581,
+     "f": 4.085
+    },
+    {
+     "p": "criando",
+     "i": 4.085,
+     "f": 4.52
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P02"
+  },
+  {
+   "t0": 4.52,
+   "t1": 5.581,
+   "texto": "um sistema do",
+   "palavras": [
+    {
+     "p": "um",
+     "i": 4.52,
+     "f": 4.711
+    },
+    {
+     "p": "sistema",
+     "i": 4.711,
+     "f": 4.955
+    },
+    {
+     "p": "do",
+     "i": 4.955,
+     "f": 5.581
+    }
+   ],
+   "destaque": [
+    "SISTEMA"
+   ],
+   "estilo": "fala",
+   "plano": "P02"
+  },
+  {
+   "t0": 5.581,
+   "t1": 6.05,
+   "texto": "Super Kal,",
+   "palavras": [
+    {
+     "p": "Super",
+     "i": 5.581,
+     "f": 5.894
+    },
+    {
+     "p": "Kal,",
+     "i": 5.894,
+     "f": 6.05
+    }
+   ],
+   "destaque": [
+    "SUPER"
+   ],
+   "estilo": "fala",
+   "plano": "P02"
+  },
+  {
+   "t0": 6.224,
+   "t1": 6.694,
+   "texto": "um sistema de",
+   "palavras": [
+    {
+     "p": "um",
+     "i": 6.224,
+     "f": 6.329
+    },
+    {
+     "p": "sistema",
+     "i": 6.329,
+     "f": 6.52
+    },
+    {
+     "p": "de",
+     "i": 6.52,
+     "f": 6.694
+    }
+   ],
+   "destaque": [
+    "SISTEMA"
+   ],
+   "estilo": "fala",
+   "plano": "P02"
+  },
+  {
+   "t0": 6.694,
+   "t1": 7.059,
+   "texto": "fila que lá",
+   "palavras": [
+    {
+     "p": "fila",
+     "i": 6.694,
+     "f": 6.885
+    },
+    {
+     "p": "que",
+     "i": 6.885,
+     "f": 6.955
+    },
+    {
+     "p": "lá",
+     "i": 6.955,
+     "f": 7.059
+    }
+   ],
+   "destaque": [
+    "FILA"
+   ],
+   "estilo": "fala",
+   "plano": "P02"
+  },
+  {
+   "t0": 7.059,
+   "t1": 7.685,
+   "texto": "está precisando.",
+   "palavras": [
+    {
+     "p": "está",
+     "i": 7.059,
+     "f": 7.233
+    },
+    {
+     "p": "precisando.",
+     "i": 7.233,
+     "f": 7.685
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P02"
+  },
+  {
+   "t0": 7.863,
+   "t1": 8.281,
+   "texto": "Ó, o sistema",
+   "palavras": [
+    {
+     "p": "Ó,",
+     "i": 7.863,
+     "f": 7.899
+    },
+    {
+     "p": "o",
+     "i": 8.045,
+     "f": 8.063
+    },
+    {
+     "p": "sistema",
+     "i": 8.063,
+     "f": 8.281
+    }
+   ],
+   "destaque": [
+    "SISTEMA"
+   ],
+   "estilo": "fala",
+   "plano": "P03"
+  },
+  {
+   "t0": 8.281,
+   "t1": 9.499,
+   "texto": "aqui de açougue,",
+   "palavras": [
+    {
+     "p": "aqui",
+     "i": 8.281,
+     "f": 8.863
+    },
+    {
+     "p": "de",
+     "i": 8.863,
+     "f": 9.117
+    },
+    {
+     "p": "açougue,",
+     "i": 9.117,
+     "f": 9.499
+    }
+   ],
+   "destaque": [
+    "AÇOUGUE"
+   ],
+   "estilo": "fala",
+   "plano": "P03"
+  },
+  {
+   "t0": 9.554,
+   "t1": 10.099,
+   "texto": "fila.",
+   "palavras": [
+    {
+     "p": "fila.",
+     "i": 9.554,
+     "f": 10.099
+    }
+   ],
+   "destaque": [
+    "FILA"
+   ],
+   "estilo": "fala",
+   "plano": "P03"
+  },
+  {
+   "t0": 10.344,
+   "t1": 10.853,
+   "texto": "A operação não",
+   "palavras": [
+    {
+     "p": "A",
+     "i": 10.344,
+     "f": 10.399
+    },
+    {
+     "p": "operação",
+     "i": 10.399,
+     "f": 10.69
+    },
+    {
+     "p": "não",
+     "i": 10.69,
+     "f": 10.853
+    }
+   ],
+   "destaque": [
+    "NÃO"
+   ],
+   "estilo": "fala",
+   "plano": "P04"
+  },
+  {
+   "t0": 10.853,
+   "t1": 11.271,
+   "texto": "para.",
+   "palavras": [
+    {
+     "p": "para.",
+     "i": 10.853,
+     "f": 11.271
+    }
+   ],
+   "destaque": [
+    "PARA"
+   ],
+   "estilo": "fala",
+   "plano": "P04"
+  },
+  {
+   "t0": 11.708,
+   "t1": 12.253,
+   "texto": "Let's go,",
+   "palavras": [
+    {
+     "p": "Let's",
+     "i": 11.708,
+     "f": 11.981
+    },
+    {
+     "p": "go,",
+     "i": 11.981,
+     "f": 12.253
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P06"
+  },
+  {
+   "t0": 12.435,
+   "t1": 13.508,
+   "texto": "creat.MTT em ação.",
+   "palavras": [
+    {
+     "p": "creat.MTT",
+     "i": 12.435,
+     "f": 12.926
+    },
+    {
+     "p": "em",
+     "i": 12.926,
+     "f": 13.272
+    },
+    {
+     "p": "ação.",
+     "i": 13.272,
+     "f": 13.508
+    }
+   ],
+   "destaque": [
+    "CREAT.MTT"
+   ],
+   "estilo": "fala",
+   "plano": "P06"
+  },
+  {
+   "t0": 16.7,
+   "t1": 17.14,
+   "texto": "Como o Ruan",
+   "palavras": [
+    {
+     "p": "Como",
+     "i": 16.7,
+     "f": 16.84
+    },
+    {
+     "p": "o",
+     "i": 16.84,
+     "f": 16.86
+    },
+    {
+     "p": "Ruan",
+     "i": 16.86,
+     "f": 17.14
+    }
+   ],
+   "destaque": [
+    "RUAN"
+   ],
+   "estilo": "fala",
+   "plano": "P08"
+  },
+  {
+   "t0": 17.14,
+   "t1": 17.772,
+   "texto": "já estava falando,",
+   "palavras": [
+    {
+     "p": "já",
+     "i": 17.14,
+     "f": 17.22
+    },
+    {
+     "p": "estava",
+     "i": 17.22,
+     "f": 17.38
+    },
+    {
+     "p": "falando,",
+     "i": 17.38,
+     "f": 17.772
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P08"
+  },
+  {
+   "t0": 17.963,
+   "t1": 18.705,
+   "texto": "mais uma operação,",
+   "palavras": [
+    {
+     "p": "mais",
+     "i": 17.963,
+     "f": 17.963
+    },
+    {
+     "p": "uma",
+     "i": 17.963,
+     "f": 18.096
+    },
+    {
+     "p": "operação,",
+     "i": 18.096,
+     "f": 18.705
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P08"
+  },
+  {
+   "t0": 18.82,
+   "t1": 19.486,
+   "texto": "grupo Super Kal.",
+   "palavras": [
+    {
+     "p": "grupo",
+     "i": 18.82,
+     "f": 18.972
+    },
+    {
+     "p": "Super",
+     "i": 18.972,
+     "f": 19.296
+    },
+    {
+     "p": "Kal.",
+     "i": 19.296,
+     "f": 19.486
+    }
+   ],
+   "destaque": [
+    "SUPER"
+   ],
+   "estilo": "fala",
+   "plano": "P08"
+  },
+  {
+   "t0": 19.797,
+   "t1": 21.084,
+   "texto": "E segunda operação:",
+   "palavras": [
+    {
+     "p": "E",
+     "i": 19.797,
+     "f": 19.884
+    },
+    {
+     "p": "segunda",
+     "i": 19.884,
+     "f": 19.971
+    },
+    {
+     "p": "operação:",
+     "i": 19.971,
+     "f": 21.084
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P50"
+  },
+  {
+   "t0": 21.293,
+   "t1": 22.232,
+   "texto": "Valente, Drako e",
+   "palavras": [
+    {
+     "p": "Valente,",
+     "i": 21.293,
+     "f": 21.554
+    },
+    {
+     "p": "Drako",
+     "i": 21.554,
+     "f": 21.936
+    },
+    {
+     "p": "e",
+     "i": 21.936,
+     "f": 22.232
+    }
+   ],
+   "destaque": [
+    "VALENTE"
+   ],
+   "estilo": "fala",
+   "plano": "P50"
+  },
+  {
+   "t0": 22.232,
+   "t1": 23.675,
+   "texto": "depois Seleto.",
+   "palavras": [
+    {
+     "p": "depois",
+     "i": 22.232,
+     "f": 22.719
+    },
+    {
+     "p": "Seleto.",
+     "i": 22.719,
+     "f": 23.675
+    }
+   ],
+   "destaque": [
+    "SELETO"
+   ],
+   "estilo": "fala",
+   "plano": "P50"
+  },
+  {
+   "t0": 23.745,
+   "t1": 24.353,
+   "texto": "Partiu Super Kal,",
+   "palavras": [
+    {
+     "p": "Partiu",
+     "i": 23.745,
+     "f": 23.884
+    },
+    {
+     "p": "Super",
+     "i": 23.884,
+     "f": 24.214
+    },
+    {
+     "p": "Kal,",
+     "i": 24.214,
+     "f": 24.353
+    }
+   ],
+   "destaque": [
+    "SUPER"
+   ],
+   "estilo": "fala",
+   "plano": "P09"
+  },
+  {
+   "t0": 24.718,
+   "t1": 25.171,
+   "texto": "com a operação",
+   "palavras": [
+    {
+     "p": "com",
+     "i": 24.718,
+     "f": 24.823
+    },
+    {
+     "p": "a",
+     "i": 24.823,
+     "f": 24.858
+    },
+    {
+     "p": "operação",
+     "i": 24.858,
+     "f": 25.171
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P09"
+  },
+  {
+   "t0": 25.171,
+   "t1": 25.553,
+   "texto": "da parte do",
+   "palavras": [
+    {
+     "p": "da",
+     "i": 25.171,
+     "f": 25.275
+    },
+    {
+     "p": "parte",
+     "i": 25.275,
+     "f": 25.397
+    },
+    {
+     "p": "do",
+     "i": 25.397,
+     "f": 25.553
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P09"
+  },
+  {
+   "t0": 25.553,
+   "t1": 26.127,
+   "texto": "açougue,",
+   "palavras": [
+    {
+     "p": "açougue,",
+     "i": 25.553,
+     "f": 26.127
+    }
+   ],
+   "destaque": [
+    "AÇOUGUE"
+   ],
+   "estilo": "fala",
+   "plano": "P09"
+  },
+  {
+   "t0": 26.329,
+   "t1": 27.169,
+   "texto": "Chegamos agora aqui",
+   "palavras": [
+    {
+     "p": "Chegamos",
+     "i": 26.329,
+     "f": 26.769
+    },
+    {
+     "p": "agora",
+     "i": 26.769,
+     "f": 26.989
+    },
+    {
+     "p": "aqui",
+     "i": 26.989,
+     "f": 27.169
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P10"
+  },
+  {
+   "t0": 27.169,
+   "t1": 27.849,
+   "texto": "no Super Kal.",
+   "palavras": [
+    {
+     "p": "no",
+     "i": 27.169,
+     "f": 27.269
+    },
+    {
+     "p": "Super",
+     "i": 27.269,
+     "f": 27.609
+    },
+    {
+     "p": "Kal.",
+     "i": 27.609,
+     "f": 27.849
+    }
+   ],
+   "destaque": [
+    "SUPER"
+   ],
+   "estilo": "fala",
+   "plano": "P10"
+  },
+  {
+   "t0": 28.062,
+   "t1": 28.734,
+   "texto": "Aqui está faltando",
+   "palavras": [
+    {
+     "p": "Aqui",
+     "i": 28.062,
+     "f": 28.262
+    },
+    {
+     "p": "está",
+     "i": 28.262,
+     "f": 28.407
+    },
+    {
+     "p": "faltando",
+     "i": 28.407,
+     "f": 28.734
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P54"
+  },
+  {
+   "t0": 28.734,
+   "t1": 29.225,
+   "texto": "a parte da",
+   "palavras": [
+    {
+     "p": "a",
+     "i": 28.734,
+     "f": 28.807
+    },
+    {
+     "p": "parte",
+     "i": 28.807,
+     "f": 29.025
+    },
+    {
+     "p": "da",
+     "i": 29.025,
+     "f": 29.225
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P54"
+  },
+  {
+   "t0": 29.225,
+   "t1": 29.753,
+   "texto": "logomarca,",
+   "palavras": [
+    {
+     "p": "logomarca,",
+     "i": 29.225,
+     "f": 29.753
+    }
+   ],
+   "destaque": [
+    "LOGOMARCA"
+   ],
+   "estilo": "fala",
+   "plano": "P54"
+  },
+  {
+   "t0": 29.862,
+   "t1": 30.153,
+   "texto": "vai vir o",
+   "palavras": [
+    {
+     "p": "vai",
+     "i": 29.862,
+     "f": 29.934
+    },
+    {
+     "p": "vir",
+     "i": 29.934,
+     "f": 30.025
+    },
+    {
+     "p": "o",
+     "i": 30.025,
+     "f": 30.153
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P54"
+  },
+  {
+   "t0": 30.153,
+   "t1": 30.734,
+   "texto": "mascote que a",
+   "palavras": [
+    {
+     "p": "mascote",
+     "i": 30.153,
+     "f": 30.498
+    },
+    {
+     "p": "que",
+     "i": 30.498,
+     "f": 30.662
+    },
+    {
+     "p": "a",
+     "i": 30.662,
+     "f": 30.734
+    }
+   ],
+   "destaque": [
+    "MASCOTE"
+   ],
+   "estilo": "fala",
+   "plano": "P54"
+  },
+  {
+   "t0": 30.734,
+   "t1": 31.553,
+   "texto": "gente criou,",
+   "palavras": [
+    {
+     "p": "gente",
+     "i": 30.734,
+     "f": 30.88
+    },
+    {
+     "p": "criou,",
+     "i": 30.88,
+     "f": 31.553
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P54"
+  },
+  {
+   "t0": 31.698,
+   "t1": 32.08,
+   "texto": "o mascote da",
+   "palavras": [
+    {
+     "p": "o",
+     "i": 31.698,
+     "f": 31.825
+    },
+    {
+     "p": "mascote",
+     "i": 31.825,
+     "f": 31.989
+    },
+    {
+     "p": "da",
+     "i": 31.989,
+     "f": 32.08
+    }
+   ],
+   "destaque": [
+    "MASCOTE"
+   ],
+   "estilo": "fala",
+   "plano": "P54"
+  },
+  {
+   "t0": 32.08,
+   "t1": 32.662,
+   "texto": "identidade da marca",
+   "palavras": [
+    {
+     "p": "identidade",
+     "i": 32.08,
+     "f": 32.28
+    },
+    {
+     "p": "da",
+     "i": 32.28,
+     "f": 32.444
+    },
+    {
+     "p": "marca",
+     "i": 32.444,
+     "f": 32.662
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P54"
+  },
+  {
+   "t0": 32.662,
+   "t1": 32.971,
+   "texto": "dele.",
+   "palavras": [
+    {
+     "p": "dele.",
+     "i": 32.662,
+     "f": 32.971
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P54"
+  },
+  {
+   "t0": 33.498,
+   "t1": 34.516,
+   "texto": "Ali estão as",
+   "palavras": [
+    {
+     "p": "Ali",
+     "i": 33.498,
+     "f": 33.698
+    },
+    {
+     "p": "estão",
+     "i": 33.698,
+     "f": 33.898
+    },
+    {
+     "p": "as",
+     "i": 33.898,
+     "f": 34.516
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P11"
+  },
+  {
+   "t0": 34.516,
+   "t1": 35.498,
+   "texto": "TVs que comunicam",
+   "palavras": [
+    {
+     "p": "TVs",
+     "i": 34.516,
+     "f": 34.789
+    },
+    {
+     "p": "que",
+     "i": 34.789,
+     "f": 35.007
+    },
+    {
+     "p": "comunicam",
+     "i": 35.007,
+     "f": 35.498
+    }
+   ],
+   "destaque": [
+    "TVS"
+   ],
+   "estilo": "fala",
+   "plano": "P11"
+  },
+  {
+   "t0": 35.498,
+   "t1": 35.916,
+   "texto": "ofertas,",
+   "palavras": [
+    {
+     "p": "ofertas,",
+     "i": 35.498,
+     "f": 35.916
+    }
+   ],
+   "destaque": [
+    "OFERTAS"
+   ],
+   "estilo": "fala",
+   "plano": "P11"
+  },
+  {
+   "t0": 35.916,
+   "t1": 36.952,
+   "texto": "comunicam novidade de",
+   "palavras": [
+    {
+     "p": "comunicam",
+     "i": 35.916,
+     "f": 36.352
+    },
+    {
+     "p": "novidade",
+     "i": 36.352,
+     "f": 36.68
+    },
+    {
+     "p": "de",
+     "i": 36.68,
+     "f": 36.952
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P11"
+  },
+  {
+   "t0": 36.952,
+   "t1": 37.643,
+   "texto": "produtos.",
+   "palavras": [
+    {
+     "p": "produtos.",
+     "i": 36.952,
+     "f": 37.643
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P11"
+  },
+  {
+   "t0": 37.837,
+   "t1": 38.62,
+   "texto": "Tudo que foi",
+   "palavras": [
+    {
+     "p": "Tudo",
+     "i": 37.837,
+     "f": 38.387
+    },
+    {
+     "p": "que",
+     "i": 38.387,
+     "f": 38.487
+    },
+    {
+     "p": "foi",
+     "i": 38.487,
+     "f": 38.62
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P12"
+  },
+  {
+   "t0": 38.62,
+   "t1": 39.57,
+   "texto": "feito foi pensado,",
+   "palavras": [
+    {
+     "p": "feito",
+     "i": 38.62,
+     "f": 38.87
+    },
+    {
+     "p": "foi",
+     "i": 38.87,
+     "f": 39.07
+    },
+    {
+     "p": "pensado,",
+     "i": 39.07,
+     "f": 39.57
+    }
+   ],
+   "destaque": [
+    "PENSADO"
+   ],
+   "estilo": "fala",
+   "plano": "P12"
+  },
+  {
+   "t0": 39.637,
+   "t1": 40.603,
+   "texto": "foi criado para",
+   "palavras": [
+    {
+     "p": "foi",
+     "i": 39.637,
+     "f": 39.787
+    },
+    {
+     "p": "criado",
+     "i": 39.787,
+     "f": 40.37
+    },
+    {
+     "p": "para",
+     "i": 40.37,
+     "f": 40.603
+    }
+   ],
+   "destaque": [
+    "CRIADO"
+   ],
+   "estilo": "fala",
+   "plano": "P12"
+  },
+  {
+   "t0": 40.603,
+   "t1": 42.22,
+   "texto": "trazer resultado de",
+   "palavras": [
+    {
+     "p": "trazer",
+     "i": 40.603,
+     "f": 40.97
+    },
+    {
+     "p": "resultado",
+     "i": 40.97,
+     "f": 41.837
+    },
+    {
+     "p": "de",
+     "i": 41.837,
+     "f": 42.22
+    }
+   ],
+   "destaque": [
+    "RESULTADO"
+   ],
+   "estilo": "fala",
+   "plano": "P12"
+  },
+  {
+   "t0": 42.22,
+   "t1": 43.537,
+   "texto": "forma assertiva.",
+   "palavras": [
+    {
+     "p": "forma",
+     "i": 42.22,
+     "f": 42.47
+    },
+    {
+     "p": "assertiva.",
+     "i": 42.47,
+     "f": 43.537
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P12"
+  },
+  {
+   "t0": 47.472,
+   "t1": 47.872,
+   "texto": "A TV ali",
+   "palavras": [
+    {
+     "p": "A",
+     "i": 47.472,
+     "f": 47.489
+    },
+    {
+     "p": "TV",
+     "i": 47.489,
+     "f": 47.715
+    },
+    {
+     "p": "ali",
+     "i": 47.715,
+     "f": 47.872
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P14"
+  },
+  {
+   "t0": 47.872,
+   "t1": 49.44,
+   "texto": "em cima comunicando",
+   "palavras": [
+    {
+     "p": "em",
+     "i": 47.872,
+     "f": 48.045
+    },
+    {
+     "p": "cima",
+     "i": 48.045,
+     "f": 48.185
+    },
+    {
+     "p": "comunicando",
+     "i": 48.185,
+     "f": 49.44
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P14"
+  },
+  {
+   "t0": 49.44,
+   "t1": 49.86,
+   "texto": "os números que",
+   "palavras": [
+    {
+     "p": "quais",
+     "i": 49.44,
+     "f": 49.64
+    },
+    {
+     "p": "são",
+     "i": 49.64,
+     "f": 49.76
+    },
+    {
+     "p": "os",
+     "i": 49.76,
+     "f": 49.86
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P14"
+  },
+  {
+   "t0": 49.86,
+   "t1": 50.637,
+   "texto": "vão vir,",
+   "palavras": [
+    {
+     "p": "números",
+     "i": 49.86,
+     "f": 50.0
+    },
+    {
+     "p": "que",
+     "i": 50.0,
+     "f": 50.17
+    },
+    {
+     "p": "vão",
+     "i": 50.17,
+     "f": 50.31
+    },
+    {
+     "p": "vir,",
+     "i": 50.31,
+     "f": 50.637
+    }
+   ],
+   "destaque": [
+    "NÚMEROS"
+   ],
+   "estilo": "fala",
+   "plano": "P14"
+  },
+  {
+   "t0": 50.834,
+   "t1": 51.3,
+   "texto": "o açougueiro só",
+   "palavras": [
+    {
+     "p": "o",
+     "i": 50.834,
+     "f": 50.917
+    },
+    {
+     "p": "açougueiro",
+     "i": 50.917,
+     "f": 51.2
+    },
+    {
+     "p": "só",
+     "i": 51.2,
+     "f": 51.3
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P15"
+  },
+  {
+   "t0": 51.3,
+   "t1": 53.2,
+   "texto": "vai simplesmente apertar",
+   "palavras": [
+    {
+     "p": "vai",
+     "i": 51.3,
+     "f": 51.467
+    },
+    {
+     "p": "simplesmente",
+     "i": 51.467,
+     "f": 52.1
+    },
+    {
+     "p": "apertar",
+     "i": 52.1,
+     "f": 53.2
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P15"
+  },
+  {
+   "t0": 53.2,
+   "t1": 54.517,
+   "texto": "o botão e",
+   "palavras": [
+    {
+     "p": "o",
+     "i": 53.2,
+     "f": 53.267
+    },
+    {
+     "p": "botão",
+     "i": 53.267,
+     "f": 53.8
+    },
+    {
+     "p": "e",
+     "i": 53.8,
+     "f": 54.517
+    }
+   ],
+   "destaque": [
+    "BOTÃO"
+   ],
+   "estilo": "fala",
+   "plano": "P15"
+  },
+  {
+   "t0": 54.517,
+   "t1": 55.167,
+   "texto": "automaticamente já vai",
+   "palavras": [
+    {
+     "p": "automaticamente",
+     "i": 54.517,
+     "f": 54.95
+    },
+    {
+     "p": "já",
+     "i": 54.95,
+     "f": 55.067
+    },
+    {
+     "p": "vai",
+     "i": 55.067,
+     "f": 55.167
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P15"
+  },
+  {
+   "t0": 55.167,
+   "t1": 55.867,
+   "texto": "chamar o próximo",
+   "palavras": [
+    {
+     "p": "chamar",
+     "i": 55.167,
+     "f": 55.55
+    },
+    {
+     "p": "o",
+     "i": 55.55,
+     "f": 55.667
+    },
+    {
+     "p": "próximo",
+     "i": 55.667,
+     "f": 55.867
+    }
+   ],
+   "destaque": [
+    "PRÓXIMO"
+   ],
+   "estilo": "fala",
+   "plano": "P15"
+  },
+  {
+   "t0": 55.867,
+   "t1": 56.167,
+   "texto": "número.",
+   "palavras": [
+    {
+     "p": "número.",
+     "i": 55.867,
+     "f": 56.167
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P15"
+  },
+  {
+   "t0": 56.365,
+   "t1": 58.365,
+   "texto": "Toda empresa desorganizada,",
+   "palavras": [
+    {
+     "p": "Toda",
+     "i": 56.365,
+     "f": 56.51
+    },
+    {
+     "p": "empresa",
+     "i": 56.51,
+     "f": 56.801
+    },
+    {
+     "p": "desorganizada,",
+     "i": 56.801,
+     "f": 58.365
+    }
+   ],
+   "destaque": [
+    "DESORGANIZADA"
+   ],
+   "estilo": "fala",
+   "plano": "P16"
+  },
+  {
+   "t0": 58.547,
+   "t1": 59.819,
+   "texto": "ela não cresce.",
+   "palavras": [
+    {
+     "p": "ela",
+     "i": 58.547,
+     "f": 58.747
+    },
+    {
+     "p": "não",
+     "i": 58.747,
+     "f": 59.037
+    },
+    {
+     "p": "cresce.",
+     "i": 59.037,
+     "f": 59.819
+    }
+   ],
+   "destaque": [
+    "NÃO"
+   ],
+   "estilo": "kinetic",
+   "plano": "P16"
+  },
+  {
+   "t0": 60.02,
+   "t1": 60.365,
+   "texto": "É um sistema",
+   "palavras": [
+    {
+     "p": "É",
+     "i": 60.02,
+     "f": 60.092
+    },
+    {
+     "p": "um",
+     "i": 60.092,
+     "f": 60.202
+    },
+    {
+     "p": "sistema",
+     "i": 60.202,
+     "f": 60.365
+    }
+   ],
+   "destaque": [
+    "SISTEMA"
+   ],
+   "estilo": "fala",
+   "plano": "P17"
+  },
+  {
+   "t0": 60.365,
+   "t1": 60.711,
+   "texto": "que não é",
+   "palavras": [
+    {
+     "p": "que",
+     "i": 60.365,
+     "f": 60.474
+    },
+    {
+     "p": "não",
+     "i": 60.474,
+     "f": 60.583
+    },
+    {
+     "p": "é",
+     "i": 60.583,
+     "f": 60.711
+    }
+   ],
+   "destaque": [
+    "NÃO"
+   ],
+   "estilo": "fala",
+   "plano": "P17"
+  },
+  {
+   "t0": 60.711,
+   "t1": 61.347,
+   "texto": "fácil pra você",
+   "palavras": [
+    {
+     "p": "fácil",
+     "i": 60.711,
+     "f": 61.038
+    },
+    {
+     "p": "pra",
+     "i": 61.038,
+     "f": 61.202
+    },
+    {
+     "p": "você",
+     "i": 61.202,
+     "f": 61.347
+    }
+   ],
+   "destaque": [
+    "FÁCIL"
+   ],
+   "estilo": "fala",
+   "plano": "P17"
+  },
+  {
+   "t0": 61.347,
+   "t1": 62.038,
+   "texto": "poder implementar.",
+   "palavras": [
+    {
+     "p": "poder",
+     "i": 61.347,
+     "f": 61.547
+    },
+    {
+     "p": "implementar.",
+     "i": 61.547,
+     "f": 62.038
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P17"
+  },
+  {
+   "t0": 62.093,
+   "t1": 62.365,
+   "texto": "Aí, Ruan,",
+   "palavras": [
+    {
+     "p": "Aí,",
+     "i": 62.093,
+     "f": 62.165
+    },
+    {
+     "p": "Ruan,",
+     "i": 62.256,
+     "f": 62.365
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P19"
+  },
+  {
+   "t0": 62.456,
+   "t1": 62.929,
+   "texto": "terminou a missão",
+   "palavras": [
+    {
+     "p": "terminou",
+     "i": 62.456,
+     "f": 62.656
+    },
+    {
+     "p": "a",
+     "i": 62.656,
+     "f": 62.729
+    },
+    {
+     "p": "missão",
+     "i": 62.729,
+     "f": 62.929
+    }
+   ],
+   "destaque": [
+    "MISSÃO"
+   ],
+   "estilo": "fala",
+   "plano": "P19"
+  },
+  {
+   "t0": 62.929,
+   "t1": 63.438,
+   "texto": "aqui agora.",
+   "palavras": [
+    {
+     "p": "aqui",
+     "i": 62.929,
+     "f": 63.093
+    },
+    {
+     "p": "agora.",
+     "i": 63.093,
+     "f": 63.438
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P19"
+  },
+  {
+   "t0": 63.62,
+   "t1": 64.002,
+   "texto": "Hoje tinha a",
+   "palavras": [
+    {
+     "p": "Hoje",
+     "i": 63.62,
+     "f": 63.783
+    },
+    {
+     "p": "tinha",
+     "i": 63.783,
+     "f": 63.892
+    },
+    {
+     "p": "a",
+     "i": 63.892,
+     "f": 64.002
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P51"
+  },
+  {
+   "t0": 64.002,
+   "t1": 64.42,
+   "texto": "missão de ir",
+   "palavras": [
+    {
+     "p": "missão",
+     "i": 64.002,
+     "f": 64.22
+    },
+    {
+     "p": "de",
+     "i": 64.22,
+     "f": 64.347
+    },
+    {
+     "p": "ir",
+     "i": 64.347,
+     "f": 64.42
+    }
+   ],
+   "destaque": [
+    "MISSÃO"
+   ],
+   "estilo": "fala",
+   "plano": "P51"
+  },
+  {
+   "t0": 64.42,
+   "t1": 64.711,
+   "texto": "na igreja.",
+   "palavras": [
+    {
+     "p": "na",
+     "i": 64.42,
+     "f": 64.529
+    },
+    {
+     "p": "igreja.",
+     "i": 64.529,
+     "f": 64.711
+    }
+   ],
+   "destaque": [
+    "IGREJA"
+   ],
+   "estilo": "fala",
+   "plano": "P51"
+  },
+  {
+   "t0": 64.793,
+   "t1": 65.484,
+   "texto": "Estamos partindo agora",
+   "palavras": [
+    {
+     "p": "Estamos",
+     "i": 64.793,
+     "f": 65.047
+    },
+    {
+     "p": "partindo",
+     "i": 65.047,
+     "f": 65.338
+    },
+    {
+     "p": "agora",
+     "i": 65.338,
+     "f": 65.484
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P20"
+  },
+  {
+   "t0": 65.484,
+   "t1": 65.956,
+   "texto": "pra Valente.",
+   "palavras": [
+    {
+     "p": "pra",
+     "i": 65.484,
+     "f": 65.684
+    },
+    {
+     "p": "Valente.",
+     "i": 65.684,
+     "f": 65.956
+    }
+   ],
+   "destaque": [
+    "VALENTE"
+   ],
+   "estilo": "fala",
+   "plano": "P20"
+  },
+  {
+   "t0": 66.169,
+   "t1": 67.369,
+   "texto": "Estaremos comunicando em",
+   "palavras": [
+    {
+     "p": "Estaremos",
+     "i": 66.169,
+     "f": 66.474
+    },
+    {
+     "p": "comunicando",
+     "i": 66.474,
+     "f": 67.083
+    },
+    {
+     "p": "em",
+     "i": 67.083,
+     "f": 67.369
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P21"
+  },
+  {
+   "t0": 67.369,
+   "t1": 67.712,
+   "texto": "rota.",
+   "palavras": [
+    {
+     "p": "rota.",
+     "i": 67.369,
+     "f": 67.712
+    }
+   ],
+   "destaque": [
+    "ROTA"
+   ],
+   "estilo": "fala",
+   "plano": "P21"
+  },
+  {
+   "t0": 71.16,
+   "t1": 71.783,
+   "texto": "Choveu muito,",
+   "palavras": [
+    {
+     "p": "Choveu",
+     "i": 71.16,
+     "f": 71.38
+    },
+    {
+     "p": "muito,",
+     "i": 71.38,
+     "f": 71.783
+    }
+   ],
+   "destaque": [
+    "MUITO"
+   ],
+   "estilo": "narracao",
+   "plano": "P71"
+  },
+  {
+   "t0": 72.183,
+   "t1": 73.02,
+   "texto": "uma chuva de",
+   "palavras": [
+    {
+     "p": "uma",
+     "i": 72.183,
+     "f": 72.201
+    },
+    {
+     "p": "chuva",
+     "i": 72.201,
+     "f": 72.82
+    },
+    {
+     "p": "de",
+     "i": 72.82,
+     "f": 73.02
+    }
+   ],
+   "destaque": [],
+   "estilo": "narracao",
+   "plano": "P71"
+  },
+  {
+   "t0": 73.02,
+   "t1": 73.565,
+   "texto": "vento também,",
+   "palavras": [
+    {
+     "p": "vento",
+     "i": 73.02,
+     "f": 73.238
+    },
+    {
+     "p": "também,",
+     "i": 73.238,
+     "f": 73.565
+    }
+   ],
+   "destaque": [],
+   "estilo": "narracao",
+   "plano": "P71"
+  },
+  {
+   "t0": 74.129,
+   "t1": 74.729,
+   "texto": "joga muita água,",
+   "palavras": [
+    {
+     "p": "joga",
+     "i": 74.129,
+     "f": 74.274
+    },
+    {
+     "p": "muita",
+     "i": 74.274,
+     "f": 74.51
+    },
+    {
+     "p": "água,",
+     "i": 74.51,
+     "f": 74.729
+    }
+   ],
+   "destaque": [
+    "ÁGUA"
+   ],
+   "estilo": "narracao",
+   "plano": "P71"
+  },
+  {
+   "t0": 74.802,
+   "t1": 75.293,
+   "texto": "a gente veio",
+   "palavras": [
+    {
+     "p": "a",
+     "i": 74.802,
+     "f": 74.802
+    },
+    {
+     "p": "gente",
+     "i": 74.802,
+     "f": 74.947
+    },
+    {
+     "p": "veio",
+     "i": 74.947,
+     "f": 75.293
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P26"
+  },
+  {
+   "t0": 75.293,
+   "t1": 76.784,
+   "texto": "praticamente num dilúvio.",
+   "palavras": [
+    {
+     "p": "praticamente",
+     "i": 75.293,
+     "f": 75.838
+    },
+    {
+     "p": "num",
+     "i": 75.838,
+     "f": 75.965
+    },
+    {
+     "p": "dilúvio.",
+     "i": 75.965,
+     "f": 76.784
+    }
+   ],
+   "destaque": [
+    "DILÚVIO"
+   ],
+   "estilo": "fala",
+   "plano": "P26"
+  },
+  {
+   "t0": 78.347,
+   "t1": 78.765,
+   "texto": "Já estamos aqui",
+   "palavras": [
+    {
+     "p": "Já",
+     "i": 78.347,
+     "f": 78.347
+    },
+    {
+     "p": "estamos",
+     "i": 78.347,
+     "f": 78.547
+    },
+    {
+     "p": "aqui",
+     "i": 78.547,
+     "f": 78.765
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P27"
+  },
+  {
+   "t0": 78.765,
+   "t1": 79.074,
+   "texto": "em Valente,",
+   "palavras": [
+    {
+     "p": "em",
+     "i": 78.765,
+     "f": 78.819
+    },
+    {
+     "p": "Valente,",
+     "i": 78.819,
+     "f": 79.074
+    }
+   ],
+   "destaque": [
+    "VALENTE"
+   ],
+   "estilo": "selo",
+   "plano": "P27"
+  },
+  {
+   "t0": 79.165,
+   "t1": 80.038,
+   "texto": "Elite Drako Gym.",
+   "palavras": [
+    {
+     "p": "Elite",
+     "i": 79.165,
+     "f": 79.274
+    },
+    {
+     "p": "Drako",
+     "i": 79.274,
+     "f": 80.001
+    },
+    {
+     "p": "Gym.",
+     "i": 80.001,
+     "f": 80.038
+    }
+   ],
+   "destaque": [
+    "DRAKO"
+   ],
+   "estilo": "selo",
+   "plano": "P27"
+  },
+  {
+   "t0": 80.202,
+   "t1": 80.565,
+   "texto": "E já estamos",
+   "palavras": [
+    {
+     "p": "E",
+     "i": 80.202,
+     "f": 80.293
+    },
+    {
+     "p": "já",
+     "i": 80.293,
+     "f": 80.402
+    },
+    {
+     "p": "estamos",
+     "i": 80.402,
+     "f": 80.565
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P28"
+  },
+  {
+   "t0": 80.565,
+   "t1": 81.493,
+   "texto": "aqui no modo",
+   "palavras": [
+    {
+     "p": "aqui",
+     "i": 80.565,
+     "f": 80.784
+    },
+    {
+     "p": "no",
+     "i": 80.784,
+     "f": 80.911
+    },
+    {
+     "p": "modo",
+     "i": 80.911,
+     "f": 81.493
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P28"
+  },
+  {
+   "t0": 81.493,
+   "t1": 83.711,
+   "texto": "operação em rota.",
+   "palavras": [
+    {
+     "p": "operação",
+     "i": 81.493,
+     "f": 82.547
+    },
+    {
+     "p": "em",
+     "i": 82.547,
+     "f": 83.274
+    },
+    {
+     "p": "rota.",
+     "i": 83.274,
+     "f": 83.711
+    }
+   ],
+   "destaque": [
+    "ROTA"
+   ],
+   "estilo": "fala",
+   "plano": "P28"
+  },
+  {
+   "t0": 83.926,
+   "t1": 84.778,
+   "texto": "Fez uma pose,",
+   "palavras": [
+    {
+     "p": "Fez",
+     "i": 83.926,
+     "f": 84.065
+    },
+    {
+     "p": "uma",
+     "i": 84.065,
+     "f": 84.239
+    },
+    {
+     "p": "pose,",
+     "i": 84.239,
+     "f": 84.778
+    }
+   ],
+   "destaque": [
+    "POSE"
+   ],
+   "estilo": "fala",
+   "plano": "P29"
+  },
+  {
+   "t0": 85.717,
+   "t1": 86.047,
+   "texto": "e ela vai",
+   "palavras": [
+    {
+     "p": "e",
+     "i": 85.717,
+     "f": 85.786
+    },
+    {
+     "p": "ela",
+     "i": 85.786,
+     "f": 85.926
+    },
+    {
+     "p": "vai",
+     "i": 85.926,
+     "f": 86.047
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P29"
+  },
+  {
+   "t0": 86.047,
+   "t1": 86.621,
+   "texto": "ter a visualização",
+   "palavras": [
+    {
+     "p": "ter",
+     "i": 86.047,
+     "f": 86.152
+    },
+    {
+     "p": "a",
+     "i": 86.152,
+     "f": 86.186
+    },
+    {
+     "p": "visualização",
+     "i": 86.186,
+     "f": 86.621
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P29"
+  },
+  {
+   "t0": 86.621,
+   "t1": 88.013,
+   "texto": "atrás das costas",
+   "palavras": [
+    {
+     "p": "atrás",
+     "i": 86.621,
+     "f": 87.369
+    },
+    {
+     "p": "das",
+     "i": 87.369,
+     "f": 87.717
+    },
+    {
+     "p": "costas",
+     "i": 87.717,
+     "f": 88.013
+    }
+   ],
+   "destaque": [
+    "COSTAS"
+   ],
+   "estilo": "fala",
+   "plano": "P29"
+  },
+  {
+   "t0": 88.013,
+   "t1": 88.343,
+   "texto": "de um ângulo",
+   "palavras": [
+    {
+     "p": "de",
+     "i": 88.013,
+     "f": 88.099
+    },
+    {
+     "p": "um",
+     "i": 88.099,
+     "f": 88.169
+    },
+    {
+     "p": "ângulo",
+     "i": 88.169,
+     "f": 88.343
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P29"
+  },
+  {
+   "t0": 88.343,
+   "t1": 88.76,
+   "texto": "diferente.",
+   "palavras": [
+    {
+     "p": "diferente.",
+     "i": 88.343,
+     "f": 88.76
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P29"
+  },
+  {
+   "t0": 88.86,
+   "t1": 90.15,
+   "texto": "Ofertando o máximo",
+   "palavras": [
+    {
+     "p": "Ofertando",
+     "i": 88.86,
+     "f": 89.56
+    },
+    {
+     "p": "o",
+     "i": 89.79,
+     "f": 89.93
+    },
+    {
+     "p": "máximo",
+     "i": 89.93,
+     "f": 90.15
+    }
+   ],
+   "destaque": [
+    "MÁXIMO"
+   ],
+   "estilo": "fala",
+   "plano": "P30"
+  },
+  {
+   "t0": 90.15,
+   "t1": 90.83,
+   "texto": "de qualidade",
+   "palavras": [
+    {
+     "p": "de",
+     "i": 90.15,
+     "f": 90.33
+    },
+    {
+     "p": "qualidade",
+     "i": 90.33,
+     "f": 90.83
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P30"
+  },
+  {
+   "t0": 92.895,
+   "t1": 93.314,
+   "texto": "Sabe que isso",
+   "palavras": [
+    {
+     "p": "Sabe",
+     "i": 92.895,
+     "f": 93.095
+    },
+    {
+     "p": "que",
+     "i": 93.095,
+     "f": 93.204
+    },
+    {
+     "p": "isso",
+     "i": 93.204,
+     "f": 93.314
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P32"
+  },
+  {
+   "t0": 93.314,
+   "t1": 93.968,
+   "texto": "aqui traz muito?",
+   "palavras": [
+    {
+     "p": "aqui",
+     "i": 93.314,
+     "f": 93.477
+    },
+    {
+     "p": "traz",
+     "i": 93.477,
+     "f": 93.659
+    },
+    {
+     "p": "muito?",
+     "i": 93.659,
+     "f": 93.968
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P32"
+  },
+  {
+   "t0": 94.041,
+   "t1": 94.44,
+   "texto": "É a pegada",
+   "palavras": [
+    {
+     "p": "É",
+     "i": 94.041,
+     "f": 94.11
+    },
+    {
+     "p": "a",
+     "i": 94.11,
+     "f": 94.19
+    },
+    {
+     "p": "pegada",
+     "i": 94.19,
+     "f": 94.44
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P32"
+  },
+  {
+   "t0": 94.52,
+   "t1": 95.404,
+   "texto": "discoteca.",
+   "palavras": [
+    {
+     "p": "de",
+     "i": 94.52,
+     "f": 94.66
+    },
+    {
+     "p": "discoteca.",
+     "i": 94.66,
+     "f": 95.404
+    }
+   ],
+   "destaque": [
+    "DISCOTECA"
+   ],
+   "estilo": "fala",
+   "plano": "P32"
+  },
+  {
+   "t0": 95.537,
+   "t1": 96.254,
+   "texto": "Falta espuma,",
+   "palavras": [
+    {
+     "p": "Falta",
+     "i": 95.537,
+     "f": 95.854
+    },
+    {
+     "p": "espuma,",
+     "i": 95.854,
+     "f": 96.254
+    }
+   ],
+   "destaque": [],
+   "estilo": "cliente",
+   "plano": "P61"
+  },
+  {
+   "t0": 96.404,
+   "t1": 97.071,
+   "texto": "fita de LED,",
+   "palavras": [
+    {
+     "p": "fita",
+     "i": 96.404,
+     "f": 96.554
+    },
+    {
+     "p": "de",
+     "i": 96.554,
+     "f": 96.771
+    },
+    {
+     "p": "LED,",
+     "i": 96.771,
+     "f": 97.071
+    }
+   ],
+   "destaque": [
+    "LED"
+   ],
+   "estilo": "cliente",
+   "plano": "P61"
+  },
+  {
+   "t0": 97.554,
+   "t1": 97.821,
+   "texto": "aí vai fazer",
+   "palavras": [
+    {
+     "p": "aí",
+     "i": 97.554,
+     "f": 97.554
+    },
+    {
+     "p": "vai",
+     "i": 97.554,
+     "f": 97.654
+    },
+    {
+     "p": "fazer",
+     "i": 97.654,
+     "f": 97.821
+    }
+   ],
+   "destaque": [],
+   "estilo": "cliente",
+   "plano": "P61"
+  },
+  {
+   "t0": 97.821,
+   "t1": 98.354,
+   "texto": "uma parede de",
+   "palavras": [
+    {
+     "p": "uma",
+     "i": 97.821,
+     "f": 97.954
+    },
+    {
+     "p": "parede",
+     "i": 97.954,
+     "f": 98.137
+    },
+    {
+     "p": "de",
+     "i": 98.137,
+     "f": 98.354
+    }
+   ],
+   "destaque": [],
+   "estilo": "cliente",
+   "plano": "P61"
+  },
+  {
+   "t0": 98.354,
+   "t1": 98.937,
+   "texto": "cordas,",
+   "palavras": [
+    {
+     "p": "cordas,",
+     "i": 98.354,
+     "f": 98.937
+    }
+   ],
+   "destaque": [
+    "CORDAS"
+   ],
+   "estilo": "cliente",
+   "plano": "P61"
+  },
+  {
+   "t0": 99.137,
+   "t1": 99.804,
+   "texto": "pintura neon,",
+   "palavras": [
+    {
+     "p": "pintura",
+     "i": 99.137,
+     "f": 99.387
+    },
+    {
+     "p": "neon,",
+     "i": 99.387,
+     "f": 99.804
+    }
+   ],
+   "destaque": [
+    "NEON"
+   ],
+   "estilo": "cliente",
+   "plano": "P61"
+  },
+  {
+   "t0": 100.121,
+   "t1": 100.454,
+   "texto": "plantas,",
+   "palavras": [
+    {
+     "p": "plantas,",
+     "i": 100.121,
+     "f": 100.454
+    }
+   ],
+   "destaque": [],
+   "estilo": "cliente",
+   "plano": "P62"
+  },
+  {
+   "t0": 100.521,
+   "t1": 100.904,
+   "texto": "aí vai colocar",
+   "palavras": [
+    {
+     "p": "aí",
+     "i": 100.521,
+     "f": 100.537
+    },
+    {
+     "p": "vai",
+     "i": 100.537,
+     "f": 100.654
+    },
+    {
+     "p": "colocar",
+     "i": 100.654,
+     "f": 100.904
+    }
+   ],
+   "destaque": [],
+   "estilo": "cliente",
+   "plano": "P62"
+  },
+  {
+   "t0": 100.904,
+   "t1": 101.371,
+   "texto": "samambaia.",
+   "palavras": [
+    {
+     "p": "samambaia.",
+     "i": 100.904,
+     "f": 101.371
+    }
+   ],
+   "destaque": [
+    "SAMAMBAIA"
+   ],
+   "estilo": "cliente",
+   "plano": "P62"
+  },
+  {
+   "t0": 101.471,
+   "t1": 102.171,
+   "texto": "É exclusividade,",
+   "palavras": [
+    {
+     "p": "É",
+     "i": 101.471,
+     "f": 101.654
+    },
+    {
+     "p": "exclusividade,",
+     "i": 101.654,
+     "f": 102.171
+    }
+   ],
+   "destaque": [
+    "EXCLUSIVIDADE"
+   ],
+   "estilo": "cliente",
+   "plano": "P63"
+  },
+  {
+   "t0": 102.304,
+   "t1": 102.971,
+   "texto": "então exclusividade é",
+   "palavras": [
+    {
+     "p": "então",
+     "i": 102.304,
+     "f": 102.438
+    },
+    {
+     "p": "exclusividade",
+     "i": 102.438,
+     "f": 102.854
+    },
+    {
+     "p": "é",
+     "i": 102.854,
+     "f": 102.971
+    }
+   ],
+   "destaque": [],
+   "estilo": "cliente",
+   "plano": "P63"
+  },
+  {
+   "t0": 102.971,
+   "t1": 103.371,
+   "texto": "o diferencial.",
+   "palavras": [
+    {
+     "p": "o",
+     "i": 102.971,
+     "f": 103.054
+    },
+    {
+     "p": "diferencial.",
+     "i": 103.054,
+     "f": 103.371
+    }
+   ],
+   "destaque": [
+    "DIFERENCIAL"
+   ],
+   "estilo": "cliente",
+   "plano": "P63"
+  },
+  {
+   "t0": 103.388,
+   "t1": 103.854,
+   "texto": "Aqui dentro do",
+   "palavras": [
+    {
+     "p": "Aqui",
+     "i": 103.388,
+     "f": 103.488
+    },
+    {
+     "p": "dentro",
+     "i": 103.488,
+     "f": 103.704
+    },
+    {
+     "p": "do",
+     "i": 103.704,
+     "f": 103.854
+    }
+   ],
+   "destaque": [],
+   "estilo": "cliente",
+   "plano": "P63"
+  },
+  {
+   "t0": 103.854,
+   "t1": 104.954,
+   "texto": "lounge, aqui dançando,",
+   "palavras": [
+    {
+     "p": "lounge,",
+     "i": 103.854,
+     "f": 104.138
+    },
+    {
+     "p": "aqui",
+     "i": 104.421,
+     "f": 104.471
+    },
+    {
+     "p": "dançando,",
+     "i": 104.471,
+     "f": 104.954
+    }
+   ],
+   "destaque": [
+    "LOUNGE"
+   ],
+   "estilo": "cliente",
+   "plano": "P63"
+  },
+  {
+   "t0": 104.988,
+   "t1": 105.321,
+   "texto": "o pessoal vai",
+   "palavras": [
+    {
+     "p": "o",
+     "i": 104.988,
+     "f": 105.004
+    },
+    {
+     "p": "pessoal",
+     "i": 105.004,
+     "f": 105.154
+    },
+    {
+     "p": "vai",
+     "i": 105.154,
+     "f": 105.321
+    }
+   ],
+   "destaque": [],
+   "estilo": "cliente",
+   "plano": "P63"
+  },
+  {
+   "t0": 105.321,
+   "t1": 105.638,
+   "texto": "ver que tá",
+   "palavras": [
+    {
+     "p": "ver",
+     "i": 105.321,
+     "f": 105.488
+    },
+    {
+     "p": "que",
+     "i": 105.488,
+     "f": 105.521
+    },
+    {
+     "p": "tá",
+     "i": 105.521,
+     "f": 105.638
+    }
+   ],
+   "destaque": [],
+   "estilo": "cliente",
+   "plano": "P63"
+  },
+  {
+   "t0": 105.638,
+   "t1": 106.338,
+   "texto": "dentro do lounge,",
+   "palavras": [
+    {
+     "p": "dentro",
+     "i": 105.638,
+     "f": 105.821
+    },
+    {
+     "p": "do",
+     "i": 105.821,
+     "f": 105.938
+    },
+    {
+     "p": "lounge,",
+     "i": 105.938,
+     "f": 106.338
+    }
+   ],
+   "destaque": [
+    "LOUNGE"
+   ],
+   "estilo": "cliente",
+   "plano": "P63"
+  },
+  {
+   "t0": 106.771,
+   "t1": 107.088,
+   "texto": "já é outra",
+   "palavras": [
+    {
+     "p": "já",
+     "i": 106.771,
+     "f": 106.838
+    },
+    {
+     "p": "é",
+     "i": 106.838,
+     "f": 106.938
+    },
+    {
+     "p": "outra",
+     "i": 106.938,
+     "f": 107.088
+    }
+   ],
+   "destaque": [],
+   "estilo": "cliente",
+   "plano": "P63"
+  },
+  {
+   "t0": 107.088,
+   "t1": 107.538,
+   "texto": "parada.",
+   "palavras": [
+    {
+     "p": "parada.",
+     "i": 107.088,
+     "f": 107.538
+    }
+   ],
+   "destaque": [
+    "PARADA"
+   ],
+   "estilo": "cliente",
+   "plano": "P63"
+  },
+  {
+   "t0": 107.651,
+   "t1": 108.311,
+   "texto": "Isso é comunicação!",
+   "palavras": [
+    {
+     "p": "Isso",
+     "i": 107.651,
+     "f": 107.711
+    },
+    {
+     "p": "é",
+     "i": 107.711,
+     "f": 107.751
+    },
+    {
+     "p": "comunicação!",
+     "i": 107.751,
+     "f": 108.311
+    }
+   ],
+   "destaque": [
+    "COMUNICAÇÃO"
+   ],
+   "estilo": "kinetic",
+   "plano": "P35"
+  },
+  {
+   "t0": 110.531,
+   "t1": 110.971,
+   "texto": "Obrigado!",
+   "palavras": [
+    {
+     "p": "Obrigado!",
+     "i": 110.531,
+     "f": 110.971
+    }
+   ],
+   "destaque": [
+    "OBRIGADO"
+   ],
+   "estilo": "fala",
+   "plano": "P37"
+  },
+  {
+   "t0": 111.534,
+   "t1": 112.188,
+   "texto": "Estamos aqui finalizando",
+   "palavras": [
+    {
+     "p": "Estamos",
+     "i": 111.534,
+     "f": 111.643
+    },
+    {
+     "p": "aqui",
+     "i": 111.643,
+     "f": 111.879
+    },
+    {
+     "p": "finalizando",
+     "i": 111.879,
+     "f": 112.188
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P38"
+  },
+  {
+   "t0": 112.188,
+   "t1": 113.061,
+   "texto": "o dia com",
+   "palavras": [
+    {
+     "p": "o",
+     "i": 112.188,
+     "f": 112.316
+    },
+    {
+     "p": "dia",
+     "i": 112.316,
+     "f": 112.425
+    },
+    {
+     "p": "com",
+     "i": 112.425,
+     "f": 113.061
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P38"
+  },
+  {
+   "t0": 113.061,
+   "t1": 114.134,
+   "texto": "o hamburguinho.",
+   "palavras": [
+    {
+     "p": "o",
+     "i": 113.061,
+     "f": 113.17
+    },
+    {
+     "p": "hamburguinho.",
+     "i": 113.17,
+     "f": 114.134
+    }
+   ],
+   "destaque": [
+    "HAMBURGUINHO"
+   ],
+   "estilo": "fala",
+   "plano": "P38"
+  },
+  {
+   "t0": 114.323,
+   "t1": 115.283,
+   "texto": "Finalizamos aqui no",
+   "palavras": [
+    {
+     "p": "Finalizamos",
+     "i": 114.323,
+     "f": 114.763
+    },
+    {
+     "p": "aqui",
+     "i": 114.763,
+     "f": 114.943
+    },
+    {
+     "p": "no",
+     "i": 114.943,
+     "f": 115.283
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P39"
+  },
+  {
+   "t0": 115.283,
+   "t1": 115.903,
+   "texto": "Rota.",
+   "palavras": [
+    {
+     "p": "Rota.",
+     "i": 115.283,
+     "f": 115.903
+    }
+   ],
+   "destaque": [
+    "ROTA"
+   ],
+   "estilo": "fala",
+   "plano": "P39"
+  },
+  {
+   "t0": 116.079,
+   "t1": 116.727,
+   "texto": "Graças a Deus",
+   "palavras": [
+    {
+     "p": "Graças",
+     "i": 116.079,
+     "f": 116.308
+    },
+    {
+     "p": "a",
+     "i": 116.308,
+     "f": 116.46
+    },
+    {
+     "p": "Deus",
+     "i": 116.46,
+     "f": 116.727
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P40"
+  },
+  {
+   "t0": 116.727,
+   "t1": 117.603,
+   "texto": "deu tudo certo,",
+   "palavras": [
+    {
+     "p": "deu",
+     "i": 116.727,
+     "f": 116.917
+    },
+    {
+     "p": "tudo",
+     "i": 116.917,
+     "f": 117.184
+    },
+    {
+     "p": "certo,",
+     "i": 117.184,
+     "f": 117.603
+    }
+   ],
+   "destaque": [
+    "CERTO"
+   ],
+   "estilo": "fala",
+   "plano": "P40"
+  },
+  {
+   "t0": 117.79,
+   "t1": 118.535,
+   "texto": "prospectando mais novos",
+   "palavras": [
+    {
+     "p": "prospectando",
+     "i": 117.79,
+     "f": 118.172
+    },
+    {
+     "p": "mais",
+     "i": 118.172,
+     "f": 118.317
+    },
+    {
+     "p": "novos",
+     "i": 118.317,
+     "f": 118.535
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P41"
+  },
+  {
+   "t0": 118.535,
+   "t1": 119.172,
+   "texto": "negócios e acompanhando",
+   "palavras": [
+    {
+     "p": "negócios",
+     "i": 118.535,
+     "f": 118.79
+    },
+    {
+     "p": "e",
+     "i": 118.79,
+     "f": 118.917
+    },
+    {
+     "p": "acompanhando",
+     "i": 118.917,
+     "f": 119.172
+    }
+   ],
+   "destaque": [
+    "NEGÓCIOS"
+   ],
+   "estilo": "fala",
+   "plano": "P41"
+  },
+  {
+   "t0": 119.172,
+   "t1": 119.681,
+   "texto": "os bastidores que",
+   "palavras": [
+    {
+     "p": "os",
+     "i": 119.172,
+     "f": 119.281
+    },
+    {
+     "p": "bastidores",
+     "i": 119.281,
+     "f": 119.626
+    },
+    {
+     "p": "que",
+     "i": 119.626,
+     "f": 119.681
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P41"
+  },
+  {
+   "t0": 119.681,
+   "t1": 120.281,
+   "texto": "vão sair aí.",
+   "palavras": [
+    {
+     "p": "vão",
+     "i": 119.681,
+     "f": 119.808
+    },
+    {
+     "p": "sair",
+     "i": 119.808,
+     "f": 120.062
+    },
+    {
+     "p": "aí.",
+     "i": 120.062,
+     "f": 120.281
+    }
+   ],
+   "destaque": [],
+   "estilo": "fala",
+   "plano": "P41"
+  },
+  {
+   "t0": 120.413,
+   "t1": 121.333,
+   "texto": "Bora fazer acontecer.",
+   "palavras": [
+    {
+     "p": "Bora",
+     "i": 120.413,
+     "f": 120.593
+    },
+    {
+     "p": "fazer",
+     "i": 120.593,
+     "f": 120.773
+    },
+    {
+     "p": "acontecer.",
+     "i": 120.773,
+     "f": 121.333
+    }
+   ],
+   "destaque": [
+    "ACONTECER"
+   ],
+   "estilo": "fala",
+   "plano": "P42"
+  }
+ ],
+ "graficos": [
+  {
+   "t0": 0.0,
+   "t1": 1.6,
+   "modelo": "gancho2",
+   "props": {
+    "y": 0.2,
+    "a": {
+     "linhas": [
+      "UM DIA",
+      "DE TRABALHO",
+      "NA *MÁXIMA*."
+     ],
+     "sai": 1.4
+    }
+   },
+   "nota": "Gancho legível no quadro 0 (capa do Reel), palavras do dono. Sai em 1.4 s quando o Ruan aparece no vão. O selo S01 fica embaixo dele, sobre a porta."
+  },
+  {
+   "t0": 1.5,
+   "t1": 123.848,
+   "modelo": "linha_tempo",
+   "props": {
+    "x": 60,
+    "y": 300,
+    "relogio": [
+     {
+      "t": 1.5,
+      "tela": "TARDE",
+      "nome": "CT MTT · RIACHÃO DO JACUÍPE",
+      "hora_real": "gravações 16:40 a 16:49; o dono lembra 'em torno de 3 horas': sem hora cravada",
+      "plano": "P01"
+     },
+     {
+      "t": 26.249,
+      "tela": "16H55",
+      "nome": "SUPER KAL",
+      "hora_real": "16:57:06",
+      "plano": "P10"
+     },
+     {
+      "t": 43.645,
+      "tela": "17H00",
+      "nome": "SUPER KAL",
+      "hora_real": "16:58:43 (chave) e 16:59:32 (açougue)",
+      "plano": "P55"
+     },
+     {
+      "t": 56.292,
+      "tela": "17H10",
+      "nome": "SUPER KAL",
+      "hora_real": "17:08:36",
+      "plano": "P16"
+     },
+     {
+      "t": 59.947,
+      "tela": "17H50",
+      "nome": "SUPER KAL",
+      "hora_real": "17:48:16",
+      "plano": "P17"
+     },
+     {
+      "t": 69.305,
+      "tela": "18H40",
+      "nome": "ESTRADA",
+      "hora_real": "18:37:50 e 18:39:01",
+      "plano": "P70"
+     },
+     {
+      "t": 74.729,
+      "tela": "19H00",
+      "nome": "VALENTE · ELITE DRAKO GYM",
+      "hora_real": "18:57:41 e 18:59:45",
+      "plano": "P26"
+     },
+     {
+      "t": 91.059,
+      "tela": "21H00",
+      "nome": "BRABUS LOUNGE",
+      "hora_real": "21:02:19",
+      "plano": "P60"
+     },
+     {
+      "t": 110.451,
+      "tela": "23H25",
+      "nome": "ROTA",
+      "hora_real": "23:27:31",
+      "plano": "P37"
+     }
+    ],
+    "saltos": [
+     {
+      "t0": 25.999,
+      "t1": 26.699,
+      "de": "TARDE",
+      "ate": "16H55",
+      "sobre": "CT -> Super Kal (mesma cidade), junto com a vinheta do mapa"
+     },
+     {
+      "t0": 69.305,
+      "t1": 70.205,
+      "de": "17H50",
+      "ate": "18H40",
+      "sobre": "estrada Riachão do Jacuípe -> Valente, no dilúvio (os ponteiros/dígitos correm com motion blur)"
+     },
+     {
+      "t0": 90.809,
+      "t1": 91.609,
+      "de": "19H00",
+      "ate": "21H00",
+      "sobre": "Valente: da Elite Drako ao Brabus Lounge (som: wh_vassoura_longo)"
+     },
+     {
+      "t0": 110.151,
+      "t1": 110.951,
+      "de": "21H15",
+      "ate": "23H25",
+      "sobre": "volta de Valente até o Rota ('Chegamos de Valente', fala do Rota)"
+     }
+    ],
+    "paradas": [
+     "CT MTT",
+     "SUPER KAL",
+     "ESTRADA",
+     "VALENTE · ELITE DRAKO",
+     "BRABUS LOUNGE",
+     "ROTA"
+    ],
+    "ponto": "logo creat.MTT mini (o ponto que viaja pela linha é a creat)",
+    "cede": true,
+    "opacidade": 0.9
+   },
+   "nota": "MODELO NOVO (troca o hud de relógio e as abas da v1). LINHA DO TEMPO do dia: relógio digital (TARDE, 16H55 ... 23H25) + nome da parada atual + linha fina com 6 paradas; o ponto da creat.MTT anda de parada em parada. Nos saltos os dígitos correm (0,5 a 0,9 s) com blur. É o mapa de rota em miniatura, presente o filme inteiro."
+  },
+  {
+   "t0": 4.035,
+   "t1": 5.935,
+   "modelo": "hud_chip",
+   "props": {
+    "titulo": "● MODO CRIAÇÃO",
+    "placa": "vermelho",
+    "y": 392,
+    "x": 60
+   },
+   "nota": "Modo do bloco B1, na palavra 'criando' (em cima do insert do monitor). 1 modo por bloco."
+  },
+  {
+   "t0": 5.67,
+   "t1": 7.74,
+   "modelo": "chip",
+   "props": {
+    "nome": "RUAN",
+    "cargo": "creat.MTT",
+    "aba": true,
+    "ponto": true,
+    "saida": true
+   },
+   "nota": "Entra quando o selo do CT sai."
+  },
+  {
+   "t0": 16.734,
+   "t1": 19.434,
+   "modelo": "chip",
+   "props": {
+    "nome": "MARCOS",
+    "cargo": "creat.MTT",
+    "aba": true,
+    "ponto": true,
+    "saida": true
+   },
+   "nota": "Entra com o 'Como o Ruan já estava falando' = passagem de bastão."
+  },
+  {
+   "t0": 19.808,
+   "t1": 23.675,
+   "modelo": "mapa_rota",
+   "props": {
+    "forma": "cartao",
+    "caixa": [
+     60,
+     1130,
+     960,
+     1470
+    ],
+    "legenda": {
+     "planos": [
+      "P50"
+     ],
+     "y": 0.53
+    },
+    "titulo": "AGENDA DO DIA",
+    "hub": {
+     "logo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/creatmtt_logo_oficial_alfa.png",
+     "largura_px": 230
+    },
+    "cidades": [
+     {
+      "nome": "RIACHÃO DO JACUÍPE",
+      "nos": [
+       {
+        "id": "ct",
+        "logo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/ctmtt_logo.svg",
+        "rotulo": "A BASE",
+        "voce_esta_aqui": true
+       },
+       {
+        "id": "sk",
+        "logo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/superkal_logo.svg"
+       },
+       {
+        "id": "igreja",
+        "texto": "IGREJA MATRIZ",
+        "icone": "sparkles"
+       }
+      ]
+     },
+     {
+      "nome": "VALENTE",
+      "nos": [
+       {
+        "id": "valente",
+        "logo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/drako_dragao.png",
+        "texto": "ELITE DRAKO"
+       }
+      ]
+     },
+     {
+      "nome": null,
+      "nos": [
+       {
+        "id": "seleto",
+        "texto": "SELETO"
+       }
+      ]
+     }
+    ],
+    "acende": [
+     {
+      "no": "ct",
+      "t": 19.808
+     },
+     {
+      "no": "sk",
+      "t": 20.108
+     },
+     {
+      "no": "valente",
+      "t": 21.293
+     },
+     {
+      "no": "seleto",
+      "t": 22.719
+     },
+     {
+      "no": "igreja",
+      "t": 23.069
+     }
+    ],
+    "estrada": {
+     "entre": [
+      "RIACHÃO DO JACUÍPE",
+      "VALENTE"
+     ],
+     "desenha_em": 21.293
+    }
+   },
+   "nota": "MODELO NOVO. MAPA DE ROTA / ECOSSISTEMA (aparição A1): a logo creat.MTT no centro, com um fio para cada ponto que ela opera; os nós acendem quando o Marcos fala. É um diagrama, não um mapa geográfico (sem distância nem km: ninguém disse). Seleto sem cidade (não foi dita). Cartão baixo e largo (900 x 340): os nós em fila, a creat no meio em cima. Cobre só da cintura para baixo; a legenda do P50 vai para y 0.53 (peito, abaixo da barba)."
+  },
+  {
+   "t0": 25.799,
+   "t1": 26.599,
+   "modelo": "mapa_rota",
+   "props": {
+    "forma": "tela_cheia",
+    "de": "ct",
+    "para": "sk",
+    "mergulha_no_no": "sk"
+   },
+   "nota": "Vinheta de rota (0,8 s): o cartão do mapa cresce, a linha corre CT MTT -> SUPER KAL com o ponto da creat na frente e a câmera mergulha no nó. Casada com a transição 'mapa' e com o salto do relógio."
+  },
+  {
+   "t0": 39.07,
+   "t1": 43.645,
+   "modelo": "gancho",
+   "props": {
+    "linhas": [
+     "*PENSADO.*",
+     "CRIADO.",
+     "RESULTADO."
+    ],
+    "modo": "entrada",
+    "y": 0.3,
+    "largura": 0.8,
+    "cantos": true
+   },
+   "nota": "Cada palavra bate quando é dita (igual à v1)."
+  },
+  {
+   "t0": 56.492,
+   "t1": 59.847,
+   "modelo": "chip",
+   "props": {
+    "nome": "SUPER KAL",
+    "cargo": "cuida do açougue",
+    "aba": true,
+    "ponto": true,
+    "saida": true,
+    "y": 404
+   },
+   "nota": "SEM nome próprio: não foi dito com clareza. Chip no topo (y 404), como na v1."
+  },
+  {
+   "t0": 60.247,
+   "t1": 61.3,
+   "modelo": "rotulo",
+   "props": {
+    "x": 60,
+    "y": 400,
+    "titulo": "DESAFIO",
+    "sub": "sistema novo leva tempo",
+    "cor": "vermelho",
+    "ponto": true
+   },
+   "nota": "Carimbo vermelho (desce para y 400: a faixa do topo agora é da linha do tempo)."
+  },
+  {
+   "t0": 63.597,
+   "t1": 66.093,
+   "modelo": "agenda",
+   "props": {
+    "caixa": [
+     60,
+     1180,
+     960,
+     1470
+    ],
+    "legenda": {
+     "planos": [
+      "P51",
+      "P20"
+     ],
+     "y": 0.56
+    },
+    "titulo": "AGENDA DO DIA",
+    "relogio": "17H50",
+    "linhas": [
+     {
+      "id": "sk",
+      "texto": "SUPER KAL",
+      "estado": "feito",
+      "marca_em": 63.797
+     },
+     {
+      "id": "igreja",
+      "texto": "IGREJA MATRIZ",
+      "estado": "remarcada",
+      "etiqueta": "REMARCADA",
+      "risca_em": 64.529
+     },
+     {
+      "id": "valente",
+      "texto": "VALENTE · ELITE DRAKO",
+      "estado": "agora",
+      "etiqueta": "AGORA",
+      "acende_em": 65.684
+     },
+     {
+      "id": "seleto",
+      "texto": "SELETO",
+      "estado": "fila"
+     }
+    ]
+   },
+   "nota": "MODELO NOVO sobre o hud 'operacao' da casa (checklist com tique desenhado). Aparição A2: o plano mudou. 4 linhas de 62 px (texto 40 px). A linha da igreja é empurrada para a direita com um risco e ganha a etiqueta âmbar REMARCADA (nunca 'feita'); Valente acende em vermelho. Conferido em direcao/v2chk/caixas_selos.jpg: a caixa cobre o reflexo no teto do carro, não o rosto (que termina em y 920); a legenda vai para y 0.56 (peito)."
+  },
+  {
+   "t0": 67.369,
+   "t1": 67.855,
+   "modelo": "gancho",
+   "props": {
+    "linhas": [
+     "EM *ROTA*."
+    ],
+    "modo": "entrada",
+    "y": 0.3,
+    "largura": 0.8,
+    "cantos": true
+   },
+   "nota": "Primeira vez que a palavra vira título (vai ecoar no fim)."
+  },
+  {
+   "t0": 69.305,
+   "t1": 70.405,
+   "modelo": "mapa_rota",
+   "props": {
+    "forma": "faixa",
+    "caixa": [
+     60,
+     392,
+     960,
+     520
+    ],
+    "de_cidade": "RIACHÃO DO JACUÍPE",
+    "para_cidade": "VALENTE",
+    "rotulo": "ESTRADA"
+   },
+   "nota": "Aparição da estrada: logo abaixo da linha do tempo, a faixa RIACHÃO DO JACUÍPE ━━▶ VALENTE com o ponto da creat correndo, enquanto o relógio salta 17H50 -> 18H40. Sem km."
+  },
+  {
+   "t0": 75.965,
+   "t1": 76.874,
+   "modelo": "gancho",
+   "props": {
+    "linhas": [
+     "*DILÚVIO*."
+    ],
+    "modo": "entrada",
+    "y": 0.3,
+    "largura": 0.8,
+    "cantos": true
+   },
+   "nota": "Letras molhadas/tremidas (igual à v1)."
+  },
+  {
+   "t0": 80.911,
+   "t1": 83.856,
+   "modelo": "gancho",
+   "props": {
+    "linhas": [
+     "● MODO",
+     "*OPERAÇÃO*",
+     "EM ROTA."
+    ],
+    "modo": "entrada",
+    "y": 0.3,
+    "largura": 0.8,
+    "cantos": true
+   },
+   "nota": "MODO do bloco B4, na fala do Marcos. Mesmo título cinético da v1 (embaixo da placa SALA DE POSE; a legenda do P28 para no 'modo'), agora com o ponto vermelho dos chips '● MODO' da casa."
+  },
+  {
+   "t0": 86.639,
+   "t1": 87.539,
+   "modelo": "freeze_espelho",
+   "props": {
+    "src_t": 62.2,
+    "copias": 3,
+    "flash": true,
+    "congela": false,
+    "tela_cheia": true
+   },
+   "nota": "correcao 1: sem congelar (o plano segue rodando) e espelho em tela cheia (3x3 espelhado)"
+  },
+  {
+   "t0": 89.79,
+   "t1": 91.059,
+   "modelo": "gancho",
+   "props": {
+    "linhas": [
+     "O *MÁXIMO*."
+    ],
+    "modo": "entrada",
+    "y": 0.3,
+    "largura": 0.8,
+    "cantos": true
+   },
+   "nota": "Eco do gancho 'NA MÁXIMA'."
+  },
+  {
+   "t0": 92.009,
+   "t1": 95.504,
+   "modelo": "hud_chip",
+   "props": {
+    "titulo": "● MODO PROSPECÇÃO",
+    "placa": "vermelho",
+    "y": 392,
+    "x": 60
+   },
+   "nota": "Modo do bloco B5 (AJUSTE 6). Entra depois do título BRABUS LOUNGE."
+  },
+  {
+   "t0": 95.604,
+   "t1": 96.304,
+   "modelo": "chip",
+   "props": {
+    "nome": "BRABUS LOUNGE",
+    "cargo": "quem está montando o espaço",
+    "aba": true,
+    "ponto": true,
+    "saida": true,
+    "y": 1180
+   },
+   "nota": "SEM nome próprio (ninguém disse). Só enquanto o rosto dele está na tela. Embaixo (y 1180): o rosto dele fica no alto do quadro."
+  },
+  {
+   "t0": 101.421,
+   "t1": 102.221,
+   "modelo": "chip",
+   "props": {
+    "nome": "BRABUS LOUNGE",
+    "cargo": "quem está montando o espaço",
+    "aba": true,
+    "ponto": true,
+    "saida": true,
+    "y": 1180
+   },
+   "nota": "Idem, na abertura ao vivo do P63."
+  },
+  {
+   "t0": 108.451,
+   "t1": 110.451,
+   "modelo": "checklist",
+   "props": {
+    "titulo": "NOVO NEGÓCIO",
+    "sub": "o que a creat.MTT leva",
+    "itens": [
+     {
+      "t": 108.751,
+      "rot": "IMAGEM"
+     },
+     {
+      "t": 109.251,
+      "rot": "DIVULGAÇÃO"
+     },
+     {
+      "t": 109.751,
+      "rot": "GESTÃO"
+     }
+    ]
+   },
+   "nota": "Tiques no ritmo, sobre os lasers na fumaça (igual à v1)."
+  },
+  {
+   "t0": 114.323,
+   "t1": 116.003,
+   "modelo": "gancho2",
+   "props": {
+    "y": 0.24,
+    "a": {
+     "linhas": [
+      "*EM* ROTA",
+      "O DIA TODO."
+     ],
+     "risca": "EM",
+     "riscaEm": 0.6,
+     "sai": 1.0
+    },
+    "b": {
+     "entra": 1.0,
+     "topo": "FIM",
+     "trocas": [],
+     "fim": {
+      "t": 1.1,
+      "p": "NO ROTA."
+     }
+    }
+   },
+   "nota": "Payoff do trocadilho: 'EM ROTA' (o dia) é riscado e vira 'NO ROTA' (a lanchonete). Som do risco: wh_alca."
+  },
+  {
+   "t0": 124.198,
+   "t1": 126.598,
+   "modelo": "mapa_rota",
+   "props": {
+    "forma": "tela_cheia",
+    "titulo": "O DIA EM ROTA",
+    "hub": {
+     "logo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/creatmtt_logo_oficial_alfa.png",
+     "largura_px": 360
+    },
+    "nos": [
+     {
+      "id": "ct",
+      "logo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/ctmtt_logo.svg",
+      "estado": "✓",
+      "t": 124.398
+     },
+     {
+      "id": "sk",
+      "logo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/superkal_logo.svg",
+      "estado": "✓",
+      "t": 124.698
+     },
+     {
+      "id": "valente",
+      "logo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/drako_dragao_nome_vertical.png",
+      "estado": "✓",
+      "t": 124.998
+     },
+     {
+      "id": "brabus",
+      "texto": "BRABUS LOUNGE",
+      "estado": "PROSPECÇÃO",
+      "t": 125.298
+     },
+     {
+      "id": "rota",
+      "texto": "ROTA",
+      "estado": "✓ FIM DE ROTA",
+      "t": 125.548
+     },
+     {
+      "id": "igreja",
+      "texto": "IGREJA MATRIZ",
+      "estado": "REMARCADA",
+      "t": 125.848,
+      "estilo": "pendente"
+     },
+     {
+      "id": "seleto",
+      "texto": "SELETO",
+      "estado": "PRÓXIMA ROTA",
+      "t": 126.048,
+      "estilo": "pendente"
+     }
+    ],
+    "colapsa_em": 126.548
+   },
+   "nota": "Aparição A3: O ECOSSISTEMA. A logo creat.MTT no centro, um fio para cada ponto do dia; os 5 feitos acendem em sequência na batida, os 2 pendentes pulsam em âmbar (o gancho para o próximo vídeo). Em 2.7 tudo é sugado para o centro e vira a logo do fecho (selo S07)."
+  },
+  {
+   "t0": 126.548,
+   "t1": 129.148,
+   "modelo": "fecho2",
+   "props": {
+    "cta": "SEGUE A",
+    "logo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/creatmtt_logo_oficial_alfa.png",
+    "larguraLogo": 700,
+    "arroba": "@creat.mtt",
+    "apoio": "BORA FAZER ACONTECER."
+   },
+   "nota": "FECHA com a logo oficial animada + convite. Pousa em 0,4 s e fica parado 1,3 s legível."
+  }
+ ],
+ "vfx": [
+  {
+   "id": "V01",
+   "tipo": "tela",
+   "planos": [
+    "P03"
+   ],
+   "t0": 7.94,
+   "t1": 10.235,
+   "spec": {
+    "o_que": "O MONITOR vira motion: uma réplica vetorial limpa da tela do sistema se descola do monitor real e vem para a frente, com os números em destaque.",
+    "fonte_da_verdade": "IMG_5160 36.8-39.5 (ver direcao/v2chk/5160a.jpg). Só entra o que está escrito na tela; conferir no 4K e tirar o que não der para ler.",
+    "textos_da_tela": [
+     "Fila do Açougue Super Kal",
+     "AÇOUGUE FILA",
+     "AÇOUGUE 1 · ATENDENDO A SENHA · 011",
+     "AÇOUGUE 2 · ATENDENDO A SENHA · 012",
+     "PRÓXIMA SENHA · 013",
+     "19 pessoas em espera",
+     "014 015 016 017 018 019 020 021 022 023 024 025",
+     "Chamar próxima",
+     "Chamar de novo",
+     "Emitir senha",
+     "Reimprimir"
+    ],
+    "animacao": [
+     "0.00 s: 4 cantoneiras travam nos cantos da tela real (rastreio simples da tela, quadro a quadro)",
+     "0.15 s: o cartão-réplica sobe da tela (homografia da tela -> cartão frontal) com 4 fios ligando os cantos do cartão aos cantos do monitor",
+     "0.45 s: 011 e 012 pulsam um depois do outro na palavra 'açougue'",
+     "na palavra 'fila': a coluna PRÓXIMA SENHA 013 + '19 pessoas em espera' ganha o destaque âmbar",
+     "sai com o corte"
+    ],
+    "caixa_cartao": [
+     110,
+     330,
+     970,
+     880
+    ],
+    "resto_do_quadro": "escurece 25% atrás do cartão",
+    "sincronia": {
+     "acougue": 9.117,
+     "fila": 9.554
+    },
+    "legenda": {
+     "planos": [
+      "P03"
+     ],
+     "y": 0.7
+    },
+    "som": "nenhum próprio (o whip de entrada cobre). Não há troca de senha aqui: na v1 a senha 'virava' 011 -> 012, o que não acontece na imagem.",
+    "troca_da_v1": "substitui o gráfico 'senha 011 -> 012' e o bip do monitor"
+   }
+  },
+  {
+   "id": "V02",
+   "tipo": "kal",
+   "planos": [
+    "P54"
+   ],
+   "t0": 29.933,
+   "t1": 33.18,
+   "spec": {
+    "regra_tamanho": "AJUSTE 10 (dono reprovou o tamanho): Kal PEQUENO, no máximo 320 px de largura (30% do quadro), dentro da zona segura, num canto, com um elemento de design que o ancora. Ignorar a escala 0.75-0.8 do relatório do Kal.",
+    "escala": 0.31,
+    "reducao": "Lanczos a partir do PNG 1080x1920; conferir a 100% que segue nítido",
+    "relogio": "dessaturar o AZUL do mostrador (máscara local) para grafite, sem tocar no dourado",
+    "integracao": "contraste +4%, saturação -5%, 3 a 5% puxado para a luz do plano, grão igual ao do plano, blur de movimento só na subida e na descida; sem sombra projetada (não há chão): sombra suave atrás do corpo sobre a plaquinha",
+    "proibido": "cobrir rosto de pessoa real (conferir em build/motion/rostos.json quadro a quadro), cobrir legenda ou a ação; espelhar o Kal (a logo da camisa inverteria); deformar: tomada com rosto/roupa diferente da arte é descartada",
+    "fps": "tocar a 30 fps (1,25x), 1 PNG por quadro",
+    "aparicao": "1 de 3 · CHEGADA: o dono da casa recebe a creat.MTT",
+    "quadros": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/kal/1_chegada/quadro_%04d.png",
+    "q_ini": 1,
+    "q_fim": 97,
+    "ancora": "a PLAQUINHA é a própria logo oficial do Super Kal, que acabou de se montar e encolheu para o canto (selo S03, caixa_final [792,1300,946,1470]) sobre um cartão de vidro grafite [600,1288,950,1474]",
+    "caixa_kal": [
+     606,
+     862,
+     926,
+     1300
+    ],
+    "canto": "inferior direito da zona segura (no P54 ali estão a moto e a calçada, depois o caixa: nenhum rosto)",
+    "movimento": [
+     "sobe por trás do cartão em 12 quadros com overshoot (squash & stretch só na translação/escala global de até 4%, nunca deformando a arte)",
+     "solta e cruza os braços (q 6-37)",
+     "sorri para a câmera (q 46 em diante)",
+     "desce por trás do cartão em 9 quadros no fim de 'da marca dele'; o cartão sai junto no corte para o P11"
+    ],
+    "etiqueta": {
+     "texto": [
+      "O MASCOTE",
+      "criação creat.MTT"
+     ],
+     "caixa": [
+      606,
+      790,
+      926,
+      852
+     ],
+     "entra": 30.153,
+     "prova": "fala do Ruan: 'o mascote que a gente criou' (IMG_5168 20.7-22.3)"
+    },
+    "sincronia": {
+     "comeca_a_subir": 29.933,
+     "palavra_mascote": 30.153,
+     "desce": 32.88
+    },
+    "legenda": {
+     "planos": [
+      "P54"
+     ],
+     "de": 29.825,
+     "cx": 330,
+     "largura": 0.48,
+     "porPagina": 2,
+     "y": 0.64
+    },
+    "som": [
+     "kal_sobe_tecido (âncora na subida)",
+     "kal_cruza_bracos (âncora no q 30)",
+     "kal_pop_discreto (na etiqueta)"
+    ]
+   }
+  },
+  {
+   "id": "V03",
+   "tipo": "tela",
+   "planos": [
+    "P11"
+   ],
+   "t0": 33.675,
+   "t1": 37.67,
+   "spec": {
+    "o_que": "AS TVs DA LOJA viram motion: colchetes de foco travam em cada TV e a do meio é ampliada com os pixels REAIS (sem redesenhar nada).",
+    "fonte_da_verdade": "IMG_5168 24.3-29.1: três TVs verticais no ar (super kal NOVIDADE, HORTIFRUTI, OMO). Nenhum preço ou texto é redigitado: o que aparece no cartão é o recorte do próprio 4K.",
+    "animacao": [
+     "colchetes (shape brackets) nas 2 ou 3 TVs visíveis, seguindo cada uma",
+     "a TV mais nítida do quadro salta para um cartão vertical (até 1:1 do 4K, ~430 px de largura; não ampliar além da fonte), com leve inclinação e sombra",
+     "aba 'OFERTAS' abre na palavra 'ofertas'; aba 'NOVIDADE DE PRODUTOS' na palavra 'novidade'",
+     "o cartão troca para a TV seguinte quando a câmera chega nela"
+    ],
+    "caixa_cartao": [
+     560,
+     400,
+     950,
+     1010
+    ],
+    "abas": [
+     {
+      "texto": "OFERTAS",
+      "t": 35.498
+     },
+     {
+      "texto": "NOVIDADE DE PRODUTOS",
+      "t": 36.352
+     }
+    ],
+    "rotulo": "TVs DA LOJA · no ar",
+    "legenda": {
+     "planos": [
+      "P11"
+     ],
+     "y": 0.7
+    },
+    "som": "nenhum (tela não faz barulho; na v1 havia um glitch aqui: sai)"
+   }
+  },
+  {
+   "id": "V04",
+   "tipo": "chave_carro",
+   "planos": [
+    "P55",
+    "P56"
+   ],
+   "t0": 43.645,
+   "t1": 45.802,
+   "spec": {
+    "fonte": "build/cenas/chave_carro.json (medidas quadro a quadro no bruto 4K)",
+    "ritmo": {
+     "bpm": 117.6,
+     "clique": 44.212,
+     "pisca_1_visivel": 44.977,
+     "pisca_2": 45.742,
+     "intervalo_s": 0.765,
+     "regra": "os três eventos ficam a 1,5 tempo um do outro (0,765 s). A trilha para no clique (stop-time), dá um acento no pisca 1 e a cabeça do compasso cai no pisca 2. Se o bpm da trilha v2 mudar, recalcular: vel do P56 = 0,834 / (1,5 x 60/bpm) e src_in do P56 = 2,068 - (1,5 x 60/bpm - 0,166) x vel."
+    },
+    "chave": {
+     "clique_t": 44.212,
+     "led_t": 44.245,
+     "congela_de": 44.245,
+     "botao_xy_norm": [
+      0.843,
+      0.45
+     ],
+     "punch": "1.05 -> 1.40 em 2 quadros, centrado no botão; no congelado, micro tremida de 1 quadro",
+     "anel": "nasce do LED azul no q18: 1º anel fino azul (a cor do LED), 2º anel âmbar atrasado 2 quadros; expandem até sair do quadro em 6 quadros e carregam o corte"
+    },
+    "viagem": {
+     "de": 44.245,
+     "ate": 44.977,
+     "desenho": "no P56 o sinal chega como uma linha pontilhada fina com 3 anéis pequenos correndo do canto direito (de onde veio a chave) até o pisca do carro [0.22,0.66]; passa POR TRÁS da moto azul (a moto é o wipe: máscara pela silhueta em movimento, ou simplesmente esconder o sinal enquanto ela cobre 1.73-2.07)"
+    },
+    "carro": {
+     "moto_wipe": [
+      44.548,
+      44.979
+     ],
+     "pisca_xy_norm": [
+      0.22,
+      0.66
+     ],
+     "pisca_1": {
+      "t": 44.977,
+      "efeito": "impact frame âmbar de 2 quadros (o quadro inteiro pega a cor do pisca, alto contraste) + punch 1.00 -> 1.10"
+     },
+     "pisca_2": {
+      "t": 45.742,
+      "efeito": "2 quadros acesos e CORTE (o âmbar vira o impact do corte para o corredor)"
+     },
+     "falso_pisca": "q150 em diante é o carro cinza: fora da janela usada"
+    },
+    "hud": {
+     "texto": "● CARRO TRANCADO",
+     "icone": "cadeado que fecha (haste desce 6 quadros) no pisca 1",
+     "caixa": [
+      80,
+      1180,
+      520,
+      1260
+     ],
+     "de": 44.977,
+     "ate": 45.802,
+     "nota": "só o chip com o cadeado, na linguagem da biblioteca de motion. SEM 'MODO' aqui: o modo deste filme é 1 por bloco e o MODO OPERAÇÃO fica para Valente (fala do Marcos)."
+    },
+    "som": [
+     {
+      "imagem": "IMG_5169 q17-q18 (0,567-0,600 s): polegar afunda, LED acende",
+      "arquivo": "chave_clique_perto.wav",
+      "ancora_s": 0.205,
+      "perspectiva": "perto e seco"
+     },
+     {
+      "imagem": "IMG_5170 pisca 1 acende (1,802 s; visível inteiro em 2,068 s)",
+      "arquivo": "carro_trancando_longe.wav",
+      "ancora_s": 0.165,
+      "perspectiva": "do outro lado da rua, 45 ms de atraso do ar embutidos",
+      "alternativa": "carro_travas_longe.wav sozinho (sem bip) ou carro_toque_buzina_longe.wav"
+     },
+     {
+      "imagem": "IMG_5170 pisca 2 acende (2,902 s) = corte",
+      "arquivo": "carro_bip2_longe.wav",
+      "ancora_s": 0.01,
+      "opcional": true
+     },
+     {
+      "imagem": "IMG_5170 moto azul cruza (1,60-2,67 s) = wipe de entrada",
+      "arquivo": "moto_cruza_esq_dir.wav",
+      "ancora_s": 2.0,
+      "casar_com": "~2,10 s do clipe (moto no meio do quadro)",
+      "obs": "reforço por baixo do som real do plano; cortar a fala \"O que é? De leves?\" (0-0,7 s) do áudio original"
+     }
+    ],
+    "som_regra": "clique perto e seco; travas + bip vindos de longe, com a rua em volta, ancorados no pisca 1 VISÍVEL (2.068). Pisca 2 sem bip (o dono pediu 'bip curto', um só): a cabeça do compasso faz o papel.",
+    "aviso_de_verdade": "o bip é uma gravação real de outro aparelho (substituto): o áudio do IMG_5170 não tem bip audível. Alternativa pronta: só carro_travas_longe.wav."
+   }
+  },
+  {
+   "id": "V05",
+   "tipo": "tela",
+   "planos": [
+    "P14",
+    "P15"
+   ],
+   "t0": 47.439,
+   "t1": 56.142,
+   "spec": {
+    "o_que": "'A TV ALI EM CIMA': o painel do sistema (a mesma tela do monitor do CT, V01) abre na parede branca acima do balcão e mostra o sistema chamando a próxima senha.",
+    "fonte_da_verdade": "números e textos = tela do monitor (IMG_5160 36.8-39.5). O próprio documento da creat mostra essa TV na parede do açougue ('A TV na parede', IMG_5160 47-53 s). O comportamento = fala do Ruan ('apertar o botão e automaticamente já vai chamar o próximo número').",
+    "rotulo_obrigatorio": "SIMULAÇÃO · SISTEMA EM IMPLANTAÇÃO",
+    "por_que_o_rotulo": "a TV ainda não está na parede (ele diz 'quando tiver isso tudo feito'); o painel é uma visualização, não foto do lugar",
+    "forma": "painel 2D de vidro escuro (não fingir que está pregado na parede: sem rastreio planar numa parede branca sem textura), com um fio fino até o ponto da parede para onde o Ruan aponta. Leve deriva acompanhando a estabilização.",
+    "caixa_painel": [
+     90,
+     400,
+     720,
+     830
+    ],
+    "conteudo": [
+     "AÇOUGUE 1 · 011",
+     "AÇOUGUE 2 · 012",
+     "PRÓXIMA SENHA · 013"
+    ],
+    "animacao": [
+     {
+      "t": 47.439,
+      "faz": "o painel abre do centro (borda desenhada), com 011 e 012 já na tela"
+     },
+     {
+      "t": 49.715,
+      "faz": "PRÓXIMA SENHA 013 acende em âmbar"
+     },
+     {
+      "t": 53.75,
+      "faz": "APERTA (no fim da palavra 'botão', com o Kal já apontando): o 013 SALTA para a frente (escala 1 -> 2,2 com overshoot, sai do painel e ocupa o centro por 0,5 s), o AÇOUGUE 1 vira 011 -> 013 e a próxima vira 014 (o 014 é o primeiro da fila que a tela real mostra)"
+     },
+     {
+      "t": 55.667,
+      "faz": "anel de chamada pulsa 2x em volta do 013"
+     }
+    ],
+    "conferido": "direcao/v2chk/p14_caixas.jpg e p15_caixas.jpg: a caixa do painel cai na parede branca nos dois planos, sem rosto",
+    "som": "fila_botao_e_chamada_loja.wav (botão seco perto + toque de chamada vindo do alto, com o salão), ancorado em 'botão'. 1 uso. Aviso: é som de outro aparelho; o do sistema real não foi gravado.",
+    "troca_da_v1": "substitui o gráfico 'PRÓXIMO 012 -> 013' e os 2 bips sintéticos"
+   }
+  },
+  {
+   "id": "V06",
+   "tipo": "kal",
+   "planos": [
+    "P15"
+   ],
+   "t0": 53.217,
+   "t1": 56.267,
+   "spec": {
+    "regra_tamanho": "AJUSTE 10 (dono reprovou o tamanho): Kal PEQUENO, no máximo 320 px de largura (30% do quadro), dentro da zona segura, num canto, com um elemento de design que o ancora. Ignorar a escala 0.75-0.8 do relatório do Kal.",
+    "escala": 0.31,
+    "reducao": "Lanczos a partir do PNG 1080x1920; conferir a 100% que segue nítido",
+    "relogio": "dessaturar o AZUL do mostrador (máscara local) para grafite, sem tocar no dourado",
+    "integracao": "contraste +4%, saturação -5%, 3 a 5% puxado para a luz do plano, grão igual ao do plano, blur de movimento só na subida e na descida; sem sombra projetada (não há chão): sombra suave atrás do corpo sobre a plaquinha",
+    "proibido": "cobrir rosto de pessoa real (conferir em build/motion/rostos.json quadro a quadro), cobrir legenda ou a ação; espelhar o Kal (a logo da camisa inverteria); deformar: tomada com rosto/roupa diferente da arte é descartada",
+    "fps": "tocar a 30 fps (1,25x), 1 PNG por quadro",
+    "aparicao": "2 de 3 · ENTREGA: o Kal aponta para a tela e aprova",
+    "quadros": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/kal/2_entrega/quadro_%04d.png",
+    "q_ini": 12,
+    "q_fim": 96,
+    "ancora": "chip 'SUPER KAL' (logo oficial a 96 px sobre cartão de vidro grafite [600,1372,950,1474]) no canto inferior direito; o painel V05 fica para CIMA e para a ESQUERDA dele, que é para onde ele aponta",
+    "caixa_kal": [
+     620,
+     1030,
+     940,
+     1385
+    ],
+    "canto": "inferior direito da zona segura",
+    "conferido": "direcao/v2chk/p15_caixas.jpg (quadros do P15 já renderizado na v1, com a caixa desenhada): de 2,5 s até o fim do plano essa caixa só tem as costas da cliente e o balcão; os açougueiros ficam ACIMA dela (y 740 a 950). Antes de 2,5 s há rostos ali: por isso o Kal só sobe em 2,45 s. O canto de cima à direita foi descartado (rostos dos açougueiros entre 2,5 e 4,5 s).",
+    "movimento": [
+     "sobe de trás do chip já soltando os braços (q 12-20)",
+     "APONTA para cima e para a esquerda, para o painel (q 20-48): o 013 salta nessa hora",
+     "volta para a câmera (q 48-58)",
+     "JOINHA (q 60-96) em 'automaticamente já vai chamar o próximo'",
+     "desce no q 96 (antes do 'ô' de boca aberta dos q 100-112)"
+    ],
+    "sincronia": {
+     "comeca_a_subir": 53.217,
+     "aponta": [
+      53.484,
+      54.417
+     ],
+     "o_013_salta": 53.75,
+     "joinha": [
+      54.817,
+      56.017
+     ]
+    },
+    "legenda": {
+     "planos": [
+      "P15"
+     ],
+     "de": 53.217,
+     "cx": 330,
+     "largura": 0.48,
+     "porPagina": 2,
+     "y": 0.66
+    },
+    "som": [
+     "tecido de subida: OUTRO trecho do Cloth 61 (não repetir kal_sobe_tecido)",
+     "kal_aponta_joinha (âncora no gesto de apontar)"
+    ]
+   }
+  },
+  {
+   "id": "V07",
+   "tipo": "kal",
+   "planos": [
+    "P58"
+   ],
+   "t0": 67.935,
+   "t1": 69.455,
+   "spec": {
+    "regra_tamanho": "AJUSTE 10 (dono reprovou o tamanho): Kal PEQUENO, no máximo 320 px de largura (30% do quadro), dentro da zona segura, num canto, com um elemento de design que o ancora. Ignorar a escala 0.75-0.8 do relatório do Kal.",
+    "escala": 0.31,
+    "reducao": "Lanczos a partir do PNG 1080x1920; conferir a 100% que segue nítido",
+    "relogio": "dessaturar o AZUL do mostrador (máscara local) para grafite, sem tocar no dourado",
+    "integracao": "contraste +4%, saturação -5%, 3 a 5% puxado para a luz do plano, grão igual ao do plano, blur de movimento só na subida e na descida; sem sombra projetada (não há chão): sombra suave atrás do corpo sobre a plaquinha",
+    "proibido": "cobrir rosto de pessoa real (conferir em build/motion/rostos.json quadro a quadro), cobrir legenda ou a ação; espelhar o Kal (a logo da camisa inverteria); deformar: tomada com rosto/roupa diferente da arte é descartada",
+    "fps": "tocar a 30 fps (1,25x), 1 PNG por quadro",
+    "aparicao": "3 de 3 · SAÍDA: o soco BORA PRA CIMA! leva o filme para a estrada",
+    "quadros": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/kal/3_soco/quadro_%04d.png",
+    "q_ini": 14,
+    "q_fim": 56,
+    "ancora": "chip 'SUPER KAL' (logo oficial a 96 px sobre cartão de vidro grafite [600,1372,950,1474]) no canto inferior direito",
+    "caixa_kal": [
+     620,
+     950,
+     940,
+     1385
+    ],
+    "caixa_no_soco": [
+     620,
+     850,
+     940,
+     1385
+    ],
+    "canto": "inferior direito da zona segura, sobre as motos em bokeh (o P58 não tem rosto em primeiro plano)",
+    "movimento": [
+     "sobe de trás do chip já descruzando (q 14-26)",
+     "prepara (q 26-40)",
+     "SOCO para cima (q 42-54); o punho passa do topo da caixa",
+     "no pico (q 50-54) o quadro INTEIRO é arrastado para cima: whip vertical com blur, a estrada entra por baixo; o Kal e o chip saem junto, arrastados pelo próprio whip"
+    ],
+    "letreiro": {
+     "texto": "BORA PRA CIMA!",
+     "de": 68.868,
+     "caixa": [
+      330,
+      1090,
+      620,
+      1250
+     ],
+     "estilo": "tipografia do motion (Anton inclinada -6 graus, amarelo do Super Kal com contorno grafite), 3 linhas BORA / PRA / CIMA! que sobem em escada com o punho; NÃO usar a figurinha com letreiro (não foi animada para não deformar as letras)",
+     "prova": "letreiro da figurinha oficial do mascote (assets/marcas/kal_mascote_bora.png)"
+    },
+    "sincronia": {
+     "comeca_a_subir": 67.935,
+     "soco": [
+      68.868,
+      69.268
+     ],
+     "pico_e_whip": 69.202,
+     "corte": 69.305
+    },
+    "som": [
+     "kal_soco_bora (âncora 0,31 no impacto = pico)",
+     "wh_rajada_folhas emendando no whip e na chuva"
+    ]
+   }
+  },
+  {
+   "id": "V08",
+   "tipo": "visao",
+   "planos": [
+    "P61",
+    "P62"
+   ],
+   "t0": 96.304,
+   "t1": 101.371,
+   "spec": {
+    "rotulo_obrigatorio": "A VISÃO DA creat.MTT · CONCEITO",
+    "trecho": "T2",
+    "regra_de_verdade": "é ILUSTRAÇÃO da ideia dita por quem está montando o espaço; nunca foto do lugar nem trabalho entregue. O rótulo fica na tela durante todo o conceito.",
+    "arquivos": {
+     "base": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/visao/base_2.png",
+     "blueprint_alfa": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/visao/blueprint_2_alfa.png",
+     "blueprint_json": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/visao/blueprint_2.json",
+     "conceito": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/visao/conceito_2.png",
+     "conceito_2k": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/visao/conceito_2_2k.png"
+    },
+    "sequencia": [
+     {
+      "de": 95.504,
+      "ate": 96.304,
+      "imagem": "AO VIVO: o rosto de quem fala ('Falta espuma,'), com a cor noturno_prospeccao"
+     },
+     {
+      "de": 96.304,
+      "ate": 96.504,
+      "imagem": "corte com flash curto de luz para o QUADRO REAL do salão (base_2, com a mesma cor do plano, -30% de saturação, push 1.00 -> 1.04, grão vivo por cima para não parecer foto parada)"
+     },
+     {
+      "de": 96.504,
+      "ate": 99.387,
+      "imagem": "BLUEPRINT SOBE DO CHÃO sobre o quadro real: a grade do piso primeiro, depois paredes e teto, linha a linha na ordem do blueprint_2.json (traço branco/ciano com brilho)"
+     },
+     {
+      "de": 99.387,
+      "ate": 99.737,
+      "imagem": "A LUZ ACENDE na palavra 'neon': crossfade de luminância do blueprint para o conceito_2 com bloom (o neon acende primeiro, o resto da sala vem atrás)"
+     },
+     {
+      "de": 99.737,
+      "ate": 101.371,
+      "imagem": "CONCEITO_2 com push 2.5D (1.00 -> 1.08, folga do arquivo 2k): fita de LED, parede de cordas, neon e samambaias; atravessa o corte P61 -> P62"
+     }
+    ],
+    "notas_de_briefing": {
+     "onde": "coluna à esquerda [70,480,560,960], como anotação à mão digitada (typewriter), cada linha com um tique âmbar; cabeçalho 'BRIEFING · o que o espaço pede'",
+     "itens": [
+      {
+       "texto": "ESPUMA",
+       "t": 95.854
+      },
+      {
+       "texto": "FITA DE LED",
+       "t": 96.404
+      },
+      {
+       "texto": "PAREDE DE CORDAS",
+       "t": 97.954
+      },
+      {
+       "texto": "PINTURA NEON",
+       "t": 99.137
+      },
+      {
+       "texto": "PLANTAS",
+       "t": 100.121
+      },
+      {
+       "texto": "SAMAMBAIA",
+       "t": 100.904
+      }
+     ],
+     "fios": "no conceito, um fio fino liga FITA DE LED, PAREDE DE CORDAS, PINTURA NEON e SAMAMBAIA ao elemento correspondente da imagem (ESPUMA fica só na lista: o conceito não mostra espuma)"
+    },
+    "rotulo": {
+     "esboco": "A VISÃO DA creat.MTT · ESBOÇO",
+     "conceito": "A VISÃO DA creat.MTT · CONCEITO",
+     "caixa": [
+      60,
+      392,
+      760,
+      452
+     ],
+     "troca_em": 99.387
+    },
+    "legenda": {
+     "planos": [
+      "P61",
+      "P62"
+     ],
+     "estilo": "cliente",
+     "y": 0.72,
+     "tamanho": 72
+    },
+    "som": "1 interruptor real de luz na palavra 'neon' (pedido ao som: outro take do 3maze Buttons and Switches, com a sala; não repetir o botão da fila). Sem som de desenho no blueprint."
+   }
+  },
+  {
+   "id": "V09",
+   "tipo": "visao",
+   "planos": [
+    "P63"
+   ],
+   "t0": 102.221,
+   "t1": 106.771,
+   "spec": {
+    "rotulo_obrigatorio": "A VISÃO DA creat.MTT · CONCEITO",
+    "trecho": "T3 (a frase que o dono citou)",
+    "regra_de_verdade": "idem V08",
+    "arquivos": {
+     "base": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/visao/base_3.png",
+     "blueprint_alfa": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/visao/blueprint_3_alfa.png",
+     "blueprint_json": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/visao/blueprint_3.json",
+     "conceito": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/visao/conceito_3.png",
+     "conceito_2k": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/visao/conceito_3_2k.png"
+    },
+    "sequencia": [
+     {
+      "de": 101.371,
+      "ate": 102.221,
+      "imagem": "AO VIVO: o rosto de quem fala ('É exclusividade,')"
+     },
+     {
+      "de": 102.221,
+      "ate": 102.971,
+      "imagem": "QUADRO REAL da pista em obra (base_3) + blueprint subindo RÁPIDO (0,6 s: o espectador já conhece o código)"
+     },
+     {
+      "de": 102.971,
+      "ate": 103.321,
+      "imagem": "A LUZ ACENDE em 'o diferencial': bloom e crossfade para o conceito_3"
+     },
+     {
+      "de": 103.321,
+      "ate": 106.621,
+      "imagem": "CONCEITO_3 com push 2.5D (1.00 -> 1.10): pista cheia na fumaça com laser, área premium com sofás",
+      "eventos": [
+       {
+        "t": 104.471,
+        "faz": "'aqui dançando': os lasers do conceito pulsam 2x na batida e a nota AQUI DANÇANDO entra apontando a pista"
+       },
+       {
+        "t": 105.004,
+        "faz": "'o pessoal vai ver que tá dentro do lounge': a câmera 2.5D desliza da pista para a área dos sofás (quem está na pista olha para o lounge)"
+       }
+      ]
+     },
+     {
+      "de": 106.621,
+      "ate": 106.771,
+      "imagem": "a luz do conceito APAGA em 4 quadros (volta pelo blueprint)"
+     },
+     {
+      "de": 106.771,
+      "ate": 107.571,
+      "imagem": "AO VIVO de novo: nessa hora a câmera real já virou para o RUAN (close do rosto dele na luz azul, 848.0-849.0), que ouve enquanto a voz fecha 'já é outra parada': a creat.MTT escutando"
+     }
+    ],
+    "notas_de_briefing": {
+     "onde": "mesma coluna da V08, a lista continua (as 6 notas da V08 ficam acima, em cinza)",
+     "itens": [
+      {
+       "texto": "EXCLUSIVIDADE",
+       "t": 101.654
+      },
+      {
+       "texto": "O DIFERENCIAL",
+       "t": 103.054
+      },
+      {
+       "texto": "DENTRO DO LOUNGE",
+       "t": 103.488
+      },
+      {
+       "texto": "AQUI DANÇANDO",
+       "t": 104.471
+      }
+     ]
+    },
+    "rotulo": {
+     "esboco": "A VISÃO DA creat.MTT · ESBOÇO",
+     "conceito": "A VISÃO DA creat.MTT · CONCEITO",
+     "caixa": [
+      60,
+      392,
+      760,
+      452
+     ],
+     "troca_em": 102.971
+    },
+    "legenda": {
+     "planos": [
+      "P63"
+     ],
+     "estilo": "cliente",
+     "y": 0.72,
+     "tamanho": 72
+    },
+    "som": "nenhum próprio: a trilha (4x4 filtrado) abre um pouco o filtro quando a luz acende e fecha quando apaga"
+   }
+  }
+ ],
+ "selos": [
+  {
+   "id": "S01",
+   "t0": 0.0,
+   "t1": 1.15,
+   "tipo": "abertura",
+   "texto": [
+    "creat.MTT STUDIO",
+    "EM PRODUÇÃO"
+   ],
+   "arquivo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/creat_studio_producao_alfa.png",
+   "caixa": [
+    70,
+    820,
+    610,
+    1090
+   ],
+   "anim": "os colchetes de REC se desenham (trim path), o ponto REC pisca 1x, a logo acende em traço de luz; em 1.05 o selo é 'aberto' junto com a porta (desliza com a folha + blur)",
+   "nota": "ABRE com a logo animada. O selo fica SOBRE a porta preta (x 0.10 a 0.60 do quadro). PNG de 1774 px usado a 540 px (reduzido, nunca ampliado). Substitui a logo_creatMTT_claro.png da v1, que não é a oficial.",
+   "largura_px": 540,
+   "plano": "P01"
+  },
+  {
+   "id": "S02",
+   "t0": 2.97,
+   "t1": 5.57,
+   "tipo": "lugar",
+   "texto": [
+    "RIACHÃO DO JACUÍPE",
+    "[logo CT MTT]",
+    "A BASE"
+   ],
+   "arquivo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/ctmtt_logo.svg",
+   "caixa": [
+    140,
+    980,
+    940,
+    1230
+   ],
+   "anim": "sobrelinha digitada (RIACHÃO DO JACUÍPE), a logo entra em duas peças (CT vinho desliza da esquerda, MTT branco da direita e travam com um tranco), 'A BASE' abre em placa âmbar; sai recolhendo para a faixa do topo",
+   "nota": "Lugar do COMEÇO. O vinho do CT some no escuro: a logo vai sobre placa clara (vidro fosco branco 92%) ou com contorno claro de 2 px. Conferir a 100%. 'A base da operação' = palavra do dono (AJUSTE 4); 'Riachão do Jacuípe' = fala do IMG_5186 54.0-57.7.",
+   "largura_px": 520,
+   "plano": "P02",
+   "legenda": {
+    "planos": [
+     "P02"
+    ],
+    "y": 0.7,
+    "ate": 5.57
+   },
+   "alternativa": [
+    140,
+    1240,
+    940,
+    1470
+   ]
+  },
+  {
+   "id": "S03",
+   "t0": 27.269,
+   "t1": 29.825,
+   "tipo": "marca",
+   "texto": [
+    "[logo GRUPO super kal]"
+   ],
+   "arquivo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/superkal_logo.svg",
+   "caixa": [
+    90,
+    850,
+    400,
+    1260
+   ],
+   "anim": "a logo oficial SE MONTA peça por peça (arco, 'super', 'kal', 'GRUPO'), cada peça com overshoot; segura inteira durante 'aqui está faltando a parte da logomarca'; em 'vai vir' encolhe e viaja em arco até virar a PLAQUINHA do canto (caixa_final), de trás da qual o Kal sobe",
+   "nota": "AJUSTE 7, item 1: 'a logo oficial se monta e o Kal sobe'. Vetor refeito pelo designer (superkal_logo.svg), 300 px de largura aqui. A logo aparece porque se FALA do Super Kal; não é aplicada na fachada (a fachada real diz outra coisa e ele mesmo diz que a logomarca ainda falta).",
+   "largura_px": 300,
+   "planos": [
+    "P10",
+    "P54"
+   ],
+   "caixa_final": [
+    792,
+    1300,
+    946,
+    1470
+   ],
+   "plaquinha_ate": 33.33,
+   "legenda": {
+    "planos": [
+     "P10",
+     "P54"
+    ],
+    "cx": 640,
+    "largura": 0.52,
+    "porPagina": 2,
+    "ate": 29.825
+   }
+  },
+  {
+   "id": "S04",
+   "t0": 76.924,
+   "t1": 80.229,
+   "tipo": "lugar",
+   "texto": [
+    "CHEGAMOS EM",
+    "VALENTE",
+    "[dragão + ELITE DRAKO GYM]"
+   ],
+   "arquivo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/drako_dragao_nome_horizontal.png",
+   "caixa": [
+    120,
+    640,
+    960,
+    1180
+   ],
+   "anim": "NA PLACA (P72, 1,4 s): 'CHEGAMOS EM' pequeno e 'VALENTE' em Anton 170 px que bate com tranco no tempo forte; 0,45 s depois o dragão se desenha (stroke reveal) e 'ELITE DRAKO GYM' abre ao lado; brilho vermelho da academia varre o conjunto. NO CORTE para o P27 o conjunto encolhe para a caixa_recolhida (uma linha: dragão + nome a 420 px e a etiqueta VALENTE) e dá um pulso quando o Marcos diz 'Valente' e outro em 'Elite Drako Gym'. Sai para a faixa do topo no fim do P27",
+   "nota": "Texto pedido pelo dono (AJUSTE 5). Só o dragão com o nome, SEM o anel de texto do selo redondo (arquivo do vetor oficial, 4099 px, usado a 640 px na placa e a 420 px recolhido). No P27 o rosto do Marcos vai até y 1110: o selo recolhido fica em y 1300-1470 e a 1ª página da legenda ('Já estamos aqui') em y 0.635; as páginas 'em Valente, Elite Drako Gym.' NÃO viram legenda comum: quem escreve essas palavras na tela é o próprio selo (estilo 'selo').",
+   "largura_px": 640,
+   "planos": [
+    "P72",
+    "P27"
+   ],
+   "caixa_recolhida": [
+    120,
+    1300,
+    960,
+    1470
+   ],
+   "largura_recolhida_px": 420,
+   "sincronia": {
+    "valente_bate": 77.074,
+    "dragao_desenha": 77.524,
+    "recolhe": 78.274,
+    "pulso_valente": 78.819,
+    "pulso_elite_drako": 79.165
+   },
+   "legenda": {
+    "planos": [
+     "P27"
+    ],
+    "y": 0.635,
+    "so_ate": 78.765
+   }
+  },
+  {
+   "id": "S05",
+   "t0": 91.159,
+   "t1": 93.309,
+   "tipo": "titulo_cinema",
+   "texto": [
+    "BRABUS",
+    "LOUNGE",
+    "PROSPECÇÃO DE UM NOVO NEGÓCIO"
+   ],
+   "arquivo": null,
+   "caixa": [
+    110,
+    700,
+    970,
+    1120
+   ],
+   "anim": "TIPOGRAFIA DE CINEMA (não é legenda): 'BRABUS' em caixa alta condensada com espaçamento bem aberto (0,32 em), revelada letra a letra pela varredura do canhão de luz do próprio plano (flare anamórfico azul passando por trás das letras, que ficam em contraluz e depois acendem); 'LOUNGE' em serifa itálica fina embaixo, entre dois fios; por último, a sublinha 'PROSPECÇÃO DE UM NOVO NEGÓCIO' em caixa alta pequena e espaçada (é a comunicação do bloco, pedida pelo dono); halo magenta/azul da cor do lugar; grão. No corte para o P32 o título encolhe e vai para a faixa do topo",
+   "nota": "Nome soletrado pelo dono (B-R-A-B-U-S L-O-U-N-G-E). Não há logo do lugar: é só tipografia, sem inventar marca. Centro do quadro (o P60 não tem rosto).",
+   "plano": "P60",
+   "fontes": {
+    "BRABUS": "Bebas Neue ou Anton, 190 px, tracking 0.32",
+    "LOUNGE": "Cormorant Italic, 96 px, tracking 0.18",
+    "sublinha": "Montserrat SemiBold, 30 px, tracking 0.30"
+   }
+  },
+  {
+   "id": "S06",
+   "t0": 119.231,
+   "t1": 120.353,
+   "tipo": "bastidores",
+   "texto": [
+    "creat.MTT STUDIO",
+    "BASTIDORES"
+   ],
+   "arquivo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/creat_bastidores_alfa.png",
+   "caixa": [
+    560,
+    380,
+    950,
+    575
+   ],
+   "anim": "a claquete BATE (a haste fecha em 3 quadros) exatamente na palavra 'bastidores'; micro tremida de 2 quadros; sai com fade",
+   "nota": "Selo do dono para o fecho. PNG de 1774 px usado a 390 px. Canto superior direito (os dois rostos estão no centro do quadro): conferir no mapa de rostos.",
+   "largura_px": 390,
+   "plano": "P41"
+  },
+  {
+   "id": "S07",
+   "t0": 126.548,
+   "t1": 129.148,
+   "tipo": "fecho",
+   "texto": [
+    "creat.MTT STUDIO",
+    "SEGUE A",
+    "@creat.mtt",
+    "BORA FAZER ACONTECER."
+   ],
+   "arquivo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/creatmtt_logo_oficial_alfa.png",
+   "caixa": [
+    190,
+    760,
+    890,
+    935
+   ],
+   "anim": "os nós do mapa são sugados pelas linhas para o centro e viram a logo oficial, que cresce com um tranco; 'SEGUE A' em cima, '@creat.mtt' embaixo em placa vermelha, 'BORA FAZER ACONTECER.' por último. Pousa em 0,4 s e fica parado no mínimo 1,3 s",
+   "nota": "FECHA com a logo oficial (PNG de 3933 px usado a 700 px; o brilho em volta de 'creat' é do original). A frase final é fala deles (P42).",
+   "largura_px": 700,
+   "plano": "P44"
+  },
+  {
+   "id": "S08",
+   "t0": 1.5,
+   "t1": 123.848,
+   "tipo": "rec_mini",
+   "texto": [
+    "● REC",
+    "creat.MTT STUDIO"
+   ],
+   "arquivo": "/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/maxima/build/marcas/creat_studio_producao_alfa.png",
+   "caixa": [
+    720,
+    300,
+    960,
+    372
+   ],
+   "anim": "fixo; o ponto REC pisca a cada 2 s; cede (opacidade 0) enquanto S02, S04, S05 ou S06 estiverem na tela",
+   "nota": "Assinatura de bastidor presente o filme inteiro, discreta. Usar só o trecho do selo que cabe na faixa (colchetes + logo), reduzido.",
+   "largura_px": 240
+  }
+ ],
+ "cronologia": {
+  "regra": "Relógio do dia no topo esquerdo, dentro da zona segura. Horários = hora de gravação de cada arquivo (ordem.json), arredondados para 5 min. A abertura não tem hora cravada (pedido do dono, AJUSTE 5). Nos trechos sem gravação o relógio CORRE (salto animado), nunca para em hora inventada.",
+  "fonte": "build/cenas/cronologia.json",
+  "relogio": [
+   {
+    "t": 1.5,
+    "tela": "TARDE",
+    "nome": "CT MTT · RIACHÃO DO JACUÍPE",
+    "hora_real": "gravações 16:40 a 16:49; o dono lembra 'em torno de 3 horas': sem hora cravada",
+    "plano": "P01"
+   },
+   {
+    "t": 26.249,
+    "tela": "16H55",
+    "nome": "SUPER KAL",
+    "hora_real": "16:57:06",
+    "plano": "P10"
+   },
+   {
+    "t": 43.645,
+    "tela": "17H00",
+    "nome": "SUPER KAL",
+    "hora_real": "16:58:43 (chave) e 16:59:32 (açougue)",
+    "plano": "P55"
+   },
+   {
+    "t": 56.292,
+    "tela": "17H10",
+    "nome": "SUPER KAL",
+    "hora_real": "17:08:36",
+    "plano": "P16"
+   },
+   {
+    "t": 59.947,
+    "tela": "17H50",
+    "nome": "SUPER KAL",
+    "hora_real": "17:48:16",
+    "plano": "P17"
+   },
+   {
+    "t": 69.305,
+    "tela": "18H40",
+    "nome": "ESTRADA",
+    "hora_real": "18:37:50 e 18:39:01",
+    "plano": "P70"
+   },
+   {
+    "t": 74.729,
+    "tela": "19H00",
+    "nome": "VALENTE · ELITE DRAKO GYM",
+    "hora_real": "18:57:41 e 18:59:45",
+    "plano": "P26"
+   },
+   {
+    "t": 91.059,
+    "tela": "21H00",
+    "nome": "BRABUS LOUNGE",
+    "hora_real": "21:02:19",
+    "plano": "P60"
+   },
+   {
+    "t": 110.451,
+    "tela": "23H25",
+    "nome": "ROTA",
+    "hora_real": "23:27:31",
+    "plano": "P37"
+   }
+  ],
+  "saltos": [
+   {
+    "t0": 25.999,
+    "t1": 26.699,
+    "de": "TARDE",
+    "ate": "16H55",
+    "sobre": "CT -> Super Kal (mesma cidade), junto com a vinheta do mapa"
+   },
+   {
+    "t0": 69.305,
+    "t1": 70.205,
+    "de": "17H50",
+    "ate": "18H40",
+    "sobre": "estrada Riachão do Jacuípe -> Valente, no dilúvio (os ponteiros/dígitos correm com motion blur)"
+   },
+   {
+    "t0": 90.809,
+    "t1": 91.609,
+    "de": "19H00",
+    "ate": "21H00",
+    "sobre": "Valente: da Elite Drako ao Brabus Lounge (som: wh_vassoura_longo)"
+   },
+   {
+    "t0": 110.151,
+    "t1": 110.951,
+    "de": "21H15",
+    "ate": "23H25",
+    "sobre": "volta de Valente até o Rota ('Chegamos de Valente', fala do Rota)"
+   }
+  ],
+  "paradas_da_linha": [
+   "CT MTT",
+   "SUPER KAL",
+   "ESTRADA",
+   "VALENTE · ELITE DRAKO",
+   "BRABUS LOUNGE",
+   "ROTA"
+  ],
+  "agenda": {
+   "itens": [
+    {
+     "id": "ct",
+     "tela": "CT MTT · RIACHÃO DO JACUÍPE",
+     "prova": "IMG_5186 49.2-57.7 'a gente tava [no] CT MTT... igreja matriz de Riachão do Jacuípe'"
+    },
+    {
+     "id": "sk",
+     "tela": "SUPER KAL",
+     "prova": "IMG_5168 2.9-4.5 'Chegamos agora aqui no Super Kal' (P10)"
+    },
+    {
+     "id": "igreja",
+     "tela": "IGREJA MATRIZ",
+     "prova": "IMG_5178 46.84-51.30 'Hoje tinha a missão de ir na igreja... mas estamos partindo agora pra Valente' (P51+P20); IMG_5186 52.6-57.7 'a gente ia fazer... lá na igreja matriz de Riachão do Jacuípe'",
+     "nunca_dizer": "que foi feita"
+    },
+    {
+     "id": "valente",
+     "tela": "VALENTE · ELITE DRAKO",
+     "prova": "v_185741 2.1-4.1 'Já estamos aqui em Valente, Elite Drako Gym' (P27)"
+    },
+    {
+     "id": "seleto",
+     "tela": "SELETO",
+     "prova": "v_164647 21.1-22.7 'e depois Seleto' (P50). A remarcação se apoia na palavra do dono (AJUSTE 5): não há fala gravada dizendo que ficou para depois, nem imagem da Seleto.",
+     "nunca_dizer": "que foi feita; na tela só o nome SELETO (o ramo não foi dito em gravação)"
+    },
+    {
+     "id": "brabus",
+     "tela": "BRABUS LOUNGE",
+     "prova": "nome soletrado pelo dono (AJUSTE 5); na gravação só 'lounge' (v_210219 844.5 e 847.0); 'prospectando mais um negócio lá' (IMG_5226 21.1-23.3)"
+    },
+    {
+     "id": "rota",
+     "tela": "ROTA",
+     "prova": "IMG_5226 68.8-70.4 'Finalizamos aqui no Rota' (P39)"
+    }
+   ],
+   "aparicoes": [
+    {
+     "id": "A1",
+     "t0": 19.808,
+     "t1": 23.675,
+     "plano": "P50",
+     "forma": "mapa de rota (cartão): o plano do dia",
+     "estados": {
+      "ct": "VOCÊ ESTÁ AQUI · A BASE",
+      "sk": "1ª operação",
+      "valente": "2ª operação",
+      "seleto": "depois",
+      "igreja": "gravação especial"
+     },
+     "sincronia": {
+      "sk": "já aceso (dito no P08)",
+      "valente": 21.293,
+      "drako": 21.554,
+      "seleto": 22.719
+     }
+    },
+    {
+     "id": "A2",
+     "t0": 63.597,
+     "t1": 66.093,
+     "planos": [
+      "P51",
+      "P20"
+     ],
+     "forma": "agenda (checklist da casa, hud operacao): o plano mudou",
+     "estados": {
+      "sk": "✓",
+      "igreja": "→ REMARCADA",
+      "valente": "▶ AGORA",
+      "seleto": "na fila"
+     },
+     "sincronia": {
+      "igreja_riscada": 64.529,
+      "valente_acende": 65.684
+     }
+    },
+    {
+     "id": "A3",
+     "t0": 124.198,
+     "t1": 126.548,
+     "plano": "P44",
+     "forma": "mapa do ecossistema (tela cheia): o dia fechado",
+     "estados": {
+      "ct": "✓",
+      "sk": "✓",
+      "valente": "✓",
+      "brabus": "PROSPECÇÃO",
+      "rota": "✓ FIM DE ROTA",
+      "igreja": "REMARCADA",
+      "seleto": "PRÓXIMA ROTA"
+     }
+    }
+   ]
+  },
+  "cuidados": [
+   "Igreja e Seleto nunca aparecem como feitas.",
+   "Seleto: a remarcação se apoia na palavra do dono, não em fala gravada.",
+   "O Rota fecha o dia às 23h27 reais; o Brabus Lounge fica em Valente (fala do Rota).",
+   "Nenhum horário entre 17h50 e 18h37 nem entre 19h01 e 21h02 tem gravação: nesses saltos o relógio corre, não para em hora inventada.",
+   "'11 e pouquinho' NÃO entra: a retranscrição (medium) ouviu 'tá uma chuvinha, pouquinha, graças a Deus'. A hora 23H25 vem só do carimbo do arquivo (23:27:31)."
+  ]
+ },
+ "sfx": [
+  {
+   "t": 0.75,
+   "evento_t": 0.75,
+   "arquivo": null,
+   "real": "maçaneta real do IMG_5159 (build/audio/sfx/porta_real_abre)",
+   "nota": "Mantido da v1: é o som de verdade da porta da abertura."
+  },
+  {
+   "t": 1.03,
+   "evento_t": 1.05,
+   "arquivo": "build/sfx2/porta_ct_abre.wav",
+   "ancora_s": 0.02,
+   "perspectiva": "perto, sala pequena",
+   "nota": "Reforço discreto da porta abrindo (-8 dB sob a real).",
+   "ganho_db": -8
+  },
+  {
+   "t": 7.583,
+   "evento_t": 7.67,
+   "arquivo": "build/sfx2/wh_camiseta_rapido.wav",
+   "ancora_s": 0.087,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Whip rosto -> tela."
+  },
+  {
+   "t": 16.084,
+   "evento_t": 16.104,
+   "arquivo": "build/sfx2/porta_ct_encosta.wav",
+   "ancora_s": 0.02,
+   "perspectiva": "a 1,5 m, sala pequena",
+   "nota": "MATCH DA PORTA: a porta encostando É o corte; somada à porta real fechando. Sem whoosh."
+  },
+  {
+   "t": 19.46,
+   "evento_t": 19.538,
+   "arquivo": "build/sfx2/wh_corda_chicote.wav",
+   "ancora_s": 0.078,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Chicote pelo batente branco."
+  },
+  {
+   "t": 23.486,
+   "evento_t": 23.575,
+   "arquivo": "build/sfx2/wh_luva_curto.wav",
+   "ancora_s": 0.089,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Loja -> fachada."
+  },
+  {
+   "t": 26.047,
+   "evento_t": 26.199,
+   "arquivo": "build/sfx2/wh_ar_suave.wav",
+   "ancora_s": 0.152,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Vinheta do mapa (ar suave, não whoosh de banco)."
+  },
+  {
+   "t": 26.049,
+   "evento_t": 26.599,
+   "arquivo": "build/sfx2/moto_passa_rua.wav",
+   "ancora_s": 2.0,
+   "perspectiva": "na calçada",
+   "nota": "Rua do Super Kal: moto 175 cc real POR BAIXO do som real do plano (-10 dB). Entra só 0,2 s antes do corte (não pode soar em cima da selfie no CT) e sai com o plano.",
+   "inicio_no_arquivo": 1.45,
+   "corta_em": 28.289,
+   "ganho_db": -10
+  },
+  {
+   "t": 29.883,
+   "evento_t": 29.933,
+   "arquivo": "build/sfx2/kal_sobe_tecido.wav",
+   "ancora_s": 0.05,
+   "perspectiva": "perto, pequeno: tecido de algodão",
+   "nota": "Kal 1 sobe de trás da plaquinha (tecido, perto e pequeno)."
+  },
+  {
+   "t": 30.783,
+   "evento_t": 30.933,
+   "arquivo": "build/sfx2/kal_cruza_bracos.wav",
+   "ancora_s": 0.15,
+   "perspectiva": "perto, pequeno",
+   "nota": "Kal 1 cruza os braços."
+  },
+  {
+   "t": 30.15,
+   "evento_t": 30.153,
+   "arquivo": "build/sfx2/kal_pop_discreto.wav",
+   "ancora_s": 0.003,
+   "perspectiva": "perto, discreto (não é pop de desenho: é estalo real, abafado)",
+   "nota": "Etiqueta 'O MASCOTE' (único pop do filme)."
+  },
+  {
+   "t": 44.007,
+   "evento_t": 44.212,
+   "arquivo": "build/sfx2/chave_clique_perto.wav",
+   "ancora_s": 0.205,
+   "perspectiva": "perto e seco (20 cm), sem reverb",
+   "nota": "CLIQUE da chave: perto e seco, no quadro em que o polegar afunda. A trilha parou."
+  },
+  {
+   "t": 44.378,
+   "evento_t": 45.006,
+   "arquivo": "build/sfx2/moto_cruza_esq_dir.wav",
+   "ancora_s": 2.0,
+   "perspectiva": "na calçada, do outro lado da rua; panorâmica esquerda->direita em 1,1 s",
+   "nota": "Moto azul cruzando (esq -> dir), por baixo do som real da rua. Âncora = moto no meio do quadro. Só existe dentro do P56: entra no corte e é cortada no pisca 2 (não vaza para a loja).",
+   "inicio_no_arquivo": 1.372,
+   "corta_em": 45.802,
+   "ganho_db": -6
+  },
+  {
+   "t": 44.812,
+   "evento_t": 44.977,
+   "arquivo": "build/sfx2/carro_trancando_longe.wav",
+   "ancora_s": 0.165,
+   "perspectiva": "do outro lado da rua; 45 ms de atraso do ar já embutidos; somar ao ambiente real do IMG_5170 (sem fala de 0,8 s em diante)",
+   "nota": "Travas + bip do outro lado da rua, no pisca 1 visível (45 ms de ar já embutidos)."
+  },
+  {
+   "t": 44.543,
+   "evento_t": 44.977,
+   "arquivo": "build/sfx2/trena_hud.wav",
+   "ancora_s": 0.434,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Cadeado do HUD fechando (trena curta, -10 dB).",
+   "ganho_db": -10
+  },
+  {
+   "t": 45.703,
+   "evento_t": 45.822,
+   "arquivo": "build/sfx2/wh_camiseta_medio.wav",
+   "ancora_s": 0.119,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Speed ramp do corredor; a trilha volta."
+  },
+  {
+   "t": 53.738,
+   "evento_t": 53.75,
+   "arquivo": "build/sfx2/fila_botao_e_chamada_loja.wav",
+   "ancora_s": 0.012,
+   "perspectiva": "botão perto (balcão); o toque vem do alto, com o salão do mercado em volta",
+   "nota": "Botão do açougueiro + toque de chamada vindo do alto, no instante em que o 013 salta. 1 uso."
+  },
+  {
+   "t": 53.217,
+   "evento_t": 53.217,
+   "arquivo": null,
+   "pedido": "tecido de subida do Kal 2: outro trecho do Cloth 61 (build/sfx2/_fontes/tecido_61.wav), para não repetir kal_sobe_tecido",
+   "nota": "Kal 2 sobe de trás do chip."
+  },
+  {
+   "t": 53.477,
+   "evento_t": 53.617,
+   "arquivo": "build/sfx2/kal_aponta_joinha.wav",
+   "ancora_s": 0.14,
+   "perspectiva": "perto, pequeno",
+   "nota": "Kal 2 aponta para o painel."
+  },
+  {
+   "t": 64.343,
+   "evento_t": 64.629,
+   "arquivo": "build/sfx2/wh_isopor_textura.wav",
+   "ancora_s": 0.286,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Risco da agenda: IGREJA MATRIZ -> REMARCADA."
+  },
+  {
+   "t": 68.892,
+   "evento_t": 69.202,
+   "arquivo": "build/sfx2/kal_soco_bora.wav",
+   "ancora_s": 0.31,
+   "perspectiva": "perto, pequeno; o impacto é um baque de luva, sem exagero",
+   "nota": "SOCO do Kal: golpe de camiseta + baque de luva no pico; daqui nasce o whip vertical."
+  },
+  {
+   "t": 68.797,
+   "evento_t": 69.255,
+   "arquivo": "build/sfx2/wh_rajada_folhas.wav",
+   "ancora_s": 0.458,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Rajada de vento que emenda o whip na chuva."
+  },
+  {
+   "t": 69.305,
+   "evento_t": 69.555,
+   "arquivo": "build/sfx2/trovao_longe_estrada.wav",
+   "ancora_s": 0.25,
+   "perspectiva": "de dentro do carro: passa-baixa 1,4 kHz",
+   "nota": "Trovão distante ao entrar na estrada (ouvido de dentro do carro). Morre antes do relâmpago.",
+   "corta_em": 74.429
+  },
+  {
+   "t": 69.205,
+   "evento_t": 69.305,
+   "arquivo": "build/sfx2/chuva_parabrisa_dentro_12s.wav",
+   "ate": 74.729,
+   "nota": "CAMA do dilúvio: chuva no para-brisa gravada de dentro de um carro, SOMADA ao som real sem voz dos planos (a conversa do carro tem palavrão e fica muda). Corta seco no relâmpago."
+  },
+  {
+   "t": 70.935,
+   "evento_t": [
+    70.935,
+    71.515,
+    71.975,
+    73.709,
+    74.089
+   ],
+   "arquivo": "build/sfx2/limpador_dentro_2x.wav",
+   "ancora_s": 0.37,
+   "nota": "LIMPADOR real, só onde ele aparece. Passadas medidas quadro a quadro nos arquivos tratados: I02 em 45.71, 46.29 e 46.75 do bruto; I04 em 26.92 e 27.30. No dilúvio o limpador está rápido (uma passada a cada ~0,5 s) e o arquivo tem 2 passadas lentas: CORTAR as passadas uma a uma e casar cada uma com uma passada visível. Se não ficar natural, deixar só o som real do plano."
+  },
+  {
+   "t": 72.039,
+   "evento_t": 73.989,
+   "arquivo": "build/sfx2/pista_molhada_carro_cruza.wav",
+   "ancora_s": 1.95,
+   "perspectiva": "ouvido de dentro do carro com vidro fechado: passa-baixa 2,6 kHz",
+   "nota": "Faróis vindo na pista alagada (I04): carro cruzando ouvido de dentro, vidro fechado. Cortado seco no relâmpago.",
+   "corta_em": 74.729,
+   "ganho_db": -4
+  },
+  {
+   "t": 74.379,
+   "evento_t": 74.779,
+   "arquivo": "build/sfx2/trovao_perto_com_chuva.wav",
+   "ancora_s": 0.4,
+   "perspectiva": "externa, perto",
+   "nota": "TROVÃO do relâmpago REAL (há clarão na imagem: 1º clarão em 27.50-27.54 e pico em 27.903 do v_183901). Estala 0,05 s depois do corte; a cauda fica -8 dB sob a fala e some até o fim do P26.",
+   "fade_ate": 76.874
+  },
+  {
+   "t": 76.539,
+   "evento_t": 76.754,
+   "arquivo": "build/sfx2/wh_couro.wav",
+   "ancora_s": 0.215,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Whip para o geral da academia (chegada em Valente)."
+  },
+  {
+   "t": 83.533,
+   "evento_t": 83.696,
+   "arquivo": "build/sfx2/wh_vara_grave.wav",
+   "ancora_s": 0.163,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Mergulho na placa SALA DE POSE."
+  },
+  {
+   "t": 90.649,
+   "evento_t": 90.859,
+   "arquivo": "build/sfx2/wh_vassoura_longo.wav",
+   "ancora_s": 0.21,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Relógio varrendo 19H00 -> 21H00."
+  },
+  {
+   "t": 99.387,
+   "evento_t": 99.387,
+   "arquivo": null,
+   "pedido": "interruptor real de luz (outro take do 3maze Buttons and Switches, com resposta de sala; NÃO o switch_on_042 da fila)",
+   "nota": "A luz do conceito acende (V08). 1 uso."
+  },
+  {
+   "t": 110.151,
+   "evento_t": 110.151,
+   "arquivo": "build/sfx2/chuva_fina_rua_8s.wav",
+   "ate": 114.243,
+   "nota": "Chuvisco real do Rota ('tá uma chuvinha'), baixo, até o fim do P38."
+  },
+  {
+   "t": 114.085,
+   "evento_t": 114.163,
+   "arquivo": "build/sfx2/wh_baqueta_seco.wav",
+   "ancora_s": 0.078,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Whip seco para o plano dos dois com os lanches."
+  },
+  {
+   "t": 114.721,
+   "evento_t": 114.923,
+   "arquivo": "build/sfx2/wh_alca.wav",
+   "ancora_s": 0.202,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Risco do EM -> NO ROTA."
+  },
+  {
+   "t": 121.813,
+   "evento_t": 121.813,
+   "arquivo": null,
+   "real": "brinde real do IMG_5226 (96.6-97.8, antes do 'aí sim')",
+   "nota": "Mantido da v1."
+  },
+  {
+   "t": 123.416,
+   "evento_t": 123.748,
+   "arquivo": "build/sfx2/wh_corda_gira.wav",
+   "ancora_s": 0.332,
+   "perspectiva": "transição (movimento de câmera)",
+   "nota": "Garrafa cobrindo a lente."
+  }
+ ],
+ "audio_fonte": [
+  {
+   "plano": "P01",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P02",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P03",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P04",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P06",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P07",
+   "ganho_db": -8,
+   "ambiente": true,
+   "nota": "som real do lugar (conferir no stem que não há voz)"
+  },
+  {
+   "plano": "P08",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P50",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P09",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P10",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P54",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P11",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P12",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P55",
+   "ganho_db": -14,
+   "ambiente": true,
+   "nota": "áudio original muito baixo e sem clique audível: o clique vem da sfx2"
+  },
+  {
+   "plano": "P56",
+   "ganho_db": -8,
+   "ambiente": true,
+   "nota": "som real da rua de 1.415 em diante (a fala 'O que é? De leves?' fica antes, em 0-0.7)"
+  },
+  {
+   "plano": "P13",
+   "ganho_db": -12,
+   "ambiente": true,
+   "nota": "som real do lugar (conferir no stem que não há voz)"
+  },
+  {
+   "plano": "P14",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P15",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P16",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P17",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P19",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P51",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)",
+   "nota": "a palavra seguinte está colada no corte: o fade-out termina NO corte (30 ms), sem vazamento"
+  },
+  {
+   "plano": "P20",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P21",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P58",
+   "ganho_db": -10,
+   "ambiente": true,
+   "nota": "sem voz entre 71.25 e 75.25 (medido)"
+  },
+  {
+   "plano": "P70",
+   "ganho_db": -6,
+   "ambiente": true,
+   "nota": "som real do carro/chuva só de trecho sem conversa (vad.json), somado à cama da sfx2"
+  },
+  {
+   "plano": "P71",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)",
+   "nota": "voz sobre a estrada: mesma cadeia de voz do P26 (são contíguos na fonte: 38.98 -> 45.70 num fôlego só, sem fade entre os dois); por baixo, a cama de chuva"
+  },
+  {
+   "plano": "P26",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P72",
+   "ganho_db": -10,
+   "ambiente": true,
+   "nota": "depois do fim da fala (89.0); há um som baixo em 90.6-91.2: conferir no vad que não é voz, senão usar o tom do lugar"
+  },
+  {
+   "plano": "P27",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P28",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P29",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P30",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P60",
+   "ganho_db": -99,
+   "ambiente": false,
+   "nota": "mudo: fala de terceiros a partir de 858.2; tom do lugar por baixo"
+  },
+  {
+   "plano": "P32",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P61",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)",
+   "nota": "voz de terceiro em lugar barulhento: mistura 90/10 como na prospecção da v1; nivelar em -18 LUFS igual às demais"
+  },
+  {
+   "plano": "P62",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)",
+   "nota": "a palavra seguinte está colada no corte: o fade-out termina NO corte (30 ms), sem vazamento"
+  },
+  {
+   "plano": "P63",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)",
+   "nota": "voz de terceiro em lugar barulhento: mistura 90/10 como na prospecção da v1; nivelar em -18 LUFS igual às demais"
+  },
+  {
+   "plano": "P35",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P36",
+   "ganho_db": -99,
+   "ambiente": false,
+   "nota": "mudo: fala de terceiros; tom do lugar por baixo"
+  },
+  {
+   "plano": "P37",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P38",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P39",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P40",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P41",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P42",
+   "ganho_db": 0,
+   "ambiente": false,
+   "voz": "limpeza DeepFilterNet moderada (voz_prep.py), tom de sala contínuo por baixo (sintético casado ao espectro do local, sem voz)"
+  },
+  {
+   "plano": "P43",
+   "ganho_db": -12,
+   "ambiente": true,
+   "nota": "som real do lugar (conferir no stem que não há voz)"
+  }
+ ],
+ "dur": 129.148,
+ "reuso": {
+  "arquivo_identico": [
+   "P01",
+   "P02",
+   "P03",
+   "P04",
+   "P06",
+   "P07",
+   "P08",
+   "P11",
+   "P12",
+   "P13",
+   "P14",
+   "P15",
+   "P16",
+   "P20",
+   "P28",
+   "P29",
+   "P30",
+   "P32",
+   "P35",
+   "P36",
+   "P37",
+   "P38",
+   "P39",
+   "P40",
+   "P41",
+   "P42",
+   "P43"
+  ],
+  "mesmo_corte_cauda_nova": [
+   "P09",
+   "P10",
+   "P17",
+   "P19",
+   "P21",
+   "P26",
+   "P27"
+  ],
+  "novos": [
+   "P50",
+   "P54",
+   "P55",
+   "P56",
+   "P51",
+   "P58",
+   "P70",
+   "P71",
+   "P72",
+   "P60",
+   "P61",
+   "P62",
+   "P63"
+  ],
+  "alterados": [
+   "P44"
+  ],
+  "fora_da_v2": [
+   "P22",
+   "P23",
+   "P24",
+   "P25",
+   "P31",
+   "P33",
+   "P34"
+  ],
+  "motivo_fora": {
+   "P22": "interior do carro: tremor de 27 px mesmo estabilizado e preto levantado; a conversa tem palavrão (fica muda de qualquer jeito)",
+   "P23": "para-brisa 0.5-4.5: tremor de 22 a 24 px mesmo tratado; trocado pelas janelas firmes (d3, e3, b3)",
+   "P24": "perfil do Ruan: volta como insert I03, da versão tratada (c.mp4)",
+   "P25": "'Choveu muito,' agora é voz sobre a estrada (P71), com a frase inteira",
+   "P31": "abria num rosto borrado; trocado pela placa do canhão de luz (P60)",
+   "P33": "'ambiente que é cultural': cedeu o tempo para A VISÃO DA creat.MTT",
+   "P34": "'monetizar... pratos, bebidas' (5,2 s): cedeu o tempo para A VISÃO; GESTÃO fica no checklist do P36"
+  }
+ },
+ "layout": {
+  "zona_segura": {
+   "x0": 60,
+   "y0": 285,
+   "x1": 960,
+   "y1": 1480
+  },
+  "faixa_topo": {
+   "y0": 300,
+   "y1": 372,
+   "esquerda": "relógio + parada atual (x 60 a 520)",
+   "direita": "selo mini '● REC creat.MTT STUDIO' (x 720 a 960), opacidade 0.85, cede quando um selo grande entra"
+  },
+  "legenda": {
+   "y_padrao": 0.622,
+   "y_baixa": 0.7,
+   "cx": 510,
+   "largura": 0.8,
+   "regra": "se um selo, cartão ou o Kal ocupar a faixa, a legenda é quem se ajusta (campo 'legenda' de cada item); nunca sobre rosto (build/motion/rostos.json)"
+  },
+  "prioridade": "rosto real > legenda > selo/cartão/Kal. Em conflito, o selo vai para a caixa alternativa; o Kal nunca cobre rosto."
+ },
+ "musica": {
+  "bpm": 117.6,
+  "tempo_s": 0.51,
+  "fonte": "mesma trilha da v1 (ElevenLabs Music, build/audio/musica), reeditada em compassos para a duração nova. A v1 tinha 108 s e a v2 pede mais: repetir FRASES inteiras nas seções longas (Super Kal e Brabus) ou gerar a continuação com os créditos do plano grátis (sem nada pago). Ducking de -10 dB sob a fala. Se o bpm mudar, refazer a conta do V04.",
+  "secoes": [
+   {
+    "t0": 0.0,
+    "t1": 1.6,
+    "energia": "alta",
+    "nota": "Riser curto que estoura no 'Fala, pessoal!' (porta abrindo)."
+   },
+   {
+    "t0": 1.6,
+    "t1": 16.134,
+    "energia": "media",
+    "nota": "CT: pulso de trabalho sem bumbo (passa-alta 220 Hz), muito espaço para a fala."
+   },
+   {
+    "t0": 16.134,
+    "t1": 26.249,
+    "energia": "alta",
+    "nota": "Entra o bumbo no match da porta; cresce enquanto o mapa se desenha."
+   },
+   {
+    "t0": 26.249,
+    "t1": 43.645,
+    "energia": "alta",
+    "nota": "Super Kal com groove. Acento na logo que se monta e no Kal."
+   },
+   {
+    "t0": 43.645,
+    "t1": 45.802,
+    "energia": "stop-time",
+    "nota": "A TRILHA PARA no clique da chave (só rua e balcão): acento seco no pisca 1 e a cabeça do compasso cai no pisca 2."
+   },
+   {
+    "t0": 45.802,
+    "t1": 59.947,
+    "energia": "alta",
+    "nota": "Volta inteira no corredor; açougue com arpejo 'digital'."
+   },
+   {
+    "t0": 59.947,
+    "t1": 67.855,
+    "energia": "queda",
+    "nota": "Hora azul e reflexo: tira a bateria, pad + piano. O plano do dia mudou (agenda)."
+   },
+   {
+    "t0": 67.855,
+    "t1": 74.729,
+    "energia": "pico",
+    "nota": "Riser na fachada, estouro no soco do Kal; estrada: tambores + chuva. A música vira tempestade e CORTA no relâmpago."
+   },
+   {
+    "t0": 74.729,
+    "t1": 91.059,
+    "energia": "alta",
+    "nota": "Valente: energia de academia, grave cheio."
+   },
+   {
+    "t0": 91.059,
+    "t1": 107.571,
+    "energia": "pico contido",
+    "nota": "Brabus Lounge: 4x4 de pista com passa-baixa sob as falas; o filtro abre um pouco cada vez que a luz do conceito acende."
+   },
+   {
+    "t0": 107.571,
+    "t1": 110.451,
+    "energia": "pico",
+    "nota": "'Isso é comunicação!': o filtro abre de vez, drop."
+   },
+   {
+    "t0": 110.451,
+    "t1": 123.848,
+    "energia": "queda",
+    "nota": "Rota: resolve em acorde quente, missão cumprida, sorriso."
+   },
+   {
+    "t0": 123.848,
+    "t1": 128.248,
+    "energia": "pico",
+    "nota": "Mapa do dia subindo em arpejo (um degrau por nó) e o acorde final na logo. Último som = assinatura (nota da própria trilha, sem shimmer sintético)."
+   }
+  ],
+  "batidas_chave": [
+   1.05,
+   16.134,
+   26.249,
+   30.153,
+   44.212,
+   44.977,
+   45.742,
+   53.267,
+   59.947,
+   69.202,
+   74.729,
+   78.274,
+   86.639,
+   91.059,
+   99.387,
+   102.971,
+   107.571,
+   110.451,
+   114.243,
+   123.848,
+   126.548
+  ]
+ },
+ "sfx_regras": [
+  "cada arquivo marcado usar_1x na biblioteca entra uma única vez (checado aqui)",
+  "nenhum som em texto de legenda, chip ou título",
+  "transição com som só quando há movimento que o justifique; onde a tabela de transições diz '', é silêncio de efeito (a trilha e o som real seguram)",
+  "ambiente de biblioteca sempre SOMADO ao som real do plano, nunca no lugar dele",
+  "nada de laser, glitch, carimbo, pop de legenda, tick de interface, riser de banco: o impacto vem da trilha, de porta, de chuva ou de trovão",
+  "antes do mix alguém precisa OUVIR: carro_trancando_longe, fila_botao_e_chamada_loja, kal_soco_bora, chave_clique_perto (o agente de som não conseguiu escutar)",
+  "transcrever o mix final e os stems de ambiente e ler a lista inteira antes de entregar"
+ ],
+ "verdade": [
+  {
+   "na_tela": "RUAN · creat.MTT / MARCOS · creat.MTT",
+   "prova": "eles mesmos, em quadro"
+  },
+  {
+   "na_tela": "CT MTT · A BASE · RIACHÃO DO JACUÍPE",
+   "prova": "logo do dono; 'a gente tava [no] CT MTT... igreja matriz de Riachão do Jacuípe' (IMG_5186 49-58); 'a base da operação' = dono, AJUSTE 4"
+  },
+  {
+   "na_tela": "SUPER KAL (logo oficial) · O MASCOTE · criação creat.MTT",
+   "prova": "'Chegamos agora aqui no Super Kal' e 'o mascote que a gente criou' (IMG_5168)"
+  },
+  {
+   "na_tela": "011 · 012 · 013 · 19 pessoas em espera · Fila do Açougue Super Kal",
+   "prova": "tela do monitor (IMG_5160 36.8-39.5)"
+  },
+  {
+   "na_tela": "SIMULAÇÃO · SISTEMA EM IMPLANTAÇÃO (013 chamada, 014 a próxima)",
+   "prova": "comportamento descrito na fala (IMG_5172 40.7-47.2) e a fila 014... da própria tela; rotulado como simulação"
+  },
+  {
+   "na_tela": "● CARRO TRANCADO",
+   "prova": "IMG_5169 (LED da chave) + IMG_5170 (duas piscadas do carro preto)"
+  },
+  {
+   "na_tela": "SUPER KAL · cuida do açougue",
+   "prova": "camisa Super Kal e a própria fala (IMG_5173); sem nome"
+  },
+  {
+   "na_tela": "IGREJA MATRIZ → REMARCADA",
+   "prova": "'Hoje tinha a missão de ir na igreja... mas estamos partindo agora pra Valente' (IMG_5178 46.8-51.3)"
+  },
+  {
+   "na_tela": "SELETO → PRÓXIMA ROTA",
+   "prova": "'e depois Seleto' (v_164647 21.1-22.7) + palavra do dono (AJUSTE 5) de que não deu; sem imagem nem fala de que foi feita"
+  },
+  {
+   "na_tela": "CHEGAMOS EM VALENTE · ELITE DRAKO GYM",
+   "prova": "'Já estamos aqui em Valente, Elite Drako Gym' (v_185741 2.1-4.1); texto do selo pedido pelo dono"
+  },
+  {
+   "na_tela": "BRABUS LOUNGE",
+   "prova": "nome soletrado pelo dono (AJUSTE 5); na gravação aparece 'lounge'"
+  },
+  {
+   "na_tela": "A VISÃO DA creat.MTT · CONCEITO + notas ESPUMA, FITA DE LED, PAREDE DE CORDAS, PINTURA NEON, PLANTAS, SAMAMBAIA, EXCLUSIVIDADE, O DIFERENCIAL, DENTRO DO LOUNGE, AQUI DANÇANDO",
+   "prova": "palavras ditas em v_210219 767.5-775.5 e 841.6-849.0; imagens rotuladas como conceito"
+  },
+  {
+   "na_tela": "IMAGEM · DIVULGAÇÃO · GESTÃO / NOVO NEGÓCIO NO RADAR",
+   "prova": "dono, AJUSTE 3; 'prospectando mais um negócio lá' (IMG_5226)"
+  },
+  {
+   "na_tela": "relógio TARDE, 16H55, 17H00, 17H10, 17H50, 18H40, 19H00, 21H00, 23H25",
+   "prova": "hora de gravação dos arquivos (ordem.json), arredondada"
+  },
+  {
+   "na_tela": "BORA PRA CIMA!",
+   "prova": "letreiro da figurinha oficial do mascote"
+  },
+  {
+   "na_tela": "NO ROTA · BASTIDORES · BORA FAZER ACONTECER.",
+   "prova": "falas do IMG_5226 (68.8-70.4, 88.8-90.1, 92.1-93.0)"
+  }
+ ],
+ "fora_do_corte_de_proposito": [
+  "CELULAR do IMG_5175 (17:22): baixei o bruto e olhei a tela em 4K (direcao/v2chk/5175_4k.jpg). É a foto de uma parede com uma placa, com os dedos na frente; a tela tem ~600 px no 4K e nenhum texto dá para ler. Replicar seria inventar. O tratamento de 'tela' foi para o monitor (V01), as TVs (V03) e a TV do açougue (V05). Se o dono mandar a imagem que estava no celular, entra em 1,5 s.",
+  "Conversa dentro do carro na chuva (IMG_5183, v_183901): tem palavrão e xingamento; fica muda.",
+  "'Grupo Super Kal, a magia acontecendo, bora pra mais' (IMG_5173 163-167): a palavra do meio não está clara nas duas transcrições; sem certeza não vai para a legenda.",
+  "'11 e pouquinho' (IMG_5226 19-20): na retranscrição virou 'chuvinha, pouquinha'; não uso como prova de hora.",
+  "P33 e P34 da v1 (ambiente cultural; monetizar pratos e bebidas): saíram para dar lugar à VISÃO sem estourar 130 s."
+ ],
+ "ordem_real": {
+  "regra": "os blocos seguem a hora de gravação (ordem.json): CT 16:41-16:49, Super Kal 16:57-17:48, estrada 18:37-18:39, Valente 18:57-18:59, Brabus Lounge 21:02, Rota 23:27",
+  "trocas_assumidas": [
+   "P71 (voz do IMG_5186, 18:59) narra a estrada das 18:37-18:39: é o Marcos contando, já em Valente, a chuva que acabou de passar; a frase termina com ele em quadro (P26)",
+   "P26 e P72 (IMG_5186, 18:59) vêm antes de P27-P29 (v_185741, 18:57): 2 minutos dentro do mesmo lugar, como na v1",
+   "P72 usa um trecho do IMG_5186 (89.6) posterior ao do P30 (77.3): é plano de ambiente do mesmo geral da academia",
+   "dentro do Brabus Lounge a ordem é de montagem (título 857 s, Marcos 153 s, visão 767 e 841 s, 'Isso é comunicação!' 484 s, lasers 599 s): tudo no mesmo lugar, na mesma noite",
+   "P50 (v_164647 18.2) vem do mesmo clipe do P08 (0-3.7), na ordem; IMG_5169 e IMG_5170 (chave e carro, 16:58) entram entre IMG_5168 e IMG_5172, como o dono pediu"
+  ]
+ },
+ "retencao": {
+  "gancho": "o quadro 0 já lê 'UM DIA DE TRABALHO NA MÁXIMA.' sobre a porta com o selo; a porta abre em 1,05 s e o Ruan fala em 1,9 s",
+  "maior_intervalo_sem_novidade_s": 2.92,
+  "onde": [
+   16.734,
+   19.658
+  ],
+  "como_medi": "lista de tudo que muda para o olho ou o ouvido (cortes, inserts, selos, gráficos, palavras-título, eventos de vfx, ticks do relógio, batidas-chave); nenhum intervalo passa de 3 s",
+  "puxadores": [
+   "'Let's go' -> a porta",
+   "'e depois Seleto' -> mapa -> 'Partiu Super Kal'",
+   "logo que se monta -> o mascote",
+   "'resultado' -> acelera e trava na chave",
+   "pisca 2 -> corredor",
+   "botão -> 013",
+   "'não cresce' -> DESAFIO",
+   "igreja REMARCADA -> Valente AGORA",
+   "'em rota' -> soco -> estrada",
+   "relâmpago -> 'dilúvio' -> CHEGAMOS EM VALENTE",
+   "'o máximo' -> BRABUS LOUNGE",
+   "luz acende 2x -> 'Isso é comunicação!'",
+   "IMAGEM · DIVULGAÇÃO · GESTÃO -> Rota",
+   "'bastidores' -> claquete -> mapa do dia -> SEGUE A"
+  ]
+ },
+ "pendencias": {
+  "video": [
+   "renderizar os 13 planos novos (lista em reuso.novos) com a mesma cor por local da v1; P70 e os inserts I02, I03, I04 saem dos arquivos JÁ tratados de build/cenas/chuva/final (não regradar: só cortar a janela e casar o grão)",
+   "P55: congelar no quadro 18 (LED aceso) do instante 0,600 s até o fim; P56 a 1.09x sem interpolação (descarta quadros)",
+   "P71: não renderizar a imagem (coberta pelos inserts)",
+   "P54 -> P11: conferir a emenda contígua (mesmo take); usar no P54 o mesmo modo de estabilização do P11 (leve, recorte 1.12)",
+   "transições novas na base: 'mapa' (zoom_through de 0,5 s), 'sinal' (corte seco; o anel é do overlay), 'whip_vertical' (whip na vertical, de baixo para cima), 'relampago_real' (segura o quadro mais claro do I04 por 2 quadros como flash)",
+   "P12 e P13 da v1 servem como estão (rampas embutidas); 7 planos só precisam da cauda nova (reuso.mesmo_corte_cauda_nova)"
+  ],
+  "vfx": [
+   "V02, V06, V07 (Kal): reduzir para 0.31, corrigir o mostrador do relógio, compor nas caixas e conferir quadro a quadro contra build/motion/rostos.json (refazer o mapa de rostos para os planos novos)",
+   "V01 e V05: redesenhar a tela do sistema em vetor SÓ com o que se lê no 4K do IMG_5160 36.8-39.5 (baixar o bruto, 197 MB, olhar a 100%)",
+   "V03: recorte real da TV, sem redigitar texto",
+   "V04: anel, viagem do sinal, impact âmbar e HUD do cadeado",
+   "V08 e V09: sequência da visão com os arquivos prontos de build/visao; rótulo 'A VISÃO DA creat.MTT · CONCEITO' sempre visível no conceito"
+  ],
+  "motion": [
+   "modelos novos no kit: linha_tempo, mapa_rota (cartao, tela_cheia, faixa), agenda, hud_chip, selo tipos lugar/marca/titulo_cinema/bastidores/rec_mini; legenda com estilos 'narracao', 'cliente' e 'selo' e com os desvios do campo 'legenda' de cada item",
+   "trocar a logo: a oficial é build/marcas/creatmtt_logo_oficial_alfa.png (a logo_creatMTT_claro.png da v1 tem outra caligrafia e não é a dos selos do dono)",
+   "conferir toda logo a 100% num quadro 1080x1920 antes de devolver (regra do dono); CT MTT sobre placa clara"
+  ],
+  "som": [
+   "reeditar a trilha para 128,2 s com as seções e batidas de musica (stop-time na chave; corte no relâmpago)",
+   "trocar TODOS os sfx da v1 pela lista sfx (biblioteca build/sfx2); 2 pedidos novos: tecido de subida do Kal 2 e interruptor de luz real",
+   "voz nova: P50, P54, P51, P71, P61, P62, P63 (mesma cadeia da v1); P71+P26 são um fôlego só",
+   "alguém precisa OUVIR os 4 sons que o agente não conseguiu escutar; transcrever mix e stems e ler a lista inteira"
+  ],
+  "qa": [
+   "a 100%: logos (CT MTT, Super Kal, Elite Drako, creat), Kal a 320 px, bordas do recorte do Kal sobre os 3 planos",
+   "nenhum rosto real coberto por Kal, selo, cartão ou legenda",
+   "rótulos 'SIMULAÇÃO · SISTEMA EM IMPLANTAÇÃO' e 'A VISÃO DA creat.MTT · CONCEITO' presentes",
+   "Igreja e Seleto nunca como feitas; nenhum nome além dos da lista 'verdade'",
+   "duração entre 100 e 130 s (o contrato dá 128,2)"
+  ]
+ },
+ "correcao1": {
+  "quando": "18/11 rodada 2",
+  "voz_solta": {
+   "P30": {
+    "pedacos": [
+     [
+      76.66,
+      77.44
+     ],
+     [
+      77.94,
+      79.14
+     ]
+    ],
+    "fala_ini": [
+     76.7,
+     77.98
+    ],
+    "fala_fim": [
+     77.41,
+     79.1
+    ],
+    "t_ini": 88.82,
+    "pausa": 0.15,
+    "nota": "voz solta da imagem (plano geral): palavra Ofertando inteira"
+   }
+  },
+  "voz_in": {
+   "P42": 92.12
+  }
+ }
+}
