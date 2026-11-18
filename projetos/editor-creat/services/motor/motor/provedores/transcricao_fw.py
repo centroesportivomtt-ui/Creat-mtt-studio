@@ -1,6 +1,7 @@
 """Transcrição local com faster-whisper (padrão). SEM VAD: o VAD Silero derrubou 5 de 6 falas gritadas ou
 sobre música no material de 17/11 (pesquisa C). Para conter a alucinação típica do Whisper sem VAD:
-- condition_on_previous_text=False (corta laços de repetição);
+- condition_on_previous_text=False (corta laços de repetição) e só temperatura 0 (o fallback dobrava o tempo em música);
+- sem hotwords por padrão (em tom/música elas viram laço "marcos marcos marcos");
 - os limiares nativos de no_speech/logprob/compressão continuam ligados;
 - a etapa de análise ainda descarta segmentos sobre silêncio (energia) e frases-fantasma conhecidas.
 
@@ -79,6 +80,8 @@ class FasterWhisper:
         self.modelo = cfg.whisper_modelo
         self.threads = max(1, int(cfg.threads))
         self.beam = int(os.environ.get("EDITOR_WHISPER_BEAM", "1") or 1)
+        # só temperatura 0: o fallback (0,2; 0,4...) dobra o tempo em música/tom e só produz lixo filtrado depois
+        self.temperaturas = [float(x) for x in (os.environ.get("EDITOR_WHISPER_TEMPERATURAS", "0") or "0").split(",")]
 
     def _carregar(self):
         chave = (self.modelo, self.threads)
@@ -94,8 +97,10 @@ class FasterWhisper:
         audio = ler_16k(wav)   # PyAV desta máquina é incompatível com o decode_audio do faster-whisper: ffmpeg direto
         segs, info = m.transcribe(
             audio, language=idioma, task="transcribe", beam_size=self.beam, word_timestamps=palavras,
-            vad_filter=False, condition_on_previous_text=False,
-            hotwords=" ".join(dicas) if dicas else None,
+            vad_filter=False, condition_on_previous_text=False, temperature=self.temperaturas,
+            # hotwords/initial_prompt induzem laço de alucinação em música/tom ("marcos marcos marcos", medido em 18/11):
+            # desligados por padrão; nomes próprios são corrigidos na direção (`corrigir`).
+            hotwords=" ".join(dicas) if dicas and os.environ.get("EDITOR_WHISPER_DICAS") == "1" else None,
         )
         out, ultimo = [], 0.0
         dur = float(info.duration or 0) or 1.0

@@ -23,10 +23,10 @@ from motor import config
 from motor.etapas import Contexto, ErroDefinitivo, etapa
 from motor.etapas.ingest import assinatura
 from motor.provedores import provedor
-from motor.provedores.transcricao_fw import eh_fantasma
+from motor.provedores.transcricao_fw import eh_fantasma, normalizar
 
 log = logging.getLogger("motor.analise")
-ALGO = "analise-1"
+ALGO = "analise-2"
 PASSO_ENERGIA = 0.05
 DICAS_CASA = ["creat.MTT", "Creat", "Marcos", "Ruan", "Xande"]
 SILENCIO_DB = -50.0
@@ -94,11 +94,46 @@ def picos(db: np.ndarray, maximo: int = 20) -> list[list[float]]:
     return [[round(i * PASSO_ENERGIA, 2), round(float(db[i]), 1)] for i in sorted(esc)]
 
 
+def _laco(texto: str) -> bool:
+    """Laço de alucinação: um n-grama de 2 a 4 palavras repetido 4+ vezes cobrindo >= 80% do segmento."""
+    pal = normalizar(texto).split()
+    for n in (2, 3, 4):
+        if len(pal) < 4 * n:
+            continue
+        for i in range(0, n):
+            g = pal[i:i + n]
+            rep, j = 0, i
+            while pal[j:j + n] == g:
+                rep, j = rep + 1, j + n
+            if rep >= 4 and rep * n >= 0.8 * len(pal):
+                return True
+    return False
+
+
+def _latino(texto: str) -> bool:
+    letras = [c for c in texto if c.isalpha()]
+    return bool(letras) and sum(1 for c in letras if ord(c) < 0x250) >= 0.8 * len(letras)
+
+
 def filtrar_transcricao(tr: dict, db: np.ndarray | None) -> dict:
-    """Sem VAD, o Whisper às vezes inventa texto em silêncio: descarta fantasmas e segmentos sobre silêncio."""
+    """Sem VAD, o Whisper às vezes inventa texto em silêncio, tom ou música. Descarta: frases-fantasma, texto sem
+    letra latina ('...', cirílico), segmentos de confiança média < 0,35, laços de n-grama, 3+ segmentos curtos
+    idênticos seguidos e segmentos sobre silêncio (energia < -50 dBFS)."""
+    segs = list(tr["segmentos"])
+    norm = [normalizar(s["texto"]) for s in segs]
+    repetidos = set()
+    for i in range(len(segs)):
+        j = i
+        while j + 1 < len(segs) and norm[j + 1] == norm[i] and len(norm[i].split()) <= 3:
+            j += 1
+        if j - i >= 2:
+            repetidos.update(range(i, j + 1))
     bons = []
-    for s in tr["segmentos"]:
-        if eh_fantasma(s["texto"]):
+    for k, s in enumerate(segs):
+        if k in repetidos or eh_fantasma(s["texto"]) or not _latino(s["texto"]) or _laco(s["texto"]):
+            continue
+        probs = [w[3] for w in s.get("palavras", [])]
+        if probs and sum(probs) / len(probs) < 0.35:
             continue
         if db is not None and len(db):
             i0, i1 = int(s["s"] / PASSO_ENERGIA), max(int(s["s"] / PASSO_ENERGIA) + 1, int(s["e"] / PASSO_ENERGIA))
@@ -168,7 +203,7 @@ def analise(ctx: Contexto) -> dict:
     if wav is None:
         tr = {"provedor": "nenhum", "modelo": "-", "idioma": "pt", "vad": False, "segmentos": []}
     else:
-        sig_tr = assinatura("tr-1", ing["assinatura"], tr_prov.nome, tr_modelo, ",".join(dicas))
+        sig_tr = assinatura("tr-3", ing["assinatura"], tr_prov.nome, tr_modelo, ",".join(dicas))
         ck = f"{base}/transcricao.json"
         tr = None
         if arm.existe(ck):
