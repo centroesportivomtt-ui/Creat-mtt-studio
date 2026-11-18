@@ -154,8 +154,9 @@ def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: i
            "modelos": modelos or []}
     # níveis de compressão, aplicados em ordem até caber (§4.2); cada nível inclui os anteriores
     txt, nivel = "", 0
+    protegidas = falas_protegidas(clipes)
     for nivel in range(len(NIVEIS)):
-        txt = _texto(cat, nivel, palavras_pedido)
+        txt = _texto(cat, nivel, palavras_pedido, protegidas)
         if estimar_tokens(txt) <= limite:
             break
     cat["orcamento"]["cortes"] = [NIVEIS[n]["corte"] for n in range(1, nivel + 1)]
@@ -164,7 +165,7 @@ def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: i
     if trunca:                         # marca no JSON o que foi truncado no texto
         for c in cat["clipes"]:
             for f in c["falas"]:
-                if not _inteira(f, palavras_pedido) and len(f["texto"].split()) > trunca:
+                if not _inteira(f, palavras_pedido, protegidas) and len(f["texto"].split()) > trunca:
                     f["truncado"] = True
     return cat, txt
 
@@ -191,11 +192,28 @@ def _camera(a, vis) -> str:
     return "tremido" if (t.get("media_px") or 0) > 4 else "estável"
 
 
-def _inteira(f, palavras_pedido) -> bool:
-    return f["falante"] in EQUIPE or bool(palavras_pedido & set(tokens(f["texto"])))
+def _inteira(f, palavras_pedido, protegidas=frozenset()) -> bool:
+    return f["falante"] in EQUIPE or f["id"] in protegidas or bool(palavras_pedido & set(tokens(f["texto"])))
 
 
-def _texto(cat: dict, nivel: int, palavras_pedido: set[str]) -> str:
+def falas_protegidas(clipes: list[dict]) -> frozenset:
+    """Material sem falante rotulado (a frente A ainda não identifica Marcos/Ruan/Xande): toda fala que coincide com um
+    momento 'fala' nota >= 4 ("fala com rosto em quadro") fica INTEIRA no catálogo. Sem isso, a fala base do Reel
+    (regra do dono: construir sobre a fala dele) seria truncada a 4 palavras nos níveis de compressão.
+    Com falante rotulado em qualquer fala do projeto, vale a regra normal (equipe inteira)."""
+    if any(f.get("falante") for c in clipes for f in c["falas"]):
+        return frozenset()
+    ids = set()
+    for c in clipes:
+        fortes = [m for m in c["momentos"] if m["tipo"].startswith("fala")
+                  and (m["nota"] >= 4 or m.get("desc", "").startswith("fala com rosto"))]
+        for f in c["falas"]:
+            if any(m["t0"] < f["t1"] and m["t1"] > f["t0"] for m in fortes):
+                ids.add(f["id"])
+    return frozenset(ids)
+
+
+def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozenset()) -> str:
     cl = cat["clipes"]
     total = sum(c["dur"] for c in cl)
     tipos = sorted({m["tipo"] for c in cl for m in c["momentos"]})
@@ -232,7 +250,7 @@ def _texto(cat: dict, nivel: int, palavras_pedido: set[str]) -> str:
             tipos_f = sorted({m["tipo"] for m in fracos})
             linhas.append(f" M{c['id'][1:]}.* {'/'.join(tipos_f)} n<=2 ×{len(fracos)} ({' '.join(m['id'].split('.')[1] for m in fracos)})")
         for f in c["falas"]:
-            inteira = _inteira(f, palavras_pedido)
+            inteira = _inteira(f, palavras_pedido, protegidas)
             if not P["curtas"] and not inteira and len(f["texto"].split()) < 3:
                 continue
             texto = f["texto"] if (not trunca or inteira) else _corta(f["texto"], trunca)[0]

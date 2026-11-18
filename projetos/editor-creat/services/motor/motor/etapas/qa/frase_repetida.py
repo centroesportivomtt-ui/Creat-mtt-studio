@@ -37,8 +37,9 @@ def checar(c):
             fontes.append((nome, c.stems[nome], True, 2))
     for nome, arq, normal, lim in fontes:
         tr = c.transcrever(nome if nome == "mix" else f"stem_{nome}", arq, normalizar_nivel=normal)
-        if tr is None:
-            continue
+        falta = c.nao_verificado(tr, nome if nome == "mix" else f"stem {nome}")
+        if falta:
+            return falta
         toks = [w[2] for w in c.palavras(tr)]
         ouvidos[nome] = len(toks)
         for ng, k in _ngramas(toks, n).items():
@@ -47,8 +48,6 @@ def checar(c):
                 achados.append({"onde": nome, "frase": " ".join(ng), "vezes": k, "no_roteiro": esperado.get(ng, 0) if nome == "mix" else 0})
                 if nome != "mix":
                     evid.append(f"stems/{nome}.flac")
-    if not ouvidos:
-        return {"ok": True, "bloqueia": False, "detalhe": "transcritor indisponível: NÃO VERIFICADO (ouvir antes de entregar)"}
     achados.sort(key=lambda a: -a["vezes"])
     if achados:
         a = achados[0]

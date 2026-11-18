@@ -96,6 +96,10 @@ def test_fechar_envio_e_sse(cli, arm):
 
 def test_servir_com_range(cli, arm):
     arm.gravar_bytes("saidas/p1/v1/final.mp4", bytes(range(256)) * 4)
+    from motor import banco, config
+    con = banco.conectar(config.carregar().banco)
+    con.execute("INSERT INTO versoes (id, projeto, estado, criado) VALUES ('v1','p1','entregue',?)", (banco.agora_iso(),))
+    con.close()
     r = cli.get("/v1/arquivos/saidas/p1/v1/final.mp4")
     assert r.status_code == 200 and len(r.content) == 1024 and r.headers["accept-ranges"] == "bytes"
     r = cli.get("/v1/arquivos/saidas/p1/v1/final.mp4", headers={"Range": "bytes=10-19"})

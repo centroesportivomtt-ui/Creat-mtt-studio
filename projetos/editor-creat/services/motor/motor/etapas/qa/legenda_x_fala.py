@@ -17,8 +17,10 @@ def checar(c):
     if soltas:
         det.append(f"{len(soltas)} palavra(s) de legenda fora de qualquer fala: {[w[2] for w in soltas][:6]}")
     tr = c.transcrever("mix", c.mix if c.mix is not None else c.final)
-    if tr is None:
-        det.append("transcritor indisponível: conferido só pela estrutura")
+    falta = c.nao_verificado(tr, "mix")
+    if falta:
+        det.append(falta["detalhe"])
+        return {"ok": False, "bloqueia": True, "valor": val, "detalhe": "; ".join(det)}
     else:
         ouvidas = c.palavras(tr)
         alvo = [(w[0], normalizar(w[2])) for w in leg if len(normalizar(w[2])) >= 3]

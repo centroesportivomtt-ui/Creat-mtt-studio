@@ -19,12 +19,19 @@ def _dados(con, projeto: str) -> dict:
     return json.loads(r["dados"]) if r else {}
 
 
+ETAPAS_DE_ARQUIVO = ("ingest", "analise")
+ESTADOS_FINAIS = ("entregue", "erro", "reprovado_qa")
+
+
 def pronto_para_dirigir(con, projeto: str) -> bool:
+    """Envio fechado + pedido + todo arquivo lido. Arquivo que falhou de vez (vídeo corrompido) fica de fora com aviso,
+    em vez de travar o projeto para sempre; precisa sobrar pelo menos um arquivo lido."""
     d = _dados(con, projeto)
     if not d.get("envio_fechado") or not d.get("pedido"):
         return False
-    pendentes = con.execute("SELECT COUNT(*) n FROM arquivos WHERE projeto=? AND estado!='analisado'", (projeto,)).fetchone()["n"]
-    return pendentes == 0
+    r = con.execute("""SELECT SUM(estado='analisado') lidos, SUM(estado NOT IN ('analisado','falhou')) pendentes
+                       FROM arquivos WHERE projeto=?""", (projeto,)).fetchone()
+    return (r["pendentes"] or 0) == 0 and (r["lidos"] or 0) > 0
 
 
 def tentar_dirigir(con, projeto: str) -> bool:
@@ -69,3 +76,57 @@ def depois(con, job: dict, saida: dict | None) -> None:
     elif etapa == "entrega":
         banco.mudar_estado(con, projeto, "entregue", "Vídeo pronto.")
         banco.emitir(con, projeto, "entregue", etapa="entrega", alvo=alvo, dados=saida)
+
+
+def falha_definitiva(con, job: dict, mensagem: str) -> None:
+    """Job que não vai mais ser tentado. Arquivo: fica de fora (com aviso) e o projeto segue com o resto.
+    Qualquer outra etapa: o projeto vai para 'erro' com a mensagem (o relógio do site para e o dono vê o motivo)."""
+    etapa, projeto, alvo = job["etapa"], job["projeto"], job.get("alvo")
+    msg = (mensagem or "").strip().splitlines()[-1][:300] if mensagem else "falhou"
+    if etapa in ETAPAS_DE_ARQUIVO and alvo not in (None, "-"):
+        con.execute("UPDATE arquivos SET estado='falhou' WHERE projeto=? AND id=?", (projeto, alvo))
+        nome = con.execute("SELECT nome FROM arquivos WHERE projeto=? AND id=?", (projeto, alvo)).fetchone()
+        banco.emitir(con, projeto, "aviso", etapa=etapa, alvo=alvo,
+                     mensagem=f"O arquivo {nome['nome'] if nome else alvo} não pôde ser lido e ficou de fora: {msg}")
+        r = con.execute("SELECT SUM(estado='analisado') lidos, SUM(estado NOT IN ('analisado','falhou')) pendentes "
+                        "FROM arquivos WHERE projeto=?", (projeto,)).fetchone()
+        if (r["pendentes"] or 0) == 0 and not (r["lidos"] or 0) and _dados(con, projeto).get("envio_fechado"):
+            banco.mudar_estado(con, projeto, "erro", "Nenhum arquivo do envio pôde ser lido. Mande o material de novo.")
+        else:
+            tentar_dirigir(con, projeto)
+        return
+    if etapa in ("montagem", "qa", "entrega") and alvo not in (None, "-"):
+        con.execute("UPDATE versoes SET estado='erro' WHERE projeto=? AND id=? AND estado!='entregue'", (projeto, alvo))
+    banco.mudar_estado(con, projeto, "erro", f"A etapa {etapa} falhou de vez: {msg}")
+
+
+def reconciliar(con) -> int:
+    """Roda no start do worker. Se a máquina caiu entre 'concluir' e 'depois' (antes da transação única), um projeto
+    pode ter ficado parado com o último job 'feito' e nada na fila. Para cada projeto aberto e parado, reaplica o
+    'depois' do job feito mais recente (idempotente: enfileirar não duplica; etapas pulam o que já têm)."""
+    n = 0
+    abertos = con.execute(f"SELECT id FROM projetos WHERE estado NOT IN ({','.join('?' * len(ESTADOS_FINAIS))})", ESTADOS_FINAIS).fetchall()
+    for p in abertos:
+        pid = p["id"]
+        ativo = con.execute("SELECT 1 FROM jobs WHERE projeto=? AND estado IN ('pendente','rodando') LIMIT 1", (pid,)).fetchone()
+        if ativo:
+            continue
+        j = con.execute("SELECT * FROM jobs WHERE projeto=? AND estado='feito' ORDER BY atualizado DESC LIMIT 1", (pid,)).fetchone()
+        if j is None:
+            continue
+        job = dict(j)
+        job["entrada"] = json.loads(job["entrada"] or "{}")
+        saida = json.loads(job["saida"]) if job.get("saida") else {}
+        if job["etapa"] == "entrega":
+            est = con.execute("SELECT estado FROM projetos WHERE id=?", (pid,)).fetchone()["estado"]
+            if est == "dirigindo":       # o dono reprovou depois da entrega: a nova direção já foi pedida pela rota
+                continue
+        con.execute("BEGIN IMMEDIATE")
+        try:
+            depois(con, job, saida)
+            con.execute("COMMIT")
+        except Exception:
+            con.execute("ROLLBACK")
+            raise
+        n += 1
+    return n

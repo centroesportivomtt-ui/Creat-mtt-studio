@@ -9,6 +9,7 @@ import asyncio
 import json
 import mimetypes
 import os
+import pathlib
 import re
 import time
 import uuid
@@ -127,9 +128,26 @@ def ver_projeto(pid: str):
 
 
 # ---------------- arquivos ----------------
+def _local_do_envio(cfg, chave: str):
+    """Onde o servidor tus do site deixa o arquivo terminado: $EDITOR_DADOS/armazenamento/<chave> (mesmo disco)."""
+    raiz = (pathlib.Path(cfg.dados) / "armazenamento").resolve()
+    p = (raiz / validar_chave(chave)).resolve()
+    return p if raiz in p.parents and p.is_file() else None
+
+
+def _promover_para_r2(cfg, arm, chave: str) -> None:
+    """Produção com EDITOR_ARMAZENAMENTO=r2 enquanto o site ainda grava o tus em disco: o motor sobe o arquivo
+    terminado para o R2 (fica uma cópia no cache local, que o ingest lê). Passo de transição até o @tus/s3-store."""
+    if getattr(arm, "nome", "") != "r2" or arm.existe(chave):
+        return
+    local = _local_do_envio(cfg, chave)
+    if local is not None:
+        arm.gravar(chave, local, mover=True)
+
+
 @rotas.post("/projetos/{pid}/arquivos", status_code=201)
 def registrar_arquivo(pid: str, corpo: NovoArquivo):
-    _, arm = _config()
+    cfg, arm = _config()
     if arm is None:
         raise HTTPException(503, "armazenamento indisponível")
     try:
@@ -143,6 +161,7 @@ def registrar_arquivo(pid: str, corpo: NovoArquivo):
         p = _projeto(con, pid)
         if p["estado"] not in ESTADOS_ABERTOS:
             raise HTTPException(409, "o projeto já está em direção/montagem; crie uma nova versão para mandar material novo")
+        _promover_para_r2(cfg, arm, corpo.chave)
         if not arm.existe(corpo.chave):
             raise HTTPException(409, "o arquivo ainda não chegou ao armazenamento (termine o envio antes)")
         real = arm.tamanho(corpo.chave)
@@ -166,10 +185,49 @@ def importar_link(pid: str, corpo: Importacao):
         return {"id": aid, "mensagem": "Importação na fila: o motor baixa e já começa a ler."}
 
 
+def _recolher_orfaos(con, cfg, arm, pid: str) -> int:
+    """Arquivo que terminou de subir mas não foi registrado (motor fora do ar + aba fechada antes do novo registro)
+    ficaria de fora do vídeo em silêncio. Antes de fechar o envio, tudo em entrada/<pid>/ que não tem linha no banco é
+    registrado (registrar_arquivo é idempotente pela chave)."""
+    conhecidas = {r["chave"] for r in con.execute("SELECT chave FROM arquivos WHERE projeto=? AND chave IS NOT NULL", (pid,))}
+    prefixo = f"entrada/{pid}/"
+    achadas: set[str] = set()
+    if arm is not None:
+        try:
+            achadas.update(k for k in arm.listar(prefixo) if not k.rsplit("/", 1)[-1].startswith("."))
+        except Exception:  # noqa: BLE001 - listar falhou: segue com o que der para ver no disco
+            pass
+    pasta = pathlib.Path(cfg.dados) / "armazenamento" / "entrada" / pid
+    if pasta.is_dir():
+        achadas.update(f"{prefixo}{q.name}" for q in pasta.iterdir() if q.is_file() and not q.name.startswith("."))
+    ids = {r["id"] for r in con.execute("SELECT id FROM arquivos WHERE projeto=?", (pid,))}
+    n = 0
+    for chave in sorted(achadas - conhecidas):
+        m = re.match(r"^(a\d{3,})(_z\d{3})?\.", chave.rsplit("/", 1)[-1])
+        if m and m.group(1) in ids:
+            continue              # nome do motor (importação por link em andamento): o ingest registra
+        try:
+            validar_chave(chave)
+            _promover_para_r2(cfg, arm, chave)
+            if arm is None or not arm.existe(chave):
+                continue
+            nome = chave.rsplit("/", 1)[-1]
+            _, novo = importar.registrar_arquivo(con, pid, nome, chave, arm.tamanho(chave))
+            n += int(bool(novo))
+        except (ChaveInvalida, OSError):
+            continue
+    if n:
+        banco.emitir(con, pid, "aviso", mensagem=f"{n} arquivo(s) que tinham subido sem registro entraram no projeto.")
+    return n
+
+
 @rotas.post("/projetos/{pid}/fechar-envio")
 def fechar_envio(pid: str):
+    cfg, arm = _config()
     with _con() as con:
         p = _projeto(con, pid)
+        if p["estado"] in ESTADOS_ABERTOS:
+            _recolher_orfaos(con, cfg, arm, pid)
         n = con.execute("SELECT COUNT(*) n FROM arquivos WHERE projeto=?", (pid,)).fetchone()["n"]
         if n == 0:
             raise HTTPException(409, "nenhum arquivo enviado ainda")
@@ -226,6 +284,31 @@ async def eventos(pid: str, request: Request, depois: int = 0, seguir: bool = Tr
 _RE_RANGE = re.compile(r"^bytes=(\d*)-(\d*)$")
 
 
+_RE_SAIDA = re.compile(r"^saidas/([^/]+)/([^/]+)/(.+)$")
+_SO_ENTREGUE = re.compile(r"^(final\.mp4|mix\.wav|stems/.*|capa\.jpg|entrega\.json)$")
+
+
+def _liberado(chave: str) -> None:
+    """Regra do dono: nunca mostrar/baixar versão com erro conhecido. O vídeo (e o áudio) de uma versão só saem
+    depois que a versão está 'entregue' (QA aprovado e mesmo sha256). Evidências do QA continuam visíveis."""
+    m = _RE_SAIDA.match(chave)
+    if not m or not _SO_ENTREGUE.match(m.group(3)):
+        return
+    with _con() as con:
+        r = con.execute("SELECT estado FROM versoes WHERE projeto=? AND id=?", (m.group(1), m.group(2))).fetchone()
+    if r is None or r["estado"] != "entregue":
+        raise HTTPException(403, "esta versão ainda não passou na conferência automática (QA); o vídeo sai só depois de aprovado")
+
+
+def _cabecalhos_tipo(nome: str) -> tuple[str, dict]:
+    tipo = mimetypes.guess_type(nome)[0] or "application/octet-stream"
+    extra = {"X-Content-Type-Options": "nosniff"}
+    if tipo in ("image/svg+xml", "text/html", "application/xhtml+xml", "text/xml", "application/xml"):
+        extra["Content-Disposition"] = "attachment"     # SVG/HTML enviado não roda na origem do site (XSS armazenado)
+        extra["Content-Security-Policy"] = "default-src 'none'; sandbox"
+    return tipo, extra
+
+
 @rotas.get("/arquivos/{chave:path}")
 def servir_arquivo(chave: str, range: Optional[str] = Header(default=None)):
     _, arm = _config()
@@ -235,13 +318,14 @@ def servir_arquivo(chave: str, range: Optional[str] = Header(default=None)):
         raise HTTPException(400, str(e)) from e
     if not chave.startswith(PREFIXOS_SERVIDOS):
         raise HTTPException(403, "caminho não servido")
+    _liberado(chave)
     if arm is None or not arm.existe(chave):
         raise HTTPException(404, "arquivo não encontrado")
     if getattr(arm, "nome", "") != "local":
         return RedirectResponse(arm.url(chave), status_code=307)
     caminho = arm.caminho_local(chave)
     total = caminho.stat().st_size
-    tipo = mimetypes.guess_type(caminho.name)[0] or "application/octet-stream"
+    tipo, extra = _cabecalhos_tipo(caminho.name)
     ini, fim, status = 0, total - 1, 200
     if range:
         m = _RE_RANGE.match(range.strip())
@@ -268,7 +352,7 @@ def servir_arquivo(chave: str, range: Optional[str] = Header(default=None)):
                 falta -= len(bloco)
                 yield bloco
 
-    cab = {"Accept-Ranges": "bytes", "Content-Length": str(tamanho), "Cache-Control": "private, max-age=3600"}
+    cab = {"Accept-Ranges": "bytes", "Content-Length": str(tamanho), "Cache-Control": "private, max-age=3600", **extra}
     if status == 206:
         cab["Content-Range"] = f"bytes {ini}-{fim}/{total}"
     return StreamingResponse(ler(), status_code=status, media_type=tipo, headers=cab)
@@ -283,5 +367,6 @@ def cabecalho_arquivo(chave: str):
         raise HTTPException(400, str(e)) from e
     if not chave.startswith(PREFIXOS_SERVIDOS) or arm is None or not arm.existe(chave):
         raise HTTPException(404, "arquivo não encontrado")
-    tipo = mimetypes.guess_type(chave)[0] or "application/octet-stream"
-    return Response(headers={"Accept-Ranges": "bytes", "Content-Length": str(arm.tamanho(chave)), "Content-Type": tipo})
+    _liberado(chave)
+    tipo, extra = _cabecalhos_tipo(chave)
+    return Response(headers={"Accept-Ranges": "bytes", "Content-Length": str(arm.tamanho(chave)), "Content-Type": tipo, **extra})

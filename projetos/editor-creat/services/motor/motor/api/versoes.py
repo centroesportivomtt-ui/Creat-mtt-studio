@@ -62,7 +62,10 @@ def listar(pid: str):
                 "aprovado": qa["aprovado"], "tempo_s": qa.get("tempo_s"),
                 "falhas": [{"id": c["id"], "detalhe": c.get("detalhe", "")} for c in qa["checagens"] if not c["ok"] and c["bloqueia"]],
                 "avisos": [{"id": c["id"], "detalhe": c.get("detalhe", "")} for c in qa["checagens"] if not c["ok"] and not c["bloqueia"]]}
-            d["link"] = d.get("link") or (arm.url(f"{base}/final.mp4") if arm is not None and arm.existe(f"{base}/final.mp4") else None)
+            entregue = d["estado"] == "entregue"
+            if not entregue:         # versão não entregue não tem link nem vídeo para o site (regra: nunca a versão com erro)
+                d["video"] = None
+            d["link"] = (d.get("link") or (arm.url(f"{base}/final.mp4") if arm is not None and arm.existe(f"{base}/final.mp4") else None)) if entregue else None
             d["capa"] = arm.url(f"{base}/capa.jpg") if arm is not None and arm.existe(f"{base}/capa.jpg") else None
             d["legenda_post"] = ent.get("legenda_post") if ent else None
             d["tempos_montagem"] = mont.get("tempos") if mont else None

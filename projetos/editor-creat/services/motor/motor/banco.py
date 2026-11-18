@@ -98,7 +98,28 @@ def enfileirar(con, etapa: str, projeto: str, alvo: str | None = None, entrada: 
     return con.execute("SELECT id FROM jobs WHERE etapa=? AND projeto=? AND alvo=?", (etapa, projeto, alvo)).fetchone()["id"]
 
 
-def pegar(con, dono: str, etapas: Iterable[str] | None = None, aluguel_s: float = 600) -> dict | None:
+ALUGUEL_S = 120.0   # curto: o worker renova numa thread enquanto a etapa roda; depois de kill -9 o job volta em ~2 min
+
+
+def recolher_mortos(con) -> list[dict]:
+    """Jobs 'rodando' com aluguel vencido e sem tentativa sobrando (o worker morreu de novo e de novo: OOM, reinício).
+
+    Antes ficavam 'rodando' para sempre e o projeto travava calado. Agora viram 'falhou' com erro claro; quem chama
+    (worker.rodar_um, numa transação só com pipeline.falha_definitiva) leva o projeto ao estado certo e emite o evento.
+    Não abre transação: roda dentro da de quem chama.
+    """
+    t = time.time()
+    linhas = [dict(r) for r in con.execute(
+        "SELECT * FROM jobs WHERE estado='rodando' AND aluguel_ate < ? AND tentativas >= max_tentativas", (t,))]
+    for r in linhas:
+        erro = f"o worker morreu {r['tentativas']} vez(es) rodando esta etapa (falta de memória ou reinício da máquina)"
+        con.execute("UPDATE jobs SET estado='falhou', erro=?, aluguel_ate=NULL, atualizado=? WHERE id=?", (erro, t, r["id"]))
+        r["estado"], r["erro"] = "falhou", erro
+        r["entrada"] = json.loads(r["entrada"] or "{}")
+    return linhas
+
+
+def pegar(con, dono: str, etapas: Iterable[str] | None = None, aluguel_s: float = ALUGUEL_S) -> dict | None:
     """Pega o próximo job disponível (pendente, ou rodando com aluguel vencido) de forma atômica."""
     t = time.time()
     filtro, args = "", []
@@ -130,8 +151,9 @@ def pegar(con, dono: str, etapas: Iterable[str] | None = None, aluguel_s: float 
     return d
 
 
-def renovar(con, job_id: str, aluguel_s: float = 600) -> None:
-    con.execute("UPDATE jobs SET aluguel_ate=?, atualizado=? WHERE id=?", (time.time() + aluguel_s, time.time(), job_id))
+def renovar(con, job_id: str, aluguel_s: float = ALUGUEL_S) -> None:
+    """Renova só o aluguel de quem ainda está rodando (não ressuscita job já concluído/falho)."""
+    con.execute("UPDATE jobs SET aluguel_ate=? WHERE id=? AND estado='rodando'", (time.time() + aluguel_s, job_id))
 
 
 def concluir(con, job_id: str, saida: Any = None) -> None:

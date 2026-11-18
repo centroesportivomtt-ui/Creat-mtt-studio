@@ -93,14 +93,18 @@ def _transcrever_pedido(cfg, arm, chave: str) -> str:
 def gravar_pedido(pid: str, corpo: PedidoEntrada):
     import validar
     with _con() as (cfg, con):
-        _projeto(con, pid)
+        proj = _projeto(con, pid)
+        # o tipo escolhido em "Novo projeto" vale quando o pedido não diz outro (o formulário do pedido não manda tipo)
+        tipo = corpo.tipo_video
+        if tipo == "auto" and (proj.get("tipo_video") or "auto") != "auto":
+            tipo = proj["tipo_video"]
         arm = _armazem(cfg)
         texto = (corpo.texto or "").strip()
         if corpo.audio_chave and not texto:
             texto = _transcrever_pedido(cfg, arm, corpo.audio_chave)
             if not texto:
                 raise HTTPException(422, "não deu para entender o áudio do pedido; grave de novo ou mande em texto")
-        pedido = {"versao": "1", "projeto": pid, "texto": texto, "audio": corpo.audio_chave, "tipo_video": corpo.tipo_video, "cliente": corpo.cliente,
+        pedido = {"versao": "1", "projeto": pid, "texto": texto, "audio": corpo.audio_chave, "tipo_video": tipo, "cliente": corpo.cliente,
                   "destino": corpo.destino, "formato": corpo.formato, "duracao_alvo": corpo.duracao_alvo, "obrigatorio": corpo.obrigatorio,
                   "proibido": corpo.proibido, "referencias": [], "ajustes_de": corpo.ajustes_de, "criado_em": banco.agora_iso()}
         erros = validar.erros("pedido", pedido)
@@ -109,7 +113,7 @@ def gravar_pedido(pid: str, corpo: PedidoEntrada):
         arm.gravar_json(f"projetos/{pid}/pedido.json", pedido)
         r = con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()
         dados = json.loads(r["dados"] or "{}")
-        dados["pedido"] = {"texto": texto[:200], "tipo_video": corpo.tipo_video}
+        dados["pedido"] = {"texto": texto[:200], "tipo_video": tipo}
         con.execute("UPDATE projetos SET dados=?, atualizado=? WHERE id=?", (json.dumps(dados), banco.agora_iso(), pid))
         banco.emitir(con, pid, "estado", mensagem="Pedido recebido.", dados={"pedido": texto[:200]})
         dirigindo = pipeline.tentar_dirigir(con, pid)
@@ -120,8 +124,13 @@ def gravar_pedido(pid: str, corpo: PedidoEntrada):
 def reprovar(pid: str, versao: str, corpo: Reprovacao):
     with _con() as (cfg, con):
         _projeto(con, pid)
-        if con.execute("SELECT 1 FROM versoes WHERE projeto=? AND id=?", (pid, versao)).fetchone() is None:
+        v = con.execute("SELECT estado FROM versoes WHERE projeto=? AND id=?", (pid, versao)).fetchone()
+        if v is None:
             raise HTTPException(404, "versão não encontrada")
+        if v["estado"] not in ("entregue", "reprovada_qa", "aprovada_qa", "erro"):
+            raise HTTPException(409, f"a versão {versao} ainda está em produção ({v['estado']}); espere ela ficar pronta para reprovar")
+        if con.execute("SELECT 1 FROM jobs WHERE projeto=? AND etapa='direcao' AND estado='rodando'", (pid,)).fetchone():
+            raise HTTPException(409, "a direção já está refazendo este projeto; espere a nova versão")
         cerebro = None
         try:
             from motor.provedores import provedor
@@ -130,6 +139,9 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
             cerebro = None
         r = Loja().registrar_reprovacao(pid, versao, corpo.motivo, cerebro=cerebro)
         con.execute("UPDATE versoes SET estado='reprovada', reprovacao=? WHERE projeto=? AND id=?", (corpo.motivo, pid, versao))
+        d = _projeto(con, pid)["dados"]
+        d["correcoes_auto"] = 0            # nova rodada pedida pelo dono: o auto-ajuste do QA volta a ter as 2 tentativas
+        con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), pid))
         banco.enfileirar(con, "direcao", pid, entrada={"reprovacao": corpo.motivo, "versao_anterior": versao}, prioridade=1)
         banco.mudar_estado(con, pid, "dirigindo", f"Versão {versao} reprovada: virou regra da casa. Refazendo a direção.")
         return {"regra": r["regra"], "checagem": r["checagem"], "vocabulario": r["vocabulario"], "nova_direcao": True}

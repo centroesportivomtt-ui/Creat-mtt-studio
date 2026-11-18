@@ -130,12 +130,26 @@ class Conferencia:
             sf.write(str(alvo), x, sr, subtype="PCM_16")
         try:
             r = tr.transcrever(alvo, idioma="pt", palavras=True)
-        except Exception as e:  # noqa: BLE001
-            r = {"segmentos": [], "erro": str(e)}
+        except BaseException as e:  # noqa: BLE001 - MemoryError incluso; KeyboardInterrupt/SystemExit sobem
+            if isinstance(e, (KeyboardInterrupt, SystemExit)):
+                raise
+            r = {"segmentos": [], "erro": f"{type(e).__name__}: {e}"}
         if normalizar_nivel:
             alvo.unlink(missing_ok=True)
         self._tr[nome] = r
         return r
+
+    @staticmethod
+    def nao_verificado(tr: dict | None, onde: str = "mix") -> dict | None:
+        """Transcrição ausente (sem transcritor) ou que quebrou (MemoryError, modelo faltando) NÃO é "sem problema":
+        a checagem reprova e bloqueia, com o motivo. Lição de 17/11: o laço de voz não pode passar calado."""
+        if tr is None:
+            return {"ok": False, "bloqueia": True,
+                    "detalhe": f"NÃO VERIFICADO: transcritor indisponível para o {onde}; a versão não é entregue sem ouvir"}
+        if tr.get("erro"):
+            return {"ok": False, "bloqueia": True,
+                    "detalhe": f"NÃO VERIFICADO: a transcrição do {onde} quebrou ({str(tr['erro'])[:160]}); a versão não é entregue sem ouvir"}
+        return None
 
     @staticmethod
     def palavras(tr: dict | None, conf_min: float = 0.0) -> list[list]:
@@ -208,6 +222,13 @@ def resumo(rel: dict) -> str:
     return "aprovado" if rel["aprovado"] else "reprovado — " + " | ".join(falhas)
 
 
+def resumo_coluna(rel: dict, chave: str) -> dict:
+    """O que vai na coluna versoes.qa: JSON curto que o site lê direto (aprovado + cada checagem), e a chave do relatório."""
+    return {"aprovado": rel["aprovado"], "chave": chave, "tempo_s": rel.get("tempo_s"),
+            "checagens": [{"id": x["id"], "ok": x["ok"], "bloqueia": x["bloqueia"], "detalhe": (x.get("detalhe") or "")[:200]}
+                          for x in rel["checagens"]]}
+
+
 @etapa("qa")
 def etapa_qa(ctx) -> dict:
     from motor.etapas.montagem.comum import Fontes
@@ -224,6 +245,8 @@ def etapa_qa(ctx) -> dict:
     if arm.existe(f"{base}/qa.json") and arm.existe(f"{base}/qa.sha256"):
         if pathlib.Path(arm.caminho_local(f"{base}/qa.sha256")).read_text().strip() == sha:
             ant = json.loads(pathlib.Path(arm.caminho_local(f"{base}/qa.json")).read_text(encoding="utf-8"))
+            ctx.con.execute("UPDATE versoes SET estado=?, qa=? WHERE projeto=? AND id=? AND estado!='entregue'",
+                            ("aprovada_qa" if ant["aprovado"] else "reprovada_qa", json.dumps(resumo_coluna(ant, f"{base}/qa.json"), ensure_ascii=False), p, v))
             return {"aprovado": ant["aprovado"], "reaproveitado": True, "resumo": resumo(ant), "sha256": sha,
                     "checagens": [x for x in ant["checagens"] if not x["ok"] and x["bloqueia"]]}
     stems = {n: str(arm.caminho_local(k)) for n, k in (mont.get("chaves", {}).get("stems") or {}).items()}
@@ -238,7 +261,7 @@ def etapa_qa(ctx) -> dict:
     arm.gravar(f"{base}/qa.json", io.BytesIO(json.dumps(rel, ensure_ascii=False, indent=1).encode()))
     arm.gravar(f"{base}/qa.sha256", io.BytesIO(sha.encode()))
     ctx.con.execute("UPDATE versoes SET estado=?, qa=? WHERE projeto=? AND id=?",
-                    ("aprovada_qa" if rel["aprovado"] else "reprovada_qa", f"{base}/qa.json", p, v))
+                    ("aprovada_qa" if rel["aprovado"] else "reprovada_qa", json.dumps(resumo_coluna(rel, f"{base}/qa.json"), ensure_ascii=False), p, v))
     # saída curta (vai para o job e, se reprovar, para a próxima direção corrigir)
     return {"aprovado": rel["aprovado"], "resumo": resumo(rel), "sha256": sha,
             "checagens": [{"id": x["id"], "ok": False, "detalhe": x.get("detalhe", ""), "valor": x.get("valor")}
