@@ -90,10 +90,18 @@ def converter(origem: pathlib.Path, dados: pathlib.Path, projeto: str = "p_drako
             conf = round(float(np.mean([p[3] for p in pal])), 3) if pal else None
             segs.append({"s": float(s["s"]), "e": float(s["e"]), "texto": s["t"].strip(), "falante": falante(s["s"], s["e"]), "conf": conf, "palavras": pal})
 
-        for i in range(1, len(segs) - 1):                 # trecho sem rótulo entre duas falas da mesma pessoa = mesma pessoa
-            if segs[i]["falante"] is None and segs[i - 1]["falante"] and segs[i - 1]["falante"] == segs[i + 1]["falante"] \
-                    and segs[i]["s"] - segs[i - 1]["e"] < 1.5 and segs[i + 1]["s"] - segs[i]["e"] < 1.5:
-                segs[i]["falante"] = segs[i - 1]["falante"]
+        i = 0                                            # trecho sem rótulo (até 15 s) entre falas da mesma pessoa = mesma pessoa
+        while i < len(segs):
+            if segs[i]["falante"] is None:
+                j = i
+                while j < len(segs) and segs[j]["falante"] is None:
+                    j += 1
+                if 0 < i and j < len(segs) and segs[i - 1]["falante"] == segs[j]["falante"] and segs[j]["s"] - segs[i - 1]["e"] < 15:
+                    for k in range(i, j):
+                        segs[k]["falante"] = segs[i - 1]["falante"]
+                i = j
+            else:
+                i += 1
         trechos = [{"chave": t["arq"], "ini": float(t["ini"]), "fim": t["fim"]} for t in indice.get(clip, [])]
         chave_e = f"derivados/{projeto}/{aid}/energia.npy"
         arq_e = dados / "armazenamento" / chave_e
@@ -121,7 +129,7 @@ def converter(origem: pathlib.Path, dados: pathlib.Path, projeto: str = "p_drako
         a = {
             "versao": "1",
             "arquivo": {"id": aid, "projeto": projeto, "nome": f"{clip}.mov", "chave": trechos[0]["chave"] if trechos else f"legado/{clip}.mov",
-                        "bytes": int(tamanho), "sha256": None, "gravado_em": f"2026-11-15T{clip[:2]}:{clip[3:5]}:00-03:00" if clip[:2].isdigit() else None},
+                        "bytes": int(tamanho), "sha256": None, "gravado_em": f"2026-11-15T{clip[:2]}:{clip[2:4]}:{clip[5:7]}-03:00" if clip[:2].isdigit() else None},
             "midia": {"duracao": round(dur, 3), "tem_video": True, "tem_audio": True, "w": 2160, "h": 3840, "rotacao": -90 if clip != "sala" else 0,
                       "fps": 30.0, "codec_video": "hevc" if clip != "sala" else "h264", "codec_audio": "aac", "hdr": False, "gop": 1.0},
             "derivados": {"audio_wav": None, "proxy_480": None, "folha": str(origem / "folhas" / f"{clip}.jpg") if (origem / "folhas" / f"{clip}.jpg").exists() else None,

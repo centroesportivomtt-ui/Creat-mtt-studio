@@ -1,0 +1,11 @@
+{
+ "id": "bastidor-creat-2026-11-17",
+ "tipo_video": "bastidor",
+ "modelo": "evento-reel",
+ "projeto_fixture": "p_drako17",
+ "pedido": "Reel de bastidor da creat.MTT na cobertura do evento: a fala do Marcos é a base, Ruan e Xande aparecem, termina chamando para seguir @creat.mtt",
+ "estrutura": "gancho com a frase mais forte do Marcos -> mesa (contexto) -> sistema (prova) -> automação (virada) -> equipe no evento com chips (bastidor) -> fala do Ruan (emoção) -> gente seguindo (prova social) -> sala: 70 abas (clímax) -> 'sigam a creat' + aba71 + logo",
+ "nota_dono": "aprovado com 2 ajustes: 'RUAN na filmagem' (não 'voando'); arroba @creat.mtt confirmado",
+ "origem": "filme V2 de 17/11 (drako/V2/edl.json), reescrito como direção com os ids do catálogo novo",
+ "fixture": "direcao.json só resolve contra o catálogo do material de 17/11 (motor.ferramentas.cat_legado)"
+}

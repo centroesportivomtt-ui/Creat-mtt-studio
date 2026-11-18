@@ -1,0 +1,450 @@
+{
+ "versao": "1",
+ "tipo_video": "bastidor",
+ "modelo": "evento-reel",
+ "duracao_alvo": 115,
+ "vel_fala": 1.12,
+ "conceito": "O dia vira um navegador: cada assunto abre uma aba da creat.MTT, até a 71ª, que é a logo.",
+ "alem_do_pedido": [
+  "Abas numeradas a cada assunto plantam o fecho 'mais de 70 abas abertas'",
+  "Ruan aparece no exato 'Ruan na filmagem'; Xande no 'Xande tá aqui'",
+  "Rampa e punch na prova do evento casados com a batida"
+ ],
+ "gancho": {
+  "texto_tela": [
+   "NÃO É SÓ",
+   "FILMAR."
+  ],
+  "troca": {
+   "risca": "FILMAR",
+   "para": "CONTAR"
+  }
+ },
+ "blocos": [
+  {
+   "id": "B1",
+   "funcao": "gancho",
+   "intensidade": 4,
+   "falas": [
+    {
+     "id": "F13.14",
+     "de": "não é sobre vídeos",
+     "ate": "comunicando com o pessoal",
+     "corrigir": null,
+     "imagem": "falante"
+    }
+   ],
+   "cobertura": [],
+   "texto_tela": [],
+   "chips": [
+    {
+     "nome": "MARCOS",
+     "funcao": "creat.MTT",
+     "sobre": "F13.14"
+    }
+   ],
+   "saida": "whip"
+  },
+  {
+   "id": "B2",
+   "funcao": "contexto",
+   "intensidade": 3,
+   "falas": [
+    {
+     "id": "F01.1",
+     "de": "o evento Draco hoje",
+     "ate": "novembro azul",
+     "corrigir": [
+      {
+       "de": "Draco",
+       "para": "Drako"
+      }
+     ],
+     "imagem": "falante"
+    },
+    {
+     "id": "F01.1",
+     "de": "a gente veio aqui",
+     "ate": "comunicando",
+     "corrigir": null,
+     "imagem": "misto"
+    },
+    {
+     "id": "F01.2",
+     "de": "mostrando todos os momentos",
+     "ate": "a energia do espaço",
+     "corrigir": null,
+     "imagem": "misto"
+    }
+   ],
+   "cobertura": [
+    {
+     "m": "M36.2",
+     "sobre": "F01.2",
+     "dur": 1.6,
+     "efeito": "rampa"
+    },
+    {
+     "m": "M30.8",
+     "sobre": "F01.2",
+     "dur": 1.4,
+     "efeito": "punch"
+    }
+   ],
+   "texto_tela": [
+    "ABA 01 · EVENTO"
+   ],
+   "chips": [],
+   "saida": "corte_batida"
+  },
+  {
+   "id": "B3",
+   "funcao": "prova",
+   "intensidade": 3,
+   "falas": [
+    {
+     "id": "F01.3",
+     "de": "já estamos com o sistema",
+     "ate": "a competição",
+     "corrigir": null,
+     "imagem": "misto"
+    },
+    {
+     "id": "F01.4",
+     "de": "aqui tem um pouco",
+     "ate": "em relação a check-list",
+     "corrigir": null,
+     "imagem": "misto"
+    }
+   ],
+   "cobertura": [
+    {
+     "m": "M01.6",
+     "sobre": "F01.4",
+     "dur": 2.2,
+     "efeito": "punch"
+    },
+    {
+     "m": "M11.5",
+     "sobre": "F01.4",
+     "dur": 1.8,
+     "efeito": "nenhum"
+    }
+   ],
+   "texto_tela": [
+    "ABA 02 · SISTEMA"
+   ],
+   "chips": [],
+   "saida": "mascara"
+  },
+  {
+   "id": "B4",
+   "funcao": "virada",
+   "intensidade": 4,
+   "falas": [
+    {
+     "id": "F01.6",
+     "de": "tecnologia de automação",
+     "ate": "tecnologia de automação",
+     "corrigir": null,
+     "imagem": "falante"
+    },
+    {
+     "id": "F01.6",
+     "de": "para que a gente consiga",
+     "ate": "camadas de um evento",
+     "corrigir": null,
+     "imagem": "misto"
+    }
+   ],
+   "cobertura": [
+    {
+     "m": "M26.6",
+     "sobre": "F01.6",
+     "dur": 1.5,
+     "efeito": "punch"
+    }
+   ],
+   "texto_tela": [
+    "ABA 03 · AUTOMAÇÃO"
+   ],
+   "chips": [],
+   "saida": "whip"
+  },
+  {
+   "id": "B5",
+   "funcao": "bastidor",
+   "intensidade": 4,
+   "falas": [
+    {
+     "id": "F11.2",
+     "de": "o pessoal da creit",
+     "ate": "ângulos possíveis do evento",
+     "corrigir": [
+      {
+       "de": "voando a",
+       "para": "Ruan na"
+      }
+     ],
+     "imagem": "misto"
+    },
+    {
+     "id": "F11.3",
+     "de": "o Xande está aqui",
+     "ate": "conferência do checklist",
+     "corrigir": null,
+     "imagem": "misto"
+    },
+    {
+     "id": "F11.5",
+     "de": "outro aplicativo",
+     "ate": "cadastrando o competidor",
+     "corrigir": null,
+     "imagem": "misto"
+    },
+    {
+     "id": "F11.6",
+     "de": "a gente ter essa conferência",
+     "ate": "muito reorganizado",
+     "corrigir": [
+      {
+       "de": "reorganizado",
+       "para": "bem organizado"
+      }
+     ],
+     "imagem": "misto"
+    },
+    {
+     "id": "F11.7",
+     "de": "então todo o ecossistema",
+     "ate": "entregar a qualidade",
+     "corrigir": null,
+     "imagem": "falante"
+    }
+   ],
+   "cobertura": [
+    {
+     "m": "M11.18",
+     "sobre": "F11.2",
+     "dur": 2.0,
+     "efeito": "nenhum"
+    },
+    {
+     "m": "M25.1",
+     "sobre": "F11.3",
+     "dur": 2.2,
+     "efeito": "nenhum"
+    },
+    {
+     "m": "M11.9",
+     "sobre": "F11.5",
+     "dur": 2.0,
+     "efeito": "janela"
+    }
+   ],
+   "texto_tela": [
+    "ABA 04 · EQUIPE"
+   ],
+   "chips": [
+    {
+     "nome": "RUAN",
+     "funcao": "creat.MTT",
+     "sobre": "F11.2"
+    },
+    {
+     "nome": "XANDE",
+     "funcao": "creat.MTT",
+     "sobre": "F11.3"
+    }
+   ],
+   "saida": "impacto"
+  },
+  {
+   "id": "B6",
+   "funcao": "emocao",
+   "intensidade": 4,
+   "falas": [
+    {
+     "id": "F11.15",
+     "de": "hoje está sendo",
+     "ate": "cobertura da MTT",
+     "corrigir": null,
+     "imagem": "falante"
+    },
+    {
+     "id": "F11.16",
+     "de": "tudo acontecendo",
+     "ate": "a gente planejou",
+     "corrigir": null,
+     "imagem": "falante"
+    },
+    {
+     "id": "F11.16",
+     "de": "o pessoal, a equipe",
+     "ate": "evento acontecer",
+     "corrigir": null,
+     "imagem": "falante"
+    },
+    {
+     "id": "F11.18",
+     "de": "let's go",
+     "ate": "em ação",
+     "corrigir": null,
+     "imagem": "falante"
+    }
+   ],
+   "cobertura": [],
+   "texto_tela": [],
+   "chips": [],
+   "saida": "whip"
+  },
+  {
+   "id": "B7",
+   "funcao": "prova",
+   "intensidade": 4,
+   "falas": [
+    {
+     "id": "F38.13",
+     "de": "a gente trabalha com a parte",
+     "ate": "comunicação com a pessoa",
+     "corrigir": null,
+     "imagem": "misto"
+    },
+    {
+     "id": "F14.12",
+     "de": "está seguindo a create",
+     "ate": "meu irmão",
+     "corrigir": null,
+     "imagem": "misto"
+    },
+    {
+     "id": "F14.13",
+     "de": "prosperidade sucesso",
+     "ate": "cada vez mais",
+     "corrigir": null,
+     "imagem": "misto"
+    }
+   ],
+   "cobertura": [
+    {
+     "m": "M17.1",
+     "sobre": "F14.12",
+     "dur": 2.0,
+     "efeito": "punch"
+    }
+   ],
+   "texto_tela": [
+    "ABA 05 · GENTE"
+   ],
+   "chips": [],
+   "saida": "mascara"
+  },
+  {
+   "id": "B8",
+   "funcao": "climax",
+   "intensidade": 5,
+   "falas": [
+    {
+     "id": "F48.1",
+     "de": "no momento em que",
+     "ate": "possibilidades diferentes",
+     "corrigir": null,
+     "imagem": "falante"
+    },
+    {
+     "id": "F48.4",
+     "de": "distribuindo possibilidades",
+     "ate": "fora da casa",
+     "corrigir": [
+      {
+       "de": "casa",
+       "para": "caixa"
+      }
+     ],
+     "imagem": "falante"
+    },
+    {
+     "id": "F48.8",
+     "de": "aqui está várias",
+     "ate": "abertas",
+     "corrigir": [
+      {
+       "de": "alvas",
+       "para": "abas"
+      }
+     ],
+     "imagem": "misto"
+    },
+    {
+     "id": "F48.11",
+     "de": "mais 70",
+     "ate": "vai fechar",
+     "corrigir": [
+      {
+       "de": "alvas",
+       "para": "abas"
+      }
+     ],
+     "imagem": "falante"
+    }
+   ],
+   "cobertura": [
+    {
+     "m": "M48.2",
+     "sobre": "F48.8",
+     "dur": 2.0,
+     "efeito": "punch"
+    }
+   ],
+   "texto_tela": [
+    "ABA 70 · NENHUMA FECHA"
+   ],
+   "chips": [],
+   "saida": "corte_batida"
+  },
+  {
+   "id": "B9",
+   "funcao": "convite",
+   "intensidade": 5,
+   "falas": [
+    {
+     "id": "F48.7",
+     "de": "então sigam a create",
+     "ate": "sigam a create",
+     "corrigir": null,
+     "imagem": "falante"
+    }
+   ],
+   "cobertura": [],
+   "texto_tela": [],
+   "chips": [],
+   "saida": "aba71"
+  }
+ ],
+ "trilha": {
+  "id": "t_creat_104",
+  "clima": "energia urbana que cresce até a sala",
+  "curva": [
+   3,
+   3,
+   3,
+   4,
+   4,
+   4,
+   4,
+   5,
+   5
+  ],
+  "drop_em": "B8"
+ },
+ "fecho": {
+  "cta": "SEGUE A creat.MTT",
+  "apoio": "70 abas abertas. nenhuma fecha.",
+  "arroba": "@creat.mtt",
+  "logo_cliente": null
+ },
+ "riscos": [
+  "tela do app de cadastro (M11.9) pode ter dados de competidores: desfocar",
+  "'bem organizado' corrigido por ouvido no V2: conferir"
+ ]
+}
