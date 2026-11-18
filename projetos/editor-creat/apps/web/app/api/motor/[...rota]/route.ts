@@ -18,7 +18,7 @@ const SAI = ['content-type', 'content-length', 'content-range', 'accept-ranges',
 type Ctx = { params: Promise<{ rota: string[] }> };
 
 async function repassar(req: Request, ctx: Ctx): Promise<Response> {
-  if (!sessaoDaRequisicao(req)) return NextResponse.json({ detail: 'entre com a senha de novo' }, { status: 401 });
+  if (!(await sessaoDaRequisicao(req))) return NextResponse.json({ detail: 'entre com a senha de novo' }, { status: 401 });
   if (req.method === 'POST' && !mesmaOrigem(req)) return NextResponse.json({ detail: 'origem não permitida' }, { status: 403 });
   const falta = faltaConfigMotor();
   if (falta) return NextResponse.json({ detail: falta }, { status: 503 });

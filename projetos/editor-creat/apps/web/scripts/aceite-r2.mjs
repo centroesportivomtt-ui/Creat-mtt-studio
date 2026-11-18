@@ -75,7 +75,7 @@ async function sha256(arquivo) {
   return h.digest('hex');
 }
 const estadoR2 = async () => (await fetch(`${R2}/__controle/estado`)).json();
-const valor = async (page, sel, attr) => page.getAttribute(sel, attr).catch(() => null);
+const valor = async (page, sel, attr) => page.getAttribute(sel, attr, { timeout: 2000 }).catch(() => null);
 
 /** Contador entre o site e o motor falso: conta cada aviso de arquivo terminado e repassa tudo igual. */
 function subirContador() {
@@ -202,13 +202,16 @@ async function principal() {
     const errado = await fetch(urls[0].url, { method: 'PUT', body: Buffer.alloc(1 * MiB) }).catch(() => ({ status: 0 }));
     const trocada = await fetch(urls[0].url.replace('partNumber=1', 'partNumber=2'), { method: 'PUT', body: Buffer.alloc(5 * MiB) }).catch(() => ({ status: 0 }));
     ok('R2 recusa parte de outro tamanho ou URL alterada (assinatura)', errado.status === 403 && trocada.status === 403, `tamanho trocado ${errado.status}, parte trocada ${trocada.status}`);
+    const acento = await (await iniciar({ nome: 'Vídeo Ação 01.MOV', tamanho: 10 })).json();
+    ok('acento vira sem acento na chave', /^entrada\/p_[a-z0-9]+\/video-acao-01-[a-z0-9]{8}\.mov$/.test(acento.chave ?? ''), acento.chave);
+    await api.post(`${BASE}/api/envio-r2/abortar`, { data: { token: acento.token }, headers: { origin: BASE } });
     const conc = await api.post(`${BASE}/api/envio-r2/concluir`, { data: { token: bom.token }, headers: { origin: BASE } });
     ok('concluir com partes faltando é recusado (409)', conc.status() === 409, `status ${conc.status()}`);
     await api.post(`${BASE}/api/envio-r2/abortar`, { data: { token: bom.token }, headers: { origin: BASE } });
   }
 
   // ---------- 3. envio de 40 MB: queda no meio da parte, recarga, retomada, offline ----------
-  const nomeArquivo = 'Bastidor ação 01.mp4';
+  const nomeArquivo = 'Bastidor 01.mp4'; // o Playwright não anexa arquivo com acento no caminho; o acento é testado no iniciar
   const origem = path.join(SCRATCH, nomeArquivo);
   fs.writeFileSync(origem, randomBytes(TAMANHO));
   const hashOrigem = await sha256(origem);
@@ -234,6 +237,7 @@ async function principal() {
       if (confirmadas >= 3) { interrompidoEm = v; break; }
       await dormir(20);
     }
+    if (!interrompidoEm) await page.screenshot({ path: path.join(PRINTS, 'erro-envio.png'), fullPage: true });
     if (!interrompidoEm) throw new Error(`o envio não andou: "${(await page.textContent('[data-envio]').catch(() => ''))?.slice(0, 200)}" · R2 ${JSON.stringify((await estadoR2()).operacoes)} · console ${errosConsole.slice(0, 4).join(" | ")} · url ${page.url()} · desabilitado ${await page.isDisabled("[data-teste=entrada-arquivo]").catch((e) => e.message)}`);
     antesRecarga = await estadoR2();
     viuRepeticao = antesRecarga.derrubadas === 1;
@@ -270,7 +274,7 @@ async function principal() {
   const salvo = salvos.map((f) => path.join(pastaEntrada, f)).find((f) => fs.statSync(f).size === TAMANHO);
   const hashDestino = salvo ? await sha256(salvo) : '';
   ok('objeto final idêntico no R2 falso (sha256)', salvo && hashDestino === hashOrigem, `${salvo ? path.relative(ARM, salvo) : 'não encontrado'} · ${hashOrigem.slice(0, 16)}…`);
-  ok('chave sem acento e sem espaço', salvo && /^bastidor-acao-01-[a-z0-9]{8}\.mp4$/.test(path.basename(salvo)), salvo ? path.basename(salvo) : '');
+  ok('chave sem espaço', salvo && /^bastidor-01-[a-z0-9]{8}\.mp4$/.test(path.basename(salvo)), salvo ? path.basename(salvo) : '');
   const nPartes = TAMANHO / (PARTE_MB * MiB);
   const confirmadasAntes = Object.keys(antesRecarga?.partes ?? {}).map(Number);
   const repetidas = confirmadasAntes.filter((n) => (fim.partes[n] ?? 0) > (antesRecarga.partes[n] ?? 0) && antesRecarga.partes[n] > 0);

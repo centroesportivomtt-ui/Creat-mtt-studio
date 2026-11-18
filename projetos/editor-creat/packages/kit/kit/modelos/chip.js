@@ -47,11 +47,11 @@ export default function chip(ctx, c) {
 
   const nome = el("div", "mk-display", textos, { fontSize: pxNome + "px", lineHeight: "0.95", overflow: "hidden", paddingBottom: "4px" });
   // a máscara do nome (overflow) aparava o acento (Á, Ã, É) e a cedilha: a área de recorte cresce para cima (e para baixo,
-  // só se houver cedilha/vírgula) com margem negativa do mesmo tamanho, então o layout e o nome sem acento ficam iguais
+  // só se houver cedilha) com margem negativa do mesmo tamanho, então o layout e o nome sem acento ficam iguais
   const nomeU = (p.nome ?? "").toUpperCase();
   const ext = Math.round(0.24 * pxNome);
   if (/[^\x00-\x7F]/.test(nomeU)) for (const e of [textos, nome]) Object.assign(e.style, { paddingTop: ext + "px", marginTop: -ext + "px" });
-  if (/[ÇQJ,;]/.test(nomeU)) {
+  if (/Ç/.test(nomeU)) {
     Object.assign(nome.style, { paddingBottom: 4 + ext + "px", marginBottom: -ext + "px" });
     Object.assign(textos.style, { paddingBottom: ext + "px", marginBottom: -ext + "px" });
   }

@@ -109,9 +109,13 @@ export default function gancho(ctx, c) {
     });
     // 3) a palavra pousa com peso e a câmera leva um empurrão de 2 quadros. A escala de entrada (1,16) encolhe quando a
     //    palavra, crescida a partir do centro, sairia da zona segura (palavra longa encostada na margem)
-    const ra = alvo.getBoundingClientRect(), ZZ = ctx.ZONA;
-    const folgaLado = Math.max(0, Math.min(ra.left - ZZ.esquerda, W - ZZ.direita - ra.right));
-    const s0 = Math.min(1.16, 1 + (2 * folgaLado) / Math.max(1, ra.width));
+    // Conta pela TINTA (a palavra fica à esquerda da caixa travada) e aceita encostar até a tolerância do QA
+    // (ZONA.tolerancia, 16 px) por 2 quadros: o demo pousa igual a sempre e só a palavra longa na margem encolhe a escala.
+    const ra = alvo.getBoundingClientRect(), ZZ = ctx.ZONA, cx = (ra.left + ra.right) / 2;
+    const tintaD = ra.left + Math.max(ctx.medir(troca.de, "Anton", fs0), ctx.medir(troca.para + (troca.ponto === false ? "" : "."), "Anton", fs0));
+    const sD = tintaD > cx ? (W - ZZ.direita + ZZ.tolerancia - cx) / (tintaD - cx) : Infinity;
+    const sE = cx > ra.left ? (cx - (ZZ.esquerda - ZZ.tolerancia)) / (cx - ra.left) : Infinity;
+    const s0 = Math.max(1, Math.min(1.16, sD, sE));
     tl.fromTo(alvo, { scale: s0 }, { scale: 1, duration: 0.42, ease: EASE.chegadaForte, immediateRender: false }, em + dur);
     tl.fromTo(pontoTroca, { scale: 0, transformOrigin: "50% 80%" }, { scale: 1, duration: 0.34, ease: EASE.mola }, em + dur + 0.04);
     tl.to(bloco, { keyframes: [{ x: 9, duration: 1 / 30 }, { x: -6, duration: 1 / 30 }, { x: 0, duration: 1 / 30 }], ease: "none" }, em + dur);

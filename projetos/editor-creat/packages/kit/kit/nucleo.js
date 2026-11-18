@@ -28,7 +28,7 @@ export const DUR = {
 // margem = recuo padrão de layout (84 px). O HUD decorativo é isento da zona, mas nunca pode colidir com texto
 // (regra "sem-colisao" do checar). Os números vêm de kit/zona.json, a fonte única que o QA de entrega do motor
 // (etapas/qa/zona_segura.py) e o verificador do kit (ferramentas/zona.cjs) também leem.
-export const ZONA = { ...ZONA_CASA.zona, margem: ZONA_CASA.margem };
+export const ZONA = { ...ZONA_CASA.zona, margem: ZONA_CASA.margem, tolerancia: ZONA_CASA.tolerancia };
 
 // gerador com semente (mulberry32): mesmo número, mesma sequência
 export function semente(n) {

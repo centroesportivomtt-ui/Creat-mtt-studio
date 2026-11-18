@@ -1,17 +1,28 @@
 """zona_segura: todo texto do overlay fica dentro da zona segura do Reels (topo 285, base 440, direita 120, esquerda 60 px).
 
+Fonte única: packages/kit/kit/zona.json (a mesma que o kit usa em nucleo.js e que o QA do kit, ferramentas/zona.cjs,
+mede modelo por modelo com textos longos). Zona, tolerância, limiar de alfa, passo de amostragem e a lista de modelos de
+tela cheia vêm de lá.
+
 Mede o alfa REAL dos quadros do overlay (amostra a cada 3 quadros) nos instantes em que só há camadas de texto no ar
 (legenda, chip, gancho, rótulo, selo...). Camadas de tela cheia (fecho, fundo, transição, HUD) ficam fora da medida.
 Tolerância de 16 px (sombra do texto e cantoneiras do chip, que o kit encosta no limite). Evidência: o quadro do pior caso com a zona desenhada.
 """
+import json
 import os
 
 import numpy as np
 
+from motor import config
+
 ID, BLOQUEIA = "zona_segura", True
-ZONA = {"topo": 285, "base": 440, "direita": 120, "esquerda": 60}
-TELA_CHEIA = {"fecho", "fecho2", "fundo", "transicao", "hud", "abas", "heroi", "camadas", "pilha", "stats"}
-TOL = 16
+ARQ_ZONA = config.KIT / "kit" / "zona.json"
+_Z = json.loads(ARQ_ZONA.read_text(encoding="utf-8"))
+ZONA = dict(_Z["zona"])
+TELA_CHEIA = set(_Z["tela_cheia"])
+TOL = int(_Z["tolerancia"])
+ALFA = int(_Z["alfa_minimo"])
+PASSO = int(_Z["amostra_quadros"])
 
 
 def checar(c):
@@ -26,7 +37,7 @@ def checar(c):
     y0, y1 = ZONA["topo"] - TOL, H - ZONA["base"] + TOL
     piores, medidos = [], 0
     cache = {}
-    for n in range(0, int(round(c.edl["duracao"] * c.FPS)), 3):
+    for n in range(0, int(round(c.edl["duracao"] * c.FPS)), PASSO):
         t = n / c.FPS
         ativos = [m for m in mot if m["de"] <= t < m["ate"]]
         if any(m["modelo"] in TELA_CHEIA for m in ativos):
@@ -40,7 +51,7 @@ def checar(c):
             if o is None or o.ndim < 3 or o.shape[2] < 4:
                 cache[ino] = None
             else:
-                a = o[:, :, 3] > 200
+                a = o[:, :, 3] > ALFA
                 ys, xs = np.where(a.any(1))[0], np.where(a.any(0))[0]
                 cache[ino] = None if len(ys) == 0 else (int(xs[0]), int(ys[0]), int(xs[-1]), int(ys[-1]))
         bb = cache[ino]
