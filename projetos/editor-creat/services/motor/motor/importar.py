@@ -124,6 +124,8 @@ def baixar(url: str, destino: Path, *, hosts=HOSTS, max_bytes: int = 60 << 30, p
             total = (int(total) + (ja if continuar else 0)) if total and total.isdigit() else None
             if total and total > max_bytes:
                 raise ErroImportacao(f"Arquivo grande demais ({total / 2**30:.1f} GB).")
+            if total:
+                _checar_disco(destino.parent, total - (ja if continuar else 0))
             feito, ultimo = (ja if continuar else 0), 0.0
             with open(parte, "ab" if continuar else "wb") as f:
                 while True:
@@ -152,31 +154,48 @@ def eh_zip(caminho: Path, nome: str) -> bool:
     return nome.lower().endswith(".zip") or zipfile.is_zipfile(caminho)
 
 
-def videos_do_zip(caminho: Path, pasta: Path) -> list[tuple[Path, str]]:
-    """Extrai só mídia (sem caminhos do zip: evita zip-slip). Devolve [(arquivo, nome_original)] em ordem de nome."""
+def videos_do_zip(caminho: Path, pasta: Path, max_bytes: int = 60 << 30) -> list[tuple[Path, str]]:
+    """Extrai só mídia (sem caminhos do zip: evita zip-slip), com teto de bytes conferido no cabeçalho E na
+    extração (zip-bomba) e espaço em disco checado antes. Devolve [(arquivo, nome_original)] em ordem de nome."""
     out = []
     with zipfile.ZipFile(caminho) as z:
-        for info in sorted(z.infolist(), key=lambda i: i.filename):
+        itens = [i for i in sorted(z.infolist(), key=lambda i: i.filename)
+                 if not i.is_dir() and not Path(i.filename).name.startswith(".") and Path(i.filename).suffix.lower() in EXT_MIDIA]
+        total = sum(i.file_size for i in itens)
+        if total > max_bytes:
+            raise ErroImportacao(f"A pasta tem {total / 2**30:.1f} GB de vídeo, acima do limite.")
+        _checar_disco(pasta, total)
+        escrito = 0
+        for info in itens:
             nome = Path(info.filename).name
-            if info.is_dir() or nome.startswith(".") or Path(nome).suffix.lower() not in EXT_MIDIA:
-                continue
             dest = pasta / f"z{len(out):03d}{Path(nome).suffix.lower()}"
             with z.open(info) as src, open(dest, "wb") as f:
-                shutil.copyfileobj(src, f, 1 << 20)
+                for bloco in iter(lambda: src.read(1 << 20), b""):
+                    escrito += len(bloco)
+                    if escrito > max_bytes:
+                        raise ErroImportacao("A pasta descompactada passou do limite de tamanho.")
+                    f.write(bloco)
             out.append((dest, nome))
     return out
+
+
+def _checar_disco(pasta: Path, nbytes: int, folga: int = 512 << 20) -> None:
+    livre = shutil.disk_usage(pasta).free
+    if nbytes + folga > livre:
+        raise ErroImportacao(f"Sem espaço no motor para {nbytes / 2**30:.1f} GB (livre: {livre / 2**30:.1f} GB).")
 
 
 # ---------------- registro de arquivos (usado pela API e pela importação) ----------------
 def registrar_arquivo(con, projeto: str, nome: str, chave: str | None, nbytes: int, *, entrada: dict | None = None,
                       ext: str = "") -> tuple[str, bool]:
     """Cria (ou reencontra, pela chave) o arquivo e enfileira o ingest. Devolve (id, novo)."""
-    if chave:
-        r = con.execute("SELECT id FROM arquivos WHERE projeto=? AND chave=?", (projeto, chave)).fetchone()
-        if r:
-            return r["id"], False
-    con.execute("BEGIN IMMEDIATE")
+    con.execute("BEGIN IMMEDIATE")          # checagem de duplicata e alocação do id na mesma transação
     try:
+        if chave:
+            r = con.execute("SELECT id FROM arquivos WHERE projeto=? AND chave=?", (projeto, chave)).fetchone()
+            if r:
+                con.execute("COMMIT")
+                return r["id"], False
         n = con.execute("SELECT COUNT(*) n FROM arquivos WHERE projeto=?", (projeto,)).fetchone()["n"]
         aid = f"a{n + 1:03d}"
         while con.execute("SELECT 1 FROM arquivos WHERE projeto=? AND id=?", (projeto, aid)).fetchone():

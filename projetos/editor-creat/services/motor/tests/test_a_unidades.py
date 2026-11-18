@@ -74,6 +74,14 @@ def test_zip_so_midia_e_sem_zip_slip(tmp_path):
     assert not (tmp_path.parent / "fora.mov").exists()
 
 
+def test_zip_bomba_recusado(tmp_path):
+    z = tmp_path / "b.zip"
+    with zipfile.ZipFile(z, "w", compression=zipfile.ZIP_DEFLATED) as f:
+        f.writestr("a.mov", b"\0" * 200_000)
+    with pytest.raises(importar.ErroImportacao):
+        importar.videos_do_zip(z, tmp_path, max_bytes=100_000)
+
+
 def test_nome_do_content_disposition():
     assert importar._nome_de("attachment; filename*=UTF-8''v%C3%ADdeo%201.mov", "https://x/y") == "vídeo 1.mov"
     assert importar._nome_de('attachment; filename="../a/b.mov"', "https://x/y") == "_a_b.mov"
