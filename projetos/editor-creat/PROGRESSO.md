@@ -33,3 +33,7 @@ Atualize este arquivo a cada passo concluído (a máquina reinicia sem aviso). F
 - 18/11 · B · mudança de contrato (dona B): `direcao...falas[].corrigir` agora é lista `[{de, para}]` (structured outputs não aceitam chaves livres); `analise.derivados.trechos` opcional (material cortado em trechos). Exemplos continuam válidos; `test_fila` + `test_contratos` verdes. Novas variáveis em `.env.example`: `EDITOR_MEMORIA`, `EDITOR_TRILHAS`, `EDITOR_AUTORIZADO_PAGO`.
 - 18/11 · D · `apps/web` tem `pnpm-workspace.yaml` próprio (instalação isolada); por isso o script da raiz `aceite:web` passou a ser `cd apps/web && pnpm install && pnpm aceite`. Novas variáveis só de desenvolvimento no `.env.example`: `MOTOR_FALSO_PORTA`, `MOTOR_FALSO_PASSO_MS`.
 - 18/11 · C · `.env.example`: novos `EDITOR_PLANO_RAM_MB`, `EDITOR_CACHE_PLANOS_MB`, `MK_BF`, `MK_CHROME`. Núcleo e schemas não mudaram. O pacote `drako/turbo/` ainda estava vazio (só experimentos em `tmp/`): a frente C fez beginFrame, decodificação única e portão de entrega por conta própria, sem editar aquela pasta.
+
+## Revisão do Crivo (18/11) — correções
+- 18/11 · forja · itens 1-12 corrigidos (motor `d241b77`, site `096706e`); `pytest -m "not pago"` 120 ok; `tests/test_revisao_crivo.py` reproduz cada item. Aceite D 18/18.
+- Próximo: aceites A/B/C de novo, E2E da fase 1 pelo site com cérebro fixture (V2/edl.json), `FASE1_RELATORIO.md`.

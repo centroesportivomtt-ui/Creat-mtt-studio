@@ -127,10 +127,15 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
         v = con.execute("SELECT estado FROM versoes WHERE projeto=? AND id=?", (pid, versao)).fetchone()
         if v is None:
             raise HTTPException(404, "versão não encontrada")
-        if v["estado"] not in ("entregue", "reprovada_qa", "aprovada_qa", "erro"):
-            raise HTTPException(409, f"a versão {versao} ainda está em produção ({v['estado']}); espere ela ficar pronta para reprovar")
         if con.execute("SELECT 1 FROM jobs WHERE projeto=? AND etapa='direcao' AND estado='rodando'", (pid,)).fetchone():
             raise HTTPException(409, "a direção já está refazendo este projeto; espere a nova versão")
+        if con.execute("SELECT 1 FROM jobs WHERE projeto=? AND alvo=? AND etapa IN ('montagem','qa','entrega') AND estado='rodando'",
+                       (pid, versao)).fetchone():
+            raise HTTPException(409, f"a versão {versao} está sendo montada/conferida agora; reprove quando ela terminar")
+        # o que ainda estava na fila para esta versão não roda mais (senão a versão reprovada seria entregue depois)
+        con.execute("UPDATE jobs SET estado='cancelado', erro='versão reprovada pelo dono', atualizado=? "
+                    "WHERE projeto=? AND alvo=? AND etapa IN ('montagem','qa','entrega') AND estado='pendente'",
+                    (__import__("time").time(), pid, versao))
         cerebro = None
         try:
             from motor.provedores import provedor

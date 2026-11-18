@@ -261,3 +261,18 @@ def test_r2_transicao_sobe_o_arquivo_do_tus(dados):
     r2 = R2Falso()
     _promover_para_r2(cfg, r2, "entrada/p1/v-1234.mp4")
     assert r2.obj["entrada/p1/v-1234.mp4"] == b"zzz" and not local.exists()
+
+
+def test_reprovar_cancela_a_fila_da_versao_e_recusa_com_direcao_rodando(cli, con, tmp_path, monkeypatch):
+    import shutil
+    destino = tmp_path / "memoria"
+    shutil.copytree(config.RAIZ_REPO / "memoria", destino)
+    monkeypatch.setenv("EDITOR_MEMORIA", str(destino))          # nunca escreve na memória do repositório
+    _projeto(con, estado="montando")
+    con.execute("INSERT INTO versoes (id, projeto, estado, criado) VALUES ('v1','p1','montando',?)", (banco.agora_iso(),))
+    banco.enfileirar(con, "montagem", "p1", "v1")
+    r = cli.post("/v1/projetos/p1/versoes/v1/reprovar", json={"motivo": "ficou lento demais"})
+    assert r.status_code == 200
+    assert con.execute("SELECT estado FROM jobs WHERE etapa='montagem'").fetchone()["estado"] == "cancelado"
+    con.execute("UPDATE jobs SET estado='rodando' WHERE etapa='direcao'")
+    assert cli.post("/v1/projetos/p1/versoes/v1/reprovar", json={"motivo": "outra coisa"}).status_code == 409
