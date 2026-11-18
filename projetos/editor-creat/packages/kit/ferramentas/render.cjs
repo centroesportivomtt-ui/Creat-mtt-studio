@@ -14,9 +14,14 @@
 //   node ferramentas/render.cjs cenas/demo.json --quadros 0,1.2,5.5 --out saida/quadros/
 // Opções: --de/--ate (s), --fps, --escala (0.25..1), --sub N (blur de movimento por N subquadros, obturador 180°),
 //         --crf (16), --colunas (folha, 8)
+// Captura: HeadlessExperimental.beginFrame no chrome-headless-shell (padrão; MK_BF=0 volta ao screenshot do Playwright).
+// Paralelo (só sequência PNG): --workers N divide o intervalo em N processos (um Chromium cada); os quadros saem com
+//   índice GLOBAL (quadro_<round(t*fps)>.png) e quadro idêntico ao anterior vira link físico (não ocupa disco nem PNG novo).
+//   --json imprime no fim uma linha "MKSTATS {...}" com quadros, ms/quadro por worker e ms efetivos (relógio / quadros).
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
+const crypto = require("crypto");
 const { abrir, lerComp, args } = require("./comum.cjs");
 
 const o = args(process.argv.slice(2));
@@ -38,18 +43,52 @@ const escrever = (proc, buf) => new Promise((ok, erro) => {
 });
 const fechar = (proc) => new Promise((ok, erro) => { proc.on("close", (c) => (c === 0 ? ok() : erro(new Error("ffmpeg saiu com " + c)))); proc.stdin.end(); });
 
+// --workers N: divide o intervalo entre N processos filhos (só para sequência PNG)
+async function emParalelo(nw) {
+  const info = { duracao: comp.duracao, fps: comp.formato?.fps ?? 30 };
+  const de = +(o.de ?? 0), ate = Math.min(+(o.ate ?? info.duracao), info.duracao);
+  const a = Math.round(de * fps), b = Math.round(ate * fps), passo = Math.ceil((b - a) / nw);
+  fs.mkdirSync(o.out, { recursive: true });
+  const t0 = Date.now();
+  const partes = [];
+  for (let k = 0; k < nw; k++) {
+    const x = a + k * passo, y = Math.min(b, x + passo);
+    if (y <= x) continue;
+    const av = ["--alfa", "png", "--out", o.out, "--de", String(x / fps), "--ate", String(y / fps), "--fps", String(fps), "--json", "--filho", "--workers", "1"];
+    partes.push(new Promise((ok, erro) => {
+      const p = spawn(process.execPath, [__filename, arqComp, ...av], { stdio: ["ignore", "pipe", "inherit"] });
+      let saida = "";
+      p.stdout.on("data", (d) => (saida += d));
+      p.on("close", (c) => {
+        const m = saida.match(/MKSTATS (\{.*\})/);
+        if (c !== 0 || !m) return erro(new Error(`worker ${k} saiu com ${c}:\n${saida.slice(-800)}`));
+        ok(JSON.parse(m[1]));
+      });
+    }));
+  }
+  const st = await Promise.all(partes);
+  const N = st.reduce((s, x) => s + x.quadros, 0), rel = Date.now() - t0;
+  const r = { quadros: N, ms_quadro: +(st.reduce((s, x) => s + x.ms_quadro * x.quadros, 0) / N).toFixed(1), ms_efetivo: +(rel / N).toFixed(1),
+    workers: st.length, repetidos: st.reduce((s, x) => s + x.repetidos, 0), captura: st[0].captura, erros: st.reduce((s, x) => s + x.erros, 0), relogio_s: +(rel / 1000).toFixed(1) };
+  fs.writeFileSync(o.out.replace(/\/$/, "") + ".cues.json", JSON.stringify({ duracao: comp.duracao, fps: info.fps, cues: [] }, null, 1));
+  console.log(`pronto: ${o.out} · ${N} quadros · ${r.workers} workers · ${r.ms_quadro} ms/quadro em cada · ${r.ms_efetivo} ms/quadro efetivos · ${r.repetidos} repetidos`);
+  if (o.json) console.log("MKSTATS " + JSON.stringify(r));
+}
+
 (async () => {
   fs.mkdirSync(path.dirname(path.resolve(o.out)), { recursive: true });
+  const nw = Math.max(1, +(o.workers ?? 1));
+  if (nw > 1) {
+    if (!(ALFA === "png" && !o.sobre && !FOLHA && !o.quadros)) console.error("aviso: --workers só vale para --alfa png (sequência); seguindo com 1 worker");
+    else return emParalelo(nw);
+  }
   const sess = await abrir(comp, { alfa: !!ALFA, escala });
   const { page, info } = sess;
   const de = +(o.de ?? 0), ate = Math.min(+(o.ate ?? info.duracao), info.duracao);
   const W = Math.round(info.w * escala), H = Math.round(info.h * escala);
-  const tiro = async (t) => {
-    await page.evaluate((tt) => window.__mk.seek(tt), t);
-    return ALFA ? page.screenshot({ type: "png", omitBackground: true }) : page.screenshot({ type: "jpeg", quality: FOLHA ? 85 : 95 });
-  };
+  const tiro = (t) => sess.tiro(t, { formato: ALFA ? "png" : "jpeg", qualidade: FOLHA ? 85 : 95 });
   const base = o.out.replace(/\/$/, "").replace(/\.[a-z0-9]+$/i, "");
-  fs.writeFileSync(base + ".cues.json", JSON.stringify({ duracao: info.duracao, fps: info.fps, cues: info.cues }, null, 1));
+  if (!o.filho) fs.writeFileSync(base + ".cues.json", JSON.stringify({ duracao: info.duracao, fps: info.fps, cues: info.cues }, null, 1));
 
   // quadros soltos
   if (o.quadros) {
@@ -63,7 +102,8 @@ const fechar = (proc) => new Promise((ok, erro) => { proc.on("close", (c) => (c 
     return sess.fechar();
   }
 
-  const N = Math.max(1, Math.round((ate - de) * fps));
+  const i0 = Math.round(de * fps);
+  const N = Math.max(1, Math.round(ate * fps) - i0);
   let proc = null;
   const dirPng = ALFA === "png" && !o.sobre ? o.out : null;
   if (dirPng) fs.mkdirSync(dirPng, { recursive: true });
@@ -90,18 +130,25 @@ const fechar = (proc) => new Promise((ok, erro) => { proc.on("close", (c) => (c 
   if (proc) proc.on("close", () => (proc.morreu = true));
   const t0 = Date.now();
   const obturador = 0.5; // 180°
+  let hashAnt = null, arqAnt = null, repetidos = 0;
   for (let i = 0; i < N; i++) {
     for (let k = 0; k < sub; k++) {
-      const t = de + i / fps + (sub > 1 ? ((k - (sub - 1)) / sub) * (obturador / fps) : 0);
+      const t = (i0 + i) / fps + (sub > 1 ? ((k - (sub - 1)) / sub) * (obturador / fps) : 0);
       const buf = await tiro(Math.max(0, t));
-      if (dirPng) fs.writeFileSync(path.join(dirPng, `quadro_${String(i).padStart(5, "0")}.png`), buf);
-      else await escrever(proc, buf);
+      if (dirPng) {
+        const arq = path.join(dirPng, `quadro_${String(i0 + i).padStart(5, "0")}.png`);
+        const h = crypto.createHash("md5").update(buf).digest("hex");
+        try { fs.unlinkSync(arq); } catch {}
+        if (h === hashAnt && arqAnt) { fs.linkSync(arqAnt, arq); repetidos++; }
+        else { fs.writeFileSync(arq, buf); hashAnt = h; arqAnt = arq; }
+      } else await escrever(proc, buf);
     }
     if (!FOLHA && (i % 60 === 59 || i === N - 1)) process.stdout.write(`\r${i + 1}/${N} quadros · ${((Date.now() - t0) / (i + 1)).toFixed(0)} ms/quadro   `);
   }
   if (proc) await fechar(proc);
   const ms = (Date.now() - t0) / N;
-  console.log(`\npronto: ${o.out} · ${N} quadros · ${ms.toFixed(0)} ms/quadro${sub > 1 ? ` (sub ${sub})` : ""}`);
+  console.log(`\npronto: ${o.out} · ${N} quadros · ${ms.toFixed(0)} ms/quadro${sub > 1 ? ` (sub ${sub})` : ""} · captura ${sess.captura}${dirPng ? ` · ${repetidos} repetidos` : ""}`);
+  if (o.json) console.log("MKSTATS " + JSON.stringify({ quadros: N, ms_quadro: +ms.toFixed(1), ms_efetivo: +ms.toFixed(1), workers: 1, repetidos, captura: sess.captura, erros: sess.erros.length }));
   if (sess.erros.length) console.log("erros do navegador:\n" + sess.erros.join("\n"));
   await sess.fechar();
 })().catch((e) => { console.error(e); process.exit(1); });

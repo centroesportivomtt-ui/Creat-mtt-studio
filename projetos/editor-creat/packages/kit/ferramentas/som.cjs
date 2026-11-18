@@ -4,14 +4,15 @@
 // revezar amostras (o mesmo whoosh em todo corte é sinal de amador); silêncio curto em volta do impacto do logo;
 // música por baixo; mix final em -14 LUFS integrado e pico real de -1,5 dBTP (loudnorm em duas passadas).
 //   node ferramentas/som.cjs --video saida/demo.mp4 --cues saida/demo.cues.json --comp cenas/demo.json --out saida/demo_som.mp4
-// Biblioteca: MK_SOM=<pasta com sfx/ e music/> (padrão: a biblioteca licenciada da creat.MTT na nuvem)
+// Biblioteca: MK_SOM=<pasta com sfx/ e music/> (obrigatório; a biblioteca licenciada fica fora do git)
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 const { args } = require("./comum.cjs");
 
 const o = args(process.argv.slice(2));
-const BIB = process.env.MK_SOM || "/tmp/claude-0/-home-user-Creat-nuvem-VIBE-CODE/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/assets/audio";
+const BIB = process.env.MK_SOM || "";
+if (!BIB) { console.error("defina MK_SOM=<pasta com sfx/ e music/> (biblioteca de sons fora do git)"); process.exit(2); }
 const comp = o.comp ? JSON.parse(fs.readFileSync(o.comp, "utf8")) : {};
 const { cues, duracao, fps } = JSON.parse(fs.readFileSync(o.cues, "utf8"));
 const QUADRO = 1 / (fps || 30);

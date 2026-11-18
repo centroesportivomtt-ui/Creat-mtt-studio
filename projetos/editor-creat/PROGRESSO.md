@@ -18,6 +18,7 @@ Atualize este arquivo a cada passo concluído (a máquina reinicia sem aviso). F
   - 18/11 · B · catálogo (13,6k tokens para 48 clipes / 64 min de 17/11, 70/70 falas do Marcos inteiras), resolvedor direção→EDL, cérebro fixture + Claude via API (desligado sem chave), etapas `catalogo` e `direcao`, rotas `pedido`/`reprovar`/`memoria`, memória inicial (17 regras, 7 checagens, 4 modelos, caso bastidor-creat). Tempos: catálogo+direção+resolvedor 0,29 s; conversão do legado 14 s (uma vez). Prompt 15,7k tokens, direção 1,6k. Detalhes: `services/motor/README-frente-b.md`.
   - Próximo (B): ligar o teste pago com autorização do dono; casos novos a cada filme aprovado; `count_tokens` oficial quando houver chave.
 - [ ] C · motor: montagem e QA — aceite `python -m motor.ferramentas.aceite_c`
+  - 18/11 · C · EM ANDAMENTO (Forja). Ordem: kit (beginFrame + workers) → montagem (planos, voz, trilha, mix, overlay, fx, comp) → qa → entrega/versoes → edl_legado → aceite_c. Para continuar: `git log --oneline | grep 'frente C'` e seguir a ordem.
 - [ ] D · site mínimo — aceite `cd apps/web && pnpm aceite`
 
 ## Notas
