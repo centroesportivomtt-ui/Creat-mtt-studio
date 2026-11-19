@@ -62,7 +62,21 @@ def _projeto(con, pid: str) -> dict:
 
 
 # ---------------- modelos de entrada ----------------
-class NovoProjeto(BaseModel):
+def _sem_nul(v):
+    """Byte NUL: o SQLite aceita e o Postgres recusa (virava HTTP 500). Recusado na borda, igual nos dois bancos."""
+    if isinstance(v, str) and "\x00" in v:
+        raise ValueError("texto com caractere NUL (\\u0000) não é aceito")
+    return v
+
+
+class SemNul(BaseModel):
+    @field_validator("*", mode="before")
+    @classmethod
+    def _nul(cls, v):
+        return _sem_nul(v)
+
+
+class NovoProjeto(SemNul):
     nome: str = Field(min_length=1, max_length=120)
     tipo_video: Optional[str] = "auto"
 
@@ -82,14 +96,14 @@ class NovoProjeto(BaseModel):
         return v or "auto"
 
 
-class NovoArquivo(BaseModel):
+class NovoArquivo(SemNul):
     chave: str = Field(min_length=1, max_length=512)
     nome: str = Field(min_length=1, max_length=255)
     bytes: int = Field(ge=0)
     etag: Optional[str] = Field(default=None, max_length=80)   # envio direto ao R2: o site manda o ETag do objeto
 
 
-class Importacao(BaseModel):
+class Importacao(SemNul):
     url: str = Field(min_length=12, max_length=2000)
 
 
@@ -200,8 +214,13 @@ def _recolher_orfaos(con, cfg, arm, pid: str) -> int:
     if arm is not None:
         try:
             achadas.update(k for k in arm.listar(prefixo) if not k.rsplit("/", 1)[-1].startswith("."))
-        except Exception:  # noqa: BLE001 - listar falhou: segue com o que der para ver no disco
-            pass
+        except Exception as e:  # noqa: BLE001
+            if getattr(arm, "nome", "") != "local":
+                # R2 fora do ar: fechar assim deixaria arquivo enviado fora do vídeo em silêncio. Avisa e não fecha.
+                banco.emitir(con, pid, "aviso", mensagem="Não deu para conferir os arquivos no armazenamento agora; "
+                             "o envio continua aberto. Tente fechar de novo em instantes.")
+                raise HTTPException(503, "o armazenamento não respondeu ao conferir os arquivos; tente de novo em instantes") from e
+            # local: o disco é lido logo abaixo
     pasta = pathlib.Path(cfg.dados) / "armazenamento" / "entrada" / pid
     if pasta.is_dir():
         achadas.update(f"{prefixo}{q.name}" for q in pasta.iterdir() if q.is_file() and not q.name.startswith("."))
@@ -232,17 +251,22 @@ def fechar_envio(pid: str):
     with _con() as con:
         p = _projeto(con, pid)
         if p["estado"] in ESTADOS_ABERTOS:
-            _recolher_orfaos(con, cfg, arm, pid)
-        n = con.execute("SELECT COUNT(*) n FROM arquivos WHERE projeto=?", (pid,)).fetchone()["n"]
-        if n == 0:
-            raise HTTPException(409, "nenhum arquivo enviado ainda")
-        d = p["dados"]
-        d["envio_fechado"] = True
-        con.execute("UPDATE projetos SET dados=?, atualizado=? WHERE id=?", (json.dumps(d), banco.agora_iso(), pid))
-        dirigindo = pipeline.tentar_dirigir(con, pid)
-        if not dirigindo and p["estado"] == "recebendo":
-            falta = "o pedido" if not d.get("pedido") else "terminar a leitura"
-            banco.mudar_estado(con, pid, "lendo", f"Envio fechado ({n} arquivo(s)). Falta {falta}.")
+            _recolher_orfaos(con, cfg, arm, pid)       # fora da transação: registra arquivo (transação própria) e sobe ao R2
+        # Ler dados + gravar + tentar dirigir sob a MESMA trava do worker ("fechar job + próxima etapa"): sem isso, no
+        # Postgres, este fechamento e a última leitura do worker se cruzavam, cada um achava que faltava o outro e o
+        # projeto ficava parado em 'lendo'. Os dados são relidos aqui dentro (não sobrescreve o que mudou no meio).
+        with banco.transacao(con):
+            p = _projeto(con, pid)
+            n = con.execute("SELECT COUNT(*) n FROM arquivos WHERE projeto=?", (pid,)).fetchone()["n"]
+            if n == 0:
+                raise HTTPException(409, "nenhum arquivo enviado ainda")
+            d = p["dados"]
+            d["envio_fechado"] = True
+            con.execute("UPDATE projetos SET dados=?, atualizado=? WHERE id=?", (json.dumps(d), banco.agora_iso(), pid))
+            dirigindo = pipeline.tentar_dirigir(con, pid)
+            if not dirigindo and p["estado"] == "recebendo":
+                falta = "o pedido" if not d.get("pedido") else "terminar a leitura"
+                banco.mudar_estado(con, pid, "lendo", f"Envio fechado ({n} arquivo(s)). Falta {falta}.")
         return {"envio_fechado": True, "dirigindo": dirigindo, "arquivos": n}
 
 

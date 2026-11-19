@@ -221,12 +221,13 @@ def falas_protegidas(clipes: list[dict]) -> frozenset:
     Com o rótulo do provedor de falante, a fala MARCOS já fica inteira (equipe). Isto é a RESERVA para o que ficou sem
     rótulo: toda fala sem falante que coincide com um momento 'fala' nota >= 4 ("fala com rosto em quadro") fica
     INTEIRA no catálogo (sem isso seria truncada a 4 palavras nos níveis de compressão).
-    - projeto sem rótulo nenhum (falante desligado, sem perfil cadastrado, legado): vale para toda fala;
-    - projeto com rótulo: só para as falas que o provedor marcou DESCONHECIDO (curtas, ambíguas, voz fora dos perfis);
-      fala sem rótulo num projeto rotulado (legado misturado) segue a regra normal."""
-    rotulado = any(f.get("falante") not in SEM_ROTULO for c in clipes for f in c["falas"])
+    Decidido POR CLIPE (projeto misto: um clipe sem rótulo ao lado de outro rotulado não perde a reserva):
+    - clipe sem rótulo nenhum (falante desligado, sem perfil, falha do falante, legado): vale para toda fala dele;
+    - clipe com rótulo: só para as falas que o provedor marcou DESCONHECIDO (curtas, ambíguas, voz fora dos perfis);
+      fala sem rótulo num clipe rotulado (legado misturado no mesmo arquivo) segue a regra normal."""
     ids = set()
     for c in clipes:
+        rotulado = any(f.get("falante") not in SEM_ROTULO for f in c["falas"])
         fortes = [m for m in c["momentos"] if m["tipo"].startswith("fala")
                   and (m["nota"] >= 4 or m.get("desc", "").startswith("fala com rosto"))]
         for f in c["falas"]:

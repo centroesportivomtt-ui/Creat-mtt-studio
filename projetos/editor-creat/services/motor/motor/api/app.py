@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hmac
 import importlib
+import json
 import os
 import threading
 
@@ -52,6 +53,16 @@ class AcordarWorker:
             threading.Thread(target=self.acordar, args=(self.cfg,), daemon=True).start()
 
 
+def _tem_nul(v) -> bool:
+    if isinstance(v, str):
+        return "\x00" in v
+    if isinstance(v, dict):
+        return any(_tem_nul(k) or _tem_nul(x) for k, x in v.items())
+    if isinstance(v, list):
+        return any(_tem_nul(x) for x in v)
+    return False
+
+
 def criar():
     from fastapi import Depends, FastAPI, Header, HTTPException
 
@@ -71,7 +82,25 @@ def criar():
         elif (request.client.host if request.client else "") not in LOOPBACK:
             raise HTTPException(401, "motor sem MOTOR_TOKEN só atende a própria máquina")
 
-    app = FastAPI(title="Motor do Editor creat.MTT", version="0.1.0", dependencies=[Depends(autorizado)])
+    async def sem_nul(request: Request):
+        """Byte NUL em qualquer texto do corpo JSON: 422 igual no SQLite e no Postgres (que recusa NUL e dava 500).
+        Vale para todas as rotas, inclusive as que têm modelo em outro arquivo (pedido, direção)."""
+        if request.method not in MUTANTES or "json" not in (request.headers.get("content-type") or ""):
+            return
+        corpo = await request.body()
+        if b"\\u0000" not in corpo and b"\x00" not in corpo:
+            return
+        try:
+            dado = json.loads(corpo)
+        except ValueError:
+            return                    # JSON quebrado: o FastAPI responde 422 sozinho
+        if _tem_nul(dado):
+            raise HTTPException(422, "texto com caractere NUL (\\u0000) não é aceito")
+
+    # Motor exposto (com token, ou na nuvem sem estado): nada de /docs, /redoc nem /openapi.json abertos sem token.
+    exposto = bool(token) or os.environ.get("EDITOR_SEM_ESTADO", "") == "1"
+    docs = {"docs_url": None, "redoc_url": None, "openapi_url": None} if exposto else {}
+    app = FastAPI(title="Motor do Editor creat.MTT", version="0.1.0", dependencies=[Depends(autorizado), Depends(sem_nul)], **docs)
 
     @app.get("/v1/saude")
     def saude():

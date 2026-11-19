@@ -12,6 +12,7 @@ import json
 import sqlite3
 import time
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
@@ -170,9 +171,40 @@ def pegar(con, dono: str, etapas: Iterable[str] | None = None, aluguel_s: float 
     return d
 
 
-def renovar(con, job_id: str, aluguel_s: float = ALUGUEL_S) -> None:
-    """Renova só o aluguel de quem ainda está rodando (não ressuscita job já concluído/falho)."""
-    con.execute("UPDATE jobs SET aluguel_ate=? WHERE id=? AND estado='rodando'", (time.time() + aluguel_s, job_id))
+def renovar(con, job_id: str, aluguel_s: float = ALUGUEL_S, dono: str | None = None) -> bool:
+    """Renova só o aluguel de quem ainda está rodando (não ressuscita job já concluído/falho). Com `dono`, só renova
+    se o job ainda é deste worker (outro pode ter pegado depois de o aluguel vencer). Devolve se renovou."""
+    if dono is None:
+        cur = con.execute("UPDATE jobs SET aluguel_ate=? WHERE id=? AND estado='rodando'", (time.time() + aluguel_s, job_id))
+    else:
+        cur = con.execute("UPDATE jobs SET aluguel_ate=? WHERE id=? AND estado='rodando' AND dono=?",
+                          (time.time() + aluguel_s, job_id, dono))
+    return (cur.rowcount or 0) > 0
+
+
+def ainda_dono(con, job_id: str, dono: str) -> bool:
+    """O job ainda está 'rodando' com este dono? Chamar dentro da transação que vai concluir/falhar o job
+    (no Postgres a linha fica travada até o fim dela)."""
+    r = con.execute("SELECT estado, dono FROM jobs WHERE id=?" + (" FOR UPDATE" if eh_postgres(con) else ""), (job_id,)).fetchone()
+    return r is not None and r["estado"] == "rodando" and r["dono"] == dono
+
+
+def conexao_caiu(con) -> bool:
+    """Conexão Postgres perdida (pooler cortou, servidor reiniciou). SQLite é arquivo local: nunca."""
+    return bool(getattr(con, "quebrada", False))
+
+
+@contextmanager
+def transacao(con):
+    """BEGIN IMMEDIATE ... COMMIT (ROLLBACK no erro). No Postgres pega a mesma trava consultiva do worker."""
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        yield con
+    except BaseException:
+        if not conexao_caiu(con):
+            con.execute("ROLLBACK")
+        raise
+    con.execute("COMMIT")
 
 
 def concluir(con, job_id: str, saida: Any = None) -> None:

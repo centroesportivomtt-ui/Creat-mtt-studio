@@ -38,7 +38,6 @@ ALTER TABLE arquivos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE versoes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE eventos ENABLE ROW LEVEL SECURITY;
-
 -- Reforço: tira qualquer permissão dos papéis da API pública do Supabase (no Postgres comum esses papéis não existem).
 DO $$
 DECLARE papel text;

@@ -108,9 +108,14 @@ const MODELOS = {
     casos: comTextos((x) => ({ x: 70, y: 620, itens: [x.linhas[0].replace(/\*/g, ""), x.limpo, "ENTREGA"] })),
   },
   stats: {
-    dur: 3.0,
-    casos: comTextos((x, de, ate, k) => ({ x: 60, y: 420, w: 420, titulo: "BASTIDOR · " + x.palavra,
-      itens: [{ n: k === "numeros" ? x.limpo : 71, rot: x.minusc }, { n: k === "numeros" ? "1.234.567" : 15, rot: "agentes\nna nuvem" }], rodape: x.limpo })),
+    dur: (k) => (k === "numeros_formatos" ? 3.6 : 3.0),
+    casos: {
+      ...comTextos((x, de, ate, k) => ({ x: 60, y: 420, w: 420, titulo: "BASTIDOR · " + x.palavra,
+        itens: [{ n: k === "numeros" ? x.limpo : 71, rot: x.minusc }, { n: k === "numeros" ? "1.234.567" : 15, rot: "agentes\nna nuvem" }], rodape: x.limpo })),
+      // números em texto: "4.8" e "2026" mantêm o formato antigo; "1.234,56" e preço contam no formato brasileiro
+      numeros_formatos: () => ({ x: 60, y: 420, w: 420, titulo: "BASTIDOR · NÚMEROS",
+        itens: [{ n: "4.8", rot: "nota" }, { n: "2026", rot: "desde" }, { n: "1.234,56", rot: "média" }, { n: "R$ 12.999,90", rot: "ticket" }], rodape: "formatos de número" }),
+    },
   },
   pilha: {
     // a pilha não recebe texto do autor (só imagens e a contagem): os casos variam a contagem e os números

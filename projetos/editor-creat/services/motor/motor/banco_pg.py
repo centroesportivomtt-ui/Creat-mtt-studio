@@ -12,7 +12,12 @@ lê linhas por nome (`r["estado"]`, `dict(r)`), usa `lastrowid`, `in_transaction
   que apaga e insere de novo); `INSERT OR IGNORE` → `ON CONFLICT DO NOTHING`;
 - `SUM(estado='x')` → `SUM(CAST((estado='x') AS INTEGER))` (Postgres não soma booleano);
 - `INSERT INTO eventos` ganha `RETURNING id` para `lastrowid`;
-- `PRAGMA` vira nada.
+- `PRAGMA` vira nada;
+- escrita (INSERT/UPDATE/DELETE) fora de transação roda num BEGIN curto com a MESMA trava consultiva: é o que o SQLite
+  faz (toda escrita espera quem está num BEGIN IMMEDIATE). Sem isso, uma rota que escreve solta (pedido, fechar envio)
+  cruza com o "fechar job + próxima etapa" do worker e o projeto para; e o id do evento (BIGSERIAL) poderia ser
+  alocado antes e confirmado depois de um mais novo, e o SSE (cursor id>?) pularia o evento. Com a trava, a ordem dos
+  ids é a ordem de confirmação.
 
 Compatível com o pooler do Supabase (porta 6543, modo transação): sem prepared statement persistente
 (`prepare_threshold=None`), autocommit fora dos blocos BEGIN/COMMIT e conexões curtas. `sslmode` da URL é respeitado;
@@ -70,6 +75,17 @@ ALTER TABLE arquivos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE versoes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE eventos ENABLE ROW LEVEL SECURITY;
+-- Reforço: tira qualquer permissão dos papéis da API pública do Supabase (no Postgres comum esses papéis não existem).
+DO $$
+DECLARE papel text;
+BEGIN
+  FOREACH papel IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = papel) THEN
+      EXECUTE format('REVOKE ALL ON TABLE public.projetos, public.arquivos, public.versoes, public.jobs, public.eventos FROM %I', papel);
+      EXECUTE format('REVOKE ALL ON SEQUENCE public.eventos_id_seq FROM %I', papel);
+    END IF;
+  END LOOP;
+END $$;
 """
 
 # Colunas e chave de cada tabela (para traduzir INSERT OR REPLACE).
@@ -174,6 +190,7 @@ def _somas_booleanas(sql: str) -> str:
 
 _INSERT_OU = re.compile(r"^\s*INSERT\s+OR\s+(REPLACE|IGNORE)\s+INTO\s+(\w+)\s*\(([^)]*)\)", re.IGNORECASE | re.DOTALL)
 _INSERT = re.compile(r"^\s*INSERT\s+INTO\s+(\w+)", re.IGNORECASE)
+_ESCRITA = re.compile(r"^\s*(INSERT|UPDATE|DELETE)\b", re.IGNORECASE)
 _BEGIN = re.compile(r"^\s*BEGIN(\s+(DEFERRED|IMMEDIATE|EXCLUSIVE))?(\s+TRANSACTION)?\s*;?\s*$", re.IGNORECASE)
 
 
@@ -268,6 +285,17 @@ class ConexaoPG:
             return _CursorVazio()
         args = tuple(params) if params is not None else ()
         cur = None
+        if len(comandos) == 1 and _ESCRITA.match(comandos[0]) and not self.in_transaction:
+            self._con.execute(f"BEGIN; SELECT pg_advisory_xact_lock({TRAVA_ESCRITA})")
+            try:
+                cur = self._con.execute(comandos[0], args)
+                linha = cur.fetchone() if devolve_id else None
+                self._con.execute("COMMIT")
+            except BaseException:
+                if not self.quebrada:
+                    self._con.execute("ROLLBACK")
+                raise
+            return Cursor(cur, linha["id"] if linha else None) if devolve_id else Cursor(cur)
         for i, c in enumerate(comandos):
             cur = self._con.execute(c, args if i == len(comandos) - 1 else ())
         if devolve_id:
@@ -297,6 +325,11 @@ class ConexaoPG:
     @property
     def closed(self) -> bool:
         return self._con.closed
+
+    @property
+    def quebrada(self) -> bool:
+        """A conexão caiu (servidor reiniciou, pooler cortou, rede): só reconectando."""
+        return bool(self._con.closed or self._con.broken)
 
     def __enter__(self):
         return self

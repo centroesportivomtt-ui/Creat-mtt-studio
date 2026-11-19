@@ -7,14 +7,19 @@ export default function stats(ctx, c) {
   const cab = el("div", "", card, { display: "flex", alignItems: "center", gap: "12px" });
   aba(cab, 36, { position: "relative", flex: "0 0 auto" });
   const h = el("div", "", cab, { font: "700 19px 'JetBrains Mono'", letterSpacing: "0.10em", color: "#F5B84D" }); h.textContent = p.titulo;
-  // número: 71 conta como inteiro (como sempre); texto com número ("R$ 12.999,90", "1.234.567", "98%") conta no formato
-  // brasileiro com o prefixo, as casas decimais e o sufixo de quem escreveu
+  // número: 71 conta como inteiro (como sempre). Texto só com dígitos e no máximo um ponto ("4.8", "2026") é lido como
+  // número e mantém o formato antigo (inteiro arredondado, sem separador). Só texto com vírgula decimal, mais de um ponto
+  // de milhar, prefixo ou sufixo ("R$ 12.999,90", "1.234.567", "98%") conta no formato brasileiro, com as casas
+  // decimais de quem escreveu; o separador de milhar só aparece se o autor escreveu um (ano "2026 clientes" fica 2026).
   const contador = (alvo) => {
     if (typeof alvo === "number") return (k) => String(Math.round(k * alvo));
-    const m = /^(.*?)(\d[\d.]*(?:,\d+)?)(.*)$/.exec(String(alvo ?? ""));
-    if (!m) return () => String(alvo ?? "");
+    const txt = String(alvo ?? "").trim();
+    if (/^\d+(\.\d+)?$/.test(txt)) { const v = Number(txt); return (k) => String(Math.round(k * v)); }
+    const m = /^(.*?)(\d[\d.]*(?:,\d+)?)(.*)$/.exec(txt);
+    if (!m) return () => txt;
     const dec = (m[2].split(",")[1] ?? "").length, v = parseFloat(m[2].replace(/\./g, "").replace(",", "."));
-    return (k) => m[1] + (k * v).toLocaleString("pt-BR", { minimumFractionDigits: dec, maximumFractionDigits: dec }) + m[3];
+    const grupo = m[2].includes(".");
+    return (k) => m[1] + (k * v).toLocaleString("pt-BR", { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: grupo }) + m[3];
   };
   // auto-ajuste (ctx.caber): o cartão recorta o que passa da largura (clip-path). Rótulo que não cabe ao lado do número
   // encolhe e quebra; número largo (preço) encolhe até caber com o rótulo. O que cabe fica igual.

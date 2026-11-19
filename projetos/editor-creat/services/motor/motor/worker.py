@@ -31,26 +31,42 @@ class _Batimento:
     """Renova o aluguel do job numa thread (conexão própria) enquanto a etapa roda. Assim o aluguel pode ser curto
     (banco.ALUGUEL_S) e um job de worker morto (kill -9, reinício) volta à fila em ~2 min, não em 10."""
 
-    def __init__(self, cfg, job_id: str, intervalo: float | None = None):
-        self.cfg, self.job_id = cfg, job_id
+    def __init__(self, cfg, job_id: str, intervalo: float | None = None, dono: str | None = None):
+        self.cfg, self.job_id, self.dono = cfg, job_id, dono
         self.intervalo = intervalo or max(5.0, banco.ALUGUEL_S / 4)
         self._parar = threading.Event()
         self._t = threading.Thread(target=self._rodar, daemon=True)
+        self.renovacoes = 0
+        self.reconexoes = 0
 
     def _rodar(self):
+        """Conexão caída (pooler cortou, Postgres reiniciou) não mata o batimento: reconecta no próximo passo.
+        Antes, ele morria calado, o aluguel vencia e outro worker rodava o mesmo job de novo (render e entrega dobrados)."""
         con = None
         try:
-            con = banco.conectar(self.cfg.banco)
             while not self._parar.wait(self.intervalo):
                 try:
-                    banco.renovar(con, self.job_id)
-                except Exception:  # noqa: BLE001 - banco ocupado: tenta no próximo batimento
-                    pass
-        except Exception:  # noqa: BLE001
-            pass
+                    if con is None:
+                        con = banco.conectar(self.cfg.banco)
+                    if banco.renovar(con, self.job_id, dono=self.dono):
+                        self.renovacoes += 1
+                except Exception as e:  # noqa: BLE001 - banco ocupado ou fora: tenta no próximo batimento
+                    if con is not None and banco.conexao_caiu(con):
+                        log.warning("batimento do job %s perdeu a conexão com o banco (%s); reconectando",
+                                    self.job_id, type(e).__name__)
+                        try:
+                            con.close()
+                        except Exception:  # noqa: BLE001
+                            pass
+                        con, self.reconexoes = None, self.reconexoes + 1
+                    elif con is None:
+                        log.warning("batimento do job %s não conectou no banco (%s); tenta de novo", self.job_id, type(e).__name__)
         finally:
             if con is not None:
-                con.close()
+                try:
+                    con.close()
+                except Exception:  # noqa: BLE001
+                    pass
 
     def __enter__(self):
         self._t.start()
@@ -69,8 +85,39 @@ def _transacao(con, fn):
         con.execute("COMMIT")
         return r
     except BaseException:
-        con.execute("ROLLBACK")
+        if not banco.conexao_caiu(con):
+            con.execute("ROLLBACK")
         raise
+
+
+def _como_dono(con, cfg, job: dict, dono: str, fazer) -> bool:
+    """Fecha o job (concluir/falhar + eventos + próxima etapa) numa transação, SÓ se este worker ainda é o dono
+    (estado 'rodando' e dono igual). Se a conexão caiu, reconecta uma vez para fechar. Devolve se fechou."""
+    nova = None
+    for tentativa in (1, 2):
+        alvo = con
+        if tentativa == 2 or banco.conexao_caiu(con):
+            log.warning("conexão com o banco caiu; reconectando para fechar o job %s", job["id"])
+            nova = alvo = banco.conectar(cfg.banco)
+        try:
+            _sair_de_transacao(alvo)
+
+            def bloco():
+                if not banco.ainda_dono(alvo, job["id"], dono):
+                    log.warning("job %s não é mais deste worker (o aluguel venceu e outro pegou): não conclui nem falha",
+                                job["id"])
+                    return False
+                fazer(alvo)
+                return True
+            return _transacao(alvo, bloco)
+        except Exception:
+            if tentativa == 2 or not banco.conexao_caiu(alvo):
+                raise
+        finally:
+            if nova is not None:
+                nova.close()
+                nova = None
+    return False
 
 
 def recolher_mortos(con) -> int:
@@ -95,31 +142,31 @@ def rodar_um(con, cfg, arm, dono: str, etapas=None) -> bool:
     banco.emitir(con, proj, "etapa_inicio", etapa=et, alvo=alvo_ev)
     t0 = time.time()
     try:
-        with _Batimento(cfg, job["id"]):
+        with _Batimento(cfg, job["id"], dono=dono):
             saida = obter(et)(Contexto(con=con, cfg=cfg, job=job, armazenamento=arm)) or {}
 
-        def fechar():   # concluir + evento + próxima etapa: tudo ou nada (reinício no meio não perde o encadeamento)
-            banco.concluir(con, job["id"], saida)
-            banco.emitir(con, proj, "etapa_fim", etapa=et, alvo=alvo_ev, dados={"s": round(time.time() - t0, 2)})
-            pipeline.depois(con, job, saida)
-        _transacao(con, fechar)
+        def fechar(c):   # concluir + evento + próxima etapa: tudo ou nada (reinício no meio não perde o encadeamento)
+            banco.concluir(c, job["id"], saida)
+            banco.emitir(c, proj, "etapa_fim", etapa=et, alvo=alvo_ev, dados={"s": round(time.time() - t0, 2)})
+            pipeline.depois(c, job, saida)
+        _como_dono(con, cfg, job, dono, fechar)
     except ErroDefinitivo as e:
-        def desistir():
-            con.execute("UPDATE jobs SET max_tentativas=tentativas WHERE id=?", (job["id"],))
-            banco.falhar(con, job["id"], str(e))
-            banco.emitir(con, proj, "etapa_erro", etapa=et, alvo=alvo_ev, mensagem=str(e)[:300])
-            pipeline.falha_definitiva(con, job, str(e))
-        _sair_de_transacao(con)
-        _transacao(con, desistir)
+        def desistir(c):
+            c.execute("UPDATE jobs SET max_tentativas=tentativas WHERE id=?", (job["id"],))
+            banco.falhar(c, job["id"], str(e))
+            banco.emitir(c, proj, "etapa_erro", etapa=et, alvo=alvo_ev, mensagem=str(e)[:300])
+            pipeline.falha_definitiva(c, job, str(e))
+        _como_dono(con, cfg, job, dono, desistir)
     except Exception as e:  # noqa: BLE001 - qualquer falha volta para a fila
-        def registrar():
-            estado = banco.falhar(con, job["id"], traceback.format_exc())
-            banco.emitir(con, proj, "etapa_erro", etapa=et, alvo=alvo_ev,
+        rastro = traceback.format_exc()
+
+        def registrar(c):
+            estado = banco.falhar(c, job["id"], rastro)
+            banco.emitir(c, proj, "etapa_erro", etapa=et, alvo=alvo_ev,
                          mensagem=f"{type(e).__name__}: {str(e)[:200]} ({'vai tentar de novo' if estado == 'pendente' else 'desistiu'})")
             if estado == "falhou":
-                pipeline.falha_definitiva(con, job, f"{type(e).__name__}: {str(e)[:200]}")
-        _sair_de_transacao(con)
-        _transacao(con, registrar)
+                pipeline.falha_definitiva(c, job, f"{type(e).__name__}: {str(e)[:200]}")
+        _como_dono(con, cfg, job, dono, registrar)
     return True
 
 
@@ -240,10 +287,35 @@ def main(argv=None) -> int:
     dono = f"{socket.gethostname()}:{os.getpid()}"
     etapas = [e for e in a.etapas.split(",") if e] or None
     while True:
-        if not rodar_um(con, cfg, arm, dono, etapas):
+        try:
+            trabalhou = rodar_um(con, cfg, arm, dono, etapas)
+        except Exception as e:  # noqa: BLE001 - só a queda de conexão é tratada aqui; o resto sobe
+            if not banco.conexao_caiu(con):
+                raise
+            log.warning("worker perdeu a conexão com o banco (%s); reconectando", type(e).__name__)
+            con = _reconectar(cfg, con, a.espera)
+            continue
+        if not trabalhou:
             if a.ate_ocioso:
                 return 0
             time.sleep(a.espera)
+
+
+def _reconectar(cfg, velha, espera: float = 1.0, tentativas: int = 30):
+    """Fecha a conexão caída e abre outra, com espera crescente (até ~30 s entre tentativas)."""
+    try:
+        velha.close()
+    except Exception:  # noqa: BLE001
+        pass
+    ultimo = None
+    for i in range(tentativas):
+        try:
+            return banco.conectar(cfg.banco)
+        except Exception as e:  # noqa: BLE001
+            ultimo = e
+            log.warning("ainda sem banco (%s); nova tentativa", type(e).__name__)
+            time.sleep(min(30.0, espera * (2 ** min(i, 5))))
+    raise RuntimeError(f"o banco não voltou depois de {tentativas} tentativas") from ultimo
 
 
 if __name__ == "__main__":

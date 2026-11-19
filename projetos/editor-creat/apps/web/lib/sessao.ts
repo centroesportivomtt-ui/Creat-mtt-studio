@@ -10,7 +10,10 @@ import { cookies, headers } from 'next/headers';
 import { configSupabase, emailPermitido, emailsPermitidos, normalizarEmail } from '@/lib/supabase';
 
 export const COOKIE = 'ec_sessao';
-const DURACAO_S = 30 * 24 * 3600; // 30 dias: o dono usa no celular e não quer digitar senha toda hora
+// 30 dias no modo senha (o dono usa no celular e não quer digitar senha toda hora); 7 dias no modo supabase:
+// na Vercel o "Sair" e o limite de tentativas valem só na instância que atendeu (memória do processo), então o
+// cookie dura menos. Ver docs/AUTH.md.
+const duracaoS = () => (modoAuth() === 'supabase' ? 7 : 30) * 24 * 3600;
 
 function scrypt(senha: string, sal: Buffer, tamanho: number, opcoes: ScryptOptions): Promise<Buffer> {
   return new Promise((ok, falha) => scryptCb(senha, sal, tamanho, opcoes, (e, k) => (e ? falha(e) : ok(k))));
@@ -74,7 +77,8 @@ function assinar(corpo: string): string {
 
 /** Sessão nova. No modo supabase, `email` é obrigatório (vai assinado no cookie). */
 export function criarToken(agora = Date.now(), email?: string): { valor: string; maxAge: number } {
-  const expira = Math.floor(agora / 1000) + DURACAO_S;
+  const duracao = duracaoS();
+  const expira = Math.floor(agora / 1000) + duracao;
   const nonce = randomBytes(9).toString('base64url');
   let corpo = `v1.${expira}.${nonce}`;
   if (modoAuth() === 'supabase') {
@@ -82,7 +86,7 @@ export function criarToken(agora = Date.now(), email?: string): { valor: string;
     if (!e) throw new Error('sessão do modo supabase precisa do e-mail');
     corpo = `v2.${expira}.${nonce}.${Buffer.from(e).toString('base64url')}`;
   }
-  return { valor: `${corpo}.${assinar(corpo)}`, maxAge: DURACAO_S };
+  return { valor: `${corpo}.${assinar(corpo)}`, maxAge: duracao };
 }
 
 type Sessao = { versao: 'v1' | 'v2'; expira: number; nonce: string; email: string | null };

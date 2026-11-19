@@ -1,7 +1,8 @@
 # Login do site (EDITOR_AUTH)
 
 Dois modos e uma sessão só: cookie `ec_sessao`, HttpOnly, SameSite=Lax, `Secure` atrás de HTTPS, assinado com
-HMAC-SHA256 (`EDITOR_SEGREDO_SESSAO`), 30 dias. Cookie de um modo não vale no outro.
+HMAC-SHA256 (`EDITOR_SEGREDO_SESSAO`). Vale 30 dias no modo senha e 7 dias no modo supabase. Cookie de um modo não
+vale no outro.
 
 | modo | como entra | cookie |
 |---|---|---|
@@ -25,11 +26,18 @@ HMAC-SHA256 (`EDITOR_SEGREDO_SESSAO`), 30 dias. Cookie de um modo não vale no o
 A lista é conferida de novo a cada requisição: tirar um e-mail de `EDITOR_EMAILS_PERMITIDOS` derruba a sessão dele
 no próximo clique (depois de reiniciar o site com a variável nova). Sem a lista, o login recusa tudo (503) e a tela avisa.
 
-**Sair** revoga o nonce no servidor (o mesmo cookie para de valer, não só some do navegador). A lista de revogados
-vive na memória do processo; para derrubar todas as sessões de vez, troque `EDITOR_SEGREDO_SESSAO`.
+**Sair** apaga o cookie do navegador e revoga o nonce na memória do processo que atendeu. **Na Vercel (várias
+instâncias), essa revogação vale só naquela instância:** uma cópia do cookie guardada antes de sair ainda pode ser
+aceita por outra instância até vencer. O mesmo vale para o limite de tentativas abaixo: ele conta por instância, não no
+site inteiro. Não há banco compartilhado para isso hoje; por isso, no modo supabase, o cookie dura só 7 dias.
 
-**Proteções mantidas:** 8 tentativas erradas por IP a cada 10 min, 40 no total, e (novo) 8 por e-mail, para quem gira
-de IP; POST de outra origem recusado (403); senha errada, conta inexistente e conta fora da lista recebem a MESMA
+O que vale em todas as instâncias, sempre: o cookie é assinado (HMAC) e HttpOnly, não dá para forjar nem ler pelo
+JavaScript da página; e a cada requisição o e-mail do cookie é conferido de novo contra `EDITOR_EMAILS_PERMITIDOS`.
+Para derrubar alguém de verdade: **tire o e-mail da lista** (derruba a sessão dele). Para derrubar todo mundo: **troque
+`EDITOR_SEGREDO_SESSAO`**. Nos dois casos, publique/reinicie o site com a variável nova.
+
+**Proteções mantidas (por instância, ver acima):** 8 tentativas erradas por IP a cada 10 min, 40 no total, e (novo) 8
+por e-mail, para quem gira de IP; POST de outra origem recusado (403); senha errada, conta inexistente e conta fora da lista recebem a MESMA
 mensagem ("E-mail ou senha incorretos."), então a tela não revela quem tem conta.
 
 ## Variáveis

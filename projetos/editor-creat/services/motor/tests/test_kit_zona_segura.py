@@ -113,3 +113,19 @@ def test_kit_e_motor_leem_a_mesma_zona():
     nucleo = (KIT / "kit" / "nucleo.js").read_text()
     assert 'from "./zona.json"' in nucleo and "ZONA_CASA.zona" in nucleo
     assert '"zona.json"' in ZONA_CJS.read_text()
+
+
+def test_stats_numero_em_texto_mantem_o_formato():
+    """'4.8' e '2026' continuam como sempre (Number arredondado, sem separador); '1.234,56', '1.234.567' e preço contam no
+    formato brasileiro (antes da correção o preço virava 'NaN'; na primeira correção '4.8' virava 48 e '2026' virava 2.026)."""
+    cena = {"formato": {"w": 1080, "h": 1920, "fps": 30}, "duracao": 4.6, "cor": "#0B0B0C", "camadas": [
+        {"id": "s", "modelo": "stats", "de": 0, "ate": 4.6, "props": {"titulo": "T", "rodape": "r", "itens": [
+            {"n": "4.8", "rot": "a"}, {"n": "2026", "rot": "b"}, {"n": "1.234,56", "rot": "c"}, {"n": "R$ 12.999,90", "rot": "d"},
+            {"n": "2026 clientes", "rot": "e"}, {"n": "1.234.567", "rot": "f"}, {"n": 71, "rot": "g"}]}}]}
+    js = ("const {abrir}=require('./ferramentas/comum.cjs');(async()=>{const s=await abrir(JSON.parse(process.argv[1]),{escala:0.25});"
+          "await s.page.evaluate(()=>window.__mk.seek(4.2));"
+          "const r=await s.page.evaluate(()=>[...document.querySelectorAll('[data-id=\"s\"] .mk-display')].map(e=>e.textContent));"
+          "console.log(JSON.stringify(r));await s.fechar();})().catch(e=>{console.error(e);process.exit(1)})")
+    r = subprocess.run(["node", "-e", js, json.dumps(cena)], cwd=KIT, capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, r.stderr[-800:]
+    assert json.loads(r.stdout.strip().splitlines()[-1]) == ["5", "2026", "1.234,56", "R$ 12.999,90", "2026 clientes", "1.234.567", "71"]

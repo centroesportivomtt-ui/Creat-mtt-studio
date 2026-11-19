@@ -22,7 +22,7 @@ Secret "editor-motor" (Modal > Secrets), variáveis esperadas — nomes, nunca v
   opcionais:    EDITOR_TRANSCRICAO, EDITOR_WHISPER_MODELO, ELEVENLABS_API_KEY, EDITOR_VISAO, GEMINI_API_KEY,
                 EDITOR_PUBLICACAO, METRICOOL_TOKEN, META_ACCESS_TOKEN, EDITOR_MODELO_DIRECAO, EDITOR_MODELO_LEVE,
                 EDITOR_ESFORCO_DIRECAO, EDITOR_ORCAMENTO_ENTRADA, EDITOR_ORCAMENTO_SAIDA, EDITOR_AUTORIZADO_PAGO
-  (EDITOR_DADOS, EDITOR_SEM_ESTADO, EDITOR_MODAL_WORKER, EDITOR_MEMORIA, EDITOR_TRILHAS, EDITOR_FALANTES_DIR,
+  (EDITOR_DADOS, EDITOR_SEM_ESTADO, EDITOR_MODAL_WORKER, EDITOR_MEMORIA, EDITOR_MEMORIA_REMOTA, EDITOR_TRILHAS, EDITOR_FALANTES_DIR,
    EDITOR_YUNET e PLAYWRIGHT_BROWSERS_PATH já vêm da imagem, abaixo.)
 
 O pacote `modal` NÃO é dependência do motor: sem ele este arquivo importa, mas não define nada (`app is None`).
@@ -30,7 +30,6 @@ O pacote `modal` NÃO é dependência do motor: sem ele este arquivo importa, ma
 from __future__ import annotations
 
 import pathlib
-import shutil
 
 try:  # import protegido: a Modal só existe na máquina de quem publica e dentro dos contêineres
     import modal
@@ -59,7 +58,9 @@ _AQUI = pathlib.Path(__file__).resolve()
 MOTOR_LOCAL = _AQUI.parents[1] if len(_AQUI.parents) > 2 else _AQUI.parent    # services/motor
 RAIZ_LOCAL = MOTOR_LOCAL.parents[1] if len(MOTOR_LOCAL.parents) > 1 else MOTOR_LOCAL  # projetos/editor-creat
 RAIZ_IMG = "/app"
-ESTADO = "/estado"              # Volume pequeno: memória da casa, trilhas e perfis de falante (JSON). Ver DEPLOY.md.
+ESTADO = "/estado"              # Volume pequeno: trilhas e perfis de falante (JSON, mudam raramente). Ver DEPLOY.md.
+# A memória da casa NÃO fica no Volume: regras/checagens vivem no R2 com escrita condicional (memoria/loja.py,
+# EDITOR_MEMORIA_REMOTA=r2); /app/memoria, dentro da imagem, é só a semente e a fonte de modelos/ e casos/.
 
 AMBIENTE_IMAGEM = {
     "PYTHONPATH": f"{RAIZ_IMG}/services/motor",
@@ -68,7 +69,8 @@ AMBIENTE_IMAGEM = {
     "EDITOR_SEM_ESTADO": "1",                        # worker/app recusam subir sem R2 + Postgres + token
     "EDITOR_MODAL_WORKER": "1",                      # a API acorda `trabalhar` ao enfileirar
     "EDITOR_MODAL_APP": APP_NOME,
-    "EDITOR_MEMORIA": f"{ESTADO}/memoria",
+    "EDITOR_MEMORIA": f"{RAIZ_IMG}/memoria",              # semente (git) + modelos/ e casos/
+    "EDITOR_MEMORIA_REMOTA": "r2",                        # regras.json/checagens.json no R2 (If-Match)
     "EDITOR_TRILHAS": f"{ESTADO}/biblioteca/trilhas.json",
     "EDITOR_FALANTES_DIR": f"{ESTADO}/biblioteca/falantes",
     "EDITOR_YUNET": "/opt/editor/modelos/face_detection_yunet_2023mar.onnx",
@@ -120,15 +122,13 @@ def construir_imagem():
     )
 
 
-def preparar_estado(raiz_estado: str = ESTADO, memoria_semente: str = f"{RAIZ_IMG}/memoria") -> bool:
-    """Primeira vez num Volume vazio: copia a memória versionada no git como semente. Devolve True se semeou."""
-    destino = pathlib.Path(raiz_estado) / "memoria"
-    if (destino / "regras.json").is_file():
+def preparar_estado(raiz_estado: str = ESTADO) -> bool:
+    """Primeira vez num Volume vazio: cria a pasta da biblioteca (trilhas, falantes). Devolve True se criou.
+    A memória não passa mais por aqui (fica no R2; ver memoria/loja.py)."""
+    pasta = pathlib.Path(raiz_estado) / "biblioteca" / "falantes"
+    if pasta.is_dir():
         return False
-    semente = pathlib.Path(memoria_semente)
-    if semente.is_dir():
-        shutil.copytree(semente, destino, dirs_exist_ok=True)
-    (pathlib.Path(raiz_estado) / "biblioteca" / "falantes").mkdir(parents=True, exist_ok=True)
+    pasta.mkdir(parents=True, exist_ok=True)
     return True
 
 

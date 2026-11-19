@@ -15,6 +15,11 @@ esse arquivo:
 
 `tokens.css` repete os números só como referência visual. Se mudar a zona, mude o JSON.
 
+Requisito: `nucleo.js` importa o JSON com *import attributes* (`import ... with { type: "json" }`), que exige
+Chromium 123 ou mais novo. Por isso o `peerDependency` do kit é `playwright >= 1.42` (Chromium 123); aqui roda o
+1.63. Com um Chromium mais velho, o `montar` falha de cara ("falha ao montar a composição"), sem render errado em
+silêncio.
+
 ## Como rodar
 
 ```bash
@@ -52,7 +57,7 @@ til do Ã aparado. O pytest reprova esse aviso também.
 Casos (`cenas/zona/casos.cjs`): `curto` (VENDA MAIS.), `medio`, `longo` (frase de 3 a 4 linhas), `infraestrutura`,
 `estaticos` (ESTÁTICOS.), `eletrodomesticos`, `acentos`, `numeros` (R$ 12.999,90) e `quebra` (2 linhas forçadas).
 Alguns modelos têm casos a mais: `demo_troca` e `troca_longa` no gancho, `motor_longo` e `motor_gigante` na legenda (no
-formato que o motor monta), `direita` no rótulo, `assinatura` no selo e `aba71` no herói. A `pilha` não recebe texto do
+formato que o motor monta), `direita` no rótulo, `assinatura` no selo, `aba71` no herói e `numeros_formatos` no stats ("4.8", "2026", "1.234,56", "R$ 12.999,90"). A `pilha` não recebe texto do
 autor, por isso varia só a contagem.
 
 ## Modelo novo
@@ -68,7 +73,7 @@ autor, por isso varia só a contagem.
 
 ## Resultado (18/11/2026)
 
-Na matriz final, 15 modelos são medidos e 2 ficam isentos (`fundo` e `transicao`). São 135 casos e 4.958 instantes.
+Na matriz final, 15 modelos são medidos e 2 ficam isentos (`fundo` e `transicao`). São 136 casos e cerca de 5.000 instantes.
 
 Antes das correções, 39 casos ficaram fora da zona, somando 1.008 instantes, em 11 modelos. Um desses casos também
 derrubava a montagem: o `gancho2` com "R$ 12.999,90". Outros 10 casos tinham texto recortado, em 3 modelos.
@@ -91,7 +96,7 @@ Depois das correções, nenhum caso fica fora, nenhum instante vaza, nenhum text
 | pilha | dentro | nenhuma | 2/2 |
 | rotulo | longo +940, direita +940 esq. | título e apoio em até 2 linhas, limitados à zona | 10/10 |
 | selo | 8 de 10 fora | as 3 linhas cabem ao lado da logo | 10/10 |
-| stats | palavra recortada; preço aparecia como "NaN" | rótulo e número encolhem; conta no formato BR | 9/9 |
+| stats | palavra recortada; preço aparecia como "NaN" | rótulo e número encolhem; número em texto com vírgula, prefixo ou sufixo conta no formato BR ("4.8" e "2026" continuam como antes) | 10/10 |
 
 Os casos que já cabiam ficaram iguais. O demo (`cenas/demo.json`) também: o overlay é pixel-idêntico ao kit original
 em 58 instantes. A única diferença no quadro cheio é o fundo "código", que mostra o próprio `heroi.js`. Dos 402 quadros

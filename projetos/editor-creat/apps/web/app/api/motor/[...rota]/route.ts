@@ -10,7 +10,28 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // = LIMITE_FUNCAO_S (lib/motor.ts) e vercel.json; o Next exige número literal aqui
 
-const PERMITIDAS = /^v1\/(saude|memoria|projetos|projetos\/p_[a-z0-9]{4,40}(\/[A-Za-z0-9_\-./]+)?|arquivos\/[A-Za-z0-9_\-./]+)$/;
+// Cada segmento é conferido DEPOIS de decodificado (o Next transforma %2F em '/' dentro do segmento): só letras,
+// números, '_', '-' e '.', nunca só pontos. A regex abaixo vale para o caminho já montado de segmentos limpos.
+const SEGMENTO = /^[A-Za-z0-9_\-.]+$/;
+const SEG = '[A-Za-z0-9_\\-.]+';
+const PERMITIDAS = new RegExp(`^v1\\/(saude|memoria|projetos|projetos\\/p_[a-z0-9]{4,40}(\\/${SEG})*|arquivos(\\/${SEG})+)$`);
+
+/** Caminho seguro para o motor, ou null. */
+function caminhoSeguro(rota: string[]): string | null {
+  if (!rota.length || rota.length > 40) return null;
+  for (const p of rota) {
+    if (!SEGMENTO.test(p) || /^\.+$/.test(p) || /[/\\%]/.test(p)) return null;
+  }
+  const caminho = rota.join('/');
+  if (!PERMITIDAS.test(caminho)) return null;
+  // última trava: o URL montado não pode ser normalizado para outro lugar
+  try {
+    if (new URL(caminho, 'http://motor.invalid/').pathname !== `/${caminho}`) return null;
+  } catch {
+    return null;
+  }
+  return caminho;
+}
 const EVENTOS = /^v1\/projetos\/p_[a-z0-9]{4,40}\/eventos$/;
 const ENTRA = ['content-type', 'range', 'if-range', 'last-event-id', 'accept'];
 const SAI = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'cache-control', 'last-modified', 'etag', 'content-disposition'];
@@ -23,8 +44,10 @@ async function repassar(req: Request, ctx: Ctx): Promise<Response> {
   const falta = faltaConfigMotor();
   if (falta) return NextResponse.json({ detail: falta }, { status: 503 });
   const { rota } = await ctx.params;
-  const caminho = rota.join('/');
-  if (!PERMITIDAS.test(caminho) || rota.some((p) => p === '..' || p === '.')) {
+  const caminho = caminhoSeguro(rota);
+  if (!caminho) return NextResponse.json({ detail: 'rota do motor não permitida' }, { status: 404 });
+  const alvo = new URL(`${MOTOR_URL}/${caminho}`);
+  if (alvo.pathname !== `${new URL(MOTOR_URL).pathname.replace(/\/+$/, '')}/${caminho}`) {
     return NextResponse.json({ detail: 'rota do motor não permitida' }, { status: 404 });
   }
   const url = new URL(req.url);

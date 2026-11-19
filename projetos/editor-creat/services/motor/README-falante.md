@@ -34,8 +34,11 @@ nas vozes sintéticas). Catálogo: 48 clipes no formato de 17/11, 13 706 → 13 
 O catálogo põe o rótulo em maiúsculas (MARCOS, RUAN, XANDE, OUTRO, DESCONHECIDO) e `falante_conf` no JSON. No texto
 do cérebro: `MARCOS`, `MARCOS~` (confiança < 0,7, fala fica inteira), `?` (sem rótulo) e uma linha de cabeçalho com
 quantas falas e segundos o Marcos tem (base do Reel). Falas da equipe nunca são truncadas.
-Reserva (paliativo do item 7 da fase 1): sem rótulo nenhum no projeto, toda fala sob momento "fala com rosto" nota ≥ 4
-fica inteira; com rótulo, a reserva vale só para as falas `DESCONHECIDO`.
+Reserva (paliativo do item 7 da fase 1), decidida **por clipe**: num clipe sem rótulo nenhum, toda fala sob momento
+"fala com rosto" nota ≥ 4 fica inteira; num clipe rotulado, a reserva vale só para as falas `DESCONHECIDO`. Assim um
+projeto misto (um arquivo rotulado, outro não) não perde a fala do Marcos do arquivo sem rótulo.
+Falha do falante (provedor ativo que deu erro) é gravada com marcador em `analise.ok`: o próximo reenfileiramento
+tenta de novo só o rótulo, sem refazer transcrição nem visão.
 
 ## Cadastro dos perfis (passo a passo para o dono)
 

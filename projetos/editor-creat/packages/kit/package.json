@@ -19,7 +19,7 @@
     "three": "0.160.0"
   },
   "peerDependencies": {
-    "playwright": ">=1.40"
+    "playwright": ">=1.42"
   },
   "peerDependenciesMeta": {
     "playwright": {

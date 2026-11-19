@@ -35,7 +35,7 @@ O arquivo de 300 MB é sintético e esparso (64 KB aleatórios a cada MB): quase
 
 | peça | arquivo | o que faz |
 |---|---|---|
-| login | `lib/sessao.ts`, `app/api/entrar`, `app/api/sair` | senha única em scrypt (`scrypt:N:r:p:sal:hash`), cookie `ec_sessao` HttpOnly assinado com HMAC-SHA256, 30 dias, `Secure` quando chega por HTTPS; 8 tentativas por IP a cada 10 min; POST de outra origem recusado |
+| login | `lib/sessao.ts`, `app/api/entrar`, `app/api/sair` | senha única em scrypt (`scrypt:N:r:p:sal:hash`), cookie `ec_sessao` HttpOnly assinado com HMAC-SHA256, 30 dias (7 no modo supabase), `Secure` quando chega por HTTPS; 8 tentativas por IP a cada 10 min (por instância: na Vercel, "Sair" e o limite valem só na instância que atendeu, ver `docs/AUTH.md`); POST de outra origem recusado |
 | envio retomável | `app/api/envio/[[...tus]]/route.ts`, `componentes/Envio.tsx` | servidor tus (`@tus/server` + `@tus/file-store`) grava em `armazenamento/.envio/`; no fim move (rename, mesmo disco) para `entrada/<projeto>/<nome>-<id>.<ext>` e chama `POST /v1/projetos/{id}/arquivos`. O navegador manda partes de `EDITOR_ENVIO_PARTE_MB` (64); a impressão digital inclui o projeto; envio interrompido aparece na tela com a porcentagem e continua quando o arquivo é escolhido de novo |
 | proxy do motor | `app/api/motor/[...rota]/route.ts`, `lib/motor.ts` | só com sessão; lista fechada de rotas `v1/…`; repassa `Range` (player) e SSE (status ao vivo) em streaming; o `MOTOR_TOKEN` nunca vai ao navegador |
 | telas | `app/entrar`, `app/projetos`, `app/projetos/novo`, `app/projetos/[id]`, `componentes/Projeto.tsx` | material, pedido, ilha ao vivo (relógio dos 30 minutos + trilha das etapas), versões com player, QA resumido e "reprovar com motivo" (vira regra da casa no motor) |

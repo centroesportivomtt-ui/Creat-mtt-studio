@@ -305,12 +305,13 @@ class _TrFake:
                 "segmentos": [{**s, "palavras": [[s["s"], s["e"], w, 0.9] for w in s["texto"].split()]} for s in self.segs]}
 
 
-def test_analise_ponta_a_ponta_fixture(dados, tmp_path, monkeypatch):
-    from motor import banco, config, importar, worker
+def _projeto_na_fila(tmp_path, monkeypatch, falante: str):
+    """Projeto p1 com um vídeo de 3 trechos (marcos, xande, curto); transcrição falsa; visão local contada."""
+    from motor import banco, config, importar
     from motor.etapas import analise as an
     from motor.provedores import armazenamento_de
     monkeypatch.setenv("EDITOR_MODELOS_BAIXAR", "0")
-    monkeypatch.setenv("EDITOR_FALANTE", "desligado")
+    monkeypatch.setenv("EDITOR_FALANTE", falante)
     monkeypatch.delenv("EDITOR_FALANTE_FIXTURE", raising=False)
     partes = [(voz(100, 1.0, 3, 1), "o pessoal da creat está aqui"), (voz(185, 0.88, 3, 2), "bora que bora galera"),
               (voz(100, 1.0, 0.8, 3), "valeu")]
@@ -324,26 +325,37 @@ def test_analise_ponta_a_ponta_fixture(dados, tmp_path, monkeypatch):
     arm = armazenamento_de(cfg)
     arm.gravar("entrada/p1/20261118_101500.mov", mov)
     importar.registrar_arquivo(con, "p1", mov.name, "entrada/p1/20261118_101500.mov", mov.stat().st_size)
-    vis_chamadas = []
+    chamadas = {"visao": 0, "transcricao": 0}
     original = an._instancia
+
+    class Tr(_TrFake):
+        def transcrever(self, wav, **k):
+            chamadas["transcricao"] += 1
+            return super().transcrever(wav, **k)
 
     def instancia(tipo, c):
         if tipo == "transcricao":
-            return _TrFake(segs)
+            return Tr(segs)
         v = original(tipo, c)
         if not hasattr(v, "_contado"):
             d = v.descrever
-            v.descrever = lambda *a, **k: (vis_chamadas.append(1), d(*a, **k))[1]
+            v.descrever = lambda *a, **k: (chamadas.__setitem__("visao", chamadas["visao"] + 1), d(*a, **k))[1]
             v._contado = True
         return v
     monkeypatch.setattr(an, "_instancia", instancia)
+    return con, arm, chamadas
+
+
+def test_analise_ponta_a_ponta_fixture(dados, tmp_path, monkeypatch):
+    from motor import banco, worker
+    con, arm, chamadas = _projeto_na_fila(tmp_path, monkeypatch, "desligado")
 
     # 1) desligado: análise como antes, sem campos novos
     worker.main(["--ate-ocioso", "--etapas", "ingest,analise"])
     a = arm.ler_json("derivados/p1/a001/analise.json")
     assert validar.erros("analise", a) == [] and "falante" not in a and "analise_falante" not in a["tempos"]
     assert all("falante_metodo" not in s for s in a["transcricao"]["segmentos"])
-    assert len(vis_chamadas) == 1
+    assert chamadas["visao"] == 1
 
     # 2) liga o fixture: só o rótulo é refeito (sem nova visão nem transcrição)
     monkeypatch.setenv("EDITOR_FALANTE", "fixture")
@@ -353,21 +365,21 @@ def test_analise_ponta_a_ponta_fixture(dados, tmp_path, monkeypatch):
     assert validar.erros("analise", a) == []
     assert [s["falante"] for s in a["transcricao"]["segmentos"]] == ["marcos", "xande", "desconhecido"]
     assert a["falante"]["provedor"] == "fixture" and a["falante"]["contagem"] == {"marcos": 1, "xande": 1, "desconhecido": 1}
-    assert len(vis_chamadas) == 1 and "analise_falante" in a["tempos"]
+    assert chamadas["visao"] == 1 and "analise_falante" in a["tempos"]
     saida = lambda: json.loads(con.execute("SELECT saida FROM jobs WHERE etapa='analise' AND alvo='a001'").fetchone()["saida"])  # noqa: E731
     assert saida().get("so_falante") is True
 
     # 3) idempotente: de novo não refaz nada
     banco.enfileirar(con, "analise", "p1", "a001")
     worker.main(["--ate-ocioso", "--etapas", "analise"])
-    assert saida() == {"pulado": True} and len(vis_chamadas) == 1
+    assert saida() == {"pulado": True} and chamadas["visao"] == 1
 
     # desligar de novo tira os rótulos (sem refazer visão)
     monkeypatch.setenv("EDITOR_FALANTE", "desligado")
     banco.enfileirar(con, "analise", "p1", "a001")
     worker.main(["--ate-ocioso", "--etapas", "analise"])
     b = arm.ler_json("derivados/p1/a001/analise.json")
-    assert "falante" not in b and all("falante_metodo" not in s for s in b["transcricao"]["segmentos"]) and len(vis_chamadas) == 1
+    assert "falante" not in b and all("falante_metodo" not in s for s in b["transcricao"]["segmentos"]) and chamadas["visao"] == 1
 
     # 4) catálogo do projeto: a fala do Marcos sai rotulada e inteira
     cat, txt = catalogo.montar([a], {"texto": "reel"}, "p1")
@@ -394,3 +406,50 @@ def test_falha_do_falante_nao_derruba_a_analise(monkeypatch):
     monkeypatch.setattr(an, "provedor", lambda *a: (_ for _ in ()).throw(KeyError("nao_existe")))
     prov, aviso = an._falante(types.SimpleNamespace(falante="nao_existe"))
     assert prov is None and "indisponível" in aviso
+
+
+def test_falha_transitoria_do_falante_e_refeita_sem_visao(dados, tmp_path, monkeypatch):
+    """Provedor ativo que levanta exceção: a análise sai sem rótulo, mas o próximo reenfileiramento tenta de novo SÓ o
+    rótulo (sem refazer transcrição nem visão). Antes, a falha ficava gravada como análise pronta para sempre."""
+    from motor import banco, worker
+    from motor.provedores import falante_fixture
+    con, arm, chamadas = _projeto_na_fila(tmp_path, monkeypatch, "fixture")
+    certo = falante_fixture.FalanteFixture.rotular
+    monkeypatch.setattr(falante_fixture.FalanteFixture, "rotular", lambda *a, **k: (_ for _ in ()).throw(OSError("disco")))
+    worker.main(["--ate-ocioso", "--etapas", "ingest,analise"])
+    a = arm.ler_json("derivados/p1/a001/analise.json")
+    assert validar.erros("analise", a) == [] and "falhou" in a["falante"]["aviso"]
+    assert all("falante_metodo" not in s for s in a["transcricao"]["segmentos"])
+    assert chamadas == {"visao": 1, "transcricao": 1}
+    monkeypatch.setattr(falante_fixture.FalanteFixture, "rotular", certo)        # a falha passou
+    banco.enfileirar(con, "analise", "p1", "a001")
+    worker.main(["--ate-ocioso", "--etapas", "analise"])
+    a = arm.ler_json("derivados/p1/a001/analise.json")
+    assert [s["falante"] for s in a["transcricao"]["segmentos"]] == ["marcos", "xande", "desconhecido"]
+    assert a["falante"]["aviso"] is None and chamadas == {"visao": 1, "transcricao": 1}
+    banco.enfileirar(con, "analise", "p1", "a001")                                 # agora sim: pronto, não refaz
+    worker.main(["--ate-ocioso", "--etapas", "analise"])
+    saida = json.loads(con.execute("SELECT saida FROM jobs WHERE etapa='analise' AND alvo='a001'").fetchone()["saida"])
+    assert saida == {"pulado": True}
+
+
+def test_reserva_por_clipe_em_projeto_misto():
+    """Clipe sem rótulo (falante desligado/falhou naquele arquivo) ao lado de clipe rotulado: a fala do Marcos para a
+    câmera no clipe sem rótulo continua inteira (antes a reserva era decidida pelo projeto e sumia)."""
+    longa = " ".join(f"palavra{i}" for i in range(40))
+    sem = analise_b(aid="a001", nome="20261118_100000.mov", falante=None, falas=[(1.0, longa)], dur=40)
+    sem["visao"]["momentos"].append({"t0": 0.5, "t1": 15.0, "tipo": "fala_evento", "desc": "fala com rosto em quadro", "nota": 4})
+    outros = [_rotular(analise_b(aid=f"a{i:03d}", nome=f"2026111811{i:04d}.mov", falante=None,
+                                 falas=[(1.0 + 13 * k, longa) for k in range(2)], dur=40), [("outro", 0.9), ("outro", 0.9)])
+              for i in range(2, 32)]
+    cat, txt = catalogo.montar([sem] + outros, {"texto": "reel"}, "p_t", limite=4000)
+    assert cat["orcamento"]["cortes"]                                     # houve compressão
+    c_sem = next(c for c in cat["clipes"] if c["arquivo"] == "a001")
+    c_rot = [c for c in cat["clipes"] if c is not c_sem]
+    f = c_sem["falas"][0]
+    assert f["falante"] is None and f["id"] in catalogo.falas_protegidas(cat["clipes"])
+    assert not f["truncado"] and f"«{longa}»" in txt
+    assert any(x["truncado"] for c in c_rot for x in c["falas"])       # OUTRO segue truncável
+    # sem rótulo nenhum e totalmente rotulado: iguais a antes
+    assert catalogo.falas_protegidas([c_sem]) == {f["id"]}
+    assert catalogo.falas_protegidas(c_rot) == frozenset()

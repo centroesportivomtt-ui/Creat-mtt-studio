@@ -161,7 +161,8 @@ def test_imagem_debian_ffmpeg_chromium_deps_e_codigo(app_modal):
     env = {k: v for a, _ in img.todos("env") for k, v in a[0].items()}
     assert env["EDITOR_SEM_ESTADO"] == "1" and env["EDITOR_MODAL_WORKER"] == "1"
     assert env["EDITOR_DADOS"].startswith("/tmp/") and env["PYTHONPATH"] == "/app/services/motor"
-    assert env["EDITOR_MEMORIA"].startswith("/estado/") and env["EDITOR_TRILHAS"].startswith("/estado/")
+    assert env["EDITOR_MEMORIA"] == "/app/memoria" and env["EDITOR_MEMORIA_REMOTA"] == "r2"   # memória no R2, imagem = semente
+    assert env["EDITOR_TRILHAS"].startswith("/estado/")
     # nenhum segredo na imagem: só nomes no comentário/listas
     assert not any(k in env for k in app_modal.VARIAVEIS_OBRIGATORIAS + app_modal.VARIAVEIS_OPCIONAIS)
 
@@ -185,16 +186,11 @@ def test_requisitos_exatos():
     assert linhas and all("==" in ln and ">" not in ln and "<" not in ln for ln in linhas)
 
 
-def test_preparar_estado_semeia_uma_vez(app_modal, tmp_path):
-    semente = tmp_path / "semente"
-    (semente / "modelos").mkdir(parents=True)
-    (semente / "regras.json").write_text('{"regras": []}')
+def test_preparar_estado_so_cria_a_biblioteca(app_modal, tmp_path):
     est = tmp_path / "estado"
-    assert app_modal.preparar_estado(str(est), str(semente)) is True
-    assert (est / "memoria" / "regras.json").is_file() and (est / "biblioteca" / "falantes").is_dir()
-    (est / "memoria" / "regras.json").write_text('{"regras": [{"id": "r_dono"}]}')
-    assert app_modal.preparar_estado(str(est), str(semente)) is False          # nunca pisa na memória já gravada
-    assert "r_dono" in (est / "memoria" / "regras.json").read_text()
+    assert app_modal.preparar_estado(str(est)) is True
+    assert (est / "biblioteca" / "falantes").is_dir() and not (est / "memoria").exists()
+    assert app_modal.preparar_estado(str(est)) is False
 
 
 def test_vigia_acorda_trabalhar_so_com_job(app_modal, dados):

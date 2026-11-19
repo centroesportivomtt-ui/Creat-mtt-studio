@@ -32,6 +32,22 @@ def assinatura(*partes) -> str:
     return hashlib.sha1("|".join(map(str, partes)).encode()).hexdigest()[:16]
 
 
+def identidade_do_objeto(arm, chave: str, local: Path) -> tuple:
+    """O que identifica o original SEM depender do disco desta máquina. Provedor com stat() (R2): bytes + ETag do
+    objeto, iguais em qualquer contêiner. Sem stat() ou sem ETag (adaptador local): tamanho + mtime do arquivo, que
+    ali é o próprio objeto. Antes o R2 usava o mtime da CÓPIA em cache: contêiner novo, mtime novo, análise refeita."""
+    st_fn = getattr(arm, "stat", None)
+    if callable(st_fn):
+        try:
+            info = st_fn(chave) or {}
+            if info.get("etag"):
+                return ("etag", int(info["bytes"]), str(info["etag"]))
+        except (FileNotFoundError, KeyError, TypeError, ValueError):
+            pass
+    st = local.stat()
+    return ("mtime", st.st_size, st.st_mtime_ns)
+
+
 def ffprobe(caminho: Path) -> dict:
     r = subprocess.run(["ffprobe", "-v", "error", "-show_streams", "-show_format", "-of", "json", str(caminho)],
                        capture_output=True, text=True)
@@ -221,7 +237,7 @@ def ingest(ctx: Contexto) -> dict:
     t0 = time.time()
     orig = arm.caminho_local(chave)
     st = orig.stat()
-    sig = assinatura(ALGO, chave, st.st_size, st.st_mtime_ns)
+    sig = assinatura(ALGO, chave, *identidade_do_objeto(arm, chave, orig))
     base = f"derivados/{p}/{a}"
     kj = f"{base}/ingest.json"
     if arm.existe(kj):

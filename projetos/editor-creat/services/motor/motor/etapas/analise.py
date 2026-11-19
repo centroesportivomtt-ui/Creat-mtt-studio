@@ -209,6 +209,14 @@ def rotular_falantes(prov, aviso: str | None, wav: Path | None, tr: dict, contex
     return {**tr, "segmentos": segs}, info
 
 
+def _sig_ok(sig: str, fal, info: dict | None) -> str:
+    """Assinatura gravada em analise.ok. Se o provedor ativo levantou exceção (falha possivelmente transitória), grava
+    com marcador: o próximo reenfileiramento não bate a assinatura, cai em _so_falante e tenta de novo SÓ o rótulo."""
+    if fal is not None and getattr(fal, "ativo", False) and info and str(info.get("aviso") or "").startswith("falante falhou"):
+        return sig + "|falante_falhou"
+    return sig
+
+
 def _so_falante(arm, base: str, sig: str, sig_base: str, fal, aviso, ing) -> dict:
     """Análise já pronta e só o falante mudou (perfil novo, provedor trocado): refaz só o rótulo, sem visão nem transcrição."""
     t0 = time.time()
@@ -223,7 +231,7 @@ def _so_falante(arm, base: str, sig: str, sig_base: str, fal, aviso, ing) -> dic
     obj.setdefault("tempos", {})["analise_falante"] = round(time.time() - t0, 3)
     validar_analise(obj)
     arm.gravar_json(f"{base}/analise.json", obj)
-    arm.gravar_bytes(f"{base}/analise.ok", json.dumps({"assinatura": sig, "base": sig_base}).encode())
+    arm.gravar_bytes(f"{base}/analise.ok", json.dumps({"assinatura": _sig_ok(sig, fal, info), "base": sig_base}).encode())
     return {"so_falante": True, "falas": len(obj["transcricao"]["segmentos"]), "segundos": obj["tempos"]["analise_falante"]}
 
 
@@ -329,7 +337,7 @@ def analise(ctx: Contexto) -> dict:
         obj["falante"] = info_fal
     validar_analise(obj)
     arm.gravar_json(f"{base}/analise.json", obj)
-    arm.gravar_bytes(f"{base}/analise.ok", json.dumps({"assinatura": sig, "base": sig_base}).encode())
+    arm.gravar_bytes(f"{base}/analise.ok", json.dumps({"assinatura": _sig_ok(sig, fal, info_fal), "base": sig_base}).encode())
     n_pal = sum(len(s.get("palavras", [])) for s in tr["segmentos"])
     ctx.progresso(1.0, f"Análise pronta: {len(tr['segmentos'])} falas, {len((visao or {}).get('momentos', []))} momentos")
     return {"falas": len(tr["segmentos"]), "palavras": n_pal, "segundos": tempos["analise_total"]}

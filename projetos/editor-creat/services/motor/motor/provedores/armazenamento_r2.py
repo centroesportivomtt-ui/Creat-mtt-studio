@@ -178,7 +178,21 @@ class ArmazenamentoR2:
                 return p
         self.baixar_para(chave, p)
         self._lembrar_etag(p, info["etag"])
+        self._mtime_do_objeto(p, info.get("modificado"))
         return p
+
+    @staticmethod
+    def _mtime_do_objeto(p: pathlib.Path, modificado) -> None:
+        """A cópia em cache ganha o LastModified do objeto: o mtime fica igual em qualquer contêiner (quem ainda
+        assina por mtime não refaz trabalho só porque o cache é novo)."""
+        if not modificado:
+            return
+        try:
+            from datetime import datetime
+            ts = datetime.fromisoformat(str(modificado).replace("Z", "+00:00")).timestamp()
+            os.utime(p, (ts, ts))
+        except (ValueError, OSError):
+            pass
 
     # ---------- escrita ----------
     def gravar(self, chave: str, origem: pathlib.Path | BinaryIO, *, mover: bool = False) -> str:

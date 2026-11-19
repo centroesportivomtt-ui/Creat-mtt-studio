@@ -41,6 +41,7 @@ const tempos = {};
 const filhos = [];
 let navegador, contador;
 const avisos = []; // POST /v1/projetos/<p>/arquivos que chegaram ao motor
+const pedidosMotor = []; // tudo o que chegou ao motor (para provar que o caminho torto nem saiu do site)
 
 function ok(nome, passou, detalhe = '') {
   resultados.push({ nome, passou: Boolean(passou), detalhe });
@@ -77,10 +78,25 @@ async function sha256(arquivo) {
 const estadoR2 = async () => (await fetch(`${R2}/__controle/estado`)).json();
 const valor = async (page, sel, attr) => page.getAttribute(sel, attr, { timeout: 2000 }).catch(() => null);
 
+/** GET cru (sem o cliente normalizar %2e%2e ou ..): o caminho chega ao site exatamente como foi escrito. */
+function getCru(caminho, cookie, extra = {}) {
+  return new Promise((ok) => {
+    const r = http.request({ host: '127.0.0.1', port: PORTA_WEB, path: caminho, method: 'GET', headers: { cookie, ...extra } }, (res) => {
+      const partes = [];
+      res.on('data', (c) => { if (partes.length < 4) partes.push(c); if (res.headers['content-type']?.startsWith('text/event-stream')) res.destroy(); });
+      const fim = () => ok({ status: res.statusCode, tipo: res.headers['content-type'] ?? '', corpo: Buffer.concat(partes).toString('utf8').slice(0, 200) });
+      res.on('end', fim); res.on('close', fim);
+    });
+    r.on('error', () => ok({ status: 0, tipo: '', corpo: '' }));
+    r.end();
+  });
+}
+
 /** Contador entre o site e o motor falso: conta cada aviso de arquivo terminado e repassa tudo igual. */
 function subirContador() {
   return new Promise((pronto) => {
     contador = http.createServer((req, res) => {
+      pedidosMotor.push(`${req.method} ${req.url}`);
       if (req.method === 'POST' && /^\/v1\/projetos\/[^/]+\/arquivos$/.test(req.url)) avisos.push(req.url);
       const p = http.request({ host: '127.0.0.1', port: PORTA_MOTOR, path: req.url, method: req.method, headers: req.headers }, (r) => {
         res.writeHead(r.statusCode, r.headers);
@@ -290,6 +306,36 @@ async function principal() {
   ok('arquivo aparece na lista da tela', (await page.locator('.arquivo').count()) === 1);
   const lsResto = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('ec-r2:')).length);
   ok('nada sobrou do envio no navegador (localStorage)', lsResto === 0, `${lsResto} registro(s)`);
+
+  // ---------- proxy do motor: caminho torto não sai do site; rotas legítimas passam ----------
+  {
+    const cookie = (await ctx.cookies()).map((c) => `${c.name}=${c.value}`).join('; ');
+    const tortos = [
+      '/api/motor/v1/arquivos/..%2F..%2Fv1%2Fconferir',
+      '/api/motor/v1/arquivos/..%2F..%2Fv1%2Fconferir?escrita=1',
+      '/api/motor/v1/arquivos/%2e%2e/%2e%2e/v1/conferir',
+      '/api/motor/v1/arquivos/%2E%2E%2F%2E%2E%2Fv1%2Fconferir',
+      '/api/motor/v1/arquivos/..%5C..%5Cv1%5Cconferir',
+      '/api/motor/v1/arquivos/..%252F..%252Fv1%252Fconferir',
+      `/api/motor/v1/projetos/${pid}/..%2F..%2Fconferir`,
+      '/api/motor/v1/arquivos/entrada/.../x',
+      '/api/motor/v1/arquivos/x%00y',
+      '/api/motor/v1/conferir',
+    ];
+    const antes = pedidosMotor.length;
+    const vistos = [];
+    for (const c of tortos) vistos.push(`${(await getCru(c, cookie)).status}`);
+    const chegou = pedidosMotor.slice(antes);
+    ok('proxy do motor recusa caminho torto (..%2F, %2e%2e, %5c, duplo encode) sem chamar o motor',
+      vistos.every((st) => st === '400' || st === '404') && chegou.length === 0, `status ${vistos.join(',')} · chegaram ao motor: ${chegou.join(' | ') || 'nada'}`);
+    const chave = `entrada/${pid}/${path.basename(salvo ?? 'x')}`;
+    const proj = await getCru(`/api/motor/v1/projetos/${pid}`, cookie);
+    const faixa = await getCru(`/api/motor/v1/arquivos/${chave}`, cookie, { range: 'bytes=0-1023' });
+    const sse = await getCru(`/api/motor/v1/projetos/${pid}/eventos?seguir=false`, cookie);
+    ok('proxy do motor: rotas legítimas passam (projeto, Range do player, SSE)',
+      proj.status === 200 && faixa.status === 206 && sse.status === 200 && sse.tipo.startsWith('text/event-stream'),
+      `projeto ${proj.status}, range ${faixa.status}, sse ${sse.status} ${sse.tipo}`);
+  }
 
   // ---------- 4. cancelar ----------
   const pequeno = path.join(SCRATCH, 'cancelar.mov');
