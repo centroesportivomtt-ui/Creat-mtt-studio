@@ -26,13 +26,16 @@ export default async function fecho(ctx, c) {
     const larg = (W - ZONA.esquerda - ZONA.direita);
     const a = el("img", "", c.el, { position: "absolute", top: cy + "px", height: hc + "px", left: ZONA.esquerda + larg * 0.25 + "px", transform: "translate(-50%,-50%)" });
     const b = el("img", "", c.el, { position: "absolute", top: cy + "px", height: hc + "px", left: ZONA.esquerda + larg * 0.75 + "px", transform: "translate(-50%,-50%)" });
-    const x = el("div", "mk-display", c.el, { position: "absolute", top: cy + "px", left: ZONA.esquerda + larg * 0.5 + "px", transform: "translate(-50%,-50%)", fontSize: "64px", color: "rgba(241,235,226,0.75)" });
+    const x = el("div", "mk-display", c.el, { position: "absolute", top: cy + "px", left: ZONA.esquerda + larg * 0.5 + "px", transform: "translate(-50%,-50%)", fontSize: "92px", color: "rgba(241,235,226,0.8)" });
     x.textContent = "×";
     a.src = p.logo_cliente; b.src = p.logo_parceiro;
     await a.decode().catch(() => {}); await b.decode().catch(() => {});
     tl.fromTo(a, { scale: 0.6, opacity: 0, x: -30 }, { scale: 1, opacity: 1, x: 0, duration: 0.55, ease: EASE.mola }, t0 + 0.05);
     tl.fromTo(b, { scale: 0.6, opacity: 0, x: 30 }, { scale: 1, opacity: 1, x: 0, duration: 0.55, ease: EASE.mola }, t0 + 0.15);
     tl.fromTo(x, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.35, ease: EASE.chegada }, t0 + 0.3);
+    // logo nunca fica parada (regra do dono, 19/11): respiro leve e alternado depois do pouso
+    tl.to(a, { scale: 1.035, duration: 1.1, ease: "sine.inOut", yoyo: true, repeat: 3 }, t0 + 0.75);
+    tl.to(b, { scale: 1.035, duration: 1.1, ease: "sine.inOut", yoyo: true, repeat: 3 }, t0 + 1.3);
     logo = a;
     const ass = el("img", "", c.el, { position: "absolute", left: "50%", top: H - ZONA.base - 40 + "px", width: (p.larguraAssinatura ?? 230) + "px", transform: "translate(-50%,-50%)", opacity: "0.92" });
     ass.src = p.logo ?? "assets/marca/logo_creatMTT_claro.png";
@@ -44,6 +47,7 @@ export default async function fecho(ctx, c) {
     logo.src = p.logo_cliente;
     await logo.decode().catch(() => {});
     tl.fromTo(logo, { scale: 0.6, opacity: 0, y: 30 }, { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: EASE.mola }, t0 + 0.05);
+    tl.to(logo, { scale: 1.035, duration: 1.1, ease: "sine.inOut", yoyo: true, repeat: 3 }, t0 + 0.75);
     const ass = el("img", "", c.el, { position: "absolute", left: "50%", top: H - ZONA.base - 40 + "px", width: (p.larguraAssinatura ?? 230) + "px", transform: "translate(-50%,-50%)", opacity: "0.92" });
     ass.src = p.logo ?? "assets/marca/logo_creatMTT_claro.png";
     await ass.decode().catch(() => {});
