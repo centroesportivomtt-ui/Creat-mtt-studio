@@ -87,7 +87,7 @@ def montar_trilha(edl: dict, arq: pathlib.Path | None) -> tuple[np.ndarray, dict
                 fonte = int(round(fase * SR)) if bpm else 0
                 pos -= int(0.03 * SR)
         rel["laco"] = len(m) < N
-    fim = int(0.5 * SR)
+    fim = int(1.4 * SR)                                # sem acorde final marcado, a música sai devagar (0,5 s soava interrompida)
     if N > fim and np.abs(out[-fim:]).max() > 0 and not tr.get("acorde_final"):
         out[-fim:] *= (np.linspace(1, 0, fim) ** 1.5)[:, None]
     return out, rel

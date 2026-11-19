@@ -12,7 +12,8 @@ frases corridas em três peças, cada uma com o fim comido. Aqui a régua é o �
   pedida; se é a palavra anterior colada, corta no vale;
 - silêncio de mais de 0,20 s antes da primeira palavra sai (ar morto, e é onde sobra a voz de quem dirige a gravação);
 - peças seguidas da mesma fonte que ficam a menos de 0,30 s uma da outra viram uma só (a pausa natural volta);
-- o tempo do filme é refeito peça a peça mantendo os intervalos (os pequenos encolhem 80 ms para pagar o respiro) e tudo que
+- o tempo do filme é refeito peça a peça mantendo os intervalos (os pequenos encolhem até 80 ms, só para pagar o respiro que
+  esta rodada acrescentou: rodar de novo não aperta mais) e tudo que
   tem tempo passa por um mapa antigo -> novo; plano sincronizado com a fala recalcula o ponto da fonte para a boca não sair
   do lugar.
 
@@ -76,7 +77,7 @@ def novos_limites(arm, edl, forcar: dict | None = None) -> list[dict]:
         if not colada_dep:
             f = AF.fim_da_fala(e, v["s1"], silencio=0.08)
             v["_fim"] = f
-            if f["ativa"]:
+            if f["ativa"] or (f["fim"] is not None and f["fim"] > v["s1"] + 0.03):     # voz no corte, ou o "s" final passando dele
                 if f["fim"] is not None and f["fim"] - v["s1"] <= 0.6:
                     # respiro: até 90 ms, mas sobrando >= 130 ms de silêncio depois do corte (o QA reprova corte com a voz
                     # voltando em até 120 ms); em pausa menor que isso ficam 30 ms e o diretor confirma de ouvido
@@ -140,7 +141,10 @@ def ajustar(arm, edl: dict, limites: list[dict] | None = None) -> tuple[dict, li
         else:
             ant = grupos[k - 1]["pecas"][-1]
             vao = p0["t0"] - ant["t1"]
-            t0 = t + (vao if vao > 0.4 else max(0.03, vao - 0.08))
+            # o intervalo pequeno só encolhe o que ESTA rodada acrescentou de respiro nas duas pontas (até 80 ms): rodar a
+            # ferramenta de novo num EDL já ajustado não pode ir apertando o filme
+            ganho = (max(0.0, grupos[k - 1]["_s1"] - ant["s1"]) + max(0.0, p0["s0"] - g["_s0"])) / g["vel"]
+            t0 = t + (vao if vao > 0.4 else max(0.03, vao - min(0.08, ganho)))
         g["_t0"] = round(t0, 4)
         g["_t1"] = round(t0 + (g["_s1"] - g["_s0"]) / g["vel"], 4)
         t = g["_t1"]

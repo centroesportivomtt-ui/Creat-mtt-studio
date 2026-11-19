@@ -15,16 +15,47 @@ PASSO = 0.01
 
 
 def envelope(x: np.ndarray, sr: int) -> dict:
-    """Envelope da banda da fala e o limiar que separa fala de ambiente (entre o piso e o nível alto do arquivo)."""
+    """Envelope da banda da fala e o limiar que separa fala de ambiente (entre o piso e o nível alto do arquivo).
+    Traz também o envelope do CHIADO (3,5-7,5 kHz), onde mora o "s" final ("calorias", "horas"): a vogal acaba e o "s"
+    segue por 100 a 200 ms quase sem energia abaixo de 3 kHz."""
     from scipy.signal import butter, sosfilt
     x = x.mean(1) if x.ndim > 1 else x
-    y = sosfilt(butter(2, [200, min(7500, sr / 2 - 100)], "bp", fs=sr, output="sos"), x)   # até 7,5 kHz: o "s" final conta
     h = max(1, int(sr * PASSO))
-    n = len(y) // h
-    e = 20 * np.log10(np.sqrt(np.mean(y[:n * h].reshape(n, h) ** 2, 1)) + 1e-9) if n else np.zeros(0)
+    n = len(x) // h
+
+    def banda(lo, hi):
+        y = sosfilt(butter(2, [lo, min(hi, sr / 2 - 100)], "bp", fs=sr, output="sos"), x)
+        return 20 * np.log10(np.sqrt(np.mean(y[:n * h].reshape(n, h) ** 2, 1)) + 1e-9) if n else np.zeros(0)
+    e = banda(200, 7500)                                   # até 7,5 kHz: o "s" final conta
     piso = float(np.percentile(e, 15)) if n else -90.0
     alto = float(np.percentile(e, 90)) if n else -90.0
-    return {"db": e, "piso": piso, "alto": alto, "limiar": piso + 0.45 * (alto - piso)}
+    out = {"db": e, "piso": piso, "alto": alto, "limiar": piso + 0.45 * (alto - piso)}
+    if sr >= 16000 and n:
+        hf = banda(3500, 7500)                              # mesma banda em 16 kHz (QA) e 48 kHz (ajuste): a decisão tem de bater
+        out["db_hf"] = hf
+        out["limiar_hf"] = float(np.percentile(hf, 15)) + 9.0
+    return out
+
+
+def _chiado_ate(env: dict, fim: float, alcance: float = 0.22) -> float:
+    """Se há chiado ("s") colado no fim da fala, devolve onde ele acaba (senão, o próprio `fim`)."""
+    hf, lim = env.get("db_hf"), env.get("limiar_hf")
+    if hf is None:
+        return fim
+    q = int(round(fim / PASSO))
+    ini = None
+    for r in range(max(0, q - 4), min(len(hf), q + 4)):   # chiado COLADO na voz (de 40 ms antes a 30 ms depois do fim dela):
+        # mais longe que isso já é o "s" da palavra seguinte ("laranja | as calorias")
+        if hf[r] > lim:
+            ini = r
+            break
+    if ini is None:
+        return fim
+    r = ini
+    teto = min(len(hf) - 3, q + int(round(alcance / PASSO)))
+    while r < teto and not np.all(hf[r:r + 3] <= lim):
+        r += 1
+    return max(fim, r * PASSO)
 
 
 def _pico(e: np.ndarray, a: float, b: float) -> float:
@@ -62,6 +93,7 @@ def fim_da_fala(env: dict, s1: float, janela: float = 1.5, silencio: float = 0.0
                 break
     pausa = 0.0
     if fim is not None:
+        fim = _chiado_ate(env, fim)                    # o "s" final faz parte da palavra
         q = int(round(fim / PASSO))
         r = q
         while r < len(e) and r - q < 150 and e[r] < lim:
@@ -100,6 +132,8 @@ def corte_final_ok(env: dict, s1: float, folga: float = 0.04) -> tuple[bool, str
     """O corte em `s1` deixa a frase terminar? Reprova quando a fala continua depois do corte (sílaba partida, ou corte numa
     oclusão com a voz retomando em até 120 ms) e quando a fala acaba exatamente em cima do corte, sem respiro."""
     f = fim_da_fala(env, s1)
+    if f["fim"] is not None and f["fim"] > s1 + 0.03 and not f["retoma"] and not f["soando"]:
+        return False, f"o chiado do fim da palavra (\"s\") continua depois do corte em {s1:.2f} s, até {f['fim']:.2f} s"
     if not f["ativa"]:
         return True, "fala já tinha terminado"
     if f["retoma"]:
