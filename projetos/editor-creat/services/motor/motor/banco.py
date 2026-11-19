@@ -3,7 +3,8 @@
 Por que SQLite: uma máquina, reinício sem aviso, zero serviço extra. A fila usa "aluguel" (lease):
 um job rodando cujo aluguel venceu (máquina reiniciou) volta a ficar disponível sozinho.
 Toda etapa é idempotente (pula o que já tem saída válida), então repetir um job é seguro.
-Produção com vários workers em máquinas diferentes: trocar por Postgres mantendo esta interface.
+Produção com vários workers em máquinas diferentes (Modal + Supabase): `conectar("postgres://...")` devolve o
+adaptador de banco_pg.py, com a mesma interface; a fila lá usa FOR UPDATE SKIP LOCKED. Caminho de arquivo = SQLite.
 """
 from __future__ import annotations
 
@@ -11,6 +12,7 @@ import json
 import sqlite3
 import time
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
@@ -48,7 +50,16 @@ def agora_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def conectar(caminho) -> sqlite3.Connection:
+def eh_postgres(con) -> bool:
+    return getattr(con, "dialeto", "sqlite") == "postgres"
+
+
+def conectar(destino):
+    """Caminho (ou Path) → SQLite em WAL, como sempre. URL postgres:// ou postgresql:// → Postgres (banco_pg)."""
+    if isinstance(destino, str) and destino.split("://", 1)[0].lower() in ("postgres", "postgresql"):
+        from motor import banco_pg      # import tardio: psycopg só é exigido de quem usa Postgres
+        return banco_pg.conectar(destino)
+    caminho = destino
     con = sqlite3.connect(str(caminho), timeout=30, isolation_level=None)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA journal_mode=WAL")
@@ -110,7 +121,8 @@ def recolher_mortos(con) -> list[dict]:
     """
     t = time.time()
     linhas = [dict(r) for r in con.execute(
-        "SELECT * FROM jobs WHERE estado='rodando' AND aluguel_ate < ? AND tentativas >= max_tentativas", (t,))]
+        "SELECT * FROM jobs WHERE estado='rodando' AND aluguel_ate < ? AND tentativas >= max_tentativas"
+        + (" FOR UPDATE SKIP LOCKED" if eh_postgres(con) else ""), (t,))]
     for r in linhas:
         erro = f"o worker morreu {r['tentativas']} vez(es) rodando esta etapa (falta de memória ou reinício da máquina)"
         con.execute("UPDATE jobs SET estado='falhou', erro=?, aluguel_ate=NULL, atualizado=? WHERE id=?", (erro, t, r["id"]))
@@ -121,6 +133,14 @@ def recolher_mortos(con) -> list[dict]:
 
 def pegar(con, dono: str, etapas: Iterable[str] | None = None, aluguel_s: float = ALUGUEL_S) -> dict | None:
     """Pega o próximo job disponível (pendente, ou rodando com aluguel vencido) de forma atômica."""
+    if eh_postgres(con):
+        from motor import banco_pg
+        d = banco_pg.pegar(con, dono, list(etapas) if etapas else None, aluguel_s)
+        if d is None:
+            return None
+        d["entrada"] = json.loads(d["entrada"] or "{}")
+        d["tentativas"] += 1
+        return d
     t = time.time()
     filtro, args = "", []
     if etapas:
@@ -151,9 +171,40 @@ def pegar(con, dono: str, etapas: Iterable[str] | None = None, aluguel_s: float 
     return d
 
 
-def renovar(con, job_id: str, aluguel_s: float = ALUGUEL_S) -> None:
-    """Renova só o aluguel de quem ainda está rodando (não ressuscita job já concluído/falho)."""
-    con.execute("UPDATE jobs SET aluguel_ate=? WHERE id=? AND estado='rodando'", (time.time() + aluguel_s, job_id))
+def renovar(con, job_id: str, aluguel_s: float = ALUGUEL_S, dono: str | None = None) -> bool:
+    """Renova só o aluguel de quem ainda está rodando (não ressuscita job já concluído/falho). Com `dono`, só renova
+    se o job ainda é deste worker (outro pode ter pegado depois de o aluguel vencer). Devolve se renovou."""
+    if dono is None:
+        cur = con.execute("UPDATE jobs SET aluguel_ate=? WHERE id=? AND estado='rodando'", (time.time() + aluguel_s, job_id))
+    else:
+        cur = con.execute("UPDATE jobs SET aluguel_ate=? WHERE id=? AND estado='rodando' AND dono=?",
+                          (time.time() + aluguel_s, job_id, dono))
+    return (cur.rowcount or 0) > 0
+
+
+def ainda_dono(con, job_id: str, dono: str) -> bool:
+    """O job ainda está 'rodando' com este dono? Chamar dentro da transação que vai concluir/falhar o job
+    (no Postgres a linha fica travada até o fim dela)."""
+    r = con.execute("SELECT estado, dono FROM jobs WHERE id=?" + (" FOR UPDATE" if eh_postgres(con) else ""), (job_id,)).fetchone()
+    return r is not None and r["estado"] == "rodando" and r["dono"] == dono
+
+
+def conexao_caiu(con) -> bool:
+    """Conexão Postgres perdida (pooler cortou, servidor reiniciou). SQLite é arquivo local: nunca."""
+    return bool(getattr(con, "quebrada", False))
+
+
+@contextmanager
+def transacao(con):
+    """BEGIN IMMEDIATE ... COMMIT (ROLLBACK no erro). No Postgres pega a mesma trava consultiva do worker."""
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        yield con
+    except BaseException:
+        if not conexao_caiu(con):
+            con.execute("ROLLBACK")
+        raise
+    con.execute("COMMIT")
 
 
 def concluir(con, job_id: str, saida: Any = None) -> None:

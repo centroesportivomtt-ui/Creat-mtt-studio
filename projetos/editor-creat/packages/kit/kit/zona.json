@@ -1,0 +1,15 @@
+{
+  "_leia": "Fonte única da zona segura 9:16 da casa. Lida por kit/nucleo.js (ZONA), ferramentas/zona.cjs (QA do kit) e services/motor/motor/etapas/qa/zona_segura.py (QA de entrega). Mudou aqui, muda nos três; tokens.css repete os px só como referência visual.",
+  "formato": { "w": 1080, "h": 1920 },
+  "zona": { "topo": 285, "base": 440, "direita": 120, "esquerda": 60 },
+  "margem": 84,
+  "tolerancia": 16,
+  "alfa_minimo": 200,
+  "alfa_texto_minimo": 128,
+  "amostra_quadros": 3,
+  "tela_cheia": ["fecho", "fecho2", "fundo", "transicao", "hud", "abas", "heroi", "camadas", "pilha", "stats"],
+  "isentos": {
+    "fundo": "placa de fundo: não tem texto de leitura e fica fora do overlay",
+    "transicao": "cobre a tela de propósito durante o corte (o mergulho da Aba 71 escala 70x)"
+  }
+}

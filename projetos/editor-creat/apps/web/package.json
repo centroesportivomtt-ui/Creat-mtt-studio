@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "description": "Site do Editor creat.MTT (frente D): login, envio retomável, projetos, status ao vivo e player.",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
@@ -12,11 +14,17 @@
     "tipos": "tsc --noEmit",
     "motor-falso": "node scripts/motor-falso.mjs",
     "senha": "node scripts/gerar-senha.mjs",
-    "aceite": "node scripts/aceite.mjs"
+    "aceite": "node scripts/aceite.mjs",
+    "aceite:r2": "node scripts/aceite-r2.mjs",
+    "aceite:auth": "node scripts/aceite-auth.mjs",
+    "aceite:tudo": "node scripts/aceite.mjs && node scripts/aceite-r2.mjs && node scripts/aceite-auth.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1172.0",
+    "@aws-sdk/s3-request-presigner": "3.1172.0",
     "@tus/file-store": "2.1.1",
     "@tus/server": "2.4.6",
+    "jose": "6.2.18",
     "next": "15.5.28",
     "react": "19.1.10",
     "react-dom": "19.1.10",

@@ -3,6 +3,13 @@
 Raiz: EDITOR_MEMORIA (testes usam uma cópia) ou projetos/editor-creat/memoria (versionada no git).
 Toda reprovação do dono vira REGRA (entra no próximo prompt) + CHECAGEM (o QA ou o próprio EDL conferem), com origem.
 Gravação atômica; nada de material de cliente aqui (logos de cliente ficam no armazenamento).
+
+Na nuvem (vários contêineres, disco que some): regras.json e checagens.json, os ÚNICOS arquivos que mudam, moram num
+objeto do R2 cada (`memoria/regras.json`, `memoria/checagens.json`) com escrita CONDICIONAL (If-Match no ETag lido;
+If-None-Match:* na primeira gravação). Duas reprovações ao mesmo tempo em contêineres diferentes: a segunda recebe 412,
+relê e refaz a mesclagem; nenhuma se perde. A pasta da raiz (EDITOR_MEMORIA, dentro da imagem) vira só SEMENTE e
+continua sendo a fonte de modelos/ e casos/ (que só mudam por commit). Liga com EDITOR_MEMORIA_REMOTA=r2, ou sozinho
+com EDITOR_SEM_ESTADO=1 + EDITOR_ARMAZENAMENTO=r2.
 """
 from __future__ import annotations
 
@@ -32,16 +39,100 @@ def _grava(caminho: pathlib.Path, obj) -> None:
     os.replace(tmp, caminho)
 
 
+MUTAVEIS = ("regras.json", "checagens.json")
+PREFIXO_REMOTO = "memoria/"
+TENTATIVAS_CAS = 8
+
+
+class Conflito(Exception):
+    """A versão remota mudou entre ler e gravar (412): reler e refazer."""
+
+
+class MemoriaR2:
+    """regras.json/checagens.json no R2 com escrita condicional pelo ETag. `cliente` = boto3 S3 (ou falso nos testes)."""
+
+    def __init__(self, cliente=None, bucket: str | None = None):
+        if cliente is None:
+            from motor.provedores.armazenamento_r2 import criar_cliente, faltando
+            falta = faltando()
+            if falta:
+                raise RuntimeError(f"memória no R2 desligada: faltam {', '.join(falta)}")
+            cliente = criar_cliente()
+        self.s3 = cliente
+        self.bucket = bucket or os.environ.get("R2_BUCKET", "").strip()
+
+    @staticmethod
+    def _codigo(e) -> str:
+        return str(getattr(e, "response", {}).get("Error", {}).get("Code", ""))
+
+    def ler(self, nome: str):
+        """(objeto, etag) ou None se ainda não existe no R2."""
+        try:
+            r = self.s3.get_object(Bucket=self.bucket, Key=PREFIXO_REMOTO + nome)
+        except Exception as e:  # noqa: BLE001 - botocore ClientError
+            if self._codigo(e) in ("NoSuchKey", "404", "NotFound"):
+                return None
+            raise
+        corpo = r["Body"].read()
+        return json.loads(corpo.decode("utf-8")), str(r.get("ETag", "")).strip('"')
+
+    def gravar(self, nome: str, obj, etag: str | None) -> None:
+        corpo = (json.dumps(obj, ensure_ascii=False, indent=1) + "\n").encode("utf-8")
+        cond = {"IfMatch": f'"{etag}"'} if etag else {"IfNoneMatch": "*"}
+        try:
+            self.s3.put_object(Bucket=self.bucket, Key=PREFIXO_REMOTO + nome, Body=corpo,
+                               ContentType="application/json", **cond)
+        except Exception as e:  # noqa: BLE001
+            if self._codigo(e) in ("PreconditionFailed", "412", "ConditionalRequestConflict"):
+                raise Conflito(nome) from e
+            raise
+
+
+def _remota_padrao():
+    modo = os.environ.get("EDITOR_MEMORIA_REMOTA", "").strip().lower()
+    if modo in ("local", "nenhuma", "0"):
+        return None
+    automatico = os.environ.get("EDITOR_SEM_ESTADO", "") == "1" and os.environ.get("EDITOR_ARMAZENAMENTO", "").strip() == "r2"
+    if modo == "r2" or (not modo and automatico):
+        return MemoriaR2()
+    return None
+
+
 class Loja:
-    def __init__(self, raiz: pathlib.Path | str | None = None):
+    def __init__(self, raiz: pathlib.Path | str | None = None, *, remota=None):
         self.raiz = pathlib.Path(raiz) if raiz else _raiz()
+        self.remota = remota if remota is not None else _remota_padrao()
 
     # ---------- leitura ----------
-    def _ler(self, nome: str, padrao):
+    def _ler_semente(self, nome: str, padrao):
         try:
             return json.loads((self.raiz / nome).read_text(encoding="utf-8"))
         except FileNotFoundError:
             return padrao
+
+    def _ler(self, nome: str, padrao):
+        if self.remota is not None and nome in MUTAVEIS:
+            r = self.remota.ler(nome)
+            return r[0] if r is not None else self._ler_semente(nome, padrao)
+        return self._ler_semente(nome, padrao)
+
+    def _atualizar(self, nome: str, padrao, mudar) -> dict:
+        """Ler-alterar-gravar. Remoto: condicional pelo ETag, relendo e refazendo `mudar` em conflito. Local: atômico
+        (quem chama segura a trava de arquivo)."""
+        if self.remota is None:
+            obj = mudar(self._ler_semente(nome, padrao))
+            _grava(self.raiz / nome, obj)
+            return obj
+        for _ in range(TENTATIVAS_CAS):
+            atual = self.remota.ler(nome)
+            obj, etag = (atual if atual is not None else (self._ler_semente(nome, padrao), None))
+            novo = mudar(json.loads(json.dumps(obj)))
+            try:
+                self.remota.gravar(nome, novo, etag)
+                return novo
+            except Conflito:
+                continue
+        raise RuntimeError(f"memória: {nome} mudou {TENTATIVAS_CAS} vezes seguidas durante a gravação; tente de novo")
 
     def regras(self, tipo_video: str | None = None) -> list[dict]:
         todas = self._ler("regras.json", {"regras": []})["regras"]
@@ -100,6 +191,8 @@ class Loja:
     # ---------- reprovação do dono -> regra + checagem ----------
     def registrar_reprovacao(self, projeto: str, versao: str, motivo: str, *, cerebro=None) -> dict:
         """Ler-alterar-gravar das regras com trava de arquivo: duas reprovações ao mesmo tempo não perdem uma."""
+        if self.remota is not None:     # a trava é a escrita condicional no R2 (vale entre contêineres)
+            return self._registrar_reprovacao(projeto, versao, motivo, cerebro=cerebro)
         import fcntl
         with open(self.raiz / ".trava", "a+") as trava:
             fcntl.flock(trava, fcntl.LOCK_EX)
@@ -126,15 +219,18 @@ class Loja:
         regra = {"id": f"r_dono_{h}", "texto": proposta["regra"], "origem": origem, "data": _hoje(), "tipos": None, "motivo": motivo}
         chec = dict(proposta["checagem"], id=f"c_dono_{h}", origem=origem, motivo=motivo)
         chec.setdefault("gravidade", "bloqueia")
-        reg = self._ler("regras.json", {"versao": "1", "regras": [], "vocabulario": []})
-        reg["regras"] = [r for r in reg["regras"] if r["id"] != regra["id"]] + [regra]
-        for v in proposta.get("vocabulario", []):
-            if not any(norm(x["de"]) == norm(v["de"]) for x in reg.setdefault("vocabulario", [])):
-                reg["vocabulario"].append({"de": v["de"], "para": v["para"], "origem": origem})
-        _grava(self.raiz / "regras.json", reg)
-        ch = self._ler("checagens.json", {"versao": "1", "checagens": []})
-        ch["checagens"] = [c for c in ch["checagens"] if c["id"] != chec["id"]] + [chec]
-        _grava(self.raiz / "checagens.json", ch)
+        def mudar_regras(reg):
+            reg["regras"] = [r for r in reg.get("regras", []) if r["id"] != regra["id"]] + [regra]
+            for v in proposta.get("vocabulario", []):
+                if not any(norm(x["de"]) == norm(v["de"]) for x in reg.setdefault("vocabulario", [])):
+                    reg["vocabulario"].append({"de": v["de"], "para": v["para"], "origem": origem})
+            return reg
+
+        def mudar_checagens(ch):
+            ch["checagens"] = [c for c in ch.get("checagens", []) if c["id"] != chec["id"]] + [chec]
+            return ch
+        self._atualizar("regras.json", {"versao": "1", "regras": [], "vocabulario": []}, mudar_regras)
+        self._atualizar("checagens.json", {"versao": "1", "checagens": []}, mudar_checagens)
         return {"regra": regra, "checagem": chec, "vocabulario": proposta.get("vocabulario", []), "uso": uso}
 
     # ---------- checagens que o próprio EDL responde (o QA da frente C chama) ----------

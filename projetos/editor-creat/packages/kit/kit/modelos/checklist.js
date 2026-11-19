@@ -8,8 +8,17 @@ export default function checklist(ctx, c) {
   const cab = el("div", "", card, { display: "flex", alignItems: "center", gap: "14px" });
   aba(cab, 44, { position: "relative", flex: "0 0 auto" });
   const ct = el("div", "", cab, {});
-  const h1 = el("div", "", ct, { font: "700 19px 'JetBrains Mono'", letterSpacing: "0.10em", color: "#F5B84D" }); h1.textContent = p.titulo;
-  const h2 = el("div", "", ct, { font: "900 27px 'Inter'", letterSpacing: "0.02em", color: "#fff", marginTop: "2px" }); h2.textContent = p.sub;
+  // auto-ajuste (ctx.caber): o cartão recorta o que passa da largura (clip-path), então título, apoio e itens que não cabem
+  // encolhem e quebram em até 2 linhas, e só no fim levam reticências. O que cabe fica igual.
+  const ajusta = (e, txt, fonte, px, ls, min, largura, maiusc = false) => {
+    const r = ctx.caber(txt ?? "", { fonte, ls, largura, max: px, min, piso: Math.min(min, 16), linhas: 2, maiusculas: maiusc });
+    if (r.px !== px) e.style.fontSize = r.px + "px";
+    if (r.quebrou) e.style.whiteSpace = "pre";
+    e.textContent = r.quebrou || r.cortado ? r.linhas.join("\n") : txt ?? "";
+  };
+  const larCab = w - 48 - 44 - 14 - 2;
+  const h1 = el("div", "", ct, { font: "700 19px 'JetBrains Mono'", letterSpacing: "0.10em", color: "#F5B84D" }); ajusta(h1, p.titulo, "700 'JetBrains Mono'", 19, 0.1, 15, larCab);
+  const h2 = el("div", "", ct, { font: "900 27px 'Inter'", letterSpacing: "0.02em", color: "#fff", marginTop: "2px" }); ajusta(h2, p.sub, "900 Inter", 27, 0.02, 20, larCab);
   const lista = el("div", "", card, { marginTop: "18px", display: "flex", flexDirection: "column", gap: "12px" });
   const ns = "http://www.w3.org/2000/svg";
   const linhas = p.itens.map((it) => {
@@ -20,7 +29,7 @@ export default function checklist(ctx, c) {
     const pa = document.createElementNS(ns, "path"); pa.setAttribute("d", "M9 21 L17 29 L31 12"); pa.setAttribute("fill", "none"); pa.setAttribute("stroke", "#111");
     pa.setAttribute("stroke-width", "5.5"); pa.setAttribute("stroke-linecap", "round"); pa.setAttribute("stroke-linejoin", "round"); pa.style.strokeDasharray = "40"; pa.style.strokeDashoffset = "40";
     svg.appendChild(pa); cx.appendChild(svg);
-    const tx = el("div", "mk-display", ln, { fontSize: "44px", lineHeight: "1", color: "rgba(255,255,255,0.78)" }); tx.textContent = it.rot;
+    const tx = el("div", "mk-display", ln, { fontSize: "44px", lineHeight: "1", color: "rgba(255,255,255,0.78)" }); ajusta(tx, it.rot, "Anton", 44, 0, 30, w - 48 - 40 - 16 - 2, true);
     return { ln, cx, pa, tx, t: it.t };
   });
   const barra = el("div", "", card, { marginTop: "20px", height: "8px", background: "rgba(241,235,226,0.18)", borderRadius: "4px", overflow: "hidden" });

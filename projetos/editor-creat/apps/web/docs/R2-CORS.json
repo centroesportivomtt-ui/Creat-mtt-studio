@@ -1,0 +1,13 @@
+[
+  {
+    "AllowedOrigins": [
+      "https://TROQUE-PELO-DOMINIO-DO-SITE",
+      "https://TROQUE-PELO-ENDERECO-DA-VERCEL.vercel.app",
+      "http://localhost:3000"
+    ],
+    "AllowedMethods": ["PUT", "GET", "HEAD"],
+    "AllowedHeaders": ["content-type"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]

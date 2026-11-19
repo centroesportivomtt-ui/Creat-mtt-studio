@@ -28,6 +28,7 @@ from motor.etapas.montagem import planos as PL
 from motor.etapas.montagem import trilha as TR
 from motor.etapas.montagem import voz as VZ
 from motor.etapas.montagem.comum import Fontes, gravar_json, hash_obj
+from motor.provedores import render_roteador as RR
 
 _PY_SCHEMAS = str(config.SCHEMAS / "py")
 if _PY_SCHEMAS not in sys.path:
@@ -87,8 +88,10 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
     with cf.ThreadPoolExecutor(max_workers=2) as ex:
         f_ov = ex.submit(cronometro, "overlay", OV.renderizar, edl, fontes, trabalho / "overlay", workers=workers_ov, janela=janela, nice=nice)
         f_au = ex.submit(audio)
-        res_pl = cronometro("planos", PL.renderizar, edl, fontes, cache_planos, workers=workers_pl, nice=nice, janela=janela,
-                            progresso=lambda p, m=None: prog(0.05 + 0.55 * p, m))
+        # planos: CPU ou GPU (Modal) pelo tamanho do filme; GPU indisponível cai na CPU (render_roteador)
+        res_pl = cronometro("planos", RR.renderizar_planos, edl, fontes, cache_planos, cfg=cfg, workers=workers_pl, nice=nice,
+                            janela=janela, progresso=lambda p, m=None: prog(0.05 + 0.55 * p, m))
+        render_planos = RR.renderizar_planos.ultima
         res_ov = f_ov.result()
         res_au = f_au.result()
     prog(0.65, "Composição e encode (vídeo + áudio numa passada)")
@@ -105,6 +108,7 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
                     "workers": st.get("workers"), "repetidos": st.get("repetidos"), "captura": st.get("captura"), "cache": res_ov.get("cache")},
         "planos": {k: {"arquivo": v["arquivo"], "cache": v["cache"], **({k2: v["info"][k2] for k2 in ("ms_quadro", "estab", "jit_antes", "jit_depois", "zoom_x")} if v.get("info") else {})}
                    for k, v in res_pl.items()},
+        "render_planos": render_planos,
         "audio": {k: v for k, v in res_au.items() if k not in ("stems",)},
         "composicao": res_comp, "tempos": tempos,
     }

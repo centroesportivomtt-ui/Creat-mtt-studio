@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm build",
+  "regions": ["gru1"],
+  "functions": {
+    "app/api/motor/[...rota]/route.ts": { "maxDuration": 300 },
+    "app/api/envio-r2/[acao]/route.ts": { "maxDuration": 60 },
+    "app/api/envio/[[...tus]]/route.ts": { "maxDuration": 300 }
+  }
+}

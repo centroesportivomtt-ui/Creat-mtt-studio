@@ -49,14 +49,40 @@ def _cv2():
 
 
 # ---------------------------------------------------------------- leitura
-def ler(arq, m, n0: int, n: int, vf: str, w: int, h: int, ch: int, *, rapido: bool = False, nice: int = 5):
-    """Decodifica n quadros a partir do quadro-fonte n0 (busca rápida -ss antes do -i)."""
+def nvenc_ligado() -> bool:
+    """EDITOR_NVENC=1 só no contêiner GPU (deploy/modal_app.py, render_gpu): NVDEC na leitura e NVENC no encode.
+    Sem a variável, as linhas de comando são exatamente as da CPU."""
+    return os.environ.get("EDITOR_NVENC", "").strip() == "1"
+
+
+def cmd_leitura(arq, m, n0: int, n: int, vf: str, ch: int, *, rapido: bool = False, nice: int = 5) -> list[str]:
     T = max(0.0, m.start + (n0 - 0.4) / m.fps)
     cmd = (["nice", "-n", str(nice)] if nice else []) + ["ffmpeg", "-nostdin", "-v", "error", "-threads", "2"]
+    if nvenc_ligado():
+        cmd += ["-hwaccel", "cuda"]            # decodifica na GPU; os quadros voltam à RAM para os filtros de CPU
     if rapido:
         cmd += ["-skip_loop_filter", "all"]
     cmd += ["-ss", f"{T:.4f}", "-i", str(arq), "-frames:v", str(n), "-fps_mode", "passthrough", "-vf", vf,
             "-pix_fmt", "bgr24" if ch == 3 else "gray", "-f", "rawvideo", "-"]
+    return cmd
+
+
+def cmd_encode(W: int, H: int, FPS: float, tmp: str, *, nice: int = 5) -> list[str]:
+    """Encode do clipe intermediário (bgr24 cru na entrada). CPU: libx264 crf 14. GPU: h264_nvenc cq 14 equivalente."""
+    if nvenc_ligado():
+        codec = ["-c:v", "h264_nvenc", "-preset", "p5", "-tune", "hq", "-rc", "vbr", "-cq", "14", "-b:v", "0"]
+    else:
+        codec = ["-c:v", "libx264", "-preset", "veryfast", "-crf", "14"]
+    return (["nice", "-n", str(nice)] if nice else []) + [
+        "ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
+        "-vf", "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p", *codec,
+        "-g", str(int(FPS)), "-threads", "2", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
+        "-color_range", "tv", "-f", "mp4", tmp]
+
+
+def ler(arq, m, n0: int, n: int, vf: str, w: int, h: int, ch: int, *, rapido: bool = False, nice: int = 5):
+    """Decodifica n quadros a partir do quadro-fonte n0 (busca rápida -ss antes do -i)."""
+    cmd = cmd_leitura(arq, m, n0, n, vf, ch, rapido=rapido, nice=nice)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=w * h * ch * 2)
     sz = w * h * ch
     try:
@@ -288,11 +314,7 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
     cor = p.get("cor", "neutro")
     mblur = bool(p.get("mblur"))
     tmp = saida + ".tmp.mp4"
-    enc = subprocess.Popen((["nice", "-n", str(nice)] if nice else []) + [
-        "ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-        "-vf", "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p", "-c:v", "libx264", "-preset", "veryfast", "-crf", "14",
-        "-g", str(int(FPS)), "-threads", "2", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
-        "-color_range", "tv", "-f", "mp4", tmp], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    enc = subprocess.Popen(cmd_encode(W, H, FPS, tmp, nice=nice), stdin=subprocess.PIPE, stderr=subprocess.PIPE)
     disp = sorted(buf)
 
     def pega(n):

@@ -1,0 +1,10 @@
+{
+  "nome": "zona-positivo",
+  "_leia": "Controle do teste negativo: a mesma frase gigante com o auto-ajuste ligado (padrão) tem de passar.",
+  "formato": { "w": 1080, "h": 1920, "fps": 30 },
+  "duracao": 2.0,
+  "cor": "#0B0B0C",
+  "camadas": [
+    { "id": "gigante_com_ajuste", "modelo": "gancho", "de": 0, "ate": 2.0, "props": { "linhas": ["ELETRODOMÉSTICOS"], "tamanho": 400, "y": 0.44 } }
+  ]
+}

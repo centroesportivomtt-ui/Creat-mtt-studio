@@ -8,6 +8,7 @@ Implementações:
   cerebro:       fixture (B) | anthropic (B)
   render:        cpu (C) | modal (C, GPU, pago, desligado)
   publicacao:    nenhuma (C) | metricool | meta (C, desligados)
+  falante:       voz (padrão, numpy/scipy + perfis cadastrados) | fixture (testes) | desligado
 """
 from __future__ import annotations
 
@@ -42,6 +43,16 @@ class Visao(Protocol):
     nome: str
     def descrever(self, folha_jpg: pathlib.Path, tempos: list[float], contexto: dict) -> dict | None: ...
     # devolve o objeto 'visao' de analise.schema.json (ou None no provedor local sem semântica)
+
+
+@runtime_checkable
+class Falante(Protocol):
+    nome: str
+    ativo: bool                                                       # False: não rotula e não entra na assinatura da análise
+    def assinatura(self) -> str: ...                                  # muda quando perfis/limiares mudam (reprocessa só o rótulo)
+    def rotular(self, wav: pathlib.Path | None, segmentos: list[dict], contexto: dict | None = None) -> list[dict | None]: ...
+    # um item por segmento: {'falante': marcos|ruan|xande|outro|desconhecido, 'falante_confianca': 0-1,
+    #                        'falante_metodo': voz|rosto|voz+rosto|fixture} ou None (sem rótulo)
 
 
 @runtime_checkable

@@ -28,6 +28,13 @@ export default function hud(ctx, c) {
     });
   }
 
+  // auto-ajuste (zona segura, ctx.caber): o HUD é isento só nas cantoneiras; os textos dele ficam dentro da zona.
+  // Rótulo e linhas extras (24 px, mono) que não cabem até a coluna de botões encolhem até 16 px e, no fim, levam reticências.
+  const limTexto = W - ZONA.direita - (esq + 16) - 8;
+  const caberMono = (txt, largura, maiusc = true) => {
+    const r = ctx.caber(txt, { fonte: "700 'JetBrains Mono'", ls: 0.08, largura, max: 24, min: 18, piso: 16, maiusculas: maiusc });
+    return { px: r.px, t: r.cortado ? r.linhas[0] : txt };
+  };
   const textos = [];
   let rec = null, tc = null, qd = null;
   if (p.rec !== false) {
@@ -36,12 +43,16 @@ export default function hud(ctx, c) {
     textos.push(rec);
   }
   if (p.timecode !== false) { tc = mono({ left: esq + 130 + "px", top: topo + 6 + "px" }); textos.push(tc); }
-  if (p.direita !== false) { const d = mono({ right: W - dir + 12 + "px", top: topo + 6 + "px", textAlign: "right" }); d.textContent = p.direita ?? `${W}×${H} · ${ctx.fps}P`; textos.push(d); }
-  if (p.rotulo) { const r = mono({ left: esq + 16 + "px", top: topo + 52 + "px", color: "rgba(241,235,226,0.6)" }); r.textContent = p.rotulo; textos.push(r); }
+  if (p.direita !== false) {
+    const a = caberMono(p.direita ?? `${W}×${H} · ${ctx.fps}P`, dir - 12 - (esq + 130 + 260));
+    const d = mono({ right: W - dir + 12 + "px", top: topo + 6 + "px", textAlign: "right", fontSize: a.px + "px" }); d.textContent = a.t; textos.push(d);
+  }
+  if (p.rotulo) { const a = caberMono(p.rotulo, limTexto); const r = mono({ left: esq + 16 + "px", top: topo + 52 + "px", color: "rgba(241,235,226,0.6)", fontSize: a.px + "px" }); r.textContent = a.t; textos.push(r); }
   if (p.quadro !== false) { qd = mono({ right: W - dir + 12 + "px", top: base - 34 + "px", color: "var(--mk-destaque)" }); textos.push(qd); }
   const extras = (p.linhas ?? []).map((txt, i) => {
-    const e = mono({ left: esq + 16 + "px", top: topo + 52 + (i + 1) * 38 + "px", color: "rgba(245,184,77,0.8)", textTransform: "none" });
-    e.dataset.alvo = txt; return e;
+    const a = caberMono(txt, limTexto, false);
+    const e = mono({ left: esq + 16 + "px", top: topo + 52 + (i + 1) * 38 + "px", color: "rgba(245,184,77,0.8)", textTransform: "none", fontSize: a.px + "px" });
+    e.dataset.alvo = a.t; return e;
   });
   tl.fromTo(textos, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none", stagger: 0.05 }, c.de + 0.1);
 

@@ -7,11 +7,42 @@ export default function stats(ctx, c) {
   const cab = el("div", "", card, { display: "flex", alignItems: "center", gap: "12px" });
   aba(cab, 36, { position: "relative", flex: "0 0 auto" });
   const h = el("div", "", cab, { font: "700 19px 'JetBrains Mono'", letterSpacing: "0.10em", color: "#F5B84D" }); h.textContent = p.titulo;
+  // número: 71 conta como inteiro (como sempre). Texto só com dígitos e no máximo um ponto ("4.8", "2026") é lido como
+  // número e mantém o formato antigo (inteiro arredondado, sem separador). Só texto com vírgula decimal, mais de um ponto
+  // de milhar, prefixo ou sufixo ("R$ 12.999,90", "1.234.567", "98%") conta no formato brasileiro, com as casas
+  // decimais de quem escreveu; o separador de milhar só aparece se o autor escreveu um (ano "2026 clientes" fica 2026).
+  const contador = (alvo) => {
+    if (typeof alvo === "number") return (k) => String(Math.round(k * alvo));
+    const txt = String(alvo ?? "").trim();
+    if (/^\d+(\.\d+)?$/.test(txt)) { const v = Number(txt); return (k) => String(Math.round(k * v)); }
+    const m = /^(.*?)(\d[\d.]*(?:,\d+)?)(.*)$/.exec(txt);
+    if (!m) return () => txt;
+    const dec = (m[2].split(",")[1] ?? "").length, v = parseFloat(m[2].replace(/\./g, "").replace(",", "."));
+    const grupo = m[2].includes(".");
+    return (k) => m[1] + (k * v).toLocaleString("pt-BR", { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: grupo }) + m[3];
+  };
+  // auto-ajuste (ctx.caber): o cartão recorta o que passa da largura (clip-path). Rótulo que não cabe ao lado do número
+  // encolhe e quebra; número largo (preço) encolhe até caber com o rótulo. O que cabe fica igual.
+  const inner = (p.w ?? 420) - 52;
   const nums = p.itens.map((it, i) => {
     const ln = el("div", "", card, { display: "flex", alignItems: "baseline", gap: "16px", marginTop: i ? "6px" : "14px" });
-    const n = el("div", "mk-display", ln, { fontSize: "118px", lineHeight: "1", color: i === 0 ? "#F5B84D" : "#fff", minWidth: "150px" });
-    const r = el("div", "", ln, { font: "900 27px/1.1 'Inter'", color: "#fff", letterSpacing: "0.02em", whiteSpace: "pre-line" }); r.textContent = it.rot;
-    return { ln, n, alvo: it.n, t: t0 + 0.3 + i * 0.45 };
+    const fmt = contador(it.n), final = fmt(1);
+    let pxN = 118, pxR = 27;
+    const nLarg = (px) => Math.max(150 * px / 118, ctx.medir(final, "Anton", px) * 1.02);
+    // o rótulo quebra sozinho (pre-line) ao lado do número; só a PALAVRA que não cabe nem sozinha na linha força o ajuste:
+    // o rótulo encolhe até ela caber (mín. 16 px) e, se ainda faltar, o número encolhe (mín. 48 px). O que cabe fica igual.
+    const palavrasRot = String(it.rot ?? "").split(/\s+/).filter(Boolean);
+    const maiorPal = (px) => Math.max(0, ...palavrasRot.map((w) => ctx.medir(w, "900 Inter", px) + 0.02 * px * w.length));
+    const sobra = inner - 16 - nLarg(118);
+    if (maiorPal(27) > sobra) {
+      pxR = Math.max(16, Math.min(27, Math.floor((27 * Math.max(sobra, 1)) / maiorPal(27))));
+      const falta = nLarg(118) + 16 + maiorPal(pxR) - inner;
+      if (falta > 0) pxN = Math.max(48, Math.floor((118 * (inner - 16 - maiorPal(pxR))) / (ctx.medir(final, "Anton", 118) * 1.02)));
+    }
+    const rot = it.rot;
+    const n = el("div", "mk-display", ln, { fontSize: pxN + "px", lineHeight: "1", color: i === 0 ? "#F5B84D" : "#fff", minWidth: Math.round(150 * Math.min(1, pxN / 118)) + "px" });
+    const r = el("div", "", ln, { font: `900 ${pxR}px/1.1 'Inter'`, color: "#fff", letterSpacing: "0.02em", whiteSpace: "pre-line" }); r.textContent = rot;
+    return { ln, n, fmt, t: t0 + 0.3 + i * 0.45 };
   });
   const rod = el("div", "", card, { marginTop: "14px", paddingTop: "12px", borderTop: "2px solid rgba(241,235,226,0.2)", font: "700 19px/1.35 'JetBrains Mono'", letterSpacing: "0.06em", color: "rgba(241,235,226,0.9)" });
   rod.textContent = p.rodape;
@@ -23,7 +54,7 @@ export default function stats(ctx, c) {
     nums.forEach((q) => {
       const k = prog(t, q.t, 0.5);
       q.ln.style.opacity = String(Math.min(1, prog(t, q.t - 0.05, 0.1)));
-      q.n.textContent = String(Math.round(eo(k) * q.alvo));
+      q.n.textContent = q.fmt(eo(k));
     });
     rod.style.opacity = String(Math.min(1, prog(t, tr, 0.25)));
     const ks = prog(t, tr - 0.2, 0.9);

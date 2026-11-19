@@ -18,18 +18,30 @@ export default async function fecho(ctx, c) {
   const bloco = el("div", "", c.el, { position: "absolute", left: "50%", top: H * (p.y ?? 0.5) + "px", transform: "translate(-50%,-50%)", textAlign: "center" });
   const linhas = p.cta ?? ["MANDA NO", "*DIRECT*."];
   const larg = W * 0.7;
-  const tam = Math.min(...linhas.map((l) => ajustar(l.replace(/\*/g, ""), "Anton", larg, 210)));
+  let tam = Math.min(...linhas.map((l) => ajustar(l.replace(/\*/g, ""), "Anton", larg, 210)));
+  // auto-ajuste (zona segura, ctx.caber): linha que não cabe a 60 px quebra em até 3; o CTA inteiro usa o menor tamanho
+  let grupos = linhas.map((l) => [palavras(l).map((_, k) => k)]);
+  const naoCabe = linhas.some((l) => ctx.medir(l.replace(/\*/g, ""), "Anton", tam) > larg + 0.5);
+  if (naoCabe) {
+    const rs = linhas.map((l) => ctx.caber(l.replace(/\*/g, ""), { largura: larg, max: 210, min: 60, piso: 40, linhas: 3 }));
+    tam = Math.min(...rs.map((r) => r.px)); grupos = rs.map((r) => r.grupos);
+  }
   const spans = [];
   linhas.forEach((l, i) => {
-    const ln = el("div", "mk-display mk-sombra", bloco, { fontSize: tam + "px", lineHeight: "0.95" });
-    palavras(l).forEach((w, k, arr) => {
-      const s = el("span", "mk-palavra" + (w.destaque ? " mk-destaque" : ""), ln);
-      s.textContent = w.t;
-      if (w.ponto) { const pt = el("span", "mk-ponto", s); pt.textContent = "."; }
-      if (k < arr.length - 1) ln.appendChild(document.createTextNode(" "));
-      spans.push(s);
-    });
+    const ps = palavras(l);
+    for (const g of grupos[i]) {
+      const ln = el("div", "mk-display mk-sombra", bloco, { fontSize: tam + "px", lineHeight: "0.95" });
+      g.forEach((k, j) => {
+        const w = ps[k];
+        const s = el("span", "mk-palavra" + (w.destaque ? " mk-destaque" : ""), ln);
+        s.textContent = w.t;
+        if (w.ponto) { const pt = el("span", "mk-ponto", s); pt.textContent = "."; }
+        if (j < g.length - 1) ln.appendChild(document.createTextNode(" "));
+        spans.push(s);
+      });
+    }
   });
+  const nLinhas = grupos.reduce((n, g) => n + g.length, 0);
   const cs = cantos(bloco, { arm: 44, esp: 7, folga: 34 });
   spans.forEach((s, i) => {
     tl.fromTo(s, { opacity: 0, y: 30, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.3, ease: EASE.chegadaForte }, t0 + 0.32 + i * DUR.entrePalavras * 1.5);
@@ -62,7 +74,11 @@ export default async function fecho(ctx, c) {
 
   let apoio = null;
   if (p.apoio) {
-    apoio = el("div", "", c.el, { position: "absolute", left: "0", right: "0", top: H * (p.y ?? 0.5) + tam * 1.2 + "px", textAlign: "center", font: "500 34px/1.3 'Inter', sans-serif", letterSpacing: "0.04em", color: "rgba(241,235,226,0.86)" });
+    // centrado em W/2 como antes, mas a caixa termina na coluna de botões (texto longo quebra dentro da zona);
+    // com o CTA quebrado em mais linhas, o apoio desce junto
+    const lado = ZONA.direita;
+    const topoApoio = nLinhas === linhas.length ? H * (p.y ?? 0.5) + tam * 1.2 : H * (p.y ?? 0.5) + bloco.offsetHeight / 2 + tam * 0.25;
+    apoio = el("div", "", c.el, { position: "absolute", left: lado + "px", right: lado + "px", top: topoApoio + "px", textAlign: "center", font: "500 34px/1.3 'Inter', sans-serif", letterSpacing: "0.04em", color: "rgba(241,235,226,0.86)" });
     if (iconeSvg) apoio.appendChild(iconeSvg);
     apoio.appendChild(document.createTextNode(p.apoio));
     tl.fromTo(apoio, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: EASE.chegada }, t0 + 0.85);

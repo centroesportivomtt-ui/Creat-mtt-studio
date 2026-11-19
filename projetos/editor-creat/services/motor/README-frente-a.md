@@ -68,6 +68,6 @@ entrando (o motivo de não usar VAD).
 Projeção para 62 min de material: ~13 min de leitura com 2 workers, sobreposta ao envio (meta §8: até 6 min depois do último arquivo).
 
 ## Fora desta entrega
-- Identificação de falante (MARCOS/RUAN/XANDE): `falante` sai `null` no local; o Scribe (pago) separa F0/F1.
+- Identificação de falante (MARCOS/RUAN/XANDE): o rótulo por voz já existe (fase 2): veja `README-falante.md`; o Scribe (pago) continua separando F0/F1.
 - `proxy_480` não é gerado (decodificar o 4K inteiro custa ~90 ms/quadro); fica para GPU/Fase 2.
 - Parakeet e Scribe/Gemini/Claude-leve não foram exercitados de verdade aqui (sem pacote carregável / sem chave e sem autorização).

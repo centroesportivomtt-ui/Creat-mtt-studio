@@ -17,6 +17,10 @@ import unicodedata
 from motor.cerebro.orcamento import estimar_tokens
 
 EQUIPE = ("MARCOS", "RUAN", "XANDE")
+# rótulo do provedor de falante (analise: marcos|ruan|xande|outro|desconhecido) -> catálogo (maiúsculas, como o legado)
+ROTULOS = {"marcos": "MARCOS", "ruan": "RUAN", "xande": "XANDE", "outro": "OUTRO", "desconhecido": "DESCONHECIDO"}
+SEM_ROTULO = (None, "DESCONHECIDO")
+CONF_INCERTA = 0.7          # abaixo disso o texto marca o nome com '~' (MARCOS~): a fala fica inteira, mas o cérebro sabe
 MAX_FALA_S = 14.0
 GAP_JUNTA_S = 0.8
 PALAVRAS_TRUNCA = 14
@@ -64,20 +68,34 @@ def _num(x: float) -> str:
 
 
 # ---------------- falas ----------------
+def rotulo(seg: dict) -> tuple[str | None, float | None]:
+    """(falante no catálogo, confiança). Com falante_metodo: rótulo do provedor em maiúsculas. Sem: rótulo do legado
+    (MARCOS, F1...; nome da equipe em qualquer caixa vira maiúsculo) ou None."""
+    f = seg.get("falante")
+    if seg.get("falante_metodo"):
+        return ROTULOS.get(f, "DESCONHECIDO"), seg.get("falante_confianca")
+    if isinstance(f, str) and f.strip():
+        return (f.strip().upper() if f.strip().upper() in EQUIPE else f), None
+    return None, None
+
+
 def falas_do_arquivo(analise: dict) -> list[dict]:
-    """Junta segmentos vizinhos do mesmo falante em falas (menos linhas = menos tokens)."""
+    """Junta segmentos vizinhos do mesmo falante em falas (menos linhas = menos tokens). A confiança da fala é a menor
+    entre os trechos juntados."""
     out: list[dict] = []
     for s in analise["transcricao"]["segmentos"]:
         texto = (s.get("texto") or "").strip()
         if not texto:
             continue
-        f = s.get("falante")
+        f, cf = rotulo(s)
         if out and out[-1]["falante"] == f and s["s"] - out[-1]["t1"] <= GAP_JUNTA_S and s["e"] - out[-1]["t0"] <= MAX_FALA_S:
             out[-1]["t1"] = s["e"]
             out[-1]["texto"] += " " + texto
             out[-1]["confs"].append(s.get("conf"))
+            if cf is not None:
+                out[-1]["falante_conf"] = cf if out[-1]["falante_conf"] is None else min(out[-1]["falante_conf"], cf)
         else:
-            out.append({"t0": s["s"], "t1": s["e"], "falante": f, "texto": texto, "confs": [s.get("conf")]})
+            out.append({"t0": s["s"], "t1": s["e"], "falante": f, "falante_conf": cf, "texto": texto, "confs": [s.get("conf")]})
     return out
 
 
@@ -133,8 +151,10 @@ def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: i
             ref = float(np.percentile(serie, 99))
         falas = []
         for k, f in enumerate(falas_do_arquivo(a), 1):
-            falas.append({"id": f"F{num}.{k}", "t0": round(f["t0"], 2), "t1": round(f["t1"], 2), "falante": f["falante"],
-                          "texto": f["texto"], "truncado": False, "energia": _energia_rel(serie, passo, f["t0"], f["t1"], ref)})
+            item = {"id": f"F{num}.{k}", "t0": round(f["t0"], 2), "t1": round(f["t1"], 2), "falante": f["falante"]}
+            if f["falante_conf"] is not None:
+                item["falante_conf"] = round(float(f["falante_conf"]), 2)
+            falas.append({**item, "texto": f["texto"], "truncado": False, "energia": _energia_rel(serie, passo, f["t0"], f["t1"], ref)})
         momentos = []
         for k, m in enumerate(sorted(vis.get("momentos", []), key=lambda m: (m["t0"], m["t1"])), 1):
             momentos.append({"id": f"M{num}.{k}", "t0": round(m["t0"], 2), "t1": round(m["t1"], 2), "tipo": m["tipo"],
@@ -197,20 +217,34 @@ def _inteira(f, palavras_pedido, protegidas=frozenset()) -> bool:
 
 
 def falas_protegidas(clipes: list[dict]) -> frozenset:
-    """Material sem falante rotulado (a frente A ainda não identifica Marcos/Ruan/Xande): toda fala que coincide com um
-    momento 'fala' nota >= 4 ("fala com rosto em quadro") fica INTEIRA no catálogo. Sem isso, a fala base do Reel
-    (regra do dono: construir sobre a fala dele) seria truncada a 4 palavras nos níveis de compressão.
-    Com falante rotulado em qualquer fala do projeto, vale a regra normal (equipe inteira)."""
-    if any(f.get("falante") for c in clipes for f in c["falas"]):
-        return frozenset()
+    """Regra do dono: o Reel da creat.MTT é construído sobre a fala do Marcos para a câmera, que nunca pode ser truncada.
+    Com o rótulo do provedor de falante, a fala MARCOS já fica inteira (equipe). Isto é a RESERVA para o que ficou sem
+    rótulo: toda fala sem falante que coincide com um momento 'fala' nota >= 4 ("fala com rosto em quadro") fica
+    INTEIRA no catálogo (sem isso seria truncada a 4 palavras nos níveis de compressão).
+    Decidido POR CLIPE (projeto misto: um clipe sem rótulo ao lado de outro rotulado não perde a reserva):
+    - clipe sem rótulo nenhum (falante desligado, sem perfil, falha do falante, legado): vale para toda fala dele;
+    - clipe com rótulo: só para as falas que o provedor marcou DESCONHECIDO (curtas, ambíguas, voz fora dos perfis);
+      fala sem rótulo num clipe rotulado (legado misturado no mesmo arquivo) segue a regra normal."""
     ids = set()
     for c in clipes:
+        rotulado = any(f.get("falante") not in SEM_ROTULO for f in c["falas"])
         fortes = [m for m in c["momentos"] if m["tipo"].startswith("fala")
                   and (m["nota"] >= 4 or m.get("desc", "").startswith("fala com rosto"))]
         for f in c["falas"]:
+            if rotulado and f.get("falante") != "DESCONHECIDO":
+                continue
             if any(m["t0"] < f["t1"] and m["t1"] > f["t0"] for m in fortes):
                 ids.add(f["id"])
     return frozenset(ids)
+
+
+def _tag(f: dict) -> str:
+    """Falante no texto do cérebro, no mínimo de tokens: ? = sem rótulo; MARCOS~ = rótulo incerto."""
+    if f["falante"] in SEM_ROTULO:
+        return "?"
+    if f["falante"] in EQUIPE and f.get("falante_conf") is not None and f["falante_conf"] < CONF_INCERTA:
+        return f["falante"] + "~"
+    return f["falante"]
 
 
 def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozenset()) -> str:
@@ -222,6 +256,10 @@ def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozense
               f"# trilhas: {trilhas or 'nenhuma'} · modelos: {', '.join(cat.get('modelos') or []) or 'evento-reel'}",
               "# C=clipe (arquivo \"nome\" dur · câmera · pessoas · ambientes · resumo) · M=momento t0-t1 tipo nota(1-5) desc · "
               "F=fala t0-t1 FALANTE e.energia «texto». Tempos em s da fonte. Use só estes ids."]
+    if any("falante_conf" in f for c in cl for f in c["falas"]):     # só quando o provedor de falante rotulou
+        n_m = [f for c in cl for f in c["falas"] if f["falante"] == "MARCOS"]
+        linhas.append(f"# FALANTE pela voz (?=não identificado, ~=incerto) · MARCOS: {len(n_m)} falas, "
+                      f"{_num(sum(f['t1'] - f['t0'] for f in n_m))} s (base do Reel)")
     P = NIVEIS[nivel]
     trunca = P["trunca"]
     for c in cl:
@@ -255,7 +293,7 @@ def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozense
                 continue
             texto = f["texto"] if (not trunca or inteira) else _corta(f["texto"], trunca)[0]
             e = f" e.{int(round(f['energia'] * 10))}" if f.get("energia") is not None else ""
-            linhas.append(f" {f['id']} {_num(f['t0'])}-{_num(f['t1'])} {f['falante'] or '?'}{e} «{texto}»")
+            linhas.append(f" {f['id']} {_num(f['t0'])}-{_num(f['t1'])} {_tag(f)}{e} «{texto}»")
     return "\n".join(linhas) + "\n"
 
 

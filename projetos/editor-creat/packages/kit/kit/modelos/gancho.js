@@ -25,22 +25,35 @@ export default function gancho(ctx, c) {
 
   let alvo = null; // span da palavra trocada
   let pontoTroca = null;
+  // auto-ajuste (zona segura): a linha que não cabe na largura nem no tamanho mínimo (60 px) quebra em até 4 linhas
+  // (ctx.caber); a que cabe fica exatamente como antes. autoAjuste: false desliga (só para o teste negativo do QA).
+  const auto = p.autoAjuste !== false;
   for (const linha of p.linhas) {
     const ps = palavras(linha);
     // mede a linha com a versão mais larga (antes ou depois da troca)
+    const sufixo = ps.some((w) => w.ponto) ? "." : "";
     const versoes = [ps.map((w) => w.t).join(" ")];
     if (troca) versoes.push(ps.map((w) => (w.t === troca.de ? troca.para + (troca.ponto === false ? "" : ".") : w.t)).join(" "));
-    const tam = p.tamanho ?? Math.min(...versoes.map((v) => ajustar(v + (ps.some((w) => w.ponto) ? "." : ""), "Anton", larg / 1.03, p.maximo ?? 300)));
-    const ln = el("div", "mk-display mk-sombra", bloco, { fontSize: tam + "px", marginTop: (linhasEl.length ? gap : 0) + "px" });
-    ps.forEach((w, i) => {
-      const s = el("span", "mk-palavra" + (w.destaque ? " mk-destaque" : ""), ln);
-      s.textContent = w.t;
-      if (troca && w.t === troca.de) alvo = s;
-      if (w.ponto) { const pt = el("span", "mk-ponto", s); pt.textContent = "."; }
-      if (i < ps.length - 1) ln.appendChild(document.createTextNode(" "));
-    });
-    linhasEl.push(ln);
-    alturaTotal += tam * 0.92 + (linhasEl.length > 1 ? gap : 0);
+    let tam = p.tamanho ?? Math.min(...versoes.map((v) => ajustar(v + sufixo, "Anton", larg / 1.03, p.maximo ?? 300)));
+    let grupos = [ps.map((_, i) => i)];
+    const larga = versoes.reduce((a, v) => (ctx.medir(v, "Anton", 100) > ctx.medir(a, "Anton", 100) ? v : a));
+    if (auto && ctx.medir(larga + sufixo, "Anton", tam) * 1.03 > larg + 0.5) {
+      const r = ctx.caber(larga + sufixo, { largura: larg / 1.03, max: p.tamanho ?? p.maximo ?? 300, min: 60, piso: 36, linhas: 4 });
+      tam = r.px; grupos = r.grupos;
+    }
+    for (const g of grupos) {
+      const ln = el("div", "mk-display mk-sombra", bloco, { fontSize: tam + "px", marginTop: (linhasEl.length ? gap : 0) + "px" });
+      g.forEach((i, k) => {
+        const w = ps[i];
+        const s = el("span", "mk-palavra" + (w.destaque ? " mk-destaque" : ""), ln);
+        s.textContent = w.t;
+        if (troca && w.t === troca.de) alvo = s;
+        if (w.ponto) { const pt = el("span", "mk-ponto", s); pt.textContent = "."; }
+        if (k < g.length - 1) ln.appendChild(document.createTextNode(" "));
+      });
+      linhasEl.push(ln);
+      alturaTotal += tam * 0.92 + (linhasEl.length > 1 ? gap : 0);
+    }
   }
   const yc = H * (p.y ?? 0.42);
   bloco.style.top = Math.round(yc - alturaTotal / 2) + "px";
@@ -94,8 +107,16 @@ export default function gancho(ctx, c) {
       textoNo.nodeValue = s;
       alvo.style.color = k > 0.5 ? "var(--mk-destaque)" : corBase;
     });
-    // 3) a palavra pousa com peso e a câmera leva um empurrão de 2 quadros
-    tl.fromTo(alvo, { scale: 1.16 }, { scale: 1, duration: 0.42, ease: EASE.chegadaForte, immediateRender: false }, em + dur);
+    // 3) a palavra pousa com peso e a câmera leva um empurrão de 2 quadros. A escala de entrada (1,16) encolhe quando a
+    //    palavra, crescida a partir do centro, sairia da zona segura (palavra longa encostada na margem)
+    // Conta pela TINTA (a palavra fica à esquerda da caixa travada) e aceita encostar até a tolerância do QA
+    // (ZONA.tolerancia, 16 px) por 2 quadros: o demo pousa igual a sempre e só a palavra longa na margem encolhe a escala.
+    const ra = alvo.getBoundingClientRect(), ZZ = ctx.ZONA, cx = (ra.left + ra.right) / 2;
+    const tintaD = ra.left + Math.max(ctx.medir(troca.de, "Anton", fs0), ctx.medir(troca.para + (troca.ponto === false ? "" : "."), "Anton", fs0));
+    const sD = tintaD > cx ? (W - ZZ.direita + ZZ.tolerancia - cx) / (tintaD - cx) : Infinity;
+    const sE = cx > ra.left ? (cx - (ZZ.esquerda - ZZ.tolerancia)) / (cx - ra.left) : Infinity;
+    const s0 = Math.max(1, Math.min(1.16, sD, sE));
+    tl.fromTo(alvo, { scale: s0 }, { scale: 1, duration: 0.42, ease: EASE.chegadaForte, immediateRender: false }, em + dur);
     tl.fromTo(pontoTroca, { scale: 0, transformOrigin: "50% 80%" }, { scale: 1, duration: 0.34, ease: EASE.mola }, em + dur + 0.04);
     tl.to(bloco, { keyframes: [{ x: 9, duration: 1 / 30 }, { x: -6, duration: 1 / 30 }, { x: 0, duration: 1 / 30 }], ease: "none" }, em + dur);
     ctx.cue(em - 0.16, "risco", -6);

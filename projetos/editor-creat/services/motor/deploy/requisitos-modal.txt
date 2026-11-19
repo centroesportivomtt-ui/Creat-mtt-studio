@@ -1,0 +1,21 @@
+# Dependências EXATAS da imagem do motor na Modal (deploy/modal_app.py). Espelham o pyproject (base + extras r2,
+# postgres, transcricao, cerebro, falante) com versão fixada, para o deploy ser reproduzível.
+# Conferidas no venv de testes da fase 2 (18/11/2026):
+jsonschema==4.26.0
+numpy==2.5.5
+scipy==1.18.1
+soundfile==0.14.0
+pyloudnorm==0.2.0
+opencv-python-headless==5.1.0.95
+pillow==13.0.0
+fastapi==0.165.0
+starlette==1.10.0
+pydantic==2.14.3
+uvicorn==0.54.0
+boto3==1.44.6
+botocore==1.44.6
+psycopg[binary]==3.2.13
+# Não instaladas no venv de testes: piso do pyproject. Conferir no primeiro `modal deploy` (DEPLOY.md, passo 3).
+faster-whisper==1.2.1
+anthropic==0.70.0
+onnxruntime==1.18.0
