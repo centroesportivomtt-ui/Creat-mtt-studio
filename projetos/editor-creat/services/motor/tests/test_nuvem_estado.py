@@ -230,7 +230,7 @@ def test_memoria_remota_so_liga_na_nuvem(monkeypatch, sementes):
     monkeypatch.setenv("EDITOR_SEM_ESTADO", "1")
     monkeypatch.setenv("EDITOR_ARMAZENAMENTO", "r2")
     for n in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET"):
-        monkeypatch.setenv(n, "falso-" + n.lower())
+        monkeypatch.setenv(n, "falso" + n.lower().replace("_", ""))
     pytest.importorskip("boto3")
     assert isinstance(L.Loja(sementes[0]).remota, L.MemoriaR2)        # cria o cliente, não chama a rede
     monkeypatch.setenv("EDITOR_MEMORIA_REMOTA", "local")
