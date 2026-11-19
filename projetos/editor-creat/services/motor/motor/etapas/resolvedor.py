@@ -108,8 +108,9 @@ def _limpa(w: str) -> str:
 class Resolvedor:
     def __init__(self, direcao: dict, catalogo: dict, analises: dict, modelo: dict, trilhas: list[dict] | None = None,
                  vocabulario: list[dict] | None = None, energias: dict | None = None, projeto: str | None = None,
-                 ambiente: str | None = None):
+                 ambiente: str | None = None, vozes: str | None = None):
         self.d, self.cat, self.an, self.m = direcao, catalogo, analises, modelo
+        self.vozes = vozes if vozes in ("uma", "varias") else None
         self.ambiente = ambiente if ambiente in COR.LOOKS else None      # pedido do dono (ex.: academia) vence a medição
         self.trilhas = trilhas or []
         self.voc = vocabulario or []
@@ -171,6 +172,7 @@ class Resolvedor:
         if we + 1 < len(pal):
             s1 = min(s1, pal[we + 1][0] - 0.02)
         s0, s1 = self._energia(c["arquivo"], s0, s1, pal[ws][0], pal[we][1])
+        s1 = self._cauda(c["arquivo"], s1, pal[ws][0], pal[we][1], pal[we + 1][0] - 0.01 if we + 1 < len(pal) else None)
         palavras = aplicar_corrigir(pal[ws:we + 1], fd.get("corrigir") or [])
         # aperto de pausas: corta silêncio interno acima de pausa_max, deixando 0,10 s de cada lado
         gmax, manter = self.r.get("pausa_max", 0.28), 0.10
@@ -200,6 +202,31 @@ class Resolvedor:
         except (IndexError, ValueError):
             pass
         return s0, s1
+
+    def _cauda(self, aid, s1, w0, w1, teto):
+        """Nunca cortar a última sílaba (regra do dono, 19/11): o fim da palavra na transcrição costuma vir antes do fim
+        do som. Se a voz ainda está ativa em s1, o corte anda até ela morrer (no máximo +0,40 s e nunca além do começo
+        da palavra seguinte)."""
+        serie = self.energias.get(aid)
+        if serie is None:
+            return s1
+        passo = self.energias.get("_passo", {}).get(aid, 0.02)
+        try:
+            a, b = max(0, int(w0 / passo)), int(w1 / passo) + 1
+            if b - a < 3:
+                return s1
+            ref = sorted(float(v) for v in serie[a:b])[int(0.9 * (b - a - 1))]
+            i = int(round(s1 / passo))
+            if i >= len(serie) or float(serie[i]) <= ref - 14.0:
+                return s1
+            fim = min(len(serie) - 1, i + int(0.40 / passo))
+            for j in range(i, fim):
+                if float(serie[j]) < ref - 24.0 and float(serie[j + 1]) < ref - 24.0:
+                    novo = j * passo + 0.02
+                    return round(min(novo, teto), 4) if teto is not None else round(novo, 4)
+        except (IndexError, ValueError):
+            pass
+        return s1
 
     # --- fontes (trechos do original)
     def fonte_de(self, cid: str, s: float) -> str:
@@ -318,7 +345,8 @@ class Resolvedor:
             "versao": "1", "projeto": self.projeto,
             "origem": {"direcao": hashlib.sha256(json.dumps(d, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16],
                        "catalogo": self.cat.get("projeto"), "modelo": self.m["id"], "vel_aplicada": vel, "avisos": self.avisos,
-                       "conceito": d.get("conceito"), "alem_do_pedido": d.get("alem_do_pedido", [])},
+                       "conceito": d.get("conceito"), "alem_do_pedido": d.get("alem_do_pedido", []),
+                       **({"vozes": self.vozes} if getattr(self, "vozes", None) else {})},
             "formato": {"w": 1080, "h": 1920, "fps": 30},
             "duracao": L["duracao"], "vel_fala": vel,
             "blocos": L["blocos"],

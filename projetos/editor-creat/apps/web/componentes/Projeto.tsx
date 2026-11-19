@@ -39,7 +39,7 @@ function classeVersao(estado: string): string {
 const NOME_CHECAGEM: Record<string, string> = {
   frase_repetida: 'frase repetida', tom_sala_sem_voz: 'tom de sala', logo_100: 'logo a 100%', lufs: 'LUFS', true_peak: 'pico',
   quadros_pretos: 'quadro preto', legenda_x_fala: 'legenda x fala', zona_segura: 'zona segura', legenda_sobre_rosto: 'legenda x rosto',
-  formato: 'formato', duracao: 'duração', sincronia: 'sincronia', telas_desfocadas: 'telas', regra_memoria: 'regras da casa', cor_medida: 'cor',
+  formato: 'formato', duracao: 'duração', sincronia: 'sincronia', telas_desfocadas: 'telas', regra_memoria: 'regras da casa', cor_medida: 'cor', fala_cortada: 'fim das falas', voz_externa: 'voz de fora', cobertura_sintonia: 'cobertura em sintonia',
 };
 
 export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parteMB: number }) {
@@ -316,6 +316,7 @@ function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boo
         if (q.campo === 'formato') extra.formato = marcados[0];
         else if (q.campo === 'destino') extra.destino = marcados;
         else if (q.campo === 'ambiente') extra.ambiente = marcados[0];
+        else if (q.campo === 'vozes') extra.vozes = marcados[0];
         else (extra[q.campo] as string[]).push(...marcados);
       }
       const livre = String(f.get('precisa') ?? '').trim();

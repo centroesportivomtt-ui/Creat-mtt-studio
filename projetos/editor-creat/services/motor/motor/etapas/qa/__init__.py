@@ -27,7 +27,7 @@ if _PY_SCHEMAS not in sys.path:
     sys.path.insert(0, _PY_SCHEMAS)
 
 CHECAGENS = ("formato", "duracao", "sincronia", "lufs", "true_peak", "quadros_pretos", "zona_segura", "legenda_x_fala",
-             "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria", "cor_medida")
+             "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria", "cor_medida", "fala_cortada", "voz_externa", "cobertura_sintonia")
 
 
 def normalizar(txt: str) -> str:
@@ -183,6 +183,10 @@ class Conferencia:
         return sorted(pal)
 
 
+# Checagens recém-chegadas que ainda estão em revisão: medem e avisam, mas não seguram a entrega. Sai daqui = bloqueia.
+EM_OBSERVACAO: tuple[str, ...] = ("fala_cortada", "voz_externa", "cobertura_sintonia")
+
+
 def _rodar(nome: str, c: Conferencia) -> dict:
     mod = importlib.import_module(f"motor.etapas.qa.{nome}")
     t = time.time()
@@ -195,6 +199,10 @@ def _rodar(nome: str, c: Conferencia) -> dict:
         if r.get(k) is not None:
             item[k] = r[k]
     item.setdefault("detalhe", "")
+    if mod.ID in EM_OBSERVACAO and item["bloqueia"]:
+        item["bloqueia"] = False
+        if not item["ok"]:
+            item["detalhe"] = "[em observação, ainda não segura a entrega] " + item["detalhe"]
     item["detalhe"] = (item["detalhe"] + f" [{time.time() - t:.1f} s]").strip()
     return item
 

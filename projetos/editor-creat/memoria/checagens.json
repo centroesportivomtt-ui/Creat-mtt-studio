@@ -82,6 +82,9 @@
    "origem": "dono 10/11/2026",
    "gravidade": "aviso"
   },
-  {"id": "c_cor_medida", "executor": "qa", "tipo": "cor_medida", "params": {}, "descricao": "Cor de cada plano medida: altas sem estourar, pretos sem esmagar e pele na faixa natural (105° a 145° no vetorscópio).", "origem": "casa 19/11/2026", "gravidade": "aviso"}
+  {"id": "c_cor_medida", "executor": "qa", "tipo": "cor_medida", "params": {}, "descricao": "Cor de cada plano medida: altas sem estourar, pretos sem esmagar e pele na faixa natural (105° a 145° no vetorscópio).", "origem": "casa 19/11/2026", "gravidade": "aviso"},
+  {"id": "c_fala_cortada", "executor": "qa", "tipo": "fala_cortada", "params": {}, "descricao": "Nenhuma fala é cortada antes da última sílaba: forma de onda da fonte no ponto do corte, palavra a palavra da transcrição e última palavra ouvida no mix final.", "origem": "dono 19/11/2026", "gravidade": "bloqueia"},
+  {"id": "c_voz_externa", "executor": "qa", "tipo": "voz_externa", "params": {}, "descricao": "A peça do apresentador não leva fala de quem está dirigindo a gravação: cada fala é conferida pela assinatura de voz contra a voz principal.", "origem": "dono 19/11/2026", "gravidade": "bloqueia"},
+  {"id": "c_cobertura_sintonia", "executor": "qa", "tipo": "cobertura_sintonia", "params": {}, "descricao": "Imagem por cima da fala não mostra pessoa em primeiro plano fora de sincronia com o que se ouve.", "origem": "dono 19/11/2026", "gravidade": "bloqueia"}
  ]
 }
