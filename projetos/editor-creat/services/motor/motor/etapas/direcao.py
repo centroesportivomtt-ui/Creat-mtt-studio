@@ -189,6 +189,9 @@ def rodar(ctx) -> dict:
     arm.gravar_json(f"projetos/{p}/uso_{n}.json", {"versao": v, "chamadas": r["usos"], "total": total, "prompt_tokens_estimados": r["prompt_tokens"],
                                                     "direcao_tokens_estimados": r["direcao_tokens"], "checagens_edl": loja.avaliar_edl(r["edl"])})
     arm.gravar_json(f"saidas/{p}/{v}/edl.json", r["edl"])
+    from motor.cerebro import gastos
+    for i, u in enumerate(r["usos"]):
+        gastos.registrar(ctx.cfg, "critico" if u.get("chamada") == "critico" else "direcao", u, projeto=p, versao=v, ref=f"projetos/{p}/uso_{n}.json#{i}")
     indice["por_entrada"][chave] = v
     indice["ultima"] = n
     arm.gravar_json(f"projetos/{p}/direcoes.json", indice)

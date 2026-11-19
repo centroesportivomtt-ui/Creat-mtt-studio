@@ -82,6 +82,7 @@ class VisaoClaude:
 
     def descrever(self, folha_jpg: pathlib.Path | None, tempos: list[float], contexto: dict) -> dict | None:
         dur = float(contexto["midia"]["duracao"])
+        self.ultimo_uso = None                     # sem isso, um arquivo que caiu no heurístico herdava o custo do anterior
         if folha_jpg is None or not pathlib.Path(folha_jpg).is_file():
             return momentos_heuristicos(contexto)
         try:

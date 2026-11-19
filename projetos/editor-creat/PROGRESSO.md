@@ -179,3 +179,12 @@ Fila confirmada pelo dono ("Let's go"): A backup diário no Dropbox · B memóri
 - Medido: o Chromium do kit abre a página de solicitação do Dropbox daqui (só `www.dropbox.com` e `cfl.dropboxstatic.com`); com um endereço inexistente a página diz "Solicitação de arquivo não encontrada". O envio real só roda quando o dono criar a solicitação.
 - **Testes:** `tests/test_backup.py` (12). pytest **211 ok, 3 pulados**; aceite D **26/26** (novo: "backup: endereço errado recusado, destino salvo, backup feito e o link não fica na tela").
 - **Falta do dono (1 passo):** criar a solicitação de arquivos no Dropbox e colar o link na tela Backup do Caderno. Cuidado de privacidade: a pasta não deve ficar dentro da "Pasta da equipe" (as transcrições têm falas de terceiros).
+
+## Fila do dono · item H: painel de gastos do mês — 19/11
+- **Livro de gastos completo** (`cerebro/gastos.py` → `<dados>/gastos.jsonl`): agora registram a direção e o crítico (por chamada, com projeto e versão), a visão leve da análise, o olho de IA (inclusive o que falhou depois de cobrado, marcado como estimado) e os autotestes da direção e do olho. Custo zero (cérebro fixture ou sessão) não entra.
+- **Histórico:** na primeira consulta, o painel importa o que foi gasto antes do livro existir (`projetos/*/uso_*.json` e `derivados/*/*/uso_visao.json`), com a data do arquivo, sem duplicar (cada linha leva a `ref` da origem).
+- **Defeito corrigido de passagem:** a visão leve guardava o custo da última chamada e, se o arquivo seguinte caísse no modo sem IA, herdava o custo do anterior (gasto contado em dobro). Agora zera a cada arquivo.
+- **Tela "Gastos"** (link no topo, `/gastos`): total do mês, por tipo de gasto, por projeto (com o nome do projeto) e as últimas 30 chamadas; troca de mês quando há mais de um. Diz que ElevenLabs e Higgsfield usados pelas sessões de trabalho não passam pelo editor.
+- Topo do site: com 4 itens no menu, no celular o menu desce para uma segunda linha em vez de criar rolagem lateral (a verificação visual pegou).
+- Testes: `tests/test_gastos.py` (5). pytest **216 ok, 3 pulados**; aceite D **27/27** (novo: "painel de gastos do mês"; a verificação visual passou a incluir a tela de gastos).
+- Próximo: item E (biblioteca de trilhas e SFX com licença).

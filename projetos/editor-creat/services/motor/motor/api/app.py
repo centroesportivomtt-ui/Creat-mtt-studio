@@ -64,7 +64,7 @@ def criar():
     if os.environ.get("EDITOR_BACKUP_AGENDAR") == "1":            # só no servidor (iniciar.sh); testes e aceites não agendam
         from motor import backup as _backup_ag
         _backup_ag.agendar(cfg)
-    for nome in ("projetos", "direcao", "versoes", "referencias", "backup"):
+    for nome in ("projetos", "direcao", "versoes", "referencias", "backup", "gastos"):
         try:
             mod = importlib.import_module(f"motor.api.{nome}")
         except ModuleNotFoundError as e:

@@ -304,7 +304,13 @@ details > summary::-webkit-details-marker { display: none; }
 .caderno__lista p { margin: 0 0 4px; }
 .caderno__voc { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px var(--r4); font: 700 13px/1.4 var(--fonte-dado); }
 .caderno__voc s { color: var(--cor-erro); }
-@media (max-width: 520px) { .topo__editor { display: none; } .topo__nav { gap: 2px; } }
+@media (max-width: 520px) {
+  .topo__editor { display: none; }
+  /* 4 itens no menu: se não couber ao lado da marca, o menu desce para uma segunda linha (nunca rolagem lateral) */
+  .topo { flex-wrap: wrap; row-gap: 2px; }
+  .topo__nav { gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
+  .topo__nav .botao--pequeno { padding-inline: 10px; }
+}
 
 /* ---------- aprovar: a claquete ---------- */
 .botao--ok { background: var(--cor-ok); color: #06150c; border-color: transparent; display: inline-flex; align-items: center; gap: 8px; }
@@ -334,3 +340,13 @@ details > summary::-webkit-details-marker { display: none; }
 .cor__hists { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .cor__hist { width: 100%; height: 26px; display: block; fill: currentColor; opacity: .55; }
 .cor__plano .aviso { font-size: 12px; margin-top: 4px; overflow-wrap: anywhere; }
+
+/* Painel de gastos */
+.gastos__total { font-size: clamp(32px, 9vw, 48px); font-weight: 700; margin: 4px 0 8px; font-variant-numeric: tabular-nums; }
+.gastos__barras { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.gastos__barras li { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(60px, 1fr) auto; gap: 10px; align-items: center; }
+.gastos__nome { overflow-wrap: anywhere; font-size: 14px; }
+.gastos__barra { height: 8px; border-radius: 999px; background: color-mix(in srgb, currentColor 10%, transparent); overflow: hidden; }
+.gastos__barra > span { display: block; height: 100%; border-radius: inherit; background: currentColor; opacity: .7; }
+.gastos__valor { font-variant-numeric: tabular-nums; font-size: 14px; white-space: nowrap; }
+@media (max-width: 480px) { .gastos__barras li { grid-template-columns: minmax(0, 1fr) auto; } .gastos__barra { grid-column: 1 / -1; grid-row: 2; } }

@@ -77,6 +77,9 @@ def testar_direcao(cfg=None, *, validade_s: int = 86400) -> dict:
             r = dirigir_e_resolver(cerebro=CerebroAnthropic(cfg), loja=Loja(), catalogo=cat, catalogo_txt=txt, pedido=ped,
                                    analises={an["arquivo"]["id"]: an}, trilhas=[], cfg=cfg)
             tot = orcamento.somar(r["usos"])
+            from motor.cerebro import gastos
+            for u in r["usos"]:
+                gastos.registrar(cfg, "direcao_autoteste", u)
             d = r["direcao"]
             res = {"estado": "ok", "em": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "em_ts": time.time(), "segundos": round(time.time() - t0, 1),
                    "custo_usd": tot["custo_usd"], "tokens": {k: tot[k] for k in ("entrada", "entrada_cache", "saida")},

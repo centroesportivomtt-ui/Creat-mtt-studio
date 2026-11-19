@@ -251,6 +251,20 @@ async function rotear(req, res) {
     REFS.unshift({ id: `ref_${REFS.length + 1}`, url, autor: 'teste', licao: `30 s, 12 planos (plano médio 2.5 s); 1º corte em 1.2 s${c.nota ? '; o dono quer: ' + c.nota : ''}` });
     return json(res, 202, { id: REFS[0].id, estado: 'lendo' });
   }
+  if (r1 === 'gastos' && M === 'GET') {
+    const mes = url.searchParams.get('mes') || agora().slice(0, 7);
+    const ultimas = [
+      { quando: `${mes}-19T20:00:00Z`, o_que: 'olho_ia', projeto: 'p_teste', versao: 'v1', modelo: 'claude-opus-5-5', custo_usd: 0.12 },
+      { quando: `${mes}-19T19:41:00Z`, o_que: 'olho_ia_autoteste', projeto: null, versao: null, modelo: 'claude-opus-5-5', custo_usd: 0.024 },
+      { quando: `${mes}-03T10:00:00Z`, o_que: 'direcao', projeto: 'p_teste', versao: 'v1', modelo: 'claude-opus-5-5', custo_usd: 0.234 },
+    ];
+    return json(res, 200, { mes, meses: [mes], total_usd: 0.378, chamadas: 3, estimado_usd: 0,
+      por_servico: [{ id: 'anthropic', custo_usd: 0.378, chamadas: 3 }],
+      por_tipo: [{ id: 'direcao', nome: 'direção do filme', custo_usd: 0.234, chamadas: 1 }, { id: 'olho_ia', nome: 'olho de IA (revisão)', custo_usd: 0.12, chamadas: 1 },
+        { id: 'olho_ia_autoteste', nome: 'autoteste do olho de IA', custo_usd: 0.024, chamadas: 1 }],
+      por_projeto: [{ id: 'p_teste', nome: 'Reel de teste', custo_usd: 0.354, chamadas: 2 }, { id: 'sem projeto', custo_usd: 0.024, chamadas: 1 }],
+      por_dia: [], ultimas, fora_do_editor: 'ElevenLabs e Higgsfield usados pelas sessões de trabalho não passam por aqui.' });
+  }
   if (r1 === 'backup') {      // mesmo contrato do motor real: nunca devolve o endereço, só se existe
     if (!pid && M === 'GET') return json(res, 200, BACKUP);
     if (pid === 'config' && M === 'POST') {

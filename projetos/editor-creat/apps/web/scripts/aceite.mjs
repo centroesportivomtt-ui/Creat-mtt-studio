@@ -286,6 +286,11 @@ async function principal() {
   await page.click('[data-teste=ler-referencia]');
   const leu = await page.waitForSelector('[data-teste=referencias] li >> text=planos', { timeout: 10000 }).then(() => true).catch(() => false);
   ok('estudo de caso por link entra no caderno', leu, leu ? 'lição gravada' : 'não apareceu');
+  await page.goto(`${BASE}/gastos`);
+  const totalG = await page.locator('[data-teste=gastos-total]').textContent({ timeout: 10000 }).catch(() => null);
+  const nUlt = await page.locator('[data-teste=gastos-ultimas] li').count();
+  const rolaG = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  ok('painel de gastos do mês: total, por tipo, por projeto e últimas chamadas', /US\$ 0,378/.test(totalG ?? '') && nUlt === 3 && !rolaG, `total "${totalG}" · ${nUlt} linhas`);
   ok('fluxo sem erro de console', errosConsole.length === 0, errosConsole.slice(0, 3).join(' | '));
 
   // ---------- 4. verificação visual logada ----------
@@ -296,7 +301,7 @@ async function principal() {
     { nome: 'desktop-claro', viewport: { width: 1440, height: 900 }, colorScheme: 'light' },
     { nome: 'desktop-escuro', viewport: { width: 1440, height: 900 }, colorScheme: 'dark' },
   ];
-  const paginas = [['entrar', '/entrar', false], ['projetos', '/projetos', true], ['novo', '/projetos/novo', true], ['projeto', `/projetos/${pid}`, true], ['caderno', '/caderno', true]];
+  const paginas = [['entrar', '/entrar', false], ['projetos', '/projetos', true], ['novo', '/projetos/novo', true], ['projeto', `/projetos/${pid}`, true], ['caderno', '/caderno', true], ['gastos', '/gastos', true]];
   const problemas = [];
   await medir('verificacao_visual_s', async () => {
     for (const c of configs) {
