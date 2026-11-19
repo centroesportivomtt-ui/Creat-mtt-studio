@@ -1,5 +1,6 @@
 // RÓTULO de sistema: etiqueta de vidro com ponto (status) + título + linha de apoio, que entra decodificando.
-// props: x, y (canto sup. esq.), titulo, sub, cor ("ambar"|"vermelho"), ponto (true), direita (alinha pela direita em x)
+// props: x, y (canto sup. esq.), titulo, sub, cor ("ambar"|"vermelho"), ponto (true), direita (alinha pela direita em x),
+//        tam (30) e tamSub (18): corpo do título e da linha de apoio (aviso legal pede apoio maior, 24+)
 export default function rotulo(ctx, c) {
   const { el, tl, EASE, prog, semente } = ctx;
   const p = c.props, t0 = c.de;
@@ -15,7 +16,7 @@ export default function rotulo(ctx, c) {
   if (p.ponto !== false) pt = el("div", "", card, { width: "16px", height: "16px", borderRadius: "50%", background: cor, flex: "0 0 auto" });
   const tx = el("div", "", card, {});
   const h1 = el("div", "", tx, { font: `900 ${p.tam ?? 30}px 'Inter'`, letterSpacing: "0.03em", color: "#fff" });
-  const h2 = p.sub ? el("div", "", tx, { font: "700 18px 'JetBrains Mono'", letterSpacing: "0.08em", color: "rgba(241,235,226,0.78)", marginTop: "3px" }) : null;
+  const h2 = p.sub ? el("div", "", tx, { font: `700 ${p.tamSub ?? 18}px 'JetBrains Mono'`, letterSpacing: "0.08em", color: "rgba(241,235,226,0.78)", marginTop: "3px" }) : null;
   if (h2) h2.textContent = p.sub;
   const alfabeto = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#/"; const r = semente(p.titulo.length * 7 + 3);
   const lixo = Array.from({ length: 12 }, () => [...p.titulo].map((ch) => (ch === " " || ch === "·" || ch === "." ? ch : alfabeto[Math.floor(r() * alfabeto.length)])).join(""));

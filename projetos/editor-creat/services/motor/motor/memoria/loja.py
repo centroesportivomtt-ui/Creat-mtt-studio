@@ -259,6 +259,9 @@ def avaliar(c: dict, edl: dict) -> dict:
         ok, detalhe = not achadas, (f"legenda tem {achadas}" if achadas else "")
     elif tipo == "fecho_contem":
         fechos = [json.dumps(m["props"], ensure_ascii=False) for m in edl.get("motion", []) if m["modelo"].startswith("fecho")]
+        if not fechos and (edl.get("origem") or {}).get("modelo") == "story":
+            # story curto não tem cartão final: a assinatura vale em qualquer camada de texto que fique na tela
+            fechos = [json.dumps(m["props"], ensure_ascii=False) for m in edl.get("motion", [])]
         ok = any(p.get("texto", "") in f for f in fechos)
         detalhe = "" if ok else f"fecho sem {p.get('texto')}"
     elif tipo == "duracao_max":
