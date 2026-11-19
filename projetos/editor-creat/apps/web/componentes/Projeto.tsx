@@ -1,6 +1,7 @@
 'use client';
 // Mesa do projeto: material, pedido, status ao vivo (SSE do motor pelo proxy), relógio dos 30 minutos e versões.
 import Cor from '@/componentes/Cor';
+import LinkCliente from '@/componentes/LinkCliente';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Envio from './Envio';
 import {
@@ -82,7 +83,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       }
       if (['arquivo_recebido', 'etapa_fim', 'estado', 'versao_pronta', 'entregue', 'qa_reprovado', 'etapa_erro'].includes(e.tipo)) recarregar();
     };
-    for (const t of ['projeto_criado', 'arquivo_recebido', 'etapa_inicio', 'etapa_progresso', 'etapa_fim', 'etapa_erro', 'estado', 'versao_pronta', 'qa_reprovado', 'entregue', 'message']) {
+    for (const t of ['projeto_criado', 'arquivo_recebido', 'etapa_inicio', 'etapa_progresso', 'etapa_fim', 'etapa_erro', 'estado', 'versao_pronta', 'qa_reprovado', 'entregue', 'cliente', 'message']) {
       fonte.addEventListener(t, receber as EventListener);
     }
     fonte.onopen = () => setConectado(true);
@@ -256,7 +257,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
             )}
             {versoes.length > 0 && (
               <ul className="versoes">
-                {versoes.map((v) => <LinhaVersao key={v.id} v={v} aprovada={Boolean(p.dados?.aprovadas?.[v.id])} aoAprovar={() => postar(`/versoes/${v.id}/aprovar`, {})} aoReprovar={(motivo) => postar(`/versoes/${v.id}/reprovar`, { motivo })} />)}
+                {versoes.map((v) => <LinhaVersao key={v.id} pid={p.id} v={v} aprovada={Boolean(p.dados?.aprovadas?.[v.id])} aoAprovar={() => postar(`/versoes/${v.id}/aprovar`, {})} aoReprovar={(motivo) => postar(`/versoes/${v.id}/reprovar`, { motivo })} />)}
               </ul>
             )}
           </section>
@@ -378,7 +379,7 @@ function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boo
   );
 }
 
-function LinhaVersao({ v, aprovada, aoAprovar, aoReprovar }: { v: Versao; aprovada: boolean; aoAprovar: () => Promise<unknown>; aoReprovar: (motivo: string) => Promise<unknown> }) {
+function LinhaVersao({ pid, v, aprovada, aoAprovar, aoReprovar }: { pid: string; v: Versao; aprovada: boolean; aoAprovar: () => Promise<unknown>; aoReprovar: (motivo: string) => Promise<unknown> }) {
   const [batendo, setBatendo] = useState(false);
   const [aberto, setAberto] = useState(false);
   const [motivo, setMotivo] = useState('');
@@ -409,6 +410,7 @@ function LinhaVersao({ v, aprovada, aoAprovar, aoReprovar }: { v: Versao; aprova
         </>
       )}
       {entregue && v.video && <Cor base={v.video.replace(/\/final\.mp4$/, '')} />}
+      {entregue && v.video && <LinkCliente pid={pid} versao={v.id} />}
       {v.reprovacao && <p className="aviso">Reprovada: “{v.reprovacao}”</p>}
       {aprovada && <p className="aprovada" data-teste="aprovada"><span className="claquete claquete--bateu" aria-hidden="true" />Corta! Aprovada por você. Bora postar.</p>}
       {podeReprovar && (

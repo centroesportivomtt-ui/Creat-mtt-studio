@@ -2,6 +2,7 @@ import { motorJson } from '@/lib/motor';
 import Referencias from '@/componentes/Referencias';
 import Backup from '@/componentes/Backup';
 import Biblioteca from '@/componentes/Biblioteca';
+import PedidosCliente from '@/componentes/PedidosCliente';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Caderno da casa' };
@@ -57,6 +58,11 @@ export default async function Caderno() {
           </ul>
         </section>
       )}
+
+      <section className="cartao" aria-labelledby="c-clientes" id="clientes">
+        <h2 className="cartao__titulo" id="c-clientes"><span className="num">01c</span> O que os clientes responderam</h2>
+        <PedidosCliente />
+      </section>
 
       <section className="cartao" aria-labelledby="c-refs">
         <h2 className="cartao__titulo" id="c-refs"><span className="num">02</span> Estudos de caso</h2>

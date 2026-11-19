@@ -225,3 +225,22 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Olho de IA segura a entrega** (`EM_OBSERVACAO` vazio): defeito grave com confiança ≥ 0,7 reprova; falha da API segue só avisando.
 - **Fila única:** `FILA.md` com o combinado entre as sessões (puxar, reservar a linha com push, trabalhar, fechar) e o estado de cada item. Pedido feito à sessão da Lavínia: subir as 3 trilhas que ela já gerou e pagou (ElevenLabs Music) com a ficha de licença, para entrarem na biblioteca sem gasto novo.
 - pytest **270 ok, 3 pulados**; aceite D **28/28**.
+
+## Item F: link de aprovação para o cliente (19/11, noite)
+- **O que é:** na versão entregue, o dono toca em "Gerar link" (validade de 3 a 30 dias). Sai um link `/c/<token>` exclusivo, que mostra uma vez, com os botões Copiar e WhatsApp. O cliente abre sem login e vê só o player daquela versão, com dois botões:
+  - **Aprovar**, com confirmação;
+  - **Pedir ajuste**, com texto curto e nome opcional.
+- **Uma resposta por link.** Ela vira evento no diário do projeto, aparece no cartão da versão e cai no Caderno, em "O que os clientes responderam", onde o dono marca como resolvido. **Nunca vira regra sozinha:** para isso o dono reprova a versão com o motivo dele.
+- **Segurança:**
+  - o token tem 256 bits; o banco guarda só o sha256;
+  - gerar outro desliga o anterior; o dono pode desligar a qualquer hora; reprovar a versão fecha o link de vez;
+  - link vencido mostra "Link fechado", e o vídeo também recebe 410;
+  - pelo link só saem o vídeo final e a capa daquela versão;
+  - o motor nunca é exposto ao navegador do cliente;
+  - limites: 20 tentativas inválidas por IP a cada 10 min, 10 respostas por IP e 6 envios por link;
+  - páginas sem Referer, sem cache e sem indexação; uvicorn sem log de acesso (o caminho leva o token); o Caddy põe o IP real;
+  - texto do cliente limpo de caracteres invisíveis de direção; transações de verdade (`BEGIN IMMEDIATE`) no gerar e no responder.
+- **Revisões:** Muralha (segurança) e Crivo (código) aprovaram com ajustes, e os ajustes entraram neste commit. Pendente (baixa): apagar nome e texto do cliente depois de 12 meses (LGPD).
+- **Testes:** pytest **277 ok** (8 novos em `test_cliente.py`); aceite D **33/33**, com o fluxo inteiro no navegador. O dono gera, o cliente (outro navegador, sem sessão) assiste no celular e pede ajuste, a resposta aparece no projeto e no Caderno, o dono desliga e a página fecha.
+- **Trilhas do ElevenLabs:** a licença foi lida (termos de 09/10/2026) e o resultado tem ressalva: o plano Creator é "individual" e há proibição de montar biblioteca de música. Não entraram na biblioteca; a decisão está em FILA.md, em "Precisa do dono".
+- **Dados reais das réguas de fala (sessão da Lavínia):** viraram o item D2 da fila.

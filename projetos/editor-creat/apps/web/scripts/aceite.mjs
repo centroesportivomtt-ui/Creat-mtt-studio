@@ -247,6 +247,62 @@ async function principal() {
   await page.click('[data-teste=aprovar]');
   const aprovou = await page.waitForSelector('[data-teste=aprovada]', { timeout: 10000 }).then(() => true).catch(() => false);
   ok('aprovar bate a claquete e marca a versão', aprovou, aprovou ? 'aprovada' : 'não marcou');
+
+  // ---------- link de aprovação do cliente (página pública, sem sessão) ----------
+  await page.click('[data-teste=link-cliente-gerar]');
+  const urlCliente = (await page.locator('[data-teste=link-cliente-url]').textContent({ timeout: 10000 }).catch(() => '')) ?? '';
+  const tokCliente = /\/c\/([A-Za-z0-9_-]{43})$/.exec(urlCliente.trim())?.[1] ?? '';
+  ok('link do cliente: o dono gera e o link aparece uma vez', Boolean(tokCliente), urlCliente.trim().replace(/[A-Za-z0-9_-]{43}$/, '<token>'));
+  const cctx = await navegador.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'pt-BR' });
+  const cp = await cctx.newPage();
+  const errosCli = [];
+  cp.on('console', (m) => { if (m.type() === 'error') errosCli.push(m.text()); });
+  cp.on('pageerror', (e) => errosCli.push(String(e)));
+  const rc = await cp.goto(`${BASE}/c/${tokCliente}`);
+  const refCli = rc?.headers()['referrer-policy'];
+  const tocaCli = await cp.waitForSelector('[data-teste=cliente-player]', { timeout: 10000 }).then(() => cp.evaluate(async () => {
+    const v = document.querySelector('[data-teste=cliente-player]');
+    v.muted = true;
+    try { await v.play(); } catch (e) { return { erro: String(e) }; }
+    const t = Date.now();
+    while (v.currentTime < 0.5 && Date.now() - t < 10000) await new Promise((r) => setTimeout(r, 100));
+    const r = { tempo: v.currentTime, largura: v.videoWidth, erro: v.error?.message ?? null };
+    v.pause();
+    return r;
+  })).catch((e) => ({ erro: String(e) }));
+  const medCli = await cp.evaluate(() => ({
+    rolagem: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    menu: Boolean(document.querySelector('.topo, a[href^="/projetos"], a[href="/caderno"]')),
+    alvos: [...document.querySelectorAll('button, a, textarea, input')].filter((el) => { const r = el.getBoundingClientRect(); return r.width && r.height && r.height < 44; }).length,
+  }));
+  await cp.screenshot({ path: path.join(PRINTS, 'cliente-celular-antes.png'), fullPage: true });
+  const semSessaoCli = await cctx.request.get(`${BASE}/api/motor/v1/projetos`).then((r) => r.status());
+  const outraVersao = await cctx.request.get(`${BASE}/api/cliente/${tokCliente}/mix`).then((r) => r.status());
+  ok('página do cliente: só o player (toca) e os botões; sem menu do editor, sem Referer, motor fechado', !tocaCli.erro && tocaCli.tempo >= 0.5 && !medCli.rolagem && !medCli.menu && medCli.alvos === 0
+    && refCli === 'no-referrer' && semSessaoCli === 401 && outraVersao === 404, JSON.stringify({ ...tocaCli, ...medCli, refCli, semSessaoCli, outraVersao }));
+  await cp.click('[data-teste=cliente-pedir]');
+  await cp.fill('[data-teste=cliente-texto]', 'Trocar a música do final');
+  await cp.click('[data-teste=cliente-enviar]');
+  const enviouCli = await cp.waitForSelector('[data-teste=cliente-ajuste-enviado]', { timeout: 10000 }).then(() => true).catch(() => false);
+  await cp.reload();
+  const ficouCli = await cp.locator('[data-teste=cliente-ajuste-enviado]').count() === 1 && await cp.locator('[data-teste=cliente-aprovar]').count() === 0;
+  const falso = await cctx.request.get(`${BASE}/c/${'A'.repeat(43)}`).then(async (r) => /Link não encontrado/.test(await r.text()));
+  await cp.screenshot({ path: path.join(PRINTS, 'cliente-celular-depois.png'), fullPage: true });
+  ok('cliente pede ajuste uma vez só; link falso não abre nada', enviouCli && ficouCli && falso && errosCli.length === 0, JSON.stringify({ enviouCli, ficouCli, falso, errosCli: errosCli.slice(0, 2) }));
+  await cctx.close();
+  const viuNoProjeto = await page.waitForSelector('[data-teste=link-cliente-resposta] >> text=música do final', { timeout: 20000 }).then(() => true).catch(() => false);
+  await page.goto(`${BASE}/caderno#clientes`);
+  const noCaderno = await page.waitForSelector('[data-teste=pedidos-cliente] >> text=música do final', { timeout: 10000 }).then(() => true).catch(() => false);
+  await page.click('[data-teste=pedido-tratar]').catch(() => {});
+  const tratou = await page.waitForSelector('[data-teste=pedidos-cliente] >> text=Ajuste (resolvido)', { timeout: 10000 }).then(() => true).catch(() => false);
+  ok('resposta do cliente chega ao projeto e ao Caderno (o dono marca como resolvido)', viuNoProjeto && noCaderno && tratou, JSON.stringify({ viuNoProjeto, noCaderno, tratou }));
+  await page.goto(`${BASE}/projetos/${pid}`);
+  await page.waitForSelector('[data-teste=player]', { timeout: 10000 });
+  await page.click('[data-teste=link-cliente-desligar]');
+  await page.waitForSelector('[data-teste=link-cliente-desligar]', { state: 'detached', timeout: 10000 }).catch(() => {});
+  const fechou = await fetch(`${BASE}/c/${tokCliente}`).then(async (r) => /Link fechado/.test(await r.text()));
+  const videoFechado = await fetch(`${BASE}/api/cliente/${tokCliente}/video`).then((r) => r.status);
+  ok('o dono desliga o link e a página do cliente fecha (vídeo também)', fechou && videoFechado === 410, JSON.stringify({ fechou, videoFechado }));
   const avisoQa = await page.locator('[data-teste=qa-aviso]').first().textContent().catch(() => null);
   const olhoQa = await page.locator('[data-teste=qa-olho]').first().textContent().catch(() => null);
   ok('QA mostra os avisos (checagem em observação) e o olho de IA com o custo', /voz de fora/.test(avisoQa ?? '') && /custo US\$/.test(olhoQa ?? ''), `${avisoQa ?? 'sem aviso'} | ${olhoQa ?? 'sem olho'}`.slice(0, 200));
@@ -314,7 +370,7 @@ async function principal() {
     { nome: 'desktop-claro', viewport: { width: 1440, height: 900 }, colorScheme: 'light' },
     { nome: 'desktop-escuro', viewport: { width: 1440, height: 900 }, colorScheme: 'dark' },
   ];
-  const paginas = [['entrar', '/entrar', false], ['projetos', '/projetos', true], ['novo', '/projetos/novo', true], ['projeto', `/projetos/${pid}`, true], ['caderno', '/caderno', true], ['gastos', '/gastos', true]];
+  const paginas = [['entrar', '/entrar', false], ['projetos', '/projetos', true], ['novo', '/projetos/novo', true], ['projeto', `/projetos/${pid}`, true], ['caderno', '/caderno', true], ['gastos', '/gastos', true], ['cliente', `/c/${tokCliente}`, false]];
   const problemas = [];
   await medir('verificacao_visual_s', async () => {
     for (const c of configs) {

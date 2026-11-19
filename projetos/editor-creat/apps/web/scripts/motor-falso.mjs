@@ -6,7 +6,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 
 const PORTA = Number(process.env.MOTOR_FALSO_PORTA || 8788);
@@ -22,6 +22,18 @@ const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 const projetos = new Map();
 const eventos = [];
 let proximoEvento = 1;
+// links de aprovação do cliente: igual ao motor real, só o sha256 do token fica guardado
+const LINKS = [];
+const hashTok = (t) => createHash('sha256').update(t).digest('hex');
+function linkDono(l) { const { hash, ...d } = l; return { ...d, ativo: !l.revogado && l.expira > agora() }; }
+function linkPublico(tok) {
+  if (!/^[A-Za-z0-9_-]{43}$/.test(tok ?? '')) return { status: 404 };
+  const l = LINKS.find((x) => x.hash === hashTok(tok));
+  if (!l) return { status: 404 };
+  const v = projetos.get(l.projeto)?.versoes.find((x) => x.id === l.versao);
+  if (l.revogado || l.expira <= agora() || !v || v.estado !== 'entregue') return { status: 410, l };
+  return { status: 200, l, v };
+}
 
 // ---------- vídeo de amostra (5 s, 540x960, H.264 + AAC, faststart) ----------
 const AMOSTRA = path.join(ARM, '_amostras', 'final_5s.mp4');
@@ -292,6 +304,37 @@ async function rotear(req, res) {
     }
     return falha(res, 404, 'rota não encontrada');
   }
+  if (r1 === 'cliente') {             // página pública (o site chama do servidor dele)
+    const { status, l, v } = linkPublico(pid);
+    if (status === 404) return falha(res, 404, 'link não encontrado');
+    if (status === 410) return falha(res, 410, 'este link venceu ou foi trocado; peça um novo a quem te mandou');
+    if (!r3 && M === 'GET') {
+      if (url.searchParams.get('contar') !== 'false') { if (l.vistas === 0) emitir(l.projeto, 'cliente', { mensagem: `O cliente abriu o link da ${l.versao}.` }); l.vistas += 1; l.visto_em = agora(); }
+      return json(res, 200, { titulo: l.titulo, versao: l.versao, expira: l.expira, resposta: l.resposta, texto: l.resposta ? l.texto : null, respondido: l.respondido, pode_responder: !l.resposta && l.tentativas < 6, capa: fs.existsSync(path.join(ARM, 'saidas', l.projeto, l.versao, 'capa.jpg')) });
+    }
+    if ((r3 === 'video' || r3 === 'capa') && (M === 'GET' || M === 'HEAD')) return servirArquivo(req, res, r3 === 'video' ? v.video : `saidas/${l.projeto}/${l.versao}/capa.jpg`);
+    if (r3 === 'responder' && M === 'POST') {
+      const c = (await lerCorpo(req)) ?? {};
+      if (!['aprovar', 'ajuste'].includes(c.acao) || String(c.texto ?? '').length > 600 || String(c.nome ?? '').length > 60) return falha(res, 422, 'resposta inválida');
+      if (l.resposta) return falha(res, 409, 'a resposta deste link já foi enviada');
+      if (l.tentativas >= 6) return falha(res, 429, 'muitas tentativas neste link; fale com quem te mandou');
+      l.tentativas += 1;
+      const texto = String(c.texto ?? '').replace(/[ \t]+/g, ' ').trim();
+      if (c.acao === 'ajuste' && texto.length < 3) return falha(res, 422, 'escreva em poucas palavras o que quer ajustar');
+      Object.assign(l, { resposta: c.acao, texto: texto || null, nome: String(c.nome ?? '').trim().slice(0, 60) || null, respondido: agora() });
+      emitir(l.projeto, 'cliente', { mensagem: c.acao === 'aprovar' ? `O cliente aprovou a ${l.versao}.` : `O cliente pediu ajuste na ${l.versao}: “${texto}”` });
+      return json(res, 200, { resposta: l.resposta, respondido: l.respondido });
+    }
+    return falha(res, 404, 'rota não encontrada');
+  }
+  if (r1 === 'clientes') {
+    if (!pid && M === 'GET') return json(res, 200, { respostas: LINKS.filter((l) => l.resposta).map((l) => ({ ...linkDono(l), projeto_nome: projetos.get(l.projeto)?.nome ?? null })).reverse() });
+    const l = LINKS.find((x) => x.id === pid);
+    if (!l) return falha(res, 404, 'link não encontrado');
+    if (r3 === 'revogar' && M === 'POST') { if (!l.revogado) { l.revogado = agora(); emitir(l.projeto, 'cliente', { mensagem: `Link do cliente da ${l.versao} desligado.` }); } return json(res, 200, linkDono(l)); }
+    if (r3 === 'tratar' && M === 'POST') { if (!l.resposta) return falha(res, 404, 'pedido não encontrado'); l.tratado = l.tratado || agora(); return json(res, 200, linkDono(l)); }
+    return falha(res, 404, 'rota não encontrada');
+  }
   if (r1 !== 'projetos') return falha(res, 404, 'rota não encontrada');
 
   if (!pid) {
@@ -320,6 +363,7 @@ async function rotear(req, res) {
   if (!r3 && M === 'GET') return json(res, 200, verProjeto(p));
   if (r3 === 'eventos' && M === 'GET') return sse(req, res, pid, url);
   if (r3 === 'versoes' && !r4 && M === 'GET') return json(res, 200, p.versoes);
+  if (r3 === 'links-cliente' && M === 'GET') return json(res, 200, { links: LINKS.filter((l) => l.projeto === pid).map(linkDono).reverse() });
   if (M !== 'POST') return falha(res, 405, 'método não permitido');
   const c = await lerCorpo(req);
   if (c === null) return falha(res, 422, 'JSON inválido');
@@ -390,6 +434,22 @@ async function rotear(req, res) {
     p.dados.aprovadas = { ...(p.dados.aprovadas ?? {}), [v.id]: { em: agora(), nota: c.nota ?? null } };
     emitir(pid, 'estado', { mensagem: `Corta! Versão ${v.id} aprovada. Virou caso de referência da casa.` });
     return json(res, 200, { aprovada: v.id, caso: `${pid}-${v.id}` });
+  }
+  if (r3 === 'versoes' && r4 && r5 === 'link-cliente') {
+    const v = p.versoes.find((x) => x.id === r4);
+    if (!v) return falha(res, 404, 'versão não encontrada');
+    if (v.estado !== 'entregue') return falha(res, 409, 'só gero link de versão entregue (conferida pelo QA)');
+    const dias = Number(c.dias ?? 7);
+    if (!Number.isInteger(dias) || dias < 1 || dias > 30) return falha(res, 422, 'dias entre 1 e 30');
+    if (c.titulo != null && String(c.titulo).length > 80) return falha(res, 422, 'título com até 80 caracteres');
+    for (const l of LINKS) if (l.projeto === pid && l.versao === v.id && !l.revogado) l.revogado = agora();
+    const token = randomBytes(32).toString('base64url');
+    const l = { id: 'lc_' + randomBytes(6).toString('hex'), hash: hashTok(token), projeto: pid, versao: v.id, titulo: String(c.titulo ?? '').trim() || p.nome, criado: agora(),
+      expira: new Date(Date.now() + dias * 864e5).toISOString().replace(/\.\d{3}Z$/, 'Z'), revogado: null, vistas: 0, visto_em: null, tentativas: 0,
+      resposta: null, texto: null, nome: null, respondido: null, tratado: null };
+    LINKS.push(l);
+    emitir(pid, 'cliente', { mensagem: `Link de aprovação da ${v.id} gerado para o cliente (vale ${dias} dias).` });
+    return json(res, 201, { id: l.id, token, caminho: `/c/${token}`, expira: l.expira, versao: v.id, titulo: l.titulo });
   }
   if (r3 === 'versoes' && r4 && r5 === 'publicar') return json(res, 202, { mensagem: 'Publicação desligada neste motor (provedor nenhuma).' });
   return falha(res, 404, 'rota não encontrada');

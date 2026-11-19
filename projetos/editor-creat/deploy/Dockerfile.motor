@@ -13,4 +13,4 @@ RUN cd packages/kit && npm install --omit=dev --no-audit --no-fund && npm instal
 ENV PATH=/opt/venv/bin:$PATH EDITOR_DADOS=/dados MOTOR_HOST=0.0.0.0
 WORKDIR /app/projetos/editor-creat/services/motor
 EXPOSE 8787
-CMD ["uvicorn", "motor.api.app:criar", "--factory", "--host", "0.0.0.0", "--port", "8787"]
+CMD ["uvicorn", "motor.api.app:criar", "--factory", "--host", "0.0.0.0", "--port", "8787", "--no-access-log"]

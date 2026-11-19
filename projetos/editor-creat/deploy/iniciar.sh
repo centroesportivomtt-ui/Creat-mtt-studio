@@ -23,7 +23,7 @@ cd /app/projetos/editor-creat/services/motor
 # A do git (imagem) é juntada a cada boot. Se a junção falhar, o motor sobe com a memória do git e avisa no log.
 export EDITOR_MEMORIA="${EDITOR_MEMORIA:-$DADOS/memoria}"
 python -m motor.memoria.semear || { echo "AVISO: não consegui juntar a memória no volume; usando a do repositório nesta subida" >&2; unset EDITOR_MEMORIA; }
-EDITOR_BACKUP_AGENDAR=1 uvicorn motor.api.app:criar --factory --host 127.0.0.1 --port "$MOTOR_PORTA" &
+EDITOR_BACKUP_AGENDAR=1 uvicorn motor.api.app:criar --factory --host 127.0.0.1 --port "$MOTOR_PORTA" --no-access-log &   # sem log de acesso: o caminho do link do cliente leva o token
 for i in $(seq 1 60); do curl -fsS -o /dev/null -H "authorization: Bearer $MOTOR_TOKEN" "http://127.0.0.1:${MOTOR_PORTA}/v1/saude" && break; sleep 0.5; done   # banco criado antes dos workers
 for i in $(seq 1 "${EDITOR_WORKERS:-2}"); do python -m motor.worker & done
 cd /app/projetos/editor-creat/apps/web

@@ -350,3 +350,21 @@ details > summary::-webkit-details-marker { display: none; }
 .gastos__barra > span { display: block; height: 100%; border-radius: inherit; background: currentColor; opacity: .7; }
 .gastos__valor { font-variant-numeric: tabular-nums; font-size: 14px; white-space: nowrap; }
 @media (max-width: 480px) { .gastos__barras li { grid-template-columns: minmax(0, 1fr) auto; } .gastos__barra { grid-column: 1 / -1; grid-row: 2; } }
+
+/* Página do cliente (link de aprovação): só a marca, o vídeo e a resposta */
+.cliente { min-height: 100dvh; display: grid; place-items: start center; padding: var(--r5) var(--r4) calc(var(--r5) + env(safe-area-inset-bottom)); }
+.cliente__caixa { width: min(100%, 440px); display: grid; gap: var(--r4); }
+.cliente__marca { display: flex; align-items: center; gap: 10px; }
+.cliente__corpo { display: grid; gap: var(--r4); }
+.cliente__titulo { font: 400 clamp(34px, 10vw, 52px)/1 var(--fonte-display); text-transform: uppercase; margin-top: 6px; }
+.cliente__botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cliente__botoes .botao { min-height: 52px; justify-content: center; font-size: 16px; }
+.cliente__resposta { display: grid; gap: 6px; padding: var(--r3) var(--r4); border: 1px solid var(--cor-linha); border-radius: var(--r3); background: var(--cor-superficie); }
+.cliente__resposta .aprovada { margin: 0; font-size: 15px; }
+.cliente__validade { font-size: 13px; }
+.cliente__assina { justify-content: center; margin-top: var(--r3); }
+.cliente .player { max-height: 72dvh; }
+/* Painel do dono: link para o cliente */
+.link-cliente { display: grid; gap: 8px; padding: 10px 12px; border: 1px dashed var(--cor-linha); border-radius: var(--r3); margin-top: 8px; }
+.link-cliente__url { font: 600 13px/1.3 var(--fonte-dado); overflow-wrap: anywhere; user-select: all; }
+.link-toque { display: inline-flex; align-items: center; min-height: 44px; }

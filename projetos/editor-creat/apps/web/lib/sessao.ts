@@ -108,6 +108,16 @@ export function mesmaOrigem(req: Request): boolean {
   }
 }
 
+// IP para os limites de tentativa. O PRIMEIRO valor do X-Forwarded-For é do cliente (ele escolhe o que quiser):
+// girando o cabeçalho, o limite virava infinito. Vale o que o proxy de produção põe: x-real-ip, ou o ÚLTIMO salto
+// do X-Forwarded-For (quem acrescentou foi o nosso proxy).
+export function ipDe(req: { headers: Headers }): string {
+  const real = (req.headers.get('x-real-ip') ?? '').trim();
+  if (real) return real;
+  const saltos = (req.headers.get('x-forwarded-for') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  return saltos.at(-1) || 'local';
+}
+
 // Tentativas de senha por IP (memória do processo): 8 a cada 10 min.
 const tentativas = new Map<string, number[]>();
 export function podeTentar(ip: string, limite = 8, agora = Date.now()): boolean {

@@ -13,6 +13,12 @@ export default {
   reactStrictMode: true,
   images: { unoptimized: true },
   async headers() {
-    return [{ source: '/:caminho*', headers: seguranca }];
+    const doCliente = [
+      { key: 'Referrer-Policy', value: 'no-referrer' },
+      { key: 'Cache-Control', value: 'no-store' },
+      { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+    ];
+    // o último bloco que casa vence a mesma chave: a página do cliente e a rota dela não vazam o token pelo Referer
+    return [{ source: '/:caminho*', headers: seguranca }, { source: '/c/:token', headers: doCliente }, { source: '/api/cliente/:caminho*', headers: doCliente }];
   },
 };

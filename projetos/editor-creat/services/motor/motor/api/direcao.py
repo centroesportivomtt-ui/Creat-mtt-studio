@@ -148,6 +148,8 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
             cerebro = None
         r = Loja().registrar_reprovacao(pid, versao, corpo.motivo, cerebro=cerebro)
         con.execute("UPDATE versoes SET estado='reprovada', reprovacao=? WHERE projeto=? AND id=?", (corpo.motivo, pid, versao))
+        from motor import cliente as _cliente
+        _cliente.revogar_versao(con, pid, versao)          # link do cliente desta versão fecha de vez
         d = _projeto(con, pid)["dados"]
         d["correcoes_auto"] = 0            # nova rodada pedida pelo dono: o auto-ajuste do QA volta a ter as 2 tentativas
         con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), pid))

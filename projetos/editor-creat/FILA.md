@@ -20,8 +20,9 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 | B | memória do servidor de volta ao git | feito em parte · 51fcc19 (memória no volume) + backup leva `editor-memoria-*.json`; falta a rotina que lê o backup e versiona |
 | C | revisão com olho de IA antes de entregar | feito · 51fcc19 · segura a entrega desde 19/11 |
 | D | checagens de fala (cortada, voz de fora, cobertura) | feito · c9e2b1e (integração das duas sessões) |
-| E | biblioteca de trilhas e efeitos com licença | feito · bb750bd · efeitos da casa (Sonniss GDC) no kit; **trilhas: falta fonte** |
-| F | link de aprovação para o cliente | em andamento · 01LA2wrM · 19/11 21:00 |
+| E | biblioteca de trilhas e efeitos com licença | feito · bb750bd · efeitos da casa (Sonniss GDC) no kit; **trilhas: licença com ressalva, ver Precisa do dono** |
+| D2 | réguas de fala, rodada 2 (dados reais da Lavínia, 19/11): voz distante abaixo do limiar vira tom < ~170 Hz contra a principal; falso positivo em consoante sonora (≥180 ms e tom fora de ±25%); início no meio de palavra da mesma voz (< 150 ms antes do s0) | livre |
+| F | link de aprovação para o cliente | feito · (este commit) · 19/11 |
 | G | agendar o post aprovado pelo Metricool | livre (precisa do dono: token do Metricool na hospedagem) |
 | H | painel de gastos do mês | feito · 90781ea |
 
@@ -40,4 +41,4 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 
 ## Precisa do dono
 - Colar o link do backup na tela: https://creat-mtt-studio-production.up.railway.app/caderno#backup (link na conversa de 19/11; não fica no repositório).
-- Trilhas: de onde vêm (biblioteca paga que a creat assine, ElevenLabs Music pago por geração, ou livres conferidas uma a uma).
+- Trilhas: as 3 do ElevenLabs (plano Creator) estão no Dropbox (`/Creat.MTT Studio/creat.MTT/Kit de edição/Trilhas/`), mas os termos de música (09/10/2026) dizem Creator = "For Individual Use Only" e proíbem montar biblioteca de músicas com o que se gera. Uso comercial online, inclusive anúncio pago, é permitido; agência para cliente não está definido. Por isso NÃO entraram na biblioteca da casa. Caminhos: (a) a creat passa a gerar no plano Scale (empresa com menos de 10 pessoas); (b) e-mail à ElevenLabs confirmando o Creator para cliente; (c) biblioteca paga com licença de agência. Fonte: elevenlabs.io/music-terms.
