@@ -48,12 +48,27 @@ def agora_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _com_tentativas(fn, tentativas: int = 40, espera: float = 0.25):
+    """Abrir o banco no boot disputa o PRAGMA journal_mode=WAL e o esquema entre API e workers (o sqlite devolve 'database is locked'
+    sem respeitar o timeout nessa hora). Tenta de novo por até ~10 s; qualquer outro erro sobe na hora."""
+    for i in range(tentativas):
+        try:
+            return fn()
+        except sqlite3.OperationalError as e:
+            if "locked" not in str(e).lower() and "busy" not in str(e).lower():
+                raise
+            if i == tentativas - 1:
+                raise
+            time.sleep(espera)
+
+
 def conectar(caminho) -> sqlite3.Connection:
     con = sqlite3.connect(str(caminho), timeout=30, isolation_level=None)
     con.row_factory = sqlite3.Row
-    con.execute("PRAGMA journal_mode=WAL")
+    con.execute("PRAGMA busy_timeout=30000")
+    _com_tentativas(lambda: con.execute("PRAGMA journal_mode=WAL"))
     con.execute("PRAGMA synchronous=NORMAL")
-    con.executescript(ESQUEMA)
+    _com_tentativas(lambda: con.executescript(ESQUEMA))
     return con
 
 

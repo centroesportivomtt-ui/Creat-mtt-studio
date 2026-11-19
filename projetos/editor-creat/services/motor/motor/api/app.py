@@ -46,8 +46,12 @@ def criar():
     app = FastAPI(title="Motor do Editor creat.MTT", version="0.1.0", dependencies=[Depends(autorizado)])
 
     @app.get("/v1/saude")
-    def saude():
-        return {"ok": True, "provedores": {t: cfg.provedor_efetivo(t) for t in ("armazenamento", "transcricao", "visao", "cerebro", "render", "publicacao")}}
+    def saude(chave: bool = False):
+        out = {"ok": True, "provedores": {t: cfg.provedor_efetivo(t) for t in ("armazenamento", "transcricao", "visao", "cerebro", "render", "publicacao")}}
+        if chave:
+            from motor.cerebro.diagnostico import checar_chave
+            out["chave_cerebro"] = checar_chave(cfg)
+        return out
 
     for nome in ("projetos", "direcao", "versoes"):
         try:

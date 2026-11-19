@@ -20,6 +20,7 @@ fi
 unset EDITOR_SENHA
 cd /app/projetos/editor-creat/services/motor
 uvicorn motor.api.app:criar --factory --host 127.0.0.1 --port "$MOTOR_PORTA" &
+for i in $(seq 1 60); do curl -fsS -o /dev/null -H "authorization: Bearer $MOTOR_TOKEN" "http://127.0.0.1:${MOTOR_PORTA}/v1/saude" && break; sleep 0.5; done   # banco criado antes dos workers
 for i in $(seq 1 "${EDITOR_WORKERS:-2}"); do python -m motor.worker & done
 cd /app/projetos/editor-creat/apps/web
 npx next start -H 0.0.0.0 -p "${PORT:-3000}" &
