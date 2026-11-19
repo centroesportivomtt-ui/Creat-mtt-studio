@@ -66,6 +66,8 @@ const servidor = () => (g.__tusEditor ??= criarServidor());
 
 async function tratar(req: Request): Promise<Response> {
   if (!sessaoDaRequisicao(req)) return new Response('entre com a senha de novo', { status: 401 });
+  // Produção (Vercel + R2): o arquivo vai do navegador direto ao R2 (lib/envioR2.ts); o tus em disco fica desligado.
+  if (process.env.EDITOR_ARMAZENAMENTO === 'r2') return new Response('envio direto ao R2 ativo; recarregue a página', { status: 409 });
   if (req.method !== 'HEAD' && req.method !== 'GET' && !mesmaOrigem(req)) return new Response('origem não permitida', { status: 403 });
   const s = await servidor();
   return s.handleWeb(req as Parameters<Server['handleWeb']>[0]);

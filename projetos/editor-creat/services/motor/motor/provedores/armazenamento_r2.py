@@ -32,11 +32,12 @@ class ArmazenamentoR2:
                 raise RuntimeError("R2 precisa do pacote boto3 (pip install 'editor-motor[r2]')") from e
             cliente = boto3.client(
                 "s3",
-                endpoint_url=f"https://{conta}.r2.cloudflarestorage.com",
+                # R2_ENDPOINT: jurisdição da UE (<conta>.eu.r2...) ou S3 de teste; padrão é o endpoint da conta
+                endpoint_url=os.environ.get("R2_ENDPOINT", "").strip() or f"https://{conta}.r2.cloudflarestorage.com",
                 aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
                 aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
                 region_name="auto",
-                config=BotoConfig(retries={"max_attempts": 5, "mode": "adaptive"}),
+                config=BotoConfig(signature_version="s3v4", retries={"max_attempts": 5, "mode": "adaptive"}),  # R2 só aceita SigV4
             )
         self.s3 = cliente
         self.cache = pathlib.Path(cfg.dados) / "cache" / "r2"
@@ -109,6 +110,19 @@ class ArmazenamentoR2:
     def url_parte(self, chave: str, envio_id: str, parte: int) -> str:
         return self.s3.generate_presigned_url(
             "upload_part", Params={"Bucket": self.bucket, "Key": validar_chave(chave), "UploadId": envio_id, "PartNumber": int(parte)}, ExpiresIn=6 * 3600)
+
+    def partes_multipart(self, chave: str, envio_id: str) -> list[dict]:
+        """Partes que já chegaram (para retomar depois de fechar a aba ou cair a rede)."""
+        out, marca = [], 0
+        while True:
+            r = self.s3.list_parts(Bucket=self.bucket, Key=validar_chave(chave), UploadId=envio_id, PartNumberMarker=marca)
+            out += [{"parte": int(x["PartNumber"]), "etag": x["ETag"], "bytes": int(x["Size"])} for x in r.get("Parts", [])]
+            if not r.get("IsTruncated"):
+                return out
+            marca = int(r["NextPartNumberMarker"])
+
+    def abortar_multipart(self, chave: str, envio_id: str) -> None:
+        self.s3.abort_multipart_upload(Bucket=self.bucket, Key=validar_chave(chave), UploadId=envio_id)
 
     def concluir_multipart(self, chave: str, envio_id: str, partes: list[dict]) -> None:
         self.s3.complete_multipart_upload(

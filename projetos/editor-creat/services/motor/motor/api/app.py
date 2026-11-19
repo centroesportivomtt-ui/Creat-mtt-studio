@@ -49,7 +49,7 @@ def criar():
     def saude():
         return {"ok": True, "provedores": {t: cfg.provedor_efetivo(t) for t in ("armazenamento", "transcricao", "visao", "cerebro", "render", "publicacao")}}
 
-    for nome in ("projetos", "direcao", "versoes"):
+    for nome in ("projetos", "envios", "direcao", "versoes"):
         try:
             mod = importlib.import_module(f"motor.api.{nome}")
         except ModuleNotFoundError as e:
