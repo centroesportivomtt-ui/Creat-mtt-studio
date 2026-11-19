@@ -29,7 +29,7 @@ class Config:
     transcricao: str = field(default_factory=lambda: _env("EDITOR_TRANSCRICAO", "faster-whisper"))  # faster-whisper | parakeet | scribe
     whisper_modelo: str = field(default_factory=lambda: _env("EDITOR_WHISPER_MODELO", "small"))
     visao: str = field(default_factory=lambda: _env("EDITOR_VISAO", "local"))                      # local | claude-leve | gemini
-    cerebro: str = field(default_factory=lambda: _env("EDITOR_CEREBRO", "fixture"))                # fixture | anthropic
+    cerebro: str = field(default_factory=lambda: _env("EDITOR_CEREBRO", "fixture"))                # fixture | anthropic | sessao
     modelo_direcao: str = field(default_factory=lambda: _env("EDITOR_MODELO_DIRECAO", "claude-opus-5-5"))
     modelo_leve: str = field(default_factory=lambda: _env("EDITOR_MODELO_LEVE", "claude-haiku-5-5"))
     esforco_direcao: str = field(default_factory=lambda: _env("EDITOR_ESFORCO_DIRECAO", "high"))

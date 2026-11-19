@@ -122,6 +122,11 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
             "avisos": edl["origem"]["avisos"], "critica": critica}
 
 
+def _dirigir(cerebro, loja, catalogo, cat_txt, pedido, analises, arm, ctx, correcao):
+    return dirigir_e_resolver(cerebro=cerebro, loja=loja, catalogo=catalogo, catalogo_txt=cat_txt, pedido=pedido, analises=analises,
+                              trilhas=armazem_b.trilhas(ctx.cfg), energias=_energias(arm, analises), correcao=correcao, cfg=ctx.cfg)
+
+
 @etapa("direcao")
 def rodar(ctx) -> dict:
     from motor.provedores import provedor
@@ -157,8 +162,11 @@ def rodar(ctx) -> dict:
             analises[a["arquivo"]["id"]] = a
     ctx.progresso(0.1, "Direção: o diretor está lendo o catálogo.")
     cerebro = provedor("cerebro", ctx.cfg)
-    r = dirigir_e_resolver(cerebro=cerebro, loja=loja, catalogo=catalogo, catalogo_txt=cat_txt, pedido=pedido, analises=analises,
-                           trilhas=armazem_b.trilhas(ctx.cfg), energias=_energias(arm, analises), correcao=correcao, cfg=ctx.cfg)
+    from motor.cerebro.sessao import AguardandoDiretor
+    try:
+        r = _dirigir(cerebro, loja, catalogo, cat_txt, pedido, analises, arm, ctx, correcao)
+    except AguardandoDiretor as e:
+        raise ErroDefinitivo(str(e)) from e
     n = int(indice.get("ultima", 0)) + 1
     v = f"v{n}"
     r["edl"]["origem"].update({"versao": v, "cerebro": cerebro.nome, "critica": r["critica"]})
