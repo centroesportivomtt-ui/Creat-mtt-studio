@@ -98,11 +98,17 @@ def test_docs_fechados_com_token(dados, monkeypatch, caminho):
 # ---------- item 3: nenhum evento some do SSE ----------
 def test_evento_de_transacao_longa_nao_some_do_cursor(con, backend):
     url = config.carregar().banco
-    outra = banco.conectar(url)
-    try:
+
+    def solto():
+        outra = banco.conectar(url)          # conexão da própria thread (o sqlite3 exige)
+        try:
+            return banco.emitir(outra, "p1", "solto")
+        finally:
+            outra.close()
+    if True:
         con.execute("BEGIN IMMEDIATE")
         a = banco.emitir(con, "p1", "dentro_da_transacao")          # id alocado, ainda não confirmado
-        t, _ = _rota_em_paralelo(lambda: banco.emitir(outra, "p1", "solto"))
+        t, _ = _rota_em_paralelo(solto)
         time.sleep(0.5)
         leitor = banco.conectar(url)
         vistos = [e["id"] for e in banco.eventos_desde(leitor, "p1", 0)]   # o SSE lê aqui no meio
@@ -114,8 +120,6 @@ def test_evento_de_transacao_longa_nao_some_do_cursor(con, backend):
         todos = [e["id"] for e in banco.eventos_desde(con, "p1", 0)]
         assert a in todos and len(todos) == 2
         assert sorted(vistos) == sorted(todos), f"o leitor perdeu evento: viu {vistos}, existem {todos}"
-    finally:
-        outra.close()
 
 
 def test_muitos_emissores_e_leitor_por_cursor_nao_perdem_evento(con, backend):

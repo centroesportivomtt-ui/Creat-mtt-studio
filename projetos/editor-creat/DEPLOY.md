@@ -10,8 +10,17 @@ celular/navegador ──► Vercel (apps/web, região gru1) ──MOTOR_URL + MO
 ```
 
 O motor na Modal é **sem estado local**: o disco do contêiner (`/tmp`) é só rascunho. Ele se recusa a subir
-(`EDITOR_SEM_ESTADO=1`, já na imagem) se faltar R2, Postgres ou `MOTOR_TOKEN`. Memória da casa, trilhas e perfis de
-falante (JSON pequenos) ficam no Volume `editor-motor-estado`, criado sozinho no primeiro deploy.
+(`EDITOR_SEM_ESTADO=1`, já na imagem) se faltar R2, Postgres ou `MOTOR_TOKEN`.
+
+- **Memória da casa** (regras e checagens que nascem de cada reprovação do dono): objetos `memoria/regras.json` e
+  `memoria/checagens.json` no R2, gravados com escrita condicional (If-Match no ETag). A API e qualquer worker leem a
+  mesma versão na hora; duas reprovações ao mesmo tempo em contêineres diferentes não se perdem (a segunda relê e
+  refaz). A pasta `memoria/` do git, dentro da imagem, é só a semente da primeira gravação e a fonte de modelos e
+  casos. Por que não o Volume: ele precisa de commit/reload manuais e a última gravação apaga a outra.
+- **Trilhas e perfis de falante** (JSON pequenos, mudam raramente): Volume `editor-motor-estado`, criado sozinho no
+  primeiro deploy; o worker dá reload ao começar e commit ao terminar.
+- **Idempotência**: o ingest identifica o original pelo ETag e tamanho no R2, não pelo disco. Um contêiner novo
+  reaproveita a leitura e a análise já feitas, sem refazer nada pago.
 
 ## 1. Modal (motor)
 
@@ -67,7 +76,7 @@ falante (JSON pequenos) ficam no Volume `editor-motor-estado`, criado sozinho no
 | `EDITOR_AUTORIZADO_PAGO` | Modal > Secrets > editor-motor | não | trava de gasto pago (ver .env.example) |
 
 Já definidas pela imagem (não cole): `EDITOR_DADOS=/tmp/editor-dados`, `EDITOR_SEM_ESTADO=1`, `EDITOR_MODAL_WORKER=1`,
-`EDITOR_MEMORIA`, `EDITOR_TRILHAS`, `EDITOR_FALANTES_DIR`, `EDITOR_YUNET`, `PLAYWRIGHT_BROWSERS_PATH`.
+`EDITOR_MEMORIA`, `EDITOR_MEMORIA_REMOTA=r2`, `EDITOR_TRILHAS`, `EDITOR_FALANTES_DIR`, `EDITOR_YUNET`, `PLAYWRIGHT_BROWSERS_PATH`.
 
 ## 2. Vercel (site)
 
