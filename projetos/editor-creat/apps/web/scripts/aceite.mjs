@@ -206,6 +206,12 @@ async function principal() {
     await page.waitForSelector('[data-teste=estado][data-estado=lendo]', { timeout: 15000 });
     await page.fill('textarea[name=texto]', 'Reels de 45 s do bastidor: abre com a fala mais forte, fecha chamando para o @creat.mtt.');
     await page.selectOption('select[name=duracao]', '45');
+    const nPerguntas = await page.locator('[data-teste=perguntas] fieldset').count();
+    ok('o editor pergunta o que falta (botões de resposta)', nPerguntas >= 4, `${nPerguntas} perguntas`);
+    await page.check('input[name=modo][value=ultra]');
+    const nUltra = await page.locator('[data-teste=perguntas] fieldset').count();
+    ok('as perguntas mudam com o modo (ultra pergunta do mascote e da IA)', nUltra > nPerguntas, `${nPerguntas} -> ${nUltra}`);
+    await page.check('input[name=q_proibido][value="palavrão"]');
     await page.click('[data-teste=mandar-pedido]');
     const t0 = Date.now();
     while (Date.now() - t0 < 90000) {

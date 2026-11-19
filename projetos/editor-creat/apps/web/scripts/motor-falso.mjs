@@ -294,6 +294,7 @@ async function rotear(req, res) {
     if (c.duracao_alvo != null && (Number(c.duracao_alvo) < 5 || Number(c.duracao_alvo) > 600)) return falha(res, 422, 'duração alvo entre 5 e 600 s');
     if (c.modo != null && !['auto', 'criativo', 'ultra', 'cinema', 'ia', 'clean', 'serio', 'fala'].includes(c.modo)) return falha(res, 422, 'modo inválido');
     p.dados.pedido = { texto: texto.slice(0, 200), tipo_video: c.tipo_video ?? 'auto', modo: c.modo ?? 'auto' };
+    p.dados.pedido.respostas = { formato: c.formato ?? null, destino: c.destino ?? null, obrigatorio: c.obrigatorio ?? [], proibido: c.proibido ?? [] };
     emitir(pid, 'estado', { mensagem: 'Pedido recebido.', dados: { pedido: texto.slice(0, 200) } });
     const dirigindo = tentarDirigir(p);
     return json(res, 201, { pedido: { versao: '1', projeto: pid, texto }, dirigindo });

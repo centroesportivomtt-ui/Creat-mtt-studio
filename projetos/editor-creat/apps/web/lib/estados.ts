@@ -42,6 +42,35 @@ export const MODOS: { valor: string; rotulo: string; dica: string }[] = [
   { valor: 'fala', rotulo: 'Fala', dica: 'A fala é o filme. Legenda fiel.' },
 ];
 export const rotuloModo = (v: string | null | undefined) => MODOS.find((m) => m.valor === v)?.rotulo ?? 'O editor decide';
+// Perguntas que o editor faz antes de montar: o dono só toca nos botões. Cada uma vira campo do pedido (destino, formato) ou
+// entra em "obrigatório"/"proibido", que o diretor lê. `modos` limita a pergunta a certos modos (vazio = todos).
+export type Pergunta = {
+  id: string; texto: string; tipo: 'um' | 'varios'; campo: 'formato' | 'destino' | 'obrigatorio' | 'proibido';
+  opcoes: { valor: string; rotulo: string }[]; modos?: string[];
+};
+export const PERGUNTAS: Pergunta[] = [
+  { id: 'formato', texto: 'Qual formato?', tipo: 'um', campo: 'formato', opcoes: [
+    { valor: '9:16', rotulo: 'Vertical 9:16' }, { valor: '4:5', rotulo: 'Feed 4:5' }, { valor: '1:1', rotulo: 'Quadrado' }, { valor: '16:9', rotulo: 'Horizontal 16:9' }] },
+  { id: 'destino', texto: 'Onde vai ser postado?', tipo: 'varios', campo: 'destino', opcoes: [
+    { valor: 'reels', rotulo: 'Reels' }, { valor: 'stories', rotulo: 'Stories' }, { valor: 'tiktok', rotulo: 'TikTok' },
+    { valor: 'shorts', rotulo: 'Shorts' }, { valor: 'feed', rotulo: 'Feed' }, { valor: 'youtube', rotulo: 'YouTube' }] },
+  { id: 'proibido', texto: 'O que NÃO pode aparecer?', tipo: 'varios', campo: 'proibido', opcoes: [
+    { valor: 'palavrão', rotulo: 'Palavrão' }, { valor: 'rosto de terceiros', rotulo: 'Rosto de terceiros' }, { valor: 'preços', rotulo: 'Preços' },
+    { valor: 'placa de carro', rotulo: 'Placa de carro' }, { valor: 'marca de concorrente', rotulo: 'Marca de concorrente' }] },
+  { id: 'mascote', texto: 'Usar o mascote do cliente?', tipo: 'um', campo: 'obrigatorio', modos: ['ultra', 'criativo'], opcoes: [
+    { valor: '', rotulo: 'Não' }, { valor: 'mascote do cliente pequeno, estratégico, em 3 aparições no máximo', rotulo: 'Sim, pequeno' }] },
+  { id: 'ia', texto: 'Pode gerar cenas por IA? (tem custo)', tipo: 'um', campo: 'obrigatorio', modos: ['ia', 'ultra'], opcoes: [
+    { valor: '', rotulo: 'Não' }, { valor: 'cenas geradas por IA permitidas, sempre rotuladas como conceito; informar o gasto antes', rotulo: 'Sim, informe o gasto' }] },
+  { id: 'telas', texto: 'Recriar telas de celular ou computador em motion?', tipo: 'um', campo: 'obrigatorio', modos: ['ultra', 'criativo', 'cinema', 'ia'], opcoes: [
+    { valor: '', rotulo: 'Não' }, { valor: 'recriar em motion as telas mostradas, sem inventar dado', rotulo: 'Sim, sem inventar dado' }] },
+  { id: 'legenda', texto: 'Como a legenda?', tipo: 'um', campo: 'obrigatorio', modos: ['fala', 'clean', 'serio'], opcoes: [
+    { valor: '', rotulo: 'O editor decide' }, { valor: 'legenda discreta e fiel à fala', rotulo: 'Discreta' }, { valor: 'sem legenda na tela', rotulo: 'Sem legenda' }] },
+  { id: 'musica', texto: 'Música?', tipo: 'um', campo: 'obrigatorio', opcoes: [
+    { valor: '', rotulo: 'O editor decide' }, { valor: 'sem música, só o som direto', rotulo: 'Sem música' }, { valor: 'trilha com curva emocional e ducking sob a fala', rotulo: 'Trilha com emoção' }] },
+  { id: 'fecho', texto: 'Como termina?', tipo: 'um', campo: 'obrigatorio', opcoes: [
+    { valor: '', rotulo: 'O editor decide' }, { valor: 'fecho com logo animada e convite para seguir', rotulo: 'Logo + seguir' }, { valor: 'fecho com chamada para comentar', rotulo: 'Chamar comentário' }] },
+];
+export const perguntasDoModo = (modo: string) => PERGUNTAS.filter((q) => !q.modos || q.modos.includes(modo));
 export const rotuloTipo = (v: string | null | undefined) => TIPOS_VIDEO.find((t) => t.valor === v)?.rotulo ?? 'O editor decide';
 
 export function classeEstado(estado: string): string {

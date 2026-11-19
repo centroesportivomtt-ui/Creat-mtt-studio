@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Envio from './Envio';
 import {
   bytesLegiveis, classeEstado, ESTADOS, ETAPA_DO_ESTADO, EXPLICA_ESTADO, ROTULO_ESTADO, rotuloTipo,
-  type Evento, type Projeto as TProjeto, type Versao, MODOS, rotuloModo } from '@/lib/estados';
+  type Evento, type Projeto as TProjeto, type Versao, MODOS, rotuloModo, perguntasDoModo } from '@/lib/estados';
 
 const TETO_MS = 30 * 60 * 1000;
 const ESTADOS_ABERTOS = ['recebendo', 'lendo'];
@@ -295,6 +295,7 @@ function Importar({ aberto, aoImportar }: { aberto: boolean; aoImportar: (url: s
 
 function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boolean; aoMandar: (c: object) => Promise<unknown> }) {
   const [indo, setIndo] = useState(false);
+  const [modoSel, setModoSel] = useState('auto');
   if (atual && !aberto) {
     return <p style={{ whiteSpace: 'pre-wrap' }} data-teste="pedido-atual">“{atual}”</p>;
   }
@@ -307,7 +308,17 @@ function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boo
       const duracao = Number(f.get('duracao') ?? 0);
       setIndo(true);
       const modo = String(f.get('modo') ?? 'auto');
-      await aoMandar({ texto, modo, ...(duracao ? { duracao_alvo: duracao } : {}) });
+      const extra: Record<string, unknown> = { obrigatorio: [] as string[], proibido: [] as string[] };
+      for (const q of perguntasDoModo(modo)) {
+        const marcados = f.getAll(`q_${q.id}`).map(String).filter(Boolean);
+        if (!marcados.length) continue;
+        if (q.campo === 'formato') extra.formato = marcados[0];
+        else if (q.campo === 'destino') extra.destino = marcados;
+        else (extra[q.campo] as string[]).push(...marcados);
+      }
+      const livre = String(f.get('precisa') ?? '').trim();
+      if (livre) (extra.obrigatorio as string[]).push(livre.slice(0, 200));
+      await aoMandar({ texto, modo, ...extra, ...(duracao ? { duracao_alvo: duracao } : {}) });
       setIndo(false);
     }}>
       {atual && <p className="aviso" data-teste="pedido-atual">Pedido atual: “{atual}”. Mande de novo para trocar.</p>}
@@ -321,12 +332,32 @@ function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boo
         <div className="opcoes" data-teste="modos">
           {MODOS.map((m, i) => (
             <label className="opcao" key={m.valor} title={m.dica}>
-              <input type="radio" name="modo" value={m.valor} defaultChecked={i === 0} />
+              <input type="radio" name="modo" value={m.valor} defaultChecked={i === 0} onChange={() => setModoSel(m.valor)} />
               <span>{m.rotulo}</span>
             </label>
           ))}
         </div>
       </fieldset>
+      <div className="perguntas" data-teste="perguntas">
+        <p className="aviso" style={{ margin: 0 }}>O editor pergunta o que falta. Toque nas respostas; o que ficar sem resposta ele decide.</p>
+        {perguntasDoModo(modoSel).map((q) => (
+          <fieldset className="campo" key={`${modoSel}-${q.id}`} style={{ border: 0, margin: 0, padding: 0 }}>
+            <legend className="campo__rotulo" style={{ marginBottom: 6 }}>{q.texto}</legend>
+            <div className="opcoes">
+              {q.opcoes.map((o, i) => (
+                <label className="opcao" key={o.rotulo}>
+                  <input type={q.tipo === 'um' ? 'radio' : 'checkbox'} name={`q_${q.id}`} value={o.valor} defaultChecked={q.tipo === 'um' && i === 0 && q.campo !== 'formato' ? true : q.id === 'formato' && i === 0} />
+                  <span>{o.rotulo}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ))}
+        <label className="campo">
+          <span className="campo__rotulo">Algo que precisa aparecer? (opcional)</span>
+          <input className="entrada" name="precisa" maxLength={200} placeholder="Ex.: a frase da Lavínia sobre calorias" autoComplete="off" />
+        </label>
+      </div>
       <label className="campo">
         <span className="campo__rotulo">Duração</span>
         <select className="entrada" name="duracao" defaultValue="0">
