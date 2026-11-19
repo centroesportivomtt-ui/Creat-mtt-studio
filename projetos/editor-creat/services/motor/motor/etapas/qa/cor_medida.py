@@ -25,5 +25,7 @@ def checar(c):
         if not CR.pele_ok(d.get("pele")):
             ja = "" if CR.pele_ok(a.get("pele")) else " (já vinha assim do material)"
             probs.append(f"{it['plano']}: pele a {d['pele']['angulo']:.0f}° no vetorscópio{ja}")
+    sem = len(getattr(c, "edl", {}).get("planos", [])) - len(itens)
+    resto = f" ({sem} plano(s) vieram do cache antigo, sem medição)" if sem > 0 else ""
     return {"ok": not probs, "valor": val,
-            "detalhe": "; ".join(probs[:6]) if probs else f"{len(itens)} plano(s) com cor medida: altas, pretos e pele dentro da faixa"}
+            "detalhe": ("; ".join(probs[:6]) if probs else f"{len(itens)} plano(s) com cor medida: altas, pretos e pele dentro da faixa") + resto}

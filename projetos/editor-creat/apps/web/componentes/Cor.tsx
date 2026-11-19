@@ -23,11 +23,13 @@ function Histograma({ h, rotulo }: { h?: number[]; rotulo: string }) {
 
 function Plano({ it }: { it: Item }) {
   const [pos, setPos] = useState(50);
+  const [prop, setProp] = useState('9 / 16');   // a proporção vem da própria imagem (a versão pode ser 16:9, 1:1 ou 4:5)
   const pele = it.depois.pele?.angulo;
   return (
     <li className="cor__plano" data-teste="cor-plano">
-      <div className="cor__quadro" style={{ ['--pos' as string]: `${pos}%` }}>
-        <img src={arq(it.depois_chave)} alt={`Plano ${it.plano} depois da cor`} loading="lazy" />
+      <div className="cor__quadro" style={{ ['--pos' as string]: `${pos}%`, aspectRatio: prop }}>
+        <img src={arq(it.depois_chave)} alt={`Plano ${it.plano} depois da cor`} loading="lazy"
+          onLoad={(e) => { const i = e.currentTarget; if (i.naturalWidth > 0 && i.naturalHeight > 0) setProp(`${i.naturalWidth} / ${i.naturalHeight}`); }} />
         <img className="cor__antes" src={arq(it.antes_chave)} alt={`Plano ${it.plano} antes da cor`} loading="lazy" />
         <span className="cor__etq cor__etq--a">Antes</span>
         <span className="cor__etq cor__etq--d">Depois</span>

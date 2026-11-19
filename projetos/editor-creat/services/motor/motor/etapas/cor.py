@@ -26,7 +26,13 @@ def _carregar_looks() -> dict[str, dict]:
     import json
 
     from motor import config
-    return json.loads((config.MEMORIA / "cor" / "looks.json").read_text(encoding="utf-8"))["looks"]
+    import pathlib
+    padrao = json.loads((pathlib.Path(__file__).with_name("cor_looks.json")).read_text(encoding="utf-8"))["looks"]
+    try:                       # a memória pode ser um volume antigo sem a pasta cor/: o motor sobe com o padrão do pacote
+        da_casa = json.loads((config.MEMORIA / "cor" / "looks.json").read_text(encoding="utf-8"))["looks"]
+    except (OSError, ValueError, KeyError):
+        return padrao
+    return {**padrao, **da_casa}
 
 
 LOOKS: dict[str, dict] = _carregar_looks()

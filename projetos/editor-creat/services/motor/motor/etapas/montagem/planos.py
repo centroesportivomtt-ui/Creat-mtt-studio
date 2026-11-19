@@ -288,7 +288,7 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
     caixas = p.get("desfocar") or []
     cor = p.get("cor", "neutro")
     bal = p.get("balanco")
-    if cor in CR.LOOKS:                                      # biblioteca nova: balanço da cena + look + pele protegida
+    if _look_novo(p):                                        # biblioteca nova: balanço da cena + look + pele protegida
         colorir = lambda img: CR.aplicar(img, cor, bal)      # noqa: E731
     elif bal:                                                # look da tabela antiga com primárias medidas
         colorir = lambda img: grade(CR.aplicar_balanco(img, bal), cor)  # noqa: E731
@@ -355,9 +355,12 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
     err = enc.stderr.read().decode(errors="replace")
     if enc.wait() != 0:
         raise RuntimeError(f"plano {p['id']}: encode falhou: {err[-500:]}")
-    if antes_depois is not None:
-        info["cor"] = gravar_antes_depois(saida, p, *antes_depois)
     os.replace(tmp, saida)
+    if antes_depois is not None:
+        try:                                                # é só revisão: falha aqui nunca derruba o plano pronto
+            info["cor"] = gravar_antes_depois(saida, p, *antes_depois)
+        except Exception as e:  # noqa: BLE001
+            info["aviso_cor"] = f"{type(e).__name__}: {e}"
     info["ms_quadro"] = round((time.time() - t_ini) * 1000 / nf, 1)
     info["janela_trabalho"] = [ww, wh]
     info["buffer"] = "cru" if cru else "jpeg"
@@ -371,9 +374,16 @@ def chave_plano(p: dict, assinatura: list, fmt: dict) -> str:
     q["t1"] = round(p["t1"] - p["t0"], 4)
     q.pop("t0", None)
     cor = p.get("cor", "neutro")
-    if cor in CR.LOOKS or p.get("balanco"):
-        return hash_obj(q, assinatura, fmt, CR.LOOKS.get(cor) or COR.get(cor, COR["neutro"]), CR.VERSAO, VERSAO)
+    if _look_novo(p) or p.get("balanco"):
+        return hash_obj(q, assinatura, fmt, CR.LOOKS[cor] if _look_novo(p) else COR.get(cor, COR["neutro"]), CR.VERSAO, VERSAO)
     return hash_obj(q, assinatura, fmt, COR.get(cor, COR["neutro"]), VERSAO)
+
+
+def _look_novo(p: dict) -> bool:
+    """Look da biblioteca nova. 'neutro' e 'palco' existem também na tabela antiga: sem balanço medido, o plano é de
+    EDL antigo e continua no caminho (e na chave de cache) de antes."""
+    cor = p.get("cor", "neutro")
+    return cor in CR.LOOKS and (cor not in COR or bool(p.get("balanco")))
 
 
 def gravar_antes_depois(saida: str, p: dict, antes, depois) -> dict:
@@ -382,12 +392,17 @@ def gravar_antes_depois(saida: str, p: dict, antes, depois) -> dict:
     base = saida[:-4] if saida.endswith(".mp4") else saida
     for nome, img in (("antes", antes), ("depois", depois)):
         peq = cv2.resize(img, (img.shape[1] // 2, img.shape[0] // 2), interpolation=cv2.INTER_AREA)
-        cv2.imwrite(f"{base}.{nome}.jpg", peq, [cv2.IMWRITE_JPEG_QUALITY, 86])
+        tmp = f"{base}.{nome}.{os.getpid()}.tmp.jpg"
+        if not cv2.imwrite(tmp, peq, [cv2.IMWRITE_JPEG_QUALITY, 86]):
+            raise OSError(f"não gravou {nome}.jpg")
+        os.replace(tmp, f"{base}.{nome}.jpg")
     m_a, m_d = CR.medir(antes), CR.medir(depois)
     info = {"look": p.get("cor", "neutro"), "look_nome": (CR.LOOKS.get(p.get("cor", "")) or {}).get("nome", p.get("cor", "neutro")),
             "balanco": p.get("balanco"), "antes": m_a, "depois": m_d, "versao": CR.VERSAO}
     import json
-    pathlib.Path(f"{base}.cor.json").write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
+    tmp = pathlib.Path(f"{base}.cor.{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, f"{base}.cor.json")
     return info
 
 

@@ -233,3 +233,39 @@ def test_pele_trava_o_balanco_de_branco():
     depois = C._dist_linha(C.angulo_rgb([c * k for c, k in zip(m["pele"]["rgb"], g)]))
     assert depois <= max(antes + 2.0, 6.0)
     assert C.angulo_rgb(m["pele"]["rgb"]) == pytest.approx(m["pele"]["angulo"], abs=4)   # mesma régua da medição
+
+
+def test_neutro_e_palco_antigos_ficam_no_caminho_antigo():
+    """Achado do revisor: 'neutro' e 'palco' existem nas duas tabelas. Sem balanço medido, o plano é de EDL antigo."""
+    from motor.etapas.montagem.comum import hash_obj
+    from motor.etapas.montagem.planos import COR, VERSAO, _look_novo, chave_plano
+    fmt = {"w": 1080, "h": 1920, "fps": 30}
+    for nome in ("neutro", "palco"):
+        p = {"id": "P", "t0": 0, "t1": 1.0, "fonte": "a", "s0": 0.2, "cor": nome}
+        q = {k: v for k, v in p.items() if k != "t0"}
+        assert not _look_novo(p) and chave_plano(p, ["x"], fmt) == hash_obj(q, ["x"], fmt, COR[nome], VERSAO)
+        assert _look_novo({**p, "balanco": {"ganho": [1, 1, 1], "exp": 1.0}})
+    assert _look_novo({"cor": "loja"}) and not _look_novo({"cor": "salao"}) and not _look_novo({})
+
+
+def test_looks_sobem_sem_o_arquivo_da_memoria(tmp_path, monkeypatch):
+    """Achado do revisor: memória montada como volume antigo (sem cor/) não pode impedir o motor de subir."""
+    monkeypatch.setattr(config, "MEMORIA", tmp_path)
+    looks = C._carregar_looks()
+    assert {"loja", "rua_dia", "rua_noite", "academia", "palco", "neutro"} <= set(looks)
+    (tmp_path / "cor").mkdir()
+    (tmp_path / "cor" / "looks.json").write_text(json.dumps({"looks": {"loja": {**looks["loja"], "sat": 1.2}}}))
+    assert C._carregar_looks()["loja"]["sat"] == 1.2 and "palco" in C._carregar_looks()
+    pacote = json.loads((pathlib.Path(C.__file__).with_name("cor_looks.json")).read_text())
+    assert pacote == json.loads((pathlib.Path(__file__).resolve().parents[3] / "memoria" / "cor" / "looks.json").read_text())
+
+
+def test_falha_na_revisao_de_cor_nao_derruba_o_plano(tmp_path, monkeypatch):
+    from motor.etapas.montagem import planos as PL
+    src = tmp_path / "s.mp4"
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=gray:s=320x180:r=30:d=1", "-pix_fmt", "yuv420p", str(src)], check=True)
+    monkeypatch.setattr(PL, "gravar_antes_depois", lambda *a, **k: (_ for _ in ()).throw(OSError("disco cheio")))
+    out = tmp_path / "p.mp4"
+    info = PL.render_plano({"id": "P", "t0": 0, "t1": 0.5, "fonte": "a", "s0": 0.1, "estab": "nao", "cor": "loja"}, str(src), 0.0, str(out),
+                           {"w": 270, "h": 480, "fps": 30}, nice=0)
+    assert out.exists() and "disco cheio" in info["aviso_cor"] and "cor" not in info
