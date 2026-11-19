@@ -1,14 +1,21 @@
 'use client';
-// Envio retomável (tus). Partes de EDITOR_ENVIO_PARTE_MB; a impressão digital inclui o projeto, então o mesmo
-// arquivo em outro projeto não se mistura. Fechou a aba ou caiu a rede: escolha o mesmo arquivo e ele continua.
+// Envio retomável. Dois modos, escolhidos pelo servidor (EDITOR_ARMAZENAMENTO):
+// - 'tus' (local): partes de EDITOR_ENVIO_PARTE_MB para o servidor tus do site, no mesmo disco do motor;
+// - 'r2' (produção na Vercel): direto do navegador ao Cloudflare R2 por URLs assinadas (lib/envioR2.ts).
+// A impressão digital inclui o projeto, então o mesmo arquivo em outro projeto não se mistura.
+// Fechou a aba ou caiu a rede: escolha o mesmo arquivo e ele continua.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as tus from 'tus-js-client';
 import { bytesLegiveis } from '@/lib/estados';
+import { EnvioR2, pendentesR2 } from '@/lib/envioR2';
+
+export type ModoEnvio = 'tus' | 'r2';
+type Controle = { start(): void; abort(): void };
 
 type EstadoEnvio = 'preparando' | 'enviando' | 'pausado' | 'concluido' | 'erro';
 type Item = {
   chave: string; nome: string; tamanho: number; enviados: number; estado: EstadoEnvio;
-  retomadoDe: number | null; velocidade: number; mensagem: string; upload?: tus.Upload;
+  retomadoDe: number | null; velocidade: number; mensagem: string; upload?: Controle;
 };
 type Pendente = { nome: string; tamanho: number; fracao: number | null; storageKey: string; url: string };
 
@@ -24,8 +31,8 @@ async function offsetRemoto(url: string): Promise<number | null> {
   }
 }
 
-export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
-  projeto: string; parteMB: number; aberto: boolean; aoConcluir: () => void;
+export default function Envio({ projeto, parteMB, aberto, aoConcluir, modo = 'tus' }: {
+  projeto: string; parteMB: number; aberto: boolean; aoConcluir: () => void; modo?: ModoEnvio;
 }) {
   const [itens, setItens] = useState<Item[]>([]);
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
@@ -39,6 +46,10 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
 
   // Envios interrompidos deste projeto (ficam no localStorage do navegador pelo tus).
   const carregarPendentes = useCallback(async () => {
+    if (modo === 'r2') {
+      setPendentes(pendentesR2(projeto).map((p) => ({ nome: p.nome, tamanho: p.tamanho, fracao: null, storageKey: p.chaveLocal, url: '' })));
+      return;
+    }
     try {
       const todos = await tus.defaultOptions.urlStorage.findAllUploads();
       const meus = todos.filter((u) => u.metadata?.projeto === projeto && u.uploadUrl);
@@ -55,7 +66,7 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
     } catch {
       setPendentes([]);
     }
-  }, [projeto]);
+  }, [projeto, modo]);
 
   useEffect(() => { void carregarPendentes(); }, [carregarPendentes]);
 
@@ -68,9 +79,47 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
     return () => window.removeEventListener('beforeunload', aviso);
   }, [itens]);
 
+  const progresso = useCallback((chave: string, enviados: number, total: number) => {
+    const agora = performance.now();
+    const m = medidas.current.get(chave);
+    let velocidade = 0;
+    if (m && agora - m.t > 400) {
+      velocidade = ((enviados - m.b) / (agora - m.t)) * 1000;
+      medidas.current.set(chave, { t: agora, b: enviados });
+    } else if (!m) medidas.current.set(chave, { t: agora, b: enviados });
+    setItens((l) => l.map((i) => (i.chave === chave ? {
+      ...i, enviados, tamanho: total, estado: 'enviando',
+      velocidade: velocidade || i.velocidade, mensagem: '',
+    } : i)));
+  }, []);
+
+  const comecarR2 = useCallback(async (arquivo: File, chave: string) => {
+    const envio = new EnvioR2(arquivo, projeto, {
+      progresso: (enviados, total) => progresso(chave, enviados, total),
+      sucesso: () => {
+        atualizar(chave, { estado: 'concluido', enviados: arquivo.size, mensagem: 'No armazenamento. O motor já está lendo.' });
+        aoConcluir();
+        void carregarPendentes();
+      },
+      erro: (e) => {
+        const msg = e.status === 401 ? 'Sua sessão expirou. Entre de novo e escolha o arquivo para continuar.'
+          : e.message.length < 300 ? e.message : 'O envio parou. Escolha o mesmo arquivo para continuar de onde parou.';
+        atualizar(chave, { estado: 'erro', mensagem: msg });
+      },
+    });
+    atualizar(chave, { upload: { start: () => { void envio.iniciar(); }, abort: () => envio.pausar() } });
+    const anterior = await envio.retomar();
+    if (anterior && envio.retomadoDe !== null) {
+      atualizar(chave, { retomadoDe: envio.retomadoDe, enviados: envio.retomadoDe, mensagem: `Retomando de ${Math.floor((envio.retomadoDe / arquivo.size) * 100)}%` });
+    }
+    void envio.iniciar();
+    setPendentes((p) => p.filter((x) => !(x.nome === arquivo.name && x.tamanho === arquivo.size)));
+  }, [projeto, progresso, atualizar, aoConcluir, carregarPendentes]);
+
   const comecar = useCallback(async (arquivo: File) => {
     const chave = `${impressao(projeto, arquivo)}|${Date.now()}`;
     setItens((l) => [{ chave, nome: arquivo.name, tamanho: arquivo.size, enviados: 0, estado: 'preparando', retomadoDe: null, velocidade: 0, mensagem: 'Preparando…' }, ...l]);
+    if (modo === 'r2') return comecarR2(arquivo, chave);
     const upload = new tus.Upload(arquivo, {
       endpoint: '/api/envio',
       chunkSize: parteMB * 1024 * 1024,
@@ -79,19 +128,7 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
       fingerprint: async (f) => impressao(projeto, f as File),
       storeFingerprintForResuming: true,
       removeFingerprintOnSuccess: true,
-      onProgress(enviados, total) {
-        const agora = performance.now();
-        const m = medidas.current.get(chave);
-        let velocidade = 0;
-        if (m && agora - m.t > 400) {
-          velocidade = ((enviados - m.b) / (agora - m.t)) * 1000;
-          medidas.current.set(chave, { t: agora, b: enviados });
-        } else if (!m) medidas.current.set(chave, { t: agora, b: enviados });
-        setItens((l) => l.map((i) => (i.chave === chave ? {
-          ...i, enviados, tamanho: total, estado: 'enviando',
-          velocidade: velocidade || i.velocidade, mensagem: '',
-        } : i)));
-      },
+      onProgress(enviados, total) { progresso(chave, enviados, total); },
       async onSuccess(payload) {
         const resp = payload?.lastResponse;
         const registro = resp?.getHeader('Editor-Registro');
@@ -130,7 +167,7 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
     } catch { /* sem envio anterior: começa do zero */ }
     upload.start();
     setPendentes((p) => p.filter((x) => !(x.nome === arquivo.name && x.tamanho === arquivo.size)));
-  }, [projeto, parteMB, atualizar, aoConcluir, carregarPendentes]);
+  }, [projeto, parteMB, modo, comecarR2, progresso, atualizar, aoConcluir, carregarPendentes]);
 
   const escolher = (lista: FileList | null) => {
     if (!lista) return;
@@ -138,7 +175,7 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
     if (entrada.current) entrada.current.value = '';
   };
 
-  const pausar = (i: Item) => { void i.upload?.abort(); atualizar(i.chave, { estado: 'pausado', mensagem: 'Pausado. Toque em continuar quando quiser.' }); };
+  const pausar = (i: Item) => { i.upload?.abort(); atualizar(i.chave, { estado: 'pausado', mensagem: 'Pausado. Toque em continuar quando quiser.' }); };
   const continuar = (i: Item) => { i.upload?.start(); atualizar(i.chave, { estado: 'enviando', mensagem: '' }); };
 
   return (

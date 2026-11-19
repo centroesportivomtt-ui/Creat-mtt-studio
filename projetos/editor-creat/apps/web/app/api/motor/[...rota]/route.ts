@@ -9,13 +9,26 @@ export const dynamic = 'force-dynamic';
 
 const PERMITIDAS = /^v1\/(saude|memoria|projetos|projetos\/p_[a-z0-9]{4,40}(\/[A-Za-z0-9_\-./]+)?|arquivos\/[A-Za-z0-9_\-./]+)$/;
 const ENTRA = ['content-type', 'range', 'if-range', 'last-event-id', 'accept'];
-const SAI = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'cache-control', 'last-modified', 'etag', 'content-disposition'];
+const SAI = ['location', 'content-type', 'content-length', 'content-range', 'accept-ranges', 'cache-control', 'last-modified', 'etag', 'content-disposition'];
+
+// O motor redireciona o player para o vídeo no R2 (URL assinada). Só esse destino passa: um redirect qualquer
+// do motor (barra no fim, por exemplo) não pode mostrar ao navegador o endereço interno da Modal.
+const HOSTS_EXTRA = (process.env.EDITOR_REDIRECT_HOSTS ?? '').split(',').map((h) => h.trim()).filter(Boolean);
+function destinoPermitido(url: string): boolean {
+  try {
+    const u = new URL(url);
+    if (HOSTS_EXTRA.includes(u.host)) return true;
+    return u.protocol === 'https:' && u.hostname.endsWith('.r2.cloudflarestorage.com');
+  } catch {
+    return false;
+  }
+}
 
 type Ctx = { params: Promise<{ rota: string[] }> };
 
 async function repassar(req: Request, ctx: Ctx): Promise<Response> {
   if (!sessaoDaRequisicao(req)) return NextResponse.json({ detail: 'entre com a senha de novo' }, { status: 401 });
-  if (req.method === 'POST' && !mesmaOrigem(req)) return NextResponse.json({ detail: 'origem não permitida' }, { status: 403 });
+  if ((req.method === 'POST' || req.method === 'DELETE') && !mesmaOrigem(req)) return NextResponse.json({ detail: 'origem não permitida' }, { status: 403 });
   const { rota } = await ctx.params;
   const caminho = rota.join('/');
   if (!PERMITIDAS.test(caminho) || rota.some((p) => p === '..' || p === '.')) {
@@ -45,7 +58,7 @@ async function repassar(req: Request, ctx: Ctx): Promise<Response> {
   const sai = new Headers();
   for (const k of SAI) {
     const v = r.headers.get(k);
-    if (v) sai.set(k, v);
+    if (v && (k !== 'location' || destinoPermitido(v))) sai.set(k, v);
   }
   if ((r.headers.get('content-type') ?? '').startsWith('text/event-stream')) {
     sai.set('cache-control', 'no-cache, no-transform');
@@ -57,3 +70,4 @@ async function repassar(req: Request, ctx: Ctx): Promise<Response> {
 export const GET = repassar;
 export const HEAD = repassar;
 export const POST = repassar;
+export const DELETE = repassar;

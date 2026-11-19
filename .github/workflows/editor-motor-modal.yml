@@ -1,0 +1,60 @@
+# Editor creat.MTT · testes do motor e deploy na Modal (Trilho)
+#
+# Em todo push/PR que mexe no editor: roda os testes do motor (sem nada pago).
+# Em push na main: publica o motor na Modal, só se os dois segredos existirem
+# (Settings > Secrets and variables > Actions > Secrets):
+#   MODAL_TOKEN_ID      e   MODAL_TOKEN_SECRET     (modal.com > Settings > API Tokens)
+# As chaves do editor (Anthropic, Gemini, R2...) NÃO ficam aqui: ficam no Secret "editor-creat" da Modal.
+name: Editor · motor na Modal
+
+concurrency:
+  group: editor-motor-${{ github.ref }}
+  cancel-in-progress: false   # nunca interromper um deploy no meio
+
+on:
+  push:
+    branches: [main]
+    paths: ['projetos/editor-creat/services/motor/**', 'projetos/editor-creat/packages/**', 'projetos/editor-creat/memoria/**', '.github/workflows/editor-motor-modal.yml']
+  pull_request:
+    paths: ['projetos/editor-creat/services/motor/**', 'projetos/editor-creat/packages/**', 'projetos/editor-creat/memoria/**', '.github/workflows/editor-motor-modal.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: projetos/editor-creat/services/motor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg libsndfile1
+      - run: pip install -e '.[teste,r2,cerebro,transcricao]' 'moto[server]'
+      - run: python -m pytest -q -m "not pago and not real and not lento"
+
+  deploy:
+    needs: testes
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Sem token da Modal, não publica (e avisa)
+        if: env.MODAL_TOKEN_ID == '' || env.MODAL_TOKEN_SECRET == ''
+        run: echo "::warning::MODAL_TOKEN_ID/MODAL_TOKEN_SECRET não configurados; deploy do motor pulado."
+      - name: Publica o motor
+        if: env.MODAL_TOKEN_ID != '' && env.MODAL_TOKEN_SECRET != ''
+        working-directory: projetos/editor-creat
+        run: |
+          pip install 'modal>=1.6,<1.7'
+          modal deploy services/motor/deploy/modal_app.py

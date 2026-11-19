@@ -1,7 +1,7 @@
 'use client';
 // Mesa do projeto: material, pedido, status ao vivo (SSE do motor pelo proxy), relógio dos 30 minutos e versões.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Envio from './Envio';
+import Envio, { type ModoEnvio } from './Envio';
 import {
   bytesLegiveis, classeEstado, ESTADOS, ETAPA_DO_ESTADO, EXPLICA_ESTADO, ROTULO_ESTADO, rotuloTipo,
   type Evento, type Projeto as TProjeto, type Versao,
@@ -42,7 +42,7 @@ const NOME_CHECAGEM: Record<string, string> = {
   formato: 'formato', duracao: 'duração', sincronia: 'sincronia', telas_desfocadas: 'telas', regra_memoria: 'regras da casa',
 };
 
-export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parteMB: number }) {
+export default function Projeto({ inicial, parteMB, modo = 'tus' }: { inicial: TProjeto; parteMB: number; modo?: ModoEnvio }) {
   const [p, setP] = useState(inicial);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [conectado, setConectado] = useState(false);
@@ -169,7 +169,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
             <h2 className="cartao__titulo" id="t-material"><span className="num">01</span> Material</h2>
             {aberto ? (
               <>
-                <Envio projeto={p.id} parteMB={parteMB} aberto={aberto} aoConcluir={recarregar} />
+                <Envio projeto={p.id} parteMB={parteMB} aberto={aberto} aoConcluir={recarregar} modo={modo} />
                 <Importar aberto={aberto} aoImportar={(url) => postar('/importar', { url })} />
               </>
             ) : (

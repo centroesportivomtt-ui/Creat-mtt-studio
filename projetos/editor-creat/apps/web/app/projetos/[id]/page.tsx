@@ -24,5 +24,6 @@ export default async function PaginaProjeto({ params }: { params: Promise<{ id: 
     );
   }
   const parteMB = Math.min(512, Math.max(5, Number(process.env.EDITOR_ENVIO_PARTE_MB) || 64));
-  return <Projeto inicial={r.dados} parteMB={parteMB} />;
+  const modo = process.env.EDITOR_ARMAZENAMENTO === 'r2' ? 'r2' : 'tus';
+  return <Projeto inicial={r.dados} parteMB={parteMB} modo={modo} />;
 }

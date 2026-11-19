@@ -45,7 +45,9 @@ class Config:
 
     @property
     def banco(self) -> pathlib.Path:
-        return self.dados / "motor.db"
+        """EDITOR_BANCO troca o lugar do SQLite (Modal: disco local, com cópia no Volume)."""
+        b = _env("EDITOR_BANCO")
+        return pathlib.Path(b) if b else self.dados / "motor.db"
 
     def provedor_efetivo(self, tipo: str) -> str:
         """Provedor que vai rodar de fato: o pedido, ou o local quando falta a chave do pago."""
