@@ -52,8 +52,10 @@ def testar_direcao(cfg=None, *, validade_s: int = 86400) -> dict:
     Não envolve nenhum projeto do dono."""
     cfg = cfg or config.carregar()
     atual = estado_direcao(cfg)
-    if atual.get("estado") == "rodando" or (atual.get("em") and time.time() - atual.get("em_ts", 0) < validade_s):
-        return atual
+    idade = time.time() - atual.get("em_ts", 0)
+    if (atual.get("estado") == "rodando" and idade < 900) or (atual.get("estado") == "ok" and idade < validade_s) \
+            or (atual.get("estado") == "falha" and idade < 300):
+        return atual                                  # ok vale 1 dia; falha pode ser testada de novo em 5 min (depois de uma correção)
     if cfg.provedor_efetivo("cerebro") != "anthropic":
         return {"estado": "cérebro real desligado", "provedor": cfg.provedor_efetivo("cerebro")}
     if not _TRAVA.acquire(blocking=False):

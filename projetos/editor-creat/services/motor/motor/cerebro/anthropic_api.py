@@ -22,6 +22,25 @@ _FORA = {"minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multiple
          "minItems", "maxItems", "uniqueItems", "default", "$schema", "$id", "title", "prefixItems"}
 
 
+def _enxuto(s):
+    """Contrato sem descrições e exemplos (para ir no texto do pedido quando o modo estrito não cabe)."""
+    if isinstance(s, list):
+        return [_enxuto(x) for x in s]
+    if not isinstance(s, dict):
+        return s
+    return {k: _enxuto(v) for k, v in s.items() if k not in ("description", "examples", "title", "$comment")}
+
+
+def _json_do_texto(t: str) -> str:
+    """Tira cercas de código e texto ao redor, se o modelo puser; devolve só o objeto JSON."""
+    t = (t or "").strip()
+    if t.startswith("```"):
+        t = t.split("\n", 1)[1] if "\n" in t else t
+        t = t.rsplit("```", 1)[0]
+    a, b = t.find("{"), t.rfind("}")
+    return t[a:b + 1] if a >= 0 and b > a else t
+
+
 def esquema_para_api(s):
     """Tira do JSON Schema o que os structured outputs não aceitam e troca type:[x,null] por anyOf."""
     if isinstance(s, list):
@@ -71,10 +90,27 @@ class CerebroAnthropic:
                                                       *cauda]}],
         }
 
+    _sem_gramatica = False   # a API recusou o contrato por ser grande demais para o modo estrito: vai pelo texto + validação local
+
     def _chamar(self, modelo: str, esforco: str, corpo: dict, esquema: dict | None, max_tokens: int) -> tuple[str, dict]:
+        if esquema is not None and not self._sem_gramatica:
+            try:
+                return self._chamar_uma(modelo, esforco, corpo, esquema, max_tokens, estrito=True)
+            except self._anthropic.BadRequestError as e:
+                if "grammar" not in str(e).lower() and "too large" not in str(e).lower():
+                    raise
+                type(self)._sem_gramatica = True
+        return self._chamar_uma(modelo, esforco, corpo, esquema, max_tokens, estrito=False)
+
+    def _chamar_uma(self, modelo: str, esforco: str, corpo: dict, esquema: dict | None, max_tokens: int, *, estrito: bool) -> tuple[str, dict]:
         oc = {"effort": esforco}
-        if esquema is not None:
+        if esquema is not None and estrito:
             oc["format"] = {"type": "json_schema", "schema": esquema_para_api(copy.deepcopy(esquema))}
+        elif esquema is not None:
+            corpo = copy.deepcopy(corpo)
+            contrato = json.dumps(_enxuto(esquema_para_api(copy.deepcopy(esquema))), ensure_ascii=False, separators=(",", ":"))
+            corpo["messages"][-1]["content"].append({"type": "text", "text": "Responda SOMENTE com um objeto JSON válido (sem texto antes ou depois, "
+                                                     "sem cercas de código) que siga exatamente este JSON Schema:\n" + contrato})
         extra = {"betas": BETAS, "fallbacks": "default"} if modelo != self.cfg.modelo_leve else {}
         api = self.cli.beta.messages if extra else self.cli.messages
         with api.stream(model=modelo, max_tokens=max_tokens, thinking={"type": "adaptive"}, output_config=oc, **extra, **corpo) as st:
@@ -83,7 +119,7 @@ class CerebroAnthropic:
             raise RuntimeError(f"o modelo recusou a direção ({getattr(msg, 'stop_details', None)})")
         if msg.stop_reason == "max_tokens":
             raise RuntimeError("a direção estourou max_tokens")
-        texto = next((b.text for b in msg.content if getattr(b, "type", "") == "text"), "")
+        texto = _json_do_texto(next((b.text for b in msg.content if getattr(b, "type", "") == "text"), ""))
         u = msg.usage
         uso = orcamento.uso(getattr(msg, "model", modelo), entrada=int(u.input_tokens or 0), saida=int(u.output_tokens or 0),
                             cache_lido=int(getattr(u, "cache_read_input_tokens", 0) or 0), cache_escrito=int(getattr(u, "cache_creation_input_tokens", 0) or 0),
