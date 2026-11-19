@@ -2,11 +2,11 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: { default: 'Editor creat.MTT', template: '%s · Editor creat.MTT' },
-  description: 'Sobe o material, manda o pedido, recebe o vídeo pronto em até 30 minutos.',
+  title: { default: 'creat.PULO', template: '%s · creat.PULO' },
+  description: 'O editor da creat.MTT. Sobe o material, fala o pedido, recebe o filme com pulo do gato em até 30 minutos.',
   manifest: '/manifest.webmanifest',
   icons: { icon: '/icone.svg', apple: '/icone-192.png' },
-  appleWebApp: { capable: true, title: 'Editor', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'PULO', statusBarStyle: 'black-translucent' },
   robots: { index: false, follow: false },
 };
 

@@ -97,6 +97,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: var(--cor-aba); color: #fff; padding: 5px 7px 4px; border-radius: 3px;
   transform: rotate(-3deg);
 }
+.iso { color: var(--cor-ambar); flex: 0 0 auto; display: block; }
+.iso__ponto { fill: var(--cor-aba); }
+.topo__pulo { display: inline-flex; align-items: center; gap: 6px; font: 900 17px/1 var(--fonte-marca); letter-spacing: -0.03em; color: var(--cor-aba); text-transform: lowercase; }
+.entrar__iso { margin-bottom: var(--r3); }
+@media (prefers-reduced-motion: no-preference) {
+  .entrar__iso .iso { animation: pulo 2.6s var(--curva-entrada) infinite; transform-origin: 50% 100%; }
+  .entrar__iso .iso__ponto { animation: ponto 2.6s linear infinite; }
+}
+@keyframes pulo { 0%, 58%, 100% { transform: translateY(0) rotate(0); } 12% { transform: translateY(2px) scaleY(0.94); } 30% { transform: translateY(-16px) rotate(-7deg); } 46% { transform: translateY(0) scaleY(0.97); } }
+@keyframes ponto { 0%, 40%, 100% { opacity: 1; } 46%, 52% { opacity: 0.35; } }
 .topo__nav { margin-left: auto; display: flex; align-items: center; gap: var(--r1); }
 
 /* ---------- botões e campos ---------- */
