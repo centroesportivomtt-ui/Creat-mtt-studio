@@ -49,3 +49,11 @@ def test_receitas_existem_para_todos_os_modos_e_mudam_o_modelo():
     assert serio["sfx"]["drop"] is None and serio["intensidade"]["5"]["fx"] is None
     ultra = loja.modelo_com_modo("daily-vlog", "ultra")
     assert ultra["ritmo"]["pausa_max"] < base["ritmo"]["pausa_max"] and "whip" in ultra["transicoes"]
+
+
+def test_direcao_sabe_quais_transicoes_o_modo_proibe():
+    from motor.memoria.loja import Loja
+    _, _, txt = montar_prompt(Loja(), "CAT", _pedido(modo="cinema"))
+    assert "NÃO use as saídas: aba71, flash" in txt
+    _, _, txt = montar_prompt(Loja(), "CAT", _pedido(modo="criativo"))
+    assert "NÃO use as saídas" not in txt
