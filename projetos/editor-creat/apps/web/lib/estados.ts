@@ -45,7 +45,7 @@ export const rotuloModo = (v: string | null | undefined) => MODOS.find((m) => m.
 // Perguntas que o editor faz antes de montar: o dono só toca nos botões. Cada uma vira campo do pedido (destino, formato) ou
 // entra em "obrigatório"/"proibido", que o diretor lê. `modos` limita a pergunta a certos modos (vazio = todos).
 export type Pergunta = {
-  id: string; texto: string; tipo: 'um' | 'varios'; campo: 'formato' | 'destino' | 'obrigatorio' | 'proibido';
+  id: string; texto: string; tipo: 'um' | 'varios'; campo: 'formato' | 'destino' | 'obrigatorio' | 'proibido' | 'ambiente';
   opcoes: { valor: string; rotulo: string }[]; modos?: string[];
 };
 export const PERGUNTAS: Pergunta[] = [
@@ -54,6 +54,9 @@ export const PERGUNTAS: Pergunta[] = [
   { id: 'destino', texto: 'Onde vai ser postado?', tipo: 'varios', campo: 'destino', opcoes: [
     { valor: 'reels', rotulo: 'Reels' }, { valor: 'stories', rotulo: 'Stories' }, { valor: 'tiktok', rotulo: 'TikTok' },
     { valor: 'shorts', rotulo: 'Shorts' }, { valor: 'feed', rotulo: 'Feed' }, { valor: 'youtube', rotulo: 'YouTube' }] },
+  { id: 'ambiente', texto: 'Onde foi gravado? (para a cor)', tipo: 'um', campo: 'ambiente', opcoes: [
+    { valor: 'auto', rotulo: 'O editor mede' }, { valor: 'loja', rotulo: 'Dentro da loja' }, { valor: 'rua_dia', rotulo: 'Rua de dia' },
+    { valor: 'rua_noite', rotulo: 'Rua à noite' }, { valor: 'academia', rotulo: 'Academia' }, { valor: 'palco', rotulo: 'Palco' }] },
   { id: 'proibido', texto: 'O que NÃO pode aparecer?', tipo: 'varios', campo: 'proibido', opcoes: [
     { valor: 'palavrão', rotulo: 'Palavrão' }, { valor: 'rosto de terceiros', rotulo: 'Rosto de terceiros' }, { valor: 'preços', rotulo: 'Preços' },
     { valor: 'placa de carro', rotulo: 'Placa de carro' }, { valor: 'marca de concorrente', rotulo: 'Marca de concorrente' }] },

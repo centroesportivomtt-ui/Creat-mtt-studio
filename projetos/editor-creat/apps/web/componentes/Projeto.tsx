@@ -1,5 +1,6 @@
 'use client';
 // Mesa do projeto: material, pedido, status ao vivo (SSE do motor pelo proxy), relógio dos 30 minutos e versões.
+import Cor from '@/componentes/Cor';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Envio from './Envio';
 import {
@@ -38,7 +39,7 @@ function classeVersao(estado: string): string {
 const NOME_CHECAGEM: Record<string, string> = {
   frase_repetida: 'frase repetida', tom_sala_sem_voz: 'tom de sala', logo_100: 'logo a 100%', lufs: 'LUFS', true_peak: 'pico',
   quadros_pretos: 'quadro preto', legenda_x_fala: 'legenda x fala', zona_segura: 'zona segura', legenda_sobre_rosto: 'legenda x rosto',
-  formato: 'formato', duracao: 'duração', sincronia: 'sincronia', telas_desfocadas: 'telas', regra_memoria: 'regras da casa',
+  formato: 'formato', duracao: 'duração', sincronia: 'sincronia', telas_desfocadas: 'telas', regra_memoria: 'regras da casa', cor_medida: 'cor',
 };
 
 export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parteMB: number }) {
@@ -314,6 +315,7 @@ function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boo
         if (!marcados.length) continue;
         if (q.campo === 'formato') extra.formato = marcados[0];
         else if (q.campo === 'destino') extra.destino = marcados;
+        else if (q.campo === 'ambiente') extra.ambiente = marcados[0];
         else (extra[q.campo] as string[]).push(...marcados);
       }
       const livre = String(f.get('precisa') ?? '').trim();
@@ -399,6 +401,7 @@ function LinhaVersao({ v, aprovada, aoAprovar, aoReprovar }: { v: Versao; aprova
           ))}
         </>
       )}
+      {entregue && v.video && <Cor base={v.video.replace(/\/final\.mp4$/, '')} />}
       {v.reprovacao && <p className="aviso">Reprovada: “{v.reprovacao}”</p>}
       {aprovada && <p className="aprovada" data-teste="aprovada"><span className="claquete claquete--bateu" aria-hidden="true" />Corta! Aprovada por você. Bora postar.</p>}
       {podeReprovar && (

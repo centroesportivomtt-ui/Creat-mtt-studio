@@ -110,7 +110,8 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
     def tentar(d):
         modelo = loja.modelo_com_modo(d.get("modelo") or "evento-reel", (pedido or {}).get("modo"))
         try:
-            return resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, projeto=catalogo["projeto"]), []
+            return resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, projeto=catalogo["projeto"],
+                            ambiente=(pedido or {}).get("ambiente")), []
         except ErroResolucao as e:
             return None, e.problemas
 

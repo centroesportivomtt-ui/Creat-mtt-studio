@@ -7,7 +7,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 
 const PORTA = Number(process.env.MOTOR_FALSO_PORTA || 8788);
 const TOKEN = process.env.MOTOR_TOKEN || '';
@@ -94,6 +94,26 @@ async function etapa(p, nome, alvo, mensagens) {
   emitir(p.id, 'etapa_fim', { etapa: nome, alvo, progresso: 1, mensagem: `${mensagens[0].replace(/…$/, '')}: pronto` });
 }
 
+// Revisão da cor simulada (mesmo formato do motor real: saidas/<p>/<v>/cor.json + cor/<plano>_{antes,depois}.jpg).
+function gravarCorFalsa(pid, v) {
+  const base = `saidas/${pid}/${v}`;
+  const dir = path.join(ARM, base, 'cor');
+  fs.mkdirSync(dir, { recursive: true });
+  const itens = [];
+  for (const [i, plano] of ['p1', 'p2'].entries()) {
+    for (const [lado, filtro] of [['antes', 'eq=saturation=0.7:brightness=-0.06'], ['depois', 'eq=saturation=1.1:contrast=1.08']]) {
+      spawnSync('ffmpeg', ['-nostdin', '-v', 'error', '-y', '-ss', String(1 + i * 2), '-i', AMOSTRA, '-frames:v', '1', '-vf', `scale=270:480,${filtro}`,
+        path.join(dir, `${plano}_${lado}.jpg`)]);
+    }
+    const hist = Array.from({ length: 32 }, (_, k) => Number((Math.exp(-((k - 14 - i * 3) ** 2) / 40) / 11).toFixed(4)));
+    itens.push({ plano, t0: i * 2.5, t1: (i + 1) * 2.5, look: 'loja', look_nome: 'Interno de loja', balanco: { ganho: [1.04, 1, 0.95], exp: 1.08 },
+      antes: { p50: 0.38, estouro: 0.004, esmagado: 0.01, pele: { angulo: 128.0 }, hist },
+      depois: { p50: 0.46, estouro: 0.006, esmagado: 0.012, pele: { angulo: 126.5 }, hist: [...hist.slice(2), 0, 0] },
+      antes_chave: `${base}/cor/${plano}_antes.jpg`, depois_chave: `${base}/cor/${plano}_depois.jpg` });
+  }
+  fs.writeFileSync(path.join(ARM, base, 'cor.json'), JSON.stringify(itens));
+}
+
 async function rodarVersao(p) {
   const n = p.versoes.length + 1;
   const v = `v${n}`;
@@ -109,6 +129,7 @@ async function rodarVersao(p) {
   fs.mkdirSync(path.dirname(destino), { recursive: true });
   try { fs.rmSync(destino, { force: true }); fs.linkSync(AMOSTRA, destino); } catch { fs.copyFileSync(AMOSTRA, destino); }
   versao.video = chave;
+  gravarCorFalsa(p.id, v);
   mudarEstado(p, 'conferindo', `Conferindo a versão ${v} (QA automático).`);
   await etapa(p, 'qa', v, ['Conferindo LUFS, pico, quadros pretos e zona segura…', 'Transcrevendo o mix e o tom de sala']);
   versao.qa = JSON.stringify({
@@ -164,7 +185,7 @@ function servirArquivo(req, res, chave) {
   const f = path.join(ARM, chave);
   if (!f.startsWith(ARM + path.sep) || !fs.existsSync(f) || !fs.statSync(f).isFile()) return falha(res, 404, 'arquivo não encontrado');
   // igual ao motor real: vídeo de versão só sai depois de entregue (QA aprovado)
-  const ms = /^saidas\/([^/]+)\/([^/]+)\/(final\.mp4|mix\.wav|stems\/.*|capa\.jpg)$/.exec(chave);
+  const ms = /^saidas\/([^/]+)\/([^/]+)\/(final\.mp4|mix\.wav|stems\/.*|capa\.jpg|cor\.json|cor\/.*)$/.exec(chave);
   if (ms) {
     const ver = projetos.get(ms[1])?.versoes.find((x) => x.id === ms[2]);
     if (!ver || ver.estado !== 'entregue') return falha(res, 403, 'esta versão ainda não passou na conferência automática (QA)');
@@ -348,5 +369,6 @@ function memoriaDaCasa() {
   const r = ler('regras.json', { regras: [], vocabulario: [] });
   const ordem = ['criativo', 'ultra', 'cinema', 'ia', 'clean', 'serio', 'fala'];
   return { regras: r.regras ?? [], vocabulario: r.vocabulario ?? [], checagens: ler('checagens.json', { checagens: [] }).checagens ?? [],
-    modelos: [], modos: ordem.map((m) => ler(`modos/${m}.json`, null)).filter(Boolean), raiz_isolada: false };
+    modelos: [], modos: ordem.map((m) => ler(`modos/${m}.json`, null)).filter(Boolean),
+    looks: Object.entries(ler('cor/looks.json', { looks: {} }).looks).map(([id, l]) => ({ id, nome: l.nome, desc: l.desc })), raiz_isolada: false };
 }

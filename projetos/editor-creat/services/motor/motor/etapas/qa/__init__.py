@@ -27,7 +27,7 @@ if _PY_SCHEMAS not in sys.path:
     sys.path.insert(0, _PY_SCHEMAS)
 
 CHECAGENS = ("formato", "duracao", "sincronia", "lufs", "true_peak", "quadros_pretos", "zona_segura", "legenda_x_fala",
-             "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria")
+             "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria", "cor_medida")
 
 
 def normalizar(txt: str) -> str:
@@ -40,7 +40,8 @@ def normalizar(txt: str) -> str:
 class Conferencia:
     """Tudo que as checagens precisam, carregado só quando alguma pede (transcrição é cara: cache por arquivo)."""
 
-    def __init__(self, final: pathlib.Path, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None):
+    def __init__(self, final: pathlib.Path, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None, cor=None):
+        self.cor = cor or []
         self.final = pathlib.Path(final)
         self.edl = edl
         self.cfg = cfg
@@ -198,10 +199,10 @@ def _rodar(nome: str, c: Conferencia) -> dict:
     return item
 
 
-def conferir(final, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None,
+def conferir(final, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None, cor=None,
              video_chave: str | None = None, so: list[str] | None = None, progresso=None) -> dict:
     t0 = time.time()
-    c = Conferencia(final, edl, cfg, mix=mix, stems=stems, overlay_dir=overlay_dir, evidencias=evidencias, fontes=fontes)
+    c = Conferencia(final, edl, cfg, mix=mix, stems=stems, overlay_dir=overlay_dir, evidencias=evidencias, fontes=fontes, cor=cor)
     itens = []
     nomes = [n for n in CHECAGENS if not so or n in so]
     for i, nome in enumerate(nomes):
@@ -252,7 +253,7 @@ def etapa_qa(ctx) -> dict:
     stems = {n: str(arm.caminho_local(k)) for n, k in (mont.get("chaves", {}).get("stems") or {}).items()}
     mix = arm.caminho_local(mont["chaves"]["mix"]) if mont.get("chaves", {}).get("mix") else None
     evid = pathlib.Path(ctx.cfg.dados) / "tmp" / "qa" / p / v
-    rel = conferir(final, edl, ctx.cfg, mix=mix, stems=stems, overlay_dir=mont.get("overlay_dir"), evidencias=evid,
+    rel = conferir(final, edl, ctx.cfg, mix=mix, stems=stems, overlay_dir=mont.get("overlay_dir"), evidencias=evid, cor=mont.get("cor"),
                    fontes=Fontes(edl, arm, ctx.cfg.dados), video_chave=f"{base}/final.mp4", progresso=ctx.progresso)
     for arq in sorted(evid.glob("*")):
         if arq.is_file() and not arq.name.startswith("_"):

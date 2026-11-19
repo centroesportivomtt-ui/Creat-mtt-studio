@@ -12,6 +12,7 @@ import json
 import math
 import re
 
+from motor.etapas import cor as COR
 from motor.etapas.catalogo import EQUIPE, norm, tokens
 
 LETRA = "a-zà-öø-ÿ"
@@ -106,8 +107,10 @@ def _limpa(w: str) -> str:
 # ---------------- resolvedor ----------------
 class Resolvedor:
     def __init__(self, direcao: dict, catalogo: dict, analises: dict, modelo: dict, trilhas: list[dict] | None = None,
-                 vocabulario: list[dict] | None = None, energias: dict | None = None, projeto: str | None = None):
+                 vocabulario: list[dict] | None = None, energias: dict | None = None, projeto: str | None = None,
+                 ambiente: str | None = None):
         self.d, self.cat, self.an, self.m = direcao, catalogo, analises, modelo
+        self.ambiente = ambiente if ambiente in COR.LOOKS else None      # pedido do dono (ex.: academia) vence a medição
         self.trilhas = trilhas or []
         self.voc = vocabulario or []
         self.energias = energias or {}
@@ -353,11 +356,30 @@ class Resolvedor:
             return "sim"
         return "sim" if (tr.get("media_px") or 0) > lim else "auto"
 
-    def _cor(self, cid: str, s: float) -> str:
+    def _cena(self, cid: str, s: float) -> dict | None:
         for c in self.an[self.clipe[cid]["arquivo"]]["sinais"].get("cenas") or []:
-            if c["t0"] <= s <= c["t1"] and c.get("ambiente"):
-                return c["ambiente"]
-        return "neutro"
+            if c["t0"] <= s <= c["t1"]:
+                return c
+        return None
+
+    def _ambiente(self, cid: str, s: float) -> str:
+        """Rótulo de ambiente da análise (o catálogo agrupa clipes por ele; usado no tom de sala)."""
+        c = self._cena(cid, s)
+        return c["ambiente"] if c and c.get("ambiente") else "neutro"
+
+    def _cor(self, cid: str, s: float) -> str:
+        """Look da biblioteca de cor: o do pedido, senão o medido na cena; análise antiga cai no rótulo de ambiente."""
+        if self.ambiente:
+            return self.ambiente
+        c = self._cena(cid, s)
+        if c and c.get("look") in COR.LOOKS:
+            return c["look"]
+        return c["ambiente"] if c and c.get("ambiente") else "neutro"
+
+    def _balanco(self, cid: str, s: float) -> dict | None:
+        """Primárias da cena (mesma correção para todos os planos da cena: sem cor pulando entre cortes)."""
+        c = self._cena(cid, s)
+        return COR.balanco(c.get("medicao"), self._cor(cid, s)) if c and c.get("medicao") else None
 
     def _desfocar(self, cid: str, s0: float, s1: float) -> list:
         return [t["caixa"] for t in self.an[self.clipe[cid]["arquivo"]]["sinais"].get("telas") or [] if t["t0"] < s1 and t["t1"] > s0]
@@ -367,6 +389,9 @@ class Resolvedor:
         p = {"id": pid, "bloco": bloco, "t0": round(t0, 4), "t1": round(t1, 4), "fonte": self.fonte_de(cid, s0), "s0": round(s0, 4), "vel": round(vel, 4),
              "enquadre": self._enquadre(cid, s0, zoom), "estab": self._estab(cid, s0, s1), "cor": self._cor(cid, s0),
              "som_direto_db": None, "desfocar": self._desfocar(cid, s0, s1), "janela": None, "mblur": False}
+        bal = self._balanco(cid, s0)
+        if bal:
+            p["balanco"] = bal
         p.update(extra)
         p["_clipe"] = cid
         return p
@@ -568,7 +593,7 @@ class Resolvedor:
         for v in L["voz"]:
             peso[v["clipe"]] = peso.get(v["clipe"], 0) + v["s1"] - v["s0"]
         principal = max(peso, key=peso.get)
-        amb = self._cor(principal, L["voz"][0]["s0"])
+        amb = self._ambiente(principal, L["voz"][0]["s0"])
         ordem = [principal] + [c for c in peso if c != principal] + [c["id"] for c in self.cat["clipes"] if c["id"] not in peso and amb in c.get("ambientes", [])]
         min_s = self.m.get("tom_sala", {}).get("min_s", 1.5)
         for cid in ordem:

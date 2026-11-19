@@ -51,6 +51,7 @@ class PedidoEntrada(BaseModel):
     audio_chave: Optional[str] = Field(None, max_length=500)
     tipo_video: TipoVideo = "auto"
     modo: Modo = "auto"
+    ambiente: Literal["auto", "loja", "rua_dia", "rua_noite", "academia", "palco", "neutro"] = "auto"
     duracao_alvo: Optional[float] = Field(None, ge=5, le=600)
     destino: list[Destino] = Field(default_factory=lambda: ["reels"], max_length=6)
     formato: Literal["9:16", "1:1", "4:5", "16:9"] = "9:16"
@@ -106,7 +107,7 @@ def gravar_pedido(pid: str, corpo: PedidoEntrada):
             texto = _transcrever_pedido(cfg, arm, corpo.audio_chave)
             if not texto:
                 raise HTTPException(422, "não deu para entender o áudio do pedido; grave de novo ou mande em texto")
-        pedido = {"versao": "1", "projeto": pid, "texto": texto, "audio": corpo.audio_chave, "tipo_video": tipo, "modo": corpo.modo, "cliente": corpo.cliente,
+        pedido = {"versao": "1", "projeto": pid, "texto": texto, "audio": corpo.audio_chave, "tipo_video": tipo, "modo": corpo.modo, "ambiente": corpo.ambiente, "cliente": corpo.cliente,
                   "destino": corpo.destino, "formato": corpo.formato, "duracao_alvo": corpo.duracao_alvo, "obrigatorio": corpo.obrigatorio,
                   "proibido": corpo.proibido, "referencias": [], "ajustes_de": corpo.ajustes_de, "criado_em": banco.agora_iso()}
         erros = validar.erros("pedido", pedido)
@@ -157,7 +158,9 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
 @rotas.get("/memoria")
 def memoria():
     loja = Loja()
+    from motor.etapas import cor as COR
     from motor.etapas.direcao import MODOS
     return {"regras": loja.regras(), "checagens": loja.checagens(), "vocabulario": loja.vocabulario(), "modelos": loja.nomes_modelos(),
             "modos": [m for m in (loja.modo(n) for n in MODOS) if m],
+            "looks": COR.catalogo(),
             "raiz_isolada": bool(os.environ.get("EDITOR_MEMORIA"))}

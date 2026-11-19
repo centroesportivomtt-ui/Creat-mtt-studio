@@ -81,6 +81,7 @@
    "descricao": "Nenhum vazio sem voz, sem efeito e sem texto maior que 1,2 s (ar morto).",
    "origem": "dono 10/11/2026",
    "gravidade": "aviso"
-  }
+  },
+  {"id": "c_cor_medida", "executor": "qa", "tipo": "cor_medida", "params": {}, "descricao": "Cor de cada plano medida: altas sem estourar, pretos sem esmagar e pele na faixa natural (105° a 145° no vetorscópio).", "origem": "casa 19/11/2026", "gravidade": "aviso"}
  ]
 }

@@ -20,6 +20,7 @@ import time
 
 import numpy as np
 
+from motor.etapas import cor as CR
 from motor.etapas.montagem.comum import FPS_PADRAO, H_PADRAO, W_PADRAO, Fontes, hash_obj, interp_kf, meta, quadro
 
 VERSAO = "p4"
@@ -286,6 +287,15 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
     tremores = [(u * dur_p, du, f) for u, du, f in p.get("tremor", []) or []]
     caixas = p.get("desfocar") or []
     cor = p.get("cor", "neutro")
+    bal = p.get("balanco")
+    if cor in CR.LOOKS:                                      # biblioteca nova: balanço da cena + look + pele protegida
+        colorir = lambda img: CR.aplicar(img, cor, bal)      # noqa: E731
+    elif bal:                                                # look da tabela antiga com primárias medidas
+        colorir = lambda img: grade(CR.aplicar_balanco(img, bal), cor)  # noqa: E731
+    else:
+        colorir = lambda img: grade(img, cor)                # noqa: E731
+    k_meio = nf // 2
+    antes_depois = None
     mblur = bool(p.get("mblur"))
     tmp = saida + ".tmp.mp4"
     enc = subprocess.Popen((["nice", "-n", str(nice)] if nice else []) + [
@@ -330,9 +340,12 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
         o = cv2.warpAffine(base, np.hstack([A, b[:, None]]), (W, H), flags=interp | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
         if caixas:
             o = desfoca(o, caixas)
-        o = grade(o, cor)
+        antes = o if k == k_meio else None
+        o = colorir(o)
         bl = cv2.GaussianBlur(o, (0, 0), 1.0)
         o = vinheta(cv2.addWeighted(o, 1.18, bl, -0.18, 0))
+        if antes is not None:
+            antes_depois = (antes, o.copy())
         for t0_, du, f in flashes:
             if t0_ <= tt < t0_ + du:
                 e = f * (1 - (tt - t0_) / du) ** 1.5
@@ -342,6 +355,8 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
     err = enc.stderr.read().decode(errors="replace")
     if enc.wait() != 0:
         raise RuntimeError(f"plano {p['id']}: encode falhou: {err[-500:]}")
+    if antes_depois is not None:
+        info["cor"] = gravar_antes_depois(saida, p, *antes_depois)
     os.replace(tmp, saida)
     info["ms_quadro"] = round((time.time() - t_ini) * 1000 / nf, 1)
     info["janela_trabalho"] = [ww, wh]
@@ -355,7 +370,40 @@ def chave_plano(p: dict, assinatura: list, fmt: dict) -> str:
     q = {k: v for k, v in p.items() if k not in ("bloco", "som_direto_db", "janela")}
     q["t1"] = round(p["t1"] - p["t0"], 4)
     q.pop("t0", None)
-    return hash_obj(q, assinatura, fmt, COR.get(p.get("cor", "neutro"), COR["neutro"]), VERSAO)
+    cor = p.get("cor", "neutro")
+    if cor in CR.LOOKS or p.get("balanco"):
+        return hash_obj(q, assinatura, fmt, CR.LOOKS.get(cor) or COR.get(cor, COR["neutro"]), CR.VERSAO, VERSAO)
+    return hash_obj(q, assinatura, fmt, COR.get(cor, COR["neutro"]), VERSAO)
+
+
+def gravar_antes_depois(saida: str, p: dict, antes, depois) -> dict:
+    """Quadro do meio do plano antes e depois da cor (540x960) + medição dos dois, ao lado do clipe no cache."""
+    cv2 = _cv2()
+    base = saida[:-4] if saida.endswith(".mp4") else saida
+    for nome, img in (("antes", antes), ("depois", depois)):
+        peq = cv2.resize(img, (img.shape[1] // 2, img.shape[0] // 2), interpolation=cv2.INTER_AREA)
+        cv2.imwrite(f"{base}.{nome}.jpg", peq, [cv2.IMWRITE_JPEG_QUALITY, 86])
+    m_a, m_d = CR.medir(antes), CR.medir(depois)
+    info = {"look": p.get("cor", "neutro"), "look_nome": (CR.LOOKS.get(p.get("cor", "")) or {}).get("nome", p.get("cor", "neutro")),
+            "balanco": p.get("balanco"), "antes": m_a, "depois": m_d, "versao": CR.VERSAO}
+    import json
+    pathlib.Path(f"{base}.cor.json").write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
+    return info
+
+
+def ler_antes_depois(arquivo: str) -> dict | None:
+    """Sidecar de cor de um clipe do cache (existe para clipes renderizados desde a cor c1)."""
+    import json
+    base = arquivo[:-4] if arquivo.endswith(".mp4") else arquivo
+    j = pathlib.Path(f"{base}.cor.json")
+    if not j.exists() or not pathlib.Path(f"{base}.antes.jpg").exists() or not pathlib.Path(f"{base}.depois.jpg").exists():
+        return None
+    try:
+        info = json.loads(j.read_text(encoding="utf-8"))
+    except ValueError:
+        return None
+    info["antes_jpg"], info["depois_jpg"] = f"{base}.antes.jpg", f"{base}.depois.jpg"
+    return info
 
 
 def _trabalho(args):
@@ -422,6 +470,8 @@ def limpar_cache(cache: pathlib.Path, limite_mb: int) -> int:
         p = arqs.pop(0)
         s = p.stat().st_size
         p.unlink(missing_ok=True)
+        for extra in (".antes.jpg", ".depois.jpg", ".cor.json"):
+            p.with_name(p.stem + extra).unlink(missing_ok=True)
         total -= s
         apagado += s
     return apagado

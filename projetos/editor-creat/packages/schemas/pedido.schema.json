@@ -125,6 +125,19 @@
     "criado_em": {
       "type": "string",
       "format": "date-time"
+    },
+    "ambiente": {
+      "enum": [
+        "auto",
+        "loja",
+        "rua_dia",
+        "rua_noite",
+        "academia",
+        "palco",
+        "neutro"
+      ],
+      "default": "auto",
+      "description": "Onde foi gravado, para a cor: auto = o editor mede cada cena e escolhe o look; loja (interno de loja), rua_dia, rua_noite, academia, palco, neutro."
     }
   }
 }

@@ -285,7 +285,7 @@ _RE_RANGE = re.compile(r"^bytes=(\d*)-(\d*)$")
 
 
 _RE_SAIDA = re.compile(r"^saidas/([^/]+)/([^/]+)/(.+)$")
-_SO_ENTREGUE = re.compile(r"^(final\.mp4|mix\.wav|stems/.*|capa\.jpg|entrega\.json)$")
+_SO_ENTREGUE = re.compile(r"^(final\.mp4|mix\.wav|stems/.*|capa\.jpg|entrega\.json|cor\.json|cor/.*)$")
 
 
 def _liberado(chave: str) -> None:

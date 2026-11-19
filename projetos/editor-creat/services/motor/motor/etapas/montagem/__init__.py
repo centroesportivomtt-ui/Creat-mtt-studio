@@ -97,6 +97,7 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
                           threads=max(2, int(getattr(cfg, "threads", 2) or 2) + 1), nice=nice,
                           progresso=lambda p, m=None: prog(0.65 + 0.33 * p, m))
     tempos["total"] = round(time.time() - t_ini, 2)
+    cor = revisao_cor(edl, res_pl, trabalho / "cor")
     st = res_ov.get("stats") or {}
     rel = {
         "versao": VERSAO, "edl_hash": hash_obj(edl), "janela": list(janela) if janela else None,
@@ -106,11 +107,34 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
         "planos": {k: {"arquivo": v["arquivo"], "cache": v["cache"], **({k2: v["info"][k2] for k2 in ("ms_quadro", "estab", "jit_antes", "jit_depois", "zoom_x")} if v.get("info") else {})}
                    for k, v in res_pl.items()},
         "audio": {k: v for k, v in res_au.items() if k not in ("stems",)},
+        "cor": cor,
         "composicao": res_comp, "tempos": tempos,
     }
     gravar_json(trabalho / "montagem.json", rel)
     prog(1.0, "Montagem pronta")
     return rel
+
+
+def revisao_cor(edl: dict, res_pl: dict, pasta: pathlib.Path) -> list[dict]:
+    """Antes/depois da cor por plano (quadro do meio + medição), na ordem do filme, para a revisão do dono e o QA."""
+    shutil.rmtree(pasta, ignore_errors=True)
+    out = []
+    for p in edl["planos"]:
+        r = res_pl.get(p["id"])
+        info = PL.ler_antes_depois(r["arquivo"]) if r else None
+        if not info:
+            continue
+        pasta.mkdir(parents=True, exist_ok=True)
+        item = {"plano": p["id"], "t0": p["t0"], "t1": p["t1"], "look": info["look"], "look_nome": info["look_nome"],
+                "balanco": info.get("balanco"), "antes": info["antes"], "depois": info["depois"]}
+        for lado in ("antes", "depois"):
+            destino = pasta / f"{p['id']}_{lado}.jpg"
+            shutil.copyfile(info[f"{lado}_jpg"], destino)
+            item[f"{lado}_jpg"] = str(destino)
+        out.append(item)
+    if out:
+        gravar_json(pasta / "cor.json", out)
+    return out
 
 
 def _gravar(arm, chave: str, origem: pathlib.Path) -> str:
@@ -143,6 +167,14 @@ def etapa_montagem(ctx) -> dict:
     for nome, arq in rel["stems"].items():
         _gravar(arm, f"{base}/stems/{nome}.flac", pathlib.Path(arq))
     rel["chaves"] = {"final": f"{base}/final.mp4", "mix": f"{base}/mix.wav", "stems": {n: f"{base}/stems/{n}.flac" for n in rel["stems"]}}
+    for item in rel.get("cor") or []:                       # revisão da cor: imagens e medição ao lado do vídeo
+        for lado in ("antes", "depois"):
+            chave = f"{base}/cor/{item['plano']}_{lado}.jpg"
+            _gravar(arm, chave, pathlib.Path(item.pop(f"{lado}_jpg")))
+            item[lado + "_chave"] = chave
+    if rel.get("cor"):
+        arm.gravar(f"{base}/cor.json", _bytes_json(rel["cor"]))
+        rel["chaves"]["cor"] = f"{base}/cor.json"
     arm.gravar(chave_rel, _bytes_json(rel))
     ctx.con.execute("UPDATE versoes SET estado='montada', video=? WHERE projeto=? AND id=?", (f"{base}/final.mp4", p, v))
     PL.limpar_cache(pathlib.Path(ctx.cfg.dados) / "cache" / "planos", int(os.environ.get("EDITOR_CACHE_PLANOS_MB", "1200")))

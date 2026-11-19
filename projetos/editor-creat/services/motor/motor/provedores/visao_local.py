@@ -18,6 +18,8 @@ import urllib.request
 import cv2
 import numpy as np
 
+from motor.etapas import cor as COR
+
 log = logging.getLogger("motor.visao")
 
 YUNET_URL = "https://huggingface.co/opencv/face_detection_yunet/resolve/main/face_detection_yunet_2023mar.onnx"
@@ -131,7 +133,7 @@ class VisaoLocal:
         """quadros = [(t, jpg)] já com rotação aplicada. Devolve tremor, cenas, rostos, telas (analise.schema)."""
         ts, desl, hist_ant, cinza_ant = [], [], None, None
         cenas, rostos, telas_raw = [], [], []
-        ini_cena, cores = 0.0, []
+        ini_cena, cores, meds = 0.0, [], []
         for i, (t, p) in enumerate(quadros):
             bgr = cv2.imread(str(p))
             if bgr is None:
@@ -151,20 +153,21 @@ class VisaoLocal:
                 dist = cv2.compareHist(hist_ant, hist, cv2.HISTCMP_BHATTACHARYYA)
                 if dist > 0.45 and t - ini_cena >= 1.0:
                     rot, luz = _rotulo_cor_media(cores)
-                    cenas.append({"t0": round(ini_cena, 2), "t1": round(t, 2), "ambiente": rot, "luz": luz})
-                    ini_cena, cores = t, []
+                    cenas.append(_cena(ini_cena, t, rot, luz, meds))
+                    ini_cena, cores, meds = t, [], []
             cores.append(peq)
             ts.append(t)
             cinza_ant, hist_ant = g, hist
             caixas = self.rostos.detectar(bgr)
             if caixas:
                 rostos.append({"t": round(t, 2), "caixas": caixas})
+            meds.append(COR.medir(peq, caixas))
             for cx in _telas(bgr):
                 telas_raw.append((i, t, cx))
         fim = quadros[-1][0] if quadros else 0.0
         if ts:
             rot, luz = _rotulo_cor_media(cores)
-            cenas.append({"t0": round(ini_cena, 2), "t1": round(max(fim, ini_cena), 2), "ambiente": rot, "luz": luz})
+            cenas.append(_cena(ini_cena, max(fim, ini_cena), rot, luz, meds))
         vals = [d[2] for d in desl if d[2] is not None]
         trechos = []
         for t0, t1, px in desl:
@@ -185,6 +188,12 @@ class VisaoLocal:
 
     def descrever(self, folha_jpg, tempos: list[float], contexto: dict) -> dict | None:
         return momentos_heuristicos(contexto)
+
+
+def _cena(t0: float, t1: float, rot: str, luz: float, meds: list) -> dict:
+    """Cena com o rótulo antigo (quente/frio + nível) e a medição de cor do DaVinci: look do ambiente + primárias."""
+    med = COR.mediana(meds)
+    return {"t0": round(t0, 2), "t1": round(t1, 2), "ambiente": rot, "luz": luz, "look": COR.classificar(med), "medicao": med}
 
 
 def _rotulo_cor_media(imgs) -> tuple[str, float]:

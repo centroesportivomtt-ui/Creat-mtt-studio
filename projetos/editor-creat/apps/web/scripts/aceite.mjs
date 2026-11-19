@@ -247,7 +247,24 @@ async function principal() {
   await page.click('[data-teste=aprovar]');
   const aprovou = await page.waitForSelector('[data-teste=aprovada]', { timeout: 10000 }).then(() => true).catch(() => false);
   ok('aprovar bate a claquete e marca a versão', aprovou, aprovou ? 'aprovada' : 'não marcou');
+  await page.click('[data-teste=ver-cor]');
+  const corAbriu = await page.waitForSelector('[data-teste=cor-grade] [data-teste=cor-plano]', { timeout: 10000 }).then(() => true).catch(() => false);
+  const cor = corAbriu ? await page.evaluate(async () => {
+    const imgs = [...document.querySelectorAll('[data-teste=cor-plano] img')];
+    await Promise.all(imgs.map((i) => (i.complete ? null : new Promise((r) => { i.onload = i.onerror = r; }))));
+    const faixa = document.querySelector('[data-teste=cor-plano] input[type=range]');
+    const quadro = faixa.closest('.cor__quadro');
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    set.call(faixa, '80'); faixa.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 150));
+    return { planos: document.querySelectorAll('[data-teste=cor-plano]').length, carregadas: imgs.filter((i) => i.naturalWidth > 0).length, total: imgs.length,
+      pos: quadro.style.getPropertyValue('--pos'), rolagem: document.documentElement.scrollWidth > document.documentElement.clientWidth };
+  }) : null;
+  if (corAbriu) await page.locator('[data-versao] .cor').first().screenshot({ path: path.join(PRINTS, 'cor-antes-depois.png') }).catch(() => {});
+  ok('cor: antes e depois de cada plano na versão (imagens, medição e comparador)', Boolean(cor && cor.planos >= 2 && cor.carregadas === cor.total && cor.pos === '80%' && !cor.rolagem), JSON.stringify(cor));
   await page.goto(`${BASE}/caderno`);
+  const nLooks = await page.locator('[data-teste=caderno-looks] li').count();
+  ok('caderno mostra a biblioteca de cor por ambiente', nLooks >= 5, `${nLooks} looks`);
   await page.fill('[data-teste=form-referencia] input[name=url]', 'https://www.instagram.com/reel/TESTE123/');
   await page.click('[data-teste=ler-referencia]');
   const leu = await page.waitForSelector('[data-teste=referencias] li >> text=planos', { timeout: 10000 }).then(() => true).catch(() => false);
