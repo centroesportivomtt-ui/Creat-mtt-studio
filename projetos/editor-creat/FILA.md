@@ -21,7 +21,7 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 | C | revisão com olho de IA antes de entregar | feito · 51fcc19 · segura a entrega desde 19/11 |
 | D | checagens de fala (cortada, voz de fora, cobertura) | feito · c9e2b1e (integração das duas sessões) |
 | E | biblioteca de trilhas e efeitos com licença | feito · bb750bd · efeitos da casa (Sonniss GDC) no kit; **trilhas: falta fonte** |
-| F | link de aprovação para o cliente | livre |
+| F | link de aprovação para o cliente | em andamento · 01LA2wrM · 19/11 21:00 |
 | G | agendar o post aprovado pelo Metricool | livre (precisa do dono: token do Metricool na hospedagem) |
 | H | painel de gastos do mês | feito · 90781ea |
 
