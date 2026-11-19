@@ -1,21 +1,27 @@
 # Publicar o Editor creat.MTT
 
-Tudo roda num servidor só, com HTTPS automático. O seu computador não processa nada.
+## Caminho mais curto (um link pronto, sem comprar domínio): Railway
+O editor inteiro (site + motor + workers) sobe num contêiner só (`deploy/Dockerfile.tudo`, configurado em `railway.json`).
+Os segredos internos são gerados sozinhos no primeiro boot. O dono informa só 3 variáveis.
 
-## O que o dono precisa ter (uma vez)
-1. **Um servidor na nuvem** com Docker: recomendado 8 núcleos e 16 GB de memória, 200 GB de disco (o render do motion e o 4K pedem CPU).
-2. **Um domínio** (ex.: `editor.creatmtt.com.br`) apontando para o IP do servidor (registro A).
-3. **Chave da API da Anthropic** só para o editor, com teto mensal em console.anthropic.com → Limits.
-4. Opcional: **Cloudflare R2** para guardar os vídeos fora do disco do servidor.
+1. Abrir **https://railway.com** → **Login** → **Login with GitHub** (a conta que já tem o creat-mtt-studio).
+2. **New Project** → **Deploy from GitHub repo** → escolher **creat-mtt-studio**.
+3. No serviço criado → **Settings**:
+   - **Source → Branch:** `claude/editor-creat`
+   - **Source → Root Directory:** `projetos/editor-creat`
+4. **Variables** → **New Variable**, uma por vez:
+   - `EDITOR_SENHA` = a senha da casa (10+ caracteres; é com ela que se entra no editor)
+   - `EDITOR_ANTHROPIC_KEY` = a chave da API da Anthropic
+   - `EDITOR_CEREBRO` = `anthropic`
+5. Clicar com o botão direito no serviço → **Attach Volume** → caminho **`/dados`** (guarda projetos e vídeos).
+6. **Settings → Networking → Generate Domain**. Esse é o link do editor: abre no celular, notebook e computador.
 
-## Subir (quem tiver acesso ao servidor)
+A primeira subida demora alguns minutos (instala o motor, o kit e o site). O Railway cobra pelo uso; o valor aparece no painel antes de confirmar o plano.
+
+## Alternativa: servidor próprio com domínio
+`deploy/docker-compose.yml` (motor, 2 workers, site e Caddy com HTTPS automático). Ver `deploy/.env.example`.
 ```bash
 git clone https://github.com/centroesportivomtt-ui/creat-mtt-studio && cd creat-mtt-studio/projetos/editor-creat/deploy
 cp .env.example .env    # preencher domínio, senha, tokens e chave
 docker compose up -d --build
 ```
-O Caddy pede o certificado HTTPS sozinho. Depois é só abrir o domínio no celular e entrar com a senha da casa.
-
-## O que fica guardado
-- Volume `dados`: projetos, vídeos e banco do motor.
-- Volume `memoria`: regras, casos e modos (o caderno da casa). Na primeira subida ele nasce com o que está no repositório.
