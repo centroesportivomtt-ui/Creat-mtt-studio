@@ -1,8 +1,11 @@
 // CHECKLIST ao vivo: painel de vidro do "sistema" que marca cada item no instante em que a palavra é dita.
 // props: x, y, w, titulo, sub, itens:[{t, rot}]
+//   compacto: true = faixa baixa (cabeçalho + contador + barra em gomos, sem a lista), para quando há rosto no quadro e a lista
+//   inteira cairia em cima dele (Super Kal, 19/11: o cartão tapava a boca de quem falava). Os nomes ficam com a legenda.
 export default function checklist(ctx, c) {
   const { el, tl, EASE, aba, prog, ease } = ctx;
   const p = c.props, t0 = c.de, w = p.w ?? 400;
+  if (p.compacto) return compacto(ctx, c);
   const card = el("div", "mk-chip", c.el, { position: "absolute", left: Math.max(ctx.ZONA.esquerda, Math.min(p.x ?? 60, ctx.W - ctx.ZONA.direita - 260)) + "px", top: (p.y ?? 420) + "px", width: Math.min(w, ctx.W - ctx.ZONA.direita - Math.max(ctx.ZONA.esquerda, Math.min(p.x ?? 60, ctx.W - ctx.ZONA.direita - 260))) + "px", boxSizing: "border-box", padding: "22px 24px 24px",
     background: "rgba(14,14,16,0.86)", borderRadius: "10px", borderTop: "5px solid #FF1A1A", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" });
   const cab = el("div", "", card, { display: "flex", alignItems: "center", gap: "14px" });
@@ -45,6 +48,36 @@ export default function checklist(ctx, c) {
     let f = 0; linhas.forEach((l) => { f += eo(prog(t, l.t, 0.3)); });
     cheia.style.transform = `scaleX(${f / linhas.length})`;
     cont.textContent = `${feitos}/${linhas.length} CONFERIDO`;
+  });
+  ctx.exigir({ tipo: "seguro", alvo: `[data-id="${c.id}"] .mk-chip`, de: c.de + 0.6, ate: c.ate - 0.3 });
+}
+
+function compacto(ctx, c) {
+  const { el, tl, EASE, aba, prog, ease } = ctx;
+  const p = c.props, t0 = c.de;
+  const x = Math.max(ctx.ZONA.esquerda, p.x ?? 60), w = Math.min(p.w ?? 900, ctx.W - ctx.ZONA.direita - x);
+  const card = el("div", "mk-chip", c.el, { position: "absolute", left: x + "px", top: (p.y ?? 300) + "px", width: w + "px", boxSizing: "border-box", padding: "18px 24px 20px",
+    background: "rgba(14,14,16,0.86)", borderRadius: "10px", borderTop: "5px solid #FF1A1A", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" });
+  const cab = el("div", "", card, { display: "flex", alignItems: "center", gap: "16px" });
+  aba(cab, 52, { position: "relative", flex: "0 0 auto" });
+  const ct = el("div", "", cab, { flex: "1 1 auto", minWidth: "0" });
+  const h1 = el("div", "", ct, { font: "700 20px 'JetBrains Mono'", letterSpacing: "0.10em", color: "#F5B84D" }); h1.textContent = p.titulo;
+  const h2 = el("div", "", ct, { font: "900 30px 'Inter'", letterSpacing: "0.02em", color: "#fff", marginTop: "2px" }); h2.textContent = p.sub;
+  const cont = el("div", "mk-display", cab, { flex: "0 0 auto", fontSize: "64px", lineHeight: "1", color: "#F5B84D", fontVariantNumeric: "tabular-nums" });
+  const gomos = el("div", "", card, { marginTop: "16px", display: "flex", gap: "8px" });
+  const gs = p.itens.map((it) => {
+    const g = el("div", "", gomos, { flex: "1 1 0", height: "10px", background: "rgba(241,235,226,0.2)", borderRadius: "5px", overflow: "hidden" });
+    const c2 = el("div", "", g, { height: "100%", width: "100%", background: "#F5B84D", transformOrigin: "0 50%", transform: "scaleX(0)" });
+    return { c2, t: it.t };
+  });
+  tl.fromTo(card, { clipPath: "inset(0% 0% 100% 0% round 10px)", y: -18 }, { clipPath: "inset(0% 0% 0% 0% round 10px)", y: 0, duration: 0.45, ease: EASE.chegada }, t0);
+  tl.to(card, { clipPath: "inset(0% 100% 0% 0% round 10px)", duration: 0.24, ease: EASE.saida, immediateRender: false }, c.ate - 0.26);
+  const eo = ease("expo.out"), bk = ease("back.out(2)");
+  ctx.aCada((t) => {
+    let feitos = 0, ult = -1e9;
+    gs.forEach((g) => { g.c2.style.transform = `scaleX(${eo(prog(t, g.t, 0.3))})`; if (t >= g.t) { feitos++; ult = Math.max(ult, g.t); } });
+    cont.textContent = `${feitos}/${gs.length}`;
+    cont.style.transform = `scale(${0.8 + 0.2 * bk(prog(t, ult, 0.25))})`;
   });
   ctx.exigir({ tipo: "seguro", alvo: `[data-id="${c.id}"] .mk-chip`, de: c.de + 0.6, ate: c.ate - 0.3 });
 }

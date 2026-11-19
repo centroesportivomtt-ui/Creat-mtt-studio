@@ -32,7 +32,10 @@ export default function chip(ctx, c) {
   let pxCargo = 27;
   while (pxCargo > 18 && largCargo(pxCargo) + 0.16 * pxCargo * txtCargo.length > util) pxCargo--;
 
-  const nome = el("div", "mk-display", textos, { fontSize: pxNome + "px", lineHeight: "0.95", overflow: "hidden", paddingBottom: "4px" });
+  // folga em cima para o acento de maiúscula (Í, Á, Ô): com lineHeight 0,95 e overflow hidden (máscara da entrada das letras)
+  // o acento ficava fora da caixa e sumia ("LAVINIA" no lugar de "LAVÍNIA", Super Kal 19/11). A placa cresce esses px.
+  const acento = Math.round(pxNome * 0.22);
+  const nome = el("div", "mk-display", textos, { fontSize: pxNome + "px", lineHeight: "0.95", overflow: "hidden", paddingBottom: "4px", paddingTop: acento + "px" });
   const letras = [];
   for (const ch of p.nome ?? "") {
     const s = el("span", "", nome, { display: "inline-block", whiteSpace: "pre" });
