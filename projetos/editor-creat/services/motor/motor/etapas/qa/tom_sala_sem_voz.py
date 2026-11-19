@@ -15,6 +15,15 @@ def checar(c):
                 "evidencia": ["stems/ambiente.flac"] if arq else []}
     if not arq:
         return {"ok": False, "bloqueia": True, "detalhe": "NÃO VERIFICADO: o EDL tem tom de sala mas a montagem não gravou o stem 'ambiente'"}
+    if ts.get("difuso"):
+        # Ambiente sintetizado (espectro médio + fase aleatória): o Whisper alucina em ruído normalizado ("cidade no Brasil"),
+        # então a prova é física: sem sílaba não há fala. Envelope de 50 ms com desvio <= 2,5 dB = sem voz.
+        from motor.etapas.qa import modulacao_db
+        mod = modulacao_db(arq)
+        ok = mod <= 2.5
+        return {"ok": ok, "valor": {"difuso": True, "modulacao_db": round(mod, 2)},
+                "detalhe": f"tom de sala difuso (fase aleatória): modulação do envelope {mod:.1f} dB ({'sem sílabas, sem voz' if ok else 'tem modulação de fala'})",
+                "evidencia": [] if ok else ["stems/ambiente.flac"]}
     tr = c.transcrever("stem_ambiente", arq, normalizar_nivel=True)
     falta = c.nao_verificado(tr, "stem ambiente")
     if falta:

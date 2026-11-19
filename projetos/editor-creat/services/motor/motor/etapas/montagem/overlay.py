@@ -19,7 +19,7 @@ from motor import config
 from motor.etapas.montagem.comum import Fontes, gravar_json, hash_obj
 
 KIT = config.KIT
-CHAVES_IMG = ("src", "imagem", "logo")
+CHAVES_IMG = ("src", "imagem", "logo", "logo_cliente", "logo_parceiro")
 
 
 def _fixa_caminhos(obj, fontes: Fontes | None):

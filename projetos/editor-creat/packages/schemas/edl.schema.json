@@ -127,7 +127,7 @@
     },
     "tom_sala": {
       "type": ["object", "null"], "additionalProperties": false, "required": ["fonte", "s0", "s1"],
-      "properties": { "fonte": { "type": "string" }, "s0": { "type": "number" }, "s1": { "type": "number" }, "db": { "type": "number", "default": -48 } },
+      "properties": { "fonte": { "type": "string" }, "s0": { "type": "number" }, "s1": { "type": "number" }, "db": { "type": "number", "default": -48 }, "difuso": { "type": "boolean", "default": false, "description": "true = ambiente sintetizado com o espectro médio do trecho e fase aleatória: timbre do lugar, nenhuma palavra inteligível, nível constante (lugar com gente falando ao fundo)." } },
       "description": "Trecho SEM voz (o QA confere transcrevendo o stem; lição do laço 'vai competir')."
     },
     "master": {

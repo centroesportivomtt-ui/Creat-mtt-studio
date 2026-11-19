@@ -269,3 +269,20 @@ def etapa_qa(ctx) -> dict:
 
 
 __all__ = ["conferir", "Conferencia", "normalizar", "resumo", "CHECAGENS", "hash_obj", "gravar_json"]
+
+
+def modulacao_db(arq) -> float:
+    """Desvio padrão (dB) do envelope de 50 ms, sem os 2 s das pontas. Fala tem sílabas (>= 5-6 dB);
+    o tom de sala difuso (espectro médio + fase aleatória) fica perto de 1 dB. Usado para provar 'sem voz por construção'."""
+    import numpy as np
+    import soundfile as sf
+    x, sr = sf.read(str(arq), dtype="float32")
+    if x.ndim > 1:
+        x = x.mean(1)
+    x = x[2 * sr:-2 * sr] if len(x) > 6 * sr else x
+    h = int(0.05 * sr)
+    n = len(x) // h
+    if n < 10:
+        return 99.0
+    rms = np.sqrt(np.mean(x[:n * h].reshape(n, h) ** 2, axis=1)) + 1e-9
+    return float(np.std(20 * np.log10(rms)))

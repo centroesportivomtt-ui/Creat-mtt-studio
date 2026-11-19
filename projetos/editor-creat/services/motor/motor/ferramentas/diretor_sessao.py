@@ -41,6 +41,13 @@ def responder(cfg, projeto: str) -> dict:
     problemas = validar_respostas(cfg)
     if problemas:
         return {"ok": False, "problemas": problemas}
+    # a direção (re)escrita pela sessão é nova: esquece o reaproveitamento por chave de entrada, senão o motor
+    # devolveria a versão antiga montada com a direção anterior (falha vista em 19/11 no Super Kal)
+    idx = pathlib.Path(cfg.dados) / "armazenamento" / "projetos" / projeto / "direcoes.json"
+    if idx.exists():
+        d = json.loads(idx.read_text(encoding="utf-8"))
+        d["por_entrada"] = {}
+        idx.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
     con = banco.conectar(cfg.banco)
     with con:
         banco.enfileirar(con, "direcao", projeto, prioridade=1)

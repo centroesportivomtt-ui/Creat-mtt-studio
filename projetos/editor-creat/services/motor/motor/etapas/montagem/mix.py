@@ -65,6 +65,21 @@ def tom_de_sala(edl: dict, fontes: Fontes, N: int, cfg=None) -> tuple[np.ndarray
     x = ler_audio(fontes.audio(ts["fonte"]), ts["s0"] - off, ts["s1"] - ts["s0"], cfg=cfg)
     if len(x) < int(0.3 * SR) or float(np.abs(x).max()) < 1e-6:
         return piso, {"tom_sala": "vazio"}
+    if ts.get("difuso"):
+        # Ambiente com gente falando ao fundo (supermercado, evento): mantém o TIMBRE do lugar (espectro médio do trecho)
+        # e joga fora a fase, então nenhuma palavra fica inteligível e o nível é constante (sem laço, sem bombear).
+        from scipy.signal import welch
+        f, pxx = welch(x, fs=SR, nperseg=4096)
+        n = 1 << int(np.ceil(np.log2(N + 1)))
+        fr = np.fft.rfftfreq(n, 1 / SR)
+        mag = np.sqrt(np.interp(fr, f, pxx))
+        out = np.zeros((N, 2), np.float32)
+        for c in range(2):                      # dois canais com fases diferentes = largura estéreo natural
+            fase = rng.uniform(0, 2 * np.pi, len(fr))
+            out[:, c] = np.fft.irfft(mag * np.exp(1j * fase), n)[:N]
+        alvo = 10 ** (float(ts.get("db", -48)) / 20)
+        out *= alvo / (np.sqrt(np.mean(out ** 2)) + 1e-9)
+        return out + piso, {"tom_sala": [ts["fonte"], ts["s0"], ts["s1"]], "difuso": True}
     # laço com crossfade longo (sem degrau, sem bombear)
     xf = min(int(0.4 * SR), len(x) // 3)
     out = np.zeros(N + len(x), np.float32)

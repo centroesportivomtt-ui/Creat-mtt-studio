@@ -32,7 +32,12 @@ def checar(c):
     esperado = _ngramas(roteiro.split(), n)
     achados, evid, ouvidos = [], [], {}
     fontes = [("mix", c.mix if c.mix is not None else c.final, False, vezes)]
+    difuso = bool((c.edl.get("tom_sala") or {}).get("difuso"))
     for nome in ("ambiente", "direto"):
+        if nome == "ambiente" and difuso:
+            from motor.etapas.qa import modulacao_db     # sem sílaba não há frase (ver tom_sala_sem_voz)
+            if nome in c.stems and modulacao_db(c.stems[nome]) <= 2.5:
+                continue
         if nome in c.stems:
             fontes.append((nome, c.stems[nome], True, 2))
     for nome, arq, normal, lim in fontes:
