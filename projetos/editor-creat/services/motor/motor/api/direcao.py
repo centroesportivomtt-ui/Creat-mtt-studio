@@ -111,12 +111,15 @@ def gravar_pedido(pid: str, corpo: PedidoEntrada):
         if erros:
             raise HTTPException(422, "pedido inválido: " + "; ".join(erros[:3]))
         arm.gravar_json(f"projetos/{pid}/pedido.json", pedido)
-        r = con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()
-        dados = json.loads(r["dados"] or "{}")
-        dados["pedido"] = {"texto": texto[:200], "tipo_video": tipo}
-        con.execute("UPDATE projetos SET dados=?, atualizado=? WHERE id=?", (json.dumps(dados), banco.agora_iso(), pid))
-        banco.emitir(con, pid, "estado", mensagem="Pedido recebido.", dados={"pedido": texto[:200]})
-        dirigindo = pipeline.tentar_dirigir(con, pid)
+        # ler e gravar `dados` numa transação só (mesma trava do worker e do fechar-envio): sem isso o pedido
+        # podia sobrescrever `envio_fechado` de um fechar-envio que chegasse no meio
+        with banco.transacao(con):
+            r = con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()
+            dados = json.loads(r["dados"] or "{}")
+            dados["pedido"] = {"texto": texto[:200], "tipo_video": tipo}
+            con.execute("UPDATE projetos SET dados=?, atualizado=? WHERE id=?", (json.dumps(dados), banco.agora_iso(), pid))
+            banco.emitir(con, pid, "estado", mensagem="Pedido recebido.", dados={"pedido": texto[:200]})
+            dirigindo = pipeline.tentar_dirigir(con, pid)
         return {"pedido": pedido, "dirigindo": dirigindo}
 
 
@@ -144,11 +147,12 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
             cerebro = None
         r = Loja().registrar_reprovacao(pid, versao, corpo.motivo, cerebro=cerebro)
         con.execute("UPDATE versoes SET estado='reprovada', reprovacao=? WHERE projeto=? AND id=?", (corpo.motivo, pid, versao))
-        d = _projeto(con, pid)["dados"]
-        d["correcoes_auto"] = 0            # nova rodada pedida pelo dono: o auto-ajuste do QA volta a ter as 2 tentativas
-        con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), pid))
-        banco.enfileirar(con, "direcao", pid, entrada={"reprovacao": corpo.motivo, "versao_anterior": versao}, prioridade=1)
-        banco.mudar_estado(con, pid, "dirigindo", f"Versão {versao} reprovada: virou regra da casa. Refazendo a direção.")
+        with banco.transacao(con):        # reler e regravar `dados` sob a mesma trava (não sobrescreve gravação concorrente)
+            d = _projeto(con, pid)["dados"]
+            d["correcoes_auto"] = 0            # nova rodada pedida pelo dono: o auto-ajuste do QA volta a ter as 2 tentativas
+            con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), pid))
+            banco.enfileirar(con, "direcao", pid, entrada={"reprovacao": corpo.motivo, "versao_anterior": versao}, prioridade=1)
+            banco.mudar_estado(con, pid, "dirigindo", f"Versão {versao} reprovada: virou regra da casa. Refazendo a direção.")
         return {"regra": r["regra"], "checagem": r["checagem"], "vocabulario": r["vocabulario"], "nova_direcao": True}
 
 
