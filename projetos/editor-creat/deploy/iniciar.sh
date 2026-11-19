@@ -10,7 +10,8 @@ if [ ! -f "$SEG" ]; then
   { echo "MOTOR_TOKEN=$(head -c 32 /dev/urandom | base64 | tr -d '/+=\n')"; echo "EDITOR_SEGREDO_SESSAO_GERADO=$(head -c 32 /dev/urandom | base64 | tr -d '/+=\n')"; } > "$SEG"
 fi
 set -a; . "$SEG"; set +a
-export MOTOR_TOKEN="${MOTOR_TOKEN}" EDITOR_SEGREDO_SESSAO="${EDITOR_SEGREDO_SESSAO:-$EDITOR_SEGREDO_SESSAO_GERADO}" MOTOR_HOST=127.0.0.1
+MOTOR_PORTA="${MOTOR_PORTA:-8787}"
+export MOTOR_URL="http://127.0.0.1:${MOTOR_PORTA}" MOTOR_TOKEN="${MOTOR_TOKEN}" EDITOR_SEGREDO_SESSAO="${EDITOR_SEGREDO_SESSAO:-$EDITOR_SEGREDO_SESSAO_GERADO}" MOTOR_HOST=127.0.0.1
 if [ -z "${EDITOR_SENHA_HASH:-}" ]; then
   : "${EDITOR_SENHA:?defina EDITOR_SENHA (a senha da casa, 10+ caracteres) nas variáveis da hospedagem}"
   EDITOR_SENHA_HASH="$(cd /app/projetos/editor-creat/apps/web && node scripts/gerar-senha.mjs "$EDITOR_SENHA" | sed -n 's/^EDITOR_SENHA_HASH=//p')"
@@ -18,7 +19,7 @@ if [ -z "${EDITOR_SENHA_HASH:-}" ]; then
 fi
 unset EDITOR_SENHA
 cd /app/projetos/editor-creat/services/motor
-uvicorn motor.api.app:criar --factory --host 127.0.0.1 --port 8787 &
+uvicorn motor.api.app:criar --factory --host 127.0.0.1 --port "$MOTOR_PORTA" &
 for i in $(seq 1 "${EDITOR_WORKERS:-2}"); do python -m motor.worker & done
 cd /app/projetos/editor-creat/apps/web
 npx next start -H 0.0.0.0 -p "${PORT:-3000}" &
