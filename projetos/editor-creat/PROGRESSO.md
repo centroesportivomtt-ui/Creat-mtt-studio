@@ -72,3 +72,9 @@ Atualize este arquivo a cada passo concluído (a máquina reinicia sem aviso). F
 - **Voz da casa** nos textos de estado ("Pronto. Assiste e me diz: aprova ou corta." etc.) e o modo de edição aparece no projeto.
 - **Testes do material real** pulam quando o scratchpad está incompleto (antes falhavam depois de limpeza). pytest 132 ok, 2 pulados; aceite B 28/28.
 - **Publicação pronta:** `deploy/` com Dockerfile do motor (base Playwright 1.63 + Python + ffmpeg), do site, `docker-compose.yml` (motor, 2 workers, site, Caddy com HTTPS automático), `.env.example` e `PUBLICAR.md`. `docker compose config` ok; as imagens não foram construídas nesta máquina (disco cheio). Falta do dono: servidor, domínio e chave da API.
+
+## Teste do cérebro real (anthropic) — 19/11, bloqueado
+- O ambiente da nuvem tem `ANTHROPIC_API_KEY` cadastrada (aparece na lista de variáveis do ambiente), mas ela **não chega ao processo da sessão**: `EDITOR_CEREBRO=anthropic` chega, a chave não. Provável causa: a plataforma retira `ANTHROPIC_API_KEY` das sessões (é o nome que o próprio Claude Code usa) ou a variável foi salva depois que esta máquina subiu.
+- Nenhuma chamada paga foi feita. Gasto: US$ 0.
+- Saída sugerida: salvar a chave com outro nome (ex.: `EDITOR_ANTHROPIC_KEY`) e o motor ler esse nome, ou cadastrá-la como segredo de rede do host `api.anthropic.com` (o proxy injeta); depois abrir sessão nova e rodar `pytest -m pago`.
+- Também visto: `test_ingest_e_analise_pela_fila` falha com `pip install -e '.[teste,cerebro]'` porque a transcrição precisa do extra `transcricao` (faster-whisper). Instalar com `.[teste,cerebro,transcricao]`. pytest sem pagos: 120 ok, 1 falha por esse motivo, 3 pulados.
