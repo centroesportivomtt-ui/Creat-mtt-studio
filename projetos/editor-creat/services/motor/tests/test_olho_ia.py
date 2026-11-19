@@ -276,3 +276,13 @@ def test_revisao_reaproveitada_mantem_a_evidencia(tmp_path, dados, monkeypatch):
     r1 = olho_ia.checar(_conf(tmp_path, monkeypatch))
     r2 = olho_ia.checar(_conf(tmp_path, monkeypatch))
     assert not r2["ok"] and r2["valor"]["reaproveitado"] and r2["evidencia"] == r1["evidencia"] == ["qa/olho_folha.jpg", "qa/olho_Q2.jpg"]
+
+
+def test_caderno_mostra_checagem_em_observacao_como_aviso(tmp_path, dados):
+    from fastapi.testclient import TestClient
+    from motor.api.app import criar
+    from motor.etapas.qa import EM_OBSERVACAO
+    cs = {c["tipo"]: c["gravidade"] for c in TestClient(criar()).get("/v1/memoria").json()["checagens"]}
+    for tipo in EM_OBSERVACAO:
+        assert cs.get(tipo) == "observacao"
+    assert cs.get("frase_repetida") == "bloqueia"

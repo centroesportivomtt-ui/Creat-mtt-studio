@@ -77,7 +77,8 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
         if arq_tr is not None and not pathlib.Path(arq_tr).exists():
             raise ErroDefinitivo(f"trilha não encontrada: {chave_tr}")
         trilha, rel_tr = cronometro("trilha", TR.montar_trilha, edl, arq_tr)
-        sfx, rel_sfx = TR.montar_sfx(edl, getattr(cfg, "som", "") or os.environ.get("MK_SOM"))
+        from motor import biblioteca as BIB
+        sfx, rel_sfx = TR.montar_sfx(edl, getattr(cfg, "som", "") or os.environ.get("MK_SOM") or str(BIB.pasta_sfx(cfg)))
         rel_mix = cronometro("mix", MIX.mixar, edl, voz, trilha, sfx, fontes, trabalho / "audio", cfg)
         shutil.rmtree(trabalho / "tmp_audio", ignore_errors=True)
         return {"voz": rel_voz, "trilha": rel_tr, "sfx": rel_sfx, **rel_mix}

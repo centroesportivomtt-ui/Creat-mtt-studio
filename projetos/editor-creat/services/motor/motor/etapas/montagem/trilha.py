@@ -145,12 +145,15 @@ _SFX: dict = {}
 
 
 def som(nome: str, biblioteca: str | None) -> tuple[np.ndarray, str]:
-    if nome in _SFX:
-        return _SFX[nome]
+    cands = [p for p in ((pathlib.Path(biblioteca) / "sfx" / f"{nome}.wav", pathlib.Path(biblioteca) / f"{nome}.wav") if biblioteca else ())
+             if p.exists()]
+    chave = (nome, str(cands[0]), cands[0].stat().st_mtime) if cands else (nome, None, None)   # som novo na biblioteca vale sem reiniciar
+    if chave in _SFX:
+        return _SFX[chave]
     origem = "sintetico"
     x = None
-    if biblioteca:
-        for p in (pathlib.Path(biblioteca) / "sfx" / f"{nome}.wav", pathlib.Path(biblioteca) / f"{nome}.wav"):
+    if cands:
+        for p in cands[:1]:
             if p.exists():
                 import soundfile as sf
                 x, sr = sf.read(str(p), dtype="float32", always_2d=True)
@@ -162,8 +165,8 @@ def som(nome: str, biblioteca: str | None) -> tuple[np.ndarray, str]:
                 break
     if x is None:
         x = _st(sintetizar(nome))
-    _SFX[nome] = (x, origem)
-    return _SFX[nome]
+    _SFX[chave] = (x, origem)
+    return _SFX[chave]
 
 
 def montar_sfx(edl: dict, biblioteca: str | None) -> tuple[np.ndarray, dict]:

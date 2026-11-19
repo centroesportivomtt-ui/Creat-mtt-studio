@@ -269,6 +269,19 @@ async function principal() {
   const nLooks = await page.locator('[data-teste=caderno-looks] li').count();
   ok('caderno mostra a biblioteca de cor por ambiente', nLooks >= 5, `${nLooks} looks`);
   {
+    const f = '[data-teste=form-biblioteca]';
+    await page.fill(`${f} input[name=url]`, 'https://www.dropbox.com/scl/fi/abc123/trilha.wav?rlkey=x');
+    await page.fill(`${f} input[name=titulo]`, 'Mercado em festa');
+    await page.fill(`${f} input[name=fonte]`, 'Artlist');
+    await page.click('[data-teste=bib-enviar]');
+    const pediuLicenca = await page.waitForSelector(`${f} [role=alert] >> text=Confirme a licença`, { timeout: 8000 }).then(() => true).catch(() => false);
+    await page.check('[data-teste=bib-comercial]');
+    await page.click('[data-teste=bib-enviar]');
+    const entrou = await page.waitForSelector('[data-teste=biblioteca-lista] >> text=Mercado em festa', { timeout: 15000 }).then(() => true).catch(() => false);
+    const pode = await page.locator('[data-teste=biblioteca-lista] >> text=pode tocar').count();
+    ok('biblioteca: sem confirmar a licença não entra; com licença a trilha aparece e pode tocar', pediuLicenca && entrou && pode >= 1, `pediu licença ${pediuLicenca} · entrou ${entrou} · pode tocar ${pode}`);
+  }
+  {
     const antes = (await page.locator('[data-teste=backup-estado]').textContent({ timeout: 10000 }).catch(() => '')) ?? '';
     await page.fill('[data-teste=backup-pedido]', 'https://exemplo.com/nao-e-dropbox');
     await page.click('[data-teste=backup-salvar]');

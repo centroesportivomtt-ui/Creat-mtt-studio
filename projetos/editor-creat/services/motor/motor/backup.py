@@ -142,6 +142,10 @@ def _candidatos(dados: pathlib.Path, memoria: pathlib.Path):
             if sub == "derivados" and p.name not in ("analise.json", "ingest.json", "uso_visao.json"):
                 continue
             yield f"armazenamento/{p.relative_to(arm).as_posix()}", p
+    bib = dados / "biblioteca"                          # fichas de licença das trilhas e efeitos (o áudio fica no volume)
+    if bib.is_dir():
+        for p in sorted(bib.glob("*.json")):
+            yield f"biblioteca/{p.name}", p
     refs = dados / "referencias"
     if refs.is_dir():
         for p in sorted(refs.rglob("*.json")):

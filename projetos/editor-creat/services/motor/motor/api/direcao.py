@@ -161,7 +161,10 @@ def memoria():
     loja = Loja()
     from motor.etapas import cor as COR
     from motor.etapas.direcao import MODOS
-    return {"regras": loja.regras(), "checagens": loja.checagens(), "vocabulario": loja.vocabulario(), "modelos": loja.nomes_modelos(),
+    from motor.etapas.qa import EM_OBSERVACAO
+    checagens = [dict(c, gravidade="observacao") if c.get("tipo") in EM_OBSERVACAO and c.get("gravidade") == "bloqueia" else c
+                 for c in loja.checagens()]          # o Caderno diz a verdade: checagem em observação ainda só avisa
+    return {"regras": loja.regras(), "checagens": checagens, "vocabulario": loja.vocabulario(), "modelos": loja.nomes_modelos(),
             "modos": [m for m in (loja.modo(n) for n in MODOS) if m],
             "looks": COR.catalogo(),
             "raiz_isolada": bool(os.environ.get("EDITOR_MEMORIA"))}

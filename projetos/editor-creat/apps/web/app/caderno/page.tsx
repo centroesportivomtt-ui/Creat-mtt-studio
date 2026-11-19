@@ -1,6 +1,7 @@
 import { motorJson } from '@/lib/motor';
 import Referencias from '@/componentes/Referencias';
 import Backup from '@/componentes/Backup';
+import Biblioteca from '@/componentes/Biblioteca';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Caderno da casa' };
@@ -82,7 +83,7 @@ export default async function Caderno() {
           {checagens.map((c) => (
             <li key={c.id}>
               <p>{c.descricao}</p>
-              <small>{c.gravidade === 'bloqueia' ? 'segura a entrega' : 'avisa'} · {c.origem ?? 'casa'}</small>
+              <small>{c.gravidade === 'bloqueia' ? 'segura a entrega' : c.gravidade === 'observacao' ? 'em observação: por enquanto só avisa' : 'avisa'} · {c.origem ?? 'casa'}</small>
             </li>
           ))}
         </ul>
@@ -96,6 +97,12 @@ export default async function Caderno() {
           </ul>
         </section>
       )}
+      <section className="cartao" aria-labelledby="c-bib" id="biblioteca">
+        <h2 className="cartao__titulo" id="c-bib"><span className="num">05b</span> Trilhas e efeitos da casa</h2>
+        <p className="aviso" style={{ maxWidth: '62ch' }}>Só toca no filme o que tiver licença registrada para uso em vídeo de cliente e anúncio. Cole o link do arquivo; o editor mede a duração e o andamento.</p>
+        <Biblioteca />
+      </section>
+
       <section className="cartao" aria-labelledby="c-backup" id="backup">
         <h2 className="cartao__titulo" id="c-backup"><span className="num">06</span> Backup</h2>
         <p className="aviso" style={{ maxWidth: '62ch' }}>Uma vez por dia, o que não se refaz (projetos, pedidos, direções, relatórios, regras e casos da casa) vai para uma pasta do seu Dropbox.</p>

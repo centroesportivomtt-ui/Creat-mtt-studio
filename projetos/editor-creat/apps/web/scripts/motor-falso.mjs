@@ -251,6 +251,19 @@ async function rotear(req, res) {
     REFS.unshift({ id: `ref_${REFS.length + 1}`, url, autor: 'teste', licao: `30 s, 12 planos (plano médio 2.5 s); 1º corte em 1.2 s${c.nota ? '; o dono quer: ' + c.nota : ''}` });
     return json(res, 202, { id: REFS[0].id, estado: 'lendo' });
   }
+  if (r1 === 'biblioteca') {
+    if (!pid && M === 'GET') return json(res, 200, { ...BIB, tipos_licenca: { propria: 'gravada ou composta pela creat.MTT', comprada: 'biblioteca paga (Artlist, Epidemic, Musicbed…)', gerada_ia: 'gerada por IA em plano que permite uso comercial', livre: 'livre de direitos (CC0, licença Pixabay…)' }, nomes_sfx: ['abre', 'chip', 'cta', 'embaralha', 'impacto', 'risco'], andamento: [] });
+    if (!pid && M === 'POST') {
+      const c = (await lerCorpo(req)) ?? {};
+      if (!c.licenca || c.licenca.uso_comercial !== true || !String(c.licenca.fonte ?? '').trim()) return falha(res, 422, 'não registro som sem licença válida');
+      if (!/^https:\/\/([a-z0-9-]+\.)*(dropbox\.com|drive\.google\.com)\//.test(String(c.url ?? ''))) return falha(res, 422, 'Link não aceito: use um link https compartilhado do Dropbox ou do Google Drive.');
+      const item = { id: c.tipo === 'sfx' ? c.nome : 'mercado-em-festa', tipo: c.tipo, titulo: c.titulo, dur: c.tipo === 'sfx' ? 0.8 : 62.4, bpm: c.tipo === 'sfx' ? undefined : 124,
+        clima: c.clima ?? null, ativo: true, licenca: { ...c.licenca }, pode_tocar: true, problema: null };
+      (c.tipo === 'sfx' ? BIB.sfx : BIB.trilhas).push(item);
+      return json(res, 202, { id: 'x', estado: 'entrando' });
+    }
+    return falha(res, 404, 'rota não encontrada');
+  }
   if (r1 === 'gastos' && M === 'GET') {
     const mes = url.searchParams.get('mes') || agora().slice(0, 7);
     const ultimas = [
@@ -392,6 +405,7 @@ http.createServer((req, res) => {
 
 const REFS = [];
 const BACKUP = { destino: 'falta configurar', estado: 'nunca rodou' };
+const BIB = { trilhas: [], sfx: [] };
 
 // Memória da casa lida direto de projetos/editor-creat/memoria (a mesma que o motor real usa).
 function memoriaDaCasa() {
@@ -399,7 +413,7 @@ function memoriaDaCasa() {
   const ler = (n, padrao) => { try { return JSON.parse(fs.readFileSync(new URL(n, raiz), 'utf8')); } catch { return padrao; } };
   const r = ler('regras.json', { regras: [], vocabulario: [] });
   const ordem = ['criativo', 'ultra', 'cinema', 'ia', 'clean', 'serio', 'fala'];
-  return { regras: r.regras ?? [], vocabulario: r.vocabulario ?? [], checagens: ler('checagens.json', { checagens: [] }).checagens ?? [],
+  return { regras: r.regras ?? [], vocabulario: r.vocabulario ?? [], checagens: (ler('checagens.json', { checagens: [] }).checagens ?? []).map((c) => (['fala_cortada', 'voz_externa', 'cobertura_sintonia', 'olho_ia'].includes(c.tipo) && c.gravidade === 'bloqueia' ? { ...c, gravidade: 'observacao' } : c)),
     modelos: [], modos: ordem.map((m) => ler(`modos/${m}.json`, null)).filter(Boolean),
     looks: Object.entries(ler('cor/looks.json', { looks: {} }).looks).map(([id, l]) => ({ id, nome: l.nome, desc: l.desc })), raiz_isolada: false };
 }
