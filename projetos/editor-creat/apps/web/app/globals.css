@@ -305,3 +305,12 @@ details > summary::-webkit-details-marker { display: none; }
 .caderno__voc { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px var(--r4); font: 700 13px/1.4 var(--fonte-dado); }
 .caderno__voc s { color: var(--cor-erro); }
 @media (max-width: 520px) { .topo__editor { display: none; } .topo__nav { gap: 2px; } }
+
+/* ---------- aprovar: a claquete ---------- */
+.botao--ok { background: var(--cor-ok); color: #06150c; border-color: transparent; display: inline-flex; align-items: center; gap: 8px; }
+.claquete { width: 16px; height: 13px; position: relative; display: inline-block; flex: 0 0 auto; background: currentColor; border-radius: 1px; }
+.claquete::before { content: ""; position: absolute; left: 0; right: 0; top: -6px; height: 5px; border-radius: 1px;
+  background: repeating-linear-gradient(120deg, currentColor 0 4px, transparent 4px 7px); transform-origin: 0 100%; transform: rotate(-22deg); }
+.claquete--bateu::before { transform: rotate(0); }
+@media (prefers-reduced-motion: no-preference) { .claquete::before { transition: transform 90ms ease-in; } }
+.aprovada { display: flex; align-items: center; gap: 10px; font: 700 13px/1.3 var(--fonte-dado); letter-spacing: 0.04em; color: var(--cor-ok); margin: 6px 0 0; }

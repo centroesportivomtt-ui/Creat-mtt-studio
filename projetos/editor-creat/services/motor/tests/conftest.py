@@ -19,6 +19,8 @@ def dados(tmp_path, monkeypatch):
 
 @pytest.fixture()
 def material_real():
-    if not SCRATCH.exists():
-        pytest.skip("material real do scratchpad não está nesta máquina")
+    # o scratchpad é apagado sem aviso (reinício, limpeza de disco): só roda com o material inteiro
+    faltando = [n for n in ("cat.json", "seg/indice.json", "V2/edl.json", "V1/edl.json") if not (SCRATCH / n).exists()]
+    if not SCRATCH.exists() or faltando:
+        pytest.skip(f"material real do scratchpad incompleto nesta máquina (falta: {', '.join(faltando) or 'tudo'})")
     return SCRATCH

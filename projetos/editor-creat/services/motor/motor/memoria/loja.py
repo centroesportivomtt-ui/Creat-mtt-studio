@@ -132,6 +132,22 @@ class Loja:
                           f"estrutura: {c.get('estrutura', '')} · nota do dono: {c.get('nota_dono', '—')}")
         return "\n".join(linhas)
 
+    # ---------- aprovação do dono -> caso de referência ----------
+    def registrar_aprovacao(self, projeto: str, versao: str, *, pedido: dict | None, direcao: dict | None, nota: str | None = None) -> dict:
+        """Versão aprovada pelo dono vira CASO (memoria/casos/<projeto>-<versao>/caso.json): o diretor vê os casos aprovados do
+        mesmo tipo de vídeo no próximo prompt. Guarda só a estrutura e as escolhas, nunca material de cliente."""
+        d = direcao or {}
+        blocos = d.get("blocos") or []
+        estrutura = " -> ".join(f"{b.get('funcao', '?')} ({b.get('saida', 'corte')})" for b in blocos)
+        caso = {"id": f"{projeto}-{versao}", "tipo_video": (pedido or {}).get("tipo_video") or d.get("tipo_video") or "auto",
+                "modo": (pedido or {}).get("modo") or "auto", "modelo": d.get("modelo"), "pedido": (pedido or {}).get("texto", "")[:400],
+                "conceito": d.get("conceito", ""), "estrutura": estrutura,
+                "gancho": " / ".join((d.get("gancho") or {}).get("texto_tela") or []),
+                "nota_dono": ("aprovado: " + " ".join(nota.split())) if nota and nota.strip() else "aprovado",
+                "data": _hoje(), "origem": "aprovação do dono"}
+        _grava(self.raiz / "casos" / caso["id"] / "caso.json", caso)
+        return caso
+
     # ---------- reprovação do dono -> regra + checagem ----------
     def registrar_reprovacao(self, projeto: str, versao: str, motivo: str, *, cerebro=None) -> dict:
         """Ler-alterar-gravar das regras com trava de arquivo: duas reprovações ao mesmo tempo não perdem uma."""

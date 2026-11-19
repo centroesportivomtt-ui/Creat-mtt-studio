@@ -2,6 +2,7 @@
 
 GET  /v1/projetos/{pid}/versoes                 -> versões com estado, link, capa, QA (aprovado + falhas) e tempos da montagem
 POST /v1/projetos/{pid}/versoes/{v}/publicar    {rede, quando?} -> só versão entregue e aprovada pelo QA
+POST /v1/projetos/{pid}/versoes/{v}/aprovar     {nota?} -> o dono aprova a versão entregue; vira caso de referência da casa
 """
 from __future__ import annotations
 
@@ -98,3 +99,31 @@ def publicar(pid: str, v: str, corpo: Publicar):
             raise HTTPException(501, str(e)) from e
         banco.emitir(con, pid, "estado", etapa="entrega", alvo=v, mensagem="Publicado." if res.get("publicado") else "Link pronto para postar.", dados=res)
         return res
+
+
+class Aprovar(BaseModel):
+    nota: Optional[str] = Field(default=None, max_length=500)
+
+
+@rotas.post("/projetos/{pid}/versoes/{v}/aprovar")
+def aprovar(pid: str, v: str, corpo: Aprovar):
+    """A claquete: só versão entregue (QA aprovado). Marca em projetos.dados.aprovadas e grava o caso na memória da casa."""
+    _valida(pid, v)
+    with _ctx() as (cfg, con, arm):
+        r = con.execute("SELECT * FROM versoes WHERE projeto=? AND id=?", (pid, v)).fetchone()
+        if r is None:
+            raise HTTPException(404, "versão não encontrada")
+        if r["estado"] != "entregue":
+            raise HTTPException(409, "só dá para aprovar versão entregue (conferida pelo QA)")
+        pedido = _ler(arm, f"projetos/{pid}/pedido.json")
+        n = v.lstrip("v")
+        direcao = _ler(arm, f"projetos/{pid}/direcao_{n}.json") if n.isdigit() else None
+        from motor.memoria.loja import Loja
+        caso = Loja().registrar_aprovacao(pid, v, pedido=pedido, direcao=direcao, nota=corpo.nota)
+        linha = con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()
+        dados = json.loads(linha["dados"] or "{}")
+        dados.setdefault("aprovadas", {})[v] = {"em": banco.agora_iso(), "nota": corpo.nota}
+        with con:
+            con.execute("UPDATE projetos SET dados=?, atualizado=? WHERE id=?", (json.dumps(dados), banco.agora_iso(), pid))
+            banco.emitir(con, pid, "estado", etapa="entrega", alvo=v, mensagem=f"Corta! Versão {v} aprovada. Virou caso de referência da casa.")
+        return {"aprovada": v, "caso": caso["id"]}

@@ -66,3 +66,9 @@ Atualize este arquivo a cada passo concluído (a máquina reinicia sem aviso). F
 - Demonstrado em 19/11 com o material sintético dos testes, modo cinema: direção escrita pela sessão passou no contrato, o resolvedor gerou EDL válido (18 s, efeitos match/fade/fade/impacto, legenda com "Ruan na filmagem" e "creat" corrigidos), custo US$ 0.
 - Teste: `tests/test_cerebro_sessao.py`. pytest 131 ok.
 - Limite: só funciona com uma sessão do Claude aberta acompanhando o projeto. Para o editor rodar sozinho, continua precisando da ANTHROPIC_API_KEY.
+
+## Fechamento da fase 2 (o que dá sem conta do dono) — 19/11
+- **Aprovar com a claquete:** `POST /v1/projetos/{pid}/versoes/{v}/aprovar` (só versão entregue). Marca em `projetos.dados.aprovadas` e grava o caso em `memoria/casos/<pid>-<v>/caso.json` (estrutura, gancho, modo, nota), que o diretor passa a ver nos próximos filmes do mesmo tipo. Site: botão "Aprovar" com a claquete; versão aprovada mostra "Corta! Aprovada por você. Bora postar." Teste `test_aprovar.py`; aceite D 19/19 (novo: "aprovar bate a claquete e marca a versão").
+- **Voz da casa** nos textos de estado ("Pronto. Assiste e me diz: aprova ou corta." etc.) e o modo de edição aparece no projeto.
+- **Testes do material real** pulam quando o scratchpad está incompleto (antes falhavam depois de limpeza). pytest 132 ok, 2 pulados; aceite B 28/28.
+- **Publicação pronta:** `deploy/` com Dockerfile do motor (base Playwright 1.63 + Python + ffmpeg), do site, `docker-compose.yml` (motor, 2 workers, site, Caddy com HTTPS automático), `.env.example` e `PUBLICAR.md`. `docker compose config` ok; as imagens não foram construídas nesta máquina (disco cheio). Falta do dono: servidor, domínio e chave da API.

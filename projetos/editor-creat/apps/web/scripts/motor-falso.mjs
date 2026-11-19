@@ -310,6 +310,14 @@ async function rotear(req, res) {
     setTimeout(() => tentarDirigir(p), PASSO);
     return json(res, 200, { regra: { id: `r_${Date.now()}`, texto: motivo }, checagem: null, nova_direcao: true });
   }
+  if (r3 === 'versoes' && r4 && r5 === 'aprovar') {
+    const v = p.versoes.find((x) => x.id === r4);
+    if (!v) return falha(res, 404, 'versão não encontrada');
+    if (v.estado !== 'entregue') return falha(res, 409, 'só dá para aprovar versão entregue (conferida pelo QA)');
+    p.dados.aprovadas = { ...(p.dados.aprovadas ?? {}), [v.id]: { em: agora(), nota: c.nota ?? null } };
+    emitir(pid, 'estado', { mensagem: `Corta! Versão ${v.id} aprovada. Virou caso de referência da casa.` });
+    return json(res, 200, { aprovada: v.id, caso: `${pid}-${v.id}` });
+  }
   if (r3 === 'versoes' && r4 && r5 === 'publicar') return json(res, 202, { mensagem: 'Publicação desligada neste motor (provedor nenhuma).' });
   return falha(res, 404, 'rota não encontrada');
 }

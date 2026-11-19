@@ -7,12 +7,12 @@ export const ROTULO_ESTADO: Record<string, string> = {
   conferindo: 'Conferindo', entregue: 'Entregue', reprovado_qa: 'Reprovado no QA', erro: 'Erro',
 };
 export const EXPLICA_ESTADO: Record<string, string> = {
-  recebendo: 'Material chegando. Cada arquivo é lido assim que chega.',
-  lendo: 'Falas, momentos e rostos sendo lidos.',
-  dirigindo: 'O diretor escolhe gancho, falas e ritmo.',
+  recebendo: 'Subindo. Pode travar o celular que o envio retoma de onde parou.',
+  lendo: 'Lendo tudo: falas, momentos e rostos.',
+  dirigindo: 'O diretor escolhe gancho, falas e ritmo no modo pedido.',
   montando: 'Cortes, cor, legendas, motion e mix.',
-  conferindo: 'QA automático: som, logo, legenda, zona segura.',
-  entregue: 'Pronto para assistir e postar.',
+  conferindo: 'Conferindo som, logo, legenda e zona segura. Com erro, a entrega fica segura.',
+  entregue: 'Pronto. Assiste e me diz: aprova ou corta.',
 };
 export const ROTULO_ETAPA: Record<string, string> = {
   ingest: 'Ingestão', analise: 'Leitura', catalogo: 'Catálogo', direcao: 'Direção',
@@ -41,6 +41,7 @@ export const MODOS: { valor: string; rotulo: string; dica: string }[] = [
   { valor: 'serio', rotulo: 'Sério', dica: 'Institucional e sóbrio.' },
   { valor: 'fala', rotulo: 'Fala', dica: 'A fala é o filme. Legenda fiel.' },
 ];
+export const rotuloModo = (v: string | null | undefined) => MODOS.find((m) => m.valor === v)?.rotulo ?? 'O editor decide';
 export const rotuloTipo = (v: string | null | undefined) => TIPOS_VIDEO.find((t) => t.valor === v)?.rotulo ?? 'O editor decide';
 
 export function classeEstado(estado: string): string {
@@ -72,7 +73,7 @@ export type Arquivo = { id: string; nome: string; chave: string | null; bytes: n
 export type Versao = { id: string; estado: string; video: string | null; qa: unknown; link: string | null; reprovacao: string | null; criado: string };
 export type Projeto = {
   id: string; nome: string; estado: string; tipo_video: string | null; criado: string; atualizado: string;
-  dados: { envio_fechado?: boolean; envio_fechado_em?: string; pedido?: { texto: string; tipo_video?: string } } & Record<string, unknown>;
+  dados: { envio_fechado?: boolean; envio_fechado_em?: string; pedido?: { texto: string; tipo_video?: string; modo?: string }; aprovadas?: Record<string, { em: string; nota: string | null }> } & Record<string, unknown>;
   arquivos: Arquivo[]; versoes: Versao[];
 };
 export type ResumoProjeto = { id: string; nome: string; estado: string; tipo_video: string | null; criado: string; atualizado: string; arquivos: number };

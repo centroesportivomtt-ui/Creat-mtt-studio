@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Envio from './Envio';
 import {
   bytesLegiveis, classeEstado, ESTADOS, ETAPA_DO_ESTADO, EXPLICA_ESTADO, ROTULO_ESTADO, rotuloTipo,
-  type Evento, type Projeto as TProjeto, type Versao, MODOS } from '@/lib/estados';
+  type Evento, type Projeto as TProjeto, type Versao, MODOS, rotuloModo } from '@/lib/estados';
 
 const TETO_MS = 30 * 60 * 1000;
 const ESTADOS_ABERTOS = ['recebendo', 'lendo'];
@@ -195,6 +195,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
           <section className="cartao" aria-labelledby="t-pedido">
             <h2 className="cartao__titulo" id="t-pedido"><span className="num">02</span> Pedido</h2>
             <Pedido atual={p.dados?.pedido?.texto ?? null} aberto={aberto} aoMandar={(c) => postar('/pedido', c)} />
+            {p.dados?.pedido?.texto && <p className="aviso" data-teste="modo-atual">Modo de edição: {rotuloModo(p.dados.pedido.modo)}</p>}
           </section>
         </div>
 
@@ -254,7 +255,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
             )}
             {versoes.length > 0 && (
               <ul className="versoes">
-                {versoes.map((v) => <LinhaVersao key={v.id} v={v} aoReprovar={(motivo) => postar(`/versoes/${v.id}/reprovar`, { motivo })} />)}
+                {versoes.map((v) => <LinhaVersao key={v.id} v={v} aprovada={Boolean(p.dados?.aprovadas?.[v.id])} aoAprovar={() => postar(`/versoes/${v.id}/aprovar`, {})} aoReprovar={(motivo) => postar(`/versoes/${v.id}/reprovar`, { motivo })} />)}
               </ul>
             )}
           </section>
@@ -343,7 +344,8 @@ function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boo
   );
 }
 
-function LinhaVersao({ v, aoReprovar }: { v: Versao; aoReprovar: (motivo: string) => Promise<unknown> }) {
+function LinhaVersao({ v, aprovada, aoAprovar, aoReprovar }: { v: Versao; aprovada: boolean; aoAprovar: () => Promise<unknown>; aoReprovar: (motivo: string) => Promise<unknown> }) {
+  const [batendo, setBatendo] = useState(false);
   const [aberto, setAberto] = useState(false);
   const [motivo, setMotivo] = useState('');
   const qa = lerQa(v.qa);
@@ -367,6 +369,7 @@ function LinhaVersao({ v, aoReprovar }: { v: Versao; aoReprovar: (motivo: string
         </>
       )}
       {v.reprovacao && <p className="aviso">Reprovada: “{v.reprovacao}”</p>}
+      {aprovada && <p className="aprovada" data-teste="aprovada"><span className="claquete claquete--bateu" aria-hidden="true" />Corta! Aprovada por você. Bora postar.</p>}
       {podeReprovar && (
         aberto ? (
           <form className="form" style={{ gap: 8, maxWidth: 'none' }} onSubmit={async (e) => {
@@ -388,7 +391,13 @@ function LinhaVersao({ v, aoReprovar }: { v: Versao; aoReprovar: (motivo: string
         ) : (
           <div className="linha-acoes" style={{ marginTop: 0 }}>
             {entregue && v.video && <a className="botao botao--fantasma botao--pequeno" href={`/api/motor/v1/arquivos/${v.video}`} download data-teste="baixar">Baixar</a>}
-            <button className="botao botao--perigo botao--pequeno" type="button" onClick={() => setAberto(true)}>Reprovar com motivo</button>
+            {entregue && !aprovada && (
+              <button className="botao botao--ok botao--pequeno" type="button" data-teste="aprovar" disabled={batendo}
+                onClick={async () => { setBatendo(true); await aoAprovar(); setBatendo(false); }}>
+                <span className={`claquete${batendo ? ' claquete--bateu' : ''}`} aria-hidden="true" />{batendo ? 'Batendo…' : 'Aprovar'}
+              </button>
+            )}
+            {!aprovada && <button className="botao botao--perigo botao--pequeno" type="button" onClick={() => setAberto(true)}>Reprovar com motivo</button>}
           </div>
         )
       )}

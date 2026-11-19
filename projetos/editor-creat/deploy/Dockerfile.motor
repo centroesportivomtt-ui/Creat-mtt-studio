@@ -1,0 +1,16 @@
+# Motor do Editor creat.MTT: API (uvicorn) e worker usam a mesma imagem.
+# Base Playwright: já traz Node 22 e o Chromium que o motion kit usa para renderizar os letreiros quadro a quadro.
+FROM mcr.microsoft.com/playwright:v1.63.0-noble
+ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv python3-pip ffmpeg fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app/projetos/editor-creat
+COPY packages ./packages
+COPY memoria ./memoria
+COPY services/motor ./services/motor
+RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install -e "./services/motor[transcricao,cerebro,r2]"
+RUN cd packages/kit && npm install --omit=dev --no-audit --no-fund && npm install --no-save --no-audit --no-fund playwright@1.63.0
+ENV PATH=/opt/venv/bin:$PATH EDITOR_DADOS=/dados MOTOR_HOST=0.0.0.0
+WORKDIR /app/projetos/editor-creat/services/motor
+EXPOSE 8787
+CMD ["uvicorn", "motor.api.app:criar", "--factory", "--host", "0.0.0.0", "--port", "8787"]
