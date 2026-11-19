@@ -248,7 +248,7 @@ async function principal() {
     { nome: 'desktop-claro', viewport: { width: 1440, height: 900 }, colorScheme: 'light' },
     { nome: 'desktop-escuro', viewport: { width: 1440, height: 900 }, colorScheme: 'dark' },
   ];
-  const paginas = [['entrar', '/entrar', false], ['projetos', '/projetos', true], ['novo', '/projetos/novo', true], ['projeto', `/projetos/${pid}`, true]];
+  const paginas = [['entrar', '/entrar', false], ['projetos', '/projetos', true], ['novo', '/projetos/novo', true], ['projeto', `/projetos/${pid}`, true], ['caderno', '/caderno', true]];
   const problemas = [];
   await medir('verificacao_visual_s', async () => {
     for (const c of configs) {

@@ -53,3 +53,10 @@ Atualize este arquivo a cada passo concluído (a máquina reinicia sem aviso). F
 - **Modo de edição** (novo campo `modo` do pedido, contrato `pedido.schema.json`): auto, criativo, ultra, cinema, ia, clean, serio, fala. O site manda no pedido; a direção recebe a instrução do estilo (`etapas/direcao.py: MODOS`). Testes: `tests/test_modos.py`. Aceite D 18/18; pytest 122 ok.
 - `tests/test_c_unidades.py::test_edl_legado_v1_v2_validos` falha neste ambiente porque lê `scratchpad/drako/seg/indice.json`, que não existe mais depois que a máquina reiniciou (não é regressão; o teste depende de arquivo fora do repositório e deveria pular quando falta).
 - Próximo: cada modo com seu modelo em `memoria/modelos/` (hoje só daily-vlog e anuncio-produto), a tela "Caderno da casa" (regras e treinamento visíveis ao dono) e o endereço público.
+
+## Receitas dos modos e Caderno da casa — 19/11
+- `memoria/modos/<modo>.json` (criativo, ultra, cinema, ia, clean, serio, fala): ajustes de ritmo e trilha, transições que o modo não usa (viram corte seco), sons desligados, zoom máximo e efeito de pico. `Loja.modelo_com_modo()` aplica a receita por cima do modelo de vídeo (cópia; o arquivo do modelo não muda). A direção usa o modo do pedido.
+- Resolvedor: som desligado pelo modo sai do EDL; efeito de pico desligado (fx None) não entra.
+- Testes: `test_modos.py` (receitas e contrato) e `test_b_resolvedor.py::test_cada_modo_gera_edl_valido` (o mesmo material resolvido nos 7 modos, EDL válido; clean, sério e fala sem transições pesadas). pytest 123 ok (fora os 2 que dependem de arquivo do scratchpad que sumiu).
+- Site: tela **Caderno da casa** (`/caderno`, link no topo): modos, regras (as do dono primeiro), checagens que seguram a entrega e vocabulário. O motor expõe `modos` em `GET /v1/memoria`; o motor falso lê a mesma pasta `memoria/`. Aceite D 18/18 (verificação visual agora inclui o caderno nas 4 configurações).
+- Próximo: endereço público (domínio + armazenamento do dono) e teste com o cérebro real (chave da API e teto de gasto do dono).

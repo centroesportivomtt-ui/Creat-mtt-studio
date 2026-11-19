@@ -61,6 +61,41 @@ class Loja:
             raise FileNotFoundError(f"modelo de vídeo '{nome}' não existe em {self.raiz}/modelos")
         return m
 
+    def modo(self, nome: str | None) -> dict | None:
+        """Receita do modo de edição (memoria/modos/<modo>.json). "auto" ou modo sem receita: None (o modelo vale como está)."""
+        if not nome or nome == "auto":
+            return None
+        return self._ler(f"modos/{nome}.json", None)
+
+    def modelo_com_modo(self, nome_modelo: str, modo: str | None) -> dict:
+        """O modelo de vídeo com a receita do modo aplicada por cima (cópia; o arquivo do modelo não muda)."""
+        import copy
+        m = copy.deepcopy(self.modelo(nome_modelo))
+        r = self.modo(modo)
+        if not r:
+            return m
+
+        def mescla(a: dict, b: dict):
+            for k, v in b.items():
+                if isinstance(v, dict) and isinstance(a.get(k), dict):
+                    mescla(a[k], v)
+                else:
+                    a[k] = copy.deepcopy(v)
+        mescla(m, r.get("ajustes") or {})
+        for t in r.get("sem_transicoes") or []:          # transição que o modo não usa vira corte seco
+            m.get("transicoes", {}).pop(t, None)
+        for s in r.get("sem_sons") or []:                # som que o modo não usa sai (o resolvedor descarta som vazio)
+            if s in m.get("sfx", {}):
+                m["sfx"][s] = None
+        zmax = r.get("zoom_max")
+        for nivel in (m.get("intensidade") or {}).values():
+            if zmax and nivel.get("zoom", 1.0) > zmax:
+                nivel["zoom"] = zmax
+        if "fx_pico" in r and "5" in (m.get("intensidade") or {}):
+            m["intensidade"]["5"]["fx"] = r["fx_pico"]
+        m["modo"] = r["id"]
+        return m
+
     def nomes_modelos(self) -> list[str]:
         return sorted(p.stem for p in (self.raiz / "modelos").glob("*.json"))
 

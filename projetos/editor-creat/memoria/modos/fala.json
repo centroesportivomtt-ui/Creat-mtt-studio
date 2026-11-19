@@ -1,0 +1,28 @@
+{
+ "id": "fala",
+ "nome": "Fala",
+ "descricao": "A fala é o filme: só tira pausa e erro, legenda fiel, apoio visual quando esclarece.",
+ "ajustes": {
+  "ritmo": {
+   "gap_fala": 0.05,
+   "pausa_max": 0.3
+  },
+  "trilha": {
+   "ganho_db": -19
+  }
+ },
+ "sem_transicoes": [
+  "whip",
+  "aba71",
+  "impacto",
+  "flash",
+  "mascara"
+ ],
+ "sem_sons": [
+  "troca",
+  "texto_tela",
+  "drop"
+ ],
+ "zoom_max": 1.06,
+ "fx_pico": null
+}

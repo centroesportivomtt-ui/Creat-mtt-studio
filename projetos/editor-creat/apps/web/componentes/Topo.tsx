@@ -10,6 +10,7 @@ export default function Topo() {
       </Link>
       <nav className="topo__nav" aria-label="Principal">
         <Link className="botao botao--fantasma botao--pequeno" href="/projetos">Projetos</Link>
+        <Link className="botao botao--fantasma botao--pequeno" href="/caderno">Caderno</Link>
         <form action="/api/sair" method="post">
           <button className="botao botao--fantasma botao--pequeno" type="submit">Sair</button>
         </form>

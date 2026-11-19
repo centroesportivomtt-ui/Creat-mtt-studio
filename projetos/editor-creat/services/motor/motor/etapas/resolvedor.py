@@ -516,7 +516,7 @@ class Resolvedor:
                                    "props": {"tipo": tr["fx"], "corte": round(corte, 3)}})
                 if tr.get("sfx"):
                     sfx.append({"t": round(corte - (0.12 if tr["fx"] == "whip" else 0), 3), "som": tr["sfx"], "g": -5, "pan": 0})
-            if b["intensidade"] >= 5:
+            if b["intensidade"] >= 5 and m["intensidade"]["5"].get("fx", "bloom"):      # modo sóbrio desliga o efeito de pico (fx None)
                 fx.append({"tipo": m["intensidade"]["5"].get("fx", "bloom"), "t": round(bl["t0"], 3), "dur": 0.5, "forca": 0.7})
             if (d.get("trilha") or {}).get("drop_em") == b["id"]:
                 fx.append({"tipo": "impacto", "t": round(bl["t0"], 3), "dur": 0.2, "forca": 1.0})
@@ -532,6 +532,7 @@ class Resolvedor:
             props["logo_cliente"] = f"marcas/{fe['logo_cliente']}/logo.png"
         motion.append({"id": "fecho", "modelo": m["fecho"]["modelo"], "de": round(L["fecho_t"], 3), "ate": L["duracao"], "props": props})
         sfx.append({"t": round(L["fecho_t"] + 0.6, 3), "som": m["sfx"]["cta"], "g": -12, "pan": 0})
+        sfx = [x for x in sfx if x.get("som")]           # som desligado pelo modo de edição
         motion.sort(key=lambda x: x["de"])
         fx.sort(key=lambda x: x["t"])
         sfx.sort(key=lambda x: x["t"])

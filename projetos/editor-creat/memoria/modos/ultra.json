@@ -1,0 +1,27 @@
+{
+ "id": "ultra",
+ "nome": "Ultra criação",
+ "descricao": "O máximo de invenção: motion pesado, mascotes da marca, efeitos de impacto, som casado.",
+ "ajustes": {
+  "ritmo": {
+   "pausa_max": 0.14,
+   "gap_bloco": 0.16
+  },
+  "intensidade": {
+   "4": {
+    "zoom": 1.16
+   },
+   "5": {
+    "zoom": 1.24,
+    "fx": "bloom"
+   }
+  },
+  "trilha": {
+   "ganho_db": -13
+  }
+ },
+ "sem_transicoes": [],
+ "sem_sons": [],
+ "zoom_max": 1.24,
+ "fx_pico": "bloom"
+}

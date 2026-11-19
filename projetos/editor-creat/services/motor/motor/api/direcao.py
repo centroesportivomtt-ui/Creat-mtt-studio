@@ -157,5 +157,7 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
 @rotas.get("/memoria")
 def memoria():
     loja = Loja()
+    from motor.etapas.direcao import MODOS
     return {"regras": loja.regras(), "checagens": loja.checagens(), "vocabulario": loja.vocabulario(), "modelos": loja.nomes_modelos(),
+            "modos": [m for m in (loja.modo(n) for n in MODOS) if m],
             "raiz_isolada": bool(os.environ.get("EDITOR_MEMORIA"))}

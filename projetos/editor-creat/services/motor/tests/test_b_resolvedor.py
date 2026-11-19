@@ -77,3 +77,16 @@ def test_aperto_de_pausa():
     r = resolvedor.Resolvedor(direcao(), cat, {an["arquivo"]["id"]: an}, Loja().modelo("evento-reel"), TRILHAS)
     f = r.resolver_fala({"id": "F01.1", "de": None, "ate": None})
     assert len(f["pecas"]) == 2 and f["pecas"][0][1] == pytest.approx(0.7) and f["pecas"][1][0] == pytest.approx(1.5)
+
+
+@pytest.mark.parametrize("modo", ["criativo", "ultra", "cinema", "ia", "clean", "serio", "fala"])
+def test_cada_modo_gera_edl_valido(base, modo):
+    """O mesmo material e a mesma direção, resolvidos com a receita de cada modo de edição."""
+    an, cat, loja = base
+    edl = resolvedor.resolver(direcao(), cat, [an], loja.modelo_com_modo("evento-reel", modo), TRILHAS, vocabulario=loja.vocabulario())
+    assert validar.erros("edl", edl) == [], modo
+    assert all(s.get("som") for s in edl.get("sfx", [])), "som vazio vazou para o EDL"
+    if modo in ("clean", "serio", "fala"):
+        pesadas = {"whip", "aba71", "impacto", "flash", "mascara"}
+        assert not [f for f in edl.get("fx", []) if f["tipo"] in pesadas and f["tipo"] != "impacto"], modo
+        assert not [m for m in edl.get("motion", []) if m["modelo"] == "transicao"], modo

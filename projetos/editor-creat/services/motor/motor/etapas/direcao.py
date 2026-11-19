@@ -95,7 +95,7 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
     voc = loja.vocabulario()
 
     def tentar(d):
-        modelo = loja.modelo(d.get("modelo") or "evento-reel")
+        modelo = loja.modelo_com_modo(d.get("modelo") or "evento-reel", (pedido or {}).get("modo"))
         try:
             return resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, projeto=catalogo["projeto"]), []
         except ErroResolucao as e:

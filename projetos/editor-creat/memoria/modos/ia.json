@@ -1,0 +1,14 @@
+{
+ "id": "ia",
+ "nome": "Com IA",
+ "descricao": "Cenas geradas por IA junto do material real; toda cena gerada é rotulada como conceito.",
+ "ajustes": {
+  "ritmo": {
+   "pausa_max": 0.2
+  }
+ },
+ "sem_transicoes": [],
+ "sem_sons": [],
+ "zoom_max": 1.18,
+ "fx_pico": "bloom"
+}

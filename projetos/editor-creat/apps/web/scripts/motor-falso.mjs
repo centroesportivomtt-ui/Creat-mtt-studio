@@ -219,6 +219,7 @@ async function rotear(req, res) {
 
   if (r1 === 'saude' && M === 'GET') return json(res, 200, { ok: true, falso: true, provedores: { armazenamento: 'local', transcricao: 'falso', visao: 'falso', cerebro: 'fixture', render: 'falso', publicacao: 'nenhuma' } });
   if (r1 === 'arquivos' && (M === 'GET' || M === 'HEAD')) return servirArquivo(req, res, partes.slice(2).join('/'));
+  if (r1 === 'memoria' && M === 'GET') return json(res, 200, memoriaDaCasa());
   if (r1 !== 'projetos') return falha(res, 404, 'rota não encontrada');
 
   if (!pid) {
@@ -320,3 +321,13 @@ http.createServer((req, res) => {
 }).listen(PORTA, '127.0.0.1', () => {
   console.log(`motor falso em http://127.0.0.1:${PORTA} · armazenamento ${ARM} · passo ${PASSO} ms`);
 });
+
+// Memória da casa lida direto de projetos/editor-creat/memoria (a mesma que o motor real usa).
+function memoriaDaCasa() {
+  const raiz = new URL('../../../memoria/', import.meta.url);
+  const ler = (n, padrao) => { try { return JSON.parse(fs.readFileSync(new URL(n, raiz), 'utf8')); } catch { return padrao; } };
+  const r = ler('regras.json', { regras: [], vocabulario: [] });
+  const ordem = ['criativo', 'ultra', 'cinema', 'ia', 'clean', 'serio', 'fala'];
+  return { regras: r.regras ?? [], vocabulario: r.vocabulario ?? [], checagens: ler('checagens.json', { checagens: [] }).checagens ?? [],
+    modelos: [], modos: ordem.map((m) => ler(`modos/${m}.json`, null)).filter(Boolean), raiz_isolada: false };
+}
