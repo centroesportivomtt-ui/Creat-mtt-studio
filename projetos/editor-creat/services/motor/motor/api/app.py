@@ -53,7 +53,7 @@ def criar():
             out["chave_cerebro"] = checar_chave(cfg)
         return out
 
-    for nome in ("projetos", "direcao", "versoes"):
+    for nome in ("projetos", "direcao", "versoes", "referencias"):
         try:
             mod = importlib.import_module(f"motor.api.{nome}")
         except ModuleNotFoundError as e:

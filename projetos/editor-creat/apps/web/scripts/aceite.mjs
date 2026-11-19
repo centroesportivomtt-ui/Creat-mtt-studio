@@ -247,6 +247,11 @@ async function principal() {
   await page.click('[data-teste=aprovar]');
   const aprovou = await page.waitForSelector('[data-teste=aprovada]', { timeout: 10000 }).then(() => true).catch(() => false);
   ok('aprovar bate a claquete e marca a versão', aprovou, aprovou ? 'aprovada' : 'não marcou');
+  await page.goto(`${BASE}/caderno`);
+  await page.fill('[data-teste=form-referencia] input[name=url]', 'https://www.instagram.com/reel/TESTE123/');
+  await page.click('[data-teste=ler-referencia]');
+  const leu = await page.waitForSelector('[data-teste=referencias] li >> text=planos', { timeout: 10000 }).then(() => true).catch(() => false);
+  ok('estudo de caso por link entra no caderno', leu, leu ? 'lição gravada' : 'não apareceu');
   ok('fluxo sem erro de console', errosConsole.length === 0, errosConsole.slice(0, 3).join(' | '));
 
   // ---------- 4. verificação visual logada ----------

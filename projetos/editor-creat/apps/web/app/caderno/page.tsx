@@ -1,4 +1,5 @@
 import { motorJson } from '@/lib/motor';
+import Referencias from '@/componentes/Referencias';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Caderno da casa' };
@@ -39,8 +40,14 @@ export default async function Caderno() {
         </ul>
       </section>
 
+      <section className="cartao" aria-labelledby="c-refs">
+        <h2 className="cartao__titulo" id="c-refs"><span className="num">02</span> Estudos de caso</h2>
+        <p className="aviso">Cole o link de um Reel que você admira. O editor mede o ritmo e o gancho e usa como referência nos próximos filmes.</p>
+        <Referencias />
+      </section>
+
       <section className="cartao" aria-labelledby="c-regras">
-        <h2 className="cartao__titulo" id="c-regras"><span className="num">02</span> Regras ({regras.length})</h2>
+        <h2 className="cartao__titulo" id="c-regras"><span className="num">03</span> Regras ({regras.length})</h2>
         {doDono.length > 0 && <p className="aviso">Aprendidas com as suas reprovações: {doDono.length}.</p>}
         <ol className="caderno__lista" data-teste="caderno-regras">
           {[...doDono, ...daCasa].map((x) => (
@@ -53,7 +60,7 @@ export default async function Caderno() {
       </section>
 
       <section className="cartao" aria-labelledby="c-checa">
-        <h2 className="cartao__titulo" id="c-checa"><span className="num">03</span> O que ele confere antes de entregar ({checagens.length})</h2>
+        <h2 className="cartao__titulo" id="c-checa"><span className="num">04</span> O que ele confere antes de entregar ({checagens.length})</h2>
         <ul className="caderno__lista">
           {checagens.map((c) => (
             <li key={c.id}>
@@ -66,7 +73,7 @@ export default async function Caderno() {
 
       {vocabulario.length > 0 && (
         <section className="cartao" aria-labelledby="c-voc">
-          <h2 className="cartao__titulo" id="c-voc"><span className="num">04</span> Palavras que a transcrição erra</h2>
+          <h2 className="cartao__titulo" id="c-voc"><span className="num">05</span> Palavras que a transcrição erra</h2>
           <ul className="caderno__voc">
             {vocabulario.map((v) => <li key={v.de}><s>{v.de}</s> → <b>{v.para}</b></li>)}
           </ul>

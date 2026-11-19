@@ -220,6 +220,14 @@ async function rotear(req, res) {
   if (r1 === 'saude' && M === 'GET') return json(res, 200, { ok: true, falso: true, provedores: { armazenamento: 'local', transcricao: 'falso', visao: 'falso', cerebro: 'fixture', render: 'falso', publicacao: 'nenhuma' } });
   if (r1 === 'arquivos' && (M === 'GET' || M === 'HEAD')) return servirArquivo(req, res, partes.slice(2).join('/'));
   if (r1 === 'memoria' && M === 'GET') return json(res, 200, memoriaDaCasa());
+  if (r1 === 'referencias' && M === 'GET') return json(res, 200, { andamento: [], referencias: REFS });
+  if (r1 === 'referencias' && M === 'POST') {
+    const c = (await lerCorpo(req)) ?? {};
+    const url = String(c?.url ?? '').trim();
+    if (!/^https:\/\/([a-z0-9-]+\.)*(instagram\.com|tiktok\.com|youtube\.com|youtu\.be|dropbox\.com|drive\.google\.com|vimeo\.com)\//i.test(url)) return falha(res, 422, 'link não reconhecido');
+    REFS.unshift({ id: `ref_${REFS.length + 1}`, url, autor: 'teste', licao: `30 s, 12 planos (plano médio 2.5 s); 1º corte em 1.2 s${c.nota ? '; o dono quer: ' + c.nota : ''}` });
+    return json(res, 202, { id: REFS[0].id, estado: 'lendo' });
+  }
   if (r1 !== 'projetos') return falha(res, 404, 'rota não encontrada');
 
   if (!pid) {
@@ -330,6 +338,8 @@ http.createServer((req, res) => {
 }).listen(PORTA, '127.0.0.1', () => {
   console.log(`motor falso em http://127.0.0.1:${PORTA} · armazenamento ${ARM} · passo ${PASSO} ms`);
 });
+
+const REFS = [];
 
 // Memória da casa lida direto de projetos/editor-creat/memoria (a mesma que o motor real usa).
 function memoriaDaCasa() {

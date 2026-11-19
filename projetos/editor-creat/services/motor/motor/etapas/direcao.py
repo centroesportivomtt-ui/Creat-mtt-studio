@@ -32,11 +32,21 @@ MODOS = {
 }
 
 
+def _referencias_txt() -> str:
+    """Estudos de caso colados pelo dono (links de Reels etc.), medidos pelo editor: ritmo e gancho de referência."""
+    try:
+        from motor import referencias
+        t = referencias.para_prompt()
+    except Exception:  # noqa: BLE001
+        return ""
+    return ("\n- ESTUDOS DE CASO do dono (inspire-se no ritmo e no gancho, sem copiar):\n" + t) if t else ""
+
+
 def montar_prompt(loja: Loja, catalogo_txt: str, pedido: dict, *, correcao: dict | None = None) -> tuple[str, str, str]:
     """Devolve (sistema, catalogo_txt, pedido_txt). Sistema e catálogo são estáveis (cache); o pedido vem por último."""
     tipo = (pedido or {}).get("tipo_video") or "auto"
     sistema = (prompts_texto("diretor").replace("{regras}", loja.regras_para_prompt(tipo)).replace("{modelos}", loja.modelos_para_prompt())
-               .replace("{casos}", loja.casos_para_prompt(tipo) or "- nenhum ainda"))
+               .replace("{casos}", (loja.casos_para_prompt(tipo) or "- nenhum ainda") + _referencias_txt()))
     p = pedido or {}
     linhas = [f"PEDIDO: {p.get('texto', '').strip()}"]
     for campo, rotulo in (("tipo_video", "tipo"), ("duracao_alvo", "duração alvo (s)"), ("destino", "destino"), ("formato", "formato"),
