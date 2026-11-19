@@ -57,7 +57,7 @@ def montar_prompt(loja: Loja, catalogo_txt: str, pedido: dict, *, correcao: dict
     modo = MODOS.get(p.get("modo") or "auto")
     if modo:
         linhas.append(f"modo de edição: {modo}")
-        receita = loja.modo(p.get("modo"))
+        receita = loja.modo(p.get("modo")) if hasattr(loja, "modo") else None
         if receita and receita.get("sem_transicoes"):
             linhas.append("neste modo NÃO use as saídas: " + ", ".join(receita["sem_transicoes"]) + " (use corte_batida, match, fade ou as que restarem)")
     if correcao:
