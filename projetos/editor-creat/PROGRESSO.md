@@ -78,3 +78,8 @@ Atualize este arquivo a cada passo concluído (a máquina reinicia sem aviso). F
 - Nenhuma chamada paga foi feita. Gasto: US$ 0.
 - Saída sugerida: salvar a chave com outro nome (ex.: `EDITOR_ANTHROPIC_KEY`) e o motor ler esse nome, ou cadastrá-la como segredo de rede do host `api.anthropic.com` (o proxy injeta); depois abrir sessão nova e rodar `pytest -m pago`.
 - Também visto: `test_ingest_e_analise_pela_fila` falha com `pip install -e '.[teste,cerebro]'` porque a transcrição precisa do extra `transcricao` (faster-whisper). Instalar com `.[teste,cerebro,transcricao]`. pytest sem pagos: 120 ok, 1 falha por esse motivo, 3 pulados.
+
+## Chave da API nas sessões do Claude Code — 19/11
+- Medido: o ambiente lista `ANTHROPIC_API_KEY`, mas a variável não chega às sessões (nome reservado do Claude Code). E `ANTHROPIC_BASE_URL` das sessões aponta para o proxy da própria sessão.
+- Correção: o motor lê a chave em `EDITOR_ANTHROPIC_KEY` (e, no servidor próprio, também `ANTHROPIC_API_KEY`), e o cliente é criado por `config.cliente_anthropic()` sempre com `base_url=https://api.anthropic.com` (troca com `EDITOR_ANTHROPIC_URL`). Cérebro e visão usam o mesmo cliente. Teste `tests/test_chave_editor.py`. pytest 134 ok.
+- Dono: renomear a variável do ambiente para `EDITOR_ANTHROPIC_KEY`.

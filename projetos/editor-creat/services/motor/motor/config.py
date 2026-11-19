@@ -19,7 +19,22 @@ def _env(nome: str, padrao: str = "") -> str:
 
 
 def _tem(nome: str) -> bool:
+    if nome == "ANTHROPIC_API_KEY":
+        return bool(chave_anthropic())
     return bool(_env(nome))
+
+
+def chave_anthropic() -> str:
+    """Chave da API da Anthropic do EDITOR. Nas sessões do Claude Code o nome ANTHROPIC_API_KEY é reservado (a plataforma não o
+    repassa), por isso o editor lê primeiro EDITOR_ANTHROPIC_KEY; no servidor próprio qualquer um dos dois serve."""
+    return (os.environ.get("EDITOR_ANTHROPIC_KEY") or os.environ.get("ANTHROPIC_API_KEY") or "").strip()
+
+
+def cliente_anthropic():
+    """Cliente oficial sempre apontado para api.anthropic.com com a chave do editor (ignora ANTHROPIC_BASE_URL do ambiente,
+    que dentro do Claude Code aponta para o proxy da própria sessão)."""
+    import anthropic
+    return anthropic.Anthropic(api_key=chave_anthropic(), base_url=os.environ.get("EDITOR_ANTHROPIC_URL") or "https://api.anthropic.com")
 
 
 @dataclass(frozen=True)

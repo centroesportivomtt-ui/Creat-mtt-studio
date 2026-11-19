@@ -61,7 +61,7 @@ class CerebroAnthropic:
         self.cfg = cfg or config.carregar()
         import anthropic  # dependência opcional: pip install 'editor-motor[cerebro]'
         self._anthropic = anthropic
-        self.cli = anthropic.Anthropic()
+        self.cli = config.cliente_anthropic()
 
     # --- montagem da chamada
     def _base(self, sistema: str, catalogo_txt: str, cauda: list[dict]) -> dict:

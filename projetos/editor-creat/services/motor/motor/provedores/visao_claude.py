@@ -77,7 +77,8 @@ class VisaoClaude:
             import anthropic
         except ModuleNotFoundError as e:
             raise RuntimeError("visão claude-leve precisa do pacote anthropic (pip install 'editor-motor[cerebro]')") from e
-        self.cli = anthropic.Anthropic(max_retries=2, timeout=120)
+        from motor import config as _cfg
+        self.cli = _cfg.cliente_anthropic().with_options(max_retries=2, timeout=120)
 
     def descrever(self, folha_jpg: pathlib.Path | None, tempos: list[float], contexto: dict) -> dict | None:
         dur = float(contexto["midia"]["duracao"])
