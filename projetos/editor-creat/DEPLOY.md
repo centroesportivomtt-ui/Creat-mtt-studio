@@ -99,7 +99,7 @@ Já definidas pela imagem (não cole): `EDITOR_DADOS=/tmp/editor-dados`, `EDITOR
 | `EDITOR_SENHA_HASH` | Vercel > Environment Variables | com `senha` | hash scrypt gerado por `pnpm senha` |
 | `SUPABASE_URL` | Vercel > Environment Variables | com `supabase` | URL do projeto Supabase |
 | `SUPABASE_ANON_KEY` | Vercel > Environment Variables | com `supabase` | chave pública (anon) do Supabase |
-| `SUPABASE_JWT_SECRET` | Vercel > Environment Variables | com `supabase` | segredo JWT do Supabase (Project Settings > API) |
+| `SUPABASE_JWT_SECRET` | Vercel > Environment Variables | não | só se o projeto Supabase ainda usa o segredo JWT antigo (HS256); sem ela o site confere o login pelo JWKS |
 | `EDITOR_EMAILS_PERMITIDOS` | Vercel > Environment Variables | com `supabase` | e-mails que podem entrar, separados por vírgula |
 | `EDITOR_ARMAZENAMENTO` | Vercel > Environment Variables | sim | `r2` (envio direto do navegador ao R2; a Vercel não tem disco) |
 | `R2_ACCOUNT_ID` | Vercel > Environment Variables | sim | o mesmo da tabela 1 |
