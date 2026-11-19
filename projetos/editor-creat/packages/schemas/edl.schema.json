@@ -80,7 +80,8 @@
           "tremor": { "$ref": "#/$defs/evt" },
           "desfocar": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 }, "description": "Caixas normalizadas a desfocar (telas com dados de terceiros)." },
           "janela": { "type": ["object", "null"], "description": "PiP/janela-aba (V2 janelas): {x,y,w,h,titulo}." },
-          "mblur": { "type": "boolean", "default": false }
+          "mblur": { "type": "boolean", "default": false },
+          "cobertura": { "type": ["object", "null"], "additionalProperties": false, "required": ["olhar"], "description": "Conferência de sintonia de quem dirigiu e OLHOU o take, quando o plano cobre uma fala que não é dele e mostra a pessoa (QA cobertura_sintonia). olhar 'camera' = rosto falando para a câmera fora do take da fala: reprova sempre.", "properties": { "olhar": { "enum": ["produto", "camera", "acao"] }, "assunto": { "type": "string", "description": "O que a fala diz e a imagem mostra." } } }
         }
       }
     },
@@ -141,6 +142,8 @@
       "properties": {
         "logos": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["t", "chave"], "properties": { "t": { "type": "number" }, "chave": { "type": "string" } } } },
         "falas_confirmadas": { "type": "array", "items": { "type": "string" } },
+        "cortes_confirmados": { "type": "array", "items": { "type": "string" }, "description": "Ids de peça de voz cujo corte o diretor ouviu e manteve de propósito (QA fala_cortada não reprova, só lista)." },
+        "vozes_confirmadas": { "type": "array", "items": { "type": "string" }, "description": "Ids de peça de voz ou de plano com voz de fora ouvida e aceita pelo diretor (QA voz_externa não reprova, só lista)." },
         "riscos": { "type": "array", "items": { "type": "string" } }
       }
     }

@@ -2,6 +2,8 @@
 
 Regra do dono (17/11): "você não vai mandar a versão que não está ajustada". Por isso:
 - sem qa.json aprovado -> recusa; sha256 do final diferente do qa.sha256 -> recusa (arquivo mexido depois da conferência);
+- qa.json sem alguma checagem de CHECAGENS, ou EDL/regras mudados depois da conferência (qa.chave) -> recusa (19/11: um QA
+  de antes de fala_cortada, voz_externa e cobertura_sintonia não pode liberar a entrega);
 - gera capa (quadro do gancho), legenda do post (do próprio EDL: gancho + CTA + arroba, sem LLM) e o link;
 - publicação pelo provedor (`EDITOR_PUBLICACAO`; padrão 'nenhuma' = só link); provedor pago sem chave fica desligado;
 - limpa os intermediários da versão (overlay, áudio de trabalho) — o disco é curto.
@@ -69,7 +71,14 @@ def entregar(arm, cfg, projeto: str, versao: str, *, publicar_em: str | None = N
     sha = sha256_arquivo(final)
     if sha != sha_qa:
         raise ErroDefinitivo("o arquivo final mudou depois da conferência (sha256 diferente): refazer o QA")
+    from motor.etapas.qa import CHECAGENS, chave_conferencia
+    faltam = [n for n in CHECAGENS if n not in {x.get("id") for x in qa.get("checagens") or []}]
+    if faltam:
+        raise ErroDefinitivo(f"o QA desta versão é de antes das checagens {', '.join(faltam)}: refazer o QA")
     edl = json.loads(pathlib.Path(arm.caminho_local(f"{base}/edl.json")).read_text(encoding="utf-8"))
+    chave_qa = pathlib.Path(arm.caminho_local(f"{base}/qa.chave")).read_text().strip() if arm.existe(f"{base}/qa.chave") else ""
+    if chave_qa != chave_conferencia(sha, edl):
+        raise ErroDefinitivo("o EDL ou as regras do dono mudaram depois da conferência (qa.chave diferente): refazer o QA")
     tmp = pathlib.Path(cfg.dados) / "tmp" / "entrega" / projeto / versao
     tmp.mkdir(parents=True, exist_ok=True)
     arm.gravar(f"{base}/capa.jpg", capa(final, edl, tmp / "capa.jpg"))

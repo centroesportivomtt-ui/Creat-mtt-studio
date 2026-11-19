@@ -82,7 +82,7 @@ SISTEMA = (
 # ---------------------------------------------------------------- o que olhar
 def pontos_de_risco(edl: dict) -> list[dict]:
     """[{t, motivo, esperado}] em ordem de prioridade (transição, texto, cobertura, logo), sem repetir instante."""
-    from motor.etapas.qa.cobertura_sintonia import coberturas
+    from motor.etapas.qa.cobertura_sintonia import coberturas_do_edl as coberturas
     dur = float(edl.get("duracao") or 0)
     grupos = [[], [], [], []]
     from motor.etapas.montagem.fx import janela
