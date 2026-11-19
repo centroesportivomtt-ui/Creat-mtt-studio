@@ -618,7 +618,7 @@ def test_as_tres_bloqueiam_e_a_chave_leva_o_modo_observacao(monkeypatch):
     (O olho de IA, item C, segue em observação como a outra sessão definiu; ele roda por último.)"""
     import importlib
     from motor.etapas import qa
-    assert qa.EM_OBSERVACAO == ("olho_ia",) and qa.CHECAGENS[-1] == "olho_ia"
+    assert qa.EM_OBSERVACAO == () and qa.CHECAGENS[-1] == "olho_ia"            # 19/11: o olho de IA também passou a segurar a entrega
     assert not {"fala_cortada", "voz_externa", "cobertura_sintonia"} & set(qa.EM_OBSERVACAO)
     for nome in ("fala_cortada", "voz_externa", "cobertura_sintonia"):
         assert importlib.import_module(f"motor.etapas.qa.{nome}").BLOQUEIA is True and nome in qa.CHECAGENS

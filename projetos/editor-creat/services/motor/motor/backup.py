@@ -219,7 +219,10 @@ def enviar(cfg, arquivos: list[str], url: str, *, limite_s: int = 900) -> tuple[
     """Envia pela solicitação de arquivos com o navegador do kit (o mesmo Chromium do render). Devolve (ok, última linha)."""
     script = config.KIT / "ferramentas" / "dropbox-enviar.cjs"
     # ambiente mínimo: o navegador não herda a chave do cérebro, o token do motor nem nada do editor
-    env = {k: os.environ[k] for k in ("PATH", "HOME", "LANG", "TMPDIR", "PLAYWRIGHT_BROWSERS_PATH", "NODE_PATH", "DROPBOX_PRINT", "DROPBOX_QUALQUER_HOST") if k in os.environ}
+    # (proxy e certificados da máquina passam: sem eles o navegador não sai para a internet onde há proxy)
+    env = {k: os.environ[k] for k in ("PATH", "HOME", "LANG", "TMPDIR", "PLAYWRIGHT_BROWSERS_PATH", "NODE_PATH", "DROPBOX_PRINT", "DROPBOX_QUALQUER_HOST",
+                                      "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY", "https_proxy", "http_proxy", "no_proxy",
+                                      "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR") if k in os.environ}
     env.update(DROPBOX_REMETENTE_NOME=os.environ.get("EDITOR_BACKUP_NOME", "Editor creatMTT"),
                DROPBOX_REMETENTE_EMAIL=os.environ.get("EDITOR_BACKUP_EMAIL", "entrega@creatmtt.com.br"))
     try:

@@ -204,7 +204,7 @@ class Conferencia:
 # Desde a integração de 19/11, fala_cortada, voz_externa e cobertura_sintonia BLOQUEIAM (ordem do dono: "QA que
 # bloqueia"); o recuo para uma delas é explícito no EDL (qa.cortes_confirmados, qa.vozes_confirmadas, plano.cobertura).
 # olho_ia (revisão por IA, item C) segue em observação até vermos como se comporta em peças reais.
-EM_OBSERVACAO: tuple[str, ...] = ("olho_ia",)
+EM_OBSERVACAO: tuple[str, ...] = ()          # vazio desde 19/11: o olho de IA também segura a entrega (dono: "resolva tudo")
 
 
 def _rodar(nome: str, c: Conferencia) -> dict:

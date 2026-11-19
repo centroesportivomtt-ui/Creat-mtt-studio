@@ -216,10 +216,24 @@ def retirar(cfg, tipo: str, ident: str) -> bool:
         return achou
 
 
+def sfx_da_casa() -> list[dict]:
+    """Efeitos da casa embutidos no kit (sempre disponíveis; um efeito registrado com o mesmo nome vence)."""
+    from motor import config
+    try:
+        d = json.loads((config.KIT / "assets" / "sfx" / "sfx.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return [dict(s, origem="kit") for s in d.get("sfx", []) if (config.KIT / "assets" / "sfx" / s.get("arquivo", "")).exists()]
+
+
 def listar(cfg, arm=None) -> dict:
     def ficha(i):
         prob = problema_licenca(i.get("licenca"))
         return {**{k: i.get(k) for k in ("id", "tipo", "titulo", "dur", "bpm", "bpm_medido", "clima", "ativo", "licenca")},
                 "pode_tocar": bool(i.get("ativo", True)) and prob is None and (arm is None or _audio_ok(arm, i)), "problema": prob}
-    return {"trilhas": [ficha(i) for i in ler(cfg, "trilha")], "sfx": [ficha(i) for i in ler(cfg, "sfx")],
+    proprios = [ficha(i) for i in ler(cfg, "sfx")]
+    ativos = {s["id"] for s in proprios if s.get("ativo", True)}
+    casa = [dict({k: s.get(k) for k in ("id", "tipo", "titulo", "dur", "licenca")}, ativo=True, pode_tocar=s["id"] not in ativos, origem="kit",
+                 problema=("substituído pelo efeito que você registrou" if s["id"] in ativos else None)) for s in sfx_da_casa()]
+    return {"trilhas": [ficha(i) for i in ler(cfg, "trilha")], "sfx": proprios + casa,
             "tipos_licenca": TIPOS_LICENCA, "nomes_sfx": list(NOMES_SFX)}

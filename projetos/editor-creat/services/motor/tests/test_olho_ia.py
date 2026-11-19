@@ -285,4 +285,4 @@ def test_caderno_mostra_checagem_em_observacao_como_aviso(tmp_path, dados):
     cs = {c["tipo"]: c["gravidade"] for c in TestClient(criar()).get("/v1/memoria").json()["checagens"]}
     for tipo in EM_OBSERVACAO:
         assert cs.get(tipo) == "observacao"
-    assert cs.get("frase_repetida") == "bloqueia"
+    assert cs.get("frase_repetida") == "bloqueia" and cs.get("olho_ia") == "bloqueia"

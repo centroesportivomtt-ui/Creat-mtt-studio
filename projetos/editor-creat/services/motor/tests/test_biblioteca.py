@@ -85,14 +85,29 @@ def test_registrar_trilha_e_efeito_e_o_catalogo_so_ve_licenciado(tmp_path, dados
     assert [x["titulo"] for x in B.ler(cfg, "sfx")] == ["Pancada 2"] and s["chave"] == "biblioteca/sfx/impacto.wav"
     lista = B.listar(cfg, arm)
     assert lista["sfx"][0]["pode_tocar"] and not lista["trilhas"][0]["pode_tocar"] and "livre" in lista["tipos_licenca"]
+    casa_impacto = next(s for s in lista["sfx"] if s.get("origem") == "kit" and s["id"] == "impacto")
+    assert not casa_impacto["pode_tocar"] and "substituído" in casa_impacto["problema"]
 
 
-def test_efeito_licenciado_vence_o_sintetico_e_vale_sem_reiniciar(tmp_path, dados):
+def test_efeitos_da_casa_estao_no_kit_com_licenca():
+    from motor.etapas.montagem import trilha as TR
+    casa = {s["id"]: s for s in B.sfx_da_casa()}
+    assert {"abre", "chip", "cta", "embaralha", "impacto", "risco"} <= set(casa)
+    for s in casa.values():
+        assert B.problema_licenca(s["licenca"]) is None and "Sonniss" in s["licenca"]["fonte"] and 0.1 < s["dur"] < 2
+    x, origem = TR.som("chip", None)
+    assert origem == "kit" and x.shape[1] == 2 and 0.3 < len(x) / 48000 < 0.6
+    assert TR.som("nome_que_nao_existe", None)[1] == "sintetico"
+    lic = (config.KIT / "assets" / "sfx" / "LICENCAS-kit-17-11.md").read_text()
+    assert "uso em projetos **pessoais e comerciais, sem atribuição**" in lic
+
+
+def test_efeito_licenciado_vence_o_da_casa_e_vale_sem_reiniciar(tmp_path, dados):
     from motor.etapas.montagem import trilha as TR
     cfg = config.carregar()
     pasta = str(B.pasta_sfx(cfg))
     x0, origem0 = TR.som("risco", pasta)
-    assert origem0 == "sintetico"
+    assert origem0 == "kit"
     B.registrar(cfg, _arm(cfg), _batida(tmp_path, dur=0.6, nome="r.wav"), tipo="sfx", titulo="Risco", licenca=LIC, nome="risco")
     x1, origem1 = TR.som("risco", pasta)
     assert origem1 == "biblioteca" and len(x1) != len(x0)

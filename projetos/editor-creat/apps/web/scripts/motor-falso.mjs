@@ -143,7 +143,7 @@ async function rodarVersao(p) {
       { id: 'zona_segura', ok: true, bloqueia: true },
       { id: 'formato', ok: true, bloqueia: true, valor: '1080x1920 30fps H.264' },
       { id: 'voz_externa', ok: false, bloqueia: false, detalhe: '[em observação, ainda não segura a entrega] 1 fala de outra voz na peça: V3 aos 6.6 s «vai de novo» (semelhança 0.30)' },
-      { id: 'olho_ia', ok: true, bloqueia: false, detalhe: 'custo US$ 0.12 · o Claude olhou 6 imagem(ns) e não achou defeito que segure a entrega' },
+      { id: 'olho_ia', ok: true, bloqueia: true, detalhe: 'custo US$ 0.12 · o Claude olhou 6 imagem(ns) e não achou defeito que segure a entrega' },
     ],
   });
   versao.estado = 'aprovada_qa';
@@ -413,7 +413,7 @@ function memoriaDaCasa() {
   const ler = (n, padrao) => { try { return JSON.parse(fs.readFileSync(new URL(n, raiz), 'utf8')); } catch { return padrao; } };
   const r = ler('regras.json', { regras: [], vocabulario: [] });
   const ordem = ['criativo', 'ultra', 'cinema', 'ia', 'clean', 'serio', 'fala'];
-  return { regras: r.regras ?? [], vocabulario: r.vocabulario ?? [], checagens: (ler('checagens.json', { checagens: [] }).checagens ?? []).map((c) => (['olho_ia'].includes(c.tipo) && c.gravidade === 'bloqueia' ? { ...c, gravidade: 'observacao' } : c)),
+  return { regras: r.regras ?? [], vocabulario: r.vocabulario ?? [], checagens: (ler('checagens.json', { checagens: [] }).checagens ?? []).map((c) => ([].includes(c.tipo) && c.gravidade === 'bloqueia' ? { ...c, gravidade: 'observacao' } : c)),
     modelos: [], modos: ordem.map((m) => ler(`modos/${m}.json`, null)).filter(Boolean),
     looks: Object.entries(ler('cor/looks.json', { looks: {} }).looks).map(([id, l]) => ({ id, nome: l.nome, desc: l.desc })), raiz_isolada: false };
 }

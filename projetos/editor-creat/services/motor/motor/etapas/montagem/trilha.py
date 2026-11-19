@@ -144,9 +144,20 @@ def sintetizar(nome: str) -> np.ndarray:
 _SFX: dict = {}
 
 
+def _kit_sfx(nome: str) -> pathlib.Path | None:
+    """Efeito da casa embutido no kit (gravação real, licença em packages/kit/assets/sfx/sfx.json)."""
+    from motor import config
+    p = config.KIT / "assets" / "sfx" / f"{nome}.flac"
+    return p if p.exists() else None
+
+
 def som(nome: str, biblioteca: str | None) -> tuple[np.ndarray, str]:
+    """Ordem: efeito registrado pelo dono na biblioteca (ou MK_SOM) -> efeito da casa no kit -> sintético de reserva."""
     cands = [p for p in ((pathlib.Path(biblioteca) / "sfx" / f"{nome}.wav", pathlib.Path(biblioteca) / f"{nome}.wav") if biblioteca else ())
              if p.exists()]
+    kit = None if cands else _kit_sfx(nome)
+    if kit is not None:
+        cands = [kit]
     chave = (nome, str(cands[0]), cands[0].stat().st_mtime) if cands else (nome, None, None)   # som novo na biblioteca vale sem reiniciar
     if chave in _SFX:
         return _SFX[chave]
@@ -161,7 +172,7 @@ def som(nome: str, biblioteca: str | None) -> tuple[np.ndarray, str]:
                     from scipy.signal import resample_poly
                     x = resample_poly(x, SR, sr, axis=0).astype(np.float32)
                 x = _st(x if x.shape[1] > 1 else x[:, 0])
-                origem = "biblioteca"
+                origem = "kit" if kit is not None else "biblioteca"
                 break
     if x is None:
         x = _st(sintetizar(nome))

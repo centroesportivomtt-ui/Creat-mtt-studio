@@ -1,0 +1,146 @@
+{
+ "versao": "1",
+ "descricao": "Efeitos sonoros da casa embutidos no editor (kit). Escolhidos em 19/11/2026 do kit de edição de 17/11 (sfx2, ~49 gravações reais do Sonniss GDC). Não são biblioteca para redistribuir: são parte do produto.",
+ "sfx": [
+  {
+   "id": "abre",
+   "tipo": "sfx",
+   "titulo": "whoosh grave (mergulho na placa SALA DE POSE)",
+   "arquivo": "abre.flac",
+   "origem_kit": "sfx2/wh_vara_grave.wav",
+   "dur": 0.72,
+   "pico_db": -10.0,
+   "gravacao": null,
+   "sha256": "7147071670cf541b",
+   "licenca": {
+    "tipo": "livre",
+    "fonte": "Sonniss #GameAudioGDC Bundle (gravações reais)",
+    "autor": "gravadores do pacote Sonniss GDC",
+    "termos_url": "https://sonniss.com/gameaudiogdc",
+    "atribuicao": null,
+    "uso_comercial": true,
+    "nota": "royalty-free, uso comercial sem atribuição; proibido revender os sons soltos e usar para treinar IA"
+   }
+  },
+  {
+   "id": "chip",
+   "tipo": "sfx",
+   "titulo": "alça/zíper curto (chip entrando)",
+   "arquivo": "chip.flac",
+   "origem_kit": "sfx2/wh_alca.wav",
+   "dur": 0.42,
+   "pico_db": -13.0,
+   "gravacao": null,
+   "sha256": "aecc42523ed622dd",
+   "licenca": {
+    "tipo": "livre",
+    "fonte": "Sonniss #GameAudioGDC Bundle (gravações reais)",
+    "autor": "gravadores do pacote Sonniss GDC",
+    "termos_url": "https://sonniss.com/gameaudiogdc",
+    "atribuicao": null,
+    "uso_comercial": true,
+    "nota": "royalty-free, uso comercial sem atribuição; proibido revender os sons soltos e usar para treinar IA"
+   }
+  },
+  {
+   "id": "cta",
+   "tipo": "sfx",
+   "titulo": "ar suave (entrada de selo de lugar)",
+   "arquivo": "cta.flac",
+   "origem_kit": "sfx2/wh_ar_suave.wav",
+   "dur": 0.52,
+   "pico_db": -13.0,
+   "gravacao": null,
+   "sha256": "64b95ebb54cb9917",
+   "licenca": {
+    "tipo": "livre",
+    "fonte": "Sonniss #GameAudioGDC Bundle (gravações reais)",
+    "autor": "gravadores do pacote Sonniss GDC",
+    "termos_url": "https://sonniss.com/gameaudiogdc",
+    "atribuicao": null,
+    "uso_comercial": true,
+    "nota": "royalty-free, uso comercial sem atribuição; proibido revender os sons soltos e usar para treinar IA"
+   }
+  },
+  {
+   "id": "embaralha",
+   "tipo": "sfx",
+   "titulo": "whip curto (rosto -> tela das senhas)",
+   "arquivo": "embaralha.flac",
+   "origem_kit": "sfx2/wh_camiseta_rapido.wav",
+   "dur": 0.48,
+   "pico_db": -10.0,
+   "gravacao": null,
+   "sha256": "b829008a2b55a0a3",
+   "licenca": {
+    "tipo": "livre",
+    "fonte": "Sonniss #GameAudioGDC Bundle (gravações reais)",
+    "autor": "gravadores do pacote Sonniss GDC",
+    "termos_url": "https://sonniss.com/gameaudiogdc",
+    "atribuicao": null,
+    "uso_comercial": true,
+    "nota": "royalty-free, uso comercial sem atribuição; proibido revender os sons soltos e usar para treinar IA"
+   }
+  },
+  {
+   "id": "impacto",
+   "tipo": "sfx",
+   "titulo": "corte seco e rápido (impact frame)",
+   "arquivo": "impacto.flac",
+   "origem_kit": "sfx2/wh_baqueta_seco.wav",
+   "dur": 0.22,
+   "pico_db": -12.0,
+   "gravacao": null,
+   "sha256": "9b26c547aa554ebc",
+   "licenca": {
+    "tipo": "livre",
+    "fonte": "Sonniss #GameAudioGDC Bundle (gravações reais)",
+    "autor": "gravadores do pacote Sonniss GDC",
+    "termos_url": "https://sonniss.com/gameaudiogdc",
+    "atribuicao": null,
+    "uso_comercial": true,
+    "nota": "royalty-free, uso comercial sem atribuição; proibido revender os sons soltos e usar para treinar IA"
+   }
+  },
+  {
+   "id": "risco",
+   "tipo": "sfx",
+   "titulo": "textura arrastada (risca EM -> NO ROTA; agenda riscando \"remarcada\")",
+   "arquivo": "risco.flac",
+   "origem_kit": "sfx2/wh_isopor_textura.wav",
+   "dur": 0.75,
+   "pico_db": -14.0,
+   "gravacao": null,
+   "sha256": "fecd459e120af13a",
+   "licenca": {
+    "tipo": "livre",
+    "fonte": "Sonniss #GameAudioGDC Bundle (gravações reais)",
+    "autor": "gravadores do pacote Sonniss GDC",
+    "termos_url": "https://sonniss.com/gameaudiogdc",
+    "atribuicao": null,
+    "uso_comercial": true,
+    "nota": "royalty-free, uso comercial sem atribuição; proibido revender os sons soltos e usar para treinar IA"
+   }
+  },
+  {
+   "id": "whoosh_curto",
+   "tipo": "sfx",
+   "titulo": "passagem curta e abafada (jump cut com punch-in)",
+   "arquivo": "whoosh_curto.flac",
+   "origem_kit": "sfx2/wh_luva_curto.wav",
+   "dur": 0.4,
+   "pico_db": -12.0,
+   "gravacao": null,
+   "sha256": "7b7ba3a2cde23f55",
+   "licenca": {
+    "tipo": "livre",
+    "fonte": "Sonniss #GameAudioGDC Bundle (gravações reais)",
+    "autor": "gravadores do pacote Sonniss GDC",
+    "termos_url": "https://sonniss.com/gameaudiogdc",
+    "atribuicao": null,
+    "uso_comercial": true,
+    "nota": "royalty-free, uso comercial sem atribuição; proibido revender os sons soltos e usar para treinar IA"
+   }
+  }
+ ]
+}
