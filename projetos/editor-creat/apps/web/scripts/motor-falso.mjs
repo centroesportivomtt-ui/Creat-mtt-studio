@@ -142,6 +142,8 @@ async function rodarVersao(p) {
       { id: 'quadros_pretos', ok: true, bloqueia: true },
       { id: 'zona_segura', ok: true, bloqueia: true },
       { id: 'formato', ok: true, bloqueia: true, valor: '1080x1920 30fps H.264' },
+      { id: 'voz_externa', ok: false, bloqueia: false, detalhe: '[em observação, ainda não segura a entrega] 1 fala de outra voz na peça: V3 aos 6.6 s «vai de novo» (semelhança 0.30)' },
+      { id: 'olho_ia', ok: true, bloqueia: false, detalhe: 'custo US$ 0.12 · o Claude olhou 6 imagem(ns) e não achou defeito que segure a entrega' },
     ],
   });
   versao.estado = 'aprovada_qa';

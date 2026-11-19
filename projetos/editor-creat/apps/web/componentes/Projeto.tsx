@@ -39,7 +39,7 @@ function classeVersao(estado: string): string {
 const NOME_CHECAGEM: Record<string, string> = {
   frase_repetida: 'frase repetida', tom_sala_sem_voz: 'tom de sala', logo_100: 'logo a 100%', lufs: 'LUFS', true_peak: 'pico',
   quadros_pretos: 'quadro preto', legenda_x_fala: 'legenda x fala', zona_segura: 'zona segura', legenda_sobre_rosto: 'legenda x rosto',
-  formato: 'formato', duracao: 'duração', sincronia: 'sincronia', telas_desfocadas: 'telas', regra_memoria: 'regras da casa', cor_medida: 'cor', fala_cortada: 'fim das falas', voz_externa: 'voz de fora', cobertura_sintonia: 'cobertura em sintonia',
+  formato: 'formato', duracao: 'duração', sincronia: 'sincronia', telas_desfocadas: 'telas', regra_memoria: 'regras da casa', cor_medida: 'cor', fala_cortada: 'fim das falas', voz_externa: 'voz de fora', cobertura_sintonia: 'cobertura em sintonia', olho_ia: 'olho de IA',
 };
 
 export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parteMB: number }) {
@@ -399,6 +399,12 @@ function LinhaVersao({ v, aprovada, aoAprovar, aoReprovar }: { v: Versao; aprova
           <ul className="qa">{qa.checagens.map((c) => <li key={c.id} data-ok={c.ok} title={c.detalhe || undefined}>{c.ok ? '✓' : '✕'} {NOME_CHECAGEM[c.id] ?? c.id}</li>)}</ul>
           {qa.checagens.filter((c) => !c.ok && c.bloqueia !== false && c.detalhe).slice(0, 3).map((c) => (
             <p className="aviso" key={`d-${c.id}`} style={{ overflowWrap: 'anywhere' }}>{NOME_CHECAGEM[c.id] ?? c.id}: {c.detalhe}</p>
+          ))}
+          {qa.checagens.filter((c) => !c.ok && c.bloqueia === false && c.detalhe).slice(0, 4).map((c) => (
+            <p className="aviso" key={`a-${c.id}`} data-teste="qa-aviso" style={{ overflowWrap: 'anywhere' }}>Aviso · {NOME_CHECAGEM[c.id] ?? c.id}: {c.detalhe}</p>
+          ))}
+          {qa.checagens.filter((c) => c.ok && c.id === 'olho_ia' && c.detalhe && /custo US\$/.test(c.detalhe)).map((c) => (
+            <p className="aviso" key="olho" data-teste="qa-olho" style={{ overflowWrap: 'anywhere' }}>Olho de IA: {c.detalhe}</p>
           ))}
         </>
       )}

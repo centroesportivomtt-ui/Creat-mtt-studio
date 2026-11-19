@@ -19,6 +19,10 @@ if [ -z "${EDITOR_SENHA_HASH:-}" ]; then
 fi
 unset EDITOR_SENHA
 cd /app/projetos/editor-creat/services/motor
+# A memória da casa (regras que o dono ensinou, casos aprovados, estudos de caso) mora no volume e sobrevive a cada deploy.
+# A do git (imagem) é juntada a cada boot. Se a junção falhar, o motor sobe com a memória do git e avisa no log.
+export EDITOR_MEMORIA="${EDITOR_MEMORIA:-$DADOS/memoria}"
+python -m motor.memoria.semear || { echo "AVISO: não consegui juntar a memória no volume; usando a do repositório nesta subida" >&2; unset EDITOR_MEMORIA; }
 uvicorn motor.api.app:criar --factory --host 127.0.0.1 --port "$MOTOR_PORTA" &
 for i in $(seq 1 60); do curl -fsS -o /dev/null -H "authorization: Bearer $MOTOR_TOKEN" "http://127.0.0.1:${MOTOR_PORTA}/v1/saude" && break; sleep 0.5; done   # banco criado antes dos workers
 for i in $(seq 1 "${EDITOR_WORKERS:-2}"); do python -m motor.worker & done

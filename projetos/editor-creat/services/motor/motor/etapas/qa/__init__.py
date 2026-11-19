@@ -27,7 +27,7 @@ if _PY_SCHEMAS not in sys.path:
     sys.path.insert(0, _PY_SCHEMAS)
 
 CHECAGENS = ("formato", "duracao", "sincronia", "lufs", "true_peak", "quadros_pretos", "zona_segura", "legenda_x_fala",
-             "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria", "cor_medida", "fala_cortada", "voz_externa", "cobertura_sintonia")
+             "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria", "cor_medida", "fala_cortada", "voz_externa", "cobertura_sintonia", "olho_ia")
 
 
 def normalizar(txt: str) -> str:
@@ -184,7 +184,7 @@ class Conferencia:
 
 
 # Checagens recém-chegadas que ainda estão em revisão: medem e avisam, mas não seguram a entrega. Sai daqui = bloqueia.
-EM_OBSERVACAO: tuple[str, ...] = ("fala_cortada", "voz_externa", "cobertura_sintonia")
+EM_OBSERVACAO: tuple[str, ...] = ("fala_cortada", "voz_externa", "cobertura_sintonia", "olho_ia")
 
 
 def _rodar(nome: str, c: Conferencia) -> dict:
@@ -214,6 +214,7 @@ def conferir(final, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, e
     itens = []
     nomes = [n for n in CHECAGENS if not so or n in so]
     for i, nome in enumerate(nomes):
+        c.ja_reprovou = any((not x["ok"]) and x["bloqueia"] for x in itens)     # checagem paga não roda em versão já reprovada
         itens.append(_rodar(nome, c))
         if progresso:
             progresso((i + 1) / len(nomes), f"Conferência: {nome}")

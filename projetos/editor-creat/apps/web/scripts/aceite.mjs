@@ -247,6 +247,9 @@ async function principal() {
   await page.click('[data-teste=aprovar]');
   const aprovou = await page.waitForSelector('[data-teste=aprovada]', { timeout: 10000 }).then(() => true).catch(() => false);
   ok('aprovar bate a claquete e marca a versão', aprovou, aprovou ? 'aprovada' : 'não marcou');
+  const avisoQa = await page.locator('[data-teste=qa-aviso]').first().textContent().catch(() => null);
+  const olhoQa = await page.locator('[data-teste=qa-olho]').first().textContent().catch(() => null);
+  ok('QA mostra os avisos (checagem em observação) e o olho de IA com o custo', /voz de fora/.test(avisoQa ?? '') && /custo US\$/.test(olhoQa ?? ''), `${avisoQa ?? 'sem aviso'} | ${olhoQa ?? 'sem olho'}`.slice(0, 200));
   await page.click('[data-teste=ver-cor]');
   const corAbriu = await page.waitForSelector('[data-teste=cor-grade] [data-teste=cor-plano]', { timeout: 10000 }).then(() => true).catch(() => false);
   const cor = corAbriu ? await page.evaluate(async () => {
