@@ -33,3 +33,22 @@ def test_cai_para_texto_quando_gramatica_e_grande(monkeypatch):
     c._chamar("m", "high", {"messages": [{"role": "user", "content": []}]}, {"type": "object"}, 10)
     assert chamadas == [True, False, False]          # depois da 1ª recusa, nem tenta o modo estrito de novo
     A.CerebroAnthropic._sem_gramatica = False
+
+
+def test_conserta_ate_passar_no_contrato(monkeypatch):
+    import anthropic
+    c = A.CerebroAnthropic.__new__(A.CerebroAnthropic)
+    c._anthropic = anthropic
+    esquema = {"type": "object", "required": ["id"], "properties": {"id": {"type": "string", "pattern": "^B[0-9]$"}}}
+    respostas = iter(['{"id": "B1"}'])
+    pedidos = []
+
+    def falsa(self, modelo, esforco, corpo, esq, max_tokens, *, estrito):
+        pedidos.append(corpo["messages"][-1]["content"][0]["text"])
+        return next(respostas), {"custo_usd": 0.01, "entrada": 10, "saida": 5}
+
+    monkeypatch.setattr(A.CerebroAnthropic, "_chamar_uma", falsa)
+    obj, uso = c._conserta("m", "high", {"messages": [{"role": "user", "content": [{"type": "text", "text": "x"}]}]}, esquema,
+                           '{"id": "b1"}', {"custo_usd": 0.02, "entrada": 20, "saida": 9})
+    assert obj == {"id": "B1"} and uso["correcoes"] == 1 and abs(uso["custo_usd"] - 0.03) < 1e-9
+    assert "id" in pedidos[0] and "does not match" in pedidos[0]

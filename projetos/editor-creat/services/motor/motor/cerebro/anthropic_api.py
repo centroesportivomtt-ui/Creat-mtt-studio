@@ -132,9 +132,50 @@ class CerebroAnthropic:
         return int(self.cli.messages.count_tokens(model=self.cfg.modelo_direcao, **corpo).input_tokens)
 
     # --- interface Cerebro
+    def _validar(self, obj, esquema: dict) -> list[str]:
+        try:
+            import jsonschema
+        except ImportError:
+            return []
+        v = jsonschema.Draft202012Validator(esquema)
+        return [f"{'/'.join(map(str, e.absolute_path)) or '(raiz)'}: {e.message[:160]}" for e in sorted(v.iter_errors(obj), key=lambda e: list(map(str, e.absolute_path)))][:25]
+
+    def _conserta(self, modelo: str, esforco: str, corpo: dict, esquema: dict, texto: str, uso: dict, tentativas: int = 2) -> tuple[dict, dict]:
+        """Sem o modo estrito, o modelo às vezes foge do contrato (id minúsculo, valor acima do máximo, enum fora da lista).
+        Valida local e pede para corrigir SÓ os erros apontados, até 2 vezes. Os usos somam no custo."""
+        from motor.cerebro import orcamento
+        usos = [uso]
+        try:
+            obj = json.loads(texto)
+        except json.JSONDecodeError as e:
+            obj, erros = None, [f"JSON inválido: {e}"]
+        else:
+            erros = self._validar(obj, esquema)
+        for _ in range(tentativas):
+            if not erros:
+                break
+            c2 = copy.deepcopy(corpo)
+            c2["messages"].append({"role": "assistant", "content": [{"type": "text", "text": texto}]})
+            c2["messages"].append({"role": "user", "content": [{"type": "text", "text":
+                "Essa resposta não passou no contrato. Corrija SOMENTE estes erros e devolva o JSON completo, sem texto fora dele:\n- " + "\n- ".join(erros)}]})
+            texto, u = self._chamar_uma(modelo, esforco, c2, esquema, 32000, estrito=False)
+            usos.append(u)
+            try:
+                obj = json.loads(texto)
+                erros = self._validar(obj, esquema)
+            except json.JSONDecodeError as e:
+                obj, erros = None, [f"JSON inválido: {e}"]
+        if obj is None:
+            raise RuntimeError("o cérebro não devolveu JSON válido depois das correções")
+        total = orcamento.somar(usos)
+        uso_final = dict(usos[0], custo_usd=total["custo_usd"], entrada=total["entrada"], saida=total["saida"], correcoes=len(usos) - 1)
+        return obj, uso_final
+
     def dirigir(self, *, sistema: str, catalogo_txt: str, pedido_txt: str, esquema: dict, maximo_saida: int = 4000) -> tuple[dict, dict]:
         corpo = self._base(sistema, catalogo_txt, [{"type": "text", "text": pedido_txt}])
         texto, uso = self._chamar(self.cfg.modelo_direcao, self.cfg.esforco_direcao, corpo, esquema, 32000)
+        if self._sem_gramatica:
+            return self._conserta(self.cfg.modelo_direcao, self.cfg.esforco_direcao, corpo, esquema, texto, uso)
         return json.loads(texto), uso
 
     def criticar(self, *, sistema: str, catalogo_txt: str, direcao: dict, pedido_txt: str, esquema: dict, problemas: list[str] | None = None) -> tuple[dict, dict]:
@@ -143,7 +184,10 @@ class CerebroAnthropic:
                  {"type": "text", "text": "DIREÇÃO PROPOSTA\n" + json.dumps(direcao, ensure_ascii=False)
                   + "\n\nPROBLEMAS DO RESOLVEDOR\n" + ("\n".join(f"- {p}" for p in problemas) if problemas else "- nenhum")
                   + "\n\n" + prompts_texto("critico")}]
-        texto, uso = self._chamar(self.cfg.modelo_direcao, "medium", self._base(sistema, catalogo_txt, cauda), esquema, 32000)
+        corpo = self._base(sistema, catalogo_txt, cauda)
+        texto, uso = self._chamar(self.cfg.modelo_direcao, "medium", corpo, esquema, 32000)
+        if self._sem_gramatica:
+            return self._conserta(self.cfg.modelo_direcao, "medium", corpo, esquema, texto, uso)
         return json.loads(texto), uso
 
     def leve(self, *, tarefa: str, texto: str, esquema: dict | None = None) -> tuple[dict | str, dict]:
