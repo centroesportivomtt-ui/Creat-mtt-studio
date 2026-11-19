@@ -20,6 +20,12 @@ TOM_LONGE = 0.20
 PRINCIPAL_MIN = 0.65
 
 
+def _tom_longe(razao: float) -> bool:
+    """20% ou mais de diferença na altura da voz. (Homem x mulher fica perto de uma oitava: tolerar oitava apagaria
+    justamente o caso do pedido; o erro de oitava é tratado na medição, em falante.tom_hz.)"""
+    return abs(razao - 1.0) >= TOM_LONGE
+
+
 def _assinador(c):
     if getattr(c, "_assinador", None) is None:
         from motor.etapas.falante import Assinador
@@ -63,7 +69,7 @@ def checar(c):
         item = {"voz": v["id"], "t": round(float(v["t0"]), 2), "dur": round(d, 2), "proximidade": prox, "tom_hz": tm}
         longe = prox is not None and prox < F.LIMIAR
         if longe and d < CURTA:                                 # trecho curto: precisa da segunda pista
-            tom_diz = bool(tm and tom_ref and abs(tm / tom_ref - 1.0) >= TOM_LONGE)
+            tom_diz = bool(tm and tom_ref and _tom_longe(tm / tom_ref))
             longe = tom_diz or prox < LIM_CURTA
         if longe:
             item["outra_voz"] = True

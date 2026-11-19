@@ -4,12 +4,12 @@
 Um plano é COBERTURA quando a voz que toca por baixo vem de outra fonte ou de outro instante da mesma fonte
 (diferença maior que 0,3 s). Plano em sincronia (a pessoa falando o que se ouve) e janela/PiP não entram.
 Para cada cobertura com 0,5 s ou mais de fala por baixo, o QA olha até 3 quadros do FILME FINAL e procura rosto:
-rosto com 20% ou mais da largura do quadro, na maioria dos quadros olhados, é pessoa em primeiro plano com a boca fora
+rosto com 30% ou mais da largura do quadro (close; plano médio de cliente ou atendente passa), na maioria dos quadros olhados, é pessoa em primeiro plano com a boca fora
 da fala (falante desconectado) e reprova. "Fora do assunto" é semântica: fica com a revisão por IA (olho do Claude).
 Sem detector de rosto e com cobertura para conferir, o QA não passa calado.
 """
 ID, BLOQUEIA = "cobertura_sintonia", True
-ROSTO_MIN = 0.20         # largura do rosto / largura do quadro
+ROSTO_MIN = 0.30         # largura do rosto / largura do quadro (0,20 pegava b-roll comum com gente: revisão de 19/11)
 SOBRE_MIN = 0.5          # s de fala por baixo para contar
 SINC_S = 0.3
 

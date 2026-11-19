@@ -309,10 +309,10 @@ def test_rosto_em_primeiro_plano_sobre_a_fala_reprova(tmp_path, dados):
     assert "cobertura_sintonia" in CHECAGENS and cobertura_sintonia.BLOQUEIA
     voz = [{"id": "V1", "fonte": "a", "s0": 10.0, "s1": 16.0, "t0": 0.0, "t1": 6.0, "vel": 1.0, "texto": "olha só essa promoção"}]
     planos = [_p(1, "a", 0.0, 2.0, 10.0), _p(2, "b", 2.0, 4.0, 3.0), _p(3, "b", 4.0, 6.0, 30.0)]
-    r = cobertura_sintonia.checar(_cob(tmp_path, planos, voz, [0.3, 0.28, 0.0, 0.0, 0.1, 0.0]))
+    r = cobertura_sintonia.checar(_cob(tmp_path, planos, voz, [0.4, 0.35, 0.0, 0.0, 0.1, 0.0]))
     assert not r["ok"] and "P2" in r["detalhe"] and "P3" not in r["detalhe"] and r["evidencia"] == ["qa/cobertura_P2_V1.jpg"]
-    assert r["valor"][0]["rosto_largura"] == [0.3, 0.28, 0.0]
-    ok = cobertura_sintonia.checar(_cob(tmp_path, planos, voz, [0.3, 0.0, 0.0, 0.05, 0.1, 0.0]))    # rosto passando em 1 de 3 quadros
+    assert r["valor"][0]["rosto_largura"] == [0.4, 0.35, 0.0]
+    ok = cobertura_sintonia.checar(_cob(tmp_path, planos, voz, [0.4, 0.0, 0.0, 0.25, 0.25, 0.25]))    # rosto passando em 1 de 3; plano médio (25%) passa em 1 de 3 quadros
     assert ok["ok"]
 
 
@@ -349,3 +349,55 @@ def test_checagem_em_observacao_avisa_e_fora_dela_bloqueia(tmp_path, dados, monk
     monkeypatch.setattr(qa, "EM_OBSERVACAO", ())
     item = qa._rodar("voz_externa", c)
     assert not item["ok"] and item["bloqueia"] is True and "observação" not in item["detalhe"]
+
+
+# ---------------------------------------------------------------- ajustes da revisão (Crivo, 19/11)
+def test_corte_de_pausa_tambem_espera_a_voz_morrer():
+    """O aperto de pausas cortava em fim-da-palavra + 0,10 s sem olhar a onda: reprovaria sempre igual, sem saída."""
+    from motor.etapas.resolvedor import Resolvedor
+    r = Resolvedor.__new__(Resolvedor)
+    passo = 0.02
+    serie = np.full(600, -60.0, np.float32)
+    serie[50:120] = -20.0                                # "vem comigo": 1,00 a 2,40 s
+    serie[120:132] = np.linspace(-21, -45, 12)           # cauda até ~2,64 s (a transcrição disse 2,20 s)
+    serie[200:260] = -20.0                               # "agora": 4,00 a 5,20 s
+    r.energias = {"a": serie, "_passo": {"a": passo}}
+    r.r = {"pausa_max": 0.28, "folga_in": 0.06, "folga_out": 0.09}
+    r.problemas, r.avisos = [], []
+    pal = [[1.0, 1.5, "vem", 0.9], [1.6, 2.2, "comigo", 0.9], [4.0, 5.2, "agora", 0.9]]
+    r.fala = {"F1": ({"id": "c1", "arquivo": "a"}, {"t0": 1.0, "t1": 5.2})}
+    r._pal = {"c1": pal}
+    res = r.resolver_fala({"id": "F1"})
+    (a0, a1), (b0, b1) = res["pecas"]
+    assert 2.5 <= a1 <= 2.75                             # antes parava em 2,30 s, no meio da cauda
+    assert b0 == pytest.approx(3.9) and a1 < b0 - 0.02
+
+
+def test_ultima_palavra_corrigida_conta_como_ouvida():
+    from motor.etapas.qa.fala_cortada import _parecida
+    assert _parecida("kal", "cal") and _parecida("creat", "create") and _parecida("mtt", "creatmtt")
+    assert _parecida("agora", "agora") and not _parecida("agora", "comigo") and not _parecida("", "x")
+
+
+def test_tom_longe_e_medicao_sem_cair_de_oitava():
+    from motor.etapas import falante as F
+    from motor.etapas.qa.voz_externa import _tom_longe
+    assert not _tom_longe(1.0) and not _tom_longe(1.1) and _tom_longe(0.5) and _tom_longe(0.7) and _tom_longe(1.4)
+    t = np.arange(F.SR) / F.SR
+    for f0 in (110.0, 220.0):                            # homem e mulher, uma oitava: cada um na sua altura
+        x = sum(np.sin(2 * np.pi * f0 * k * t) / k for k in range(1, 8)).astype(np.float32) * 0.1
+        assert abs(F.tom_hz(x, F.SR) - f0) < 0.04 * f0
+
+
+def test_modelo_de_voz_so_carrega_com_o_hash_conferido(tmp_path, monkeypatch):
+    import io
+    import urllib.request
+    from motor.etapas import falante as F
+
+    class Cfg:
+        dados = tmp_path
+    monkeypatch.delenv("EDITOR_FALANTE", raising=False)
+    monkeypatch.setenv("EDITOR_MODELOS_BAIXAR", "1")
+    monkeypatch.setattr(urllib.request, "urlopen", lambda *a, **k: io.BytesIO(b"x" * 6_000_000))
+    assert F._modelo(Cfg()) is None                      # baixou outra coisa: não vira modelo
+    assert list((tmp_path / "modelos").iterdir()) == []  # e não deixa resto

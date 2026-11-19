@@ -62,6 +62,14 @@ def _palavras_fonte(c, fid: str) -> list | None:
         return None
 
 
+def _parecida(a: str, b: str) -> bool:
+    """Palavra do EDL (já corrigida: marca, número) x palavra ouvida no mix: igual, uma contém a outra ou 60% parecida."""
+    import difflib
+    if not a or not b:
+        return False
+    return a == b or (len(b) >= 3 and (a in b or b in a)) or difflib.SequenceMatcher(None, a, b).ratio() >= 0.6
+
+
 def _fim_na_fonte(v: dict) -> float:
     vel = float(v.get("vel", 1.0) or 1.0)
     return min(float(v["s1"]), float(v["s0"]) + (float(v["t1"]) - float(v["t0"])) * vel)
@@ -85,7 +93,8 @@ def checar(c):
         ultima = next((n for n in reversed(normalizar(v.get("texto") or "").split()) if len(n) >= 3), None)
         ouvida = None
         if ultima and ouvidas is not None:
-            ouvida = any(o[2] == ultima and v["t1"] - 1.5 <= o[0] <= v["t1"] + 0.7 for o in ouvidas)
+            perto = [o[2] for o in ouvidas if v["t1"] - 1.5 <= o[0] <= v["t1"] + 0.7]
+            ouvida = any(_parecida(ultima, o) for o in perto) or _parecida(ultima, "".join(perto[-2:]))
             item["ultima_palavra"], item["ouvida_no_mix"] = ultima, ouvida
         m = None
         if c.fontes is not None:

@@ -20,6 +20,7 @@ log = logging.getLogger("motor.falante")
 
 MODELO_URL = "https://huggingface.co/csukuangfj/speaker-embedding-models/resolve/main/wespeaker_en_voxceleb_CAM++.onnx"
 MODELO_NOME = "wespeaker_voxceleb_campp.onnx"
+MODELO_SHA256 = "7acd352a0372de23ce49379b02864833b7f3f501b4ea25248fc977389f08e5fc"   # conferido em 19/11/2026
 SR = 16000
 LIMIAR = 0.42            # cosseno mínimo para "mesma voz" (medido com vozes de teste; material real pode pedir ajuste)
 MIN_S = 0.8              # trecho menor que isso não dá assinatura confiável
@@ -45,13 +46,21 @@ def _modelo(cfg) -> pathlib.Path | None:
                 f.write(b)
                 if f.tell() > 80_000_000:
                     raise OSError("modelo maior que o esperado")
-        if tmp.stat().st_size < 5_000_000:
-            tmp.unlink(missing_ok=True)
-            return None
+        import hashlib
+        h = hashlib.sha256()
+        with open(tmp, "rb") as f:
+            for bloco in iter(lambda: f.read(1 << 20), b""):
+                h.update(bloco)
+        if h.hexdigest() != MODELO_SHA256:                  # arquivo de terceiros: só carrega o que foi conferido
+            raise OSError("sha256 do modelo não confere")
         os.replace(tmp, p)
         return p
     except Exception as e:  # noqa: BLE001 - sem rede: segue sem assinatura de voz
         log.warning("modelo de falante indisponível (%s)", e)
+        try:
+            tmp.unlink(missing_ok=True)
+        except (OSError, NameError):
+            pass
         return None
 
 
@@ -184,6 +193,12 @@ def tom_hz(x: np.ndarray, sr: int) -> float | None:
     a, b = SR // 400, SR // 60
     k = ac[:, a:b].argmax(axis=1) + a
     forca = ac[np.arange(n), k]
+    # erro de oitava: se na metade do atraso o pico é quase tão forte, a altura verdadeira é a de cima
+    meio = np.clip(np.round(k / 2).astype(int), a, b - 1)
+    viz = np.stack([ac[np.arange(n), np.clip(meio + d, a, b - 1)] for d in (-1, 0, 1)]).max(axis=0)
+    sobe = (k // 2 >= a) & (viz >= 0.85 * forca)
+    k = np.where(sobe, meio, k)
+    forca = np.where(sobe, viz, forca)
     ok = (forca > 0.45) & (en > 0.05 * en.max())
     if ok.sum() < 5:
         return None

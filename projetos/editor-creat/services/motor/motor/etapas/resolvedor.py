@@ -180,7 +180,9 @@ class Resolvedor:
         for k in range(len(palavras) - 1):
             g0, g1 = palavras[k][1], palavras[k + 1][0]
             if g1 - g0 > gmax and (g1 - g0 - 2 * manter) >= 0.10:
-                pecas.append((a, g0 + manter))
+                # o corte de pausa também não come a última sílaba: anda até a voz morrer, sem encostar na retomada
+                fim = min(self._cauda(c["arquivo"], g0 + manter, pal[ws][0], g0, g1 - 0.01), g1 - manter - 0.02)
+                pecas.append((a, max(fim, g0 + manter)))
                 a = g1 - manter
         pecas.append((a, s1))
         return {"clipe": c["id"], "fala": f, "s0": s0, "s1": s1, "pecas": pecas, "palavras": palavras}
