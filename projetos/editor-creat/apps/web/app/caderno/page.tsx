@@ -1,5 +1,6 @@
 import { motorJson } from '@/lib/motor';
 import Referencias from '@/componentes/Referencias';
+import Backup from '@/componentes/Backup';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Caderno da casa' };
@@ -95,6 +96,11 @@ export default async function Caderno() {
           </ul>
         </section>
       )}
+      <section className="cartao" aria-labelledby="c-backup" id="backup">
+        <h2 className="cartao__titulo" id="c-backup"><span className="num">06</span> Backup</h2>
+        <p className="aviso" style={{ maxWidth: '62ch' }}>Uma vez por dia, o que não se refaz (projetos, pedidos, direções, relatórios, regras e casos da casa) vai para uma pasta do seu Dropbox.</p>
+        <Backup />
+      </section>
     </main>
   );
 }

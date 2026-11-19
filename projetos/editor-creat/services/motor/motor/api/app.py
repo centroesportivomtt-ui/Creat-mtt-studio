@@ -57,9 +57,14 @@ def criar():
         if olho:
             from motor.cerebro.diagnostico import testar_olho
             out["olho_ia"] = testar_olho(cfg)
+        from motor import backup as _backup
+        out["backup"] = {k: v for k, v in _backup.estado(cfg).items() if k in ("destino", "estado", "ultimo_ok", "horas_desde_o_ultimo")}
         return out
 
-    for nome in ("projetos", "direcao", "versoes", "referencias"):
+    if os.environ.get("EDITOR_BACKUP_AGENDAR") == "1":            # só no servidor (iniciar.sh); testes e aceites não agendam
+        from motor import backup as _backup_ag
+        _backup_ag.agendar(cfg)
+    for nome in ("projetos", "direcao", "versoes", "referencias", "backup"):
         try:
             mod = importlib.import_module(f"motor.api.{nome}")
         except ModuleNotFoundError as e:

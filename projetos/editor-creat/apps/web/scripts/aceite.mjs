@@ -268,6 +268,20 @@ async function principal() {
   await page.goto(`${BASE}/caderno`);
   const nLooks = await page.locator('[data-teste=caderno-looks] li').count();
   ok('caderno mostra a biblioteca de cor por ambiente', nLooks >= 5, `${nLooks} looks`);
+  {
+    const antes = (await page.locator('[data-teste=backup-estado]').textContent({ timeout: 10000 }).catch(() => '')) ?? '';
+    await page.fill('[data-teste=backup-pedido]', 'https://exemplo.com/nao-e-dropbox');
+    await page.click('[data-teste=backup-salvar]');
+    const recusou = await page.waitForSelector('[data-teste=backup] [role=alert] >> text=não é o link de uma solicitação', { timeout: 8000 }).then(() => true).catch(() => false);
+    await page.fill('[data-teste=backup-pedido]', 'https://www.dropbox.com/request/AbCdEfGh1234567890');
+    await page.click('[data-teste=backup-salvar]');
+    await page.waitForSelector('[data-teste=backup-agora]:not([disabled])', { timeout: 8000 }).catch(() => {});
+    await page.click('[data-teste=backup-agora]').catch(() => {});
+    const emDia = await page.waitForSelector('[data-teste=backup-estado] >> text=em dia', { timeout: 15000 }).then(() => true).catch(() => false);
+    const html = await page.content();
+    ok('backup: endereço errado recusado, destino salvo, backup feito e o link não fica na tela', /ainda não rodou/.test(antes) && recusou && emDia && !html.includes('AbCdEfGh1234567890'),
+      `antes "${antes.trim().slice(0, 40)}" · recusou ${recusou} · em dia ${emDia}`);
+  }
   await page.fill('[data-teste=form-referencia] input[name=url]', 'https://www.instagram.com/reel/TESTE123/');
   await page.click('[data-teste=ler-referencia]');
   const leu = await page.waitForSelector('[data-teste=referencias] li >> text=planos', { timeout: 10000 }).then(() => true).catch(() => false);

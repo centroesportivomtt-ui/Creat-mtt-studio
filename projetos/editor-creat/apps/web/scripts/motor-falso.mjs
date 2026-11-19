@@ -251,6 +251,20 @@ async function rotear(req, res) {
     REFS.unshift({ id: `ref_${REFS.length + 1}`, url, autor: 'teste', licao: `30 s, 12 planos (plano médio 2.5 s); 1º corte em 1.2 s${c.nota ? '; o dono quer: ' + c.nota : ''}` });
     return json(res, 202, { id: REFS[0].id, estado: 'lendo' });
   }
+  if (r1 === 'backup') {      // mesmo contrato do motor real: nunca devolve o endereço, só se existe
+    if (!pid && M === 'GET') return json(res, 200, BACKUP);
+    if (pid === 'config' && M === 'POST') {
+      const c = (await lerCorpo(req)) ?? {};
+      if (!/^https:\/\/www\.dropbox\.com\/request\/[A-Za-z0-9]{8,40}$/.test(String(c?.pedido ?? '').trim())) return falha(res, 422, 'endereço não reconhecido: cole o link da solicitação de arquivos (https://www.dropbox.com/request/...)');
+      BACKUP.destino = 'configurado';
+      return json(res, 200, BACKUP);
+    }
+    if (pid === 'rodar' && M === 'POST') {
+      Object.assign(BACKUP, { estado: 'ok', ultimo_ok: agora(), bytes: 25014, arquivos: 22, horas_desde_o_ultimo: 0, midia_fora: { arquivos: 7, bytes: 15304535 } });
+      return json(res, 202, { ...BACKUP, estado: 'rodando' });
+    }
+    return falha(res, 404, 'rota não encontrada');
+  }
   if (r1 !== 'projetos') return falha(res, 404, 'rota não encontrada');
 
   if (!pid) {
@@ -363,6 +377,7 @@ http.createServer((req, res) => {
 });
 
 const REFS = [];
+const BACKUP = { destino: 'falta configurar', estado: 'nunca rodou' };
 
 // Memória da casa lida direto de projetos/editor-creat/memoria (a mesma que o motor real usa).
 function memoriaDaCasa() {

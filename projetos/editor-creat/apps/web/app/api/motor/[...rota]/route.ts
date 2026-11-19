@@ -7,7 +7,7 @@ import { mesmaOrigem, sessaoDaRequisicao } from '@/lib/sessao';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PERMITIDAS = /^v1\/(saude|memoria|referencias|projetos|projetos\/p_[a-z0-9]{4,40}(\/[A-Za-z0-9_\-./]+)?|arquivos\/[A-Za-z0-9_\-./]+)$/;
+const PERMITIDAS = /^v1\/(saude|memoria|referencias|backup|backup\/config|backup\/rodar|projetos|projetos\/p_[a-z0-9]{4,40}(\/[A-Za-z0-9_\-./]+)?|arquivos\/[A-Za-z0-9_\-./]+)$/;
 const ENTRA = ['content-type', 'range', 'if-range', 'last-event-id', 'accept'];
 const SAI = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'cache-control', 'last-modified', 'etag', 'content-disposition'];
 
