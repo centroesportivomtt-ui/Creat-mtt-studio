@@ -18,6 +18,7 @@ from motor.memoria.loja import Loja
 
 rotas = APIRouter(tags=["direcao"])
 TipoVideo = Literal["auto", "evento", "empresa", "daily_vlog", "anuncio", "depoimento", "bastidor"]
+Modo = Literal["auto", "criativo", "ultra", "cinema", "ia", "clean", "serio", "fala"]
 Destino = Literal["reels", "stories", "tiktok", "shorts", "feed", "youtube"]
 
 
@@ -49,6 +50,7 @@ class PedidoEntrada(BaseModel):
     texto: Optional[str] = Field(None, max_length=4000)
     audio_chave: Optional[str] = Field(None, max_length=500)
     tipo_video: TipoVideo = "auto"
+    modo: Modo = "auto"
     duracao_alvo: Optional[float] = Field(None, ge=5, le=600)
     destino: list[Destino] = Field(default_factory=lambda: ["reels"], max_length=6)
     formato: Literal["9:16", "1:1", "4:5", "16:9"] = "9:16"
@@ -104,7 +106,7 @@ def gravar_pedido(pid: str, corpo: PedidoEntrada):
             texto = _transcrever_pedido(cfg, arm, corpo.audio_chave)
             if not texto:
                 raise HTTPException(422, "não deu para entender o áudio do pedido; grave de novo ou mande em texto")
-        pedido = {"versao": "1", "projeto": pid, "texto": texto, "audio": corpo.audio_chave, "tipo_video": tipo, "cliente": corpo.cliente,
+        pedido = {"versao": "1", "projeto": pid, "texto": texto, "audio": corpo.audio_chave, "tipo_video": tipo, "modo": corpo.modo, "cliente": corpo.cliente,
                   "destino": corpo.destino, "formato": corpo.formato, "duracao_alvo": corpo.duracao_alvo, "obrigatorio": corpo.obrigatorio,
                   "proibido": corpo.proibido, "referencias": [], "ajustes_de": corpo.ajustes_de, "criado_em": banco.agora_iso()}
         erros = validar.erros("pedido", pedido)
@@ -113,7 +115,7 @@ def gravar_pedido(pid: str, corpo: PedidoEntrada):
         arm.gravar_json(f"projetos/{pid}/pedido.json", pedido)
         r = con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()
         dados = json.loads(r["dados"] or "{}")
-        dados["pedido"] = {"texto": texto[:200], "tipo_video": tipo}
+        dados["pedido"] = {"texto": texto[:200], "tipo_video": tipo, "modo": corpo.modo}
         con.execute("UPDATE projetos SET dados=?, atualizado=? WHERE id=?", (json.dumps(dados), banco.agora_iso(), pid))
         banco.emitir(con, pid, "estado", mensagem="Pedido recebido.", dados={"pedido": texto[:200]})
         dirigindo = pipeline.tentar_dirigir(con, pid)

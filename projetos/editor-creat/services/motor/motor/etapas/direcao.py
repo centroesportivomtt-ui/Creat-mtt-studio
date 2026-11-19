@@ -20,6 +20,18 @@ from motor.etapas.resolvedor import ErroResolucao, resolver
 from motor.memoria.loja import Loja
 
 
+# Modos de edição (estilo): o mesmo material pode virar filmes bem diferentes. O dono escolhe no pedido; "auto" deixa o diretor decidir.
+MODOS = {
+    "criativo": "criativo: ritmo vivo, tipografia cinética, transições motivadas pela fala, humor e surpresa na medida",
+    "ultra": "ultra criação: o máximo de invenção (motion pesado, personagens e mascotes da marca, efeitos de impacto, som casado); interpretar além do pedido",
+    "cinema": "cinema: transições cinematográficas, cor por LUT e por ambiente, trilha com curva emocional, poucos textos e bem compostos",
+    "ia": "com IA: cenas geradas por IA entram junto do material humano para mostrar o que a câmera não pegou; toda cena gerada é rotulada como conceito",
+    "clean": "clean: limpo e neutro, cortes secos e precisos, legenda discreta, sem efeitos chamativos, muito respiro",
+    "serio": "sério: institucional e sóbrio, sem mascote, sem gíria, sem efeito de impacto; marca e dados com clareza",
+    "fala": "fala e apresentação: a fala é o filme; cortes só para tirar pausa e erro, legenda fiel, apoio visual apenas quando esclarece",
+}
+
+
 def montar_prompt(loja: Loja, catalogo_txt: str, pedido: dict, *, correcao: dict | None = None) -> tuple[str, str, str]:
     """Devolve (sistema, catalogo_txt, pedido_txt). Sistema e catálogo são estáveis (cache); o pedido vem por último."""
     tipo = (pedido or {}).get("tipo_video") or "auto"
@@ -32,6 +44,9 @@ def montar_prompt(loja: Loja, catalogo_txt: str, pedido: dict, *, correcao: dict
         v = p.get(campo)
         if v not in (None, "", [], "auto"):
             linhas.append(f"{rotulo}: {', '.join(map(str, v)) if isinstance(v, list) else v}")
+    modo = MODOS.get(p.get("modo") or "auto")
+    if modo:
+        linhas.append(f"modo de edição: {modo}")
     if correcao:
         if correcao.get("reprovacao"):
             linhas.append(f"O DONO REPROVOU a versão {correcao.get('versao_anterior')}: «{correcao['reprovacao']}». Corrija isso na nova direção.")

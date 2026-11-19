@@ -1,7 +1,7 @@
 {
-  "name": "creat.PULO",
-  "short_name": "PULO",
-  "description": "O editor da creat.MTT. Sobe o material, fala o pedido, recebe o filme com pulo do gato em até 30 minutos.",
+  "name": "Editor creat.MTT",
+  "short_name": "Editor",
+  "description": "Sobe o material, escolhe o modo de edição, faz o pedido e recebe o filme pronto em até 30 minutos.",
   "lang": "pt-BR",
   "start_url": "/projetos",
   "scope": "/",

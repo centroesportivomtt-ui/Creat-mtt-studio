@@ -31,6 +31,16 @@ export const TIPOS_VIDEO: { valor: string; rotulo: string }[] = [
   { valor: 'anuncio', rotulo: 'Anúncio' },
   { valor: 'depoimento', rotulo: 'Depoimento' },
 ];
+export const MODOS: { valor: string; rotulo: string; dica: string }[] = [
+  { valor: 'auto', rotulo: 'O editor decide', dica: 'Ele lê o material e escolhe.' },
+  { valor: 'criativo', rotulo: 'Criativo', dica: 'Ritmo vivo e tipografia em movimento.' },
+  { valor: 'ultra', rotulo: 'Ultra criação', dica: 'O máximo de invenção, com mascotes e efeitos.' },
+  { valor: 'cinema', rotulo: 'Cinema', dica: 'Transições de cinema, cor e trilha com emoção.' },
+  { valor: 'ia', rotulo: 'Com IA', dica: 'Cenas geradas junto do material real, sempre rotuladas.' },
+  { valor: 'clean', rotulo: 'Clean', dica: 'Limpo e neutro, cortes precisos.' },
+  { valor: 'serio', rotulo: 'Sério', dica: 'Institucional e sóbrio.' },
+  { valor: 'fala', rotulo: 'Fala', dica: 'A fala é o filme. Legenda fiel.' },
+];
 export const rotuloTipo = (v: string | null | undefined) => TIPOS_VIDEO.find((t) => t.valor === v)?.rotulo ?? 'O editor decide';
 
 export function classeEstado(estado: string): string {

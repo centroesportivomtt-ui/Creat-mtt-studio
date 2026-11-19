@@ -46,3 +46,10 @@ Atualize este arquivo a cada passo concluído (a máquina reinicia sem aviso). F
 - Depois: `checar.cjs` na cena de estresse e na demo, **tudo dentro das regras**.
 - Achado aberto: `*destaque*` só vale por palavra; `*PARA NUNCA*` (duas palavras) imprime os asteriscos. Usar `*PARA* *NUNCA*` ou suportar frase no `palavras()`.
 - Lição do Reel 17/11 para o catálogo de transições: transição por luminância (`luma`) abre buracos no rosto de pessoa real (pele clara some antes da sombra). Para plano de rosto usar fusão limpa; `luma` só para cenário sem pessoa em primeiro plano.
+
+## Identidade e modos de edição — 19/11
+- Leitura do dono: o editor atende vídeos criativos, sérios, clean, ultra criação, com IA, cinema e fala. A marca principal tem que ser moderna e sóbria; o "pulo do gato" fica como camada secundária (assinatura "Pula o óbvio.", espera, avisos).
+- Marca: logo creat.MTT + "EDITOR" (mono). Isotipo = o "c." da creat (anel com corte reto + ponto vermelho), `componentes/Iso.tsx`; `gato` liga as orelhas só na camada secundária. Login: "Do bruto ao filme."
+- **Modo de edição** (novo campo `modo` do pedido, contrato `pedido.schema.json`): auto, criativo, ultra, cinema, ia, clean, serio, fala. O site manda no pedido; a direção recebe a instrução do estilo (`etapas/direcao.py: MODOS`). Testes: `tests/test_modos.py`. Aceite D 18/18; pytest 122 ok.
+- `tests/test_c_unidades.py::test_edl_legado_v1_v2_validos` falha neste ambiente porque lê `scratchpad/drako/seg/indice.json`, que não existe mais depois que a máquina reiniciou (não é regressão; o teste depende de arquivo fora do repositório e deveria pular quando falta).
+- Próximo: cada modo com seu modelo em `memoria/modelos/` (hoje só daily-vlog e anuncio-produto), a tela "Caderno da casa" (regras e treinamento visíveis ao dono) e o endereço público.

@@ -4,8 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Envio from './Envio';
 import {
   bytesLegiveis, classeEstado, ESTADOS, ETAPA_DO_ESTADO, EXPLICA_ESTADO, ROTULO_ESTADO, rotuloTipo,
-  type Evento, type Projeto as TProjeto, type Versao,
-} from '@/lib/estados';
+  type Evento, type Projeto as TProjeto, type Versao, MODOS } from '@/lib/estados';
 
 const TETO_MS = 30 * 60 * 1000;
 const ESTADOS_ABERTOS = ['recebendo', 'lendo'];
@@ -306,7 +305,8 @@ function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boo
       if (!texto) return;
       const duracao = Number(f.get('duracao') ?? 0);
       setIndo(true);
-      await aoMandar({ texto, ...(duracao ? { duracao_alvo: duracao } : {}) });
+      const modo = String(f.get('modo') ?? 'auto');
+      await aoMandar({ texto, modo, ...(duracao ? { duracao_alvo: duracao } : {}) });
       setIndo(false);
     }}>
       {atual && <p className="aviso" data-teste="pedido-atual">Pedido atual: “{atual}”. Mande de novo para trocar.</p>}
@@ -315,6 +315,17 @@ function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boo
         <textarea className="entrada" name="texto" maxLength={4000} required
           placeholder="Ex.: Reels de 45 s do bastidor, abre com a minha fala mais forte, fecha chamando para o @creat.mtt." />
       </label>
+      <fieldset className="campo" style={{ border: 0, margin: 0, padding: 0 }}>
+        <legend className="campo__rotulo" style={{ marginBottom: 8 }}>Modo de edição</legend>
+        <div className="opcoes" data-teste="modos">
+          {MODOS.map((m, i) => (
+            <label className="opcao" key={m.valor} title={m.dica}>
+              <input type="radio" name="modo" value={m.valor} defaultChecked={i === 0} />
+              <span>{m.rotulo}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <label className="campo">
         <span className="campo__rotulo">Duração</span>
         <select className="entrada" name="duracao" defaultValue="0">

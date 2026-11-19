@@ -11,7 +11,7 @@ export default async function Projetos() {
     <main className="pagina">
       <div className="cabeca-pagina">
         <div>
-          <p className="sobretitulo">creat.PULO · ilha de edição</p>
+          <p className="sobretitulo">Ilha de edição</p>
           <h1 className="titulo">Projetos</h1>
         </div>
         <Link className="botao botao--principal" href="/projetos/novo">Novo projeto</Link>
