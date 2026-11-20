@@ -36,7 +36,7 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 | 5 | Drive e Dropbox direto no editor | livre |
 | 6 | cenas por IA com custo à vista | livre |
 | 7 | perguntas em camadas | livre |
-| 8 | motion premium | livre |
+| 8 | motion premium | em andamento · sessão Lavínia/homenagem (…TqPTUo) · 20/11 00:55 UTC · linguagem "Em Revelação": camadas revelacao, legenda_revelada, laboratorio, papel; FX revela e salto; looks matriz |
 | 9 | tela Novidades | livre |
 
 ## Precisa do dono
