@@ -65,6 +65,11 @@ def criar():
             v = os.environ.get(var, "").strip()
             return _pl.Path(v).is_file() if v else (pasta / nome).is_file()
         out["modelos"] = {"pessoa": _tem("EDITOR_PESSOA", _pes.MODELO_NOME), "voz": _tem("EDITOR_FALANTE", _fal.MODELO_NOME)}
+        try:                                                # o boot confere o navegador do kit (motor/modelos.py)
+            import json as _json
+            out["modelos"]["navegador"] = _json.loads((pasta / "navegador.json").read_text()).get("ok")
+        except (OSError, ValueError):
+            out["modelos"]["navegador"] = None
         from motor import backup as _backup
         import re as _re
         _bk = _backup.estado(cfg)
