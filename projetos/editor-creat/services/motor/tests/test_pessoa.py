@@ -120,7 +120,7 @@ def test_texto_atras_sobe_quando_a_pessoa_cobre_demais(tmp_path):
     assert j["deslocamento"] is not None and j["deslocamento"] < 0, j          # subiu para cima da cabeça
     y = int((280 / H + j["deslocamento"]) * H)
     assert fr[y, 135].mean() > 230                                             # o texto aparece inteiro lá em cima
-    assert C.ZONA[0] * H <= (260 / H + j["deslocamento"]) * H and comp.OCULTO_MAX == 0.30
+    assert (260 / H + j["deslocamento"]) >= C.ZONA[0] and comp.OCULTO_MAX == 0.30
 
 
 def test_sem_modelo_texto_por_cima_e_aviso(tmp_path):
@@ -144,7 +144,6 @@ def test_overlay_separa_as_camadas():
 
 
 def test_precisa_e_schema():
-    import sys
     from motor import config
     from motor.etapas.pessoa import precisa
     assert not precisa({"motion": [], "planos": [{"id": "a"}]})
@@ -153,7 +152,6 @@ def test_precisa_e_schema():
     s = json.loads((config.SCHEMAS / "edl.schema.json").read_text())
     assert "atras" in s["properties"]["motion"]["items"]["properties"]
     assert "fundo" in s["properties"]["planos"]["items"]["properties"]
-    sys.path.insert(0, str(config.SCHEMAS / "py"))
 
 
 @pytest.mark.skipif(not __import__("os").environ.get("EDITOR_PESSOA"), reason="modelo real só com EDITOR_PESSOA apontando o ONNX")
@@ -174,3 +172,77 @@ def test_cobertura_pela_pior_linha():
     a = np.zeros((50, 100), np.float32)
     a[20:50, 30:70] = 1.0                        # a cabeça cobre só a linha de baixo, metade dela
     assert abs(cobertura_por_linha(texto, a) - 0.5) < 1e-6      # a média (25%) passaria; a pior linha (50%) não
+
+
+class RecortadorComMemoria(RecortadorFalso):
+    """Caminho real da composição: máscara pequena guardada entre a passada prévia e a composição, e estado do modelo."""
+
+    def __init__(self):
+        super().__init__()
+        self.chamadas = 0
+        self._estado = [0, 0, 0, 0]
+
+    def novo_plano(self):
+        super().novo_plano()
+        self._estado = [0, 0, 0, 0]
+
+    def alfa_pequena(self, bgr):
+        self.chamadas += 1
+        self._estado = [self._estado[0] + 1] * 4                              # "memória": quantos quadros já viu
+        return (RecortadorFalso.alfa(self, bgr) * 255).astype(np.uint8)
+
+    def alfa(self, bgr):                                                       # como o real: passa pela máscara pequena
+        from motor.etapas.pessoa import ampliar
+        return ampliar(self.alfa_pequena(bgr), bgr.shape[1], bgr.shape[0])
+
+
+def test_janela_atravessa_dois_planos_um_sem_arquivo_e_o_modelo_segue_quente(tmp_path):
+    from motor.etapas.montagem.comp import compor
+    rec = RecortadorComMemoria()
+    vistos = []
+    orig = rec.alfa_pequena
+
+    def espia(bgr):
+        vistos.append(rec._estado[0])
+        return orig(bgr)
+    rec.alfa_pequena = espia
+    edl = {"formato": {"w": W, "h": H, "fps": FPS}, "duracao": 1.0, "fx": [],
+           "planos": [{"id": "P1", "t0": 0.0, "t1": 0.5, "fundo": {"desfoque": 0.5}}, {"id": "P2", "t0": 0.5, "t1": 1.0}]}
+    ov = _overlay_texto(tmp_path, 300, 340, n=10)                              # texto só nos 10 primeiros quadros (janela no P1)
+    r = compor(edl, {"P1": {"arquivo": _plano(tmp_path)}, "P2": {"arquivo": None}}, None, None, tmp_path / "f.mp4",
+               dir_overlay_atras=ov, recortador=rec, crf=12)
+    p = r["pessoa"]
+    assert p["atras_quadros"] == 10 and p["desfoque_quadros"] == 15
+    assert rec.chamadas == 15                                                  # 10 na passada prévia + 5 do resto do P1: nada repetido
+    assert vistos[10] == 10                                                    # depois da janela o modelo continua de onde parou
+
+
+def test_janela_de_texto_atravessa_o_corte_sem_arquivo(tmp_path):
+    from motor.etapas.montagem.comp import compor
+    edl = {"formato": {"w": W, "h": H, "fps": FPS}, "duracao": 1.0, "fx": [],
+           "planos": [{"id": "P1", "t0": 0.0, "t1": 0.5}, {"id": "P2", "t0": 0.5, "t1": 1.0}]}
+    r = compor(edl, {"P1": {"arquivo": None}, "P2": {"arquivo": _plano(tmp_path)}}, None, None, tmp_path / "f.mp4",
+               dir_overlay_atras=_overlay_texto(tmp_path, 300, 340), recortador=RecortadorComMemoria(), crf=12)
+    assert r["quadros"] == 30 and r["pessoa"]["janelas_atras"]                 # sem AttributeError no corte
+
+
+def test_modelo_sem_rede_e_sha256_errado(tmp_path, monkeypatch):
+    import io
+    from motor.etapas import pessoa as P
+
+    class Cfg:
+        dados = str(tmp_path)
+    monkeypatch.delenv("EDITOR_PESSOA", raising=False)
+    monkeypatch.setenv("EDITOR_MODELOS_BAIXAR", "0")
+    monkeypatch.setattr(P, "_TENTOU", False)
+    assert P._modelo(Cfg()) is None and not P.Recortador(Cfg()).disponivel
+    monkeypatch.setenv("EDITOR_MODELOS_BAIXAR", "1")
+    chamadas = []
+
+    def falso_urlopen(req, timeout):
+        chamadas.append(timeout)
+        return io.BytesIO(b"nao e o modelo")
+    monkeypatch.setattr(P.urllib.request, "urlopen", falso_urlopen)
+    assert P._modelo(Cfg()) is None                                            # sha256 não confere: não carrega
+    assert not list((tmp_path / "modelos").glob("*"))                          # e não deixa arquivo pela metade
+    assert P._modelo(Cfg()) is None and chamadas == [20]                       # uma tentativa por processo, espera curta

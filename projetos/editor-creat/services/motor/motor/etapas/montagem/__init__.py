@@ -92,9 +92,10 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
     prog(0.02, "Montagem: planos, motion e áudio em paralelo")
     with cf.ThreadPoolExecutor(max_workers=2) as ex:
         tem_atras = any(m.get("atras") for m in edl.get("motion", []))
-        f_ov = ex.submit(cronometro, "overlay", OV.renderizar, edl, fontes, trabalho / "overlay", workers=workers_ov, janela=janela,
-                         nice=nice, atras=False if tem_atras else None)
-        f_at = ex.submit(cronometro, "overlay_atras", OV.renderizar, edl, fontes, trabalho / "overlay", workers=workers_ov,
+        w_at = max(1, workers_ov // 3) if tem_atras else 0     # a camada de trás é curta (o gancho): poucos navegadores para ela
+        f_ov = ex.submit(cronometro, "overlay", OV.renderizar, edl, fontes, trabalho / "overlay", workers=max(1, workers_ov - w_at),
+                         janela=janela, nice=nice, atras=False if tem_atras else None)
+        f_at = ex.submit(cronometro, "overlay_atras", OV.renderizar, edl, fontes, trabalho / "overlay", workers=w_at,
                          janela=janela, nice=nice, atras=True) if tem_atras else None
         f_au = ex.submit(audio)
         res_pl = cronometro("planos", PL.renderizar, edl, fontes, cache_planos, workers=workers_pl, nice=nice, janela=janela,

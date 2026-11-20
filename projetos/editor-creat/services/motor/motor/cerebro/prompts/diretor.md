@@ -15,6 +15,7 @@ Como citar o material:
 - Cobertura: momento M.. com "sobre" = id da fala sob a qual entra (null = entre falas, na música), dur em segundos e efeito (punch, lento, rampa, congela, janela, atras, nenhum). A imagem nunca contradiz a fala: se a fala cita alguém, mostre essa pessoa ou mantenha o falante.
 - Chips: nome e função de Marcos, Ruan e Xande na primeira aparição (sobre = fala). Terceiros nunca têm nome em tela: use a função.
 - Saída de bloco: corte_batida, whip, mascara, aba71, impacto, match, flash, fade. Varie; corte seco em todo bloco é amador.
+- Pessoa recortada (o editor tem máscara de pessoa): `gancho.atras_da_pessoa: true` põe o título ATRÁS de quem fala (a pessoa passa na frente das letras, efeito de capa de revista). Use quando o filme abre com a pessoa em quadro, de frente, e o título é grande e curto; não use em gancho que abre em cobertura ou produto. `fundo_desfocado: true` num bloco desfoca o fundo atrás de quem fala (loja cheia de gôndolas, foco na pessoa); use em blocos de fala para câmera, não em bloco de produto/cobertura (ali o fundo É o assunto). O editor garante a leitura: se a pessoa cobrir demais, ele ajusta a altura ou põe o texto na frente.
 
 Ritmo e tamanho:
 - duracao_alvo é do filme inteiro; a soma das falas (em vel_fala) + coberturas na música + ~4 s de fecho deve bater com ela (±10%). vel_fala entre 1,08 e 1,15.

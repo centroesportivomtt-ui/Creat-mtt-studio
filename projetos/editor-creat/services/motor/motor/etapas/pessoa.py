@@ -30,6 +30,9 @@ LADO = 640                 # lado maior do quadro que entra no modelo (1080x1920
 REDUCAO = 0.4              # downsample_ratio do RVM para esse tamanho (o miolo do modelo trabalha em ~144x256)
 
 
+_TENTOU = False
+
+
 def _modelo(cfg) -> pathlib.Path | None:
     env = os.environ.get("EDITOR_PESSOA", "").strip()
     if env:
@@ -37,12 +40,14 @@ def _modelo(cfg) -> pathlib.Path | None:
     p = pathlib.Path(cfg.dados) / "modelos" / MODELO_NOME
     if p.is_file():
         return p
-    if os.environ.get("EDITOR_MODELOS_BAIXAR", "1") != "1":
-        return None
+    global _TENTOU
+    if os.environ.get("EDITOR_MODELOS_BAIXAR", "1") != "1" or _TENTOU:
+        return None                                       # uma tentativa por processo: sem rede, não trava cada render
+    _TENTOU = True
     tmp = p.with_suffix(f".{os.getpid()}.tmp")
     try:
         p.parent.mkdir(parents=True, exist_ok=True)
-        with urllib.request.urlopen(urllib.request.Request(MODELO_URL, headers={"User-Agent": "editor-motor/0.1"}), timeout=120) as r, \
+        with urllib.request.urlopen(urllib.request.Request(MODELO_URL, headers={"User-Agent": "editor-motor/0.1"}), timeout=20) as r, \
                 open(tmp, "wb") as f:
             while True:
                 b = r.read(1 << 20)

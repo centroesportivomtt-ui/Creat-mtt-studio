@@ -257,11 +257,23 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Testes:** pytest **283 ok** (6 novos em `test_qa_fala_d2.py`, áudio sintético com as medidas reais); aceite D 33/33.
 - **Falta:** conferir no material real (só a sessão da Lavínia tem os arquivos); pedido enviado a ela.
 
-## Item 2: recorte de pessoa (20/11, parte 1, em revisão)
+## Item 2: recorte de pessoa (20/11)
 - **Modelo:** RVM MobileNetV3 em ONNX (temporal), baixado do GitHub com sha256 conferido. A licença é GPL-3.0; o uso é só no servidor. O registro está em `docs/stack-ferramentas-2026.md`.
 - **Camada atrás da pessoa** (`motion[].atras`): o kit renderiza a camada em separado. Antes de compor, a passada prévia mede quanto a pessoa cobre a linha mais coberta do texto e testa as posições 0, -8%, -16%, +8% e -24% da altura, dentro da zona segura. Se nada fica com 30% ou menos, o texto vai para a frente. Sem modelo, ou em quadro sem plano, a camada entra por cima, como antes.
 - **Fundo desfocado** (`planos[].fundo.desfoque`): convolução normalizada (sem halo), calculada em 1/4 da resolução.
-- **Direção:** `gancho.atras_da_pessoa` passa a camada para trás e o y para 0,30; `blocos[].fundo_desfocado` vira desfoque 0,7 nos planos de fala. A instrução ao diretor só entra depois da revisão do Crivo.
+- **Direção:** `gancho.atras_da_pessoa` passa a camada para trás e o y para 0,30; `blocos[].fundo_desfocado` vira desfoque 0,7 nos planos de fala. A instrução ao diretor entrou depois da revisão.
 - **Teste real** (story da Lavínia): máscara limpa no cabelo e desfoque com cara de lente. Num close, "SOBRE DIETA" ficaria 33% coberto ("SOB…TA"), e a trava pôs o título na frente.
 - **Custo medido:** cerca de 45 ms por quadro para a máscara (cache entre a passada prévia e a composição). Sem o efeito, o render não muda.
 - **Testes:** pytest **311 ok** (10 novos em `test_pessoa.py` e 1 no resolvedor).
+- **Revisão do Crivo:** aprovado com ajustes, e entraram 10 dos 12 pontos.
+  - O modelo continua "quente" depois da janela do título, sem pulo no desfoque.
+  - Plano sem arquivo no meio da janela não derruba mais a composição.
+  - Sem modelo, a camada de trás entra depois dos efeitos, igual a antes.
+  - As linhas do texto são separadas pelo pico de alfa.
+  - Um quadro fora da zona segura tira a posição inteira.
+  - O texto é composto só na faixa dele.
+  - Menos navegadores para a camada de trás.
+  - O encoder só abre depois da passada prévia.
+  - O modelo é baixado uma vez por processo, com espera de 20 s.
+  - A máscara é guardada quando há desfoque.
+- **Testes:** pytest **314 ok** (15 em `test_pessoa.py`); aceite D 33/33. Um aceite anterior deu 32/33 uma vez, intermitente, sem mudança no site: fica de olho.

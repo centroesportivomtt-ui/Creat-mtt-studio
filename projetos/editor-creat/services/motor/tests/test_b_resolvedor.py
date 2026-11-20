@@ -104,7 +104,6 @@ def test_titulo_atras_da_pessoa_e_fundo_desfocado(base):
     g = next(m for m in edl["motion"] if m["id"] == "gancho")
     assert g.get("atras") is True and g["props"]["y"] == 0.30
     do_bloco = [p for p in edl["planos"] if p.get("bloco") == alvo and not p.get("_cob")]
-    assert do_bloco and all((p.get("fundo") or {}).get("desfoque") == 0.7 for p in do_bloco if p.get("fundo") is not None)
-    assert any(p.get("fundo") for p in edl["planos"])
+    assert do_bloco and all((p.get("fundo") or {}).get("desfoque") == 0.7 for p in do_bloco)
     assert not any(p.get("fundo") for p in edl["planos"] if p.get("bloco") != alvo)
     assert erros("edl", edl) == []

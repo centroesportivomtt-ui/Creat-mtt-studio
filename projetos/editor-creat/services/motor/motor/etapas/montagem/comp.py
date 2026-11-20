@@ -113,10 +113,11 @@ def texto_atras(img: np.ndarray, val, a: np.ndarray) -> tuple[np.ndarray, float]
     if val[0] == "opaco":
         return Overlay.aplicar(img, val), 0.0
     _, y0, y1, rgb, al = val
-    sob = Overlay.aplicar(img.copy(), val)
-    a3 = a[:, :, None]
-    out = (img.astype(np.float32) * a3 + sob.astype(np.float32) * (1 - a3)).astype(np.uint8)
-    return out, cobertura_por_linha(al[:, :, 0].astype(np.float32) / 255.0, a[y0:y1])
+    faixa = img[y0:y1]                                    # só a faixa do texto: o resto do quadro não muda
+    sob = ((faixa.astype(np.uint16) * (255 - al) + rgb * al + 127) // 255).astype(np.float32)
+    a3 = a[y0:y1, :, None]
+    img[y0:y1] = (faixa.astype(np.float32) * a3 + sob * (1 - a3) + 0.5).astype(np.uint8)
+    return img, cobertura_por_linha(al[:, :, 0].astype(np.float32) / 255.0, a[y0:y1])
 
 
 def cobertura(val, a: np.ndarray) -> float:
@@ -130,7 +131,7 @@ def cobertura(val, a: np.ndarray) -> float:
 def cobertura_por_linha(texto: np.ndarray, a: np.ndarray) -> float:
     """Parte do texto coberta pela pessoa NA LINHA MAIS COBERTA (linhas = faixas de rows com texto, separadas por rows vazias).
     A média do bloco engana: 33% no total era "SOB…TA" na segunda linha (teste real de 20/11, 'NÃO É / SOBRE DIETA')."""
-    tem = texto.sum(1) > 0
+    tem = texto.max(1) > 0.15                         # sombra/brilho de alfa baixo não junta as linhas numa faixa só
     pior, i = 0.0, 0
     while i < len(tem):
         if not tem[i]:
@@ -240,7 +241,6 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
             "-preset", "veryfast", "-crf", str(crf), "-profile:v", "high", "-x264-params", "aq-mode=3", "-threads", str(threads),
             "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
             "-t", f"{(fb - fa) / FPS:.4f}", "-movflags", "+faststart", str(tmp)]
-    enc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
     ov = Overlay(dir_overlay)
     ov_atras = Overlay(dir_overlay_atras)
     rec = recortador if (recortador is not None and getattr(recortador, "disponivel", False)) else None
@@ -257,17 +257,19 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
             plano_de.setdefault(k, i)
     posicao: dict[int, float | None] = {}
     guardadas: dict[int, np.ndarray] = {}
+    estado_fim: dict[int, tuple[int, list]] = {}
     pessoa["janelas_atras"] = []
     if rec is not None and dir_overlay_atras:
         ks = [k for k in range(fa, fb) if k in plano_de and ov_atras.pegar(k) is not None]
         for a0, b0 in janelas(ks):
             cob: dict[float, list[float]] = {}
+            fora_da_zona: set[float] = set()
             pessoa_vista = False
             i_atual, rd = None, None
             for k in range(a0, b0):
                 i = plano_de[k]
                 if i != i_atual:
-                    if rd is not None:
+                    if rd is not None and hasattr(rd, "close"):
                         rd.close()
                     pl = planos[i]
                     arq = planos_res.get(pl["id"], {}).get("arquivo")
@@ -288,12 +290,19 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
                 val = ov_atras.pegar(k)
                 for d in DESLOCA:
                     v = deslocar(val, int(round(d * H)), H)
-                    if v is None or (v[0] == "rgba" and (v[1] < ZONA[0] * H or v[2] > ZONA[1] * H) and d != 0.0):
+                    if d != 0.0 and (v is None or (v[0] == "rgba" and (v[1] < ZONA[0] * H or v[2] > ZONA[1] * H))):
+                        fora_da_zona.add(d)                  # um quadro fora da zona segura já tira a posição inteira
                         continue
                     cob.setdefault(d, []).append(cobertura(v, a))
             if rd is not None and hasattr(rd, "close"):
                 rd.close()
-            d, motivo = escolher_posicao(cob, not pessoa_vista)
+            if i_atual is not None and hasattr(rec, "_estado"):
+                estado_fim[b0] = (i_atual, list(rec._estado))   # a composição continua a memória do modelo depois da janela
+            d, motivo = escolher_posicao({x: v for x, v in cob.items() if x not in fora_da_zona}, not pessoa_vista)
+            if d is None:                                    # texto foi para a frente: só fica a máscara de quem vai desfocar
+                for k in range(a0, b0):
+                    if not float((planos[plano_de[k]].get("fundo") or {}).get("desfoque") or 0.0) > 0:
+                        guardadas.pop(k, None)
             for k in range(a0, b0):
                 posicao[k] = d
             pessoa["janelas_atras"].append({"de": round(a0 / FPS, 2), "ate": round(b0 / FPS, 2), "deslocamento": d, "decisao": motivo})
@@ -301,6 +310,7 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
     def frente(img, k):
         """Quadro sem plano por baixo (buraco/fecho): a camada de trás entra por cima, sem máscara."""
         return Overlay.aplicar(Overlay.aplicar(img, ov_atras.pegar(k)), ov.pegar(k))
+    enc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)   # depois da passada prévia: erro nela não deixa o ffmpeg pendurado
     preto = np.zeros((H, W, 3), np.uint8)
     t0 = time.time()
     ult = None
@@ -340,6 +350,8 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
                 atras_val = deslocar(atras_val, int(round((d_at or 0.0) * H)), H)
             if rec is not None and (desf > 0 or atras_val is not None):
                 tm = time.time()
+                if k in estado_fim and estado_fim[k][0] == i:   # saiu da janela guardada: o modelo segue quente, sem pulo
+                    rec._estado = estado_fim.pop(k)[1]
                 pq = guardadas.pop(k, None)
                 if pq is not None:
                     a = PESSOA.ampliar(pq, W, H)
@@ -355,15 +367,15 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
                     pessoa["atras_quadros"] += 1
                     oculto_soma += oc
                     pessoa["atras_oculto_max"] = max(pessoa["atras_oculto_max"], round(oc, 3))
-            elif atras_val is not None:                     # sem modelo: por cima, como antes
-                img = Overlay.aplicar(img, atras_val)
-            if atras_frente is not None:
-                img = Overlay.aplicar(img, atras_frente)
+            elif atras_val is not None:                     # sem modelo: por cima e depois do FX, exatamente como antes
+                atras_frente = atras_val
             if efeitos:
                 img = FX.aplicar(img, k / FPS, efeitos, hist, vizinhos(k / FPS, i, anterior))
                 hist.append(fr)
                 if len(hist) > 4:
                     hist.pop(0)
+            if atras_frente is not None:
+                img = Overlay.aplicar(img, atras_frente)
             img = Overlay.aplicar(img, ov.pegar(k))
             enc.stdin.write(img.tobytes())
             k += 1

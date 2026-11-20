@@ -18,9 +18,9 @@ from motor.etapas.catalogo import EQUIPE, norm, tokens
 LETRA = "a-zà-öø-ÿ"
 
 
-
 Y_ATRAS = 0.30          # título atrás da pessoa começa mais alto (a cabeça passa na frente da parte de baixo das letras)
 DESFOQUE_FUNDO = 0.7    # "fundo_desfocado" do bloco: lente bem aberta, sem virar borrão de vidro
+
 
 class ErroResolucao(Exception):
     """A direção cita algo que não existe ou não foi encontrado na transcrição. .problemas vai para o cérebro corrigir."""
