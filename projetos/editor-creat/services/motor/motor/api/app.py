@@ -57,6 +57,14 @@ def criar():
         if olho:
             from motor.cerebro.diagnostico import testar_olho
             out["olho_ia"] = testar_olho(cfg)
+        import pathlib as _pl
+        from motor.etapas import falante as _fal, pessoa as _pes
+        pasta = _pl.Path(cfg.dados) / "modelos"             # só olha o disco: a saúde nunca baixa nada
+
+        def _tem(var, nome):
+            v = os.environ.get(var, "").strip()
+            return _pl.Path(v).is_file() if v else (pasta / nome).is_file()
+        out["modelos"] = {"pessoa": _tem("EDITOR_PESSOA", _pes.MODELO_NOME), "voz": _tem("EDITOR_FALANTE", _fal.MODELO_NOME)}
         from motor import backup as _backup
         out["backup"] = {k: v for k, v in _backup.estado(cfg).items() if k in ("destino", "estado", "ultimo_ok", "horas_desde_o_ultimo")}
         return out

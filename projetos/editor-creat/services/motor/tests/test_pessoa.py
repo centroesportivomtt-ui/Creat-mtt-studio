@@ -246,3 +246,75 @@ def test_modelo_sem_rede_e_sha256_errado(tmp_path, monkeypatch):
     assert P._modelo(Cfg()) is None                                            # sha256 não confere: não carrega
     assert not list((tmp_path / "modelos").glob("*"))                          # e não deixa arquivo pela metade
     assert P._modelo(Cfg()) is None and chamadas == [20]                       # uma tentativa por processo, espera curta
+
+
+# ------------------------------------------------------------------ parte 2: destaque e pele só na pessoa
+def _pele_bgr():
+    import cv2
+    ycc = np.uint8([[[150, 155, 110]]])                                        # tom de pele no YCrCb (faixa de cor.mascara_pele)
+    return cv2.cvtColor(ycc, cv2.COLOR_YCrCb2BGR)[0, 0].astype(np.int16)
+
+
+def test_destaque_escurece_e_tira_cor_so_do_fundo():
+    from motor.etapas.montagem.comp import destacar
+    img = np.zeros((H, W, 3), np.uint8)
+    img[:] = (40, 160, 220)                                                    # fundo laranja de embalagem
+    a = np.zeros((H, W), np.float32)
+    a[200:, 100:170] = 1.0
+    out = destacar(img.copy(), a, 1.0)
+    f0, f1 = img[50, 50].astype(int), out[50, 50].astype(int)
+    assert f1.sum() < f0.sum() * 0.85                                          # fundo mais escuro
+    assert (f1.max() - f1.min()) < (f0.max() - f0.min()) * 0.7                 # e com menos cor
+    assert abs(int(out[300, 135].sum()) - int(img[300, 135].sum()) * 1.05) <= 6   # a pessoa sobe só um pouco
+
+
+def test_pele_so_na_pele_da_pessoa():
+    from motor.etapas.montagem.comp import suavizar_pele
+    rng = np.random.default_rng(1)
+    base = _pele_bgr()
+    img = np.zeros((H, W, 3), np.uint8)
+    img[:] = (90, 90, 90)
+    tex = rng.integers(-14, 15, (H, W, 1))
+    img[100:300, 90:180] = np.clip(base + tex[100:300, 90:180], 0, 255)       # rosto (pele) da pessoa, com textura
+    img[100:300, 10:60] = np.clip(base + tex[100:300, 10:60], 0, 255)         # FUNDO com cor de pele (embalagem/madeira)
+    img[320:460, 90:180] = (30, 30, 30)                                        # roupa da pessoa (não é pele)
+    a = np.zeros((H, W), np.float32)
+    a[90:470, 80:190] = 1.0
+    out = suavizar_pele(img.copy(), a, 1.0)
+    sd = lambda m: float(m.astype(np.float32).std(axis=(0, 1)).mean())        # textura por canal
+    assert sd(out[130:270, 110:160]) < sd(img[130:270, 110:160]) * 0.85      # a pele dela fica mais lisa
+    assert np.array_equal(out[100:300, 10:60], img[100:300, 10:60])            # o fundo cor de pele não é tocado
+    assert np.array_equal(out[340:440, 100:170], img[340:440, 100:170])        # a roupa também não
+    assert np.array_equal(suavizar_pele(img.copy(), np.zeros((H, W), np.float32), 1.0), img)   # sem pessoa, nada
+
+
+def test_composicao_aplica_pele_e_destaque_por_plano(tmp_path):
+    from motor.etapas.montagem.comp import compor
+    edl = {"formato": {"w": W, "h": H, "fps": FPS}, "duracao": 1.0, "fx": [],
+           "planos": [{"id": "P1", "t0": 0.0, "t1": 0.5, "pessoa": {"pele": 0.5}, "fundo": {"destaque": 0.6}},
+                      {"id": "P2", "t0": 0.5, "t1": 1.0}]}
+    arq = _plano(tmp_path)
+    r = compor(edl, {"P1": {"arquivo": arq}, "P2": {"arquivo": arq}}, None, None, tmp_path / "f.mp4", recortador=RecortadorFalso(), crf=12)
+    p = r["pessoa"]
+    assert p["pele_quadros"] == 15 and p["destaque_quadros"] == 15 and p["quadros_mascara"] == 15   # só no plano que pede
+    from motor.etapas.pessoa import precisa, usa_mascara
+    assert usa_mascara(edl["planos"][0]) and not usa_mascara(edl["planos"][1]) and precisa(edl)
+
+
+def test_pele_tamanho_impar_e_fundo_cor_de_pele_dentro_da_caixa():
+    """A caixa da pele (meia resolução -> cheia) em quadro de tamanho ímpar, com fundo cor de pele DENTRO da caixa: quem
+    protege o fundo é a máscara da pessoa, não a caixa."""
+    from motor.etapas.montagem.comp import suavizar_pele
+    rng = np.random.default_rng(2)
+    h, w = 481, 271
+    base = _pele_bgr()
+    img = np.zeros((h, w, 3), np.uint8)
+    img[:] = np.clip(base + rng.integers(-14, 15, (h, w, 1)), 0, 255)         # TUDO cor de pele com textura
+    a = np.zeros((h, w), np.float32)
+    a[100:300, 60:120] = 1.0                                                   # pessoa à esquerda
+    a[100:300, 160:220] = 1.0                                                  # e à direita: a caixa inclui o vão do meio
+    out = suavizar_pele(img.copy(), a, 1.0)
+    assert out.shape == img.shape
+    assert np.array_equal(out[120:280, 132:148], img[120:280, 132:148])        # o vão (fundo) dentro da caixa fica intacto
+    sd = lambda m: float(m.astype(np.float32).std(axis=(0, 1)).mean())
+    assert sd(out[120:280, 70:110]) < sd(img[120:280, 70:110]) * 0.85

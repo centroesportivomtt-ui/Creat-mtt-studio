@@ -105,6 +105,52 @@ def desfocar_fundo(img: np.ndarray, a: np.ndarray, forca: float) -> np.ndarray:
     return np.clip(img * a3 + borrado * (1 - a3), 0, 255).astype(np.uint8)
 
 
+def destacar(img: np.ndarray, a: np.ndarray, forca: float) -> np.ndarray:
+    """Janela de luz do colorista (power window) na pessoa: o fundo baixa ~1/3 de ponto e perde um pouco de cor, a pessoa sobe
+    um pouco. Separa quem fala de uma loja cheia sem parecer recorte (a máscara já é macia na borda). Operações nativas do
+    OpenCV em uint8 (~15 ms em 1080x1920)."""
+    if forca <= 0:
+        return img
+    cv2 = _cv2()
+    f = float(min(1.0, forca))
+    luz, cor = 1.0 - 0.20 * f, 1.0 - 0.22 * f                                # -20% de luz (~1/3 ponto) e -22% de cor no fundo
+    cinza = cv2.cvtColor(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
+    fundo = cv2.addWeighted(img, luz * cor, cinza, luz * (1.0 - cor), 0.5)
+    pessoa = cv2.convertScaleAbs(img, alpha=1.0 + 0.05 * f, beta=0.5)
+    return cv2.blendLinear(pessoa, fundo, a, 1.0 - a)
+
+
+def suavizar_pele(img: np.ndarray, a: np.ndarray, forca: float) -> np.ndarray:
+    """Pele tratada (regra do dono), só na pele DA PESSOA: separação de frequências leve. A textura fina (poro, marquinha)
+    perde até 55% da força; olho, boca, cabelo e roupa ficam (não são pele); o fundo nunca é tocado, mesmo que tenha cor de
+    pele (embalagem laranja, madeira), porque a máscara de pele é cruzada com a da pessoa. O liso é calculado em meia
+    resolução e só na caixa da pele (rosto, colo, braços)."""
+    if forca <= 0:
+        return img
+    cv2 = _cv2()
+    from motor.etapas.cor import mascara_pele
+    h, w = img.shape[:2]
+    meia = (max(2, w // 2), max(2, h // 2))
+    img2 = cv2.resize(img, meia, interpolation=cv2.INTER_AREA)
+    a2 = cv2.resize(a, meia, interpolation=cv2.INTER_AREA)
+    pele2 = (mascara_pele(img2).astype(np.float32) / 255.0) * a2
+    ys, xs = np.where(pele2 > 0.5)
+    if len(ys) < 50:
+        return img
+    m = 6
+    y0, y1, x0, x1 = max(0, ys.min() - m), min(meia[1], ys.max() + m + 1), max(0, xs.min() - m), min(meia[0], xs.max() + m + 1)
+    roi2 = img2[y0:y1, x0:x1]
+    base2 = cv2.bilateralFilter(roi2, 0, 18, max(1.0, 1.1 * w / 1080.0))      # o liso preserva a borda (contorno do rosto)
+    k2 = cv2.GaussianBlur(pele2[y0:y1, x0:x1], (0, 0), 1.5) * (0.55 * float(min(1.0, forca)))
+    Y0, Y1, X0, X1 = y0 * 2, min(h, y1 * 2), x0 * 2, min(w, x1 * 2)
+    tam = (X1 - X0, Y1 - Y0)
+    base = cv2.resize(base2, tam, interpolation=cv2.INTER_LINEAR)
+    k = cv2.resize(k2, tam, interpolation=cv2.INTER_LINEAR)
+    roi = img[Y0:Y1, X0:X1]
+    img[Y0:Y1, X0:X1] = cv2.blendLinear(base, roi, k, 1.0 - k)
+    return img
+
+
 def texto_atras(img: np.ndarray, val, a: np.ndarray) -> tuple[np.ndarray, float]:
     """Camada do kit ATRÁS da pessoa: fundo + texto, e a pessoa (máscara a) volta por cima. Devolve (quadro, parte do texto que
     a pessoa cobre, 0..1)."""
@@ -244,9 +290,11 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
     ov = Overlay(dir_overlay)
     ov_atras = Overlay(dir_overlay_atras)
     rec = recortador if (recortador is not None and getattr(recortador, "disponivel", False)) else None
-    pessoa = {"quadros_mascara": 0, "atras_quadros": 0, "atras_oculto_max": 0.0, "atras_oculto_medio": 0.0, "desfoque_quadros": 0,
-              "ms_mascara": 0.0, "sem_modelo": bool(dir_overlay_atras or any((p.get("fundo") or {}).get("desfoque") for p in edl["planos"]))
-              and rec is None}
+    pessoa = {"quadros_mascara": 0, "atras_quadros": 0, "atras_oculto_max": 0.0, "atras_oculto_medio": 0.0, "desfoque_quadros": 0, "destaque_quadros": 0, "pele_quadros": 0,
+              "ms_mascara": 0.0, "sem_modelo": bool(dir_overlay_atras or any((p.get("fundo") or {}).get("desfoque") or (p.get("fundo") or {}).get("destaque")
+                                                     for p in edl["planos"]))
+              and rec is None,
+              "pele_sem_modelo": rec is None and any((p.get("pessoa") or {}).get("pele") for p in edl["planos"])}   # automática: só registra
     oculto_soma = 0.0
     t_masc = 0.0
 
@@ -301,7 +349,7 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
             d, motivo = escolher_posicao({x: v for x, v in cob.items() if x not in fora_da_zona}, not pessoa_vista)
             if d is None:                                    # texto foi para a frente: só fica a máscara de quem vai desfocar
                 for k in range(a0, b0):
-                    if not float((planos[plano_de[k]].get("fundo") or {}).get("desfoque") or 0.0) > 0:
+                    if not PESSOA.usa_mascara(planos[plano_de[k]]):
                         guardadas.pop(k, None)
             for k in range(a0, b0):
                 posicao[k] = d
@@ -333,6 +381,8 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
         rd = leitor(arq, W, H, max(0, k - p0) / FPS) if arq and os.path.exists(arq) else iter(())
         anterior = ult                                       # último quadro do plano anterior (o salto mostra na emenda)
         desf = float((p.get("fundo") or {}).get("desfoque") or 0.0)
+        dest = float((p.get("fundo") or {}).get("destaque") or 0.0)
+        pele = float((p.get("pessoa") or {}).get("pele") or 0.0)
         if rec is not None:
             rec.novo_plano()                                 # a máscara tem memória entre quadros: zera no corte
         while k < min(p1, fb):
@@ -348,7 +398,7 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
             else:
                 atras_frente = None
                 atras_val = deslocar(atras_val, int(round((d_at or 0.0) * H)), H)
-            if rec is not None and (desf > 0 or atras_val is not None):
+            if rec is not None and (desf > 0 or dest > 0 or pele > 0 or atras_val is not None):
                 tm = time.time()
                 if k in estado_fim and estado_fim[k][0] == i:   # saiu da janela guardada: o modelo segue quente, sem pulo
                     rec._estado = estado_fim.pop(k)[1]
@@ -359,6 +409,12 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
                     a = rec.alfa(fr)
                     pessoa["quadros_mascara"] += 1
                 t_masc += time.time() - tm
+                if pele > 0:
+                    img = suavizar_pele(img, a, pele)
+                    pessoa["pele_quadros"] += 1
+                if dest > 0:
+                    img = destacar(img, a, dest)
+                    pessoa["destaque_quadros"] += 1
                 if desf > 0:
                     img = desfocar_fundo(img, a, desf)
                     pessoa["desfoque_quadros"] += 1

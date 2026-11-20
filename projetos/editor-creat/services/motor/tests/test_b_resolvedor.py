@@ -105,5 +105,33 @@ def test_titulo_atras_da_pessoa_e_fundo_desfocado(base):
     assert g.get("atras") is True and g["props"]["y"] == 0.30
     do_bloco = [p for p in edl["planos"] if p.get("bloco") == alvo and not p.get("_cob")]
     assert do_bloco and all((p.get("fundo") or {}).get("desfoque") == 0.7 for p in do_bloco)
-    assert not any(p.get("fundo") for p in edl["planos"] if p.get("bloco") != alvo)
+    assert not any((p.get("fundo") or {}).get("desfoque") for p in edl["planos"] if p.get("bloco") != alvo)
+    assert erros("edl", edl) == []
+
+
+def test_pele_tratada_sempre_e_destaque_por_bloco(base, monkeypatch):
+    """Regra do dono: pele tratada em TODO plano de fala (e em nenhum de cobertura); destaque_pessoa do bloco vira janela de luz
+    em todos os planos de fala dele e em nenhum outro."""
+    import copy
+    from validar import erros
+    cobs = []
+    orig = resolvedor.Resolvedor._cob
+
+    def espia(self, *a, **k):
+        p = orig(self, *a, **k)
+        cobs.append(round(p["t0"], 3))                                         # o fim pode ser esticado depois; o começo fica
+        return p
+    monkeypatch.setattr(resolvedor.Resolvedor, "_cob", espia)
+    d = copy.deepcopy(direcao())
+    alvo = d["blocos"][-1]["id"]
+    d["blocos"][-1]["destaque_pessoa"] = True
+    edl = _resolver(base, d)
+    cob = [p for p in edl["planos"] if round(p["t0"], 3) in set(cobs)]
+    fala = [p for p in edl["planos"] if p not in cob]
+    assert cob and fala                                                        # o filme sintético tem os dois tipos
+    assert all((p.get("pessoa") or {}).get("pele") == 0.5 for p in fala)      # todo plano de fala, sem exceção
+    assert not any(p.get("pessoa") for p in cob)                              # cobertura (produto, loja) não
+    do_alvo = [p for p in fala if p["bloco"] == alvo]
+    assert do_alvo and all((p.get("fundo") or {}).get("destaque") == 0.6 for p in do_alvo)
+    assert not any((p.get("fundo") or {}).get("destaque") for p in edl["planos"] if p not in do_alvo)
     assert erros("edl", edl) == []

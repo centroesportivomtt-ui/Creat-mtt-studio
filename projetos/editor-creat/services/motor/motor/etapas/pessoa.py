@@ -126,10 +126,15 @@ def ampliar(pequena: np.ndarray, w: int, h: int) -> np.ndarray:
     return np.clip(a, 0.0, 1.0).astype(np.float32)
 
 
+def usa_mascara(p: dict) -> bool:
+    """O plano pede a máscara? (fundo desfocado, pessoa em destaque ou pele tratada)"""
+    f, s = p.get("fundo") or {}, p.get("pessoa") or {}
+    return bool(f.get("desfoque") or f.get("destaque") or s.get("pele"))
+
+
 def precisa(edl: dict) -> bool:
-    """O filme usa a máscara? (camada atrás da pessoa ou fundo desfocado em algum plano)"""
-    return any(m.get("atras") for m in edl.get("motion") or []) or \
-        any((p.get("fundo") or {}).get("desfoque") for p in edl.get("planos") or [])
+    """O filme usa a máscara? (camada atrás da pessoa ou algum plano que pede)"""
+    return any(m.get("atras") for m in edl.get("motion") or []) or any(usa_mascara(p) for p in edl.get("planos") or [])
 
 
 def recortador_para(edl: dict, cfg) -> Recortador | None:

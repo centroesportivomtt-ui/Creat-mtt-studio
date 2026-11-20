@@ -277,3 +277,13 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - O modelo é baixado uma vez por processo, com espera de 20 s.
   - A máscara é guardada quando há desfoque.
 - **Testes:** pytest **314 ok** (15 em `test_pessoa.py`); aceite D 33/33. Um aceite anterior deu 32/33 uma vez, intermitente, sem mudança no site: fica de olho.
+
+## Item 2, parte 2: destaque e pele só na pessoa (20/11)
+- **Pele tratada (regra do dono), automática em todo plano de fala** (`planos[].pessoa.pele = 0,5`): é uma separação de frequências leve. A textura fina perde até 27%, e só na pele DA PESSOA: a máscara de pele (YCrCb) é cruzada com a de pessoa, então embalagem laranja e madeira do fundo não são tocadas, nem olho, boca, cabelo e roupa. O liso é bilateral, em meia resolução e só na caixa da pele (cerca de 20 ms por quadro).
+- **Destaque da pessoa** (`blocos[].destaque_pessoa` vira `fundo.destaque = 0,6`): janela de luz do colorista, com o fundo -20% de luz e -22% de cor e a pessoa +5%. Cerca de 12 ms por quadro, com operações nativas do OpenCV.
+- **Custo medido** em 3 s reais: 3,6 s sem nada, 7,8 s com pele, 9,0 s com pele e destaque, ou seja, cerca de +40 s num Reel de 30 s.
+- **Sem o modelo,** o filme sai como antes. `pele_sem_modelo` só registra; `sem_modelo` fica para o que o diretor pediu.
+- **Modelos baixados no boot** em segundo plano (`motor/modelos.py`). `/api/saude` mostra `modelos: {pessoa, voz}` e respeita `EDITOR_PESSOA` e `EDITOR_FALANTE`.
+- **Revisão do Crivo: reprovou primeiro, e com razão.** O download em segundo plano no `iniciar.sh` fazia o `wait -n` do fim derrubar o contêiner a cada boot. Corrigido com `disown` e testado no bash. Também pegou dois testes vazios, agora firmes: pele em TODO plano de fala e em NENHUM de cobertura; caixa da pele em tamanho ímpar com fundo cor de pele dentro dela.
+- **Pendências:** (1) a máscara roda mesmo em plano sem pessoa (tela gravada), um custo pequeno; (2) sem rede, o primeiro filme de cada worker espera até 20 s pelo download.
+- **Testes:** pytest **319 ok**; aceite D 33/33.
