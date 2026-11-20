@@ -1,0 +1,1391 @@
+{
+ "versao": "9a0af159a178",
+ "gerado_em": "2026-11-20T16:11:19.018Z",
+ "bytes_total": 14253215,
+ "casco": [
+  "vendor/LICENSE-qrcode-generator.txt",
+  "vendor/LICENSE.txt",
+  "vendor/VERSOES.json",
+  "vendor/maplibre-gl.css",
+  "vendor/maplibre-gl.js",
+  "vendor/qrcode-generator.js",
+  "vendor/qrcode-generator.mjs"
+ ],
+ "arquivos": [
+  {
+   "url": "dados/atribuicoes.json",
+   "bytes": 1306,
+   "hash": "425fdae5260d420f"
+  },
+  {
+   "url": "dados/base.geojson",
+   "bytes": 389932,
+   "hash": "34684a1326bd1327"
+  },
+  {
+   "url": "dados/pontos.geojson",
+   "bytes": 30141,
+   "hash": "70cfee9b436f6347"
+  },
+  {
+   "url": "dados/trilhas.geojson",
+   "bytes": 17773,
+   "hash": "ad24f4bf1906e8ba"
+  },
+  {
+   "url": "tiles/dem/10/396/544.png",
+   "bytes": 62471,
+   "hash": "bac5090e1dc07b1f"
+  },
+  {
+   "url": "tiles/dem/10/397/544.png",
+   "bytes": 47231,
+   "hash": "1541da420416d3be"
+  },
+  {
+   "url": "tiles/dem/11/793/1088.png",
+   "bytes": 57330,
+   "hash": "3fa735b24e3f1d61"
+  },
+  {
+   "url": "tiles/dem/11/793/1089.png",
+   "bytes": 56840,
+   "hash": "321f14b345d0d5ae"
+  },
+  {
+   "url": "tiles/dem/11/794/1088.png",
+   "bytes": 45168,
+   "hash": "a8a484799f69b886"
+  },
+  {
+   "url": "tiles/dem/11/794/1089.png",
+   "bytes": 45932,
+   "hash": "f1da7619f2d35bf9"
+  },
+  {
+   "url": "tiles/dem/12/1586/2176.png",
+   "bytes": 37614,
+   "hash": "81317a826a2cb869"
+  },
+  {
+   "url": "tiles/dem/12/1586/2177.png",
+   "bytes": 45764,
+   "hash": "2119d660ddfd9563"
+  },
+  {
+   "url": "tiles/dem/12/1586/2178.png",
+   "bytes": 45762,
+   "hash": "a8dd784ec0cdefc1"
+  },
+  {
+   "url": "tiles/dem/12/1587/2176.png",
+   "bytes": 49213,
+   "hash": "d6891f5199460145"
+  },
+  {
+   "url": "tiles/dem/12/1587/2177.png",
+   "bytes": 48196,
+   "hash": "849bc0ac0500facf"
+  },
+  {
+   "url": "tiles/dem/12/1587/2178.png",
+   "bytes": 45368,
+   "hash": "8223930e1f87d50b"
+  },
+  {
+   "url": "tiles/dem/12/1588/2176.png",
+   "bytes": 39727,
+   "hash": "2340c8dc6f9df4ee"
+  },
+  {
+   "url": "tiles/dem/12/1588/2177.png",
+   "bytes": 41021,
+   "hash": "ee996b1bdc18406d"
+  },
+  {
+   "url": "tiles/dem/12/1588/2178.png",
+   "bytes": 38356,
+   "hash": "e09c38ca737f703c"
+  },
+  {
+   "url": "tiles/dem/13/3172/4353.png",
+   "bytes": 26209,
+   "hash": "be0e5d6902df4467"
+  },
+  {
+   "url": "tiles/dem/13/3172/4354.png",
+   "bytes": 30149,
+   "hash": "c1ee76865c21463c"
+  },
+  {
+   "url": "tiles/dem/13/3172/4355.png",
+   "bytes": 30607,
+   "hash": "5ccad6b50893bc01"
+  },
+  {
+   "url": "tiles/dem/13/3172/4356.png",
+   "bytes": 31142,
+   "hash": "fc79c56ecc2543f1"
+  },
+  {
+   "url": "tiles/dem/13/3172/4357.png",
+   "bytes": 32213,
+   "hash": "3415b0fe0b7a60e1"
+  },
+  {
+   "url": "tiles/dem/13/3173/4353.png",
+   "bytes": 37715,
+   "hash": "41a8a1bfba15140d"
+  },
+  {
+   "url": "tiles/dem/13/3173/4354.png",
+   "bytes": 37785,
+   "hash": "186318e6183985ef"
+  },
+  {
+   "url": "tiles/dem/13/3173/4355.png",
+   "bytes": 40856,
+   "hash": "93bb032f3ee242cf"
+  },
+  {
+   "url": "tiles/dem/13/3173/4356.png",
+   "bytes": 38877,
+   "hash": "9ba6eb855675a882"
+  },
+  {
+   "url": "tiles/dem/13/3173/4357.png",
+   "bytes": 38450,
+   "hash": "98bd0eba735fd8c5"
+  },
+  {
+   "url": "tiles/dem/13/3174/4353.png",
+   "bytes": 45169,
+   "hash": "54f84b58a5e689d4"
+  },
+  {
+   "url": "tiles/dem/13/3174/4354.png",
+   "bytes": 44178,
+   "hash": "21c9d6d2387b4010"
+  },
+  {
+   "url": "tiles/dem/13/3174/4355.png",
+   "bytes": 39640,
+   "hash": "b0bd59ca8b663b19"
+  },
+  {
+   "url": "tiles/dem/13/3174/4356.png",
+   "bytes": 39119,
+   "hash": "beaf2755b0a0ad51"
+  },
+  {
+   "url": "tiles/dem/13/3174/4357.png",
+   "bytes": 34829,
+   "hash": "62583da84f74698c"
+  },
+  {
+   "url": "tiles/dem/13/3175/4353.png",
+   "bytes": 32873,
+   "hash": "bc7213713a1f51f6"
+  },
+  {
+   "url": "tiles/dem/13/3175/4354.png",
+   "bytes": 33211,
+   "hash": "bc129a896fe8b974"
+  },
+  {
+   "url": "tiles/dem/13/3175/4355.png",
+   "bytes": 32352,
+   "hash": "e5e88786fdc0424b"
+  },
+  {
+   "url": "tiles/dem/13/3175/4356.png",
+   "bytes": 33261,
+   "hash": "db7367c2503d0b39"
+  },
+  {
+   "url": "tiles/dem/13/3175/4357.png",
+   "bytes": 34418,
+   "hash": "777176ebdbd0d6f9"
+  },
+  {
+   "url": "tiles/dem/13/3176/4353.png",
+   "bytes": 29104,
+   "hash": "4c6e042c62ecaea4"
+  },
+  {
+   "url": "tiles/dem/13/3176/4354.png",
+   "bytes": 29609,
+   "hash": "00a0d0d13196f100"
+  },
+  {
+   "url": "tiles/dem/13/3176/4355.png",
+   "bytes": 30400,
+   "hash": "aa78ea9f32652daf"
+  },
+  {
+   "url": "tiles/dem/13/3176/4356.png",
+   "bytes": 30637,
+   "hash": "94630fdf213a5007"
+  },
+  {
+   "url": "tiles/dem/13/3176/4357.png",
+   "bytes": 29900,
+   "hash": "81a1d3b7a7d35448"
+  },
+  {
+   "url": "tiles/dem/14/6344/8707.png",
+   "bytes": 96650,
+   "hash": "041b448fed42d3ab"
+  },
+  {
+   "url": "tiles/dem/14/6344/8708.png",
+   "bytes": 100569,
+   "hash": "fb52fd888c4cb7df"
+  },
+  {
+   "url": "tiles/dem/14/6344/8709.png",
+   "bytes": 99549,
+   "hash": "78f270e39b33daa1"
+  },
+  {
+   "url": "tiles/dem/14/6344/8710.png",
+   "bytes": 99041,
+   "hash": "226d0768ef05889a"
+  },
+  {
+   "url": "tiles/dem/14/6344/8711.png",
+   "bytes": 99035,
+   "hash": "9d2c765c2b19acf2"
+  },
+  {
+   "url": "tiles/dem/14/6344/8712.png",
+   "bytes": 103903,
+   "hash": "c10edefb15cfb395"
+  },
+  {
+   "url": "tiles/dem/14/6344/8713.png",
+   "bytes": 102239,
+   "hash": "5da78fec3703040c"
+  },
+  {
+   "url": "tiles/dem/14/6344/8714.png",
+   "bytes": 105312,
+   "hash": "3046752ed7de7f73"
+  },
+  {
+   "url": "tiles/dem/14/6344/8715.png",
+   "bytes": 103540,
+   "hash": "05645d8c21991085"
+  },
+  {
+   "url": "tiles/dem/14/6345/8707.png",
+   "bytes": 91814,
+   "hash": "64907dc8c743a5e0"
+  },
+  {
+   "url": "tiles/dem/14/6345/8708.png",
+   "bytes": 109452,
+   "hash": "7d7e4b6be8f6ba52"
+  },
+  {
+   "url": "tiles/dem/14/6345/8709.png",
+   "bytes": 104141,
+   "hash": "ae825723ac61b8ee"
+  },
+  {
+   "url": "tiles/dem/14/6345/8710.png",
+   "bytes": 104627,
+   "hash": "06e9d13b7c8e612b"
+  },
+  {
+   "url": "tiles/dem/14/6345/8711.png",
+   "bytes": 110695,
+   "hash": "c85f1126601111d0"
+  },
+  {
+   "url": "tiles/dem/14/6345/8712.png",
+   "bytes": 106121,
+   "hash": "f39d64a8cd5ab0b7"
+  },
+  {
+   "url": "tiles/dem/14/6345/8713.png",
+   "bytes": 106742,
+   "hash": "a30921b9be12461c"
+  },
+  {
+   "url": "tiles/dem/14/6345/8714.png",
+   "bytes": 109973,
+   "hash": "b4952966aedc3ddd"
+  },
+  {
+   "url": "tiles/dem/14/6345/8715.png",
+   "bytes": 109411,
+   "hash": "50d8c2f4482d956c"
+  },
+  {
+   "url": "tiles/dem/14/6346/8707.png",
+   "bytes": 96839,
+   "hash": "910d617f389bba4c"
+  },
+  {
+   "url": "tiles/dem/14/6346/8708.png",
+   "bytes": 98972,
+   "hash": "bb0c1cfcfe18a17b"
+  },
+  {
+   "url": "tiles/dem/14/6346/8709.png",
+   "bytes": 112082,
+   "hash": "abf29f96ec09ec81"
+  },
+  {
+   "url": "tiles/dem/14/6346/8710.png",
+   "bytes": 112165,
+   "hash": "290ca87d8cbb7ae3"
+  },
+  {
+   "url": "tiles/dem/14/6346/8711.png",
+   "bytes": 112917,
+   "hash": "f7c0cb43d2dd752d"
+  },
+  {
+   "url": "tiles/dem/14/6346/8712.png",
+   "bytes": 112541,
+   "hash": "8616397c0b9764e6"
+  },
+  {
+   "url": "tiles/dem/14/6346/8713.png",
+   "bytes": 112384,
+   "hash": "ca3267e8187f9eb4"
+  },
+  {
+   "url": "tiles/dem/14/6346/8714.png",
+   "bytes": 111503,
+   "hash": "14a0850a3adff51f"
+  },
+  {
+   "url": "tiles/dem/14/6346/8715.png",
+   "bytes": 113843,
+   "hash": "2e1ace38554f2795"
+  },
+  {
+   "url": "tiles/dem/14/6347/8707.png",
+   "bytes": 99399,
+   "hash": "d40cf9c87a1f1297"
+  },
+  {
+   "url": "tiles/dem/14/6347/8708.png",
+   "bytes": 101076,
+   "hash": "119d239644f914a3"
+  },
+  {
+   "url": "tiles/dem/14/6347/8709.png",
+   "bytes": 114892,
+   "hash": "036108a8081e6aad"
+  },
+  {
+   "url": "tiles/dem/14/6347/8710.png",
+   "bytes": 116543,
+   "hash": "7be600d5f5faec4c"
+  },
+  {
+   "url": "tiles/dem/14/6347/8711.png",
+   "bytes": 118382,
+   "hash": "6adeafe3307e18e5"
+  },
+  {
+   "url": "tiles/dem/14/6347/8712.png",
+   "bytes": 114587,
+   "hash": "5111dbb6ae8608cb"
+  },
+  {
+   "url": "tiles/dem/14/6347/8713.png",
+   "bytes": 114465,
+   "hash": "84743dbb47340b3c"
+  },
+  {
+   "url": "tiles/dem/14/6347/8714.png",
+   "bytes": 115026,
+   "hash": "c4cdd5c23d108d6e"
+  },
+  {
+   "url": "tiles/dem/14/6347/8715.png",
+   "bytes": 116168,
+   "hash": "95cad1316d8e785f"
+  },
+  {
+   "url": "tiles/dem/14/6348/8707.png",
+   "bytes": 115913,
+   "hash": "a32bbbe9a22c067e"
+  },
+  {
+   "url": "tiles/dem/14/6348/8708.png",
+   "bytes": 116784,
+   "hash": "7f8a419e46129a04"
+  },
+  {
+   "url": "tiles/dem/14/6348/8709.png",
+   "bytes": 121834,
+   "hash": "405ebbbc9c9b91c8"
+  },
+  {
+   "url": "tiles/dem/14/6348/8710.png",
+   "bytes": 118741,
+   "hash": "45cf8f5d026395dc"
+  },
+  {
+   "url": "tiles/dem/14/6348/8711.png",
+   "bytes": 121129,
+   "hash": "4123f1a1d73739f2"
+  },
+  {
+   "url": "tiles/dem/14/6348/8712.png",
+   "bytes": 119802,
+   "hash": "e3fa539425e9f9ce"
+  },
+  {
+   "url": "tiles/dem/14/6348/8713.png",
+   "bytes": 116140,
+   "hash": "9a6893d735f69ae0"
+  },
+  {
+   "url": "tiles/dem/14/6348/8714.png",
+   "bytes": 113919,
+   "hash": "b29d4aaca9adae43"
+  },
+  {
+   "url": "tiles/dem/14/6348/8715.png",
+   "bytes": 107313,
+   "hash": "a571a4c1e97e9b07"
+  },
+  {
+   "url": "tiles/dem/14/6349/8707.png",
+   "bytes": 119171,
+   "hash": "a73a3f1b5de5fb09"
+  },
+  {
+   "url": "tiles/dem/14/6349/8708.png",
+   "bytes": 114961,
+   "hash": "8435426979451d9f"
+  },
+  {
+   "url": "tiles/dem/14/6349/8709.png",
+   "bytes": 112400,
+   "hash": "ad42bd6192c56aac"
+  },
+  {
+   "url": "tiles/dem/14/6349/8710.png",
+   "bytes": 107492,
+   "hash": "eed6d68389341de7"
+  },
+  {
+   "url": "tiles/dem/14/6349/8711.png",
+   "bytes": 106308,
+   "hash": "95a0f239a731bb71"
+  },
+  {
+   "url": "tiles/dem/14/6349/8712.png",
+   "bytes": 105851,
+   "hash": "be0ad618d2f5c875"
+  },
+  {
+   "url": "tiles/dem/14/6349/8713.png",
+   "bytes": 104877,
+   "hash": "46b7e200e6bde10b"
+  },
+  {
+   "url": "tiles/dem/14/6349/8714.png",
+   "bytes": 108963,
+   "hash": "ef0b73aea3d0f507"
+  },
+  {
+   "url": "tiles/dem/14/6349/8715.png",
+   "bytes": 108701,
+   "hash": "b59968488a2fa4d8"
+  },
+  {
+   "url": "tiles/dem/14/6350/8707.png",
+   "bytes": 102914,
+   "hash": "fb8e1edfe25ea7a6"
+  },
+  {
+   "url": "tiles/dem/14/6350/8708.png",
+   "bytes": 105362,
+   "hash": "a90ea162f319410c"
+  },
+  {
+   "url": "tiles/dem/14/6350/8709.png",
+   "bytes": 107172,
+   "hash": "686ee16ea0d82341"
+  },
+  {
+   "url": "tiles/dem/14/6350/8710.png",
+   "bytes": 105676,
+   "hash": "6f89499e89e363c5"
+  },
+  {
+   "url": "tiles/dem/14/6350/8711.png",
+   "bytes": 103281,
+   "hash": "619499342027fd98"
+  },
+  {
+   "url": "tiles/dem/14/6350/8712.png",
+   "bytes": 106677,
+   "hash": "293e15540efc3740"
+  },
+  {
+   "url": "tiles/dem/14/6350/8713.png",
+   "bytes": 105882,
+   "hash": "ea65bf8f4a6dce14"
+  },
+  {
+   "url": "tiles/dem/14/6350/8714.png",
+   "bytes": 108955,
+   "hash": "42cc18647fbf4ff1"
+  },
+  {
+   "url": "tiles/dem/14/6350/8715.png",
+   "bytes": 110328,
+   "hash": "f872976432999c3d"
+  },
+  {
+   "url": "tiles/dem/14/6351/8707.png",
+   "bytes": 107348,
+   "hash": "240347db6ea11881"
+  },
+  {
+   "url": "tiles/dem/14/6351/8708.png",
+   "bytes": 110622,
+   "hash": "8e4e6b525350b219"
+  },
+  {
+   "url": "tiles/dem/14/6351/8709.png",
+   "bytes": 110592,
+   "hash": "a91c127feaa923e2"
+  },
+  {
+   "url": "tiles/dem/14/6351/8710.png",
+   "bytes": 108531,
+   "hash": "957cb38b6d2fab44"
+  },
+  {
+   "url": "tiles/dem/14/6351/8711.png",
+   "bytes": 106554,
+   "hash": "ad9bd9f786ec6e19"
+  },
+  {
+   "url": "tiles/dem/14/6351/8712.png",
+   "bytes": 106134,
+   "hash": "44453769d3954e9f"
+  },
+  {
+   "url": "tiles/dem/14/6351/8713.png",
+   "bytes": 109059,
+   "hash": "1340729b01e1e886"
+  },
+  {
+   "url": "tiles/dem/14/6351/8714.png",
+   "bytes": 110850,
+   "hash": "af1311c372e7d822"
+  },
+  {
+   "url": "tiles/dem/14/6351/8715.png",
+   "bytes": 107418,
+   "hash": "0963548440871309"
+  },
+  {
+   "url": "tiles/dem/14/6352/8707.png",
+   "bytes": 82519,
+   "hash": "c5997127c49094c1"
+  },
+  {
+   "url": "tiles/dem/14/6352/8708.png",
+   "bytes": 102820,
+   "hash": "95afffbd213aa540"
+  },
+  {
+   "url": "tiles/dem/14/6352/8709.png",
+   "bytes": 102466,
+   "hash": "60529c872108dc85"
+  },
+  {
+   "url": "tiles/dem/14/6352/8710.png",
+   "bytes": 102534,
+   "hash": "2fe76ba27482b185"
+  },
+  {
+   "url": "tiles/dem/14/6352/8711.png",
+   "bytes": 102041,
+   "hash": "d43cd33995c27533"
+  },
+  {
+   "url": "tiles/dem/14/6352/8712.png",
+   "bytes": 100913,
+   "hash": "41b6f794fc63a244"
+  },
+  {
+   "url": "tiles/dem/14/6352/8713.png",
+   "bytes": 102947,
+   "hash": "b5e42dc234a7396f"
+  },
+  {
+   "url": "tiles/dem/14/6352/8714.png",
+   "bytes": 102788,
+   "hash": "5661f83465a59d20"
+  },
+  {
+   "url": "tiles/dem/14/6352/8715.png",
+   "bytes": 103211,
+   "hash": "1c834206a07c094e"
+  },
+  {
+   "url": "tiles/dem/14/6353/8707.png",
+   "bytes": 80648,
+   "hash": "25f5fd7fe5108de9"
+  },
+  {
+   "url": "tiles/dem/14/6353/8708.png",
+   "bytes": 100575,
+   "hash": "6c40bf826b198edc"
+  },
+  {
+   "url": "tiles/dem/14/6353/8709.png",
+   "bytes": 101991,
+   "hash": "d79d81cf24be49c9"
+  },
+  {
+   "url": "tiles/dem/14/6353/8710.png",
+   "bytes": 102399,
+   "hash": "2016b2413762af08"
+  },
+  {
+   "url": "tiles/dem/14/6353/8711.png",
+   "bytes": 104031,
+   "hash": "6e679788d21bac5e"
+  },
+  {
+   "url": "tiles/dem/14/6353/8712.png",
+   "bytes": 104690,
+   "hash": "23d9a244f2f32a24"
+  },
+  {
+   "url": "tiles/dem/14/6353/8713.png",
+   "bytes": 101884,
+   "hash": "9b301174d58447ca"
+  },
+  {
+   "url": "tiles/dem/14/6353/8714.png",
+   "bytes": 100776,
+   "hash": "fd1419729f49c44b"
+  },
+  {
+   "url": "tiles/dem/14/6353/8715.png",
+   "bytes": 101762,
+   "hash": "86155502696bcaa3"
+  },
+  {
+   "url": "tiles/dem/8/99/136.png",
+   "bytes": 75974,
+   "hash": "ab3e2ce4ac88f71b"
+  },
+  {
+   "url": "tiles/dem/9/198/272.png",
+   "bytes": 72311,
+   "hash": "939fd60a4ca94600"
+  },
+  {
+   "url": "tiles/sat/10/396/544.jpg",
+   "bytes": 19710,
+   "hash": "17cd8baf29a689dc"
+  },
+  {
+   "url": "tiles/sat/10/397/544.jpg",
+   "bytes": 21644,
+   "hash": "1eca7d3812bc1848"
+  },
+  {
+   "url": "tiles/sat/11/793/1088.jpg",
+   "bytes": 17524,
+   "hash": "001c1de36a89c7d3"
+  },
+  {
+   "url": "tiles/sat/11/793/1089.jpg",
+   "bytes": 16871,
+   "hash": "12dbacc70db0ab6e"
+  },
+  {
+   "url": "tiles/sat/11/794/1088.jpg",
+   "bytes": 19086,
+   "hash": "953efd1b97d51603"
+  },
+  {
+   "url": "tiles/sat/11/794/1089.jpg",
+   "bytes": 19153,
+   "hash": "49fbcf3dbde699f7"
+  },
+  {
+   "url": "tiles/sat/12/1586/2176.jpg",
+   "bytes": 18779,
+   "hash": "6f769eec7bba7844"
+  },
+  {
+   "url": "tiles/sat/12/1586/2177.jpg",
+   "bytes": 14769,
+   "hash": "931a7f9b9905a98d"
+  },
+  {
+   "url": "tiles/sat/12/1586/2178.jpg",
+   "bytes": 14495,
+   "hash": "b1d866758a44c742"
+  },
+  {
+   "url": "tiles/sat/12/1587/2176.jpg",
+   "bytes": 14004,
+   "hash": "5a71a216574d1bba"
+  },
+  {
+   "url": "tiles/sat/12/1587/2177.jpg",
+   "bytes": 12263,
+   "hash": "1c4eec825c81826e"
+  },
+  {
+   "url": "tiles/sat/12/1587/2178.jpg",
+   "bytes": 13236,
+   "hash": "70b79647b6b4f312"
+  },
+  {
+   "url": "tiles/sat/12/1588/2176.jpg",
+   "bytes": 15631,
+   "hash": "0d50ac72298ffe7d"
+  },
+  {
+   "url": "tiles/sat/12/1588/2177.jpg",
+   "bytes": 14861,
+   "hash": "a58c95e109729f89"
+  },
+  {
+   "url": "tiles/sat/12/1588/2178.jpg",
+   "bytes": 16588,
+   "hash": "62ae47c04089ae1f"
+  },
+  {
+   "url": "tiles/sat/13/3172/4353.jpg",
+   "bytes": 15761,
+   "hash": "8d6c9697c860ecfb"
+  },
+  {
+   "url": "tiles/sat/13/3172/4354.jpg",
+   "bytes": 14963,
+   "hash": "4310e9adc3c1af4a"
+  },
+  {
+   "url": "tiles/sat/13/3172/4355.jpg",
+   "bytes": 14157,
+   "hash": "8a1acae56e9c8e75"
+  },
+  {
+   "url": "tiles/sat/13/3172/4356.jpg",
+   "bytes": 13489,
+   "hash": "f67c0b23ccc4d25a"
+  },
+  {
+   "url": "tiles/sat/13/3172/4357.jpg",
+   "bytes": 15734,
+   "hash": "03b46e189508a0d9"
+  },
+  {
+   "url": "tiles/sat/13/3173/4353.jpg",
+   "bytes": 14234,
+   "hash": "a8830e4fcf09c8c1"
+  },
+  {
+   "url": "tiles/sat/13/3173/4354.jpg",
+   "bytes": 12096,
+   "hash": "e7655d844ff6f60d"
+  },
+  {
+   "url": "tiles/sat/13/3173/4355.jpg",
+   "bytes": 10720,
+   "hash": "c6d3622f3d486dfc"
+  },
+  {
+   "url": "tiles/sat/13/3173/4356.jpg",
+   "bytes": 10444,
+   "hash": "24076ebd6c9e5fba"
+  },
+  {
+   "url": "tiles/sat/13/3173/4357.jpg",
+   "bytes": 11579,
+   "hash": "242754cb28654650"
+  },
+  {
+   "url": "tiles/sat/13/3174/4353.jpg",
+   "bytes": 11624,
+   "hash": "3f375d8d2b8c6970"
+  },
+  {
+   "url": "tiles/sat/13/3174/4354.jpg",
+   "bytes": 10651,
+   "hash": "98684c89cb4e5b77"
+  },
+  {
+   "url": "tiles/sat/13/3174/4355.jpg",
+   "bytes": 11221,
+   "hash": "e0349457abd80b81"
+  },
+  {
+   "url": "tiles/sat/13/3174/4356.jpg",
+   "bytes": 11036,
+   "hash": "d53ed6ea08042448"
+  },
+  {
+   "url": "tiles/sat/13/3174/4357.jpg",
+   "bytes": 11432,
+   "hash": "e0d4ad410885e540"
+  },
+  {
+   "url": "tiles/sat/13/3175/4353.jpg",
+   "bytes": 11343,
+   "hash": "7c84dface33ad4d5"
+  },
+  {
+   "url": "tiles/sat/13/3175/4354.jpg",
+   "bytes": 10248,
+   "hash": "3d6b369cbcc2e9af"
+  },
+  {
+   "url": "tiles/sat/13/3175/4355.jpg",
+   "bytes": 10429,
+   "hash": "495f14bbfc5dde3c"
+  },
+  {
+   "url": "tiles/sat/13/3175/4356.jpg",
+   "bytes": 12208,
+   "hash": "b4a93286d1331430"
+  },
+  {
+   "url": "tiles/sat/13/3175/4357.jpg",
+   "bytes": 11449,
+   "hash": "c377842d5ea00c7b"
+  },
+  {
+   "url": "tiles/sat/13/3176/4353.jpg",
+   "bytes": 15452,
+   "hash": "19a8c78077507109"
+  },
+  {
+   "url": "tiles/sat/13/3176/4354.jpg",
+   "bytes": 14054,
+   "hash": "c161c78437103110"
+  },
+  {
+   "url": "tiles/sat/13/3176/4355.jpg",
+   "bytes": 15403,
+   "hash": "8130d77fb4c2cbfd"
+  },
+  {
+   "url": "tiles/sat/13/3176/4356.jpg",
+   "bytes": 15389,
+   "hash": "c956510b26861476"
+  },
+  {
+   "url": "tiles/sat/13/3176/4357.jpg",
+   "bytes": 14347,
+   "hash": "b0b441c488e4d816"
+  },
+  {
+   "url": "tiles/sat/14/6344/8707.jpg",
+   "bytes": 9074,
+   "hash": "82cf35d621f996cd"
+  },
+  {
+   "url": "tiles/sat/14/6344/8708.jpg",
+   "bytes": 8302,
+   "hash": "3fbbf3ab9458e843"
+  },
+  {
+   "url": "tiles/sat/14/6344/8709.jpg",
+   "bytes": 9147,
+   "hash": "1500bc13c3c66766"
+  },
+  {
+   "url": "tiles/sat/14/6344/8710.jpg",
+   "bytes": 7386,
+   "hash": "cce8d90749bd734d"
+  },
+  {
+   "url": "tiles/sat/14/6344/8711.jpg",
+   "bytes": 9003,
+   "hash": "351a4f9ee30d4a61"
+  },
+  {
+   "url": "tiles/sat/14/6344/8712.jpg",
+   "bytes": 7100,
+   "hash": "ac30e20848f6cc8c"
+  },
+  {
+   "url": "tiles/sat/14/6344/8713.jpg",
+   "bytes": 7910,
+   "hash": "81d70c7615106e6c"
+  },
+  {
+   "url": "tiles/sat/14/6344/8714.jpg",
+   "bytes": 8143,
+   "hash": "2ec2191d257b78b7"
+  },
+  {
+   "url": "tiles/sat/14/6344/8715.jpg",
+   "bytes": 10784,
+   "hash": "105c3a6b04360548"
+  },
+  {
+   "url": "tiles/sat/14/6345/8707.jpg",
+   "bytes": 7232,
+   "hash": "4ab57cc8cc9cbf9d"
+  },
+  {
+   "url": "tiles/sat/14/6345/8708.jpg",
+   "bytes": 6698,
+   "hash": "5fa642c54c5ec84b"
+  },
+  {
+   "url": "tiles/sat/14/6345/8709.jpg",
+   "bytes": 7944,
+   "hash": "8417b643edc6ff2f"
+  },
+  {
+   "url": "tiles/sat/14/6345/8710.jpg",
+   "bytes": 7904,
+   "hash": "ca41f9a69a86c6e7"
+  },
+  {
+   "url": "tiles/sat/14/6345/8711.jpg",
+   "bytes": 6114,
+   "hash": "6bb97ff18b3770f4"
+  },
+  {
+   "url": "tiles/sat/14/6345/8712.jpg",
+   "bytes": 6545,
+   "hash": "1bbece34b5ec9cde"
+  },
+  {
+   "url": "tiles/sat/14/6345/8713.jpg",
+   "bytes": 7496,
+   "hash": "365534db6d498f47"
+  },
+  {
+   "url": "tiles/sat/14/6345/8714.jpg",
+   "bytes": 7328,
+   "hash": "0a589a48639a2750"
+  },
+  {
+   "url": "tiles/sat/14/6345/8715.jpg",
+   "bytes": 7536,
+   "hash": "f3a88335b33e338c"
+  },
+  {
+   "url": "tiles/sat/14/6346/8707.jpg",
+   "bytes": 5373,
+   "hash": "4e47d331657b7080"
+  },
+  {
+   "url": "tiles/sat/14/6346/8708.jpg",
+   "bytes": 5476,
+   "hash": "1847888194ac6938"
+  },
+  {
+   "url": "tiles/sat/14/6346/8709.jpg",
+   "bytes": 6072,
+   "hash": "db168aad0a7734b5"
+  },
+  {
+   "url": "tiles/sat/14/6346/8710.jpg",
+   "bytes": 6351,
+   "hash": "dd6f104b29528789"
+  },
+  {
+   "url": "tiles/sat/14/6346/8711.jpg",
+   "bytes": 5607,
+   "hash": "31a81a04e014a4fa"
+  },
+  {
+   "url": "tiles/sat/14/6346/8712.jpg",
+   "bytes": 6588,
+   "hash": "44578c1c8689c73b"
+  },
+  {
+   "url": "tiles/sat/14/6346/8713.jpg",
+   "bytes": 6224,
+   "hash": "79cf35b46c12a4ea"
+  },
+  {
+   "url": "tiles/sat/14/6346/8714.jpg",
+   "bytes": 7461,
+   "hash": "c9beac398d6f175c"
+  },
+  {
+   "url": "tiles/sat/14/6346/8715.jpg",
+   "bytes": 6440,
+   "hash": "fe5e31273ebfce26"
+  },
+  {
+   "url": "tiles/sat/14/6347/8707.jpg",
+   "bytes": 8370,
+   "hash": "461795c0b226546b"
+  },
+  {
+   "url": "tiles/sat/14/6347/8708.jpg",
+   "bytes": 6667,
+   "hash": "c2f68091b2c6c7d8"
+  },
+  {
+   "url": "tiles/sat/14/6347/8709.jpg",
+   "bytes": 7677,
+   "hash": "8bf03dd3e1b5aed8"
+  },
+  {
+   "url": "tiles/sat/14/6347/8710.jpg",
+   "bytes": 6018,
+   "hash": "24901d06b5536884"
+  },
+  {
+   "url": "tiles/sat/14/6347/8711.jpg",
+   "bytes": 5051,
+   "hash": "fbed64da7ef875dc"
+  },
+  {
+   "url": "tiles/sat/14/6347/8712.jpg",
+   "bytes": 4598,
+   "hash": "536c65e1b60c6346"
+  },
+  {
+   "url": "tiles/sat/14/6347/8713.jpg",
+   "bytes": 4933,
+   "hash": "efc6792e5e22695d"
+  },
+  {
+   "url": "tiles/sat/14/6347/8714.jpg",
+   "bytes": 5092,
+   "hash": "e6e69d083957549a"
+  },
+  {
+   "url": "tiles/sat/14/6347/8715.jpg",
+   "bytes": 5832,
+   "hash": "8a08e6158a74ff8e"
+  },
+  {
+   "url": "tiles/sat/14/6348/8707.jpg",
+   "bytes": 6827,
+   "hash": "06e63ca97a72a510"
+  },
+  {
+   "url": "tiles/sat/14/6348/8708.jpg",
+   "bytes": 6414,
+   "hash": "6e503f2d338bb815"
+  },
+  {
+   "url": "tiles/sat/14/6348/8709.jpg",
+   "bytes": 5705,
+   "hash": "ac89cbebc43736bf"
+  },
+  {
+   "url": "tiles/sat/14/6348/8710.jpg",
+   "bytes": 5109,
+   "hash": "95ff9102d40f10a7"
+  },
+  {
+   "url": "tiles/sat/14/6348/8711.jpg",
+   "bytes": 5545,
+   "hash": "63aad5b417552a4b"
+  },
+  {
+   "url": "tiles/sat/14/6348/8712.jpg",
+   "bytes": 5684,
+   "hash": "f49dfbd5fcf0de1b"
+  },
+  {
+   "url": "tiles/sat/14/6348/8713.jpg",
+   "bytes": 6207,
+   "hash": "5e8d1ea53ff43f09"
+  },
+  {
+   "url": "tiles/sat/14/6348/8714.jpg",
+   "bytes": 6601,
+   "hash": "a07fbe9d73be8112"
+  },
+  {
+   "url": "tiles/sat/14/6348/8715.jpg",
+   "bytes": 7760,
+   "hash": "808f42f6a9831aaf"
+  },
+  {
+   "url": "tiles/sat/14/6349/8707.jpg",
+   "bytes": 5852,
+   "hash": "04ad6eac07ad12ef"
+  },
+  {
+   "url": "tiles/sat/14/6349/8708.jpg",
+   "bytes": 5348,
+   "hash": "a935e2af086fe550"
+  },
+  {
+   "url": "tiles/sat/14/6349/8709.jpg",
+   "bytes": 5480,
+   "hash": "c43d4eff84c49ddf"
+  },
+  {
+   "url": "tiles/sat/14/6349/8710.jpg",
+   "bytes": 6197,
+   "hash": "b3f5c2bc759d0bed"
+  },
+  {
+   "url": "tiles/sat/14/6349/8711.jpg",
+   "bytes": 7132,
+   "hash": "96809559fecd87c8"
+  },
+  {
+   "url": "tiles/sat/14/6349/8712.jpg",
+   "bytes": 5546,
+   "hash": "ee8a2f7aaa5f5503"
+  },
+  {
+   "url": "tiles/sat/14/6349/8713.jpg",
+   "bytes": 6235,
+   "hash": "07e97e77866a0585"
+  },
+  {
+   "url": "tiles/sat/14/6349/8714.jpg",
+   "bytes": 4914,
+   "hash": "9779f9e6a3a70f19"
+  },
+  {
+   "url": "tiles/sat/14/6349/8715.jpg",
+   "bytes": 5250,
+   "hash": "7597108f74fe9767"
+  },
+  {
+   "url": "tiles/sat/14/6350/8707.jpg",
+   "bytes": 8128,
+   "hash": "bf07a6619772cdf0"
+  },
+  {
+   "url": "tiles/sat/14/6350/8708.jpg",
+   "bytes": 7072,
+   "hash": "bce5246ee6063b9f"
+  },
+  {
+   "url": "tiles/sat/14/6350/8709.jpg",
+   "bytes": 6501,
+   "hash": "a0a63b3751b2d8b9"
+  },
+  {
+   "url": "tiles/sat/14/6350/8710.jpg",
+   "bytes": 5635,
+   "hash": "60e8d99f89588664"
+  },
+  {
+   "url": "tiles/sat/14/6350/8711.jpg",
+   "bytes": 6577,
+   "hash": "533eacf90683acdd"
+  },
+  {
+   "url": "tiles/sat/14/6350/8712.jpg",
+   "bytes": 6271,
+   "hash": "3770f756f9364844"
+  },
+  {
+   "url": "tiles/sat/14/6350/8713.jpg",
+   "bytes": 6905,
+   "hash": "6a578379a8d7381e"
+  },
+  {
+   "url": "tiles/sat/14/6350/8714.jpg",
+   "bytes": 6136,
+   "hash": "67b184cdba4709de"
+  },
+  {
+   "url": "tiles/sat/14/6350/8715.jpg",
+   "bytes": 6427,
+   "hash": "04fcd589702b5e45"
+  },
+  {
+   "url": "tiles/sat/14/6351/8707.jpg",
+   "bytes": 4992,
+   "hash": "ab8cb2122a7967b9"
+  },
+  {
+   "url": "tiles/sat/14/6351/8708.jpg",
+   "bytes": 4503,
+   "hash": "bb3067ea7e235116"
+  },
+  {
+   "url": "tiles/sat/14/6351/8709.jpg",
+   "bytes": 3975,
+   "hash": "af5994ff840ffccb"
+  },
+  {
+   "url": "tiles/sat/14/6351/8710.jpg",
+   "bytes": 4172,
+   "hash": "b13d0a63bddcda91"
+  },
+  {
+   "url": "tiles/sat/14/6351/8711.jpg",
+   "bytes": 5989,
+   "hash": "1c57a39e2f661356"
+  },
+  {
+   "url": "tiles/sat/14/6351/8712.jpg",
+   "bytes": 6680,
+   "hash": "34143178accb2460"
+  },
+  {
+   "url": "tiles/sat/14/6351/8713.jpg",
+   "bytes": 6251,
+   "hash": "38ed6c8b7228818c"
+  },
+  {
+   "url": "tiles/sat/14/6351/8714.jpg",
+   "bytes": 5661,
+   "hash": "53683b4c9fa04726"
+  },
+  {
+   "url": "tiles/sat/14/6351/8715.jpg",
+   "bytes": 6323,
+   "hash": "97b09cb3332b05be"
+  },
+  {
+   "url": "tiles/sat/14/6352/8707.jpg",
+   "bytes": 8701,
+   "hash": "67a6cbed4bb7371d"
+  },
+  {
+   "url": "tiles/sat/14/6352/8708.jpg",
+   "bytes": 8166,
+   "hash": "b32b325c1bb93565"
+  },
+  {
+   "url": "tiles/sat/14/6352/8709.jpg",
+   "bytes": 7519,
+   "hash": "19d7446325ce8dc9"
+  },
+  {
+   "url": "tiles/sat/14/6352/8710.jpg",
+   "bytes": 8775,
+   "hash": "b7aa7c07ec7b0532"
+  },
+  {
+   "url": "tiles/sat/14/6352/8711.jpg",
+   "bytes": 8856,
+   "hash": "5d356fd9dab04a4f"
+  },
+  {
+   "url": "tiles/sat/14/6352/8712.jpg",
+   "bytes": 8964,
+   "hash": "6bbfad171811657c"
+  },
+  {
+   "url": "tiles/sat/14/6352/8713.jpg",
+   "bytes": 8360,
+   "hash": "340700c1598b5df9"
+  },
+  {
+   "url": "tiles/sat/14/6352/8714.jpg",
+   "bytes": 6992,
+   "hash": "cfca8a81cb7e6f04"
+  },
+  {
+   "url": "tiles/sat/14/6352/8715.jpg",
+   "bytes": 7848,
+   "hash": "e66403f9826b0ab8"
+  },
+  {
+   "url": "tiles/sat/14/6353/8707.jpg",
+   "bytes": 7432,
+   "hash": "73f6ab7d5e43db8e"
+  },
+  {
+   "url": "tiles/sat/14/6353/8708.jpg",
+   "bytes": 7207,
+   "hash": "897aeb48a815ca93"
+  },
+  {
+   "url": "tiles/sat/14/6353/8709.jpg",
+   "bytes": 7127,
+   "hash": "a5dd188389176707"
+  },
+  {
+   "url": "tiles/sat/14/6353/8710.jpg",
+   "bytes": 7491,
+   "hash": "ff578aa3a9002c9a"
+  },
+  {
+   "url": "tiles/sat/14/6353/8711.jpg",
+   "bytes": 8063,
+   "hash": "2d7bb9ad5cf0152a"
+  },
+  {
+   "url": "tiles/sat/14/6353/8712.jpg",
+   "bytes": 7725,
+   "hash": "3ac1f40a7ffa0e96"
+  },
+  {
+   "url": "tiles/sat/14/6353/8713.jpg",
+   "bytes": 7973,
+   "hash": "455b141af4c74057"
+  },
+  {
+   "url": "tiles/sat/14/6353/8714.jpg",
+   "bytes": 8060,
+   "hash": "c934f07bbf57822b"
+  },
+  {
+   "url": "tiles/sat/14/6353/8715.jpg",
+   "bytes": 7665,
+   "hash": "d38a3e1203f3d93f"
+  },
+  {
+   "url": "tiles/sat/8/99/136.jpg",
+   "bytes": 21476,
+   "hash": "618b983965db2d0b"
+  },
+  {
+   "url": "tiles/sat/9/198/272.jpg",
+   "bytes": 21244,
+   "hash": "1d8a99696608205c"
+  },
+  {
+   "url": "vendor/LICENSE-qrcode-generator.txt",
+   "bytes": 1071,
+   "hash": "3a850fa5f08101db"
+  },
+  {
+   "url": "vendor/LICENSE.txt",
+   "bytes": 5984,
+   "hash": "ee5fc05a0677eaf6"
+  },
+  {
+   "url": "vendor/VERSOES.json",
+   "bytes": 1831,
+   "hash": "be05e7fc2ee2e5f9"
+  },
+  {
+   "url": "vendor/maplibre-gl.css",
+   "bytes": 70024,
+   "hash": "ab1e70d59ec40465"
+  },
+  {
+   "url": "vendor/maplibre-gl.js",
+   "bytes": 1056837,
+   "hash": "45a9b07a9189ce56"
+  },
+  {
+   "url": "vendor/qrcode-generator.js",
+   "bytes": 56837,
+   "hash": "de4863c835264c57"
+  },
+  {
+   "url": "vendor/qrcode-generator.mjs",
+   "bytes": 52050,
+   "hash": "a53256bb8dcb0611"
+  }
+ ]
+}
