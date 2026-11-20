@@ -29,7 +29,7 @@ site/itaitu/
 ├── js/
 │   ├── app.js estilo.js mapa.js dados.js marca.js destinos.js gps.js rota.js
 │   │   gravador.js banco.js gpx.js sos.js busca.js armazenamento.js
-│   │   economia.js util.js       frontend A
+│   │   economia.js util.js perfil.js marcar.js   frontend A (seção 2.1)
 │   ├── textos.js                 copywriter   todos os textos da interface
 │   ├── som.js                    som          Web Audio sintetizado
 │   ├── luz.js voos.js abertura.js  motion-3d
@@ -95,6 +95,7 @@ window.Itaitu = {
   recorte: {...},                   // dados/recorte.json
   dados: { pontos, trilhas, base, info },  // FeatureCollections já enriquecidas (seção 6) e info.json
   marca: {...},                     // marca validada (seção 7.1)
+  motor: null | Motor,              // seção 4.3; o B preenche depois do 'init' e emite itaitu:motor. O A só lê (perfil, toque longo)
   agora(): Date,                    // seção 3
   economia(): boolean,
   reduzMovimento(): boolean,        // prefers-reduced-motion OU economia()
@@ -122,8 +123,11 @@ Eventos (sempre no `document`, nome com o prefixo):
 | `itaitu:destino-escolhido` | tabuas.js, destinos.js, busca.js | `{ id, origem: 'tabua'\|'lista'\|'mapa'\|'busca'\|'demo' }` |
 | `itaitu:trilha-gravada` | gravador.js | `{ id, destino_id\|null, km, desnivel_m, duracao_s, inicioMs, fimMs }` |
 | `itaitu:gravacao` | gravador.js | `{ estado: 'gravando'\|'pausada'\|'parada' }` |
+| `itaitu:motor` | hora/index.js | `{ ok: boolean }` (falso: sem OffscreenCanvas ou `init` falhou) |
+| `itaitu:toque-longo` | mapa.js | `{ lon, lat, origem: 'toque'\|'centro' }` |
+| `itaitu:ponto-marcado` | marcar.js | `{ id }` (Feature já gravada em `marcados`) |
 
-Quem reage: destinos.js ouve `itaitu:destino-escolhido` (voo e alvo do GPS); luz.js ouve `itaitu:hora`; cartao.js ouve `itaitu:trilha-gravada`; horarios.js ouve `itaitu:gravacao`.
+Quem reage: destinos.js ouve `itaitu:destino-escolhido` (voo e alvo do GPS); luz.js ouve `itaitu:hora`; cartao.js ouve `itaitu:trilha-gravada`; horarios.js ouve `itaitu:gravacao`; perfil.js ouve `itaitu:motor` (refaz os perfis que esperavam o relevo) e `itaitu:trilha-gravada`; mapa.js ouve `itaitu:ponto-marcado` (atualiza a fonte `marcados`).
 
 Ids de montagem que o frontend A cria vazios em `index.html` para o B preencher (o A não escreve dentro deles):
 
@@ -138,6 +142,79 @@ Ids de montagem que o frontend A cria vazios em `index.html` para o B preencher 
 | `#hora-live` | invisível, `aria-live="polite"` | anúncios de hora e sombra |
 
 O `marcos.html` mostra a vitrine num `<iframe src="./index.html?m=<slug>&demo=1&vitrine=1">`; com `vitrine=1` o A desliga links externos (wa.me, tel, sms) com aviso "na demonstração". A trava (toque longo + PIN) fica no `marcos.html`, por cima do iframe.
+
+### 2.1 Cada função do briefing tem um arquivo dono
+
+Regra: função obrigatória do briefing ("O que o app faz", "Realmente completo") sem linha nesta tabela não tem autor. Quem achar uma falta pede no RELATORIO.
+
+| função do briefing | arquivo (dono) | onde aparece na tela |
+|---|---|---|
+| mapa 3D, 3D/2D, Satélite/Mapa, voltar ao norte | `estilo.js`, `mapa.js` (A) | controles no canto do mapa |
+| lista de destinos, cartão do destino, voo | `destinos.js` (A); tábuas `hora/tabuas.js` (B); voo `voos.js` (motion-3d) | painel de destinos; detalhe em `#destino-detalhe` |
+| GPS ao vivo, seguir, rumo e distância, fora da trilha, bússola | `gps.js`, `rota.js` (A) | ponto azul; faixa de rumo no rodapé com destino escolhido |
+| gravar trilha, GPX de saída | `gravador.js`, `gpx.js` (A) | painel Gravar |
+| **Marcar ponto aqui** (briefing, item 4) | `marcar.js` (A) | botão no painel Gravar e no balão do toque longo; lista "Meus pontos" no mesmo painel (seção 2.2) |
+| importar GPX | `gpx.js` (A) | painel Gravar, "Importar GPX" |
+| **perfil de altitude de cada trilha** | `perfil.js` (A) | `#destino-detalhe` (trilha `pe` do destino), resumo ao parar a gravação, item de "Minhas trilhas" (seção 2.2) |
+| **coordenada do toque longo no mapa** | `mapa.js` (A), formatação em `util.js` (A) | balão sobre o ponto tocado (seção 2.2) |
+| busca offline por nome | `busca.js` (A) | campo no topo do painel de destinos |
+| SOS (coordenada grande, SMS, 192/193/190) | `sos.js` (A), formatação em `util.js` | botão SOS fixo |
+| segurança (avisos, guias, melhor época) | `app.js` lê `info.json` (A); texto do copywriter | painel Informações |
+| horários do dia, "faltam X min para escurecer" | `hora/horarios.js` (B) | `#hora-horarios` |
+| armazenamento, "atualizar mapa" | `armazenamento.js` (A) | painel Informações |
+| economia | `economia.js` (A) | botão no painel Informações |
+| contraste alto, texto grande | `app.js` (A), atributos no `<html>` (6.4) | painel Informações |
+| marca, "Falar com a pousada", "Onde comer" | `marca.js` (A) | topo do app e painel de destinos |
+| "Chamar um guia" | `hora/tabuas.js` (B) na tábua; `marca.js` (A) no painel | tábua e painel |
+| cartão da trilha | `hora/cartao.js` (B) | `#hora-cartao` |
+| demonstração | `hora/demo.js` (B) | `?demo=1` |
+| app particular inteiro | `marcos.html`, `js/marcos/**` (C) | só no `marcos.html` |
+
+### 2.2 Perfil, toque longo e Marcar ponto aqui (frontend A)
+
+**`js/util.js`** é puro (nada de DOM ao importar; Node importa para teste):
+```js
+export function tempoMaisLentoMin(texto) -> int | null        // seção 6.1
+export function formatarDecimal(lon, lat) -> '-11.333108, -40.503572'      // lat primeiro, 6 casas, ponto decimal
+export function formatarGMS(lon, lat) -> '11°19′59,2″ S · 40°30′12,9″ O'   // segundos com 1 casa e vírgula
+export function distanciaM([lon, lat], [lon, lat]) -> number                // haversine, R = 6.371.000
+```
+`sos.js` e `mapa.js` usam as mesmas funções; ninguém formata coordenada por conta própria.
+
+**`js/perfil.js`**
+```js
+export function perfilDeCoordenadas(coords /*[[lon, lat, alt], ...]*/, passoM = 25) -> Perfil | null
+//   null se algum ponto não tem altitude; reamostra por distância ao longo da linha a cada passoM
+export async function perfilDaTrilha(trilha /*Feature LineString ou registro de banco.js*/, motor /*Itaitu.motor*/) -> Perfil | null
+//   1º: altitudes da própria trilha (gravada ou GPX com <ele>), fonte 'gps'
+//   2º: sem altitude, motor.altitudes(...) (seção 4.3) sobre a grade z12, fonte 'relevo'
+//   3º: sem motor, null; a tela diz t('perfil.indisponivel') e tenta de novo no itaitu:motor
+export function desenharPerfil(el, perfil, { posicaoM } = {})   // SVG inline, sem biblioteca; posicaoM marca "você está aqui"
+Perfil = { pontos: [[dist_m, alt_m], ...],   // inteiros, começa em [0, alt]
+           km, subida_m, descida_m, min_m, max_m, fonte: 'gps' | 'relevo' }
+```
+- Subida e descida somam só variações de 3 m ou mais (histerese), para o ruído do GPS não inflar o desnível. `desnivel_m` em todo o app (evento `itaitu:trilha-gravada`, banco, pacote, cartão) é o `subida_m` desta função.
+- O SVG tem `role="img"` e `aria-label` com o resumo em texto ("sobe 61 m, desce 12 m, de 560 a 621 m de altitude"); o mesmo resumo aparece escrito abaixo do gráfico. Fonte 'relevo' vem com t('perfil.do_relevo'), "altitude do relevo, ~37 m por pixel".
+- O app particular (C) importa `perfil.js` para preencher o campo `perfil` do pacote (7.5); não reimplementa.
+
+**Toque longo (`js/mapa.js`)**
+- Disparo: um dedo parado 550 ms com movimento < 10 px; no desktop, `contextmenu`. Arrastar, pinçar ou girar cancela. Desligado com a trava da gravação ativa e durante a demonstração.
+- Alternativa de teclado e leitor de tela: botão "Coordenada do centro do mapa" nos controles do mapa, que abre o mesmo balão no centro (`origem: 'centro'`).
+- Balão (`maplibregl.Popup`, conteúdo montado com `textContent`): `formatarDecimal`, `formatarGMS`, altitude do relevo (`motor.altitudes`, omitida se não houver motor), distância até o GPS quando ligado, e os botões "Copiar coordenada" (`navigator.clipboard.writeText`; sem permissão, seleciona o texto) e "Marcar ponto aqui" (chama `marcarPonto` com `origem: 'toque'`). Fecha com Esc e com o X de 44 px.
+- Emite `itaitu:toque-longo`.
+
+**Marcar ponto aqui (`js/marcar.js`)**, nos dois apps
+```js
+export async function marcarPonto({ lon, lat, alt = null, precisao_m = null, origem /*'gps'|'toque'*/ }) -> Promise<Feature | null>  // null = cancelado
+export async function listarMarcados() -> Feature[]
+export async function apagarMarcado(id)
+export async function exportarMarcados(formato /*'geojson'|'gpx'*/) -> Blob   // GPX com <wpt>, montado por gpx.js
+```
+- Botão "Marcar ponto aqui" no painel Gravar, com ou sem gravação em andamento: usa a última posição do `gps.js`. Sem posição ainda: desabilitado com "aguardando o GPS". Com precisão pior que 30 m: grava assim mesmo, com o aviso "precisão de N m".
+- Formulário em `<dialog id="marcar-ponto">`: nome (obrigatório, até 60 caracteres), tipo (`<select>` com os tipos do contrato de `pontos.geojson`; padrão `mirante`), nota (até 280).
+- Grava no IndexedDB, store `marcados` (7.7), como Feature Point: `{ id: 'marcado-<ms>', nome, tipo, nota, origem, precisao_m, alt_m, criado_em, aproximado, fonte: 'marcado no aparelho' }`, com `aproximado = origem == 'toque' || precisao_m == null || precisao_m > 30`. Emite `itaitu:ponto-marcado`.
+- No mapa: fonte `marcados`, camada `pontos-marcados` (seção 5). Lista "Meus pontos" no painel Gravar, com "Exportar GeoJSON", "Exportar GPX" e apagar.
+- O ponto marcado nunca vira ponto oficial sozinho e nunca recebe hora de sol (não passa pelo enriquecimento da 6.1). O caminho oficial é o "Estou aqui: confirmar posição" do `marcos.html` (C) e o pacote (7.5).
 
 ---
 
@@ -222,12 +299,15 @@ Motor = {
     -> Promise<{ cantos, quadros: [{ minuto, bitmap }] }>
   relevoCartao({ trilha, minuto, data, largura, altura })
     -> Promise<{ imagem: ImageData, tracadoPx, bbox }>
+  altitudes({ coordenadas: [[lon, lat], ...] })             // amostrar() na grade z12; para perfil.js e o toque longo
+    -> Promise<{ alt: (number | null)[] }>                  // null fora da grade
   encerrar(): void
 }
 ```
 - Criação: `new Worker(new URL('./worker.js', import.meta.url), { type: 'module' })`.
-- Mensagens: página → worker `{ id, tipo: 'init'|'horas'|'sombra'|'dia'|'relevoCartao', ...args }`; worker → página `{ id, ok: true, resultado }` ou `{ id, ok: false, erro: 'texto' }`. Bitmaps e buffers vão como transferíveis.
+- Mensagens: página → worker `{ id, tipo: 'init'|'horas'|'sombra'|'dia'|'relevoCartao'|'altitudes', ...args }`; worker → página `{ id, ok: true, resultado }` ou `{ id, ok: false, erro: 'texto' }`. Bitmaps e buffers vão como transferíveis.
 - `init` busca os PNG com `fetch` (o SW responde do cache), decodifica com `createImageBitmap` + `OffscreenCanvas`, monta a grade e guarda os horizontes por ponto. Sem `OffscreenCanvas` o motor rejeita `init`; o B mostra "horas de sol indisponíveis neste aparelho" e o mapa segue.
+- Quem abre o motor é o `hora/index.js` (B), uma vez. Depois do `init` ele põe o objeto em `Itaitu.motor` e emite `itaitu:motor` `{ ok: true }`; se falhar, deixa `null` e emite `{ ok: false }`. O A nunca chama `abrirMotor`.
 - Propriedade opcional `sol_ajuste_min` nos pontos (inteiro, −30 a +30, medido em campo): soma ao `apagaMin`. O app funciona sem ela.
 
 ---
@@ -252,22 +332,40 @@ Fontes:
 | `trilhas` | geojson (arquivo + gravadas + GPX importado) | A | |
 | `rota-gps` | geojson | A (rota.js) | |
 | `gravacao` | geojson | A (gravador.js) | |
+| `marcados` | geojson (store `marcados`) | A (marcar.js escreve, mapa.js atualiza) | |
 | `sombra-serra` | canvas, `animate: false` | B (sombra-canvas.js) | cantos de `cantosDaGrade` |
 
-Camadas, de baixo para cima:
+Camadas, de baixo para cima. Toda camada da fonte `base` filtra por `camada` **e** por tipo de geometria; nenhuma camada desenha geometria que não é sua:
 
-| ordem | id | tipo | dono |
-|---|---|---|---|
-| 1 | `satelite` | raster `sat`, `visibility: none` por padrão | A |
-| 2 | `relevo-cor` | color-relief `dem-relevo` | A |
-| 3 | `relevo-sombra` | hillshade `dem-relevo`, `hillshade-method: 'basic'`, `hillshade-illumination-anchor: 'map'` | A cria, luz.js muda direção e altitude |
-| 4 | `sombra-serra-camada` | raster `sombra-serra`, `beforeId: 'camada-vetorial-base'` | B |
-| 5 | `camada-vetorial-base` | fill âncora: `filter ['==',['get','camada'],'__ancora__']`, opacidade 0 | A |
-| 6 | `parque`, `rios`, `ruas`, `predios` | fill/line de `base`, por `camada` | A |
-| 7 | `trilhas-linhas` | line `trilhas` (tracejado se `aproximado`) | A |
-| 8 | `rota-gps`, `gravacao` | line | A |
-| 9 | `pontos-aproximados` | circle, `_estado == 'aproximada'`, contorno tracejado no marcador HTML | A |
-| 10 | `pontos-confirmados` | circle, `_estado == 'confirmada'` | A |
+```js
+const POLI  = ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]];
+const LINHA = ['in', ['geometry-type'], ['literal', ['LineString', 'MultiLineString']]];
+const de = (c, g) => ['all', ['==', ['get', 'camada'], c], g];
+```
+
+| ordem | id | tipo | fonte e filtro | dono |
+|---|---|---|---|---|
+| 1 | `satelite` | raster | `sat`, `visibility: none` por padrão | A |
+| 2 | `relevo-cor` | color-relief | `dem-relevo` | A |
+| 3 | `relevo-sombra` | hillshade | `dem-relevo`, `hillshade-method: 'basic'`, `hillshade-illumination-anchor: 'map'` | A cria, luz.js muda direção e altitude |
+| 4 | `sombra-serra-camada` | raster | `sombra-serra`, `beforeId: 'camada-vetorial-base'` | B |
+| 5 | `camada-vetorial-base` | fill | âncora: `['==', ['get', 'camada'], '__ancora__']`, opacidade 0 | A |
+| 6 | `area` | fill | `base`, `de('area', POLI)` (28 hoje: quadra, pedreira, praça, residencial...) | A |
+| 7 | `parque` | fill | `base`, `de('parque', POLI)` (1: Sete Passagens) | A |
+| 8 | `parque-contorno` | line | `base`, `de('parque', POLI)` (a linha desenha a borda do polígono) | A |
+| 9 | `rios-agua` | fill | `base`, `de('rios', POLI)` (8 hoje, `tipo: 'agua'`) | A |
+| 10 | `rios` | line | `base`, `de('rios', LINHA)` (79 hoje) | A |
+| 11 | `ruas` | line | `base`, `de('ruas', LINHA)` (400), largura por `classe` | A |
+| 12 | `predios` | fill | `base`, `de('predios', POLI)` (94) | A |
+| 13 | `trilhas-linhas` | line | `trilhas`, tracejado se `aproximado` | A |
+| 14 | `rota-gps`, `gravacao` | line | fontes de mesmo nome | A |
+| 15 | `pontos-marcados` | circle | `marcados`, contorno tracejado se `aproximado` | A |
+| 16 | `pontos-aproximados` | circle | `pontos`, `_estado == 'aproximada'`, contorno tracejado no marcador HTML | A |
+| 17 | `pontos-confirmados` | circle | `pontos`, `_estado == 'confirmada'` | A |
+
+**Nomes de lugar.** Os 45 Points de `base` com `camada: 'area'` e `tipo: 'lugar'` (localidades com `nome`) não têm camada: o `mapa.js` (A) cria um `maplibregl.Marker` de HTML para cada um, `<span class="rotulo-lugar">` com `textContent = nome`, visível só com zoom ≥ 12,5 (liga e desliga no evento `zoom`, sem recriar). O designer estiliza `.rotulo-lugar` em `app.css` por meio do A. Os nomes dos pontos de `pontos` também são marcadores HTML do `mapa.js` (`.rotulo-ponto[data-estado]`); as etiquetas de hora são do B (`.etiqueta-hora`, `sombra-canvas.js`).
+
+Conta com a `base.geojson` de hoje (655 features): `area` 28 polígonos + 45 lugares; `parque` 1; `rios` 8 + 79; `ruas` 400; `predios` 94. Tudo tem dono. Feature com `camada` fora dessa lista é ignorada pelo estilo, e o `dados.js` avisa uma vez com `console.info`.
 
 Botão Satélite (A): `satelite` visível, `relevo-cor` oculta, `hillshade-exaggeration` 0,15. A `sombra-serra-camada` continua nos dois modos.
 Atualizar a CanvasSource sem animação: desenhar no canvas e chamar `fonte.play(); fonte.pause();` (o `pause` do 5.24 sobe a textura). Durante o dia correndo, `play()` no início e `pause()` no fim.
@@ -281,20 +379,41 @@ Atualizar a CanvasSource sem animação: desenhar no canvas e chamar `fonte.play
 | propriedade | regra |
 |---|---|
 | `_estado` | `geometry == null` → `'sem-coordenada'`; senão `confianca ∈ {alta, media}` e `aproximado !== true` → `'confirmada'`; senão → `'aproximada'` |
-| `_carro_min` | tempo mais lento de `carro_tempo`, ou `null` |
-| `_trilha_min` | tempo mais lento de `trilha_tempo`, ou `null` |
+| `_carro_min` | `tempoMaisLentoMin(carro_tempo)` (`util.js`), ou `null` |
+| `_trilha_min` | `tempoMaisLentoMin(trilha_tempo)` (`util.js`), ou `null` |
 | `_hora_de_sol` | `_estado == 'confirmada'` e `tipo ∈ {cachoeira, poco}` |
 | `_ordem` | `grupo == 'placa'` primeiro, na ordem do arquivo; depois os outros por estado (confirmada, aproximada, sem-coordenada) e nome |
 
-Tempo mais lento de um texto da placa: se houver `N h M` → `N*60 + M`; senão o **maior número** do texto (`'25–30 min'` → 30, `'≈ 60 min'` → 60, `'12 min'` → 12).
+Tempo mais lento de um texto da placa, `tempoMaisLentoMin(texto)`. Lista fechada de formatos; o que não se encaixa devolve `null`, **nunca um número chutado** (chutar para menos adia o "saia até", o que é inseguro):
+1. Normaliza: `null`/vazio → `null`; minúsculas; tira `≈`, `~` e "cerca de"; `–` e `—` viram `-`; espaços repetidos viram um.
+2. Separa em até 2 partes pelo `-` (faixa). Mais de 2 partes → `null`.
+3. Cada parte tem de casar inteira com uma destas formas (`h` aceita `h`, `hr`, `hora`, `horas`; `min` aceita `min`, `mins`, `minuto`, `minutos`):
+   - `N h` → `N*60`;
+   - `N h M`, `N h M min`, `NhM`, `NhMmin` → `N*60 + M` (com `M < 60`);
+   - `N min` → `N`;
+   - `N` sozinho, só na 1ª parte de uma faixa: herda a unidade da 2ª (`'25-30 min'` → 25 e 30; `'1-2 h'` → 60 e 120).
+4. Resultado = o maior valor das partes, inteiro maior que 0. Qualquer outra coisa (`'meia hora'`, `'1,5 h'`, `'30'` sem unidade, `'2 km'`) → `null`.
 
-Com os dados de hoje isso dá, na placa: **confirmadas** Véu da Noiva (alta), Arapongas (media) e Coxinho (media); **aproximada** Flores; **sem coordenada** Sossego, Geladeira e Piancó. Fora da placa: Cachoeira do Urubu também sai confirmada (tem hora de sol, mas sem tempo de placa); Santuário, Índios, Andorinhas, Riachinho e Sonhos sem coordenada. Quando o time de dados reescrever o arquivo, a contagem muda sozinha.
+| texto | resultado |
+|---|---|
+| `'12 min'`, `'≈ 30 min'`, `'≈ 60 min'` | 12, 30, 60 |
+| `'25–30 min'`, `'35–45 min'` | 30, 45 |
+| `'1 h'`, `'1h'` | 60 |
+| `'1 h 30'`, `'1h30'`, `'1h30min'`, `'1 h 30 min'` | 90 |
+| `'1-2 h'`, `'40 min–1 h'`, `'1h–1h30'` | 120, 60, 90 |
+| `'meia hora'`, `'1,5 h'`, `'30'`, `''`, `null` | `null` |
+
+Com `_trilha_min` ou `_carro_min` `null`, o ponto confirmado cai na situação `'sem-tempo'` (6.2): mostra apaga e escurece, nunca "saia até".
+
+Com os dados de hoje isso dá (o conceito citado é o da seção 12), na placa: **confirmadas** Véu da Noiva (alta), Arapongas (media) e Coxinho (media); **aproximada** Flores; **sem coordenada** Sossego, Geladeira e Piancó. Fora da placa: Cachoeira do Urubu também sai confirmada (tem hora de sol, mas sem tempo de placa); Santuário, Índios, Andorinhas, Riachinho e Sonhos sem coordenada. Quando o time de dados reescrever o arquivo, a contagem muda sozinha.
 
 No `marcos.html`, e só nele, `dados.js` sobrepõe os pontos de `pontos-local` (IndexedDB) antes de enriquecer.
 
 ### 6.2 Horas exibidas (`hora/regras.js`, puro, importável em Node)
 
-Toda hora exibida é múltiplo de 5. Os brutos (16:07, 15:40) só existem no motor e nos testes.
+Toda **estimativa** exibida (apaga, nasce, escurece, saia até, volte com luz, saindo agora, régua, etiquetas) é múltiplo de 5. Os brutos (16:07, 15:40) só existem no motor e nos testes.
+
+**Fato** gravado aparece exato, em `hhmm`, sem arredondar: a chegada ao poço, o início e o fim de uma gravação e a hora do relógio quando ela é mostrada como "agora". A regra dos múltiplos de 5 não vale para fato.
 
 | nome | conta | arredonda |
 |---|---|---|
@@ -303,7 +422,7 @@ Toda hora exibida é múltiplo de 5. Os brutos (16:07, 15:40) só existem no mot
 | `escurece` | `escureceMin` | baixo |
 | `saiaAte` | `apaga − 60 − _carro_min − _trilha_min` | baixo |
 | `volteComLuzAte` | `escurece − _trilha_min − 30` | baixo |
-| sol no cartão | `apaga − minuto real de chegada` (mínimo 0) | sem arredondar |
+| sol no cartão | `minutosDeSolNoPoco(apaga exibido, chegada exata)` | não arredonda (o `apaga` já veio arredondado para baixo) |
 
 Contas usam os valores **já exibidos**. Exemplo Véu em 20/11/2026: apaga 16:07 → 16:05; saia até 16:05 − 60 − 3 − 30 = 14:32 → **14:30**; escurece 18:11 → 18:10; volte com luz até 18:10 − 30 − 30 = **17:10**. Arapongas: apaga 15:40; saia até 15:40 − 60 − 12 − 30 = 13:58 → **13:55**.
 
@@ -314,19 +433,23 @@ export function horasExibidas(horas, props, agoraMin) -> {
   situacao: 'planejar' | 'saia-agora' | 'sol-foi' | 'sem-sol' | 'sem-tempo'
 }
 export function deveMostrarAmanha(horasPorId, agoraMin) -> boolean
-export function minutosDeSolNoPoco(apagaExibido, chegadaMin) -> int
+export function minutosDeSolNoPoco(apagaExibido, chegadaMin) -> int   // max(0, apagaExibido − chegadaMin)
+export function incertezaMin(props) -> 10 | 15                        // 10 se confianca == 'alta'; 15 nos outros
+export function valorDaRegua(minuto, nascerMin, escureceMin) -> int    // arredondar5(minuto,'baixo') preso entre min e max da régua (6.4)
 ```
+- `chegadaMin` é `minutoDoDia(chegadaMs)`, o minuto exato do GPS (15:52 fica 15:52). `minutosDeSolNoPoco` usa essa chegada exata menos o `apaga` **exibido**: chegada 15:52 com apaga exibido 16:05 dá 13 min. Assim o número do cartão bate com as duas horas escritas nele.
 - `planejar`: `agoraMin ≤ saiaAte`.
 - `saia-agora`: passou do `saiaAte`, mas `agora + carro + trilha < apaga`; mostra "saindo agora: N min de sol no poço".
 - `sol-foi`: o sol do poço já foi hoje; mostra o `saiaAte` de amanhã.
 - `sem-sol`: `apagaMin == null` (sem sol direto no dia).
 - `sem-tempo`: confirmado, mas sem `_carro_min` ou `_trilha_min` (ex.: Urubu); mostra só apaga e escurece, com "tempo de trilha fora da placa: combine com um guia".
-- `deveMostrarAmanha`: verdadeiro se `agoraMin > apaga` de **todos** os pontos com `_hora_de_sol`; aí tudo é calculado para `somarDias(hoje, 1)` com o rótulo "amanhã".
+- `deveMostrarAmanha`: seja `P` a lista dos pontos com `_hora_de_sol` e `apaga != null`. Devolve `P.length > 0 && P.every(p => agoraMin > apaga(p))`. **Lista vazia dá falso** (zero pontos com hora, ou todos `sem-sol`): o app mostra hoje, nunca "amanhã" para sempre. Verdadeiro: tudo é calculado para `somarDias(hoje, 1)` com o rótulo "amanhã".
 - O tempo de carro é o da placa, a partir do Village, para qualquer marca; a tábua diz "de carro a partir do Village (placa)".
 
 ### 6.3 Honestidade na tela (obrigatório, não é rodapé)
 
-- Toda hora vem com `calculado pelo relevo, ±10 min`.
+- Toda hora de sol (apaga, nasce, saia até, saindo agora, etiqueta e cartão) vem com `calculado pelo relevo, ±{min} min`, onde `min = incertezaMin(ponto)`: **±10 min para confiança `alta` e ±15 min para `media`**. Motivo, medido no protótipo em 20/11/2026: deslocar o ponto 50 m muda o apaga do Véu (alta) entre −6 e +6 min e o das Arapongas (media) entre −6 e +11 min; com 111 m, o Véu vai de −15 a +12 e as Arapongas de −12 a +13. A coordenada `media` pode estar errada nessa escala, e o arredondamento para baixo não cobre o erro quando a hora real é mais cedo. Ponto confirmado em campo pelo pacote (7.5) entra como `alta`.
+- `escurece` e `volte com luz até` não dependem do relevo (crepúsculo civil) e não levam a nota de ±.
 - Junto das horas: "Em dia nublado, o 'escurece às …' continua valendo; a hora de sol é para sol direto."
 - `aproximada`: tábua com contorno tracejado, "posição aproximada", **sem hora de sol**.
 - `sem-coordenada`: tábua sem hora, "posição não confirmada: vá com guia" e o botão "Chamar um guia".
@@ -346,7 +469,7 @@ export function minutosDeSolNoPoco(apagaExibido, chegadaMin) -> int
       <div class="tabua__hora"><dt>saia até</dt><dd class="tabua__num">14:30</dd></div>
       <div class="tabua__hora"><dt>volte com luz até</dt><dd class="tabua__num">17:10</dd></div>
     </dl>
-    <p class="tabua__nota">calculado pelo relevo, ±10 min</p>
+    <p class="tabua__nota">calculado pelo relevo, ±10 min</p>   <!-- ±15 quando a confiança é media (6.3) -->
     <p class="tabua__aviso">posição aproximada</p>
     <a class="tabua__guia" href="…">Chamar um guia</a>
     <span class="tabua__selo">amanhã</span>
@@ -355,17 +478,20 @@ export function minutosDeSolNoPoco(apagaExibido, chegadaMin) -> int
 </ul>
 <div class="faixa-saia"><span class="faixa-saia__rotulo">saia até</span><span class="faixa-saia__num">14:30</span><span class="faixa-saia__destino">para 1 hora de sol no Véu da Noiva</span></div>
 <div class="regua" role="group" aria-label="Régua do dia">
-  <input class="regua__controle" type="range" min="nascer" max="escurece" step="5" aria-valuetext="16:05, a sombra da serra cobre o Véu da Noiva">
+  <input class="regua__controle" type="range" min="310" max="1090" step="5" value="955" aria-valuetext="15:55, sol no Véu da Noiva">
   <div class="regua__trilho" aria-hidden="true">
     <span class="regua__janela" style="--ini:20%;--fim:70%"></span>
     <span class="regua__marca" data-ponto="…" data-luz="sol|sombra" style="--pos:64%"></span>
     <span class="regua__sol" style="--pos:55%"></span>
   </div>
-  <output class="regua__hora">15:50</output>
+  <output class="regua__hora">15:55</output>
 </div>
 <div class="etiqueta-hora" data-luz="sol|sombra"><span class="etiqueta-hora__nome">Véu</span><span class="etiqueta-hora__num">16:05</span></div>
 ```
-A régua é um `input range` nativo: teclado e leitor de tela vêm de graça; `aria-valuetext` sempre com a hora e a palavra da sombra.
+A régua é um `input range` nativo: teclado e leitor de tela vêm de graça.
+- `min`, `max` e `value` são **minutos inteiros do dia**, nunca texto: `min = arredondar5(nascerMin, 'cima')`, `max = arredondar5(escureceMin, 'baixo')`, `step = 5`. No `input range` o `step` conta a partir do `min`; com o `min` bruto (nascer 05:07 = 307) a régua cairia em 05:12, 05:17... e quebraria a regra dos múltiplos de 5. Em 20/11/2026: `min="310"` (05:10) e `max="1090"` (18:10).
+- `value` sempre por `valorDaRegua` (6.2); quando o relógio anda, a régua mostra a hora atual arredondada para baixo.
+- `aria-valuetext` = `hhmm(value)` + ", " + a palavra da sombra do destino escolhido (ou do 1º confirmado): "16:05, a sombra da serra cobre o Véu da Noiva" ou "15:55, sol no Véu da Noiva". O `<output class="regua__hora">` mostra o mesmo `hhmm(value)`.
 
 Variáveis de `tokens.css` que todo mundo usa (designer define os valores): `--madeira: #3A2618`, `--tinta: #FFF4DC` (13,1:1, conferido), `--sol`, `--sombra`, `--cor-parceiro` (o `marca.js` escreve), `--fonte: 'Atkinson Hyperlegible Next'`, `--num-min: 28px`, `--num-max: 40px`, `--alvo: 44px`. Atributos no `<html>`: `data-contraste="sol"` (preto e branco puros), `data-texto="grande"`, `data-economia="1"`. Números com `font-variant-numeric: tabular-nums`; se a fonte não tiver `tnum`, o designer registra e fixa a largura da caixa.
 
@@ -375,7 +501,7 @@ Variáveis de `tokens.css` que todo mundo usa (designer define os valores): `--m
 export const T = { /* chaves com ponto: 'hora.nota', 'tabua.sem_coordenada', ... */ };
 export function t(chave, vars = {}, provisorio) -> string   // troca {var}; chave ausente: provisorio ?? chave, e console.info uma vez
 ```
-Chaves mínimas: `app.nome`, `app.credito` ("feito pela Creat"), `hora.nota`, `hora.nublado`, `hora.amanha`, `hora.apaga` ("sol no poço até"), `hora.nasce`, `hora.saia_ate`, `hora.volte_com_luz`, `hora.escurece`, `hora.saindo_agora` ({min}), `hora.sol_foi`, `hora.sem_sol`, `hora.sem_tempo`, `hora.carro_da_placa`, `hora.indisponivel`, `hora.sombra_cobre` ({hora}, {nome}), `hora.faixa_destino` ({nome}), `hora.faltam_escurecer` ({min}), `tabua.aproximada`, `tabua.sem_coordenada`, `tabua.chamar_guia`, `tabua.fincada`, `cartao.frase` ({chegada}, {apaga}, {min}), `cartao.selo` ("Hora da Serra"), `cartao.compartilhar`, `cartao.baixar`, `rota.linha_reta`, `gravar.aviso_tela` ("página web não grava com a tela bloqueada"), `cache.progresso` ({pct}), `cache.pronto`, `demo.sair`. Quem precisa de chave nova usa `t('x.y', vars, 'texto provisório')` e anota no RELATORIO; o copywriter fecha.
+Chaves mínimas: `app.nome`, `app.credito` ("feito pela Creat"), `hora.nota` ({min}), `hora.nublado`, `hora.amanha`, `hora.apaga` ("sol no poço até"), `hora.nasce`, `hora.saia_ate`, `hora.volte_com_luz`, `hora.escurece`, `hora.saindo_agora` ({min}), `hora.sol_foi`, `hora.sem_sol`, `hora.sem_tempo`, `hora.carro_da_placa`, `hora.indisponivel`, `hora.sombra_cobre` ({hora}, {nome}), `hora.faixa_destino` ({nome}), `hora.faltam_escurecer` ({min}), `tabua.aproximada`, `tabua.sem_coordenada`, `tabua.chamar_guia`, `tabua.fincada`, `cartao.frase` ({chegada}, {apaga}, {min}), `cartao.frase_sombra` ({chegada}, {apaga}: chegou depois da sombra), `cartao.frase_sem_hora` ({chegada}: destino sem hora de sol), `cartao.selo` ("Hora da Serra"), `cartao.compartilhar`, `cartao.baixar`, `rota.linha_reta`, `perfil.indisponivel`, `perfil.do_relevo`, `perfil.resumo` ({sobe}, {desce}, {min}, {max}), `mapa.toque_copiar`, `mapa.coord_centro`, `marcar.botao` ("Marcar ponto aqui"), `marcar.aguardando_gps`, `marcar.precisao` ({m}), `marcar.meus_pontos`, `gravar.aviso_tela` ("página web não grava com a tela bloqueada"), `cache.progresso` ({pct}), `cache.pronto`, `demo.sair`. Quem precisa de chave nova usa `t('x.y', vars, 'texto provisório')` e anota no RELATORIO; o copywriter fecha.
 
 ---
 
@@ -434,7 +560,7 @@ Valor vazio = ausente: o botão correspondente não aparece.
 ```
 
 ### 7.4 `dados/base.geojson` e `dados/atribuicoes.json` (devops)
-- base (já gerado, 655 features): `properties.camada ∈ {'ruas', 'rios', 'predios', 'parque', 'area'}`, mais `classe`, `nome`, `tipo`, `lugar`, `piso`, `protecao`, `tracktype` quando houver. As camadas `ruas`, `rios`, `predios`, `parque` filtram por `camada` com esse mesmo nome.
+- base (já gerado, 655 features): `properties.camada ∈ {'ruas', 'rios', 'predios', 'parque', 'area'}`, mais `classe`, `nome`, `tipo`, `lugar`, `piso`, `protecao`, `tracktype` quando houver. As camadas e os filtros por `camada` e por tipo de geometria estão na seção 5, que cobre as 655 features (inclusive os 45 Points `tipo: 'lugar'` de `area`, desenhados como marcador HTML).
 - atribuições (já gerado): `[{ "nome", "texto", "licenca", "url" }]`, com os textos exatos do briefing. O A monta o controle de atribuição a partir de `texto`.
 
 ### 7.5 Pacote de atualização v1 (`marcos.html` exporta; `scripts/aplicar-pacote.mjs` valida e funde)
@@ -451,6 +577,8 @@ Arquivo `itaitu-pacote-AAAA-MM-DD.json`:
                  "perfil": [[0, 560], [25, 562], "…"] } ],
   "gpx": "<?xml version=\"1.0\"?><gpx version=\"1.1\" …>…</gpx>" }
 ```
+`perfil` é `Perfil.pontos` de `perfilDeCoordenadas` (2.2): `[distância_m, altitude_m]` inteiros a cada 25 m, começando em 0; `desnivel_m` é o `subida_m` do mesmo perfil.
+
 Regras do script: rejeita `formato`/`versao` errados, coordenada fora do `recorte.bbox`, `precisao_m > 30`, `n_amostras < 10`; ponto confirmado entra com `confianca: 'alta'`, `aproximado: false`, `fonte: 'GPS no local, AAAA-MM-DD'` (sem nome de pessoa); `sol_ajuste_min` e `fincada_por` só são copiados se presentes; relatório do que mudou no terminal. Nunca roda sozinho: o time de dados decide quando.
 
 ### 7.6 Kit de venda v1 (só o formato; o conteúdo nunca entra no repositório)
@@ -468,7 +596,8 @@ Regras do script: rejeita `formato`/`versao` errados, coordenada fora do `recort
 |---|---|---|
 | `trilhas` | `id` | `{ id, nome, destino_id, criada_em, fim_em, pontos: [{lon,lat,alt,precisao,t}], passagens, km, desnivel_m, duracao_s, origem: 'gravada'\|'gpx', oficial }`; índice `criada_em` |
 | `marcas-local` | `slug` | marca editada no app particular |
-| `pontos-local` | `id` | Feature GeoJSON confirmada em campo |
+| `pontos-local` | `id` | Feature GeoJSON confirmada em campo (só o `marcos.html` escreve) |
+| `marcados` | `id` | Feature Point do "Marcar ponto aqui" (2.2), nos dois apps; nunca vira ponto oficial sozinha |
 | `caderno` | `id` | `{ id, negocio, status: 'visitar'\|'visitado'\|'interessado'\|'proposta'\|'fechado', nota, proximo_passo, data }` |
 | `kit` | `chave` | `{ chave: 'atual', kit }` |
 | `config` | `chave` | `{ chave: 'pin', sal, hash }` (PBKDF2-SHA-256 via `crypto.subtle`, 100.000 iterações; proteção de uso, não cofre) e outras preferências |
@@ -522,8 +651,10 @@ Quem chama: `hora/index.js`, depois do primeiro `horas` e do `dia` pré-calculad
 | 0,5–3,0 s | `setMinuto` corre de agora até `minutoFim`; cada etiqueta acende quando a sombra passa; câmera quase parada |
 | 3,0–3,3 s | volta para agora; etiquetas ficam |
 | 3,0–4,0 s | `mostrarFaixa()` |
-| 4,0–5,0 s | `arrastarSolDemo(agora, apaga do 1º confirmado + 10, id dele)`: marcador vai de `data-luz="sol"` a `"sombra"`; `tocarSom('araponga')` só se o áudio já foi liberado por um toque |
+| 4,0–5,0 s | `arrastarSolDemo(agoraExibido, min(alvo.apaga + 10, minutoFim), alvo.id)`: marcador vai de `data-luz="sol"` a `"sombra"`; `tocarSom('araponga')` só se o áudio já foi liberado por um toque |
 
+- `alvo` = o primeiro ponto, na ordem `_ordem` (6.1), com `_hora_de_sol`, `apaga != null` e **`apaga > agoraExibido`** (ainda tem sol). Nunca "o 1º confirmado" às cegas: se ele já perdeu o sol e outro ainda tem, o arraste andaria para trás. Sem alvo, o passo 4,0–5,0 s não acontece e a abertura termina em 4 s com `concluida: true`.
+- `agoraExibido = valorDaRegua(agoraMin, ...)` (6.2). `etiquetas` traz todos os pontos com `apaga != null`; as que têm `minuto ≤ agoraExibido` já começam acesas em `data-luz="sombra"`.
 - Qualquer `pointerdown` ou `keydown` interrompe: volta a agora, acende todas as etiquetas, mostra a faixa.
 - Uma vez por abertura e não repete antes de 30 min (`localStorage 'itaitu:abertura'`).
 - Pulada (`pulada: true`, tudo aparece parado) em `reduzMovimento()`, `economia()` ou quando `deveMostrarAmanha` é verdadeiro.
@@ -557,7 +688,7 @@ Tudo sintetizado em código, `som.js` abaixo de 30 KB, mudo em economia e em mov
 | 1 | 0–8 s | o resto do dia passa sobre o vale (mesmo motor da abertura) |
 | 2 | 8–30 s | `voarPresentacao()` no Véu e nas Arapongas; tábua de cada um com a janela de sol |
 | 3 | 30–45 s | `seguirTrilhaSimulada` na primeira trilha `modo: 'pe'` do primeiro confirmado (hoje `pe-veu-da-noiva-1`), relógio correndo; sem trilha `pe`, pula a fase |
-| 4 | 45–60 s | cartão gerado com chegada = apaga − 15 min e a marca de `?m=` |
+| 4 | 45–60 s | cartão gerado com chegada = apaga exibido − 15 min (dá "15 min de sol") e a marca de `?m=` |
 
 `#hora-demo-controle` tem "Sair da demonstração". A demo não grava nada no IndexedDB.
 
@@ -566,7 +697,7 @@ Tudo sintetizado em código, `som.js` abaixo de 30 KB, mudo em economia e em mov
 export async function gerarCartao({ trilhaId | trilha, destinoId, chegadaMs, marca }) -> Blob   // PNG 1080x1920
 export async function compartilharCartao(blob, nomeArquivo)  // navigator.canShare({files}) ? share : download
 ```
-Chegada = primeiro ponto gravado a até 60 m do destino; senão o fim da gravação. Frase: "Cheguei 15:50 · a serra apaga o sol 16:05 · 15 min de sol no poço", km, tempo, desnível, selo Hora da Serra (arco do nascer ao pôr com a janela de sol do poço e a marca da chegada), marca do parceiro e "feito pela Creat". Espera `document.fonts.load` da fonte antes de desenhar. Nome do arquivo: `trilhas-de-itaitu-<destino>-<AAAA-MM-DD>.png`.
+Chegada = instante (`t`) do primeiro ponto gravado a até 60 m do destino; senão o fim da gravação. É fato: aparece exata (6.2). Frase, por exemplo (valores ilustrativos): "Cheguei 15:52 · a serra apaga o sol 16:05 · 13 min de sol no poço", com `min = minutosDeSolNoPoco(apaga exibido, chegada exata)`. Chegou depois do apaga: `cartao.frase_sombra`, sem "0 min". Destino sem hora de sol (aproximado, sem coordenada, `sem-sol` ou trilha sem destino): `cartao.frase_sem_hora`. Depois da frase: km, tempo, desnível, selo Hora da Serra (arco do nascer ao pôr com a janela de sol do poço e a marca da chegada), marca do parceiro e "feito pela Creat". Espera `document.fonts.load` da fonte antes de desenhar. Nome do arquivo: `trilhas-de-itaitu-<destino>-<AAAA-MM-DD>.png`.
 
 ---
 
@@ -583,7 +714,12 @@ Chegada = primeiro ponto gravado a até 60 m do destino; senão o fim da gravaç
 - Conteúdo de JSON entra no DOM só por `textContent`; links só `https:`, `tel:`, `sms:` e os padrões de `wa.me` e Instagram.
 - Gravação: Wake Lock (repedido no `visibilitychange`), fundo quase preto, trava contra toque no bolso (toque longo para soltar) e o aviso "página web não grava com a tela bloqueada".
 - Orçamento de peso: `bytes_total` do `precache.json` ≤ 25 MB (hoje 14,25 MB com tiles e vendor); motor responde `horas` em < 300 ms e `sombra` (escala 1) em < 150 ms num Android intermediário emulado.
-- Testes: `node --test projetos/itaitu-mapa/testes/` (backend). O teste lê os PNG de `site/itaitu/tiles/dem/12/` com decodificador PNG próprio (zlib nativo), importa `site/itaitu/js/motor/nucleo.js` e `js/hora/regras.js`, e confere: Véu `apagaBrutoMin` 967 ± 10 e Arapongas 940 ± 10 em 2026-11-20; exibidos 16:05 e 15:40; saia até 14:30 e 13:55. Coxinho e Urubu são calculados e registrados no RELATORIO, sem valor de referência.
+- Testes: `node --test 'projetos/itaitu-mapa/testes/*.test.mjs'` (backend; o padrão entre aspas: a pasta sozinha, `node --test projetos/itaitu-mapa/testes/`, falha no Node 22 com MODULE_NOT_FOUND). O teste lê os PNG de `site/itaitu/tiles/dem/12/` com decodificador PNG próprio (zlib nativo), importa `site/itaitu/js/motor/nucleo.js` e `js/hora/regras.js`, e confere: Véu `apagaBrutoMin` 967 ± 10 e Arapongas 940 ± 10 em 2026-11-20; exibidos 16:05 e 15:40; saia até 14:30 e 13:55. Coxinho e Urubu são calculados e registrados no RELATORIO, sem valor de referência. Casos obrigatórios a mais, no mesmo comando:
+  - **Sensibilidade de posição:** para cada ponto confirmado com hora de sol, recalcula `apagaBrutoMin` com o ponto deslocado 50 m para norte, sul, leste e oeste (`dLat = 50/111320`, `dLon = dLat/cos(lat)`). Registra no RELATORIO a variação de cada direção e falha se alguma passar de `incertezaMin(ponto)` (6.3). Referência do protótipo em 20/11/2026 (N, S, L, O): Véu +6, −6, 0, −1; Arapongas +11, −6, +4, −4; Coxinho +2, −5, +1, 0; Urubu +2, 0, +11, −7.
+  - `tempoMaisLentoMin` (`js/util.js`): todas as linhas da tabela da 6.1.
+  - `deveMostrarAmanha`: lista vazia e lista só com `sem-sol` dão falso; todos com apaga passado dá verdadeiro.
+  - `valorDaRegua` e os atributos da régua para 20/11/2026: `min` 310, `max` 1090, todo valor múltiplo de 5.
+  - `minutosDeSolNoPoco(965, 952)` = 13; `minutosDeSolNoPoco(965, 970)` = 0.
 
 ---
 
@@ -595,9 +731,33 @@ O rumo e a distância até o destino do briefing continuam no `gps.js`, como inf
 
 ---
 
+## 12. Conceito aprovado e critérios de aceite
+
+Fonte: o conceito "Hora da Serra" aprovado pelo júri em 20/11/2026 e entregue ao diretor no texto da tarefa do fluxo da agência. Ele não existia em arquivo; o essencial fica aqui para quem confere.
+
+**Conceito, em uma frase:** todo app de trilha responde ONDE; este responde QUANDO. O vale em 3D, iluminado pelo sol do minuto, com a sombra do paredão andando no mapa e a hora em que a serra tira o sol de cada poço, calculada pelo relevo, sem internet. O app se chama "Trilhas de Itaitu" na marca padrão; "Hora da Serra" é o recurso-assinatura e o selo do cartão. Enxerto da Placa Viva: destinos como tábuas da placa (seção 6.4), "a placa se completa" (trilha "fincada pela ACAGI", `sol_ajuste_min`) e placa física com QR.
+
+**Critérios de aceite numerados** (texto do conceito, com o ajuste deste contrato entre colchetes; a coluna "como conferir" diz o comando ou o passo):
+
+| nº | critério | como conferir |
+|---|---|---|
+| 1 | Horas do Véu (16:07 bruto) e das Arapongas (15:40) em 20/11/2026 batem com o teste em Node dentro de ±10 min e aparecem arredondadas para 5 min (16:05 e 15:40) com a nota [±10 min no Véu, `alta`; ±15 min nas Arapongas, `media`, seção 6.3] | `node --test 'projetos/itaitu-mapa/testes/*.test.mjs'` (seção 10, inclui a sensibilidade de 50 m); tábua com `?agora=2026-11-20T13:00` |
+| 2 | Abre sem erro de console em 390 px, sem rolagem horizontal, alvos ≥ 44 px | `verificacao-visual` em `index.html` e `marcos.html` |
+| 3 | Régua operável por teclado e leitor de tela; horas anunciadas em `aria-live`; sombra sempre com a palavra | setas na régua mudam de 5 em 5; `aria-valuetext` e `#hora-live` (6.3, 6.4) |
+| 4 | Offline depois do pré-cache: com `setOffline(true)` e recarga, a sombra, as horas e o cartão funcionam | Playwright, briefing (b) |
+| 5 | Os 20 primeiros quadros do dia correndo ficam acima de 30 fps no celular emulado; senão modo parado | medição do B (9.1) registrada no RELATORIO |
+| 6 | [Toda tábua `sem-coordenada` (hoje 8: Sossego, Geladeira, Piancó, Santuário, Índios, Andorinhas, Riachinho, Sonhos)] não mostra hora de sol e mostra "vá com guia" e "Chamar um guia"; a `aproximada` (Flores) não mostra hora e mostra "posição aproximada" | contar `.tabua[data-estado="sem-coordenada"]` sem `.tabua__horas` |
+| 7 | Cartão 1080x1920 gerado offline com a marca do parceiro vinda do JSON; [chegada exata e "N min" = chegada menos apaga exibido, 9.6] | `?m=demo-village&demo=1` offline; abrir o PNG |
+| 8 | `?demo=1` percorre os 60 s sem erro | console limpo do início ao fim (9.5) |
+| 9 | `prefers-reduced-motion` respeitado | emulação no Playwright: sem dia correndo, voos viram saltos, sem som |
+
+Valem também as verificações (a) a (e) da seção "Verificação obrigatória" do `BRIEFING.md` e o padrão da skill `padrao-de-entrega`.
+
+---
+
 ## Riscos técnicos (do mais grave ao menos grave)
 
-1. **Precisão da hora.** DEM de ~30 m reamostrado em z12 (~37 m/px): paredão estreito ou coordenada errada de 100 m no fundo do cânion muda a hora além de ±10 min. Defesa: arredondar para baixo, nota visível, `sol_ajuste_min` medido em campo com a ACAGI.
+1. **Precisão da hora.** DEM de ~30 m reamostrado em z12 (~37 m/px) e coordenada de confiança `media`. Medido no protótipo: 50 m de erro de posição já mudam o apaga das Arapongas em até +11 min; 111 m mudam o Véu de −15 a +12. Arredondar para baixo não cobre o erro quando a hora real é mais cedo. Defesa: nota de ±10 min só para `alta` e ±15 min para `media` (6.3), teste de sensibilidade de 50 m que falha se a nota mentir (10), `sol_ajuste_min` medido em campo com a ACAGI e confirmação de posição pelo pacote (que sobe o ponto para `alta`). Resta: erro de posição acima de ~100 m num ponto `media` ainda pode passar de 15 min; a venda fala em "hora calculada pelo relevo", nunca em hora garantida.
 2. **iOS.** `OffscreenCanvas` no worker e Wake Lock exigem iOS 16.4+; Web Share com arquivo varia; o Safari pode despejar o armazenamento sem `persist()`. Defesa: falha mansa por recurso, download como alternativa.
 3. **Desempenho no Android intermediário.** Terreno 3D + CanvasSource + hillshade. Defesa: portão de 30 fps, economia, quadros do dia em escala 0,5.
 4. **Código velho no cache.** Cache primeiro em JS: um bug publicado fica até "atualizar". Defesa: `versao` no `precache.json` a cada publicação e conferência no ar.
@@ -610,21 +770,21 @@ O rumo e a distância até o destino do briefing continuam no `gps.js`, como inf
 
 | quem | seções obrigatórias |
 |---|---|
-| shader (Prisma) | 3, 4, 5 (`sombra-serra`), 10 |
-| frontend A (Pixel) | 1, 2, 3, 5, 6.1, 6.3, 7.0, 7.1, 7.3, 7.4, 7.7, 8 (parte da página), 10 |
-| frontend B (Pixel) | 2, 3, 4.3, 5, 6, 9, 10 |
-| frontend C (Pixel) | 2 (vitrine), 6.1, 7.1, 7.2, 7.5, 7.6, 7.7, 10 |
+| shader (Prisma) | 3, 4 (com `altitudes`), 5 (`sombra-serra`), 10 |
+| frontend A (Pixel) | 1, 2 (com 2.1 e 2.2), 3, 4.3 (`altitudes`), 5, 6.1, 6.3, 7.0, 7.1, 7.3, 7.4, 7.7, 8 (parte da página), 10 |
+| frontend B (Pixel) | 2, 3, 4.3, 5, 6, 9, 10, 12 |
+| frontend C (Pixel) | 2 (vitrine, 2.2 `perfil.js` e `marcar.js`), 6.1, 7.1, 7.2, 7.5, 7.6, 7.7, 10 |
 | motion-3d (Órbita) | 2, 3, 4.1 (`posicaoDoSol`), 5 (`relevo-sombra`), 9.1–9.3, 10 |
 | som (Eco) | 9.1, 9.4, 10 |
 | designer (Paleta) | 1, 6.3, 6.4, 10 |
 | copywriter (Verbo) | 6.3, 6.5, 7.1, 7.2, 7.3 |
 | devops (Trilho) | 1, 5 (URLs), 7.0, 7.4, 8, 10 |
-| backend (Forja) | 4.1, 6.2, 7.5, 10 (testes) |
-| revisor, qa, segurança | tudo; qa usa `?agora=2026-11-20T13:00`, `?sw=0`, `?demo=1` |
+| backend (Forja) | 2.2 (`util.js`), 4.1, 6.1 (tempo), 6.2, 6.3 (incerteza), 7.5, 10 (testes), 12 |
+| revisor, qa, segurança | tudo; os critérios numerados estão na seção 12; qa usa `?agora=2026-11-20T13:00`, `?sw=0`, `?demo=1` |
 
-## Decisões que divergem do briefing ou do conceito
+## Decisões que divergem do briefing ou do conceito (conceito: seção 12)
 
-1. **Contagem de pontos.** O conceito dizia "só Véu e Arapongas têm coordenada; as outras 5 sem hora". Os dados novos (commit f851853) dão, na placa, 3 confirmadas (Véu, Arapongas, Coxinho), 1 aproximada (Flores) e 3 sem coordenada; fora da placa, Urubu confirmada e 5 sem coordenada. Vale a regra da seção 6.1, nunca a lista. O critério de aceite (6) passa a ser "toda tábua sem coordenada não mostra hora e mostra 'vá com guia' e 'Chamar um guia'" (hoje 8).
+1. **Contagem de pontos.** O conceito dizia "só Véu e Arapongas têm coordenada; as outras 5 sem hora". Os dados novos (commit f851853) dão, na placa, 3 confirmadas (Véu, Arapongas, Coxinho), 1 aproximada (Flores) e 3 sem coordenada; fora da placa, Urubu confirmada e 5 sem coordenada. Vale a regra da seção 6.1, nunca a lista. O critério de aceite (6) da seção 12 passa a ser "toda tábua sem coordenada não mostra hora e mostra 'vá com guia' e 'Chamar um guia'" (hoje 8).
 2. **Horas na tela são múltiplos de 5, para baixo.** "16:07", "escurece às 18:11" e "17 min de sol" do conceito aparecem como 16:05, 18:10 e 15 min. Motivo: nunca prometer sol que não há.
 3. **"Sol chega ao poço" arredonda para cima.** Para baixo prometeria sol antes da hora; o mesmo princípio de honestidade, aplicado ao início da janela.
 4. **Duas fontes de relevo (`dem` e `dem-relevo`).** O MapLibre 5.24 avisa no console quando hillshade ou color-relief divide a fonte com o terreno (conferido no `vendor/maplibre-gl.js`). Os tiles são os mesmos; o SW serve os dois.
@@ -642,3 +802,8 @@ O rumo e a distância até o destino do briefing continuam no `gps.js`, como inf
 16. **Evento extra `itaitu:gravacao`.** O alerta "faltam X min para escurecer" do briefing precisa saber quando há trilha em andamento.
 17. **`?agora=` anda em tempo real e `?sw=0` desliga o SW.** Testes ganham data fixa sem travar o relógio da gravação; desenvolvimento não briga com o cache primeiro.
 18. **Tempo de carro é sempre o da placa (a partir do Village).** Não há dado de carro para outras bases; a tela diz de onde vem o número.
+19. **A nota "±10 min" do conceito vale só para confiança `alta`; `media` mostra ±15 min.** O protótipo deslocado 50 a 111 m passou de 10 min nas Arapongas e no Véu (6.3). O critério (1) da seção 12 muda junto.
+20. **Estimativa em múltiplo de 5, fato exato.** A chegada do cartão vem do GPS e aparece como foi (15:52); o "N min de sol" é a chegada exata menos o apaga exibido. O conceito escrevia "Cheguei 15:50 · ... · 17 min"; os números do cartão são sempre ilustrativos neste documento.
+21. **Tempo da placa ilegível vira `null`.** Antes o "maior número" lia `'1 h'` como 1 min. Agora uma lista fechada de formatos (6.1); fora dela, `sem-tempo`.
+22. **Perfil, toque longo e Marcar ponto aqui ganharam dono** (2.1 e 2.2): `perfil.js` e `marcar.js` novos no A, toque longo no `mapa.js`, método `altitudes` no motor e store `marcados`. O toque longo também oferece "Marcar ponto aqui", sempre como `aproximado`, porque não é GPS no local.
+23. **Critérios de aceite escritos aqui (seção 12).** O conceito aprovado só existia no texto da tarefa do fluxo; o qa e o revisor precisam conferir por número.

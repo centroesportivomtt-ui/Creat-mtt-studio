@@ -1,0 +1,561 @@
+/* =====================================================================
+   Régua do dia, faixa "saia até", etiquetas de hora e polegar fantasma
+   (Paleta, 20/11/2026). Depende de tokens.css e fontes.css.
+
+   Marcação base: ARQUITETURA.md 6.4. A régua é um <input type="range"> nativo
+   (teclado e leitor de tela de graça); o trilho desenhado fica atrás dele,
+   recuado meia alça de cada lado, para a porcentagem --pos casar com a alça.
+
+   Extras opcionais que este CSS entende (o B escreve se quiser):
+     <div class="regua" data-arrastando="1">             estado arrastando (também :active)
+     <span class="regua__legenda" data-luz="sol|sombra">  ao lado da hora: "sol no Véu da Noiva"
+     no .regua__trilho: style="--por: 97.4%"             onde o sol se põe (o resto é crepúsculo)
+     <span class="regua__evento" data-evento="nascer|por|escurece" style="--pos: 97.4%">  risco no trilho
+     <div class="regua__eventos"><span>nascer 05:10</span><span>pôr 17:50 · escurece 18:10</span></div>
+   ===================================================================== */
+
+/* ===================== régua ===================== */
+.regua {
+  --meia-alca: calc(var(--alvo-polegar) / 2);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto var(--alvo-polegar) auto;
+  align-items: center;
+  column-gap: var(--ritmo-3);
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+  padding: var(--ritmo-2) var(--margem) max(var(--ritmo-3), env(safe-area-inset-bottom));
+  color: var(--tinta-ui);
+  background: var(--superficie);
+  border-top: var(--borda) solid var(--linha);
+  box-shadow: var(--sombra-flutua);
+  font-family: var(--fonte-texto);
+  z-index: var(--z-regua);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+
+.regua__hora {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  font-family: var(--fonte-dado);
+  font-size: var(--t-num-regua);
+  font-weight: var(--peso-forte);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.01em;
+}
+
+.regua__legenda {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  max-width: 24ch;
+  font-size: var(--t-pequeno);
+  font-weight: var(--peso-forte);
+  line-height: var(--entrelinha-justa);
+  text-align: end;
+  text-wrap: balance;
+}
+.regua__legenda[data-luz='sol'] {
+  color: var(--sol-ui);
+}
+.regua__legenda[data-luz='sombra'] {
+  color: var(--sombra-ui);
+}
+
+/* o input ocupa a linha 2 inteira; o trilho desenhado fica embaixo dele */
+.regua__controle,
+.regua__trilho {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.regua__trilho {
+  position: relative;
+  height: 12px;
+  margin-inline: var(--meia-alca);
+  border-radius: var(--raio-pilula);
+  background:
+    /* crepúsculo: do pôr ao escurecer, listrado */
+    repeating-linear-gradient(135deg, var(--linha) 0 2px, transparent 2px 5px) var(--por, 100%) 0 / calc(100% - var(--por, 100%)) 100% no-repeat,
+    var(--superficie-2);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  pointer-events: none;
+}
+
+/* janela de sol do poço escolhido: barra dourada com contorno escuro (3:1 no papel) */
+.regua__janela {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: var(--ini, 0%);
+  width: calc(var(--fim, 0%) - var(--ini, 0%));
+  border-radius: var(--raio-pilula);
+  background: var(--sol);
+  box-shadow: inset 0 0 0 1.5px var(--madeira);
+}
+
+/* marcador do poço: a hora em que a serra apaga o sol */
+.regua__marca {
+  position: absolute;
+  top: 50%;
+  left: var(--pos, 0%);
+  width: 18px;
+  height: 18px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--poco-sol);
+  box-shadow: 0 0 0 2px var(--madeira), 0 0 0 4px var(--tinta);
+  transition: background-color var(--dur-media) var(--curva-saida);
+}
+.regua__marca[data-luz='sombra'] {
+  background: var(--poco-sombra);
+}
+
+/* "agora": risco fino atrás da alça, com a palavra em cima */
+.regua__sol {
+  position: absolute;
+  top: -10px;
+  bottom: -10px;
+  left: var(--pos, 0%);
+  width: 3px;
+  translate: -50% 0;
+  border-radius: 2px;
+  background: var(--tinta-ui);
+}
+.regua__sol::before {
+  content: 'agora';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  translate: -50% 0;
+  color: var(--tinta-ui-apoio);
+  font-size: var(--t-legenda);
+  font-weight: var(--peso-forte);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* riscos de nascer, pôr e escurecer */
+.regua__evento {
+  position: absolute;
+  top: 100%;
+  left: var(--pos, 0%);
+  width: 2px;
+  height: 8px;
+  translate: -50% 2px;
+  background: var(--tinta-ui-apoio);
+}
+.regua__evento[data-evento='escurece'] {
+  height: 10px;
+  background: var(--tinta-ui);
+}
+
+.regua__eventos {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ritmo-3);
+  padding-top: var(--ritmo-2);
+  color: var(--tinta-ui-apoio);
+  font-size: var(--t-legenda);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  line-height: 1.2;
+}
+.regua__eventos > :last-child {
+  text-align: end;
+}
+
+/* ----- o input range: alça de 48 px, o sol que o polegar arrasta ----- */
+.regua__controle {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: var(--alvo-polegar);
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: grab;
+  touch-action: none;
+}
+.regua__controle:focus {
+  outline: none;
+}
+.regua__controle::-webkit-slider-runnable-track {
+  height: var(--alvo-polegar);
+  background: transparent;
+  border: 0;
+}
+.regua__controle::-moz-range-track {
+  height: var(--alvo-polegar);
+  background: transparent;
+  border: 0;
+}
+.regua__controle::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--alvo-polegar);
+  height: var(--alvo-polegar);
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--sol) 0 11px, var(--madeira) 11.5px 14px, var(--tinta) 14.5px 16px, transparent 16.5px);
+  transition: background var(--dur-rapida) var(--curva-saida);
+}
+.regua__controle::-moz-range-thumb {
+  width: var(--alvo-polegar);
+  height: var(--alvo-polegar);
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--sol) 0 11px, var(--madeira) 11.5px 14px, var(--tinta) 14.5px 16px, transparent 16.5px);
+}
+
+/* foco visível: anel em dois tons em volta do sol */
+.regua__controle:focus-visible::-webkit-slider-thumb {
+  background: radial-gradient(circle, var(--sol) 0 11px, var(--madeira) 11.5px 14px, var(--tinta) 14.5px 16px, var(--foco-claro) 16.5px 20px, var(--foco-escuro) 20.5px 23px, transparent 23.5px);
+}
+.regua__controle:focus-visible::-moz-range-thumb {
+  background: radial-gradient(circle, var(--sol) 0 11px, var(--madeira) 11.5px 14px, var(--tinta) 14.5px 16px, var(--foco-claro) 16.5px 20px, var(--foco-escuro) 20.5px 23px, transparent 23.5px);
+}
+.regua:focus-within {
+  border-top-color: var(--tinta-ui);
+}
+
+/* arrastando: o sol ganha halo e a régua some com o "agora" */
+.regua[data-arrastando='1'] .regua__controle,
+.regua__controle:active {
+  cursor: grabbing;
+}
+.regua[data-arrastando='1'] .regua__controle::-webkit-slider-thumb,
+.regua__controle:active::-webkit-slider-thumb {
+  background: radial-gradient(circle, var(--sol) 0 13px, var(--madeira) 13.5px 16px, rgb(245 184 61 / 0.4) 16.5px 24px, transparent 24.5px);
+}
+.regua[data-arrastando='1'] .regua__controle::-moz-range-thumb,
+.regua__controle:active::-moz-range-thumb {
+  background: radial-gradient(circle, var(--sol) 0 13px, var(--madeira) 13.5px 16px, rgb(245 184 61 / 0.4) 16.5px 24px, transparent 24.5px);
+}
+.regua[data-arrastando='1'] .regua__sol::before {
+  opacity: 0;
+}
+
+/* ===================== faixa "saia até" ===================== */
+#hora-faixa,
+.faixa-saia {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: var(--ritmo-3);
+  row-gap: var(--ritmo-1);
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+  padding: var(--ritmo-3) var(--margem) var(--ritmo-3) calc(var(--margem) + 6px);
+  color: var(--faixa-tinta);
+  background:
+    linear-gradient(90deg, var(--sol) 0 6px, transparent 6px),
+    var(--faixa-fundo);
+  font-family: var(--fonte-texto);
+  z-index: var(--z-faixa);
+  animation: faixa-entra var(--dur-lenta) var(--curva-saida) both;
+}
+#hora-faixa[hidden],
+.faixa-saia[hidden] {
+  display: none;
+}
+.faixa-saia__rotulo {
+  color: var(--faixa-rotulo);
+  font-size: var(--t-destaque);
+  font-weight: var(--peso-forte);
+  line-height: 1;
+  white-space: nowrap;
+}
+.faixa-saia__num {
+  font-family: var(--fonte-dado);
+  font-size: var(--t-num-faixa);
+  font-weight: var(--peso-forte);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+.faixa-saia__destino {
+  min-width: 0;
+  font-size: var(--t-apoio);
+  line-height: var(--entrelinha-justa);
+  text-wrap: balance;
+}
+/* nota de honestidade, se o B puser dentro da faixa */
+.faixa-saia__nota {
+  grid-column: 1 / -1;
+  font-size: var(--t-pequeno);
+  opacity: 0.9;
+}
+@container (max-width: 330px) {
+  .faixa-saia__destino {
+    grid-column: 1 / -1;
+  }
+}
+
+@keyframes faixa-entra {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* ===================== etiqueta de hora no mapa ===================== */
+/* uma plaquinha da mesma madeira; use o Marker com anchor: 'bottom' (a ponta fica no ponto) */
+.etiqueta-hora {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 10px 4px 8px;
+  color: var(--tinta);
+  background: var(--madeira);
+  border: 1.5px solid var(--madeira-funda);
+  border-radius: var(--raio-tabua);
+  box-shadow: var(--sombra-etiqueta);
+  font-family: var(--fonte-texto);
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+}
+.etiqueta-hora::before {
+  /* o marcador do poço: dourado com sol, azul com sombra */
+  content: '';
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--poco-sol);
+  box-shadow: 0 0 0 2px var(--tinta);
+  transition: background-color var(--dur-media) var(--curva-saida);
+}
+.etiqueta-hora::after {
+  /* ponta embaixo, apontando o lugar */
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 12px;
+  height: 7px;
+  translate: -50% -1px;
+  background: var(--madeira);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.etiqueta-hora[data-luz='sombra']::before {
+  background: var(--poco-sombra);
+}
+.etiqueta-hora__nome {
+  font-size: var(--t-pequeno);
+  font-weight: var(--peso-forte);
+}
+.etiqueta-hora__num {
+  font-family: var(--fonte-dado);
+  font-size: var(--t-corpo);
+  font-weight: var(--peso-forte);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+/* antes da sombra passar: só o nome; a hora entra quando acende */
+.etiqueta-hora[data-acesa='0'] .etiqueta-hora__num {
+  display: none;
+}
+.etiqueta-hora[data-acesa='0'] {
+  opacity: 0.78;
+}
+.etiqueta-hora[data-acesa='1'] {
+  animation: etiqueta-acende var(--dur-acender) var(--curva-mola) both;
+}
+.etiqueta-hora[data-acesa='1'] .etiqueta-hora__num {
+  animation: etiqueta-num var(--dur-acender) var(--curva-saida) both;
+}
+@keyframes etiqueta-acende {
+  0% {
+    opacity: 0.78;
+    scale: 1;
+    box-shadow: var(--sombra-etiqueta), 0 0 0 0 rgb(147 174 245 / 0.75);
+  }
+  45% {
+    opacity: 1;
+    scale: 1.12;
+    box-shadow: var(--sombra-etiqueta), 0 0 0 6px rgb(147 174 245 / 0.45);
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+    box-shadow: var(--sombra-etiqueta), 0 0 0 10px rgb(147 174 245 / 0);
+  }
+}
+@keyframes etiqueta-num {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* ===================== polegar fantasma (abertura, 4,0 a 5,0 s) ===================== */
+/* Ponha dentro do .regua, irmão do trilho:
+   <span class="polegar-fantasma" aria-hidden="true" data-ativo="1" style="--de: 55%; --para: 82%"></span>
+   --de e --para são as mesmas porcentagens de --pos do trilho. */
+.polegar-fantasma {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  position: relative;
+  align-self: stretch;
+  margin-inline: var(--meia-alca, 24px);
+  pointer-events: none;
+  z-index: var(--z-polegar);
+  visibility: hidden;
+}
+.polegar-fantasma::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: var(--de, 50%);
+  width: 34px;
+  height: 46px;
+  translate: -50% -38%;
+  border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%;
+  background: rgb(255 244 220 / 0.55);
+  border: 2px solid rgb(58 38 24 / 0.55);
+  box-shadow: 0 6px 14px rgb(23 18 13 / 0.3);
+}
+.polegar-fantasma[data-ativo='1'] {
+  visibility: visible;
+}
+.polegar-fantasma[data-ativo='1']::before {
+  animation: polegar-arrasta var(--dur-polegar) var(--curva-dia) both;
+}
+@keyframes polegar-arrasta {
+  0% {
+    left: var(--de, 50%);
+    opacity: 0;
+    scale: 1.1;
+  }
+  15% {
+    left: var(--de, 50%);
+    opacity: 1;
+    scale: 0.94;
+  }
+  85% {
+    left: var(--para, 80%);
+    opacity: 1;
+    scale: 0.94;
+  }
+  100% {
+    left: var(--para, 80%);
+    opacity: 0;
+    scale: 1.05;
+  }
+}
+
+/* ===================== modo sol: preto e branco, sol cheio x sombra vazada ===================== */
+:root[data-contraste='sol'] .regua {
+  border-top: var(--borda-forte) solid #000000;
+}
+:root[data-contraste='sol'] .regua__trilho {
+  background:
+    repeating-linear-gradient(135deg, #000000 0 2px, transparent 2px 5px) var(--por, 100%) 0 / calc(100% - var(--por, 100%)) 100% no-repeat,
+    #FFFFFF;
+  box-shadow: inset 0 0 0 2px #000000;
+}
+:root[data-contraste='sol'] .regua__janela {
+  background: #000000;
+  box-shadow: none;
+}
+:root[data-contraste='sol'] .regua__marca {
+  background: #000000;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #000000;
+}
+:root[data-contraste='sol'] .regua__marca[data-luz='sombra'] {
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 3px #000000, 0 0 0 2px #FFFFFF, 0 0 0 4px #000000;
+}
+:root[data-contraste='sol'] .regua__controle::-webkit-slider-thumb {
+  background: radial-gradient(circle, #000000 0 11px, #FFFFFF 11.5px 14px, #000000 14.5px 17px, transparent 17.5px);
+}
+:root[data-contraste='sol'] .regua__controle::-moz-range-thumb {
+  background: radial-gradient(circle, #000000 0 11px, #FFFFFF 11.5px 14px, #000000 14.5px 17px, transparent 17.5px);
+}
+:root[data-contraste='sol'] .regua__controle:focus-visible::-webkit-slider-thumb {
+  background: radial-gradient(circle, #000000 0 11px, #FFFFFF 11.5px 14px, #000000 14.5px 17px, #FFFFFF 17.5px 19px, #000000 19.5px 23px, transparent 23.5px);
+}
+:root[data-contraste='sol'] #hora-faixa,
+:root[data-contraste='sol'] .faixa-saia {
+  background: #000000;
+}
+:root[data-contraste='sol'] .etiqueta-hora {
+  color: #000000;
+  background: #FFFFFF;
+  border: 2px solid #000000;
+}
+:root[data-contraste='sol'] .etiqueta-hora::after {
+  background: #000000;
+}
+:root[data-contraste='sol'] .etiqueta-hora::before {
+  background: #000000;
+  box-shadow: none;
+}
+:root[data-contraste='sol'] .etiqueta-hora[data-luz='sombra']::before {
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 3px #000000;
+}
+
+/* ===================== economia e movimento reduzido ===================== */
+:root[data-economia='1'] .polegar-fantasma {
+  display: none;
+}
+:root[data-economia='1'] #hora-faixa,
+:root[data-economia='1'] .faixa-saia,
+:root[data-economia='1'] .etiqueta-hora,
+:root[data-economia='1'] .etiqueta-hora__num {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .polegar-fantasma {
+    display: none;
+  }
+  #hora-faixa,
+  .faixa-saia,
+  .etiqueta-hora,
+  .etiqueta-hora__num,
+  .regua__marca,
+  .etiqueta-hora::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .regua__trilho,
+  .regua__janela,
+  .regua__marca {
+    forced-color-adjust: none;
+  }
+  .regua__controle::-webkit-slider-thumb {
+    background: Highlight;
+  }
+}

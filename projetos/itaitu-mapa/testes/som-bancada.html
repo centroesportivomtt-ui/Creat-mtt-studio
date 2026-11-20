@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bancada de som</title>
+<style>
+  :root { --fundo: #FFF4DC; --tinta: #3A2618; --linha: #C9B48E; --ok: #1F6B3A; --falha: #A3241B; --botao: #3A2618; --botao-tinta: #FFF4DC; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --fundo: #17110B; --tinta: #FFF4DC; --linha: #5A4630; --ok: #7FD39A; --falha: #FF8A7F; --botao: #FFF4DC; --botao-tinta: #3A2618; } }
+  :root[data-theme="dark"] { --fundo: #17110B; --tinta: #FFF4DC; --linha: #5A4630; --ok: #7FD39A; --falha: #FF8A7F; --botao: #FFF4DC; --botao-tinta: #3A2618; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--fundo); color: var(--tinta); font: 16px/1.45 system-ui, sans-serif; }
+  main { max-width: 920px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  p { margin: 0 0 12px; }
+  .linha { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; align-items: center; }
+  button { min-height: 44px; min-width: 44px; padding: 8px 14px; border: 0; border-radius: 8px; background: var(--botao); color: var(--botao-tinta); font: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #E0A526; outline-offset: 2px; }
+  label { display: flex; gap: 8px; align-items: center; min-height: 44px; }
+  input[type=range] { width: min(320px, 100%); min-height: 44px; }
+  output, code { font-variant-numeric: tabular-nums; }
+  .tabela { overflow-x: auto; border: 1px solid var(--linha); border-radius: 8px; margin-top: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--linha); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  .ok { color: var(--ok); font-weight: 700; }
+  .falha { color: var(--falha); font-weight: 700; }
+  #estado { font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Bancada de som · Hora da Serra</h1>
+  <p>Cada som é sintetizado por <code>site/itaitu/js/som.js</code>. Nada toca antes de um toque. A análise offline não precisa de alto-falante.</p>
+
+  <div class="linha" id="botao-som"></div>
+  <p>Estado: <span id="estado" aria-live="polite">-</span></p>
+
+  <div class="linha">
+    <button id="b-toin" type="button">Tóin da araponga</button>
+    <button id="b-tic" type="button">Tic de hora cheia</button>
+    <button id="b-parar" type="button">Parar</button>
+    <button id="b-eco" type="button">Alternar economia</button>
+  </div>
+  <div class="linha">
+    <label for="hora">Hora da ambiência <output id="hora-txt">07:30</output></label>
+    <input id="hora" type="range" min="0" max="24" step="0.25" value="7.5" aria-describedby="hora-txt">
+    <button type="button" data-h="7.5">Manhã</button>
+    <button type="button" data-h="14">Tarde</button>
+    <button type="button" data-h="21">Noite</button>
+  </div>
+
+  <h2>Análise offline</h2>
+  <div class="linha"><button id="b-analisar" type="button">Renderizar e medir</button> <span id="veredito" aria-live="polite"></span></div>
+  <div class="tabela"><table id="tabela"><thead><tr>
+    <th>som</th><th>duração s</th><th>pico dBFS</th><th>RMS dBFS</th><th>NaN</th><th>1ª amostra</th><th>última</th><th>início 2 ms</th><th>fim 20 ms</th><th>salto/p99,9</th><th>cauda -40 dB s</th><th>ok</th>
+  </tr></thead><tbody></tbody></table></div>
+  <p id="laco"></p>
+</main>
+<script type="module">
+import * as Som from '../../../site/itaitu/js/som.js';
+
+const $ = (s) => document.querySelector(s);
+const hhmm = (h) => String(Math.floor(h) % 24).padStart(2, '0') + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0');
+function mostrarEstado() { const e = Som.estado(); $('#estado').textContent = (e.ligado ? 'tocando' : 'parado') + (e.mudo ? ' · mudo' : '') + (e.economia ? ' · economia' : '') + (e.reduzido ? ' · movimento reduzido (sem ambiência)' : ''); }
+$('#botao-som').append(Som.botao());
+document.addEventListener('pointerdown', () => { Som.liberar().then(mostrarEstado); }, { capture: true });
+document.addEventListener('keydown', () => { Som.liberar().then(mostrarEstado); }, { capture: true });
+$('#b-toin').onclick = () => { Som.toin({ intensidade: 0.9 }); mostrarEstado(); };
+$('#b-tic').onclick = () => { Som.tic({ hora: Number($('#hora').value) }); };
+$('#b-parar').onclick = () => { Som.parar(); mostrarEstado(); };
+$('#b-eco').onclick = () => { Som.definirModo({ economia: !Som.estado().economia }); mostrarEstado(); };
+let ultimaHora = 7;
+function porHora(h) {
+  $('#hora').value = h; $('#hora-txt').textContent = hhmm(h);
+  if (Math.floor(h) !== ultimaHora) { Som.tic({ hora: h }); ultimaHora = Math.floor(h); }
+  Som.ambiencia(h); mostrarEstado();
+}
+$('#hora').addEventListener('input', (e) => porHora(Number(e.target.value)));
+document.querySelectorAll('[data-h]').forEach((b) => b.addEventListener('click', () => porHora(Number(b.dataset.h))));
+mostrarEstado();
+setInterval(mostrarEstado, 500);  // o botão de som e os eventos da casa também mudam o estado
+
+// ---------- medição ----------
+const db = (x) => (x > 0 ? 20 * Math.log10(x) : -Infinity);
+function medir(nome, buf) {
+  const taxa = buf.sampleRate, n = buf.length;
+  let pico = 0, soma = 0, nan = 0, ini = 0, fim = 0, prim = 0, ult = 0;
+  const saltos = [];
+  let maxSalto = 0, fimCauda = 0;
+  const ambiente = buf.lacoSegundos > 0;
+  const a0 = ambiente ? Math.floor(1.2 * taxa) : 0, a1 = ambiente ? n - Math.floor(1.2 * taxa) : n;
+  let somaAmb = 0, nAmb = 0;
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch);
+    prim = Math.max(prim, Math.abs(d[0])); ult = Math.max(ult, Math.abs(d[n - 1]));
+    for (let i = 0; i < n; i++) {
+      const v = d[i];
+      if (!Number.isFinite(v)) { nan++; continue; }
+      const a = Math.abs(v);
+      if (a > pico) pico = a;
+      soma += v * v;
+      if (i >= a0 && i < a1) { somaAmb += v * v; nAmb++; }
+      if (i < taxa * 0.002) ini = Math.max(ini, a);
+      if (i > n - taxa * 0.02) fim = Math.max(fim, a);
+      if (i > 0 && i >= a0 && i < a1) { const s = Math.abs(v - d[i - 1]); if (s > maxSalto) maxSalto = s; if ((i & 7) === 0) saltos.push(s); }
+    }
+  }
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = n - 1; i >= 0; i--) if (Math.abs(d[i]) > pico * 0.01) { fimCauda = Math.max(fimCauda, i / taxa); break; }
+  }
+  saltos.sort((x, y) => x - y);
+  const p999 = saltos[Math.floor(saltos.length * 0.999)] || 1e-9;
+  const rms = ambiente ? Math.sqrt(somaAmb / Math.max(1, nAmb)) : Math.sqrt(soma / (n * buf.numberOfChannels));
+  const r = { nome, duracao: n / taxa, picoDb: db(pico), rmsDb: db(rms), nan, primeira: prim, ultima: ult, inicio2ms: ini, fim20ms: fim, saltoRazao: maxSalto / p999, caudaS: fimCauda };
+  r.ok = nan === 0 && r.picoDb < -14 && prim < 1e-4 && ult < 1e-4 && ini < 0.02 && fim < 1e-3 && (!ambiente || r.saltoRazao < 6);
+  return r;
+}
+function laco() {
+  const { rosa, branco } = Som._ruidoDoLaco ? Som._ruidoDoLaco() : {};
+  const out = {};
+  for (const [nome, b] of [['rosa', rosa], ['branco', branco]]) {
+    const d = b.getChannelData(0), n = d.length;
+    let somaSalto = 0, maxSalto = 0, maiores = 0;
+    const emenda = Math.abs(d[0] - d[n - 1]);
+    for (let i = 1; i < n; i++) { const s = Math.abs(d[i] - d[i - 1]); somaSalto += s; if (s > maxSalto) maxSalto = s; if (s > emenda) maiores++; }
+    // energia da primeira e da última janela de 250 ms (o nível não pode pular na emenda)
+    const w = Math.floor(b.sampleRate * 0.25);
+    let e0 = 0, e1 = 0; for (let i = 0; i < w; i++) { e0 += d[i] * d[i]; e1 += d[n - 1 - i] * d[n - 1 - i]; }
+    out[nome] = { segundos: n / b.sampleRate, emenda, saltoMedio: somaSalto / (n - 1), saltoMax: maxSalto, razaoEmenda: emenda / (somaSalto / (n - 1)), percentilEmenda: 100 * (1 - maiores / (n - 1)), difNivelDb: Math.abs(db(Math.sqrt(e0 / w)) - db(Math.sqrt(e1 / w))) };
+  }
+  out.ok = out.rosa.percentilEmenda < 99.9 && out.branco.percentilEmenda < 99.9 && out.rosa.difNivelDb < 3;
+  return out;
+}
+
+async function analisar() {
+  $('#veredito').textContent = 'renderizando...';
+  const casos = [
+    ['toin', { intensidade: 1 }, 'tóin 1'], ['toin', { intensidade: 1 }, 'tóin 2'], ['toin', { intensidade: 1 }, 'tóin 3'],
+    ['toin', { intensidade: 0.4, pan: -0.8 }, 'tóin fraco à esquerda'],
+    ['tic', { hora: 12 }, 'tic 12h'], ['tic', { hora: 19 }, 'tic 19h'],
+    ['manha', {}, 'manhã'], ['tarde', {}, 'tarde'], ['noite', {}, 'noite'],
+    ['ambiencia', { hora: 18 }, 'cruzamento 18:00'],
+    ['varredura', { de: 16, ate: 20, segundos: 10 }, 'régua 16h→20h em 8 s'],
+    ['varredura', { de: 4, ate: 12, segundos: 10 }, 'régua 4h→12h em 8 s'],
+  ];
+  const res = [];
+  const tb = $('#tabela tbody'); tb.textContent = '';
+  for (const [nome, op, rotulo] of casos) {
+    const t0 = performance.now();
+    const buf = await Som.renderizar(nome, op);
+    const r = medir(rotulo, buf); r.msRender = performance.now() - t0;
+    res.push(r);
+    const tr = document.createElement('tr');
+    const f = (x, c = 1) => (Number.isFinite(x) ? x.toFixed(c) : String(x));
+    [r.nome, f(r.duracao, 2), f(r.picoDb), f(r.rmsDb), r.nan, r.primeira.toExponential(1), r.ultima.toExponential(1), r.inicio2ms.toFixed(4), r.fim20ms.toExponential(1), f(r.saltoRazao, 2), f(r.caudaS, 2), r.ok ? 'sim' : 'NÃO']
+      .forEach((v, i, arr) => { const td = document.createElement('td'); td.textContent = v; if (i === arr.length - 1) td.className = r.ok ? 'ok' : 'falha'; tr.append(td); });
+    tb.append(tr);
+  }
+  const l = laco();
+  $('#laco').textContent = `Laço de ruído (${l.rosa.segundos} s): emenda rosa ${l.rosa.emenda.toExponential(2)} = ${l.rosa.razaoEmenda.toFixed(2)}× o salto médio (percentil ${l.rosa.percentilEmenda.toFixed(1)} dos saltos), diferença de nível ${l.rosa.difNivelDb.toFixed(2)} dB; branco ${l.branco.razaoEmenda.toFixed(2)}× o salto médio (percentil ${l.branco.percentilEmenda.toFixed(1)}). ${l.ok ? 'Emenda inaudível.' : 'EMENDA SUSPEITA.'}`;
+  const ok = res.every((r) => r.ok) && l.ok;
+  $('#veredito').textContent = ok ? 'Tudo dentro do limite.' : 'Há som fora do limite.';
+  $('#veredito').className = ok ? 'ok' : 'falha';
+  window.resultadoBancada = { ok, sons: res, laco: l };
+  console.table && console.log(JSON.stringify(window.resultadoBancada));
+  return window.resultadoBancada;
+}
+$('#b-analisar').onclick = analisar;
+window.analisarSom = analisar;
+</script>
+</body>
+</html>

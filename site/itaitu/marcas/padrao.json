@@ -1,0 +1,20 @@
+{
+  "versao": 1,
+  "slug": "padrao",
+  "nome_app": "Trilhas de Itaitu",
+  "parceiro": "",
+  "cor": "#C9283E",
+  "logo": "",
+  "ponto_base_id": "village-serra-do-cruzeiro",
+  "whatsapp": "",
+  "instagram": "",
+  "boas_vindas": "Veja a hora em que a serra tira o sol de cada cachoeira, calculada pelo relevo. Assim você chega ao poço com sol e volta com luz, mesmo sem sinal.",
+  "credito": "feito pela Creat",
+  "parceiros": [
+    { "nome": "ACAGI · Condutores e Guias de Itaitu", "tipo": "guia", "link": "https://www.instagram.com/guiasdeitaitu/" }
+  ],
+  "_nota": "Marca neutra, sem parceiro. O Village aparece só como lugar no mapa e como base dos tempos de carro da placa. A cor é a padrão do designer (tokens.css, --cor-parceiro). ACAGI: perfil público de guias, não é parceira. Onde comer: vazio até um restaurante autorizar (o contrato 7.1 pede link https em todo parceiro).",
+  "_pendente": {
+    "parceiros": "onde comer: preencher com os restaurantes que autorizarem (nome, link https e ponto no mapa). Até lá o botão Onde comer não aparece"
+  }
+}

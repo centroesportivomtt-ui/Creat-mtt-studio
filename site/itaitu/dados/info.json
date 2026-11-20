@@ -1,0 +1,202 @@
+{
+  "versao": 1,
+  "atualizado_em": "2026-11-20",
+  "lugar": "Itaitu, Jacobina (BA)",
+  "_como_ler": "Cada informação traz fonte e data. confirmado: true só quando duas fontes batem ou a fonte é oficial. desatualizado: true quando a fonte mais nova tem mais de 12 meses em 20/11/2026 e o dado muda com o tempo (preço, horário, estrada). conferir: o que perguntar no local. data em AAAA-MM-DD, ou AAAA-MM e AAAA quando a fonte só dá o mês ou o ano; quando é a mesma data escrita para a tela. Campo que começa com _ é nota da equipe e não vai para a tela. Fonte principal: projetos/itaitu-mapa/dados/pesquisa-radar.md, seção 5.",
+  "emergencia": [
+    { "nome": "SAMU", "numero": "192", "para": "socorro médico" },
+    { "nome": "Bombeiros", "numero": "193", "para": "resgate e afogamento" },
+    { "nome": "Polícia", "numero": "190", "para": "Polícia Militar" }
+  ],
+  "emergencia_fonte": {
+    "fonte": "Números nacionais de emergência do Brasil, ligação gratuita",
+    "data": "2026-11-20",
+    "quando": "nov/2026",
+    "confirmado": true,
+    "desatualizado": false
+  },
+  "avisos": [
+    {
+      "chave": "cabeca-dagua",
+      "texto": "Chuva forte: saia do rio, risco de cabeça d'água.",
+      "fonte": "Estado de Minas, 21/07/2026, sobre Itaitu: “Evite trilhas durante chuva forte por risco de enxurradas.” Book Transfer (11/02/2026): com chuva, as trilhas escorregam e pedem guia.",
+      "url": "https://www.em.com.br/emfoco/2026/07/21/a-cidade-do-ouro-que-reune-mais-de-40-cachoeiras-em-uma-unica-vila-com-queda-dagua-de-60-metros/",
+      "data": "2026-07-21",
+      "quando": "jul/2026",
+      "confirmado": true,
+      "desatualizado": false,
+      "_nota": "As duas fontes avisam sobre chuva em Itaitu. Nenhuma relata uma cabeça d'água específica: o texto vale como regra de segurança de rio de serra."
+    },
+    {
+      "chave": "sem-caixa",
+      "texto": "Não há caixa eletrônico na vila: leve dinheiro.",
+      "fonte": "Pesquisa da equipe (20/11/2026), sem fonte pública nomeada. Uma busca na web na mesma data não achou caixa eletrônico em Itaitu.",
+      "data": "2026-11-20",
+      "quando": "nov/2026",
+      "confirmado": false,
+      "desatualizado": false,
+      "conferir": "Confirmar na vila."
+    },
+    {
+      "chave": "sinal",
+      "texto": "Celular só pega na vila. Nas trilhas, conte com o mapa guardado.",
+      "fonte": "Torre de celular na vila no OpenStreetMap (nó 7961194194). O sinal falha nas trilhas, pelo relato local do briefing (20/11/2026).",
+      "data": "2026-11-20",
+      "quando": "nov/2026",
+      "confirmado": false,
+      "desatualizado": false,
+      "conferir": "Operadora e cobertura exata não confirmadas."
+    },
+    {
+      "chave": "chuva-trilha",
+      "texto": "Com chuva, as trilhas escorregam: vá com guia.",
+      "fonte": "Book Transfer, booktransfer.com.br/vila-de-itaitu (11/02/2026). O Estado de Minas (21/07/2026) diz que no tempo seco as trilhas ficam mais firmes.",
+      "data": "2026-02-11",
+      "quando": "fev/2026",
+      "confirmado": true,
+      "desatualizado": false
+    },
+    {
+      "chave": "regras-veu",
+      "texto": "Não acampe no Véu da Noiva. Moradores da vila usam a água dali.",
+      "fonte": "Wikipédia em português, página “Itaitu”, lida em 20/11/2026: acampar no Véu de Noiva é proibido, porque dali se capta a água que abastece a vila. O Bahia Notícias (22/04/2020), sobre uma ação do Ministério Público da Bahia, diz que a água é usada por moradores.",
+      "url": "https://pt.wikipedia.org/wiki/Itaitu",
+      "data": "2026-11-20",
+      "quando": "nov/2026",
+      "confirmado": false,
+      "desatualizado": false,
+      "conferir": "Respeite as placas no local.",
+      "_nota": "Corrigido em 20/11/2026: a fonte antiga apontava a página “Cachoeira Véu de Noiva (Itaitu)”, que não fala de acampar, de água nem de coliforme. Bebida alcoólica saiu: nenhuma fonte achada (Wikipédia, Bahia Notícias e busca na web em 20/11/2026). A proibição de acampar está só na Wikipédia. A ação do MP de 2020 pede o isolamento das áreas de camping não autorizadas, que é pedido, não regra. Por isso o texto aconselha e não afirma a regra. Notícia: https://www.bahianoticias.com.br/municipios/noticia/20361-mp-ajuiza-acao-para-garantir-preservacao-da-cachoeira-veu-de-noiva-em-jacobina"
+    },
+    {
+      "chave": "agua",
+      "texto": "Não beba a água do rio sem tratar. Em 2020, uma ação do Ministério Público citou coliforme fecal na água do Véu da Noiva.",
+      "fonte": "Wikipédia em português, página “Itaitu”, lida em 20/11/2026: um exame de laboratório detectou coliforme fecal na água do Véu de Noiva. Bahia Notícias (22/04/2020), sobre a ação do Ministério Público da Bahia: “Exames laboratoriais apontaram a presença de coliformes fecais e outros contaminantes na água”.",
+      "url": "https://pt.wikipedia.org/wiki/Itaitu",
+      "data": "2020-04-22",
+      "quando": "abr/2020",
+      "confirmado": false,
+      "desatualizado": true,
+      "_nota": "As duas fontes repetem a mesma ação do MP (mpba.mp.br/noticia/51018), que não abriu daqui em 20/11/2026: conexão recusada duas vezes, sem cópia no Wayback. Vira confirmado: true quando o texto original do MP for lido. desatualizado: true porque o exame é de 2020 e a qualidade da água muda. O conselho de não beber sem tratar vale de qualquer jeito, e o texto da tela diz o ano."
+    },
+    {
+      "chave": "propriedade",
+      "texto": "Várias cachoeiras ficam em terra particular. Onde houver controle na entrada, pague a taxa.",
+      "fonte": "Pesquisa da equipe (20/11/2026). As trilhas do Wikiloc para as cachoeiras dos Índios e das Andorinhas citam propriedade privada (lidas só no resumo da busca).",
+      "data": "2026-11-20",
+      "quando": "nov/2026",
+      "confirmado": false,
+      "desatualizado": false
+    }
+  ],
+  "guias": {
+    "nome": "ACAGI",
+    "nome_completo": "Associação de Condutores(as) e Guias de Itaitu",
+    "link": "https://www.instagram.com/guiasdeitaitu/",
+    "instagram": "https://www.instagram.com/guiasdeitaitu/",
+    "arroba": "@guiasdeitaitu",
+    "como_falar": "Pelo Instagram, ainda na vila, onde o celular pega.",
+    "fonte": "Perfil público @guiasdeitaitu no Instagram, visto na pesquisa de 20/11/2026",
+    "data": "2026-11-20",
+    "quando": "nov/2026",
+    "confirmado": true,
+    "desatualizado": false,
+    "_nota": "Sem telefone: só entra com autorização da associação. A ACAGI aparece como serviço de guias da vila, não como parceira da Creat. Citar como apoio só com o de acordo dela."
+  },
+  "melhor_epoca": {
+    "texto": "abril a outubro",
+    "motivo": "menos chuva, trilhas mais firmes",
+    "fonte": "Book Transfer, booktransfer.com.br/vila-de-itaitu (11/02/2026). O Estado de Minas (21/07/2026) diz que de junho a agosto as trilhas ficam mais seguras.",
+    "data": "2026-02-11",
+    "quando": "fev/2026",
+    "confirmado": false,
+    "desatualizado": false,
+    "_nota": "O intervalo de abril a outubro vem de uma fonte só; a outra confirma o meio dele."
+  },
+  "taxas": [
+    {
+      "pontos": ["cachoeira-veu-da-noiva"],
+      "texto": "Véu da Noiva: R$ 5 por pessoa.",
+      "fonte": "Trilha do Wikiloc de jul/2025, lida só no resumo da busca",
+      "data": "2025-07",
+      "quando": "jul/2025",
+      "confirmado": false,
+      "desatualizado": true,
+      "conferir": "Conferir o valor na entrada."
+    },
+    {
+      "pontos": ["cachoeira-do-pianco"],
+      "texto": "Piancó: R$ 5 por pessoa de manutenção, cobrados num controle na entrada.",
+      "fonte": "Viaje com Norma (jan/2023); A Tarde (20/10/2025)",
+      "data": "2025-10-20",
+      "quando": "out/2025",
+      "confirmado": true,
+      "desatualizado": true,
+      "conferir": "Conferir o valor atual."
+    },
+    {
+      "pontos": ["cachoeira-das-arapongas", "cachoeira-do-sossego", "poco-da-geladeira"],
+      "texto": "Arapongas, Sossego e Poço da Geladeira: taxa no Posto do Parque Estadual das Sete Passagens. Valor não achado.",
+      "fonte": "Viaje com Norma (abr/2023)",
+      "data": "2023-04",
+      "quando": "abr/2023",
+      "confirmado": false,
+      "desatualizado": true,
+      "conferir": "Leve dinheiro para a taxa.",
+      "_nota": "Um roteiro sem data cita R$ 8 por pessoa no Poço da Geladeira (pontos.geojson); não confirmado, fora da tela."
+    }
+  ],
+  "horarios": [
+    {
+      "pontos": ["cachoeira-das-arapongas", "cachoeira-do-sossego", "poco-da-geladeira"],
+      "texto": "Posto do Parque Estadual das Sete Passagens: todos os dias, das 8h às 16h.",
+      "fonte": "Viaje com Norma (abr/2023)",
+      "data": "2023-04",
+      "quando": "abr/2023",
+      "confirmado": false,
+      "desatualizado": true,
+      "conferir": "Conferir o horário antes de sair."
+    }
+  ],
+  "_horarios_nota": "Para as outras cachoeiras nenhuma fonte deu horário.",
+  "acesso": [
+    {
+      "chave": "onibus",
+      "texto": "Não há ônibus até a vila: só carro, táxi ou transfer.",
+      "fonte": "Site do Camping Payayás, campingpayayas.com (2026)",
+      "data": "2026",
+      "quando": "2026",
+      "confirmado": false,
+      "desatualizado": false,
+      "conferir": "Uma matéria de A Tarde de 2020 citava ônibus de Jacobina nos fins de semana. Conferir antes de ir."
+    },
+    {
+      "chave": "distancia",
+      "texto": "A vila fica a cerca de 25 a 30 km do centro de Jacobina.",
+      "fonte": "Camping Payayás: camping a 24 km de Jacobina e 1,7 km da vila (2026). Book Transfer: cerca de 30 km (11/02/2026).",
+      "data": "2026-02-11",
+      "quando": "fev/2026",
+      "confirmado": true,
+      "desatualizado": false
+    },
+    {
+      "chave": "estrada",
+      "texto": "A estrada mudou: uma fonte de 2026 fala em asfalto recente, e blogs de 2023 falam em 13 a 17 km de terra.",
+      "fonte": "Book Transfer (11/02/2026); Viaje com Norma (jan/2023 e abr/2023)",
+      "data": "2026-02-11",
+      "quando": "fev/2026",
+      "confirmado": false,
+      "desatualizado": false,
+      "conferir": "Conferir o trecho de terra antes de sair de Jacobina."
+    }
+  ],
+  "atrativos": {
+    "texto": "Itaitu tem mais de 40 cachoeiras.",
+    "fonte": "Estado de Minas (21/07/2026): mais de 40 quedas d'água catalogadas. A Tarde (20/01/2020 e 20/10/2025): mais de 40. Rede Globo (2018): 42.",
+    "url": "https://www.em.com.br/emfoco/2026/07/21/a-cidade-do-ouro-que-reune-mais-de-40-cachoeiras-em-uma-unica-vila-com-queda-dagua-de-60-metros/",
+    "data": "2026-07-21",
+    "quando": "jul/2026",
+    "confirmado": true,
+    "desatualizado": false
+  }
+}

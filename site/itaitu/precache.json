@@ -1,8 +1,85 @@
 {
- "versao": "9a0af159a178",
- "gerado_em": "2026-11-20T16:11:19.018Z",
- "bytes_total": 14253215,
+ "versao": "d8c5c707d4e8",
+ "gerado_em": "2026-11-20T21:37:05.818Z",
+ "bytes_total": 15244878,
  "casco": [
+  "arte/placa-qr.svg",
+  "css/app.css",
+  "css/fontes.css",
+  "css/hora.css",
+  "css/marcos.css",
+  "css/regua.css",
+  "css/tabuas.css",
+  "css/tokens.css",
+  "icones/apple-touch-icon.png",
+  "icones/favicon-32.png",
+  "icones/favicon.svg",
+  "icones/icone-192.png",
+  "icones/icone-512.png",
+  "icones/icone-maskable-512.png",
+  "icones/icone-maskable.svg",
+  "icones/icone.svg",
+  "icones/marcos-192.png",
+  "icones/marcos-512.png",
+  "icones/marcos-maskable.png",
+  "icones/marcos-maskable.svg",
+  "icones/marcos.svg",
+  "icones/ui.svg",
+  "index.html",
+  "js/abertura.js",
+  "js/app.js",
+  "js/armazenamento.js",
+  "js/banco.js",
+  "js/busca.js",
+  "js/dados.js",
+  "js/destinos.js",
+  "js/economia.js",
+  "js/estilo.js",
+  "js/gps.js",
+  "js/gpx.js",
+  "js/gravador.js",
+  "js/hora/cartao.js",
+  "js/hora/demo.js",
+  "js/hora/horarios.js",
+  "js/hora/index.js",
+  "js/hora/regras.js",
+  "js/hora/regua.js",
+  "js/hora/sombra-canvas.js",
+  "js/hora/tabuas.js",
+  "js/luz.js",
+  "js/mapa.js",
+  "js/marca.js",
+  "js/marcos/caderno.js",
+  "js/marcos/comum.js",
+  "js/marcos/confirmar.js",
+  "js/marcos/gravador-pro.js",
+  "js/marcos/index.js",
+  "js/marcos/kit.js",
+  "js/marcos/pacote-tela.js",
+  "js/marcos/pacote.js",
+  "js/marcos/pin.js",
+  "js/marcos/placa.js",
+  "js/marcos/qr.js",
+  "js/marcos/trava.js",
+  "js/marcos/vitrine.js",
+  "js/motor/cliente.js",
+  "js/motor/nucleo.js",
+  "js/motor/relevo-cartao.js",
+  "js/motor/sombra.js",
+  "js/motor/worker.js",
+  "js/rota.js",
+  "js/som.js",
+  "js/sos.js",
+  "js/textos.js",
+  "js/util.js",
+  "js/voos.js",
+  "manifest-marcos.webmanifest",
+  "manifest.webmanifest",
+  "marcas/demo-camping.json",
+  "marcas/demo-village.json",
+  "marcas/indice.json",
+  "marcas/padrao.json",
+  "marcos.html",
   "vendor/LICENSE-qrcode-generator.txt",
   "vendor/LICENSE.txt",
   "vendor/VERSOES.json",
@@ -12,6 +89,46 @@
   "vendor/qrcode-generator.mjs"
  ],
  "arquivos": [
+  {
+   "url": "arte/placa-qr.svg",
+   "bytes": 75745,
+   "hash": "0010451ce060ef33"
+  },
+  {
+   "url": "css/app.css",
+   "bytes": 38738,
+   "hash": "c382bd49b9eb7fa3"
+  },
+  {
+   "url": "css/fontes.css",
+   "bytes": 1004,
+   "hash": "99477d23c4f8bb58"
+  },
+  {
+   "url": "css/hora.css",
+   "bytes": 8019,
+   "hash": "aac97a94b108eb25"
+  },
+  {
+   "url": "css/marcos.css",
+   "bytes": 10254,
+   "hash": "3514902197702929"
+  },
+  {
+   "url": "css/regua.css",
+   "bytes": 15934,
+   "hash": "ece593e67da9f0a1"
+  },
+  {
+   "url": "css/tabuas.css",
+   "bytes": 12600,
+   "hash": "5800a31b4886a427"
+  },
+  {
+   "url": "css/tokens.css",
+   "bytes": 12920,
+   "hash": "2511358e84380401"
+  },
   {
    "url": "dados/atribuicoes.json",
    "bytes": 1306,
@@ -23,6 +140,11 @@
    "hash": "34684a1326bd1327"
   },
   {
+   "url": "dados/info.json",
+   "bytes": 10622,
+   "hash": "b16907ff6e827e35"
+  },
+  {
    "url": "dados/pontos.geojson",
    "bytes": 30141,
    "hash": "70cfee9b436f6347"
@@ -31,6 +153,366 @@
    "url": "dados/trilhas.geojson",
    "bytes": 17773,
    "hash": "ad24f4bf1906e8ba"
+  },
+  {
+   "url": "fontes/AtkinsonHyperlegibleNext-Bold.woff2",
+   "bytes": 25928,
+   "hash": "dda449f0f556a595"
+  },
+  {
+   "url": "fontes/AtkinsonHyperlegibleNext-Regular.woff2",
+   "bytes": 24896,
+   "hash": "378aea0f5c1d179f"
+  },
+  {
+   "url": "fontes/LICENSE.txt",
+   "bytes": 4431,
+   "hash": "aca6a428580965d2"
+  },
+  {
+   "url": "icones/apple-touch-icon.png",
+   "bytes": 7177,
+   "hash": "2975127bec78087b"
+  },
+  {
+   "url": "icones/favicon-32.png",
+   "bytes": 905,
+   "hash": "bb0465e2d032b107"
+  },
+  {
+   "url": "icones/favicon.svg",
+   "bytes": 634,
+   "hash": "103c9aebffec20bd"
+  },
+  {
+   "url": "icones/icone-192.png",
+   "bytes": 7577,
+   "hash": "f15e7f6d7df08a05"
+  },
+  {
+   "url": "icones/icone-512.png",
+   "bytes": 23868,
+   "hash": "55bbbd0ef05db79f"
+  },
+  {
+   "url": "icones/icone-maskable-512.png",
+   "bytes": 23673,
+   "hash": "5acdcce2155cb769"
+  },
+  {
+   "url": "icones/icone-maskable.svg",
+   "bytes": 971,
+   "hash": "c8f71e9d08ba07b9"
+  },
+  {
+   "url": "icones/icone.svg",
+   "bytes": 866,
+   "hash": "a86dd58fd74981a9"
+  },
+  {
+   "url": "icones/marcos-192.png",
+   "bytes": 7999,
+   "hash": "5841e7665fc195e3"
+  },
+  {
+   "url": "icones/marcos-512.png",
+   "bytes": 24592,
+   "hash": "c0f7f4c3098b40c6"
+  },
+  {
+   "url": "icones/marcos-maskable.png",
+   "bytes": 24372,
+   "hash": "c7f6b5dc53758405"
+  },
+  {
+   "url": "icones/marcos-maskable.svg",
+   "bytes": 1017,
+   "hash": "0b7da932009d6d3c"
+  },
+  {
+   "url": "icones/marcos.svg",
+   "bytes": 912,
+   "hash": "f2a7159970b5ba0b"
+  },
+  {
+   "url": "icones/ui.svg",
+   "bytes": 5840,
+   "hash": "061e42aeb972aa5b"
+  },
+  {
+   "url": "index.html",
+   "bytes": 21740,
+   "hash": "9c09c158d3fa2316"
+  },
+  {
+   "url": "js/abertura.js",
+   "bytes": 13758,
+   "hash": "20517573073a2bd4"
+  },
+  {
+   "url": "js/app.js",
+   "bytes": 17072,
+   "hash": "a86eb8bface287b8"
+  },
+  {
+   "url": "js/armazenamento.js",
+   "bytes": 5267,
+   "hash": "49e09c916821226e"
+  },
+  {
+   "url": "js/banco.js",
+   "bytes": 3247,
+   "hash": "e48a4e377e1d2a04"
+  },
+  {
+   "url": "js/busca.js",
+   "bytes": 4109,
+   "hash": "d0006b4f32a7426e"
+  },
+  {
+   "url": "js/dados.js",
+   "bytes": 5990,
+   "hash": "a5558a5287d718e6"
+  },
+  {
+   "url": "js/destinos.js",
+   "bytes": 9377,
+   "hash": "5fbad0be82034e64"
+  },
+  {
+   "url": "js/economia.js",
+   "bytes": 2862,
+   "hash": "012d4c20a1995b06"
+  },
+  {
+   "url": "js/estilo.js",
+   "bytes": 11455,
+   "hash": "8ede8cb923db8334"
+  },
+  {
+   "url": "js/gps.js",
+   "bytes": 8041,
+   "hash": "0a4df07aad691ebc"
+  },
+  {
+   "url": "js/gpx.js",
+   "bytes": 5619,
+   "hash": "0e687c697130ec17"
+  },
+  {
+   "url": "js/gravador.js",
+   "bytes": 26379,
+   "hash": "4cae6e6b9a6b7238"
+  },
+  {
+   "url": "js/hora/cartao.js",
+   "bytes": 23121,
+   "hash": "3c60b7d26b3667ea"
+  },
+  {
+   "url": "js/hora/demo.js",
+   "bytes": 11756,
+   "hash": "7bc8191410fde0b9"
+  },
+  {
+   "url": "js/hora/horarios.js",
+   "bytes": 3900,
+   "hash": "fd30e43038a02f75"
+  },
+  {
+   "url": "js/hora/index.js",
+   "bytes": 19250,
+   "hash": "844fc7b80a99b12c"
+  },
+  {
+   "url": "js/hora/regras.js",
+   "bytes": 8655,
+   "hash": "b3f297f558d62107"
+  },
+  {
+   "url": "js/hora/regua.js",
+   "bytes": 10932,
+   "hash": "882b9b999221120e"
+  },
+  {
+   "url": "js/hora/sombra-canvas.js",
+   "bytes": 8386,
+   "hash": "d6ef97a990c3884f"
+  },
+  {
+   "url": "js/hora/tabuas.js",
+   "bytes": 11686,
+   "hash": "72f9a2759c8a46c8"
+  },
+  {
+   "url": "js/luz.js",
+   "bytes": 13252,
+   "hash": "deff5aa7ebdd7695"
+  },
+  {
+   "url": "js/mapa.js",
+   "bytes": 16377,
+   "hash": "4f4499f8b8ad55e8"
+  },
+  {
+   "url": "js/marca.js",
+   "bytes": 9176,
+   "hash": "8fabaa8a2a248f64"
+  },
+  {
+   "url": "js/marcos/caderno.js",
+   "bytes": 5600,
+   "hash": "6b4515fee2df5c6e"
+  },
+  {
+   "url": "js/marcos/comum.js",
+   "bytes": 6145,
+   "hash": "500c244c069d6d25"
+  },
+  {
+   "url": "js/marcos/confirmar.js",
+   "bytes": 15052,
+   "hash": "a40209ea05f4f914"
+  },
+  {
+   "url": "js/marcos/gravador-pro.js",
+   "bytes": 20261,
+   "hash": "30decfee666c64f4"
+  },
+  {
+   "url": "js/marcos/index.js",
+   "bytes": 9901,
+   "hash": "ff844dee821b95f3"
+  },
+  {
+   "url": "js/marcos/kit.js",
+   "bytes": 4920,
+   "hash": "4477c8efe6ff339e"
+  },
+  {
+   "url": "js/marcos/pacote-tela.js",
+   "bytes": 3592,
+   "hash": "09a959da1bee091e"
+  },
+  {
+   "url": "js/marcos/pacote.js",
+   "bytes": 9146,
+   "hash": "e5ee8e9e5191288f"
+  },
+  {
+   "url": "js/marcos/pin.js",
+   "bytes": 3023,
+   "hash": "c78ac8bf847f860f"
+  },
+  {
+   "url": "js/marcos/placa.js",
+   "bytes": 3949,
+   "hash": "3dab6d032813bb98"
+  },
+  {
+   "url": "js/marcos/qr.js",
+   "bytes": 2731,
+   "hash": "d119a82ef70e5e54"
+  },
+  {
+   "url": "js/marcos/trava.js",
+   "bytes": 8786,
+   "hash": "d188c437a85971b3"
+  },
+  {
+   "url": "js/marcos/vitrine.js",
+   "bytes": 7403,
+   "hash": "60b31ea421954caa"
+  },
+  {
+   "url": "js/motor/cliente.js",
+   "bytes": 9130,
+   "hash": "b9ebb0d9f6f5491c"
+  },
+  {
+   "url": "js/motor/nucleo.js",
+   "bytes": 16211,
+   "hash": "204ac3f05a29fc64"
+  },
+  {
+   "url": "js/motor/relevo-cartao.js",
+   "bytes": 10075,
+   "hash": "a364055abfa33472"
+  },
+  {
+   "url": "js/motor/sombra.js",
+   "bytes": 7516,
+   "hash": "74a53957a06fb708"
+  },
+  {
+   "url": "js/motor/worker.js",
+   "bytes": 13855,
+   "hash": "f9433325b7f8cd39"
+  },
+  {
+   "url": "js/rota.js",
+   "bytes": 15244,
+   "hash": "918e522121e05dbd"
+  },
+  {
+   "url": "js/som.js",
+   "bytes": 26213,
+   "hash": "e41d82f0876e05be"
+  },
+  {
+   "url": "js/sos.js",
+   "bytes": 5558,
+   "hash": "f0a91158ec87504a"
+  },
+  {
+   "url": "js/textos.js",
+   "bytes": 85487,
+   "hash": "2facf654996446dc"
+  },
+  {
+   "url": "js/util.js",
+   "bytes": 12262,
+   "hash": "1991371866bd5e2c"
+  },
+  {
+   "url": "js/voos.js",
+   "bytes": 18717,
+   "hash": "5ed922e0883404e3"
+  },
+  {
+   "url": "manifest-marcos.webmanifest",
+   "bytes": 962,
+   "hash": "26d4fe85874a42ee"
+  },
+  {
+   "url": "manifest.webmanifest",
+   "bytes": 928,
+   "hash": "73e14365dab62b6f"
+  },
+  {
+   "url": "marcas/demo-camping.json",
+   "bytes": 1620,
+   "hash": "38d64953a833d27a"
+  },
+  {
+   "url": "marcas/demo-village.json",
+   "bytes": 1436,
+   "hash": "f1ff941dd18b17f5"
+  },
+  {
+   "url": "marcas/indice.json",
+   "bytes": 354,
+   "hash": "0fd1802a8d7d2ecc"
+  },
+  {
+   "url": "marcas/padrao.json",
+   "bytes": 1071,
+   "hash": "bc874e7bdddeceb8"
+  },
+  {
+   "url": "marcos.html",
+   "bytes": 21614,
+   "hash": "d063f5c770b828c6"
   },
   {
    "url": "tiles/dem/10/396/544.png",

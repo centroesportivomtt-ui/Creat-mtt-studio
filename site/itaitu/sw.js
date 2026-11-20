@@ -39,6 +39,11 @@
  *                       fontes do MapLibre para nem pedir fora do recorte).
  */
 
+// Versão da lista que este sw.js acompanha. Mudar esta linha muda os bytes do sw.js, e o navegador instala o SW
+// de novo: quem já tinha o mapa completo recebe a versão nova inteira no install (sem precisar do botão "atualizar").
+// Troque junto com o precache.json a cada publicação (testes/rodar-tudo.mjs confere).
+const VERSAO_DA_LISTA = 'd8c5c707d4e8';
+
 const PREFIXO = 'itaitu-v';
 const META = 'itaitu-meta';
 const CANAL = 'itaitu-cache';

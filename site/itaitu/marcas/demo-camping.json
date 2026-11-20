@@ -1,0 +1,26 @@
+{
+  "versao": 1,
+  "slug": "demo-camping",
+  "nome_app": "Trilhas de Itaitu",
+  "parceiro": "Camping Payayás (demonstração)",
+  "cor": "#1E7A46",
+  "logo": "",
+  "ponto_base_id": "",
+  "whatsapp": "",
+  "instagram": "",
+  "boas_vindas": "Antes de sair do camping, veja a hora em que a serra tira o sol de cada cachoeira, calculada pelo relevo. Assim você chega ao poço com sol e volta com luz, mesmo sem sinal.",
+  "credito": "feito pela Creat",
+  "parceiros": [
+    { "nome": "ACAGI · Condutores e Guias de Itaitu", "tipo": "guia", "link": "https://www.instagram.com/guiasdeitaitu/" }
+  ],
+  "_nota": "Marca de demonstração, sem contato e sem logo. O nome entra só em texto, com (demonstração). O camping ainda não tem ponto no pontos.geojson: com ponto_base_id vazio, a base cai na vila. Os tempos de carro continuam os da placa, a partir do Village, e a tábua diz isso. A cor é de demonstração (4,9:1 sobre o creme), não é a cor da marca dele.",
+  "_pendente": {
+    "logo": "preencher quando o parceiro autorizar",
+    "whatsapp": "preencher quando o parceiro autorizar",
+    "instagram": "preencher quando o parceiro autorizar",
+    "ponto_base_id": "preencher quando a posição do camping for confirmada no mapa (Estou aqui: confirmar posição, no app particular); até lá, a base é a vila",
+    "cor": "trocar pela cor da marca do parceiro quando ele enviar",
+    "parceiro": "tirar o (demonstração) quando o parceiro assinar",
+    "parceiros": "onde comer: preencher com os restaurantes que autorizarem (nome, link https e ponto no mapa). Até lá o botão Onde comer não aparece"
+  }
+}
