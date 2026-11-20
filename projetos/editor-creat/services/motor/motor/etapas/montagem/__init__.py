@@ -22,6 +22,7 @@ import time
 from motor import config
 from motor.etapas import ErroDefinitivo, etapa
 from motor.etapas.montagem import comp as COMP
+from motor.etapas.montagem import fx as FX
 from motor.etapas.montagem import mix as MIX
 from motor.etapas.montagem import overlay as OV
 from motor.etapas.montagem import planos as PL
@@ -50,6 +51,9 @@ def validar_edl(edl: dict) -> None:
     for v in edl["voz"]:
         if v["fonte"] not in edl["fontes"]:
             raise ErroDefinitivo(f"EDL inválido: voz {v['id']} usa fonte '{v['fonte']}' que não está em fontes")
+    pr = FX.problemas(edl)                                   # revela/salto: o que quebraria calado no render
+    if pr:
+        raise ErroDefinitivo("EDL inválido: " + "; ".join(pr[:5]))
 
 
 def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tuple[float, float] | None = None,

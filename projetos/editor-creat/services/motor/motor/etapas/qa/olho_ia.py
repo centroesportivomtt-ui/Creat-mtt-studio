@@ -85,16 +85,18 @@ def pontos_de_risco(edl: dict) -> list[dict]:
     from motor.etapas.qa.cobertura_sintonia import coberturas_do_edl as coberturas
     dur = float(edl.get("duracao") or 0)
     grupos = [[], [], [], []]
-    from motor.etapas.montagem.fx import janela
+    from motor.etapas.montagem.fx import janela, meio
+    from motor.etapas.montagem.overlay import MODELOS_LEGENDA
     for f in edl.get("fx", []) or []:
         try:
-            a, b = janela(f)                    # whip/aba71/mascara/rush são centrados em t; os outros começam em t
+            a, b = janela(f)                    # whip/aba71/mascara/rush/salto são centrados em t; os outros começam em t
+            tm = meio(f)                        # revela: o meio da frente, não o meio da janela (que começa no plano)
         except (KeyError, TypeError, ValueError):
             continue
         if b - a > 0.05:
-            grupos[0].append({"t": max(0.0, (a + b) / 2), "motivo": f"meio da transição «{f.get('tipo')}»", "esperado": None})
+            grupos[0].append({"t": max(0.0, tm), "motivo": f"meio da transição «{f.get('tipo')}»", "esperado": None})
     for m in edl.get("motion", []) or []:
-        if m.get("modelo") == "legenda":
+        if m.get("modelo") in MODELOS_LEGENDA:
             continue
         de, ate = float(m.get("de", 0)), float(m.get("ate", 0))
         if ate - de < 0.3:

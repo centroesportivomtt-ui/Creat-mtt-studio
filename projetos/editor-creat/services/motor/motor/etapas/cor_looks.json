@@ -145,6 +145,54 @@
    "alvo": 0.45,
    "wb": 0.5,
    "desc": "Só o equilíbrio da cena, sem assinatura."
+  },
+  "matriz_pos_chuva": {
+   "nome": "Praça depois da chuva",
+   "lift": [
+    0.012,
+    0.01,
+    0.008
+   ],
+   "gamma": [
+    1.0,
+    1.0,
+    1.02
+   ],
+   "gain": [
+    1.03,
+    1.0,
+    0.96
+   ],
+   "con": 0.1,
+   "sat": 0.92,
+   "pele": 0.75,
+   "alvo": 0.46,
+   "wb": 0.4,
+   "desc": "Pedra molhada e céu lavado: pretos quentes de laboratório, altas um pouco frias, cor contida e pele protegida (Reel O Mestre)."
+  },
+  "matriz_memoria": {
+   "nome": "Praça em memória",
+   "lift": [
+    0.012,
+    0.01,
+    0.008
+   ],
+   "gamma": [
+    1.0,
+    1.0,
+    1.02
+   ],
+   "gain": [
+    1.04,
+    1.0,
+    0.95
+   ],
+   "con": 0.1,
+   "sat": 0.85,
+   "pele": 0.75,
+   "alvo": 0.46,
+   "wb": 0.4,
+   "desc": "Mesma praça, mais lembrança que presente: um pouco mais quente e menos saturada (blocos de memória do Reel O Mestre)."
   }
  }
 }

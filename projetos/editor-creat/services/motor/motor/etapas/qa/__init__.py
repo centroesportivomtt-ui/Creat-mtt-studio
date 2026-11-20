@@ -190,13 +190,23 @@ class Conferencia:
 
     # ---------- EDL
     def palavras_legenda(self) -> list[list]:
-        """[t0, t1, texto] das legendas (do EDL ou das camadas 'legenda' prontas do filme legado)."""
+        """[t0, t1, texto] das legendas (do EDL ou das camadas 'legenda' prontas do filme legado).
+
+        Sem `legendas.palavras`, as frases de `legenda_revelada` entram palavra a palavra, com o tempo da frase dividido
+        por igual (aproximação: para a régua de ouvido ficar exata, mande as palavras com tempo em `legendas.palavras`)."""
         pal = [[w[0], w[1], str(w[2])] for w in (self.edl.get("legendas") or {}).get("palavras", [])]
         if not pal:
             for m in self.edl.get("motion", []):
                 if m["modelo"] == "legenda":
                     for w in m["props"].get("palavras", []):
                         pal.append([w.get("i", m["de"]), w.get("f", m["ate"]), str(w.get("p", ""))])
+                elif m["modelo"] == "legenda_revelada":
+                    for fr in m["props"].get("frases", []):
+                        # " / " é a quebra manual de linha do kit (split /\s+\/\s+/), não palavra: não entra na régua
+                        ws = [x.strip("*") for x in str(fr.get("texto", "")).split() if x.strip("*") and x.strip("*") != "/"]
+                        de, ate = float(fr.get("de", m["de"])), float(fr.get("ate", m["ate"]))
+                        passo = (ate - de) / max(1, len(ws))
+                        pal += [[round(de + j * passo, 3), round(de + (j + 1) * passo, 3), x] for j, x in enumerate(ws)]
         return sorted(pal)
 
 

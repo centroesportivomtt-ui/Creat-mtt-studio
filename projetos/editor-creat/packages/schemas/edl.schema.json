@@ -78,7 +78,7 @@
           "som_direto_db": { "type": ["number", "null"], "description": "Som do próprio plano como textura (V1 nat)." },
           "flash": { "$ref": "#/$defs/evt" },
           "tremor": { "$ref": "#/$defs/evt" },
-          "desfocar": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 }, "description": "Caixas normalizadas a desfocar (telas com dados de terceiros)." },
+          "desfocar": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 5 }, "description": "Caixas normalizadas a desfocar (telas com dados de terceiros): [x0, y0, x1, y1] e, opcional, o desfoque (sigma) em px do quadro de 1080 (padrão 16)." },
           "janela": { "type": ["object", "null"], "description": "PiP/janela-aba (V2 janelas): {x,y,w,h,titulo}." },
           "mblur": { "type": "boolean", "default": false },
           "cobertura": { "type": ["object", "null"], "additionalProperties": false, "required": ["olhar"], "description": "Conferência de sintonia de quem dirigiu e OLHOU o take, quando o plano cobre uma fala que não é dele e mostra a pessoa (QA cobertura_sintonia). olhar 'camera' = rosto falando para a câmera fora do take da fala: reprova sempre.", "properties": { "olhar": { "enum": ["produto", "camera", "acao"] }, "assunto": { "type": "string", "description": "O que a fala diz e a imagem mostra." } } }
@@ -107,8 +107,16 @@
       "items": {
         "type": "object", "additionalProperties": false, "required": ["tipo", "t"],
         "properties": {
-          "tipo": { "enum": ["whip", "mascara", "aba71", "impacto", "bloom", "leak", "zoomt", "gagueira", "rush", "foto", "flash", "match", "fade"] },
-          "t": { "type": "number" }, "dur": { "type": "number" }, "forca": { "type": "number" }, "dir": { "type": "number" }, "nome": { "type": "string" }
+          "tipo": { "enum": ["whip", "mascara", "aba71", "impacto", "bloom", "leak", "zoomt", "gagueira", "rush", "foto", "flash", "match", "fade", "revela", "salto"] },
+          "t": { "type": "number" }, "dur": { "type": "number" }, "forca": { "type": "number" }, "dir": { "type": "number" }, "nome": { "type": "string" },
+          "modo": { "enum": ["abre", "fecha"], "default": "abre", "description": "revela: 'abre' = negativo vira positivo a partir da origem; 'fecha' = o negativo cresce a partir da origem e fica." },
+          "origem": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "revela: centro da frente [x, y] em px do quadro 1080x1920 (padrão [540,960] no abre, [540,1980] no fecha)." },
+          "rmax": { "type": "number", "exclusiveMinimum": 0, "description": "revela: raio final da frente em px; sem ele, cobre o quadro inteiro." },
+          "soft": { "type": "number", "exclusiveMinimum": 0, "default": 40, "description": "revela: largura da borda da frente em px." },
+          "amp": { "type": "number", "minimum": 0, "default": 70, "description": "revela: amplitude do ruído na borda em px." },
+          "seed": { "type": "integer", "default": 7, "description": "revela: semente do ruído (mesma semente = mesma borda)." },
+          "desde": { "type": "number", "description": "revela abre: início da janela (antes da frente tudo é negativo); padrão = início do plano que contém t." },
+          "ate": { "type": "number", "description": "revela fecha: fim da janela (depois da frente tudo fica negativo); padrão = fim do plano que contém t." }
         }
       }
     },

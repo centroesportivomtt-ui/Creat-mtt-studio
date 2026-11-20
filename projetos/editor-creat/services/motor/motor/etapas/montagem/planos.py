@@ -148,19 +148,24 @@ def vinheta(img):
 
 
 def desfoca(img, caixas: list):
+    """Caixas [x0, y0, x1, y1] normalizadas da saída, com um 5o valor opcional: o desfoque (sigma) em px do quadro de 1080
+    de largura (padrão 16). Caixas com sigmas diferentes são desfocadas cada uma com o seu."""
     cv2 = _cv2()
     h, w = img.shape[:2]
-    mask = np.zeros((h, w), np.float32)
-    for x0, y0, x1, y1 in caixas:
+    por_sigma: dict = {}
+    for cx in caixas:
+        x0, y0, x1, y1 = cx[:4]
+        sig = float(cx[4]) * w / 1080 if len(cx) > 4 and cx[4] else 16.0   # sem o 5o valor: o de sempre (16 px)
         a, b = int(max(0, min(x0, x1)) * w), int(max(0, min(y0, y1)) * h)
         c, d = int(min(1, max(x0, x1)) * w), int(min(1, max(y0, y1)) * h)
         if c > a and d > b:
-            mask[b:d, a:c] = 1.0
-    if mask.max() == 0:
-        return img
-    mask = cv2.GaussianBlur(mask, (0, 0), 9)[:, :, None]
-    bl = cv2.GaussianBlur(img, (0, 0), 16)
-    return (img * (1 - mask) + bl * mask).astype(np.uint8)
+            por_sigma.setdefault(sig, np.zeros((h, w), np.float32))[b:d, a:c] = 1.0
+    out = img
+    for sig, mask in por_sigma.items():
+        mask = cv2.GaussianBlur(mask, (0, 0), 9)[:, :, None]
+        bl = cv2.GaussianBlur(out, (0, 0), max(0.5, sig))
+        out = (out * (1 - mask) + bl * mask).astype(np.uint8)
+    return out
 
 
 # ---------------------------------------------------------------- plano

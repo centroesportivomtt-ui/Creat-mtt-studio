@@ -3,6 +3,8 @@ PNG RGBA por beginFrame com N workers (`EDITOR_RENDER_WORKERS`). Quadro repetido
 
 Legendas: se o EDL não trouxer camadas `legenda` prontas (filme legado), as palavras [t0, t1, texto, ênfase] viram páginas
 do modelo `legenda` do kit, quebrando em pausa > 0,45 s ou pontuação final (máx. 3 palavras por página). Ênfase 1 = *palavra*.
+Camada de legenda própria no EDL (`legenda` pronta ou `legenda_revelada`, a de frase inteira do kit): o overlay NÃO gera a
+legenda padrão; `legendas.palavras` continua sendo a lista das palavras ditas que o QA confere contra a fala.
 Imagens das camadas (src/imagem/logo) que são chaves do armazenamento ou caminhos absolutos viram `/@abs/<caminho>`.
 """
 from __future__ import annotations
@@ -20,6 +22,7 @@ from motor.etapas.montagem.comum import Fontes, gravar_json, hash_obj
 
 KIT = config.KIT
 CHAVES_IMG = ("src", "imagem", "logo", "logo_cliente", "logo_parceiro")
+MODELOS_LEGENDA = ("legenda", "legenda_revelada")   # camadas que JÁ são a legenda do filme: com uma delas, nada de padrão
 
 
 def _fixa_caminhos(obj, fontes: Fontes | None):
@@ -71,7 +74,7 @@ def camadas_legenda(edl: dict) -> list[dict]:
 
 def cena_do_edl(edl: dict, fontes: Fontes | None = None) -> dict:
     motion = [dict(m) for m in edl.get("motion", [])]
-    if not any(m["modelo"] == "legenda" for m in motion):
+    if not any(m["modelo"] in MODELOS_LEGENDA for m in motion):
         motion += camadas_legenda(edl)
     motion = _fixa_caminhos(motion, fontes)
     for m in motion:

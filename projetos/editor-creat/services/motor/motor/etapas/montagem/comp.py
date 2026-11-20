@@ -92,8 +92,36 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
     NF = quadro(edl["duracao"], FPS)
     fa, fb = (quadro(janela[0], FPS), min(NF, quadro(janela[1], FPS))) if janela else (0, NF)
     crf = int(crf if crf is not None else (edl.get("master") or {}).get("crf", 17))
-    efeitos = list(edl.get("fx", []) or [])
     planos = sorted(edl["planos"], key=lambda p: p["t0"])
+    efeitos = FX.preparar(list(edl.get("fx", []) or []), planos)
+    saltos = [e for e in efeitos if e["tipo"] == "salto"]
+    um_cache: dict = {}
+
+    def um_quadro(i: int, ultimo: bool):
+        """Primeiro (ou último) quadro do plano i, lido sob demanda e guardado: o salto mostra o vizinho na emenda."""
+        if not 0 <= i < len(planos):
+            return None
+        if (i, ultimo) not in um_cache:
+            pl = planos[i]
+            arq = planos_res.get(pl["id"], {}).get("arquivo")
+            fr = None
+            if arq and os.path.exists(arq):
+                n = quadro(pl["t1"], FPS) - quadro(pl["t0"], FPS)
+                rd = leitor(arq, W, H, max(0, n - 3) / FPS if ultimo else 0.0)
+                for q in rd:
+                    fr = q
+                    if not ultimo:
+                        break
+                rd.close()
+            um_cache[(i, ultimo)] = fr
+        return um_cache[(i, ultimo)]
+
+    def vizinhos(tt: float, i: int, anterior):
+        """Só quando um salto está no ar: o anterior é o último quadro já visto (ou lido do plano i-1); o seguinte, o 1o de i+1."""
+        if not saltos or not FX.ativos(saltos, tt):
+            return None
+        return {"anterior": (lambda: anterior) if anterior is not None else (lambda: um_quadro(i - 1, True)),
+                "seguinte": lambda: um_quadro(i + 1, False)}
     saida.parent.mkdir(parents=True, exist_ok=True)
     tmp = saida.with_name(saida.stem + ".tmp.mp4")
     cmd = (["nice", "-n", str(nice)] if nice else []) + ["ffmpeg", "-nostdin", "-v", "error", "-y",
@@ -113,19 +141,20 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
     escritos = 0
     buracos = 0
     k = fa
-    for p in planos:
+    for i, p in enumerate(planos):
         p0, p1 = quadro(p["t0"], FPS), quadro(p["t1"], FPS)
         if p1 <= fa or p0 >= fb:
             continue
         while k < min(p0, fb):                               # buraco entre planos: segura o último quadro
             img = (ult if ult is not None else preto).copy()
-            img = Overlay.aplicar(FX.aplicar(img, k / FPS, efeitos, hist), ov.pegar(k))
+            img = Overlay.aplicar(FX.aplicar(img, k / FPS, efeitos, hist, vizinhos(k / FPS, i - 1, ult)), ov.pegar(k))
             enc.stdin.write(img.tobytes())
             k += 1
             escritos += 1
             buracos += 1
         arq = planos_res.get(p["id"], {}).get("arquivo")
         rd = leitor(arq, W, H, max(0, k - p0) / FPS) if arq and os.path.exists(arq) else iter(())
+        anterior = ult                                       # último quadro do plano anterior (o salto mostra na emenda)
         while k < min(p1, fb):
             fr = next(rd, None)
             if fr is None:
@@ -133,7 +162,7 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
             ult = fr
             img = fr.copy()
             if efeitos:
-                img = FX.aplicar(img, k / FPS, efeitos, hist)
+                img = FX.aplicar(img, k / FPS, efeitos, hist, vizinhos(k / FPS, i, anterior))
                 hist.append(fr)
                 if len(hist) > 4:
                     hist.pop(0)
@@ -147,7 +176,7 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
             rd.close()
     while k < fb:                                            # depois do último plano (fecho cheio do kit)
         img = (ult if ult is not None else preto).copy()
-        img = Overlay.aplicar(FX.aplicar(img, k / FPS, efeitos, hist), ov.pegar(k))
+        img = Overlay.aplicar(FX.aplicar(img, k / FPS, efeitos, hist, vizinhos(k / FPS, len(planos) - 1, ult)), ov.pegar(k))
         enc.stdin.write(img.tobytes())
         k += 1
         escritos += 1
