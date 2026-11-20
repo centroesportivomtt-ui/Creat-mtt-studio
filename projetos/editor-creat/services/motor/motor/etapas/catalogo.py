@@ -73,6 +73,7 @@ def falas_do_arquivo(analise: dict) -> list[dict]:
             continue
         f, voz = s.get("falante"), s.get("voz")
         ditado = (s.get("ditado") or {}).get("s")
+        ditado_arq = (s.get("ditado") or {}).get("arquivo")
         # junta só a MESMA voz (item 4): o ditado da equipe e a repetição de quem fala viram falas separadas; ditado não junta
         if out and out[-1]["falante"] == f and out[-1].get("voz") == voz and ditado is None and out[-1].get("ditado_s") is None \
                 and s["s"] - out[-1]["t1"] <= GAP_JUNTA_S and s["e"] - out[-1]["t0"] <= MAX_FALA_S:
@@ -80,7 +81,8 @@ def falas_do_arquivo(analise: dict) -> list[dict]:
             out[-1]["texto"] += " " + texto
             out[-1]["confs"].append(s.get("conf"))
         else:
-            out.append({"t0": s["s"], "t1": s["e"], "falante": f, "texto": texto, "confs": [s.get("conf")], "voz": voz, "ditado_s": ditado})
+            out.append({"t0": s["s"], "t1": s["e"], "falante": f, "texto": texto, "confs": [s.get("conf")], "voz": voz, "ditado_s": ditado,
+                        "ditado_arq": ditado_arq})
     return out
 
 
@@ -149,11 +151,9 @@ def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: i
             if f.get("voz"):
                 item["voz"] = f["voz"]
             falas.append(item)
-        for item, f in zip(falas, brutas):                   # ditado -> id da fala onde a voz principal repete
+        for item, f in zip(falas, brutas):                   # ditado: resolvido depois de todos os clipes (pode estar no take seguinte)
             if f.get("ditado_s") is not None:
-                rep = next((g for g in falas if g["t0"] - 0.05 <= f["ditado_s"] <= g["t1"] + 0.05 and g.get("voz") == "A"), None)
-                if rep:
-                    item["ditado"] = rep["id"]
+                item["_dit"] = (f.get("ditado_arq") or a["arquivo"]["id"], f["ditado_s"])
         momentos = []
         for k, m in enumerate(sorted(vis.get("momentos", []), key=lambda m: (m["t0"], m["t1"])), 1):
             momentos.append({"id": f"M{num}.{k}", "t0": round(m["t0"], 2), "t1": round(m["t1"], 2), "tipo": m["tipo"],
@@ -168,6 +168,16 @@ def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: i
             "resumo": " ".join((vis.get("resumo") or "").split()[:22])[:240],
             "pessoas": pessoas[:160], "camera": _camera(a, vis)[:80], "ambientes": amb, "momentos": momentos, "falas": falas,
         })
+    for c in clipes:                                          # ditado -> id da fala (deste ou de outro clipe) onde a voz A repete
+        for item in c["falas"]:
+            alvo = item.pop("_dit", None)
+            if alvo is None:
+                continue
+            arq, s = alvo
+            rep = next((g for c2 in clipes if c2["arquivo"] == arq for g in c2["falas"]
+                        if g["t0"] - 0.05 <= s <= g["t1"] + 0.05 and g.get("voz") == "A"), None)
+            if rep:
+                item["ditado"] = rep["id"]
     cat = {"versao": "1", "projeto": projeto, "orcamento": {"tokens_estimados": 0, "limite": limite, "cortes": []}, "clipes": clipes,
            "trilhas": [{k: t[k] for k in ("id", "clima", "bpm", "dur") if k in t} for t in (trilhas or [])],
            "modelos": modelos or []}
@@ -243,7 +253,7 @@ def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozense
               "# C=clipe (arquivo \"nome\" dur · câmera · pessoas · ambientes · resumo) · M=momento t0-t1 tipo nota(1-5) desc · "
               "F=fala t0-t1 FALANTE e.energia «texto». Tempos em s da fonte. Use só estes ids."]
     if any(f.get("voz") for c in cl for f in c["falas"]):
-        linhas.append("# vozA = voz principal (quem fala no vídeo); vozB, vozC... = outra pessoa (em geral a equipe dirigindo). "
+        linhas.append("# vozA = voz principal (quem fala no vídeo); vozB = outra pessoa (em geral a equipe dirigindo). "
                       "DITADO→F.. = a equipe ditou a frase e a voz principal repetiu em F..: use F.., nunca o ditado.")
     P = NIVEIS[nivel]
     trunca = P["trunca"]

@@ -299,7 +299,7 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Diretor:** nunca usa ditado; voz B só quando várias pessoas falam.
 - **Resolvedor:** troca sozinho o ditado pela repetição e avisa. Se não achar, o ditado não entra.
 - **Testes:** pytest **324 ok** (5 novos em `test_vozes.py`); aceite D 33/33.
-- **Pendência:** conferir no material real da cerveja (pedido à sessão da Lavínia).
+- **Material real da cerveja** (sessão da Lavínia, 18 fontes): voz A = Lavínia; o ditado do Ruan saiu como voz B; nenhuma fala dela fora de A. **v3 da cerveja entregue** pela sessão dela (QA 17/17), com o take dela regravado.
 - **v3 do vídeo da cerveja:** pedida à sessão da Lavínia.
 - **Revisão do Crivo: reprovou a 1a versão (já publicada por exigência do gancho de commit), e as correções entraram:**
   - (1) o plano B do resolvedor não derruba mais o filme: a 1a tentativa falha, a repetição entra inteira e o problema é retirado;
@@ -312,3 +312,10 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - (9) chip e cobertura que citam a repetição acham a janela;
   - (10) a repetição nunca é truncada no catálogo.
 - **Testes:** pytest **327 ok** (8 em `test_vozes.py`); aceite D 33/33.
+- **Rodada 3 (dados reais):**
+  - (1) a regravação dela estava no TAKE SEGUINTE, com outras palavras: o ditado agora procura nos 2 takes seguintes (até 90 s do começo; sem `gravado_em` não cruza arquivos);
+  - (2) `casa_ditado` passa a exigir trecho contínuo de 3 palavras ou mais, ou 3 palavras de conteúdo; os dois lados com 4 palavras ou mais; e 60% da mais curta e 35% da mais longa (revisão: "que eu vou" casava qualquer coisa);
+  - (3) a equipe se espalhava em vários rótulos (B a I): agora é só A (principal) e B (outra pessoa);
+  - (4) fala curta sem assinatura vira B pela altura da voz, só se 40% ou mais longe (uma exclamação dela continua dela);
+  - (5) busca por índice e `bisect`, sem O(n²).
+- **Testes:** pytest com 12 testes em `test_vozes.py`; aceite D 33/33.

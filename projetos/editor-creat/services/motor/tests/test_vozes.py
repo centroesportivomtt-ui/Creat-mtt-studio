@@ -78,7 +78,7 @@ def test_rotular_separa_o_ditado_da_repeticao():
     novas = vozes.rotular([a], lambda _a: (x, 0.0), assinador=AssinadorPorTom())
     segs = novas[0]["transcricao"]["segmentos"]
     assert [s["voz"] for s in segs] == ["A", "B", "A"]                        # ela, ele, ela
-    assert segs[1]["ditado"] == {"s": segs[2]["s"]} and "ditado" not in segs[2]
+    assert segs[1]["ditado"] == {"s": segs[2]["s"], "arquivo": "a001"} and "ditado" not in segs[2]
     assert a["transcricao"]["segmentos"][1]["texto"].count("vem") == 2        # a análise original não foi mexida
 
 
@@ -179,7 +179,7 @@ def test_repeticao_colada_sem_pausa_e_apresentadora_falando_menos(monkeypatch):
     s = novas[0]["transcricao"]["segmentos"]
     assert len(s) == 3                                                         # a repetição colada foi cortada no meio
     assert [p["voz"] for p in s] == ["B", "B", "A"]                            # A = quem repete (ela), mesmo falando menos
-    assert s[1]["ditado"] == {"s": s[2]["s"]}
+    assert s[1]["ditado"]["s"] == s[2]["s"]
 
 
 def test_agrupar_linear():
@@ -192,3 +192,115 @@ def test_agrupar_linear():
     t = time.time()
     g = agrupar(assin, [1.0] * 2000)
     assert time.time() - t < 3.0 and len(set(g)) == 2                          # 2000 pedaços em segundos, 2 vozes
+
+
+def test_ditado_com_repeticao_no_take_seguinte_e_rotulos_A_B(dados, tmp_path, monkeypatch):
+    """Dado real (cerveja, 20/11): o Ruan dita no take c1220 ("Agora vem comigo que eu vou te mostrar as menos calorias aqui do
+    Super") e a Lavínia regrava no take SEGUINTE com outras palavras ("Vem comigo que hoje irei te mostrar as que tem menos
+    calorias"). A equipe aparece com vozes diferentes (outro grupo) e falas curtas ("Valeu!"): tudo vira B."""
+    import soundfile as sf
+    from b_sintetico import analise
+    from motor import config
+    from motor.etapas import catalogo, falante
+    monkeypatch.setattr(falante, "Assinador", AssinadorPorTom)
+    sr = 16000
+    dit = "agora vem comigo que eu vou te mostrar as menos calorias aqui do super"
+    rep = "vem comigo que hoje irei te mostrar as que tem menos calorias"
+    abertura = "quer tomar uma cerveja e nao quer sair da dieta entao presta atencao"
+
+    def take(aid, nome, trechos, dur):
+        x = (0.0005 * np.random.default_rng(len(aid)).standard_normal(int(dur * sr))).astype(np.float32)
+        segs = []
+        for s0, texto, f0 in trechos:
+            v = _voz(len(texto.split()) * 0.3, f0)
+            x[int(s0 * sr):int(s0 * sr) + len(v)] += v
+            p = _palavras(texto, s0)
+            segs.append({"s": p[0][0], "e": p[-1][1], "texto": texto, "falante": None, "conf": 0.9, "palavras": p})
+        a = analise(aid=aid, nome=nome, dur=dur, falante=None)
+        a["transcricao"]["segmentos"] = segs
+        a["visao"]["momentos"] = []
+        a["arquivo"]["chave"] = f"entrada/p_t/{aid}.wav"
+        a["arquivo"]["gravado_em"] = f"2026-11-18T10:0{int(aid[-1])}:00-03:00"
+        sf.write(tmp_path / f"{aid}.wav", x, sr)
+        return a
+    a1 = take("a001", "c1220.mov", [(0.3, abertura, 255), (5.0, dit, 140), (10.0, "valeu", 140)], 12.0)
+    a2 = take("a002", "c1222.mov", [(3.6, rep, 258)], 9.0)
+
+    class Arm:
+        def caminho_local(self, chave):
+            return tmp_path / chave.rsplit("/", 1)[1]
+    cat, txt = catalogo.montar([a1, a2], {"texto": "cerveja"}, "p_t", armazenamento=Arm(), cfg=config.carregar())
+    f1, f2 = cat["clipes"][0]["falas"], cat["clipes"][1]["falas"]
+    ditado = next(f for f in f1 if "agora vem comigo" in f["texto"])
+    assert ditado["voz"] == "B" and ditado["ditado"] == f2[0]["id"] and f2[0]["voz"] == "A"
+    assert {f.get("voz") for f in f1 + f2} <= {"A", "B"}                     # sem C, D...: A ou "outra pessoa"
+    valeu = next(f for f in f1 if f["texto"] == "valeu")
+    assert valeu["voz"] == "B"                                                 # curto demais para assinatura: a altura diz
+    assert f"DITADO→{f2[0]['id']}" in txt and validar.erros("catalogo", cat) == []
+
+
+def test_casa_ditado():
+    from motor.etapas.vozes import casa_ditado
+    assert casa_ditado("Agora vem comigo que eu vou te mostrar as menos calorias aqui do Super",
+                       "Vem comigo que hoje irei te mostrar as que tem menos calorias")
+    assert not casa_ditado("vem comigo", "vem comigo")                        # curto demais: não é ditado
+    assert not casa_ditado("pode cortar aí pessoal", "hoje eu vim mostrar a cerveja")
+    assert not casa_ditado("pode ir que eu vou", "hoje eu vou te mostrar que essa cerveja tem menos calorias")   # só palavras de função
+    assert not casa_ditado("vem comigo que", "agora vem comigo que eu vou te mostrar as menos calorias aqui")   # 3 palavras não bastam
+    assert not casa_ditado("olha a cerveja aqui", "olha so que coisa linda essa gondola toda de frutas frescas hoje aqui")
+
+
+def test_tres_vozes_viram_A_e_B_e_exclamacao_dela_continua_dela():
+    """Três vozes (ela 255 Hz, Ruan 140, Xande 110) -> só A e B. Uma exclamação curta DELA, mais aguda (300 Hz, +18%), não vira B."""
+    from b_sintetico import analise
+    from motor.etapas import vozes
+
+    class TresVozes(AssinadorPorTom):
+        def assinar(self, x, sr, minimo=0.8):
+            from motor.etapas.falante import tom_hz
+            if len(x) < minimo * sr:
+                return None
+            tm = tom_hz(x, sr) or 0
+            return np.array([1.0, 0, 0] if tm > 190 else ([0, 1.0, 0] if tm > 125 else [0, 0, 1.0]), np.float32)
+    sr = 16000
+    x = (0.0005 * np.random.default_rng(9).standard_normal(16 * sr)).astype(np.float32)
+    falas = [(0.3, "oi gente hoje eu vim no super kal", 255), (4.0, "pode ir quando quiser", 140),
+             (6.5, "mais uma vez do comeco", 110), (9.5, "nossa", 300), (11.0, "olha que lindo esse corredor", 255)]
+    segs = []
+    for s0, texto, f0 in falas:
+        v = _voz(len(texto.split()) * 0.3, f0)
+        x[int(s0 * sr):int(s0 * sr) + len(v)] += v
+        p = _palavras(texto, s0)
+        segs.append({"s": p[0][0], "e": p[-1][1], "texto": texto, "falante": None, "conf": 0.9, "palavras": p})
+    a = analise(dur=16.0, falante=None)
+    a["transcricao"]["segmentos"] = segs
+    r = {s["texto"]: s.get("voz") for s in vozes.rotular([a], lambda _a: (x, 0.0), assinador=TresVozes())[0]["transcricao"]["segmentos"]}
+    assert r["oi gente hoje eu vim no super kal"] == "A" and r["olha que lindo esse corredor"] == "A"
+    assert r["pode ir quando quiser"] == "B" and r["mais uma vez do comeco"] == "B"       # Ruan e Xande: os dois são B
+    assert r["nossa"] != "B"                                                   # a exclamação dela não vira "equipe"
+
+
+def test_sem_data_nao_cruza_arquivos(dados, tmp_path, monkeypatch):
+    """Take sem gravado_em: não dá para saber qual vem depois; o ditado não é procurado em outro arquivo."""
+    from motor.etapas import vozes
+    from b_sintetico import analise
+    sr = 16000
+    dit, rep = "agora vem comigo que eu vou te mostrar as menos calorias", "vem comigo que hoje irei te mostrar as menos calorias"
+
+    def take(aid, s0, texto, f0, data):
+        x = (0.0005 * np.random.default_rng(1).standard_normal(10 * sr)).astype(np.float32)
+        v = _voz(len(texto.split()) * 0.3, f0)
+        x[int(s0 * sr):int(s0 * sr) + len(v)] += v
+        p = _palavras(texto, s0)
+        a = analise(aid=aid, dur=10.0, falante=None)
+        a["transcricao"]["segmentos"] = [{"s": p[0][0], "e": p[-1][1], "texto": texto, "falante": None, "conf": 0.9, "palavras": p}]
+        a["arquivo"]["gravado_em"] = data
+        return a, x
+    a1, x1 = take("a001", 1.0, dit, 140, None)
+    a2, x2 = take("a002", 1.0, rep, 255, None)
+    aud = {"a001": x1, "a002": x2}
+    novas = vozes.rotular([a1, a2], lambda a: (aud[a["arquivo"]["id"]], 0.0), assinador=AssinadorPorTom())
+    assert "ditado" not in novas[0]["transcricao"]["segmentos"][0]
+    a1["arquivo"]["gravado_em"], a2["arquivo"]["gravado_em"] = "2026-11-18T10:00:00-03:00", "2026-11-18T10:01:00-03:00"
+    novas = vozes.rotular([a1, a2], lambda a: (aud[a["arquivo"]["id"]], 0.0), assinador=AssinadorPorTom())
+    assert novas[0]["transcricao"]["segmentos"][0]["ditado"] == {"s": 1.0, "arquivo": "a002"}
