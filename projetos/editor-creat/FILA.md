@@ -16,7 +16,7 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 ## Fila do dono (ordem dele, 19/11)
 | item | o quê | estado |
 |---|---|---|
-| A | backup diário para o Dropbox | feito · 8024537 · destino criado em 19/11 (falta o dono colar o link na tela Backup) |
+| A | backup diário para o Dropbox | feito e funcionando em produção · 2e2ac49 · 1º backup real 20/11 15:52 |
 | B | memória do servidor de volta ao git | feito em parte · 51fcc19 (memória no volume) + backup leva `editor-memoria-*.json`; falta a rotina que lê o backup e versiona |
 | C | revisão com olho de IA antes de entregar | feito · 51fcc19 · segura a entrega desde 19/11 |
 | D | checagens de fala (cortada, voz de fora, cobertura) | feito · c9e2b1e (integração das duas sessões) |
@@ -40,5 +40,4 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 | 9 | tela Novidades | livre |
 
 ## Precisa do dono
-- Colar o link do backup na tela: https://creat-mtt-studio-production.up.railway.app/caderno#backup (link na conversa de 19/11; não fica no repositório).
 - Trilhas: as 3 do ElevenLabs (plano Creator) estão no Dropbox (`/Creat.MTT Studio/creat.MTT/Kit de edição/Trilhas/`), mas os termos de música (09/10/2026) dizem Creator = "For Individual Use Only" e proíbem montar biblioteca de músicas com o que se gera. Uso comercial online, inclusive anúncio pago, é permitido; agência para cliente não está definido. Por isso NÃO entraram na biblioteca da casa. Caminhos: (a) a creat passa a gerar no plano Scale (empresa com menos de 10 pessoas); (b) e-mail à ElevenLabs confirmando o Creator para cliente; (c) biblioteca paga com licença de agência. Fonte: elevenlabs.io/music-terms.

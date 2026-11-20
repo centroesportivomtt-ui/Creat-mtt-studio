@@ -329,3 +329,10 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Conferido aqui:** com endereço inexistente sai "erro TimeoutError…"; sem navegador sai "erro o navegador não abriu: …".
 - O agendador tenta de novo sozinho (1 h depois de uma falha), e o dono pode tocar em "Fazer backup agora".
 - **Testes:** pytest **333 ok**.
+- **Causa real, achada com a mensagem nova:** "Playwright não encontrado". O pacote instalado só dentro de `packages/kit` não era achado no contêiner. Correções:
+  - playwright **global** no Dockerfile, com conferência que derruba o build se não achar;
+  - `NODE_PATH`;
+  - o envio usa a mesma busca do kit (`comum.cjs`);
+  - backup que falhou numa versão anterior tenta de novo no boot da versão nova;
+  - `/api/saude` mostra a causa da falha (sem caminhos) e `modelos.navegador`.
+- **Resolvido em produção (2e2ac49):** backup **ok** às 15:52 de 20/11. Na pasta "/Creat.MTT Studio/Backup do Editor" estão `editor-backup-20261120-1552.zip` (17 KB) e `editor-memoria-20261120-1552.json`. Os de 19/11 são o teste com dados sintéticos.
