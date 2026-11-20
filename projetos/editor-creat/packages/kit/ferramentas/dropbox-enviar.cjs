@@ -10,7 +10,10 @@
    (obrigatório). O Dropbox acrescenta o nome de quem envia ao fim do nome de cada arquivo.
    Sai com código 0 só quando a página confirma o envio. */
 const fs = require('fs'), path = require('path');
-let chromium; try { ({ chromium } = require('playwright')); } catch (e) { ({ chromium } = require('/opt/node-tools/node_modules/playwright')); }
+// o MESMO jeito de achar o Playwright que o render dos filmes usa (ferramentas/comum.cjs), que funciona no servidor.
+// Antes: require('playwright') ou uma pasta que só existe na máquina de trabalho -> em produção o Node caía calado (20/11).
+let chromium = null, erroPlaywright = '';
+try { ({ chromium } = require('./comum.cjs').playwright()); } catch (e) { erroPlaywright = String((e && e.message) || e).split('\n')[0]; }
 
 const args = process.argv.slice(2);
 const iP = args.indexOf('--pedido');
@@ -22,6 +25,7 @@ const EMAIL = process.env.DROPBOX_REMETENTE_EMAIL || '';
 const semEndereco = (s) => String(s).split(pedido || '\u0000').join('<pedido>').replace(/dropbox\.com\/request\/[A-Za-z0-9]*/g, 'dropbox.com/request/<pedido>');
 function falha(msg) { console.error('erro   ' + semEndereco(msg)); process.exit(1); }
 if (!/^https:\/\/www\.dropbox\.com\/request\/[A-Za-z0-9]+$/.test(pedido)) falha('passe --pedido https://www.dropbox.com/request/<id>');
+if (!chromium) falha('Playwright não encontrado: ' + erroPlaywright);
 if (!EMAIL) falha('defina DROPBOX_REMETENTE_EMAIL');
 if (!arquivos.length) falha('nenhum arquivo');
 for (const a of arquivos) if (!fs.existsSync(a) || !fs.statSync(a).isFile()) falha('arquivo não existe: ' + a);
