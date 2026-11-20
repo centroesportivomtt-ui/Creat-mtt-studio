@@ -71,13 +71,16 @@ def falas_do_arquivo(analise: dict) -> list[dict]:
         texto = (s.get("texto") or "").strip()
         if not texto:
             continue
-        f = s.get("falante")
-        if out and out[-1]["falante"] == f and s["s"] - out[-1]["t1"] <= GAP_JUNTA_S and s["e"] - out[-1]["t0"] <= MAX_FALA_S:
+        f, voz = s.get("falante"), s.get("voz")
+        ditado = (s.get("ditado") or {}).get("s")
+        # junta só a MESMA voz (item 4): o ditado da equipe e a repetição de quem fala viram falas separadas; ditado não junta
+        if out and out[-1]["falante"] == f and out[-1].get("voz") == voz and ditado is None and out[-1].get("ditado_s") is None \
+                and s["s"] - out[-1]["t1"] <= GAP_JUNTA_S and s["e"] - out[-1]["t0"] <= MAX_FALA_S:
             out[-1]["t1"] = s["e"]
             out[-1]["texto"] += " " + texto
             out[-1]["confs"].append(s.get("conf"))
         else:
-            out.append({"t0": s["s"], "t1": s["e"], "falante": f, "texto": texto, "confs": [s.get("conf")]})
+            out.append({"t0": s["s"], "t1": s["e"], "falante": f, "texto": texto, "confs": [s.get("conf")], "voz": voz, "ditado_s": ditado})
     return out
 
 
@@ -114,10 +117,17 @@ def _energia_rel(serie, passo, t0, t1, ref) -> float | None:
 
 # ---------------- montagem ----------------
 def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: int = 15000, trilhas: list[dict] | None = None,
-           modelos: list[str] | None = None, armazenamento=None, dados=None) -> tuple[dict, str]:
+           modelos: list[str] | None = None, armazenamento=None, dados=None, cfg=None) -> tuple[dict, str]:
     pedido = pedido or {}
     palavras_pedido = {w for w in tokens(pedido.get("texto", "") + " " + " ".join(pedido.get("obrigatorio", [])))
                        if len(w) >= 5 and w not in GENERICAS}
+    if cfg is not None and armazenamento is not None:      # item 4: quem fala em cada trecho (ditado da equipe separado)
+        from motor.etapas import vozes
+
+        def audio_de(a):
+            from motor.etapas.montagem.comum import ler_audio
+            return ler_audio(armazenamento.caminho_local(a["arquivo"]["chave"]), sr=vozes.SR, cfg=cfg), 0.0
+        analises = vozes.rotular(analises, audio_de, cfg=cfg)
     ordenadas = sorted(analises, key=lambda a: (a["arquivo"].get("gravado_em") is None, a["arquivo"].get("gravado_em") or "",
                                                 a["arquivo"]["nome"], a["arquivo"]["id"]))
     clipes = []
@@ -132,9 +142,18 @@ def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: i
             import numpy as np
             ref = float(np.percentile(serie, 99))
         falas = []
-        for k, f in enumerate(falas_do_arquivo(a), 1):
-            falas.append({"id": f"F{num}.{k}", "t0": round(f["t0"], 2), "t1": round(f["t1"], 2), "falante": f["falante"],
-                          "texto": f["texto"], "truncado": False, "energia": _energia_rel(serie, passo, f["t0"], f["t1"], ref)})
+        brutas = falas_do_arquivo(a)
+        for k, f in enumerate(brutas, 1):
+            item = {"id": f"F{num}.{k}", "t0": round(f["t0"], 2), "t1": round(f["t1"], 2), "falante": f["falante"],
+                    "texto": f["texto"], "truncado": False, "energia": _energia_rel(serie, passo, f["t0"], f["t1"], ref)}
+            if f.get("voz"):
+                item["voz"] = f["voz"]
+            falas.append(item)
+        for item, f in zip(falas, brutas):                   # ditado -> id da fala onde a voz principal repete
+            if f.get("ditado_s") is not None:
+                rep = next((g for g in falas if g["t0"] - 0.05 <= f["ditado_s"] <= g["t1"] + 0.05 and g.get("voz") == "A"), None)
+                if rep:
+                    item["ditado"] = rep["id"]
         momentos = []
         for k, m in enumerate(sorted(vis.get("momentos", []), key=lambda m: (m["t0"], m["t1"])), 1):
             momentos.append({"id": f"M{num}.{k}", "t0": round(m["t0"], 2), "t1": round(m["t1"], 2), "tipo": m["tipo"],
@@ -222,6 +241,9 @@ def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozense
               f"# trilhas: {trilhas or 'nenhuma'} · modelos: {', '.join(cat.get('modelos') or []) or 'evento-reel'}",
               "# C=clipe (arquivo \"nome\" dur · câmera · pessoas · ambientes · resumo) · M=momento t0-t1 tipo nota(1-5) desc · "
               "F=fala t0-t1 FALANTE e.energia «texto». Tempos em s da fonte. Use só estes ids."]
+    if any(f.get("voz") for c in cl for f in c["falas"]):
+        linhas.append("# vozA = voz principal (quem fala no vídeo); vozB, vozC... = outra pessoa (em geral a equipe dirigindo). "
+                      "DITADO→F.. = a equipe ditou a frase e a voz principal repetiu em F..: use F.., nunca o ditado.")
     P = NIVEIS[nivel]
     trunca = P["trunca"]
     for c in cl:
@@ -255,7 +277,9 @@ def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozense
                 continue
             texto = f["texto"] if (not trunca or inteira) else _corta(f["texto"], trunca)[0]
             e = f" e.{int(round(f['energia'] * 10))}" if f.get("energia") is not None else ""
-            linhas.append(f" {f['id']} {_num(f['t0'])}-{_num(f['t1'])} {f['falante'] or '?'}{e} «{texto}»")
+            voz = f" voz{f['voz']}" if f.get("voz") else ""
+            dit = f" DITADO→{f['ditado']}" if f.get("ditado") else ""
+            linhas.append(f" {f['id']} {_num(f['t0'])}-{_num(f['t1'])} {f['falante'] or '?'}{voz}{dit}{e} «{texto}»")
     return "\n".join(linhas) + "\n"
 
 
@@ -290,7 +314,7 @@ if etapa is not None:
             return {"catalogo": meta.get("hash"), "tokens": meta.get("tokens"), "reaproveitado": True}
         ctx.progresso(0.2, f"Montando o catálogo de {len(analises)} arquivos.")
         cat, txt = montar(analises, pedido, p, limite=ctx.cfg.orcamento_entrada, trilhas=trilhas, modelos=modelos,
-                          armazenamento=ctx.armazenamento, dados=ctx.cfg.dados)
+                          armazenamento=ctx.armazenamento, dados=ctx.cfg.dados, cfg=ctx.cfg)
         validar.validar("catalogo", cat)
         arm.gravar_json(f"projetos/{p}/catalogo.json", cat)
         arm.gravar_texto(f"projetos/{p}/catalogo.txt", txt)

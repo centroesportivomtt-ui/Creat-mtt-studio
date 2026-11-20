@@ -287,3 +287,17 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Revisão do Crivo: reprovou primeiro, e com razão.** O download em segundo plano no `iniciar.sh` fazia o `wait -n` do fim derrubar o contêiner a cada boot. Corrigido com `disown` e testado no bash. Também pegou dois testes vazios, agora firmes: pele em TODO plano de fala e em NENHUM de cobertura; caixa da pele em tamanho ímpar com fundo cor de pele dentro dela.
 - **Pendências:** (1) a máscara roda mesmo em plano sem pessoa (tela gravada), um custo pequeno; (2) sem rede, o primeiro filme de cada worker espera até 20 s pelo download.
 - **Testes:** pytest **319 ok**; aceite D 33/33.
+
+## Item 4: quem fala e ditado da equipe (20/11; defeito da cerveja apontado pelo dono)
+- **Defeito:** no Reel da cerveja entrou o Ruan DITANDO "vem comigo que eu vou te mostrar…", e não a Lavínia repetindo. Causa: a transcrição não separa falantes; ditado e repetição viravam uma fala só do catálogo, e o resolvedor pegava a primeira ocorrência das palavras.
+- **`motor/etapas/vozes.py`:**
+  - divide cada segmento nas pausas de 0,30 s ou mais;
+  - assina cada pedaço de 0,6 s ou mais (CAM++ local);
+  - agrupa as vozes do projeto: A é a principal; B, C… são outras vozes;
+  - marca DITADO quando outra voz diz 3 palavras ou mais que a voz A repete em até 40 s.
+- **Catálogo:** só junta a mesma voz; a fala ganha `voz` e `ditado` (o id da repetição); o texto para o diretor mostra `vozB DITADO→F..`.
+- **Diretor:** nunca usa ditado; voz B só quando várias pessoas falam.
+- **Resolvedor:** troca sozinho o ditado pela repetição e avisa. Se não achar, o ditado não entra.
+- **Testes:** pytest **324 ok** (5 novos em `test_vozes.py`); aceite D 33/33.
+- **Pendências:** conferir no material real da cerveja (pedido à sessão da Lavínia); a revisão do Crivo está em andamento.
+- **v3 do vídeo da cerveja:** pedida à sessão da Lavínia.

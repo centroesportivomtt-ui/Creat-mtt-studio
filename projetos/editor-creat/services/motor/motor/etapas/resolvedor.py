@@ -140,6 +140,17 @@ class Resolvedor:
         if fd["id"] not in self.fala:
             self.problemas.append(f"fala {fd['id']} não existe no catálogo")
             return None
+        dit = self.fala[fd["id"]][1].get("ditado")
+        if dit and dit in self.fala:
+            # item 4 (defeito da cerveja, 20/11): a fala escolhida é a equipe DITANDO; entra a repetição de quem fala no vídeo
+            self.avisos.append(f"fala {fd['id']} é ditado da equipe: troquei pela repetição da voz principal ({dit})")
+            r = self._resolver_fala({**fd, "id": dit}) or self._resolver_fala({**fd, "id": dit, "de": None, "ate": None})
+            if r is None:
+                self.problemas.append(f"fala {fd['id']} é ditado da equipe e a repetição {dit} não foi achada: o ditado não entra")
+            return r
+        return self._resolver_fala(fd)
+
+    def _resolver_fala(self, fd: dict) -> dict | None:
         c, f = self.fala[fd["id"]]
         pal = self.pal(c["id"])
         i0 = next((i for i, p in enumerate(pal) if p[1] > f["t0"] - 0.3), len(pal))

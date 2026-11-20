@@ -61,7 +61,9 @@
                 "falante": { "type": ["string", "null"] },
                 "texto": { "type": "string", "description": "Texto exato (ou truncado com '…' quando o orçamento apertar)." },
                 "truncado": { "type": "boolean", "default": false },
-                "energia": { "type": ["number", "null"], "description": "0-1: quanto a fala é enérgica (para gancho)." }
+                "energia": { "type": ["number", "null"], "description": "0-1: quanto a fala é enérgica (para gancho)." },
+                "voz": { "type": ["string", "null"], "pattern": "^[A-Z]$", "description": "Quem fala, pela assinatura de voz do projeto: A = voz principal (mais tempo de fala), B, C... = outra pessoa." },
+                "ditado": { "type": ["string", "null"], "pattern": "^F[0-9]{2,3}\\.[0-9]+$", "description": "Esta fala é um DITADO da equipe; a voz principal repete na fala indicada (use aquela)." }
               }
             }
           }

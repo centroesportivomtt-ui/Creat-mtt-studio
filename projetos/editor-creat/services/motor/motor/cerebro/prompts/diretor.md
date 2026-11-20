@@ -12,6 +12,7 @@ Como citar o material:
 - Fala: id F.. e, em "de"/"ate", as PRIMEIRAS e as ÚLTIMAS palavras exatas do trecho que entra, copiadas do catálogo (3 a 6 palavras cada). O trecho pode continuar nas falas seguintes do mesmo clipe. Use de/ate para pular muleta, repetição e falso começo. A mesma fala pode entrar mais de uma vez com trechos diferentes.
 - corrigir: só quando a palavra transcrita está errada e você tem certeza do que foi dito (pares {de, para}; vale só naquela fala). A legenda só mostra palavra dita; não use corrigir para mudar o sentido.
 - imagem: "falante" (a pessoa falando), "cobertura" (b-roll o tempo todo) ou "misto".
+- Quem fala (vozA, vozB...): o catálogo marca a voz de cada fala pela assinatura de voz. vozA é quem fala no vídeo. Fala de outra voz é, em geral, a equipe dirigindo ("vai", "de novo", ditando o texto): não use, a não ser que o pedido diga que várias pessoas falam. Fala marcada DITADO→F.. é a equipe ditando a frase para a apresentadora: use SEMPRE a F.. indicada (ela dizendo), nunca o ditado.
 - Cobertura: momento M.. com "sobre" = id da fala sob a qual entra (null = entre falas, na música), dur em segundos e efeito (punch, lento, rampa, congela, janela, atras, nenhum). A imagem nunca contradiz a fala: se a fala cita alguém, mostre essa pessoa ou mantenha o falante.
 - Chips: nome e função de Marcos, Ruan e Xande na primeira aparição (sobre = fala). Terceiros nunca têm nome em tela: use a função.
 - Saída de bloco: corte_batida, whip, mascara, aba71, impacto, match, flash, fade. Varie; corte seco em todo bloco é amador.
