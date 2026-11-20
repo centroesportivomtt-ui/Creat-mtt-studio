@@ -266,3 +266,21 @@ def test_ambiente_do_navegador_sem_segredos(monkeypatch):
     env = visto["env"]
     assert env["PLAYWRIGHT_BROWSERS_PATH"] == "/ms-playwright" and env["XDG_CONFIG_HOME"] == "/tmp/x"   # o resto da máquina passa
     assert "nao-pode-ir" not in env.values()                                   # segredo nenhum
+
+
+def test_tenta_de_novo_quando_sobe_versao_nova(dados, monkeypatch):
+    import json
+    import pathlib
+    from motor import backup, config
+    cfg = config.carregar()
+    monkeypatch.setenv("EDITOR_BACKUP_PEDIDO", "https://www.dropbox.com/request/ZZZZZZZZ9999")
+    arq = pathlib.Path(cfg.dados) / "backup_estado.json"
+    arq.parent.mkdir(parents=True, exist_ok=True)
+    arq.write_text(json.dumps({"estado": "falha", "commit": "aaaaaaa"}))
+    monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "bbbbbbbcccc")
+    assert backup.tentar_no_boot(cfg)                                          # versão nova: tenta já
+    monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "aaaaaaa999")
+    assert not backup.tentar_no_boot(cfg)                                      # a mesma versão que falhou: espera a hora
+    arq.write_text(json.dumps({"estado": "ok", "commit": "aaaaaaa"}))
+    monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "bbbbbbb")
+    assert not backup.tentar_no_boot(cfg)

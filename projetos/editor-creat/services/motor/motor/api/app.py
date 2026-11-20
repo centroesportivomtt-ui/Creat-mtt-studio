@@ -66,7 +66,11 @@ def criar():
             return _pl.Path(v).is_file() if v else (pasta / nome).is_file()
         out["modelos"] = {"pessoa": _tem("EDITOR_PESSOA", _pes.MODELO_NOME), "voz": _tem("EDITOR_FALANTE", _fal.MODELO_NOME)}
         from motor import backup as _backup
-        out["backup"] = {k: v for k, v in _backup.estado(cfg).items() if k in ("destino", "estado", "ultimo_ok", "horas_desde_o_ultimo")}
+        import re as _re
+        _bk = _backup.estado(cfg)
+        out["backup"] = {k: v for k, v in _bk.items() if k in ("destino", "estado", "ultimo_ok", "horas_desde_o_ultimo")}
+        if _bk.get("estado") == "falha" and _bk.get("erro"):   # causa da falha, sem caminhos internos (a saúde é pública)
+            out["backup"]["erro"] = _re.sub(r"(/[\w.@-]+)+/?", "<caminho>", str(_bk["erro"]))[:160]
         return out
 
     if os.environ.get("EDITOR_BACKUP_AGENDAR") == "1":            # só no servidor (iniciar.sh); testes e aceites não agendam

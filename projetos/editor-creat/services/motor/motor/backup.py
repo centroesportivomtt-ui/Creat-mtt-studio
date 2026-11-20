@@ -272,7 +272,7 @@ def rodar(cfg, *, enviar_fn=None) -> dict:
     try:
         ant = _ler_json(_arq_estado(cfg), {})
         novo = {k: ant.get(k) for k in ("ultimo_ok", "ultimo_ok_ts")}
-        novo.update(ultima_tentativa=_agora(), ultima_tentativa_ts=time.time())
+        novo.update(ultima_tentativa=_agora(), ultima_tentativa_ts=time.time(), commit=_commit())
         try:
             pac = montar(cfg)
             novo.update(bytes=pac["bytes"], arquivos=pac["arquivos"], midia_fora=pac["midia_fora"])
@@ -299,6 +299,18 @@ def espera_manual(cfg) -> float:
     return max(0.0, ENTRE_MANUAIS_S - (time.time() - float(e.get("ultima_tentativa_ts") or 0)))
 
 
+def _commit() -> str | None:
+    return (os.environ.get("RAILWAY_GIT_COMMIT_SHA") or "")[:7] or None
+
+
+def tentar_no_boot(cfg) -> bool:
+    """Falhou numa versão anterior do editor? Então a versão nova (que pode ter a correção) tenta já, sem esperar 1 hora."""
+    if not pedido(cfg):
+        return False
+    e = _ler_json(_arq_estado(cfg), {})
+    return e.get("estado") == "falha" and e.get("commit") != _commit()
+
+
 def precisa_rodar(cfg, agora: float | None = None) -> bool:
     if not pedido(cfg):
         return False
@@ -316,6 +328,11 @@ def agendar(cfg, intervalo_s: int = 900) -> threading.Thread | None:
 
     def laco():
         time.sleep(120)                                  # deixa o motor subir
+        try:
+            if tentar_no_boot(cfg):
+                rodar(cfg)
+        except Exception:  # noqa: BLE001
+            pass
         while True:
             try:
                 if precisa_rodar(cfg):
