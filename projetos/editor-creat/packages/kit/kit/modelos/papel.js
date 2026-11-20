@@ -243,7 +243,8 @@ function cartao(ctx, c, p) {
 
   if (p.cta) {
     const dur = Math.max(0.1, (p.cta.ate ?? p.cta.de + 0.6) - p.cta.de);
-    datilografar(ctx, f, { de: p.cta.de, x: 96, y: 1100, linhas: [p.cta.texto], dur }, { tira: false, cor: COR.carimbo, tam: 40, rot: 0, base: true, semente: 9 });
+    datilografar(ctx, f, { de: p.cta.de, x: 96, y: p.cta.y ?? 1100, linhas: [p.cta.texto], dur },
+      { tira: false, cor: COR.carimbo, tam: p.cta.tam ?? 40, rot: 0, base: true, semente: 9 });
   }
   if (p.assinatura) {
     const a = p.assinatura;
