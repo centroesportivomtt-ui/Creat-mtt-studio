@@ -26,6 +26,12 @@ LIMIAR = 0.42            # cosseno mínimo para "mesma voz" (medido com vozes de
 MIN_S = 0.8              # trecho menor que isso não dá assinatura confiável
 
 
+def modelo_presente(cfg) -> bool:
+    """O modelo já está no disco? (sem baixar nada)"""
+    env = os.environ.get("EDITOR_FALANTE", "").strip()
+    return pathlib.Path(env).is_file() if env else (pathlib.Path(cfg.dados) / "modelos" / MODELO_NOME).is_file()
+
+
 def _modelo(cfg) -> pathlib.Path | None:
     env = os.environ.get("EDITOR_FALANTE", "").strip()
     if env:

@@ -128,6 +128,7 @@ class Resolvedor:
         self._pal = {}
         self.problemas: list[str] = []
         self.avisos: list[str] = []
+        self._usadas_por: dict[str, str] = {}             # repetição -> id do ditado que o diretor escolheu
         self.r = modelo["ritmo"]
 
     def pal(self, cid: str) -> list[list]:
@@ -144,9 +145,19 @@ class Resolvedor:
         if dit and dit in self.fala:
             # item 4 (defeito da cerveja, 20/11): a fala escolhida é a equipe DITANDO; entra a repetição de quem fala no vídeo
             self.avisos.append(f"fala {fd['id']} é ditado da equipe: troquei pela repetição da voz principal ({dit})")
-            r = self._resolver_fala({**fd, "id": dit}) or self._resolver_fala({**fd, "id": dit, "de": None, "ate": None})
+            n = len(self.problemas)
+            r = self._resolver_fala({**fd, "id": dit})
+            if r is None:                                   # as palavras pedidas não batem com a repetição: usa a repetição inteira
+                r = self._resolver_fala({**fd, "id": dit, "de": None, "ate": None})
+                if r is not None:
+                    del self.problemas[n:]                  # a 1a tentativa falhou, mas a repetição entrou: não é problema
+                    self.avisos.append(f"fala {dit} entrou inteira: o trecho pedido do ditado não bate palavra a palavra com a repetição")
             if r is None:
+                del self.problemas[n:]
                 self.problemas.append(f"fala {fd['id']} é ditado da equipe e a repetição {dit} não foi achada: o ditado não entra")
+            else:
+                r["fala_usada"] = dit
+                self._usadas_por[dit] = fd["id"]
             return r
         return self._resolver_fala(fd)
 
@@ -309,6 +320,8 @@ class Resolvedor:
                                 "imagem": fd.get("imagem", "misto")})
                     t = t1
                 janelas_fala.setdefault(fd["id"], (f0, t, fd.get("imagem", "misto"), b))
+                if rf.get("fala_usada"):                    # cobertura/chip que citam a repetição também acham a janela
+                    janelas_fala.setdefault(rf["fala_usada"], janelas_fala[fd["id"]])
                 t += self.r.get("gap_fala", 0.1)
             for cb in b["cobertura"]:
                 if cb.get("sobre") in janelas_fala:
@@ -568,6 +581,9 @@ class Resolvedor:
         primeira = {}
         for v in L["voz"]:
             primeira.setdefault(v["fala"], v["t0"])
+        for rep, orig in self._usadas_por.items():         # chip "sobre" a repetição acha o tempo do ditado trocado
+            if orig in primeira:
+                primeira.setdefault(rep, primeira[orig])
         vistos = set()
         for b, bl in zip(d["blocos"], L["blocos"]):
             for k, ch in enumerate(b.get("chips") or []):

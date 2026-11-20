@@ -299,5 +299,16 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Diretor:** nunca usa ditado; voz B só quando várias pessoas falam.
 - **Resolvedor:** troca sozinho o ditado pela repetição e avisa. Se não achar, o ditado não entra.
 - **Testes:** pytest **324 ok** (5 novos em `test_vozes.py`); aceite D 33/33.
-- **Pendências:** conferir no material real da cerveja (pedido à sessão da Lavínia); a revisão do Crivo está em andamento.
+- **Pendência:** conferir no material real da cerveja (pedido à sessão da Lavínia).
 - **v3 do vídeo da cerveja:** pedida à sessão da Lavínia.
+- **Revisão do Crivo: reprovou a 1a versão (já publicada por exigência do gancho de commit), e as correções entraram:**
+  - (1) o plano B do resolvedor não derruba mais o filme: a 1a tentativa falha, a repetição entra inteira e o problema é retirado;
+  - (2) o hash do catálogo leva `vozes.VERSAO` e "modelo de voz presente", então projetos antigos são recatalogados com as vozes;
+  - (3) o agrupamento é por centroide e linear (o aglomerativo era cúbico: 400 pedaços levavam 37 s; agora 2000 levam poucos segundos);
+  - (4) o ditado é simétrico, e a voz principal é QUEM REPETE (a apresentadora), mesmo quando a equipe fala mais;
+  - (5) ditado e repetição colados sem pausa são cortados pela repetição interna;
+  - (7) o áudio é lido um arquivo por vez;
+  - (8) assinatura só a partir de 0,8 s;
+  - (9) chip e cobertura que citam a repetição acham a janela;
+  - (10) a repetição nunca é truncada no catálogo.
+- **Testes:** pytest **327 ok** (8 em `test_vozes.py`); aceite D 33/33.

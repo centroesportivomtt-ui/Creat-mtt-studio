@@ -133,3 +133,62 @@ def test_resolvedor_troca_o_ditado_pela_repeticao(cat_e_analise):
     s0s = [v["s0"] for v in edl["voz"]]
     assert s0s and min(s0s) >= 8.4                                             # a voz dela (8,6 s), nunca o ditado dele (5,0 s)
     assert any("ditado da equipe" in m for m in r.avisos)
+
+
+def test_resolvedor_usa_a_repeticao_inteira_quando_as_palavras_nao_batem(cat_e_analise):
+    """Plano B (revisão do Crivo): o diretor pediu um trecho do ditado com palavras que a repetição não tem; a repetição entra
+    inteira, com aviso, e o filme NÃO falha."""
+    from motor.etapas import resolvedor
+    from motor.memoria.loja import Loja
+    cat, _, a = cat_e_analise
+    falas = cat["clipes"][0]["falas"]
+    d = direcao()
+    d["gancho"]["troca"] = None
+    d["blocos"] = [{"id": "B1", "funcao": "gancho", "intensidade": 4, "cobertura": [], "texto_tela": [], "saida": "corte_batida",
+                    "chips": [{"nome": "LAVINIA", "funcao": "nutricionista", "sobre": falas[2]["id"]}],
+                    "falas": [{"id": falas[1]["id"], "de": "palavras que ninguem disse", "ate": None, "corrigir": None, "imagem": "falante"}]}]
+    d["trilha"]["drop_em"] = "B1"
+    loja = Loja()
+    r = resolvedor.Resolvedor(d, cat, {a["arquivo"]["id"]: a}, loja.modelo("evento-reel"), TRILHAS, vocabulario=loja.vocabulario())
+    edl = r.resolver()                                                         # não levanta ErroResolucao
+    assert min(v["s0"] for v in edl["voz"]) >= 8.4
+    assert any("entrou inteira" in m for m in r.avisos)
+    assert any(m["id"].startswith("chip_") for m in edl["motion"])
+
+
+def test_repeticao_colada_sem_pausa_e_apresentadora_falando_menos(monkeypatch):
+    """Riscos do material real (Crivo): ditado e repetição sem pausa entre si, no mesmo pedaço; e a equipe falando MAIS que a
+    apresentadora no projeto. Ainda assim: o ditado é marcado e a voz principal (A) é quem repete."""
+    from motor.etapas import vozes
+    sr = 16000
+    frase = "olha que promocao boa de cerveja hoje"
+    x = (0.0005 * np.random.default_rng(4).standard_normal(20 * sr)).astype(np.float32)
+    longa = "bom dia pessoal a gente vai gravar agora o video da cerveja e depois o da fruta tudo certo"
+    for s0, texto, f0 in ((0.3, longa, 140), (6.0, frase, 140), (8.1, frase, 255)):    # ele fala muito; ela só repete
+        v = _voz(len(texto.split()) * 0.3, f0)
+        i = int(s0 * sr)
+        x[i:i + len(v)] += v
+    p0 = _palavras(longa, 0.3)
+    p1 = _palavras(frase, 6.0) + _palavras(frase, 8.1)                         # 0,14 s entre o fim do ditado e a repetição
+    segs = [{"s": p0[0][0], "e": p0[-1][1], "texto": longa, "falante": None, "conf": 0.9, "palavras": p0},
+            {"s": p1[0][0], "e": p1[-1][1], "texto": frase + " " + frase, "falante": None, "conf": 0.9, "palavras": p1}]
+    from b_sintetico import analise
+    a = analise(dur=20.0, falante=None)
+    a["transcricao"]["segmentos"] = segs
+    novas = vozes.rotular([a], lambda _a: (x, 0.0), assinador=AssinadorPorTom())
+    s = novas[0]["transcricao"]["segmentos"]
+    assert len(s) == 3                                                         # a repetição colada foi cortada no meio
+    assert [p["voz"] for p in s] == ["B", "B", "A"]                            # A = quem repete (ela), mesmo falando menos
+    assert s[1]["ditado"] == {"s": s[2]["s"]}
+
+
+def test_agrupar_linear():
+    import time
+    from motor.etapas.vozes import agrupar
+    rng = np.random.default_rng(0)
+    base = [np.eye(8)[0], np.eye(8)[1]]
+    assin = [(base[i % 2] + 0.05 * rng.standard_normal(8)) for i in range(2000)]
+    assin = [v / np.linalg.norm(v) for v in assin]
+    t = time.time()
+    g = agrupar(assin, [1.0] * 2000)
+    assert time.time() - t < 3.0 and len(set(g)) == 2                          # 2000 pedaços em segundos, 2 vozes

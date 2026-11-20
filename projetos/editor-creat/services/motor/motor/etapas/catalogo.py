@@ -220,8 +220,9 @@ def falas_protegidas(clipes: list[dict]) -> frozenset:
     momento 'fala' nota >= 4 ("fala com rosto em quadro") fica INTEIRA no catálogo. Sem isso, a fala base do Reel
     (regra do dono: construir sobre a fala dele) seria truncada a 4 palavras nos níveis de compressão.
     Com falante rotulado em qualquer fala do projeto, vale a regra normal (equipe inteira)."""
+    ditados = {f["ditado"] for c in clipes for f in c["falas"] if f.get("ditado")}   # a repetição do ditado nunca some
     if any(f.get("falante") for c in clipes for f in c["falas"]):
-        return frozenset()
+        return frozenset(ditados)
     ids = set()
     for c in clipes:
         fortes = [m for m in c["momentos"] if m["tipo"].startswith("fala")
@@ -229,7 +230,7 @@ def falas_protegidas(clipes: list[dict]) -> frozenset:
         for f in c["falas"]:
             if any(m["t0"] < f["t1"] and m["t1"] > f["t0"] for m in fortes):
                 ids.add(f["id"])
-    return frozenset(ids)
+    return frozenset(ids | ditados)
 
 
 def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozenset()) -> str:
@@ -307,8 +308,10 @@ if etapa is not None:
         trilhas = armazem_b.trilhas(ctx.cfg)
         from motor.memoria import loja
         modelos = loja.Loja().nomes_modelos()
+        from motor.etapas import falante as _fal, vozes as _vz
+        voz_pronta = _fal.modelo_presente(ctx.cfg)           # o catálogo com e sem vozes rotuladas são diferentes
         chave_in = hash_texto(json.dumps([a["arquivo"]["id"] for a in analises]) + json.dumps(pedido, sort_keys=True, ensure_ascii=False)
-                              + json.dumps([len(json.dumps(a)) for a in analises]))
+                              + json.dumps([len(json.dumps(a)) for a in analises]) + f"|vozes {_vz.VERSAO} {voz_pronta}")
         meta = arm.ler_json(f"projetos/{p}/catalogo.meta.json", padrao={})
         if meta.get("entrada") == chave_in and arm.existe(f"projetos/{p}/catalogo.txt"):
             return {"catalogo": meta.get("hash"), "tokens": meta.get("tokens"), "reaproveitado": True}
