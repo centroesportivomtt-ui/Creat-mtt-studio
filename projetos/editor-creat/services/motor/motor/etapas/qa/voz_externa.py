@@ -8,6 +8,11 @@ Régua 1, nível e tom (`motor.audio_fala`, sem modelo):
       da frase que sai da fala dela sem pausa e com o F0 contínuo é ela mesma, não entra;
    b) som direto de apoio (planos com som_direto_db): o trecho da fonte do plano (s0 a s0 + (t1 - t0) * vel) não pode trazer
       conversa nenhuma: >= 0,4 s de voz contínua (F0) acima do piso da fonte + 6 dB reprova.
+   c) desde 20/11 (dados reais da Lavínia): a referência também é a voz principal do FILME (tom de todas as peças; nível da mesma
+      fonte), porque uma peça que é inteira a voz de outra pessoa virava a "fala principal" de si mesma; linha de tom estável
+      bem mais grave que a principal em pausa ou começo de peça (voz longe, que o limiar de vozeamento não pega); e peça "sem
+      fala que se ouça" que tem uma linha de tom de outra altura vira voz de fora (motivo certo) em vez de só NÃO VERIFICADO.
+      Achado de TOM segue a mesma conta da assinatura: reprova em "uma" e no automático com a voz principal >= 65% do tempo.
 Régua 2, assinatura de voz (`motor/etapas/falante.py`, CAM++ local): a voz principal é a de mais tempo de fala. Uma peça é
    "de outra voz" quando fica longe da principal: cosseno < 0,42 em peça de 2 s ou mais. Peça curta (0,45 a 2 s) engana a
    assinatura (medido em 19/11: a mesma voz dizendo "Vem!" deu 0,39), então pede uma segunda pista: altura da voz 20% ou mais
@@ -38,6 +43,24 @@ CURTA, MINIMA = 2.0, 0.45
 LIM_CURTA = 0.15
 TOM_LONGE = 0.20
 PRINCIPAL_MIN = 0.65
+RAZAO_TOM = 0.72          # tom abaixo de 72% da voz principal = outra pessoa (o mesmo de audio_fala.vozes_de_fora)
+LONGE_GLOBAL_DB = 12.0    # peça inteira 12 dB abaixo da fala da mesma fonte = voz longe do microfone
+
+
+def _fatia_principal(pecas: list[dict], trechos: dict, f0_ref) -> float:
+    """Parte do tempo de fala (por duração de peça) com o tom da voz principal (±25%). Sem referência: 1."""
+    if not f0_ref:
+        return 1.0
+    tot = dentro = 0.0
+    for v in pecas:
+        _, f, lv = audio_fala.f0_serie(trechos[v["id"]], SR_FALA)
+        fv = f[(f > 0) & (lv > (np.percentile(lv, 85) if len(lv) else 0) - 8)]
+        if not len(fv):
+            continue
+        d = float(v["s1"]) - float(v["s0"])
+        tot += d
+        dentro += d if abs(float(np.median(fv)) / f0_ref - 1) <= audio_fala.TOM_IGUAL else 0.0
+    return dentro / tot if tot else 1.0
 
 
 def _tom_longe(razao: float) -> bool:
@@ -151,20 +174,63 @@ def checar(c):
                 "detalhe": f"NÃO VERIFICADO: não consegui ler o áudio da fonte ({type(e).__name__}); a versão não é entregue sem conferir de quem é cada fala"}
     surdos += [{**p, "tipo": "voz"} for p in fala_cortada.nao_ouvidas(voz, envs, offs)]
     sem_som = {p["id"] for p in surdos}
-    # régua 1a: nível e tom dentro de cada peça
+    # régua 1a: nível e tom dentro de cada peça (referência da própria peça e, desde 20/11, a voz principal do filme inteiro)
     ouvidas = [v for v in voz if v["id"] not in sem_som]
     trechos = {}
-    for v in ouvidas:
+    for v in voz:
         x, off = c.audio_fonte(v["fonte"], SR_FALA)
         trechos[v["id"]] = _trecho(x, SR_FALA, v["s0"] - off, v["s1"] - off)
+    ref = audio_fala.referencia([trechos[v["id"]] for v in ouvidas], SR_FALA) or {}
+    nivel_fonte = {fid: (audio_fala.referencia([trechos[v["id"]] for v in ouvidas if v["fonte"] == fid], SR_FALA) or {}).get("nivel")
+                   for fid in {v["fonte"] for v in ouvidas}}
+    f0_ref = ref.get("f0")
+    fatia = _fatia_principal(ouvidas, trechos, f0_ref)
+    tom_reprova = modo == "uma" or (modo != "varias" and fatia >= PRINCIPAL_MIN)
+
+    def achado(v, r, regua, motivo, medida, de_tom):
         vel = float(v.get("vel", 1.0) or 1.0)
-        for r in audio_fala.vozes_de_fora(trechos[v["id"]], SR_FALA, continuidade=True):
-            a = {"id": v["id"], "tipo": "voz", "fonte": v["fonte"], "regua": "nivel_tom",
-                 "t": [round(v["t0"] + r["a"] / vel, 2), round(v["t0"] + r["b"] / vel, 2)],
-                 "s": [round(v["s0"] + r["a"], 2), round(v["s0"] + r["b"], 2)],
-                 "motivo": "longe do microfone" if r["motivo"] == "longe" else "tom de outra pessoa",
-                 "medida": f"{r['nivel']:.0f} dB contra {r['fala']:.0f} dB da fala, F0 {r['f0']} Hz contra {r['f0_fala']} Hz"}
-            (permitidos if modo == "varias" and r["motivo"] == "tom" else achados).append(a)
+        a = {"id": v["id"], "tipo": "voz", "fonte": v["fonte"], "regua": regua,
+             "t": [round(v["t0"] + r["a"] / vel, 2), round(v["t0"] + r["b"] / vel, 2)],
+             "s": [round(v["s0"] + r["a"], 2), round(v["s0"] + r["b"], 2)], "motivo": motivo, "medida": medida}
+        (permitidos if de_tom and not tom_reprova else achados).append(a)
+
+    def ja_tem(vid, r):
+        return any(a["id"] == vid and a["s"][0] - 0.05 <= r["s"] and r["s"] <= a["s"][1] + 0.05 for a in achados + permitidos)
+
+    for v in ouvidas:
+        x = trechos[v["id"]]
+        local = audio_fala.vozes_de_fora(x, SR_FALA, continuidade=True)
+        for r in local:
+            achado(v, r, "nivel_tom", "longe do microfone" if r["motivo"] == "longe" else "tom de outra pessoa",
+                   f"{r['nivel']:.0f} dB contra {r['fala']:.0f} dB da fala, F0 {r['f0']} Hz contra {r['f0_fala']} Hz",
+                   de_tom=r["motivo"] == "tom")
+        if not f0_ref:
+            continue
+        # a peça inteira pode ser a outra pessoa: compara com a voz principal do filme (tom) e com o nível dela na fonte
+        nf = nivel_fonte.get(v["fonte"])
+        nv = (audio_fala.referencia([x], SR_FALA) or {}).get("nivel")          # peça curta demais: sem medida, não é "longe"
+        longe_demais = nf is not None and nv is not None and nv < nf - LONGE_GLOBAL_DB
+        glob = audio_fala.vozes_de_fora(x, SR_FALA, continuidade=True, ref={"f0": f0_ref, "nivel": nf if longe_demais else None})
+        for r in glob:
+            if ja_tem(v["id"], {"s": v["s0"] + (r["a"] + r["b"]) / 2}):
+                continue
+            achado(v, r, "voz_do_filme", "longe do microfone" if r["motivo"] == "longe" else "tom de outra pessoa",
+                   f"{r['nivel']:.0f} dB contra {r['fala']:.0f} dB da fala na fonte, F0 {r['f0']} Hz contra {int(f0_ref)} Hz da voz principal do filme",
+                   de_tom=r["motivo"] == "tom")
+        # voz longe que o limiar de vozeamento não pega (eco): linha de tom estável bem mais grave que a voz principal
+        for r in audio_fala.tom_estavel(x, SR_FALA, nivel_fala=nf):
+            if r["f0"] < RAZAO_TOM * f0_ref and not ja_tem(v["id"], {"s": v["s0"] + (r["a"] + r["b"]) / 2}):
+                achado(v, r, "tom_fraco", "tom de outra pessoa, voz fraca (pausa ou começo da peça)",
+                       f"F0 {r['f0']} Hz contra {int(f0_ref)} Hz da voz principal, {r['b'] - r['a']:.2f} s", de_tom=True)
+    # peça "sem fala que se ouça": se o que soa ali é uma voz de tom diferente, é voz de fora (motivo certo), não só NÃO VERIFICADO
+    if f0_ref:
+        for v in [v for v in voz if v["id"] in sem_som]:
+            linhas = [r for r in audio_fala.tom_estavel(trechos[v["id"]], SR_FALA, nivel_fala=nivel_fonte.get(v["fonte"])) if abs(r["f0"] / f0_ref - 1) > audio_fala.TOM_IGUAL]
+            if linhas:
+                r = max(linhas, key=lambda r: r["b"] - r["a"])
+                achado(v, r, "tom_fraco", "outra pessoa longe do microfone (abaixo do nível de fala)",
+                       f"F0 {r['f0']} Hz contra {int(f0_ref)} Hz da voz principal, {r['b'] - r['a']:.2f} s", de_tom=False)
+                surdos = [s for s in surdos if s["id"] != v["id"]]      # reprova mesmo em "várias": voz LONGE é a equipe dirigindo
     # régua 1b: conversa no som direto de apoio
     for p in diretos:
         x, off = c.audio_fonte(p["fonte"], SR_FALA)

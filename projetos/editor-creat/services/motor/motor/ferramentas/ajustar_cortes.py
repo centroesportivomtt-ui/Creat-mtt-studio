@@ -88,7 +88,11 @@ def novos_limites(arm, edl, forcar: dict | None = None) -> list[dict]:
                     v["_nota"].append("fim no vale (palavra seguinte colada): OUVIR")
         if not colada_ant:
             ok, _ = AF.corte_inicial_ok(e, v["s0"])
-            if not ok:
+            if not ok and AF.comeco_colado(e, v["s0"]) is not None and not (AF._pico(e["db"], v["s0"] - 0.06, v["s0"]) > e["limiar"]):
+                # começa logo depois de outra fala (pode ser o resto de uma palavra, como o "-zer" de "freezer"): recuar pegaria
+                # a palavra anterior e avançar pede a transcrição palavra a palavra; fica para o diretor ouvir
+                v["_nota"].append("começo colado em outra fala (resto de palavra?): OUVIR")
+            elif not ok:
                 i = AF.inicio_da_fala(e, v["s0"])
                 ws = [w for w in _palavras(arm, edl, v["fonte"]) if w[0] >= v["s0"] - 0.05]
                 w0 = ws[0][0] if ws else v["s0"]

@@ -4,7 +4,8 @@
 Integração de 19/11 (duas sessões fizeram a mesma checagem): uma checagem só, que REPROVA quando QUALQUER régua reprova.
 Régua 1, `motor.audio_fala` (a mesma de quem corta, `ferramentas/ajustar_cortes.py`), no envelope do arquivo inteiro da fonte:
    fim com `corte_final_ok` (fala que continua depois do corte, oclusão de "t/p/k" com a voz voltando, fim sem respiro) e
-   começo com `corte_inicial_ok` (corte no meio de um som).
+   começo com `corte_inicial_ok` (corte no meio de um som; desde 20/11 também a peça que começa a menos de 150 ms do fim de
+   outra fala da fonte, o resto de palavra como o "-zer" de "freezer" depois de uma oclusão).
 Régua 2, a cauda da última sílaba, numa janela de 1,6 s em volta do corte: se a voz está ativa no corte e morre 50 a 450 ms
    depois (antes da palavra seguinte), o corte comeu a cauda (`medir_corte`).
 Régua 3, palavra a palavra da fonte (transcrição da análise, quando existe ao lado do áudio): corte dentro de uma palavra.

@@ -244,3 +244,15 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Testes:** pytest **277 ok** (8 novos em `test_cliente.py`); aceite D **33/33**, com o fluxo inteiro no navegador. O dono gera, o cliente (outro navegador, sem sessão) assiste no celular e pede ajuste, a resposta aparece no projeto e no Caderno, o dono desliga e a página fecha.
 - **Trilhas do ElevenLabs:** a licença foi lida (termos de 09/10/2026) e o resultado tem ressalva: o plano Creator é "individual" e há proibição de montar biblioteca de música. Não entraram na biblioteca; a decisão está em FILA.md, em "Precisa do dono".
 - **Dados reais das réguas de fala (sessão da Lavínia):** viraram o item D2 da fila.
+
+## D2: réguas de fala, rodada 2, com os casos reais da Lavínia (20/11)
+- **Voz da equipe que passava:**
+  - A referência agora é a voz principal do FILME (moda do tom de todas as peças; nível da mesma fonte), não só a da própria peça. Uma peça que é inteira o "vem" do homem longe do microfone virava a "fala principal" de si mesma e caía em NÃO VERIFICADO pelo motivo errado. Agora vira voz de fora com o motivo certo.
+  - Linha de tom estável bem mais grave que a principal, numa pausa ou no começo da peça (o "Vai, pode ir" a 150 Hz contra 260 Hz), com o limiar de vozeamento mais baixo para voz com eco.
+  - Achado de tom segue a mesma conta da assinatura: reprova em "uma" e no automático com a voz principal ≥ 65%; em conversa equilibrada só relata.
+- **Falso positivo de consoante:** trecho só fraco, com tom dentro de ±25% da principal e encostado (até 120 ms) na fala dela, é ela (o "g" de "Goiaba", o "xi" de "abacaxi"). Zumbido de máquina (tom parado, variação < 0,4%) e a cauda grave da frase dela não contam como outra pessoa.
+- **Começo no meio de palavra:** a peça que abre com uma sílaba solta (até 300 ms de som) a menos de 150 ms de outra fala da fonte reprova (o "-zer" de "freezer"). Jump cut em fala corrida não reprova (a fala segue). O `ajustar_cortes` só marca OUVIR nesse caso.
+- **Desempenho:** a série de tom fica em cache (o QA pedia a mesma série até 7 vezes por peça).
+- **Revisão:** Crivo aprovou com ajustes, e os 8 pontos entraram (o mais grave era o jump cut que viraria falso positivo).
+- **Testes:** pytest **283 ok** (6 novos em `test_qa_fala_d2.py`, áudio sintético com as medidas reais); aceite D 33/33.
+- **Falta:** conferir no material real (só a sessão da Lavínia tem os arquivos); pedido enviado a ela.

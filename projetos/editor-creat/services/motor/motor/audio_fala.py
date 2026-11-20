@@ -145,11 +145,44 @@ def corte_final_ok(env: dict, s1: float, folga: float = 0.04) -> tuple[bool, str
 
 
 def corte_inicial_ok(env: dict, s0: float) -> tuple[bool, str]:
-    """O corte em `s0` pega a fala desde o começo? Reprova quando há som de fala colado antes E depois do corte."""
+    """O corte em `s0` pega a fala desde o começo? Reprova quando há som de fala colado antes E depois do corte, e (20/11)
+    quando a primeira fala da peça começa a menos de 150 ms do fim de outra fala da fonte (`comeco_colado`)."""
     e, lim = env["db"], env["limiar"]
     if _pico(e, s0 - 0.06, s0) > lim and _pico(e, s0, s0 + 0.04) > lim:
         return False, f"corte em {s0:.2f} s cai no meio de um som (palavra começada antes ou palavra anterior colada)"
+    pausa = comeco_colado(env, s0)
+    if pausa is not None:
+        return False, (f"a peça começa {pausa * 1000:.0f} ms depois de outra fala da fonte (corte em {s0:.2f} s): pode ser o resto "
+                       "de uma palavra; uma frase nova pede pausa de 150 ms ou mais")
     return True, ""
+
+
+SILABA_MAX = 0.30          # resto de palavra: som de até 300 ms antes de um silêncio (o "-zer" real tinha 260 ms)
+
+
+def comeco_colado(env: dict, s0: float, minimo: float = 0.15, alcance: float = 0.5, procura: float = 0.30) -> float | None:
+    """A primeira fala da peça (a partir de `s0`) começa a menos de `minimo` s do fim de OUTRA fala da fonte? Pega a peça que
+    começa no meio de uma palavra depois de uma oclusão curta (dados reais 19/11: o "-zer" de "freezer", com 120 ms de silêncio
+    antes, abria a frase seguinte). Devolve a pausa medida (s) quando colado; None quando a pausa é de frase ou não há fala antes."""
+    e, lim = env["db"], env["limiar"]
+    j0 = int(round(s0 / PASSO))
+    p = next((k for k in range(max(0, j0), min(len(e), j0 + int(round(procura / PASSO)))) if e[k] > lim), None)
+    if p is None or p == 0:
+        return None
+    q = p - 1
+    while q >= 0 and e[q] <= lim and (p - q) * PASSO <= alcance:
+        q -= 1
+    if q < 0 or e[q] <= lim:
+        return None                                   # nada de fala no alcance: começo limpo
+    pausa = (p - q - 1) * PASSO
+    if pausa >= minimo:
+        return None
+    # só o RESTO de palavra: a primeira fala é uma sílaba solta (som curto até um silêncio de 60 ms). Corte de frase no meio de
+    # fala corrida ("...e eu | acho que...") tem pausa curta também, mas a fala segue: não é resto de palavra.
+    k, r = int(round(0.06 / PASSO)), p
+    while r < len(e) - k and not np.all(e[r:r + k] <= lim) and (r - p) * PASSO < SILABA_MAX:
+        r += 1
+    return round(pausa, 2) if (r - p) * PASSO < SILABA_MAX else None
 
 
 # ------------------------------------------------------------------ voz que não é do falante
@@ -168,10 +201,26 @@ def audivel(env: dict, a: float, b: float, minimo: float = 0.05) -> bool:
     return j > i and int(np.sum(e[i:j] > env["limiar"])) * PASSO >= minimo - 1e-9
 
 
-def f0_serie(x: np.ndarray, sr: int, passo: float = 0.02, jan: float = 0.05) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Tom (F0) por autocorrelação, 70-400 Hz. Devolve tempos, f0 (0 = sem voz) e nível em dB."""
+def f0_serie(x: np.ndarray, sr: int, passo: float = 0.02, jan: float = 0.05, ac_min: float = 0.45) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Tom (F0) por autocorrelação, 70-400 Hz. Devolve tempos, f0 (0 = sem voz) e nível em dB. `ac_min` mais baixo ouve voz
+    distante (eco da sala tira a nitidez do tom); quem usa assim exige linha de tom estável para não ler ruído como voz."""
     from scipy.signal import butter, resample_poly, sosfilt
     x = x.mean(1) if x.ndim > 1 else x
+    chave = (len(x), sr, passo, jan, ac_min, hash(np.ascontiguousarray(x[:: max(1, len(x) // 4096)]).tobytes()))
+    if chave in _F0_CACHE:                            # o QA pede a mesma série várias vezes por peça
+        return _F0_CACHE[chave]
+    out = _f0_serie(x, sr, passo, jan, ac_min)
+    if len(_F0_CACHE) > 64:
+        _F0_CACHE.clear()
+    _F0_CACHE[chave] = out
+    return out
+
+
+_F0_CACHE: dict = {}
+
+
+def _f0_serie(x: np.ndarray, sr: int, passo: float, jan: float, ac_min: float):
+    from scipy.signal import butter, resample_poly, sosfilt
     if sr != 16000:
         x = resample_poly(x, 16000, sr).astype(np.float32)
         sr = 16000
@@ -187,12 +236,12 @@ def f0_serie(x: np.ndarray, sr: int, passo: float = 0.02, jan: float = 0.05) -> 
         k = lo + int(np.argmax(ac[lo:hi]))
         ts.append(i / sr)
         lv.append(20 * np.log10(float(np.sqrt(np.mean(w ** 2))) + 1e-9))
-        fs.append(sr / k if ac[k] > 0.45 else 0.0)
+        fs.append(sr / k if ac[k] > ac_min else 0.0)
     return np.array(ts), np.array(fs), np.array(lv)
 
 
 def vozes_de_fora(x: np.ndarray, sr: int, dur_min: float = 0.18, abaixo_db: float = 9.0, razao_tom: float = 0.72,
-                 continuidade: bool = False) -> list[dict]:
+                 continuidade: bool = False, ref: dict | None = None) -> list[dict]:
     """Trechos vozeados que não parecem o falante principal do trecho: bem mais FRACOS que a fala dele (voz longe do microfone,
     `abaixo_db`) ou com TOM muito abaixo do dele (`razao_tom` x a mediana; homem dirigindo uma apresentadora).
 
@@ -200,6 +249,13 @@ def vozes_de_fora(x: np.ndarray, sr: int, dur_min: float = 0.18, abaixo_db: floa
     no meio da frase e tom caindo no fim da frase saem da fala principal sem pausa e com o F0 contínuo (vizinho a até 40 ms,
     razão de F0 dentro de `TOM_CONTINUO`); voz de outra pessoa entra depois de uma pausa ou com um salto de tom (homem da
     equipe ~120 Hz contra ~230 Hz da apresentadora). Padrão False: o comportamento antigo, para quem já chama.
+
+    Com `continuidade=True` também vale a regra da consoante (dados reais de 19/11: o "g" de "Goiaba" e o "xi" de "abacaxi"
+    davam falso positivo): trecho só FRACO, com o tom dentro de ±25% do falante e encostado (até 120 ms) na fala dele é a
+    própria fala (pré-sonorização de consoante, sílaba final fraca). Voz fraca de tom diferente, ou solta numa pausa, continua.
+
+    `ref` ({"f0", "nivel"}, opcional): a voz principal medida no filme inteiro (mesma fonte para o nível). Sem ela, a referência
+    é o próprio trecho, e uma peça que é TODA voz de outra pessoa longe do microfone viraria a "fala principal" de si mesma.
 
     Devolve [{"a", "b", "f0", "nivel", "fala" (nível da fala principal), "f0_fala", "motivo"}], tempos relativos ao trecho."""
     ts, f, lv = f0_serie(x, sr)
@@ -209,6 +265,9 @@ def vozes_de_fora(x: np.ndarray, sr: int, dur_min: float = 0.18, abaixo_db: floa
     piso = float(np.percentile(lv, 10))
     fv = f[(f > 0) & (lv > forte - 8)]
     med = float(np.median(fv)) if len(fv) else 0.0
+    if ref:
+        med = float(ref.get("f0") or med)
+        forte = max(forte, float(ref.get("nivel") if ref.get("nivel") is not None else forte))
     fraco = (f > 0) & (lv < forte - abaixo_db) & (lv > piso + 3)
     grave = (f > 0) & (f < razao_tom * med) & (lv > piso + 3) if med else np.zeros(len(f), bool)
     g = fraco | grave
@@ -218,7 +277,11 @@ def vozes_de_fora(x: np.ndarray, sr: int, dur_min: float = 0.18, abaixo_db: floa
             j = i
             while j + 1 < len(g) and (g[j + 1] or (j + 2 < len(g) and g[j + 2])):
                 j += 1
-            if ts[j] - ts[i] >= dur_min and not (continuidade and _colado_no_falante(f, g, i, j)):
+            so_fraco = not grave[i:j + 1].any()
+            ff_ = f[i:j + 1][f[i:j + 1] > 0]
+            tom_igual = bool(med and len(ff_) and abs(float(np.median(ff_)) / med - 1) <= TOM_IGUAL)
+            consoante = continuidade and so_fraco and tom_igual and _encostado(f, lv, g, i, j, forte)
+            if ts[j] - ts[i] >= dur_min and not consoante and not (continuidade and _colado_no_falante(f, g, i, j)):
                 ff = f[i:j + 1]
                 ff = ff[ff > 0]
                 out.append({"a": round(float(ts[i]), 2), "b": round(float(ts[j] + 0.02), 2), "f0": int(np.median(ff)),
@@ -228,6 +291,76 @@ def vozes_de_fora(x: np.ndarray, sr: int, dur_min: float = 0.18, abaixo_db: floa
         else:
             i += 1
     return out
+
+
+TOM_IGUAL = 0.25          # ±25% do tom do falante: mesma pessoa (homem x mulher fica perto de uma oitava)
+ENCOSTA_Q = 6             # quadros de 20 ms (120 ms)
+
+
+def _encostado(f: np.ndarray, lv: np.ndarray, g: np.ndarray, i: int, j: int, forte: float) -> bool:
+    """Há fala principal (vozeada, fora da marca, nível de fala) a até 120 ms antes ou depois do trecho [i, j]?"""
+    viz = list(range(max(0, i - ENCOSTA_Q), i)) + list(range(j + 1, min(len(f), j + 1 + ENCOSTA_Q)))
+    return any(f[k] > 0 and not g[k] and lv[k] > forte - 8 for k in viz)
+
+
+TOM_PARADO = 0.004        # variação de F0 menor que 0,4% no trecho: máquina (voz humana oscila)
+
+
+def tom_estavel(x: np.ndarray, sr: int, dur_min: float = 0.18, ac_min: float = 0.30, nivel_fala: float | None = None) -> list[dict]:
+    """Voz que o limiar de fala não ouve (longe do microfone): linhas de tom ESTÁVEIS (F0 de quadro a quadro dentro de
+    `TOM_CONTINUO`, >= `dur_min`) com o limiar de vozeamento mais baixo. Ruído não forma linha de tom de 180 ms; zumbido de
+    máquina forma, mas parado (`TOM_PARADO`), e cai fora. Com `nivel_fala` (nível da fala principal na fonte), só fora da
+    fala principal e sem encostar nela: a cauda grave da frase dela não é outra pessoa.
+    Devolve [{"a", "b", "f0", "nivel"}], tempos relativos ao trecho."""
+    ts, f, lv = f0_serie(x, sr, ac_min=ac_min)
+    if not len(ts):
+        return []
+    piso = float(np.percentile(lv, 10))
+    if nivel_fala is None:                              # sem o nível da fala principal (peça que pode ser só a outra voz)
+        fala = np.zeros(len(f), bool)
+    else:
+        _, f_fala, _ = f0_serie(x, sr)                  # fala principal: vozeamento normal e nível de fala da fonte
+        fala = (f_fala > 0) & (lv > float(nivel_fala) - 8)
+    out, i = [], 0
+    while i < len(f):
+        if f[i] > 0 and lv[i] > piso + 3 and not fala[i]:
+            j = i
+            while j + 1 < len(f) and f[j + 1] > 0 and not fala[j + 1] and 1 / TOM_CONTINUO <= f[j + 1] / f[j] <= TOM_CONTINUO:
+                j += 1
+            ff = f[i:j + 1]
+            parado = float(np.ptp(ff)) / float(np.median(ff)) < TOM_PARADO     # zumbido de freezer/ar-condicionado: tom imóvel
+            encosta = any(0 <= k < len(f) and fala[k] for k in (i - 1, i - 2, j + 1, j + 2))   # cauda/começo da fala principal
+            if ts[j] - ts[i] + 0.02 >= dur_min and not parado and not encosta:
+                out.append({"a": round(float(ts[i]), 2), "b": round(float(ts[j] + 0.02), 2), "f0": int(np.median(f[i:j + 1])),
+                            "nivel": round(float(lv[i:j + 1].max()), 1)})
+            i = j + 1
+        else:
+            i += 1
+    return out
+
+
+def referencia(trechos: list[np.ndarray], sr: int) -> dict | None:
+    """Voz principal de um conjunto de trechos (as peças do filme): mediana do F0 nos quadros fortes e nível alto (p85)."""
+    fs, lvs = [], []
+    for x in trechos:
+        if len(x) < sr * 0.1:
+            continue
+        _, f, lv = f0_serie(x, sr)
+        fs.append(f)
+        lvs.append(lv)
+    if not fs:
+        return None
+    f, lv = np.concatenate(fs), np.concatenate(lvs)
+    forte = float(np.percentile(lv, 85))
+    fv = f[(f > 0) & (lv > forte - 8)]
+    if not len(fv):
+        return {"f0": None, "nivel": forte}
+    # moda (em escala de tom) e não mediana: com duas vozes a mediana cairia entre as duas, longe de ambas
+    lg = np.log2(fv)
+    h, b = np.histogram(lg, bins=np.arange(np.log2(70), np.log2(400) + 0.1, 0.1))
+    pico = (b[int(np.argmax(h))] + b[int(np.argmax(h)) + 1]) / 2
+    perto = fv[np.abs(lg - pico) <= np.log2(1 + TOM_IGUAL)]
+    return {"f0": float(np.median(perto)) if len(perto) else float(np.median(fv)), "nivel": forte}
 
 
 def _colado_no_falante(f: np.ndarray, g: np.ndarray, i: int, j: int) -> bool:

@@ -21,7 +21,7 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 | C | revisão com olho de IA antes de entregar | feito · 51fcc19 · segura a entrega desde 19/11 |
 | D | checagens de fala (cortada, voz de fora, cobertura) | feito · c9e2b1e (integração das duas sessões) |
 | E | biblioteca de trilhas e efeitos com licença | feito · bb750bd · efeitos da casa (Sonniss GDC) no kit; **trilhas: licença com ressalva, ver Precisa do dono** |
-| D2 | réguas de fala, rodada 2 (dados reais da Lavínia, 19/11): voz distante abaixo do limiar vira tom < ~170 Hz contra a principal; falso positivo em consoante sonora (≥180 ms e tom fora de ±25%); início no meio de palavra da mesma voz (< 150 ms antes do s0) | em andamento · 01LA2wrM · 20/11 |
+| D2 | réguas de fala, rodada 2 (dados reais da Lavínia, 19/11): voz distante abaixo do limiar vira tom < ~170 Hz contra a principal; falso positivo em consoante sonora (≥180 ms e tom fora de ±25%); início no meio de palavra da mesma voz (< 150 ms antes do s0) | feito · ver PROGRESSO 20/11 (falta conferir no material real: pedido à sessão da Lavínia) |
 | F | link de aprovação para o cliente | feito · 7ab6ddc · 19/11 |
 | G | agendar o post aprovado pelo Metricool | livre (precisa do dono: token do Metricool na hospedagem) |
 | H | painel de gastos do mês | feito · 90781ea |
