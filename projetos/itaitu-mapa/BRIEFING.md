@@ -31,6 +31,37 @@ Itaitu é um distrito de Jacobina (BA), o "vale das cachoeiras", na Chapada Diam
 3. **Botões que geram negócio para o parceiro:** "Falar com a pousada" (WhatsApp), "Chamar um guia" (ACAGI) e "Onde comer" (parceiros).
 4. **Modo demonstração para a venda presencial.** Um botão escondido, ou `?demo=1`, faz um tour automático: abertura 3D, voo até cada cachoeira e uma trilha gravada simulada que vira o cartão da trilha. Assim o Marcos mostra tudo em 60 segundos na recepção de uma pousada, sem precisar andar a trilha.
 
+## Atualização do dono (20/11, segunda ordem): "faça algo realmente completo e me entregue um app que seja o meu particular"
+Além do produto que vende, o Marcos ganha um **app particular**. Ele é a ferramenta de trabalho dele: curador do mapa e vendedor. Mesmo código, mesma pasta, mesmo service worker. O que muda:
+- **Entrada própria:** `site/itaitu/marcos.html` com `manifest-marcos.webmanifest` (nome "Itaitu · Marcos", ícone com variação, `id` e `start_url` próprios). Instala como um **segundo ícone** no celular. Não tem link em lugar nenhum do app público.
+- **Confirmar posição aqui:** em cada ponto sem coordenada ou de confiança baixa/média, o botão "Estou aqui: confirmar posição".
+  - Faz a média do GPS por cerca de 20 s e mostra a precisão.
+  - Grava como camada local por cima do `pontos.geojson`, no IndexedDB, com confiança "alta (GPS no local, data)".
+  - Também dá para **criar ponto novo** (porteira, estacionamento, ponte, mirante, poço) com nota.
+- **Gravador de trilha completo:** pausa automática, pontos de passagem com nota, perfil de altitude e salvar como trilha oficial de um destino.
+- **Pacote de atualização:** um botão exporta tudo o que ele confirmou e gravou (GeoJSON + GPX) para compartilhar (Web Share/download). O script `projetos/itaitu-mapa/scripts/aplicar-pacote.mjs` valida o pacote e o funde em `site/itaitu/dados/pontos.geojson` e `trilhas.geojson`, com relatório do que mudou. Rodar o script é tarefa do time de dados depois; o script é deste time. Assim o mapa de todos os parceiros melhora a cada ida dele a campo.
+- **Vitrine de parceiros:**
+  - Trocar entre todas as marcas (`marcas/*.json`, listadas num `marcas/indice.json`).
+  - Rodar o modo demonstração da marca escolhida.
+  - Mostrar na tela o **QR code** do link do parceiro, com gerador de QR guardado localmente (biblioteca MIT dentro de `vendor/`, com licença) e PNG para baixar e imprimir.
+- **Caderno de vendas offline:** lista de negócios com status (visitar, visitado, interessado, proposta, fechado), nota, próximo passo e data. Exporta CSV. **Fica só no celular dele (IndexedDB), nunca no repositório.**
+- **Kit de venda:** roteiro, objeções e preços **não vão para o site público.** O app particular tem "Importar kit" (um arquivo .json que o Marcos recebe no Dropbox). Ele guarda no aparelho e mostra offline. O formato do arquivo fica documentado no RELATORIO.
+- **Trava da vitrine:**
+  - Quando o Marcos entrega o celular ao dono da pousada no modo demonstração, o app fica preso na vitrine.
+  - Sair exige um toque longo mais um PIN local de 4 dígitos, que ele define no primeiro uso. O PIN é guardado com hash no aparelho.
+  - Caderno, preços e kit ficam atrás desse PIN.
+  - Diga com clareza no RELATORIO que isso é proteção de uso, não cofre.
+
+## "Realmente completo": o que mais entra (os dois apps)
+- **Tela SOS:**
+  - Mostra a coordenada atual em letra grande, em graus decimais e em graus/minutos/segundos.
+  - Tem o botão "Enviar minha posição por SMS" (link `sms:` com a coordenada e o link de mapa). SMS às vezes passa onde a internet não passa.
+  - Tem os botões 193 e 192.
+- **Bússola com rumo** para o destino, **perfil de altitude** de cada trilha, **busca offline** por nome e **coordenada do toque longo** no mapa.
+- **Horários do dia:** nascer e pôr do sol calculados offline, com alerta de "faltam X min para escurecer" durante a trilha.
+- **Estado do armazenamento:** quanto o mapa ocupa, data da última atualização e botão "atualizar mapa" quando houver sinal (o SW troca a versão do cache sem quebrar o offline).
+- **Acessibilidade:** leitor de tela nos controles, contraste alto e texto grande opcional.
+
 **Imagem de satélite melhor (vale gastar):**
 - Sentinel-2 com 10 m por pixel é borrado demais para o 3D impressionar. Tente, nesta ordem:
   - (a) **CBERS-4A WPM do INPE**: satélite brasileiro, 2 m pancromático, dado gratuito. Ache uma cena sem nuvem sobre o bbox pelo catálogo do INPE / Brazil Data Cube, faça o pansharpen e corte em tiles WebMercator até o z16 só na área das cachoeiras e da vila. Registre a licença e a atribuição exatas.
