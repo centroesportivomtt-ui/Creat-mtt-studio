@@ -4,6 +4,41 @@ Pedido do dono (Marcos), 20/11/2026: "pegue a foto do mapa de Itaitu como base, 
 
 Itaitu é um distrito de Jacobina (BA), o "vale das cachoeiras", na Chapada Diamantina norte. O sinal de celular só existe na vila e falha nas trilhas. Por isso o app tem de **abrir e funcionar inteiro sem internet** depois da primeira visita com sinal.
 
+## Atualização do dono (20/11, a que manda): é PRODUTO PARA VENDER em Itaitu
+"Pode usar o que precisar pra me entregar algo tão foda que eu possa vender pra alguém aqui de Itaitu."
+
+**Quem compra:**
+- Primeiro alvo: a pousada **Village Serra do Cruzeiro**, que é dona da placa fotografada.
+- Depois: outras pousadas e campings (Camping Payayás, Camping Vale do Mamute), a associação de guias (ACAGI), restaurantes e o turismo de Jacobina.
+
+**O que eles compram:** um app de trilhas 3D offline com a marca deles, que o hóspede abre por um QR na recepção. O hóspede volta encantado e conta para os outros, e a pousada se diferencia de todas as vizinhas. Toda oferta da casa tem **plano mensal** (atualização de trilhas, novos pontos, suporte, hospedagem). Por isso o produto precisa ser:
+1. **Marca do parceiro (white-label) por configuração.** Arquivo `site/itaitu/marcas/<slug>.json`, escolhido por `?m=<slug>`; sem parâmetro abre `padrao.json`. Campos:
+   - nome do app e nome do parceiro;
+   - cor de destaque e logo (caminho; opcional);
+   - id do ponto-base no mapa, de onde saem as rotas de carro;
+   - WhatsApp de reserva (link `wa.me`) e Instagram;
+   - texto de boas-vindas;
+   - lista de parceiros em destaque ("onde comer", "guias") com nome, tipo, link e ponto no mapa quando houver.
+   Trocar de parceiro = criar um JSON, sem mexer em código.
+   - Faça três: `padrao.json` (neutro, "Trilhas de Itaitu"), `demo-village.json` e `demo-camping.json`.
+   - O `demo-village.json` usa o Village só pelo **nome em texto** e como ponto-base. **Sem logo dele** (não temos autorização). Os campos de logo e WhatsApp ficam vazios, marcados "preencher quando o parceiro autorizar".
+   - Crédito discreto "feito pela Creat".
+2. **"Cartão da trilha", o pulo do gato para quem compra.** Ao terminar uma trilha gravada, o app gera uma imagem pronta para story (canvas, 1080×1920), feita no próprio celular e offline:
+   - o traçado sobre o relevo;
+   - os números da trilha: km, tempo, desnível, cachoeira;
+   - a marca do parceiro.
+   A pessoa compartilha (Web Share API, com download como alternativa). **Cada hóspede vira anúncio da pousada.**
+3. **Botões que geram negócio para o parceiro:** "Falar com a pousada" (WhatsApp), "Chamar um guia" (ACAGI) e "Onde comer" (parceiros).
+4. **Modo demonstração para a venda presencial.** Um botão escondido, ou `?demo=1`, faz um tour automático: abertura 3D, voo até cada cachoeira e uma trilha gravada simulada que vira o cartão da trilha. Assim o Marcos mostra tudo em 60 segundos na recepção de uma pousada, sem precisar andar a trilha.
+
+**Imagem de satélite melhor (vale gastar):**
+- Sentinel-2 com 10 m por pixel é borrado demais para o 3D impressionar. Tente, nesta ordem:
+  - (a) **CBERS-4A WPM do INPE**: satélite brasileiro, 2 m pancromático, dado gratuito. Ache uma cena sem nuvem sobre o bbox pelo catálogo do INPE / Brazil Data Cube, faça o pansharpen e corte em tiles WebMercator até o z16 só na área das cachoeiras e da vila. Registre a licença e a atribuição exatas.
+  - (b) Se não for viável daqui, levante as opções pagas com licença que permite uso offline em app próprio, com preço e fonte. Exemplos: arquivo Pléiades/SPOT por UP42 ou Apollo Mapping, MapTiler Data satélite para auto-hospedagem. Devolva a recomendação pronta para o dono decidir. **Não compre nada.**
+  - (c) Alternativa garantida: estilo ilustrado/toon sobre o relevo (skill `toon-3d`), que pode ficar mais bonito que um satélite borrado.
+- A decisão final de estilo é do conceito, mas o Sentinel-2 2016 fica como camada de reserva.
+- O dono autorizou ferramentas pagas ("pode usar o que precisar"). Registre todo gasto em `projetos/itaitu-mapa/RELATORIO.md` (o quê, quanto, por quê). Antes de gastar, rode a rota da economia (grátis, crédito, mais barato com a mesma qualidade).
+
 ## Leituras obrigatórias (nesta ordem)
 1. `projetos/itaitu-mapa/dados/placa.json`: a placa "Guia das Cachoeiras de Itaitu" fotografada pelo dono. Tem 7 cachoeiras com distâncias de carro e de trilha, tempos e nível. **A placa é esquemática e fora de escala.** Vale para distância, tempo e dificuldade, nunca para posição.
 2. `projetos/itaitu-mapa/dados/pesquisa-radar.md`: a pesquisa do Radar. Traz coordenadas, fontes, trilhas, estradas, taxas, riscos, guias e licenças.
@@ -72,7 +107,7 @@ Um processo separado de pesquisa continua procurando as coordenadas que faltam e
    - Deve rodar liso num Android intermediário.
 
 Tudo em português do Brasil. Nome do app: "Trilhas de Itaitu", ou algo melhor que o conceito propuser.
-- **Não usar a marca, o logo nem o nome do Village Serra do Cruzeiro como marca do app.** O Village aparece só como um lugar no mapa.
+- O nome do parceiro só entra pelo arquivo de marca. Logo de terceiro só com autorização dele. Na versão padrão, o Village aparece só como um lugar no mapa.
 - Não citar pessoas físicas. Nada de telefone pessoal.
 
 ## Momento-assinatura
