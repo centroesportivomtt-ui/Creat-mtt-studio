@@ -72,12 +72,14 @@ def camadas_legenda(edl: dict) -> list[dict]:
     return camadas
 
 
-def cena_do_edl(edl: dict, fontes: Fontes | None = None) -> dict:
-    motion = [dict(m) for m in edl.get("motion", [])]
-    if not any(m["modelo"] in MODELOS_LEGENDA for m in motion):
+def cena_do_edl(edl: dict, fontes: Fontes | None = None, atras: bool | None = None) -> dict:
+    """atras=None: todas as camadas; True: só as que vão ATRÁS da pessoa; False: só as da frente (a legenda é sempre da frente)."""
+    motion = [dict(m) for m in edl.get("motion", []) if atras is None or bool(m.get("atras")) == atras]
+    if atras is not True and not any(m["modelo"] in MODELOS_LEGENDA for m in edl.get("motion", [])):
         motion += camadas_legenda(edl)
     motion = _fixa_caminhos(motion, fontes)
     for m in motion:
+        m.pop("atras", None)                              # o kit não conhece a marca: quem decide a ordem é a composição
         m["de"] = max(0.0, float(m["de"]))
         m["ate"] = min(float(edl["duracao"]), float(m["ate"]))
     return {"nome": f"overlay-{edl.get('projeto', 'p')}", "formato": edl.get("formato", {"w": 1080, "h": 1920, "fps": 30}),
@@ -85,9 +87,9 @@ def cena_do_edl(edl: dict, fontes: Fontes | None = None) -> dict:
 
 
 def renderizar(edl: dict, fontes: Fontes | None, base: pathlib.Path, *, workers: int = 3, janela: tuple[float, float] | None = None,
-               nice: int = 5, progresso=None) -> dict:
-    """Devolve {'dir', 'stats', 'cena', 'cache'}. Idempotente por hash da cena + janela."""
-    cena = cena_do_edl(edl, fontes)
+               nice: int = 5, progresso=None, atras: bool | None = None) -> dict:
+    """Devolve {'dir', 'stats', 'cena', 'cache'}. Idempotente por hash da cena + janela. `atras` como em cena_do_edl."""
+    cena = cena_do_edl(edl, fontes, atras)
     if not cena["camadas"]:
         return {"dir": None, "stats": {"quadros": 0}, "cena": cena, "cache": False}
     h = hash_obj(cena, janela, "ov2")

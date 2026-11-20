@@ -18,6 +18,10 @@ from motor.etapas.catalogo import EQUIPE, norm, tokens
 LETRA = "a-zà-öø-ÿ"
 
 
+
+Y_ATRAS = 0.30          # título atrás da pessoa começa mais alto (a cabeça passa na frente da parte de baixo das letras)
+DESFOQUE_FUNDO = 0.7    # "fundo_desfocado" do bloco: lente bem aberta, sem virar borrão de vidro
+
 class ErroResolucao(Exception):
     """A direção cita algo que não existe ou não foi encontrado na transcrição. .problemas vai para o cérebro corrigir."""
 
@@ -429,13 +433,15 @@ class Resolvedor:
     def _planos(self, L) -> list:
         zooms = self.m.get("intensidade", {})
         intens = {b["id"]: b["intensidade"] for b in self.d["blocos"]}
+        desfoca = {b["id"] for b in self.d["blocos"] if b.get("fundo_desfocado")}
         base = []
         alterna = 0
         for v in L["voz"]:
             z = zooms.get(str(intens.get(v["bloco"], 3)), {}).get("zoom", 1.0)
             zoom = 1.0 if alterna % 2 == 0 else z                        # corte de escala entre frases da mesma fala
             alterna += 1
-            base.append(self._plano(f"P{len(base)}", v["bloco"], v["t0"], v["t1"], v["clipe"], v["s0"], v["vel"], zoom))
+            extra = {"fundo": {"desfoque": DESFOQUE_FUNDO}} if v["bloco"] in desfoca else {}
+            base.append(self._plano(f"P{len(base)}", v["bloco"], v["t0"], v["t1"], v["clipe"], v["s0"], v["vel"], zoom, **extra))
         cobertos = []
         som = self.m.get("cobertura", {}).get("som_direto_db", {})
         lento = self.m.get("cobertura", {}).get("lento_vel", 0.5)
@@ -537,7 +543,11 @@ class Resolvedor:
             if g.get("troca") and g["troca"].get("risca"):
                 props["troca"] = {"de": g["troca"]["risca"], "para": g["troca"].get("para", ""), "em": 0.62, "dur": 0.36}
                 sfx.append({"t": 0.62, "som": m["sfx"]["troca"], "g": -8, "pan": 0})
-            motion.append({"id": "gancho", "modelo": m["gancho"]["modelo"], "de": 0.0, "ate": round(min(m["gancho"]["dur"], L["duracao"]), 3), "props": props})
+            camada = {"id": "gancho", "modelo": m["gancho"]["modelo"], "de": 0.0, "ate": round(min(m["gancho"]["dur"], L["duracao"]), 3), "props": props}
+            if g.get("atras_da_pessoa"):            # quem fala passa NA FRENTE do título (a composição escolhe a altura legível)
+                camada["atras"] = True
+                props["y"] = m["gancho"].get("y_atras", Y_ATRAS)
+            motion.append(camada)
             sfx.append({"t": 0.0, "som": m["sfx"]["gancho"], "g": -6, "pan": 0})
         primeira = {}
         for v in L["voz"]:

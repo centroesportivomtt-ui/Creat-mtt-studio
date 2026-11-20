@@ -88,6 +88,10 @@
               "type": "string"
             }
           }
+        },
+        "atras_da_pessoa": {
+          "type": "boolean",
+          "description": "O título do gancho fica ATRÁS de quem fala (a pessoa passa na frente do texto). Use quando o gancho abre com a pessoa em quadro, de frente, e o texto é grande."
         }
       }
     },
@@ -284,6 +288,10 @@
               "flash",
               "fade"
             ]
+          },
+          "fundo_desfocado": {
+            "type": "boolean",
+            "description": "Desfoca o fundo atrás da pessoa nos planos de fala deste bloco (fundo poluído de loja; o foco vai para quem fala)."
           }
         }
       }

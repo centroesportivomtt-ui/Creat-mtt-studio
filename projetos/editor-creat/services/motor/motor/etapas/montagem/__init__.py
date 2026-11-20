@@ -21,6 +21,7 @@ import time
 
 from motor import config
 from motor.etapas import ErroDefinitivo, etapa
+from motor.etapas import pessoa as PESSOA
 from motor.etapas.montagem import comp as COMP
 from motor.etapas.montagem import fx as FX
 from motor.etapas.montagem import mix as MIX
@@ -90,17 +91,23 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
     t_ini = time.time()
     prog(0.02, "Montagem: planos, motion e áudio em paralelo")
     with cf.ThreadPoolExecutor(max_workers=2) as ex:
-        f_ov = ex.submit(cronometro, "overlay", OV.renderizar, edl, fontes, trabalho / "overlay", workers=workers_ov, janela=janela, nice=nice)
+        tem_atras = any(m.get("atras") for m in edl.get("motion", []))
+        f_ov = ex.submit(cronometro, "overlay", OV.renderizar, edl, fontes, trabalho / "overlay", workers=workers_ov, janela=janela,
+                         nice=nice, atras=False if tem_atras else None)
+        f_at = ex.submit(cronometro, "overlay_atras", OV.renderizar, edl, fontes, trabalho / "overlay", workers=workers_ov,
+                         janela=janela, nice=nice, atras=True) if tem_atras else None
         f_au = ex.submit(audio)
         res_pl = cronometro("planos", PL.renderizar, edl, fontes, cache_planos, workers=workers_pl, nice=nice, janela=janela,
                             progresso=lambda p, m=None: prog(0.05 + 0.55 * p, m))
         res_ov = f_ov.result()
+        res_at = f_at.result() if f_at else {}
         res_au = f_au.result()
     prog(0.65, "Composição e encode (vídeo + áudio numa passada)")
     nome = "final.mp4" if not janela else f"trecho_{janela[0]:g}_{janela[1]:g}.mp4"
     res_comp = cronometro("composicao", COMP.compor, edl, res_pl, res_ov.get("dir"), res_au["mix"], trabalho / nome, janela=janela,
                           threads=max(2, int(getattr(cfg, "threads", 2) or 2) + 1), nice=nice,
-                          progresso=lambda p, m=None: prog(0.65 + 0.33 * p, m))
+                          progresso=lambda p, m=None: prog(0.65 + 0.33 * p, m), dir_overlay_atras=res_at.get("dir"),
+                          recortador=PESSOA.recortador_para(edl, cfg))
     tempos["total"] = round(time.time() - t_ini, 2)
     cor = revisao_cor(edl, res_pl, trabalho / "cor")
     st = res_ov.get("stats") or {}

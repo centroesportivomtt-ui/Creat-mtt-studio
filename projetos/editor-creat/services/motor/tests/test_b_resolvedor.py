@@ -90,3 +90,21 @@ def test_cada_modo_gera_edl_valido(base, modo):
         pesadas = {"whip", "aba71", "impacto", "flash", "mascara"}
         assert not [f for f in edl.get("fx", []) if f["tipo"] in pesadas and f["tipo"] != "impacto"], modo
         assert not [m for m in edl.get("motion", []) if m["modelo"] == "transicao"], modo
+
+
+def test_titulo_atras_da_pessoa_e_fundo_desfocado(base):
+    """Item 2 (20/11): a direção pede o título atrás de quem fala e o fundo desfocado num bloco; o EDL leva as marcas e valida."""
+    import copy
+    from validar import erros
+    d = copy.deepcopy(direcao())
+    d["gancho"]["atras_da_pessoa"] = True
+    alvo = d["blocos"][0]["id"]
+    d["blocos"][0]["fundo_desfocado"] = True
+    edl = _resolver(base, d)
+    g = next(m for m in edl["motion"] if m["id"] == "gancho")
+    assert g.get("atras") is True and g["props"]["y"] == 0.30
+    do_bloco = [p for p in edl["planos"] if p.get("bloco") == alvo and not p.get("_cob")]
+    assert do_bloco and all((p.get("fundo") or {}).get("desfoque") == 0.7 for p in do_bloco if p.get("fundo") is not None)
+    assert any(p.get("fundo") for p in edl["planos"])
+    assert not any(p.get("fundo") for p in edl["planos"] if p.get("bloco") != alvo)
+    assert erros("edl", edl) == []

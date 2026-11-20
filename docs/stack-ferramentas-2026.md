@@ -167,6 +167,13 @@ Avaliações: Brevo Capterra 4,6 (3.528), G2 cerca de 4,5; MailerLite G2 cerca d
 | alt. | Meshy / Tripo | Pro US$ 20 | 3D; Meshy grátis exige atribuição; Tripo grátis só não comercial | https://www.meshy.ai/pricing |
 | alt. | Suno | Pro US$ 10, 20 downloads/mês | Risco jurídico aberto (GEMA, Sony) | https://suno.com/pricing |
 
+**Editor creat.MTT, recorte de pessoa (20/11/2026):**
+- **Escolhido:** Robust Video Matting MobileNetV3 (ONNX, 15 MB, local e grátis). É temporal, então a borda não treme. Rodando no editor deu 37 a 48 ms por quadro em 640 px com redução 0,4, contra 11 ms medidos pelo Radar sem a redução. A redução 0,25 é 2× mais rápida, mas abriu buraco no topo da cabeça no teste real.
+- **Licença:** GPL-3.0. Uso só no servidor, sem distribuir o modelo. Se o editor virar programa entregue a terceiros, trocar.
+- **Reserva:** MODNet (Apache-2.0), quadro a quadro, de 80 a 140 ms.
+- **Descartados:** MatAnyone 2, o melhor em qualidade, tem licença NTU S-Lab, e uso comercial exige acordo. SAM 2.1 é inviável em CPU (cerca de 2 s por quadro).
+- **Fontes:** github.com/PeterL1n/RobustVideoMatting ; huggingface.co/Xenova/modnet.
+
 Voto cego (Artificial Analysis, 08/11/2026): vídeo, 1º Wan 3.0 (1172), 5º Seedance 2.5, 23º Veo 3.1; o Kling 4.0 não aparece. Evitar: Sora (encerrado), Udio, Midjourney em automação, Adobe Firefly como principal. Nenhuma nota G2 verificada.
 
 ### 3.9 Métricas, analytics e testes

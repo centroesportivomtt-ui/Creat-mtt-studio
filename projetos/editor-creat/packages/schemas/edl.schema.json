@@ -81,6 +81,7 @@
           "desfocar": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 5 }, "description": "Caixas normalizadas a desfocar (telas com dados de terceiros): [x0, y0, x1, y1] e, opcional, o desfoque (sigma) em px do quadro de 1080 (padrão 16)." },
           "janela": { "type": ["object", "null"], "description": "PiP/janela-aba (V2 janelas): {x,y,w,h,titulo}." },
           "mblur": { "type": "boolean", "default": false },
+          "fundo": { "type": ["object", "null"], "additionalProperties": false, "description": "Fundo atrás da pessoa (máscara de pessoa na composição).", "properties": { "desfoque": { "type": "number", "minimum": 0, "maximum": 1, "description": "0 = nada, 1 = lente bem aberta." } } },
           "cobertura": { "type": ["object", "null"], "additionalProperties": false, "required": ["olhar"], "description": "Conferência de sintonia de quem dirigiu e OLHOU o take, quando o plano cobre uma fala que não é dele e mostra a pessoa (QA cobertura_sintonia). olhar 'camera' = rosto falando para a câmera fora do take da fala: reprova sempre.", "properties": { "olhar": { "enum": ["produto", "camera", "acao"] }, "assunto": { "type": "string", "description": "O que a fala diz e a imagem mostra." } } }
         }
       }
@@ -90,7 +91,8 @@
       "description": "Camadas do kit (mesmo contrato de packages/kit/cenas/*.json -> camadas).",
       "items": {
         "type": "object", "additionalProperties": false, "required": ["id", "modelo", "de", "ate", "props"],
-        "properties": { "id": { "type": "string" }, "modelo": { "type": "string" }, "de": { "type": "number" }, "ate": { "type": "number" }, "props": { "type": "object" } }
+        "properties": { "id": { "type": "string" }, "modelo": { "type": "string" }, "de": { "type": "number" }, "ate": { "type": "number" }, "props": { "type": "object" },
+          "atras": { "type": "boolean", "default": false, "description": "Camada ATRÁS da pessoa: entra entre o fundo e quem aparece no plano (máscara de pessoa na composição). Sem pessoa no quadro, aparece normal." } }
       }
     },
     "legendas": {
