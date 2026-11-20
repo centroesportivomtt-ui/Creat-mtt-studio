@@ -218,11 +218,9 @@ def _montar(cfg, dados, pasta, memoria, arq_zip, arq_mem, tmp_zip, entrou, fora,
 def enviar(cfg, arquivos: list[str], url: str, *, limite_s: int = 900) -> tuple[bool, str]:
     """Envia pela solicitação de arquivos com o navegador do kit (o mesmo Chromium do render). Devolve (ok, última linha)."""
     script = config.KIT / "ferramentas" / "dropbox-enviar.cjs"
-    # ambiente mínimo: o navegador não herda a chave do cérebro, o token do motor nem nada do editor
-    # (proxy e certificados da máquina passam: sem eles o navegador não sai para a internet onde há proxy)
-    env = {k: os.environ[k] for k in ("PATH", "HOME", "LANG", "TMPDIR", "PLAYWRIGHT_BROWSERS_PATH", "NODE_PATH", "DROPBOX_PRINT", "DROPBOX_QUALQUER_HOST",
-                                      "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY", "https_proxy", "http_proxy", "no_proxy",
-                                      "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR") if k in os.environ}
+    # ambiente da máquina SEM segredos: o navegador não herda chave do cérebro, token do motor, senha, R2... (lista de bloqueio:
+    # a lista de permissão de antes deixava de fora alguma variável que o Chromium precisa no servidor e o envio caía, 20/11)
+    env = {k: v for k, v in os.environ.items() if not _SEGREDO.search(k)}
     env.update(DROPBOX_REMETENTE_NOME=os.environ.get("EDITOR_BACKUP_NOME", "Editor creatMTT"),
                DROPBOX_REMETENTE_EMAIL=os.environ.get("EDITOR_BACKUP_EMAIL", "entrega@creatmtt.com.br"))
     try:
@@ -234,12 +232,17 @@ def enviar(cfg, arquivos: list[str], url: str, *, limite_s: int = 900) -> tuple[
     return r.returncode == 0, _sem_endereco(r.stdout + "\n" + r.stderr, url)
 
 
+_SEGREDO = re.compile(r"KEY|TOKEN|SECRET|SEGREDO|SENHA|PASS|ANTHROPIC|OPENAI|ELEVEN|HIGGS|R2_|AWS_|DATABASE|PEDIDO|COOKIE|AUTH", re.I)
+
+
 def _sem_endereco(saida: str, url: str) -> str:
     """Última linha útil da saída, sem o endereço do pedido (inteiro ou cortado) em lugar nenhum."""
     limpo = saida.replace(url, "<pedido>")
     limpo = re.sub(r"dropbox\.com/request/[A-Za-z0-9]*", "dropbox.com/request/<pedido>", limpo)
     linhas = [ln.strip() for ln in limpo.splitlines() if ln.strip()]
-    uteis = [ln for ln in linhas if ln.startswith(("ok ", "erro "))] or linhas
+    # travamento do Node: a mensagem é a última linha que não é pilha ("at ..."), seta "^", chave solta nem "Node.js v.."
+    uteis = [ln for ln in linhas if ln.startswith(("ok ", "erro "))] \
+        or [ln for ln in linhas if not re.match(r"(at |Node\.js v|\^|[{}\]\[]$)", ln)] or linhas
     return (uteis[-1] if uteis else "")[:300]
 
 

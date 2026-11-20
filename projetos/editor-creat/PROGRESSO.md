@@ -319,3 +319,13 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - (4) fala curta sem assinatura vira B pela altura da voz, só se 40% ou mais longe (uma exclamação dela continua dela);
   - (5) busca por índice e `bisect`, sem O(n²).
 - **Testes:** pytest com 12 testes em `test_vozes.py`; aceite D 33/33.
+
+## Backup: primeira tentativa em produção falhou (20/11, print do dono)
+- O dono colou o link e a tela mostrou "falhou · o Dropbox não confirmou o envio: Node.js v24.20.0". Essa é a última linha de um travamento do Node: o navegador não abriu ANTES do bloco que trata erro, e a mensagem real ficou escondida.
+- **Correções:**
+  - o `dropbox-enviar.cjs` abre o navegador dentro de try e trata qualquer rejeição ou exceção com uma linha "erro …" legível;
+  - a leitura da saída ignora pilha e "Node.js v…";
+  - o navegador passa a receber o ambiente da máquina menos os segredos (bloqueio por nome: KEY, TOKEN, SECRET, SEGREDO, SENHA, PEDIDO, R2_…). A lista de permissão de antes deixava de fora alguma variável que o Chromium usa no servidor.
+- **Conferido aqui:** com endereço inexistente sai "erro TimeoutError…"; sem navegador sai "erro o navegador não abriu: …".
+- O agendador tenta de novo sozinho (1 h depois de uma falha), e o dono pode tocar em "Fazer backup agora".
+- **Testes:** pytest **333 ok**.

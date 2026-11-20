@@ -240,3 +240,29 @@ def test_teto_total_do_pacote(tmp_path, dados, monkeypatch):
     pac = B.montar(cfg)
     man = json.loads(zipfile.ZipFile(pac["zip"]).read("MANIFESTO.json"))
     assert any("teto" in f["motivo"] for f in man["fora"]) and "motor.db" in {a["nome"] for a in man["arquivos"]}
+
+
+def test_mensagem_de_falha_mostra_o_erro_e_nao_a_versao_do_node():
+    """20/11 em produção: a tela dizia só "o Dropbox não confirmou o envio: Node.js v24.20.0" (última linha do travamento)."""
+    from motor.backup import _sem_endereco
+    saida = ("/app/x.cjs:40\n  browser = await chromium.launch()\nbrowserType.launch: Executable doesn't exist at /ms-playwright/chromium\n"
+             "    at /app/x.cjs:40:3\n\nNode.js v24.20.0\n")
+    assert _sem_endereco(saida, "https://www.dropbox.com/request/AbCdEfGh12") .startswith("browserType.launch: Executable doesn't exist")
+    assert _sem_endereco("ok     2 arquivo(s)\nNode.js v24.20.0", "x") == "ok     2 arquivo(s)"
+
+
+def test_ambiente_do_navegador_sem_segredos(monkeypatch):
+    from motor import backup
+    for k in ("EDITOR_SENHA_HASH", "EDITOR_SEGREDO_SESSAO", "EDITOR_BACKUP_PEDIDO", "R2_SECRET_ACCESS_KEY", "EDITOR_ANTHROPIC_KEY"):
+        monkeypatch.setenv(k, "nao-pode-ir")
+    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", "/ms-playwright")
+    monkeypatch.setenv("XDG_CONFIG_HOME", "/tmp/x")
+    visto = {}
+    monkeypatch.setattr(backup.subprocess, "run", lambda cmd, **k: visto.update(env=k["env"]) or type("R", (), {"returncode": 0, "stdout": "ok", "stderr": ""})())
+
+    class Cfg:
+        dados = "/tmp"
+    backup.enviar(Cfg(), ["/tmp/a.zip"], "https://www.dropbox.com/request/AbCdEfGh12")
+    env = visto["env"]
+    assert env["PLAYWRIGHT_BROWSERS_PATH"] == "/ms-playwright" and env["XDG_CONFIG_HOME"] == "/tmp/x"   # o resto da máquina passa
+    assert "nao-pode-ir" not in env.values()                                   # segredo nenhum

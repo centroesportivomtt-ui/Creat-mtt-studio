@@ -29,8 +29,17 @@ for (const a of arquivos) if (!fs.existsSync(a) || !fs.statSync(a).isFile()) fal
 // Envie com nome sem acento e renomeie depois pelo conector do Dropbox (move). Confira sempre a pasta depois do envio.
 for (const a of arquivos) if (/[^\x20-\x7E]/.test(path.basename(a))) falha('nome com acento é descartado pelo Dropbox: ' + path.basename(a));
 
+// nada pode derrubar o Node sem uma linha "erro ..." (antes, falha ao abrir o navegador saía só com "Node.js v24..." no fim)
+process.on('unhandledRejection', (e) => falha('inesperado: ' + String((e && e.message) || e).slice(0, 300)));
+process.on('uncaughtException', (e) => falha('inesperado: ' + String((e && e.message) || e).slice(0, 300)));
+
 (async () => {
-  const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  let browser;
+  try {
+    browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  } catch (e) {
+    falha('o navegador não abriu: ' + String((e && e.message) || e).split('\n')[0].slice(0, 300));
+  }
   const ctx = await browser.newContext({
     viewport: { width: 1280, height: 900 }, locale: 'pt-BR',
     userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
