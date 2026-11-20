@@ -17,13 +17,18 @@
     "grupo": "placa",
     "confianca": "alta",
     "aproximado": false,
-    "fonte": "OpenStreetMap API 0.6 /map (consulta 20/11/2026) (nó amenity=fountain name='Cachoeira Véu da Noiva', node); confere com Wikipédia pt (11°19'59\"S 40°30'12\"O) e aroundus.com (-11.33306,-40.50336)",
+    "fonte": "OpenStreetMap API 0.6 /map (consulta 20/11/2026) (nó 10238223938, tag amenity=fountain, name='Cachoeira Véu da Noiva'). Confere com: (1) SGB Geossit 2296, WGS 84 -11,332848549 / -40,503246307, cota 621 m, a 46 m do nó OSM (https://www.sgb.gov.br/geossit/geossitios/ver/2296, lido pelo resumo de busca em 20/11/2026, a página não abre por robô); (2) Wikipédia pt 'Cachoeira Véu de Noiva (Itaitu)', 11°19'59\"S 40°30'12\"O (= -11,33306 / -40,50333, a 27 m do nó OSM); (3) aroundus.com (-11.33306,-40.50336), lido numa rodada anterior e não reaberto no crítico. Cuidado: o Geossit tem outro 'Cachoeira Véu de Noiva' (id 2191) em Mato Grosso.",
     "carro_km": 1.2,
     "carro_tempo": "3 min",
-    "trilha_km": 2.0,
+    "trilha_km": 2,
     "trilha_tempo": "≈ 30 min",
     "nivel": "Fácil",
-    "notas": "Coordenada do OSM é o pé/ponto da queda, não a entrada da trilha. Entrada da trilha a 1,2 km do centro da vila (Viaje com Norma 2023); trilha 2,08 km só ida, descida na ida e subida na volta. Queda 64-70 m. Poço mais fundo sob a queda. Água da vila é captada ali: camping e bebida alcoólica proibidos. Rapel só com agendamento (Eco Sistema Adventure). Taxa R$ 5 por pessoa (Wikiloc, jul/2025). Outros nomes: Cachoeira de Clarindo (Wikipédia)."
+    "notas": "Coordenada do OSM é o pé/ponto da queda, não a entrada da trilha. Entrada da trilha a 1,2 km do centro da vila (Viaje com Norma 2023); trilha 2,08 km só ida, descida na ida e subida na volta. Queda 64-70 m. Poço mais fundo sob a queda. Água da vila é captada ali: camping e bebida alcoólica proibidos. Rapel só com agendamento (Eco Sistema Adventure). Taxa R$ 5 por pessoa (Wikiloc, jul/2025). Outros nomes: Cachoeira de Clarindo (Wikipédia). DIVERGÊNCIA DE DISTÂNCIA: o traçado OSM da entrada até a queda mede 0,76 km (+46 m sem traçado) e a linha reta entrada-queda é de 0,55 km; a placa e o blog dão 2,0-2,08 km de trilha. A entrada usada aqui bate com o início da trilha Wikiloc 123961804 (10 m), então ou a placa/blog contam outro começo, ou arredondam para cima. Não resolvido: não exibir 2 km como se fosse o traçado.",
+    "entrada_trilha_id": "cachoeira-das-flores-entrada",
+    "taxa": "R$ 5 por pessoa (Wikiloc, jul/2025, citado em pesquisa-radar.md; conferir no local).",
+    "outros_nomes": [
+     "Cachoeira de Clarindo"
+    ]
    }
   },
   {
@@ -42,13 +47,20 @@
     "grupo": "placa",
     "confianca": "media",
     "aproximado": false,
-    "fonte": "OpenStreetMap API 0.6 /map (consulta 20/11/2026) (nó waterway=waterfall name='Cachoeira Arapongas'); sem segunda fonte de coordenada",
-    "carro_km": 4.0,
+    "fonte": "OpenStreetMap API 0.6 /map (consulta 20/11/2026) (nó 10238231425, waterway=waterfall, name='Cachoeira Arapongas'). Segunda leitura (crítico, 20/11/2026): resultado de busca do Wikiloc traz 'Arapongas Waterfall' em -11.371969,-40.505958 (a 41 m do nó OSM) e 'Cachoeira da araponga' em -11.37203,-40.506053 (a 29 m), duas trilhas Wikiloc que a busca devolveu (provavelmente 21684503 'cachoeira-da-araponga-itaitu' e 46961519 'arapongas x poço do gelo x sossego'; o id exato de cada leitura não foi confirmado); lido só no resumo de busca, página não aberta. Mapcarta repete o OSM, não conta como independente.",
+    "carro_km": 4,
     "carro_tempo": "12 min",
     "trilha_km": 1.2,
     "trilha_tempo": "25–30 min",
     "nivel": "Moderada",
-    "notas": "Fica na zona de amortecimento/entorno do Parque Estadual das Sete Passagens (sede em Miguel Calmon). Posto do parque cobra taxa (valor não achado), aberto todos os dias 08h-16h (blog, abr/2023). A estrada cruza um riacho antes do posto: atenção em chuva. Ponte suspensa na entrada da trilha. Antigo nome: Jaqueira (Wikipédia). Entrada da trilha: sem coordenada."
+    "notas": "Fica na zona de amortecimento/entorno do Parque Estadual das Sete Passagens (sede em Miguel Calmon). Ponte suspensa na entrada da trilha (blog, abr/2023). Antigo nome: Jaqueira (Wikipédia). Entrada da trilha: início do track OSM way 922994533 (ponto cachoeira-das-arapongas-entrada), 1,32 km de trilha OSM até 44 m da queda.",
+    "entrada_trilha_id": "cachoeira-das-arapongas-entrada",
+    "horario": "Posto do Parque Estadual das Sete Passagens: todos os dias, 08h às 16h (Viaje com Norma, abr/2023; conferir).",
+    "taxa": "Taxa cobrada no Posto do Parque; valor não achado (Viaje com Norma, abr/2023).",
+    "outros_nomes": [
+     "Jaqueira"
+    ],
+    "riscos": "Estrada de acesso cruza um riacho por vau, que sobe com chuva. Água fria."
    }
   },
   {
@@ -60,14 +72,18 @@
     "tipo": "cachoeira",
     "grupo": "placa",
     "confianca": "sem-coordenada",
-    "aproximado": true,
-    "fonte": "Sem coordenada em OSM, Wikipedia, Mapcarta ou aroundus. Trilha gravada existe no Wikiloc (bloqueado a robô)",
-    "carro_km": 4.0,
+    "aproximado": false,
+    "fonte": "Nenhuma fonte aberta com coordenada do Sossego. Posição relativa: https://viajecomnorma.com.br/cachoeira-das-arapongas-itaitu-jacobina-ba/ (\"cerca de 100 metros acima, depois do Poço da Geladeira\"). Âncora: nó OSM waterfall Cachoeira Arapongas e track OSM way 922994533.",
+    "carro_km": 4,
     "carro_tempo": "12 min",
     "trilha_km": 1.5,
     "trilha_tempo": "30–40 min",
     "nivel": "Moderada",
-    "notas": "Fica ~100 m acima do Poço da Geladeira na mesma trilha de Arapongas; trecho dentro do rio, pedra e subida íngreme; usar calçado de trilha (blog Norma, abr/2023). Água rasa, muita sombra."
+    "notas": "Mesma trilha das Arapongas, acima delas, no riacho sem nome (OSM way 1539166301). Conflito sem desempate: a placa põe o Sossego (1,5 km) antes da Geladeira (1,7 km); blog, A Tarde e Wikiloc (só título) põem o Sossego ~100 m acima da Geladeira. Pista de busca, não posição: corredor do riacho de 300 a 650 m a montante das Arapongas. Água rasa, muita sombra. Fechar com GPX do Wikiloc (conta do dono), guia da ACAGI ou \"Marcar ponto aqui\" no local.",
+    "entrada_trilha_id": "cachoeira-das-arapongas-entrada",
+    "horario": "Posto do Parque Estadual das Sete Passagens: todos os dias, 08h às 16h (Viaje com Norma, abr/2023; conferir).",
+    "taxa": "Taxa cobrada no Posto do Parque; valor não achado. Os R$ 5 citados pela A Tarde são do Piancó.",
+    "riscos": "Trecho acima das Arapongas íngreme, com muita pedra e parte dentro do rio (Viaje com Norma, abr/2023); água fria; vau na estrada de acesso sobe na chuva; calçado de trilha. Cordas e escadas citadas só em resultado de busca, não confirmado."
    }
   },
   {
@@ -79,14 +95,22 @@
     "tipo": "poco",
     "grupo": "placa",
     "confianca": "sem-coordenada",
-    "aproximado": true,
-    "fonte": "Sem coordenada em fonte pública acessível",
-    "carro_km": 4.0,
+    "aproximado": false,
+    "fonte": "Nenhuma fonte com coordenada. Pistas relativas: viajecomnorma.com.br (abr/2023), placa do Village (trilha 1,7 km), OSM way 1539166301 (riacho a montante das Arapongas), relevo Terrarium z14.",
+    "carro_km": 4,
     "carro_tempo": "12 min",
     "trilha_km": 1.7,
     "trilha_tempo": "35–45 min",
     "nivel": "Moderada",
-    "notas": "Acima de Arapongas, trilha íngreme e difícil segundo o blog; água muito fria."
+    "notas": "Acima das Arapongas, no mesmo riacho do Sossego. O relevo (DEM ~30 m) não separa poço de queda nem distingue Geladeira de Sossego no trecho íngreme de ~300 a ~540 m a montante; ordem Geladeira/Sossego contraditória entre placa e Wikiloc. Água muito fria. Fechar com GPX do Wikiloc, guia da ACAGI ou gravação no local.",
+    "entrada_trilha_id": "cachoeira-das-arapongas-entrada",
+    "outros_nomes": [
+     "Poço do Gelo",
+     "Poço da Geladeira (Reserva Arapongas)"
+    ],
+    "horario": "Todos os dias, 08h às 16h, horário do Posto do Parque (Viaje com Norma, abr/2023; conferir).",
+    "taxa": "Posto do Parque na entrada cobra taxa, valor não informado (Viaje com Norma, abr/2023). Um roteiro isolado cita R$ 8 por pessoa, sem data confirmada. Conferir.",
+    "riscos": "Trilha difícil e íngreme (Viaje com Norma, abr/2023); águas caudalosas, nadar é mais difícil que nos outros poços (Como Viajei, abr/2020); travessia de riacho na estrada de acesso, que enche na chuva; evitar chuva forte (Estado de Minas, 21/07/2026)."
    }
   },
   {
@@ -98,55 +122,79 @@
     "tipo": "cachoeira",
     "grupo": "placa",
     "confianca": "sem-coordenada",
-    "aproximado": true,
-    "fonte": "Sem coordenada em fonte pública acessível; trilhas Wikiloc existem",
+    "aproximado": false,
+    "fonte": "Nenhuma fonte com coordenada da Cachoeira do Piancó/Pinhacó (OSM, Commons, Wikidata, iNaturalist, Nominatim e buscas web de 20/11/2026).",
     "carro_km": 3.7,
     "carro_tempo": "10 min",
-    "trilha_km": 3.0,
+    "trilha_km": 3,
     "trilha_tempo": "≈ 60 min",
     "nivel": "Moderada",
-    "notas": "DIVERGÊNCIA: placa diz trilha 3,0 km; Wikiloc 123080128 diz 1,5 km da porteira até a cachoeira (a placa pode somar o trecho até a porteira). Taxa de manutenção R$ 5 por pessoa (jan/2023). Duas travessias de rio, duas porteiras. Acesso difícil pela direita para ver a queda; descida ao poço por pedras. Pinhacó e Piancó são o mesmo lugar.",
+    "notas": "DIVERGÊNCIA: placa diz trilha 3,0 km; Wikiloc 123080128 (só título) diz 1,5 km da porteira até a cachoeira; blog diz 3 km da vila até a entrada. Fica no ramo sul da placa, depois do Coxinho (A Tarde 2020). A localidade \"Piancó - Itaitu\" do iNaturalist (~-11.316, -40.491) é rótulo de povoado, não a queda. Duas porteiras. Fechar com GPX do Wikiloc (conta do dono), guia da ACAGI ou gravação no local.",
     "outros_nomes": [
      "Pinhacó"
-    ]
+    ],
+    "taxa": "R$ 5 por pessoa de manutenção, cobrada num controle na entrada (Viaje com Norma, jan/2023; A Tarde, 20/10/2025). Confirmar valor atual.",
+    "riscos": "Duas travessias de rio \"sem grau de dificuldade\" (Viaje com Norma, jan/2023); descida ao poço sobre pedras exige cuidado e o acesso à queda pela direita é difícil (Viaje com Norma, fev/2023; A Tarde, 2020). Queda de ~45 m (A Tarde 2020/2021, a verificar)."
    }
   },
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -40.49041748,
+     -11.330183
+    ]
+   },
    "properties": {
     "id": "cachoeira-do-coxinho",
     "nome": "Cachoeira do Coxinho",
     "tipo": "cachoeira",
     "grupo": "placa",
-    "confianca": "sem-coordenada",
-    "aproximado": true,
-    "fonte": "Sem coordenada em fonte pública acessível",
+    "confianca": "media",
+    "aproximado": false,
+    "fonte": "SGB Geossit 2294 (https://www.sgb.gov.br/geossit/geossitios/ver/2294): WGS 84 -11,330183029 / -40,490417480, cota 541 m, status 'Em análise', alteração 25/12/2022. Lido só pelo resumo de busca (4 leituras iguais); a página não abre por robô e o HTML salvo é a home do portal. Conferências do crítico: (1) o inventário do patrimônio geológico de Jacobina (doi 10.22456/1807-9806.131571, também via busca) traz UTM 24S 337348 E / 8747096 N, que convertido dá -11,330183 / -40,490417 (mesma origem SGB, não é fonte nova); (2) resultado de busca do Wikiloc 86343066 ('Vila de Itaitu x Coxinho x Piancó x Jacobina') lista o waypoint 'Coxinho Waterfall' em -11,330211 / -40,490483, a 8 m do SGB (fonte independente, só pelo resumo); (3) quebra de relevo Terrarium a 18 m e rio OSM (way 1167232555) a 37 m. Fica média até alguém abrir as duas páginas.",
     "carro_km": 1.2,
     "carro_tempo": "3 min",
-    "trilha_km": 1.0,
+    "trilha_km": 1,
     "trilha_tempo": "20–25 min",
     "nivel": "Fácil",
-    "notas": "Wikiloc: ~700-750 m da porteira; 500 m do Camping Payayás. Antigo nome Cachoeira do Cocino (Wikipédia). Estacionamento na porteira."
+    "notas": "Na estrada de barro paralela à serra, antes do Piancó (Jornal da Chapada, 21/01/2020). SGB: 1,1 km de estrada rumo ao povoado Piancó. Divergência de distância: A Tarde diz \"500 m da vila\", Wikiloc (via busca) \"~750 m da porteira\"; em linha reta são 1,16 km da vila. Ponto do SGB pode ser o poço ou a crista (erro de dezenas de metros). Estacionamento na porteira (sem coordenada). Nota do crítico: o SGB descreve o acesso como 'Rua do Prédio Velho, estrada para o povoado de Piancó, cerca de 1,1 km'.",
+    "entrada_trilha_id": "cachoeira-do-coxinho-entrada",
+    "outros_nomes": [
+     "Cachoeira do Cocino"
+    ],
+    "riscos": "Nenhum risco específico citado (queda pequena, poço bom para banho, águas escuras e geladas). Vegetação invadindo a trilha: ir de calça comprida (Wikiloc, via resumo de busca, indireto)."
    }
   },
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -40.50592,
+     -11.32366
+    ]
+   },
    "properties": {
     "id": "cachoeira-das-flores",
     "nome": "Cachoeira das Flores",
     "tipo": "cachoeira",
     "grupo": "placa",
-    "confianca": "sem-coordenada",
+    "confianca": "media",
     "aproximado": true,
-    "fonte": "Sem coordenada em fonte pública acessível",
+    "fonte": "Wikiloc, só via resultado de busca (rodada anterior e releitura do crítico em 20/11/2026): trilha 123961804 (jan/2023) lista pontos de queda em -11.323552,-40.505945 / -11.323447,-40.505977 / -11.323772,-40.505863; trilha 35819879 (abr/2019) lista -11.323572,-40.505943. Usada a média da rodada anterior (-11.32366,-40.50592), que fica a 8 m da média da releitura (-11.32359,-40.50593). Uma das leituras avisou que os pontos da 35819879 não estão claramente ligados ao rótulo 'Cachoeira das Flores'. Conferido com talvegue calculado no Terrarium z14 (40 m) e altitude (765 m DEM contra 770 m do Wikiloc). Páginas do Wikiloc não abertas.",
     "carro_km": 1.2,
     "carro_tempo": "3 min",
     "trilha_km": 1.5,
     "trilha_tempo": "30–40 min",
     "nivel": "Moderada",
-    "notas": "Fica acima da Véu de Noiva: do topo segue pelo rio, 3 travessias e uma pedra para escalar (blog Norma). Wikiloc: Itaitu→Flores 3,78-3,97 km +259-276 m."
+    "notas": "Acima do Véu da Noiva, mesmo curso: do topo segue pelo rio (Viaje com Norma). Trilha medida ~2,1 km da entrada (0,76 km de trilha OSM até o Véu + ~1,33 km de talvegue sem traçado OSM); a placa dá 1,5 km. Erro provável de dezenas de metros, até ~150 m. Wikiloc: Itaitu → Flores 3,78-3,97 km, +259-276 m.",
+    "entrada_trilha_id": "cachoeira-das-flores-entrada",
+    "outros_nomes": [
+     "Cachoeira da Flores"
+    ],
+    "riscos": "Três travessias de rio e uma pedra a escalar (Viaje com Norma, jan/2023); abelhas em tronco e pedras escorregadias perto da queda (Wikiloc 102995977, via busca); cobras na trilha (Wikiloc 35819879, via busca, abr/2019); evitar chuva forte (Estado de Minas, 2026, aviso geral). Guia recomendado."
    }
   },
   {
@@ -215,7 +263,7 @@
     "grupo": "vila",
     "confianca": "baixa",
     "aproximado": true,
-    "fonte": "Estimado: igreja fica na Praça da Matriz (Wikipédia pt); não há nó próprio no OSM",
+    "fonte": "Estimado: a Wikipédia pt (https://pt.wikipedia.org/wiki/Itaitu, lida em 20/11/2026) diz 'A Praça da Matriz apresenta uma igreja histórica, com uma marca da Companhia de Jesus'. Não há nó próprio no OSM nem endereço. A coordenada é a da praça (way OSM 248603522, 6 vértices, cerca de 115 m de ponta a ponta), então o erro esperado é de até ~60 m.",
     "carro_km": null,
     "carro_tempo": null,
     "trilha_km": null,
@@ -226,21 +274,32 @@
   },
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -40.488777,
+     -11.339013
+    ]
+   },
    "properties": {
     "id": "village-serra-do-cruzeiro",
     "nome": "Village Serra do Cruzeiro",
     "tipo": "hospedagem",
     "grupo": "base",
-    "confianca": "sem-coordenada",
+    "confianca": "baixa",
     "aproximado": true,
-    "fonte": "Não achada. Booking/Airbnb listam 'Village Vista do Cruzeiro' / 'Serra Azul Village' (800 m da praça, 900 m da entrada da Véu), sem coordenada legível",
+    "fonte": "https://www.br-hotels.com/en/vacation-rentals/jacobina/ (lido em 20/11/2026 por rodada anterior), trecho: { \"HotelID\": 22478315, \"Latitude\": -11.339013, \"Longitude\": -40.488777 } do imóvel \"Village Vista Do Cruzeiro Itaitu\". Releitura do crítico (busca): o Booking tem dois anúncios do mesmo nome e os pins ficam a 246 m um do outro: A em cerca de -11,3390/-40,4888 (igual ao br-hotels, provavelmente o mesmo feed) e B ('Melhor vista de Itaitu - Village Vista do Cruzeiro', Rua da Palha) em cerca de -11,3409/-40,4876. Raio de incerteza usado: 250 m.",
     "carro_km": null,
     "carro_tempo": null,
     "trilha_km": null,
     "trilha_tempo": null,
     "nivel": null,
-    "notas": "Base das distâncias da placa. Pode ser a mesma propriedade que 'Village Vista do Cruzeiro' (não confirmado)."
+    "notas": "Base das distâncias da placa. POSIÇÃO APROXIMADA (raio de ~250 m), A CONFIRMAR: a identidade com o \"Village Serra do Cruzeiro\" da placa é provável, não provada (anúncios dizem \"Vista do Cruzeiro\"). Os dois pins do Booking ficam a 266 m (A) e 159 m (B) em linha reta da vila, contra 650 m a pé da placa, e o endereço dos agregadores é Rua da Palha, S/N (o pin B fica a 59 m dessa rua no OSM, o A a 154 m). O que sustenta a posição: as rotas de carro calculadas a partir daqui dão 1,27 km até a entrada do Véu e 1,08 km até a rua do Coxinho, contra 1,2 km e 1,2 km da placa, e 4,40 km até as Arapongas contra 4,0 km; ou seja, a origem não deve estar errada por mais de algumas centenas de metros. Confirmar com o pin do Google Maps do Village.",
+    "outros_nomes": [
+     "Village Vista do Cruzeiro Itaitu",
+     "Vista do Cruzeiro Itaitu",
+     "Melhor vista de Itaitu - Village Vista do Cruzeiro"
+    ]
    }
   },
   {
@@ -257,9 +316,9 @@
     "nome": "Torre de comunicação (celular)",
     "tipo": "infra",
     "grupo": "vila",
-    "confianca": "alta",
+    "confianca": "media",
     "aproximado": false,
-    "fonte": "OpenStreetMap API 0.6 /map (consulta 20/11/2026) (man_made=tower, communication:mobile_phone=yes)",
+    "fonte": "OpenStreetMap API 0.6 /map (consulta 20/11/2026) (nó 7961194194, man_made=tower, tower:type=communication, communication:mobile_phone=yes; versão 1, mapeada em 2020 por um colaborador). Fonte única, por isso média (a escala da casa reserva alta a ponto com duas fontes). Está a 60 m do nó da vila.",
     "carro_km": null,
     "carro_tempo": null,
     "trilha_km": null,
@@ -323,24 +382,24 @@
    "geometry": {
     "type": "Point",
     "coordinates": [
-     -40.51091,
-     -11.32494
+     -40.524104,
+     -11.388887
     ]
    },
    "properties": {
     "id": "parque-estadual-das-sete-passagens-poligono",
-    "nome": "Parque Estadual das Sete Passagens (polígono)",
+    "nome": "Parque Estadual das Sete Passagens (ponto de referência)",
     "tipo": "area",
     "grupo": "fora-da-placa",
     "confianca": "baixa",
     "aproximado": true,
-    "fonte": "OpenStreetMap API 0.6 /map (consulta 20/11/2026) (way 524775361 natural=wood; ponto = centro geométrico dos vértices)",
+    "fonte": "Wikidata Q10345048, coordenada Point(-40.524104 -11.388887), consulta SPARQL em 20/11/2026 (arquivo de trabalho wikidata_bbox.json); a Wikipédia em inglês 'Sete Passagens State Park' dá 11°23′20″S 40°31′27″W (= -11,38889 / -40,52417), o mesmo ponto. Substitui o centro dos vértices do way OSM 524775361, que foi descartado: esse polígono natural=wood tem 92 km² e inclui o Véu, as Flores e as Arapongas, enquanto o parque oficial tem 2.821 ha (28,2 km², wikiparques.org), então o polígono OSM não é o limite do parque.",
     "carro_km": null,
     "carro_tempo": null,
     "trilha_km": null,
     "trilha_tempo": null,
     "nivel": null,
-    "notas": "Polígono no OSM; a sede do parque fica em Miguel Calmon. Usar o polígono, não este ponto."
+    "notas": "Ponto de referência do parque, não é sede, portaria nem limite. A sede fica em Miguel Calmon. Não use este ponto para dizer se um local está dentro ou fora do parque: o polígono OSM disponível está superdimensionado e o limite oficial não foi achado."
    }
   },
   {
@@ -352,14 +411,14 @@
     "tipo": "cachoeira",
     "grupo": "fora-da-placa",
     "confianca": "sem-coordenada",
-    "aproximado": true,
-    "fonte": "Sem coordenada em fonte acessível",
+    "aproximado": false,
+    "fonte": "Nenhuma fonte com coordenada verificável. Só o nome em https://www.campingpayayas.com/itaitu e snippet de https://is.wikiloc.com/fjallaferd-slodir/cachoeira-do-santuario-203400324 (4,56 km, +143 m, máx. 692 m).",
     "carro_km": null,
     "carro_tempo": null,
     "trilha_km": null,
     "trilha_tempo": null,
     "nivel": null,
-    "notas": "trilha moderada; Wikiloc 203400324 a pé da vila, 4,56 km, +143 m, fácil/ trecho difícil"
+    "notas": "Trilha moderada; Wikiloc 203400324 a pé da vila, 4,56 km, +143 m. Há trilha Wikiloc \"Cachoeira do santuário + coxinho\" (61817748): vizinhança provável com o Coxinho, não identidade. Fechar com GPX do Wikiloc (conta do dono) ou guia da ACAGI."
    }
   },
   {
@@ -371,14 +430,15 @@
     "tipo": "cachoeira",
     "grupo": "fora-da-placa",
     "confianca": "sem-coordenada",
-    "aproximado": true,
-    "fonte": "Sem coordenada em fonte acessível",
+    "aproximado": false,
+    "fonte": "Nenhuma coordenada. Só menção em resultado de busca do Wikiloc 161436275 (trilha \"Cachoeira das Andorinhas - Itaitu\", fev/2024).",
     "carro_km": null,
     "carro_tempo": null,
     "trilha_km": null,
     "trilha_tempo": null,
     "nivel": null,
-    "notas": "citada pelo Camping Payayás, moderada"
+    "notas": "Citada pelo Camping Payayás, moderada. Pode ficar no lado de Jacobina (inferência, não confirmada). Fechar abrindo o waypoint \"Índios\" da trilha Wikiloc 161436275 com a conta do dono, ou com guia da ACAGI.",
+    "riscos": "Percurso cruza propriedade privada e tem trechos de difícil acesso; o autor recomenda guia local (Wikiloc 161436275, via resumo de busca)."
    }
   },
   {
@@ -390,14 +450,15 @@
     "tipo": "cachoeira",
     "grupo": "fora-da-placa",
     "confianca": "sem-coordenada",
-    "aproximado": true,
-    "fonte": "Sem coordenada em fonte acessível",
+    "aproximado": false,
+    "fonte": "Nenhuma coordenada utilizável. https://pt.wikiloc.com/trilhas-trekking/cachoeira-das-andorinhas-itaitu-161436275 (só o resumo de busca).",
     "carro_km": null,
     "carro_tempo": null,
     "trilha_km": null,
     "trilha_tempo": null,
     "nivel": null,
-    "notas": "citada pelo Camping Payayás, difícil"
+    "notas": "Citada pelo Camping Payayás, difícil. A trilha do Wikiloc entra \"na placa do Piancó\"; posição da queda sem distância nem rumo. Fechar com o GPX do Wikiloc (conta do dono) ou guia da ACAGI.",
+    "riscos": "Trilha passa por propriedade privada e tem trechos de difícil acesso; guia local recomendado; percurso moderado, +418 m (Wikiloc 161436275, fev/2024, via resumo de busca)."
    }
   },
   {
@@ -409,14 +470,15 @@
     "tipo": "cachoeira",
     "grupo": "fora-da-placa",
     "confianca": "sem-coordenada",
-    "aproximado": true,
-    "fonte": "Sem coordenada em fonte acessível",
+    "aproximado": false,
+    "fonte": "Nenhuma coordenada. Única pista: Estado de Minas, 21/07/2026, \"fica a 500 metros da vila e pode ser feita a pé\" (https://www.em.com.br/emfoco/2026/07/21/a-cidade-do-ouro-que-reune-mais-de-40-cachoeiras-em-uma-unica-vila-com-queda-dagua-de-60-metros/), sem direção.",
     "carro_km": null,
     "carro_tempo": null,
     "trilha_km": null,
     "trilha_tempo": null,
     "nivel": null,
-    "notas": "a 500 m da vila, banho em riacho (blog Norma, jul/2023)"
+    "notas": "A 500 m da vila, banho em riacho (blog Norma, jul/2023), sem direção. Os rios OSM a menos de 600 m da vila não têm degrau de queda no relevo. Não é o Coxinho comprovadamente. Fechar com guia da ACAGI ou \"Marcar ponto aqui\" no local.",
+    "riscos": "Aviso geral do Estado de Minas (21/07/2026): evitar trilhas com chuva forte, risco de enxurrada. Riachos perto da vila são intermitentes no OSM (água sazonal, não confirmado em campo)."
    }
   },
   {
@@ -428,14 +490,114 @@
     "tipo": "cachoeira",
     "grupo": "fora-da-placa",
     "confianca": "sem-coordenada",
-    "aproximado": true,
-    "fonte": "Sem coordenada em fonte acessível",
+    "aproximado": false,
+    "fonte": "https://pt.wikipedia.org/wiki/Itaitu (só a existência do nome; sem posição).",
     "carro_km": null,
     "carro_tempo": null,
     "trilha_km": null,
     "trilha_tempo": null,
     "nivel": null,
-    "notas": "citada na Wikipédia pt"
+    "notas": "Citada na Wikipédia pt entre as mais conhecidas; nenhuma fonte dá posição, distância ou trilha. Pode ser nome turístico de outra queda (hipótese sem fonte). Pistas: artigo de Macedo (2021, DOI 10.47363/jeesr/2021(3)146), guia da ACAGI."
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -40.494775,
+     -11.3725988
+    ]
+   },
+   "properties": {
+    "id": "cachoeira-das-arapongas-entrada",
+    "nome": "Entrada da trilha das Arapongas, Sossego e Geladeira",
+    "tipo": "entrada-trilha",
+    "grupo": "fora-da-placa",
+    "confianca": "baixa",
+    "aproximado": false,
+    "fonte": "OpenStreetMap nó 8568154125: início do highway=track way 922994533 (1,32 km até 44 m do nó waterfall Cachoeira Arapongas), no cruzamento com a estrada way 248603510 e ao lado de um vau (nó ford em -11.3727332, -40.4947364). Compatível com a trilha de 1,2 km da placa e com o riacho citado pelo Viaje com Norma. O OSM não rotula o ponto como entrada nem como posto do parque. Releitura do crítico: o nó 8568154125 é o primeiro do track 922994533 e o ponto onde ele encontra a estrada 248603510; o vau (nó 14015589430) está a 13 m. O track mede 1,32 km e termina a 44 m do nó da queda, coerente com os 1,2 km da placa.",
+    "notas": "Entrada comum às Arapongas, ao Sossego e ao Poço da Geladeira (os dois vereditos deram o mesmo ponto; um classificou como média e outro como baixa, ficou a menor). Não é o portão do parque nem o estacionamento (não achados). Altitude Terrarium 538 m.",
+    "carro_km": null,
+    "carro_tempo": null,
+    "trilha_km": null,
+    "trilha_tempo": null,
+    "nivel": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -40.4991218,
+     -11.3354097
+    ]
+   },
+   "properties": {
+    "id": "cachoeira-das-flores-entrada",
+    "nome": "Entrada da trilha do Véu da Noiva e das Flores",
+    "tipo": "entrada-trilha",
+    "grupo": "fora-da-placa",
+    "confianca": "media",
+    "aproximado": false,
+    "fonte": "OpenStreetMap: primeiro nó do path way 922994535 (763 m até o Véu da Noiva), a 10 m do waypoint de início da trilha Wikiloc 123961804 (-11.335327, -40.499142, via resultado de busca).",
+    "notas": "Entrada da trilha do Véu, usada também para a Cachoeira das Flores. Não confirma estacionamento nem porteira. Altitude Terrarium 696 m.",
+    "carro_km": null,
+    "carro_tempo": null,
+    "trilha_km": null,
+    "trilha_tempo": null,
+    "nivel": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -40.489614,
+     -11.340485
+    ]
+   },
+   "properties": {
+    "id": "cachoeira-do-coxinho-entrada",
+    "nome": "Ponto de partida provável da trilha do Coxinho (Wikiloc)",
+    "tipo": "entrada-trilha",
+    "grupo": "fora-da-placa",
+    "confianca": "baixa",
+    "aproximado": true,
+    "fonte": "Wikiloc 35986276 ('Cachoeira do Coxinho - Itaitu', https://www.wikiloc.com/hiking-trails/cachoeira-do-coxinho-itaitu-35986276): o dado estruturado da página dá a posição -11,340485 / -40,489614 (duas leituras de resumo de busca, 20/11/2026, iguais). Nenhuma leitura confirmou que seja o waypoint de início da trilha. Página não aberta.",
+    "notas": "Fica a 342 m da vila e a cerca de 1,1 km ao sul da queda (SGB), não 'a ~100 m da vila' como constava. Uma das buscas citou 'Camping Vale do Mamute' em -11,340607 / -40,489107, a 55 m deste ponto: pode ser o camping, e não a trilha, que esteja marcado aqui. A trilha Wikiloc tem 1,82 km, contra 1,0 km da placa. A porteira/estacionamento do Coxinho continua sem coordenada.",
+    "carro_km": null,
+    "carro_tempo": null,
+    "trilha_km": null,
+    "trilha_tempo": null,
+    "nivel": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -40.540359,
+     -11.39262
+    ]
+   },
+   "properties": {
+    "id": "mirante-parque-sete-passagens",
+    "nome": "Mirante do Parque Estadual das Sete Passagens",
+    "tipo": "mirante",
+    "grupo": "fora-da-placa",
+    "confianca": "baixa",
+    "aproximado": true,
+    "fonte": "Wikimedia Commons, geotag das fotos \"File:Vista do Mirante - PESP - Parque Estadual Sete Passagens - panoramio.jpg\" e \"(1).jpg\" (-11.39262, -40.540359), https://commons.wikimedia.org/wiki/File:Vista_do_Mirante_-_PESP_-_Parque_Estadual_Sete_Passagens_-_panoramio.jpg Conferência do crítico: o geotag está em 979 m no Terrarium, a 61 m acima do ponto mais baixo num raio de 100 m e a 174 m acima no raio de 300 m, o que combina com uma borda de escarpa.",
+    "notas": "Geotag de foto (posição da câmera, origem panoramio), não ponto oficial. O parque tem mais de um mirante (a sede tem dois, e há o do Dandá), e o título da foto não diz qual: tratar como 'um mirante do parque'. Fica a 1,1 km da Cachoeira do Urubu (OSM) e 1,8 km a oeste do ponto do parque na Wikidata. Acesso a partir de Itaitu não verificado.",
+    "carro_km": null,
+    "carro_tempo": null,
+    "trilha_km": null,
+    "trilha_tempo": null,
+    "nivel": null
    }
   }
  ]
