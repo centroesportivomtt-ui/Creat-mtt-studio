@@ -51,6 +51,13 @@ export function criarMapa(contexto, { container, recorte, atribuicoes, economia,
     },
   });
   map.addControl(new (ML().AttributionControl)({ compact: true }), 'bottom-left');
+  // créditos recolhidos atrás do botão "i": aberta, a caixa cobria um quarto do mapa no celular (a atribuição segue a um toque e no painel Informações)
+  const recolherCreditos = () => {
+    const c = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+    if (c) { c.classList.remove('maplibregl-compact-show'); c.removeAttribute('open'); }
+  };
+  map.once('load', recolherCreditos);
+  setTimeout(recolherCreditos, 0);
   if (economia) { map.dragRotate.disable(); map.touchZoomRotate.disableRotation(); }
 
   const canvas = map.getCanvas();
