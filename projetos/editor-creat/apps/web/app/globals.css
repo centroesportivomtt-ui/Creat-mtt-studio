@@ -262,7 +262,7 @@ textarea.entrada { min-height: 120px; resize: vertical; line-height: 1.45; }
 .arquivo span:last-child { font: 700 12px/1.4 var(--fonte-dado); color: var(--cor-tinta-2); white-space: nowrap; }
 .linha-acoes { display: flex; flex-wrap: wrap; gap: var(--r2); margin-top: var(--r3); }
 .linha-acoes > * { flex: 1 1 auto; }
-.importar { display: flex; gap: var(--r2); margin-top: var(--r3); }
+.importar { display: flex; flex-wrap: wrap; gap: var(--r2); margin-top: var(--r3); align-items: flex-start; }
 .importar .entrada { flex: 1; min-width: 0; }
 
 /* versões e player */

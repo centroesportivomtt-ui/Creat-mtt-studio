@@ -197,6 +197,13 @@ async function principal() {
   ok('sem restos do tus depois do fim', restos.length === 0, restos.join(', '));
   await page.waitForSelector('.arquivo', { timeout: 15000 });
   ok('motor recebeu o arquivo (aparece na lista)', (await page.locator('.arquivo').count()) === 1);
+  // links do Dropbox: vários de uma vez, e o resultado aparece embaixo do botão (o dono colou 4 links e "o botão não ia")
+  await page.fill('[data-teste=importar-links]', 'olha os videos https://www.dropbox.com/scl/fi/abc123/C0016.MP4?rlkey=x&dl=0\nhttps://exemplo.com/nao.mp4');
+  const rotuloImp = await page.textContent('[data-teste=importar-enviar]');
+  await page.click('[data-teste=importar-enviar]');
+  const resImp = await page.locator('[data-teste=importar-resultado]').textContent({ timeout: 10000 }).catch(() => '');
+  ok('vários links do Dropbox de uma vez: um entra, o errado diz por quê, ali embaixo do botão', /2 links/.test(rotuloImp ?? '') && /1 link na fila/.test(resImp ?? '') && /exemplo\.com.*não é link do Dropbox/.test(resImp ?? ''), `${rotuloImp} | ${(resImp ?? '').slice(0, 160)}`);
+  await page.waitForFunction(() => document.querySelectorAll('.arquivo').length === 2, null, { timeout: 15000 }).catch(() => {});
 
   // ---------- 3. status ao vivo até "entregue" e player ----------
   const vistos = [];

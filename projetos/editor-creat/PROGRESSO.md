@@ -336,3 +336,16 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - backup que falhou numa versão anterior tenta de novo no boot da versão nova;
   - `/api/saude` mostra a causa da falha (sem caminhos) e `modelos.navegador`.
 - **Resolvido em produção (2e2ac49):** backup **ok** às 15:52 de 20/11. Na pasta "/Creat.MTT Studio/Backup do Editor" estão `editor-backup-20261120-1552.zip` (17 KB) e `editor-memoria-20261120-1552.json`. Os de 19/11 são o teste com dados sintéticos.
+
+## Envio pelo Dropbox no celular "não ia para lugar nenhum" (21/11, relato do dono)
+- **Causas prováveis no editor:**
+  - (1) o campo de link era `type=url`: colar VÁRIOS links (os 4 vídeos) fazia o navegador barrar o envio em silêncio;
+  - (2) o erro da importação aparecia no topo da página, fora da vista no celular;
+  - (3) o seletor do iPhone com vídeos do app Dropbox baixa tudo para o celular antes de entregar e pode voltar vazio;
+  - (4) o link de transferência do Dropbox (`/t/`) não baixa direto.
+- **Correções:**
+  - caixa de links que aceita um ou vários (extrai cada `https://`), valida no próprio celular se é Dropbox/Drive, manda cada um e mostra o resultado EMBAIXO do botão ("N links na fila" e o erro de cada link que não entrou);
+  - seletor que volta vazio mostra aviso e aponta para o link;
+  - texto fixo "vídeos que estão no Dropbox: cole o link, o servidor baixa direto";
+  - link `/t/` recusado na hora, com instrução (Compartilhar > Copiar link da pasta).
+- **Testes:** pytest **335 ok**; aceite D **34/34** (novo: 2 links colados juntos, um entra e o outro diz por quê).

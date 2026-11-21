@@ -132,9 +132,13 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
     setPendentes((p) => p.filter((x) => !(x.nome === arquivo.name && x.tamanho === arquivo.size)));
   }, [projeto, parteMB, atualizar, aoConcluir, carregarPendentes]);
 
+  const [aviso, setAviso] = useState('');
   const escolher = (lista: FileList | null) => {
-    if (!lista) return;
-    for (const f of Array.from(lista)) void comecar(f);
+    const arquivos = lista ? Array.from(lista) : [];
+    // o seletor do iPhone com arquivos do app Dropbox pode voltar VAZIO (ele precisa baixar os vídeos antes e às vezes desiste)
+    setAviso(arquivos.length ? '' : 'Nenhum arquivo chegou do seletor. Vídeos do app Dropbox: o celular baixa tudo antes de entregar, '
+      + 'e com vídeo grande isso pode falhar. Mais rápido: cole aqui embaixo o link do Dropbox (da pasta ou dos vídeos).');
+    for (const f of arquivos) void comecar(f);
     if (entrada.current) entrada.current.value = '';
   };
 
@@ -159,6 +163,8 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
             onChange={(e) => escolher(e.currentTarget.files)} data-teste="entrada-arquivo" />
         </label>
         {!aberto && <p className="aviso">O envio foi fechado: este projeto já está sendo editado.</p>}
+        {aviso && <p className="erro" role="alert" data-teste="envio-aviso">{aviso}</p>}
+        <p className="aviso" style={{ fontSize: 13 }}>Vídeos que estão no Dropbox: em vez de escolher pelo seletor, cole o link (abaixo). O servidor baixa direto, sem passar pelo celular.</p>
       </div>
 
       {pendentes.length > 0 && (

@@ -171,7 +171,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
             {aberto ? (
               <>
                 <Envio projeto={p.id} parteMB={parteMB} aberto={aberto} aoConcluir={recarregar} />
-                <Importar aberto={aberto} aoImportar={(url) => postar('/importar', { url })} />
+                <Importar aberto={aberto} projeto={p.id} aoTerminar={recarregar} />
               </>
             ) : (
               <p className="material-fechado">Envio fechado: o editor está trabalhando com este material. Material novo entra numa nova versão.</p>
@@ -276,21 +276,60 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   );
 }
 
-function Importar({ aberto, aoImportar }: { aberto: boolean; aoImportar: (url: string) => Promise<unknown> }) {
-  const [url, setUrl] = useState('');
+// Links do Dropbox ou do Drive: um ou VÁRIOS de uma vez (o dono compartilha 4 vídeos e cola os 4 links juntos). Cada link entra
+// na fila do motor; o resultado aparece aqui mesmo, embaixo do botão (no celular o topo da página fica fora da vista).
+export function extrairLinks(texto: string): string[] {
+  const achados = texto.match(/https:\/\/[^\s<>"'”“]+/g) ?? [];
+  return [...new Set(achados.map((u) => u.replace(/[),.;!?]+$/, '')))].slice(0, 30);
+}
+
+function Importar({ aberto, projeto, aoTerminar }: { aberto: boolean; projeto: string; aoTerminar: () => void }) {
+  const [texto, setTexto] = useState('');
   const [indo, setIndo] = useState(false);
+  const [resultado, setResultado] = useState<{ ok: number; erros: string[] } | null>(null);
+  const links = extrairLinks(texto);
   return (
-    <form className="importar" onSubmit={async (e) => {
+    <form className="importar" noValidate data-teste="importar" onSubmit={async (e) => {
       e.preventDefault();
-      if (!url.trim()) return;
-      setIndo(true);
-      if (await aoImportar(url.trim())) setUrl('');
+      if (!links.length) { setResultado({ ok: 0, erros: ['Não achei nenhum link https no que foi colado.'] }); return; }
+      setIndo(true); setResultado(null);
+      let ok = 0;
+      const erros: string[] = [];
+      for (const url of links) {
+        let host = '';
+        try { host = new URL(url).hostname.toLowerCase(); } catch { /* inválido */ }
+        if (!/(^|\.)(dropbox\.com|dropboxusercontent\.com|drive\.google\.com|docs\.google\.com)$/.test(host)) {
+          erros.push(`${url.slice(0, 48)}…: não é link do Dropbox nem do Google Drive`);
+          continue;
+        }
+        try {
+          const r = await fetch(`/api/motor/v1/projetos/${projeto}/importar`, {
+            method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }),
+          });
+          if (r.status === 401) { window.location.assign('/entrar'); return; }
+          const c = await r.json().catch(() => null);
+          if (r.ok) ok += 1;
+          else erros.push(`${url.slice(0, 48)}…: ${typeof c?.detail === 'string' ? c.detail : 'recusado'}`);
+        } catch {
+          erros.push(`${url.slice(0, 48)}…: sem conexão`);
+        }
+      }
       setIndo(false);
+      setResultado({ ok, erros });
+      if (ok) { setTexto(''); aoTerminar(); }
     }}>
-      <label className="so-leitor" htmlFor="link-importar">Link compartilhado do Dropbox ou do Drive</label>
-      <input id="link-importar" className="entrada" type="url" inputMode="url" placeholder="Ou cole um link do Dropbox / Drive"
-        value={url} onChange={(e) => setUrl(e.target.value)} disabled={!aberto} />
-      <button className="botao botao--fantasma" type="submit" disabled={!aberto || indo || !url.trim()}>{indo ? 'Indo…' : 'Importar'}</button>
+      <label className="so-leitor" htmlFor="link-importar">Links compartilhados do Dropbox ou do Drive</label>
+      <textarea id="link-importar" className="entrada" rows={2} inputMode="url" placeholder="Ou cole links do Dropbox / Drive (um ou vários; link de pasta também vale)"
+        value={texto} onChange={(e) => setTexto(e.target.value)} disabled={!aberto} data-teste="importar-links" style={{ resize: 'vertical', minHeight: 48 }} />
+      <button className="botao botao--fantasma" type="submit" disabled={!aberto || indo || !texto.trim()} data-teste="importar-enviar">
+        {indo ? 'Indo…' : links.length > 1 ? `Importar ${links.length} links` : 'Importar'}
+      </button>
+      {resultado && (
+        <div style={{ flexBasis: '100%' }} role="status" data-teste="importar-resultado">
+          {resultado.ok > 0 && <p className="aprovada" style={{ margin: 0 }}>{resultado.ok} link{resultado.ok > 1 ? 's' : ''} na fila: o motor baixa e já começa a ler.</p>}
+          {resultado.erros.map((er) => <p key={er} className="erro" style={{ margin: '4px 0 0', overflowWrap: 'anywhere' }}>{er}</p>)}
+        </div>
+      )}
     </form>
   );
 }

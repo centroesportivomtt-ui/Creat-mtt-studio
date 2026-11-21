@@ -45,6 +45,9 @@ def link_direto(url: str, hosts=HOSTS) -> tuple[str, str]:
     h, caminho = u.hostname.lower(), u.path
     q = urllib.parse.parse_qs(u.query, keep_blank_values=True)
     if "dropbox" in h:
+        if caminho.startswith(("/t/", "/transfer/")):
+            raise ErroImportacao("Link de transferência do Dropbox não baixa direto. No Dropbox, toque em Compartilhar > Copiar link "
+                                 "da PASTA (ou de cada vídeo) e cole aqui.")
         q.pop("raw", None)
         q["dl"] = ["1"]
         tipo = "pasta_zip" if caminho.startswith(("/scl/fo/", "/sh/")) else "arquivo"
