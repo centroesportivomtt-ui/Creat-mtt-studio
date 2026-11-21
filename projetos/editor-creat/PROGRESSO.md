@@ -380,3 +380,25 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - testes que provam a mistura no áudio (proporção entre 220 e 440 Hz), o alinhamento e a emenda dos blocos.
 - **Testes:** pytest **343 ok** (7 em `test_limpeza_voz.py` e 2 no medidor); aceite D 34/34. Os testes não baixam modelo (`EDITOR_MODELOS_BAIXAR=0` no conftest).
 - **Erro meu, registrado:** um teste do medidor foi ao repositório vermelho por ~3 min (o push leu a última linha da saída, não o código de saída). Desde então, publico só com código 0 do pytest e do aceite.
+
+## Link do Dropbox e envio do celular "ainda com problema" (21/11, relato do dono)
+- **Causa achada:** a conta do Dropbox é de **equipe (Mttcreatt)**. Testado com links reais:
+  - link público baixa normal (12 MB em segundos);
+  - link restrito devolve a página "Log in to Dropbox" com código 200;
+  - o editor punha o link na fila, o worker falhava minutos depois e apagava a linha. Para o dono, o arquivo **sumia sem aviso**.
+- **Correção:** o motor confere o link na hora (`importar.sondar`). Pede só 1 byte, com prazo total de 15 s. Embaixo do botão aparece:
+  - link restrito → o passo a passo "Qualquer pessoa com o link" (Dropbox ou Drive);
+  - link apagado ou 404 → "não existe mais";
+  - pasta que o Dropbox não entrega em zip → "cole o link de cada vídeo".
+  - Rede lenta não bloqueia: vira aviso e a importação segue.
+- **Tela:** motivo igual aparece uma vez, com os nomes dos links ("2 de 2 links (A.MOV, B.MOV): …"). Confere 4 links de cada vez.
+- **Envio do celular:**
+  - aviso "o celular está preparando os vídeos, espere nesta tela" entre tocar em Escolher e o iPhone entregar os arquivos;
+  - partes de 16 MB em tela de toque: queda do 4G ou tela bloqueada perde no máximo 16 MB.
+- **Revisão do Crivo:** aprovado com 5 ajustes, todos aplicados:
+  - título de login casado só no começo (nome de arquivo não engana);
+  - Drive privado que redireciona para accounts.google.com → mensagem certa;
+  - prazo total da sondagem;
+  - fechar o HTTPError;
+  - aviso do seletor some em 3 min no Safari antigo.
+- **Testes:** pytest **353 ok** (10 em `test_sondar.py`); aceite **35/35** (novo: link restrito recusado na hora, passo a passo uma vez só).
