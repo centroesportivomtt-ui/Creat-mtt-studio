@@ -29,7 +29,7 @@ if _PY_SCHEMAS not in sys.path:
 
 CHECAGENS = ("formato", "duracao", "sincronia", "lufs", "true_peak", "quadros_pretos", "zona_segura", "legenda_x_fala",
              "fala_cortada", "voz_externa", "cobertura_sintonia",
-             "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria", "cor_medida",
+             "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria", "cor_medida", "fatos",
              "olho_ia")                       # olho_ia por último: não gasta em versão que já reprovou (ja_reprovou)
 
 

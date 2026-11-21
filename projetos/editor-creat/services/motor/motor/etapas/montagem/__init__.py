@@ -21,6 +21,7 @@ import time
 
 from motor import config
 from motor.etapas import ErroDefinitivo, etapa
+from motor.etapas import fatos
 from motor.etapas import pessoa as PESSOA
 from motor.etapas.montagem import comp as COMP
 from motor.etapas.montagem import fx as FX
@@ -168,6 +169,11 @@ def etapa_montagem(ctx) -> dict:
         raise ErroDefinitivo(f"sem EDL em {chave_edl}")
     edl = json.loads(pathlib.Path(arm.caminho_local(chave_edl)).read_text(encoding="utf-8"))
     trabalho = pathlib.Path(ctx.cfg.dados) / "tmp" / "montagem" / p / v
+    # verificação de fatos (regra do dono): número errado na fala sai CERTO na tela; relatório em edl.qa.fatos
+    antes = hash_obj(edl)
+    fatos.revisar(edl, ctx.cfg, Fontes(edl, arm, ctx.cfg.dados), contexto=_contexto(ctx, arm, p), projeto=p, trabalho=trabalho / "fatos")
+    if hash_obj(edl) != antes:
+        arm.gravar(chave_edl, _bytes_json(edl))
     chave_rel = f"saidas/{p}/{v}/montagem.json"
     if arm.existe(chave_rel) and arm.existe(f"saidas/{p}/{v}/final.mp4"):
         ant = json.loads(pathlib.Path(arm.caminho_local(chave_rel)).read_text(encoding="utf-8"))
@@ -192,6 +198,22 @@ def etapa_montagem(ctx) -> dict:
     ctx.con.execute("UPDATE versoes SET estado='montada', video=? WHERE projeto=? AND id=?", (f"{base}/final.mp4", p, v))
     PL.limpar_cache(pathlib.Path(ctx.cfg.dados) / "cache" / "planos", int(os.environ.get("EDITOR_CACHE_PLANOS_MB", "1200")))
     return {"versao": v, "final": f"{base}/final.mp4", "tempos": rel["tempos"], "overlay_ms_quadro": rel["overlay"]["ms_quadro_efetivo"]}
+
+
+def _contexto(ctx, arm, p: str) -> str:
+    """Nome do projeto + pedido do cliente: o preço e a oferta da loja se confirmam por ele."""
+    try:
+        nome = (ctx.con.execute("SELECT nome FROM projetos WHERE id=?", (p,)).fetchone() or {"nome": ""})["nome"]
+    except Exception:  # noqa: BLE001
+        nome = ""
+    pedido = ""
+    try:
+        if arm.existe(f"projetos/{p}/pedido.json"):
+            ped = arm.ler_json(f"projetos/{p}/pedido.json")
+            pedido = " | ".join(str(ped.get(k) or "") for k in ("texto", "cliente", "obrigatorio") if ped.get(k))
+    except Exception:  # noqa: BLE001 - sem pedido legível: confere só pelo produto
+        pass
+    return f"Projeto: {nome}. Pedido do cliente: {pedido[:1500] or '(sem pedido)'}"
 
 
 def _bytes_json(obj):

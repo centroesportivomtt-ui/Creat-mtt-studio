@@ -153,6 +153,8 @@
       "properties": {
         "logos": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["t", "chave"], "properties": { "t": { "type": "number" }, "chave": { "type": "string" } } } },
         "falas_confirmadas": { "type": "array", "items": { "type": "string" } },
+        "fatos": { "type": "object", "description": "Verificação de fatos (motor/etapas/fatos.py): números de produto da tela, fonte de cada um e trocas feitas na legenda e nos cartões. Escrito pela montagem." },
+        "numeros_confirmados": { "type": "array", "items": { "type": "string" }, "description": "Trechos (ex.: \"275 ml\") que o dono confirmou à mão: a checagem fatos não segura a entrega por eles." },
         "cortes_confirmados": { "type": "array", "items": { "type": "string" }, "description": "Ids de peça de voz cujo corte o diretor ouviu e manteve de propósito (QA fala_cortada não reprova, só lista)." },
         "vozes_confirmadas": { "type": "array", "items": { "type": "string" }, "description": "Ids de peça de voz ou de plano com voz de fora ouvida e aceita pelo diretor (QA voz_externa não reprova, só lista)." },
         "riscos": { "type": "array", "items": { "type": "string" } }
