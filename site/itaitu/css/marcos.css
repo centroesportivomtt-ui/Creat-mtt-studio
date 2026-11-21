@@ -1,0 +1,224 @@
+/* =====================================================================
+   Itaitu · Marcos (app particular) · frontend C, Pixel, 20/11/2026
+   Conceito: Hora da Serra. Para o hóspede o app responde QUANDO; para o
+   Marcos ele responde "o que falta na placa" e "como mostro isto em 60 s".
+   Momento-assinatura deste app: a placa da recepção sai do celular com o QR
+   do parceiro dentro, pronta para a gráfica, na frente do dono da pousada.
+   Layout: o mesmo mapa e o mesmo topo do app público; um 4º botão "Marcos"
+   abre uma folha com 5 abas (Campo, Pacote, Vitrine, Venda, Ajustes).
+   Só tokens do designer (tokens.css). Nenhuma cor nova, a não ser a cor
+   do parceiro da vitrine, que vem do JSON validado (--marcos-cor-vitrine).
+   ===================================================================== */
+
+/* ---------- topo: 4 botões ---------- */
+.topo__acoes--marcos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.acao--marcos { border-style: dashed; }
+.acao--marcos[aria-expanded='true'] { border-style: solid; }
+
+/* ---------- folha do Marcos ---------- */
+.folha--marcos { --marcos-cor-vitrine: var(--cor-marca); }
+.folha--marcos .folha__corpo { padding-bottom: var(--ritmo-6); }
+.abas {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--ritmo-1);
+  padding: var(--ritmo-2) var(--margem);
+  border-bottom: 1px solid var(--superficie-2);
+}
+.aba {
+  min-height: var(--alvo);
+  padding: 4px 2px;
+  border: var(--borda) solid var(--linha);
+  border-radius: var(--raio-controle);
+  background: var(--superficie);
+  color: var(--tinta-ui);
+  font-size: var(--t-pequeno);
+  font-weight: var(--peso-forte);
+  line-height: 1.1;
+}
+.aba[aria-selected='true'] {
+  background: var(--madeira);
+  border-color: var(--madeira);
+  color: var(--tinta);
+  box-shadow: inset 0 -4px 0 var(--cor-marca);
+}
+.secao-marcos { display: grid; gap: var(--ritmo-2); }
+.secao-marcos:focus-visible { outline-offset: 4px; }
+.m-titulo { font-size: var(--t-destaque); font-weight: var(--peso-forte); margin-top: var(--ritmo-4); text-wrap: balance; }
+.secao-marcos > .m-titulo:first-child, .secao-marcos > div > .m-titulo:first-child { margin-top: 0; }
+.m-subtitulo { font-size: var(--t-corpo); font-weight: var(--peso-forte); margin-top: var(--ritmo-3); }
+.m-rotulo { font-weight: var(--peso-forte); font-size: var(--t-apoio); }
+.m-campo {
+  width: 100%;
+  min-height: var(--alvo);
+  padding: 8px 12px;
+  border: var(--borda) solid var(--linha);
+  border-radius: var(--raio-controle);
+  background: var(--fundo);
+  color: var(--tinta-ui);
+  font-size: var(--t-corpo);
+}
+
+/* ---------- listas (pontos, negócios) ---------- */
+.m-lista { margin-top: var(--ritmo-2); }
+.m-item {
+  display: grid; gap: var(--ritmo-1);
+  padding: var(--ritmo-3);
+  border: var(--borda) solid var(--madeira);
+  border-left-width: 6px;
+  border-radius: var(--raio-controle);
+  background: var(--fundo);
+}
+.m-item[data-estado='sem-coordenada'] { border-left-style: dotted; }
+.m-item[data-estado='aproximada'] { border-left-style: dashed; }
+.m-item[data-estado='local'] { border-left-color: var(--cor-marca); }
+.m-item[data-status='fechado'] { border-left-color: var(--cor-marca); }
+.m-item__nome { font-weight: var(--peso-forte); font-size: var(--t-corpo); }
+.m-item__info { font-size: var(--t-apoio); color: var(--tinta-ui-apoio); }
+.m-passagens { margin: 0; padding-left: 1.2em; font-size: var(--t-apoio); display: grid; gap: 2px; }
+.m-resumo { margin: var(--ritmo-1) 0 0; padding-left: 1.2em; font-size: var(--t-apoio); display: grid; gap: 2px; }
+.m-resumo--fora { color: var(--tinta-ui-apoio); }
+.m-caixa { padding: var(--ritmo-3); border: var(--borda) dashed var(--linha); border-radius: var(--raio-controle); background: var(--fundo); }
+.m-nota-gravar { margin-top: 0; }
+
+/* ---------- chips (filtros, notas rápidas) ---------- */
+.m-filtros { display: flex; flex-wrap: wrap; gap: var(--ritmo-2); }
+.m-chip {
+  min-height: var(--alvo);
+  padding: 6px 12px;
+  border: var(--borda) solid var(--linha);
+  border-radius: var(--raio-pilula);
+  background: var(--superficie);
+  color: var(--tinta-ui);
+  font-size: var(--t-apoio);
+  font-weight: var(--peso-forte);
+}
+.m-chip[aria-pressed='true'] { background: var(--madeira); border-color: var(--madeira); color: var(--tinta); }
+.m-check { display: flex; align-items: center; gap: var(--ritmo-2); min-height: var(--alvo); font-weight: var(--peso-forte); }
+.m-check input { width: 24px; height: 24px; accent-color: var(--madeira); flex: none; }
+
+/* ---------- confirmar posição: o medidor ---------- */
+.m-medidor {
+  display: grid; gap: var(--ritmo-1);
+  padding: var(--ritmo-3);
+  border-radius: var(--raio-tabua);
+  background: var(--madeira);
+  color: var(--tinta);
+  box-shadow: var(--sombra-tabua);
+}
+.m-medidor__num { font-size: var(--t-num); font-weight: var(--peso-forte); line-height: var(--entrelinha-justa); }
+.m-medidor__info { font-size: var(--t-apoio); color: var(--tinta-apoio); }
+.m-medidor__barra { height: 8px; border-radius: var(--raio-pilula); background: var(--madeira-funda); overflow: hidden; }
+.m-medidor__barra > span { display: block; height: 100%; width: 0; background: var(--sol); transition: width var(--dur-rapida) linear; }
+
+/* ---------- vitrine: ficha, QR, placa ---------- */
+.m-ficha { display: grid; gap: var(--ritmo-1); padding: var(--ritmo-3); border: var(--borda) solid var(--madeira); border-radius: var(--raio-controle); background: var(--fundo); }
+.m-ficha__nome { display: flex; align-items: center; gap: var(--ritmo-2); font-weight: var(--peso-forte); font-size: var(--t-corpo); }
+.m-ficha__cor { width: 20px; height: 20px; flex: none; border-radius: var(--raio-tabua); box-shadow: 0 0 0 2px var(--tinta), 0 0 0 4px var(--madeira); }
+.m-qr { display: grid; gap: var(--ritmo-3); align-items: start; }
+.m-qr__tela {
+  width: min(100%, 240px); height: auto; aspect-ratio: 1;
+  image-rendering: pixelated;
+  border: var(--borda-forte) solid var(--madeira);
+  border-radius: var(--raio-tabua);
+  background: #FFFFFF;
+}
+.m-url { font-size: var(--t-apoio); overflow-wrap: anywhere; font-weight: var(--peso-forte); }
+.m-placa { margin: 0; display: grid; gap: var(--ritmo-2); }
+.m-placa__slot img { display: block; width: min(100%, 300px); height: auto; aspect-ratio: 3 / 4; border: var(--borda) solid var(--madeira); border-radius: var(--raio-tabua); background: var(--madeira-funda); }
+@media (min-width: 560px) { .m-qr { grid-template-columns: 240px minmax(0, 1fr); } }
+
+/* ---------- venda: trancado, kit ---------- */
+.m-trancado {
+  display: grid; gap: var(--ritmo-3); justify-items: start;
+  padding: var(--ritmo-4);
+  border-radius: var(--raio-tabua);
+  background: var(--madeira);
+  color: var(--tinta);
+}
+.m-trancado__texto { font-size: var(--t-corpo); font-weight: var(--peso-forte); }
+.m-trancado .botao--marca { background: var(--tinta); color: var(--madeira); border-color: var(--tinta); }
+.m-kit { display: grid; gap: var(--ritmo-2); }
+.m-precos { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--ritmo-2); }
+.m-preco { padding: var(--ritmo-3); border-radius: var(--raio-tabua); background: var(--madeira); color: var(--tinta); }
+.m-preco__plano { font-weight: var(--peso-forte); font-size: var(--t-corpo); }
+.m-preco__valor { font-size: var(--t-num); font-weight: var(--peso-forte); line-height: var(--entrelinha-justa); color: var(--sol); }
+.m-preco__inclui { margin: var(--ritmo-1) 0 0; padding-left: 1.2em; color: var(--tinta-apoio); font-size: var(--t-apoio); }
+.m-roteiro { margin: 0; padding-left: 1.4em; display: grid; gap: var(--ritmo-2); }
+.m-roteiro__titulo { font-weight: var(--peso-forte); }
+.m-objecao { border: var(--borda) solid var(--madeira); border-radius: var(--raio-controle); background: var(--fundo); }
+.m-objecao > summary { min-height: var(--alvo); padding: var(--ritmo-2) var(--ritmo-3); font-weight: var(--peso-forte); cursor: pointer; }
+.m-objecao > p { padding: 0 var(--ritmo-3) var(--ritmo-3); }
+
+/* ---------- PIN ---------- */
+.m-pin__campo {
+  width: 7.5ch;
+  min-height: 56px;
+  padding: 0 12px;
+  border: var(--borda-forte) solid var(--madeira);
+  border-radius: var(--raio-controle);
+  background: var(--fundo);
+  color: var(--tinta-ui);
+  font-size: var(--t-num);
+  font-weight: var(--peso-forte);
+  letter-spacing: 0.3em;
+  text-align: center;
+}
+
+/* ---------- vitrine em tela cheia ---------- */
+.vitrine {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-sos) + 10);
+  background: var(--madeira);
+}
+.vitrine__frame { display: block; width: 100%; height: 100%; border: 0; background: var(--fundo); }
+.vitrine__sair {
+  position: absolute;
+  top: max(4px, env(safe-area-inset-top));
+  right: max(4px, env(safe-area-inset-right));
+  width: var(--alvo); height: var(--alvo);
+  display: grid; place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--raio-pilula);
+  background: transparent;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.vitrine__anel {
+  width: 14px; height: 14px;
+  border-radius: var(--raio-pilula);
+  border: 2px solid rgb(255 244 220 / 0.55);
+  background: rgb(58 38 24 / 0.35);
+  transition: transform 1.5s linear, background-color 1.5s linear;
+}
+.vitrine__sair[data-segurando='1'] .vitrine__anel { transform: scale(2.6); background: var(--cor-marca); border-color: var(--tinta); }
+.vitrine__dica {
+  position: absolute;
+  top: calc(max(4px, env(safe-area-inset-top)) + var(--alvo) + 4px);
+  right: var(--margem);
+  padding: 6px 10px;
+  border-radius: var(--raio-controle);
+  background: var(--madeira);
+  color: var(--tinta);
+  font-size: var(--t-pequeno);
+  font-weight: var(--peso-forte);
+}
+:root[data-vitrine-marcos='1'] body { overflow: hidden; }
+
+/* ---------- tela de campo (reusa .tela-gravando do app.css) ---------- */
+.m-tela[data-travada='1'] .tela-gravando__aviso { display: none; }
+
+/* ---------- movimento ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .vitrine__anel, .m-medidor__barra > span { transition: none; }
+}
+:root[data-economia='1'] .vitrine__anel,
+:root[data-economia='1'] .m-medidor__barra > span { transition: none; }
+
+@media (forced-colors: active) {
+  .aba[aria-selected='true'], .m-chip[aria-pressed='true'] { outline: 3px solid CanvasText; }
+}

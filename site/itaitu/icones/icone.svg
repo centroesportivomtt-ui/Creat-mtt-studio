@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="t">
+  <title id="t">Trilhas de Itaitu: a serra tirando o sol do vale</title>
+  <rect x="-100" y="-100" width="712" height="712" fill="#3A2618"/>
+  <path d="M-100 92 C130 80 270 104 612 86" fill="none" stroke="#4A3020" stroke-width="4" stroke-linecap="round"/>
+  <path d="M124 286 A132 132 0 0 1 388 286" fill="none" stroke="#FFF4DC" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="372" cy="226" r="36" fill="#F5B83D"/>
+  <path d="M-100 612 V320 L62 312 L84 292 L170 288 L190 268 L282 262 L300 244 L432 240 L448 262 L612 268 V612 Z" fill="#FFF4DC"/>
+  <path d="M-100 612 V352 L612 342 V612 Z" fill="#A8925A"/>
+  <path d="M-100 352 L306 346 L132 612 H-100 Z" fill="#2F4E9E"/>
+  <circle cx="356" cy="428" r="15" fill="#F5B83D" stroke="#FFF4DC" stroke-width="6"/>
+</svg>
