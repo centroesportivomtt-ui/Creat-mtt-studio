@@ -383,7 +383,7 @@ class Resolvedor:
             "duracao": L["duracao"], "vel_fala": vel,
             "blocos": L["blocos"],
             "fontes": self._fontes(usadas),
-            "voz": [{k: v[k] for k in ("id", "bloco", "fala", "fonte", "s0", "s1", "t0", "t1", "vel")} | {"ganho_db": 0, "limpeza": {"atenuacao_db": 15, "mistura": 0.8},
+            "voz": [{k: v[k] for k in ("id", "bloco", "fala", "fonte", "s0", "s1", "t0", "t1", "vel")} | {"ganho_db": 0, "limpeza": {"atenuacao_db": 15, "mistura": 0.8, "auto": True},
                      "texto": None} for v in L["voz"]],
             "planos": planos, "motion": motion, "legendas": legendas, "fx": fx,
             "trilha": self._trilha_edl(trilha, L), "sfx": sfx, "tom_sala": tom,

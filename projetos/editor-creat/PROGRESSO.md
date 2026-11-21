@@ -349,3 +349,34 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - texto fixo "vídeos que estão no Dropbox: cole o link, o servidor baixa direto";
   - link `/t/` recusado na hora, com instrução (Compartilhar > Copiar link da pasta).
 - **Testes:** pytest **335 ok**; aceite D **34/34** (novo: 2 links colados juntos, um entra e o outro diz por quê).
+
+## Item 3: limpeza de voz por IA (21/11)
+- **Achado:** a montagem tinha o encaixe do DeepFilterNet (pip com torch), mas ele NUNCA foi instalado no servidor: os filmes saíam sem limpeza por IA, contra a regra do dono para áudio sem microfone.
+- **Escolha (pesquisa do Radar):**
+  - **DeepFilterNet3 em ONNX**: nativo em 48 kHz, sem torch (que pesaria 210 MB) e sem Rust; ~30x mais rápido que o tempo real; MIT/Apache.
+  - O código do frontend numpy foi ADAPTADO para dentro do motor (`etapas/montagem/dfn3.py`), lido linha a linha. Os 3 ONNX (8,6 MB) são baixados com sha256.
+  - **Reserva:** RNNoise (`arnndn`), que já vem no ffmpeg do servidor.
+- **Medidor de voz** (`motor/qualidade_voz.py`): DNSMOS P.835 da Microsoft (ONNX, CC BY 4.0). Dá nota de 1 a 5 para a VOZ (SIG), o FUNDO (BAK) e o conjunto (OVRL).
+- **Mistura escolhida sozinha, por fonte** (`limpeza.auto`, padrão do resolvedor e do story), entre 0 / 0,6 / 0,7 / 0,8 / 0,9 / 1,0:
+  - a maior nota geral sem a nota da voz cair mais de 0,15;
+  - empate fica com a mais natural;
+  - 100% de IA só se ganhar de 90% por mais de 0,1;
+  - fonte já limpa (a IA não melhora 0,1) fica com o ORIGINAL;
+  - mistura fixa no EDL continua valendo por peça.
+- **Detalhes:** 2 s de contexto antes de cada peça só para a IA; peça longa em blocos de 30 s; amostra de 30 s das peças de mais energia.
+- **Medido em gravação real** (Mesa de Negócios, evento barulhento e com áudio estourado):
+  - a: geral 1,08 → 2,14 (100%);
+  - b: geral 1,24 → 2,60 e voz 1,57 → 3,57 (80%);
+  - story da Lavínia já tratada: 2,17 → 2,76 (70%).
+- **Boot e saúde:** o boot baixa os modelos; `/api/saude` mostra `limpeza_voz` e `medidor_voz`.
+- **Revisão do Crivo** (aprovado com ajustes; tudo aplicado):
+  - mistura por peça e por fonte;
+  - opção 0 e teto do 100%;
+  - amostra pela energia;
+  - blocos para peça longa;
+  - trava e nova tentativa do modelo;
+  - `cfg` None;
+  - `atenuacao_db` marcado obsoleto;
+  - testes que provam a mistura no áudio (proporção entre 220 e 440 Hz), o alinhamento e a emenda dos blocos.
+- **Testes:** pytest **343 ok** (7 em `test_limpeza_voz.py` e 2 no medidor); aceite D 34/34. Os testes não baixam modelo (`EDITOR_MODELOS_BAIXAR=0` no conftest).
+- **Erro meu, registrado:** um teste do medidor foi ao repositório vermelho por ~3 min (o push leu a última linha da saída, não o código de saída). Desde então, publico só com código 0 do pytest e do aceite.

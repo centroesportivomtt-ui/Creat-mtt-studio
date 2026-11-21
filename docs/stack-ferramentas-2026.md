@@ -167,6 +167,17 @@ Avaliações: Brevo Capterra 4,6 (3.528), G2 cerca de 4,5; MailerLite G2 cerca d
 | alt. | Meshy / Tripo | Pro US$ 20 | 3D; Meshy grátis exige atribuição; Tripo grátis só não comercial | https://www.meshy.ai/pricing |
 | alt. | Suno | Pro US$ 10, 20 downloads/mês | Risco jurídico aberto (GEMA, Sony) | https://suno.com/pricing |
 
+**Editor creat.MTT, limpeza de voz (21/11/2026):**
+- **Escolhido:** DeepFilterNet3 em ONNX (MIT/Apache; local; 48 kHz; RTF ~0,03 nesta CPU).
+- **Medidor:** DNSMOS P.835 (Microsoft, CC BY 4.0), que escolhe a mistura sem estragar a voz.
+- **Reserva:** RNNoise `arnndn`, que já vem no ffmpeg.
+- **Descartados:**
+  - pip `deepfilternet` (torch de 210 MB e `deepfilterlib` sem wheel);
+  - Resemble Enhance (torch 2.1.1 fixo);
+  - GTCRN (só 16 kHz);
+  - MossFormer2_SE_48K (229 MB, RTF 0,2 sem o frontend).
+- **Fontes:** huggingface.co/SayedShaun/DeepFilterNet3-onnx ; github.com/microsoft/DNS-Challenge.
+
 **Editor creat.MTT, recorte de pessoa (20/11/2026):**
 - **Escolhido:** Robust Video Matting MobileNetV3 (ONNX, 15 MB, local e grátis). É temporal, então a borda não treme. Rodando no editor deu 37 a 48 ms por quadro em 640 px com redução 0,4, contra 11 ms medidos pelo Radar sem a redução. A redução 0,25 é 2× mais rápida, mas abriu buraco no topo da cabeça no teste real.
 - **Licença:** GPL-3.0. Uso só no servidor, sem distribuir o modelo. Se o editor virar programa entregue a terceiros, trocar.

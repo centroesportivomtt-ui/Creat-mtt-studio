@@ -2,8 +2,10 @@
 
 Reaproveita V2/py/voz_build.py, sem caminho fixo:
 - trecho s0..s1 lido direto do arquivo (offset da fonte respeitado), com 40 ms de folga para a emenda;
-- limpeza com IA (DeepFilterNet) MODERADA quando instalada (`pip install editor-motor[voz]`): mistura `limpeza.mistura` do limpo
-  com o original e atenuação limitada a `limpeza.atenuacao_db` (regra do dono: voz natural, sem artefato). Sem DFN, só a cadeia leve;
+- limpeza com IA: DeepFilterNet3 em ONNX (dfn3.py, sem torch), com 1 s de contexto antes da peça. A mistura do limpo com o
+  original é escolhida POR FONTE pelo medidor de voz DNSMOS (`limpeza.auto`): o máximo de fundo limpo sem a nota da voz cair
+  (regra do dono: voz natural, sem artefato). Mistura fixa quando o EDL manda (`limpeza.mistura` sem `auto`). Sem o modelo,
+  só a cadeia leve;
 - cadeia leve: passa-alta 85 Hz, de-esser suave, compressor 1,8:1 (a mesma de 17/11);
 - nível: cada fonte é levada a -17 LUFS medidos só nas peças usadas dela (vozes de câmeras diferentes ficam iguais);
 - velocidade da fala (`vel`) por atempo (sem mudar o tom) e emendas com fade de 25 ms (crossfade de 28 ms entre peças coladas).
@@ -20,38 +22,66 @@ FADE = 0.025
 ALVO_LUFS = -17.0
 
 
-def _df():
-    try:
-        from df.enhance import enhance, init_df  # type: ignore
-        return enhance, init_df
-    except Exception:  # noqa: BLE001 - DFN é opcional
-        return None
+CONTEXTO = 2.0           # s de áudio antes da peça só para a IA (a normalização dela tem memória de ~1 s); é descartado
+MISTURAS = (0.0, 0.6, 0.7, 0.8, 0.9, 1.0)
+QUEDA_VOZ_MAX = 0.15     # a nota da VOZ (DNSMOS SIG) não pode cair mais que isso em relação à melhor: regra "sem artefato"
+GANHO_MIN = 0.10         # limpar só vale se a nota geral subir pelo menos isso (fonte já limpa: fica o original)
+MARGEM_TOTAL = 0.10      # 100% IA só se ganhar da mistura de 90% por mais que isso (voz 100% da IA é o último recurso)
+AMOSTRA_S = 30.0
+_LIMPADOR = None
+_TRAVA = __import__("threading").Lock()
+log = __import__("logging").getLogger(__name__)
 
 
-_DF_ESTADO = None
+def limpador(cfg):
+    """DeepFilterNet3 em ONNX (motor/etapas/montagem/dfn3.py). Só guarda a instância que carregou: sem modelo agora, o próximo
+    filme tenta de novo (o download do boot pode terminar depois)."""
+    global _LIMPADOR
+    with _TRAVA:
+        if _LIMPADOR is not None and _LIMPADOR.disponivel:
+            return _LIMPADOR
+        from motor.etapas.montagem.dfn3 import Limpador
+        L = Limpador(cfg)
+        if L.disponivel:
+            _LIMPADOR = L
+        return L
 
 
-def limpar_ia(x: np.ndarray, atenuacao_db: float, mistura: float) -> tuple[np.ndarray, bool]:
-    """DeepFilterNet moderado (carregado uma vez por processo). Sem DFN devolve o original."""
-    global _DF_ESTADO
-    f = _df()
-    if f is None or len(x) < SR // 4:
-        return x, False
-    enhance, init_df = f
-    try:
-        import torch  # type: ignore
-        if _DF_ESTADO is None:
-            _DF_ESTADO = init_df(log_level="ERROR")
-        modelo, est, _ = _DF_ESTADO
-        sr_df = est.sr()
-        y = x if sr_df == SR else np.interp(np.arange(0, len(x), SR / sr_df), np.arange(len(x)), x).astype(np.float32)
-        lim = enhance(modelo, est, torch.from_numpy(y[None]), atten_lim_db=float(atenuacao_db)).numpy()[0]
-        if sr_df != SR:
-            lim = np.interp(np.arange(len(x)) * sr_df / SR, np.arange(len(lim)), lim).astype(np.float32)
-        lim = lim[: len(x)]
-        return (mistura * lim + (1 - mistura) * x).astype(np.float32), True
-    except Exception:  # noqa: BLE001
-        return x, False
+def escolher_mistura(cru: np.ndarray, limpo: np.ndarray, cfg, sr: int = SR, padrao: float = 0.8) -> dict:
+    """Quanto do limpo entra (0..1), escolhido pelo medidor de voz (DNSMOS) nesta FONTE: o máximo de fundo limpo sem a voz
+    perder qualidade. Regra: entre as misturas cuja nota de voz (SIG) fica a até 0,15 da melhor, a de maior nota geral
+    (OVRL); empate (até 0,03) fica com a mistura MENOR (mais natural). Sem medidor: `padrao`.
+    Devolve {"mistura", "antes", "depois", "medida": bool}."""
+    from motor import qualidade_voz as Q
+    antes = Q.notas(cru, sr, cfg)
+    if antes is None:
+        log.warning("medidor de voz indisponível: mistura de reserva %.2f", padrao)
+        return {"mistura": padrao, "antes": None, "depois": None, "medida": False}
+    cand = {m: (antes if m == 0.0 else Q.notas(m * limpo + (1 - m) * cru, sr, cfg)) for m in MISTURAS}
+    cand = {m: c for m, c in cand.items() if c}
+    sig_max = max(c["sig"] for c in cand.values())
+    ok = {m: c for m, c in cand.items() if c["sig"] >= sig_max - QUEDA_VOZ_MAX}
+    if 1.0 in ok and 0.9 in ok and ok[1.0]["ovrl"] < ok[0.9]["ovrl"] + MARGEM_TOTAL:
+        ok.pop(1.0)                                        # 100% IA só quando ganha com folga
+    melhor = max(c["ovrl"] for c in ok.values())
+    m = min(k for k, c in ok.items() if c["ovrl"] >= melhor - 0.03)
+    if m > 0.0 and cand[m]["ovrl"] < antes["ovrl"] + GANHO_MIN:
+        m = 0.0                                            # a limpeza não melhorou de verdade: fica o original
+    return {"mistura": m, "antes": antes, "depois": cand[m], "medida": True}
+
+
+def amostra(crus: list, limpos: list, energias: list, sr: int = SR, seg: float = AMOSTRA_S):
+    """Peças de MAIS ENERGIA (fala de verdade, não silêncio nem abertura) até `seg` segundos, sem copiar a fonte inteira."""
+    ordem = sorted(range(len(crus)), key=lambda i: -energias[i])
+    a, b, total = [], [], 0
+    for i in ordem:
+        a.append(crus[i])
+        b.append(limpos[i])
+        total += len(crus[i])
+        if total >= seg * sr:
+            break
+    n = int(seg * sr)
+    return np.concatenate(a)[:n], np.concatenate(b)[:n]
 
 
 def cadeia(x: np.ndarray, vel: float, tmpdir, cfg=None) -> np.ndarray:
@@ -80,18 +110,45 @@ def montar_voz(edl: dict, fontes: Fontes, tmpdir, cfg=None, progresso=None) -> t
     pecas = sorted(edl.get("voz", []), key=lambda v: v["t0"])
     if not pecas:
         return voz, []
-    # 1) trechos crus (com folga) e limpeza
-    brutos, rel = [], []
+    # 1) trechos crus (com folga) e limpeza por IA (DeepFilterNet3 ONNX), com 1 s de contexto antes só para a IA
+    L = limpador(cfg)
+    crus, limpos, rel = [], [], []
     for i, v in enumerate(pecas):
         off = fontes.offset(v["fonte"])
         a = v["s0"] - off - FOLGA
-        x = ler_audio(fontes.audio(v["fonte"]), a, (v["s1"] - v["s0"]) + 2 * FOLGA, cfg=cfg)
-        lp = v.get("limpeza") or {}
-        x, usou_ia = limpar_ia(x, lp.get("atenuacao_db", 15), lp.get("mistura", 0.8))
-        brutos.append(x)
-        rel.append({"id": v["id"], "fonte": v["fonte"], "limpeza_ia": usou_ia})
+        ctx = min(CONTEXTO, max(0.0, a)) if L.disponivel else 0.0
+        x = ler_audio(fontes.audio(v["fonte"]), a - ctx, (v["s1"] - v["s0"]) + 2 * FOLGA + ctx, cfg=cfg)
+        k = int(round(ctx * SR))
+        crus.append(x[k:])
+        limpos.append(L.enhance(x)[k:] if L.disponivel else None)
+        rel.append({"id": v["id"], "fonte": v["fonte"], "limpeza_ia": bool(L.disponivel)})
         if progresso:
-            progresso(0.5 * (i + 1) / len(pecas), f"Voz: peça {i + 1}/{len(pecas)}")
+            progresso(0.4 * (i + 1) / len(pecas), f"Voz: limpeza {i + 1}/{len(pecas)}")
+    # mistura por FONTE para as peças `auto` (mesmo ruído, mesmo tratamento); peça com mistura fixa no EDL usa a dela
+    misturas: dict[int, float] = {}
+    medidas: dict[int, dict] = {}
+    if L.disponivel:
+        for fid in {v["fonte"] for v in pecas}:
+            auto = [i for i, v in enumerate(pecas) if v["fonte"] == fid and (v.get("limpeza") or {}).get("auto")]
+            if auto:
+                en = [float(np.mean(crus[i] ** 2)) for i in auto]
+                cru_a, limpo_a = amostra([crus[i] for i in auto], [limpos[i] for i in auto], en)
+                r = escolher_mistura(cru_a, limpo_a, cfg, padrao=float((pecas[auto[0]].get("limpeza") or {}).get("mistura", 0.8)))
+                for i in auto:
+                    misturas[i], medidas[i] = r["mistura"], r
+        for i, v in enumerate(pecas):
+            if i not in misturas:
+                misturas[i] = float((v.get("limpeza") or {}).get("mistura", 0.8))
+                medidas[i] = {"antes": None, "depois": None}
+    brutos = []
+    for i, v in enumerate(pecas):
+        m = misturas.get(i)
+        brutos.append(crus[i] if m is None else (m * limpos[i] + (1 - m) * crus[i]).astype(np.float32))
+        limpos[i] = None                                   # solta a memória do limpo assim que a peça está pronta
+        if m is not None:
+            rel[i].update(mistura=m, voz_antes=medidas[i]["antes"], voz_depois=medidas[i]["depois"])
+    if progresso:
+        progresso(0.5, "Voz: limpeza pronta")
     # 2) nível por fonte: -17 LUFS medidos nas peças usadas
     meter = pyln.Meter(SR)
     ganho = {}

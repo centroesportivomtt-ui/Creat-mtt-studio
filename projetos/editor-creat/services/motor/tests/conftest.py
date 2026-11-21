@@ -14,6 +14,7 @@ SCRATCH = pathlib.Path("/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936
 def dados(tmp_path, monkeypatch):
     monkeypatch.setenv("EDITOR_DADOS", str(tmp_path / "dados"))
     monkeypatch.setenv("EDITOR_NICE", "0")
+    monkeypatch.setenv("EDITOR_MODELOS_BAIXAR", "0")         # teste nunca baixa modelo da internet (quem precisa, liga no próprio teste)
     return tmp_path / "dados"
 
 

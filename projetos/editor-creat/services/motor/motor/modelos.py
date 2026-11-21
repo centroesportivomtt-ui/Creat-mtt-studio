@@ -29,7 +29,11 @@ def baixar() -> dict:
     from motor import config
     from motor.etapas import falante, pessoa
     cfg = config.carregar()
-    return {"pessoa": pessoa._modelo(cfg) is not None, "voz": falante._modelo(cfg) is not None, "navegador": navegador(cfg)["ok"]}
+    from motor import qualidade_voz
+    from motor.etapas.montagem import dfn3
+    return {"pessoa": pessoa._modelo(cfg) is not None, "voz": falante._modelo(cfg) is not None,
+            "limpeza_voz": dfn3._pasta(cfg) is not None, "medidor_voz": qualidade_voz._modelo(cfg) is not None,
+            "navegador": navegador(cfg)["ok"]}
 
 
 if __name__ == "__main__":

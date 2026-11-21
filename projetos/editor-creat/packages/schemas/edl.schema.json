@@ -52,7 +52,7 @@
           "t0": { "type": "number" }, "t1": { "type": "number" },
           "vel": { "type": "number", "default": 1.0 },
           "ganho_db": { "type": "number", "default": 0 },
-          "limpeza": { "type": "object", "additionalProperties": false, "properties": { "atenuacao_db": { "type": "number", "default": 15 }, "mistura": { "type": "number", "default": 0.8 } } },
+          "limpeza": { "type": "object", "additionalProperties": false, "properties": { "atenuacao_db": { "type": "number", "default": 15, "description": "Obsoleto desde 21/11 (a limpeza em ONNX não tem limite de atenuação): quem controla a força é `mistura`." }, "mistura": { "type": "number", "default": 0.8 }, "auto": { "type": "boolean", "default": false, "description": "A montagem escolhe a mistura por fonte com o medidor de voz (DNSMOS); `mistura` vira só o valor de reserva." } } },
           "texto": { "type": ["string", "null"] }
         }
       }

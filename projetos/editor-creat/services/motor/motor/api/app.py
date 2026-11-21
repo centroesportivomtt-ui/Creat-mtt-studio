@@ -64,7 +64,12 @@ def criar():
         def _tem(var, nome):
             v = os.environ.get(var, "").strip()
             return _pl.Path(v).is_file() if v else (pasta / nome).is_file()
-        out["modelos"] = {"pessoa": _tem("EDITOR_PESSOA", _pes.MODELO_NOME), "voz": _tem("EDITOR_FALANTE", _fal.MODELO_NOME)}
+        from motor import qualidade_voz as _qv
+        from motor.etapas.montagem import dfn3 as _dfn
+        _pdfn = _pl.Path(os.environ.get("EDITOR_DFN3", "").strip() or (pasta / "dfn3"))
+        out["modelos"] = {"pessoa": _tem("EDITOR_PESSOA", _pes.MODELO_NOME), "voz": _tem("EDITOR_FALANTE", _fal.MODELO_NOME),
+                          "limpeza_voz": all((_pdfn / n).is_file() for n in _dfn.ARQUIVOS),
+                          "medidor_voz": _tem("EDITOR_DNSMOS", _qv.MODELO_NOME)}
         try:                                                # o boot confere o navegador do kit (motor/modelos.py)
             import json as _json
             out["modelos"]["navegador"] = _json.loads((pasta / "navegador.json").read_text()).get("ok")

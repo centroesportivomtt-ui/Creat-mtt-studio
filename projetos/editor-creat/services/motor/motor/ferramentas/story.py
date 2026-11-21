@@ -57,7 +57,7 @@ def montar_edl(arm, projeto: str, esp: dict) -> dict:
             ditas = [w for s in fontes[aid]["_an"]["transcricao"]["segmentos"] for w in s["palavras"] if s0 - 0.02 <= w[0] < s1]
             troca = pc.get("corrigir", {})
             voz.append({"id": f"B1.{i}.0", "bloco": "B1", "fala": f"F00.{i}", "fonte": aid, "s0": round(s0, 4), "s1": round(s1, 4),
-                        "t0": round(t, 4), "t1": round(t + dur, 4), "vel": vel, "ganho_db": 0, "limpeza": {"atenuacao_db": 15, "mistura": 0.8},
+                        "t0": round(t, 4), "t1": round(t + dur, 4), "vel": vel, "ganho_db": 0, "limpeza": {"atenuacao_db": 15, "mistura": 0.8, "auto": True},
                         "texto": " ".join(troca.get(w[2], w[2]).strip(".,?!") for w in ditas)})
             for w in ditas:
                 txt = troca.get(w[2], w[2]).strip(".,?!…")
