@@ -402,3 +402,32 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - fechar o HTTPError;
   - aviso do seletor some em 3 min no Safari antigo.
 - **Testes:** pytest **353 ok** (10 em `test_sondar.py`); aceite **35/35** (novo: link restrito recusado na hora, passo a passo uma vez só).
+
+## Item I: verificação de fatos (21/11, regra permanente do dono)
+- **Regra do dono:** "na legenda você bote de forma correta, porque a pessoa pode ter falado errado".
+- **Onde roda:** no começo da montagem, antes de renderizar (`motor/etapas/fatos.py`).
+  1. Acha todo número de PRODUTO que vai para a tela: ml, litro, kcal, g, %, R$, graus. Vale para a legenda e para os cartões do motion. Tempo ("30 anos", "3 dias") não entra.
+  2. Uma chamada ao cérebro (Opus 5.5, esforço médio) com busca na web (`web_search_20260209`) e o quadro da fonte no momento de cada número (o rótulo é lido pela visão).
+     - Ordem das fontes: fabricante, depois rótulo no vídeo, varejista grande só como reserva.
+     - Preço e oferta só se confirmam pelo pedido do cliente.
+     - Item sem URL de fonte não vale.
+  3. Corrige na tela o número e, se for o caso, a unidade. A fala fica como foi dita.
+     - Correção que não cabe vira "sem fonte", nunca passa como feita.
+  4. O relatório fica em `edl.qa.fatos`, com fonte, data, trocas e custo.
+- **QA `fatos`:**
+  - segura a entrega com número sem fonte ou quando a conferência falha;
+  - sem a chave do cérebro, só avisa;
+  - o dono libera à mão em `edl.qa.numeros_confirmados`.
+- **Outras regras:**
+  - `legenda_x_fala` não conta contra o recall a palavra corrigida (falou 269, a tela diz 275);
+  - cache por conteúdo: refazer a versão não paga de novo; resposta incompleta não entra no cache.
+- **Custo estimado:** cerca de US$ 0,05 a 0,15 por versão com números (tokens + US$ 0,01 por busca). Vai para o livro de gastos como `fatos`.
+- **Caso de teste (o real do dono):** "Amstel Ultra garrafa 269 ml" → "long neck 275 ml" e 71 → 72 kcal, na legenda e no cartão.
+- **Revisão do Crivo:** aprovado com ajustes, todos aplicados:
+  - âncora no trecho do motor;
+  - troca da unidade;
+  - recall da legenda;
+  - cache de resposta incompleta;
+  - `t0` fora do try;
+  - liberação normalizada.
+- **Testes:** pytest **365 ok** (12 em `test_fatos.py`); aceite 35/35.
