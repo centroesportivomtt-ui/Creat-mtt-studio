@@ -390,6 +390,8 @@ async function rotear(req, res) {
     try { host = new URL(u).hostname; } catch { /* inválido */ }
     if (!/(^|\.)dropbox\.com$|(^|\.)drive\.google\.com$|(^|\.)dropboxusercontent\.com$/.test(host)) return falha(res, 422, 'mande um link compartilhado do Dropbox ou do Google Drive');
     if (!ABERTOS.includes(p.estado)) return falha(res, 409, 'o projeto já está em direção/montagem');
+    // como o motor de verdade (importar.sondar): link restrito da equipe é recusado NA HORA, com o passo a passo
+    if (/restrito/.test(u)) return falha(res, 422, 'Esse link do Dropbox só abre para quem está logado (link restrito da equipe). No app do Dropbox: Compartilhar > Configurações do link > "Qualquer pessoa com o link" > Copiar link, e cole aqui de novo.');
     const a = { id: `a${String(p.arquivos.length + 1).padStart(3, '0')}`, nome: 'importando do link…', chave: null, bytes: 0, estado: 'recebido', criado: agora() };
     p.arquivos.push(a);
     (async () => { await dormir(PASSO); a.nome = decodeURIComponent(u.split('/').pop()?.split('?')[0] || 'arquivo-importado.mp4'); a.bytes = 1; await lerArquivo(p, a); })();

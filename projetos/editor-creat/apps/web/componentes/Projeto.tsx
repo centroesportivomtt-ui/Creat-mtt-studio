@@ -283,50 +283,76 @@ export function extrairLinks(texto: string): string[] {
   return [...new Set(achados.map((u) => u.replace(/[),.;!?]+$/, '')))].slice(0, 30);
 }
 
+// nome curto do link para a mensagem: o arquivo do caminho (C0016.MP4) ou o site
+function rotuloLink(url: string): string {
+  try {
+    const u = new URL(url);
+    const ultimo = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() ?? '');
+    return /\.[a-z0-9]{2,4}$/i.test(ultimo) ? ultimo.slice(0, 40) : `${u.hostname}${u.pathname}`.slice(0, 40);
+  } catch {
+    return url.slice(0, 40);
+  }
+}
+
 function Importar({ aberto, projeto, aoTerminar }: { aberto: boolean; projeto: string; aoTerminar: () => void }) {
   const [texto, setTexto] = useState('');
   const [indo, setIndo] = useState(false);
-  const [resultado, setResultado] = useState<{ ok: number; erros: string[] } | null>(null);
+  const [resultado, setResultado] = useState<{ ok: number; erros: string[]; avisos: string[] } | null>(null);
   const links = extrairLinks(texto);
   return (
     <form className="importar" noValidate data-teste="importar" onSubmit={async (e) => {
       e.preventDefault();
-      if (!links.length) { setResultado({ ok: 0, erros: ['Não achei nenhum link https no que foi colado.'] }); return; }
+      if (!links.length) { setResultado({ ok: 0, erros: ['Não achei nenhum link https no que foi colado.'], avisos: [] }); return; }
       setIndo(true); setResultado(null);
       let ok = 0;
-      const erros: string[] = [];
-      for (const url of links) {
+      // o motor confere cada link na hora; o mesmo motivo (ex.: link restrito da equipe) aparece UMA vez, com quantos links tem
+      const porMotivo = new Map<string, string[]>();
+      const falhar = (url: string, motivo: string) => porMotivo.set(motivo, [...(porMotivo.get(motivo) ?? []), rotuloLink(url)]);
+      const avisos = new Set<string>();
+      const um = async (url: string) => {
         let host = '';
         try { host = new URL(url).hostname.toLowerCase(); } catch { /* inválido */ }
         if (!/(^|\.)(dropbox\.com|dropboxusercontent\.com|drive\.google\.com|docs\.google\.com)$/.test(host)) {
-          erros.push(`${url.slice(0, 48)}…: não é link do Dropbox nem do Google Drive`);
-          continue;
+          falhar(url, 'não é link do Dropbox nem do Google Drive.');
+          return;
         }
         try {
           const r = await fetch(`/api/motor/v1/projetos/${projeto}/importar`, {
             method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }),
           });
-          if (r.status === 401) { window.location.assign('/entrar'); return; }
+          if (r.status === 401) { saiu = true; return; }
           const c = await r.json().catch(() => null);
-          if (r.ok) ok += 1;
-          else erros.push(`${url.slice(0, 48)}…: ${typeof c?.detail === 'string' ? c.detail : 'recusado'}`);
+          if (r.ok) { ok += 1; if (typeof c?.aviso === 'string') avisos.add(c.aviso); }
+          else falhar(url, typeof c?.detail === 'string' ? c.detail : `O motor recusou (erro ${r.status}).`);
         } catch {
-          erros.push(`${url.slice(0, 48)}…: sem conexão`);
+          falhar(url, 'sem conexão com o editor agora. Confira a internet e toque em Importar de novo.');
         }
-      }
+      };
+      // o motor confere cada link na hora (até ~15 s cada): 4 de cada vez, para 30 links não virarem minutos de espera
+      let saiu = false;
+      const fila = [...links];
+      await Promise.all(Array.from({ length: Math.min(4, fila.length) }, async () => {
+        for (let u = fila.shift(); u !== undefined && !saiu; u = fila.shift()) await um(u);
+      }));
+      if (saiu) { window.location.assign('/entrar'); return; }
       setIndo(false);
-      setResultado({ ok, erros });
+      const erros = [...porMotivo].map(([m, quais]) => {
+        const nomes = quais.slice(0, 3).join(', ') + (quais.length > 3 ? ` e mais ${quais.length - 3}` : '');
+        return links.length > 1 ? `${quais.length} de ${links.length} links (${nomes}): ${m}` : `${nomes}: ${m}`;
+      });
+      setResultado({ ok, erros, avisos: [...avisos] });
       if (ok) { setTexto(''); aoTerminar(); }
     }}>
       <label className="so-leitor" htmlFor="link-importar">Links compartilhados do Dropbox ou do Drive</label>
       <textarea id="link-importar" className="entrada" rows={2} inputMode="url" placeholder="Ou cole links do Dropbox / Drive (um ou vários; link de pasta também vale)"
         value={texto} onChange={(e) => setTexto(e.target.value)} disabled={!aberto} data-teste="importar-links" style={{ resize: 'vertical', minHeight: 48 }} />
       <button className="botao botao--fantasma" type="submit" disabled={!aberto || indo || !texto.trim()} data-teste="importar-enviar">
-        {indo ? 'Indo…' : links.length > 1 ? `Importar ${links.length} links` : 'Importar'}
+        {indo ? 'Conferindo o link…' : links.length > 1 ? `Importar ${links.length} links` : 'Importar'}
       </button>
       {resultado && (
         <div style={{ flexBasis: '100%' }} role="status" data-teste="importar-resultado">
           {resultado.ok > 0 && <p className="aprovada" style={{ margin: 0 }}>{resultado.ok} link{resultado.ok > 1 ? 's' : ''} na fila: o motor baixa e já começa a ler.</p>}
+          {resultado.avisos.map((av) => <p key={av} className="aviso" style={{ margin: '4px 0 0' }}>Aviso: {av}.</p>)}
           {resultado.erros.map((er) => <p key={er} className="erro" style={{ margin: '4px 0 0', overflowWrap: 'anywhere' }}>{er}</p>)}
         </div>
       )}

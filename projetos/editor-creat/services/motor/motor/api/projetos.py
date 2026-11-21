@@ -175,14 +175,15 @@ def registrar_arquivo(pid: str, corpo: NovoArquivo):
 def importar_link(pid: str, corpo: Importacao):
     try:
         importar.link_direto(corpo.url)          # valida antes de enfileirar (host, formato, pasta do Drive)
-    except importar.ErroImportacao as e:
+        aviso = importar.sondar(corpo.url) if os.environ.get("EDITOR_SONDAR_LINK", "1") == "1" else None
+    except importar.ErroImportacao as e:      # link que pede login ou não existe: o motivo aparece embaixo do botão, na hora
         raise HTTPException(422, str(e)) from e
     with _con() as con:
         p = _projeto(con, pid)
         if p["estado"] not in ESTADOS_ABERTOS:
             raise HTTPException(409, "o projeto já está em direção/montagem")
         aid, _ = importar.registrar_arquivo(con, pid, "importando do link…", None, 0, entrada={"url": corpo.url.strip()})
-        return {"id": aid, "mensagem": "Importação na fila: o motor baixa e já começa a ler."}
+        return {"id": aid, "mensagem": "Importação na fila: o motor baixa e já começa a ler.", **({"aviso": aviso} if aviso else {})}
 
 
 def _recolher_orfaos(con, cfg, arm, pid: str) -> int:

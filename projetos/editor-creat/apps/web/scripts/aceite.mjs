@@ -202,8 +202,21 @@ async function principal() {
   const rotuloImp = await page.textContent('[data-teste=importar-enviar]');
   await page.click('[data-teste=importar-enviar]');
   const resImp = await page.locator('[data-teste=importar-resultado]').textContent({ timeout: 10000 }).catch(() => '');
-  ok('vários links do Dropbox de uma vez: um entra, o errado diz por quê, ali embaixo do botão', /2 links/.test(rotuloImp ?? '') && /1 link na fila/.test(resImp ?? '') && /exemplo\.com.*não é link do Dropbox/.test(resImp ?? ''), `${rotuloImp} | ${(resImp ?? '').slice(0, 160)}`);
+  ok('vários links do Dropbox de uma vez: um entra, o errado diz por quê, ali embaixo do botão', /2 links/.test(rotuloImp ?? '') && /1 link na fila/.test(resImp ?? '') && /nao\.mp4.*não é link do Dropbox/.test(resImp ?? ''), `${rotuloImp} | ${(resImp ?? '').slice(0, 160)}`);
   await page.waitForFunction(() => document.querySelectorAll('.arquivo').length === 2, null, { timeout: 15000 }).catch(() => {});
+  // link restrito da equipe (conta Mttcreatt): recusado na hora, o passo a passo aparece UMA vez para os 2 links, e nada entra na fila
+  const errosAntesRestr = errosConsole.length;
+  await page.fill('[data-teste=importar-links]', 'https://www.dropbox.com/scl/fi/restrito1/A.MOV?rlkey=x&dl=0 https://www.dropbox.com/scl/fi/restrito2/B.MOV?rlkey=y&dl=0');
+  await page.click('[data-teste=importar-enviar]');
+  await page.waitForFunction(() => /restrito/.test(document.querySelector('[data-teste=importar-resultado]')?.textContent ?? ''), null, { timeout: 10000 }).catch(() => {});
+  const resRestr = (await page.locator('[data-teste=importar-resultado]').textContent().catch(() => '')) ?? '';
+  const nPassos = (resRestr.match(/Qualquer pessoa com o link/g) ?? []).length;
+  // os 2 "422" do navegador aqui são a recusa esperada do motor (como o 401 da senha errada): só eles saem da conta
+  const novos = errosConsole.splice(errosAntesRestr);
+  errosConsole.push(...novos.filter((t) => !/status of 422/.test(t)));
+  const recusas = novos.length - (errosConsole.length - errosAntesRestr);
+  ok('link restrito da equipe: recusado na hora, com o passo a passo uma vez só', /2 de 2 links \(A\.MOV, B\.MOV\)/.test(resRestr) && nPassos === 1 && recusas === 2
+    && (await page.locator('.arquivo').count()) === 2, resRestr.slice(0, 200));
 
   // ---------- 3. status ao vivo até "entregue" e player ----------
   const vistos = [];
