@@ -24,7 +24,7 @@ def test_janelas_e_mapa():
     from motor import qualidade_voz as Q
     s = SessaoFalsa()
     n = Q.notas(np.random.default_rng(0).standard_normal(48000 * 3).astype(np.float32) * 0.1, 48000, sessao=s)
-    assert s.chamadas == 1 and set(n) == {"sig", "bak", "ovrl"}                  # 3 s repetidos até 9,01 s: uma janela
+    assert s.chamadas == 3 and set(n) == {"sig", "bak", "ovrl"}                  # 3 s dobrados (como a Microsoft) até 12 s: 3 janelas
     assert abs(n["sig"] - round(float(Q._P_SIG(3.0)), 2)) < 1e-6
     s2 = SessaoFalsa()
     Q.notas(np.zeros(16000 * 12, np.float32) + 0.01, 16000, sessao=s2)
