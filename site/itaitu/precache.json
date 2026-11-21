@@ -1,7 +1,7 @@
 {
- "versao": "d8c5c707d4e8",
- "gerado_em": "2026-11-20T21:37:05.818Z",
- "bytes_total": 15244878,
+ "versao": "975749ccd2d4",
+ "gerado_em": "2026-11-21T03:33:49.642Z",
+ "bytes_total": 15245315,
  "casco": [
   "arte/placa-qr.svg",
   "css/app.css",
@@ -252,7 +252,7 @@
   {
    "url": "js/app.js",
    "bytes": 17072,
-   "hash": "a86eb8bface287b8"
+   "hash": "4c5433ea95cc6702"
   },
   {
    "url": "js/armazenamento.js",
@@ -351,8 +351,8 @@
   },
   {
    "url": "js/mapa.js",
-   "bytes": 16377,
-   "hash": "4f4499f8b8ad55e8"
+   "bytes": 16814,
+   "hash": "69c1b85fc44798f7"
   },
   {
    "url": "js/marca.js",

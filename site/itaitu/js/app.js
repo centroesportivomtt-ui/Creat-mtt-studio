@@ -21,7 +21,7 @@ import { montarArmazenamento } from './armazenamento.js';
 // Recorte de Itaitu (ARQUITETURA 7.0). dados/recorte.json, quando existir, manda.
 export const RECORTE_PADRAO = Object.freeze({
   versao: 1, nome: 'Itaitu', bbox: [-40.60, -11.42, -40.40, -11.26],
-  centro: [-40.4950, -11.3400], zoom: 13, pitch: 60, bearing: 250,
+  centro: [-40.4975, -11.3365], zoom: 13, pitch: 60, bearing: 250,
   fuso_min: -180, tiles_z: [8, 14],
   dem: { z: 12, x0: 1586, x1: 1588, y0: 2176, y1: 2178 },
 });
