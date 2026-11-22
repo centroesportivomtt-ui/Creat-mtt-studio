@@ -111,6 +111,19 @@ def _limpa(w: str) -> str:
 
 
 # ---------------- resolvedor ----------------
+def _silabas_db(serie, passo: float) -> float:
+    """Desvio (dB) do envelope menos a média móvel de 0,5 s, sem os buracos da série (-90). Fala: >= 4-5 dB; ar-condicionado,
+    freezer e música de fundo estável: ~1-2 dB."""
+    import numpy as np
+    x = np.asarray(serie, dtype=float)
+    x = x[x > -89]
+    k = max(3, int(round(0.5 / max(passo, 1e-3))))
+    if len(x) < 2 * k:
+        return 0.0
+    media = np.convolve(x, np.ones(k) / k, mode="valid")
+    return float(np.std(x[k // 2:k // 2 + len(media)] - media))
+
+
 class Resolvedor:
     def __init__(self, direcao: dict, catalogo: dict, analises: dict, modelo: dict, trilhas: list[dict] | None = None,
                  vocabulario: list[dict] | None = None, energias: dict | None = None, projeto: str | None = None,
@@ -707,6 +720,14 @@ class Resolvedor:
                         nivel = float(np.median(tr)) if len(tr) else 0.0
                         if nivel <= -89:                           # buraco da série (sem áudio medido)
                             continue
+                        # conversa baixa da equipe não entra na transcrição, mas tem sílabas: o envelope sobe e desce rápido.
+                        # Mede só a variação RÁPIDA (envelope menos a média de 0,5 s): música crescendo, freezer ou compressor
+                        # ligando mudam devagar e não contam. Item J, cerveja v2, 22/11.
+                        sil = _silabas_db(tr, passo)
+                        tm = self.m.get("tom_sala", {})
+                        if sil > tm.get("silabas_teto_db", 5.0):
+                            continue
+                        nivel += 3.0 * max(0.0, sil - tm.get("silabas_ok_db", 2.0))    # entre ok e teto: só perde preferência
                     cands.append((nivel - 0.5 * min(hi2 - lo2, 6), lo2, hi2))
         cands.sort()
         return [(lo, hi) for _, lo, hi in cands]
