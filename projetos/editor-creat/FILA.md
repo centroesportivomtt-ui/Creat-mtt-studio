@@ -27,7 +27,7 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 | H | painel de gastos do mês | feito · 90781ea |
 | L | link do Dropbox e envio do celular (21/11): conta de equipe gera link restrito; o editor agora confere o link na hora e explica o passo a passo | feito · f7128a8 · 21/11 |
 | I | **verificação de fatos** (regra permanente do dono, 21/11): todo número, volume, caloria, preço ou alegação de produto da fala é listado; o editor confere a fonte oficial (fabricante, rótulo; varejista grande como reserva) e o rótulo visível no vídeo (OCR); corrige legenda e cartões, registra fonte e data no relatório e segura a entrega com número sem fonte. Caso real: "Amstel Ultra garrafa 269 ml" → long neck 275 ml / 72 kcal (lata 269 ml / 71 kcal) | feito · fdd6577 · 21/11 (a 1ª conferência paga real roda na próxima montagem da cerveja) |
-| J | falso negativo da voz de fora no fim (cerveja v2, "vale…" do Xande): a checagem também olha o tom de sala/ambiente e o som sob o cartão final; o tom de sala só sai de trecho sem fala | em andamento · 01LA2wrMpbZ · 22/11 05:15 |
+| J | falso negativo da voz de fora no fim (cerveja v2, "vale…" do Xande): a checagem também olha o tom de sala/ambiente e o som sob o cartão final; o tom de sala só sai de trecho sem fala | feito · 241836d · 22/11 |
 
 ## Mapa original (depois da fila do dono)
 | item | o quê | estado |

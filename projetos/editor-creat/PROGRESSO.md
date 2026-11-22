@@ -431,3 +431,22 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - `t0` fora do try;
   - liberação normalizada.
 - **Testes:** pytest **365 ok** (12 em `test_fatos.py`); aceite 35/35.
+
+## Item J: voz de fora no tom de sala (22/11; o "vale…" do Xande no fim da cerveja v2)
+- **Causa** (análise das stems pela sessão da Lavínia): o tom de sala difuso saiu de C18 49-55 s, que tinha conversa baixa da equipe.
+  - A conversa estava longe do microfone e fora da transcrição.
+  - O QA só media a modulação do stem difuso, que é lisa por construção, e por isso passava.
+- **Resolvedor** (`_silencios`): mede a variação RÁPIDA do envelope (envelope menos a média de 0,5 s, sem os buracos -90).
+  - Acima de 5 dB é sílaba: o vão é descartado.
+  - Entre 2 e 5 dB, o vão só perde preferência.
+  - Música crescendo, freezer e compressor mudam devagar e não contam.
+- **QA tom_sala_sem_voz:** o trecho ORIGINAL da fonte passa pela régua da conversa no som direto (≥ 0,4 s de voz acima do piso + 6 dB).
+  - O piso é o menor entre o do arquivo e o do próprio trecho, para pegar fonte quase toda fala.
+  - Erro ao ouvir vira NÃO VERIFICADO e bloqueia.
+- **Revisão do Crivo:** aprovado com 4 ajustes, todos aplicados:
+  - piso local;
+  - falha fechada;
+  - desvio sem deriva e sem buracos;
+  - testes para fonte quase toda fala, música e fonte ausente.
+- **Testes:** pytest **371 ok** (6 em `test_tom_sala_origem.py`); aceite 35/35.
+- **Pendente** (anotado pela sessão da Lavínia): ditado entre arquivos diferentes (comparar o texto do B com as peças A do projeto inteiro).
