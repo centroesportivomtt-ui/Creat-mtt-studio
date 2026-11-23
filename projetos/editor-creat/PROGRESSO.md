@@ -467,3 +467,6 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - para o rosto do item 4: YuNet (MIT) + SFace int8 (Apache-2.0), pelo OpenCV, em CPU;
   - para OCR de rótulo: RapidOCR (Apache-2.0), a testar com fotos reais;
   - a conferir: o pooling do CAM++ (sherpa-onnx 2.0.2 corrigiu count_include_pad).
+
+## 23/11, fim do dia
+- Verificação de fatos: número sem fonte ou conferência que falhou vira AVISO ("confira antes de postar"), não trava a entrega. Motivo: o dono vai usar o editor sozinho por um tempo e não teria como liberar a trava. A correção automática do número errado continua. pytest 374 ok, aceite 35/35.
