@@ -450,3 +450,20 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - testes para fonte quase toda fala, música e fonte ausente.
 - **Testes:** pytest **371 ok** (6 em `test_tom_sala_origem.py`); aceite 35/35.
 - **Pendente** (anotado pela sessão da Lavínia): ditado entre arquivos diferentes (comparar o texto do B com as peças A do projeto inteiro).
+
+## Rodada de 23/11 (segunda)
+- **Ditado entre arquivos** (pendência da sessão da Lavínia; commit 3d66cb5):
+  - **O problema:** o ditado ficou em a003 e a repetição em a005, fora da janela dos 2 takes seguintes.
+  - **A correção:** sem par por perto, `vozes._repeticao_no_projeto` procura no projeto inteiro:
+    - outro arquivo e outra voz;
+    - gravado depois e em até 3 h, ficando com a repetição mais próxima;
+    - pré-filtro por palavras de conteúdo, calculado uma vez.
+  - **Ressalva:** esses pares de longe não decidem quem é a voz principal (um retake da apresentadora viraria "ditado"). Só valem de B para A.
+  - **Datas:** naive e aware convivem (a do nome do arquivo vale como -03:00).
+  - **Revisão do Crivo:** reprovou na 1ª passada (TypeError de fuso, retake virando ditado, custo, teste fraco); tudo corrigido e testado.
+  - **Testes:** pytest **374 ok**; aceite 35/35.
+- **Pesquisa semanal de ferramentas** (Radar), em `docs/stack-ferramentas-2026.md`, seção "Revisão do editor, 23/11/2026":
+  - nada comprovadamente melhor para transcrição, limpeza de voz, matting e estabilização: manter;
+  - para o rosto do item 4: YuNet (MIT) + SFace int8 (Apache-2.0), pelo OpenCV, em CPU;
+  - para OCR de rótulo: RapidOCR (Apache-2.0), a testar com fotos reais;
+  - a conferir: o pooling do CAM++ (sherpa-onnx 2.0.2 corrigiu count_include_pad).

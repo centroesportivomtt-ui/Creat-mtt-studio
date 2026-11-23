@@ -35,7 +35,7 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 | 1 | cor no estilo DaVinci | feito · 3713eda |
 | 2 | rastreamento e máscara de pessoa | feito · 20/11 (texto atrás, fundo desfocado, destaque e pele tratada só na pessoa) |
 | 3 | limpeza de voz por IA | feito · 21/11 (DeepFilterNet3 ONNX + medidor DNSMOS escolhe a mistura por fonte) |
-| 4 | rótulo de quem fala (voz + rosto) | voz feita · 20/11 (voz A/B no catálogo, ditado da equipe trocado pela repetição, conferido no material real); falta: rosto |
+| 4 | rótulo de quem fala (voz + rosto) | voz feita · 20/11 (voz A/B no catálogo, ditado da equipe trocado pela repetição, conferido no material real; ditado no projeto inteiro em 23/11); falta: rosto (YuNet + SFace, pesquisa de 23/11) |
 | 5 | Drive e Dropbox direto no editor | livre |
 | 6 | cenas por IA com custo à vista | livre |
 | 7 | perguntas em camadas | livre |
