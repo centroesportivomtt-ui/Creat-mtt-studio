@@ -3,11 +3,11 @@ export const ESTADOS = ['recebendo', 'lendo', 'dirigindo', 'montando', 'conferin
 export type Estado = (typeof ESTADOS)[number] | 'reprovado_qa' | 'erro';
 
 export const ROTULO_ESTADO: Record<string, string> = {
-  recebendo: 'Recebendo', lendo: 'Lendo', dirigindo: 'Dirigindo', montando: 'Montando',
+  recebendo: 'Aguardando material', lendo: 'Lendo', dirigindo: 'Dirigindo', montando: 'Montando',
   conferindo: 'Conferindo', entregue: 'Entregue', reprovado_qa: 'Reprovado no QA', erro: 'Erro',
 };
 export const EXPLICA_ESTADO: Record<string, string> = {
-  recebendo: 'Subindo. Pode travar o celular que o envio retoma de onde parou.',
+  recebendo: 'Projeto aberto: mande os vídeos (botão ou link do Dropbox) e faça o pedido. Se a rede cair no meio do envio, ele continua de onde parou.',
   lendo: 'Lendo tudo: falas, momentos e rostos.',
   dirigindo: 'O diretor escolhe gancho, falas e ritmo no modo pedido.',
   montando: 'Cortes, cor, legendas, motion e mix.',
