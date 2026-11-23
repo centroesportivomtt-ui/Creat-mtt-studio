@@ -1,0 +1,11 @@
+{
+  "nome": "zona-negativo",
+  "_leia": "Cena que FURA a zona de propósito: o verificador (ferramentas/zona.cjs --cena) tem de reprovar as duas camadas. Prova de que ele não aprova tudo. gancho com autoAjuste:false e tamanho forçado; rótulo posto em x 1000 (dentro da coluna de botões).",
+  "formato": { "w": 1080, "h": 1920, "fps": 30 },
+  "duracao": 4.4,
+  "cor": "#0B0B0C",
+  "camadas": [
+    { "id": "gigante_sem_ajuste", "modelo": "gancho", "de": 0, "ate": 2.0, "props": { "linhas": ["ELETRODOMÉSTICOS"], "tamanho": 400, "autoAjuste": false, "y": 0.44 } },
+    { "id": "rotulo_na_coluna", "modelo": "rotulo", "de": 2.2, "ate": 4.4, "props": { "x": 1000, "y": 700, "titulo": "FORA DA ZONA", "sub": "teste negativo" } }
+  ]
+}

@@ -22,9 +22,9 @@ export default async function Entrar() {
           <p className="aviso" style={{ marginTop: 12 }}>Sobe o material, manda o pedido, recebe o vídeo pronto em até 30 minutos.</p>
         </div>
         {conf.ok ? (
-          <FormEntrar />
+          <FormEntrar modo={conf.modo === 'supabase' ? 'supabase' : 'senha'} />
         ) : (
-          <p className="erro" role="alert">O site ainda não foi configurado: falta {conf.falta.join(' e ')}. Veja apps/web/README.md.</p>
+          <p className="erro" role="alert">O site ainda não foi configurado: falta {conf.falta.join(' e ')}. Veja apps/web/README.md e apps/web/docs/AUTH.md.</p>
         )}
       </div>
     </main>

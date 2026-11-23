@@ -4,6 +4,7 @@
 //   2. Toda animação vive numa timeline GSAP PAUSADA (ctx.tl) ou numa função pura de t registrada em ctx.aCada().
 //   3. O renderizador chama window.__mk.seek(t) e tira o print. Preview e render final são idênticos.
 import { gsap } from "gsap";
+import ZONA_CASA from "./zona.json" with { type: "json" };
 
 export const EASE = {
   chegada: "expo.out",        // elemento chegando: cauda longa
@@ -25,8 +26,9 @@ export const DUR = {
 // Zona segura única da casa (1080x1920), a mesma das skills motion-design e estrategia-social:
 // texto entre y 285 e 1480 (1920 - 440) e entre x 60 e 960 (1080 - 120, coluna de botões do Instagram).
 // margem = recuo padrão de layout (84 px). O HUD decorativo é isento da zona, mas nunca pode colidir com texto
-// (regra "sem-colisao" do checar).
-export const ZONA = { topo: 285, base: 440, direita: 120, esquerda: 60, margem: 84 };
+// (regra "sem-colisao" do checar). Os números vêm de kit/zona.json, a fonte única que o QA de entrega do motor
+// (etapas/qa/zona_segura.py) e o verificador do kit (ferramentas/zona.cjs) também leem.
+export const ZONA = { ...ZONA_CASA.zona, margem: ZONA_CASA.margem, tolerancia: ZONA_CASA.tolerancia };
 
 // gerador com semente (mulberry32): mesmo número, mesma sequência
 export function semente(n) {
@@ -46,7 +48,9 @@ export const prog = (t, de, dur) => clamp((t - de) / dur);
 
 const medidor = document.createElement("canvas").getContext("2d");
 export function medir(texto, fonte, px) {
-  medidor.font = `${px}px ${fonte}`;
+  // aceita "Anton" ou "900 Inter" / "700 'JetBrains Mono'" (o peso vem antes do tamanho no atalho font do CSS)
+  const m = /^(\d{3}|bold|normal)\s+(.+)$/.exec(fonte);
+  medidor.font = m ? `${m[1]} ${px}px ${m[2]}` : `${px}px ${fonte}`;
   return medidor.measureText(texto).width;
 }
 // tamanho de fonte para a linha ocupar `largura` px (entre min e max)
@@ -55,7 +59,73 @@ export function ajustar(texto, fonte, largura, max = 260, min = 60) {
   return Math.max(min, Math.min(max, Math.floor((largura / w) * 100)));
 }
 
-// "FOI *EDITADO*." -> [{t:"FOI"}, {t:"EDITADO", destaque:true, ponto:true}]
+// AUTO-AJUSTE de texto (QA de zona segura, ferramentas/zona.cjs). Uma função para todos os modelos, nesta ordem:
+//   1. uma linha no maior tamanho até `max` (o mesmo que ajustar() faz): se der >= `min`, é isto e nada muda;
+//   2. quebra em até `linhas` linhas equilibradas, no maior tamanho >= `min` que caiba (também em `altura`, se dada);
+//   3. só então encolhe abaixo de `min`, até `piso`;
+//   4. último recurso: no `piso`, corta com reticências o que ainda não cabe (e devolve cortado: true).
+// fonte: família ou "peso família" (ex.: "Anton", "900 Inter"); ls: letter-spacing em em; extra: px fixos somados a cada
+// linha (ponto final que entra depois, folga do risco); altura: px totais para as linhas (com entrelinha `lh`);
+// maiusculas: mede em caixa alta (o CSS faz text-transform). auto: false devolve o tamanho de uma linha sem ajuste nenhum.
+// Devolve { px, linhas: [texto], grupos: [[índices das palavras]], quebrou, cortado }.
+export function caber(texto, { fonte = "Anton", largura, max = 260, min = 60, piso, linhas = 1, altura = Infinity, lh = 1, ls = 0, extra = 0, maiusculas = false, auto = true } = {}) {
+  const bruto = String(texto ?? "");
+  const t = maiusculas ? bruto.toUpperCase() : bruto;
+  const pal = t.trim().split(/\s+/).filter(Boolean);
+  piso = Math.min(piso ?? Math.min(min, 28), min);
+  // largura de um trecho a 1 px (a medida é linear no tamanho) + px fixos
+  const w1 = (s) => medir(s, fonte, 100) / 100 + ls * [...s].length;
+  const tam = (larg1, n) => Math.floor(Math.min((largura - extra) / Math.max(larg1, 1e-6), altura / (n * lh)));
+  const resp = (px, grupos, cortado = false) => {
+    const ls_ = grupos.map((g) => g.map((i) => pal[i]).join(" "));
+    return { px, linhas: ls_, grupos, quebrou: grupos.length > 1, cortado };
+  };
+  const todos = pal.map((_, i) => i);
+  if (!pal.length) return resp(max, [todos]);
+  const px1 = tam(w1(pal.join(" ")), 1);
+  if (!auto) return resp(Math.max(min, Math.min(max, px1)), [todos]); // comportamento antigo (ajustar): pode vazar
+  if (px1 >= min) return resp(Math.min(max, px1), [todos]);
+  // partição equilibrada: minimiza a linha mais larga (programação dinâmica, poucas palavras)
+  const larg = (a, b) => w1(pal.slice(a, b).join(" "));
+  const melhor = (n) => {
+    const N = pal.length, memo = new Map();
+    const f = (i, k) => {
+      if (k === 1) return [larg(i, N), [[i, N]]];
+      const ch = i + "," + k;
+      if (memo.has(ch)) return memo.get(ch);
+      let best = [Infinity, null];
+      for (let j = i + 1; j <= N - k + 1; j++) {
+        const [w, r] = f(j, k - 1);
+        const m = Math.max(larg(i, j), w);
+        if (m < best[0]) best = [m, [[i, j], ...r]];
+      }
+      memo.set(ch, best);
+      return best;
+    };
+    const [w, cortes] = f(0, n);
+    return { w, grupos: cortes.map(([a, b]) => todos.slice(a, b)) };
+  };
+  let alt = { px: px1, grupos: [todos] };
+  for (let n = 2; n <= Math.min(linhas, pal.length); n++) {
+    const m = melhor(n), px = tam(m.w, n);
+    if (px >= min) return resp(Math.min(max, px), m.grupos);
+    if (px > alt.px) alt = { px, grupos: m.grupos };
+  }
+  if (alt.px >= piso) return resp(Math.min(max, alt.px), alt.grupos);
+  // último recurso: piso + reticências no que ainda passa da largura
+  const lim = largura - extra;
+  let cortado = false;
+  const linhasF = alt.grupos.map((g) => {
+    let s = g.map((i) => pal[i]).join(" ");
+    if (w1(s) * piso <= lim) return s;
+    cortado = true;
+    while (s.length > 1 && w1(s + "…") * piso > lim) s = s.slice(0, -1);
+    return s.trimEnd() + "…";
+  });
+  return { px: piso, linhas: linhasF, grupos: alt.grupos, quebrou: alt.grupos.length > 1, cortado };
+}
+
+// "FOI *EDITADO*." ->[{t:"FOI"}, {t:"EDITADO", destaque:true, ponto:true}]
 export function palavras(linha) {
   return linha.trim().split(/\s+/).filter(Boolean).map((bruta) => {
     let t = bruta, ponto = false, destaque = false;
@@ -136,7 +206,7 @@ export async function criarPalco(comp, modelos, { alfa = false } = {}) {
 
   const ctx = {
     W, H, fps, alfa, tl, palco, camadas, gsap, EASE, DUR, ZONA,
-    semente, ease, clamp, prog, medir, ajustar, palavras, el, cantos, aba, blurDirecional,
+    semente, ease, clamp, prog, medir, ajustar, caber, palavras, el, cantos, aba, blurDirecional,
     aCada(fn) { porQuadro.push(fn); },
     cue(t, som, ganho = 0) { cues.push({ t: +t.toFixed(4), som, ganho }); },
     exigir(regra) { qa.push(regra); },

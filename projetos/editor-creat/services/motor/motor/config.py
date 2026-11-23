@@ -43,8 +43,14 @@ class Config:
     motor_token: str = field(default_factory=lambda: _env("MOTOR_TOKEN"))
     som: str = field(default_factory=lambda: _env("MK_SOM"))
 
+    banco_tipo: str = field(default_factory=lambda: _env("EDITOR_BANCO", "sqlite"))               # sqlite | postgres
+    falante: str = field(default_factory=lambda: _env("EDITOR_FALANTE", "voz"))                    # desligado | voz | fixture
+
     @property
-    def banco(self) -> pathlib.Path:
+    def banco(self):
+        """Destino do banco: URL postgres:// (Supabase) quando EDITOR_BANCO=postgres e DATABASE_URL existe; senão o arquivo SQLite."""
+        if self.banco_tipo == "postgres" and _tem("DATABASE_URL"):
+            return _env("DATABASE_URL")
         return self.dados / "motor.db"
 
     def provedor_efetivo(self, tipo: str) -> str:

@@ -23,10 +23,20 @@ export default async function selo(ctx, c) {
     background: "rgba(14,14,16,0.84)", borderRadius: "8px", borderLeft: "6px solid #FF1A1A", boxShadow: "0 16px 40px rgba(0,0,0,0.35)" });
   const img = el("img", "", card, { height: (p.altura ?? 96) + "px", display: "block" });
   img.src = p.logo; await img.decode().catch(() => {});
+  // auto-ajuste (zona segura, ctx.caber): o cartão termina na coluna de botões. As três linhas que não cabem ao lado da
+  // logo encolhem e quebram (título em até 3 linhas, apoios em até 2); o que cabe fica igual.
+  // (+4: o cartão pode encostar até 4 px além da coluna, dentro da tolerância do QA, como sempre encostou)
+  const util = ctx.W - ctx.ZONA.direita - x - 22 - 28 - 6 - img.offsetWidth - 22 + 4;
+  const linha = (pai, txt, fonte, px, ls, min, piso, n, css, cls = "") => {
+    const r = ctx.caber(txt ?? "", { fonte, ls, largura: util, max: px, min, piso, linhas: n, maiusculas: cls === "mk-display" });
+    const e = el("div", cls, pai, { ...css, ...(cls ? { fontSize: r.px + "px" } : { font: `${fonte.split(" ")[0]} ${r.px}px ${fonte.split(" ").slice(1).join(" ")}` }), ...(r.quebrou ? { whiteSpace: "pre" } : {}) });
+    e.textContent = r.quebrou || r.cortado ? r.linhas.join("\n") : txt ?? "";
+    return e;
+  };
   const tx = el("div", "", card, {});
-  const l1 = el("div", "", tx, { font: "700 19px 'JetBrains Mono'", letterSpacing: "0.14em", color: "#F5B84D" }); l1.textContent = p.linhas[0];
-  const l2 = el("div", "mk-display", tx, { fontSize: "56px", lineHeight: "1.05", marginTop: "4px" }); l2.textContent = p.linhas[1];
-  const l3 = el("div", "", tx, { font: "700 18px 'JetBrains Mono'", letterSpacing: "0.10em", color: "rgba(241,235,226,0.75)", marginTop: "4px" }); l3.textContent = p.linhas[2];
+  const l1 = linha(tx, p.linhas[0], "700 'JetBrains Mono'", 19, 0.14, 15, 12, 2, { letterSpacing: "0.14em", color: "#F5B84D" });
+  const l2 = linha(tx, p.linhas[1], "Anton", 56, 0, 40, 26, 3, { lineHeight: "1.05", marginTop: "4px" }, "mk-display");
+  const l3 = linha(tx, p.linhas[2], "700 'JetBrains Mono'", 18, 0.10, 14, 12, 2, { letterSpacing: "0.10em", color: "rgba(241,235,226,0.75)", marginTop: "4px" });
   tl.fromTo(card, { clipPath: "inset(0% 100% 0% 0% round 8px)" }, { clipPath: "inset(0% 0% 0% 0% round 8px)", duration: 0.45, ease: EASE.chegada }, t0);
   tl.fromTo(img, { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: EASE.mola }, t0 + 0.12);
   tl.fromTo([l1, l2, l3], { x: -18, opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, ease: EASE.chegada, stagger: 0.07 }, t0 + 0.2);

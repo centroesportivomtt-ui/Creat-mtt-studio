@@ -16,9 +16,12 @@ export default function abas(ctx, c) {
   const qs = [];
   for (let i = 0; i < N; i++) qs.push(el("div", "", fila, { width: "15px", height: "15px", borderRadius: "3px", background: "#DA291C", opacity: "0" }));
   const eo = ease("expo.out"), ein = ease("power2.in");
-  const medidor = document.createElement("canvas").getContext("2d");
-  medidor.font = "900 25px Inter";
-  const larg = lista.map((a) => medidor.measureText(a.titulo).width + a.titulo.length * 1.0 + 6);
+  // auto-ajuste (zona segura, ctx.caber): a pílula termina antes da coluna de botões. Título que não cabe a 25 px encolhe
+  // até 18 px e, no fim, corta com reticências (a pílula é de uma linha só). Título que cabe fica igual.
+  const numW = ctx.medir("ABA 000", "700 'JetBrains Mono'", 22) + 7 * 0.08 * 22;
+  const lim = W - ctx.ZONA.direita - x - 30 - 38 - 24 - numW - 8;
+  const ajustes = lista.map((a) => ctx.caber(a.titulo, { fonte: "900 Inter", ls: 0.04, largura: lim - 6, max: 25, min: 18, piso: 16 }));
+  const larg = lista.map((a, i) => { const r = ajustes[i], t = r.linhas[0] ?? ""; return ctx.medir(t, "900 Inter", r.px) + t.length * 0.04 * r.px + 6; });
   ctx.aCada((t) => {
     if (t < lista[0].t || (p.some && t >= p.some)) { raiz.style.opacity = "0"; return; }
     let k = 0; for (let i = 0; i < lista.length; i++) if (t >= lista[i].t) k = i;
@@ -32,7 +35,8 @@ export default function abas(ctx, c) {
     num.textContent = "ABA " + nTxt;
     // rótulo: o novo sobe de baixo
     const e = eo(prog(dt, 0, 0.30));
-    tit.textContent = a.titulo;
+    tit.textContent = ajustes[k].linhas[0] ?? a.titulo;
+    tit.style.fontSize = ajustes[k].px + "px";
     const w0 = k > 0 ? larg[k - 1] : 0;
     caixa.style.width = (w0 + (larg[k] - w0) * e) + "px";
     tit.style.transform = `translateY(${(1 - e) * 58}px)`;

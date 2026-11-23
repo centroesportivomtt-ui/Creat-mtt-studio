@@ -266,7 +266,22 @@
                   "string",
                   "null"
                 ],
-                "description": "Rótulo do falante (MARCOS, RUAN, XANDE, F1, F2...) quando a identificação existir."
+                "description": "Quem fala no trecho. Rotulado pelo provedor de falante (com falante_metodo): marcos | ruan | xande | outro | desconhecido. Sem falante_metodo: rótulo livre da transcrição/legado (MARCOS, F0, F1... da diarização) ou null."
+              },
+              "falante_confianca": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "0-1: certeza do rótulo (em 'desconhecido', certeza de que não é nenhum perfil; 0 = curto, silêncio ou sem voz)."
+              },
+              "falante_metodo": {
+                "enum": [
+                  "voz",
+                  "rosto",
+                  "voz+rosto",
+                  "fixture"
+                ],
+                "description": "Como o rótulo saiu (provedor de falante). Ausente = trecho sem rótulo do provedor."
               },
               "conf": {
                 "type": [
@@ -295,6 +310,25 @@
                   ],
                   "minItems": 4,
                   "maxItems": 4
+                }
+              }
+            },
+            "dependentSchemas": {
+              "falante_metodo": {
+                "required": [
+                  "falante",
+                  "falante_confianca"
+                ],
+                "properties": {
+                  "falante": {
+                    "enum": [
+                      "marcos",
+                      "ruan",
+                      "xande",
+                      "outro",
+                      "desconhecido"
+                    ]
+                  }
                 }
               }
             }
@@ -555,6 +589,46 @@
               }
             }
           }
+        }
+      }
+    },
+    "falante": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provedor"
+      ],
+      "description": "Resumo do provedor de falante nesta análise (ausente com EDITOR_FALANTE=desligado ou sem perfil cadastrado).",
+      "properties": {
+        "provedor": {
+          "type": "string",
+          "description": "voz | fixture | desligado"
+        },
+        "assinatura": {
+          "type": "string",
+          "description": "Perfis + limiares usados (muda -> só o rótulo é refeito)."
+        },
+        "perfis": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Perfis de voz comparados."
+        },
+        "contagem": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "description": "Trechos por rótulo."
+        },
+        "aviso": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Falha do falante (a análise segue sem rótulo)."
         }
       }
     },

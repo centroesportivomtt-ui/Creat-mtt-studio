@@ -43,6 +43,7 @@
      "t0": 0.4,
      "t1": 3.1,
      "falante": "MARCOS",
+     "falante_conf": 0.93,
      "texto": "o pessoal da creat tá aqui",
      "truncado": false,
      "energia": 0.6
