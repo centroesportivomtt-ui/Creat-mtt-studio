@@ -1,9 +1,10 @@
 """fatos: todo número de produto que aparece na tela (legenda ou cartão) tem fonte conferida (regra do dono, 21/11).
-Lê o relatório que a montagem gravou em edl.qa.fatos (motor/etapas/fatos.py). Segura a entrega se sobrar número sem fonte
-ou se a conferência falhou; sem a chave do cérebro só avisa (não dá para conferir, e o QA não inventa fonte).
+Lê o relatório que a montagem gravou em edl.qa.fatos (motor/etapas/fatos.py). Número sem fonte ou conferência que falhou
+vira AVISO bem visível (não trava): o dono usa o editor sozinho e não tem como liberar uma trava sem o Claude (23/11). A
+correção do número errado na tela continua automática.
 O dono libera um número à mão em edl.qa.numeros_confirmados.
 """
-ID, BLOQUEIA = "fatos", True
+ID, BLOQUEIA = "fatos", False
 
 
 def checar(c):
@@ -29,8 +30,8 @@ def checar(c):
         presos = [a["trecho"] for a in rel.get("alegacoes") or [] if chave(a["trecho"]) not in liberados]
         if not presos:
             return {"ok": True, "detalhe": "conferência falhou, mas o dono confirmou à mão todos os números"}
-        return {"ok": False, "bloqueia": True, "valor": {"sem_fonte": presos[:10]},
-                "detalhe": f"número na tela sem fonte ({', '.join(presos[:6])}): {rel.get('motivo')}"}
+        return {"ok": False, "bloqueia": False, "valor": {"sem_fonte": presos[:10]},
+                "detalhe": f"CONFIRA ANTES DE POSTAR: número na tela sem fonte ({', '.join(presos[:6])}): {rel.get('motivo')}"}
     itens = rel.get("itens") or []
     sem = [it for it in itens if it.get("status") == "sem_fonte" and chave(it.get("dito")) not in liberados]
     corr = [it for it in itens if it.get("status") == "corrigido"]
@@ -41,5 +42,5 @@ def checar(c):
     if corr:
         partes.append("corrigido na tela: " + "; ".join(f"{it.get('dito')} → {it.get('correto')} ({it.get('fonte_tipo')})" for it in corr[:4]))
     if sem:
-        partes.append("SEM FONTE (segura a entrega): " + ", ".join(str(it.get("dito")) for it in sem[:6]))
-    return {"ok": not sem, "valor": val, "detalhe": "; ".join(partes)}
+        partes.append("CONFIRA ANTES DE POSTAR, sem fonte: " + ", ".join(str(it.get("dito")) for it in sem[:6]))
+    return {"ok": not sem, "bloqueia": False, "valor": val, "detalhe": "; ".join(partes)}

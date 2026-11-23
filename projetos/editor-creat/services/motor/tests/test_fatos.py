@@ -108,7 +108,7 @@ def test_sem_cerebro_so_avisa_e_falha_da_api_segura(tmp_path, monkeypatch):
     edl = _edl()
     F.revisar(edl, _Cfg(tmp_path), contexto="c")
     r = Q.checar(types.SimpleNamespace(edl=edl))
-    assert r["ok"] is False and r["bloqueia"] is True and "api fora" in r["detalhe"]
+    assert r["ok"] is False and r["bloqueia"] is False and "api fora" in r["detalhe"]      # aviso, não trava (23/11)
 
 
 def test_sem_numero_passa_e_relatorio_vai_no_schema(tmp_path):
