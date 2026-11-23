@@ -24,13 +24,14 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
-VERSAO = "v4"             # entra no hash do catálogo: mudou a régua, o catálogo guardado é refeito
+VERSAO = "v5"             # entra no hash do catálogo: mudou a régua, o catálogo guardado é refeito
 PAUSA_DIVIDE = 0.30      # s entre palavras: aqui o pedaço pode trocar de voz
 MIN_ASSIN = 0.8          # s: pedaço menor que isso não dá assinatura confiável (falante.MIN_S); herda do vizinho
 LIMIAR = 0.42            # cosseno para "mesma voz" (o mesmo de falante.LIMIAR)
 DITADO_JANELA = 40.0     # s: a repetição vem logo depois do ditado
 DITADO_SEMELHANCA = 0.6
 DITADO_OUTRO_ARQUIVO = 90.0   # s: a repetição pode estar no INÍCIO do take seguinte (a apresentadora regrava; dado real 20/11)
+DITADO_PROJETO_H = 3.0        # h: sem repetição por perto, procura no projeto inteiro (take mais à frente, mesmo dia de gravação)
 TOM_CURTA = (0.25, 0.8)        # s: pedaço curto sem assinatura é julgado pela altura da voz
 TOM_LONGE = 0.40              # 40%+ longe da altura da voz principal = outra pessoa (homem x mulher ~80%; pergunta dela sobe 20-30%)
 FUNCAO = frozenset("a o as os e de da do das dos que eu vou te me se um uma no na nos nas em pra para com por ai ta é e ne".split())
@@ -140,6 +141,50 @@ def casa_ditado(a: str, b: str) -> bool:
     return m / min(len(ta), len(tb)) >= DITADO_SEMELHANCA and m / max(len(ta), len(tb)) >= 0.35
 
 
+def _quando(a: dict):
+    """Data de gravação como datetime COM fuso: a do nome do arquivo vem sem fuso (horário da Bahia, -03:00), a do QuickTime
+    com offset e a do creation_time com Z; misturar naive e aware derrubava a etapa (revisão do Crivo, 23/11)."""
+    from datetime import datetime, timedelta, timezone
+    g = (a.get("arquivo") or {}).get("gravado_em")
+    try:
+        d = datetime.fromisoformat(str(g).replace("Z", "+00:00")) if g else None
+    except ValueError:
+        return None
+    if d is not None and d.tzinfo is None:
+        d = d.replace(tzinfo=timezone(timedelta(hours=-3)))
+    return d
+
+
+def _repeticao_no_projeto(k: int, ia: int, p: dict, pedacos: list, grupos: list, quando: dict, conteudos: list) -> int | None:
+    """Repetição do ditado k em OUTRO arquivo do projeto: a mais próxima no tempo (gravada depois, em até 3 h, quando os dois
+    têm data). Pré-calculados uma vez por rótulo: `quando` por arquivo e o conjunto de palavras de conteúdo por pedaço."""
+    if len(conteudos[k]) < 2:
+        return None
+    qk = quando.get(ia)
+    melhor, melhor_dt = None, None
+    for j, (ja, _, q) in enumerate(pedacos):
+        if ja == ia or grupos[j] < 0 or grupos[j] == grupos[k] or len(conteudos[k] & conteudos[j]) < 2:
+            continue
+        qj = quando.get(ja)
+        dt = None
+        if qk is not None and qj is not None:
+            dt = (qj - qk).total_seconds()
+            if dt < 0 or dt > DITADO_PROJETO_H * 3600:
+                continue
+        texto, fim = q["texto"], q["e"]
+        for m in range(j + 1, min(len(pedacos), j + 3)):
+            ma, _, r = pedacos[m]
+            if ma != ja or grupos[m] != grupos[j] or r["s"] - fim > 1.5:
+                break
+            texto, fim = texto + " " + r["texto"], r["e"]
+        if casa_ditado(p["texto"], texto):
+            if dt is None:
+                return j                                      # sem data: a primeira que casa
+            if melhor_dt is None or dt < melhor_dt:
+                melhor, melhor_dt = j, dt
+    return melhor
+
+
 def rotular(analises: list[dict], audio_de, assinador=None, cfg=None) -> list[dict]:
     """Devolve CÓPIAS das análises com os segmentos divididos e rotulados: seg["voz"] = "A" (principal), "B", ...; e, no
     ditado, seg["ditado"] = {"s": início do pedaço da repetição}. `audio_de(analise) -> (x float32 mono 16 kHz, offset s)`.
@@ -220,7 +265,9 @@ def rotular(analises: list[dict], audio_de, assinador=None, cfg=None) -> list[di
     def janela(ja, de, ate):
         i0, i1 = bisect.bisect_left(inicios[ja], de), bisect.bisect_right(inicios[ja], ate)
         return [j for _, j in por_arq[ja][i0:i1]]
-    pares = []
+    pares, longe = [], []
+    quando = {i: _quando(a) for i, a in enumerate(analises)}
+    conteudos = [{w for w in _tokens(q["texto"]) if w not in FUNCAO} for _, _, q in pedacos]
     for k, (ia, _, p) in enumerate(pedacos):
         if grupos[k] < 0 or len(_tokens(p["texto"])) < 4:
             continue
@@ -240,6 +287,13 @@ def rotular(analises: list[dict], audio_de, assinador=None, cfg=None) -> list[di
             if casa_ditado(p["texto"], texto):
                 pares.append((k, j))
                 break
+        else:
+            # 23/11 (cerveja, dado da sessão da Lavínia): o ditado em a003 e a repetição em a005, fora da janela dos 2 takes
+            # seguintes. Sem par por perto, procura no PROJETO inteiro. Esses pares de longe NÃO decidem quem é a voz principal
+            # (um retake da própria apresentadora em outro grupo viraria "ditado"); só valem depois, de B para A.
+            j = _repeticao_no_projeto(k, ia, p, pedacos, grupos, quando, conteudos)
+            if j is not None:
+                longe.append((k, j))
     # voz principal: quem mais REPETE ditados (a apresentadora); sem ditado, quem fala mais tempo
     repete: dict[int, int] = {}
     for _, j in pares:
@@ -256,7 +310,7 @@ def rotular(analises: list[dict], audio_de, assinador=None, cfg=None) -> list[di
         for (_, _, p), tm in zip(pedacos, tons):
             if p["voz"] is None and tm and abs(tm / ref - 1.0) >= TOM_LONGE:      # só quem ficou sem assinatura
                 p["voz"] = "B"
-    for k, j in pares:
+    for k, j in pares + [(k, j) for k, j in longe if pedacos[k][2].get("voz") == "B"]:
         if pedacos[j][2].get("voz") == "A":                     # só vale ditado que a voz principal repete
             pedacos[k][2]["ditado"] = {"s": pedacos[j][2]["s"], "arquivo": analises[pedacos[j][0]]["arquivo"]["id"]}
     return novas

@@ -239,6 +239,55 @@ def test_ditado_com_repeticao_no_take_seguinte_e_rotulos_A_B(dados, tmp_path, mo
     assert f"DITADO→{f2[0]['id']}" in txt and validar.erros("catalogo", cat) == []
 
 
+def test_ditado_com_repeticao_tres_takes_depois(dados, tmp_path, monkeypatch):
+    """23/11: no material real a repetição ficou em a005 e o ditado em a003, fora da janela dos 2 takes seguintes. A busca no
+    projeto inteiro acha (mesmo cenário do teste acima, com 2 takes falados no meio).
+    Cenário: o Ruan dita no take c1220 ("Agora vem comigo que eu vou te mostrar as menos calorias aqui do
+    Super") e a Lavínia regrava no take SEGUINTE com outras palavras ("Vem comigo que hoje irei te mostrar as que tem menos
+    calorias"). A equipe aparece com vozes diferentes (outro grupo) e falas curtas ("Valeu!"): tudo vira B."""
+    import soundfile as sf
+    from b_sintetico import analise
+    from motor import config
+    from motor.etapas import catalogo, falante
+    monkeypatch.setattr(falante, "Assinador", AssinadorPorTom)
+    sr = 16000
+    dit = "agora vem comigo que eu vou te mostrar as menos calorias aqui do super"
+    rep = "vem comigo que hoje irei te mostrar as que tem menos calorias"
+    abertura = "quer tomar uma cerveja e nao quer sair da dieta entao presta atencao"
+
+    def take(aid, nome, trechos, dur):
+        x = (0.0005 * np.random.default_rng(len(aid)).standard_normal(int(dur * sr))).astype(np.float32)
+        segs = []
+        for s0, texto, f0 in trechos:
+            v = _voz(len(texto.split()) * 0.3, f0)
+            x[int(s0 * sr):int(s0 * sr) + len(v)] += v
+            p = _palavras(texto, s0)
+            segs.append({"s": p[0][0], "e": p[-1][1], "texto": texto, "falante": None, "conf": 0.9, "palavras": p})
+        a = analise(aid=aid, nome=nome, dur=dur, falante=None)
+        a["transcricao"]["segmentos"] = segs
+        a["visao"]["momentos"] = []
+        a["arquivo"]["chave"] = f"entrada/p_t/{aid}.wav"
+        a["arquivo"]["gravado_em"] = f"2026-11-18T10:0{int(aid[-1])}:00-03:00"
+        sf.write(tmp_path / f"{aid}.wav", x, sr)
+        return a
+    a1 = take("a001", "c1220.mov", [(0.3, abertura, 255), (5.0, dit, 140), (10.0, "valeu", 140)], 12.0)
+    a2 = take("a002", "c1221.mov", [(1.0, "olha essa gondola cheia de promocao hoje", 258)], 6.0)
+    a3 = take("a003", "c1222.mov", [(1.0, "corta ai que o som ficou ruim de novo", 140)], 6.0)
+    a4 = take("a004", "c1223.mov", [(3.6, rep, 258)], 9.0)
+
+    class Arm:
+        def caminho_local(self, chave):
+            return tmp_path / chave.rsplit("/", 1)[1]
+    cat, txt = catalogo.montar([a1, a2, a3, a4], {"texto": "cerveja"}, "p_t", armazenamento=Arm(), cfg=config.carregar())
+    f1, f2 = cat["clipes"][0]["falas"], cat["clipes"][3]["falas"]
+    ditado = next(f for f in f1 if "agora vem comigo" in f["texto"])
+    assert ditado["voz"] == "B" and ditado["ditado"] == f2[0]["id"] and f2[0]["voz"] == "A"
+    assert {f.get("voz") for f in f1 + f2} <= {"A", "B"}                     # sem C, D...: A ou "outra pessoa"
+    valeu = next(f for f in f1 if f["texto"] == "valeu")
+    assert valeu["voz"] == "B"                                                 # curto demais para assinatura: a altura diz
+    assert f"DITADO→{f2[0]['id']}" in txt and validar.erros("catalogo", cat) == []
+
+
 def test_casa_ditado():
     from motor.etapas.vozes import casa_ditado
     assert casa_ditado("Agora vem comigo que eu vou te mostrar as menos calorias aqui do Super",
@@ -304,3 +353,29 @@ def test_sem_data_nao_cruza_arquivos(dados, tmp_path, monkeypatch):
     a1["arquivo"]["gravado_em"], a2["arquivo"]["gravado_em"] = "2026-11-18T10:00:00-03:00", "2026-11-18T10:01:00-03:00"
     novas = vozes.rotular([a1, a2], lambda a: (aud[a["arquivo"]["id"]], 0.0), assinador=AssinadorPorTom())
     assert novas[0]["transcricao"]["segmentos"][0]["ditado"] == {"s": 1.0, "arquivo": "a002"}
+
+
+def test_datas_mistas_com_e_sem_fuso_nao_derrubam():
+    from motor.etapas.vozes import _quando
+    a = _quando({"arquivo": {"gravado_em": "2026-11-18T10:05:00"}})           # do nome do arquivo: sem fuso (Bahia)
+    b = _quando({"arquivo": {"gravado_em": "2026-11-18T13:06:00Z"}})          # creation_time
+    c = _quando({"arquivo": {"gravado_em": "2026-11-18T10:07:00-03:00"}})     # QuickTime
+    assert (b - a).total_seconds() == 60 and (c - a).total_seconds() == 120
+    assert _quando({"arquivo": {"gravado_em": "ontem"}}) is None
+
+
+def test_projeto_inteiro_respeita_janela_e_ordem_e_pega_a_mais_proxima():
+    from motor.etapas.vozes import _quando, _repeticao_no_projeto, _tokens, FUNCAO
+    dit = "agora vem comigo que eu vou te mostrar as menos calorias aqui do super"
+    rep = "vem comigo que hoje irei te mostrar as que tem menos calorias"
+    datas = ["2026-11-18T10:00:00-03:00", "2026-11-18T09:00:00-03:00", "2026-11-18T14:30:00-03:00",
+             "2026-11-18T11:00:00-03:00", "2026-11-18T10:20:00-03:00"]
+    analises = [{"arquivo": {"gravado_em": d}} for d in datas]
+    pedacos = [(0, 0, {"texto": dit, "s": 0, "e": 3})] + [(i, 0, {"texto": rep, "s": 0, "e": 3}) for i in range(1, 5)]
+    grupos = [1, 0, 0, 0, 0]
+    quando = {i: _quando(a) for i, a in enumerate(analises)}
+    conteudos = [{w for w in _tokens(q["texto"]) if w not in FUNCAO} for _, _, q in pedacos]
+    # a1 é ANTES do ditado, a2 passa das 3 h; a3 (1 h depois) e a4 (20 min depois) valem: fica a mais próxima, a4
+    assert _repeticao_no_projeto(0, 0, pedacos[0][2], pedacos, grupos, quando, conteudos) == 4
+    grupos = [0, 0, 0, 0, 0]                                     # mesma voz dos dois lados: retake, não ditado
+    assert _repeticao_no_projeto(0, 0, pedacos[0][2], pedacos, grupos, quando, conteudos) is None
