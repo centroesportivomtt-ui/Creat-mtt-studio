@@ -12,6 +12,13 @@ type Item = {
 };
 type Pendente = { nome: string; tamanho: number; fracao: number | null; storageKey: string; url: string };
 
+// No celular a parte é menor (16 MB): se o iPhone corta a conexão (tela bloqueada, troca de app, 4G oscilando),
+// perde no máximo 16 MB em vez de 64 e retoma logo. Computador segue com EDITOR_ENVIO_PARTE_MB.
+function tamanhoParte(parteMB: number): number {
+  const celular = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+  return celular ? Math.min(parteMB, 16) : parteMB;
+}
+
 const impressao = (projeto: string, f: File) => ['ec', projeto, f.name, f.size, f.lastModified].join('|');
 
 async function offsetRemoto(url: string): Promise<number | null> {
@@ -73,7 +80,7 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
     setItens((l) => [{ chave, nome: arquivo.name, tamanho: arquivo.size, enviados: 0, estado: 'preparando', retomadoDe: null, velocidade: 0, mensagem: 'Preparando…' }, ...l]);
     const upload = new tus.Upload(arquivo, {
       endpoint: '/api/envio',
-      chunkSize: parteMB * 1024 * 1024,
+      chunkSize: tamanhoParte(parteMB) * 1024 * 1024,
       retryDelays: [0, 1000, 3000, 5000, 10000, 20000, 30000, 60000],
       metadata: { projeto, nome: arquivo.name, filetype: arquivo.type || 'application/octet-stream' },
       fingerprint: async (f) => impressao(projeto, f as File),
@@ -132,9 +139,30 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
     setPendentes((p) => p.filter((x) => !(x.nome === arquivo.name && x.tamanho === arquivo.size)));
   }, [projeto, parteMB, atualizar, aoConcluir, carregarPendentes]);
 
+  const [aviso, setAviso] = useState('');
+  // Entre tocar em "Escolher" e o seletor devolver os vídeos, o iPhone prepara/baixa cada um (do app Dropbox ou da
+  // galeria) e a página fica parada: sem este aviso parece que "o botão não vai para lugar nenhum".
+  const [esperandoSeletor, setEsperandoSeletor] = useState(false);
+  useEffect(() => {
+    const el = entrada.current;
+    if (!el) return;
+    const cancelou = () => setEsperandoSeletor(false);
+    el.addEventListener('cancel', cancelou);
+    return () => el.removeEventListener('cancel', cancelou);
+  }, []);
+  // Safari antigo não avisa quando a pessoa cancela: o aviso some sozinho em 3 min
+  useEffect(() => {
+    if (!esperandoSeletor) return;
+    const t = window.setTimeout(() => setEsperandoSeletor(false), 180_000);
+    return () => window.clearTimeout(t);
+  }, [esperandoSeletor]);
   const escolher = (lista: FileList | null) => {
-    if (!lista) return;
-    for (const f of Array.from(lista)) void comecar(f);
+    setEsperandoSeletor(false);
+    const arquivos = lista ? Array.from(lista) : [];
+    // o seletor do iPhone com arquivos do app Dropbox pode voltar VAZIO (ele precisa baixar os vídeos antes e às vezes desiste)
+    setAviso(arquivos.length ? '' : 'Nenhum arquivo chegou do seletor. Vídeos do app Dropbox: o celular baixa tudo antes de entregar, '
+      + 'e com vídeo grande isso pode falhar. Mais rápido: cole aqui embaixo o link do Dropbox (da pasta ou dos vídeos).');
+    for (const f of arquivos) void comecar(f);
     if (entrada.current) entrada.current.value = '';
   };
 
@@ -156,9 +184,18 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
           Escolher arquivos
           <input ref={entrada} className="so-leitor" type="file" multiple disabled={!aberto}
             accept="video/*,audio/*,image/*,.mov,.mp4,.mts,.m4a,.wav,.zip,.pdf"
+            onClick={() => setEsperandoSeletor(true)}
             onChange={(e) => escolher(e.currentTarget.files)} data-teste="entrada-arquivo" />
         </label>
+        {esperandoSeletor && (
+          <p className="aviso" role="status" data-teste="envio-esperando">
+            Escolheu? Se o celular mostrar &quot;Preparando&quot; ou &quot;Baixando&quot;, espere nesta tela: ele está pegando os vídeos
+            (do app Dropbox pode levar alguns minutos). O envio começa sozinho.
+          </p>
+        )}
         {!aberto && <p className="aviso">O envio foi fechado: este projeto já está sendo editado.</p>}
+        {aviso && <p className="erro" role="alert" data-teste="envio-aviso">{aviso}</p>}
+        <p className="aviso" style={{ fontSize: 13 }}>Vídeos que estão no Dropbox: em vez de escolher pelo seletor, cole o link (abaixo). O servidor baixa direto, sem passar pelo celular.</p>
       </div>
 
       {pendentes.length > 0 && (

@@ -20,9 +20,10 @@ import time
 
 import numpy as np
 
+from motor.etapas import cor as CR
 from motor.etapas.montagem.comum import FPS_PADRAO, H_PADRAO, W_PADRAO, Fontes, hash_obj, interp_kf, meta, quadro
 
-VERSAO = "p4"
+VERSAO = "p5"
 
 # ganho r,g,b; gama; contraste em S; saturação; ponto preto  (V2 calibrado em 17/11 + equivalentes dos looks do V1)
 COR = {
@@ -147,19 +148,24 @@ def vinheta(img):
 
 
 def desfoca(img, caixas: list):
+    """Caixas [x0, y0, x1, y1] normalizadas da saída, com um 5o valor opcional: o desfoque (sigma) em px do quadro de 1080
+    de largura (padrão 16). Caixas com sigmas diferentes são desfocadas cada uma com o seu."""
     cv2 = _cv2()
     h, w = img.shape[:2]
-    mask = np.zeros((h, w), np.float32)
-    for x0, y0, x1, y1 in caixas:
+    por_sigma: dict = {}
+    for cx in caixas:
+        x0, y0, x1, y1 = cx[:4]
+        sig = float(cx[4]) * w / 1080 if len(cx) > 4 and cx[4] else 16.0   # sem o 5o valor: o de sempre (16 px)
         a, b = int(max(0, min(x0, x1)) * w), int(max(0, min(y0, y1)) * h)
         c, d = int(min(1, max(x0, x1)) * w), int(min(1, max(y0, y1)) * h)
         if c > a and d > b:
-            mask[b:d, a:c] = 1.0
-    if mask.max() == 0:
-        return img
-    mask = cv2.GaussianBlur(mask, (0, 0), 9)[:, :, None]
-    bl = cv2.GaussianBlur(img, (0, 0), 16)
-    return (img * (1 - mask) + bl * mask).astype(np.uint8)
+            por_sigma.setdefault(sig, np.zeros((h, w), np.float32))[b:d, a:c] = 1.0
+    out = img
+    for sig, mask in por_sigma.items():
+        mask = cv2.GaussianBlur(mask, (0, 0), 9)[:, :, None]
+        bl = cv2.GaussianBlur(out, (0, 0), max(0.5, sig))
+        out = (out * (1 - mask) + bl * mask).astype(np.uint8)
+    return out
 
 
 # ---------------------------------------------------------------- plano
@@ -167,6 +173,28 @@ def tempos_fonte(p: dict, nf: int, fps: float) -> np.ndarray:
     if p.get("rampa"):
         return np.array([interp_kf(p["rampa"], k / max(1, nf - 1))[0] for k in range(nf)])
     return p["s0"] + np.arange(nf) / fps * float(p.get("vel", 1.0) or 1.0)
+
+
+def camera_lenta(p: dict) -> bool:
+    """Plano em câmera lenta (vel < 0,95, sem rampa): os quadros vizinhos da fonte são misturados, em vez de repetidos."""
+    return (not p.get("rampa")) and float(p.get("vel", 1.0) or 1.0) < 0.95
+
+
+def indices_de_quadro(ts: np.ndarray, inicio: float, fps_fonte: float, nb: int, lento: bool = False) -> tuple[np.ndarray, np.ndarray]:
+    """Função pura: tempos da fonte de cada quadro do filme (`ts`, s) -> (índice do quadro da fonte, fração para o seguinte).
+
+    `inicio` = offset da fonte + início do vídeo no arquivo; `nb` = quadros na fonte. NÃO usar np.round: ele arredonda meio
+    para o par, e um plano que começa em "meio quadro" (s0 = 0,15 s numa fonte de 30 fps dá 4,5) saía 4, 6, 6, 8, 8... = um
+    quadro repetido a cada dois, 15 fps aos trancos (achado da auditoria do Super Kal, 19/11). Aqui o meio sobe sempre.
+    Em câmera lenta (`lento`) o índice é o de baixo e a fração diz quanto misturar do quadro seguinte; fora dela a fração é 0."""
+    pos = (np.asarray(ts, float) - inicio) * fps_fonte
+    if lento:
+        idx = np.clip(np.floor(pos + 1e-4).astype(int), 0, max(0, nb - 1))
+        frac = np.clip(pos - np.floor(pos + 1e-4), 0.0, 1.0)
+    else:
+        idx = np.clip(np.floor(pos + 0.5 + 1e-4).astype(int), 0, max(0, nb - 1))
+        frac = np.zeros(len(idx))
+    return idx, frac
 
 
 def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: int = 5) -> dict:
@@ -186,7 +214,8 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
     if nf <= 0:
         raise RuntimeError(f"plano {p['id']} sem quadros")
     ts = tempos_fonte(p, nf, FPS)
-    idx = np.clip(np.round((ts - offset - m.start) * m.fps).astype(int), 0, max(0, m.nb - 1))
+    lento = camera_lenta(p)
+    idx, frac = indices_de_quadro(ts, offset + m.start, m.fps, m.nb, lento)
     kf = p.get("enquadre") or [[0, 1.0, 0.5, 0.5], [1, 1.03, 0.5, 0.5]]
     kf = [k if len(k) == 4 else [k[0], k[1], 0.5, 0.5] for k in kf]
     if m.w / m.h > W / H:                                   # janela base 9:16 dentro da fonte (zoom 1)
@@ -222,8 +251,8 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
     # 1) decodificação única + trajetória (px da fonte) + buffer
     pad = 12 if medir else 0
     a0 = max(0, int(idx.min()) - pad)
-    b0 = min(max(0, m.nb - 1), int(idx.max()) + pad)
-    precisa = set(int(i) for i in idx)
+    b0 = min(max(0, m.nb - 1), int(idx.max()) + pad + (1 if lento else 0))
+    precisa = set(int(i) for i in idx) | (set(int(i) + 1 for i in idx) if lento else set())
     cru = (b0 - a0 + 1) * ww * wh * 3 <= float(os.environ.get("EDITOR_PLANO_RAM_MB", "1500")) * 1e6
     buf: dict = {}
     gw = 360
@@ -286,6 +315,15 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
     tremores = [(u * dur_p, du, f) for u, du, f in p.get("tremor", []) or []]
     caixas = p.get("desfocar") or []
     cor = p.get("cor", "neutro")
+    bal = p.get("balanco")
+    if _look_novo(p):                                        # biblioteca nova: balanço da cena + look + pele protegida
+        colorir = lambda img: CR.aplicar(img, cor, bal)      # noqa: E731
+    elif bal:                                                # look da tabela antiga com primárias medidas
+        colorir = lambda img: grade(CR.aplicar_balanco(img, bal), cor)  # noqa: E731
+    else:
+        colorir = lambda img: grade(img, cor)                # noqa: E731
+    k_meio = nf // 2
+    antes_depois = None
     mblur = bool(p.get("mblur"))
     tmp = saida + ".tmp.mp4"
     enc = subprocess.Popen((["nice", "-n", str(nice)] if nice else []) + [
@@ -305,6 +343,8 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
     for k in range(nf):
         n = int(idx[k])
         fr = pega(n)
+        if lento and frac[k] > 0.02:                        # câmera lenta: mistura com o quadro seguinte
+            fr = cv2.addWeighted(fr, float(1 - frac[k]), pega(n + 1), float(frac[k]), 0)
         base = cv2.addWeighted(ant, 0.5, fr, 0.5, 0) if (mblur and ant is not None) else fr
         ant = fr
         u = k / max(1, nf - 1)
@@ -330,9 +370,12 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
         o = cv2.warpAffine(base, np.hstack([A, b[:, None]]), (W, H), flags=interp | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
         if caixas:
             o = desfoca(o, caixas)
-        o = grade(o, cor)
+        antes = o if k == k_meio else None
+        o = colorir(o)
         bl = cv2.GaussianBlur(o, (0, 0), 1.0)
         o = vinheta(cv2.addWeighted(o, 1.18, bl, -0.18, 0))
+        if antes is not None:
+            antes_depois = (antes, o.copy())
         for t0_, du, f in flashes:
             if t0_ <= tt < t0_ + du:
                 e = f * (1 - (tt - t0_) / du) ** 1.5
@@ -343,6 +386,11 @@ def render_plano(p: dict, arq: str, offset: float, saida: str, fmt: dict, nice: 
     if enc.wait() != 0:
         raise RuntimeError(f"plano {p['id']}: encode falhou: {err[-500:]}")
     os.replace(tmp, saida)
+    if antes_depois is not None:
+        try:                                                # é só revisão: falha aqui nunca derruba o plano pronto
+            info["cor"] = gravar_antes_depois(saida, p, *antes_depois)
+        except Exception as e:  # noqa: BLE001
+            info["aviso_cor"] = f"{type(e).__name__}: {e}"
     info["ms_quadro"] = round((time.time() - t_ini) * 1000 / nf, 1)
     info["janela_trabalho"] = [ww, wh]
     info["buffer"] = "cru" if cru else "jpeg"
@@ -355,7 +403,52 @@ def chave_plano(p: dict, assinatura: list, fmt: dict) -> str:
     q = {k: v for k, v in p.items() if k not in ("bloco", "som_direto_db", "janela")}
     q["t1"] = round(p["t1"] - p["t0"], 4)
     q.pop("t0", None)
-    return hash_obj(q, assinatura, fmt, COR.get(p.get("cor", "neutro"), COR["neutro"]), VERSAO)
+    cor = p.get("cor", "neutro")
+    if _look_novo(p) or p.get("balanco"):
+        return hash_obj(q, assinatura, fmt, CR.LOOKS[cor] if _look_novo(p) else COR.get(cor, COR["neutro"]), CR.VERSAO, VERSAO)
+    return hash_obj(q, assinatura, fmt, COR.get(cor, COR["neutro"]), VERSAO)
+
+
+def _look_novo(p: dict) -> bool:
+    """Look da biblioteca nova. 'neutro' e 'palco' existem também na tabela antiga: sem balanço medido, o plano é de
+    EDL antigo e continua no caminho (e na chave de cache) de antes."""
+    cor = p.get("cor", "neutro")
+    return cor in CR.LOOKS and (cor not in COR or bool(p.get("balanco")))
+
+
+def gravar_antes_depois(saida: str, p: dict, antes, depois) -> dict:
+    """Quadro do meio do plano antes e depois da cor (540x960) + medição dos dois, ao lado do clipe no cache."""
+    cv2 = _cv2()
+    base = saida[:-4] if saida.endswith(".mp4") else saida
+    for nome, img in (("antes", antes), ("depois", depois)):
+        peq = cv2.resize(img, (img.shape[1] // 2, img.shape[0] // 2), interpolation=cv2.INTER_AREA)
+        tmp = f"{base}.{nome}.{os.getpid()}.tmp.jpg"
+        if not cv2.imwrite(tmp, peq, [cv2.IMWRITE_JPEG_QUALITY, 86]):
+            raise OSError(f"não gravou {nome}.jpg")
+        os.replace(tmp, f"{base}.{nome}.jpg")
+    m_a, m_d = CR.medir(antes), CR.medir(depois)
+    info = {"look": p.get("cor", "neutro"), "look_nome": (CR.LOOKS.get(p.get("cor", "")) or {}).get("nome", p.get("cor", "neutro")),
+            "balanco": p.get("balanco"), "antes": m_a, "depois": m_d, "versao": CR.VERSAO}
+    import json
+    tmp = pathlib.Path(f"{base}.cor.{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, f"{base}.cor.json")
+    return info
+
+
+def ler_antes_depois(arquivo: str) -> dict | None:
+    """Sidecar de cor de um clipe do cache (existe para clipes renderizados desde a cor c1)."""
+    import json
+    base = arquivo[:-4] if arquivo.endswith(".mp4") else arquivo
+    j = pathlib.Path(f"{base}.cor.json")
+    if not j.exists() or not pathlib.Path(f"{base}.antes.jpg").exists() or not pathlib.Path(f"{base}.depois.jpg").exists():
+        return None
+    try:
+        info = json.loads(j.read_text(encoding="utf-8"))
+    except ValueError:
+        return None
+    info["antes_jpg"], info["depois_jpg"] = f"{base}.antes.jpg", f"{base}.depois.jpg"
+    return info
 
 
 def _trabalho(args):
@@ -422,6 +515,8 @@ def limpar_cache(cache: pathlib.Path, limite_mb: int) -> int:
         p = arqs.pop(0)
         s = p.stat().st_size
         p.unlink(missing_ok=True)
+        for extra in (".antes.jpg", ".depois.jpg", ".cor.json"):
+            p.with_name(p.stem + extra).unlink(missing_ok=True)
         total -= s
         apagado += s
     return apagado

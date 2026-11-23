@@ -23,7 +23,10 @@ def test_cai_para_texto_quando_gramatica_e_grande(monkeypatch):
         chamadas.append(estrito)
         if estrito:
             req = anthropic._models.FinalRequestOptions.construct(method="post", url="/v1/messages") if hasattr(anthropic, "_models") else None
-            import httpx
+            try:
+                import httpx
+            except ModuleNotFoundError:      # versões novas do SDK usam httpx2
+                import httpx2 as httpx
             resp = httpx.Response(400, request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"))
             raise anthropic.BadRequestError("The compiled grammar is too large", response=resp, body=None)
         return "{}", {}

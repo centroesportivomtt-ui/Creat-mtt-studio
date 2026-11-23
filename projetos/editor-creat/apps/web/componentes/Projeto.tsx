@@ -1,5 +1,7 @@
 'use client';
 // Mesa do projeto: material, pedido, status ao vivo (SSE do motor pelo proxy), relógio dos 30 minutos e versões.
+import Cor from '@/componentes/Cor';
+import LinkCliente from '@/componentes/LinkCliente';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Envio from './Envio';
 import {
@@ -38,7 +40,7 @@ function classeVersao(estado: string): string {
 const NOME_CHECAGEM: Record<string, string> = {
   frase_repetida: 'frase repetida', tom_sala_sem_voz: 'tom de sala', logo_100: 'logo a 100%', lufs: 'LUFS', true_peak: 'pico',
   quadros_pretos: 'quadro preto', legenda_x_fala: 'legenda x fala', zona_segura: 'zona segura', legenda_sobre_rosto: 'legenda x rosto',
-  formato: 'formato', duracao: 'duração', sincronia: 'sincronia', telas_desfocadas: 'telas', regra_memoria: 'regras da casa',
+  formato: 'formato', duracao: 'duração', sincronia: 'sincronia', telas_desfocadas: 'telas', regra_memoria: 'regras da casa', cor_medida: 'cor', fala_cortada: 'fim das falas', voz_externa: 'voz de fora', cobertura_sintonia: 'cobertura em sintonia', fatos: 'fatos conferidos', olho_ia: 'olho de IA',
 };
 
 export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parteMB: number }) {
@@ -81,7 +83,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       }
       if (['arquivo_recebido', 'etapa_fim', 'estado', 'versao_pronta', 'entregue', 'qa_reprovado', 'etapa_erro'].includes(e.tipo)) recarregar();
     };
-    for (const t of ['projeto_criado', 'arquivo_recebido', 'etapa_inicio', 'etapa_progresso', 'etapa_fim', 'etapa_erro', 'estado', 'versao_pronta', 'qa_reprovado', 'entregue', 'message']) {
+    for (const t of ['projeto_criado', 'arquivo_recebido', 'etapa_inicio', 'etapa_progresso', 'etapa_fim', 'etapa_erro', 'estado', 'versao_pronta', 'qa_reprovado', 'entregue', 'cliente', 'message']) {
       fonte.addEventListener(t, receber as EventListener);
     }
     fonte.onopen = () => setConectado(true);
@@ -169,7 +171,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
             {aberto ? (
               <>
                 <Envio projeto={p.id} parteMB={parteMB} aberto={aberto} aoConcluir={recarregar} />
-                <Importar aberto={aberto} aoImportar={(url) => postar('/importar', { url })} />
+                <Importar aberto={aberto} projeto={p.id} aoTerminar={recarregar} />
               </>
             ) : (
               <p className="material-fechado">Envio fechado: o editor está trabalhando com este material. Material novo entra numa nova versão.</p>
@@ -255,7 +257,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
             )}
             {versoes.length > 0 && (
               <ul className="versoes">
-                {versoes.map((v) => <LinhaVersao key={v.id} v={v} aprovada={Boolean(p.dados?.aprovadas?.[v.id])} aoAprovar={() => postar(`/versoes/${v.id}/aprovar`, {})} aoReprovar={(motivo) => postar(`/versoes/${v.id}/reprovar`, { motivo })} />)}
+                {versoes.map((v) => <LinhaVersao key={v.id} pid={p.id} v={v} aprovada={Boolean(p.dados?.aprovadas?.[v.id])} aoAprovar={() => postar(`/versoes/${v.id}/aprovar`, {})} aoReprovar={(motivo) => postar(`/versoes/${v.id}/reprovar`, { motivo })} />)}
               </ul>
             )}
           </section>
@@ -274,21 +276,86 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   );
 }
 
-function Importar({ aberto, aoImportar }: { aberto: boolean; aoImportar: (url: string) => Promise<unknown> }) {
-  const [url, setUrl] = useState('');
+// Links do Dropbox ou do Drive: um ou VÁRIOS de uma vez (o dono compartilha 4 vídeos e cola os 4 links juntos). Cada link entra
+// na fila do motor; o resultado aparece aqui mesmo, embaixo do botão (no celular o topo da página fica fora da vista).
+export function extrairLinks(texto: string): string[] {
+  const achados = texto.match(/https:\/\/[^\s<>"'”“]+/g) ?? [];
+  return [...new Set(achados.map((u) => u.replace(/[),.;!?]+$/, '')))].slice(0, 30);
+}
+
+// nome curto do link para a mensagem: o arquivo do caminho (C0016.MP4) ou o site
+function rotuloLink(url: string): string {
+  try {
+    const u = new URL(url);
+    const ultimo = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() ?? '');
+    return /\.[a-z0-9]{2,4}$/i.test(ultimo) ? ultimo.slice(0, 40) : `${u.hostname}${u.pathname}`.slice(0, 40);
+  } catch {
+    return url.slice(0, 40);
+  }
+}
+
+function Importar({ aberto, projeto, aoTerminar }: { aberto: boolean; projeto: string; aoTerminar: () => void }) {
+  const [texto, setTexto] = useState('');
   const [indo, setIndo] = useState(false);
+  const [resultado, setResultado] = useState<{ ok: number; erros: string[]; avisos: string[] } | null>(null);
+  const links = extrairLinks(texto);
   return (
-    <form className="importar" onSubmit={async (e) => {
+    <form className="importar" noValidate data-teste="importar" onSubmit={async (e) => {
       e.preventDefault();
-      if (!url.trim()) return;
-      setIndo(true);
-      if (await aoImportar(url.trim())) setUrl('');
+      if (!links.length) { setResultado({ ok: 0, erros: ['Não achei nenhum link https no que foi colado.'], avisos: [] }); return; }
+      setIndo(true); setResultado(null);
+      let ok = 0;
+      // o motor confere cada link na hora; o mesmo motivo (ex.: link restrito da equipe) aparece UMA vez, com quantos links tem
+      const porMotivo = new Map<string, string[]>();
+      const falhar = (url: string, motivo: string) => porMotivo.set(motivo, [...(porMotivo.get(motivo) ?? []), rotuloLink(url)]);
+      const avisos = new Set<string>();
+      const um = async (url: string) => {
+        let host = '';
+        try { host = new URL(url).hostname.toLowerCase(); } catch { /* inválido */ }
+        if (!/(^|\.)(dropbox\.com|dropboxusercontent\.com|drive\.google\.com|docs\.google\.com)$/.test(host)) {
+          falhar(url, 'não é link do Dropbox nem do Google Drive.');
+          return;
+        }
+        try {
+          const r = await fetch(`/api/motor/v1/projetos/${projeto}/importar`, {
+            method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }),
+          });
+          if (r.status === 401) { saiu = true; return; }
+          const c = await r.json().catch(() => null);
+          if (r.ok) { ok += 1; if (typeof c?.aviso === 'string') avisos.add(c.aviso); }
+          else falhar(url, typeof c?.detail === 'string' ? c.detail : `O motor recusou (erro ${r.status}).`);
+        } catch {
+          falhar(url, 'sem conexão com o editor agora. Confira a internet e toque em Importar de novo.');
+        }
+      };
+      // o motor confere cada link na hora (até ~15 s cada): 4 de cada vez, para 30 links não virarem minutos de espera
+      let saiu = false;
+      const fila = [...links];
+      await Promise.all(Array.from({ length: Math.min(4, fila.length) }, async () => {
+        for (let u = fila.shift(); u !== undefined && !saiu; u = fila.shift()) await um(u);
+      }));
+      if (saiu) { window.location.assign('/entrar'); return; }
       setIndo(false);
+      const erros = [...porMotivo].map(([m, quais]) => {
+        const nomes = quais.slice(0, 3).join(', ') + (quais.length > 3 ? ` e mais ${quais.length - 3}` : '');
+        return links.length > 1 ? `${quais.length} de ${links.length} links (${nomes}): ${m}` : `${nomes}: ${m}`;
+      });
+      setResultado({ ok, erros, avisos: [...avisos] });
+      if (ok) { setTexto(''); aoTerminar(); }
     }}>
-      <label className="so-leitor" htmlFor="link-importar">Link compartilhado do Dropbox ou do Drive</label>
-      <input id="link-importar" className="entrada" type="url" inputMode="url" placeholder="Ou cole um link do Dropbox / Drive"
-        value={url} onChange={(e) => setUrl(e.target.value)} disabled={!aberto} />
-      <button className="botao botao--fantasma" type="submit" disabled={!aberto || indo || !url.trim()}>{indo ? 'Indo…' : 'Importar'}</button>
+      <label className="so-leitor" htmlFor="link-importar">Links compartilhados do Dropbox ou do Drive</label>
+      <textarea id="link-importar" className="entrada" rows={2} inputMode="url" placeholder="Ou cole links do Dropbox / Drive (um ou vários; link de pasta também vale)"
+        value={texto} onChange={(e) => setTexto(e.target.value)} disabled={!aberto} data-teste="importar-links" style={{ resize: 'vertical', minHeight: 48 }} />
+      <button className="botao botao--fantasma" type="submit" disabled={!aberto || indo || !texto.trim()} data-teste="importar-enviar">
+        {indo ? 'Conferindo o link…' : links.length > 1 ? `Importar ${links.length} links` : 'Importar'}
+      </button>
+      {resultado && (
+        <div style={{ flexBasis: '100%' }} role="status" data-teste="importar-resultado">
+          {resultado.ok > 0 && <p className="aprovada" style={{ margin: 0 }}>{resultado.ok} link{resultado.ok > 1 ? 's' : ''} na fila: o motor baixa e já começa a ler.</p>}
+          {resultado.avisos.map((av) => <p key={av} className="aviso" style={{ margin: '4px 0 0' }}>Aviso: {av}.</p>)}
+          {resultado.erros.map((er) => <p key={er} className="erro" style={{ margin: '4px 0 0', overflowWrap: 'anywhere' }}>{er}</p>)}
+        </div>
+      )}
     </form>
   );
 }
@@ -314,6 +381,8 @@ function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boo
         if (!marcados.length) continue;
         if (q.campo === 'formato') extra.formato = marcados[0];
         else if (q.campo === 'destino') extra.destino = marcados;
+        else if (q.campo === 'ambiente') extra.ambiente = marcados[0];
+        else if (q.campo === 'vozes') extra.vozes = marcados[0];
         else (extra[q.campo] as string[]).push(...marcados);
       }
       const livre = String(f.get('precisa') ?? '').trim();
@@ -375,7 +444,7 @@ function Pedido({ atual, aberto, aoMandar }: { atual: string | null; aberto: boo
   );
 }
 
-function LinhaVersao({ v, aprovada, aoAprovar, aoReprovar }: { v: Versao; aprovada: boolean; aoAprovar: () => Promise<unknown>; aoReprovar: (motivo: string) => Promise<unknown> }) {
+function LinhaVersao({ pid, v, aprovada, aoAprovar, aoReprovar }: { pid: string; v: Versao; aprovada: boolean; aoAprovar: () => Promise<unknown>; aoReprovar: (motivo: string) => Promise<unknown> }) {
   const [batendo, setBatendo] = useState(false);
   const [aberto, setAberto] = useState(false);
   const [motivo, setMotivo] = useState('');
@@ -397,8 +466,16 @@ function LinhaVersao({ v, aprovada, aoAprovar, aoReprovar }: { v: Versao; aprova
           {qa.checagens.filter((c) => !c.ok && c.bloqueia !== false && c.detalhe).slice(0, 3).map((c) => (
             <p className="aviso" key={`d-${c.id}`} style={{ overflowWrap: 'anywhere' }}>{NOME_CHECAGEM[c.id] ?? c.id}: {c.detalhe}</p>
           ))}
+          {qa.checagens.filter((c) => !c.ok && c.bloqueia === false && c.detalhe).slice(0, 4).map((c) => (
+            <p className="aviso" key={`a-${c.id}`} data-teste="qa-aviso" style={{ overflowWrap: 'anywhere' }}>Aviso · {NOME_CHECAGEM[c.id] ?? c.id}: {c.detalhe}</p>
+          ))}
+          {qa.checagens.filter((c) => c.ok && c.id === 'olho_ia' && c.detalhe && /custo US\$/.test(c.detalhe)).map((c) => (
+            <p className="aviso" key="olho" data-teste="qa-olho" style={{ overflowWrap: 'anywhere' }}>Olho de IA: {c.detalhe}</p>
+          ))}
         </>
       )}
+      {entregue && v.video && <Cor base={v.video.replace(/\/final\.mp4$/, '')} />}
+      {entregue && v.video && <LinkCliente pid={pid} versao={v.id} />}
       {v.reprovacao && <p className="aviso">Reprovada: “{v.reprovacao}”</p>}
       {aprovada && <p className="aprovada" data-teste="aprovada"><span className="claquete claquete--bateu" aria-hidden="true" />Corta! Aprovada por você. Bora postar.</p>}
       {podeReprovar && (

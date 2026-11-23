@@ -5,7 +5,8 @@
 Cada módulo de checagem exporta ID, BLOQUEIA e `checar(c: Conferencia) -> {ok, valor?, detalhe?, evidencia?}`.
 Uma checagem que quebra vira reprovação com o erro no detalhe (nunca passa calada). A versão só é aprovada se nenhuma
 checagem que bloqueia falhar. As lições do dono estão aqui: frase repetida no mix/stems, tom de sala com voz, logo
-conferida a 100%, LUFS, pico real, quadro preto, legenda x fala, zona segura, regras da memória.
+conferida a 100%, LUFS, pico real, quadro preto, legenda x fala, zona segura, regras da memória e, desde 19/11, fala
+cortada antes de terminar, voz da equipe dentro da peça e cobertura com a pessoa distraída na tela.
 """
 from __future__ import annotations
 
@@ -27,7 +28,9 @@ if _PY_SCHEMAS not in sys.path:
     sys.path.insert(0, _PY_SCHEMAS)
 
 CHECAGENS = ("formato", "duracao", "sincronia", "lufs", "true_peak", "quadros_pretos", "zona_segura", "legenda_x_fala",
-             "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria")
+             "fala_cortada", "voz_externa", "cobertura_sintonia",
+             "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria", "cor_medida", "fatos",
+             "olho_ia")                       # olho_ia por último: não gasta em versão que já reprovou (ja_reprovou)
 
 
 def normalizar(txt: str) -> str:
@@ -40,7 +43,8 @@ def normalizar(txt: str) -> str:
 class Conferencia:
     """Tudo que as checagens precisam, carregado só quando alguma pede (transcrição é cara: cache por arquivo)."""
 
-    def __init__(self, final: pathlib.Path, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None):
+    def __init__(self, final: pathlib.Path, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None, cor=None):
+        self.cor = cor or []
         self.final = pathlib.Path(final)
         self.edl = edl
         self.cfg = cfg
@@ -56,6 +60,8 @@ class Conferencia:
         self._audio = None
         self._tr: dict = {}
         self._transcritor = False
+        self._fonte_audio: dict = {}
+        self.memo: dict = {}                    # medidas que mais de uma checagem usa (envelope da fonte, F0...)
 
     # ---------- mídia
     def probe(self) -> dict:
@@ -86,6 +92,18 @@ class Conferencia:
         if len(r.stdout) < n:
             return None
         return np.frombuffer(r.stdout[:n], np.uint8).reshape(self.H, self.W, 3).copy()
+
+    def audio_fonte(self, fid: str, sr: int = 16000) -> tuple[np.ndarray, float] | None:
+        """Áudio inteiro da FONTE `fid` (mono, cache por fonte) e o offset dela: o tempo s do EDL cai em s - offset no arquivo.
+        None quando a conferência não recebeu as fontes (sem como ouvir a fala na origem: quem chama devolve NÃO VERIFICADO).
+        Fonte que falta no disco levanta (a checagem que quebra reprova)."""
+        if self.fontes is None:
+            return None
+        k = (fid, sr)
+        if k not in self._fonte_audio:
+            from motor.etapas.montagem.comum import ler_audio
+            self._fonte_audio[k] = (ler_audio(self.fontes.audio(fid), sr=sr, cfg=self.cfg), float(self.fontes.offset(fid)))
+        return self._fonte_audio[k]
 
     def salvar_quadro(self, img, nome: str) -> str:
         import cv2
@@ -172,14 +190,31 @@ class Conferencia:
 
     # ---------- EDL
     def palavras_legenda(self) -> list[list]:
-        """[t0, t1, texto] das legendas (do EDL ou das camadas 'legenda' prontas do filme legado)."""
+        """[t0, t1, texto] das legendas (do EDL ou das camadas 'legenda' prontas do filme legado).
+
+        Sem `legendas.palavras`, as frases de `legenda_revelada` entram palavra a palavra, com o tempo da frase dividido
+        por igual (aproximação: para a régua de ouvido ficar exata, mande as palavras com tempo em `legendas.palavras`)."""
         pal = [[w[0], w[1], str(w[2])] for w in (self.edl.get("legendas") or {}).get("palavras", [])]
         if not pal:
             for m in self.edl.get("motion", []):
                 if m["modelo"] == "legenda":
                     for w in m["props"].get("palavras", []):
                         pal.append([w.get("i", m["de"]), w.get("f", m["ate"]), str(w.get("p", ""))])
+                elif m["modelo"] == "legenda_revelada":
+                    for fr in m["props"].get("frases", []):
+                        # " / " é a quebra manual de linha do kit (split /\s+\/\s+/), não palavra: não entra na régua
+                        ws = [x.strip("*") for x in str(fr.get("texto", "")).split() if x.strip("*") and x.strip("*") != "/"]
+                        de, ate = float(fr.get("de", m["de"])), float(fr.get("ate", m["ate"]))
+                        passo = (ate - de) / max(1, len(ws))
+                        pal += [[round(de + j * passo, 3), round(de + (j + 1) * passo, 3), x] for j, x in enumerate(ws)]
         return sorted(pal)
+
+
+# Checagens recém-chegadas que ainda estão em revisão: medem e avisam, mas não seguram a entrega. Sai daqui = bloqueia.
+# Desde a integração de 19/11, fala_cortada, voz_externa e cobertura_sintonia BLOQUEIAM (ordem do dono: "QA que
+# bloqueia"); o recuo para uma delas é explícito no EDL (qa.cortes_confirmados, qa.vozes_confirmadas, plano.cobertura).
+# olho_ia (revisão por IA, item C) segue em observação até vermos como se comporta em peças reais.
+EM_OBSERVACAO: tuple[str, ...] = ()          # vazio desde 19/11: o olho de IA também segura a entrega (dono: "resolva tudo")
 
 
 def _rodar(nome: str, c: Conferencia) -> dict:
@@ -194,17 +229,22 @@ def _rodar(nome: str, c: Conferencia) -> dict:
         if r.get(k) is not None:
             item[k] = r[k]
     item.setdefault("detalhe", "")
+    if mod.ID in EM_OBSERVACAO and item["bloqueia"]:
+        item["bloqueia"] = False
+        if not item["ok"]:
+            item["detalhe"] = "[em observação, ainda não segura a entrega] " + item["detalhe"]
     item["detalhe"] = (item["detalhe"] + f" [{time.time() - t:.1f} s]").strip()
     return item
 
 
-def conferir(final, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None,
+def conferir(final, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None, cor=None,
              video_chave: str | None = None, so: list[str] | None = None, progresso=None) -> dict:
     t0 = time.time()
-    c = Conferencia(final, edl, cfg, mix=mix, stems=stems, overlay_dir=overlay_dir, evidencias=evidencias, fontes=fontes)
+    c = Conferencia(final, edl, cfg, mix=mix, stems=stems, overlay_dir=overlay_dir, evidencias=evidencias, fontes=fontes, cor=cor)
     itens = []
     nomes = [n for n in CHECAGENS if not so or n in so]
     for i, nome in enumerate(nomes):
+        c.ja_reprovou = any((not x["ok"]) and x["bloqueia"] for x in itens)     # checagem paga não roda em versão já reprovada
         itens.append(_rodar(nome, c))
         if progresso:
             progresso((i + 1) / len(nomes), f"Conferência: {nome}")
@@ -229,6 +269,24 @@ def resumo_coluna(rel: dict, chave: str) -> dict:
                           for x in rel["checagens"]]}
 
 
+def chave_conferencia(sha: str, edl: dict) -> str:
+    """O que decide se um qa.json antigo ainda vale: o arquivo conferido (sha256), o conjunto de checagens (e quais estão em
+    observação, que muda o que bloqueia), o EDL inteiro
+    (edl.qa traz as dispensas: cortes_confirmados, vozes_confirmadas, falas_confirmadas) e as regras da memória do dono.
+    Lição de 19/11: com a chave só no sha256, as três checagens novas nunca rodavam num final já conferido."""
+    try:
+        from motor.memoria.loja import Loja
+        regras = Loja().checagens()
+    except Exception:  # noqa: BLE001 - sem memória, a chave muda quando ela voltar (e o QA roda de novo)
+        regras = None
+    return hash_obj(sha, list(CHECAGENS), list(EM_OBSERVACAO), edl, regras)
+
+
+def pode_reaproveitar(ant: dict, chave_ant: str | None, chave: str) -> bool:
+    """Função pura: o relatório antigo só vale se a chave bate E ele traz toda checagem de CHECAGENS."""
+    return bool(chave_ant) and chave_ant == chave and set(CHECAGENS) <= {x.get("id") for x in ant.get("checagens") or []}
+
+
 @etapa("qa")
 def etapa_qa(ctx) -> dict:
     from motor.etapas.montagem.comum import Fontes
@@ -242,9 +300,11 @@ def etapa_qa(ctx) -> dict:
     mont = json.loads(pathlib.Path(arm.caminho_local(f"{base}/montagem.json")).read_text(encoding="utf-8"))
     final = pathlib.Path(arm.caminho_local(f"{base}/final.mp4"))
     sha = sha256_arquivo(final)
-    if arm.existe(f"{base}/qa.json") and arm.existe(f"{base}/qa.sha256"):
-        if pathlib.Path(arm.caminho_local(f"{base}/qa.sha256")).read_text().strip() == sha:
-            ant = json.loads(pathlib.Path(arm.caminho_local(f"{base}/qa.json")).read_text(encoding="utf-8"))
+    chave = chave_conferencia(sha, edl)
+    if arm.existe(f"{base}/qa.json") and arm.existe(f"{base}/qa.sha256") and arm.existe(f"{base}/qa.chave"):
+        ant = json.loads(pathlib.Path(arm.caminho_local(f"{base}/qa.json")).read_text(encoding="utf-8"))
+        chave_ant = pathlib.Path(arm.caminho_local(f"{base}/qa.chave")).read_text().strip()
+        if pathlib.Path(arm.caminho_local(f"{base}/qa.sha256")).read_text().strip() == sha and pode_reaproveitar(ant, chave_ant, chave):
             ctx.con.execute("UPDATE versoes SET estado=?, qa=? WHERE projeto=? AND id=? AND estado!='entregue'",
                             ("aprovada_qa" if ant["aprovado"] else "reprovada_qa", json.dumps(resumo_coluna(ant, f"{base}/qa.json"), ensure_ascii=False), p, v))
             return {"aprovado": ant["aprovado"], "reaproveitado": True, "resumo": resumo(ant), "sha256": sha,
@@ -252,7 +312,7 @@ def etapa_qa(ctx) -> dict:
     stems = {n: str(arm.caminho_local(k)) for n, k in (mont.get("chaves", {}).get("stems") or {}).items()}
     mix = arm.caminho_local(mont["chaves"]["mix"]) if mont.get("chaves", {}).get("mix") else None
     evid = pathlib.Path(ctx.cfg.dados) / "tmp" / "qa" / p / v
-    rel = conferir(final, edl, ctx.cfg, mix=mix, stems=stems, overlay_dir=mont.get("overlay_dir"), evidencias=evid,
+    rel = conferir(final, edl, ctx.cfg, mix=mix, stems=stems, overlay_dir=mont.get("overlay_dir"), evidencias=evid, cor=mont.get("cor"),
                    fontes=Fontes(edl, arm, ctx.cfg.dados), video_chave=f"{base}/final.mp4", progresso=ctx.progresso)
     for arq in sorted(evid.glob("*")):
         if arq.is_file() and not arq.name.startswith("_"):
@@ -260,6 +320,7 @@ def etapa_qa(ctx) -> dict:
     import io
     arm.gravar(f"{base}/qa.json", io.BytesIO(json.dumps(rel, ensure_ascii=False, indent=1).encode()))
     arm.gravar(f"{base}/qa.sha256", io.BytesIO(sha.encode()))
+    arm.gravar(f"{base}/qa.chave", io.BytesIO(chave.encode()))
     ctx.con.execute("UPDATE versoes SET estado=?, qa=? WHERE projeto=? AND id=?",
                     ("aprovada_qa" if rel["aprovado"] else "reprovada_qa", json.dumps(resumo_coluna(rel, f"{base}/qa.json"), ensure_ascii=False), p, v))
     # saída curta (vai para o job e, se reprovar, para a próxima direção corrigir)

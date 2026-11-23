@@ -1,5 +1,8 @@
 import { motorJson } from '@/lib/motor';
 import Referencias from '@/componentes/Referencias';
+import Backup from '@/componentes/Backup';
+import Biblioteca from '@/componentes/Biblioteca';
+import PedidosCliente from '@/componentes/PedidosCliente';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Caderno da casa' };
@@ -8,13 +11,14 @@ type Regra = { id: string; texto: string; origem?: string; data?: string; tipos?
 type Checagem = { id: string; descricao: string; origem?: string; gravidade?: string };
 type Modo = { id: string; nome: string; descricao: string; sem_transicoes?: string[]; zoom_max?: number };
 const NOME_FX: Record<string, string> = { whip: 'chicote', aba71: 'Aba 71', impacto: 'impacto', flash: 'flash', mascara: 'máscara' };
-type Memoria = { regras: Regra[]; checagens: Checagem[]; vocabulario: { de: string; para: string }[]; modos?: Modo[] };
+type Look = { id: string; nome: string; desc: string };
+type Memoria = { regras: Regra[]; checagens: Checagem[]; vocabulario: { de: string; para: string }[]; modos?: Modo[]; looks?: Look[] };
 
 // O que o editor sabe: as regras que o dono ensinou (cada reprovação vira uma), o que ele confere antes de entregar e os modos de edição.
 export default async function Caderno() {
   const r = await motorJson<Memoria>('/v1/memoria');
   if (!r.ok) return <main className="pagina"><p className="erro" role="alert">Não deu para abrir o caderno: {r.erro}.</p></main>;
-  const { regras, checagens, vocabulario, modos = [] } = r.dados;
+  const { regras, checagens, vocabulario, modos = [], looks = [] } = r.dados;
   const doDono = regras.filter((x) => x.id.startsWith('r_dono_'));
   const daCasa = regras.filter((x) => !x.id.startsWith('r_dono_'));
   return (
@@ -38,6 +42,26 @@ export default async function Caderno() {
             </li>
           ))}
         </ul>
+      </section>
+
+      {looks.length > 0 && (
+        <section className="cartao" aria-labelledby="c-cor">
+          <h2 className="cartao__titulo" id="c-cor"><span className="num">01b</span> Cor por ambiente</h2>
+          <p className="aviso" style={{ maxWidth: '62ch' }}>Cada cena é medida (luz, branco e tom de pele) e ganha o look do lugar onde foi gravada. A pele fica protegida. Na versão, você vê o antes e o depois de cada plano.</p>
+          <ul className="caderno__grade" data-teste="caderno-looks">
+            {looks.map((l) => (
+              <li key={l.id} className="caderno__modo">
+                <strong>{l.nome}</strong>
+                <span>{l.desc}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="cartao" aria-labelledby="c-clientes" id="clientes">
+        <h2 className="cartao__titulo" id="c-clientes"><span className="num">01c</span> O que os clientes responderam</h2>
+        <PedidosCliente />
       </section>
 
       <section className="cartao" aria-labelledby="c-refs">
@@ -65,7 +89,7 @@ export default async function Caderno() {
           {checagens.map((c) => (
             <li key={c.id}>
               <p>{c.descricao}</p>
-              <small>{c.gravidade === 'bloqueia' ? 'segura a entrega' : 'avisa'} · {c.origem ?? 'casa'}</small>
+              <small>{c.gravidade === 'bloqueia' ? 'segura a entrega' : c.gravidade === 'observacao' ? 'em observação: por enquanto só avisa' : 'avisa'} · {c.origem ?? 'casa'}</small>
             </li>
           ))}
         </ul>
@@ -79,6 +103,17 @@ export default async function Caderno() {
           </ul>
         </section>
       )}
+      <section className="cartao" aria-labelledby="c-bib" id="biblioteca">
+        <h2 className="cartao__titulo" id="c-bib"><span className="num">05b</span> Trilhas e efeitos da casa</h2>
+        <p className="aviso" style={{ maxWidth: '62ch' }}>Só toca no filme o que tiver licença registrada para uso em vídeo de cliente e anúncio. Cole o link do arquivo; o editor mede a duração e o andamento.</p>
+        <Biblioteca />
+      </section>
+
+      <section className="cartao" aria-labelledby="c-backup" id="backup">
+        <h2 className="cartao__titulo" id="c-backup"><span className="num">06</span> Backup</h2>
+        <p className="aviso" style={{ maxWidth: '62ch' }}>Uma vez por dia, o que não se refaz (projetos, pedidos, direções, relatórios, regras e casos da casa) vai para uma pasta do seu Dropbox.</p>
+        <Backup />
+      </section>
     </main>
   );
 }

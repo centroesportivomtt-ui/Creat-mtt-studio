@@ -1,5 +1,6 @@
 """regra_memoria: as checagens que nasceram das reprovações do dono (memoria/checagens.json, executor 'edl') rodam aqui.
-As de executor 'qa' já são checagens próprias (frase_repetida, tom_sala_sem_voz, logo_100). 'revisao_humana' vira aviso."""
+As de executor 'qa' já são checagens próprias (frase_repetida, tom_sala_sem_voz, logo_100, fala_cortada, voz_externa,
+cobertura_sintonia). 'revisao_humana' vira aviso."""
 ID, BLOQUEIA = "regra_memoria", True
 
 

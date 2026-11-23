@@ -18,7 +18,7 @@
         "additionalProperties": false,
         "required": ["id", "ok", "bloqueia"],
         "properties": {
-          "id": { "enum": ["frase_repetida", "tom_sala_sem_voz", "logo_100", "lufs", "true_peak", "quadros_pretos", "legenda_x_fala", "zona_segura", "legenda_sobre_rosto", "formato", "duracao", "sincronia", "telas_desfocadas", "regra_memoria"] },
+          "id": { "enum": ["frase_repetida", "tom_sala_sem_voz", "logo_100", "lufs", "true_peak", "quadros_pretos", "legenda_x_fala", "zona_segura", "legenda_sobre_rosto", "formato", "duracao", "sincronia", "telas_desfocadas", "regra_memoria", "cor_medida", "fala_cortada", "voz_externa", "cobertura_sintonia", "fatos", "olho_ia"] },
           "ok": { "type": "boolean" },
           "bloqueia": { "type": "boolean" },
           "valor": {},

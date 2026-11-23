@@ -52,7 +52,7 @@
           "t0": { "type": "number" }, "t1": { "type": "number" },
           "vel": { "type": "number", "default": 1.0 },
           "ganho_db": { "type": "number", "default": 0 },
-          "limpeza": { "type": "object", "additionalProperties": false, "properties": { "atenuacao_db": { "type": "number", "default": 15 }, "mistura": { "type": "number", "default": 0.8 } } },
+          "limpeza": { "type": "object", "additionalProperties": false, "properties": { "atenuacao_db": { "type": "number", "default": 15, "description": "Obsoleto desde 21/11 (a limpeza em ONNX não tem limite de atenuação): quem controla a força é `mistura`." }, "mistura": { "type": "number", "default": 0.8 }, "auto": { "type": "boolean", "default": false, "description": "A montagem escolhe a mistura por fonte com o medidor de voz (DNSMOS); `mistura` vira só o valor de reserva." } } },
           "texto": { "type": ["string", "null"] }
         }
       }
@@ -72,13 +72,18 @@
           "rampa": { "type": "array", "description": "[[u, s_fonte], ...] remapeamento de tempo (V1 ts).", "items": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 } },
           "enquadre": { "$ref": "#/$defs/kf" },
           "estab": { "enum": ["auto", "sim", "nao"], "default": "auto" },
-          "cor": { "type": "string", "default": "neutro", "description": "Look por ambiente (salao, mesa, corredor, claro, laranja, palco, frio, sala...)." },
+          "cor": { "type": "string", "default": "neutro", "description": "Look da biblioteca de cor (loja, rua_dia, rua_noite, academia, palco, neutro) ou da tabela antiga (salao, mesa, corredor, claro, laranja, frio, sala...)." },
+          "balanco": { "type": ["object", "null"], "additionalProperties": false, "required": ["ganho", "exp"], "description": "Primárias da cena medidas na análise (nó 1 do DaVinci): ganho de branco por canal e exposição.",
+            "properties": { "ganho": { "type": "array", "items": { "type": "number", "minimum": 0.5, "maximum": 2 }, "minItems": 3, "maxItems": 3 }, "exp": { "type": "number", "minimum": 0.5, "maximum": 2 } } },
           "som_direto_db": { "type": ["number", "null"], "description": "Som do próprio plano como textura (V1 nat)." },
           "flash": { "$ref": "#/$defs/evt" },
           "tremor": { "$ref": "#/$defs/evt" },
-          "desfocar": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 }, "description": "Caixas normalizadas a desfocar (telas com dados de terceiros)." },
+          "desfocar": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 5 }, "description": "Caixas normalizadas a desfocar (telas com dados de terceiros): [x0, y0, x1, y1] e, opcional, o desfoque (sigma) em px do quadro de 1080 (padrão 16)." },
           "janela": { "type": ["object", "null"], "description": "PiP/janela-aba (V2 janelas): {x,y,w,h,titulo}." },
-          "mblur": { "type": "boolean", "default": false }
+          "mblur": { "type": "boolean", "default": false },
+          "fundo": { "type": ["object", "null"], "additionalProperties": false, "description": "Fundo atrás da pessoa (máscara de pessoa na composição).", "properties": { "desfoque": { "type": "number", "minimum": 0, "maximum": 1, "description": "0 = nada, 1 = lente bem aberta." }, "destaque": { "type": "number", "minimum": 0, "maximum": 1, "description": "Janela de luz na pessoa: fundo até ~1/3 de ponto mais escuro e com menos cor." } } },
+          "pessoa": { "type": ["object", "null"], "additionalProperties": false, "description": "Tratamento só em quem aparece (máscara de pessoa).", "properties": { "pele": { "type": "number", "minimum": 0, "maximum": 1, "description": "Pele tratada: textura fina suavizada só na pele da pessoa (0 = nada)." } } },
+          "cobertura": { "type": ["object", "null"], "additionalProperties": false, "required": ["olhar"], "description": "Conferência de sintonia de quem dirigiu e OLHOU o take, quando o plano cobre uma fala que não é dele e mostra a pessoa (QA cobertura_sintonia). olhar 'camera' = rosto falando para a câmera fora do take da fala: reprova sempre.", "properties": { "olhar": { "enum": ["produto", "camera", "acao"] }, "assunto": { "type": "string", "description": "O que a fala diz e a imagem mostra." } } }
         }
       }
     },
@@ -87,7 +92,8 @@
       "description": "Camadas do kit (mesmo contrato de packages/kit/cenas/*.json -> camadas).",
       "items": {
         "type": "object", "additionalProperties": false, "required": ["id", "modelo", "de", "ate", "props"],
-        "properties": { "id": { "type": "string" }, "modelo": { "type": "string" }, "de": { "type": "number" }, "ate": { "type": "number" }, "props": { "type": "object" } }
+        "properties": { "id": { "type": "string" }, "modelo": { "type": "string" }, "de": { "type": "number" }, "ate": { "type": "number" }, "props": { "type": "object" },
+          "atras": { "type": "boolean", "default": false, "description": "Camada ATRÁS da pessoa: entra entre o fundo e quem aparece no plano (máscara de pessoa na composição). Sem pessoa no quadro, aparece normal." } }
       }
     },
     "legendas": {
@@ -104,8 +110,16 @@
       "items": {
         "type": "object", "additionalProperties": false, "required": ["tipo", "t"],
         "properties": {
-          "tipo": { "enum": ["whip", "mascara", "aba71", "impacto", "bloom", "leak", "zoomt", "gagueira", "rush", "foto", "flash", "match", "fade"] },
-          "t": { "type": "number" }, "dur": { "type": "number" }, "forca": { "type": "number" }, "dir": { "type": "number" }, "nome": { "type": "string" }
+          "tipo": { "enum": ["whip", "mascara", "aba71", "impacto", "bloom", "leak", "zoomt", "gagueira", "rush", "foto", "flash", "match", "fade", "revela", "salto"] },
+          "t": { "type": "number" }, "dur": { "type": "number" }, "forca": { "type": "number" }, "dir": { "type": "number" }, "nome": { "type": "string" },
+          "modo": { "enum": ["abre", "fecha"], "default": "abre", "description": "revela: 'abre' = negativo vira positivo a partir da origem; 'fecha' = o negativo cresce a partir da origem e fica." },
+          "origem": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "revela: centro da frente [x, y] em px do quadro 1080x1920 (padrão [540,960] no abre, [540,1980] no fecha)." },
+          "rmax": { "type": "number", "exclusiveMinimum": 0, "description": "revela: raio final da frente em px; sem ele, cobre o quadro inteiro." },
+          "soft": { "type": "number", "exclusiveMinimum": 0, "default": 40, "description": "revela: largura da borda da frente em px." },
+          "amp": { "type": "number", "minimum": 0, "default": 70, "description": "revela: amplitude do ruído na borda em px." },
+          "seed": { "type": "integer", "default": 7, "description": "revela: semente do ruído (mesma semente = mesma borda)." },
+          "desde": { "type": "number", "description": "revela abre: início da janela (antes da frente tudo é negativo); padrão = início do plano que contém t." },
+          "ate": { "type": "number", "description": "revela fecha: fim da janela (depois da frente tudo fica negativo); padrão = fim do plano que contém t." }
         }
       }
     },
@@ -139,6 +153,10 @@
       "properties": {
         "logos": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["t", "chave"], "properties": { "t": { "type": "number" }, "chave": { "type": "string" } } } },
         "falas_confirmadas": { "type": "array", "items": { "type": "string" } },
+        "fatos": { "type": "object", "description": "Verificação de fatos (motor/etapas/fatos.py): números de produto da tela, fonte de cada um e trocas feitas na legenda e nos cartões. Escrito pela montagem." },
+        "numeros_confirmados": { "type": "array", "items": { "type": "string" }, "description": "Trechos (ex.: \"275 ml\") que o dono confirmou à mão: a checagem fatos não segura a entrega por eles." },
+        "cortes_confirmados": { "type": "array", "items": { "type": "string" }, "description": "Ids de peça de voz cujo corte o diretor ouviu e manteve de propósito (QA fala_cortada não reprova, só lista)." },
+        "vozes_confirmadas": { "type": "array", "items": { "type": "string" }, "description": "Ids de peça de voz ou de plano com voz de fora ouvida e aceita pelo diretor (QA voz_externa não reprova, só lista)." },
         "riscos": { "type": "array", "items": { "type": "string" } }
       }
     }

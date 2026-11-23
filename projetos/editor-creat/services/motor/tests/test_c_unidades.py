@@ -60,9 +60,10 @@ def test_trilha_emendas_e_sfx_sintetico(tmp_path):
     out, rel = trilha.montar_trilha(edl, arq)
     assert rel["emendas"] == 2 and out.shape == (sr * 2, 2)
     assert abs(int(np.argmax(np.abs(out[:, 0]))) - sr) < 50          # o trecho do 3,0 s caiu no 1,0 s do filme
-    a, _ = trilha.som("whoosh_curto", None)
-    b = trilha.sintetizar("whoosh_curto")
-    assert np.allclose(a[:, 0], b) and 0.85 < np.abs(b).max() <= 0.9
+    a, origem = trilha.som("whoosh_sem_gravacao", None)            # nome sem gravação no kit: cai no sintético de reserva
+    b = trilha.sintetizar("whoosh_sem_gravacao")
+    assert origem == "sintetico" and np.allclose(a[:, 0], b) and 0.85 < np.abs(b).max() <= 0.9
+    assert trilha.som("whoosh_curto", None)[1] == "kit"                # desde 19/11 o whoosh_curto é gravação real do kit
 
 
 def test_mix_entrega_lufs_e_pico(tmp_path):

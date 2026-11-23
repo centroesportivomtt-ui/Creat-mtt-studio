@@ -12,9 +12,16 @@ import json
 import math
 import re
 
+from motor.etapas import cor as COR
 from motor.etapas.catalogo import EQUIPE, norm, tokens
 
 LETRA = "a-zà-öø-ÿ"
+
+
+Y_ATRAS = 0.30          # título atrás da pessoa começa mais alto (a cabeça passa na frente da parte de baixo das letras)
+DESFOQUE_FUNDO = 0.7    # "fundo_desfocado" do bloco: lente bem aberta, sem virar borrão de vidro
+DESTAQUE_PESSOA = 0.6   # "destaque_pessoa" do bloco: fundo ~1/5 de ponto mais escuro e com menos cor
+PELE_TRATADA = 0.5      # regra do dono ("pele tratada"): sempre nos planos de fala, sutil (textura fina -27%)
 
 
 class ErroResolucao(Exception):
@@ -104,10 +111,26 @@ def _limpa(w: str) -> str:
 
 
 # ---------------- resolvedor ----------------
+def _silabas_db(serie, passo: float) -> float:
+    """Desvio (dB) do envelope menos a média móvel de 0,5 s, sem os buracos da série (-90). Fala: >= 4-5 dB; ar-condicionado,
+    freezer e música de fundo estável: ~1-2 dB."""
+    import numpy as np
+    x = np.asarray(serie, dtype=float)
+    x = x[x > -89]
+    k = max(3, int(round(0.5 / max(passo, 1e-3))))
+    if len(x) < 2 * k:
+        return 0.0
+    media = np.convolve(x, np.ones(k) / k, mode="valid")
+    return float(np.std(x[k // 2:k // 2 + len(media)] - media))
+
+
 class Resolvedor:
     def __init__(self, direcao: dict, catalogo: dict, analises: dict, modelo: dict, trilhas: list[dict] | None = None,
-                 vocabulario: list[dict] | None = None, energias: dict | None = None, projeto: str | None = None):
+                 vocabulario: list[dict] | None = None, energias: dict | None = None, projeto: str | None = None,
+                 ambiente: str | None = None, vozes: str | None = None):
         self.d, self.cat, self.an, self.m = direcao, catalogo, analises, modelo
+        self.vozes = vozes if vozes in ("uma", "varias") else None
+        self.ambiente = ambiente if ambiente in COR.LOOKS else None      # pedido do dono (ex.: academia) vence a medição
         self.trilhas = trilhas or []
         self.voc = vocabulario or []
         self.energias = energias or {}
@@ -118,6 +141,7 @@ class Resolvedor:
         self._pal = {}
         self.problemas: list[str] = []
         self.avisos: list[str] = []
+        self._usadas_por: dict[str, str] = {}             # repetição -> id do ditado que o diretor escolheu
         self.r = modelo["ritmo"]
 
     def pal(self, cid: str) -> list[list]:
@@ -130,6 +154,27 @@ class Resolvedor:
         if fd["id"] not in self.fala:
             self.problemas.append(f"fala {fd['id']} não existe no catálogo")
             return None
+        dit = self.fala[fd["id"]][1].get("ditado")
+        if dit and dit in self.fala:
+            # item 4 (defeito da cerveja, 20/11): a fala escolhida é a equipe DITANDO; entra a repetição de quem fala no vídeo
+            self.avisos.append(f"fala {fd['id']} é ditado da equipe: troquei pela repetição da voz principal ({dit})")
+            n = len(self.problemas)
+            r = self._resolver_fala({**fd, "id": dit})
+            if r is None:                                   # as palavras pedidas não batem com a repetição: usa a repetição inteira
+                r = self._resolver_fala({**fd, "id": dit, "de": None, "ate": None})
+                if r is not None:
+                    del self.problemas[n:]                  # a 1a tentativa falhou, mas a repetição entrou: não é problema
+                    self.avisos.append(f"fala {dit} entrou inteira: o trecho pedido do ditado não bate palavra a palavra com a repetição")
+            if r is None:
+                del self.problemas[n:]
+                self.problemas.append(f"fala {fd['id']} é ditado da equipe e a repetição {dit} não foi achada: o ditado não entra")
+            else:
+                r["fala_usada"] = dit
+                self._usadas_por[dit] = fd["id"]
+            return r
+        return self._resolver_fala(fd)
+
+    def _resolver_fala(self, fd: dict) -> dict | None:
         c, f = self.fala[fd["id"]]
         pal = self.pal(c["id"])
         i0 = next((i for i, p in enumerate(pal) if p[1] > f["t0"] - 0.3), len(pal))
@@ -168,6 +213,7 @@ class Resolvedor:
         if we + 1 < len(pal):
             s1 = min(s1, pal[we + 1][0] - 0.02)
         s0, s1 = self._energia(c["arquivo"], s0, s1, pal[ws][0], pal[we][1])
+        s1 = self._cauda(c["arquivo"], s1, pal[ws][0], pal[we][1], pal[we + 1][0] - 0.01 if we + 1 < len(pal) else None)
         palavras = aplicar_corrigir(pal[ws:we + 1], fd.get("corrigir") or [])
         # aperto de pausas: corta silêncio interno acima de pausa_max, deixando 0,10 s de cada lado
         gmax, manter = self.r.get("pausa_max", 0.28), 0.10
@@ -175,7 +221,9 @@ class Resolvedor:
         for k in range(len(palavras) - 1):
             g0, g1 = palavras[k][1], palavras[k + 1][0]
             if g1 - g0 > gmax and (g1 - g0 - 2 * manter) >= 0.10:
-                pecas.append((a, g0 + manter))
+                # o corte de pausa também não come a última sílaba: anda até a voz morrer, sem encostar na retomada
+                fim = min(self._cauda(c["arquivo"], g0 + manter, pal[ws][0], g0, g1 - 0.01), g1 - manter - 0.02)
+                pecas.append((a, max(fim, g0 + manter)))
                 a = g1 - manter
         pecas.append((a, s1))
         return {"clipe": c["id"], "fala": f, "s0": s0, "s1": s1, "pecas": pecas, "palavras": palavras}
@@ -197,6 +245,31 @@ class Resolvedor:
         except (IndexError, ValueError):
             pass
         return s0, s1
+
+    def _cauda(self, aid, s1, w0, w1, teto):
+        """Nunca cortar a última sílaba (regra do dono, 19/11): o fim da palavra na transcrição costuma vir antes do fim
+        do som. Se a voz ainda está ativa em s1, o corte anda até ela morrer (no máximo +0,40 s e nunca além do começo
+        da palavra seguinte)."""
+        serie = self.energias.get(aid)
+        if serie is None:
+            return s1
+        passo = self.energias.get("_passo", {}).get(aid, 0.02)
+        try:
+            a, b = max(0, int(w0 / passo)), int(w1 / passo) + 1
+            if b - a < 3:
+                return s1
+            ref = sorted(float(v) for v in serie[a:b])[int(0.9 * (b - a - 1))]
+            i = int(round(s1 / passo))
+            if i >= len(serie) or float(serie[i]) <= ref - 14.0:
+                return s1
+            fim = min(len(serie) - 1, i + int(0.40 / passo))
+            for j in range(i, fim):
+                if float(serie[j]) < ref - 24.0 and float(serie[j + 1]) < ref - 24.0:
+                    novo = j * passo + 0.02
+                    return round(min(novo, teto), 4) if teto is not None else round(novo, 4)
+        except (IndexError, ValueError):
+            pass
+        return s1
 
     # --- fontes (trechos do original)
     def fonte_de(self, cid: str, s: float) -> str:
@@ -260,6 +333,8 @@ class Resolvedor:
                                 "imagem": fd.get("imagem", "misto")})
                     t = t1
                 janelas_fala.setdefault(fd["id"], (f0, t, fd.get("imagem", "misto"), b))
+                if rf.get("fala_usada"):                    # cobertura/chip que citam a repetição também acham a janela
+                    janelas_fala.setdefault(rf["fala_usada"], janelas_fala[fd["id"]])
                 t += self.r.get("gap_fala", 0.1)
             for cb in b["cobertura"]:
                 if cb.get("sobre") in janelas_fala:
@@ -315,12 +390,13 @@ class Resolvedor:
             "versao": "1", "projeto": self.projeto,
             "origem": {"direcao": hashlib.sha256(json.dumps(d, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16],
                        "catalogo": self.cat.get("projeto"), "modelo": self.m["id"], "vel_aplicada": vel, "avisos": self.avisos,
-                       "conceito": d.get("conceito"), "alem_do_pedido": d.get("alem_do_pedido", [])},
+                       "conceito": d.get("conceito"), "alem_do_pedido": d.get("alem_do_pedido", []),
+                       **({"vozes": self.vozes} if getattr(self, "vozes", None) else {})},
             "formato": {"w": 1080, "h": 1920, "fps": 30},
             "duracao": L["duracao"], "vel_fala": vel,
             "blocos": L["blocos"],
             "fontes": self._fontes(usadas),
-            "voz": [{k: v[k] for k in ("id", "bloco", "fala", "fonte", "s0", "s1", "t0", "t1", "vel")} | {"ganho_db": 0, "limpeza": {"atenuacao_db": 15, "mistura": 0.8},
+            "voz": [{k: v[k] for k in ("id", "bloco", "fala", "fonte", "s0", "s1", "t0", "t1", "vel")} | {"ganho_db": 0, "limpeza": {"atenuacao_db": 15, "mistura": 0.8, "auto": True},
                      "texto": None} for v in L["voz"]],
             "planos": planos, "motion": motion, "legendas": legendas, "fx": fx,
             "trilha": self._trilha_edl(trilha, L), "sfx": sfx, "tom_sala": tom,
@@ -353,11 +429,30 @@ class Resolvedor:
             return "sim"
         return "sim" if (tr.get("media_px") or 0) > lim else "auto"
 
-    def _cor(self, cid: str, s: float) -> str:
+    def _cena(self, cid: str, s: float) -> dict | None:
         for c in self.an[self.clipe[cid]["arquivo"]]["sinais"].get("cenas") or []:
-            if c["t0"] <= s <= c["t1"] and c.get("ambiente"):
-                return c["ambiente"]
-        return "neutro"
+            if c["t0"] <= s <= c["t1"]:
+                return c
+        return None
+
+    def _ambiente(self, cid: str, s: float) -> str:
+        """Rótulo de ambiente da análise (o catálogo agrupa clipes por ele; usado no tom de sala)."""
+        c = self._cena(cid, s)
+        return c["ambiente"] if c and c.get("ambiente") else "neutro"
+
+    def _cor(self, cid: str, s: float) -> str:
+        """Look da biblioteca de cor: o do pedido, senão o medido na cena; análise antiga cai no rótulo de ambiente."""
+        if self.ambiente:
+            return self.ambiente
+        c = self._cena(cid, s)
+        if c and c.get("look") in COR.LOOKS:
+            return c["look"]
+        return c["ambiente"] if c and c.get("ambiente") else "neutro"
+
+    def _balanco(self, cid: str, s: float) -> dict | None:
+        """Primárias da cena (mesma correção para todos os planos da cena: sem cor pulando entre cortes)."""
+        c = self._cena(cid, s)
+        return COR.balanco(c.get("medicao"), self._cor(cid, s)) if c and c.get("medicao") else None
 
     def _desfocar(self, cid: str, s0: float, s1: float) -> list:
         return [t["caixa"] for t in self.an[self.clipe[cid]["arquivo"]]["sinais"].get("telas") or [] if t["t0"] < s1 and t["t1"] > s0]
@@ -367,6 +462,9 @@ class Resolvedor:
         p = {"id": pid, "bloco": bloco, "t0": round(t0, 4), "t1": round(t1, 4), "fonte": self.fonte_de(cid, s0), "s0": round(s0, 4), "vel": round(vel, 4),
              "enquadre": self._enquadre(cid, s0, zoom), "estab": self._estab(cid, s0, s1), "cor": self._cor(cid, s0),
              "som_direto_db": None, "desfocar": self._desfocar(cid, s0, s1), "janela": None, "mblur": False}
+        bal = self._balanco(cid, s0)
+        if bal:
+            p["balanco"] = bal
         p.update(extra)
         p["_clipe"] = cid
         return p
@@ -374,13 +472,18 @@ class Resolvedor:
     def _planos(self, L) -> list:
         zooms = self.m.get("intensidade", {})
         intens = {b["id"]: b["intensidade"] for b in self.d["blocos"]}
+        desfoca = {b["id"] for b in self.d["blocos"] if b.get("fundo_desfocado")}
+        destaca = {b["id"] for b in self.d["blocos"] if b.get("destaque_pessoa")}
         base = []
         alterna = 0
         for v in L["voz"]:
             z = zooms.get(str(intens.get(v["bloco"], 3)), {}).get("zoom", 1.0)
             zoom = 1.0 if alterna % 2 == 0 else z                        # corte de escala entre frases da mesma fala
             alterna += 1
-            base.append(self._plano(f"P{len(base)}", v["bloco"], v["t0"], v["t1"], v["clipe"], v["s0"], v["vel"], zoom))
+            fundo = {**({"desfoque": DESFOQUE_FUNDO} if v["bloco"] in desfoca else {}),
+                     **({"destaque": DESTAQUE_PESSOA} if v["bloco"] in destaca else {})}
+            extra = {"pessoa": {"pele": PELE_TRATADA}, **({"fundo": fundo} if fundo else {})}   # pele tratada: regra do dono
+            base.append(self._plano(f"P{len(base)}", v["bloco"], v["t0"], v["t1"], v["clipe"], v["s0"], v["vel"], zoom, **extra))
         cobertos = []
         som = self.m.get("cobertura", {}).get("som_direto_db", {})
         lento = self.m.get("cobertura", {}).get("lento_vel", 0.5)
@@ -482,11 +585,18 @@ class Resolvedor:
             if g.get("troca") and g["troca"].get("risca"):
                 props["troca"] = {"de": g["troca"]["risca"], "para": g["troca"].get("para", ""), "em": 0.62, "dur": 0.36}
                 sfx.append({"t": 0.62, "som": m["sfx"]["troca"], "g": -8, "pan": 0})
-            motion.append({"id": "gancho", "modelo": m["gancho"]["modelo"], "de": 0.0, "ate": round(min(m["gancho"]["dur"], L["duracao"]), 3), "props": props})
+            camada = {"id": "gancho", "modelo": m["gancho"]["modelo"], "de": 0.0, "ate": round(min(m["gancho"]["dur"], L["duracao"]), 3), "props": props}
+            if g.get("atras_da_pessoa"):            # quem fala passa NA FRENTE do título (a composição escolhe a altura legível)
+                camada["atras"] = True
+                props["y"] = m["gancho"].get("y_atras", Y_ATRAS)
+            motion.append(camada)
             sfx.append({"t": 0.0, "som": m["sfx"]["gancho"], "g": -6, "pan": 0})
         primeira = {}
         for v in L["voz"]:
             primeira.setdefault(v["fala"], v["t0"])
+        for rep, orig in self._usadas_por.items():         # chip "sobre" a repetição acha o tempo do ditado trocado
+            if orig in primeira:
+                primeira.setdefault(rep, primeira[orig])
         vistos = set()
         for b, bl in zip(d["blocos"], L["blocos"]):
             for k, ch in enumerate(b.get("chips") or []):
@@ -568,7 +678,7 @@ class Resolvedor:
         for v in L["voz"]:
             peso[v["clipe"]] = peso.get(v["clipe"], 0) + v["s1"] - v["s0"]
         principal = max(peso, key=peso.get)
-        amb = self._cor(principal, L["voz"][0]["s0"])
+        amb = self._ambiente(principal, L["voz"][0]["s0"])
         ordem = [principal] + [c for c in peso if c != principal] + [c["id"] for c in self.cat["clipes"] if c["id"] not in peso and amb in c.get("ambientes", [])]
         min_s = self.m.get("tom_sala", {}).get("min_s", 1.5)
         for cid in ordem:
@@ -610,6 +720,14 @@ class Resolvedor:
                         nivel = float(np.median(tr)) if len(tr) else 0.0
                         if nivel <= -89:                           # buraco da série (sem áudio medido)
                             continue
+                        # conversa baixa da equipe não entra na transcrição, mas tem sílabas: o envelope sobe e desce rápido.
+                        # Mede só a variação RÁPIDA (envelope menos a média de 0,5 s): música crescendo, freezer ou compressor
+                        # ligando mudam devagar e não contam. Item J, cerveja v2, 22/11.
+                        sil = _silabas_db(tr, passo)
+                        tm = self.m.get("tom_sala", {})
+                        if sil > tm.get("silabas_teto_db", 5.0):
+                            continue
+                        nivel += 3.0 * max(0.0, sil - tm.get("silabas_ok_db", 2.0))    # entre ok e teto: só perde preferência
                     cands.append((nivel - 0.5 * min(hi2 - lo2, 6), lo2, hi2))
         cands.sort()
         return [(lo, hi) for _, lo, hi in cands]

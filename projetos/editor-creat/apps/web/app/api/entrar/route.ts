@@ -1,21 +1,12 @@
 import { NextResponse } from 'next/server';
 import {
-  COOKIE, configuracaoPronta, conferirSenha, cookieSeguro, criarToken,
+  COOKIE, configuracaoPronta, conferirSenha, cookieSeguro, criarToken, ipDe,
   limparTentativas, mesmaOrigem, podeTentar, registrarTentativa,
 } from '@/lib/sessao';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// IP para o limite de tentativas. O PRIMEIRO valor do X-Forwarded-For é do cliente (ele escolhe o que quiser):
-// girando o cabeçalho, o limite virava infinito. Vale o que o proxy de produção põe: x-real-ip, ou o ÚLTIMO salto
-// do X-Forwarded-For (quem acrescentou foi o nosso proxy). Além disso há um limite global (todas as origens).
-function ipDe(req: Request) {
-  const real = (req.headers.get('x-real-ip') ?? '').trim();
-  if (real) return real;
-  const saltos = (req.headers.get('x-forwarded-for') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-  return saltos.at(-1) || 'local';
-}
 const GLOBAL = '*todas*';
 
 export async function POST(req: Request) {

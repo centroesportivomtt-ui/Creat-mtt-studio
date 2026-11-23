@@ -87,7 +87,7 @@ def montar_trilha(edl: dict, arq: pathlib.Path | None) -> tuple[np.ndarray, dict
                 fonte = int(round(fase * SR)) if bpm else 0
                 pos -= int(0.03 * SR)
         rel["laco"] = len(m) < N
-    fim = int(0.5 * SR)
+    fim = int(1.4 * SR)                                # sem acorde final marcado, a música sai devagar (0,5 s soava interrompida)
     if N > fim and np.abs(out[-fim:]).max() > 0 and not tr.get("acorde_final"):
         out[-fim:] *= (np.linspace(1, 0, fim) ** 1.5)[:, None]
     return out, rel
@@ -144,13 +144,27 @@ def sintetizar(nome: str) -> np.ndarray:
 _SFX: dict = {}
 
 
+def _kit_sfx(nome: str) -> pathlib.Path | None:
+    """Efeito da casa embutido no kit (gravação real, licença em packages/kit/assets/sfx/sfx.json)."""
+    from motor import config
+    p = config.KIT / "assets" / "sfx" / f"{nome}.flac"
+    return p if p.exists() else None
+
+
 def som(nome: str, biblioteca: str | None) -> tuple[np.ndarray, str]:
-    if nome in _SFX:
-        return _SFX[nome]
+    """Ordem: efeito registrado pelo dono na biblioteca (ou MK_SOM) -> efeito da casa no kit -> sintético de reserva."""
+    cands = [p for p in ((pathlib.Path(biblioteca) / "sfx" / f"{nome}.wav", pathlib.Path(biblioteca) / f"{nome}.wav") if biblioteca else ())
+             if p.exists()]
+    kit = None if cands else _kit_sfx(nome)
+    if kit is not None:
+        cands = [kit]
+    chave = (nome, str(cands[0]), cands[0].stat().st_mtime) if cands else (nome, None, None)   # som novo na biblioteca vale sem reiniciar
+    if chave in _SFX:
+        return _SFX[chave]
     origem = "sintetico"
     x = None
-    if biblioteca:
-        for p in (pathlib.Path(biblioteca) / "sfx" / f"{nome}.wav", pathlib.Path(biblioteca) / f"{nome}.wav"):
+    if cands:
+        for p in cands[:1]:
             if p.exists():
                 import soundfile as sf
                 x, sr = sf.read(str(p), dtype="float32", always_2d=True)
@@ -158,12 +172,12 @@ def som(nome: str, biblioteca: str | None) -> tuple[np.ndarray, str]:
                     from scipy.signal import resample_poly
                     x = resample_poly(x, SR, sr, axis=0).astype(np.float32)
                 x = _st(x if x.shape[1] > 1 else x[:, 0])
-                origem = "biblioteca"
+                origem = "kit" if kit is not None else "biblioteca"
                 break
     if x is None:
         x = _st(sintetizar(nome))
-    _SFX[nome] = (x, origem)
-    return _SFX[nome]
+    _SFX[chave] = (x, origem)
+    return _SFX[chave]
 
 
 def montar_sfx(edl: dict, biblioteca: str | None) -> tuple[np.ndarray, dict]:

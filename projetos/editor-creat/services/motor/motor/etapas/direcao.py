@@ -110,7 +110,8 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
     def tentar(d):
         modelo = loja.modelo_com_modo(d.get("modelo") or "evento-reel", (pedido or {}).get("modo"))
         try:
-            return resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, projeto=catalogo["projeto"]), []
+            return resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, projeto=catalogo["projeto"],
+                            ambiente=(pedido or {}).get("ambiente"), vozes=(pedido or {}).get("vozes")), []
         except ErroResolucao as e:
             return None, e.problemas
 
@@ -188,6 +189,9 @@ def rodar(ctx) -> dict:
     arm.gravar_json(f"projetos/{p}/uso_{n}.json", {"versao": v, "chamadas": r["usos"], "total": total, "prompt_tokens_estimados": r["prompt_tokens"],
                                                     "direcao_tokens_estimados": r["direcao_tokens"], "checagens_edl": loja.avaliar_edl(r["edl"])})
     arm.gravar_json(f"saidas/{p}/{v}/edl.json", r["edl"])
+    from motor.cerebro import gastos
+    for i, u in enumerate(r["usos"]):
+        gastos.registrar(ctx.cfg, "critico" if u.get("chamada") == "critico" else "direcao", u, projeto=p, versao=v, ref=f"projetos/{p}/uso_{n}.json#{i}")
     indice["por_entrada"][chave] = v
     indice["ultima"] = n
     arm.gravar_json(f"projetos/{p}/direcoes.json", indice)

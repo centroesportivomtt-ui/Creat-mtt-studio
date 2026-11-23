@@ -162,3 +162,12 @@ def test_momentos_heuristicos_validos():
     assert "fala" in tipos and "broll" in tipos and "impacto" in tipos
     assert all(1 <= m["nota"] <= 5 and m["t1"] > m["t0"] for m in v["momentos"])
     assert "rosto em quadro" in v["momentos"][0]["desc"]
+
+
+def test_link_de_transferencia_do_dropbox_explica_o_que_fazer():
+    import pytest
+    from motor import importar
+    with pytest.raises(importar.ErroImportacao, match="Copiar link"):
+        importar.link_direto("https://www.dropbox.com/t/AbCdEf123")
+    u, tipo = importar.link_direto("https://www.dropbox.com/scl/fo/abc/xyz?rlkey=k&st=s&dl=0")   # vários vídeos = pasta
+    assert tipo == "pasta_zip" and "dl=1" in u

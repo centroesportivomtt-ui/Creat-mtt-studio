@@ -46,7 +46,7 @@ def criar():
     app = FastAPI(title="Motor do Editor creat.MTT", version="0.1.0", dependencies=[Depends(autorizado)])
 
     @app.get("/v1/saude")
-    def saude(chave: bool = False, direcao: bool = False):
+    def saude(chave: bool = False, direcao: bool = False, olho: bool = False):
         out = {"ok": True, "provedores": {t: cfg.provedor_efetivo(t) for t in ("armazenamento", "transcricao", "visao", "cerebro", "render", "publicacao")}}
         if chave:
             from motor.cerebro.diagnostico import checar_chave
@@ -54,9 +54,39 @@ def criar():
         if direcao:
             from motor.cerebro.diagnostico import testar_direcao
             out["direcao_real"] = testar_direcao(cfg)
+        if olho:
+            from motor.cerebro.diagnostico import testar_olho
+            out["olho_ia"] = testar_olho(cfg)
+        import pathlib as _pl
+        from motor.etapas import falante as _fal, pessoa as _pes
+        pasta = _pl.Path(cfg.dados) / "modelos"             # só olha o disco: a saúde nunca baixa nada
+
+        def _tem(var, nome):
+            v = os.environ.get(var, "").strip()
+            return _pl.Path(v).is_file() if v else (pasta / nome).is_file()
+        from motor import qualidade_voz as _qv
+        from motor.etapas.montagem import dfn3 as _dfn
+        _pdfn = _pl.Path(os.environ.get("EDITOR_DFN3", "").strip() or (pasta / "dfn3"))
+        out["modelos"] = {"pessoa": _tem("EDITOR_PESSOA", _pes.MODELO_NOME), "voz": _tem("EDITOR_FALANTE", _fal.MODELO_NOME),
+                          "limpeza_voz": all((_pdfn / n).is_file() for n in _dfn.ARQUIVOS),
+                          "medidor_voz": _tem("EDITOR_DNSMOS", _qv.MODELO_NOME)}
+        try:                                                # o boot confere o navegador do kit (motor/modelos.py)
+            import json as _json
+            out["modelos"]["navegador"] = _json.loads((pasta / "navegador.json").read_text()).get("ok")
+        except (OSError, ValueError):
+            out["modelos"]["navegador"] = None
+        from motor import backup as _backup
+        import re as _re
+        _bk = _backup.estado(cfg)
+        out["backup"] = {k: v for k, v in _bk.items() if k in ("destino", "estado", "ultimo_ok", "horas_desde_o_ultimo")}
+        if _bk.get("estado") == "falha" and _bk.get("erro"):   # causa da falha, sem caminhos internos (a saúde é pública)
+            out["backup"]["erro"] = _re.sub(r"(/[\w.@-]+)+/?", "<caminho>", str(_bk["erro"]))[:160]
         return out
 
-    for nome in ("projetos", "direcao", "versoes", "referencias"):
+    if os.environ.get("EDITOR_BACKUP_AGENDAR") == "1":            # só no servidor (iniciar.sh); testes e aceites não agendam
+        from motor import backup as _backup_ag
+        _backup_ag.agendar(cfg)
+    for nome in ("projetos", "direcao", "versoes", "referencias", "backup", "gastos", "biblioteca", "cliente"):
         try:
             mod = importlib.import_module(f"motor.api.{nome}")
         except ModuleNotFoundError as e:

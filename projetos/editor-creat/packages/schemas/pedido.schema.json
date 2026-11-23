@@ -125,6 +125,28 @@
     "criado_em": {
       "type": "string",
       "format": "date-time"
+    },
+    "ambiente": {
+      "enum": [
+        "auto",
+        "loja",
+        "rua_dia",
+        "rua_noite",
+        "academia",
+        "palco",
+        "neutro"
+      ],
+      "default": "auto",
+      "description": "Onde foi gravado, para a cor: auto = o editor mede cada cena e escolhe o look; loja (interno de loja), rua_dia, rua_noite, academia, palco, neutro."
+    },
+    "vozes": {
+      "enum": [
+        "auto",
+        "uma",
+        "varias"
+      ],
+      "default": "auto",
+      "description": "Quem fala na peça: auto = o editor ouve e decide (voz principal com 65% ou mais do tempo: o resto é intruso); uma = só o apresentador (qualquer outra voz segura a entrega); varias = várias pessoas falam de propósito."
     }
   }
 }

@@ -197,6 +197,26 @@ async function principal() {
   ok('sem restos do tus depois do fim', restos.length === 0, restos.join(', '));
   await page.waitForSelector('.arquivo', { timeout: 15000 });
   ok('motor recebeu o arquivo (aparece na lista)', (await page.locator('.arquivo').count()) === 1);
+  // links do Dropbox: vários de uma vez, e o resultado aparece embaixo do botão (o dono colou 4 links e "o botão não ia")
+  await page.fill('[data-teste=importar-links]', 'olha os videos https://www.dropbox.com/scl/fi/abc123/C0016.MP4?rlkey=x&dl=0\nhttps://exemplo.com/nao.mp4');
+  const rotuloImp = await page.textContent('[data-teste=importar-enviar]');
+  await page.click('[data-teste=importar-enviar]');
+  const resImp = await page.locator('[data-teste=importar-resultado]').textContent({ timeout: 10000 }).catch(() => '');
+  ok('vários links do Dropbox de uma vez: um entra, o errado diz por quê, ali embaixo do botão', /2 links/.test(rotuloImp ?? '') && /1 link na fila/.test(resImp ?? '') && /nao\.mp4.*não é link do Dropbox/.test(resImp ?? ''), `${rotuloImp} | ${(resImp ?? '').slice(0, 160)}`);
+  await page.waitForFunction(() => document.querySelectorAll('.arquivo').length === 2, null, { timeout: 15000 }).catch(() => {});
+  // link restrito da equipe (conta Mttcreatt): recusado na hora, o passo a passo aparece UMA vez para os 2 links, e nada entra na fila
+  const errosAntesRestr = errosConsole.length;
+  await page.fill('[data-teste=importar-links]', 'https://www.dropbox.com/scl/fi/restrito1/A.MOV?rlkey=x&dl=0 https://www.dropbox.com/scl/fi/restrito2/B.MOV?rlkey=y&dl=0');
+  await page.click('[data-teste=importar-enviar]');
+  await page.waitForFunction(() => /restrito/.test(document.querySelector('[data-teste=importar-resultado]')?.textContent ?? ''), null, { timeout: 10000 }).catch(() => {});
+  const resRestr = (await page.locator('[data-teste=importar-resultado]').textContent().catch(() => '')) ?? '';
+  const nPassos = (resRestr.match(/Qualquer pessoa com o link/g) ?? []).length;
+  // os 2 "422" do navegador aqui são a recusa esperada do motor (como o 401 da senha errada): só eles saem da conta
+  const novos = errosConsole.splice(errosAntesRestr);
+  errosConsole.push(...novos.filter((t) => !/status of 422/.test(t)));
+  const recusas = novos.length - (errosConsole.length - errosAntesRestr);
+  ok('link restrito da equipe: recusado na hora, com o passo a passo uma vez só', /2 de 2 links \(A\.MOV, B\.MOV\)/.test(resRestr) && nPassos === 1 && recusas === 2
+    && (await page.locator('.arquivo').count()) === 2, resRestr.slice(0, 200));
 
   // ---------- 3. status ao vivo até "entregue" e player ----------
   const vistos = [];
@@ -247,11 +267,119 @@ async function principal() {
   await page.click('[data-teste=aprovar]');
   const aprovou = await page.waitForSelector('[data-teste=aprovada]', { timeout: 10000 }).then(() => true).catch(() => false);
   ok('aprovar bate a claquete e marca a versão', aprovou, aprovou ? 'aprovada' : 'não marcou');
+
+  // ---------- link de aprovação do cliente (página pública, sem sessão) ----------
+  await page.click('[data-teste=link-cliente-gerar]');
+  const urlCliente = (await page.locator('[data-teste=link-cliente-url]').textContent({ timeout: 10000 }).catch(() => '')) ?? '';
+  const tokCliente = /\/c\/([A-Za-z0-9_-]{43})$/.exec(urlCliente.trim())?.[1] ?? '';
+  ok('link do cliente: o dono gera e o link aparece uma vez', Boolean(tokCliente), urlCliente.trim().replace(/[A-Za-z0-9_-]{43}$/, '<token>'));
+  const cctx = await navegador.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'pt-BR' });
+  const cp = await cctx.newPage();
+  const errosCli = [];
+  cp.on('console', (m) => { if (m.type() === 'error') errosCli.push(m.text()); });
+  cp.on('pageerror', (e) => errosCli.push(String(e)));
+  const rc = await cp.goto(`${BASE}/c/${tokCliente}`);
+  const refCli = rc?.headers()['referrer-policy'];
+  const tocaCli = await cp.waitForSelector('[data-teste=cliente-player]', { timeout: 10000 }).then(() => cp.evaluate(async () => {
+    const v = document.querySelector('[data-teste=cliente-player]');
+    v.muted = true;
+    try { await v.play(); } catch (e) { return { erro: String(e) }; }
+    const t = Date.now();
+    while (v.currentTime < 0.5 && Date.now() - t < 10000) await new Promise((r) => setTimeout(r, 100));
+    const r = { tempo: v.currentTime, largura: v.videoWidth, erro: v.error?.message ?? null };
+    v.pause();
+    return r;
+  })).catch((e) => ({ erro: String(e) }));
+  const medCli = await cp.evaluate(() => ({
+    rolagem: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    menu: Boolean(document.querySelector('.topo, a[href^="/projetos"], a[href="/caderno"]')),
+    alvos: [...document.querySelectorAll('button, a, textarea, input')].filter((el) => { const r = el.getBoundingClientRect(); return r.width && r.height && r.height < 44; }).length,
+  }));
+  await cp.screenshot({ path: path.join(PRINTS, 'cliente-celular-antes.png'), fullPage: true });
+  const semSessaoCli = await cctx.request.get(`${BASE}/api/motor/v1/projetos`).then((r) => r.status());
+  const outraVersao = await cctx.request.get(`${BASE}/api/cliente/${tokCliente}/mix`).then((r) => r.status());
+  ok('página do cliente: só o player (toca) e os botões; sem menu do editor, sem Referer, motor fechado', !tocaCli.erro && tocaCli.tempo >= 0.5 && !medCli.rolagem && !medCli.menu && medCli.alvos === 0
+    && refCli === 'no-referrer' && semSessaoCli === 401 && outraVersao === 404, JSON.stringify({ ...tocaCli, ...medCli, refCli, semSessaoCli, outraVersao }));
+  await cp.click('[data-teste=cliente-pedir]');
+  await cp.fill('[data-teste=cliente-texto]', 'Trocar a música do final');
+  await cp.click('[data-teste=cliente-enviar]');
+  const enviouCli = await cp.waitForSelector('[data-teste=cliente-ajuste-enviado]', { timeout: 10000 }).then(() => true).catch(() => false);
+  await cp.reload();
+  const ficouCli = await cp.locator('[data-teste=cliente-ajuste-enviado]').count() === 1 && await cp.locator('[data-teste=cliente-aprovar]').count() === 0;
+  const falso = await cctx.request.get(`${BASE}/c/${'A'.repeat(43)}`).then(async (r) => /Link não encontrado/.test(await r.text()));
+  await cp.screenshot({ path: path.join(PRINTS, 'cliente-celular-depois.png'), fullPage: true });
+  ok('cliente pede ajuste uma vez só; link falso não abre nada', enviouCli && ficouCli && falso && errosCli.length === 0, JSON.stringify({ enviouCli, ficouCli, falso, errosCli: errosCli.slice(0, 2) }));
+  await cctx.close();
+  const viuNoProjeto = await page.waitForSelector('[data-teste=link-cliente-resposta] >> text=música do final', { timeout: 20000 }).then(() => true).catch(() => false);
+  await page.goto(`${BASE}/caderno#clientes`);
+  const noCaderno = await page.waitForSelector('[data-teste=pedidos-cliente] >> text=música do final', { timeout: 10000 }).then(() => true).catch(() => false);
+  await page.click('[data-teste=pedido-tratar]').catch(() => {});
+  const tratou = await page.waitForSelector('[data-teste=pedidos-cliente] >> text=Ajuste (resolvido)', { timeout: 10000 }).then(() => true).catch(() => false);
+  ok('resposta do cliente chega ao projeto e ao Caderno (o dono marca como resolvido)', viuNoProjeto && noCaderno && tratou, JSON.stringify({ viuNoProjeto, noCaderno, tratou }));
+  await page.goto(`${BASE}/projetos/${pid}`);
+  await page.waitForSelector('[data-teste=player]', { timeout: 10000 });
+  await page.click('[data-teste=link-cliente-desligar]');
+  await page.waitForSelector('[data-teste=link-cliente-desligar]', { state: 'detached', timeout: 10000 }).catch(() => {});
+  const fechou = await fetch(`${BASE}/c/${tokCliente}`).then(async (r) => /Link fechado/.test(await r.text()));
+  const videoFechado = await fetch(`${BASE}/api/cliente/${tokCliente}/video`).then((r) => r.status);
+  ok('o dono desliga o link e a página do cliente fecha (vídeo também)', fechou && videoFechado === 410, JSON.stringify({ fechou, videoFechado }));
+  const avisoQa = await page.locator('[data-teste=qa-aviso]').first().textContent().catch(() => null);
+  const olhoQa = await page.locator('[data-teste=qa-olho]').first().textContent().catch(() => null);
+  ok('QA mostra os avisos (checagem em observação) e o olho de IA com o custo', /voz de fora/.test(avisoQa ?? '') && /custo US\$/.test(olhoQa ?? ''), `${avisoQa ?? 'sem aviso'} | ${olhoQa ?? 'sem olho'}`.slice(0, 200));
+  await page.click('[data-teste=ver-cor]');
+  const corAbriu = await page.waitForSelector('[data-teste=cor-grade] [data-teste=cor-plano]', { timeout: 10000 }).then(() => true).catch(() => false);
+  const cor = corAbriu ? await page.evaluate(async () => {
+    const imgs = [...document.querySelectorAll('[data-teste=cor-plano] img')];
+    await Promise.all(imgs.map((i) => (i.complete ? null : new Promise((r) => { i.onload = i.onerror = r; }))));
+    const faixa = document.querySelector('[data-teste=cor-plano] input[type=range]');
+    const quadro = faixa.closest('.cor__quadro');
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    set.call(faixa, '80'); faixa.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 150));
+    return { planos: document.querySelectorAll('[data-teste=cor-plano]').length, carregadas: imgs.filter((i) => i.naturalWidth > 0).length, total: imgs.length,
+      pos: quadro.style.getPropertyValue('--pos'), rolagem: document.documentElement.scrollWidth > document.documentElement.clientWidth };
+  }) : null;
+  if (corAbriu) await page.locator('[data-versao] .cor').first().screenshot({ path: path.join(PRINTS, 'cor-antes-depois.png') }).catch(() => {});
+  ok('cor: antes e depois de cada plano na versão (imagens, medição e comparador)', Boolean(cor && cor.planos >= 2 && cor.carregadas === cor.total && cor.pos === '80%' && !cor.rolagem), JSON.stringify(cor));
   await page.goto(`${BASE}/caderno`);
+  const nLooks = await page.locator('[data-teste=caderno-looks] li').count();
+  ok('caderno mostra a biblioteca de cor por ambiente', nLooks >= 5, `${nLooks} looks`);
+  {
+    const f = '[data-teste=form-biblioteca]';
+    await page.fill(`${f} input[name=url]`, 'https://www.dropbox.com/scl/fi/abc123/trilha.wav?rlkey=x');
+    await page.fill(`${f} input[name=titulo]`, 'Mercado em festa');
+    await page.fill(`${f} input[name=fonte]`, 'Artlist');
+    await page.click('[data-teste=bib-enviar]');
+    const pediuLicenca = await page.waitForSelector(`${f} [role=alert] >> text=Confirme a licença`, { timeout: 8000 }).then(() => true).catch(() => false);
+    await page.check('[data-teste=bib-comercial]');
+    await page.click('[data-teste=bib-enviar]');
+    const entrou = await page.waitForSelector('[data-teste=biblioteca-lista] >> text=Mercado em festa', { timeout: 15000 }).then(() => true).catch(() => false);
+    const pode = await page.locator('[data-teste=biblioteca-lista] >> text=pode tocar').count();
+    ok('biblioteca: sem confirmar a licença não entra; com licença a trilha aparece e pode tocar', pediuLicenca && entrou && pode >= 1, `pediu licença ${pediuLicenca} · entrou ${entrou} · pode tocar ${pode}`);
+  }
+  {
+    const antes = (await page.locator('[data-teste=backup-estado]').textContent({ timeout: 10000 }).catch(() => '')) ?? '';
+    await page.fill('[data-teste=backup-pedido]', 'https://exemplo.com/nao-e-dropbox');
+    await page.click('[data-teste=backup-salvar]');
+    const recusou = await page.waitForSelector('[data-teste=backup] [role=alert] >> text=não é o link de uma solicitação', { timeout: 8000 }).then(() => true).catch(() => false);
+    await page.fill('[data-teste=backup-pedido]', 'https://www.dropbox.com/request/AbCdEfGh1234567890');
+    await page.click('[data-teste=backup-salvar]');
+    await page.waitForSelector('[data-teste=backup-agora]:not([disabled])', { timeout: 8000 }).catch(() => {});
+    await page.click('[data-teste=backup-agora]').catch(() => {});
+    const emDia = await page.waitForSelector('[data-teste=backup-estado] >> text=em dia', { timeout: 15000 }).then(() => true).catch(() => false);
+    const html = await page.content();
+    ok('backup: endereço errado recusado, destino salvo, backup feito e o link não fica na tela', /ainda não rodou/.test(antes) && recusou && emDia && !html.includes('AbCdEfGh1234567890'),
+      `antes "${antes.trim().slice(0, 40)}" · recusou ${recusou} · em dia ${emDia}`);
+  }
   await page.fill('[data-teste=form-referencia] input[name=url]', 'https://www.instagram.com/reel/TESTE123/');
   await page.click('[data-teste=ler-referencia]');
   const leu = await page.waitForSelector('[data-teste=referencias] li >> text=planos', { timeout: 10000 }).then(() => true).catch(() => false);
   ok('estudo de caso por link entra no caderno', leu, leu ? 'lição gravada' : 'não apareceu');
+  await page.goto(`${BASE}/gastos`);
+  const totalG = await page.locator('[data-teste=gastos-total]').textContent({ timeout: 10000 }).catch(() => null);
+  const nUlt = await page.locator('[data-teste=gastos-ultimas] li').count();
+  const rolaG = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  ok('painel de gastos do mês: total, por tipo, por projeto e últimas chamadas', /US\$ 0,378/.test(totalG ?? '') && nUlt === 3 && !rolaG, `total "${totalG}" · ${nUlt} linhas`);
   ok('fluxo sem erro de console', errosConsole.length === 0, errosConsole.slice(0, 3).join(' | '));
 
   // ---------- 4. verificação visual logada ----------
@@ -262,7 +390,7 @@ async function principal() {
     { nome: 'desktop-claro', viewport: { width: 1440, height: 900 }, colorScheme: 'light' },
     { nome: 'desktop-escuro', viewport: { width: 1440, height: 900 }, colorScheme: 'dark' },
   ];
-  const paginas = [['entrar', '/entrar', false], ['projetos', '/projetos', true], ['novo', '/projetos/novo', true], ['projeto', `/projetos/${pid}`, true], ['caderno', '/caderno', true]];
+  const paginas = [['entrar', '/entrar', false], ['projetos', '/projetos', true], ['novo', '/projetos/novo', true], ['projeto', `/projetos/${pid}`, true], ['caderno', '/caderno', true], ['gastos', '/gastos', true], ['cliente', `/c/${tokCliente}`, false]];
   const problemas = [];
   await medir('verificacao_visual_s', async () => {
     for (const c of configs) {

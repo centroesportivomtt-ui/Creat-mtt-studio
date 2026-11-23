@@ -200,7 +200,8 @@ ESQUEMA_PROPOSTA = {
         "checagem": {"type": "object", "additionalProperties": False, "required": ["executor", "tipo", "params", "descricao"],
                      "properties": {"executor": {"enum": ["edl", "qa"]},
                                     "tipo": {"enum": ["legenda_proibida", "fecho_contem", "duracao_max", "duracao_min", "vazio_max_s",
-                                                      "frase_repetida", "tom_sala_sem_voz", "logo_100", "revisao_humana"]},
+                                                      "frase_repetida", "tom_sala_sem_voz", "logo_100", "fala_cortada", "voz_externa",
+                                                      "cobertura_sintonia", "revisao_humana"]},
                                     "params": {"type": "object", "additionalProperties": False,
                                                "properties": {"palavras": {"type": "array", "items": {"type": "string"}},
                                                               "texto": {"type": "string"}, "s": {"type": "number"}}},
@@ -258,7 +259,9 @@ def avaliar(c: dict, edl: dict) -> dict:
         achadas = sorted({norm(str(w[2])) for w in edl.get("legendas", {}).get("palavras", [])} & proib)
         ok, detalhe = not achadas, (f"legenda tem {achadas}" if achadas else "")
     elif tipo == "fecho_contem":
-        fechos = [json.dumps(m["props"], ensure_ascii=False) for m in edl.get("motion", []) if m["modelo"].startswith("fecho")]
+        # fecho = camada fecho*/ou o cartão de papel da linguagem "Em Revelação" (papel modo cartao)
+        fechos = [json.dumps(m["props"], ensure_ascii=False) for m in edl.get("motion", [])
+                  if m["modelo"].startswith("fecho") or (m["modelo"] == "papel" and (m.get("props") or {}).get("modo") == "cartao")]
         if not fechos and (edl.get("origem") or {}).get("modelo") == "story":
             # story curto não tem cartão final: a assinatura vale em qualquer camada de texto que fique na tela
             fechos = [json.dumps(m["props"], ensure_ascii=False) for m in edl.get("motion", [])]

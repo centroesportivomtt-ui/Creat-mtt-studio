@@ -241,6 +241,8 @@ def analise(ctx: Contexto) -> dict:
     uso = getattr(vis_prov, "ultimo_uso", None)
     if uso:
         arm.gravar_json(f"{base}/uso_visao.json", uso)
+        from motor.cerebro import gastos
+        gastos.registrar(ctx.cfg, "visao_leve", uso, projeto=p, ref=f"{base}/uso_visao.json")
     tempos["analise_visao"] = round(time.time() - t3, 2)
     tempos["analise_total"] = round(time.time() - t0, 2)
 

@@ -45,6 +45,9 @@ def link_direto(url: str, hosts=HOSTS) -> tuple[str, str]:
     h, caminho = u.hostname.lower(), u.path
     q = urllib.parse.parse_qs(u.query, keep_blank_values=True)
     if "dropbox" in h:
+        if caminho.startswith(("/t/", "/transfer/")):
+            raise ErroImportacao("Link de transferência do Dropbox não baixa direto. No Dropbox, toque em Compartilhar > Copiar link "
+                                 "da PASTA (ou de cada vídeo) e cole aqui.")
         q.pop("raw", None)
         q["dl"] = ["1"]
         tipo = "pasta_zip" if caminho.startswith(("/scl/fo/", "/sh/")) else "arquivo"
@@ -70,6 +73,8 @@ class _Redirecionador(urllib.request.HTTPRedirectHandler):
         u = urllib.parse.urlsplit(newurl)
         if not (u.scheme == "https" or (u.scheme == "http" and u.hostname in ("127.0.0.1", "localhost") and host_permitido(u.hostname, self.hosts))):
             raise ErroImportacao("O link redirecionou para um endereço não seguro.")
+        if (u.hostname or "").lower() == "accounts.google.com":
+            raise ErroImportacao(MSG_LOGIN_DRIVE)          # arquivo privado do Drive manda para a tela de login
         if not host_permitido(u.hostname or "", self.hosts):
             raise ErroImportacao(f"O link redirecionou para fora do Dropbox/Drive ({u.hostname}).")
         novo = super().redirect_request(req, fp, code, msg, headers, newurl)
@@ -118,6 +123,8 @@ def baixar(url: str, destino: Path, *, hosts=HOSTS, max_bytes: int = 60 << 30, p
                     campos = dict(re.findall(r'name="(\w+)" value="([^"]*)"', html))
                     url = m.group(1).replace("&amp;", "&") + ("&" if "?" in m.group(1) else "?") + urllib.parse.urlencode(campos)
                     continue
+                if _pagina_de_login(html):
+                    raise ErroImportacao(MSG_LOGIN_DRIVE if "google" in (urllib.parse.urlsplit(url).hostname or "") else MSG_LOGIN_DROPBOX)
                 raise ErroImportacao("O link abriu uma página em vez do arquivo: confira se ele é público.")
             continuar = resp.status == 206 and ja > 0
             total = resp.headers.get("Content-Length")
@@ -143,6 +150,68 @@ def baixar(url: str, destino: Path, *, hosts=HOSTS, max_bytes: int = 60 << 30, p
                 raise IOError(f"download incompleto: {feito} de {total} bytes (vai retomar)")
             return _fechar(parte, destino, resp.headers.get("Content-Disposition"), url)
     raise ErroImportacao("Não consegui baixar o arquivo do Drive.")
+
+
+MSG_LOGIN_DROPBOX = ("Esse link do Dropbox só abre para quem está logado (link restrito da equipe). No app do Dropbox: toque nos 3 "
+                     "pontinhos do vídeo ou da pasta > Compartilhar > Configurações do link (engrenagem) > Quem tem acesso: "
+                     "\"Qualquer pessoa com o link\" > Salvar > Copiar link, e cole aqui de novo.")
+MSG_LOGIN_DRIVE = ("Esse link do Google Drive só abre para quem está logado. No Drive: Compartilhar > Acesso geral: \"Qualquer pessoa "
+                   "com o link\" > Copiar link, e cole aqui de novo.")
+
+
+def _pagina_de_login(html: str) -> bool:
+    """Só o COMEÇO do título ("Log in to Dropbox", "Sign in - Google Accounts", "Fazer login"): o título da prévia traz o
+    nome do arquivo, e "login_tutorial.mp4" ou "concentrar" não podem virar "link restrito"."""
+    t = re.search(r"<title[^>]*>\s*([^<]{0,200})</title>", html, re.I)
+    return bool(t and re.match(r"(log ?in|sign ?in|entrar|fazer login|iniciar sess)\b", t.group(1).strip(), re.I))
+
+
+def sondar(url: str, *, hosts=HOSTS, timeout: float = 15) -> str | None:
+    """Confere o link NA HORA (o dono vê o motivo embaixo do botão, em vez de o arquivo sumir da fila minutos depois).
+    Pede só o 1º byte e fecha. Levanta ErroImportacao só quando a resposta é definitiva (pede login, não existe);
+    rede lenta ou fora devolve o motivo como texto e a importação segue para o worker, que tenta de novo."""
+    direto, tipo = link_direto(url, hosts)
+    return sondar_direto(direto, tipo, hosts=hosts, timeout=timeout)
+
+
+def sondar_direto(direto: str, tipo: str = "arquivo", *, hosts=HOSTS, timeout: float = 15) -> str | None:
+    google = "google" in (urllib.parse.urlsplit(direto).hostname or "")
+    abridor = urllib.request.build_opener(_Redirecionador(hosts))
+    req = urllib.request.Request(direto, headers={"User-Agent": AGENTE, "Range": "bytes=0-0"})
+    prazo = time.monotonic() + timeout                          # prazo TOTAL (o timeout do socket vale por leitura)
+    try:
+        with abridor.open(req, timeout=timeout) as resp:
+            if "text/html" not in resp.headers.get("Content-Type", ""):
+                return None                                     # é o arquivo (ou o zip da pasta)
+            partes, lidos = [], 0
+            while lidos < 300_000 and time.monotonic() < prazo:
+                b = resp.read(min(65_536, 300_000 - lidos))
+                if not b:
+                    break
+                partes.append(b)
+                lidos += len(b)
+            html = b"".join(partes).decode("utf-8", "replace")
+    except ErroImportacao:
+        raise
+    except urllib.error.HTTPError as e:
+        e.close()
+        if e.code in (401, 403, 404, 410):
+            raise ErroImportacao("Esse link não existe mais ou não está público. Gere de novo o link com "
+                                 "\"Qualquer pessoa com o link\" e cole aqui.") from e
+        return f"o {('Drive' if google else 'Dropbox')} respondeu {e.code}; o motor tenta de novo"
+    except Exception as e:  # noqa: BLE001 - rede: não bloqueia, o worker tenta de novo
+        return f"sem resposta do link agora ({type(e).__name__}); o motor tenta de novo"
+    if re.search(r'action="https://drive\.usercontent\.google\.com/download', html):
+        return None                                             # aviso "arquivo grande, sem antivírus": o baixador confirma
+    if _pagina_de_login(html):
+        raise ErroImportacao(MSG_LOGIN_DRIVE if google else MSG_LOGIN_DROPBOX)
+    if re.search(r"<title[^>]*>[^<]*(invalid link|link inválido|not found|não encontrad)", html, re.I):
+        raise ErroImportacao("Esse link não existe mais (foi apagado ou copiado pela metade). Copie o link de novo e cole aqui.")
+    if tipo == "pasta_zip":
+        raise ErroImportacao("O Dropbox não entregou essa pasta em zip (pasta grande demais ou com milhares de arquivos). "
+                             "Cole o link de cada vídeo, ou de uma pasta menor só com os vídeos do projeto.")
+    raise ErroImportacao("O link abriu uma página em vez do arquivo. Confira se ele é de um vídeo ou de uma pasta e se está "
+                         "como \"Qualquer pessoa com o link\".")
 
 
 def _fechar(parte: Path, destino: Path, cd, url) -> tuple[Path, str, int]:

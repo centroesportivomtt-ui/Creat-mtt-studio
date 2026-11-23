@@ -420,6 +420,48 @@
                   "null"
                 ],
                 "description": "Luminância média 0-1."
+              },
+              "look": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "loja",
+                  "rua_dia",
+                  "rua_noite",
+                  "academia",
+                  "palco",
+                  "neutro",
+                  null
+                ],
+                "description": "Look da biblioteca de cor (motor/etapas/cor.py) escolhido pela medição; academia vem do pedido."
+              },
+              "medicao": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "Medição de cor da cena (mediana dos quadros-chave): p2/p50/p98 de luma, estouro, esmagado, ganho_wb [r,g,b], ceu, cores_fortes, sat_media, pele {angulo, sat, fracao} e hist (32 faixas).",
+                "properties": {
+                  "p50": {
+                    "type": "number"
+                  },
+                  "ganho_wb": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "hist": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  }
+                }
               }
             }
           }

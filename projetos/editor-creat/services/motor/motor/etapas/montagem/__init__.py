@@ -21,7 +21,10 @@ import time
 
 from motor import config
 from motor.etapas import ErroDefinitivo, etapa
+from motor.etapas import fatos
+from motor.etapas import pessoa as PESSOA
 from motor.etapas.montagem import comp as COMP
+from motor.etapas.montagem import fx as FX
 from motor.etapas.montagem import mix as MIX
 from motor.etapas.montagem import overlay as OV
 from motor.etapas.montagem import planos as PL
@@ -50,6 +53,9 @@ def validar_edl(edl: dict) -> None:
     for v in edl["voz"]:
         if v["fonte"] not in edl["fontes"]:
             raise ErroDefinitivo(f"EDL inválido: voz {v['id']} usa fonte '{v['fonte']}' que não está em fontes")
+    pr = FX.problemas(edl)                                   # revela/salto: o que quebraria calado no render
+    if pr:
+        raise ErroDefinitivo("EDL inválido: " + "; ".join(pr[:5]))
 
 
 def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tuple[float, float] | None = None,
@@ -77,7 +83,8 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
         if arq_tr is not None and not pathlib.Path(arq_tr).exists():
             raise ErroDefinitivo(f"trilha não encontrada: {chave_tr}")
         trilha, rel_tr = cronometro("trilha", TR.montar_trilha, edl, arq_tr)
-        sfx, rel_sfx = TR.montar_sfx(edl, getattr(cfg, "som", "") or os.environ.get("MK_SOM"))
+        from motor import biblioteca as BIB
+        sfx, rel_sfx = TR.montar_sfx(edl, getattr(cfg, "som", "") or os.environ.get("MK_SOM") or str(BIB.pasta_sfx(cfg)))
         rel_mix = cronometro("mix", MIX.mixar, edl, voz, trilha, sfx, fontes, trabalho / "audio", cfg)
         shutil.rmtree(trabalho / "tmp_audio", ignore_errors=True)
         return {"voz": rel_voz, "trilha": rel_tr, "sfx": rel_sfx, **rel_mix}
@@ -85,18 +92,26 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
     t_ini = time.time()
     prog(0.02, "Montagem: planos, motion e áudio em paralelo")
     with cf.ThreadPoolExecutor(max_workers=2) as ex:
-        f_ov = ex.submit(cronometro, "overlay", OV.renderizar, edl, fontes, trabalho / "overlay", workers=workers_ov, janela=janela, nice=nice)
+        tem_atras = any(m.get("atras") for m in edl.get("motion", []))
+        w_at = max(1, workers_ov // 3) if tem_atras else 0     # a camada de trás é curta (o gancho): poucos navegadores para ela
+        f_ov = ex.submit(cronometro, "overlay", OV.renderizar, edl, fontes, trabalho / "overlay", workers=max(1, workers_ov - w_at),
+                         janela=janela, nice=nice, atras=False if tem_atras else None)
+        f_at = ex.submit(cronometro, "overlay_atras", OV.renderizar, edl, fontes, trabalho / "overlay", workers=w_at,
+                         janela=janela, nice=nice, atras=True) if tem_atras else None
         f_au = ex.submit(audio)
         res_pl = cronometro("planos", PL.renderizar, edl, fontes, cache_planos, workers=workers_pl, nice=nice, janela=janela,
                             progresso=lambda p, m=None: prog(0.05 + 0.55 * p, m))
         res_ov = f_ov.result()
+        res_at = f_at.result() if f_at else {}
         res_au = f_au.result()
     prog(0.65, "Composição e encode (vídeo + áudio numa passada)")
     nome = "final.mp4" if not janela else f"trecho_{janela[0]:g}_{janela[1]:g}.mp4"
     res_comp = cronometro("composicao", COMP.compor, edl, res_pl, res_ov.get("dir"), res_au["mix"], trabalho / nome, janela=janela,
                           threads=max(2, int(getattr(cfg, "threads", 2) or 2) + 1), nice=nice,
-                          progresso=lambda p, m=None: prog(0.65 + 0.33 * p, m))
+                          progresso=lambda p, m=None: prog(0.65 + 0.33 * p, m), dir_overlay_atras=res_at.get("dir"),
+                          recortador=PESSOA.recortador_para(edl, cfg))
     tempos["total"] = round(time.time() - t_ini, 2)
+    cor = revisao_cor(edl, res_pl, trabalho / "cor")
     st = res_ov.get("stats") or {}
     rel = {
         "versao": VERSAO, "edl_hash": hash_obj(edl), "janela": list(janela) if janela else None,
@@ -106,11 +121,34 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
         "planos": {k: {"arquivo": v["arquivo"], "cache": v["cache"], **({k2: v["info"][k2] for k2 in ("ms_quadro", "estab", "jit_antes", "jit_depois", "zoom_x")} if v.get("info") else {})}
                    for k, v in res_pl.items()},
         "audio": {k: v for k, v in res_au.items() if k not in ("stems",)},
+        "cor": cor,
         "composicao": res_comp, "tempos": tempos,
     }
     gravar_json(trabalho / "montagem.json", rel)
     prog(1.0, "Montagem pronta")
     return rel
+
+
+def revisao_cor(edl: dict, res_pl: dict, pasta: pathlib.Path) -> list[dict]:
+    """Antes/depois da cor por plano (quadro do meio + medição), na ordem do filme, para a revisão do dono e o QA."""
+    shutil.rmtree(pasta, ignore_errors=True)
+    out = []
+    for p in edl["planos"]:
+        r = res_pl.get(p["id"])
+        info = PL.ler_antes_depois(r["arquivo"]) if r else None
+        if not info:
+            continue
+        pasta.mkdir(parents=True, exist_ok=True)
+        item = {"plano": p["id"], "t0": p["t0"], "t1": p["t1"], "look": info["look"], "look_nome": info["look_nome"],
+                "balanco": info.get("balanco"), "antes": info["antes"], "depois": info["depois"]}
+        for lado in ("antes", "depois"):
+            destino = pasta / f"{p['id']}_{lado}.jpg"
+            shutil.copyfile(info[f"{lado}_jpg"], destino)
+            item[f"{lado}_jpg"] = str(destino)
+        out.append(item)
+    if out:
+        gravar_json(pasta / "cor.json", out)
+    return out
 
 
 def _gravar(arm, chave: str, origem: pathlib.Path) -> str:
@@ -131,6 +169,11 @@ def etapa_montagem(ctx) -> dict:
         raise ErroDefinitivo(f"sem EDL em {chave_edl}")
     edl = json.loads(pathlib.Path(arm.caminho_local(chave_edl)).read_text(encoding="utf-8"))
     trabalho = pathlib.Path(ctx.cfg.dados) / "tmp" / "montagem" / p / v
+    # verificação de fatos (regra do dono): número errado na fala sai CERTO na tela; relatório em edl.qa.fatos
+    antes = hash_obj(edl)
+    fatos.revisar(edl, ctx.cfg, Fontes(edl, arm, ctx.cfg.dados), contexto=_contexto(ctx, arm, p), projeto=p, trabalho=trabalho / "fatos")
+    if hash_obj(edl) != antes:
+        arm.gravar(chave_edl, _bytes_json(edl))
     chave_rel = f"saidas/{p}/{v}/montagem.json"
     if arm.existe(chave_rel) and arm.existe(f"saidas/{p}/{v}/final.mp4"):
         ant = json.loads(pathlib.Path(arm.caminho_local(chave_rel)).read_text(encoding="utf-8"))
@@ -143,10 +186,34 @@ def etapa_montagem(ctx) -> dict:
     for nome, arq in rel["stems"].items():
         _gravar(arm, f"{base}/stems/{nome}.flac", pathlib.Path(arq))
     rel["chaves"] = {"final": f"{base}/final.mp4", "mix": f"{base}/mix.wav", "stems": {n: f"{base}/stems/{n}.flac" for n in rel["stems"]}}
+    for item in rel.get("cor") or []:                       # revisão da cor: imagens e medição ao lado do vídeo
+        for lado in ("antes", "depois"):
+            chave = f"{base}/cor/{item['plano']}_{lado}.jpg"
+            _gravar(arm, chave, pathlib.Path(item.pop(f"{lado}_jpg")))
+            item[lado + "_chave"] = chave
+    if rel.get("cor"):
+        arm.gravar(f"{base}/cor.json", _bytes_json(rel["cor"]))
+        rel["chaves"]["cor"] = f"{base}/cor.json"
     arm.gravar(chave_rel, _bytes_json(rel))
     ctx.con.execute("UPDATE versoes SET estado='montada', video=? WHERE projeto=? AND id=?", (f"{base}/final.mp4", p, v))
     PL.limpar_cache(pathlib.Path(ctx.cfg.dados) / "cache" / "planos", int(os.environ.get("EDITOR_CACHE_PLANOS_MB", "1200")))
     return {"versao": v, "final": f"{base}/final.mp4", "tempos": rel["tempos"], "overlay_ms_quadro": rel["overlay"]["ms_quadro_efetivo"]}
+
+
+def _contexto(ctx, arm, p: str) -> str:
+    """Nome do projeto + pedido do cliente: o preço e a oferta da loja se confirmam por ele."""
+    try:
+        nome = (ctx.con.execute("SELECT nome FROM projetos WHERE id=?", (p,)).fetchone() or {"nome": ""})["nome"]
+    except Exception:  # noqa: BLE001
+        nome = ""
+    pedido = ""
+    try:
+        if arm.existe(f"projetos/{p}/pedido.json"):
+            ped = arm.ler_json(f"projetos/{p}/pedido.json")
+            pedido = " | ".join(str(ped.get(k) or "") for k in ("texto", "cliente", "obrigatorio") if ped.get(k))
+    except Exception:  # noqa: BLE001 - sem pedido legível: confere só pelo produto
+        pass
+    return f"Projeto: {nome}. Pedido do cliente: {pedido[:1500] or '(sem pedido)'}"
 
 
 def _bytes_json(obj):

@@ -1,0 +1,46 @@
+# Fila única do Editor creat.MTT
+
+Uma lista só para todas as sessões que trabalham no editor (branch `claude/editor-creat`, publicada sozinha no Railway).
+Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo e precisaram de várias junções manuais.
+
+## Combinado entre as sessões (vale para todas)
+1. **Antes de começar:** `git pull` na branch, ler esta fila e pegar o primeiro item **livre**.
+2. **Reservar:** trocar `livre` por `em andamento · <id curto da sessão> · <data hora>` e dar push SÓ dessa linha, já. Se o push
+   for recusado, outra sessão reservou antes: puxe e escolha outro item.
+3. **Trabalhar** e, antes de cada push: puxar, juntar, rodar `cd services/motor && python -m pytest -q -m "not pago"` e
+   `cd apps/web && pnpm install && pnpm tipos && pnpm aceite`. Nunca publicar com teste vermelho.
+4. **Fechar:** marcar `feito · <commit> · <data>` e anotar o detalhe no fim do `PROGRESSO.md`.
+5. Reserva parada há mais de 6 horas sem commit pode ser assumida por outra sessão (deixar uma linha dizendo isso).
+6. Decisão que só o dono pode tomar: escrever em **Precisa do dono** abaixo, com o link exato da tela.
+
+## Fila do dono (ordem dele, 19/11)
+| item | o quê | estado |
+|---|---|---|
+| A | backup diário para o Dropbox | feito e funcionando em produção · 2e2ac49 · 1º backup real 20/11 15:52 |
+| B | memória do servidor de volta ao git | feito em parte · 51fcc19 (memória no volume) + backup leva `editor-memoria-*.json`; falta a rotina que lê o backup e versiona |
+| C | revisão com olho de IA antes de entregar | feito · 51fcc19 · segura a entrega desde 19/11 |
+| D | checagens de fala (cortada, voz de fora, cobertura) | feito · c9e2b1e (integração das duas sessões) |
+| E | biblioteca de trilhas e efeitos com licença | feito · bb750bd · efeitos da casa (Sonniss GDC) no kit; **trilhas: licença com ressalva, ver Precisa do dono** |
+| D2 | réguas de fala, rodada 2 (dados reais da Lavínia, 19/11): voz distante abaixo do limiar vira tom < ~170 Hz contra a principal; falso positivo em consoante sonora (≥180 ms e tom fora de ±25%); início no meio de palavra da mesma voz (< 150 ms antes do s0) | feito · ver PROGRESSO 20/11 (falta conferir no material real: pedido à sessão da Lavínia) |
+| F | link de aprovação para o cliente | feito · 7ab6ddc · 19/11 |
+| G | agendar o post aprovado pelo Metricool | livre (precisa do dono: token do Metricool na hospedagem) |
+| H | painel de gastos do mês | feito · 90781ea |
+| L | link do Dropbox e envio do celular (21/11): conta de equipe gera link restrito; o editor agora confere o link na hora e explica o passo a passo | feito · f7128a8 · 21/11 |
+| I | **verificação de fatos** (regra permanente do dono, 21/11): todo número, volume, caloria, preço ou alegação de produto da fala é listado; o editor confere a fonte oficial (fabricante, rótulo; varejista grande como reserva) e o rótulo visível no vídeo (OCR); corrige legenda e cartões, registra fonte e data no relatório e segura a entrega com número sem fonte. Caso real: "Amstel Ultra garrafa 269 ml" → long neck 275 ml / 72 kcal (lata 269 ml / 71 kcal) | feito · fdd6577 · 21/11 (a 1ª conferência paga real roda na próxima montagem da cerveja) |
+| J | falso negativo da voz de fora no fim (cerveja v2, "vale…" do Xande): a checagem também olha o tom de sala/ambiente e o som sob o cartão final; o tom de sala só sai de trecho sem fala | feito · 241836d · 22/11 |
+
+## Mapa original (depois da fila do dono)
+| item | o quê | estado |
+|---|---|---|
+| 1 | cor no estilo DaVinci | feito · 3713eda |
+| 2 | rastreamento e máscara de pessoa | feito · 20/11 (texto atrás, fundo desfocado, destaque e pele tratada só na pessoa) |
+| 3 | limpeza de voz por IA | feito · 21/11 (DeepFilterNet3 ONNX + medidor DNSMOS escolhe a mistura por fonte) |
+| 4 | rótulo de quem fala (voz + rosto) | voz feita · 20/11 (voz A/B no catálogo, ditado da equipe trocado pela repetição, conferido no material real; ditado no projeto inteiro em 23/11); falta: rosto (YuNet + SFace, pesquisa de 23/11) |
+| 5 | Drive e Dropbox direto no editor | livre |
+| 6 | cenas por IA com custo à vista | livre |
+| 7 | perguntas em camadas | livre |
+| 8 | motion premium | feito · sessão Lavínia/homenagem (…TqPTUo) · 20/11 02:50 UTC · linguagem "Em Revelação" no ar (8212e2c, 9d3f8b6): camadas revelacao, legenda_revelada, laboratorio, papel (cartão com @ e CTA ajustável); FX revela e salto; looks matriz; Reel de bastidor entregue com QA 17/17 |
+| 9 | tela Novidades | livre |
+
+## Precisa do dono
+- Trilhas: as 3 do ElevenLabs (plano Creator) estão no Dropbox (`/Creat.MTT Studio/creat.MTT/Kit de edição/Trilhas/`), mas os termos de música (09/10/2026) dizem Creator = "For Individual Use Only" e proíbem montar biblioteca de músicas com o que se gera. Uso comercial online, inclusive anúncio pago, é permitido; agência para cliente não está definido. Por isso NÃO entraram na biblioteca da casa. Caminhos: (a) a creat passa a gerar no plano Scale (empresa com menos de 10 pessoas); (b) e-mail à ElevenLabs confirmando o Creator para cliente; (c) biblioteca paga com licença de agência. Fonte: elevenlabs.io/music-terms.

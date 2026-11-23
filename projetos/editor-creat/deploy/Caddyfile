@@ -3,5 +3,6 @@
 	encode zstd gzip
 	reverse_proxy web:3000 {
 		flush_interval -1
+		header_up X-Real-IP {remote_host}   # o site limita tentativas por IP: o cliente não escolhe o próprio IP
 	}
 }

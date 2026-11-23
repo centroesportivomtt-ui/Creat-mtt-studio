@@ -4,11 +4,19 @@
 //   mascara: cortina diagonal com faixa vermelha na borda; quem entra é revelado. angulo (graus, 14)
 //   aba71:   a etiqueta Aba 71 gira na tela, a câmera mergulha no ponto preto e a cena nova abre em íris
 //            tamanho (px, 560), cy (fração da altura, 0.5), giro: momento do giro (tempo local)
+//   salto:   avanço de filme na janela do projetor, par exato do FX `salto` do motor. dur (0.20, centrado no corte), forca (1):
+//            k = (1 − |t − corte|/(dur/2))^1,6; antes do corte quem sai sobe H·0,5·k, depois quem entra chega de baixo H·0,5·k.
+//            Perfurações #120D0A a 85% (34x46, cantos 6 px, a cada 92 px, em x 18 e x 1028) acompanham o mesmo
+//            deslocamento; linha preta de 24 px centrada na emenda; borrão vertical 40·k nas camadas sai/entra.
+//            perfuracoes: false desliga as perfurações; a conta está em salto() de revelacao_comum.js.
+import { salto } from "../revelacao_comum.js";
+
 export default function transicao(ctx, c) {
   const p = c.props;
   if (p.tipo === "whip") return whip(ctx, c, p);
   if (p.tipo === "mascara") return mascara(ctx, c, p);
   if (p.tipo === "aba71") return aba71(ctx, c, p);
+  if (p.tipo === "salto") return saltoFilme(ctx, c, p);
   throw new Error("transição desconhecida: " + p.tipo);
 }
 
@@ -139,4 +147,43 @@ function aba71(ctx, c, p) {
   ctx.cue(giro, "giro", -4);
   ctx.cue(mergulho, "mergulho", -2);
   ctx.cue(corte, "abre", 0);
+}
+
+function saltoFilme(ctx, c, p) {
+  const { el, W, H, blurDirecional } = ctx;
+  const dur = p.dur ?? 0.2;
+  const corte = p.corte ?? (c.de + c.ate) / 2;
+  const sai = alvos(ctx, p.sai), entra = alvos(ctx, p.entra);
+  const filtros = new Map();
+  for (const e of [...sai, ...entra]) filtros.set(e, blurDirecional());
+  const PASSO = 92;
+  // fita de perfurações com 3 telas de altura (cobre o deslocamento das duas fases)
+  const fita = el("div", "mk-perfuracoes", c.el, { position: "absolute", left: "0", top: "0", width: W + "px", height: 3 * H + "px", display: "none" });
+  const fb = blurDirecional();
+  if (p.perfuracoes !== false) {
+    for (let y = 23; y < 3 * H; y += PASSO) {
+      for (const x of [18, 1028]) el("div", "", fita, { position: "absolute", left: x + "px", top: y + "px", width: "34px", height: "46px", borderRadius: "6px", background: "rgba(18,13,10,0.85)" });
+    }
+  }
+  const emenda = el("div", "mk-emenda", c.el, { position: "absolute", left: "0", top: "-12px", width: W + "px", height: "24px", background: "#120D0A", display: "none" });
+  ctx.aCada((t) => {
+    const s = salto(t, corte, dur, H, p.forca ?? 1);
+    // as duas faixas andam juntas, como filme: na fase 1 o que entra já aparece embaixo da emenda,
+    // na fase 2 o que saiu continua subindo acima dela
+    for (const [lista, y] of [[sai, s.ySai], [entra, s.yEntra]]) {
+      for (const e of lista) {
+        const f = filtros.get(e);
+        if (!s.ativo) { e.style.transform = ""; e.style.filter = ""; continue; }
+        e.style.transform = `translateY(${y.toFixed(2)}px)`; f.aplicar(s.blur, "y"); e.style.filter = f.url;
+      }
+    }
+    fita.style.display = emenda.style.display = s.ativo ? "" : "none";
+    if (!s.ativo) return;
+    // a fita anda com o filme: no corte troca de quadro, então a fase 2 continua do ponto equivalente
+    const y = s.fase === 1 ? s.ySai : s.yEntra;
+    fita.style.transform = `translateY(${(((y % PASSO) + PASSO) % PASSO - PASSO - H).toFixed(2)}px)`;
+    fb.aplicar(s.blur, "y"); fita.style.filter = fb.url;
+    emenda.style.transform = `translateY(${s.emenda.toFixed(2)}px)`;
+  });
+  ctx.cue(corte - dur / 2, "avanco-filme", -14);
 }
