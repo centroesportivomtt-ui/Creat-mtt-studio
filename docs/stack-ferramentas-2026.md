@@ -1,4 +1,4 @@
-# Creat.MTT Studio: stack definitivo 2026 (atualizado em 09/11/2026, segunda-feira; original de 08/11/2026, domingo)
+# Creat.MTT Studio: stack definitivo 2026 (atualizado em 23/11/2026, segunda-feira; revisão completa de 09/11/2026; original de 08/11/2026, domingo)
 
 Relatório do Nimbus, Diretor de Operações da Creat Nuvem. Baseia-se em 10 categorias pesquisadas e contestadas por refutadores. As correções deles já estão aplicadas.
 
@@ -502,4 +502,71 @@ HOJE, versão mínima: oferta 1:1 no WhatsApp e Instagram, link Pix (Asaas, Cakt
 - **HeyGen Avatar 6 (17/11/2026, comunicado e página de preço lidos em 19/11):** plano Free com marca d'água e 3 vídeos por mês; Creator US$ 29 e Pro US$ 49 (cerca de R$ 165 e R$ 279, conta a R$ 5,50 com 3,5% de IOF). Só teste cego em português no portão de áudio; não assinar antes. Não substitui o que está no estudo.
 - **GPT Image 2.6 (04/11/2026):** só fonte secundária, preço por imagem não verificado. Testar com o `estimate` grátis do Higgsfield antes de gastar.
 - Nenhuma troca recomendada. VEED AI, MAI-Image-2.7, Cloudways AI Builder e GoDaddy Airo ficaram sem página de preço lida.
+
+## Atualização de 23/11/2026 (revisão semanal)
+
+Revisão de segunda-feira, 23/11/2026, sobre a de 09/11 e o bloco de 19/11. Seis pesquisadores (redes e anúncios; sites e apps; pagamentos e WhatsApp; e-mail, SEO e analytics; produção com IA; IA de operação e agentes), cada um com autocrítica no próprio relatório. **Nenhum nº 1 trocou.** Câmbio: R$ 5,50 por US$ com IOF de 3,5% (US$ 1 = R$ 5,69; cálculo meu).
+
+**Limite desta revisão, dito de frente:** o WebFetch não resolveu metricool.com, buffer.com, developers.facebook.com, facebook.com, ppc.land, seroundtable.com, artificialanalysis.ai, docs.perplexity.ai, exa.ai e firecrawl.dev. Parte das páginas oficiais foi lida pelo TinyFish; o resto ficou em resumo de busca ou rastreador de preço (fonte secundária). Onde só há fonte secundária, está escrito. Nada foi instalado, assinado ou testado em conta real.
+
+### O que mudou
+
+**Redes e anúncios (3.1 e 3.2), confiança média a baixa.**
+- Metricool: o rastreador PricingSaaS (02 a 09/11) registra o add-on Flows passando de grátis por tempo limitado para US$ 12 por 2.500 execuções por mês. Sem mudança de preço de lista (Starter US$ 20 ou 25 conforme a fonte). Buffer: tags do Free de 3 para 250 e histórico de Essentials e Team limitado a 2 anos; sem aumento de lista. Fonte: https://pricingsaas.com/companies/metricool/diffs/2026W46 ; https://pricingsaas.com/companies/buffer/diffs/2026W47 (secundárias).
+- Meta Ads MCP: sem anúncio novo em novembro; o último marco oficial é de 16/07/2026 (https://developers.facebook.com/blog/post/2026/07/16/meta-ads-mcp-server/). O conector da casa expõe `ads_create_ad_set`, `ads_get_whatsapp_accounts` e `ads_creative_upload_media`, o que sugere upload e conta de WhatsApp (inferência pela lista de ferramentas, não prova de que o destino WhatsApp funciona). O teste real de uma campanha pausada com destino WhatsApp segue obrigatório.
+- Google Ads MCP: a ppc.land relata 4 ferramentas de escrita (assets, vídeo, rótulos) em dry run; a documentação do Google (30/10) ainda diz só leitura. Conflito entre fontes; campanha, orçamento e lance seguem fora. Developer token encerrado em 09/09, igual ao estudo.
+- Pausa dos termos da Meta de 20/11: quatro veículos dizem que a Central de Ajuda da Meta publicou em 05/11 que as atualizações estão pausadas. A página da Meta não foi aberta, e o pesquisador de ferramentas leu o PPC Land como vigorando em 20/11. Fato provável, data sem fonte primária; conferir em 20/11 na página oficial.
+
+**Sites e apps (3.3 e 3.4), confiança alta para Cloudflare e Lovable, média para o resto.**
+- Cloudflare (changelog oficial de 19/11): Workers e Pages guardam versões por 30 dias; depois ficam só as 100 mais recentes e a que está no ar. Version URLs e previews antigos deixam de funcionar. `cf` CLI 1.0 rc.1 (17/11) é release candidate: não usar em cliente. Nenhuma mudança no plano Free nem aviso de descontinuação do Pages. https://developers.cloudflare.com/changelog/
+- Lovable: a página de planos bate com o estudo (Free 5 créditos por dia e 30 por mês; domínio próprio, edição e download de código só do Pro em diante; API só no Business). Não vem preço em dólar nesta página. Alerta de segurança que o estudo não tinha: incidente de abril/2026 com exposição de projetos criados antes de cerca de nov/2025 e recomendação de rotacionar credenciais do Supabase. Só fonte secundária (TheNextWeb, DEV), e a Lovable nega violação: não tratar como fato.
+- Supabase: Pro US$ 25 e Team US$ 599 confirmados; log de auditoria do Auth no Free de 1 h para 24 h; chaves `anon` e `service_role` seguem com prazo até 31/12/2026. Vercel e Netlify sem mudança. Base44: a página lida mostra banner de 2025 (cache antigo), então o preço fica sem confirmação de hoje.
+
+**Pagamentos e WhatsApp (3.5 e 3.6), confiança alta (changelog e página oficiais lidos pelo TinyFish).**
+- Asaas: a página oficial de preços lida em 23/11 mostra Pix a **R$ 1,59 (R$ 0,79 por 3 meses para conta nova)**, NFS-e R$ 0,49. O R$ 2,15 do estudo está desatualizado. Com R$ 1,59 e Mercado Pago a 0,99%, o ponto de equilíbrio cai para cerca de R$ 160 por cobrança (cálculo meu). Esta nota corrige os valores de R$ 2,15, R$ 217 e "faixa de R$ 160 a R$ 217" das seções 3.5, 5, "Fluxo de venda" e da tabela final.
+- WhatsApp Cloud API (changelog oficial, "Updated: Nov 20, 2026"): 04/11 BSUID no webhook (`user_id`, `username`; `wa_id`, `from` e `recipient_id` somem quando o usuário adota username); 11/11 caiu a exigência de onboarding manual do Pix com redirect (corrige "em teste" do bloco de 19/11; regra para MEI continua não verificada); 18/11 novo `subtype` `free_tier` no webhook de status; 20/11 aviso: em fev/2027 o erro 131066 substitui o 131049. Janela de entrada gratuita: a página de preço diz "até 7 dias" (a "72 h" do estudo vem de fontes secundárias). Cobrança em BRL gradual desde 01/07/2026, migração até 30/06/2027.
+- Candidatos novos, só em fonte do próprio fornecedor: AbacatePay (Pix R$ 0,80 fixo, sem mensalidade, MCP remoto com 55 ferramentas incluindo criar cobrança Pix, login por chave de API; sem avaliação independente nem Reclame Aqui) e Woovi (MCP com OAuth e escopos que cria cobrança Pix e QR Code; sem preço lido). Candidatos a **teste em sandbox, sem assinar**; o que decide é a nota independente e o prazo de saque, não o preço.
+- Mercado Pago MCP: sem mudança (documentação, aplicações e webhooks; não cria cobrança).
+
+**E-mail, SEO e analytics (3.7 e 3.9), confiança alta.**
+- MailerLite: página oficial "Last updated: September 8, 2026", sem mudança; dados armazenados na UE (relevante para LGPD). PostHog: franquia igual (1 milhão de eventos, 5.000 replays); o plano pago pay-as-you-go tem base US$ 0, mantém a franquia grátis e dá 6 projetos, o que deixa de tornar "1 projeto" um limite duro (exige cartão cadastrado).
+- Ahrefs Webmaster Tools grátis agora inclui Web Analytics sem cookies por padrão, até 1 milhão de eventos por projeto (página oficial lida em 23/11). Candidato a teste em 1 site. Conflito: plano pago Starter US$ 29 na página oficial e Lite US$ 129 em outros retornos; preço com MCP não verificado.
+- Google, atualização de núcleo: início em 10/11, até 2 semanas (cerca de 24/11), sem confirmação de término; não diagnosticar queda ou alta antes de 24/11 mais 7 dias (cerca de 01/12). Pixel da Meta de 12/11: a opção vem ligada por padrão fora da UE e do Reino Unido, mas exige Pixel instalado direto na página e site com login por e-mail ou celular; nossos sites, com pedido por WhatsApp e sem login, provavelmente não se enquadram. A data de 12/11 vem do painel do Events Manager e a leitura da Meta é por resumo secundário. Anotar 12/11 como quebra de série e comparar a conversão do Pixel com pedidos reais no WhatsApp.
+
+**Produção com IA (3.8), confiança alta para preços, média para rankings.**
+- Vídeo (Artificial Analysis, 23/11, ranking só orienta): 1º Wan 3.0 (1175), Seedance 2.5 em 5º (1156), MiniMax H3 em 3º (US$ 4,80 por minuto), Veo 3.1 em 27º. O 1º lugar é empate estatístico e outro ranking discorda (Gemini Omni 1.2 Flash em 1º, preliminar).
+- Runway: Pro US$ 28 anual (cerca de R$ 159) e US$ 35 mensal (cerca de R$ 199); Kling 4.0 com 25% de desconto até 30/11; MCP só no Pro e no Max. Runway Dev (API): Kling 4.0 Flash e Gemini Omni 1.2 Flash em 05/11, Seedance 2.5 Flash em 16/11 (cerca de R$ 5,69 por clipe de 5 s em 720p), MiniMax H3 Image em 20/11. https://docs.dev.runwayml.com/changelog/
+- Voz: Eleven v4 Turbo lidera o Speech Arena (US$ 40 por milhão de caracteres; um anúncio de 450 caracteres sai por cerca de R$ 0,10). **O preço do Gemini TTS dobra em 01/01/2027** (US$ 0,50 para US$ 1,00 na entrada). ElevenLabs: Scribe a US$ 0,20 por hora desde 17/11 e API de música a US$ 0,15 por minuto, com licença comercial a partir do Starter (US$ 6 por mês).
+- Imagem: nada supera o Nano Banana 2.1 (US$ 0,0336 por imagem, cerca de R$ 0,19). Termos comerciais do MiniMax e do Seedance não foram verificados.
+
+**IA de operação e agentes (3.10 e 3.11), confiança alta para preço, média para changelog.**
+- **Fable 5.2 entrou a US$ 8 de entrada e US$ 40 de saída por milhão de tokens** (o 5.1 custa US$ 10 e US$ 50, e o estudo ainda cita só o 5.1); cache de leitura a US$ 0,20. Mythos 5.2 tem o mesmo preço, só para organizações verificadas. Sonnet 5.5 (US$ 2 e US$ 10), Opus 5.5 (US$ 4 e US$ 20) e Haiku 5.5 sem mudança. Modo rápido existe no Fable 5.2 (US$ 16 e US$ 80) e no Opus 5.5 (US$ 8 e US$ 40). Fonte: https://platform.claude.com/docs/en/about-claude/pricing (23/11).
+- Planos (https://claude.com/pricing): o Pro segue em US$ 20 mensal ou US$ 17 anual, com Fable só por créditos de uso; o Max (US$ 100) inclui Fable até metade do limite semanal; o Team traz até US$ 500 de crédito agrupado. A linha de 3.10 que afirma Opus no Pro **não foi confirmada** pela página de hoje.
+- Claude Code (changelog, 16 a 20/11, versões 2.1.326 a 2.1.330): tarefas agendadas e `/loop` até 30 dias (com a sessão ativa); fallback de modelo vale para subagentes; tarefas salvas por versões antigas precisam ser reagendadas; MCP remoto reconecta sozinho. O trecho de 07 a 15/11 não foi lido.
+- Playwright MCP: o `latest` do npm é 0.0.86 (o estudo cita 0.0.84 como a mais nova e a casa fixa a 0.0.83). Sem data nem notas lidas da 0.0.86 e sem conferência de CVE novo: manter a 0.0.83.
+- Navegador e computador da API (`browser_toolset_20260801`, `computer_toolset_20260801`): já na documentação, cerca de 6.600 tokens de definição por requisição, sem prova de qualidade. Managed Agents segue em US$ 0,08 por hora de sessão ativa mais tokens.
+
+### O que recomendo (nenhuma troca; todos os testes sem assinatura)
+
+1. **Forja:** ajustar o fluxo do n8n para ler `user_id` quando o telefone faltar, antes de ligar número de cliente. Custo zero.
+2. **Teste cego em pt-BR** de Eleven v4 Turbo contra Gemini 3.8 Flash TTS no portão de áudio, antes de 01/01/2027, usando a camada grátis só para teste e sem dado de cliente.
+3. **Antes de qualquer geração de vídeo ou imagem,** pedir o `estimate` grátis do Higgsfield para Seedance 2.5 Flash, MiniMax H3 e Gemini Omni 1.2; testar o GPT Image 2.6 contra o Nano Banana 2.1 com texto em português dentro da imagem.
+4. **AbacatePay em sandbox,** sem assinar, se o CNPJ ou MEI da Creat for aceito. Manter Asaas nº 1 e corrigir o preço no estudo.
+5. **Fable 5.2** em tarefas de criação premium com chave de API do Console, só com o "pode" do dono (vale 20% mais barato que o 5.1).
+6. **Ahrefs Web Analytics** em 1 site, comparado ao PostHog, depois de ler o termo sobre scripts próprios.
+7. **Campanha de teste pausada** com destino WhatsApp pelo MCP oficial da Meta, para fechar a lacuna do estudo, assim que a conta de anúncios aceitar edição.
+8. **Cloudflare:** não aprovar com cliente por Version URL ou preview com mais de 30 dias.
+
+### Enfraquecido ou não verificado
+
+- Enfraquecido: Asaas R$ 2,15; a janela de entrada de 72 h; "Pix com redirect em teste"; Fable 5.1 como referência de preço; placar de busca do Exa (80,3) e da Perplexity (80,0), com mais de 30 dias; "Google Ads MCP só leitura" (há relato de escrita parcial); preço do Base44 (snapshot antigo); incidente do Lovable (só blogs).
+- Fraco por origem: Metricool e Buffer vêm de rastreadores automáticos; os preços de AbacatePay e Woovi vêm do próprio fornecedor; o Wan 3.0 em 1º é empate estatístico.
+- Não verificado: páginas oficiais de preço e changelog da Meta, Metricool e Buffer; preço do n8n Cloud hoje; taxas em reais do rate card da Meta; Pix e preço em reais de Lovable, Cloudflare, Registro.br e Vercel; término da atualização de núcleo do Google; qualidade em português de qualquer voz ou vídeo; termos comerciais do MiniMax e do Seedance; Replit, FlutterFlow, Framer, Webflow, Bolt, Softr, Suno, Meshy, Tripo, Brevo, Resend, Umami, Clarity, Plausible e GA4 não foram reabertos nesta rodada. A busca por ferramenta superior foi curta em todas as categorias: não achar não prova que não exista.
+
+### O que exige o dono
+
+1. **Liberar na rede da sessão** os domínios facebook.com, developers.facebook.com, metricool.com, buffer.com, ppc.land, seroundtable.com, artificialanalysis.ai, docs.perplexity.ai, exa.ai e firecrawl.dev, para a leitura das páginas oficiais.
+2. **"Pode" para o Fable 5.2** com chave de API do Console (recomendação pronta: 20% mais barato que o 5.1, só em criação premium).
+3. **Confirmar se o estúdio é MEI ou ME** (muda Pix Automático, elegibilidade de AbacatePay e Woovi e teto de faturamento).
+4. **Conferir agora** a página oficial dos termos de anúncio da Meta.
 
