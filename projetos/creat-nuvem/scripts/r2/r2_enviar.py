@@ -6,7 +6,7 @@ CONTA = "1f70e44ae3dedfd6bbf8a913acdd8af8"
 DEPOSITO = "creat-entregas"
 PUBLICO = "https://pub-5625d0a6139649008e20536aa6235d94.r2.dev"
 ENDPOINT = f"https://{CONTA}.r2.cloudflarestorage.com"
-PAINEL = "painel-e160f58517f4.html"
+PAINEL = "entregas.html"
 INDICE = "_painel/e160f58517f4.json"
 FUSO = datetime.timezone(datetime.timedelta(hours=-3))
 
