@@ -8,9 +8,13 @@ A API abre `nice -n 5 python -m motor.conversa.ouvir <arquivo>` com semáforo 1 
 Saída (stdout): {"texto": str, "conf": 0..1, "s_audio": s}. Códigos: 0 ok; 3 sem faster-whisper (503); 2 erro (422);
 4 áudio com mais de 65 s (413 "grave até 1 minuto"). Custo US$ 0 (faster-whisper local).
 
-Memória (achado da revisão, 25/11): o filho nasce com oom_score_adj 1000 (num aperto do contêiner o kernel mata ESTE
-processo antes do render) e com teto de espaço de endereço (EDITOR_VOZ_LIMITE_MB, padrão 4096; 0 desliga). Medido em
-25/11 com o modelo small int8 e 4 núcleos: pico virtual 3,4 GB, residente 0,75 GB; com 2 GB de teto ele não sobe.
+Memória: o filho nasce com oom_score_adj 1000 (num aperto do contêiner o kernel mata ESTE processo antes do render) e a
+API vigia a memória REAL do grupo (rss_mb) a cada meio segundo: passou de EDITOR_VOZ_LIMITE_MB (padrão 2048; 0 desliga),
+o grupo morre e a resposta é 503. Medido em 25/11 com o modelo small int8: residente 0,75 GB.
+Por que não teto de espaço de endereço (RLIMIT_AS): ele conta memória VIRTUAL, que cresce com o número de núcleos da
+máquina (pilhas e arenas de cada thread). Com 4 núcleos o pico era 3,4 GB; na hospedagem, com mais núcleos, o teto de
+4 GB derrubava o Whisper em 1,8 s e todo áudio voltava "não entendi" (achado na conferência em produção, 25/11).
+Só existe se EDITOR_VOZ_LIMITE_VIRTUAL_MB for definido. As threads do filho ficam em até 4 (ambiente()).
 Sessão própria (start_new_session): no tempo esgotado a API mata o grupo inteiro (python e o ffmpeg filho).
 O áudio é lido com corte em 75 s (ffmpeg -t) e passa de 65 s volta 4 antes do Whisper. Arquivos de tmp/voz com mais de
 10 minutos são apagados no boot e a cada áudio novo (o áudio do dono vive no máximo 10 minutos no disco).
@@ -57,24 +61,32 @@ def ambiente() -> dict:
     from motor import config
     extra = [str(raiz_motor()), str(config.SCHEMAS / "py")]
     env["PYTHONPATH"] = os.pathsep.join(extra + ([env["PYTHONPATH"]] if env.get("PYTHONPATH") else []))
+    for k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):     # máquina com muitos núcleos: memória e CPU sob controle
+        env[k] = str(min(4, int(env[k]))) if env.get(k, "").isdigit() and int(env[k]) > 0 else "4"
     return env
 
 
-def limite_mb() -> int:
+def _mb(nome: str, padrao: int) -> int:
     try:
-        return max(0, int(os.environ.get("EDITOR_VOZ_LIMITE_MB", "4096") or 0))
+        return max(0, int(os.environ.get(nome, str(padrao)) or 0))
     except ValueError:
-        return 4096
+        return padrao
+
+
+def limite_mb() -> int:
+    """Teto de memória REAL (residente) do grupo do filho, vigiado pela API. 0 desliga."""
+    return _mb("EDITOR_VOZ_LIMITE_MB", 2048)
 
 
 def limitar() -> None:
-    """preexec_fn do filho (roda no filho, antes do exec): primeiro a morrer num aperto de memória, e com teto."""
+    """preexec_fn do filho (roda no filho, antes do exec): primeiro a morrer num aperto de memória. O teto virtual só
+    existe a pedido (EDITOR_VOZ_LIMITE_VIRTUAL_MB): ele depende do número de núcleos e já derrubou a voz em produção."""
     try:
         with open("/proc/self/oom_score_adj", "w") as f:
             f.write("1000")
     except OSError:
         pass
-    mb = limite_mb()
+    mb = _mb("EDITOR_VOZ_LIMITE_VIRTUAL_MB", 0)
     if mb:
         try:
             import resource
@@ -82,6 +94,28 @@ def limitar() -> None:
             resource.setrlimit(resource.RLIMIT_AS, (lim, lim))
         except (ImportError, ValueError, OSError):
             pass
+
+
+def rss_mb(pgid: int) -> float:
+    """Memória residente (MB) somada de todos os processos do grupo `pgid` (o python do Whisper e o ffmpeg filho)."""
+    try:
+        pagina = os.sysconf("SC_PAGE_SIZE")
+        nomes = os.listdir("/proc")
+    except (OSError, ValueError):
+        return 0.0
+    total = 0
+    for d in nomes:
+        if not d.isdigit():
+            continue
+        try:
+            with open(f"/proc/{d}/stat") as f:
+                st = f.read()
+            campos = st[st.rindex(")") + 2:].split()         # depois do nome: estado, ppid, pgrp, ... (rss é o 22º)
+            if int(campos[2]) == pgid:
+                total += int(campos[21]) * pagina
+        except (OSError, ValueError, IndexError):
+            continue
+    return total / 1e6
 
 
 def limpar_velhos(cfg, velho_s: float = VELHO_S) -> int:
@@ -156,7 +190,7 @@ def main(argv: list[str]) -> int:
         print(json.dumps({"erro": "longo"}))
         return 4
     except Exception as e:  # noqa: BLE001 - o motivo técnico fica no stderr; a API responde "grave de novo"
-        print(f"falhou: {type(e).__name__}", file=sys.stderr)
+        print(f"falhou: {type(e).__name__}: {str(e)[:160]}", file=sys.stderr)
         print(json.dumps({"erro": "falhou"}))
         return 2
     out["s"] = round(time.monotonic() - t0, 2)

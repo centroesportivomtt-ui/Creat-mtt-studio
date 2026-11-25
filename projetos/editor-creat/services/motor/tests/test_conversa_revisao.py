@@ -3,6 +3,7 @@ Sem rede e sem chave: cérebro falso (transporte HTTP falso no SDK oficial)."""
 import json
 import os
 import pathlib
+import shutil
 import sys
 import time
 
@@ -328,13 +329,81 @@ def test_voz_limites_fila_longo_e_arquivo_velho(app_conversa, monkeypatch):
     assert list(voz.iterdir()) == []
 
 
-def test_voz_filho_nasce_com_oom_e_teto(monkeypatch, tmp_path):
+def test_voz_filho_nasce_com_oom_e_sem_teto_virtual(monkeypatch, tmp_path):
+    """O teto virtual (RLIMIT_AS) derrubou a voz em produção (mais núcleos = mais memória virtual): só existe a pedido."""
     import subprocess
-    monkeypatch.setenv("EDITOR_VOZ_LIMITE_MB", "4096")
-    r = subprocess.run([sys.executable, "-c", "import resource;print(open('/proc/self/oom_score_adj').read().strip());"
-                        "print(resource.getrlimit(resource.RLIMIT_AS)[0])"], capture_output=True, text=True, preexec_fn=ouvir.limitar)
-    adj, lim = r.stdout.split()
+    codigo = ("import resource;print(open('/proc/self/oom_score_adj').read().strip());"
+              "print(resource.getrlimit(resource.RLIMIT_AS)[0])")
+    monkeypatch.delenv("EDITOR_VOZ_LIMITE_VIRTUAL_MB", raising=False)
+    monkeypatch.setenv("EDITOR_VOZ_LIMITE_MB", "4096")           # o nome antigo agora é memória real: não vira RLIMIT_AS
+    adj, lim = subprocess.run([sys.executable, "-c", codigo], capture_output=True, text=True, preexec_fn=ouvir.limitar).stdout.split()
+    assert adj == "1000" and int(lim) == -1
+    monkeypatch.setenv("EDITOR_VOZ_LIMITE_VIRTUAL_MB", "4096")
+    adj, lim = subprocess.run([sys.executable, "-c", codigo], capture_output=True, text=True, preexec_fn=ouvir.limitar).stdout.split()
     assert adj == "1000" and int(lim) == 4096 * 1024 * 1024
+    assert ouvir.limite_mb() == 4096
+    monkeypatch.delenv("EDITOR_VOZ_LIMITE_MB")
+    assert ouvir.limite_mb() == 2048
+
+
+def test_voz_threads_do_filho_tem_teto(monkeypatch):
+    for k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+        monkeypatch.delenv(k, raising=False)
+    env = ouvir.ambiente()
+    assert env["OMP_NUM_THREADS"] == env["OPENBLAS_NUM_THREADS"] == env["MKL_NUM_THREADS"] == "4"
+    monkeypatch.setenv("OMP_NUM_THREADS", "32")
+    monkeypatch.setenv("MKL_NUM_THREADS", "2")
+    env = ouvir.ambiente()
+    assert env["OMP_NUM_THREADS"] == "4" and env["MKL_NUM_THREADS"] == "2"
+
+
+def test_voz_memoria_real_passou_do_teto_mata_o_grupo_e_avisa(app_conversa, monkeypatch, tmp_path):
+    """O teto é de memória REAL do grupo, vigiado pela API: quem passa morre e o dono lê 'use o microfone do teclado'."""
+    codigo = "import time; x = bytearray(400 * 1024 * 1024); x[::4096] = b'1' * len(x[::4096]); time.sleep(30)"
+    monkeypatch.setattr(ouvir, "comando", lambda arq: [sys.executable, "-c", codigo])
+    monkeypatch.setenv("EDITOR_VOZ_LIMITE_MB", "150")
+    with app_conversa() as c:
+        pid = novo_projeto(c)
+        t0 = time.time()
+        r = c.post(f"/v1/projetos/{pid}/conversa/audio", content=b"x" * 5000, headers={"content-type": "audio/webm"})
+        assert r.status_code == 503 and "microfone do teclado" in r.json()["detail"]
+        assert time.time() - t0 < 15
+        fer = [e["dados"] for e in eventos(pid, "ferramenta")]
+        assert [x["fase"] for x in fer] == ["inicio", "erro"] and fer[-1]["resumo"] == "faltou memória para ouvir"
+
+
+def test_rss_do_grupo_soma_os_processos():
+    import subprocess
+    p = subprocess.Popen([sys.executable, "-c", "import time; x = bytearray(80 * 1024 * 1024); x[::4096] = b'1' * len(x[::4096]); time.sleep(20)"],
+                         start_new_session=True)
+    try:
+        t0, mb = time.time(), 0.0
+        while time.time() - t0 < 10 and mb < 80:
+            time.sleep(0.2)
+            mb = ouvir.rss_mb(p.pid)
+        assert 80 <= mb < 400
+        assert ouvir.rss_mb(2 ** 22 - 3) == 0.0          # grupo que não existe
+    finally:
+        p.kill()
+        p.wait()
+
+
+@pytest.mark.skipif(not (shutil.which("espeak-ng") and shutil.which("ffmpeg")), reason="precisa de espeak-ng e ffmpeg para gerar a fala")
+def test_voz_de_verdade_pela_rota_com_os_limites_do_padrao(app_conversa, monkeypatch, tmp_path):
+    """A rota inteira com o Whisper real e os limites do padrão (a falha de produção era aqui: 422 em todo áudio)."""
+    import subprocess
+    pytest.importorskip("faster_whisper")
+    monkeypatch.delenv("EDITOR_VOZ_LIMITE_MB", raising=False)
+    monkeypatch.delenv("EDITOR_VOZ_LIMITE_VIRTUAL_MB", raising=False)
+    wav, webm = tmp_path / "f.wav", tmp_path / "f.webm"
+    subprocess.run(["espeak-ng", "-v", "pt-br", "-s", "150", "-w", str(wav), "Quero abrir o vídeo com um gancho mais forte e cortar o silêncio do começo."], check=True)
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(wav), "-c:a", "libopus", "-b:a", "32k", str(webm)], check=True)
+    with app_conversa() as c:
+        pid = novo_projeto(c)
+        r = c.post(f"/v1/projetos/{pid}/conversa/audio", content=webm.read_bytes(), headers={"content-type": "audio/webm"})
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert ("gancho" in d["texto"].lower() or "vídeo" in d["texto"].lower()) and 3 < d["s_audio"] < 9     # voz de robô: basta entender o assunto
 
 
 def test_voz_tempo_esgotado_mata_o_grupo(app_conversa, monkeypatch, tmp_path):

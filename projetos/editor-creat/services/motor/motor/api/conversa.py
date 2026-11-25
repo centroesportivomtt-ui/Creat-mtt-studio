@@ -142,6 +142,33 @@ async def mandar(pid: str, corpo: Mensagem):
 
 
 # ---------------- R4: áudio -> texto (não envia nada) ----------------
+async def _ouvir_vigiando(proc) -> tuple[tuple[bytes, bytes], str | None]:
+    """Espera o filho da voz vigiando o tempo (LIMITE_S) e a memória real do grupo (ouvir.limite_mb). Passou de um dos
+    dois: mata o grupo inteiro (python e ffmpeg) e diz qual foi. Devolve ((stdout, stderr), None | 'tempo' | 'memoria')."""
+    tarefa = asyncio.ensure_future(proc.communicate())
+    t0, teto = time.monotonic(), ouvir.limite_mb()
+    while True:
+        prontas, _ = await asyncio.wait({tarefa}, timeout=0.5)
+        if prontas:
+            return tarefa.result(), None
+        if time.monotonic() - t0 > ouvir.LIMITE_S:
+            motivo = "tempo"
+        elif teto and await asyncio.to_thread(ouvir.rss_mb, proc.pid) > teto:
+            motivo = "memoria"
+        else:
+            continue
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)       # o grupo todo: python e o ffmpeg filho
+        except (ProcessLookupError, PermissionError):
+            proc.kill()
+        try:
+            await tarefa
+        except Exception:  # noqa: BLE001
+            pass
+        await proc.wait()
+        return (b"", b""), motivo
+
+
 @rotas.post("/projetos/{pid}/conversa/audio")
 async def transcrever(pid: str, request: Request):
     cfg = _cfg()
@@ -188,21 +215,21 @@ async def transcrever(pid: str, request: Request):
                 except OSError:
                     await falhou("transcrição indisponível")
                     raise HTTPException(503, "a transcrição não está disponível agora; use o microfone do teclado") from None
-                try:
-                    saida, _erro = await asyncio.wait_for(proc.communicate(), timeout=ouvir.LIMITE_S)
-                except asyncio.TimeoutError:
-                    try:
-                        os.killpg(proc.pid, signal.SIGKILL)       # o grupo todo: python e o ffmpeg filho
-                    except (ProcessLookupError, PermissionError):
-                        proc.kill()
-                    await proc.wait()
+                (saida, _erro), matou = await _ouvir_vigiando(proc)
+                if matou == "tempo":
                     await falhou("demorou demais")
-                    raise HTTPException(504, "demorou demais; grave de novo") from None
+                    raise HTTPException(504, "demorou demais; grave de novo")
+                if matou == "memoria":
+                    print(f"[voz] parado: passou de {ouvir.limite_mb()} MB de memória", flush=True)
+                    await falhou("faltou memória para ouvir")
+                    raise HTTPException(503, "a transcrição não está disponível agora; use o microfone do teclado")
         except HTTPException:
             raise
         except Exception:  # noqa: BLE001 - qualquer falha inesperada fecha a linha da mesa (não fica pulsando)
             await falhou("não consegui ouvir")
             raise HTTPException(422, "não entendi, grave de novo") from None
+        if proc.returncode not in (0, 4):     # o motivo técnico vai para o log do servidor (o dono lê só a frase)
+            print(f"[voz] o filho saiu com {proc.returncode}: {(_erro or b'').decode('utf-8', 'replace').strip()[-300:]}", flush=True)
         if proc.returncode == 3:
             await falhou("transcrição indisponível")
             raise HTTPException(503, "a transcrição não está disponível; use o microfone do teclado")

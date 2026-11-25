@@ -26,8 +26,11 @@ Contrato completo: `docs/plano-conversa-25-11.md`, seção 13. Código: `motor/c
   checagem nem vocabulário). Se o texto repete 5 palavras seguidas de algo de fora lido no capítulo (fala de vídeo,
   texto de cliente: resultados `{"de_fora": ...}`), o cartão mostra o aviso e o ajuste vale só para este projeto.
   Com a conversa desligada, o toque em "Pedir o ajuste" responde 503 e o cartão fica para depois.
-- **Voz**: o filho nasce com `oom_score_adj` 1000 e teto de memória (`EDITOR_VOZ_LIMITE_MB`, padrão 4096; medido em
-  25/11: pico 3,4 GB virtual e 0,75 GB residente; com 2048 o Whisper não sobe). Ambiente por lista permitida. Áudio
+- **Voz**: o filho nasce com `oom_score_adj` 1000 e a API vigia a memória REAL do grupo a cada meio segundo
+  (`EDITOR_VOZ_LIMITE_MB`, padrão 2048; medido: 0,75 GB residente). Passou do teto: o grupo morre e a resposta é 503
+  "use o microfone do teclado". O teto virtual (`RLIMIT_AS`) saiu do padrão em 25/11: na hospedagem, com mais núcleos,
+  4 GB virtuais não bastavam e todo áudio voltava "não entendi" (só existe com `EDITOR_VOZ_LIMITE_VIRTUAL_MB`).
+  Threads do filho: até 4. Falha do filho vai para o log do servidor (`[voz] ...`). Ambiente por lista permitida. Áudio
   acima de 65 s volta 413 antes do Whisper (ffmpeg lê no máximo 75 s). Tempo esgotado mata o grupo (python e ffmpeg).
   Terceiro áudio na fila: 429. **O áudio do dono vive no máximo 10 minutos no disco**: `tmp/voz` é limpo no boot e a
   cada áudio novo.
