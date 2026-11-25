@@ -42,23 +42,58 @@ def _dia_da_linha(quando: str) -> str | None:
     return t.astimezone(BAHIA).strftime("%Y-%m-%d")
 
 
+_CACHE: dict[str, tuple] = {}         # livro -> (mtime_ns, tamanho, dia, total): o livro só é relido quando muda
+
+
 def gasto_hoje_usd(cfg, agora: datetime | None = None) -> float:
+    """Soma do dia (Bahia) das linhas de conversa do livro. Relê o arquivo só quando o tamanho ou o mtime mudam
+    (o livro só cresce): chamar no event loop custa um stat, não a leitura de meses de linhas."""
     hoje = dia_bahia(agora)
+    arq = gastos._arq(cfg)
+    try:
+        st = arq.stat()
+        marca = (st.st_mtime_ns, st.st_size)
+    except OSError:
+        marca = None
+    chave = str(arq)
+    c = _CACHE.get(chave)
+    if marca is not None and c is not None and c[:2] == marca and c[2] == hoje:
+        return c[3]
     tot = 0.0
     for d in gastos.ler(cfg):
         if d.get("o_que") == "conversa" and _dia_da_linha(d.get("quando", "")) == hoje:
             tot += float(d.get("custo_usd") or 0)
-    return round(tot, 5)
+    tot = round(tot, 5)
+    if marca is not None:
+        _CACHE[chave] = (*marca, hoje, tot)
+    return tot
 
 
 def tokens_de(texto_chars: int) -> int:
     return int(texto_chars / CARACTERES_POR_TOKEN) + 1
 
 
+# Modelos que o fallback do servidor (fallbacks="default") pode usar no lugar do configurado (skill claude-api,
+# refusal fallbacks: alvos suportados claude-opus-4-8 e claude-opus-5). O pior caso usa o MAIOR preço entre eles.
+MODELOS_FALLBACK = ("claude-opus-5", "claude-opus-4-8")
+
+
+def precos_pior(modelo: str) -> tuple:
+    """Preço por componente no pior caso: o maior entre o modelo configurado e os de fallback. Modelo fora da tabela
+    vale o maior preço da tabela (nunca o mais barato)."""
+    tabela = orcamento.PRECOS
+    if modelo in tabela:
+        cands = [tabela[modelo]] + [tabela[m] for m in MODELOS_FALLBACK if m in tabela]
+    else:
+        cands = list(tabela.values())
+    return tuple(max(c[i] for c in cands) for i in range(5))
+
+
 def pior_caso_usd(modelo: str, *, contexto_tokens: int, novos_tokens: int, recente: bool, max_saida: int = MAX_SAIDA) -> float:
     """Pior caso de UMA chamada. Com cache quente (chamada há menos de 55 min): os novos tokens são gravados no cache
-    de 1 h e o resto é lido. Frio: o contexto inteiro é gravado de novo. Mais a saída inteira (max_tokens)."""
-    pe, ps, pc, _pw, pw1 = orcamento.PRECOS.get(modelo, orcamento.PRECOS["claude-opus-5-5"])
+    de 1 h e o resto é lido. Frio: o contexto inteiro é gravado de novo. Mais a saída inteira (max_tokens).
+    Preço: o maior entre o modelo e os de fallback do servidor (precos_pior)."""
+    pe, ps, pc, _pw, pw1 = precos_pior(modelo)
     if recente:
         entrada = novos_tokens * pw1 + max(0, contexto_tokens - novos_tokens) * pc
     else:
@@ -66,6 +101,8 @@ def pior_caso_usd(modelo: str, *, contexto_tokens: int, novos_tokens: int, recen
     return round((entrada + max_saida * ps) / 1e6, 5)
 
 
-def cabe(cfg, pior: float, agora: datetime | None = None) -> tuple[bool, float]:
-    hoje = gasto_hoje_usd(cfg, agora)
-    return hoje + pior <= teto_usd_dia(cfg) + 1e-9, hoje
+def cabe(cfg, pior: float, agora: datetime | None = None, *, reservado: float = 0.0, nao_anotado: float = 0.0) -> tuple[bool, float]:
+    """reservado: pior caso das chamadas em voo de outros turnos (ainda fora do livro); nao_anotado: gasto que o livro
+    não conseguiu gravar (disco cheio, permissão) e que continua contando."""
+    hoje = gasto_hoje_usd(cfg, agora) + nao_anotado
+    return hoje + reservado + pior <= teto_usd_dia(cfg) + 1e-9, hoje

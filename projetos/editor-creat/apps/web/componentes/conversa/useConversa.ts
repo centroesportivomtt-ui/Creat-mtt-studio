@@ -9,6 +9,7 @@ import { montarFio, type FioAoVivo } from '@/lib/fio';
 import { gravarFila, guardarCampo, irEntrar, lerCampo, lerFila, type Saindo } from '@/lib/pendentes';
 
 export type Nota = { tom: 'info' | 'alerta'; texto: string; fixa?: boolean };
+export const LIMITE = 4000;          // letras por mensagem (o motor recusa acima disso)
 type Chave = { ligada: boolean; motivo?: MotivoDesligada; gasto: number; teto: number };
 
 export function useConversa(pid: string, fio: FioAoVivo, opcoes: { contexto: () => Contexto; aoMudouProjeto: () => void }) {
@@ -27,6 +28,10 @@ export function useConversa(pid: string, fio: FioAoVivo, opcoes: { contexto: () 
   useEffect(() => { opcoesRef.current = opcoes; });
   const travaEnvio = useRef(false);
   const travaCartao = useRef(false);
+  // cartões e perguntas que este aparelho já decidiu: os botões ficam travados até a resposta chegar pelo fio (o segundo
+  // toque não manda um segundo pedido, que o motor recusaria com 409)
+  const [feitos, setFeitos] = useState<Set<string>>(() => new Set());
+  const marcarFeito = useCallback((id: string) => setFeitos((s) => (s.has(id) ? s : new Set(s).add(id))), []);
   const campoRef = useRef<HTMLTextAreaElement | null>(null);
 
   // ---------- estado guardado da aba: campo, fila, conversa aberta ----------
@@ -48,14 +53,38 @@ export function useConversa(pid: string, fio: FioAoVivo, opcoes: { contexto: () 
   }, [pid]);
   useEffect(() => { gravarFila(pid, saindo.map(({ cmid, texto: t, via: v, contexto, criado, falhou }) => ({ cmid, texto: t, via: v, contexto, criado, falhou }))); }, [pid, saindo]);
 
+  // O fio aberto tem entrada própria no histórico (#conversa): o Voltar do celular fecha o fio e fica no projeto.
+  const fecharLocal = useCallback(() => {
+    setAberta(false);
+    try { sessionStorage.removeItem(`ec-conversa-aberta-${pid}`); } catch { /* sem armazenamento */ }
+  }, [pid]);
   const abrir = useCallback(() => {
     setAberta(true);
     try { sessionStorage.setItem(`ec-conversa-aberta-${pid}`, '1'); } catch { /* sem armazenamento */ }
   }, [pid]);
+  const empurrou = useRef(false);            // a entrada #conversa do histórico foi posta por esta tela
+  const semHash = () => window.location.pathname + window.location.search;
   const fechar = useCallback(() => {
-    setAberta(false);
-    try { sessionStorage.removeItem(`ec-conversa-aberta-${pid}`); } catch { /* sem armazenamento */ }
-  }, [pid]);
+    if (window.location.hash === '#conversa') {
+      if (empurrou.current) { empurrou.current = false; window.history.back(); return; }   // o popstate fecha
+      window.history.replaceState(window.history.state, '', semHash());
+    }
+    fecharLocal();
+  }, [fecharLocal]);
+  useEffect(() => {
+    if (aberta && window.location.hash !== '#conversa') {
+      window.history.pushState(window.history.state, '', '#conversa');
+      empurrou.current = true;
+    }
+  }, [aberta]);
+  useEffect(() => {
+    const aoVoltar = () => {
+      if (window.location.hash !== '#conversa') { empurrou.current = false; fecharLocal(); }
+      else { empurrou.current = true; setAberta(true); }        // Avançar reabre o fio
+    };
+    window.addEventListener('popstate', aoVoltar);
+    return () => window.removeEventListener('popstate', aoVoltar);
+  }, [fecharLocal]);
 
   // ---------- chave e gasto do dia ----------
   const lerChave = useCallback(async () => {
@@ -141,17 +170,21 @@ export function useConversa(pid: string, fio: FioAoVivo, opcoes: { contexto: () 
     setOcupado(tool_use_id);
     try {
       const r = await api.responder(pid, { tool_use_id, texto: t });
-      if (r.ok) { setRespondendo(null); return true; }
+      if (r.ok) { marcarFeito(tool_use_id); setRespondendo(null); return true; }
       if (r.status === 401) { irEntrar(pid); return false; }
       setErroCartao((e) => ({ ...e, [tool_use_id]: r.erro }));
       if (r.status === 409 || r.status === 404) setRespondendo(null);
       return false;
     } finally { travaCartao.current = false; setOcupado(null); }
-  }, [pid]);
+  }, [pid, marcarFeito]);
 
   const enviar = useCallback(async () => {
     const t = texto.trim();
     if (!t || travaEnvio.current) return;
+    if (t.length > LIMITE) {
+      setNota({ tom: 'alerta', texto: `A mensagem passou de ${LIMITE.toLocaleString('pt-BR')} letras. Corte ${(t.length - LIMITE).toLocaleString('pt-BR')} para enviar: nada é cortado sem você ver.` });
+      return;
+    }
     travaEnvio.current = true;
     try {
       if (respondendo) {
@@ -160,7 +193,7 @@ export function useConversa(pid: string, fio: FioAoVivo, opcoes: { contexto: () 
       }
       let contexto: Contexto | undefined;
       try { contexto = opcoesRef.current.contexto(); } catch { contexto = undefined; }
-      const m: Saindo = { cmid: api.novoCmid(), texto: t.slice(0, 4000), via, contexto, criado: Date.now() };
+      const m: Saindo = { cmid: api.novoCmid(), texto: t, via, contexto, criado: Date.now() };
       setSaindo((l) => [...l, m]);
       setTexto('', 'texto');
       abrir();
@@ -176,30 +209,31 @@ export function useConversa(pid: string, fio: FioAoVivo, opcoes: { contexto: () 
 
   // ---------- cartões ----------
   const escolher = useCallback(async (tool_use_id: string, escolha_id: string) => {
-    if (travaCartao.current) return;
+    if (travaCartao.current || feitos.has(tool_use_id)) return;
     travaCartao.current = true;
     setOcupado(tool_use_id);
     setErroCartao((e) => { const n = { ...e }; delete n[tool_use_id]; return n; });
     try {
       const r = await api.responder(pid, { tool_use_id, escolha_id });
-      if (r.ok) { if (respondendo === tool_use_id) setRespondendo(null); return; }
+      if (r.ok) { marcarFeito(tool_use_id); if (respondendo === tool_use_id) setRespondendo(null); return; }
       if (r.status === 401) { irEntrar(pid); return; }
       setErroCartao((e) => ({ ...e, [tool_use_id]: r.status === 409 ? `${r.erro}. Talvez no outro aparelho.` : r.erro }));
     } finally { travaCartao.current = false; setOcupado(null); }
-  }, [pid, respondendo]);
+  }, [pid, respondendo, feitos, marcarFeito]);
 
-  const decidir = useCallback(async (c: DadosConfirmacao, sim: boolean) => {
-    if (travaCartao.current) return;
+  const decidir = useCallback(async (c: DadosConfirmacao, sim: boolean, soNesteProjeto?: boolean) => {
+    if (travaCartao.current || feitos.has(c.tool_use_id)) return;
     travaCartao.current = true;
     setOcupado(c.tool_use_id);
     setErroCartao((e) => { const n = { ...e }; delete n[c.tool_use_id]; return n; });
     try {
-      const r = await api.confirmar(pid, { tool_use_id: c.tool_use_id, sim, entrada_hash: c.entrada_hash });
-      if (r.ok) { if (r.dados.feito) opcoesRef.current.aoMudouProjeto(); return; }
+      const r = await api.confirmar(pid, { tool_use_id: c.tool_use_id, sim, entrada_hash: c.entrada_hash, ...(soNesteProjeto ? { so_neste_projeto: true } : {}) });
+      if (r.ok) { marcarFeito(c.tool_use_id); if (r.dados.feito) opcoesRef.current.aoMudouProjeto(); return; }
       if (r.status === 401) { irEntrar(pid); return; }
+      if (r.status === 409) marcarFeito(c.tool_use_id);          // já decidido (aqui ou no outro aparelho): a resposta vem pelo fio
       setErroCartao((e) => ({ ...e, [c.tool_use_id]: r.erro }));
     } finally { travaCartao.current = false; setOcupado(null); }
-  }, [pid]);
+  }, [pid, feitos, marcarFeito]);
 
   const responderDoMeuJeito = useCallback((tool_use_id: string) => {
     setRespondendo(tool_use_id);
@@ -262,7 +296,7 @@ export function useConversa(pid: string, fio: FioAoVivo, opcoes: { contexto: () 
   const noTeto = Boolean(chave && chave.gasto >= chave.teto - 1e-9);
   return {
     pid, fio, montado, aberta, abrir, fechar, texto, setTexto, via, enviar, saindo, tentarSaindo, descartarSaindo,
-    respondendo, setRespondendo, responderDoMeuJeito, escolher, decidir, ocupado, erroCartao, nota, setNota,
+    respondendo, setRespondendo, responderDoMeuJeito, escolher, decidir, ocupado, feitos, erroCartao, nota, setNota, limite: LIMITE,
     chave, ligada, motivo: chave?.motivo ?? fio.inst?.motivo, noTeto, mudarChave, mudandoChave, lerChave,
     pararTurno, parando, retomarTurno, retomando, tentarTurno, mandarTexto, mostrar, campoRef, estadoChave: chave as EstadoChaveTela | null,
   };

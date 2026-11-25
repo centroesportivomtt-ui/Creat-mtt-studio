@@ -323,6 +323,11 @@
     "entrada_hash": {
      "type": "string",
      "pattern": "^[0-9a-f]{64}$"
+    },
+    "atencao": {
+     "type": "string",
+     "maxLength": 600,
+     "description": "Aviso do servidor: o texto repete algo de fora (fala de vídeo, texto de cliente); o ajuste não vira regra. Opcional."
     }
    }
   },

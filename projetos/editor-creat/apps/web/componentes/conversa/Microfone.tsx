@@ -43,24 +43,37 @@ export function useGravador(pid: string, aoTexto: (texto: string, conf: number) 
     if (g.emAndamento.has(chave)) return;
     g.emAndamento.add(chave);
     setOuvindo((x) => x + 1);
+    let contou = true;
     try {
       const res = await transcrever(pid, blob);
       if (res.ok) {
         await apagarAudio(chave);
+        contou = false;
+        setOuvindo((x) => Math.max(0, x - 1));     // o texto chega já sem a linha "Ouvindo seu áudio"
         if (res.dados.texto) cb.current.aoTexto(res.dados.texto, res.dados.conf);
         return;
       }
       if (res.status === 401) { cb.current.aoSessao(); return; }
-      if (res.status === 0 || res.status === 502 || res.status === 500) {
+      if (res.status === 0 || res.status === 502) {
         cb.current.aoNota({ tom: 'alerta', texto: 'Sem conexão: o áudio ficou guardado e vai de novo quando a rede voltar.' });
+        return;
+      }
+      if (res.status === 429) {                    // já tem áudio sendo ouvido: este espera a vez, guardado
+        cb.current.aoNota({ tom: 'info', texto: 'Ainda estou ouvindo o áudio anterior. Este ficou guardado e vai em seguida.' });
+        setTimeout(() => { void transcreverUm(chave, blob); }, 4000);
+        return;
+      }
+      if (res.status >= 500 && res.status !== 503 && res.status !== 504) {
+        cb.current.aoNota({ tom: 'alerta', texto: 'O serviço de voz falhou agora. O áudio ficou guardado e vai de novo quando você abrir o projeto.' });
         return;
       }
       await apagarAudio(chave);   // 413, 415, 422, 503, 504: não adianta mandar o mesmo pedaço de novo
       cb.current.aoNota({ tom: 'alerta', texto: `${res.erro}.`.replace(/\.\.$/, '.'), fixa: res.status === 503 });
     } finally {
       g.emAndamento.delete(chave);
-      setOuvindo((x) => Math.max(0, x - 1));
+      if (contou) setOuvindo((x) => Math.max(0, x - 1));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pid]);
 
   const entregar = useCallback(async (blob: Blob) => {

@@ -19,6 +19,7 @@ import json
 import logging
 import os
 import pathlib
+import re
 import secrets
 import threading
 import time
@@ -39,8 +40,29 @@ BETA_FALLBACK = "server-side-fallback-2026-07-01"
 BETA_ANDAMENTO = "thinking-display-updates-2026-08-18"
 CACHE_1H = {"type": "ephemeral", "ttl": "1h"}
 TEXTO_AJUSTE_FEITO = "Pedido de ajuste enviado. A direção recomeça; acompanhe na mesa."
+TEXTO_AJUSTE_SO_AQUI = "Pedido de ajuste enviado, só para este projeto (não virou regra). A direção recomeça; acompanhe na mesa."
 TEXTO_PEDIDO_FEITO = "Pedido trocado."
 TEXTO_PEDIDO_DIRIGINDO = "Pedido trocado. A edição começou; acompanhe na mesa."
+TEXTO_LIVRO_FALHOU = "não consegui anotar o gasto desta resposta; a conversa parou por segurança"
+TAXA_SAIDA_MAX = 120                # tokens/s: teto pessimista do que o modelo gera (estimativa de chamada cortada)
+# marcador que o sistema escreve antes da fala do dono ([tela: fio · versão aberta: v1 · t_player: 0:12]); se o modelo
+# repetir, a tela não mostra (o histórico guarda o que veio)
+RE_MARCADOR = re.compile(r"\[(?:tela|versão aberta|t_player): [^\]\n]{0,160}\]\s*")
+BLOCOS_ANTES_DO_FALLBACK = ("thinking", "redacted_thinking", "tool_use", "server_tool_use")
+
+
+def sem_marcador(texto: str) -> str:
+    return RE_MARCADOR.sub("", texto or "")
+
+
+def depois_do_fallback(blocos: list) -> list:
+    """Fallback do servidor no meio da resposta (skill claude-api, refusal fallbacks): antes do ÚLTIMO bloco 'fallback',
+    thinking, tool_use e server_tool_use ficam de fora do histórico (e não executam); texto e o próprio bloco ficam."""
+    tipo = lambda b: b.get("type") if isinstance(b, dict) else getattr(b, "type", "")
+    ult = max((i for i, b in enumerate(blocos) if tipo(b) == "fallback"), default=-1)
+    if ult < 0:
+        return list(blocos)
+    return [b for i, b in enumerate(blocos) if i >= ult or tipo(b) not in BLOCOS_ANTES_DO_FALLBACK]
 
 
 class ErroConversa(Exception):
@@ -277,6 +299,12 @@ class Mesa:
         self.dono_do_lock = False
         self._tentou_em = 0.0
         self._lock_trava = threading.Lock()      # ligada() roda no loop e em threads (to_thread): uma abertura só
+        self.encerrando: dict[str, asyncio.Task] = {}   # turno que já fechou o histórico e só emite o turno_fim
+        self.reservas: dict[str, float] = {}            # pior caso das chamadas em voo (ainda fora do livro)
+        self._trava_teto = asyncio.Lock()
+        self._nao_anotado: dict[str, float] = {}        # dia -> gasto que o livro não gravou (continua contando)
+        self._trava_nao_anotado = threading.Lock()
+        self.voz_na_vez = 0                              # áudios ouvindo ou esperando a vez
 
     # --- trava de processo único (D16)
     def garantir_lock(self, cfg) -> bool:
@@ -329,12 +357,41 @@ class Mesa:
         t = self.tarefas.get(pid)
         return t is not None and not t.done()
 
+    async def _esperar_encerrar(self, pid: str) -> None:
+        """Chamado com a trava do projeto: um turno que já fechou o histórico (encerrando) só falta emitir o turno_fim
+        e não precisa mais da trava; espera ele sair para a mensagem nova abrir turno próprio (e não cair numa fila
+        que ninguém mais lê)."""
+        t = self.tarefas.get(pid)
+        if t is not None and not t.done() and self.encerrando.get(pid) is t:
+            await asyncio.wait([t], timeout=10)
+
+    # --- gasto do dia (livro + o que o livro não conseguiu gravar)
+    def nao_anotado(self) -> float:
+        with self._trava_nao_anotado:
+            return round(self._nao_anotado.get(teto.dia_bahia(), 0.0), 5)
+
+    def gasto_hoje(self, cfg) -> float:
+        return round(teto.gasto_hoje_usd(cfg) + self.nao_anotado(), 5)
+
+    def registrar(self, cfg, uso: dict, *, projeto: str, ref: str) -> bool:
+        """Livro de gastos. Se não gravar (disco cheio, permissão), o valor fica num acumulador em memória que o teto
+        soma: o teto nunca falha aberto. Devolve False só quando havia gasto e ele não entrou no livro."""
+        ok = gastos.registrar(cfg, "conversa", uso, projeto=projeto, ref=ref)
+        custo = float(uso.get("custo_usd", 0) or 0)
+        if not ok and custo > 0:
+            with self._trava_nao_anotado:
+                dia = teto.dia_bahia()
+                self._nao_anotado[dia] = self._nao_anotado.get(dia, 0.0) + custo
+            log.error("conversa %s: gasto de US$ %.5f não entrou no livro; somado em memória", projeto, custo)
+            return False
+        return True
+
     # --- estado para a tela
     def estado(self, cfg) -> dict:
         ligada, motivo = self.ligada(cfg)
         with _Con(cfg) as con:
             esperando = repo.todas_esperas(con)
-        out = {"ligada": ligada, "teto_usd_dia": teto.teto_usd_dia(cfg), "gasto_hoje_usd": round(teto.gasto_hoje_usd(cfg), 4),
+        out = {"ligada": ligada, "teto_usd_dia": teto.teto_usd_dia(cfg), "gasto_hoje_usd": round(self.gasto_hoje(cfg), 4),
                "dia_vira_em": teto.dia_vira_em(), "esperando": [{"projeto": e["projeto"], "nome": e["nome"], "tipo": e["tipo"], "desde": e["desde"]} for e in esperando]}
         if motivo:
             out["motivo"] = motivo
@@ -342,7 +399,7 @@ class Mesa:
 
     def instantaneo(self, cfg, pid: str, con=None) -> dict:
         ligada, motivo = self.ligada(cfg)
-        d: dict = {"ligada": ligada, "gasto_hoje_usd": round(teto.gasto_hoje_usd(cfg), 4), "teto_usd_dia": teto.teto_usd_dia(cfg)}
+        d: dict = {"ligada": ligada, "gasto_hoje_usd": round(self.gasto_hoje(cfg), 4), "teto_usd_dia": teto.teto_usd_dia(cfg)}
         if motivo:
             d["motivo"] = motivo
         if self.rodando(pid):
@@ -375,13 +432,14 @@ class Mesa:
     # --- o dono manda uma mensagem (R3)
     async def mandar(self, cfg, pid: str, *, texto: str, via: str, contexto: dict | None, cmid: str) -> dict:
         async with self.trava(pid):
+            await self._esperar_encerrar(pid)
             ja = await asyncio.to_thread(self._por_cmid, cfg, pid, cmid)
             if ja:
                 return {"turno": ja, "na_fila": False}
             ligada, _ = self.ligada(cfg)
             if not ligada:
                 raise ErroConversa(503, "a conversa está desligada")
-            if teto.gasto_hoje_usd(cfg) >= teto.teto_usd_dia(cfg) - 1e-9:
+            if self.gasto_hoje(cfg) >= teto.teto_usd_dia(cfg) - 1e-9:
                 raise ErroConversa(429, f"chegou no teto de hoje (US$ {teto.teto_usd_dia(cfg):.2f}); a conversa volta à meia-noite".replace(".", ",", 1))
             conteudo_txt = _renderizar(texto, contexto)
             dados = {"texto": texto, "via": via, **({"contexto": contexto} if contexto else {})}
@@ -433,6 +491,7 @@ class Mesa:
             ligada, _ = self.ligada(cfg)
             if not ligada:
                 raise ErroConversa(503, "a conversa está desligada")
+            await self._esperar_encerrar(pid)
             if self.rodando(pid):
                 raise ErroConversa(409, "a conversa ainda está respondendo; espere terminar")
             res = {"por": "dono"}
@@ -480,7 +539,7 @@ class Mesa:
                 raise
 
     # --- confirmar o cartão (R6): o turno NÃO continua
-    async def confirmar(self, cfg, pid: str, *, tool_use_id: str, sim: bool, entrada_hash: str) -> dict:
+    async def confirmar(self, cfg, pid: str, *, tool_use_id: str, sim: bool, entrada_hash: str, so_neste_projeto: bool = False) -> dict:
         async with self.trava(pid):
             esp = await asyncio.to_thread(self._espera, cfg, pid)
             if esp is None or esp["tipo"] != "confirmacao" or esp["tool_use_id"] != tool_use_id:
@@ -489,7 +548,11 @@ class Mesa:
                 raise ErroConversa(404, "esse cartão não existe")
             if esp["entrada_hash"] != entrada_hash:
                 raise ErroConversa(409, "o cartão mudou")
-            res, ev, status = await asyncio.to_thread(self._decidir, cfg, pid, esp, sim)
+            if sim:
+                ligada, _ = self.ligada(cfg)
+                if not ligada:              # desligada (pelo dono ou no servidor): nada roda; o cartão fica para depois
+                    raise ErroConversa(503, "a conversa está desligada; ligue a chave para decidir este cartão")
+            res, ev, status = await asyncio.to_thread(self._decidir, cfg, pid, esp, sim, so_neste_projeto)
             if ev is not None:
                 await self.emitir(cfg, pid, "resposta", ev)
             if status == 409:
@@ -501,7 +564,7 @@ class Mesa:
             return out
 
     @staticmethod
-    def _decidir(cfg, pid: str, esp: dict, sim: bool) -> tuple[dict, dict | None, int]:
+    def _decidir(cfg, pid: str, esp: dict, sim: bool, so_neste_projeto: bool = False) -> tuple[dict, dict | None, int]:
         from fastapi import HTTPException
         from pydantic import ValidationError
         nome, entrada = esp["cartao"]["nome"], esp["cartao"]["entrada"]
@@ -526,8 +589,9 @@ class Mesa:
                 else:
                     try:
                         if nome == "propor_ajuste":
-                            res = acoes.executar_ajuste(pid, entrada["versao"], entrada["o_que_mudar"])
-                            ev.update(resultado="feito", detalhe=TEXTO_AJUSTE_FEITO)
+                            vira = bool((esp["cartao"].get("evento") or {}).get("vira_regra", True)) and not so_neste_projeto
+                            res = acoes.executar_ajuste(pid, entrada["versao"], entrada["o_que_mudar"], vira_regra=vira)
+                            ev.update(resultado="feito", detalhe=TEXTO_AJUSTE_FEITO if vira else TEXTO_AJUSTE_SO_AQUI)
                         else:
                             res = acoes.executar_pedido(cfg, pid, entrada)
                             ev.update(resultado="feito", detalhe=TEXTO_PEDIDO_DIRIGINDO if res.get("dirigindo") else TEXTO_PEDIDO_FEITO)
@@ -538,6 +602,11 @@ class Mesa:
                     except (ValidationError, ValueError) as e:
                         res = {"feito": False, "motivo": "erro", "detalhe": ferramentas.de_fora(str(e)[:300])["de_fora"]}
                         ev.update(resultado="nao_deu", detalhe="não deu: o pedido ficou inválido")
+                        status = 409
+                    except Exception as e:  # noqa: BLE001 - a decisão já foi tomada (única): sempre fecha com resposta e tool_result
+                        log.warning("conversa %s: cartão %s falhou ao executar: %s", pid, nome, type(e).__name__)
+                        res = {"feito": False, "motivo": "erro", "detalhe": "falhou ao executar do nosso lado"}
+                        ev.update(resultado="nao_deu", detalhe="não deu: algo falhou do nosso lado. Nada mudou; peça de novo na conversa.")
                         status = 409
             cap = repo.capitulo_atual(con, pid)
             if cap:
@@ -561,10 +630,11 @@ class Mesa:
 
     async def retomar(self, cfg, pid: str) -> dict:
         async with self.trava(pid):
+            await self._esperar_encerrar(pid)
             ligada, _ = self.ligada(cfg)
             if not ligada:
                 raise ErroConversa(503, "a conversa está desligada")
-            if teto.gasto_hoje_usd(cfg) >= teto.teto_usd_dia(cfg) - 1e-9:
+            if self.gasto_hoje(cfg) >= teto.teto_usd_dia(cfg) - 1e-9:
                 raise ErroConversa(429, f"chegou no teto de hoje (US$ {teto.teto_usd_dia(cfg):.2f}); a conversa volta à meia-noite".replace(".", ",", 1))
             if self.rodando(pid):
                 raise ErroConversa(409, "a conversa já está respondendo")
@@ -587,16 +657,32 @@ class Mesa:
             return turno
 
     # --- o turno
+    def _estimar(self, em_voo: dict) -> tuple[dict, int]:
+        """Custo de uma chamada cortada (Parar ou queda no meio do stream), errando para cima: a saída é o maior entre o
+        texto visível e o que o modelo pode ter gerado no tempo decorrido (raciocínio também é saída cobrada)."""
+        saida_txt = int(len(em_voo.get("texto", "")) / orcamento.CARACTERES_POR_TOKEN) + 1
+        decorrido = max(0.0, time.monotonic() - float(em_voo.get("t0") or time.monotonic()))
+        saida = min(MAX_SAIDA, max(saida_txt, int(decorrido * TAXA_SAIDA_MAX) + 1))
+        if em_voo["recente"]:
+            u = orcamento.uso(em_voo["modelo"], entrada=0, saida=saida, cache_lido=max(0, em_voo["contexto"] - em_voo["novos"]),
+                              cache_escrito_1h=em_voo["novos"], estimado=True)
+        else:
+            u = orcamento.uso(em_voo["modelo"], entrada=0, saida=saida, cache_escrito_1h=em_voo["contexto"], estimado=True)
+        return u, saida
+
     async def _rodar(self, cfg, pid: str, turno: str):
         eu = asyncio.current_task()
         t0 = time.monotonic()
         custo, estimado = 0.0, False
         tokens = {"entrada": 0, "cache_lida": 0, "cache_escrita": 0, "saida": 0}
         stop, detalhe, motivo_fecha = "erro", None, None
-        em_voo: dict | None = None          # chamada em andamento (para estimar o custo se o dono parar)
+        em_voo: dict | None = None          # chamada em andamento (para estimar o custo se o dono parar ou o stream cair)
+        reserva: str | None = None          # chave em self.reservas da chamada em voo
         abertas: dict[str, str] = {}        # ferramentas livres com 'inicio' emitido e sem fim
         escritas: set = set()
         cli = None
+        trava = self.trava(pid)
+        segurando = False                   # a trava do projeto está com este turno (decisão final e fechamento)
 
         async def escrever(fn, *a):
             fut = asyncio.ensure_future(asyncio.to_thread(fn, *a))
@@ -606,6 +692,16 @@ class Mesa:
             finally:
                 if fut.done():
                     escritas.discard(fut)
+
+        async def anotar_estimativa():
+            nonlocal custo, estimado, reserva
+            u, saida = self._estimar(em_voo)
+            await asyncio.to_thread(self.registrar, cfg, u, projeto=pid, ref=turno)
+            self.reservas.pop(reserva, None)
+            reserva = None
+            custo += u["custo_usd"]
+            estimado = True
+            tokens["saida"] += saida
 
         try:
             async with self.sem:
@@ -626,19 +722,26 @@ class Mesa:
                     novos = teto.tokens_de(len(_j(msgs[-1]))) if msgs else 0
                     recente = time.time() - self.ultima_chamada.get(pid, 0) < CACHE_RECENTE_S
                     pior = teto.pior_caso_usd(cfg.modelo_conversa, contexto_tokens=contexto, novos_tokens=novos, recente=recente)
-                    cabe, _hoje = teto.cabe(cfg, pior)
+                    async with self._trava_teto:          # pré-voo com reserva: turnos em paralelo não passam juntos do teto
+                        cabe, _hoje = await asyncio.to_thread(teto.cabe, cfg, pior, reservado=sum(self.reservas.values()),
+                                                              nao_anotado=self.nao_anotado())
+                        if cabe:
+                            reserva = novo_id("r_")
+                            self.reservas[reserva] = pior
                     if not cabe:
                         stop, detalhe = "teto", f"chegou no teto de hoje (US$ {teto.teto_usd_dia(cfg):.2f})".replace(".", ",", 1)
                         break
                     voltas += 1
                     pensar = {"type": "adaptive", "display": "updates"} if cfg.andamento_conversa else {"type": "adaptive"}
                     betas = [BETA_FALLBACK] + ([BETA_ANDAMENTO] if cfg.andamento_conversa else [])
-                    em_voo = {"contexto": contexto, "novos": novos, "recente": recente, "modelo": cfg.modelo_conversa}
+                    em_voo = {"contexto": contexto, "novos": novos, "recente": recente, "modelo": cfg.modelo_conversa,
+                              "t0": time.monotonic(), "streamou": False}
                     self._rasc(pid, turno=turno, bloco=bloco, texto="", andamento="pensando…")
                     async with cli.beta.messages.stream(
                             model=cfg.modelo_conversa, max_tokens=MAX_SAIDA, thinking=pensar, output_config={"effort": cfg.esforco_conversa},
                             system=system, tools=tools, messages=msgs, cache_control=dict(CACHE_1H), betas=betas, fallbacks="default") as st:
                         async for ev in st:
+                            em_voo["streamou"] = True
                             tp = ev.type
                             if tp == "content_block_start":
                                 cb = ev.content_block
@@ -650,13 +753,13 @@ class Mesa:
                                         abertas[cb.id] = cb.name
                                         await self.emitir(cfg, pid, "ferramenta", {"turno": turno, "tool_use_id": cb.id, "nome": cb.name, "fase": "inicio"})
                             elif tp == "text":
-                                self._rasc(pid, texto=ev.snapshot)
+                                self._rasc(pid, texto=sem_marcador(ev.snapshot))
                                 em_voo["texto"] = ev.snapshot
                             elif tp == "thinking":
                                 if (ev.snapshot or "").strip():
                                     self._rasc(pid, andamento=ev.snapshot.strip()[-280:])
                             elif tp == "content_block_stop" and getattr(ev.content_block, "type", "") == "text":
-                                txt = ev.content_block.text or ""
+                                txt = sem_marcador(ev.content_block.text or "")
                                 if txt.strip():
                                     await self.emitir(cfg, pid, "fala_editor", {"turno": turno, "bloco": bloco, "texto": txt})
                                     bloco += 1
@@ -671,8 +774,14 @@ class Mesa:
                     tokens["cache_lida"] += uso["entrada_cache"]
                     tokens["cache_escrita"] += uso["cache_escrito"] + uso.get("cache_escrito_1h", 0)
                     tokens["saida"] += uso["saida"]
-                    conteudo = [b.model_dump(mode="json", exclude_none=True) for b in msg.content]
-                    await escrever(self._gravar_assistant, cfg, pid, cap["capitulo"], conteudo, turno, {**uso, "ate_id": ate})
+                    blocos = depois_do_fallback(list(msg.content))
+                    conteudo = [b.model_dump(mode="json", exclude_none=True) for b in blocos]
+                    anotou = await escrever(self._gravar_assistant, cfg, pid, cap["capitulo"], conteudo, turno, {**uso, "ate_id": ate})
+                    self.reservas.pop(reserva, None)
+                    reserva = None
+                    if not anotou:
+                        stop, detalhe, motivo_fecha = "erro", TEXTO_LIVRO_FALHOU, "erro"
+                        break
                     if voltas > 1 and not uso["entrada_cache"]:
                         log.warning("conversa %s: chamada %d sem leitura de cache (prefixo mudou?)", pid, voltas)
                     if msg.stop_reason == "refusal":
@@ -681,9 +790,15 @@ class Mesa:
                     if msg.stop_reason == "max_tokens":
                         stop, detalhe, motivo_fecha = "limite", "a resposta passou do tamanho máximo", "max_tokens"
                         break
-                    usos = [b for b in msg.content if getattr(b, "type", "") == "tool_use"]
+                    usos = [b for b in blocos if getattr(b, "type", "") == "tool_use"]
                     if not usos:
+                        # decisão final sob a trava do projeto: ou a mensagem nova entra na fila antes (e é lida aqui),
+                        # ou chega depois e abre turno próprio (mandar espera este turno encerrar)
+                        await trava.acquire()
+                        segurando = True
                         if await asyncio.to_thread(self._tem_fila, cfg, pid):
+                            trava.release()
+                            segurando = False
                             continue
                         stop = "end_turn"
                         break
@@ -694,31 +809,37 @@ class Mesa:
         except asyncio.CancelledError:
             stop = "parado"
             if em_voo is not None:
-                saida = int(len(em_voo.get("texto", "")) / orcamento.CARACTERES_POR_TOKEN) + 1
-                if em_voo["recente"]:
-                    u = orcamento.uso(em_voo["modelo"], entrada=0, saida=saida, cache_lido=max(0, em_voo["contexto"] - em_voo["novos"]),
-                                      cache_escrito_1h=em_voo["novos"], estimado=True)
-                else:
-                    u = orcamento.uso(em_voo["modelo"], entrada=0, saida=saida, cache_escrito_1h=em_voo["contexto"], estimado=True)
-                await asyncio.to_thread(gastos.registrar, cfg, "conversa", u, projeto=pid, ref=turno)
-                custo += u["custo_usd"]
-                estimado = True
-                tokens["saida"] += saida
+                await anotar_estimativa()
         except Exception as e:  # noqa: BLE001 - qualquer falha vira turno_fim 'erro' com texto simples (sem segredo)
             stop, detalhe = "erro", _erro_simples(e)
             log.warning("conversa %s turno %s: %s", pid, turno, type(e).__name__)
+            if em_voo is not None and em_voo.get("streamou"):
+                try:                        # caiu depois de gerar tokens: o que foi cobrado entra no livro (estimado)
+                    await anotar_estimativa()
+                except Exception:  # noqa: BLE001
+                    log.exception("conversa %s: não consegui estimar a chamada que caiu", pid)
         finally:
+            self.reservas.pop(reserva, None)
             if escritas:
                 await asyncio.gather(*escritas, return_exceptions=True)
-            texto_parcial = (self.rascunho.get(pid) or {}).get("texto") if stop == "parado" else None
+            texto_parcial = sem_marcador((self.rascunho.get(pid) or {}).get("texto") or "") if stop == "parado" else None
             try:
                 for tid, nome in list(abertas.items()):
                     await self.emitir(cfg, pid, "ferramenta", {"turno": turno, "tool_use_id": tid, "nome": nome, "fase": "erro",
                                                                "resumo": "não executado"})
                 motivo = motivo_fecha or {"end_turn": "erro", "pausa": "erro", "recusa": "recusa", "limite": "limite"}.get(stop, stop)
-                await asyncio.to_thread(self._fechar, cfg, pid, motivo, turno)
+                if not segurando:
+                    await trava.acquire()
+                    segurando = True
+                try:                        # fechar o histórico com a trava: não cruza com confirmar nem com mensagem nova
+                    await asyncio.to_thread(self._fechar, cfg, pid, motivo, turno)
+                    if self.tarefas.get(pid) is eu:
+                        self.encerrando[pid] = eu
+                finally:
+                    trava.release()
+                    segurando = False
                 fim = {"turno": turno, "stop": stop, "custo_usd": round(custo, 5), "s": round(time.monotonic() - t0, 1),
-                       "gasto_hoje_usd": round(teto.gasto_hoje_usd(cfg), 4), "tokens": tokens}
+                       "gasto_hoje_usd": round(self.gasto_hoje(cfg), 4), "tokens": tokens}
                 if estimado:
                     fim["estimado"] = True
                 if texto_parcial:
@@ -727,6 +848,10 @@ class Mesa:
                     fim["detalhe"] = detalhe[:300]
                 await self.emitir(cfg, pid, "turno_fim", fim)
             finally:
+                if segurando:
+                    trava.release()
+                if self.encerrando.get(pid) is eu:
+                    self.encerrando.pop(pid, None)
                 if self.tarefas.get(pid) is eu:
                     self.tarefas.pop(pid, None)
                     self.turno_de.pop(pid, None)
@@ -779,7 +904,7 @@ class Mesa:
                 pausa = ("pergunta", cartao)
                 continue
             async with self.trava(pid):
-                porque, cartao = await asyncio.to_thread(self._criar_cartao, cfg, pid, nome, entrada, turno, tid)
+                porque, cartao = await asyncio.to_thread(self._criar_cartao, cfg, pid, nome, entrada, turno, tid, list(resultados))
             if porque:
                 resultados.append(_tool_result(tid, {"erro": "nao_cabe_agora", "detalhe": porque}, True))
             else:
@@ -808,11 +933,11 @@ class Mesa:
             msgs, ate = repo.historico(con, pid, cap["capitulo"])
             return cap, msgs, ate
 
-    @staticmethod
-    def _gravar_assistant(cfg, pid, capitulo, conteudo, turno, uso):
+    def _gravar_assistant(self, cfg, pid, capitulo, conteudo, turno, uso) -> bool:
+        """Grava a resposta e o gasto. False = o gasto não entrou no livro (o turno para por segurança)."""
         with _Con(cfg) as con:
             repo.anexar(con, pid, capitulo, "assistant", conteudo, turno, uso=uso)
-        gastos.registrar(cfg, "conversa", uso, projeto=pid, ref=turno)
+        return self.registrar(cfg, uso, projeto=pid, ref=turno)
 
     @staticmethod
     def _gravar_parcial(cfg, pid, capitulo, blocos, turno):
@@ -837,14 +962,14 @@ class Mesa:
             fechar_pendencias(con, pid, motivo, turno)
 
     @staticmethod
-    def _criar_cartao(cfg, pid, nome, entrada, turno, tid) -> tuple[str | None, dict | None]:
+    def _criar_cartao(cfg, pid, nome, entrada, turno, tid, ja_lidos=None) -> tuple[str | None, dict | None]:
         with _Con(cfg) as con:
             if nome == "propor_ajuste":
                 norm = {"versao": entrada["versao"], "o_que_mudar": " ".join(entrada["o_que_mudar"].split())}
                 porque = acoes.guarda_ajuste(con, pid, norm["versao"])
                 if porque:
                     return porque, None
-                cartao = acoes.cartao_ajuste(cfg, con, pid, norm, turno=turno, tool_use_id=tid)
+                cartao = acoes.cartao_ajuste(cfg, con, pid, norm, turno=turno, tool_use_id=tid, ja_lidos=ja_lidos)
             else:
                 norm = acoes.normalizar_pedido(entrada)
                 porque = acoes.guarda_pedido(con, pid)
@@ -860,13 +985,42 @@ class Mesa:
 
     @staticmethod
     def _uso(msg, cfg) -> dict:
+        """Uso e custo da chamada. Com fallback do servidor, `usage.iterations` é a fonte por tentativa (skill claude-api:
+        o usage de cima cobre só a tentativa que respondeu; a que recusou no meio é cobrada também, no preço dela)."""
+        def campos(u):
+            cc = getattr(u, "cache_creation", None)
+            if isinstance(cc, dict):
+                uma_hora = int(cc.get("ephemeral_1h_input_tokens", 0) or 0)
+            else:
+                uma_hora = int(getattr(cc, "ephemeral_1h_input_tokens", 0) or 0) if cc is not None else 0
+            g = (lambda k: u.get(k)) if isinstance(u, dict) else (lambda k: getattr(u, k, 0))
+            criado = int(g("cache_creation_input_tokens") or 0)
+            return {"entrada": int(g("input_tokens") or 0), "saida": int(g("output_tokens") or 0),
+                    "cache_lido": int(g("cache_read_input_tokens") or 0), "cache_escrito": max(0, criado - uma_hora), "cache_escrito_1h": uma_hora}
+
         u = msg.usage
-        cc = getattr(u, "cache_creation", None)
-        uma_hora = int(getattr(cc, "ephemeral_1h_input_tokens", 0) or 0) if cc is not None else 0
-        criado = int(getattr(u, "cache_creation_input_tokens", 0) or 0)
-        return orcamento.uso(getattr(msg, "model", None) or cfg.modelo_conversa, entrada=int(u.input_tokens or 0), saida=int(u.output_tokens or 0),
-                             cache_lido=int(getattr(u, "cache_read_input_tokens", 0) or 0), cache_escrito=max(0, criado - uma_hora),
-                             cache_escrito_1h=uma_hora, estimado=False, cerebro="conversa", esforco=cfg.esforco_conversa)
+        modelo_final = getattr(msg, "model", None) or cfg.modelo_conversa
+        its = list(getattr(u, "iterations", None) or [])
+        if its:
+            soma = {"entrada": 0, "saida": 0, "cache_lido": 0, "cache_escrito": 0, "cache_escrito_1h": 0}
+            total = 0.0
+            for it in its:
+                g = (lambda k: it.get(k)) if isinstance(it, dict) else (lambda k: getattr(it, k, None))
+                c = campos(it)
+                for k in soma:
+                    soma[k] += c[k]
+                # entrada sem modelo (tipo 'message'): pode ser do pedido ou do fallback; vale o mais caro dos dois
+                modelos = [g("model")] if g("model") else [cfg.modelo_conversa, modelo_final]
+                total += max(orcamento.custo_usd(m, c["entrada"], c["saida"], c["cache_lido"], c["cache_escrito"], c["cache_escrito_1h"])
+                             for m in modelos)
+            d = orcamento.uso(modelo_final, entrada=soma["entrada"], saida=soma["saida"], cache_lido=soma["cache_lido"],
+                              cache_escrito=soma["cache_escrito"], cache_escrito_1h=soma["cache_escrito_1h"], estimado=False,
+                              cerebro="conversa", esforco=cfg.esforco_conversa, tentativas=len(its))
+            d["custo_usd"] = round(total, 5)
+            return d
+        c = campos(u)
+        return orcamento.uso(modelo_final, entrada=c["entrada"], saida=c["saida"], cache_lido=c["cache_lido"], cache_escrito=c["cache_escrito"],
+                             cache_escrito_1h=c["cache_escrito_1h"], estimado=False, cerebro="conversa", esforco=cfg.esforco_conversa)
 
 
 def _erro_simples(e: Exception) -> str:
@@ -877,8 +1031,8 @@ def _erro_simples(e: Exception) -> str:
             return "o Claude está com muita procura agora; tente de novo em um minuto"
         if isinstance(e, anthropic.APIStatusError):
             if int(getattr(e, "status_code", 0) or 0) == 400:
-                return "o Claude recusou a conversa (400); a equipe precisa olhar"
-            return f"o Claude não respondeu ({getattr(e, 'status_code', '?')}); tente de novo"
+                return "o Claude recusou esta conversa; a equipe precisa olhar"
+            return "o Claude não respondeu agora; tente de novo"
         if isinstance(e, anthropic.APIConnectionError):
             return "sem conexão com o Claude agora; tente de novo"
     except ImportError:
@@ -913,6 +1067,13 @@ async def ao_subir():
     """Startup do app: trava de processo único e reconciliação das conversas interrompidas."""
     cfg = config.carregar()
     m = mesa()
+    try:
+        from motor.conversa import ouvir
+        await asyncio.to_thread(ouvir.limpar_velhos, cfg)     # áudio do dono não fica no disco depois de queda ou deploy
+    except Exception:  # noqa: BLE001
+        log.exception("limpeza de tmp/voz falhou")
+    if cfg.conversa_cerebro == "falso":
+        log.warning("ATENÇÃO: a conversa está com o cérebro FALSO (EDITOR_CONVERSA_CEREBRO=falso): respostas roteirizadas, só para teste")
     if m.garantir_lock(cfg):
         try:
             await asyncio.to_thread(reconciliar_conversas, cfg)

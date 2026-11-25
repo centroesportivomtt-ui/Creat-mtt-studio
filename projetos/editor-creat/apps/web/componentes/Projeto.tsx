@@ -98,7 +98,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     if (['arquivo_recebido', 'etapa_fim', 'estado', 'versao_pronta', 'entregue', 'qa_reprovado', 'etapa_erro'].includes(e.tipo)) recarregar();
   }, [recarregar]);
   const fio = useFioAoVivo(inicial.id, receber, useCallback(() => irEntrar(inicial.id), [inicial.id]));
-  const conectado = fio.conectado;
+  const conectado = fio.conectado && !fio.semSinal;      // 20 s sem sinal conta como desconectado (a tela avisa)
   // contexto da mensagem: a versão no player e o ponto em que ele está (o Nimbus responde "Entendi: 0:12, …")
   const conversa = useConversa(inicial.id, fio, {
     aoMudouProjeto: recarregar,
@@ -448,7 +448,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       <h2 className="cartao__titulo" id="t-relogio">
         Ilha ao vivo
         {/* entregue: nada está acontecendo, então o ponto "gravando" sai */}
-        {fase !== 'entregue' && <span className="ao-vivo" data-conectado={conectado} style={{ marginLeft: 'auto' }}>{conectado ? 'ao vivo' : 'reconectando'}</span>}
+        {fase !== 'entregue' && <span className="ao-vivo" data-conectado={conectado} style={{ marginLeft: 'auto' }}>{conectado ? 'ao vivo' : fio.semSinal ? 'sem sinal · reconectando' : 'reconectando'}</span>}
       </h2>
       <div className="relogio__linha">
         <p className="relogio__tc" data-correndo={correndo} aria-label={`Tempo de edição: ${tc(decorrido)}`}>{tc(decorrido)}</p>

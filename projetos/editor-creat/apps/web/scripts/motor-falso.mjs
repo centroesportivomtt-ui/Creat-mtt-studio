@@ -614,7 +614,7 @@ async function rodarTurnoC(pid, ctx, texto, contexto) {
     if (/erro/.test(t)) {
       if (!(await escreverC(pid, ctx, `${eco} Vou olhar o projeto.`, 6))) return;
       await dormir(200);
-      return fimC(pid, ctx, 'erro', { detalhe: 'o Claude não respondeu (529); tente de novo' });
+      return fimC(pid, ctx, 'erro', { detalhe: 'o Claude não respondeu agora; tente de novo' });
     }
     if (/devagar/.test(t)) {
       const longo = Array.from({ length: 12 }, (_, i) => `Parte ${i + 1}: olhando cada fala com calma para achar o melhor gancho.`).join(' ');
@@ -644,7 +644,7 @@ async function rodarTurnoC(pid, ctx, texto, contexto) {
       const entrada = { versao: v.id, o_que_mudar: texto.slice(0, 1000) };
       const dados = { turno: ctx.turno, tool_use_id: tid, acao: 'ajuste', versao: v.id, titulo: `Pedir ajuste da ${v.id}`, texto_exato: entrada.o_que_mudar,
         refaz: ['direcao', 'montagem', 'qa'], comeca_agora: true, custo_usd_est: 0.4, minutos_est: 10, vira_regra: true,
-        volta: `A ${v.id} continua guardada. Vira regra da casa, como no botão Pedir ajuste.`, entrada_hash: hashC(tid, entrada) };
+        volta: `A ${v.id} continua guardada. Vira regra da casa e vale para TODOS os projetos, como no botão Pedir ajuste.`, entrada_hash: hashC(tid, entrada) };
       await escreverC(pid, ctx, `Preparei o ajuste da ${v.id.toUpperCase()}. Todo ajuste refaz direção, montagem e conferência e vira regra da casa. Confira o cartão.`, 8);
       CONVERSA.espera.set(pid, { tipo: 'confirmacao', tool_use_id: tid, turno: ctx.turno, desde: agora(), dados, entrada });
       emitirC(pid, 'confirmacao', dados);

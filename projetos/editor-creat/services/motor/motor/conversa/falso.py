@@ -10,7 +10,8 @@ O falso confere o histórico como a API confere (e devolve 400 se estiver quebra
 
 Roteiro: lista de passos, um por chamada. Passo = dict:
   {"blocos": [{"tipo": "thinking"|"texto"|"ferramenta", "texto": str, "nome": str, "entrada": dict, "id": str}],
-   "stop": "end_turn"|"tool_use"|"max_tokens"|"refusal", "uso": {...}, "erro": 500, "atraso": 0.0, "modelo": str}
+   "stop": "end_turn"|"tool_use"|"max_tokens"|"refusal", "uso": {...}, "erro": 500, "atraso": 0.0, "modelo": str,
+   "iteracoes": [{...usage por tentativa...}] (fallback do servidor), "cair_depois": n (o stream cai depois de n pedaços)}
 ou uma função (corpo_da_requisicao) -> passo. Sem roteiro, usa o comportamento padrão (`padrao`), pensado para o
 aceite do site: responde, chama ver_projeto, pergunta com botões ou propõe um ajuste conforme a mensagem.
 """
@@ -119,6 +120,8 @@ class CerebroFalso:
             evs.append(("content_block_stop", {"type": "content_block_stop", "index": i}))
         stop = passo.get("stop") or ("tool_use" if tem_ferramenta else "end_turn")
         delta = {"type": "message_delta", "delta": {"stop_reason": stop, "stop_sequence": None}, "usage": {"output_tokens": saida}}
+        if passo.get("iteracoes"):
+            delta["usage"]["iterations"] = passo["iteracoes"]
         if stop == "refusal":
             delta["delta"]["stop_details"] = {"type": "refusal", "category": None, "explanation": "recusa de teste"}
         evs.append(("message_delta", delta))
@@ -140,10 +143,13 @@ class CerebroFalso:
             return httpx2.Response(int(passo["erro"]), json={"type": "error", "error": {"type": "api_error", "message": "falha de teste"}})
         pedacos = self._sse(passo, corpo)
         atraso = float(passo.get("atraso", self.atraso) or 0)
+        cair = passo.get("cair_depois")
 
         class Fluxo(httpx2.AsyncByteStream):
             async def __aiter__(self_):
-                for p in pedacos:
+                for i, p in enumerate(pedacos):
+                    if cair is not None and i >= int(cair):
+                        raise httpx2.ReadError("a conexão caiu (teste)")
                     if atraso:
                         await asyncio.sleep(atraso)
                     yield p

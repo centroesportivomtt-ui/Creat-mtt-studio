@@ -18,6 +18,9 @@ const TIPOS_DO_PROJETO = ['projeto_criado', 'arquivo_recebido', 'etapa_inicio', 
 const TIPOS_MESA = ['etapa_inicio', 'etapa_fim', 'etapa_erro', 'aviso', 'cliente'];
 const TODOS = [...new Set([...TIPOS_DO_PROJETO, ...TIPOS_CONVERSA, ...TIPOS_MESA, 'passo', 'decisao'])];
 const VIGIA_MS = 40_000;
+// o motor manda ping a cada 15 s: 20 s sem nenhum sinal = a conexão travou (rede ruim do celular). A tela diz na hora,
+// sem esperar o vigia de 40 s reabrir.
+const SEM_SINAL_MS = 20_000;
 
 export type Progresso = { progresso: number | null; mensagem: string | null };
 export type FioAoVivo = {
@@ -26,18 +29,25 @@ export type FioAoVivo = {
   rascunho: DadosRascunho | null;
   inst: DadosInstantaneo | null;
   conectado: boolean;
+  semSinal: boolean;                       // conectado no papel, mas nada chega há mais de 20 s
   carregado: boolean;                      // o histórico já chegou (primeiro instantâneo)
   vivoDesde: number;                       // eventos com id maior chegaram ao vivo, depois do histórico
 };
 
 export function useFioAoVivo(pid: string, aoProjeto: (e: Evento) => void, aoSessaoVencida: () => void): FioAoVivo {
-  const [estado, setEstado] = useState<FioAoVivo>({ eventos: [], progresso: {}, rascunho: null, inst: null, conectado: false, carregado: false, vivoDesde: 0 });
+  const [estado, setEstado] = useState<FioAoVivo>({ eventos: [], progresso: {}, rascunho: null, inst: null, conectado: false, semSinal: false, carregado: false, vivoDesde: 0 });
   const vistos = useRef(new Set<number>());
   const ultimoId = useRef(0);
   const buffer = useRef<Evento[]>([]);
   const progressoBuf = useRef<Record<string, Progresso>>({});
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultimoSinal = useRef(Date.now());
+  const semSinalRef = useRef(false);
+  /** Chegou qualquer coisa do motor: a conexão está viva (e o aviso de sem sinal sai). */
+  const sinal = useCallback(() => {
+    ultimoSinal.current = Date.now();
+    if (semSinalRef.current) { semSinalRef.current = false; setEstado((s) => (s.semSinal ? { ...s, semSinal: false } : s)); }
+  }, []);
   const fonte = useRef<EventSource | null>(null);
   const religar = useRef<ReturnType<typeof setTimeout> | null>(null);
   const espera = useRef(2000);
@@ -78,7 +88,7 @@ export function useFioAoVivo(pid: string, aoProjeto: (e: Evento) => void, aoSess
     fonte.current = es;
     ultimoSinal.current = Date.now();
     const comId = (m: MessageEvent) => {
-      ultimoSinal.current = Date.now();
+      sinal();
       let e: Evento;
       try { e = JSON.parse(m.data); } catch { return; }
       if (typeof e?.id !== 'number' || vistos.current.has(e.id)) return;
@@ -97,7 +107,7 @@ export function useFioAoVivo(pid: string, aoProjeto: (e: Evento) => void, aoSess
     };
     for (const t of TODOS) es.addEventListener(t, comId as EventListener);
     es.addEventListener('rascunho', ((m: MessageEvent) => {
-      ultimoSinal.current = Date.now();
+      sinal();
       let r: { dados?: DadosRascunho } | null = null;
       try { r = JSON.parse(m.data); } catch { return; }
       const d = r?.dados;
@@ -105,7 +115,7 @@ export function useFioAoVivo(pid: string, aoProjeto: (e: Evento) => void, aoSess
       setEstado((s) => (s.rascunho && s.rascunho.turno === d.turno && s.rascunho.v >= d.v ? s : { ...s, rascunho: d }));
     }) as EventListener);
     es.addEventListener('instantaneo', ((m: MessageEvent) => {
-      ultimoSinal.current = Date.now();
+      sinal();
       let r: { dados?: DadosInstantaneo } | null = null;
       try { r = JSON.parse(m.data); } catch { return; }
       const d = r?.dados;
@@ -115,9 +125,9 @@ export function useFioAoVivo(pid: string, aoProjeto: (e: Evento) => void, aoSess
       marcarCarregado();
       espera.current = 2000;
     }) as EventListener);
-    es.addEventListener('ping', () => { ultimoSinal.current = Date.now(); });
+    es.addEventListener('ping', () => { sinal(); });
     es.onopen = () => {
-      ultimoSinal.current = Date.now();
+      sinal();
       setEstado((s) => (s.conectado ? s : { ...s, conectado: true }));
       // motor com o SSE novo desligado (EDITOR_SSE_NOVO=0) não manda instantâneo: o histórico vale como carregado
       setTimeout(() => { if (fonte.current === es) marcarCarregado(); }, 2500);
@@ -133,13 +143,15 @@ export function useFioAoVivo(pid: string, aoProjeto: (e: Evento) => void, aoSess
       religar.current = setTimeout(abrir, espera.current);
       espera.current = Math.min(15000, espera.current * 2);
     };
-  }, [pid, agendar, descarregar, marcarCarregado]);
+  }, [pid, agendar, descarregar, marcarCarregado, sinal]);
 
   useEffect(() => {
     abrir();
     const vigia = setInterval(() => {
       if (document.visibilityState !== 'visible') return;
-      if (Date.now() - ultimoSinal.current > VIGIA_MS) abrir();
+      const parado = Date.now() - ultimoSinal.current;
+      if (parado > SEM_SINAL_MS && !semSinalRef.current) { semSinalRef.current = true; setEstado((s) => ({ ...s, semSinal: true })); }
+      if (parado > VIGIA_MS) abrir();
     }, 5000);
     // a tela voltou (celular destravado, aba trocada): o EventSource do iOS pode ter ficado zumbi; reabre na hora
     const visivel = () => { if (document.visibilityState === 'visible') abrir(); };
@@ -274,7 +286,11 @@ export function montarFio(eventos: Evento[], progresso: Record<string, Progresso
       case 'turno_fim': {
         temConversa = true;
         const f = d as DadosTurnoFim;
-        if (turno) fim[turno] = e.id;
+        if (turno) {
+          fim[turno] = e.id;
+          // a mensagem que entrou na fila deste turno já foi lida (ou fica no histórico do próximo): a etiqueta sai
+          for (const it of itens) if (it.k === 'dono' && it.d.turno === turno && it.d.na_fila) it.d = { ...it.d, na_fila: false };
+        }
         custoConversa += Number(f.custo_usd) || 0;
         // pausa sem texto e sem custo não ganha rodapé próprio: o cartão já está na tela
         itens.push({ k: 'fim', id: e.id, d: f });

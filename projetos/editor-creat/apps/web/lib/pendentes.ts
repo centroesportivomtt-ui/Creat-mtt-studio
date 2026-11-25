@@ -85,3 +85,23 @@ export async function audiosGuardados(pid: string): Promise<PedacoGuardado[]> {
 export function irEntrar(pid: string) {
   window.location.assign(`/entrar?volta=${encodeURIComponent(`/projetos/${pid}`)}`);
 }
+
+/** Sair: apaga do aparelho tudo o que a conversa guardou (texto do campo, fila de mensagens, conversa aberta e os
+ *  áudios guardados no IndexedDB). Celular emprestado ou perdido não fica com o que o dono escreveu ou gravou. */
+export function limparAparelho(): Promise<void> {
+  try {
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith('ec-conversa')) sessionStorage.removeItem(k);
+    }
+  } catch { /* sem armazenamento */ }
+  return new Promise((ok) => {
+    try {
+      if (typeof indexedDB === 'undefined') return ok();
+      const r = indexedDB.deleteDatabase(BANCO);
+      const fim = () => ok();
+      r.onsuccess = fim; r.onerror = fim; r.onblocked = fim;
+      setTimeout(fim, 800);                       // nunca segura o Sair
+    } catch { ok(); }
+  });
+}

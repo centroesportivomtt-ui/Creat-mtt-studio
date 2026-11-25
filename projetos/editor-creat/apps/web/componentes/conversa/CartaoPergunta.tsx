@@ -4,8 +4,8 @@
 import type { DadosPergunta, DadosResposta } from '@/lib/conversa';
 import { IconeEstado } from './Pecas';
 
-export default function CartaoPergunta({ d, r, ocupado, erro, respondendo, aoEscolher, aoMeuJeito }: {
-  d: DadosPergunta; r?: DadosResposta; ocupado: boolean; erro?: string; respondendo: boolean;
+export default function CartaoPergunta({ d, r, ocupado, feito, erro, respondendo, aoEscolher, aoMeuJeito }: {
+  d: DadosPergunta; r?: DadosResposta; ocupado: boolean; feito?: boolean; erro?: string; respondendo: boolean;
   aoEscolher: (id: string) => void; aoMeuJeito: () => void;
 }) {
   const titulo = `pergunta-${d.tool_use_id}`;
@@ -26,10 +26,11 @@ export default function CartaoPergunta({ d, r, ocupado, erro, respondendo, aoEsc
     <li className="cartao-fio cartao-fio--pergunta" role="group" aria-labelledby={titulo} data-teste="pergunta" data-respondida="false" id={`pergunta-${d.tool_use_id}`}>
       <p className="cartao-fio__cabeca"><IconeEstado fase="esperando" /> Nimbus pergunta</p>
       <p className="cartao-fio__texto" id={titulo}>{d.texto}</p>
+      <p className="cartao-fio__so-responde" data-teste="pergunta-so-responde">Isto só responde ao Nimbus: nada é enviado nem refeito.</p>
       {d.opcoes.length > 0 && (
         <div className="cartao-fio__opcoes">
           {d.opcoes.map((o) => (
-            <button key={o.id} type="button" className="opcao-fio" disabled={ocupado} data-teste="pergunta-opcao" data-opcao={o.id}
+            <button key={o.id} type="button" className="opcao-fio" disabled={ocupado || feito} data-teste="pergunta-opcao" data-opcao={o.id}
               onClick={() => aoEscolher(o.id)}>
               <span className="opcao-fio__rotulo">{o.rotulo}{d.sugestao === o.id && <span className="opcao-fio__sugestao">sugestão</span>}</span>
               {o.efeito && <span className="opcao-fio__efeito">{o.efeito}</span>}
@@ -38,11 +39,11 @@ export default function CartaoPergunta({ d, r, ocupado, erro, respondendo, aoEsc
         </div>
       )}
       {d.aceita_texto && (
-        <button type="button" className="botao botao--fantasma cartao-fio__livre" aria-pressed={respondendo} onClick={aoMeuJeito} disabled={ocupado} data-teste="pergunta-livre">
+        <button type="button" className="botao botao--fantasma cartao-fio__livre" aria-pressed={respondendo} onClick={aoMeuJeito} disabled={ocupado || feito} data-teste="pergunta-livre">
           {respondendo ? 'Escreva ou grave a resposta aqui embaixo' : 'Responder do meu jeito'}
         </button>
       )}
-      {ocupado && <p className="aviso" role="status">Mandando a resposta…</p>}
+      {(ocupado || feito) && <p className="aviso" role="status">Mandando a resposta…</p>}
       {erro && <p className="erro" role="alert">{erro}</p>}
     </li>
   );

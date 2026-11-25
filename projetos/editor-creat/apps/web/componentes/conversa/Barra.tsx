@@ -3,20 +3,23 @@
 // Escrever ou gravar abre o fio. Gravando: ponto vermelho (o único status em vermelho Aba 71), tempo e uma onda simples.
 // Depois, o texto cai no campo, editável: nada é enviado sem o toque. A linha de baixo da barra continua sendo o próximo
 // passo do projeto, com os mesmos botões de sempre.
-import { useCallback, useEffect, useLayoutEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usd } from '@/lib/conversa';
 import { irEntrar } from '@/lib/pendentes';
 import { useGravador } from './Microfone';
 import type { Conversa } from './useConversa';
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+// Enviar vira Parar no mesmo lugar assim que a mensagem sai: o segundo toque (dedo que pesa, toque duplo) não pode parar
+// a resposta nem abrir o microfone. Por 1,2 s depois de enviar, esse botão não aceita toque.
+const SEGURA_MS = 1200;
 
 export default function BarraConversa({ c }: { c: Conversa }) {
   const { pid, texto, setTexto, nota, setNota } = c;
   const aoTexto = useCallback((t: string, conf: number) => {
     const atual = c.campoRef.current?.value ?? '';
     const junto = atual.trim() ? `${atual.trim()} ${t}` : t;
-    setTexto(junto.slice(0, 4000), 'audio');
+    setTexto(junto, 'audio');
     setNota(conf > 0 && conf < 0.55 ? { tom: 'info', texto: 'Confira o texto: pode ter palavra trocada. Corrija e toque em enviar.' } : { tom: 'info', texto: 'Confira e toque em enviar. Nada sai sem o seu toque.' });
   }, [c.campoRef, setTexto, setNota]);
   const g = useGravador(pid, aoTexto, setNota, useCallback(() => irEntrar(pid), [pid]));
@@ -31,10 +34,22 @@ export default function BarraConversa({ c }: { c: Conversa }) {
   // a pergunta pendente abre a conversa no toque da pílula; responder do meu jeito leva o foco ao campo
   useEffect(() => { if (c.respondendo) c.abrir(); }, [c.respondendo, c.abrir]);
 
+  const [segura, setSegura] = useState(false);
+  const soltar = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (soltar.current) clearTimeout(soltar.current); }, []);
+  const enviar = useCallback(() => {
+    setSegura(true);
+    if (soltar.current) clearTimeout(soltar.current);
+    soltar.current = setTimeout(() => setSegura(false), SEGURA_MS);
+    void c.enviar();
+  }, [c]);
+
   const espera = c.montado.espera;
   const rodando = Boolean(c.montado.rodando);
   const gravando = g.estado === 'gravando' || g.estado === 'pedindo';
   const temTexto = texto.trim().length > 0;
+  const passou = texto.length - c.limite;
+  const perto = texto.length >= c.limite - 200;
 
   if (!c.chave && !c.fio.inst) {
     return <div className="conversa-barra" data-conversa data-teste="conversa-barra" data-estado="carregando"><p className="conversa-barra__faixa">Abrindo a conversa…</p></div>;
@@ -78,6 +93,13 @@ export default function BarraConversa({ c }: { c: Conversa }) {
           {nota && !nota.fixa && <button type="button" className="conversa-barra__link" onClick={() => setNota(null)} aria-label="Fechar o aviso">ok</button>}
         </p>
       )}
+      {perto && (
+        <p className="conversa-barra__nota" id="conversa-contador" data-tom={passou > 0 ? 'alerta' : 'info'} role="status" data-teste="conversa-contador">
+          {passou > 0
+            ? `Passou de ${c.limite.toLocaleString('pt-BR')} letras: corte ${passou.toLocaleString('pt-BR')} para enviar. Nada é cortado sem você ver.`
+            : `${texto.length.toLocaleString('pt-BR')} de ${c.limite.toLocaleString('pt-BR')} letras.`}
+        </p>
+      )}
       <div className="conversa-barra__linha">
         {gravando ? (
           <button type="button" className="conversa-barra__icone" onClick={g.cancelar} aria-label="Apagar a gravação" data-teste="conversa-cancelar-gravacao">
@@ -100,14 +122,15 @@ export default function BarraConversa({ c }: { c: Conversa }) {
         ) : (
           <>
             <label htmlFor="conversa-campo" className="so-leitor">Mensagem para a mesa</label>
-            <textarea id="conversa-campo" ref={c.campoRef} className="conversa-barra__campo" rows={1} lang="pt-BR" maxLength={4000}
+            <textarea id="conversa-campo" ref={c.campoRef} className="conversa-barra__campo" rows={1} lang="pt-BR"
+              aria-describedby={perto ? 'conversa-contador' : undefined} aria-invalid={passou > 0 || undefined}
               placeholder={placeholder} value={texto} data-teste="conversa-campo"
               disabled={c.noTeto && !c.respondendo}
               onFocus={() => { if (!c.aberta) c.abrir(); }}
               onChange={(e) => setTexto(e.target.value)}
               onKeyDown={(e) => {
                 // no computador, Enter manda e Shift+Enter quebra a linha; no celular, Enter sempre quebra a linha
-                if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia('(pointer: fine)').matches) { e.preventDefault(); void c.enviar(); }
+                if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && window.matchMedia('(pointer: fine)').matches) { e.preventDefault(); enviar(); }
               }} />
           </>
         )}
@@ -116,16 +139,18 @@ export default function BarraConversa({ c }: { c: Conversa }) {
             <span className="quadrado" aria-hidden="true" />
           </button>
         ) : temTexto ? (
-          <button type="button" className="conversa-barra__icone conversa-barra__enviar" onClick={() => void c.enviar()} aria-label="Enviar" data-teste="conversa-enviar">
+          <button type="button" className="conversa-barra__icone conversa-barra__enviar" onClick={enviar} aria-label="Enviar" data-teste="conversa-enviar"
+            disabled={passou > 0}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6 11.5L12 5.5l6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         ) : rodando && c.aberta ? (
-          <button type="button" className="conversa-barra__icone" onClick={() => void c.pararTurno()} aria-label="Parar a resposta" disabled={c.parando} data-teste="conversa-parar-barra">
+          <button type="button" className="conversa-barra__icone" onClick={() => { if (!segura) void c.pararTurno(); }} aria-label="Parar a resposta"
+            disabled={c.parando || segura} data-teste="conversa-parar-barra">
             <span className="quadrado" aria-hidden="true" />
           </button>
         ) : (
-          <button type="button" className="conversa-barra__icone" aria-label="Gravar áudio" data-teste="conversa-microfone" disabled={c.noTeto && !c.respondendo}
-            onClick={() => { c.abrir(); void g.iniciar(); }}>
+          <button type="button" className="conversa-barra__icone" aria-label="Gravar áudio" data-teste="conversa-microfone" disabled={(c.noTeto && !c.respondendo) || segura}
+            onClick={() => { if (segura) return; c.abrir(); void g.iniciar(); }}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </button>
         )}

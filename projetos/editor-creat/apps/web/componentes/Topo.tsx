@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import ChaveConversa from './conversa/ChaveConversa';
+import { limparAparelho } from '@/lib/pendentes';
 import { chave, EVENTO_CONVERSA, type EstadoChave } from '@/lib/conversa';
 
 const Icone = {
@@ -161,7 +162,13 @@ export default function Topo() {
           <div className="nav__menu">
             <ChaveConversa variante="menu" />
             <Link className="nav__menu-item" href="/gastos" onClick={fecharMais}>{Icone.gastos}Gastos do mês</Link>
-            <form action="/api/sair" method="post">
+            <form action="/api/sair" method="post" onSubmit={(e) => {
+              // antes de sair, o aparelho esquece o que a conversa guardou; depois o formulário segue normal
+              const f = e.currentTarget;
+              if (f.dataset.limpo === '1') return;
+              e.preventDefault();
+              void limparAparelho().finally(() => { f.dataset.limpo = '1'; f.requestSubmit(); });
+            }}>
               <button className="nav__menu-item nav__menu-item--sair" type="submit">{Icone.sair}Sair</button>
             </form>
           </div>

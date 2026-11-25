@@ -1,7 +1,10 @@
 """As duas ações que a conversa faz com o toque do dono (plano 3.2): guarda de estado, cartão e execução.
 
 - propor_ajuste: chama a MESMA função da rota POST /versoes/{v}/reprovar (api/direcao.reprovar), com o texto do
-  cartão como motivo. Igual ao botão "Pedir ajuste": refaz direção, montagem e conferência, e vira regra da casa.
+  cartão como motivo. Igual ao botão "Pedir ajuste": refaz direção, montagem e conferência, e vira regra da casa
+  (vale para TODOS os projetos). Exceções (revisão de segurança, 25/11): se o texto repete um trecho de algo de fora
+  lido nesta conversa (fala de vídeo, texto de cliente: os resultados marcados {"de_fora": ...}), o cartão avisa e o
+  ajuste vale SÓ para este projeto, sem regra nem checagem; e o dono pode escolher "só neste projeto" no toque.
 - propor_pedido: chama a MESMA função da rota POST /pedido (api/direcao.gravar_pedido) com os campos novos por cima
   do pedido.json atual.
 
@@ -167,13 +170,84 @@ def normalizar_pedido(entrada: dict) -> dict:
     return out
 
 
-def cartao_ajuste(cfg, con, pid: str, entrada: dict, *, turno: str, tool_use_id: str) -> dict:
+_PALAVRA = re.compile(r"\w+", re.UNICODE)
+N_GRAMA = 5
+
+
+def _coletar_de_fora(x, out: list) -> None:
+    if isinstance(x, dict):
+        for k, v in x.items():
+            if k == "de_fora" and isinstance(v, str):
+                out.append(v)
+            else:
+                _coletar_de_fora(v, out)
+    elif isinstance(x, list):
+        for v in x:
+            _coletar_de_fora(v, out)
+
+
+def textos_de_fora(con, pid: str, ja_lidos: list | None = None) -> list[str]:
+    """Tudo o que veio de fora e o modelo leu no capítulo atual: os resultados de ferramenta marcados {"de_fora": ...}.
+    ja_lidos: tool_result da mesma resposta, ainda não gravados."""
+    from motor.conversa import repo
+    cap = repo.capitulo_atual(con, pid)
+    blocos: list = list(ja_lidos or [])
+    if cap is not None:
+        for r in repo.linhas(con, pid, cap["capitulo"]):
+            if r["papel"] in ("user", "parcial"):
+                blocos.extend(r["conteudo"] or [])
+    out: list[str] = []
+    for b in blocos:
+        if not isinstance(b, dict) or b.get("type") != "tool_result":
+            continue
+        c = b.get("content")
+        if isinstance(c, str):
+            try:
+                c = json.loads(c)
+            except ValueError:
+                continue
+        _coletar_de_fora(c, out)
+    return out
+
+
+def repete_de_fora(texto: str, fontes: list[str], n: int = N_GRAMA) -> str | None:
+    """Trecho de n palavras seguidas (sem acento de caixa e pontuação) que o texto repete de alguma fonte de fora."""
+    ps = [w.lower() for w in _PALAVRA.findall(texto or "")]
+    if len(ps) < n:
+        n = len(ps)
+        if n < 3:
+            return None
+    meus: dict[tuple, int] = {}
+    for i in range(len(ps) - n + 1):
+        meus.setdefault(tuple(ps[i:i + n]), i)
+    melhor: list[str] = []
+    for f in fontes:
+        fs = [w.lower() for w in _PALAVRA.findall(f or "")]
+        for i in range(len(fs) - n + 1):
+            j = meus.get(tuple(fs[i:i + n]))
+            if j is None:
+                continue
+            k = n                                  # estende o trecho repetido o quanto der (o dono vê o trecho inteiro)
+            while i + k < len(fs) and j + k < len(ps) and fs[i + k] == ps[j + k]:
+                k += 1
+            if k > len(melhor):
+                melhor = fs[i:i + k]
+    return " ".join(melhor[:40]) if melhor else None
+
+
+def cartao_ajuste(cfg, con, pid: str, entrada: dict, *, turno: str, tool_use_id: str, ja_lidos: list | None = None) -> dict:
     custo, minutos = custo_e_minutos(cfg, con)
     v = entrada["versao"]
-    return {"turno": turno, "tool_use_id": tool_use_id, "acao": "ajuste", "versao": v, "titulo": f"Pedir ajuste da {v}",
-            "texto_exato": entrada["o_que_mudar"], "refaz": ["direcao", "montagem", "qa"], "comeca_agora": True,
-            "custo_usd_est": custo, "minutos_est": minutos, "vira_regra": True,
-            "volta": f"A {v} continua guardada. Vira regra da casa, como no botão Pedir ajuste."}
+    trecho = repete_de_fora(entrada["o_que_mudar"], textos_de_fora(con, pid, ja_lidos))
+    c = {"turno": turno, "tool_use_id": tool_use_id, "acao": "ajuste", "versao": v, "titulo": f"Pedir ajuste da {v}",
+         "texto_exato": entrada["o_que_mudar"], "refaz": ["direcao", "montagem", "qa"], "comeca_agora": True,
+         "custo_usd_est": custo, "minutos_est": minutos, "vira_regra": trecho is None,
+         "volta": (f"A {v} continua guardada. Vira regra da casa e vale para TODOS os projetos, como no botão Pedir ajuste."
+                   if trecho is None else f"A {v} continua guardada. Vale só para este projeto: não vira regra da casa.")}
+    if trecho is not None:
+        c["atencao"] = (f"Este texto repete algo que veio de fora (fala de vídeo ou texto de cliente): “{trecho}”. "
+                        "Confira antes de tocar. Por segurança, ele não vira regra da casa.")
+    return c
 
 
 def cartao_pedido(cfg, con, pid: str, entrada: dict, *, turno: str, tool_use_id: str) -> dict:
@@ -195,10 +269,13 @@ def cartao_pedido(cfg, con, pid: str, entrada: dict, *, turno: str, tool_use_id:
 
 
 # ---------------- execução (as mesmas funções das rotas antigas) ----------------
-def executar_ajuste(pid: str, versao: str, texto: str) -> dict:
+def executar_ajuste(pid: str, versao: str, texto: str, vira_regra: bool = True) -> dict:
     from motor.api import direcao
-    r = direcao.reprovar(pid, versao, direcao.Reprovacao(motivo=texto))
-    return {"feito": True, "nova_direcao": bool(r.get("nova_direcao"))}
+    r = direcao.reprovar(pid, versao, direcao.Reprovacao(motivo=texto, vira_regra=vira_regra))
+    out = {"feito": True, "nova_direcao": bool(r.get("nova_direcao"))}
+    if not vira_regra:
+        out["so_neste_projeto"] = True
+    return out
 
 
 def executar_pedido(cfg, pid: str, entrada: dict) -> dict:

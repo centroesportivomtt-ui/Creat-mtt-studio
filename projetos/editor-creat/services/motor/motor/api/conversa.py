@@ -5,7 +5,7 @@ POST /v1/conversa                 {ligada}         -> liga/desliga (grava <dados
 POST /v1/projetos/{pid}/conversa  {texto, via?, contexto?, cliente_msg_id} -> 202 {turno, na_fila}
 POST /v1/projetos/{pid}/conversa/audio   corpo bruto (webm/mp4/ogg/m4a, até 950 KB) -> {texto, conf, s_audio, s}; não envia
 POST /v1/projetos/{pid}/conversa/responder {tool_use_id, escolha_id?, texto?} -> 202 {turno}; o turno continua
-POST /v1/projetos/{pid}/conversa/confirmar {tool_use_id, sim, entrada_hash}  -> {feito, resultado?}; o turno não continua
+POST /v1/projetos/{pid}/conversa/confirmar {tool_use_id, sim, entrada_hash, so_neste_projeto?} -> {feito, resultado?}; o turno não continua
 POST /v1/projetos/{pid}/conversa/parar     {}  -> {parou}
 POST /v1/projetos/{pid}/conversa/retomar   {}  -> 202 {turno}
 Entrada validada na borda (pydantic); erros {detail} em pt-BR simples. Nada de segredo em resposta, log ou evento.
@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import pathlib
 import re
+import signal
 import time
 import uuid
 from typing import Literal, Optional
@@ -97,6 +99,7 @@ class Confirmacao(BaseModel):
     tool_use_id: str = Field(..., min_length=1, max_length=80, pattern=r"^[A-Za-z0-9_-]+$")
     sim: bool
     entrada_hash: str = Field(..., pattern=r"^[0-9a-f]{64}$")
+    so_neste_projeto: bool = False      # ajuste: refaz só este projeto, sem virar regra da casa
 
 
 class Vazio(BaseModel):
@@ -159,29 +162,53 @@ async def transcrever(pid: str, request: Request):
     if total < 200:
         raise HTTPException(422, "não entendi, grave de novo")
     m = laco.mesa()
+    if m.voz_na_vez >= 2:                       # um ouvindo e um esperando: o terceiro não fica pendurado na fila
+        raise HTTPException(429, "já estou ouvindo um áudio; espere um instante e mande de novo")
     pasta = pathlib.Path(cfg.dados) / "tmp" / "voz"
     pasta.mkdir(parents=True, exist_ok=True)
+    await asyncio.to_thread(ouvir.limpar_velhos, cfg)
     arq = pasta / f"{uuid.uuid4().hex}.{ext}"
     tid = laco.novo_id("au_")
     t0 = time.monotonic()
-    await m.emitir(cfg, pid, "ferramenta", {"turno": None, "tool_use_id": tid, "nome": "ouvir_audio", "fase": "inicio"})
+
+    async def falhou(resumo: str):
+        await m.emitir(cfg, pid, "ferramenta", {"turno": None, "tool_use_id": tid, "nome": "ouvir_audio", "fase": "erro",
+                                                "resumo": resumo, "s": round(time.monotonic() - t0, 2)})
+
+    m.voz_na_vez += 1
     try:
-        await asyncio.to_thread(arq.write_bytes, b"".join(partes))
-        async with m.sem_voz:
-            proc = await asyncio.create_subprocess_exec(*ouvir.comando(arq), stdout=asyncio.subprocess.PIPE,
-                                                        stderr=asyncio.subprocess.PIPE, env=ouvir.ambiente(), cwd=str(ouvir.raiz_motor()))
-            try:
-                saida, _erro = await asyncio.wait_for(proc.communicate(), timeout=ouvir.LIMITE_S)
-            except asyncio.TimeoutError:
-                proc.kill()
-                await proc.wait()
-                await m.emitir(cfg, pid, "ferramenta", {"turno": None, "tool_use_id": tid, "nome": "ouvir_audio", "fase": "erro",
-                                                        "resumo": "demorou demais", "s": round(time.monotonic() - t0, 2)})
-                raise HTTPException(504, "demorou demais; grave de novo") from None
+        await m.emitir(cfg, pid, "ferramenta", {"turno": None, "tool_use_id": tid, "nome": "ouvir_audio", "fase": "inicio"})
+        try:
+            await asyncio.to_thread(arq.write_bytes, b"".join(partes))
+            async with m.sem_voz:
+                try:
+                    proc = await asyncio.create_subprocess_exec(*ouvir.comando(arq), stdout=asyncio.subprocess.PIPE,
+                                                                stderr=asyncio.subprocess.PIPE, env=ouvir.ambiente(), cwd=str(ouvir.raiz_motor()),
+                                                                preexec_fn=ouvir.limitar, start_new_session=True)
+                except OSError:
+                    await falhou("transcrição indisponível")
+                    raise HTTPException(503, "a transcrição não está disponível agora; use o microfone do teclado") from None
+                try:
+                    saida, _erro = await asyncio.wait_for(proc.communicate(), timeout=ouvir.LIMITE_S)
+                except asyncio.TimeoutError:
+                    try:
+                        os.killpg(proc.pid, signal.SIGKILL)       # o grupo todo: python e o ffmpeg filho
+                    except (ProcessLookupError, PermissionError):
+                        proc.kill()
+                    await proc.wait()
+                    await falhou("demorou demais")
+                    raise HTTPException(504, "demorou demais; grave de novo") from None
+        except HTTPException:
+            raise
+        except Exception:  # noqa: BLE001 - qualquer falha inesperada fecha a linha da mesa (não fica pulsando)
+            await falhou("não consegui ouvir")
+            raise HTTPException(422, "não entendi, grave de novo") from None
         if proc.returncode == 3:
-            await m.emitir(cfg, pid, "ferramenta", {"turno": None, "tool_use_id": tid, "nome": "ouvir_audio", "fase": "erro",
-                                                    "resumo": "transcrição indisponível", "s": round(time.monotonic() - t0, 2)})
+            await falhou("transcrição indisponível")
             raise HTTPException(503, "a transcrição não está disponível; use o microfone do teclado")
+        if proc.returncode == 4:
+            await falhou("áudio longo demais")
+            raise HTTPException(413, "grave até 1 minuto")
         r = None
         if proc.returncode == 0:
             try:
@@ -190,8 +217,7 @@ async def transcrever(pid: str, request: Request):
                 r = None
         texto = " ".join(str((r or {}).get("texto") or "").split())
         if not texto:
-            await m.emitir(cfg, pid, "ferramenta", {"turno": None, "tool_use_id": tid, "nome": "ouvir_audio", "fase": "erro",
-                                                    "resumo": "não entendi o áudio", "s": round(time.monotonic() - t0, 2)})
+            await falhou("não entendi o áudio")
             raise HTTPException(422, "não entendi, grave de novo")
         s = round(time.monotonic() - t0, 2)
         s_audio = float(r.get("s_audio") or 0)
@@ -199,6 +225,7 @@ async def transcrever(pid: str, request: Request):
                                                 "resumo": f"Ouviu {round(s_audio)} s", "s": s})
         return {"texto": texto[:4000], "conf": float(r.get("conf") or 0), "s_audio": s_audio, "s": s}
     finally:
+        m.voz_na_vez -= 1
         try:
             arq.unlink()
         except OSError:
@@ -221,7 +248,8 @@ async def confirmar(pid: str, corpo: Confirmacao):
     cfg = _cfg()
     await _existe(cfg, pid)
     try:
-        return await laco.mesa().confirmar(cfg, pid, tool_use_id=corpo.tool_use_id, sim=corpo.sim, entrada_hash=corpo.entrada_hash)
+        return await laco.mesa().confirmar(cfg, pid, tool_use_id=corpo.tool_use_id, sim=corpo.sim, entrada_hash=corpo.entrada_hash,
+                                           so_neste_projeto=corpo.so_neste_projeto)
     except laco.ErroConversa as e:
         raise _http(e) from None
 

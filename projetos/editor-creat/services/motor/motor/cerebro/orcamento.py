@@ -13,6 +13,7 @@ PRECOS = {  # modelo: (entrada, saida, leitura_cache, escrita_cache_5min, escrit
     # escrita de 1 h = 2x a entrada (skill claude-api, prompt-caching); Opus 5 e Haiku 5.5 calculados pelo multiplicador
     "claude-opus-5-5": (4.00, 20.00, 0.20, 5.00, 8.00),
     "claude-opus-5": (5.00, 25.00, 0.50, 6.25, 10.00),       # fallback do servidor pode responder com ele
+    "claude-opus-4-8": (5.00, 25.00, 0.50, 6.25, 10.00),     # outro alvo do fallback do servidor (skill claude-api)
     "claude-haiku-5-5": (0.10, 0.50, 0.01, 0.125, 0.20),
     "claude-sonnet-5-5": (2.00, 10.00, 0.10, 2.50, 4.00),
 }

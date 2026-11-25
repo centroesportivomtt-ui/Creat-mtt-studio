@@ -114,7 +114,7 @@ export default function MesaAoVivo({ montado, progresso, arquivos, conectado, ao
     <section className="cartao bloco-mesa" id="mesa" aria-labelledby="t-mesa" data-teste="mesa-ao-vivo">
       <h2 className="cartao__titulo" id="t-mesa">
         Mesa ao vivo
-        <span className="ao-vivo" data-conectado={conectado} style={{ marginLeft: 'auto' }}>{conectado ? 'ao vivo' : 'reconectando…'}</span>
+        <span className="ao-vivo" data-conectado={conectado} style={{ marginLeft: 'auto' }}>{conectado ? 'ao vivo' : 'sem sinal · reconectando…'}</span>
       </h2>
       <AgoraNaMesa agora={montado.agora} />
       {!montado.agora.length && grupos.length > 0 && <p className="agora agora--parado">Ninguém trabalhando agora. {montado.mesaRodando ? '' : 'A mesa espera o próximo passo.'}</p>}

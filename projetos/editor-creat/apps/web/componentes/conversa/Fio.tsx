@@ -25,7 +25,8 @@ export default function Fio({ c, palco, arquivos }: { c: Conversa; palco: Palco;
   const rodando = montado.rodando;
   const fimRef = useRef<HTMLDivElement>(null);
   const teto = c.estadoChave?.teto ?? 3;
-  const [novidades, setNovidades] = useState(0);
+  const [novidades, setNovidades] = useState(0);        // itens novos (ids) que chegaram com o dono lendo lá em cima
+  const [cresceu, setCresceu] = useState(false);         // só a resposta cresceu: "Ir para o fim", sem número
   const [alerta, setAlerta] = useState('');
   // "Nimbus está pensando · 4 s": conta do momento em que ESTE aparelho viu o turno começar (sem depender do relógio do servidor)
   const [pensandoDesde, setPensandoDesde] = useState<number | null>(null);
@@ -49,18 +50,23 @@ export default function Fio({ c, palco, arquivos }: { c: Conversa; palco: Palco;
   const ultimoId = montado.itens[montado.itens.length - 1]?.id ?? 0;
   const assinatura = `${ultimoId}|${rascunhoVivo?.v ?? 0}|${c.saindo.length}|${rodando ?? ''}`;
   const anterior = useRef(assinatura);
+  const contados = useRef({ id: ultimoId, saindo: c.saindo.length });
   const estavaPerto = useRef(true);
   useEffect(() => {
-    const medir = () => { estavaPerto.current = perto(); if (estavaPerto.current) setNovidades(0); };
+    const medir = () => { estavaPerto.current = perto(); if (estavaPerto.current) { setNovidades(0); setCresceu(false); } };
     window.addEventListener('scroll', medir, { passive: true });
     return () => window.removeEventListener('scroll', medir);
   }, []);
   useLayoutEffect(() => {
     if (anterior.current === assinatura) return;
     anterior.current = assinatura;
+    // novidade é item novo no fio (id novo) ou mensagem saindo; pedaço de texto da resposta não conta
+    const novos = (ultimoId !== contados.current.id ? 1 : 0) + Math.max(0, c.saindo.length - contados.current.saindo);
+    contados.current = { id: ultimoId, saindo: c.saindo.length };
     if (estavaPerto.current) fimRef.current?.scrollIntoView({ block: 'end' });
-    else setNovidades((n) => n + 1);
-  }, [assinatura]);
+    else if (novos > 0) setNovidades((n) => n + novos);
+    else setCresceu(true);
+  }, [assinatura, ultimoId, c.saindo.length]);
   // o fio cresceu sem item novo (resposta escrevendo, progresso da mesa, cartão abrindo): acompanha se o dono está no fim
   const listaRef = useRef<HTMLOListElement>(null);
   useEffect(() => {
@@ -119,7 +125,9 @@ export default function Fio({ c, palco, arquivos }: { c: Conversa; palco: Palco;
             <Avatares lista={naMesa} trabalhando />
           </span>
         )}
-        <span className="ao-vivo fio__vivo" data-conectado={fio.conectado}>{fio.conectado ? 'ao vivo' : 'reconectando…'}</span>
+        <span className="ao-vivo fio__vivo" data-conectado={fio.conectado && !fio.semSinal} data-teste="fio-sinal" role="status">
+          {fio.semSinal ? 'sem sinal · reconectando…' : fio.conectado ? 'ao vivo' : 'reconectando…'}
+        </span>
       </header>
       {gasto && (
         <p className="fio__gasto" data-teste="fio-gasto" data-perto={perto80}>
@@ -169,12 +177,12 @@ export default function Fio({ c, palco, arquivos }: { c: Conversa; palco: Palco;
             case 'ferramenta':
               return <LinhaFerramenta key={it.id} f={it.f} />;
             case 'pergunta':
-              return <CartaoPergunta key={it.id} d={it.d} r={it.r} ocupado={c.ocupado === it.d.tool_use_id} erro={c.erroCartao[it.d.tool_use_id]}
+              return <CartaoPergunta key={it.id} d={it.d} r={it.r} ocupado={c.ocupado === it.d.tool_use_id} feito={c.feitos.has(it.d.tool_use_id)} erro={c.erroCartao[it.d.tool_use_id]}
                 respondendo={c.respondendo === it.d.tool_use_id}
                 aoEscolher={(id) => void c.escolher(it.d.tool_use_id, id)} aoMeuJeito={() => c.responderDoMeuJeito(it.d.tool_use_id)} />;
             case 'confirmacao':
-              return <CartaoConfirma key={it.id} d={it.d} r={it.r} ocupado={c.ocupado === it.d.tool_use_id} erro={c.erroCartao[it.d.tool_use_id]}
-                aoDecidir={(sim) => void c.decidir(it.d, sim)} />;
+              return <CartaoConfirma key={it.id} d={it.d} r={it.r} ocupado={c.ocupado === it.d.tool_use_id} feito={c.feitos.has(it.d.tool_use_id)} erro={c.erroCartao[it.d.tool_use_id]}
+                aoDecidir={(sim, soAqui) => void c.decidir(it.d, sim, soAqui)} />;
             case 'mostrar':
               return (
                 <li key={it.id} className="fio__mostrar">
@@ -237,9 +245,10 @@ export default function Fio({ c, palco, arquivos }: { c: Conversa; palco: Palco;
       </ol>
       <div ref={fimRef} className="fio__fim" aria-hidden="true" />
       <div className="so-leitor" role="alert">{alerta}</div>
-      {novidades > 0 && (
-        <button type="button" className="fio__novidades" onClick={() => { fimRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' }); setNovidades(0); }}>
-          ↓ {novidades === 1 ? '1 novidade' : `${novidades} novidades`}
+      {(novidades > 0 || cresceu) && (
+        <button type="button" className="fio__novidades" data-teste="fio-novidades"
+          onClick={() => { fimRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' }); setNovidades(0); setCresceu(false); }}>
+          ↓ {novidades === 0 ? 'Ir para o fim' : novidades === 1 ? '1 novidade' : `${novidades} novidades`}
         </button>
       )}
     </section>

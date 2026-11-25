@@ -239,7 +239,9 @@ def test_teto_do_ambiente_so_baixa_e_dia_da_bahia(dados, monkeypatch):
     agora = datetime(2026, 11, 25, 21, 30, tzinfo=timezone.utc)
     assert teto.gasto_hoje_usd(cfg, agora) == 0.25
     assert teto.dia_vira_em(agora) == "2026-11-26T03:00:00Z"
-    assert teto.pior_caso_usd("claude-opus-5-5", contexto_tokens=60000, novos_tokens=0, recente=False) == pytest.approx(0.64)
+    # pior caso no preço do fallback mais caro (opus 5 / 4.8: escrita 1 h US$ 10, saída US$ 25): 60000*10 + 8000*25 = US$ 0,80
+    assert teto.pior_caso_usd("claude-opus-5-5", contexto_tokens=60000, novos_tokens=0, recente=False) == pytest.approx(0.80)
+    assert teto.pior_caso_usd("modelo-que-nao-existe", contexto_tokens=60000, novos_tokens=0, recente=False) == pytest.approx(0.80)
 
 
 def test_outro_processo_com_a_trava_nao_derruba_o_boot(app_conversa):

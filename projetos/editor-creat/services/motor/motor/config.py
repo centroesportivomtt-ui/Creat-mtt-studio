@@ -61,6 +61,17 @@ def _teto_conversa() -> float:
     return round(min(v, TETO_CONVERSA_MAX_USD), 2)
 
 
+def _conversa_cerebro() -> str:
+    """anthropic | falso. Em produção (EDITOR_AMBIENTE=producao, definido em deploy/iniciar.sh) o cérebro falso é
+    ignorado: o dono nunca conversa com respostas roteirizadas por engano de configuração."""
+    v = _env("EDITOR_CONVERSA_CEREBRO", "anthropic").lower()
+    if v == "falso" and _env("EDITOR_AMBIENTE").lower() == "producao":
+        import logging
+        logging.getLogger("motor.config").error("EDITOR_CONVERSA_CEREBRO=falso ignorado em produção; a conversa usa o Claude")
+        return "anthropic"
+    return v
+
+
 def _esforco_conversa() -> str:
     v = _env("EDITOR_CONVERSA_ESFORCO", "medium").lower()
     return v if v in ("low", "medium", "high") else "medium"
@@ -88,7 +99,7 @@ class Config:
     som: str = field(default_factory=lambda: _env("MK_SOM"))
     # conversa com o editor (docs/plano-conversa-25-11.md, seção 13.6)
     conversa: str = field(default_factory=lambda: _env("EDITOR_CONVERSA", "auto").lower())               # auto | 0
-    conversa_cerebro: str = field(default_factory=lambda: _env("EDITOR_CONVERSA_CEREBRO", "anthropic").lower())  # anthropic | falso
+    conversa_cerebro: str = field(default_factory=_conversa_cerebro)                                      # anthropic | falso (nunca em produção)
     modelo_conversa: str = field(default_factory=lambda: _env("EDITOR_MODELO_CONVERSA", "claude-opus-5-5"))
     esforco_conversa: str = field(default_factory=_esforco_conversa)
     teto_conversa_usd_dia: float = field(default_factory=_teto_conversa)

@@ -65,11 +65,13 @@ def segmentar_palavras(palavras: list[list], pausa: float = 0.8, max_s: float = 
     return segs
 
 
-def ler_16k(wav: pathlib.Path):
+def ler_16k(wav: pathlib.Path, max_s: float | None = None):
+    """PCM 16 kHz mono. max_s corta a leitura (a voz da conversa nunca carrega mais que isso na memória)."""
     import subprocess
 
     import numpy as np
-    r = subprocess.run(["ffmpeg", "-v", "error", "-i", str(wav), "-f", "f32le", "-ac", "1", "-ar", "16000", "-"], capture_output=True, check=True)
+    corte = ["-t", f"{float(max_s):.1f}"] if max_s else []
+    r = subprocess.run(["ffmpeg", "-v", "error", "-i", str(wav), *corte, "-f", "f32le", "-ac", "1", "-ar", "16000", "-"], capture_output=True, check=True)
     return np.frombuffer(r.stdout, dtype=np.float32)
 
 

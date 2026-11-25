@@ -36,7 +36,7 @@ export default function ChaveConversa({ variante }: { variante: 'menu' | 'cartao
     <button type="button" role="switch" aria-checked={Boolean(e?.ligada)} className={`chave chave--${variante}`} disabled={!e || indo || noServidor}
       onClick={() => void mudar()} data-teste={`chave-conversa-${variante}`}>
       <span className="chave__texto">
-        <span className="chave__nome">Conversa com o editor</span>
+        <span className="chave__nome">{variante === 'menu' ? 'Conversa com o editor' : 'Chave da conversa'}</span>
         <span className="chave__estado">{indo ? (e?.ligada ? 'Desligando…' : 'Ligando…') : `${estado}${gasto ? ` · ${gasto}` : ''}`}</span>
       </span>
       <span className="chave__trilho" aria-hidden="true"><span className="chave__bola" /></span>
@@ -57,7 +57,7 @@ export default function ChaveConversa({ variante }: { variante: 'menu' | 'cartao
         Teto de {usd(e?.teto_usd_dia ?? 3)} por dia, travado no editor. Chegou no teto, a conversa para, avisa e volta à meia-noite
         (horário da Bahia). A mesa e os botões de sempre continuam funcionando. Cada resposta mostra quanto custou.
       </p>
-      {noServidor && <p className="aviso" style={{ marginTop: 8 }}>A conversa está desligada no servidor: falta a chave do cérebro no motor, ou o motor desligou a conversa. Aqui não dá para religar.</p>}
+      {noServidor && <p className="aviso" style={{ marginTop: 8 }}>A conversa está desligada no servidor. Aqui não dá para religar: avise o suporte.</p>}
       {erro && <p className="erro" role="alert" style={{ marginTop: 8 }}>{erro}</p>}
     </section>
   );

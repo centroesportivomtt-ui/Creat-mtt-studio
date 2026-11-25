@@ -12,8 +12,8 @@ const CAMPO: Record<string, string> = {
   vozes: 'Quem fala', ambiente: 'Onde foi gravado',
 };
 
-export default function CartaoConfirma({ d, r, ocupado, erro, aoDecidir }: {
-  d: DadosConfirmacao; r?: DadosResposta; ocupado: boolean; erro?: string; aoDecidir: (sim: boolean) => void;
+export default function CartaoConfirma({ d, r, ocupado, feito, erro, aoDecidir }: {
+  d: DadosConfirmacao; r?: DadosResposta; ocupado: boolean; feito?: boolean; erro?: string; aoDecidir: (sim: boolean, soNesteProjeto?: boolean) => void;
 }) {
   const titulo = `confirmacao-${d.tool_use_id}-t`;
   const verbo = d.acao === 'ajuste' ? 'Pedir o ajuste' : 'Trocar o pedido';
@@ -32,11 +32,13 @@ export default function CartaoConfirma({ d, r, ocupado, erro, aoDecidir }: {
     );
   }
   const vira = d.vira_regra && !/regra/i.test(d.volta);
+  const travado = ocupado || Boolean(feito);
   return (
     <li className="cartao-fio cartao-fio--confirma" role="group" aria-labelledby={titulo} data-teste="confirmacao" data-resultado="pendente" id={`confirmacao-${d.tool_use_id}`}>
       <p className="cartao-fio__cabeca"><IconeEstado fase="esperando" /> Antes de seguir, preciso do seu toque</p>
       <p className="cartao-fio__titulo" id={titulo}>{d.titulo}</p>
       <blockquote className="cartao-fio__exato" data-teste="confirmacao-texto">“{d.texto_exato}”</blockquote>
+      {d.atencao && <p className="cartao-fio__atencao" role="note" data-teste="confirmacao-atencao">{d.atencao}</p>}
       {d.mudancas && d.mudancas.length > 0 && (
         <ul className="cartao-fio__mudancas">
           {d.mudancas.map((m) => (
@@ -50,13 +52,18 @@ export default function CartaoConfirma({ d, r, ocupado, erro, aoDecidir }: {
         <dt>demora</dt><dd>≈ {Math.max(1, Math.round(d.minutos_est))} min</dd>
         {d.acao === 'pedido' && <><dt>quando</dt><dd>{d.comeca_agora ? 'Começa a edição agora' : 'Guarda o pedido. A edição começa quando você tocar em Começar a edição'}</dd></>}
         <dt>dá para voltar</dt><dd>{d.volta}</dd>
-        {vira && <><dt>regra</dt><dd>Vira regra da casa, como no botão Pedir ajuste</dd></>}
+        {vira && <><dt>regra</dt><dd>Vira regra da casa e vale para TODOS os projetos, como no botão Pedir ajuste</dd></>}
       </dl>
       <div className="cartao-fio__botoes">
-        <button type="button" className="botao botao--principal" disabled={ocupado} onClick={() => aoDecidir(true)} data-teste="confirmacao-sim">
-          {ocupado ? 'Mandando…' : verbo}
+        <button type="button" className="botao botao--principal" disabled={travado} onClick={() => aoDecidir(true)} data-teste="confirmacao-sim">
+          {travado ? 'Mandando…' : verbo}
         </button>
-        <button type="button" className="botao botao--fantasma" disabled={ocupado} onClick={() => aoDecidir(false)} data-teste="confirmacao-nao">Agora não</button>
+        {d.acao === 'ajuste' && d.vira_regra && (
+          <button type="button" className="botao botao--secundario" disabled={travado} onClick={() => aoDecidir(true, true)} data-teste="confirmacao-so-aqui">
+            Só neste projeto
+          </button>
+        )}
+        <button type="button" className="botao botao--fantasma" disabled={travado} onClick={() => aoDecidir(false)} data-teste="confirmacao-nao">Agora não</button>
       </div>
       {erro && <p className="erro" role="alert">{erro}</p>}
     </li>

@@ -957,3 +957,22 @@ details > summary.ferr__linha { display: grid; }
 .decisao__riscos ul { margin: 4px 0 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: 14px; color: var(--cor-tinta-2); overflow-wrap: anywhere; }
 
 .fio__mesa { display: inline-flex; align-items: center; }
+
+/* ---------- revisão das ondas 1 e 2 da conversa (25/11) ---------- */
+/* letra do avatar e número da navegação: nunca abaixo de 13 px */
+.passo-mesa .avatar { width: 22px; height: 22px; font-size: 13px; }
+.nav__numero { min-width: 20px; height: 20px; font-size: 13px; }
+/* pergunta só responde: botões de contorno (os do cartão de ação são cheios), com a linha fixa de que nada roda */
+.opcao-fio { background: transparent; border-width: 1.5px; }
+.cartao-fio__so-responde { font-size: 14px; color: var(--cor-tinta-2); }
+/* aviso do motor: o texto do ajuste repete algo de fora */
+.cartao-fio__atencao {
+  font-size: 15px; line-height: 1.4; padding: 10px 12px; border-radius: var(--r2); overflow-wrap: anywhere;
+  border: 1px solid var(--cor-alerta); background: color-mix(in srgb, var(--cor-alerta) 12%, transparent);
+}
+.cartao-fio__botoes:has(> :nth-child(3)) .botao--principal { grid-column: 1 / -1; }
+.cartao-fio__botoes .botao--secundario { min-height: 48px; }
+/* deitado com a conversa aberta: a linha do próximo passo sai da barra e o fio ganha a altura */
+@media (orientation: landscape) and (max-height: 500px) {
+  body:has(#fio) .barra-comando__dentro { display: none; }
+}

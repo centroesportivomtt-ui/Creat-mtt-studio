@@ -508,6 +508,49 @@ export async function aceiteConversa({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
       await P.close();
     }
 
+    // ---------- revisão das ondas 1 e 2 (25/11): toque duplo, texto longo, Voltar do celular, CSP ----------
+    {
+      const R = await escuro.newPage();
+      vigiar(R, 'revisao');
+      const cab = await R.goto(`${BASE}/projetos/${pidAudio}`);
+      const csp = cab?.headers()['content-security-policy'] ?? '';
+      ok('revisão: o site manda Content-Security-Policy (frame-ancestors none, sem origem de fora além do R2)',
+        /default-src 'self'/.test(csp) && /frame-ancestors 'none'/.test(csp) && /object-src 'none'/.test(csp), csp.slice(0, 160));
+      await abrirConversa(R);
+      const antes = await contar(R, '[data-teste=turno-fim]');
+      // toque duplo no Enviar: o segundo toque cai no Parar (mesmo lugar) e não pode parar a resposta
+      let n = antes;
+      for (const atraso of [0, 150, 400]) {
+        await R.fill('[data-teste=conversa-campo]', `Me diz o que tem no material (${atraso})`);
+        const caixa = await R.locator('[data-teste=conversa-enviar]').boundingBox();
+        await R.mouse.click(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
+        await dormir(atraso);
+        await R.mouse.click(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
+        n += 1;
+        await esperarFim(R, n, 20000);
+        await dormir(300);
+      }
+      const paradas = await R.locator('[data-teste=turno-fim]').evaluateAll((l) => l.map((x) => x.dataset.stop));
+      const gravando = await contar(R, '[data-teste=conversa-gravando]');
+      ok('revisão: toque duplo no Enviar (0, 150 e 400 ms) não para a resposta nem abre o microfone',
+        paradas.slice(antes).every((s) => s !== 'parado') && gravando === 0, JSON.stringify(paradas.slice(antes)));
+      // texto colado com mais de 4.000 letras: nada é cortado em silêncio; o contador avisa e o Enviar trava
+      await R.fill('[data-teste=conversa-campo]', 'a'.repeat(4300));
+      const longo = { valor: (await R.inputValue('[data-teste=conversa-campo]')).length, aviso: await R.textContent('[data-teste=conversa-contador]').catch(() => ''),
+        trava: await R.isDisabled('[data-teste=conversa-enviar]') };
+      await print(R, '28-texto-longo', 'escuro');
+      ok('revisão: 4.300 letras coladas ficam inteiras, com aviso de quanto cortar e o Enviar travado',
+        longo.valor === 4300 && /Passou de 4\.000 letras: corte 300/.test(longo.aviso ?? '') && longo.trava, JSON.stringify(longo));
+      await R.fill('[data-teste=conversa-campo]', '');
+      // Voltar do celular com o fio aberto: fecha o fio e fica no projeto
+      const url = R.url().replace(/#.*$/, '');
+      await R.goBack();
+      await R.waitForSelector('[data-teste=fio]', { state: 'detached', timeout: 5000 }).catch(() => {});
+      const voltou = { url: R.url().replace(/#.*$/, ''), fio: await contar(R, '[data-teste=fio]') };
+      ok('revisão: o Voltar do celular fecha o fio e fica no projeto', voltou.url === url && voltou.fio === 0, JSON.stringify(voltou));
+      await R.close();
+    }
+
     // desktop (1440x900): a conversa aberta fica numa coluna de leitura, sem rolagem lateral
     for (const [tema, esquema] of [['escuro', 'dark'], ['claro', 'light']]) {
       const dctx = await navegador.newContext({ viewport: { width: 1440, height: 900 }, locale: 'pt-BR', colorScheme: esquema });
