@@ -1,0 +1,43 @@
+# Porta Aberta · cabeçalhos HTTP (T10 · Trilho)
+# Formato _headers da Cloudflare (Workers Static Assets). Vai para dist/publico/ pelo montar-publico.cjs.
+# Em outro host (Base44 etc.), copie estes cabeçalhos para a configuração dele.
+#
+# CSP: só o necessário, cada host com motivo:
+#   fonts.googleapis.com / fonts.gstatic.com  Lilita One, Figtree, JetBrains Mono
+#   cdn.jsdelivr.net/npm/posthog-js@1.447.3/  e /npm/three@0.160.0/ (sede): só estes dois caminhos, nunca o CDN inteiro.
+#                                             Os arquivos também levam SRI (integrity sha384): checkout.config.js e importmap da sede.
+#                                             A sede fica com os dois caminhos no /* porque o Cloudflare soma as duas CSPs (vale a interseção).
+#   eu.i.posthog.com / eu-assets.i.posthog.com PostHog EU, sem cookie (persistence: memory)
+#   connect.facebook.net / www.facebook.com   Pixel da Meta, SÓ depois do aceite no banner
+#   www.clarity.ms / *.clarity.ms / c.bing.com Clarity, SÓ depois do aceite no banner
+# 'unsafe-inline' só em style-src (há atributos style= e blocos <style> nas páginas); script inline: proibido.
+# frame-src 'self': a prévia (/previa/) e a sede (/sede/) abrem em iframe da mesma origem.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net/npm/posthog-js@1.447.3/ https://cdn.jsdelivr.net/npm/three@0.160.0/ https://connect.facebook.net https://www.clarity.ms https://scripts.clarity.ms; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://www.facebook.com https://*.clarity.ms https://c.bing.com; connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com https://www.facebook.com https://*.clarity.ms https://c.bing.com; frame-src 'self'; frame-ancestors 'self'; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000
+
+# Prévia: estado no fragmento (#), nunca indexada.
+/previa/*
+  X-Robots-Tag: noindex, nofollow
+
+# Sede 3D: tem 3 scripts inline (aviso de demora, importmap do Three.js, módulo da cena).
+# Liberados por hash, não por 'unsafe-inline'. O montar-publico.cjs recalcula os hashes
+# a partir de sede/index.html a cada build; os valores abaixo são os de 09/11/2026 (importmap com SRI).
+# A sede não carrega PostHog, Pixel nem Clarity.
+# Referrer-Policy: no-referrer na sede (e <meta name="referrer"> no HTML): a URL leva ?marca= com o
+# nome do negócio, que não pode sair no Referer para cdn.jsdelivr.net nem fonts.googleapis.com.
+/sede/*
+  ! Content-Security-Policy
+  ! Referrer-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-tbOH5Dc3NowsPgjSEedl2cUkeIqtZuxfU0o/6pUzdYk=' 'sha256-Q9fLdLsvIn4wiD9iVLMmvP5tuxKqIptIj6To2hlH1G0=' 'sha256-bb5Xh+XIdQKWM5hOL1JDxb5TsRLPBa+CiZVPfQSabk8=' https://cdn.jsdelivr.net/npm/three@0.160.0/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net/npm/three@0.160.0/; frame-ancestors 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
+  Referrer-Policy: no-referrer
+  X-Robots-Tag: noindex
+
+# Dados que mudam (vagas, preços): sem cache longo, para a regra das 48 h valer.
+/dados/*
+  Cache-Control: no-cache

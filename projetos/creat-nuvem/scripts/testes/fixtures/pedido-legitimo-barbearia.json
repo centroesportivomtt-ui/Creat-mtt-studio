@@ -1,0 +1,17 @@
+{
+ "formato": "PEDIDO v1",
+ "id": "PA-TLEGF2BARB",
+ "plano": "aberto",
+ "nicho": "barbearia",
+ "negocio": "Barbearia Marquês",
+ "cidade": "Feira de Santana",
+ "responsavel": "Responsavel do pedido",
+ "whatsapp_negocio": "5575999990000",
+ "endereco": "Rua Marquês de Herval, 45, Kalilândia, Feira de Santana-BA, 44001-000",
+ "horarios": "seg=fechado;ter=09:00-18:00;qua=09:00-18:00;qui=09:00-18:00;sex=09:00-18:00;sab=09:00-12:00;dom=fechado",
+ "email": "sem-email@pedido.invalid",
+ "origem": "direto",
+ "previa": "https://creat-nuvem-404b1994.base44.app/previa/#k=barbearia&n=Barbearia%20Marqu%C3%AAs&c=Feira%20de%20Santana&p=1",
+ "aceite_termos": "2026-11-10T16:11:11.454Z termos-v1",
+ "servicos_texto": "Corte executivo - R$ 50 - 40 min\nCorte + barba | R$ 85 | 1h20\nPezinho - R$ 15\nPigmentação de barba - R$ 40 - 30 min\nCombo aproveite - R$ 90"
+}

@@ -1,0 +1,52 @@
+/* Ritual da placa · Porta Aberta · T6 (Órbita)
+   Composição 330 x 300 (igual a assets/svg/placa.svg): corrente no topo (0–112),
+   tábua de 96 a 296. Pivô do balanço = prego em (160, 22) = 48.5% 7.3%.
+   Só transform e opacity se movem. touch-action:none SÓ aqui, para a página
+   continuar rolando fora da placa. Tokens de assets/tokens.css, com reserva. */
+.cp-placa{
+  position:relative;display:block;width:100%;aspect-ratio:330 / 300;
+  touch-action:none;cursor:grab;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;
+  border-radius:var(--raio-placa,22px);outline:none;
+}
+.cp-placa:focus-visible{outline:3px solid var(--sol,#FFC93C);outline-offset:6px;box-shadow:0 0 0 7px var(--linha,#1E1B2E)}
+.cp-placa.cp-arrastando{cursor:grabbing}
+.cp-placa.cp-aberta{cursor:default}
+.cp-placa svg{display:block;width:100%;height:100%;overflow:visible}
+
+.cp-pendulo{
+  position:absolute;inset:0;transform-origin:48.5% 7.3%;
+  animation:cp-balanco var(--duracao-balanco,3.2s) var(--curva-balanco,cubic-bezier(.45,0,.55,1)) infinite;
+}
+.cp-arrastando .cp-pendulo{animation:none}
+@keyframes cp-balanco{
+  0%,100%{transform:rotate(calc(var(--balanco-graus,2deg) * -1))}
+  50%{transform:rotate(var(--balanco-graus,2deg))}
+}
+
+/* a corrente estica junto com o puxão (escala a partir do prego, y 22 de 112) */
+.cp-corrente{position:absolute;left:0;top:0;width:100%;height:37.333%;transform-origin:48.5% 19.6%;z-index:2;pointer-events:none}
+.cp-tabua{position:absolute;left:0;top:32%;width:100%;height:66.667%;perspective:1100px;z-index:1}
+.cp-giro{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:48.5% 8%}
+.cp-face{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.cp-verso{transform:rotateY(180deg)}
+.cp-aberto{opacity:0}
+.cp-aberta .cp-fechado{opacity:0}
+.cp-aberta .cp-aberto{opacity:1}
+
+/* giz: faixa de lousa na borda de baixo aparece com a 1ª letra */
+.cp-giz-borda{opacity:0;transform:translateY(6px);transform-box:fill-box;transition:opacity var(--duracao-media,300ms) var(--curva-saida,ease-out),transform var(--duracao-media,300ms) var(--curva-entrada,ease-out)}
+.cp-com-nome .cp-giz-borda{opacity:1;transform:none}
+.cp-giz-letra{animation:cp-giz-entra 220ms ease-out both}
+@keyframes cp-giz-entra{from{fill-opacity:0}to{fill-opacity:1}}
+
+/* passou de 40%: a placa avisa que já pode soltar */
+.cp-pronta .cp-tabua{filter:brightness(1.06)}
+
+.cp-leitor{position:absolute !important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+@media (prefers-reduced-motion: reduce){
+  .cp-pendulo{animation:none}
+  .cp-giz-letra{animation:none}
+  .cp-giz-borda{transition:opacity 1ms}
+}

@@ -1,0 +1,108 @@
+{
+ "versao": 1,
+ "fonte": "scripts/sede-viva-negocios.cjs a partir de sites/demo-*/tenant.json",
+ "negocios": {
+  "barbearia": {
+   "slug": "demo-barbearia",
+   "marca": "Barbearia Navalha Fictícia",
+   "titulo": "Cadeira no Centro, corte no capricho.",
+   "servicos": [
+    {
+     "nome": "Corte",
+     "preco": "R$ 45"
+    },
+    {
+     "nome": "Degradê",
+     "preco": "R$ 55"
+    }
+   ],
+   "botao": "Peça o seu horário",
+   "cores": {
+    "fundo": "#F7F4EF",
+    "texto": "#14213D",
+    "destaque": "#B3261E",
+    "apoio": "#46506A"
+   },
+   "galeria": [
+    {
+     "src": "assets/sede-viva/galeria-barbearia-1.webp",
+     "w": 240,
+     "h": 300
+    },
+    {
+     "src": "assets/sede-viva/galeria-barbearia-2.webp",
+     "w": 240,
+     "h": 300
+    }
+   ]
+  },
+  "salao": {
+   "slug": "demo-salao",
+   "marca": "Esmalte & Fio",
+   "titulo": "Cadeira pronta e esmalte aberto no Centro.",
+   "servicos": [
+    {
+     "nome": "Corte",
+     "preco": "R$ 70"
+    },
+    {
+     "nome": "Escova",
+     "preco": "R$ 50"
+    }
+   ],
+   "botao": "Peça o seu horário",
+   "cores": {
+    "fundo": "#FBF1EE",
+    "texto": "#2A1418",
+    "destaque": "#A8123A",
+    "apoio": "#6A4A50"
+   },
+   "galeria": [
+    {
+     "src": "assets/sede-viva/galeria-salao-1.webp",
+     "w": 240,
+     "h": 300
+    },
+    {
+     "src": "assets/sede-viva/galeria-salao-2.webp",
+     "w": 240,
+     "h": 300
+    }
+   ]
+  },
+  "academia": {
+   "slug": "demo-academia",
+   "marca": "Studio Barra Fictícia",
+   "titulo": "A barra está montada. Falta a sua primeira aula.",
+   "servicos": [
+    {
+     "nome": "Aula experimental",
+     "preco": "Grátis"
+    },
+    {
+     "nome": "Avaliação para começar",
+     "preco": "Grátis"
+    }
+   ],
+   "botao": "Peça a sua aula experimental",
+   "cores": {
+    "fundo": "#EDF0F2",
+    "texto": "#111A22",
+    "destaque": "#1556A8",
+    "apoio": "#47525C"
+   },
+   "galeria": [
+    {
+     "src": "assets/sede-viva/galeria-academia-1.webp",
+     "w": 240,
+     "h": 300
+    },
+    {
+     "src": "assets/sede-viva/galeria-academia-2.webp",
+     "w": 240,
+     "h": 300
+    }
+   ]
+  }
+ }
+}

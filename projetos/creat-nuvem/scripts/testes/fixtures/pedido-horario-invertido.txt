@@ -1,0 +1,14 @@
+PEDIDO v1
+id: PA-9TQ4HN2X
+plano: vitrine
+nicho: barbearia
+negocio: Barbearia Navalha Teste
+cidade: Campinas
+responsavel: Responsável Teste
+whatsapp_negocio: 5519999990000
+endereco: Rua das Laranjeiras, 215, Cambuí, Campinas-SP, 13025-070
+horarios: seg=fechado;ter=09:00-20:00;qua=09:00-20:00;qui=09:00-20:00;sex=09:00-21:00;sab=17:00-08:00;dom=fechado
+email: contato@exemplo.com.br
+origem: utm_source=meta;utm_medium=pago;utm_campaign=cal-nov26;utm_content=A1-barbearia-v1
+previa: https://dominio-a-confirmar.invalid/previa/#k=barbearia&n=Barbearia%20Navalha%20Teste&c=Campinas&p=2
+aceite_termos: 2026-11-08T14:03:00-03:00 termos-v1

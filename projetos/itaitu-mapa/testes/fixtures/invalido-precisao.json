@@ -1,0 +1,54 @@
+{
+ "formato": "itaitu-pacote",
+ "versao": 1,
+ "gerado_em": "2026-11-20T17:40:00-03:00",
+ "pontos": [
+  {
+   "id": "cachoeira-do-sossego",
+   "acao": "confirmar",
+   "nome": "Cachoeira do Sossego",
+   "tipo": "cachoeira",
+   "gps_media": [
+    -40.5012345,
+    -11.3801234
+   ],
+   "alt_m": 590,
+   "precisao_m": 51,
+   "n_amostras": 20,
+   "data": "2026-11-20",
+   "nota": "FIXTURE DE TESTE: coordenada fictícia, nunca aplicar nos dados reais"
+  },
+  {
+   "id": "cachoeira-do-pianco",
+   "acao": "confirmar",
+   "nome": "Cachoeira do Piancó",
+   "tipo": "cachoeira",
+   "gps_media": [
+    -40.5012345,
+    -11.3801234
+   ],
+   "alt_m": 590,
+   "precisao_m": 31,
+   "n_amostras": 20,
+   "data": "2026-11-20",
+   "nota": "FIXTURE DE TESTE: coordenada fictícia, nunca aplicar nos dados reais"
+  },
+  {
+   "id": "poco-da-geladeira",
+   "acao": "confirmar",
+   "nome": "Poço da Geladeira",
+   "tipo": "poco",
+   "gps_media": [
+    -40.5012345,
+    -11.3801234
+   ],
+   "alt_m": 590,
+   "precisao_m": 6.5,
+   "n_amostras": 9,
+   "data": "2026-11-20",
+   "nota": "FIXTURE DE TESTE: coordenada fictícia, nunca aplicar nos dados reais"
+  }
+ ],
+ "trilhas": [],
+ "gpx": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><gpx version=\"1.1\" creator=\"Trilhas de Itaitu\" xmlns=\"http://www.topografix.com/GPX/1/1\"><metadata><name>fixture de teste</name></metadata></gpx>"
+}

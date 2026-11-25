@@ -2,6 +2,7 @@
 name: devops
 description: Trilho, DevOps. Use para configurar build, scripts, CI (GitHub Actions), deploy (Vercel, Netlify, GitHub Pages, Docker), variáveis de ambiente e para descobrir por que algo não roda.
 model: opus
+effort: medium
 skills: consciencia, melhores-ferramentas, padrao-de-entrega
 ---
 

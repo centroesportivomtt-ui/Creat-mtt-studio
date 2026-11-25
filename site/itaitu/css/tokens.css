@@ -1,0 +1,328 @@
+/* =====================================================================
+   Trilhas de Itaitu · tokens (Paleta, designer, 20/11/2026)
+
+   Conceito: HORA DA SERRA. Todo app de trilha responde ONDE; este responde
+   QUANDO. O vale em relevo pintado, aceso pelo sol deste minuto, com a sombra
+   do paredão andando e a hora em que a serra tira o sol de cada poço.
+
+   Momento-assinatura: abrir o QR e ver, em 5 s, a sombra da serra atravessar
+   o vale, as horas acenderem nas etiquetas e o polegar arrastar o sol pela
+   régua até o marcador do Véu passar de dourado para azul.
+
+   Layout: o mapa é a página inteira; por cima só três objetos, todos
+   tirados da placa da recepção: a tábua de madeira (destinos), a faixa
+   "saia até" e a régua do dia no rodapé, onde o polegar alcança.
+
+   Ousadia única: as TÁBUAS DA PLACA (madeira #3A2618, tinta creme #FFF4DC,
+   13,1:1). Todo o resto é calmo: papel creme de dia, noite de serra no
+   escuro, sem gradiente decorativo, sem sombra em tudo.
+
+   Regras de cor:
+   - --sol (dourado) só significa "sol direto agora". --sombra (azul frio)
+     só significa "a serra já cobriu". Nunca decoração.
+   - --cor-marca (cor do parceiro) nunca carrega texto: só traço da trilha,
+     filete e acento, sempre com contorno creme.
+   - Toda cor de estado vem com palavra (honestidade): "sol no poço até",
+     "a sombra da serra cobre".
+
+   Atributos no <html>:
+     data-contraste="sol"   preto e branco puros (sol forte)
+     data-texto="grande"    escala 1,25 (números travados entre 28 e 40 px)
+     data-economia="1"      sem animação, sem veio de madeira, superfícies escuras
+     data-tabua="clara"     plano B: tábua creme com tinta escura
+     data-tema="claro|escuro"  força o tema (sem isso, segue o aparelho)
+   ===================================================================== */
+
+:root {
+  /* ---------- 1. Objetos da placa (fixos, iguais nos dois temas) ---------- */
+  --madeira: #3A2618;          /* tábua: madeira escura da placa */
+  --madeira-veio: #4A3020;     /* veio claro (tinta creme ainda 11,1:1) */
+  --madeira-funda: #2B1B10;    /* veio escuro, borda e quina */
+  --tinta: #FFF4DC;            /* tinta creme da placa: 13,1:1 na madeira */
+  --tinta-apoio: #E8D3AC;      /* texto secundário na madeira: 9,8:1 */
+  --prego: #B8A48A;            /* cabeça do prego */
+
+  /* ---------- 2. Luz (significado fixo) ---------- */
+  --sol: #F5B83D;              /* sol direto: 8,0:1 na madeira, 10,5:1 na noite */
+  --sol-tinta: #8A5A00;        /* sol escrito sobre papel claro: 5,1:1 */
+  --sombra: #93AEF5;           /* sombra da serra sobre escuro: 6,5:1 na madeira */
+  --sombra-tinta: #2F4E9E;     /* sombra escrita sobre papel claro: 6,7:1 */
+  --poco-sol: var(--sol);      /* marcador do poço com sol */
+  --poco-sombra: #4A6FD8;      /* marcador do poço sem sol (sempre com contorno creme) */
+
+  /* ---------- 3. Relevo pintado (o estilo do mapa lê estes valores) ---------- */
+  --relevo-mata-funda: #2E4A2C;      /* fundo de vale, beira de rio (≤ 520 m) */
+  --relevo-mata: #3F5F38;            /* mata (≈ 580 m) */
+  --relevo-cerrado-baixo: #7E7B47;   /* encosta baixa (≈ 680 m) */
+  --relevo-cerrado: #A8925A;         /* cerrado ocre das encostas (≈ 800 m) */
+  --relevo-quartzito-baixo: #C9B998; /* campo rupestre (≈ 920 m) */
+  --relevo-quartzito: #E6DAC3;       /* quartzito claro no alto (≥ 1050 m) */
+  --relevo-agua: #4F9BD0;            /* rio e poço */
+  --relevo-luz: #FFE3A6;             /* hillshade-highlight-color (luz quente do sol) */
+  --relevo-escuro: #1F2A44;          /* hillshade-shadow-color (frio, nunca roxo) */
+  --sombra-serra: #1E2F5C;           /* sombra projetada pela serra (CanvasSource) */
+  --sombra-serra-opacidade: 0.55;
+  --ceu-dia: #A9CDE8;
+  --ceu-tarde: #F2C58A;
+  --ceu-noite: #1B2338;
+
+  /* ---------- 4. Marca do parceiro ---------- */
+  /* O marca.js escreve --cor-parceiro (contrato da ARQUITETURA, 6.4).
+     Quem quiser pode escrever --cor-marca direto. Todo CSS da casa usa --cor-marca. */
+  --cor-parceiro: #C9283E;     /* padrão: vermelho de tinta de trilha (5,0:1 no creme) */
+  --cor-marca: var(--cor-parceiro);
+
+  /* ---------- 5. Tema claro (padrão): papel creme puxado para a madeira ---------- */
+  --fundo: #F6EDDA;            /* papel */
+  --superficie: #FFF8EA;       /* papel levantado */
+  --superficie-2: #EADCC0;     /* trilho, campo apagado */
+  --tinta-ui: #3A2618;         /* texto: 12,3:1 no papel */
+  --tinta-ui-apoio: #6B5340;   /* texto secundário: 6,1:1 */
+  --linha: #8A7056;            /* borda de controle: 4,0:1 (meta 3:1) */
+  --sol-ui: var(--sol-tinta);
+  --sombra-ui: var(--sombra-tinta);
+  --faixa-fundo: var(--madeira);     /* faixa "saia até": o objeto mais escuro da tela */
+  --faixa-tinta: var(--tinta);
+  --faixa-rotulo: var(--sol);
+  --foco-claro: #FFD23F;       /* anel de foco em dois tons: claro por dentro... */
+  --foco-escuro: #17120D;      /* ...escuro por fora: aparece em madeira, papel e mapa */
+
+  /* ---------- 6. Tábua (o tabuas.css só lê estes) ---------- */
+  --tabua-fundo: var(--madeira);
+  --tabua-veio: var(--madeira-veio);
+  --tabua-quina: var(--madeira-funda);
+  --tabua-tinta: var(--tinta);
+  --tabua-apoio: var(--tinta-apoio);
+  --tabua-borda: var(--madeira-funda);
+  --tabua-sol: var(--sol);
+  --tabua-sombra: var(--sombra);
+  --veio: repeating-linear-gradient(
+      177deg,
+      transparent 0 7px,
+      rgb(74 48 32 / 0.55) 7px 9px,
+      transparent 9px 16px,
+      rgb(43 27 16 / 0.45) 16px 17px,
+      transparent 17px 29px
+    ),
+    repeating-linear-gradient(
+      179.2deg,
+      transparent 0 23px,
+      rgb(74 48 32 / 0.5) 23px 26px,
+      transparent 26px 41px
+    );
+
+  /* ---------- 7. Tipografia ---------- */
+  --fonte: 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fonte-texto: var(--fonte);
+  --fonte-display: var(--fonte);    /* uma família só: o caráter vem da tábua e dos números */
+  --fonte-dado: var(--fonte);       /* sempre com tabular-nums */
+  --peso-texto: 400;
+  --peso-forte: 700;
+  --escala-texto: 1;
+  /* escala 1,2 a partir de 17 px (corpo grande para leitura ao sol) */
+  --t-legenda: calc(13px * var(--escala-texto));   /* mínimo absoluto da casa: 11 px */
+  --t-pequeno: calc(14px * var(--escala-texto));
+  --t-apoio: calc(15px * var(--escala-texto));     /* linha da placa na tábua */
+  --t-corpo: calc(17px * var(--escala-texto));
+  --t-destaque: calc(20px * var(--escala-texto));
+  --t-titulo: calc(24px * var(--escala-texto));
+  --num-min: 28px;
+  --num-max: 40px;
+  --t-num: clamp(var(--num-min), calc(30px * var(--escala-texto)), var(--num-max)); /* horas da tábua: 30 px (37,5 no texto grande) */
+  --t-num-faixa: var(--num-max);                                                  /* "saia até" da faixa */
+  --t-num-regua: clamp(var(--num-min), calc(28px * var(--escala-texto)), var(--num-max));
+  --entrelinha: 1.35;
+  --entrelinha-justa: 1.1;
+  --tracking-rotulo: 0.02em;
+
+  /* ---------- 8. Espaço, alvo, raio, sombra ---------- */
+  --ritmo-1: 4px;
+  --ritmo-2: 8px;
+  --ritmo-3: 12px;
+  --ritmo-4: 16px;   /* margem lateral no celular */
+  --ritmo-5: 24px;
+  --ritmo-6: 32px;
+  --ritmo-7: 48px;
+  --ritmo-8: 64px;
+  --margem: var(--ritmo-4);
+  --alvo: 44px;               /* mínimo de toque */
+  --alvo-polegar: 48px;       /* alça da régua */
+  --ponta-tabua: 16px;        /* a ponta de seta da tábua confirmada */
+  --raio-tabua: 2px;          /* madeira serrada, quase reta */
+  --raio-controle: 6px;
+  --raio-pilula: 999px;
+  --borda: 2px;
+  --borda-forte: 3px;
+  --sombra-tabua: 0 2px 0 var(--madeira-funda), 0 8px 18px rgb(23 18 13 / 0.38);
+  /* a tábua tem ponta de seta: a sombra é filtro, para a ponta ganhar sombra junto */
+  --sombra-tabua-filtro: drop-shadow(0 2px 0 rgb(23 18 13 / 0.9)) drop-shadow(0 6px 10px rgb(23 18 13 / 0.32));
+  --sombra-flutua: 0 -1px 0 rgb(23 18 13 / 0.12), 0 6px 24px rgb(23 18 13 / 0.28);
+  --sombra-etiqueta: 0 1px 0 rgb(23 18 13 / 0.6), 0 3px 8px rgb(23 18 13 / 0.35);
+
+  /* ---------- 9. Tempo e curva ---------- */
+  --dur-rapida: 120ms;
+  --dur-media: 240ms;
+  --dur-lenta: 420ms;
+  --dur-acender: 520ms;       /* etiqueta de hora acendendo */
+  --dur-dia: 2500ms;          /* o resto do dia na abertura */
+  --dur-volta: 300ms;         /* o dia volta para agora */
+  --dur-polegar: 1000ms;      /* polegar fantasma, 4,0 a 5,0 s */
+  --curva-saida: cubic-bezier(0.2, 0.8, 0.2, 1);    /* entra e assenta */
+  --curva-entrada: cubic-bezier(0.4, 0, 1, 1);      /* sai acelerando */
+  --curva-mola: cubic-bezier(0.34, 1.4, 0.64, 1);   /* acender, um pulo só */
+  --curva-dia: cubic-bezier(0.45, 0, 0.55, 1);      /* o dia correndo */
+
+  /* ---------- 10. Camadas ---------- */
+  --z-mapa: 0;
+  --z-etiqueta: 10;
+  --z-painel: 20;
+  --z-regua: 30;
+  --z-faixa: 31;
+  --z-polegar: 32;
+  --z-aviso: 40;
+  --z-sos: 50;
+
+  color-scheme: light dark;
+}
+
+/* ---------- Tema escuro: noite de serra (desenhado, não invertido) ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --fundo: #17120D;
+    --superficie: #231A12;
+    --superficie-2: #3A2C20;
+    --tinta-ui: #FFF4DC;        /* 17,0:1 */
+    --tinta-ui-apoio: #C9B492;  /* 9,2:1 */
+    --linha: #7D6750;           /* 3,5:1 */
+    --sol-ui: var(--sol);
+    --sombra-ui: var(--sombra);
+    --faixa-fundo: var(--tinta);    /* no escuro, a faixa é o objeto mais claro */
+    --faixa-tinta: var(--madeira);
+    --faixa-rotulo: var(--madeira);
+    --sombra-flutua: 0 -1px 0 rgb(255 244 220 / 0.08), 0 6px 24px rgb(0 0 0 / 0.5);
+  }
+}
+:root[data-tema='escuro'] {
+  --fundo: #17120D;
+  --superficie: #231A12;
+  --superficie-2: #3A2C20;
+  --tinta-ui: #FFF4DC;
+  --tinta-ui-apoio: #C9B492;
+  --linha: #7D6750;
+  --sol-ui: var(--sol);
+  --sombra-ui: var(--sombra);
+  --faixa-fundo: var(--tinta);
+  --faixa-tinta: var(--madeira);
+  --faixa-rotulo: var(--madeira);
+  --sombra-flutua: 0 -1px 0 rgb(255 244 220 / 0.08), 0 6px 24px rgb(0 0 0 / 0.5);
+}
+
+/* ---------- Texto grande ---------- */
+:root[data-texto='grande'] {
+  --escala-texto: 1.25;
+  --alvo: 48px;
+  --alvo-polegar: 52px;
+}
+
+/* ---------- Plano B: tábua clara (texto escuro sobre faixa clara) ---------- */
+:root[data-tabua='clara'] {
+  --tabua-fundo: var(--tinta);
+  --tabua-veio: #F1E3C4;
+  --tabua-quina: var(--madeira);
+  --tabua-tinta: var(--madeira);       /* 13,1:1 */
+  --tabua-apoio: #5A4330;              /* 8,4:1 no creme */
+  --tabua-borda: var(--madeira);
+  --tabua-sol: var(--sol-tinta);       /* 5,4:1 no creme */
+  --tabua-sombra: var(--sombra-tinta); /* 7,1:1 no creme */
+  --veio: none;
+}
+
+/* ---------- Modo economia: nada se mexe, nada pinta à toa ---------- */
+:root[data-economia='1'] {
+  --dur-rapida: 0ms;
+  --dur-media: 0ms;
+  --dur-lenta: 0ms;
+  --dur-acender: 0ms;
+  --dur-dia: 0ms;
+  --dur-volta: 0ms;
+  --dur-polegar: 0ms;
+  --veio: none;
+  --sombra-tabua: 0 0 0 1px var(--madeira-funda);
+  --sombra-tabua-filtro: none;
+  --sombra-flutua: none;
+  --sombra-etiqueta: none;
+  --fundo: #0E0B08;          /* quase preto: tela OLED gasta menos */
+  --superficie: #17120D;
+  --superficie-2: #2A2018;
+  --tinta-ui: #FFF4DC;
+  --tinta-ui-apoio: #C9B492;
+  --linha: #7D6750;
+  --sol-ui: var(--sol);
+  --sombra-ui: var(--sombra);
+  --faixa-fundo: var(--tinta);
+  --faixa-tinta: var(--madeira);
+  --faixa-rotulo: var(--madeira);
+}
+
+/* ---------- Modo sol: preto e branco puros (21:1). Vence todos os outros ---------- */
+:root[data-contraste='sol'] {
+  --fundo: #FFFFFF;
+  --superficie: #FFFFFF;
+  --superficie-2: #FFFFFF;
+  --tinta-ui: #000000;
+  --tinta-ui-apoio: #000000;
+  --linha: #000000;
+  --sol-ui: #000000;
+  --sombra-ui: #000000;
+  --faixa-fundo: #000000;
+  --faixa-tinta: #FFFFFF;
+  --faixa-rotulo: #FFFFFF;
+  --tabua-fundo: #FFFFFF;
+  --tabua-veio: #FFFFFF;
+  --tabua-quina: #000000;
+  --tabua-tinta: #000000;
+  --tabua-apoio: #000000;
+  --tabua-borda: #000000;
+  --tabua-sol: #000000;
+  --tabua-sombra: #000000;
+  --poco-sol: #000000;
+  --poco-sombra: #FFFFFF;
+  --veio: none;
+  --sombra-tabua: none;
+  --sombra-tabua-filtro: none;
+  --sombra-flutua: none;
+  --sombra-etiqueta: none;
+  --foco-claro: #FFFFFF;
+  --foco-escuro: #000000;
+  --cor-marca: #000000;
+}
+
+/* ---------- Movimento reduzido: o mesmo que economia, só para o tempo ---------- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-rapida: 0ms;
+    --dur-media: 0ms;
+    --dur-lenta: 0ms;
+    --dur-acender: 0ms;
+    --dur-dia: 0ms;
+    --dur-volta: 0ms;
+    --dur-polegar: 0ms;
+  }
+}
+
+/* ---------- Base mínima (o app.css do frontend completa) ---------- */
+html {
+  font-family: var(--fonte-texto);
+  font-size: var(--t-corpo);
+  line-height: var(--entrelinha);
+  color: var(--tinta-ui);
+  background: var(--fundo);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+.num,
+time,
+output {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}

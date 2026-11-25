@@ -1,0 +1,49 @@
+{
+  "gerado_em": "2026-11-20T16:07:50.651Z",
+  "arquivos": {
+    "maplibre-gl.js": {
+      "pacote": "maplibre-gl",
+      "versao": "5.24.0",
+      "licenca": "BSD-3-Clause",
+      "bytes": 1056837,
+      "sha256": "45a9b07a9189ce56054c620a947ccf41e291e58c95e9b61533b740aaa65ee5cb"
+    },
+    "maplibre-gl.css": {
+      "pacote": "maplibre-gl",
+      "versao": "5.24.0",
+      "licenca": "BSD-3-Clause",
+      "bytes": 70024,
+      "sha256": "ab1e70d59ec40465bae7e7030da2f3ccf28133fd502e62bd598eefbadfd7a732"
+    },
+    "LICENSE.txt": {
+      "pacote": "maplibre-gl",
+      "versao": "5.24.0",
+      "licenca": "BSD-3-Clause",
+      "bytes": 5984,
+      "sha256": "ee5fc05a0677eaf69601d2c7db0d9ecd6cc27c3abc1d0733bc9ed34707cf8ef2"
+    },
+    "qrcode-generator.mjs": {
+      "pacote": "qrcode-generator",
+      "versao": "2.0.4",
+      "licenca": "MIT",
+      "bytes": 52050,
+      "sha256": "a53256bb8dcb0611e70a4e53cc4d9fe05813faa5b54b157b65dafc75491e1fbf",
+      "nota": "mesma biblioteca em módulo ES (export default)"
+    },
+    "qrcode-generator.js": {
+      "pacote": "qrcode-generator",
+      "versao": "2.0.4",
+      "licenca": "MIT",
+      "fonte": "https://registry.npmjs.org/qrcode-generator/-/qrcode-generator-2.0.4.tgz",
+      "integridade_npm": "sha512-mZSiP6RnbHl4xL2Ap5HfkjLnmxfKcPWpWe/c+5XxCuetEenqmNFf1FH/ftXPCtFG5/TDobjsjz6sSNL0Sr8Z9g==",
+      "sha256_original_dist_qrcode_js": "79ec86f82856005b1c887905cfccfcfbec3821ca61c7fd5a952faa5f778f791c",
+      "sha256": "de4863c835264c5700e6f46b18297563a4f3558729c5996958cf5866bad59dac",
+      "bytes": 56837
+    },
+    "LICENSE-qrcode-generator.txt": {
+      "fonte": "https://raw.githubusercontent.com/kazuhikoarase/qrcode-generator/master/LICENSE",
+      "bytes": 1071,
+      "sha256": "3a850fa5f08101db6f40676c2786e10bd2cd5fff7b12ffdf1e0c434d4e49d90c"
+    }
+  }
+}

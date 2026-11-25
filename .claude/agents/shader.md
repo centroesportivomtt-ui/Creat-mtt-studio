@@ -2,6 +2,7 @@
 name: shader
 description: Prisma, Creative Coder. Use para shaders GLSL, efeitos WebGL/WebGPU, arte generativa, partículas, distorções, fundos vivos e qualquer efeito visual que um componente comum não faz.
 model: opus
+effort: high
 skills: consciencia, melhores-ferramentas, toon-3d, verificacao-visual, navegador
 ---
 

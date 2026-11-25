@@ -1,0 +1,121 @@
+{
+  "versao": 1,
+  "slug": "barbearia-exemplo-campinas",
+  "nicho": "barbearia",
+  "negocio": {
+    "nome": "Barbearia Exemplo",
+    "nomeCurto": "Exemplo",
+    "bordao": "Exemplo de bordão: toda cadeira começa no couro.",
+    "whatsapp": "5519999990000",
+    "telefoneExibicao": "(19) 99999-0000",
+    "endereco": {
+      "rua": "Rua Exemplo",
+      "numero": "100",
+      "bairro": "Centro",
+      "cidade": "Campinas",
+      "uf": "SP",
+      "cep": "13010-000"
+    },
+    "instagram": {
+      "usuario": "@barbeariaexemplo",
+      "url": "https://www.instagram.com/barbeariaexemplo"
+    }
+  },
+  "pagina": {
+    "titulo": "Barbearia Exemplo · pedido de horário no WhatsApp",
+    "descricao": "Exemplo de descrição. Corte, degradê e barba no Centro de Campinas. Peça seu horário pelo WhatsApp."
+  },
+  "funcionamento": {
+    "passoMin": 20,
+    "antecedenciaMin": 20,
+    "diasNaFita": 7,
+    "semana": {
+      "0": null,
+      "1": null,
+      "2": {
+        "abre": "09:00",
+        "fecha": "20:00"
+      },
+      "3": {
+        "abre": "09:00",
+        "fecha": "20:00"
+      },
+      "4": {
+        "abre": "09:00",
+        "fecha": "20:00"
+      },
+      "5": {
+        "abre": "09:00",
+        "fecha": "20:00"
+      },
+      "6": {
+        "abre": "09:00",
+        "fecha": "18:00"
+      }
+    }
+  },
+  "servicos": [
+    {
+      "id": "corte",
+      "nome": "Corte",
+      "preco": 45,
+      "duracaoMin": 40,
+      "descricao": "Exemplo: tesoura, máquina e acabamento."
+    },
+    {
+      "id": "pigmentacao",
+      "nome": "Pigmentação",
+      "preco": null,
+      "duracaoMin": 30,
+      "descricao": "Sob consulta."
+    }
+  ],
+  "profissionais": [
+    {
+      "id": "dono",
+      "nome": "Responsável Exemplo",
+      "especialidade": "Navalha",
+      "bio": "Exemplo de bio."
+    }
+  ],
+  "avaliacoes": [
+    {
+      "texto": "Exemplo de recado aprovado.",
+      "autor": "Cliente Exemplo",
+      "origem": "cliente_autorizado",
+      "aprovadoEm": "2026-11-08T12:00:00-03:00"
+    }
+  ],
+  "cores": {
+    "fundo": "#FFFDF6",
+    "texto": "#1E1B2E",
+    "destaque": "#9C3D1C",
+    "apoio": "#E3CC9F"
+  },
+  "agendamento": {
+    "modo": "whatsapp",
+    "mensagem": "Olá, {nome}. Quero pedir um horário: {servico}, {dia} às {hora}."
+  },
+  "textos": {
+    "heroTitulo": "Exemplo de título",
+    "confirmacaoTexto": "Pedido enviado. O dono confirma pelo WhatsApp.",
+    "faq": [
+      {
+        "pergunta": "Exemplo?",
+        "resposta": "Exemplo."
+      }
+    ]
+  },
+  "meta": {
+    "previa": false,
+    "motorVersao": "v1",
+    "criadoEm": "2026-11-08T12:00:00-03:00"
+  },
+  "demo": {
+    "ocupacaoFicticia": {
+      "2": [
+        "10:00"
+      ]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "versao": 1,
+  "marcas": [
+    { "slug": "padrao", "nome": "Trilhas de Itaitu (padrão)", "arquivo": "padrao.json" },
+    { "slug": "demo-village", "nome": "Village Serra do Cruzeiro (demonstração)", "arquivo": "demo-village.json" },
+    { "slug": "demo-camping", "nome": "Camping Payayás (demonstração)", "arquivo": "demo-camping.json" }
+  ]
+}

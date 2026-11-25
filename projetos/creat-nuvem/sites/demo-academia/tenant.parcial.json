@@ -1,0 +1,198 @@
+{
+  "versao": 1,
+  "slug": "demo-academia",
+  "nicho": "academia",
+  "negocio": {
+    "nome": "Studio Barra Fictícia",
+    "nomeCurto": "Studio Barra Fictícia",
+    "bordao": "Venha treinar uma vez antes de decidir.",
+    "endereco": {
+      "rua": "Avenida do Exemplo",
+      "numero": "s/n",
+      "bairro": "Santa Mônica",
+      "cidade": "Feira de Santana",
+      "uf": "BA",
+      "cep": "00000-000"
+    },
+    "whatsapp": "5575981151202",
+    "telefoneExibicao": "(75) 98115-1202"
+  },
+  "pagina": {
+    "titulo": "Studio Barra Fictícia · academia em Feira de Santana",
+    "descricao": "Musculação, funcional e aulas em Feira de Santana. Peça uma aula experimental ou uma avaliação pelo site e combine o horário no WhatsApp."
+  },
+  "funcionamento": {
+    "passoMin": 60,
+    "antecedenciaMin": 120,
+    "diasNaFita": 7,
+    "semana": {
+      "0": null,
+      "1": {
+        "abre": "05:30",
+        "fecha": "21:00"
+      },
+      "2": {
+        "abre": "05:30",
+        "fecha": "21:00"
+      },
+      "3": {
+        "abre": "05:30",
+        "fecha": "21:00"
+      },
+      "4": {
+        "abre": "05:30",
+        "fecha": "21:00"
+      },
+      "5": {
+        "abre": "05:30",
+        "fecha": "20:00"
+      },
+      "6": {
+        "abre": "07:00",
+        "fecha": "12:00"
+      }
+    }
+  },
+  "servicos": [
+    {
+      "id": "aula-experimental",
+      "nome": "Aula experimental",
+      "preco": 0,
+      "duracaoMin": 60,
+      "descricao": "Uma aula para conhecer o espaço, os professores e o ritmo da casa."
+    },
+    {
+      "id": "avaliacao",
+      "nome": "Avaliação para começar",
+      "preco": 0,
+      "duracaoMin": 45,
+      "descricao": "Conversa com o professor sobre a sua rotina e o seu objetivo, para montar o primeiro treino."
+    },
+    {
+      "id": "mensal",
+      "nome": "Plano mensal",
+      "preco": 99,
+      "duracaoMin": 60,
+      "duracaoVisivel": false,
+      "descricao": "Valor por mês. Musculação de segunda a sábado, com professor na sala. O pedido marca o primeiro treino."
+    },
+    {
+      "id": "trimestral",
+      "nome": "Plano trimestral",
+      "preco": 267,
+      "duracaoMin": 60,
+      "duracaoVisivel": false,
+      "descricao": "Valor dos três meses, pagos de uma vez, com o mês mais barato que no mensal. O pedido marca o primeiro treino."
+    },
+    {
+      "id": "livre",
+      "nome": "Plano livre mensal",
+      "preco": 149,
+      "duracaoMin": 60,
+      "duracaoVisivel": false,
+      "descricao": "Valor por mês. Musculação, funcional e pilates, quantas vezes quiser. O pedido marca o primeiro treino."
+    },
+    {
+      "id": "personal",
+      "nome": "Treino com personal",
+      "preco": 69,
+      "duracaoMin": 60,
+      "descricao": "Valor por sessão de 1 hora, individual, com o treino montado para você."
+    }
+  ],
+  "profissionais": [],
+  "avaliacoes": [],
+  "cores": {
+    "fundo": "#EDF0F2",
+    "texto": "#111A22",
+    "destaque": "#1556A8",
+    "apoio": "#47525C"
+  },
+  "agendamento": {
+    "modo": "whatsapp",
+    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}."
+  },
+  "textos": {
+    "heroTitulo": "Sua primeira aula começa com um pedido.",
+    "heroSubtitulo": "Escolha a aula experimental ou a avaliação, o dia e o horário. O pedido chega no WhatsApp da academia e o dono confirma pelo WhatsApp.",
+    "manifesto": "Aqui ninguém começa pelo plano, começa pela conversa. A primeira aula serve para você conhecer a sala, o professor e o ritmo da casa. Depois dela, você decide com calma o que cabe na sua semana.",
+    "servicosTitulo": "Aulas e planos",
+    "servicosNota": "Preços de exemplo. No seu site entram os seus valores.",
+    "equipeTitulo": "Professores",
+    "avaliacoesTitulo": "Recados de quem treina",
+    "pedidoTitulo": "Peça a sua aula experimental",
+    "pedidoNota": "O pedido vai para o WhatsApp da academia e o dono confirma pelo WhatsApp.",
+    "ritualDica": "Arraste para enviar",
+    "confirmacaoTitulo": "Pedido pronto para enviar",
+    "confirmacaoTexto": "Toque em enviar no WhatsApp. A aula vale depois que o dono confirma pelo WhatsApp.",
+    "letreiroAberto": "Aberto agora · peça a sua aula",
+    "letreiroFechado": "Fechado agora · abre {dia} às {hora}",
+    "localTitulo": "Onde fica",
+    "faqTitulo": "Antes de vir",
+    "faq": [
+      {
+        "pergunta": "Pedir pelo site já marca a aula?",
+        "resposta": "Não. O pedido chega pronto no WhatsApp da academia, com aula, dia e hora. A aula vale depois que a academia confirma."
+      },
+      {
+        "pergunta": "Quanto custa?",
+        "resposta": "A aula experimental e a avaliação são grátis. Os planos estão na tabela, com o valor ao lado de cada um."
+      },
+      {
+        "pergunta": "Preciso levar alguma coisa?",
+        "resposta": "Roupa confortável, tênis e uma garrafa de água. Toalha é bem-vinda."
+      },
+      {
+        "pergunta": "Meu nome e meu WhatsApp ficam salvos?",
+        "resposta": "Só neste aparelho, para preencher mais rápido da próxima vez. Use o botão Esquecer meus dados para apagar."
+      }
+    ],
+    "rodapeFrase": "Barra montada, sala aberta, horário combinado."
+  },
+  "meta": {
+    "previa": false,
+    "motorVersao": "v1.3",
+    "criadoEm": "2026-11-11T15:45:02.333Z"
+  },
+  "fuso": "America/Bahia",
+  "recados": [
+    {
+      "texto": "Fiz a aula experimental antes de decidir o plano.",
+      "autor": "Aluno de exemplo"
+    },
+    {
+      "texto": "Pedi a avaliação pelo celular, e o primeiro treino saiu da conversa.",
+      "autor": "Aluna de exemplo"
+    }
+  ],
+  "galeria": [
+    {
+      "src": "galeria/academia-1.webp",
+      "alt": "Ilustração de exemplo: anilhas de 25, 20, 15 e 10 kg em vermelho, azul, amarelo e verde, encostadas na parede, e a barra no piso de borracha.",
+      "legenda": "Ilustração de exemplo: anilhas e barra.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/academia-2.webp",
+      "alt": "Ilustração de exemplo: suporte de dois andares com halteres sextavados de 10 a 20 kg diante do espelho, toalha e um halter de 8 kg no chão.",
+      "legenda": "Ilustração de exemplo: os halteres.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/academia-3.webp",
+      "alt": "Ilustração de exemplo: gaiola de agachamento azul com a barra carregada nos suportes, banco reto à frente e kettlebell de 16 kg no chão.",
+      "legenda": "Ilustração de exemplo: gaiola, barra e banco.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/academia-4.webp",
+      "alt": "Ilustração de exemplo: sala com janelão, caixote de salto, bola medicinal, corda e kettlebells de 4 a 12 kg em fila no piso de borracha.",
+      "legenda": "Ilustração de exemplo: o espaço de treino.",
+      "largura": 1024,
+      "altura": 1280
+    }
+  ]
+}

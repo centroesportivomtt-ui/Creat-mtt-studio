@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SessionStart":     [{ "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/sede/aovivo/hook.sh", "async": true }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/sede/aovivo/hook.sh", "async": true }] }],
+    "PreToolUse":       [{ "matcher": "*", "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/sede/aovivo/hook.sh", "async": true }] }],
+    "SubagentStart":    [{ "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/sede/aovivo/hook.sh", "async": true }] }],
+    "SubagentStop":     [{ "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/sede/aovivo/hook.sh", "async": true }] }],
+    "Stop":             [{ "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/sede/aovivo/hook.sh", "async": true }] }],
+    "SessionEnd":       [{ "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/sede/aovivo/hook.sh", "async": true }] }]
+  }
+}

@@ -1,0 +1,86 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="ganchos.css">
+<title>G4 salão</title>
+<style>
+/* G4 · SALÃO · a copa dos fundos: azulejo, prateleira de estoque, lousinha da agenda sem horário
+   e o celular encostado na prateleira com o site do salão. Composição invertida em relação ao G3:
+   celular à esquerda, pedido à direita, lousinha embaixo do pedido. */
+.peca{background-color:#CDEBFF;background-image:linear-gradient(90deg,rgba(255,253,246,.75) 0 4px,transparent 4px),linear-gradient(rgba(255,253,246,.75) 0 4px,transparent 4px);background-size:120px 120px;background-position:-2px -2px}
+#estante,#armario{z-index:1}
+#tubos{z-index:4}
+.cel{z-index:2}.cartao{z-index:3}
+/* 9:16 */
+.f9 .nicho{left:65px;top:300px;--t:262px}
+.f9 .linhas{left:65px;top:556px}
+.f9 .linha{--l:46px}
+.f9 .cel{left:70px;top:704px;width:340px;height:760px;transform:rotate(-4deg)}
+.f9 .cartao{left:452px;top:742px;width:560px;transform:rotate(2deg)}
+.f9 #lousa{left:520px;top:1010px;width:470px}
+.f9 #estante{left:0;top:1380px;width:1080px;height:70px}
+.f9 #tubos{left:0;top:1262px;width:1080px}
+.f9 #armario{left:0;top:1446px;width:1080px;height:480px}
+/* 1:1 */
+.f1 .nicho{left:50px;top:52px;--t:178px}
+.f1 .linhas{left:56px;top:236px}
+.f1 .linha{--l:36px}
+.f1 .cel{left:64px;top:360px;width:300px;height:680px;transform:rotate(-4deg)}
+.f1 .cartao{left:420px;top:376px;width:600px;transform:rotate(2deg)}
+.f1 #lousa{left:520px;top:612px;width:430px}
+.f1 #estante{left:0;top:930px;width:1080px;height:60px}
+.f1 #tubos{left:20px;top:830px;width:900px}
+.f1 #armario{left:0;top:986px;width:1080px;height:120px}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="giz" x="-5%" y="-20%" width="110%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="7" result="r"/><feColorMatrix in="r" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 2.1" result="g"/><feComposite in="SourceGraphic" in2="g" operator="in"/></filter></svg>
+<div class="peca" id="peca">
+  <h1 class="nicho" data-fit="950" data-fit1="620" data-min="80">SALÃO</h1>
+  <div class="linhas">
+    <span class="linha" data-fit="950" data-fit1="968">A agenda dos profissionais fica na copa.</span>
+    <span class="linha" data-fit="950" data-fit1="968">O pedido do site chega escrito.</span>
+  </div>
+
+  <!-- lousinha da agenda: três cadeiras, nomes em rabisco de giz, nenhum horário -->
+  <svg class="cena" id="lousa" viewBox="0 0 470 330" aria-hidden="true" style="overflow:visible">
+    <path d="M235 -10 L120 40 M235 -10 L350 40" stroke="#1E1B2E" stroke-width="5" fill="none"/><circle cx="235" cy="-10" r="10" fill="#8C909B" stroke="#1E1B2E" stroke-width="5"/>
+    <rect x="14" y="44" width="446" height="280" rx="18" fill="#1E1B2E"/>
+    <rect x="6" y="36" width="446" height="280" rx="18" fill="#D39A5B" stroke="#1E1B2E" stroke-width="6"/>
+    <rect x="30" y="60" width="398" height="232" rx="8" fill="#22322D" stroke="#1E1B2E" stroke-width="4"/>
+    <g filter="url(#giz)" stroke="#F4F1E6" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke-width="5">
+      <path d="M70 90 C150 84 240 94 390 88"/>
+      <g><path d="M72 112 v36 M72 136 h30 v14 M76 136 v14"/><path d="M128 132 c14 -12 26 12 40 0 s26 12 40 0 s22 10 34 0"/></g>
+      <g transform="translate(0 66)"><path d="M72 112 v36 M72 136 h30 v14 M76 136 v14"/><path d="M128 132 c14 -12 26 12 40 0 s22 10 34 0"/></g>
+      <g transform="translate(0 132)"><path d="M72 112 v36 M72 136 h30 v14 M76 136 v14"/><path d="M128 132 c12 -10 22 10 34 0"/></g>
+    </g>
+    <rect x="300" y="300" width="80" height="14" rx="7" fill="#F4F1E6" stroke="#1E1B2E" stroke-width="3"/>
+  </svg>
+
+  <div class="cel">
+    <div class="tela" style="background:#FFFFFF" data-print="../saida/prints-ganchos/salao-topo.png" data-de="760" data-ate="2532"></div>
+    <span class="fita" style="left:14px;top:-24px;transform:rotate(-6deg)">número de teste</span>
+    <span class="selo" data-y="1700" style="left:-4px;transform:rotate(-2deg)">nome fictício</span>
+  </div>
+
+  <div class="cartao">
+    <span class="selo" style="right:10px;top:-32px;transform:rotate(3deg)">cena de exemplo</span>
+    <span class="rot">Pedido pelo site</span>
+    <span class="c1">escova e hidratação</span>
+    <span class="traco"></span>
+    <span class="c2">sábado 9h</span>
+  </div>
+
+  <!-- prateleira do estoque e tubos de coloração sem marca -->
+  <svg class="cena" id="estante" viewBox="0 0 1080 70" preserveAspectRatio="none" aria-hidden="true"><rect x="-10" y="6" width="1100" height="40" fill="#D39A5B" stroke="#1E1B2E" stroke-width="6"/><rect x="-10" y="6" width="1100" height="12" fill="#E6B67B"/><rect x="-10" y="46" width="1100" height="20" fill="#7A4B2A" opacity=".35"/></svg>
+  <svg class="cena" id="tubos" viewBox="0 0 1080 140" aria-hidden="true" style="overflow:visible">
+    <g stroke="#1E1B2E" stroke-width="6" stroke-linejoin="round">
+      <g transform="translate(40 30) rotate(-6)"><path d="M0 20 h250 l40 -14 v76 l-40 -14 h-250 z" fill="#E9EEF3"/><rect x="40" y="20" width="80" height="48" fill="#A8124A"/><rect x="-26" y="26" width="30" height="36" rx="6" fill="#1E1B2E"/></g>
+      <g transform="translate(300 52) rotate(3)"><path d="M0 20 h230 l40 -14 v76 l-40 -14 h-230 z" fill="#E9EEF3"/><rect x="40" y="20" width="80" height="48" fill="#7A4B2A"/><rect x="-26" y="26" width="30" height="36" rx="6" fill="#1E1B2E"/></g>
+      <g transform="translate(600 40) rotate(-2)"><path d="M0 20 h230 l40 -14 v76 l-40 -14 h-230 z" fill="#E9EEF3"/><rect x="40" y="20" width="80" height="48" fill="#E3A93B"/><rect x="-26" y="26" width="30" height="36" rx="6" fill="#1E1B2E"/></g>
+      <!-- caneca da copa -->
+      <g transform="translate(930 4)"><path d="M60 40 h30 a24 24 0 0 1 0 48 h-30" fill="none" stroke-width="10"/><rect x="0" y="20" width="80" height="104" rx="12" fill="#FFFDF6"/><path d="M14 4 c-8 10 8 12 0 22 M44 0 c-8 10 8 12 0 22" fill="none" stroke-width="4"/></g>
+    </g>
+  </svg>
+  <svg class="cena" id="armario" viewBox="0 0 1080 480" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><rect x="-10" y="0" width="1100" height="500" fill="#E6B67B" stroke="#1E1B2E" stroke-width="6"/><g fill="#D39A5B" stroke="#1E1B2E" stroke-width="6"><rect x="40" y="40" width="480" height="420" rx="14"/><rect x="560" y="40" width="480" height="420" rx="14"/></g><g fill="#8C909B" stroke="#1E1B2E" stroke-width="5"><rect x="470" y="90" width="22" height="90" rx="10"/><rect x="588" y="90" width="22" height="90" rx="10"/></g></svg>
+  <div class="guia"></div>
+</div>
+<script src="ganchos.js"></script></body></html>

@@ -1,0 +1,38 @@
+[
+  {
+    "nome": "OpenStreetMap",
+    "texto": "© OpenStreetMap contributors",
+    "licenca": "ODbL 1.0",
+    "url": "https://www.openstreetmap.org/copyright"
+  },
+  {
+    "nome": "Terrain Tiles",
+    "texto": "Terrain Tiles (Mapzen/AWS Open Data): SRTM, GMTED, ETOPO1 e outras fontes",
+    "licenca": "Atribuição conforme as fontes (domínio público e licenças abertas)",
+    "url": "https://github.com/tilezen/joerd/blob/master/docs/attribution.md"
+  },
+  {
+    "nome": "Sentinel-2 cloudless 2016",
+    "texto": "Sentinel-2 cloudless – https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016)",
+    "licenca": "CC BY 4.0",
+    "url": "https://s2maps.eu"
+  },
+  {
+    "nome": "MapLibre GL JS 5.24.0",
+    "texto": "MapLibre GL JS 5.24.0",
+    "licenca": "BSD-3-Clause",
+    "url": "https://github.com/maplibre/maplibre-gl-js/blob/v5.24.0/LICENSE.txt"
+  },
+  {
+    "nome": "qrcode-generator 2.0.4",
+    "texto": "qrcode-generator, Kazuhiko Arase",
+    "licenca": "MIT",
+    "url": "https://github.com/kazuhikoarase/qrcode-generator"
+  },
+  {
+    "nome": "Atkinson Hyperlegible Next",
+    "texto": "Atkinson Hyperlegible Next, Braille Institute of America",
+    "licenca": "SIL Open Font License 1.1",
+    "url": "https://www.brailleinstitute.org/freefont/"
+  }
+]

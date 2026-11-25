@@ -1,0 +1,22 @@
+{
+  "negocio": "EXEMPLO FICTÍCIO: site com agendamento para salão, vendido por anúncio (números inventados para mostrar a conta)",
+  "unidade": "Abertura",
+  "unidade_plural": "Aberturas",
+  "preco": "197,00",
+  "custo_variavel": [
+    {"rotulo": "Taxa do Pix", "custo": "1,97"},
+    {"rotulo": "Produção pela equipe de agentes (cota e revisão)", "custo": "18,00"}
+  ],
+  "cac": "120,00",
+  "mensalidade": {"valor": "49,00", "custo_mensal": "6,50", "cancelamento_mensal": 0.08},
+  "custos_fixos_mensais": [
+    {"rotulo": "Ferramentas e assinaturas", "custo": "450,00"},
+    {"rotulo": "Hospedagem e domínio da casa", "custo": "60,00"}
+  ],
+  "investimento_inicial": [
+    {"rotulo": "Teste de anúncio antes de escalar", "custo": "600,00"}
+  ],
+  "rampa_por_mes": [4, 6, 8, 10, 12, 14, 15, 16, 17, 18, 18, 18],
+  "capacidade_por_mes": 60,
+  "regras": {"ltv_cac_minimo": 3, "retorno_cac_max_meses": 12, "exige_mensalidade": true}
+}

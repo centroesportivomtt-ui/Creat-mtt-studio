@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="pt-BR" data-app="marcos">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Itaitu · Marcos</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="App particular do Marcos: confirmar posições em campo, gravar trilhas oficiais, exportar o pacote e mostrar a vitrine aos parceiros.">
+<meta name="theme-color" content="#3A2618">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="./manifest-marcos.webmanifest">
+<link rel="icon" href="./icones/marcos.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icones/marcos-192.png">
+<link rel="preload" href="./fontes/AtkinsonHyperlegibleNext-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="./vendor/maplibre-gl.css">
+<link rel="stylesheet" href="./css/fontes.css">
+<link rel="stylesheet" href="./css/tokens.css">
+<link rel="stylesheet" href="./css/tabuas.css">
+<link rel="stylesheet" href="./css/regua.css">
+<link rel="stylesheet" href="./css/app.css">
+<link rel="stylesheet" href="./css/hora.css">
+<link rel="stylesheet" href="./css/marcos.css">
+<script src="./vendor/maplibre-gl.js"></script>
+<script src="./vendor/qrcode-generator.js"></script>
+<!-- O casco (mapa, painéis, SOS, gravador) é o mesmo do app público: js/marcos/index.js copia o <body>
+     do index.html (do cache do SW, offline) para cá e só depois carrega ./js/app.js. Um casco só, sem cópia
+     que envelhece. As peças abaixo são só do app particular. -->
+<script type="module" src="./js/marcos/index.js"></script>
+</head>
+<body>
+<div id="marcos-casco"></div>
+
+<!-- botão do app particular no topo (o index.js põe dentro de .topo__acoes) -->
+<template id="marcos-botao-tpl">
+  <button id="marcos-abrir" class="acao acao--marcos" type="button" aria-controls="painel-marcos" aria-expanded="false">
+    <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-ponto"/></svg>
+    <span>Marcos</span>
+  </button>
+</template>
+
+<!-- Painel do Marcos: campo, pacote, vitrine, venda e ajustes -->
+<section id="painel-marcos" class="folha folha--marcos" aria-labelledby="painel-marcos-titulo" hidden>
+  <div class="folha__cabeca">
+    <h2 id="painel-marcos-titulo" class="folha__titulo" tabindex="-1">Itaitu · Marcos</h2>
+    <button id="marcos-fechar" class="folha__fechar" type="button" aria-label="Fechar o painel do Marcos">
+      <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-fechar"/></svg>
+    </button>
+  </div>
+  <div class="abas" role="tablist" aria-label="Ferramentas do Marcos">
+    <button id="aba-campo" class="aba" type="button" role="tab" aria-selected="true" aria-controls="sec-campo">Campo</button>
+    <button id="aba-pacote" class="aba" type="button" role="tab" aria-selected="false" aria-controls="sec-pacote" tabindex="-1">Pacote</button>
+    <button id="aba-vitrine" class="aba" type="button" role="tab" aria-selected="false" aria-controls="sec-vitrine" tabindex="-1">Vitrine</button>
+    <button id="aba-venda" class="aba" type="button" role="tab" aria-selected="false" aria-controls="sec-venda" tabindex="-1">Venda</button>
+    <button id="aba-ajustes" class="aba" type="button" role="tab" aria-selected="false" aria-controls="sec-ajustes" tabindex="-1">Ajustes</button>
+  </div>
+  <div class="folha__corpo">
+    <!-- CAMPO -->
+    <div id="sec-campo" class="secao-marcos" role="tabpanel" aria-labelledby="aba-campo" tabindex="0">
+      <h3 class="m-titulo">Confirmar posição</h3>
+      <p class="nota">A cada ida a campo, a placa se completa: o ponto confirmado aqui sobe para confiança alta no pacote e melhora o mapa de todos os parceiros.</p>
+      <div class="linha-botoes">
+        <button id="confirmar-novo" class="botao botao--linha" type="button">
+          <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-ponto"/></svg>
+          <span>Criar ponto novo</span>
+        </button>
+      </div>
+      <ul id="confirmar-lista" class="lista-itens m-lista"></ul>
+
+      <h3 class="m-titulo">Gravador de campo</h3>
+      <p class="nota">Pausa sozinho quando você para, marca passagens com nota e salva como trilha oficial do destino. Página web não grava com a tela bloqueada: deixe a tela acesa.</p>
+      <div id="pro-controles" class="linha-botoes">
+        <button id="pro-iniciar" class="botao botao--marca botao--grande" type="button">
+          <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-gravar"/></svg>
+          <span>Gravar trilha oficial</span>
+        </button>
+        <button id="pro-pausar" class="botao botao--linha" type="button" hidden><span>Pausar</span></button>
+        <button id="pro-passagem" class="botao botao--linha" type="button" hidden><span>Marcar passagem</span></button>
+        <button id="pro-tela" class="botao botao--linha" type="button" hidden><span>Tela escura</span></button>
+        <button id="pro-parar" class="botao botao--marca" type="button" hidden><span>Parar e salvar</span></button>
+      </div>
+      <p id="pro-status" class="status num" role="status"></p>
+      <div id="pro-perfil" class="perfil" hidden></div>
+      <ul id="pro-passagens" class="m-passagens" hidden></ul>
+      <h3 class="m-subtitulo">Trilhas oficiais gravadas</h3>
+      <ul id="pro-lista" class="lista-itens m-lista"></ul>
+    </div>
+
+    <!-- PACOTE -->
+    <div id="sec-pacote" class="secao-marcos" role="tabpanel" aria-labelledby="aba-pacote" tabindex="0" hidden>
+      <h3 class="m-titulo">Pacote de atualização</h3>
+      <p class="nota">Junta tudo o que você confirmou e gravou num arquivo só (pacote v1 + GPX). Mande para a equipe pelo WhatsApp ou pelo Dropbox: o time de dados valida e funde no mapa público.</p>
+      <div id="pacote-resumo" class="m-caixa"></div>
+      <div class="linha-botoes">
+        <button id="pacote-exportar" class="botao botao--marca botao--grande" type="button">
+          <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-compartilhar"/></svg>
+          <span>Exportar pacote de atualização</span>
+        </button>
+        <button id="pacote-gpx" class="botao botao--linha" type="button">Só o GPX</button>
+      </div>
+      <p id="pacote-status" class="status" role="status"></p>
+    </div>
+
+    <!-- VITRINE -->
+    <div id="sec-vitrine" class="secao-marcos" role="tabpanel" aria-labelledby="aba-vitrine" tabindex="0" hidden>
+      <h3 class="m-titulo">Vitrine de parceiros</h3>
+      <label class="m-rotulo" for="vitrine-marca">Marca do parceiro</label>
+      <select id="vitrine-marca" class="m-campo"></select>
+      <div id="vitrine-ficha" class="m-ficha"></div>
+      <div class="linha-botoes">
+        <button id="vitrine-demo" class="botao botao--marca botao--grande" type="button">Rodar demonstração</button>
+        <button id="vitrine-livre" class="botao botao--linha" type="button">Abrir o app desta marca</button>
+      </div>
+      <p class="nota">A demonstração trava o celular na vitrine. Para sair: toque e segure o canto de cima e digite o PIN.</p>
+
+      <h3 class="m-subtitulo">QR do parceiro</h3>
+      <div class="m-qr">
+        <canvas id="vitrine-qr" class="m-qr__tela" width="330" height="330" role="img" aria-label="QR code do link do parceiro"></canvas>
+        <div class="m-qr__texto">
+          <p id="vitrine-url" class="m-url num" translate="no"></p>
+          <div class="linha-botoes">
+            <button id="vitrine-qr-png" class="botao botao--linha" type="button">Baixar QR em PNG</button>
+            <button id="vitrine-copiar" class="botao botao--texto" type="button">Copiar link</button>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="m-subtitulo">Placa da recepção</h3>
+      <p class="nota">Monta a placa de 15 x 20 cm no estilo da placa antiga, com o nome do parceiro e o QR: “Aponte a câmera: esta placa vai com você.”</p>
+      <div class="linha-botoes">
+        <button id="placa-gerar" class="botao botao--marca" type="button">Gerar placa com QR</button>
+      </div>
+      <p id="placa-status" class="status" role="status"></p>
+      <figure id="placa-previa" class="m-placa" hidden>
+        <div id="placa-img-slot" class="m-placa__slot"></div>
+        <figcaption class="linha-botoes">
+          <button id="placa-png" class="botao botao--linha" type="button">Baixar PNG (alta resolução)</button>
+          <button id="placa-svg" class="botao botao--linha" type="button">Baixar SVG para a gráfica</button>
+        </figcaption>
+      </figure>
+    </div>
+
+    <!-- VENDA (atrás do PIN) -->
+    <div id="sec-venda" class="secao-marcos" role="tabpanel" aria-labelledby="aba-venda" tabindex="0" hidden>
+      <div id="venda-trancada" class="m-trancado">
+        <p class="m-trancado__texto">Caderno, preços e kit ficam atrás do PIN.</p>
+        <button id="venda-destrancar" class="botao botao--marca botao--grande" type="button">Digitar o PIN</button>
+      </div>
+      <div id="venda-aberta" hidden>
+        <h3 class="m-titulo">Caderno de vendas</h3>
+        <p class="nota">Fica só neste celular. Nada vai para a internet.</p>
+        <div class="linha-botoes">
+          <button id="caderno-novo" class="botao botao--marca" type="button">Novo negócio</button>
+          <button id="caderno-csv" class="botao botao--linha" type="button">Exportar CSV</button>
+        </div>
+        <div class="m-filtros" role="group" aria-label="Filtrar por status" id="caderno-filtros"></div>
+        <ul id="caderno-lista" class="lista-itens m-lista"></ul>
+
+        <h3 class="m-titulo">Kit de venda</h3>
+        <p class="nota">Roteiro, objeções e preços. O arquivo vem do Dropbox e fica só neste celular.</p>
+        <div class="linha-botoes">
+          <label class="botao botao--linha botao--arquivo" for="kit-arquivo">
+            <span>Importar kit</span>
+            <input id="kit-arquivo" class="sr-only" type="file" accept=".json,application/json">
+          </label>
+          <button id="kit-apagar" class="botao botao--texto" type="button" hidden>Apagar o kit deste celular</button>
+        </div>
+        <p id="kit-status" class="status" role="status"></p>
+        <div id="kit-conteudo" class="m-kit"></div>
+        <div class="linha-botoes">
+          <button id="venda-trancar" class="botao botao--texto" type="button">Trancar agora</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AJUSTES -->
+    <div id="sec-ajustes" class="secao-marcos" role="tabpanel" aria-labelledby="aba-ajustes" tabindex="0" hidden>
+      <h3 class="m-titulo">PIN da vitrine</h3>
+      <p class="aviso-honesto">O PIN é proteção de uso, não cofre: impede que o dono da pousada saia da vitrine ou abra o caderno sem querer. Quem tiver o celular destravado e souber mexer no navegador consegue apagar ou ler os dados do site. Não guarde aqui senha nem dado de cartão.</p>
+      <p id="pin-estado" class="status"></p>
+      <div class="linha-botoes">
+        <button id="pin-definir" class="botao botao--linha" type="button">Criar PIN</button>
+      </div>
+
+      <h3 class="m-titulo">Endereço público do mapa</h3>
+      <label class="m-rotulo" for="url-base">Endereço base (o QR acrescenta ?m=&lt;marca&gt;)</label>
+      <input id="url-base" class="m-campo num" type="url" inputmode="url" autocomplete="off" spellcheck="false">
+      <p id="url-erro" class="erro" role="alert" hidden></p>
+      <div class="linha-botoes">
+        <button id="url-salvar" class="botao botao--linha" type="button">Salvar endereço</button>
+        <button id="url-padrao" class="botao botao--texto" type="button">Voltar ao padrão</button>
+      </div>
+
+      <h3 class="m-titulo">O que fica neste celular</h3>
+      <p class="nota">Pontos confirmados, trilhas, caderno, kit, PIN (só o hash) e o endereço ficam no armazenamento deste navegador. Nada disso entra no repositório nem vai para a internet sozinho. Limpar os dados do site apaga tudo: exporte o pacote antes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Confirmar posição: média do GPS -->
+<dialog id="confirmar-dlg" class="dialogo" aria-labelledby="confirmar-titulo">
+  <form id="confirmar-form" class="form" method="dialog" novalidate>
+    <h2 id="confirmar-titulo">Estou aqui: confirmar posição</h2>
+    <p id="confirmar-alvo" class="status"></p>
+    <div id="confirmar-novo-campos" hidden>
+      <label for="confirmar-nome">Nome do ponto</label>
+      <input id="confirmar-nome" type="text" maxlength="60" autocomplete="off">
+      <label for="confirmar-tipo">Tipo</label>
+      <select id="confirmar-tipo"></select>
+    </div>
+    <div class="m-medidor" aria-live="polite">
+      <p id="confirmar-contagem" class="m-medidor__num num">20 s</p>
+      <p id="confirmar-precisao" class="m-medidor__info num"></p>
+      <div class="m-medidor__barra" aria-hidden="true"><span id="confirmar-barra"></span></div>
+    </div>
+    <p id="confirmar-resultado" class="nota"></p>
+    <p id="confirmar-erro" class="erro" role="alert" hidden></p>
+    <label for="confirmar-nota">Nota (opcional)</label>
+    <textarea id="confirmar-nota" maxlength="280" rows="2" placeholder="ex.: placa caída, poço fundo, porteira fechada aos domingos"></textarea>
+    <label for="confirmar-ajuste">Ajuste da hora de sol observado, de −30 a 30 minutos (opcional)</label>
+    <input id="confirmar-ajuste" type="number" inputmode="numeric" min="-30" max="30" step="1" aria-describedby="confirmar-ajuste-ajuda">
+    <p id="confirmar-ajuste-ajuda" class="nota">Só se você viu a sombra chegar: negativo se a serra apagou o sol antes da hora calculada.</p>
+    <div class="linha-botoes">
+      <button id="confirmar-salvar" class="botao botao--marca" type="submit" disabled>Salvar posição</button>
+      <button id="confirmar-repetir" class="botao botao--linha" type="button" hidden>Medir de novo</button>
+      <button id="confirmar-cancelar" class="botao botao--linha" type="button">Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Passagem com nota -->
+<dialog id="passagem-dlg" class="dialogo" aria-labelledby="passagem-titulo">
+  <form id="passagem-form" class="form" method="dialog">
+    <h2 id="passagem-titulo">Marcar passagem</h2>
+    <p id="passagem-onde" class="nota num"></p>
+    <div id="passagem-rapidas" class="m-filtros" role="group" aria-label="Notas rápidas"></div>
+    <label for="passagem-nota">Nota</label>
+    <input id="passagem-nota" type="text" maxlength="120" autocomplete="off">
+    <div class="linha-botoes">
+      <button class="botao botao--marca" type="submit">Salvar passagem</button>
+      <button id="passagem-cancelar" class="botao botao--linha" type="button">Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Salvar trilha oficial -->
+<dialog id="pro-salvar-dlg" class="dialogo" aria-labelledby="pro-salvar-titulo">
+  <form id="pro-salvar-form" class="form" method="dialog" novalidate>
+    <h2 id="pro-salvar-titulo">Salvar trilha</h2>
+    <p id="pro-salvar-resumo" class="status num"></p>
+    <label for="pro-nome">Nome da trilha</label>
+    <input id="pro-nome" type="text" maxlength="80" autocomplete="off">
+    <label for="pro-destino">Destino</label>
+    <select id="pro-destino"></select>
+    <label for="pro-modo">Modo</label>
+    <select id="pro-modo"><option value="pe">a pé</option><option value="carro">de carro</option></select>
+    <label class="m-check"><input id="pro-oficial" type="checkbox" checked> <span>Trilha oficial deste destino (vai no pacote)</span></label>
+    <label class="m-check"><input id="pro-fincada" type="checkbox"> <span>Fincada pela ACAGI (gravada com condutor da associação)</span></label>
+    <div id="pro-fincada-campos" hidden>
+      <label for="pro-condutor">Nome do condutor</label>
+      <input id="pro-condutor" type="text" maxlength="60" autocomplete="off" aria-describedby="pro-condutor-ajuda">
+      <p id="pro-condutor-ajuda" class="nota">Fica só neste celular. O pacote leva “ACAGI”, nunca o nome da pessoa.</p>
+      <label for="pro-ajuste">Ajuste da hora de sol no destino, de −30 a 30 minutos (opcional)</label>
+      <input id="pro-ajuste" type="number" inputmode="numeric" min="-30" max="30" step="1">
+      <p class="nota">Quanto a sombra real chegou antes (negativo) ou depois (positivo) da hora calculada.</p>
+    </div>
+    <p id="pro-salvar-erro" class="erro" role="alert" hidden></p>
+    <div id="pro-salvar-acoes" class="linha-botoes">
+      <button class="botao botao--marca" type="submit">Salvar trilha</button>
+      <button id="pro-salvar-voltar" class="botao botao--linha" type="button">Continuar gravando</button>
+      <button id="pro-salvar-descartar" class="botao botao--texto" type="button">Descartar</button>
+    </div>
+    <div id="pro-salvar-confirma" class="confirma" hidden>
+      <p>Descartar esta gravação? O traçado se perde.</p>
+      <div class="linha-botoes">
+        <button id="pro-descartar-sim" class="botao botao--perigo" type="button">Descartar gravação</button>
+        <button id="pro-descartar-nao" class="botao botao--linha" type="button">Manter</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- Tela de campo: quase preta, Wake Lock, trava de bolso -->
+<section id="pro-tela-escura" class="tela-gravando m-tela" aria-labelledby="pro-tela-titulo" data-travada="0" hidden>
+  <h2 id="pro-tela-titulo" tabindex="-1">Gravador de campo</h2>
+  <p id="pro-tela-km" class="tela-gravando__num num">0 km</p>
+  <p id="pro-tela-tempo" class="tela-gravando__num tela-gravando__num--tempo num">0 min</p>
+  <p id="pro-tela-status" class="tela-gravando__status" aria-live="polite"></p>
+  <p class="tela-gravando__aviso">Página web não grava com a tela bloqueada.</p>
+  <div class="tela-gravando__botoes" data-some-na-trava>
+    <button id="pro-tela-travar" class="botao botao--escuro botao--grande" type="button">Travar tela</button>
+    <button id="pro-tela-passagem" class="botao botao--escuro" type="button">Marcar passagem</button>
+    <button id="pro-tela-pausar" class="botao botao--escuro" type="button">Pausar</button>
+    <button id="pro-tela-sair" class="botao botao--escuro" type="button">Ver o mapa</button>
+  </div>
+  <button id="pro-tela-destravar" class="botao botao--escuro botao--grande tela-gravando__destravar" type="button" hidden>Toque e segure para destravar</button>
+</section>
+
+<!-- Caderno: negócio -->
+<dialog id="caderno-dlg" class="dialogo" aria-labelledby="caderno-titulo">
+  <form id="caderno-form" class="form" method="dialog" novalidate>
+    <h2 id="caderno-titulo">Negócio</h2>
+    <label for="caderno-negocio">Negócio</label>
+    <input id="caderno-negocio" type="text" maxlength="80" autocomplete="off" required>
+    <p id="caderno-erro" class="erro" role="alert" hidden></p>
+    <label for="caderno-status">Status</label>
+    <select id="caderno-status"></select>
+    <label for="caderno-nota">Nota</label>
+    <textarea id="caderno-nota" maxlength="600" rows="3"></textarea>
+    <label for="caderno-passo">Próximo passo</label>
+    <input id="caderno-passo" type="text" maxlength="140" autocomplete="off">
+    <label for="caderno-data">Data</label>
+    <input id="caderno-data" type="date">
+    <div class="linha-botoes">
+      <button class="botao botao--marca" type="submit">Salvar</button>
+      <button id="caderno-cancelar" class="botao botao--linha" type="button">Cancelar</button>
+      <button id="caderno-apagar" class="botao botao--texto" type="button" hidden>Apagar</button>
+    </div>
+    <div id="caderno-confirma" class="confirma" hidden>
+      <p>Apagar este negócio do caderno?</p>
+      <div class="linha-botoes">
+        <button id="caderno-apagar-sim" class="botao botao--perigo" type="button">Apagar</button>
+        <button id="caderno-apagar-nao" class="botao botao--linha" type="button">Manter</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- PIN -->
+<dialog id="pin-dlg" class="dialogo m-pin" aria-labelledby="pin-titulo">
+  <form id="pin-form" class="form" method="dialog" novalidate>
+    <h2 id="pin-titulo">PIN</h2>
+    <p id="pin-texto"></p>
+    <label for="pin-campo" class="sr-only">PIN de 4 dígitos</label>
+    <input id="pin-campo" class="m-pin__campo num" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" aria-describedby="pin-erro pin-aviso">
+    <p id="pin-erro" class="erro" role="alert" hidden></p>
+    <p id="pin-aviso" class="nota">O PIN é proteção de uso, não cofre.</p>
+    <div class="linha-botoes">
+      <button id="pin-ok" class="botao botao--marca botao--grande" type="submit">Confirmar</button>
+      <button id="pin-cancelar" class="botao botao--linha" type="button">Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Vitrine em tela cheia, presa pela trava -->
+<div id="vitrine" class="vitrine" hidden>
+  <iframe id="vitrine-frame" class="vitrine__frame" title="Demonstração do app do parceiro" allow="fullscreen; geolocation" referrerpolicy="no-referrer"></iframe>
+  <button id="vitrine-sair" class="vitrine__sair" type="button" aria-label="Sair da vitrine: toque e segure, depois digite o PIN">
+    <span class="vitrine__anel" aria-hidden="true"></span>
+    <span class="sr-only">Sair da vitrine</span>
+  </button>
+  <p id="vitrine-dica" class="vitrine__dica" role="status" hidden>Toque e segure para sair da vitrine</p>
+</div>
+
+<div id="marcos-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

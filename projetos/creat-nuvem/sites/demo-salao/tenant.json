@@ -1,0 +1,240 @@
+{
+  "versao": 1,
+  "slug": "demo-salao",
+  "nicho": "salao",
+  "negocio": {
+    "nome": "Esmalte & Fio",
+    "nomeCurto": "Esmalte & Fio",
+    "bordao": "Unha, fio e sobrancelha no Centro, sem pressa.",
+    "endereco": {
+      "rua": "Travessa do Exemplo",
+      "numero": "s/n",
+      "bairro": "Centro",
+      "cidade": "Feira de Santana",
+      "uf": "BA",
+      "cep": "00000-000"
+    },
+    "whatsapp": "5575981151202",
+    "telefoneExibicao": "(75) 98115-1202"
+  },
+  "pagina": {
+    "titulo": "Salão Esmalte & Fio · salão em Feira de Santana",
+    "descricao": "Corte, escova, progressiva, mechas, unhas e sobrancelha no Centro de Feira de Santana, com preço na lista. Escolha o serviço, o dia e a hora."
+  },
+  "funcionamento": {
+    "passoMin": 30,
+    "antecedenciaMin": 60,
+    "diasNaFita": 7,
+    "semana": {
+      "0": null,
+      "1": null,
+      "2": {
+        "abre": "09:00",
+        "fecha": "18:30"
+      },
+      "3": {
+        "abre": "09:00",
+        "fecha": "18:30"
+      },
+      "4": {
+        "abre": "09:00",
+        "fecha": "18:30"
+      },
+      "5": {
+        "abre": "09:00",
+        "fecha": "19:00"
+      },
+      "6": {
+        "abre": "08:00",
+        "fecha": "17:00"
+      }
+    }
+  },
+  "servicos": [
+    {
+      "id": "corte",
+      "nome": "Corte",
+      "preco": 70,
+      "duracaoMin": 60,
+      "descricao": "Lavagem, corte e finalização no comprimento que você pedir, conversado antes da primeira tesourada."
+    },
+    {
+      "id": "escova",
+      "nome": "Escova",
+      "preco": 50,
+      "duracaoMin": 45,
+      "descricao": "Lavagem e escova lisa ou modelada, para um compromisso ou para começar a semana."
+    },
+    {
+      "id": "progressiva",
+      "nome": "Progressiva",
+      "preco": 180,
+      "duracaoMin": 180,
+      "descricao": "Alisamento progressivo do fio, com teste de mecha antes e escova no final."
+    },
+    {
+      "id": "coloracao",
+      "nome": "Coloração",
+      "preco": 150,
+      "duracaoMin": 120,
+      "descricao": "Cor do fio inteiro ou retoque de raiz. O tom é escolhido junto com você, olhando o seu fio na hora."
+    },
+    {
+      "id": "mechas",
+      "nome": "Mechas",
+      "preco": 220,
+      "duracaoMin": 180,
+      "descricao": "Mechas ou luzes no tom que combina com você, com tonalização no final."
+    },
+    {
+      "id": "hidratacao",
+      "nome": "Hidratação",
+      "preco": 80,
+      "duracaoMin": 45,
+      "descricao": "Máscara de tratamento aplicada mecha a mecha no fio."
+    },
+    {
+      "id": "manicure",
+      "nome": "Manicure",
+      "preco": 35,
+      "duracaoMin": 45,
+      "descricao": "Cutícula, lixa e esmalte da sua escolha, com a última camada passada sem pressa."
+    },
+    {
+      "id": "pedicure",
+      "nome": "Pedicure",
+      "preco": 40,
+      "duracaoMin": 50,
+      "descricao": "Cuidado dos pés com cutícula, lixa e esmalte, para sair do salão já de sandália."
+    },
+    {
+      "id": "alongamento-gel",
+      "nome": "Alongamento em gel",
+      "preco": 150,
+      "duracaoMin": 120,
+      "descricao": "Unhas alongadas em gel, no formato e no tamanho que você pedir."
+    },
+    {
+      "id": "sobrancelha",
+      "nome": "Design de sobrancelha",
+      "preco": 35,
+      "duracaoMin": 30,
+      "descricao": "Desenho e acabamento com pinça e linha, respeitando o formato do seu rosto."
+    },
+    {
+      "id": "maquiagem",
+      "nome": "Maquiagem",
+      "preco": 90,
+      "duracaoMin": 60,
+      "descricao": "Maquiagem para festa, formatura ou ensaio, com a pele preparada antes."
+    }
+  ],
+  "profissionais": [
+    {
+      "id": "ana-exemplo",
+      "nome": "Ana (exemplo)",
+      "especialidade": "Unhas e cutícula",
+      "bio": "Profissional de exemplo: no seu site, entra a sua equipe."
+    },
+    {
+      "id": "bia-exemplo",
+      "nome": "Bia (exemplo)",
+      "especialidade": "Cor e escova",
+      "bio": "Profissional de exemplo: no seu site, entra a sua equipe."
+    }
+  ],
+  "avaliacoes": [],
+  "cores": {
+    "fundo": "#FBF1EE",
+    "texto": "#2A1418",
+    "destaque": "#A8123A",
+    "apoio": "#6A4A50"
+  },
+  "agendamento": {
+    "modo": "whatsapp",
+    "mensagem": "Olá! Meu nome é {nome}. Quero pedir um horário: {servico}, {dia} às {hora}."
+  },
+  "textos": {
+    "heroTitulo": "Cadeira pronta e esmalte aberto no Centro.",
+    "heroSubtitulo": "Escolha o dia, a hora e o serviço. O pedido chega pronto no WhatsApp do salão, sem ligação e sem fila de mensagem.",
+    "manifesto": "Aqui a cor é escolhida olhando o seu fio, na luz do espelho. O esmalte leva o tempo de cada camada secar, sem ninguém apressando a próxima. Você sai do jeito que pediu, e não do jeito que deu tempo.",
+    "servicosTitulo": "Serviços da casa",
+    "servicosNota": "Preços de exemplo. No seu site entram os seus valores.",
+    "equipeTitulo": "Quem atende",
+    "avaliacoesTitulo": "Recados de quem vem",
+    "pedidoTitulo": "Peça o seu horário",
+    "pedidoNota": "O pedido chega pronto, com serviço, dia e hora.",
+    "ritualDica": "Pincele a unha para enviar",
+    "confirmacaoTitulo": "Esmalte passado, pedido pronto",
+    "confirmacaoTexto": "Toque em enviar. O horário vale depois que o salão confirma pelo WhatsApp.",
+    "letreiroAberto": "Aberto agora · peça o seu horário",
+    "letreiroFechado": "Fechado agora · abre {dia} às {hora}",
+    "localTitulo": "Onde fica no Centro",
+    "faqTitulo": "Antes de pedir",
+    "faq": [
+      {
+        "pergunta": "Pedir pelo site já marca o horário?",
+        "resposta": "Não. O pedido sai pronto, com serviço, dia e hora, e o horário vale depois da confirmação. Aqui, ele vai para a Creat. No site do seu salão, vai para você."
+      },
+      {
+        "pergunta": "Posso pedir mais de um serviço?",
+        "resposta": "Pode. Escolha o primeiro no site e escreva os outros na mensagem antes de enviar, como mão e pé no mesmo horário."
+      },
+      {
+        "pergunta": "Quanto custa a coloração?",
+        "resposta": "O valor está na lista de serviços. Se o tom pedir mais produto, o salão avisa antes de confirmar."
+      },
+      {
+        "pergunta": "Meus dados ficam salvos?",
+        "resposta": "Nesta demonstração, não: seu nome e seu número somem quando a página fecha. No site de um negócio de verdade, ficam só no aparelho de quem pede, e o botão Esquecer meus dados apaga."
+      }
+    ],
+    "rodapeFrase": "Toalha limpa, pincel lavado e cadeira pronta."
+  },
+  "meta": {
+    "previa": false,
+    "motorVersao": "v1.3",
+    "criadoEm": "2026-11-11T15:45:00.443Z"
+  },
+  "fuso": "America/Bahia",
+  "recados": [
+    {
+      "texto": "Escolhi a cor olhando o meu fio, sem pressa, e saí do jeito que pedi.",
+      "autor": "Cliente de exemplo"
+    },
+    {
+      "texto": "Mão e pé no mesmo horário, pedido pelo celular em um minuto.",
+      "autor": "Cliente de exemplo"
+    }
+  ],
+  "galeria": [
+    {
+      "src": "galeria/salao-1.webp",
+      "alt": "Ilustração de exemplo: fileira de vidros de esmalte em vinho, rosa, bege, preto e lilás, um aberto com o pincel e uma gota de coral.",
+      "legenda": "Ilustração de exemplo: a parede de esmaltes.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/salao-2.webp",
+      "alt": "Ilustração de exemplo: bancada de manicure vista de cima, com almofada de apoio, lixa, alicate de cutícula, algodão, palito, tigela de água e dois esmaltes.",
+      "legenda": "Ilustração de exemplo: a bancada da manicure.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/salao-3.webp",
+      "alt": "Ilustração de exemplo: secador de cabelo, escova, tesoura, pente, borrifador e presilhas sobre fundo vinho listrado, vistos de cima.",
+      "legenda": "Ilustração de exemplo: as ferramentas do cabelo.",
+      "largura": 1024,
+      "altura": 1280
+    },
+    {
+      "src": "galeria/salao-4.webp",
+      "alt": "Ilustração de exemplo: espelho redondo com lâmpadas, cadeira de veludo vinho, carrinho de apoio e planta ao lado de uma janela em arco.",
+      "legenda": "Ilustração de exemplo: o espaço do salão.",
+      "largura": 1024,
+      "altura": 1280
+    }
+  ]
+}
