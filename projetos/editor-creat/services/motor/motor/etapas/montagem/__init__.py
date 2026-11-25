@@ -7,7 +7,7 @@ Ordem e paralelismo (4 CPUs, ARQUITETURA §8):
   overlay do kit (beginFrame, N workers)            ├ ao mesmo tempo
   voz + trilha + SFX + mix (numpy)                  ┘
   -> composição + encode com o áudio numa passada.
-Idempotente: planos e overlay ficam em cache por hash; o final só é refeito se o EDL mudou.
+Idempotente: planos e overlay ficam em cache por hash; o final só é refeito se o EDL ou o código do kit mudou.
 """
 from __future__ import annotations
 
@@ -121,7 +121,7 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
     cor = revisao_cor(edl, res_pl, trabalho / "cor")
     st = res_ov.get("stats") or {}
     rel = {
-        "versao": VERSAO, "edl_hash": hash_obj(edl), "janela": list(janela) if janela else None,
+        "versao": VERSAO, "edl_hash": hash_obj(edl), "kit": OV._versao_kit(), "janela": list(janela) if janela else None,
         "final": res_comp["final"], "mix": res_au["mix"], "stems": res_au["stems"], "overlay_dir": res_ov.get("dir"),
         "overlay": {"quadros": st.get("quadros"), "ms_quadro_worker": st.get("ms_quadro"), "ms_quadro_efetivo": st.get("ms_efetivo"),
                     "workers": st.get("workers"), "repetidos": st.get("repetidos"), "captura": st.get("captura"), "cache": res_ov.get("cache")},
@@ -186,7 +186,7 @@ def etapa_montagem(ctx) -> dict:
     chave_rel = f"saidas/{p}/{v}/montagem.json"
     if arm.existe(chave_rel) and arm.existe(f"saidas/{p}/{v}/final.mp4"):
         ant = json.loads(pathlib.Path(arm.caminho_local(chave_rel)).read_text(encoding="utf-8"))
-        if ant.get("edl_hash") == hash_obj(edl) and ant.get("versao") == VERSAO:
+        if ant.get("edl_hash") == hash_obj(edl) and ant.get("versao") == VERSAO and ant.get("kit") == OV._versao_kit():
             return {"versao": v, "reaproveitada": True, "final": f"saidas/{p}/{v}/final.mp4"}
     rel = montar(edl, trabalho, Fontes(edl, arm, ctx.cfg.dados), ctx.cfg, progresso=ctx.progresso)
     base = f"saidas/{p}/{v}"

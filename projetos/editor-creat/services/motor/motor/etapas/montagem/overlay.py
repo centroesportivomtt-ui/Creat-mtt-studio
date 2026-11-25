@@ -22,7 +22,7 @@ from motor.etapas.montagem.comum import Fontes, gravar_json, hash_obj
 
 KIT = config.KIT
 CHAVES_IMG = ("src", "imagem", "logo", "logo_cliente", "logo_parceiro")
-MODELOS_LEGENDA = ("legenda", "legenda_revelada")   # camadas que JÁ são a legenda do filme: com uma delas, nada de padrão
+MODELOS_LEGENDA = ("legenda", "legenda_revelada", "legenda_adesivo")   # camadas que JÁ são a legenda do filme: com uma delas, nada de padrão
 
 
 def _fixa_caminhos(obj, fontes: Fontes | None):
@@ -86,13 +86,22 @@ def cena_do_edl(edl: dict, fontes: Fontes | None = None, atras: bool | None = No
             "duracao": float(edl["duracao"]), "cor": "transparent", "camadas": [m for m in motion if m["ate"] > m["de"]]}
 
 
+def _versao_kit() -> str:
+    """Impressão do código do kit (nome, tamanho e data de cada .js/.css/.html): mudar um modelo invalida o cache do overlay.
+    Sem isso, um ajuste no kit com o EDL igual reaproveitava o overlay antigo em silêncio (Maryna, 25/11/2026)."""
+    raiz = pathlib.Path(KIT)
+    itens = sorted((str(f.relative_to(raiz)), f.stat().st_size, int(f.stat().st_mtime))
+                   for f in raiz.rglob("*") if f.is_file() and f.suffix in (".js", ".css", ".html"))
+    return hash_obj(itens)
+
+
 def renderizar(edl: dict, fontes: Fontes | None, base: pathlib.Path, *, workers: int = 3, janela: tuple[float, float] | None = None,
                nice: int = 5, progresso=None, atras: bool | None = None) -> dict:
     """Devolve {'dir', 'stats', 'cena', 'cache'}. Idempotente por hash da cena + janela. `atras` como em cena_do_edl."""
     cena = cena_do_edl(edl, fontes, atras)
     if not cena["camadas"]:
         return {"dir": None, "stats": {"quadros": 0}, "cena": cena, "cache": False}
-    h = hash_obj(cena, janela, "ov2")
+    h = hash_obj(cena, janela, "ov2", _versao_kit())
     d = base / h
     feito = d / "_feito.json"
     if feito.exists():

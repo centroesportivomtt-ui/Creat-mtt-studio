@@ -10,7 +10,7 @@ import numpy as np
 
 ID, BLOQUEIA = "zona_segura", True
 ZONA = {"topo": 285, "base": 440, "direita": 120, "esquerda": 60}
-TELA_CHEIA = {"fecho", "fecho2", "fundo", "transicao", "hud", "abas", "heroi", "camadas", "pilha", "stats", "papel"}
+TELA_CHEIA = {"fecho", "fecho2", "vitrine", "fundo", "transicao", "hud", "abas", "heroi", "camadas", "pilha", "stats", "papel"}
 TOL = 16
 CHEIO = 0.95        # quadro com >= 95% do overlay opaco é tela cheia (preto inicial, cartão): não há texto "fora" a medir
 
