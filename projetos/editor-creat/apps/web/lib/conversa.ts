@@ -30,6 +30,17 @@ export type DadosTurnoFim = {
 };
 export type DadosMostrar = { versao?: string; arquivo_id?: string; tempo_s?: number };
 export type DadosAvisoRetomar = { acao: 'retomar'; turno: Turno };
+// onda 2, mesa ao vivo: quem trabalha, com que ferramenta e modelo, quanto tempo, quanto custou e o que achou
+export type FasePasso = 'inicio' | 'fim' | 'erro' | 'interrompido';
+export type DadosPasso = {
+  passo: string; pai?: string; chave: string; fase: FasePasso; ferramenta?: string; modelo?: string; esforco?: 'low' | 'medium' | 'high';
+  s?: number; custo_usd?: number; custo_total_usd?: number; estimado?: boolean; tokens?: Tokens; conta?: string;
+  numeros?: Record<string, number | string>; achado?: string;
+};
+export type DadosDecisao = {
+  conceito: string; gancho: string; alem_do_pedido: string; riscos: string[]; critica: string;
+  blocos?: { id: string; funcao: string; intensidade?: number }[]; trilha?: { clima: string; drop_em?: string };
+};
 
 // efêmeros (sem id: não entram no "vistos" nem mexem no Last-Event-ID)
 export type DadosRascunho = { turno: Turno; bloco: number; texto: string; andamento?: string; v: number };
@@ -37,6 +48,7 @@ export type MotivoDesligada = 'sem_chave' | 'desligada_no_servidor' | 'desligada
 export type DadosInstantaneo = {
   ligada: boolean; motivo?: MotivoDesligada; turno_rodando?: Turno; rascunho?: DadosRascunho;
   espera?: { tipo: 'pergunta' | 'confirmacao'; tool_use_id: string }; gasto_hoje_usd: number; teto_usd_dia: number;
+  passos_abertos?: { passo: string; chave: string; desde: string }[];
 };
 
 export const TIPOS_CONVERSA = ['fala_dono', 'fala_editor', 'ferramenta', 'pergunta', 'confirmacao', 'resposta', 'turno_fim', 'mostrar'] as const;

@@ -77,12 +77,16 @@ function mudarEstado(p, estado, mensagem) {
 async function lerArquivo(p, a) {
   emitir(p.id, 'arquivo_recebido', { alvo: a.id, mensagem: `Chegou: ${a.nome}` });
   emitir(p.id, 'etapa_inicio', { etapa: 'ingest', alvo: a.id, mensagem: `Lendo quadros-chave e áudio de ${a.nome}` });
-  await dormir(PASSO / 2);
+  const mi = mesaInicio(p, 'ingest', a.id);            // mesa ao vivo (onda 2, bloco no fim do arquivo)
+  await mi.trecho(0, 1, PASSO / 2);
   a.estado = 'ingerido';
+  mi.fim();
   emitir(p.id, 'etapa_fim', { etapa: 'ingest', alvo: a.id, progresso: 1, mensagem: `${a.nome}: quadros-chave e áudio prontos` });
   emitir(p.id, 'etapa_inicio', { etapa: 'analise', alvo: a.id, mensagem: `Transcrevendo as falas de ${a.nome}` });
-  await dormir(PASSO / 2);
+  const ma = mesaInicio(p, 'analise', a.id);
+  await ma.trecho(0, 1, PASSO / 2);
   a.estado = 'analisado';
+  ma.fim();
   emitir(p.id, 'etapa_fim', { etapa: 'analise', alvo: a.id, progresso: 1, mensagem: `${a.nome}: falas, momentos e rostos lidos` });
   tentarDirigir(p);
 }
@@ -98,11 +102,13 @@ function tentarDirigir(p) {
 
 async function etapa(p, nome, alvo, mensagens) {
   emitir(p.id, 'etapa_inicio', { etapa: nome, alvo, mensagem: mensagens[0] });
+  const m = mesaInicio(p, nome, alvo);                 // mesa ao vivo: os passos de dentro correm no mesmo tempo de antes
   for (let i = 1; i < mensagens.length; i++) {
-    await dormir(PASSO);
+    await m.trecho(i - 1, mensagens.length, PASSO);
     emitir(p.id, 'etapa_progresso', { etapa: nome, alvo, progresso: i / mensagens.length, mensagem: mensagens[i] });
   }
-  await dormir(PASSO);
+  await m.trecho(mensagens.length - 1, mensagens.length, PASSO);
+  m.fim();
   emitir(p.id, 'etapa_fim', { etapa: nome, alvo, progresso: 1, mensagem: `${mensagens[0].replace(/…$/, '')}: pronto` });
 }
 
@@ -534,6 +540,8 @@ function instantaneoC(pid) {
   if (ctx) { d.turno_rodando = ctx.turno; const r = CONVERSA.rascunho.get(pid); if (r && r.turno === ctx.turno) d.rascunho = { ...r }; }
   const e = CONVERSA.espera.get(pid);
   if (e) d.espera = { tipo: e.tipo, tool_use_id: e.tool_use_id };
+  const ab = passosAbertos(pid);
+  if (ab.length) d.passos_abertos = ab;
   return d;
 }
 
@@ -761,6 +769,8 @@ async function rotearConversa(req, res, url, partes) {
       if (typeof c.ligada === 'boolean') CONVERSA.ligada = c.ligada;
       return json(res, 200, estadoChaveC());
     }
+    if (pid === 'mesa-erro' && projetos.has(r3)) return json(res, 200, mesaErro(projetos.get(r3)));
+    if (pid === 'mesa-interrompida' && projetos.has(r3)) return json(res, 200, mesaInterrompida(projetos.get(r3)));
     if (pid === 'interromper' && projetos.has(r3)) {
       // como o motor real no boot (reconciliar_conversas): turno aberto ganha turno_fim "erro" e um aviso "retomar"
       const ctx = CONVERSA.rodando.get(r3);
@@ -911,4 +921,135 @@ function pararC(pid, ctx) {
   emitirC(pid, 'turno_fim', { turno: ctx.turno, stop: 'parado', custo_usd: custo, estimado: true, s: +((Date.now() - ctx.t0) / 1000).toFixed(1), gasto_hoje_usd: +CONVERSA.gasto.toFixed(4), tokens: TOKENS, ...(parcial ? { texto_parcial: parcial } : {}) });
   CONVERSA.rodando.delete(pid);
   CONVERSA.rascunho.delete(pid);
+}
+
+// =====================================================================================================================
+// Mesa ao vivo (onda 2; docs/plano-conversa-25-11.md, seção 7 e 13.3): o mesmo contrato do motor real
+// (services/motor/motor/etapas/passos.py). Cada etapa simulada abre um passo raiz e, dentro dela, os passos da equipe
+// (com ferramenta, modelo, esforço, tokens, conta, custo e achado em números), e a direção emite a `decisao`.
+// Os números são de um filme de exemplo (14 falas, 6 momentos fortes, 275 ml conferido): o site só mostra o que chega.
+// =====================================================================================================================
+const novoPasso = () => 'ps_' + randomBytes(5).toString('hex');
+const conta = (m, partes, c) => `${m}: (${partes}) ÷ 1.000.000 = US$ ${c.toFixed(4).replace('.', ',')}`;
+const PASSOS_MESA = {
+  ingest: [],
+  analise: [
+    { chave: 'analise.transcricao', ferramenta: 'faster-whisper small', numeros: { falas: 14, palavras: 212 }, achado: '14 falas em 52 s de vídeo' },
+    { chave: 'analise.visao', ferramenta: 'visão claude-leve', modelo: 'claude-haiku-5-5', custo_usd: 0.0011,
+      tokens: { entrada: 9000, cache_lida: 0, cache_escrita: 0, saida: 400 }, conta: conta('claude-haiku-5-5', '9.000 novos × 0.1 + 400 de saída × 0.5', 0.0011),
+      numeros: { momentos: 9, fortes: 6, rostos: 3, cenas: 4 }, achado: '14 falas, 6 momentos fortes de 9 marcados' },
+  ],
+  catalogo: [],
+  direcao: [
+    { chave: 'direcao.diretor', ferramenta: 'Claude (Messages API, JSON estrito, cache do catálogo)', modelo: 'claude-opus-5-5', esforco: 'high', custo_usd: 0.0698,
+      tokens: { entrada: 1200, cache_lida: 15000, cache_escrita: 0, saida: 3100 }, conta: conta('claude-opus-5-5', '1.200 novos × 4 + 15.000 do cache × 0.2 + 3.100 de saída × 20', 0.0698),
+      numeros: { blocos: 5 }, achado: 'Conceito: a equipe chega e o salão vira palco.' },
+    { chave: 'direcao.resolvedor', ferramenta: 'resolvedor do editor (encaixe por palavra e batida)', numeros: { dur: 38, blocos: 5, planos: 14, falas: 9, drop_s: 14 },
+      achado: '38 s em 5 blocos e 14 planos, 9 trechos de fala; a música explode aos 0:14' },
+    { chave: 'direcao.critico', ferramenta: 'Claude (Messages API, JSON estrito, cache do catálogo)', modelo: 'claude-opus-5-5', esforco: 'medium', custo_usd: 0.0226,
+      tokens: { entrada: 400, cache_lida: 15000, cache_escrita: 0, saida: 900 }, conta: conta('claude-opus-5-5', '400 novos × 4 + 15.000 do cache × 0.2 + 900 de saída × 20', 0.0226),
+      numeros: { avisos: 2, resultado: 'sem mudança' }, achado: 'Manteve a direção (2 pontos conferidos)' },
+  ],
+  montagem: [
+    { chave: 'montagem.fatos', ferramenta: 'Claude com busca na web (fonte oficial) e leitura do rótulo nos quadros', numeros: { n: 1, confere: 1, corrigidos: 0, sem_fonte: 0 }, achado: '275 ml confere' },
+    { chave: 'montagem.voz', ferramenta: 'DeepFilterNet3 (limpeza com IA, local) + nivelamento', numeros: { n: 9 }, achado: '9 trechos de fala limpos e nivelados' },
+    { chave: 'montagem.planos', ferramenta: 'ffmpeg: cor por ambiente, estabilização e enquadre', numeros: { n: 14 }, achado: '14 planos com cor e enquadre (3 já estavam prontos)' },
+    { chave: 'montagem.overlay', ferramenta: 'Chromium + kit de motion da casa, quadro a quadro', numeros: { n: 23, quadros: 1140 }, achado: '23 camadas de legenda e motion em 1140 quadros' },
+    { chave: 'montagem.mix', ferramenta: 'mixagem do editor (ducking da música sob a fala, -14 LUFS)', numeros: { lufs: -14.1, margem_db: 9 }, achado: 'Fala 9 dB acima da música; -14,1 LUFS; o acorde final cai aos 0:36' },
+    { chave: 'montagem.comp', ferramenta: 'ffmpeg (libx264), vídeo e áudio numa passada', numeros: { Q: 1140 }, achado: '1140 quadros compostos' },
+  ],
+  qa: [
+    ['lufs', 'ok', '-14,1 LUFS (alvo -14)'], ['true_peak', 'ok', 'pico -1,4 dBTP'], ['frase_repetida', 'ok', 'nenhuma frase repetida'],
+    ['tom_sala_sem_voz', 'ok', 'tom de sala por baixo de todo silêncio'], ['quadros_pretos', 'ok', 'nenhum quadro preto fora do fade'],
+    ['zona_segura', 'ok', 'legendas dentro da zona segura do Reels'], ['formato', 'ok', '1080x1920 30fps H.264'],
+    ['voz_externa', 'aviso', '[em observação] 1 fala de outra voz aos 0:06'], ['olho_ia', 'ok', 'o Claude olhou 6 imagens e não achou defeito'],
+  ].map(([id, r, a]) => ({ chave: `qa.${id}`, ferramenta: `motor.etapas.qa.${id}`, numeros: { nome: id, resultado: r }, achado: a,
+    ...(id === 'olho_ia' ? { modelo: 'claude-haiku-5-5', custo_usd: 0.00075, tokens: { entrada: 6000, cache_lida: 0, cache_escrita: 0, saida: 300 }, conta: conta('claude-haiku-5-5', '6.000 novos × 0.1 + 300 de saída × 0.5', 0.00075) } : {}) })),
+  entrega: [],
+};
+const RAIZ_MESA = {
+  catalogo: { numeros: { falas: 14, momentos: 9, videos: 1 }, achado: '14 falas e 9 momentos de 1 vídeo, prontos para o diretor' },
+  analise: { numeros: { falas: 14, momentos: 9 } },
+  qa: { numeros: { aprovadas: 8, total: 9 }, achado: 'Passou em 8 de 9 conferências' },
+};
+const DECISAO = {
+  conceito: 'A equipe chega e o salão vira palco.', gancho: 'NÃO É SÓ FILMAR. (risca FILMAR e vira CONTAR)',
+  alem_do_pedido: 'Gancho com troca de palavra no quadro 0; fecho com o acorde caindo no logo', critica: 'sem mudança',
+  riscos: ['"creat" transcrito com confiança 0,7: conferir na legenda', 'Rosto de terceiro aos 0:22'],
+  blocos: [{ id: 'B1', funcao: 'gancho', intensidade: 4 }, { id: 'B2', funcao: 'prova', intensidade: 5 }, { id: 'B3', funcao: 'bastidor', intensidade: 3 },
+    { id: 'B4', funcao: 'climax', intensidade: 5 }, { id: 'B5', funcao: 'convite', intensidade: 4 }],
+  trilha: { clima: 'energia de evento', drop_em: 'B2' },
+};
+function emitirPasso(p, etapaNome, alvo, dados) { emitir(p.id, 'passo', { etapa: etapaNome, alvo: alvo ?? null, dados }); }
+function mesaInicio(p, nome, alvo) {
+  const numeros = {};
+  const i = alvo ? p.arquivos.findIndex((a) => a.id === alvo) : -1;
+  if (i >= 0) { numeros.n = i + 1; const a = p.arquivos[i]; if (a.bytes >= 50000) numeros.mb = +(a.bytes / 1e6).toFixed(1); }
+  else if (alvo && /^v\d+$/.test(alvo)) numeros.versao = alvo;
+  const raiz = { passo: novoPasso(), chave: nome, t0: Date.now() };
+  emitirPasso(p, nome, alvo, { passo: raiz.passo, chave: nome, fase: 'inicio', numeros });
+  const filhos = PASSOS_MESA[nome] ?? [];
+  let custo = 0;
+  const heranca = { ...(numeros.n ? { n: numeros.n } : {}), ...(numeros.versao ? { versao: numeros.versao } : {}) };
+  return {
+    async trecho(i, total, ms) {
+      const de = Math.floor((i * filhos.length) / total), ate = Math.floor(((i + 1) * filhos.length) / total);
+      const meus = filhos.slice(de, ate);
+      if (!meus.length) { await dormir(ms); return; }
+      for (const f of meus) {
+        const id = novoPasso();
+        const { custo_usd, tokens, conta: ct, achado, ...base } = f;
+        const nums = { ...heranca, ...(f.numeros ?? {}) };
+        emitirPasso(p, nome, alvo, { passo: id, pai: raiz.passo, ...base, fase: 'inicio', numeros: nums });
+        const t0 = Date.now();
+        await dormir(ms / meus.length);
+        custo += custo_usd ?? 0;
+        emitirPasso(p, nome, alvo, { passo: id, pai: raiz.passo, ...base, fase: 'fim', s: +((Date.now() - t0) / 1000).toFixed(2), numeros: nums,
+          ...(custo_usd ? { custo_usd } : {}), ...(tokens ? { tokens } : {}), ...(ct ? { conta: ct } : {}), ...(achado ? { achado } : {}) });
+      }
+    },
+    fim() {
+      if (nome === 'direcao') emitir(p.id, 'decisao', { etapa: 'direcao', alvo: `v${p.versoes.length + 1}`, dados: DECISAO });
+      const r = RAIZ_MESA[nome] ?? {};
+      emitirPasso(p, nome, alvo, { passo: raiz.passo, chave: nome, fase: 'fim', s: +((Date.now() - raiz.t0) / 1000).toFixed(2),
+        numeros: { ...numeros, ...(r.numeros ?? {}) }, ...(r.achado ? { achado: r.achado } : {}), ...(custo > 0 ? { custo_total_usd: +custo.toFixed(5) } : {}) });
+    },
+  };
+}
+function passosAbertos(pid) {
+  const por = new Map();
+  for (const e of eventos) {
+    if (e.projeto !== pid || e.tipo !== 'passo') continue;
+    const d = e.dados;
+    if (d.fase === 'inicio') por.set(d.passo, { passo: d.passo, chave: d.chave, desde: e.ts });
+    else por.delete(d.passo);
+  }
+  return [...por.values()];
+}
+// /v1/_teste/mesa-erro/<pid>: um vídeo que não dá para ler (frase em pt-BR, técnico recolhido) e o aviso de que ficou de fora
+function mesaErro(p) {
+  const a = p.arquivos[p.arquivos.length - 1];
+  const alvo = a?.id ?? 'a_quebrado';
+  const n = a ? p.arquivos.length : 2;
+  emitir(p.id, 'etapa_inicio', { etapa: 'analise', alvo, mensagem: `Radar começou a ouvir e olhar o vídeo ${n}.` });
+  const raiz = novoPasso(), filho = novoPasso();
+  emitirPasso(p, 'analise', alvo, { passo: raiz, chave: 'analise', fase: 'inicio', numeros: { n } });
+  emitirPasso(p, 'analise', alvo, { passo: filho, pai: raiz, chave: 'analise.transcricao', ferramenta: 'faster-whisper small', fase: 'inicio', numeros: { n } });
+  emitirPasso(p, 'analise', alvo, { passo: filho, pai: raiz, chave: 'analise.transcricao', ferramenta: 'faster-whisper small', fase: 'erro', s: 0.8, numeros: { n }, achado: 'Parou com um erro técnico (veja o detalhe).' });
+  const frase = `A leitura do vídeo ${n} parou.`;
+  emitirPasso(p, 'analise', alvo, { passo: raiz, chave: 'analise', fase: 'erro', s: 0.9, numeros: { n }, achado: frase });
+  emitir(p.id, 'etapa_erro', { etapa: 'analise', alvo, mensagem: frase, dados: { detalhe: 'ValueError: moov atom not found (<script>alert(1)</script>)', vai_tentar: false } });
+  emitir(p.id, 'aviso', { etapa: 'analise', alvo, mensagem: `O vídeo ${n} (<b>quebrado</b>.mov) não pôde ser lido e ficou de fora. O resto do material segue.`, dados: { detalhe: 'ValueError: moov atom not found' } });
+  return { ok: true };
+}
+// /v1/_teste/mesa-interrompida/<pid>: o editor reiniciou no meio da montagem (o motor real fecha com fase 'interrompido')
+function mesaInterrompida(p) {
+  const v = `v${p.versoes.length + 1}`;
+  emitir(p.id, 'etapa_inicio', { etapa: 'montagem', alvo: v, mensagem: `A montagem da ${v.toUpperCase()} começou: voz, planos, legendas e mix.` });
+  const raiz = novoPasso(), filho = novoPasso();
+  emitirPasso(p, 'montagem', v, { passo: raiz, chave: 'montagem', fase: 'inicio', numeros: { versao: v } });
+  emitirPasso(p, 'montagem', v, { passo: filho, pai: raiz, chave: 'montagem.comp', fase: 'inicio', numeros: { versao: v, Q: 1140 } });
+  emitirPasso(p, 'montagem', v, { passo: filho, pai: raiz, chave: 'montagem.comp', fase: 'interrompido' });
+  emitirPasso(p, 'montagem', v, { passo: raiz, chave: 'montagem', fase: 'interrompido' });
+  return { ok: true, versao: v };
 }

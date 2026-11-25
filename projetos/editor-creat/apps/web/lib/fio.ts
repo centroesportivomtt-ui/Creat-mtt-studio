@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Evento } from './estados';
 import type {
-  DadosConfirmacao, DadosFalaDono, DadosFalaEditor, DadosFerramenta, DadosInstantaneo, DadosMostrar, DadosPergunta,
+  DadosConfirmacao, DadosDecisao, DadosFalaDono, DadosFalaEditor, DadosFerramenta, DadosInstantaneo, DadosMostrar, DadosPasso, DadosPergunta,
   DadosRascunho, DadosResposta, DadosTurnoFim,
 } from './conversa';
 import { TIPOS_CONVERSA } from './conversa';
@@ -161,9 +161,13 @@ export function useFioAoVivo(pid: string, aoProjeto: (e: Evento) => void, aoSess
 }
 
 // ---------------- do evento para o que a tela mostra ----------------
+// Um passo da mesa (onda 2): o par de eventos `passo` vira uma linha só, atualizada no lugar.
+export type PassoMesa = DadosPasso & { id: number; inicio: string; fimTs?: string };
 export type LinhaMesa =
-  | { k: 'etapa'; chave: string; id: number; etapa: string; alvo: string | null; fase: 'rodando' | 'feito' | 'erro'; inicio: string; fim?: string; mensagem?: string | null }
-  | { k: 'nota'; id: number; tom: 'alerta' | 'info'; texto: string; ts: string };
+  | { k: 'etapa'; chave: string; id: number; etapa: string; alvo: string | null; fase: 'rodando' | 'feito' | 'erro' | 'interrompido'; inicio: string; fim?: string;
+      mensagem?: string | null; progressoMsg?: string | null; detalhe?: string; raiz?: PassoMesa; passos: PassoMesa[] }
+  | { k: 'nota'; id: number; tom: 'alerta' | 'info'; texto: string; ts: string; detalhe?: string }
+  | { k: 'decisao'; id: number; versao: string | null; d: DadosDecisao };
 export type Ferr = DadosFerramenta & { id: number; inicio: string; fimTs?: string };
 export type Item =
   | { k: 'dono'; id: number; ts: string; d: DadosFalaDono }
@@ -183,12 +187,21 @@ export type Fio = {
   ultimoFim: DadosTurnoFim | null;
   temConversa: boolean;
   mesaRodando: boolean;
+  agora: PassoMesa[];                      // quem está trabalhando agora (passos abertos, do mais antigo ao mais novo)
+  custoMesa: number;                       // soma dos passos pagos (o livro de gastos do projeto)
+  custoConversa: number;                   // soma das respostas do Nimbus neste projeto
+  porAgente: { chave: string; custo: number }[];  // placar do taxímetro (chave do passo; o site troca pelo agente)
+  falas: number;                           // mensagens do dono e respostas do Nimbus (para o "abrir a conversa")
 };
 
 export function montarFio(eventos: Evento[], progresso: Record<string, Progresso>): Fio {
   const itens: Item[] = [];
   const porTool = new Map<string, Item & { k: 'ferramenta' | 'pergunta' | 'confirmacao' }>();
   const abertas = new Map<string, LinhaMesa & { k: 'etapa' }>();
+  const ultimaLinha = new Map<string, LinhaMesa & { k: 'etapa' }>();   // a linha mais nova de cada etapa|alvo (eventos que chegam depois do fim)
+  const porPasso = new Map<string, PassoMesa>();
+  let custoConversa = 0;
+  let falas = 0;
   const inicio: Record<string, number> = {};
   const fim: Record<string, number> = {};
   const turnoDaPergunta: Record<string, string> = {};
@@ -205,6 +218,7 @@ export function montarFio(eventos: Evento[], progresso: Record<string, Progresso
     switch (e.tipo) {
       case 'fala_dono': {
         temConversa = true;
+        falas += 1;
         const f = d as DadosFalaDono;
         itens.push({ k: 'dono', id: e.id, ts: e.ts, d: f });
         if (turno && !f.na_fila) inicio[turno] = e.id;
@@ -212,6 +226,7 @@ export function montarFio(eventos: Evento[], progresso: Record<string, Progresso
       }
       case 'fala_editor':
         temConversa = true;
+        falas += 1;
         itens.push({ k: 'editor', id: e.id, d: d as DadosFalaEditor });
         if (turno) inicio[turno] = e.id;
         break;
@@ -260,6 +275,7 @@ export function montarFio(eventos: Evento[], progresso: Record<string, Progresso
         temConversa = true;
         const f = d as DadosTurnoFim;
         if (turno) fim[turno] = e.id;
+        custoConversa += Number(f.custo_usd) || 0;
         // pausa sem texto e sem custo não ganha rodapé próprio: o cartão já está na tela
         itens.push({ k: 'fim', id: e.id, d: f });
         ultimoFim = f;
@@ -271,7 +287,7 @@ export function montarFio(eventos: Evento[], progresso: Record<string, Progresso
         break;
       case 'aviso':
         if (d.acao === 'retomar' && turno) { temConversa = true; itens.push({ k: 'retomar', id: e.id, turno, ativo: true }); }
-        else if (e.mensagem) mesa({ k: 'nota', id: e.id, tom: 'alerta', texto: e.mensagem, ts: e.ts });
+        else if (e.mensagem) mesa({ k: 'nota', id: e.id, tom: 'alerta', texto: e.mensagem, ts: e.ts, ...(typeof d.detalhe === 'string' ? { detalhe: d.detalhe } : {}) });
         break;
       case 'cliente':
         if (e.mensagem) mesa({ k: 'nota', id: e.id, tom: 'info', texto: e.mensagem, ts: e.ts });
@@ -279,8 +295,9 @@ export function montarFio(eventos: Evento[], progresso: Record<string, Progresso
       case 'etapa_inicio': {
         if (!e.etapa) break;
         const chave = `${e.etapa}|${e.alvo ?? ''}`;
-        const l: LinhaMesa & { k: 'etapa' } = { k: 'etapa', chave, id: e.id, etapa: e.etapa, alvo: e.alvo, fase: 'rodando', inicio: e.ts, mensagem: e.mensagem };
+        const l: LinhaMesa & { k: 'etapa' } = { k: 'etapa', chave, id: e.id, etapa: e.etapa, alvo: e.alvo, fase: 'rodando', inicio: e.ts, mensagem: e.mensagem, passos: [] };
         abertas.set(chave, l);
+        ultimaLinha.set(chave, l);
         mesa(l);
         break;
       }
@@ -289,11 +306,42 @@ export function montarFio(eventos: Evento[], progresso: Record<string, Progresso
         if (!e.etapa) break;
         const chave = `${e.etapa}|${e.alvo ?? ''}`;
         const fase = e.tipo === 'etapa_fim' ? 'feito' : 'erro';
+        const det = typeof d.detalhe === 'string' ? d.detalhe : undefined;
         const l = abertas.get(chave);
-        if (l) { l.fase = fase; l.fim = e.ts; l.mensagem = e.mensagem ?? l.mensagem; abertas.delete(chave); }
-        else mesa({ k: 'etapa', chave, id: e.id, etapa: e.etapa, alvo: e.alvo, fase, inicio: e.ts, fim: e.ts, mensagem: e.mensagem });
+        if (l) { l.fase = fase; l.fim = e.ts; l.mensagem = e.mensagem ?? l.mensagem; l.detalhe = det; abertas.delete(chave); }
+        else {
+          const nova: LinhaMesa & { k: 'etapa' } = { k: 'etapa', chave, id: e.id, etapa: e.etapa, alvo: e.alvo, fase, inicio: e.ts, fim: e.ts, mensagem: e.mensagem, detalhe: det, passos: [] };
+          ultimaLinha.set(chave, nova);
+          mesa(nova);
+        }
         break;
       }
+      case 'passo': {
+        const ps = d as unknown as DadosPasso;
+        if (typeof ps.passo !== 'string' || typeof ps.chave !== 'string') break;
+        const ja = porPasso.get(ps.passo);
+        if (ja) {
+          Object.assign(ja, ps, { id: ja.id, inicio: ja.inicio, fimTs: ps.fase === 'inicio' ? undefined : e.ts });
+          break;
+        }
+        const novo: PassoMesa = { ...ps, id: e.id, inicio: e.ts, fimTs: ps.fase === 'inicio' ? undefined : e.ts };
+        porPasso.set(ps.passo, novo);
+        const chave = `${e.etapa ?? ''}|${e.alvo ?? ''}`;
+        let l = abertas.get(chave) ?? ultimaLinha.get(chave);
+        if (!l && e.etapa) {   // passo sem etapa_inicio visível (histórico cortado): a linha nasce dele
+          l = { k: 'etapa', chave, id: e.id, etapa: e.etapa, alvo: e.alvo, fase: 'rodando', inicio: e.ts, passos: [] };
+          abertas.set(chave, l);
+          ultimaLinha.set(chave, l);
+          mesa(l);
+        }
+        if (!l) break;
+        if (!ps.pai) l.raiz = novo;
+        else l.passos.push(novo);
+        break;
+      }
+      case 'decisao':
+        mesa({ k: 'decisao', id: e.id, versao: e.alvo, d: d as unknown as DadosDecisao });
+        break;
       default:
         break;
     }
@@ -301,7 +349,27 @@ export function montarFio(eventos: Evento[], progresso: Record<string, Progresso
   // progresso fundido no lugar: só a mensagem mais nova da etapa aberta
   for (const [chave, l] of abertas) {
     const p = progresso[chave];
-    if (p?.mensagem) l.mensagem = p.mensagem;
+    if (p?.mensagem) l.progressoMsg = p.mensagem;
+  }
+  // a mesa interrompida (o editor reiniciou no meio) não fica pulsando: o passo raiz 'interrompido' fecha a linha
+  for (const l of ultimaLinha.values()) {
+    if (l.fase === 'rodando' && l.raiz && l.raiz.fase !== 'inicio') {
+      l.fase = l.raiz.fase === 'fim' ? 'feito' : l.raiz.fase === 'erro' ? 'erro' : 'interrompido';
+      l.fim = l.raiz.fimTs;
+      abertas.delete(l.chave);
+    }
+    if (l.fase !== 'rodando') for (const x of l.passos) if (x.fase === 'inicio') { x.fase = 'interrompido'; x.fimTs = l.fim; }
+  }
+  const agoraMesa = [...porPasso.values()].filter((x) => x.fase === 'inicio' && x.pai).sort((a, b) => a.id - b.id);
+  // etapa rodando sem filho aberto (catálogo, entrega, motor sem passos): o raiz conta como "trabalhando"
+  for (const l of abertas.values()) if (!l.passos.some((x) => x.fase === 'inicio')) agoraMesa.push(l.raiz ?? { passo: `e${l.id}`, chave: l.etapa, fase: 'inicio', id: l.id, inicio: l.inicio, numeros: l.alvo && /^v\d+$/.test(l.alvo) ? { versao: l.alvo } : undefined });
+  let custoMesa = 0;
+  const placar = new Map<string, number>();
+  for (const x of porPasso.values()) {
+    const c = Number(x.custo_usd) || 0;
+    if (c <= 0) continue;
+    custoMesa += c;
+    placar.set(x.chave, (placar.get(x.chave) ?? 0) + c);
   }
   // aviso "retomar" vale enquanto nada aconteceu na conversa depois dele
   for (const it of itens) {
@@ -314,7 +382,10 @@ export function montarFio(eventos: Evento[], progresso: Record<string, Progresso
   for (const it of itens) {
     if ((it.k === 'pergunta' || it.k === 'confirmacao') && !it.r) espera = { tipo: it.k, tool_use_id: it.d.tool_use_id, id: it.id };
   }
-  return { itens, rodando, espera, ultimoFim, temConversa, mesaRodando: abertas.size > 0 };
+  return {
+    itens, rodando, espera, ultimoFim, temConversa, mesaRodando: abertas.size > 0, agora: agoraMesa.sort((a, b) => a.id - b.id),
+    custoMesa, custoConversa, porAgente: [...placar.entries()].map(([chave, custo]) => ({ chave, custo })), falas,
+  };
 }
 
 export function progressoDe(progresso: Record<string, Progresso>, etapa: string, alvo: string | null): number | null {

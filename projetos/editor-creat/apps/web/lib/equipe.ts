@@ -7,6 +7,7 @@ type Passo = { chave: string; agente: string; rodando: string | null; feito: str
 type Agente = { cargo: string; cor: string; inicial: string };
 const AGENTES = equipe.agentes as Record<string, Agente>;
 const PASSOS = equipe.passos as Passo[];
+const CHECAGENS = (equipe as { checagens?: Record<string, string> }).checagens ?? {};
 
 export type Quem = { agente: string; cor: string; inicial: string; cargo: string };
 export function quem(agente: string): Quem {
@@ -68,4 +69,37 @@ export function rotuloEtapa(etapa: string, fase: 'rodando' | 'feito' | 'erro', n
   const modelo = e[fase];
   const texto = preencher(modelo, nums) ?? modelo.replace(/\s*(d[aoe] )?\{[^}]+\}:?/g, '').replace(/^ /, '').trim();
   return { agentes: e.agentes.map(quem), texto: texto ? texto[0].toUpperCase() + texto.slice(1) : texto };
+}
+
+/** Nome da checagem do QA na língua do dono ("zona segura", "volume (LUFS)"); desconhecida fica com o id. */
+export function nomeChecagem(id: string): string {
+  return CHECAGENS[id] ?? id.replace(/_/g, ' ');
+}
+
+/** Quem faz um passo da mesa (chave do evento `passo`). */
+export function agenteDoPasso(chave: string): Quem {
+  return quem(achar(chave)?.agente ?? 'Nimbus');
+}
+
+/** Rótulo de um passo da mesa (onda 2): gerúndio rodando, passado com os números do motor quando termina.
+ *  "Radar · Ouvindo as falas do vídeo 2" → "Radar · Ouviu 14 falas". Sem o número, a frase sai sem ele (nunca "{n}"). */
+export function rotuloPasso(chave: string, fase: 'inicio' | 'fim' | 'erro' | 'interrompido', numeros: Record<string, string | number> = {}, s?: number) {
+  const p = achar(chave);
+  const q = quem(p?.agente ?? 'Nimbus');
+  const nums: Record<string, string | number | undefined> = { ...numeros };
+  if (typeof nums.versao === 'string') nums.versao = nums.versao.toUpperCase();
+  if (typeof nums.nome === 'string') nums.nome = nomeChecagem(nums.nome);
+  if (typeof s === 'number') nums.s = s < 10 ? s.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) : Math.round(s);
+  // sem o número, a frase perde o pedaço inteiro ("de {n} trechos", "em {s} s"), nunca fica com buraco
+  const sem = (t: string) => t
+    .replace(/\{([^}]+)\}/g, (m, k: string) => (nums[k] === undefined || nums[k] === '' ? m : String(nums[k])))
+    .replace(/^\{[^}]+\}\s*/, '')
+    .replace(/\s*(?:de |do |da |em |a )?\{[^}]+\}(?:\s+(?:trechos|planos|camadas|quadros|blocos|falas|momentos|números|MB|s)\b)?/g, '')
+    .replace(/\s*,\s*(?=,|$)/g, '').replace(/:\s*,\s*/g, ': ').replace(/[\s·:,]+$/, '').replace(/\s{2,}/g, ' ').trim();
+  let texto: string;
+  if (fase === 'inicio') texto = sem(p?.rodando ?? 'Trabalhando');
+  else if (fase === 'erro') texto = `${sem(p?.rodando ?? 'O passo')}: parou`;
+  else if (fase === 'interrompido') texto = `${sem(p?.rodando ?? 'O passo')}: interrompido`;
+  else texto = sem(p?.feito ?? 'Feito');
+  return { ...q, texto: texto ? texto[0].toUpperCase() + texto.slice(1) : texto, conhecido: Boolean(p) };
 }

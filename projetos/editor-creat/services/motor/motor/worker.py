@@ -15,7 +15,7 @@ import time
 import traceback
 
 from motor import banco, config, pipeline
-from motor.etapas import Contexto, ErroDefinitivo, carregar_todas, obter
+from motor.etapas import Contexto, ErroDefinitivo, carregar_todas, obter, passos
 from motor.provedores import armazenamento_de
 
 
@@ -69,8 +69,12 @@ def recolher_mortos(con) -> int:
     def fazer():
         mortos = banco.recolher_mortos(con)
         for j in mortos:
-            banco.emitir(con, j["projeto"], "etapa_erro", etapa=j["etapa"], alvo=None if j.get("alvo") == "-" else j.get("alvo"),
-                         mensagem=j["erro"] + " (desistiu)")
+            alvo = None if j.get("alvo") == "-" else j.get("alvo")
+            nums = passos.numeros_do_job(con, j)
+            banco.emitir(con, j["projeto"], "etapa_erro", etapa=j["etapa"], alvo=alvo,
+                         mensagem=passos.frase_erro(j["etapa"], n=nums.get("n"), versao=nums.get("versao"), e=j["erro"] or "", vai_tentar=False),
+                         dados={"detalhe": (j["erro"] or "")[:300] + " (desistiu)", "vai_tentar": False})
+            passos.fechar_abertos(con, j["projeto"], etapa=j["etapa"], alvo=alvo, so_sem_job_rodando=False)
             pipeline.falha_definitiva(con, j, j["erro"])
         return len(mortos)
     return _transacao(con, fazer)
@@ -83,14 +87,19 @@ def rodar_um(con, cfg, arm, dono: str, etapas=None) -> bool:
         return False
     proj, et, alvo = job["projeto"], job["etapa"], job.get("alvo")
     alvo_ev = None if alvo == "-" else alvo
-    banco.emitir(con, proj, "etapa_inicio", etapa=et, alvo=alvo_ev)
+    # mesa ao vivo (onda 2): o início diz quem começou (vídeo pelo número do envio, nunca pelo nome do arquivo), e um passo
+    # raiz por job leva o tempo e o custo somado; os erros saem numa frase em pt-BR com o detalhe técnico em dados.detalhe
+    nums = passos.numeros_do_job(con, job)
+    banco.emitir(con, proj, "etapa_inicio", etapa=et, alvo=alvo_ev, mensagem=passos.mensagem_inicio(et, nums.get("n"), nums.get("versao")))
     t0 = time.time()
     try:
+        passos.abrir_raiz(con, job, nums)
         with _Batimento(cfg, job["id"]):
             saida = obter(et)(Contexto(con=con, cfg=cfg, job=job, armazenamento=arm)) or {}
 
         def fechar():   # concluir + evento + próxima etapa: tudo ou nada (reinício no meio não perde o encadeamento)
             banco.concluir(con, job["id"], saida)
+            passos.fechar_raiz("fim")
             banco.emitir(con, proj, "etapa_fim", etapa=et, alvo=alvo_ev, dados={"s": round(time.time() - t0, 2)})
             pipeline.depois(con, job, saida)
         _transacao(con, fechar)
@@ -98,19 +107,26 @@ def rodar_um(con, cfg, arm, dono: str, etapas=None) -> bool:
         def desistir():
             con.execute("UPDATE jobs SET max_tentativas=tentativas WHERE id=?", (job["id"],))
             banco.falhar(con, job["id"], str(e))
-            banco.emitir(con, proj, "etapa_erro", etapa=et, alvo=alvo_ev, mensagem=str(e)[:300])
+            frase = passos.frase_erro(et, n=nums.get("n"), versao=nums.get("versao"), definitivo=True)
+            passos.fechar_raiz("erro", frase)
+            banco.emitir(con, proj, "etapa_erro", etapa=et, alvo=alvo_ev, mensagem=frase,
+                         dados={"detalhe": str(e)[:300], "vai_tentar": False})
             pipeline.falha_definitiva(con, job, str(e))
         _sair_de_transacao(con)
         _transacao(con, desistir)
     except Exception as e:  # noqa: BLE001 - qualquer falha volta para a fila
         def registrar():
             estado = banco.falhar(con, job["id"], traceback.format_exc())
-            banco.emitir(con, proj, "etapa_erro", etapa=et, alvo=alvo_ev,
-                         mensagem=f"{type(e).__name__}: {str(e)[:200]} ({'vai tentar de novo' if estado == 'pendente' else 'desistiu'})")
+            frase = passos.frase_erro(et, n=nums.get("n"), versao=nums.get("versao"), e=e, vai_tentar=estado == "pendente")
+            passos.fechar_raiz("erro", frase)
+            banco.emitir(con, proj, "etapa_erro", etapa=et, alvo=alvo_ev, mensagem=frase,
+                         dados={"detalhe": f"{type(e).__name__}: {str(e)[:200]}", "vai_tentar": estado == "pendente"})
             if estado == "falhou":
                 pipeline.falha_definitiva(con, job, f"{type(e).__name__}: {str(e)[:200]}")
         _sair_de_transacao(con)
         _transacao(con, registrar)
+    finally:
+        passos.soltar()
     return True
 
 
@@ -143,6 +159,12 @@ def main(argv=None) -> int:
         if n:
             print(f"[worker] reconciliou {n} projeto(s) parado(s) depois de reinício", flush=True)
     except Exception:  # noqa: BLE001 - reconciliar é ajuda, nunca impede o worker de subir
+        traceback.print_exc()
+    try:
+        n = passos.fechar_abertos(con)           # passo que ficou aberto num worker morto não pulsa para sempre (A2.6)
+        if n:
+            print(f"[worker] fechou {n} passo(s) da mesa interrompido(s) pelo reinício", flush=True)
+    except Exception:  # noqa: BLE001
         traceback.print_exc()
     dono = f"{socket.gethostname()}:{os.getpid()}"
     etapas = [e for e in a.etapas.split(",") if e] or None

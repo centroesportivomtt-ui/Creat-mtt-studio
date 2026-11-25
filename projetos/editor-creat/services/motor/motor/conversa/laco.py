@@ -353,6 +353,10 @@ class Mesa:
             r = con.execute("SELECT tipo, tool_use_id FROM conversa_espera WHERE projeto=?", (pid,)).fetchone()
             if r:
                 d["espera"] = {"tipo": r["tipo"], "tool_use_id": r["tool_use_id"]}
+            from motor.etapas import passos
+            ab = passos.abertos(con, pid)
+            if ab:
+                d["passos_abertos"] = ab
         return d
 
     async def emitir(self, cfg, pid: str, tipo: str, dados: dict, **kw) -> int:

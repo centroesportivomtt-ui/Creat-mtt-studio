@@ -123,9 +123,9 @@ def eventos_desde(con, projeto: str, depois_de: int = 0, limite: int = 200, sem:
     return out
 
 
-def mudar_estado(con, projeto: str, estado: str, mensagem: str | None = None) -> None:
+def mudar_estado(con, projeto: str, estado: str, mensagem: str | None = None, dados: dict | None = None) -> None:
     con.execute("UPDATE projetos SET estado=?, atualizado=? WHERE id=?", (estado, agora_iso(), projeto))
-    emitir(con, projeto, "estado", estado=estado, mensagem=mensagem)
+    emitir(con, projeto, "estado", estado=estado, mensagem=mensagem, dados=dados)
 
 
 # ---------------- fila ----------------

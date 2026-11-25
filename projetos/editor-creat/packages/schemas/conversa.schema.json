@@ -564,7 +564,8 @@
      }
     },
     "conta": {
-     "type": "string"
+     "type": "string",
+     "maxLength": 400
     },
     "numeros": {
      "type": "object",
@@ -578,6 +579,20 @@
     "achado": {
      "type": "string",
      "maxLength": 280
+    },
+    "ferramenta": {
+     "type": "string",
+     "maxLength": 120,
+     "description": "Nome técnico da ferramenta (faster-whisper small, ffmpeg, Claude…): fica nos bastidores."
+    },
+    "estimado": {
+     "type": "boolean",
+     "description": "O custo é estimativa (cérebro fixture, chamada que falhou depois de cobrada)."
+    },
+    "custo_total_usd": {
+     "type": "number",
+     "minimum": 0,
+     "description": "Só no passo raiz (sem pai): ele + os filhos. custo_usd é só o gasto feito enquanto ele era o passo de dentro."
     }
    }
   },
@@ -609,6 +624,46 @@
     },
     "critica": {
      "type": "string"
+    },
+    "blocos": {
+     "type": "array",
+     "maxItems": 14,
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "id",
+       "funcao"
+      ],
+      "properties": {
+       "id": {
+        "type": "string"
+       },
+       "funcao": {
+        "type": "string"
+       },
+       "intensidade": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5
+       }
+      }
+     }
+    },
+    "trilha": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "clima"
+     ],
+     "properties": {
+      "clima": {
+       "type": "string"
+      },
+      "drop_em": {
+       "type": "string"
+      }
+     }
     }
    }
   },

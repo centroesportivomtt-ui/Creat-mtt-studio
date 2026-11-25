@@ -5,13 +5,14 @@
 // role="log": o leitor de tela lê o que entra no fim; a resposta escrevendo fica aria-busy até chegar inteira.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { mmss, segundos, usd, type DadosTurnoFim } from '@/lib/conversa';
-import { quem } from '@/lib/equipe';
+import { agenteDoPasso, quem } from '@/lib/equipe';
 import type { Item } from '@/lib/fio';
 import CartaoConfirma from './CartaoConfirma';
 import CartaoPergunta from './CartaoPergunta';
 import GrupoMesa from './GrupoMesa';
 import LinhaFerramenta from './LinhaFerramenta';
-import { Avatar, IconeEstado, TextoSimples, useAgora } from './Pecas';
+import { useBastidores } from './MesaAoVivo';
+import { Avatar, Avatares, TextoSimples, useAgora } from './Pecas';
 import type { Conversa } from './useConversa';
 
 export type Palco = { nome: string; estado: string; rotuloEstado: string; classeEstado: string; tc: string; correndo: boolean };
@@ -30,6 +31,9 @@ export default function Fio({ c, palco, arquivos }: { c: Conversa; palco: Palco;
   const [pensandoDesde, setPensandoDesde] = useState<number | null>(null);
   useEffect(() => { setPensandoDesde(rodando ? Date.now() : null); }, [rodando]);
   const agora = useAgora(Boolean(rodando));
+  const [bastidores] = useBastidores();
+  // quem está trabalhando na mesa agora: avatares com anel na faixa do topo (o fio e a mesa são a mesma linha do tempo)
+  const naMesa = montado.agora.map((x) => agenteDoPasso(x.chave)).filter((q, i, l) => l.findIndex((y) => y.agente === q.agente) === i);
 
   const blocosFeitos = useMemo(() => {
     const s = new Set<string>();
@@ -110,6 +114,11 @@ export default function Fio({ c, palco, arquivos }: { c: Conversa; palco: Palco;
             {palco.correndo && <span className="fio__tc" aria-label={`Tempo de edição ${palco.tc}`}>{palco.tc}</span>}
           </p>
         </div>
+        {naMesa.length > 0 && (
+          <span className="fio__mesa" data-teste="fio-mesa-agora" aria-label={`Trabalhando agora: ${naMesa.map((q) => q.agente).join(', ')}`}>
+            <Avatares lista={naMesa} trabalhando />
+          </span>
+        )}
         <span className="ao-vivo fio__vivo" data-conectado={fio.conectado}>{fio.conectado ? 'ao vivo' : 'reconectando…'}</span>
       </header>
       {gasto && (
@@ -134,7 +143,7 @@ export default function Fio({ c, palco, arquivos }: { c: Conversa; palco: Palco;
           else if (it.k === 'dono') turnoAnterior = null;
           switch (it.k) {
             case 'mesa':
-              return <GrupoMesa key={`m${it.id}`} linhas={it.linhas} progresso={fio.progresso} arquivos={arquivos} />;
+              return <GrupoMesa key={`m${it.id}`} linhas={it.linhas} progresso={fio.progresso} arquivos={arquivos} bastidores={bastidores} />;
             case 'dono': {
               const mostraHora = !donoAnterior || Date.parse(it.ts) - Date.parse(donoAnterior) > 5 * 60_000;
               donoAnterior = it.ts;

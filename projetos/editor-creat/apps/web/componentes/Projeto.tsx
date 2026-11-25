@@ -8,6 +8,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import Envio from './Envio';
 import BarraConversa from './conversa/Barra';
 import Fio from './conversa/Fio';
+import MesaAoVivo, { AgoraNaMesa } from './conversa/MesaAoVivo';
 import { useConversa } from './conversa/useConversa';
 import { useFioAoVivo } from '@/lib/fio';
 import { irEntrar } from '@/lib/pendentes';
@@ -26,7 +27,6 @@ function tc(ms: number) {
   const dois = (n: number) => String(n).padStart(2, '0');
   return h ? `${h}:${dois(m)}:${dois(ss)}` : `${dois(m)}:${dois(ss)}`;
 }
-const hora = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 type Checagem = { id: string; ok: boolean; bloqueia?: boolean; detalhe?: string };
 // O motor grava em versoes.qa um JSON curto (aprovado + checagens); aceita string ou objeto.
@@ -66,7 +66,6 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   const [corta, setCorta] = useState(false);             // "Corta! Aprovada" na barra logo depois do Aprovar
   const [ajusteDe, setAjusteDe] = useState<string | null>(null); // versão com o formulário de ajuste aberto
   const formPedido = useRef<HTMLFormElement>(null);
-  const diarioRef = useRef<HTMLDetailsElement>(null);
   const barraRef = useRef<HTMLDivElement>(null);
   // trava síncrona: o toque duplo chega antes de o React redesenhar o botão apagado, então `disabled` sozinho não basta
   const trava = useRef(false);
@@ -252,7 +251,8 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   // Regra do dono: nunca mostrar versão com erro conhecido. Só a versão ENTREGUE (QA aprovado) toca e baixa.
   const assistir = versoes.find((v) => v.estado === 'entregue' && v.video) ?? null;
   const emProducao = versoes.find((v) => v.estado !== 'entregue' && v.estado !== 'reprovada') ?? null;
-  const diario = [...eventos].filter((e) => e.mensagem).slice(-12).reverse();
+  // a mesa ao vivo (onda 2) substitui o diário de 12 linhas: tudo o que a mesa fez, com quem, tempo, custo e achado
+  const temMesa = conversa.montado.itens.some((it) => it.k === 'mesa');
   const trilha = (
     <ol className="trilha" style={{ marginTop: 20 }}>
       {ESTADOS.map((est, i) => {
@@ -379,11 +379,11 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       <>
         <p className="barra-comando__status" role="status">
           <strong>{p.estado === 'erro' ? 'A edição parou com erro' : 'A conferência segurou a entrega'}</strong>
-          <span>o motivo está no diário da ilha</span>
+          <span>o motivo está na mesa ao vivo</span>
         </p>
-        {diario.length > 0 && (
+        {temMesa && (
           <button type="button" className="botao botao--secundario barra-comando__secundario"
-            onClick={() => { if (diarioRef.current) diarioRef.current.open = true; irPara('diario'); }}>Ver motivo</button>
+            onClick={() => irPara('mesa')} data-teste="ver-motivo">Ver motivo</button>
         )}
       </>
     );
@@ -458,6 +458,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
             : <>de 30:00<br />{decorrido <= TETO_MS ? `faltam ${tc(TETO_MS - decorrido)}` : `passou ${tc(decorrido - TETO_MS)}`}</>}
         </p>
       </div>
+      {fase !== 'entregue' && <AgoraNaMesa agora={conversa.montado.agora} compacto />}
       <div className="regua" aria-hidden="true">
         <div className="regua__trilho" />
         <div className="regua__feito" style={{ width: `${Math.min(100, (decorrido / TETO_MS) * 100)}%` }} />
@@ -484,7 +485,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       ) : (
         <div className="player-vazio"><p>{
           emProducao?.estado === 'reprovada_qa' ? `A conferência automática segurou a ${emProducao.id.toUpperCase()}: ela não vai para o player.`
-            : emProducao?.estado === 'erro' ? `A ${emProducao.id.toUpperCase()} parou com erro; o motivo está no diário da ilha.`
+            : emProducao?.estado === 'erro' ? `A ${emProducao.id.toUpperCase()} parou com erro; o motivo está na mesa ao vivo.`
             : emProducao ? `A ${emProducao.id.toUpperCase()} está sendo feita. Ela aparece aqui quando passar na conferência.`
             : 'O filme aparece aqui quando passar na conferência.'}</p></div>
       )}
@@ -498,14 +499,11 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       )}
     </section>
   ) : null;
-  const blocoDiario = diario.length > 0 ? (
-    <details key="diario" className="cartao bloco-diario" id="diario" ref={diarioRef}>
-      <summary className="cartao__titulo" style={{ margin: 0 }}>Diário da ilha ({eventos.length})</summary>
-      <ol className="diario" style={{ marginTop: 8 }}>
-        {diario.map((e) => <li key={e.id}><time dateTime={e.ts}>{hora(e.ts)}</time>{e.mensagem}</li>)}
-      </ol>
-    </details>
-  ) : null;
+  // com a conversa aberta, o fio já mostra a mesa (a mesma linha do tempo): o cartão não fica escondido duplicando as linhas
+  const blocoDiario = conversa.aberta ? null : (
+    <MesaAoVivo key="mesa-ao-vivo" montado={conversa.montado} progresso={fio.progresso} arquivos={p.arquivos.map((a) => a.id)} conectado={conectado}
+      aoAbrirConversa={conversa.abrir} />
+  );
   // aberto: material, pedido | pedido: pedido, material | editando: relógio, versões, diário, pedido, material
   // entregue: filme, relógio, diário, pedido, material. No desktop a mesa fica à esquerda e a projeção à direita (CSS).
   const mesa = (

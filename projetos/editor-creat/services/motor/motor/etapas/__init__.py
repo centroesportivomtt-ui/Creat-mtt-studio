@@ -45,6 +45,12 @@ class Contexto:
         banco.emitir(self.con, self.projeto, "etapa_progresso", etapa=self.job["etapa"], alvo=self.alvo, progresso=round(p, 3), mensagem=mensagem)
         banco.renovar(self.con, self.job["id"])
 
+    def passo(self, chave: str, **kw):
+        """Mesa ao vivo: `with ctx.passo("analise.visao", ferramenta=..., modelo=...) as p:` emite o par de eventos `passo`
+        (etapas/passos.py). ctx.progresso continua igual."""
+        from motor.etapas import passos
+        return passos.passo(chave, **kw)
+
 
 def etapa(nome: str):
     if nome not in ORDEM:

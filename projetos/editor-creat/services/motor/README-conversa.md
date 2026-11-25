@@ -27,3 +27,13 @@ curl -N "localhost:8787/v1/projetos/<pid>/eventos?v=2&ate=5"
 
 Testes: `python -m pytest -q tests/test_conversa_laco.py tests/test_conversa_api.py` (sem rede, sem chave).
 O teste pago A1.14 (API real, até US$ 1) só roda com o "pode" do dono e é o portão para publicar.
+
+## Mesa ao vivo (onda 2)
+
+Sem chamada nova ao Claude: o trabalho que o motor já faz fica visível.
+- `motor/etapas/passos.py`: um passo raiz por job (aberto e fechado pelo `worker`), passos filhos nas etapas (`analise.transcricao`, `analise.visao`, `direcao.diretor|resolvedor|critico`, `montagem.fatos|voz|planos|overlay|mix|comp`, `qa.<checagem>`), cada um com ferramenta, modelo, esforço, tempo, tokens, custo, a conta escrita e o achado em números. Evento `passo` (fase em `dados.fase`; `estado` e `mensagem` nulos) e `decisao` (conceito, gancho, além do pedido, blocos, trilha, riscos e crítica).
+- `cerebro/gastos.registrar` soma cada gasto no passo de dentro: a soma de `custo_usd` dos passos = o livro do projeto. O raiz leva `custo_total_usd`.
+- Boot do worker, job pego de novo e job morto: passo aberto vira `interrompido` (nada fica pulsando). `instantaneo.passos_abertos` diz quem trabalha agora.
+- Erro: `etapa_erro.mensagem` é uma frase em pt-BR ("A montagem da V1 parou (faltou memória na máquina); vou tentar de novo.") e o técnico vai em `dados.detalhe`. `etapa_inicio` ganhou mensagem ("Radar começou a ouvir e olhar o vídeo 2."). O aviso do arquivo de fora fala do vídeo pelo número e guarda o técnico à parte.
+- Rótulos na tela: `packages/schemas/equipe.json` versão 2 (chaves raiz por etapa, Verbo em `montagem.fatos`, nomes das checagens do QA).
+- Testes: `tests/test_mesa_ao_vivo.py` (A2.1, A2.2, A2.3, A2.6 e o resto, sem rede).

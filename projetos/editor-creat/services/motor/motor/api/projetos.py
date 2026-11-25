@@ -324,8 +324,10 @@ async def _gerar_v2(cfg, pid: str, request: Request, cursor: int, seguir: bool, 
         else:
             from motor.conversa import preferencia, teto
             ligada, motivo = preferencia.estado(cfg, dono_do_lock=True)
+            from motor.etapas import passos
+            ab = await asyncio.to_thread(passos.abertos, con, pid)
             inst = {"ligada": ligada, "gasto_hoje_usd": round(await asyncio.to_thread(teto.gasto_hoje_usd, cfg), 4),
-                    "teto_usd_dia": teto.teto_usd_dia(cfg), **({"motivo": motivo} if motivo else {})}
+                    "teto_usd_dia": teto.teto_usd_dia(cfg), **({"motivo": motivo} if motivo else {}), **({"passos_abertos": ab} if ab else {})}
         yield _efemero(pid, "instantaneo", inst)
         if not seguir:
             return

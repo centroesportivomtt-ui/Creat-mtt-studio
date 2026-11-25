@@ -43,10 +43,21 @@ def registrar(cfg, o_que: str, uso: dict, *, projeto: str | None = None, versao:
         arq.parent.mkdir(parents=True, exist_ok=True)
         with open(arq, "a", encoding="utf-8") as f:
             f.write(json.dumps(linha, ensure_ascii=False) + "\n")
+        _no_passo(o_que, {**uso, "custo_usd": custo})
         return True
     except Exception as e:  # noqa: BLE001
         log.warning("gasto de %s não foi para o livro: %s", o_que, e)
         return False
+
+
+def _no_passo(o_que: str, uso: dict) -> None:
+    """Mesa ao vivo (onda 2): o gasto que entrou no livro soma no passo da mesa que está rodando (etapas/passos.py), para
+    o dono ver o custo de cada chamada no passo certo. Fora de passo, só um aviso no log. O retorno de registrar não muda."""
+    try:
+        from motor.etapas import passos
+        passos.somar_gasto(o_que, uso)
+    except Exception as e:  # noqa: BLE001
+        log.warning("gasto de %s não foi para o passo: %s", o_que, e)
 
 
 def ler(cfg, mes: str | None = None) -> list[dict]:

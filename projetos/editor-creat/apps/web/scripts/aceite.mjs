@@ -7,7 +7,9 @@
 // 4. verificação visual logada (celular e desktop, claro e escuro) sem erro de console, sem rolagem horizontal,
 //    sem texto < 11 px, e o olhar.cjs da casa na tela de entrada;
 // 5. conversa com o editor (scripts/aceite-conversa.mjs): mandar texto e áudio, resposta escrevendo, ferramentas, pergunta
-//    com botões, cartões de pedido e ajuste, parar, erro, reinício, teto, chave, sessão vencida e dois aparelhos, com prints.
+//    com botões, cartões de pedido e ajuste, parar, erro, reinício, teto, chave, sessão vencida e dois aparelhos, com prints;
+// 6. mesa ao vivo (scripts/aceite-mesa.mjs, onda 2): quem trabalha agora, passos com achado e custo, decisão da direção,
+//    bastidores, taxímetro, erro e aviso em texto puro, interrupção sem avatar pulsando e rede caindo sem duplicar.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomBytes, scryptSync } from 'node:crypto';
 import fs from 'node:fs';
@@ -15,6 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { aceiteConversa } from './aceite-conversa.mjs';
+import { aceiteMesa } from './aceite-mesa.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.resolve(AQUI, '..');
@@ -590,6 +593,9 @@ async function principal() {
 
   // ---------- 5. conversa com o editor (onda 1 da conversa): texto, áudio, ferramentas, pergunta, cartões, chave e teto ----------
   await medir('conversa_s', () => aceiteConversa({ BASE, MOTOR: `http://127.0.0.1:${PORTA_MOTOR}`, TOKEN: env.MOTOR_TOKEN, SENHA, DADOS, ok }));
+
+  // ---------- 6. mesa ao vivo (onda 2 da conversa): a equipe trabalhando, com achado, custo e bastidores ----------
+  await medir('mesa_s', () => aceiteMesa({ BASE, MOTOR: `http://127.0.0.1:${PORTA_MOTOR}`, TOKEN: env.MOTOR_TOKEN, SENHA, DADOS, ok }));
 
   const olhar = acharOlhar();
   if (olhar) {

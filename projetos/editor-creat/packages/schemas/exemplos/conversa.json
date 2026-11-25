@@ -248,7 +248,12 @@
     "cache_escrita": 0,
     "saida": 3100
    },
-   "conta": "1.200 × 4 + 15.000 × 0,20 + 3.100 × 20, ÷ 1e6"
+   "conta": "1.200 × 4 + 15.000 × 0,20 + 3.100 × 20, ÷ 1e6",
+   "ferramenta": "Claude (Messages API, JSON estrito, cache do catálogo)",
+   "numeros": {
+    "blocos": 3
+   },
+   "achado": "Conceito: A equipe chega e o salão vira palco."
   }
  },
  {
@@ -268,7 +273,76 @@
    "riscos": [
     "'creat' transcrito com confiança 0,7: conferir"
    ],
-   "critica": "aprovada com 1 ajuste no fecho"
+   "critica": "aprovada com 1 ajuste no fecho",
+   "blocos": [
+    {
+     "id": "B1",
+     "funcao": "gancho",
+     "intensidade": 4
+    },
+    {
+     "id": "B2",
+     "funcao": "prova",
+     "intensidade": 5
+    },
+    {
+     "id": "B3",
+     "funcao": "convite",
+     "intensidade": 5
+    }
+   ],
+   "trilha": {
+    "clima": "energia",
+    "drop_em": "B2"
+   }
+  }
+ },
+ {
+  "id": 14,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T14:09:10Z",
+  "tipo": "passo",
+  "etapa": "qa",
+  "alvo": "v2",
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "passo": "ps_7c1d2e3f4a",
+   "pai": "ps_5b6c7d8e9f",
+   "chave": "qa.fatos",
+   "fase": "fim",
+   "ferramenta": "motor.etapas.qa.fatos",
+   "s": 0.4,
+   "numeros": {
+    "nome": "fatos",
+    "resultado": "ok"
+   },
+   "achado": "275 ml confere com o rótulo"
+  }
+ },
+ {
+  "id": 15,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T14:09:30Z",
+  "tipo": "passo",
+  "etapa": "qa",
+  "alvo": "v2",
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "passo": "ps_5b6c7d8e9f",
+   "chave": "qa",
+   "fase": "fim",
+   "s": 48.3,
+   "custo_total_usd": 0.031,
+   "numeros": {
+    "versao": "v2",
+    "aprovadas": 20,
+    "total": 21
+   },
+   "achado": "Passou em 20 de 21 conferências; segurou a entrega: zona_segura"
   }
  }
 ]

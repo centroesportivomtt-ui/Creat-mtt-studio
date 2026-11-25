@@ -387,6 +387,11 @@ if etapa is not None:
         if not analises:
             raise ErroDefinitivo("nenhuma análise pronta para montar o catálogo")
         pedido = arm.pedido(p)
+        from motor.etapas import passos
+        falas = sum(len((a.get("transcricao") or {}).get("segmentos") or []) for a in analises)
+        momentos = sum(len((a.get("visao") or {}).get("momentos") or []) for a in analises)
+        passos.anotar(falas=falas, momentos=momentos, videos=len(analises))
+        passos.achou(f"{falas} falas e {momentos} momentos de {len(analises)} vídeo{'s' if len(analises) != 1 else ''}, prontos para o diretor")
         trilhas = armazem_b.trilhas(ctx.cfg)
         from motor.memoria import loja
         modelos = loja.Loja().nomes_modelos()

@@ -15,7 +15,7 @@ import json
 
 from motor import banco
 from motor.cerebro import orcamento, prompts_texto
-from motor.etapas import ErroDefinitivo, armazem_b, etapa
+from motor.etapas import ErroDefinitivo, armazem_b, etapa, passos
 from motor.etapas.resolvedor import ErroResolucao, resolver
 from motor.memoria.loja import Loja
 
@@ -105,18 +105,53 @@ def _movimentos(arm: armazem_b.Armazem, analises: dict) -> dict:
     return out
 
 
+def _ferramenta_cerebro(cerebro) -> str:
+    nome = getattr(cerebro, "nome", "?")
+    return {"anthropic": "Claude (Messages API, JSON estrito, cache do catálogo)", "fixture": "cérebro fixture (direção gravada, sem chamar a API)",
+            "sessao": "sessão do Claude Code (por arquivo)"}.get(nome, f"cérebro {nome}")
+
+
+def _modelo_do_uso(u: dict) -> str | None:
+    return "fixture" if u.get("cerebro") == "fixture" else u.get("modelo")
+
+
+def _encaixe(ps, edl: dict | None, problemas: list, direcao: dict) -> None:
+    """Números e achado do resolvedor em palavras do dono: duração, blocos, planos e onde a música explode."""
+    if edl is None:
+        ps.anotar(resultado="não encaixou").achou("Não encaixou: " + "; ".join(str(x) for x in problemas[:2]))
+        return
+    blocos = len({pl.get("bloco") for pl in edl.get("planos", []) if pl.get("bloco")}) or len(direcao.get("blocos") or [])
+    ps.anotar(dur=round(float(edl.get("duracao") or 0)), blocos=blocos, planos=len(edl.get("planos") or []), falas=len(edl.get("voz") or []))
+    drop = (direcao.get("trilha") or {}).get("drop_em")
+    t_drop = min((float(pl["t0"]) for pl in edl.get("planos", []) if drop and pl.get("bloco") == drop and isinstance(pl.get("t0"), (int, float))), default=None)
+    txt = f"{float(edl.get('duracao') or 0):.0f} s em {blocos} blocos e {len(edl.get('planos') or [])} planos, {len(edl.get('voz') or [])} trechos de fala"
+    if t_drop is not None:
+        ps.anotar(drop_s=round(t_drop))
+        txt += f"; a música explode aos {int(t_drop) // 60}:{int(t_drop) % 60:02d}"
+    ps.achou(txt)
+
+
 def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str, pedido: dict, analises: dict, trilhas: list[dict],
                        energias: dict | None = None, correcao: dict | None = None, criticar: bool = True, cfg=None,
-                       movimentos: dict | None = None) -> dict:
-    """Núcleo testável sem banco: devolve {direcao, edl, usos, prompt_tokens, direcao_tokens, avisos, critica}."""
+                       movimentos: dict | None = None, ao_usar=None) -> dict:
+    """Núcleo testável sem banco: devolve {direcao, edl, usos, prompt_tokens, direcao_tokens, avisos, critica}.
+    Mesa ao vivo: diretor, resolvedor e crítico viram passos (sem job, não emitem nada). `ao_usar(uso, i)` é chamado logo
+    depois de cada chamada ao cérebro, para o gasto entrar no livro (e no passo certo) na hora."""
     import validar
     esquema = validar.esquema("direcao")
     sistema, cat_txt, pedido_txt = montar_prompt(loja, catalogo_txt, pedido, correcao=correcao)
     prompt_tokens = orcamento.estimar_tokens(sistema + cat_txt + pedido_txt)
     usos = []
-    direcao, u = cerebro.dirigir(sistema=sistema, catalogo_txt=cat_txt, pedido_txt=pedido_txt, esquema=esquema,
-                                 maximo_saida=getattr(cfg, "orcamento_saida", 4000))
-    usos.append(dict(u, chamada="diretor"))
+    with passos.passo("direcao.diretor", ferramenta=_ferramenta_cerebro(cerebro)) as ps:
+        direcao, u = cerebro.dirigir(sistema=sistema, catalogo_txt=cat_txt, pedido_txt=pedido_txt, esquema=esquema,
+                                     maximo_saida=getattr(cfg, "orcamento_saida", 4000))
+        usos.append(dict(u, chamada="diretor"))
+        ps.modelo = ps.modelo or _modelo_do_uso(u)
+        if ao_usar:
+            ao_usar(usos[-1], len(usos) - 1)
+        ps.anotar(blocos=len(direcao.get("blocos") or []) if isinstance(direcao, dict) else 0)
+        if isinstance(direcao, dict) and direcao.get("conceito"):
+            ps.achou(f"Conceito: {direcao['conceito']}")
     erros = validar.erros("direcao", direcao)
     if erros:
         raise ErroDefinitivo("direção fora do schema: " + "; ".join(erros[:5]))
@@ -124,19 +159,33 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
 
     def tentar(d):
         modelo = loja.modelo_com_modo(d.get("modelo") or "evento-reel", (pedido or {}).get("modo"))
-        try:
-            return resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, movimentos=movimentos,
-                            projeto=catalogo["projeto"],
-                            ambiente=(pedido or {}).get("ambiente"), vozes=(pedido or {}).get("vozes")), []
-        except ErroResolucao as e:
-            return None, e.problemas
+        with passos.passo("direcao.resolvedor", ferramenta="resolvedor do editor (encaixe por palavra e batida)") as pr:
+            try:
+                r = resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, movimentos=movimentos,
+                             projeto=catalogo["projeto"],
+                             ambiente=(pedido or {}).get("ambiente"), vozes=(pedido or {}).get("vozes")), []
+            except ErroResolucao as e:
+                r = None, e.problemas
+            _encaixe(pr, r[0], r[1], d)
+            return r
 
     edl, problemas = tentar(direcao)
     critica = "não rodou"
     if criticar:
         avisos = problemas or (edl["origem"]["avisos"] if edl else [])
-        revisada, u2 = cerebro.criticar(sistema=sistema, catalogo_txt=cat_txt, direcao=direcao, pedido_txt=pedido_txt, esquema=esquema, problemas=avisos)
-        usos.append(dict(u2, chamada="critico"))
+        with passos.passo("direcao.critico", ferramenta=_ferramenta_cerebro(cerebro), avisos=len(avisos)) as pc:
+            revisada, u2 = cerebro.criticar(sistema=sistema, catalogo_txt=cat_txt, direcao=direcao, pedido_txt=pedido_txt, esquema=esquema, problemas=avisos)
+            usos.append(dict(u2, chamada="critico"))
+            pc.modelo = pc.modelo or _modelo_do_uso(u2)
+            if ao_usar:
+                ao_usar(usos[-1], len(usos) - 1)
+            if revisada != direcao and not validar.erros("direcao", revisada):
+                pc.anotar(resultado="mudou a direção")
+                pc.achou(f"Mexeu na direção ({len(avisos)} ponto{'s' if len(avisos) != 1 else ''} para olhar)")
+            else:
+                pc.anotar(resultado="sem mudança")
+                pc.achou(f"Manteve a direção ({len(avisos)} ponto{'s' if len(avisos) != 1 else ''} conferido{'s' if len(avisos) != 1 else ''})"
+                         if avisos else "Manteve a direção")
         if revisada != direcao and not validar.erros("direcao", revisada):
             edl2, prob2 = tentar(revisada)
             if edl2 is not None:
@@ -152,10 +201,10 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
             "avisos": edl["origem"]["avisos"], "critica": critica}
 
 
-def _dirigir(cerebro, loja, catalogo, cat_txt, pedido, analises, arm, ctx, correcao):
+def _dirigir(cerebro, loja, catalogo, cat_txt, pedido, analises, arm, ctx, correcao, ao_usar=None):
     return dirigir_e_resolver(cerebro=cerebro, loja=loja, catalogo=catalogo, catalogo_txt=cat_txt, pedido=pedido, analises=analises,
                               trilhas=armazem_b.trilhas(ctx.cfg), energias=_energias(arm, analises), correcao=correcao, cfg=ctx.cfg,
-                              movimentos=_movimentos(arm, analises))
+                              movimentos=_movimentos(arm, analises), ao_usar=ao_usar)
 
 
 @etapa("direcao")
@@ -194,21 +243,25 @@ def rodar(ctx) -> dict:
     ctx.progresso(0.1, "Direção: o diretor está lendo o catálogo.")
     cerebro = provedor("cerebro", ctx.cfg)
     from motor.cerebro.sessao import AguardandoDiretor
-    try:
-        r = _dirigir(cerebro, loja, catalogo, cat_txt, pedido, analises, arm, ctx, correcao)
-    except AguardandoDiretor as e:
-        raise ErroDefinitivo(str(e)) from e
+    from motor.cerebro import gastos
     n = int(indice.get("ultima", 0)) + 1
     v = f"v{n}"
+
+    def ao_usar(u, i):   # cada chamada vai ao livro logo depois de feita (mesma linha e mesma ref de antes): o custo aparece no passo
+        gastos.registrar(ctx.cfg, "critico" if u.get("chamada") == "critico" else "direcao", u, projeto=p, versao=v, ref=f"projetos/{p}/uso_{n}.json#{i}")
+    try:
+        r = _dirigir(cerebro, loja, catalogo, cat_txt, pedido, analises, arm, ctx, correcao, ao_usar=ao_usar)
+    except AguardandoDiretor as e:
+        raise ErroDefinitivo(str(e)) from e
     r["edl"]["origem"].update({"versao": v, "cerebro": cerebro.nome, "critica": r["critica"]})
     arm.gravar_json(f"projetos/{p}/direcao_{n}.json", r["direcao"])
+    passos.emitir_decisao(v, r["direcao"], r["critica"])
     total = orcamento.somar(r["usos"])
     arm.gravar_json(f"projetos/{p}/uso_{n}.json", {"versao": v, "chamadas": r["usos"], "total": total, "prompt_tokens_estimados": r["prompt_tokens"],
                                                     "direcao_tokens_estimados": r["direcao_tokens"], "checagens_edl": loja.avaliar_edl(r["edl"])})
     arm.gravar_json(f"saidas/{p}/{v}/edl.json", r["edl"])
-    from motor.cerebro import gastos
-    for i, u in enumerate(r["usos"]):
-        gastos.registrar(ctx.cfg, "critico" if u.get("chamada") == "critico" else "direcao", u, projeto=p, versao=v, ref=f"projetos/{p}/uso_{n}.json#{i}")
+    passos.anotar(versao=v, dur=round(float(r["edl"]["duracao"])), falas=len(r["edl"]["voz"]))
+    passos.achou(f"{v.upper()}: {r['edl']['duracao']:.0f} s, {len(r['edl']['voz'])} trechos de fala; crítica {r['critica']}")
     indice["por_entrada"][chave] = v
     indice["ultima"] = n
     arm.gravar_json(f"projetos/{p}/direcoes.json", indice)
