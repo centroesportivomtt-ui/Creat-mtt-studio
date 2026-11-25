@@ -523,6 +523,78 @@
               }
             }
           }
+        },
+        "movimento": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "passo",
+            "chave"
+          ],
+          "description": "Movimento da câmera, tremor e nitidez a cada `passo` s (motor/movimento.py). Opcional: análise antiga ou falha na medição ficam sem ele.",
+          "properties": {
+            "passo": {
+              "type": "number",
+              "description": "s por janela (0,5)."
+            },
+            "chave": {
+              "type": "string",
+              "description": "Série completa (arquivo .json): t, tremor, pan_x, pan_y, nitidez."
+            },
+            "versao": {
+              "type": "string"
+            },
+            "tremor_med": {
+              "type": "number",
+              "description": "Mediana do tremor, px a 1080 do lado maior (RMS do desvio para a média de 0,5 s)."
+            },
+            "tremor_p90": {
+              "type": "number"
+            },
+            "nitidez_ref": {
+              "type": "number",
+              "description": "p90 da variância do Laplaciano na escala de análise (compara clipes)."
+            },
+            "borrado_pct": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "nota": {
+              "type": "number",
+              "description": "Qualidade média 0-1 (nitidez derrubada por tremor e chicote)."
+            },
+            "falhas": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Fração de quadros sem fluxo medido (sem textura); acima de 0,3 o tremor não é confiável."
+            },
+            "melhores": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "description": "[t0, t1, nota] dos melhores trechos (mais nítidos e firmes)."
+            },
+            "tremidos": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "description": "[t0, t1, px] dos trechos de tremor forte."
+            }
+          }
         }
       }
     },

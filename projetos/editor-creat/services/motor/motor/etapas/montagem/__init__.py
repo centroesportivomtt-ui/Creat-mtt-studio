@@ -21,6 +21,7 @@ import time
 
 from motor import config
 from motor.etapas import ErroDefinitivo, etapa
+from motor.etapas import cor as CR
 from motor.etapas import fatos
 from motor.etapas import pessoa as PESSOA
 from motor.etapas.montagem import comp as COMP
@@ -82,7 +83,13 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
         arq_tr = fontes.arquivo_qualquer(chave_tr) if chave_tr else None
         if arq_tr is not None and not pathlib.Path(arq_tr).exists():
             raise ErroDefinitivo(f"trilha não encontrada: {chave_tr}")
-        trilha, rel_tr = cronometro("trilha", TR.montar_trilha, edl, arq_tr)
+        arquivos = {}
+        for f in (edl.get("trilha") or {}).get("faixas") or []:   # filme com 2 ou 3 músicas (M4): cada uma pela sua chave
+            a = fontes.arquivo_qualquer(f["chave"])
+            if not pathlib.Path(a).exists():
+                raise ErroDefinitivo(f"trilha não encontrada: {f['chave']}")
+            arquivos[f["chave"]] = a
+        trilha, rel_tr = cronometro("trilha", TR.montar_trilha, edl, arq_tr, arquivos)
         from motor import biblioteca as BIB
         sfx, rel_sfx = TR.montar_sfx(edl, getattr(cfg, "som", "") or os.environ.get("MK_SOM") or str(BIB.pasta_sfx(cfg)))
         rel_mix = cronometro("mix", MIX.mixar, edl, voz, trilha, sfx, fontes, trabalho / "audio", cfg)
@@ -121,7 +128,8 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
         "planos": {k: {"arquivo": v["arquivo"], "cache": v["cache"], **({k2: v["info"][k2] for k2 in ("ms_quadro", "estab", "jit_antes", "jit_depois", "zoom_x")} if v.get("info") else {})}
                    for k, v in res_pl.items()},
         "audio": {k: v for k, v in res_au.items() if k not in ("stems",)},
-        "cor": cor,
+        "cor": cor, "avisos_cor": [f"{c['plano']}: {c['saturacao']['aviso']}" for c in cor if (c.get("saturacao") or {}).get("aviso")],
+        "avisos_trilha": list((res_au.get("trilha") or {}).get("avisos") or []),   # música que acabou antes do filme (M4)
         "composicao": res_comp, "tempos": tempos,
     }
     gravar_json(trabalho / "montagem.json", rel)
@@ -140,7 +148,8 @@ def revisao_cor(edl: dict, res_pl: dict, pasta: pathlib.Path) -> list[dict]:
             continue
         pasta.mkdir(parents=True, exist_ok=True)
         item = {"plano": p["id"], "t0": p["t0"], "t1": p["t1"], "look": info["look"], "look_nome": info["look_nome"],
-                "balanco": info.get("balanco"), "antes": info["antes"], "depois": info["depois"]}
+                "balanco": info.get("balanco"), "antes": info["antes"], "depois": info["depois"],
+                "saturacao": CR.checar_saturacao(info["antes"], info["depois"], info["look"])}   # cor viva: antes/depois e aviso
         for lado in ("antes", "depois"):
             destino = pasta / f"{p['id']}_{lado}.jpg"
             shutil.copyfile(info[f"{lado}_jpg"], destino)

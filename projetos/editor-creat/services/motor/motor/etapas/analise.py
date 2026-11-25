@@ -5,6 +5,8 @@ Sub-etapas, cada uma com cache próprio (um reinício no meio não refaz a trans
 2. transcrição pelo provedor efetivo (faster-whisper SEM VAD por padrão) -> transcricao.json (cache por assinatura);
    segmentos sobre silêncio e frases-fantasma do Whisper são descartados;
 3. sinais visuais locais nos quadros-chave (tremor, cenas, rostos, telas);
+   3b. movimento, tremor e nitidez a cada 0,5 s (motor/movimento.py) -> movimento.json, OPCIONAL: cache próprio e, se a
+       medição falha, vira aviso e a análise segue sem ele. Análise antiga (já pronta) ganha só este sinal, sem refazer o resto;
 4. visão: momentos (heurísticos no local; Haiku/Gemini quando ligados e com chave);
 5. validação no schema e gravação atômica; `analise.ok` guarda a assinatura (idempotência).
 """
@@ -154,6 +156,46 @@ def fala_pct(segs: list[dict], dur: float) -> float:
     return round(min(1.0, total / dur), 3) if dur > 0 else 0.0
 
 
+def movimento(arm, base: str, ing: dict, progresso=None) -> dict | None:
+    """sinais.movimento do arquivo (pedido do dono: "foco nos vídeos de mais alta qualidade", sem tremor forte).
+
+    Série completa em `<base>/movimento.json` (cache por assinatura da fonte + versão do medidor: refazer a análise não
+    mede de novo); na análise fica só o resumo que o catálogo lê. Arquivo cortado em trechos é medido trecho a trecho
+    no tempo da fonte. É um sinal OPCIONAL: qualquer falha vira aviso no log e devolve None (a análise não para)."""
+    if not ing["midia"].get("tem_video"):
+        return None
+    from motor import movimento as MV
+    chave = f"{base}/movimento.json"
+    sig = assinatura(MV.VERSAO, ing["assinatura"])
+    try:
+        serie = None
+        if arm.existe(chave):
+            c = arm.ler_json(chave)
+            if c.get("assinatura") == sig:
+                if c.get("falhou"):                  # cache negativo: a mesma fonte já falhou; medir 4K de novo é caro
+                    log.warning("AVISO: movimento de %s falhou antes (%s); siga sem ele", base, c["falhou"])
+                    return None
+                serie = c
+        if serie is None:
+            if progresso:
+                progresso("Medindo movimento, tremor e nitidez a cada 0,5 s")
+            trechos = ing["derivados"].get("trechos") or []
+            if trechos:
+                serie = MV.juntar([MV.medir(arm.caminho_local(t["chave"]), inicio=float(t["ini"])) for t in trechos])
+            else:
+                serie = MV.medir(arm.caminho_local(ing["arquivo"]["chave"]))
+            serie["assinatura"] = sig
+            arm.gravar_json(chave, serie)
+        return {"passo": serie["passo"], "chave": chave, "versao": serie["versao"], **MV.resumo(serie)}
+    except Exception as e:  # noqa: BLE001
+        log.warning("AVISO: movimento de %s não foi medido (%s); a análise segue sem ele", base, e)
+        try:                                         # guarda a falha com a assinatura: só mede de novo se a fonte mudar
+            arm.gravar_json(chave, {"assinatura": sig, "falhou": str(e)[:300]})
+        except Exception:  # noqa: BLE001
+            pass
+        return None
+
+
 def validar_analise(obj: dict) -> None:
     pasta = str(config.SCHEMAS / "py")
     if pasta not in sys.path:
@@ -181,6 +223,17 @@ def analise(ctx: Contexto) -> dict:
     if arm.existe(f"{base}/analise.json") and arm.existe(f"{base}/analise.ok"):
         try:
             if json.loads(arm.caminho_local(f"{base}/analise.ok").read_text())["assinatura"] == sig:
+                pronta = arm.ler_json(f"{base}/analise.json")
+                if "movimento" not in pronta["sinais"]:          # análise de antes do medidor: ganha só o movimento
+                    try:
+                        mov = movimento(arm, base, ing, lambda m: ctx.progresso(0.5, m))
+                        if mov:
+                            pronta["sinais"]["movimento"] = mov
+                            validar_analise(pronta)
+                            arm.gravar_json(f"{base}/analise.json", pronta)
+                            return {"pulado": True, "movimento": True}
+                    except Exception as e:  # noqa: BLE001 - sinal opcional: a análise que já existe continua valendo
+                        log.warning("AVISO: análise antiga de %s não ganhou o movimento (%s); fica como estava", base, e)
                 return {"pulado": True}
         except (ValueError, KeyError, OSError):
             pass
@@ -230,6 +283,9 @@ def analise(ctx: Contexto) -> dict:
         sinais = {"tremor": {"passo": 0.0, "media_px": 0.0, "trechos": []}, "cenas": [], "rostos": [], "telas": []}
     fp = fala_pct(tr["segmentos"], float(midia["duracao"]))
     sinais = {"energia": {"passo": PASSO_ENERGIA, "chave": f"{base}/energia.npy", "picos": pk, "fala_pct": fp}, **sinais}
+    mov = movimento(arm, base, ing, lambda m: ctx.progresso(0.8, m)) if midia["tem_video"] else None
+    if mov:
+        sinais["movimento"] = mov
     tempos["analise_sinais"] = round(time.time() - t2, 2)
 
     # 4. visão (momentos)

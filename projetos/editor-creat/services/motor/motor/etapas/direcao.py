@@ -91,8 +91,23 @@ def _energias(arm: armazem_b.Armazem, analises: dict) -> dict:
     return en
 
 
+def _movimentos(arm: armazem_b.Armazem, analises: dict) -> dict:
+    """Série de movimento de cada arquivo (motor/movimento.py) para o resolvedor escolher o trecho mais nítido e firme e
+    decidir a estabilização. Opcional: sem a série, o resolvedor segue com o tremor dos quadros-chave."""
+    out = {}
+    for aid, a in analises.items():
+        chave = (a["sinais"].get("movimento") or {}).get("chave")
+        if chave:
+            try:
+                out[aid] = arm.ler_json(chave)
+            except (OSError, ValueError):
+                pass
+    return out
+
+
 def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str, pedido: dict, analises: dict, trilhas: list[dict],
-                       energias: dict | None = None, correcao: dict | None = None, criticar: bool = True, cfg=None) -> dict:
+                       energias: dict | None = None, correcao: dict | None = None, criticar: bool = True, cfg=None,
+                       movimentos: dict | None = None) -> dict:
     """Núcleo testável sem banco: devolve {direcao, edl, usos, prompt_tokens, direcao_tokens, avisos, critica}."""
     import validar
     esquema = validar.esquema("direcao")
@@ -110,7 +125,8 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
     def tentar(d):
         modelo = loja.modelo_com_modo(d.get("modelo") or "evento-reel", (pedido or {}).get("modo"))
         try:
-            return resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, projeto=catalogo["projeto"],
+            return resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, movimentos=movimentos,
+                            projeto=catalogo["projeto"],
                             ambiente=(pedido or {}).get("ambiente"), vozes=(pedido or {}).get("vozes")), []
         except ErroResolucao as e:
             return None, e.problemas
@@ -138,7 +154,8 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
 
 def _dirigir(cerebro, loja, catalogo, cat_txt, pedido, analises, arm, ctx, correcao):
     return dirigir_e_resolver(cerebro=cerebro, loja=loja, catalogo=catalogo, catalogo_txt=cat_txt, pedido=pedido, analises=analises,
-                              trilhas=armazem_b.trilhas(ctx.cfg), energias=_energias(arm, analises), correcao=correcao, cfg=ctx.cfg)
+                              trilhas=armazem_b.trilhas(ctx.cfg), energias=_energias(arm, analises), correcao=correcao, cfg=ctx.cfg,
+                              movimentos=_movimentos(arm, analises))
 
 
 @etapa("direcao")

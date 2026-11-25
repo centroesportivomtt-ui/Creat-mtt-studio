@@ -1,6 +1,6 @@
 {
  "versao": "c1",
- "descricao": "Biblioteca de cor por ambiente (estilo DaVinci). lift/gamma/gain por canal r,g,b; con = contraste em S; sat = saturação; pele = quanto a pele fica fora da saturação do look (0 a 1); alvo = luma mediana desejada; wb = força da correção de branco (0 = respeita a luz do lugar). Lida por services/motor/motor/etapas/cor.py.",
+ "descricao": "Biblioteca de cor por ambiente (estilo DaVinci). lift/gamma/gain por canal r,g,b; con = contraste em S; sat = saturação; pele = quanto a pele fica fora da saturação do look (0 a 1); alvo = luma mediana desejada; wb = força da correção de branco (0 = respeita a luz do lugar). Lida por services/motor/motor/etapas/cor.py; dessatura = true só em look pedido pela direção para sair menos saturado que a fonte (sem isso, a saturação nunca fica abaixo da fonte: regra do dono, cor viva).",
  "looks": {
   "loja": {
    "nome": "Interno de loja",
@@ -168,6 +168,7 @@
    "pele": 0.75,
    "alvo": 0.46,
    "wb": 0.4,
+   "dessatura": true,
    "desc": "Pedra molhada e céu lavado: pretos quentes de laboratório, altas um pouco frias, cor contida e pele protegida (Reel O Mestre)."
   },
   "matriz_memoria": {
@@ -192,6 +193,7 @@
    "pele": 0.75,
    "alvo": 0.46,
    "wb": 0.4,
+   "dessatura": true,
    "desc": "Mesma praça, mais lembrança que presente: um pouco mais quente e menos saturada (blocos de memória do Reel O Mestre)."
   }
  }

@@ -496,3 +496,27 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - banco de sons reais;
   - modo de filme sem fala (cortes pela música);
   - emenda de duas ou mais músicas no mesmo tom.
+
+## 25/11: filme guiado por música, peças M2, M3 e M4 (equipe de 9 agentes: construir, revisar, corrigir)
+- **M2, olho no movimento** (`motor/movimento.py`):
+  - mede tremor, pan e nitidez a cada 0,5 s (Lucas-Kanade, px a 1080);
+  - a análise grava `sinais.movimento` (opcional, com cache; falha vira aviso);
+  - o catálogo diz ao diretor quais clipes preferir e quais evitar;
+  - o resolvedor escolhe o trecho mais firme, decide `estab` pela série, avisa quando o recorte amplia a fonte e troca a cobertura por um clipe nativo equivalente;
+  - o whip segue o sentido da câmera.
+- **M3, filme sem fala** (`motor/etapas/sem_fala.py`):
+  - cortes na batida;
+  - duração do plano pela energia da parte da música;
+  - plano mais forte na virada;
+  - ordem cronológica;
+  - câmera lenta só de fonte rápida.
+- **M4:**
+  - emenda de 2 ou 3 músicas (ponto de troca em fronteira de parte, tom que combina, bpm até 6% casado);
+  - cor viva (nenhum look padrão abaixo da saturação da fonte; medida antes/depois; aviso);
+  - câmera lenta verdadeira (`fps_fonte * vel >= fps_saida * 0,95`).
+- **Revisão do Crivo:** as três peças saíram "aprovado com ajustes"; ajustes aplicados.
+- **Testes:** pytest **449 ok**; tipos ok; aceite 35/35.
+- **Limite honesto:** tudo validado só com áudio e vídeo sintéticos. Os limiares (1,5 e 4 px, 40 e 900 px/s, nitidez 0,45) não foram calibrados em material real. Próximo passo: remontar o Itaitu pelo editor e comparar.
+- **Auditoria de lacunas** (`docs/lacunas-25-11.md`): 48 confirmadas.
+- **Backup em FALHA desde 23/11 16:27:** todos os pedidos de arquivo do Dropbox respondem "fechada, excluída ou nunca existiu", inclusive um criado em 24/11. Causa do lado da conta (espaço ou plano, não confirmado). Aguardando o dono.
+- **Comando oficial de 25/11:** pesquisas e plano em `docs/`. O crítico barrou as ondas de cor e exportação até 8 correções; podem começar a Onda 0, a 1 (leitura da gravação) e a 5a (modos como dados).

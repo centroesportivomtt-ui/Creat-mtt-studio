@@ -48,6 +48,7 @@ def test_ingest_e_analise_pela_fila(ambiente, tmp_path):
     assert a1["arquivo"]["sha256"] == hashlib.sha256(v1.read_bytes()).hexdigest()
     assert a1["arquivo"]["gravado_em"] == "2026-11-18T10:15:00"
     assert arm.existe(a1["sinais"]["energia"]["chave"]) and arm.existe(a1["derivados"]["folha"])
+    assert a1["sinais"]["movimento"]["passo"] == 0.5 and arm.existe(a1["sinais"]["movimento"]["chave"])   # M2: sinal opcional medido
     a2 = arm.ler_json("derivados/p1/a002/analise.json")
     _validar(a2)
     assert a2["midia"]["tem_audio"] is False and a2["derivados"]["audio_wav"] is None and a2["transcricao"]["provedor"] == "nenhum"
@@ -57,6 +58,23 @@ def test_ingest_e_analise_pela_fila(ambiente, tmp_path):
     worker.main(["--ate-ocioso", "--etapas", "ingest,analise"])
     saidas = {(r["etapa"], r["alvo"]): json.loads(r["saida"]) for r in con.execute("SELECT etapa, alvo, saida FROM jobs WHERE alvo='a001'")}
     assert saidas[("ingest", "a001")]["pulado"] and saidas[("analise", "a001")]["pulado"]
+    # análise de antes do medidor de movimento: ganha só o movimento, sem refazer o resto
+    velha = arm.ler_json("derivados/p1/a001/analise.json")
+    velha["sinais"].pop("movimento")
+    arm.gravar_json("derivados/p1/a001/analise.json", velha)
+    banco.enfileirar(con, "analise", "p1", "a001")
+    worker.main(["--ate-ocioso", "--etapas", "analise"])
+    nova = arm.ler_json("derivados/p1/a001/analise.json")
+    _validar(nova)
+    assert nova["sinais"]["movimento"]["chave"].endswith("movimento.json") and nova["transcricao"] == velha["transcricao"]
+    # análise antiga que já não valida no schema atual: antes era "pulado"; ganhar o movimento não pode matar a etapa
+    fora = dict(nova, sinais={k: v for k, v in nova["sinais"].items() if k != "movimento"} | {"campo_que_nao_existe": 1})
+    arm.gravar_json("derivados/p1/a001/analise.json", fora)
+    banco.enfileirar(con, "analise", "p1", "a001")
+    worker.main(["--ate-ocioso", "--etapas", "analise"])
+    ultima = con.execute("SELECT estado, saida FROM jobs WHERE etapa='analise' AND alvo='a001' ORDER BY rowid DESC LIMIT 1").fetchone()
+    assert json.loads(ultima["saida"]) == {"pulado": True}, dict(ultima)
+    assert arm.ler_json("derivados/p1/a001/analise.json") == fora              # fica como estava
 
 
 def test_arquivo_corrompido_falha_definitivo(ambiente):

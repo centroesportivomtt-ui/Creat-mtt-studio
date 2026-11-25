@@ -38,6 +38,10 @@
       "minimum": 5,
       "maximum": 600
     },
+    "sem_fala": {
+      "type": "boolean",
+      "description": "Filme SEM fala, cortado pela música (viagem, natureza, evento sem depoimento): blocos com falas vazias; a cobertura do bloco é opcional (vazia = o editor escolhe os melhores trechos em ordem de gravação). O editor põe a virada da música no bloco de trilha.drop_em, corta na batida pela energia de cada parte da música e usa a trilha cheia. Sem o campo, o modo liga sozinho quando nenhum bloco tem fala; false força o resolvedor com fala."
+    },
     "vel_fala": {
       "type": "number",
       "minimum": 1.0,
@@ -332,6 +336,23 @@
             "null"
           ],
           "description": "Id do bloco onde a música explode."
+        },
+        "ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "type": "string"
+          },
+          "description": "Opcional: 2 ou 3 trilhas da biblioteca em sequência (a 1a é a principal). O editor troca no fim de uma parte, no 1 do compasso, casando tom e tempo."
+        },
+        "troca_em": {
+          "type": "array",
+          "maxItems": 2,
+          "items": {
+            "type": "string"
+          },
+          "description": "Opcional: id do bloco em que cada música seguinte assume (sem isso, o filme se divide por igual)."
         }
       }
     },

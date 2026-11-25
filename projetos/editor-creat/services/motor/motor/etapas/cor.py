@@ -12,6 +12,10 @@ em 1/4 da resolução.
 - classificar(): heurística (sem IA) do look pela medição. Academia não se distingue de loja pela cor: vem do pedido.
 - balanco(): exposição até o alvo do look (no máximo +40%/-25%) e branco com a força do look (noite e palco mantêm
   a luz colorida de propósito).
+- COR VIVA (regra do dono, 25/11: "cores vivas, natureza brilhando… não deixa a imagem cinzenta"): nenhum look derruba a
+  saturação abaixo da fonte. O lift e o contraste também lavam a cor, então a saturação do nó 3 é medida numa paleta fixa
+  e sobe até a saída ficar pelo menos tão saturada quanto a entrada (sat_efetiva). Só um look marcado `"dessatura": true`
+  (pedido explícito da direção, ex.: bloco de memória) pode sair mais pálido. checar_saturacao() mede antes/depois por plano.
 """
 from __future__ import annotations
 
@@ -19,7 +23,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-VERSAO = "c1"
+VERSAO = "c3"               # c2: cor viva (piso de saturação medido); c3: croma relativo à luma (escurecer não é lavar). Cache antigo é refeito
 
 # A biblioteca mora em memoria/cor/looks.json (o Caderno da casa mostra; o motor falso do site lê o mesmo arquivo).
 def _carregar_looks() -> dict[str, dict]:
@@ -208,6 +212,72 @@ def curva_canal(x: np.ndarray, c: int, look: dict, bal: dict | None) -> np.ndarr
 
 
 _CACHE: OrderedDict = OrderedDict()
+SAT_PISO = 1.0               # saída / fonte, medida na paleta: nunca mais pálida que a fonte
+SAT_TOLERANCIA = 0.97        # aviso do relatório: depois < 97% do antes (abaixo disso o olho já vê "lavado")
+SAT_TETO = 1.6               # a compensação não passa disso (cor de desenho animado)
+_PALETA = None
+
+
+def _paleta():
+    """Cores de teste: 12 matizes x 4 saturações x 5 luzes, do quase preto ao quase branco (cena de noite é quase toda
+    sombra, onde o contraste em S tira cor), BGR uint8."""
+    global _PALETA
+    if _PALETA is None:
+        cv2 = _cv2()
+        hsv = np.array([[(h, s, v) for h in range(0, 180, 15) for s in (60, 120, 180, 240) for v in (40, 90, 150, 210, 245)]], np.uint8)
+        _PALETA = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    return _PALETA
+
+
+def _sat_hsv(bgr) -> float:
+    cv2 = _cv2()
+    return float(cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)[:, :, 1].astype(np.float64).mean())
+
+
+def _croma(bgr) -> float:
+    """Distância do cinza no plano Cb/Cr DIVIDIDA pela luma de cada pixel: é o que o olho lê como "cor". A saturação HSV
+    sozinha engana (o lift e o contraste sobem o S do HSV mesmo com a cor ficando mais cinza), então o piso vale para as
+    duas medidas. Sem dividir pela luma, o croma cai junto com a exposição (Cb/Cr escalam com o RGB) e todo plano que o
+    balanço escurece (exp 0,75 a 0,8) saía com +20 a +30% de saturação sem estar lavado (revisão M4, 25/11)."""
+    cv2 = _cv2()
+    ycc = cv2.cvtColor(bgr, cv2.COLOR_BGR2YCrCb).astype(np.float64)
+    return float((np.hypot(ycc[:, :, 1] - 128.0, ycc[:, :, 2] - 128.0) / np.maximum(ycc[:, :, 0], 16.0)).mean())
+
+
+def dessatura(look: str) -> bool:
+    return bool((LOOKS.get(look) or {}).get("dessatura"))
+
+
+def sat_efetiva(look: str, lut) -> float:
+    """Saturação do nó 3 que garante saída >= fonte na paleta (o pedido do look é o ponto de partida, nunca o teto)."""
+    cv2 = _cv2()
+    s = float(LOOKS.get(look, LOOKS["neutro"])["sat"])
+    if dessatura(look):
+        return s
+    pal = _paleta()
+    b_hsv, b_cr = _sat_hsv(pal), _croma(pal)
+    for _ in range(8):
+        M = ((1 - s) * np.tile(_WY, (3, 1)) + s * np.eye(3)).astype(np.float32)
+        o = cv2.LUT(pal, lut)
+        o = cv2.transform(o, M) if abs(s - 1) >= 1e-3 else o
+        r = min(_sat_hsv(o) / max(b_hsv, 1e-6), _croma(o) / max(b_cr, 1e-6))
+        if r >= SAT_PISO - 1e-3 or s >= SAT_TETO:
+            break
+        s = min(SAT_TETO, s * (SAT_PISO / max(r, 0.3)) + 0.005)
+    return round(s, 4)
+
+
+def checar_saturacao(antes: dict | None, depois: dict | None, look: str) -> dict | None:
+    """Saturação média antes/depois do plano (medir().sat_media) e um aviso quando a saída ficou mais pálida que a fonte
+    sem a direção ter pedido (look sem `dessatura`). Fonte quase sem cor (< 0,03) não gera aviso: não há o que lavar."""
+    if not antes or not depois or antes.get("sat_media") is None or depois.get("sat_media") is None:
+        return None
+    a, d = float(antes["sat_media"]), float(depois["sat_media"])
+    out = {"antes": round(a, 3), "depois": round(d, 3), "razao": round(d / a, 3) if a > 1e-6 else None, "aviso": None}
+    if a >= 0.03 and d < a * SAT_TOLERANCIA and not dessatura(look):
+        out["aviso"] = (f"cor ficou mais pálida que a fonte ({a:.2f} para {d:.2f}, {100 * (1 - d / a):.0f}% a menos) sem a direção "
+                        f"ter pedido (look {look})")
+    return out
 
 
 def _tabelas(look: str, bal: dict | None):
@@ -218,9 +288,10 @@ def _tabelas(look: str, bal: dict | None):
     L = LOOKS.get(look, LOOKS["neutro"])
     x = np.linspace(0, 1, 256)
     luts = [(curva_canal(x, c, L, bal) * 255 + 0.5).astype(np.uint8) for c in (2, 1, 0)]   # BGR
-    s = float(L["sat"])
+    lut = np.stack(luts, 1).reshape(256, 1, 3)
+    s = sat_efetiva(look if look in LOOKS else "neutro", lut)
     Msat = ((1 - s) * np.tile(_WY, (3, 1)) + s * np.eye(3)).astype(np.float32)
-    t = (np.stack(luts, 1).reshape(256, 1, 3), Msat, abs(s - 1) < 1e-3, float(L["pele"]))
+    t = (lut, Msat, abs(s - 1) < 1e-3, float(L["pele"]))
     _CACHE[chave] = t
     if len(_CACHE) > 64:
         _CACHE.popitem(last=False)
@@ -261,7 +332,8 @@ def exportar_cube(look: str, bal: dict | None, caminho, n: int = 33) -> str:
     L = LOOKS.get(look, LOOKS["neutro"])
     x = np.linspace(0, 1, n)
     cr, cg, cb = (curva_canal(x, c, L, bal) for c in range(3))
-    s = float(L["sat"])
+    m00 = float(_tabelas(look if look in LOOKS else "neutro", bal)[1][0, 0])       # a mesma saturação viva do render
+    s = (m00 - float(_WY[0])) / (1 - float(_WY[0]))
     wr, wg, wb_ = 0.2126, 0.7152, 0.0722
     linhas = [f'TITLE "creat.MTT {L["nome"]}"', f"LUT_3D_SIZE {n}", "DOMAIN_MIN 0.0 0.0 0.0", "DOMAIN_MAX 1.0 1.0 1.0"]
     for b in range(n):

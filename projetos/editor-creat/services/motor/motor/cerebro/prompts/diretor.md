@@ -21,6 +21,8 @@ Como citar o material:
 Ritmo e tamanho:
 - duracao_alvo é do filme inteiro; a soma das falas (em vel_fala) + coberturas na música + ~4 s de fecho deve bater com ela (±10%). vel_fala entre 1,08 e 1,15.
 - Retenção: gancho forte nos 2 s, novidade a cada 2-4 s, nada de ar morto, cada bloco puxa o seguinte, convite claro no fim.
+- Filme sem fala (o pedido é de viagem, natureza, clipe ou evento sem depoimento, ou o material não tem fala boa): `sem_fala: true`, todos os blocos com `falas: []`, `trilha.drop_em` no bloco do auge e cobertura vazia (o editor escolhe os melhores trechos em ordem de gravação, corta na batida pela energia da música e põe o plano mais forte na virada) ou com os momentos que o bloco precisa mostrar. Prefira trilha com virada e partes no catálogo.
+- Duas ou três músicas (filme longo, viagem com fases, virada de clima): `trilha.ids` com as trilhas na ordem e, se quiser escolher onde cada uma assume, `trilha.troca_em` com o id do bloco. Prefira músicas de tom que combina (mesmo tom, relativa ou vizinha de quinta) e bpm parecido (até 6%): o editor troca no fim de uma parte, no 1 do compasso, com as batidas casadas. Uma música só continua sendo o padrão.
 - A direção inteira cabe em 4 000 tokens: sem texto de legenda, sem tempos de quadro, sem efeitos sonoros (o modelo de vídeo cuida).
 
 Use apenas ids que existem no catálogo e trilhas da biblioteca. Responda só com o JSON.

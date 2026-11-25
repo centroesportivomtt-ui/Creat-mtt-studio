@@ -132,7 +132,23 @@
         "emendas": { "type": "array", "description": "[t_filme, s_trilha_de, s_trilha_ate, xf]: trechos da trilha na ordem (V1 trilha2 / V2 corte km).", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 } },
         "ganho_db": { "type": "number", "default": -14 },
         "ducking": { "type": "object", "additionalProperties": false, "properties": { "db": { "type": "number", "default": 10 }, "desce": { "type": "number", "default": 0.4 }, "sobe": { "type": "number", "default": 0.55 } } },
-        "acorde_final": { "type": ["number", "null"], "description": "t do filme onde o acorde final cai (logo)." }
+        "acorde_final": { "type": ["number", "null"], "description": "t do filme onde o acorde final cai (logo)." },
+        "faixas": {
+          "type": "array", "minItems": 1, "maxItems": 4,
+          "description": "Opcional (M4): 2 ou 3 músicas em sequência; com faixas, emendas não é usado. A 1a faixa é a de trilha.chave.",
+          "items": { "type": "object", "additionalProperties": false, "required": ["chave", "entra_em", "s_de"], "properties": {
+            "chave": { "type": "string" },
+            "id": { "type": "string" },
+            "entra_em": { "type": "number", "minimum": 0, "description": "s do filme em que a faixa começa (início do cruzamento com a anterior)." },
+            "s_de": { "type": "number", "description": "s da música (sem esticar) tocando em entra_em." },
+            "xf": { "type": "number", "minimum": 0, "default": 0, "description": "Cruzamento de igual potência com a faixa anterior, em s do filme." },
+            "razao": { "type": "number", "minimum": 0.5, "maximum": 2, "default": 1, "description": "s de música por s de filme, sem mudar o tom (fatiado na batida com bpm medido; atempo do ffmpeg só sem bpm)." },
+            "bpm": { "type": ["number", "null"] },
+            "fase": { "type": "number" },
+            "modo": { "type": "string", "enum": ["casada", "respiro"] },
+            "troca_em": { "type": "number", "description": "s do filme do 1 do compasso em que esta faixa assume." }
+          } }
+        }
       }
     },
     "sfx": {

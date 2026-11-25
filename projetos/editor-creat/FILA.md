@@ -33,9 +33,9 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 | item | o quê | estado |
 |---|---|---|
 | M1 | o editor ouve a música (virada, partes, tom; auge do filme na virada) | feito · cdacad4 · 25/11 |
-| M2 | movimento, tremor e nitidez a cada 0,5 s; decisão de estabilizar; recorte que amplia demais é recusado | em andamento · 01LA2wrMpbZ · 25/11 |
-| M3 | modo filme sem fala: cortes pela música (partes e virada), melhor trecho de cada cena, ordem cronológica | em andamento · 01LA2wrMpbZ · 25/11 |
-| M4 | emenda de duas ou mais músicas no mesmo tom e no tempo; cor viva como padrão; câmera lenta só de fonte 60/120 fps | em andamento · 01LA2wrMpbZ · 25/11 |
+| M2 | movimento, tremor e nitidez a cada 0,5 s; decisão de estabilizar; recorte que amplia demais é recusado | feito · 25/11 (falta calibrar no material real) |
+| M3 | modo filme sem fala: cortes pela música (partes e virada), melhor trecho de cada cena, ordem cronológica | feito · 25/11 (falta calibrar no material real) |
+| M4 | emenda de duas ou mais músicas no mesmo tom e no tempo; cor viva como padrão; câmera lenta só de fonte 60/120 fps | feito · 25/11 (falta calibrar no material real) |
 | M5 | portar o motor de render do Itaitu (transição casada com o movimento, looks por plano, moldura, mix com natureza) | AUTOMÁTICO: toda rodada confere se existe `projetos/itaitu-viagem/motor-render/`; existindo, portar para services/motor com teste e publicar, sem perguntar ao dono |
 | M6 | banco de sons reais (kit-edicao-17-11/sfx-banco) ligado ao editor: som que acompanha a imagem | AUTOMÁTICO: quando a sessão do Itaitu commitar o índice |
 

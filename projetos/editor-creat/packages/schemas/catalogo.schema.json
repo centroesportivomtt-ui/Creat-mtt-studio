@@ -33,6 +33,12 @@
           "resumo": { "type": "string", "maxLength": 240 },
           "pessoas": { "type": "string", "maxLength": 160 },
           "camera": { "type": "string", "maxLength": 80, "description": "estável | tremido 0-40 s | selfie..." },
+          "movimento": { "type": "object", "additionalProperties": false, "required": ["tremor", "nota", "melhores"], "description": "Resumo de motor/movimento.py (opcional: análise sem movimento medido fica sem).",
+            "properties": { "tremor": { "type": "number", "description": "p90 do tremor em px da saída 9:16 sem zoom (o mesmo critério do resolvedor)." }, "nota": { "type": "number", "description": "Qualidade média 0-1." },
+              "borrado_pct": { "type": "number" }, "falhas": { "type": "number", "description": "Fração de quadros sem fluxo medido; acima de 0,3 o tremor não é confiável." },
+              "nitidez_rel": { "type": "number", "description": "nitidez_ref / mediana do projeto (abaixo de 0,35 = clipe inteiro mole)." }, "ampliacao": { "type": "number", "description": "Quanto o recorte 9:16 sem zoom amplia a fonte (1 = nativo)." },
+              "melhores": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 }, "description": "[t0, t1, nota]." },
+              "tremidos": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 }, "description": "[t0, t1, px]." } } },
           "ambientes": { "type": "array", "items": { "type": "string" } },
           "momentos": {
             "type": "array",

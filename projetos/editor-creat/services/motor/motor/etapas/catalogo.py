@@ -167,7 +167,9 @@ def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: i
             "id": cid, "arquivo": a["arquivo"]["id"], "nome": a["arquivo"]["nome"], "dur": round(a["midia"]["duracao"], 2),
             "resumo": " ".join((vis.get("resumo") or "").split()[:22])[:240],
             "pessoas": pessoas[:160], "camera": _camera(a, vis)[:80], "ambientes": amb, "momentos": momentos, "falas": falas,
+            **({"movimento": mv} if (mv := _movimento(a)) else {}),
         })
+    _nitidez_relativa(clipes, ordenadas)
     for c in clipes:                                          # ditado -> id da fala (deste ou de outro clipe) onde a voz A repete
         for item in c["falas"]:
             alvo = item.pop("_dit", None)
@@ -213,7 +215,62 @@ def _pessoas(falas, momentos) -> str:
     return ", ".join(f"{n} {_num(a)}-{_num(b)}" for n, (a, b) in faixas.items())
 
 
+def _movimento(a: dict) -> dict | None:
+    """Resumo do movimento para o resolvedor e o diretor (sinais.movimento da análise; análise antiga fica sem)."""
+    mv = a["sinais"].get("movimento")
+    if not mv:
+        return None
+    from motor import movimento as MV
+    m = a["midia"]
+    esc = MV.escala_saida(m.get("w"), m.get("h"))     # tremor em px da SAÍDA 9:16, o mesmo critério do resolvedor
+    out = {"tremor": round(mv.get("tremor_p90", 0.0) * esc, 2), "nota": mv.get("nota", 0.0), "borrado_pct": mv.get("borrado_pct", 0.0),
+           "melhores": [x[:3] for x in mv.get("melhores") or []][:3], "tremidos": [x[:3] for x in mv.get("tremidos") or []][:3]}
+    if mv.get("falhas"):
+        out["falhas"] = mv["falhas"]
+    amp = MV.ampliacao(m.get("w"), m.get("h"))
+    if amp is not None:
+        out["ampliacao"] = amp
+    return out
+
+
+MOLE_REL = 0.35        # nitidez_ref abaixo de 35% da mediana do projeto = clipe inteiro mole (foco perdido, lente suja)
+
+
+def _nitidez_relativa(clipes: list[dict], analises: list[dict]) -> None:
+    """A nitidez da série é relativa ao próprio clipe: um clipe TODO fora de foco sairia com nota alta. Aqui ele é
+    comparado com a mediana do projeto (precisa de 3 clipes medidos; com menos não há base e nada muda)."""
+    import numpy as np
+    refs = {c["id"]: float((a["sinais"].get("movimento") or {}).get("nitidez_ref") or 0.0)
+            for c, a in zip(clipes, analises) if c.get("movimento")}
+    refs = {k: v for k, v in refs.items() if v > 0}
+    if len(refs) < 3:
+        return
+    med = float(np.median(list(refs.values())))
+    for c in clipes:
+        if c["id"] in refs and med > 0:
+            c["movimento"]["nitidez_rel"] = round(refs[c["id"]] / med, 2)
+
+
+def _qualidade(c: dict) -> float:
+    """Nota do clipe para o diretor priorizar o material de mais alta qualidade: firme e nítido, pixel nativo na saída.
+    Clipe mole perto do resto do projeto cai na proporção; tremor que não foi medido (quadros sem textura) vale a metade."""
+    from motor import movimento as MV
+    mv = c["movimento"]
+    amp = mv.get("ampliacao") or 1.0
+    q = mv["nota"] * (1.0 if amp <= 1.0 else 1.0 / amp)
+    rel = mv.get("nitidez_rel")
+    if rel is not None and rel < 1.0:
+        q *= max(0.0, rel)
+    if (mv.get("falhas") or 0.0) > MV.FALHAS_MAX:
+        q *= 0.5
+    return q
+
+
 def _camera(a, vis) -> str:
+    if a["sinais"].get("movimento"):                  # medição fina a cada 0,5 s vence a dos quadros-chave
+        from motor import movimento as MV
+        w, h = a["midia"].get("w"), a["midia"].get("h")
+        return MV.texto_camera(a["sinais"]["movimento"], w, h, MV.escala_saida(w, h))
     t = a["sinais"].get("tremor") or {}
     trechos = t.get("trechos") or []
     if trechos:
@@ -257,6 +314,16 @@ def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozense
               f"# trilhas: {trilhas or 'nenhuma'} · modelos: {', '.join(cat.get('modelos') or []) or 'evento-reel'}",
               "# C=clipe (arquivo \"nome\" dur · câmera · pessoas · ambientes · resumo) · M=momento t0-t1 tipo nota(1-5) desc · "
               "F=fala t0-t1 FALANTE e.energia «texto». Tempos em s da fonte. Use só estes ids."]
+    com_mov = [c for c in cl if c.get("movimento")]
+    if com_mov:                                       # pedido do dono: foco nos vídeos de mais alta qualidade
+        melhores = [c for c in sorted(com_mov, key=lambda c: (-_qualidade(c), c["id"])) if _qualidade(c) >= 0.5][:6]
+        from motor import movimento as MV
+        evite = [c["id"] for c in com_mov if c["movimento"]["tremor"] > MV.LIMIAR_FORTE and not c["movimento"]["melhores"]
+                 or c["movimento"].get("borrado_pct", 0) >= 0.5 or c["movimento"].get("nitidez_rel", 1.0) < MOLE_REL]
+        linhas.append("# câmera: 'melhor a-b' = trecho mais nítido e firme"
+                      + (f"; prefira {', '.join(c['id'] for c in melhores)}" if melhores else "")
+                      + (f"; evite {', '.join(evite)} (tremido forte, borrado ou mole)" if evite else "")
+                      + "; horizontal vira vertical ampliando (perde nitidez)")
     if any(f.get("voz") for c in cl for f in c["falas"]):
         linhas.append("# vozA = voz principal (quem fala no vídeo); vozB = outra pessoa (em geral a equipe dirigindo). "
                       "DITADO→F.. = a equipe ditou a frase e a voz principal repetiu em F..: use F.., nunca o ditado.")
