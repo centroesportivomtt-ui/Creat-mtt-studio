@@ -37,7 +37,7 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 | M3 | modo filme sem fala: cortes pela música (partes e virada), melhor trecho de cada cena, ordem cronológica | feito · 25/11 (falta calibrar no material real) |
 | M4 | emenda de duas ou mais músicas no mesmo tom e no tempo; cor viva como padrão; câmera lenta só de fonte 60/120 fps | feito · 25/11 (falta calibrar no material real) |
 | M5 | portar o motor de render do Itaitu (transição casada com o movimento, looks por plano, moldura, mix com natureza) | AUTOMÁTICO: toda rodada confere se existe `projetos/itaitu-viagem/motor-render/`; existindo, portar para services/motor com teste e publicar, sem perguntar ao dono |
-| M6 | banco de sons reais (kit-edicao-17-11/sfx-banco) ligado ao editor: som que acompanha a imagem | AUTOMÁTICO: quando a sessão do Itaitu commitar o índice |
+| M6 | banco de sons reais (kit-edicao-17-11/sfx-banco) ligado ao editor: som que acompanha a imagem | FEITO em 25/11 (8ef173c): a direção pede, o motor baixa do archive.org antes do render. Falta M6b (sugerir sozinho a partir da imagem) e ouvir num filme real |
 
 ## Comando oficial do dono (25/11, geral e permanente)
 Palavras dele: "sem limites, sem fronteiras, observando tudo… o que os próprios creators do momento mais fazem… algo premium de fato"; "não quero só um modo de edição… dezenas e dezenas e dezenas de modos de edição diferentes"; "interpretação e leitura sobre o tipo de vídeo que foi gravado… log, RAW, 30 fps, 24 fps, 120 fps, modo cinema, câmera lenta, ou aqueles aplicativos que tiram o processamento da Apple"; "nunca, jamais me exportar os vídeos de uma forma que estrague os detalhes… ainda mais os vídeos gravados com um nível de filmagem superior".

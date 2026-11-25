@@ -550,3 +550,15 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - **Custo:** a estimativa do plano (≈ US$ 0,94 por conversa de 20 turnos) NÃO foi medida; o teste real, até US$ 1, faz parte da revisão.
 - **Em paralelo, cada uma na sua cópia:** M6 (sons reais do banco de 7.546 sons) e Cloudflare/Drive (entrega do filme aprovado pelo R2, guarda do material, pasta do Drive por link).
 - **Ordem de juntar:** M6, depois Cloudflare/Drive, depois a conversa; a cada junção, pytest e aceite completos antes do push e conferência da versão no ar.
+
+## 25/11: M6, sons reais do banco no filme
+- **O que faz:** a direção pede som por bloco (`blocos[].sons`: ambiente ou pontual, ligado ao momento que aparece na imagem). O resolvedor escolhe no índice (7.546 sons Sonniss GDC, só o principal de cada um) o primeiro e duas reservas; o motor baixa do archive.org ANTES do render e mixa com ducking sob a fala.
+- **Nunca sintetiza no lugar:** pedido sem som no banco vira aviso "pedido sem som"; `edl.sfx` não foi reaproveitado justamente porque cai no sintético.
+- **Onde vive:** o índice (só metadados, 2,7 MB) vai dentro do motor (`motor/sons_reais/indice.jsonl.gz`) e vira sqlite em `dados/cache/sons_reais/` na primeira consulta. O áudio fica só no cache (fora do backup e nunca servido).
+- **Licença:** o som do banco só sai dentro do filme pronto. O stem `reais` nunca é servível (403 em GET e HEAD, com teste).
+- **Rede educada:** um download por vez no servidor inteiro, tetos por filme (8 sons, 150 MB, 240 s), respeita `Retry-After`, para tudo com 403, só fala com `archive.org` e servidores `ia<n>`/`dn<n>`; o EDL é conferido contra o índice antes de qualquer pedido.
+- **Falha segura:** som que não chegou não piora o filme (o som direto só abaixa 6 dB onde o ambiente real entrou de fato); ganho com teto de +30 dB; trecho quase mudo é trocado pela reserva; som com voz sai (triagem local e QA, só o culpado vai para a lista negra).
+- **Revisão:** 10 achados do Crivo e 7 da Muralha, todos corrigidos com teste (o mais grave: o stem com o som do banco ficava servível).
+- **Testes:** pytest **520 ok**, tipos ok, aceite **46/46** (em portas próprias: as equipes em paralelo disputam a 3000/8788).
+- **Prova real (feita por mim, fora dos testes):** riacho (trecho de 12 s de um WAV de 102 MB) e porta-malas (FLAC inteiro, MD5 conferido) baixados em 8,9 s, 3 pedidos, 8,5 MB; redirecionamentos para `dn601305.us` e `ia803106.us`, aceitos; triagem de voz com o faster-whisper de verdade, 0 palavra.
+- **Limite honesto:** nenhum filme real foi montado com som do banco ainda. Falta ouvir: se o diretor pede os sons certos, se o nível de −26 dB do ambiente fica bom sob fala, e se o pontual cai no instante da ação. Chave para desligar: `EDITOR_SONS_REAIS=0`.
