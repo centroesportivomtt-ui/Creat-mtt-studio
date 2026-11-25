@@ -39,6 +39,15 @@ Motivo: em 19/11 duas sessões fizeram as mesmas três checagens ao mesmo tempo 
 | M5 | portar o motor de render do Itaitu (transição casada com o movimento, looks por plano, moldura, mix com natureza) | AUTOMÁTICO: toda rodada confere se existe `projetos/itaitu-viagem/motor-render/`; existindo, portar para services/motor com teste e publicar, sem perguntar ao dono |
 | M6 | banco de sons reais (kit-edicao-17-11/sfx-banco) ligado ao editor: som que acompanha a imagem | AUTOMÁTICO: quando a sessão do Itaitu commitar o índice |
 
+## Comando oficial do dono (25/11, geral e permanente)
+Palavras dele: "sem limites, sem fronteiras, observando tudo… o que os próprios creators do momento mais fazem… algo premium de fato"; "não quero só um modo de edição… dezenas e dezenas e dezenas de modos de edição diferentes"; "interpretação e leitura sobre o tipo de vídeo que foi gravado… log, RAW, 30 fps, 24 fps, 120 fps, modo cinema, câmera lenta, ou aqueles aplicativos que tiram o processamento da Apple"; "nunca, jamais me exportar os vídeos de uma forma que estrague os detalhes… ainda mais os vídeos gravados com um nível de filmagem superior".
+| item | o quê | estado |
+|---|---|---|
+| O1 | leitura completa da gravação (log, RAW/ProRes, HDR/Dolby Vision, 10 bits, fps real e variável, modo cinema, câmera lenta, app sem processamento da Apple) e tratamento certo para cada uma | pesquisa em andamento · 25/11 |
+| O2 | exportação que nunca estraga: cadeia de cor e bits preservada, taxa e codec pelo destino, conferência de qualidade contra a fonte | pesquisa em andamento · 25/11 |
+| O3 | dezenas de modos de edição (biblioteca de estilos: ritmo, cor, tipografia, transição, som), escolhíveis no pedido | pesquisa em andamento · 25/11 |
+| O4 | o que os creators premium fazem agora, virando técnica do editor | pesquisa em andamento · 25/11 |
+
 ## Mapa original (depois da fila do dono)
 | item | o quê | estado |
 |---|---|---|
