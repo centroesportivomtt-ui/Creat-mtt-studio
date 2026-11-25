@@ -11,6 +11,7 @@ if [ ! -f "$SEG" ]; then
 fi
 set -a; . "$SEG"; set +a
 MOTOR_PORTA="${MOTOR_PORTA:-8787}"
+export EDITOR_AMBIENTE=producao   # o cérebro falso da conversa nunca vale aqui (motor/config.py)
 export MOTOR_URL="http://127.0.0.1:${MOTOR_PORTA}" MOTOR_TOKEN="${MOTOR_TOKEN}" EDITOR_SEGREDO_SESSAO="${EDITOR_SEGREDO_SESSAO:-$EDITOR_SEGREDO_SESSAO_GERADO}" MOTOR_HOST=127.0.0.1
 if [ -z "${EDITOR_SENHA_HASH:-}" ]; then
   : "${EDITOR_SENHA:?defina EDITOR_SENHA (a senha da casa, 10+ caracteres) nas variáveis da hospedagem}"

@@ -29,6 +29,8 @@ O aceite gera senha, segredo e token na hora (nada fica salvo), sobe o motor fal
 4. fecha o envio, manda o pedido e o status passa por lendo → dirigindo → montando → conferindo → entregue; o relógio para; o player toca (Range pelo proxy, 206);
 5. verificação visual logada em celular e desktop, claro e escuro (entrar, projetos, novo, projeto): sem erro de console, sem rolagem horizontal, sem texto < 11 px, alvos de toque ≥ 44 px no celular; e o `olhar.cjs` da casa em `/entrar`. Prints em `.verificacao/aceite/`.
 
+6. conversa com o editor (`scripts/aceite-conversa.mjs`, chamado no fim): abrir pela barra, texto com a resposta crescendo, ferramentas com quem fez, pergunta com botões (e por texto), cartões de pedido e de ajuste com o texto exato, parar, erro com "tentar de novo", motor reiniciando no meio, áudio (gravar, transcrever, texto no campo, só sai no toque), microfone negado, sessão vencida no meio, teto do dia, chave liga e desliga, desligada no servidor, título "● Precisa de você", selo na lista e número em Projetos, dois aparelhos sem repetir nada e rede caindo sem duplicar. Prints de celular claro e escuro de cada estado em `.verificacao/conversa/`. Roda também sozinho contra um site e um motor falso de pé (veja o topo do arquivo).
+
 O arquivo de 300 MB é sintético e esparso (64 KB aleatórios a cada MB): quase não ocupa disco na origem; o destino ocupa 300 MB e é apagado no fim.
 
 ## Como funciona
@@ -40,13 +42,14 @@ O arquivo de 300 MB é sintético e esparso (64 KB aleatórios a cada MB): quase
 | proxy do motor | `app/api/motor/[...rota]/route.ts`, `lib/motor.ts` | só com sessão; lista fechada de rotas `v1/…`; repassa `Range` (player) e SSE (status ao vivo) em streaming; o `MOTOR_TOKEN` nunca vai ao navegador |
 | telas | `app/entrar`, `app/projetos`, `app/projetos/novo`, `app/projetos/[id]`, `componentes/Projeto.tsx` | material, pedido, ilha ao vivo (relógio dos 30 minutos + trilha das etapas), versões com player, QA resumido e "reprovar com motivo" (vira regra da casa no motor) |
 | celular | `public/manifest.webmanifest`, ícones | instala como app (PWA); campos com 16 px (sem zoom no iPhone), alvos de 44 px, área segura do notch |
+| conversa com o editor | `componentes/conversa/*`, `lib/fio.ts`, `lib/conversa.ts`, `lib/equipe.ts` (+ `equipe.json`), `lib/pendentes.ts`, `lib/volta.ts` | um SSE só (`?v=2`) leva a mesa e a conversa: dedupe por id, efêmeros (`rascunho`, `instantaneo`, `ping`) à parte, vigia de 40 s e reabertura com `?depois=` na volta da tela. O campo mora na barra de comando; o fio toma o lugar da mesa quando aberto. Ferramentas e etapas viram linhas com quem faz (rótulo do código, nunca do modelo). Áudio por `MediaRecorder` em pedaços (700 KB ou 60 s), guardado no IndexedDB até a transcrição voltar; texto e mensagens que não saíram ficam na sessão da aba; sessão vencida vai para `/entrar?volta=` e volta para o mesmo projeto. Chave liga/desliga no menu Mais e no Caderno; teto de US$ 3 por dia vem do motor |
 | motor falso | `scripts/motor-falso.mjs` | mesma API da §4.6 em memória, com estados e eventos simulados e um vídeo de 5 s (ffmpeg) como versão |
 
 Direção de arte: ficha no topo de `app/globals.css` (conceito "Ilha de edição", momento-assinatura "o relógio dos 30 minutos", grafite + âmbar + vermelho da Aba 71, Anton no display, JetBrains Mono nos dados, fontes OFL servidas do próprio site).
 
 ## Variáveis (nomes; valores só em `.env.local` ou no servidor)
 
-`EDITOR_SENHA_HASH`, `EDITOR_SEGREDO_SESSAO` (32+ caracteres), `MOTOR_URL`, `MOTOR_TOKEN`, `EDITOR_DADOS`, `EDITOR_ENVIO_PARTE_MB`. Só para desenvolvimento: `MOTOR_FALSO_PORTA`, `MOTOR_FALSO_PASSO_MS`, `ACEITE_DIR`, `ACEITE_MB`, `ACEITE_PORTA_WEB`, `ACEITE_PORTA_MOTOR`.
+`EDITOR_SENHA_HASH`, `EDITOR_SEGREDO_SESSAO` (32+ caracteres), `MOTOR_URL`, `MOTOR_TOKEN`, `EDITOR_DADOS`, `EDITOR_ENVIO_PARTE_MB`. Só para desenvolvimento: `MOTOR_FALSO_PORTA`, `MOTOR_FALSO_PASSO_MS`, `MOTOR_FALSO_CONVERSA` (0 = desligada no servidor), `MOTOR_FALSO_DELTA_MS`, `MOTOR_FALSO_PING_MS`, `MOTOR_FALSO_OUVIR_MS`, `ACEITE_DIR`, `ACEITE_MB`, `ACEITE_PORTA_WEB`, `ACEITE_PORTA_MOTOR`.
 
 ## Fica para depois
 - Produção no R2: trocar `@tus/file-store` por `@tus/s3-store` (multipart direto no bucket) quando `EDITOR_ARMAZENAMENTO=r2`.

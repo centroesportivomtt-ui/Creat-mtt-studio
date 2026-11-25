@@ -125,7 +125,9 @@ export type Projeto = {
   dados: { envio_fechado?: boolean; envio_fechado_em?: string; pedido?: { texto: string; tipo_video?: string; modo?: string }; aprovadas?: Record<string, { em: string; nota: string | null }> } & Record<string, unknown>;
   arquivos: Arquivo[]; versoes: Versao[]; nuvem?: ResumoNuvem;
 };
-export type ResumoProjeto = { id: string; nome: string; estado: string; tipo_video: string | null; criado: string; atualizado: string; arquivos: number };
+export type ResumoProjeto = { id: string; nome: string; estado: string; tipo_video: string | null; criado: string; atualizado: string; arquivos: number;
+  /** a conversa espera o dono neste projeto (motor com a conversa; ausente no motor antigo) */
+  espera?: 'pergunta' | 'confirmacao' | null };
 export type Evento = {
   id: number; projeto: string; ts: string; tipo: string; etapa: string | null; alvo: string | null;
   progresso: number | null; estado: string | null; mensagem: string | null; dados: Record<string, unknown> | null;

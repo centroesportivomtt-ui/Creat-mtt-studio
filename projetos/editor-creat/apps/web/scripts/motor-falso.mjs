@@ -141,12 +141,16 @@ const ITENS_PASTA = [
 async function lerArquivo(p, a) {
   emitir(p.id, 'arquivo_recebido', { alvo: a.id, mensagem: `Chegou: ${a.nome}` });
   emitir(p.id, 'etapa_inicio', { etapa: 'ingest', alvo: a.id, mensagem: `Lendo quadros-chave e áudio de ${a.nome}` });
-  await dormir(PASSO / 2);
+  const mi = mesaInicio(p, 'ingest', a.id);            // mesa ao vivo (onda 2, bloco no fim do arquivo)
+  await mi.trecho(0, 1, PASSO / 2);
   a.estado = 'ingerido';
+  mi.fim();
   emitir(p.id, 'etapa_fim', { etapa: 'ingest', alvo: a.id, progresso: 1, mensagem: `${a.nome}: quadros-chave e áudio prontos` });
   emitir(p.id, 'etapa_inicio', { etapa: 'analise', alvo: a.id, mensagem: `Transcrevendo as falas de ${a.nome}` });
-  await dormir(PASSO / 2);
+  const ma = mesaInicio(p, 'analise', a.id);
+  await ma.trecho(0, 1, PASSO / 2);
   a.estado = 'analisado';
+  ma.fim();
   emitir(p.id, 'etapa_fim', { etapa: 'analise', alvo: a.id, progresso: 1, mensagem: `${a.nome}: falas, momentos e rostos lidos` });
   tentarDirigir(p);
 }
@@ -162,11 +166,13 @@ function tentarDirigir(p) {
 
 async function etapa(p, nome, alvo, mensagens) {
   emitir(p.id, 'etapa_inicio', { etapa: nome, alvo, mensagem: mensagens[0] });
+  const m = mesaInicio(p, nome, alvo);                 // mesa ao vivo: os passos de dentro correm no mesmo tempo de antes
   for (let i = 1; i < mensagens.length; i++) {
-    await dormir(PASSO);
+    await m.trecho(i - 1, mensagens.length, PASSO);
     emitir(p.id, 'etapa_progresso', { etapa: nome, alvo, progresso: i / mensagens.length, mensagem: mensagens[i] });
   }
-  await dormir(PASSO);
+  await m.trecho(mensagens.length - 1, mensagens.length, PASSO);
+  m.fim();
   emitir(p.id, 'etapa_fim', { etapa: nome, alvo, progresso: 1, mensagem: `${mensagens[0].replace(/…$/, '')}: pronto` });
 }
 
@@ -322,6 +328,10 @@ async function rotear(req, res) {
   if (partes[0] !== 'v1') return falha(res, 404, 'rota não encontrada');
   const [, r1, pid, r3, r4, r5] = partes;
   const M = req.method;
+  // conversa com o editor (bloco novo, no fim do arquivo): rotas R1 a R8, SSE v2 e as rotas de teste do aceite
+  if (r1 === 'conversa' || r1 === '_teste' || (r1 === 'projetos' && pid && (r3 === 'conversa' || (r3 === 'eventos' && url.searchParams.get('v') === '2')))) {
+    return rotearConversa(req, res, url, partes);
+  }
 
   if (r1 === 'saude' && M === 'GET') return json(res, 200, { ok: true, falso: true, provedores: { armazenamento: 'local', transcricao: 'falso', visao: 'falso', cerebro: 'fixture', render: 'falso', publicacao: 'nenhuma' },
     entregas: { ligado: ENT.ligado }, ...(ESP.ligado ? { espelho: { ligado: true, teto_gb: ESP.teto_gb } } : {}) });
@@ -441,7 +451,7 @@ async function rotear(req, res) {
   if (!pid) {
     if (M === 'GET') {
       const lista = [...projetos.values()].sort((a, b) => b.atualizado.localeCompare(a.atualizado))
-        .map((p) => ({ id: p.id, nome: p.nome, estado: p.estado, tipo_video: p.tipo_video, criado: p.criado, atualizado: p.atualizado, arquivos: p.arquivos.length }));
+        .map((p) => ({ id: p.id, nome: p.nome, estado: p.estado, tipo_video: p.tipo_video, criado: p.criado, atualizado: p.atualizado, arquivos: p.arquivos.length, espera: CONVERSA.espera.get(p.id)?.tipo ?? null }));
       return json(res, 200, lista);
     }
     if (M === 'POST') {
@@ -619,4 +629,568 @@ function memoriaDaCasa() {
   return { regras: r.regras ?? [], vocabulario: r.vocabulario ?? [], checagens: (ler('checagens.json', { checagens: [] }).checagens ?? []).map((c) => ([].includes(c.tipo) && c.gravidade === 'bloqueia' ? { ...c, gravidade: 'observacao' } : c)),
     modelos: [], modos: ordem.map((m) => ler(`modos/${m}.json`, null)).filter(Boolean),
     looks: Object.entries(ler('cor/looks.json', { looks: {} }).looks).map(([id, l]) => ({ id, nome: l.nome, desc: l.desc })), raiz_isolada: false };
+}
+
+// =====================================================================================================================
+// Conversa com o editor (bloco novo; docs/plano-conversa-25-11.md, seção 13). Mesmo contrato do motor real
+// (services/motor/motor/api/conversa.py e o SSE v2 de api/projetos.py), com um cérebro roteirizado pelo texto do dono:
+//   "pergunta"/"gancho" → pergunta com botões · "ajuste" → cartão de ajuste da versão pronta · "pedido" → cartão de troca
+//   do pedido · "mostra" → abrir o player num ponto · "erro" → a resposta para com erro · "devagar" → resposta longa
+//   (para o Parar) · o resto → "Entendi: …", duas ferramentas e a resposta.
+// Rotas /v1/_teste/* só existem aqui (o proxy do site não deixa passar): o aceite usa para semear o gasto do dia,
+// desligar a conversa no servidor e simular o motor reiniciando no meio da resposta.
+// =====================================================================================================================
+const CONVERSA = {
+  servidor: process.env.MOTOR_FALSO_CONVERSA !== '0',
+  ligada: true,
+  teto: 3,
+  gasto: 0,
+  cmid: new Map(),        // pid|cliente_msg_id -> turno (o mesmo id devolve o mesmo turno)
+  espera: new Map(),      // pid -> { tipo, tool_use_id, turno, desde, dados }
+  rodando: new Map(),     // pid -> contexto do turno
+  rascunho: new Map(),    // pid -> { turno, bloco, texto, v }
+  interrompido: new Map(),// pid -> turno com aviso "retomar" ativo
+  decididos: new Set(),
+  v: 0,
+};
+const DELTA_MS = Number(process.env.MOTOR_FALSO_DELTA_MS || 100);
+const PING_MS = Number(process.env.MOTOR_FALSO_PING_MS || 15000);
+const CUSTO_CHAMADA = 0.0352;
+const TOKENS = { entrada: 1800, cache_lida: 40000, cache_escrita: 1000, saida: 600 };
+const RE_CMID = /^[A-Za-z0-9_-]{8,40}$/;
+const RE_TOOL = /^[A-Za-z0-9_-]{1,80}$/;
+const novoTurno = () => 't_' + randomBytes(5).toString('hex');
+const novaFerramenta = (p) => `toolu_${p}${randomBytes(5).toString('hex')}`;
+const emitirC = (pid, tipo, dados) => emitir(pid, tipo, { dados });
+const ligadaC = () => CONVERSA.servidor && CONVERSA.ligada;
+
+function estadoChaveC() {
+  const ligada = ligadaC();
+  const amanha = new Date(Date.now() - 3 * 3600e3);
+  amanha.setUTCHours(24 + 3, 0, 0, 0);
+  return {
+    ligada, ...(ligada ? {} : { motivo: CONVERSA.servidor ? 'desligada_pelo_dono' : 'sem_chave' }),
+    teto_usd_dia: CONVERSA.teto, gasto_hoje_usd: +CONVERSA.gasto.toFixed(4), dia_vira_em: amanha.toISOString().replace(/\.\d{3}Z$/, 'Z'),
+    esperando: [...CONVERSA.espera].map(([pid, e]) => ({ projeto: pid, nome: projetos.get(pid)?.nome ?? pid, tipo: e.tipo, desde: e.desde })),
+  };
+}
+function instantaneoC(pid) {
+  const d = { ligada: ligadaC(), gasto_hoje_usd: +CONVERSA.gasto.toFixed(4), teto_usd_dia: CONVERSA.teto };
+  if (!d.ligada) d.motivo = CONVERSA.servidor ? 'desligada_pelo_dono' : 'sem_chave';
+  const ctx = CONVERSA.rodando.get(pid);
+  if (ctx) { d.turno_rodando = ctx.turno; const r = CONVERSA.rascunho.get(pid); if (r && r.turno === ctx.turno) d.rascunho = { ...r }; }
+  const e = CONVERSA.espera.get(pid);
+  if (e) d.espera = { tipo: e.tipo, tool_use_id: e.tool_use_id };
+  const ab = passosAbertos(pid);
+  if (ab.length) d.passos_abertos = ab;
+  return d;
+}
+
+// ---------- o turno roteirizado ----------
+function dividir(texto, n) {
+  const pedacos = [];
+  const tam = Math.max(1, Math.ceil(texto.length / n));
+  for (let i = 0; i < texto.length; i += tam) pedacos.push(texto.slice(i, i + tam));
+  return pedacos;
+}
+async function escreverC(pid, ctx, texto, deltas = 20) {
+  const bloco = ctx.bloco++;
+  const r = { turno: ctx.turno, bloco, texto: '', v: ++CONVERSA.v };
+  CONVERSA.rascunho.set(pid, r);
+  ctx.chamadas = Math.max(ctx.chamadas, 1);
+  for (const p of dividir(texto, deltas)) {
+    await dormir(DELTA_MS);
+    if (ctx.fechado) return false;
+    r.texto += p;
+    r.v = ++CONVERSA.v;
+  }
+  if (ctx.fechado) return false;
+  emitirC(pid, 'fala_editor', { turno: ctx.turno, bloco, texto });
+  return true;
+}
+async function ferramentaC(pid, ctx, nome, entrada, resumo, ms = 350) {
+  const id = novaFerramenta(nome.slice(0, 3));
+  ctx.chamadas += 1;
+  emitirC(pid, 'ferramenta', { turno: ctx.turno, tool_use_id: id, nome, fase: 'inicio' });
+  await dormir(ms);
+  if (ctx.fechado) { emitirC(pid, 'ferramenta', { turno: ctx.turno, tool_use_id: id, nome, fase: 'erro', resumo: 'não executado' }); return false; }
+  emitirC(pid, 'ferramenta', { turno: ctx.turno, tool_use_id: id, nome, fase: 'fim', resumo, s: ms / 1000, entrada });
+  return true;
+}
+function fimC(pid, ctx, stop, extra = {}) {
+  if (ctx.fechado && stop !== 'parado') return;
+  ctx.fechado = true;
+  const custo = +(CUSTO_CHAMADA * Math.max(1, ctx.chamadas) * (extra.estimado ? 0.5 : 1)).toFixed(4);
+  CONVERSA.gasto += custo;
+  emitirC(pid, 'turno_fim', { turno: ctx.turno, stop, custo_usd: custo, s: +((Date.now() - ctx.t0) / 1000).toFixed(1), gasto_hoje_usd: +CONVERSA.gasto.toFixed(4), tokens: TOKENS, ...extra });
+  if (CONVERSA.rodando.get(pid) === ctx) CONVERSA.rodando.delete(pid);
+  if (CONVERSA.rascunho.get(pid)?.turno === ctx.turno) CONVERSA.rascunho.delete(pid);
+}
+function versaoPronta(p) {
+  const v = [...p.versoes].reverse().find((x) => x.estado !== 'reprovada');
+  return v && v.estado === 'entregue' ? v : null;
+}
+function guardaAjuste(p, versao) {
+  const v = p.versoes.find((x) => x.id === versao);
+  if (!v || v.estado !== 'entregue') return `a ${versao} ainda não está pronta`;
+  if (p.dados.aprovadas?.[versao]) return `a ${versao} já foi aprovada`;
+  if (p.versoes[p.versoes.length - 1].id !== versao) return `a ${versao} não é a versão mais nova`;
+  if (p.rodando) return 'a mesa está trabalhando agora';
+  return null;
+}
+function guardaPedido(p) {
+  if (!ABERTOS.includes(p.estado)) return 'a edição já começou';
+  if (p.versoes.length) return 'já existe uma versão';
+  if (p.rodando) return 'a mesa está trabalhando agora';
+  return null;
+}
+const hashC = (tid, entrada) => createHash('sha256').update(`${tid}\n${JSON.stringify(entrada)}`).digest('hex');
+
+async function rodarTurnoC(pid, ctx, texto, contexto) {
+  const p = projetos.get(pid);
+  const t = texto.toLowerCase();
+  const tempo = typeof contexto?.t_player === 'number' ? `${Math.floor(contexto.t_player / 60)}:${String(Math.floor(contexto.t_player % 60)).padStart(2, '0')}, ` : '';
+  const eco = `Entendi: ${tempo}${texto.replace(/\s+/g, ' ').slice(0, 120).replace(/[.!?…]+$/, '')}.`;
+  try {
+    if (/erro/.test(t)) {
+      if (!(await escreverC(pid, ctx, `${eco} Vou olhar o projeto.`, 6))) return;
+      await dormir(200);
+      return fimC(pid, ctx, 'erro', { detalhe: 'o Claude não respondeu agora; tente de novo' });
+    }
+    if (/devagar/.test(t)) {
+      const longo = Array.from({ length: 12 }, (_, i) => `Parte ${i + 1}: olhando cada fala com calma para achar o melhor gancho.`).join(' ');
+      if (!(await escreverC(pid, ctx, `${eco} ${longo}`, 160))) return;
+      return fimC(pid, ctx, 'end_turn');
+    }
+    if (!(await escreverC(pid, ctx, `${eco} Vou olhar o projeto primeiro.`))) return;
+    if (!(await ferramentaC(pid, ctx, 'ver_projeto', {}, `Olhou o projeto: ${p.arquivos.length} vídeo(s), ${p.versoes.length} versão(ões)`))) return;
+    if (/pergunta|gancho/.test(t)) {
+      const tid = novaFerramenta('per');
+      const dados = { turno: ctx.turno, tool_use_id: tid, texto: 'Abro com o gancho da troca de palavra ou com você falando?',
+        opcoes: [{ id: 'gancho', rotulo: 'Pelo gancho', efeito: 'abre com FILMAR riscado virando CONTAR' }, { id: 'fala', rotulo: 'Pela sua fala', efeito: 'abre com você apresentando a equipe' }],
+        aceita_texto: true, sugestao: 'gancho' };
+      CONVERSA.espera.set(pid, { tipo: 'pergunta', tool_use_id: tid, turno: ctx.turno, desde: agora(), dados });
+      emitirC(pid, 'pergunta', dados);
+      ctx.chamadas += 1;
+      return fimC(pid, ctx, 'pausa');
+    }
+    if (/ajuste/.test(t)) {
+      const v = versaoPronta(p);
+      const porque = v ? guardaAjuste(p, v.id) : 'ainda não há versão pronta';
+      if (porque) {
+        await escreverC(pid, ctx, `Ainda não dá para pedir ajuste: ${porque}. Quando a versão ficar pronta, eu preparo o cartão.`);
+        return fimC(pid, ctx, 'end_turn');
+      }
+      const tid = novaFerramenta('aju');
+      const entrada = { versao: v.id, o_que_mudar: texto.slice(0, 1000) };
+      const dados = { turno: ctx.turno, tool_use_id: tid, acao: 'ajuste', versao: v.id, titulo: `Pedir ajuste da ${v.id}`, texto_exato: entrada.o_que_mudar,
+        refaz: ['direcao', 'montagem', 'qa'], comeca_agora: true, custo_usd_est: 0.4, minutos_est: 10, vira_regra: true,
+        volta: `A ${v.id} continua guardada. Vira regra da casa e vale para TODOS os projetos, como no botão Pedir ajuste.`, entrada_hash: hashC(tid, entrada) };
+      await escreverC(pid, ctx, `Preparei o ajuste da ${v.id.toUpperCase()}. Todo ajuste refaz direção, montagem e conferência e vira regra da casa. Confira o cartão.`, 8);
+      CONVERSA.espera.set(pid, { tipo: 'confirmacao', tool_use_id: tid, turno: ctx.turno, desde: agora(), dados, entrada });
+      emitirC(pid, 'confirmacao', dados);
+      return fimC(pid, ctx, 'pausa');
+    }
+    if (/pedido/.test(t)) {
+      const porque = guardaPedido(p);
+      if (porque) {
+        await escreverC(pid, ctx, `Não dá para trocar o pedido agora: ${porque}.`);
+        return fimC(pid, ctx, 'end_turn');
+      }
+      const tid = novaFerramenta('ped');
+      const entrada = { texto: texto.slice(0, 4000), duracao_alvo: 30 };
+      const antes = p.dados.pedido?.texto ?? '';
+      const comeca = Boolean(p.dados.envio_fechado && p.arquivos.length && p.arquivos.every((a) => a.estado === 'analisado'));
+      const dados = { turno: ctx.turno, tool_use_id: tid, acao: 'pedido', titulo: 'Trocar o pedido', texto_exato: entrada.texto,
+        mudancas: [{ campo: 'texto', antes, depois: entrada.texto }, { campo: 'duracao_alvo', antes: '', depois: '30 s' }],
+        refaz: comeca ? ['direcao', 'montagem', 'qa'] : [], comeca_agora: comeca, custo_usd_est: 0.4, minutos_est: 10, vira_regra: false,
+        volta: 'Dá para trocar de novo antes de a edição começar.', entrada_hash: hashC(tid, entrada) };
+      await escreverC(pid, ctx, 'Montei o pedido novo. Confira o antes e o depois no cartão.', 6);
+      CONVERSA.espera.set(pid, { tipo: 'confirmacao', tool_use_id: tid, turno: ctx.turno, desde: agora(), dados, entrada });
+      emitirC(pid, 'confirmacao', dados);
+      return fimC(pid, ctx, 'pausa');
+    }
+    if (/mostra/.test(t)) {
+      const v = versaoPronta(p);
+      if (v) {
+        if (!(await ferramentaC(pid, ctx, 'mostrar', { versao: v.id, tempo_s: 2 }, 'Abriu no ponto 0:02'))) return;
+        emitirC(pid, 'mostrar', { versao: v.id, tempo_s: 2 });
+      }
+      await escreverC(pid, ctx, v ? `Separei o ponto 0:02 da ${v.id.toUpperCase()}. Toque para ver no player.` : 'Ainda não há filme pronto para mostrar.');
+      return fimC(pid, ctx, 'end_turn');
+    }
+    if (!(await ferramentaC(pid, ctx, 'ver_material', { busca: 'gancho' }, `Leu ${Math.max(3, p.arquivos.length * 4)} trechos`))) return;
+    await continuarC(pid, ctx, `Olhei o projeto e o material: **${p.arquivos.length} vídeo(s)** e ${p.versoes.length} versão(ões). Nada mudou no filme; se quiser um ajuste, é só pedir.`);
+  } catch (e) {
+    fimC(pid, ctx, 'erro', { detalhe: String(e?.message || e).slice(0, 120) });
+  }
+}
+/** Fim normal do turno: responde também ao que o dono mandou enquanto a mesa falava ("na fila"). */
+async function continuarC(pid, ctx, texto) {
+  if (!(await escreverC(pid, ctx, texto))) return;
+  if (ctx.fila.length) {
+    const ult = ctx.fila.splice(0).pop();
+    if (!(await escreverC(pid, ctx, `Sobre o que você mandou agora (“${ult.slice(0, 80)}”): anotado, entra no próximo passo.`, 6))) return;
+  }
+  fimC(pid, ctx, 'end_turn');
+}
+function iniciarC(pid, turno, texto, contexto, continuar) {
+  const ctx = { turno, t0: Date.now(), bloco: 0, chamadas: 0, fechado: false, fila: [] };
+  CONVERSA.rodando.set(pid, ctx);
+  CONVERSA.interrompido.delete(pid);
+  (continuar ? continuar(ctx) : rodarTurnoC(pid, ctx, texto, contexto)).catch(() => fimC(pid, ctx, 'erro'));
+  return ctx;
+}
+function proximoBloco(pid, turno) {
+  let n = 0;
+  for (const e of eventos) if (e.projeto === pid && e.tipo === 'fala_editor' && e.dados?.turno === turno) n = Math.max(n, e.dados.bloco + 1);
+  return n;
+}
+
+// ---------- SSE v2 ----------
+function sseV2(req, res, pid, url) {
+  const sem = url.searchParams.get('sem');
+  if (sem && !/^[a-z_]+(,[a-z_]+)*$/.test(sem)) return falha(res, 422, 'sem: tipos separados por vírgula, só letras minúsculas e _');
+  const fora = new Set((sem ?? '').split(',').filter(Boolean));
+  const depois = Number(url.searchParams.get('depois') || 0);
+  const ultimo = Number(req.headers['last-event-id'] || 0);
+  const seguir = url.searchParams.get('seguir') !== 'false';
+  const ate = Math.max(1, Math.min(Number(url.searchParams.get('ate') || 600), 6 * 3600)) * 1000;
+  let cursor = Math.max(depois || 0, ultimo || 0);
+  res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-cache', connection: 'keep-alive', 'x-accel-buffering': 'no' });
+  res.write('retry: 2000\n\n');
+  const efemero = (tipo, dados) => res.write(`event: ${tipo}\ndata: ${JSON.stringify({ tipo, projeto: pid, dados })}\n\n`);
+  const novos = () => {
+    for (const e of eventos) {
+      if (e.projeto === pid && e.id > cursor) {
+        cursor = e.id;
+        if (!fora.has(e.tipo)) res.write(`id: ${e.id}\nevent: ${e.tipo}\ndata: ${JSON.stringify(e)}\n\n`);
+      }
+    }
+  };
+  novos();
+  const inst = instantaneoC(pid);
+  let ultimoV = inst.rascunho?.v ?? -1;
+  efemero('instantaneo', inst);
+  if (!seguir) return res.end();
+  const t0 = Date.now();
+  let ping = Date.now();
+  const t = setInterval(() => {
+    novos();
+    const ctx = CONVERSA.rodando.get(pid);
+    const r = CONVERSA.rascunho.get(pid);
+    if (ctx && r && r.turno === ctx.turno && r.v !== ultimoV) { ultimoV = r.v; efemero('rascunho', { ...r }); }
+    if (Date.now() - ping > PING_MS) { ping = Date.now(); efemero('ping', { ts: agora() }); }
+    if (Date.now() - t0 > ate) { clearInterval(t); res.end(); }
+  }, 100);
+  req.on('close', () => clearInterval(t));
+}
+
+// ---------- rotas ----------
+async function rotearConversa(req, res, url, partes) {
+  const [, r1, pid, r3, r4] = partes;
+  const M = req.method;
+  if (r1 === 'conversa') {
+    if (M === 'GET') return json(res, 200, estadoChaveC());
+    if (M === 'POST') {
+      const c = await lerCorpo(req);
+      if (typeof c?.ligada !== 'boolean') return falha(res, 422, 'ligada: verdadeiro ou falso');
+      if (c.ligada && !CONVERSA.servidor) return falha(res, 409, 'a conversa está desligada no servidor');
+      CONVERSA.ligada = c.ligada;
+      if (!c.ligada) for (const [p, ctx] of CONVERSA.rodando) pararC(p, ctx);
+      return json(res, 200, estadoChaveC());
+    }
+    return falha(res, 405, 'método não permitido');
+  }
+  if (r1 === '_teste') {
+    const c = (await lerCorpo(req)) ?? {};
+    if (pid === 'conversa') {
+      if (typeof c.gasto === 'number') CONVERSA.gasto = c.gasto;
+      if (typeof c.servidor === 'boolean') CONVERSA.servidor = c.servidor;
+      if (typeof c.ligada === 'boolean') CONVERSA.ligada = c.ligada;
+      return json(res, 200, estadoChaveC());
+    }
+    if (pid === 'mesa-erro' && projetos.has(r3)) return json(res, 200, mesaErro(projetos.get(r3)));
+    if (pid === 'mesa-interrompida' && projetos.has(r3)) return json(res, 200, mesaInterrompida(projetos.get(r3)));
+    if (pid === 'interromper' && projetos.has(r3)) {
+      // como o motor real no boot (reconciliar_conversas): turno aberto ganha turno_fim "erro" e um aviso "retomar"
+      const ctx = CONVERSA.rodando.get(r3);
+      let turno = ctx?.turno;
+      if (ctx) { ctx.fechado = true; CONVERSA.rodando.delete(r3); CONVERSA.rascunho.delete(r3); }
+      if (!turno) turno = [...eventos].reverse().find((e) => e.projeto === r3 && e.tipo === 'fala_dono')?.dados?.turno;
+      if (!turno) return falha(res, 409, 'nenhum turno para interromper');
+      emitirC(r3, 'turno_fim', { turno, stop: 'erro', custo_usd: 0.06, estimado: true, s: 0, gasto_hoje_usd: +(CONVERSA.gasto += 0.06).toFixed(4), detalhe: 'o motor reiniciou no meio da resposta', tokens: { entrada: 0, cache_lida: 0, cache_escrita: 7500, saida: 0 } });
+      emitirC(r3, 'aviso', { acao: 'retomar', turno });
+      CONVERSA.interrompido.set(r3, turno);
+      return json(res, 200, { turno });
+    }
+    return falha(res, 404, 'rota não encontrada');
+  }
+  const p = projetos.get(pid);
+  if (!p) return falha(res, 404, 'projeto não encontrado');
+  if (r3 === 'eventos' && M === 'GET') return sseV2(req, res, pid, url);
+  if (M !== 'POST') return falha(res, 405, 'método não permitido');
+
+  if (r4 === 'audio') {
+    const tipo = String(req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
+    if (!['audio/webm', 'audio/mp4', 'audio/ogg', 'audio/x-m4a'].includes(tipo)) return falha(res, 415, 'formato de áudio não aceito');
+    let total = 0;
+    try { for await (const pedaco of req) { total += pedaco.length; if (total > 950000) return falha(res, 413, 'grave até 1 minuto'); } } catch { return falha(res, 422, 'não entendi, grave de novo'); }
+    if (total < 200) return falha(res, 422, 'não entendi, grave de novo');
+    const tid = 'au_' + randomBytes(5).toString('hex');
+    const t0 = Date.now();
+    emitirC(pid, 'ferramenta', { turno: null, tool_use_id: tid, nome: 'ouvir_audio', fase: 'inicio' });
+    await dormir(Number(process.env.MOTOR_FALSO_OUVIR_MS || 700));
+    const s_audio = Math.max(1, Math.round(total / 16000));
+    emitirC(pid, 'ferramenta', { turno: null, tool_use_id: tid, nome: 'ouvir_audio', fase: 'fim', resumo: `Ouviu ${s_audio} s`, s: +((Date.now() - t0) / 1000).toFixed(2) });
+    return json(res, 200, { texto: 'Corta o silêncio do começo e abre com a minha fala mais forte.', conf: 0.91, s_audio, s: +((Date.now() - t0) / 1000).toFixed(2) });
+  }
+
+  const c = await lerCorpo(req);
+  if (c === null) return falha(res, 422, 'JSON inválido');
+  if (!r4) {                                                     // R3: o dono manda uma mensagem
+    const texto = typeof c.texto === 'string' ? c.texto.replace(/[\x00-\x08\x0b-\x1f\x7f]/g, '').trim() : '';
+    if (!texto || texto.length > 4000) return falha(res, 422, 'mensagem entre 1 e 4000 caracteres');
+    if (!RE_CMID.test(String(c.cliente_msg_id ?? ''))) return falha(res, 422, 'cliente_msg_id inválido');
+    if (c.via != null && !['texto', 'audio'].includes(c.via)) return falha(res, 422, 'via: texto ou audio');
+    if (c.contexto?.versao != null && !/^v[0-9]{1,3}$/.test(c.contexto.versao)) return falha(res, 422, 'contexto.versao: vN');
+    const chave = `${pid}|${c.cliente_msg_id}`;
+    if (CONVERSA.cmid.has(chave)) return json(res, 202, { turno: CONVERSA.cmid.get(chave), na_fila: false });
+    if (!ligadaC()) return falha(res, 503, 'a conversa está desligada');
+    if (CONVERSA.gasto >= CONVERSA.teto - 1e-9) return falha(res, 429, `chegou no teto de hoje (US$ ${CONVERSA.teto.toFixed(2).replace('.', ',')}); a conversa volta à meia-noite`);
+    const via = c.via ?? 'texto';
+    const contexto = c.contexto && typeof c.contexto === 'object' ? c.contexto : undefined;
+    const rodando = CONVERSA.rodando.get(pid);
+    if (rodando) {
+      CONVERSA.cmid.set(chave, rodando.turno);
+      rodando.fila.push(texto);
+      emitirC(pid, 'fala_dono', { turno: rodando.turno, texto, via, ...(contexto ? { contexto } : {}), na_fila: true });
+      return json(res, 202, { turno: rodando.turno, na_fila: true });
+    }
+    const esp = CONVERSA.espera.get(pid);
+    if (esp) {                                                  // mensagem livre responde a pergunta ou cancela o cartão
+      CONVERSA.espera.delete(pid);
+      CONVERSA.decididos.add(esp.tool_use_id);
+      if (esp.tipo === 'pergunta') emitirC(pid, 'resposta', { tool_use_id: esp.tool_use_id, tipo: 'pergunta', texto: texto.slice(0, 1000), por: 'mensagem' });
+      else emitirC(pid, 'resposta', { tool_use_id: esp.tool_use_id, tipo: 'confirmacao', sim: false, resultado: 'cancelado', detalhe: 'Cancelado: você mandou outra mensagem.', por: 'mensagem' });
+    }
+    const turno = novoTurno();
+    CONVERSA.cmid.set(chave, turno);
+    emitirC(pid, 'fala_dono', { turno, texto, via, ...(contexto ? { contexto } : {}) });
+    iniciarC(pid, turno, texto, contexto);
+    return json(res, 202, { turno, na_fila: false });
+  }
+  if (r4 === 'responder') {                                     // R5
+    const tid = String(c.tool_use_id ?? '');
+    if (!RE_TOOL.test(tid) || (c.escolha_id == null && !String(c.texto ?? '').trim())) return falha(res, 422, 'toque numa opção ou escreva a resposta');
+    const esp = CONVERSA.espera.get(pid);
+    if (!esp || esp.tipo !== 'pergunta' || esp.tool_use_id !== tid) {
+      return CONVERSA.decididos.has(tid) ? falha(res, 409, 'essa pergunta já foi respondida') : falha(res, 404, 'essa pergunta não existe');
+    }
+    const op = c.escolha_id != null ? esp.dados.opcoes.find((o) => o.id === c.escolha_id) : null;
+    if (c.escolha_id != null && !op) return falha(res, 422, 'essa opção não existe nesta pergunta');
+    if (!ligadaC()) return falha(res, 503, 'a conversa está desligada');
+    if (CONVERSA.rodando.has(pid)) return falha(res, 409, 'a conversa ainda está respondendo; espere terminar');
+    CONVERSA.espera.delete(pid);
+    CONVERSA.decididos.add(tid);
+    const textoLivre = String(c.texto ?? '').trim().slice(0, 1000);
+    emitirC(pid, 'resposta', { tool_use_id: tid, tipo: 'pergunta', ...(op ? { escolha_id: op.id } : { texto: textoLivre }), por: 'dono' });
+    iniciarC(pid, esp.turno, '', null, async (ctx) => {
+      ctx.bloco = proximoBloco(pid, esp.turno);
+      if (!(await ferramentaC(pid, ctx, 'ver_material', { busca: op ? op.id : 'resposta' }, 'Leu 6 trechos'))) return;
+      await continuarC(pid, ctx, `Combinado: ${op ? op.rotulo.toLowerCase() : `“${textoLivre.slice(0, 80)}”`}. Anotei para a próxima versão; nada roda sem o seu toque.`);
+    });
+    return json(res, 202, { turno: esp.turno });
+  }
+  if (r4 === 'confirmar') {                                     // R6
+    const tid = String(c.tool_use_id ?? '');
+    if (!RE_TOOL.test(tid) || typeof c.sim !== 'boolean' || !/^[0-9a-f]{64}$/.test(String(c.entrada_hash ?? ''))) return falha(res, 422, 'cartão inválido');
+    const esp = CONVERSA.espera.get(pid);
+    if (!esp || esp.tipo !== 'confirmacao' || esp.tool_use_id !== tid) {
+      return CONVERSA.decididos.has(tid) ? falha(res, 409, 'esse cartão já foi decidido') : falha(res, 404, 'esse cartão não existe');
+    }
+    if (esp.dados.entrada_hash !== c.entrada_hash) return falha(res, 409, 'o cartão mudou');
+    CONVERSA.espera.delete(pid);
+    CONVERSA.decididos.add(tid);
+    const ev = { tool_use_id: tid, tipo: 'confirmacao', sim: c.sim, por: 'dono' };
+    if (!c.sim) { emitirC(pid, 'resposta', { ...ev, resultado: 'cancelado', detalhe: 'Cancelado. Nada mudou.' }); return json(res, 200, { feito: false }); }
+    const porque = esp.dados.acao === 'ajuste' ? guardaAjuste(p, esp.entrada.versao) : guardaPedido(p);
+    if (porque) { emitirC(pid, 'resposta', { ...ev, resultado: 'nao_deu', detalhe: `não deu: ${porque}` }); return falha(res, 409, `não deu: ${porque}`); }
+    if (esp.dados.acao === 'ajuste') {                          // o mesmo que o botão "Pedir ajuste"
+      const v = p.versoes.find((x) => x.id === esp.entrada.versao);
+      v.estado = 'reprovada';
+      v.reprovacao = esp.entrada.o_que_mudar;
+      emitir(pid, 'estado', { mensagem: `Versão ${v.id} reprovada: ${v.reprovacao.slice(0, 120)}. Virou regra da casa.` });
+      p.estado = 'lendo';
+      setTimeout(() => tentarDirigir(p), PASSO);
+      emitirC(pid, 'resposta', { ...ev, resultado: 'feito', detalhe: 'Pedido de ajuste enviado. A direção recomeça; acompanhe na mesa.' });
+      return json(res, 200, { feito: true, resultado: { nova_direcao: true } });
+    }
+    p.dados.pedido = { texto: esp.entrada.texto.slice(0, 200), tipo_video: p.tipo_video ?? 'auto', modo: p.dados.pedido?.modo ?? 'auto' };
+    emitir(pid, 'estado', { mensagem: 'Pedido recebido.', dados: { pedido: esp.entrada.texto.slice(0, 200) } });
+    const dirigindo = tentarDirigir(p);
+    emitirC(pid, 'resposta', { ...ev, resultado: 'feito', detalhe: dirigindo ? 'Pedido trocado. A edição começou; acompanhe na mesa.' : 'Pedido trocado.' });
+    return json(res, 200, { feito: true, resultado: { dirigindo } });
+  }
+  if (r4 === 'parar') {                                         // R7
+    const ctx = CONVERSA.rodando.get(pid);
+    if (!ctx) return json(res, 200, { parou: false });
+    pararC(pid, ctx);
+    return json(res, 200, { parou: true });
+  }
+  if (r4 === 'retomar') {                                       // R8
+    if (!ligadaC()) return falha(res, 503, 'a conversa está desligada');
+    if (CONVERSA.gasto >= CONVERSA.teto - 1e-9) return falha(res, 429, `chegou no teto de hoje (US$ ${CONVERSA.teto.toFixed(2).replace('.', ',')}); a conversa volta à meia-noite`);
+    if (CONVERSA.rodando.has(pid)) return falha(res, 409, 'a conversa já está respondendo');
+    const turno = CONVERSA.interrompido.get(pid);
+    if (!turno) return falha(res, 409, 'não há conversa interrompida');
+    iniciarC(pid, turno, '', null, async (ctx) => {
+      ctx.bloco = proximoBloco(pid, turno);
+      if (!(await ferramentaC(pid, ctx, 'ver_projeto', {}, 'Olhou o projeto'))) return;
+      await continuarC(pid, ctx, 'Voltei de onde parei. Olhei o projeto de novo: nada se perdeu.');
+    });
+    return json(res, 202, { turno });
+  }
+  return falha(res, 404, 'rota não encontrada');
+}
+function pararC(pid, ctx) {
+  const r = CONVERSA.rascunho.get(pid);
+  const parcial = r && r.turno === ctx.turno && !eventos.some((e) => e.projeto === pid && e.tipo === 'fala_editor' && e.dados?.turno === ctx.turno && e.dados?.bloco === r.bloco) ? r.texto : '';
+  ctx.fechado = true;
+  const custo = +(CUSTO_CHAMADA * 0.5).toFixed(4);
+  CONVERSA.gasto += custo;
+  emitirC(pid, 'turno_fim', { turno: ctx.turno, stop: 'parado', custo_usd: custo, estimado: true, s: +((Date.now() - ctx.t0) / 1000).toFixed(1), gasto_hoje_usd: +CONVERSA.gasto.toFixed(4), tokens: TOKENS, ...(parcial ? { texto_parcial: parcial } : {}) });
+  CONVERSA.rodando.delete(pid);
+  CONVERSA.rascunho.delete(pid);
+}
+
+// =====================================================================================================================
+// Mesa ao vivo (onda 2; docs/plano-conversa-25-11.md, seção 7 e 13.3): o mesmo contrato do motor real
+// (services/motor/motor/etapas/passos.py). Cada etapa simulada abre um passo raiz e, dentro dela, os passos da equipe
+// (com ferramenta, modelo, esforço, tokens, conta, custo e achado em números), e a direção emite a `decisao`.
+// Os números são de um filme de exemplo (14 falas, 6 momentos fortes, 275 ml conferido): o site só mostra o que chega.
+// =====================================================================================================================
+const novoPasso = () => 'ps_' + randomBytes(5).toString('hex');
+const conta = (m, partes, c) => `${m}: (${partes}) ÷ 1.000.000 = US$ ${c.toFixed(4).replace('.', ',')}`;
+const PASSOS_MESA = {
+  ingest: [],
+  analise: [
+    { chave: 'analise.transcricao', ferramenta: 'faster-whisper small', numeros: { falas: 14, palavras: 212 }, achado: '14 falas em 52 s de vídeo' },
+    { chave: 'analise.visao', ferramenta: 'visão claude-leve', modelo: 'claude-haiku-5-5', custo_usd: 0.0011,
+      tokens: { entrada: 9000, cache_lida: 0, cache_escrita: 0, saida: 400 }, conta: conta('claude-haiku-5-5', '9.000 novos × 0.1 + 400 de saída × 0.5', 0.0011),
+      numeros: { momentos: 9, fortes: 6, rostos: 3, cenas: 4 }, achado: '14 falas, 6 momentos fortes de 9 marcados' },
+  ],
+  catalogo: [],
+  direcao: [
+    { chave: 'direcao.diretor', ferramenta: 'Claude (Messages API, JSON estrito, cache do catálogo)', modelo: 'claude-opus-5-5', esforco: 'high', custo_usd: 0.0698,
+      tokens: { entrada: 1200, cache_lida: 15000, cache_escrita: 0, saida: 3100 }, conta: conta('claude-opus-5-5', '1.200 novos × 4 + 15.000 do cache × 0.2 + 3.100 de saída × 20', 0.0698),
+      numeros: { blocos: 5 }, achado: 'Conceito: a equipe chega e o salão vira palco.' },
+    { chave: 'direcao.resolvedor', ferramenta: 'resolvedor do editor (encaixe por palavra e batida)', numeros: { dur: 38, blocos: 5, planos: 14, falas: 9, drop_s: 14 },
+      achado: '38 s em 5 blocos e 14 planos, 9 trechos de fala; a música explode aos 0:14' },
+    { chave: 'direcao.critico', ferramenta: 'Claude (Messages API, JSON estrito, cache do catálogo)', modelo: 'claude-opus-5-5', esforco: 'medium', custo_usd: 0.0226,
+      tokens: { entrada: 400, cache_lida: 15000, cache_escrita: 0, saida: 900 }, conta: conta('claude-opus-5-5', '400 novos × 4 + 15.000 do cache × 0.2 + 900 de saída × 20', 0.0226),
+      numeros: { avisos: 2, resultado: 'sem mudança' }, achado: 'Manteve a direção (2 pontos conferidos)' },
+  ],
+  montagem: [
+    { chave: 'montagem.fatos', ferramenta: 'Claude com busca na web (fonte oficial) e leitura do rótulo nos quadros', numeros: { n: 1, confere: 1, corrigidos: 0, sem_fonte: 0 }, achado: '275 ml confere' },
+    { chave: 'montagem.voz', ferramenta: 'DeepFilterNet3 (limpeza com IA, local) + nivelamento', numeros: { n: 9 }, achado: '9 trechos de fala limpos e nivelados' },
+    { chave: 'montagem.planos', ferramenta: 'ffmpeg: cor por ambiente, estabilização e enquadre', numeros: { n: 14 }, achado: '14 planos com cor e enquadre (3 já estavam prontos)' },
+    { chave: 'montagem.overlay', ferramenta: 'Chromium + kit de motion da casa, quadro a quadro', numeros: { n: 23, quadros: 1140 }, achado: '23 camadas de legenda e motion em 1140 quadros' },
+    { chave: 'montagem.mix', ferramenta: 'mixagem do editor (ducking da música sob a fala, -14 LUFS)', numeros: { lufs: -14.1, margem_db: 9 }, achado: 'Fala 9 dB acima da música; -14,1 LUFS; o acorde final cai aos 0:36' },
+    { chave: 'montagem.comp', ferramenta: 'ffmpeg (libx264), vídeo e áudio numa passada', numeros: { Q: 1140 }, achado: '1140 quadros compostos' },
+  ],
+  qa: [
+    ['lufs', 'ok', '-14,1 LUFS (alvo -14)'], ['true_peak', 'ok', 'pico -1,4 dBTP'], ['frase_repetida', 'ok', 'nenhuma frase repetida'],
+    ['tom_sala_sem_voz', 'ok', 'tom de sala por baixo de todo silêncio'], ['quadros_pretos', 'ok', 'nenhum quadro preto fora do fade'],
+    ['zona_segura', 'ok', 'legendas dentro da zona segura do Reels'], ['formato', 'ok', '1080x1920 30fps H.264'],
+    ['voz_externa', 'aviso', '[em observação] 1 fala de outra voz aos 0:06'], ['olho_ia', 'ok', 'o Claude olhou 6 imagens e não achou defeito'],
+  ].map(([id, r, a]) => ({ chave: `qa.${id}`, ferramenta: `motor.etapas.qa.${id}`, numeros: { nome: id, resultado: r }, achado: a,
+    ...(id === 'olho_ia' ? { modelo: 'claude-haiku-5-5', custo_usd: 0.00075, tokens: { entrada: 6000, cache_lida: 0, cache_escrita: 0, saida: 300 }, conta: conta('claude-haiku-5-5', '6.000 novos × 0.1 + 300 de saída × 0.5', 0.00075) } : {}) })),
+  entrega: [],
+};
+const RAIZ_MESA = {
+  catalogo: { numeros: { falas: 14, momentos: 9, videos: 1 }, achado: '14 falas e 9 momentos de 1 vídeo, prontos para o diretor' },
+  analise: { numeros: { falas: 14, momentos: 9 } },
+  qa: { numeros: { aprovadas: 8, total: 9 }, achado: 'Passou em 8 de 9 conferências' },
+};
+const DECISAO = {
+  conceito: 'A equipe chega e o salão vira palco.', gancho: 'NÃO É SÓ FILMAR. (risca FILMAR e vira CONTAR)',
+  alem_do_pedido: 'Gancho com troca de palavra no quadro 0; fecho com o acorde caindo no logo', critica: 'sem mudança',
+  riscos: ['"creat" transcrito com confiança 0,7: conferir na legenda', 'Rosto de terceiro aos 0:22'],
+  blocos: [{ id: 'B1', funcao: 'gancho', intensidade: 4 }, { id: 'B2', funcao: 'prova', intensidade: 5 }, { id: 'B3', funcao: 'bastidor', intensidade: 3 },
+    { id: 'B4', funcao: 'climax', intensidade: 5 }, { id: 'B5', funcao: 'convite', intensidade: 4 }],
+  trilha: { clima: 'energia de evento', drop_em: 'B2' },
+};
+function emitirPasso(p, etapaNome, alvo, dados) { emitir(p.id, 'passo', { etapa: etapaNome, alvo: alvo ?? null, dados }); }
+function mesaInicio(p, nome, alvo) {
+  const numeros = {};
+  const i = alvo ? p.arquivos.findIndex((a) => a.id === alvo) : -1;
+  if (i >= 0) { numeros.n = i + 1; const a = p.arquivos[i]; if (a.bytes >= 50000) numeros.mb = +(a.bytes / 1e6).toFixed(1); }
+  else if (alvo && /^v\d+$/.test(alvo)) numeros.versao = alvo;
+  const raiz = { passo: novoPasso(), chave: nome, t0: Date.now() };
+  emitirPasso(p, nome, alvo, { passo: raiz.passo, chave: nome, fase: 'inicio', numeros });
+  const filhos = PASSOS_MESA[nome] ?? [];
+  let custo = 0;
+  const heranca = { ...(numeros.n ? { n: numeros.n } : {}), ...(numeros.versao ? { versao: numeros.versao } : {}) };
+  return {
+    async trecho(i, total, ms) {
+      const de = Math.floor((i * filhos.length) / total), ate = Math.floor(((i + 1) * filhos.length) / total);
+      const meus = filhos.slice(de, ate);
+      if (!meus.length) { await dormir(ms); return; }
+      for (const f of meus) {
+        const id = novoPasso();
+        const { custo_usd, tokens, conta: ct, achado, ...base } = f;
+        const nums = { ...heranca, ...(f.numeros ?? {}) };
+        emitirPasso(p, nome, alvo, { passo: id, pai: raiz.passo, ...base, fase: 'inicio', numeros: nums });
+        const t0 = Date.now();
+        await dormir(ms / meus.length);
+        custo += custo_usd ?? 0;
+        emitirPasso(p, nome, alvo, { passo: id, pai: raiz.passo, ...base, fase: 'fim', s: +((Date.now() - t0) / 1000).toFixed(2), numeros: nums,
+          ...(custo_usd ? { custo_usd } : {}), ...(tokens ? { tokens } : {}), ...(ct ? { conta: ct } : {}), ...(achado ? { achado } : {}) });
+      }
+    },
+    fim() {
+      if (nome === 'direcao') emitir(p.id, 'decisao', { etapa: 'direcao', alvo: `v${p.versoes.length + 1}`, dados: DECISAO });
+      const r = RAIZ_MESA[nome] ?? {};
+      emitirPasso(p, nome, alvo, { passo: raiz.passo, chave: nome, fase: 'fim', s: +((Date.now() - raiz.t0) / 1000).toFixed(2),
+        numeros: { ...numeros, ...(r.numeros ?? {}) }, ...(r.achado ? { achado: r.achado } : {}), ...(custo > 0 ? { custo_total_usd: +custo.toFixed(5) } : {}) });
+    },
+  };
+}
+function passosAbertos(pid) {
+  const por = new Map();
+  for (const e of eventos) {
+    if (e.projeto !== pid || e.tipo !== 'passo') continue;
+    const d = e.dados;
+    if (d.fase === 'inicio') por.set(d.passo, { passo: d.passo, chave: d.chave, desde: e.ts });
+    else por.delete(d.passo);
+  }
+  return [...por.values()];
+}
+// /v1/_teste/mesa-erro/<pid>: um vídeo que não dá para ler (frase em pt-BR, técnico recolhido) e o aviso de que ficou de fora
+function mesaErro(p) {
+  const a = p.arquivos[p.arquivos.length - 1];
+  const alvo = a?.id ?? 'a_quebrado';
+  const n = a ? p.arquivos.length : 2;
+  emitir(p.id, 'etapa_inicio', { etapa: 'analise', alvo, mensagem: `Radar começou a ouvir e olhar o vídeo ${n}.` });
+  const raiz = novoPasso(), filho = novoPasso();
+  emitirPasso(p, 'analise', alvo, { passo: raiz, chave: 'analise', fase: 'inicio', numeros: { n } });
+  emitirPasso(p, 'analise', alvo, { passo: filho, pai: raiz, chave: 'analise.transcricao', ferramenta: 'faster-whisper small', fase: 'inicio', numeros: { n } });
+  emitirPasso(p, 'analise', alvo, { passo: filho, pai: raiz, chave: 'analise.transcricao', ferramenta: 'faster-whisper small', fase: 'erro', s: 0.8, numeros: { n }, achado: 'Parou com um erro técnico (veja o detalhe).' });
+  const frase = `A leitura do vídeo ${n} parou.`;
+  emitirPasso(p, 'analise', alvo, { passo: raiz, chave: 'analise', fase: 'erro', s: 0.9, numeros: { n }, achado: frase });
+  emitir(p.id, 'etapa_erro', { etapa: 'analise', alvo, mensagem: frase, dados: { detalhe: 'ValueError: moov atom not found (<script>alert(1)</script>)', vai_tentar: false } });
+  emitir(p.id, 'aviso', { etapa: 'analise', alvo, mensagem: `O vídeo ${n} (<b>quebrado</b>.mov) não pôde ser lido e ficou de fora. O resto do material segue.`, dados: { detalhe: 'ValueError: moov atom not found' } });
+  return { ok: true };
+}
+// /v1/_teste/mesa-interrompida/<pid>: o editor reiniciou no meio da montagem (o motor real fecha com fase 'interrompido')
+function mesaInterrompida(p) {
+  const v = `v${p.versoes.length + 1}`;
+  emitir(p.id, 'etapa_inicio', { etapa: 'montagem', alvo: v, mensagem: `A montagem da ${v.toUpperCase()} começou: voz, planos, legendas e mix.` });
+  const raiz = novoPasso(), filho = novoPasso();
+  emitirPasso(p, 'montagem', v, { passo: raiz, chave: 'montagem', fase: 'inicio', numeros: { versao: v } });
+  emitirPasso(p, 'montagem', v, { passo: filho, pai: raiz, chave: 'montagem.comp', fase: 'inicio', numeros: { versao: v, Q: 1140 } });
+  emitirPasso(p, 'montagem', v, { passo: filho, pai: raiz, chave: 'montagem.comp', fase: 'interrompido' });
+  emitirPasso(p, 'montagem', v, { passo: raiz, chave: 'montagem', fase: 'interrompido' });
+  return { ok: true, versao: v };
 }

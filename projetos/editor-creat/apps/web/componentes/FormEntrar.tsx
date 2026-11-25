@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
+import { voltaSegura } from '@/lib/volta';
 
-export default function FormEntrar() {
+export default function FormEntrar({ volta = '/projetos' }: { volta?: string }) {
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
 
@@ -12,7 +13,7 @@ export default function FormEntrar() {
     setEnviando(true); setErro('');
     try {
       const r = await fetch('/api/entrar', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ senha }) });
-      if (r.ok) { window.location.assign('/projetos'); return; }
+      if (r.ok) { window.location.assign(voltaSegura(volta)); return; }
       const c = await r.json().catch(() => null);
       setErro(c?.erro ?? 'Não deu para entrar agora. Tente de novo.');
     } catch {

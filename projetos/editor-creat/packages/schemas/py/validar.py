@@ -11,7 +11,7 @@ import sys
 from jsonschema import Draft202012Validator
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
-NOMES = ("pedido", "analise", "catalogo", "direcao", "edl", "qa", "evento")
+NOMES = ("pedido", "analise", "catalogo", "direcao", "edl", "qa", "evento", "conversa")
 _cache = {}
 
 

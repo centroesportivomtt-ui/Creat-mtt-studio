@@ -110,8 +110,10 @@ def listar_projetos(limite: int = 50):
     with _con() as con:
         linhas = con.execute(
             """SELECT p.id, p.nome, p.estado, p.tipo_video, p.criado, p.atualizado,
-                      (SELECT COUNT(*) FROM arquivos a WHERE a.projeto=p.id) AS arquivos
-               FROM projetos p ORDER BY p.atualizado DESC LIMIT ?""", (limite,)).fetchall()
+                      (SELECT COUNT(*) FROM arquivos a WHERE a.projeto=p.id) AS arquivos,
+                      ce.tipo AS espera
+               FROM projetos p LEFT JOIN conversa_espera ce ON ce.projeto=p.id
+               ORDER BY p.atualizado DESC LIMIT ?""", (limite,)).fetchall()
         return [dict(r) for r in linhas]
 
 
@@ -266,29 +268,47 @@ def fechar_envio(pid: str):
 
 
 # ---------------- eventos ao vivo (SSE) ----------------
-def _buscar_eventos(pid: str, depois: int) -> list[dict]:
+_RE_SEM = re.compile(r"^[a-z_]+(,[a-z_]+)*$")
+
+
+def _buscar_eventos(pid: str, depois: int, sem: tuple = ()) -> list[dict]:
     with _con() as con:
-        return banco.eventos_desde(con, pid, depois)
+        return banco.eventos_desde(con, pid, depois, sem=sem)
 
 
 def _formatar(e: dict) -> str:
     return f"id: {e['id']}\nevent: {e['tipo']}\ndata: {json.dumps(e, ensure_ascii=False)}\n\n"
 
 
+def _efemero(pid: str, tipo: str, dados: dict) -> str:
+    """Evento sem id (evento-efemero.schema.json): não fica no banco e não mexe no Last-Event-ID."""
+    return f"event: {tipo}\ndata: {json.dumps({'tipo': tipo, 'projeto': pid, 'dados': dados}, ensure_ascii=False)}\n\n"
+
+
 @rotas.get("/projetos/{pid}/eventos")
-async def eventos(pid: str, request: Request, depois: int = 0, seguir: bool = True, ate: float = 3600.0,
-                  last_event_id: Optional[str] = Header(default=None)):
+async def eventos(pid: str, request: Request, depois: int = 0, seguir: bool = True, ate: Optional[float] = None,
+                  v: int = 1, sem: Optional[str] = None, last_event_id: Optional[str] = Header(default=None)):
+    """v=1 (padrão): o SSE de sempre. v=2: o gerador da conversa (rascunho, instantâneo, ping com dados, ate de 600 s).
+    EDITOR_SSE_NOVO=0 faz v=2 servir o gerador antigo, byte a byte. sem: tipos fora (filtrados no SQL), nos dois."""
     with _con() as con:
         _projeto(con, pid)
+    if sem is not None and not _RE_SEM.match(sem):
+        raise HTTPException(422, "sem: tipos separados por vírgula, só letras minúsculas e _")
+    filtro = tuple(sorted(set(sem.split(",")))) if sem else ()
     cursor = max(depois, int(last_event_id) if (last_event_id or "").isdigit() else 0)
-    ate = max(1.0, min(ate, 6 * 3600.0))
+    cfg, _ = _config()
+    if v == 2 and cfg.sse_novo:
+        return StreamingResponse(_gerar_v2(cfg, pid, request, cursor, seguir, max(1.0, min(600.0 if ate is None else ate, 6 * 3600.0)), filtro),
+                                 media_type="text/event-stream",
+                                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
+    ate = max(1.0, min(3600.0 if ate is None else ate, 6 * 3600.0))
 
     async def gerar():
         nonlocal cursor
         inicio, ultimo_ping = time.monotonic(), time.monotonic()
         yield "retry: 2000\n\n"
         while True:
-            novos = await asyncio.to_thread(_buscar_eventos, pid, cursor)
+            novos = await asyncio.to_thread(_buscar_eventos, pid, cursor, filtro)
             for e in novos:
                 cursor = e["id"]
                 yield _formatar(e)
@@ -302,6 +322,60 @@ async def eventos(pid: str, request: Request, depois: int = 0, seguir: bool = Tr
 
     return StreamingResponse(gerar(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
+
+
+async def _gerar_v2(cfg, pid: str, request: Request, cursor: int, seguir: bool, ate: float, filtro: tuple):
+    """SSE v2 (plano 13.4): uma conexão de leitura por cliente, fechada no finally; backlog filtrado no SQL; um
+    instantâneo ao esvaziar o backlog; tique de 150 ms com turno rodando (0,5 s sem); rascunho só quando muda;
+    event: ping com dados a cada 15 s; teto de 600 s (o EventSource reconecta com Last-Event-ID)."""
+    from motor.conversa import laco
+    con = await asyncio.to_thread(banco.conectar_leitura, cfg.banco)
+    try:
+        inicio, ultimo_ping, ultimo_v = time.monotonic(), time.monotonic(), -1
+        yield "retry: 2000\n\n"
+        while True:
+            novos = await asyncio.to_thread(banco.eventos_desde, con, pid, cursor, 200, filtro)
+            for e in novos:
+                cursor = e["id"]
+                yield _formatar(e)
+            if len(novos) < 200:
+                break
+        m = laco.atual()
+        if m is not None:
+            inst = await asyncio.to_thread(m.instantaneo, cfg, pid, con)
+            ultimo_v = (inst.get("rascunho") or {}).get("v", -1)
+        else:
+            from motor.conversa import preferencia, teto
+            ligada, motivo = preferencia.estado(cfg, dono_do_lock=True)
+            from motor.etapas import passos
+            ab = await asyncio.to_thread(passos.abertos, con, pid)
+            inst = {"ligada": ligada, "gasto_hoje_usd": round(await asyncio.to_thread(teto.gasto_hoje_usd, cfg), 4),
+                    "teto_usd_dia": teto.teto_usd_dia(cfg), **({"motivo": motivo} if motivo else {}), **({"passos_abertos": ab} if ab else {})}
+        yield _efemero(pid, "instantaneo", inst)
+        if not seguir:
+            return
+        while True:
+            m = laco.atual()
+            rodando = m is not None and m.rodando(pid)
+            novos = await asyncio.to_thread(banco.eventos_desde, con, pid, cursor, 200, filtro)
+            for e in novos:
+                cursor = e["id"]
+                yield _formatar(e)
+            if rodando:
+                r = m.rascunho.get(pid)
+                if r and r.get("v", -1) != ultimo_v and r.get("turno"):
+                    ultimo_v = r["v"]
+                    yield _efemero(pid, "rascunho", dict(r))
+            if novos:
+                continue
+            if time.monotonic() - inicio > ate or await request.is_disconnected():
+                return
+            if time.monotonic() - ultimo_ping > 15:
+                ultimo_ping = time.monotonic()
+                yield _efemero(pid, "ping", {"ts": banco.agora_iso()})
+            await asyncio.sleep(0.15 if rodando else 0.5)
+    finally:
+        con.close()
 
 
 # ---------------- arquivos do armazenamento (player) com Range ----------------

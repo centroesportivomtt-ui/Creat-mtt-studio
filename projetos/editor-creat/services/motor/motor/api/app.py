@@ -43,7 +43,23 @@ def criar():
         elif (request.client.host if request.client else "") not in LOOPBACK:
             raise HTTPException(401, "motor sem MOTOR_TOKEN só atende a própria máquina")
 
-    app = FastAPI(title="Motor do Editor creat.MTT", version="0.1.0", dependencies=[Depends(autorizado)])
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def vida(_app):
+        """Startup: trava de processo único da conversa e reconciliação das conversas interrompidas (nunca derruba o boot)."""
+        try:
+            from motor.conversa import laco as _laco
+            await _laco.ao_subir()
+        except Exception:  # noqa: BLE001
+            import logging
+            logging.getLogger("motor.conversa").exception("startup da conversa falhou")
+            _laco = None
+        yield
+        if _laco is not None:
+            await _laco.ao_descer()
+
+    app = FastAPI(title="Motor do Editor creat.MTT", version="0.1.0", dependencies=[Depends(autorizado)], lifespan=vida)
 
     @app.get("/v1/saude")
     def saude(chave: bool = False, direcao: bool = False, olho: bool = False, entregas: bool = False):
@@ -91,7 +107,7 @@ def criar():
     if os.environ.get("EDITOR_BACKUP_AGENDAR") == "1":            # só no servidor (iniciar.sh); testes e aceites não agendam
         from motor import backup as _backup_ag
         _backup_ag.agendar(cfg)
-    for nome in ("projetos", "direcao", "versoes", "referencias", "backup", "gastos", "biblioteca", "cliente"):
+    for nome in ("projetos", "direcao", "versoes", "referencias", "backup", "gastos", "biblioteca", "cliente", "conversa"):
         try:
             mod = importlib.import_module(f"motor.api.{nome}")
         except ModuleNotFoundError as e:

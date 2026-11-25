@@ -20,7 +20,7 @@ import sys
 import time
 
 from motor import config
-from motor.etapas import ErroDefinitivo, etapa
+from motor.etapas import ErroDefinitivo, etapa, passos
 from motor.etapas import cor as CR
 from motor.etapas import fatos
 from motor.etapas import pessoa as PESSOA
@@ -114,25 +114,46 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
 
     t_ini = time.time()
     prog(0.02, "Montagem: planos, motion e áudio em paralelo")
+    # mesa ao vivo: as quatro mãos trabalham ao mesmo tempo; os passos abrem e fecham daqui (a thread do job), com o tempo
+    # medido de cada parte pelo cronômetro. Fora de job (testes), nada é emitido.
+    n_voz, n_pl, n_mo = len(edl.get("voz") or []), len(edl.get("planos") or []), len(edl.get("motion") or [])
     with cf.ThreadPoolExecutor(max_workers=2) as ex:
         tem_atras = any(m.get("atras") for m in edl.get("motion", []))
         w_at = max(1, workers_ov // 3) if tem_atras else 0     # a camada de trás é curta (o gancho): poucos navegadores para ela
+        ps_ov = passos.inicio("montagem.overlay", ferramenta="Chromium + kit de motion da casa, quadro a quadro", n=n_mo)
         f_ov = ex.submit(cronometro, "overlay", OV.renderizar, edl, fontes, trabalho / "overlay", workers=max(1, workers_ov - w_at),
                          janela=janela, nice=nice, atras=False if tem_atras else None)
         f_at = ex.submit(cronometro, "overlay_atras", OV.renderizar, edl, fontes, trabalho / "overlay", workers=w_at,
                          janela=janela, nice=nice, atras=True) if tem_atras else None
+        ps_au = passos.inicio("montagem.voz", ferramenta="DeepFilterNet3 (limpeza com IA, local) + nivelamento", n=n_voz)
         f_au = ex.submit(audio)
+        ps_pl = passos.inicio("montagem.planos", ferramenta="ffmpeg: cor por ambiente, estabilização e enquadre", n=n_pl)
         res_pl = cronometro("planos", PL.renderizar, edl, fontes, cache_planos, workers=workers_pl, nice=nice, janela=janela,
                             progresso=lambda p, m=None: prog(0.05 + 0.55 * p, m))
+        do_cache = sum(1 for v in res_pl.values() if v.get("cache"))
+        ps_pl.achou(f"{len(res_pl)} planos com cor e enquadre" + (f" ({do_cache} já estavam prontos)" if do_cache else ""))
+        passos.fim(ps_pl, s=tempos.get("planos"))
         res_ov = f_ov.result()
         res_at = f_at.result() if f_at else {}
+        st_ov = res_ov.get("stats") or {}
+        ps_ov.anotar(quadros=st_ov.get("quadros")).achou(f"{n_mo} camadas de legenda e motion" + (f" em {st_ov['quadros']} quadros" if st_ov.get("quadros") else ""))
+        passos.fim(ps_ov, s=round(tempos.get("overlay", 0) + tempos.get("overlay_atras", 0), 2) or None)
         res_au = f_au.result()
+        ps_au.achou(f"{n_voz} trecho{'s' if n_voz != 1 else ''} de fala limpo{'s' if n_voz != 1 else ''} e nivelado{'s' if n_voz != 1 else ''}" if n_voz else "Filme sem fala: só a trilha")
+        passos.fim(ps_au, s=tempos.get("voz"))
+        ps_mx = passos.inicio("montagem.mix", ferramenta="mixagem do editor (ducking da música sob a fala, -14 LUFS)")
+        ps_mx.anotar(lufs=res_au.get("lufs"), margem_db=res_au.get("voz_sobre_cama_db")).achou(_achado_mix(edl, res_au))
+        passos.fim(ps_mx, s=round(tempos.get("trilha", 0) + tempos.get("mix", 0), 2))
     prog(0.65, "Composição e encode (vídeo + áudio numa passada)")
     nome = "final.mp4" if not janela else f"trecho_{janela[0]:g}_{janela[1]:g}.mp4"
-    res_comp = cronometro("composicao", COMP.compor, edl, res_pl, res_ov.get("dir"), res_au["mix"], trabalho / nome, janela=janela,
-                          threads=max(2, int(getattr(cfg, "threads", 2) or 2) + 1), nice=nice,
-                          progresso=lambda p, m=None: prog(0.65 + 0.33 * p, m), dir_overlay_atras=res_at.get("dir"),
-                          recortador=PESSOA.recortador_para(edl, cfg))
+    Q = round(float(edl.get("duracao") or 0) * float((edl.get("formato") or {}).get("fps") or 30)) if isinstance(edl.get("formato"), dict) else None
+    with passos.passo("montagem.comp", ferramenta="ffmpeg (libx264), vídeo e áudio numa passada", Q=Q) as ps_cp:
+        res_comp = cronometro("composicao", COMP.compor, edl, res_pl, res_ov.get("dir"), res_au["mix"], trabalho / nome, janela=janela,
+                              threads=max(2, int(getattr(cfg, "threads", 2) or 2) + 1), nice=nice,
+                              progresso=lambda p, m=None: prog(0.65 + 0.33 * p, m), dir_overlay_atras=res_at.get("dir"),
+                              recortador=PESSOA.recortador_para(edl, cfg))
+        ps_cp.anotar(Q=res_comp.get("quadros"))
+        ps_cp.achou(f"{res_comp.get('quadros')} quadros compostos" + (f", {res_comp['quadros_sem_plano']} sem plano" if res_comp.get("quadros_sem_plano") else ""))
     tempos["total"] = round(time.time() - t_ini, 2)
     cor = revisao_cor(edl, res_pl, trabalho / "cor")
     st = res_ov.get("stats") or {}
@@ -199,6 +220,39 @@ def _sons_no_relatorio(edl: dict, preparo: dict | None, mixados: dict | None) ->
             "sem_som_na_direcao": ((edl.get("origem") or {}).get("sons_reais") or {}).get("sem_som") or [],
             "pedidos_http": prep.get("pedidos_http", 0), "bytes": prep.get("bytes", 0), "avisos": list(prep.get("avisos") or []),
             "licenca": dict(prep.get("licenca") or SONS.LICENCA)}
+def _mmss(t: float) -> str:
+    return f"{int(t) // 60}:{int(t) % 60:02d}"
+
+
+def _achado_sons(ps, sons: dict, pedidos: int) -> None:
+    """'3 de 4 sons reais prontos (8,5 MB); 1 ficou de fora.' Só números da preparação; o motivo de cada um fica no relatório."""
+    prontos, fora = len(sons.get("itens") or []), len(sons.get("faltaram") or [])
+    mb = round((sons.get("bytes") or 0) / 1e6, 1)
+    ps.anotar(prontos=prontos, fora=fora, mb=mb)
+    txt = f"{prontos} de {pedidos} sons reais prontos" + (f" ({str(mb).replace('.', ',')} MB baixados)" if mb else "")
+    if fora:
+        txt += f"; {fora} ficou de fora" if fora == 1 else f"; {fora} ficaram de fora"
+    ps.achou(txt + ".")
+
+
+def _achado_mix(edl: dict, res_au: dict) -> str:
+    """'Música 9 dB abaixo da fala, -14,1 LUFS; a 2ª música entra aos 0:42.' Números da mixagem, nunca do modelo."""
+    partes = []
+    if isinstance(res_au.get("voz_sobre_cama_db"), (int, float)):
+        partes.append(f"Fala {res_au['voz_sobre_cama_db']:.0f} dB acima da música")
+    if isinstance(res_au.get("lufs"), (int, float)):
+        partes.append(f"{res_au['lufs']:.1f} LUFS".replace(".", ","))
+    tr = edl.get("trilha") or {}
+    faixas = tr.get("faixas") or []
+    for i, f in enumerate(faixas[1:], 2):
+        t = f.get("troca_em", f.get("entra_em"))
+        if isinstance(t, (int, float)):
+            partes.append(f"a {i}ª música entra aos {_mmss(t)}")
+    if isinstance(tr.get("acorde_final"), (int, float)):
+        partes.append(f"o acorde final cai aos {_mmss(tr['acorde_final'])}")
+    if not tr.get("chave") and not faixas:
+        partes.append("sem música")
+    return "; ".join(partes) or "Mix pronto"
 
 
 def revisao_cor(edl: dict, res_pl: dict, pasta: pathlib.Path) -> list[dict]:
@@ -244,7 +298,9 @@ def etapa_montagem(ctx) -> dict:
     trabalho = pathlib.Path(ctx.cfg.dados) / "tmp" / "montagem" / p / v
     # verificação de fatos (regra do dono): número errado na fala sai CERTO na tela; relatório em edl.qa.fatos
     antes = hash_obj(edl)
-    fatos.revisar(edl, ctx.cfg, Fontes(edl, arm, ctx.cfg.dados), contexto=_contexto(ctx, arm, p), projeto=p, trabalho=trabalho / "fatos")
+    with passos.passo("montagem.fatos", ferramenta="Claude com busca na web (fonte oficial) e leitura do rótulo nos quadros") as ps_ft:
+        rel_ft = fatos.revisar(edl, ctx.cfg, Fontes(edl, arm, ctx.cfg.dados), contexto=_contexto(ctx, arm, p), projeto=p, trabalho=trabalho / "fatos")
+        _achado_fatos(ps_ft, rel_ft or {})
     if hash_obj(edl) != antes:
         arm.gravar(chave_edl, _bytes_json(edl))
     chave_rel = f"saidas/{p}/{v}/montagem.json"
@@ -256,11 +312,15 @@ def etapa_montagem(ctx) -> dict:
     if edl.get("sons_reais"):                               # a rede só é usada AQUI, antes do render (M6); falha = aviso
         from motor import sons_reais as SONS
         ctx.progresso(0.01, f"Montagem: buscando {len(edl['sons_reais'])} som(ns) real(is) do banco")
-        try:
-            sons = SONS.preparar(edl, ctx.cfg)
-        except Exception as e:  # noqa: BLE001 - nada dos sons reais derruba a montagem
-            sons = {"itens": [], "faltaram": [{"id": it["id"], "desc": it["desc"], "motivo": f"preparação quebrou ({type(e).__name__})", "pendente": True}
-                                              for it in edl["sons_reais"]], "pendentes": len(edl["sons_reais"]), "avisos": [], "licenca": SONS.LICENCA}
+        # mesa ao vivo: o dono vê a busca dos sons reais como um passo (quantos entraram, quantos ficaram de fora e o tamanho)
+        with passos.passo("montagem.sons", ferramenta="banco de sons reais da casa (gravações livres do archive.org), baixados e conferidos",
+                          n=len(edl["sons_reais"])) as ps_sr:
+            try:
+                sons = SONS.preparar(edl, ctx.cfg)
+            except Exception as e:  # noqa: BLE001 - nada dos sons reais derruba a montagem
+                sons = {"itens": [], "faltaram": [{"id": it["id"], "desc": it["desc"], "motivo": f"preparação quebrou ({type(e).__name__})", "pendente": True}
+                                                  for it in edl["sons_reais"]], "pendentes": len(edl["sons_reais"]), "avisos": [], "licenca": SONS.LICENCA}
+            _achado_sons(ps_sr, sons, len(edl["sons_reais"]))
     rel = montar(edl, trabalho, Fontes(edl, arm, ctx.cfg.dados), ctx.cfg, progresso=ctx.progresso, sons_reais=sons)
     base = f"saidas/{p}/{v}"
     _gravar(arm, f"{base}/final.mp4", pathlib.Path(rel["final"]))
@@ -286,6 +346,29 @@ def etapa_montagem(ctx) -> dict:
     ctx.con.execute("UPDATE versoes SET estado='montada', video=? WHERE projeto=? AND id=?", (f"{base}/final.mp4", p, v))
     PL.limpar_cache(pathlib.Path(ctx.cfg.dados) / "cache" / "planos", int(os.environ.get("EDITOR_CACHE_PLANOS_MB", "1200")))
     return {"versao": v, "final": f"{base}/final.mp4", "tempos": rel["tempos"], "overlay_ms_quadro": rel["overlay"]["ms_quadro_efetivo"]}
+
+
+def _achado_fatos(ps, rel: dict) -> None:
+    """'275 ml confere; 1 número corrigido na tela' com os números do relatório (edl.qa.fatos)."""
+    est = rel.get("estado")
+    itens = rel.get("itens") or []
+    trecho = {a.get("id"): a.get("trecho") for a in rel.get("alegacoes") or []}
+    conta = {k: sum(1 for i in itens if i.get("status") == k) for k in ("confirmado", "corrigido", "sem_fonte")}
+    ps.anotar(n=len(rel.get("alegacoes") or itens), confere=conta["confirmado"], corrigidos=conta["corrigido"], sem_fonte=conta["sem_fonte"])
+    if est in (None, "sem_numeros"):
+        ps.achou("Nenhum número na tela para conferir")
+    elif est == "desligado":
+        ps.achou("Conferência de números desligada neste motor")
+    elif est == "nao_conferido":
+        ps.achou("Números não conferidos: o motor está sem a chave do cérebro")
+    else:
+        ex = next((trecho.get(i.get("id")) for i in itens if i.get("status") == "confirmado" and trecho.get(i.get("id"))), None)
+        partes = [f"{ex} confere" if ex else f"{conta['confirmado']} confere{'m' if conta['confirmado'] != 1 else ''}"]
+        if conta["corrigido"]:
+            partes.append(f"{conta['corrigido']} corrigido{'s' if conta['corrigido'] != 1 else ''} na tela")
+        if conta["sem_fonte"]:
+            partes.append(f"{conta['sem_fonte']} sem fonte (segura a entrega)")
+        ps.achou("; ".join(partes))
 
 
 def _contexto(ctx, arm, p: str) -> str:

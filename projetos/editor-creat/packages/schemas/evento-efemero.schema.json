@@ -1,0 +1,223 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://creatmtt.local/schemas/evento-efemero.schema.json",
+ "title": "Evento efêmero do SSE v2 (sem id)",
+ "description": "Mandado só no SSE com ?v=2, sem linha 'id:': não fica no banco e não conta no Last-Event-ID. rascunho = texto acumulado do bloco atual; instantaneo = foto do estado ao conectar; ping = batimento a cada 15 s.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "tipo",
+  "projeto",
+  "dados"
+ ],
+ "properties": {
+  "tipo": {
+   "enum": [
+    "rascunho",
+    "instantaneo",
+    "ping"
+   ]
+  },
+  "projeto": {
+   "type": "string"
+  },
+  "dados": {
+   "type": "object"
+  }
+ },
+ "allOf": [
+  {
+   "if": {
+    "properties": {
+     "tipo": {
+      "const": "rascunho"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "dados": {
+      "$ref": "#/$defs/rascunho"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "tipo": {
+      "const": "instantaneo"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "dados": {
+      "$ref": "#/$defs/instantaneo"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "tipo": {
+      "const": "ping"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "dados": {
+      "$ref": "#/$defs/ping"
+     }
+    }
+   }
+  }
+ ],
+ "$defs": {
+  "rascunho": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "turno",
+    "bloco",
+    "texto",
+    "v"
+   ],
+   "properties": {
+    "turno": {
+     "type": "string",
+     "pattern": "^t_[0-9a-f]{10}$"
+    },
+    "bloco": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "texto": {
+     "type": "string"
+    },
+    "andamento": {
+     "type": "string"
+    },
+    "v": {
+     "type": "integer",
+     "minimum": 0
+    }
+   }
+  },
+  "instantaneo": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "ligada",
+    "gasto_hoje_usd",
+    "teto_usd_dia"
+   ],
+   "properties": {
+    "ligada": {
+     "type": "boolean"
+    },
+    "motivo": {
+     "type": "string"
+    },
+    "turno_rodando": {
+     "type": "string",
+     "pattern": "^t_[0-9a-f]{10}$"
+    },
+    "rascunho": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "turno",
+      "bloco",
+      "texto",
+      "v"
+     ],
+     "properties": {
+      "turno": {
+       "type": "string",
+       "pattern": "^t_[0-9a-f]{10}$"
+      },
+      "bloco": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "texto": {
+       "type": "string"
+      },
+      "andamento": {
+       "type": "string"
+      },
+      "v": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    },
+    "espera": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "tipo",
+      "tool_use_id"
+     ],
+     "properties": {
+      "tipo": {
+       "enum": [
+        "pergunta",
+        "confirmacao"
+       ]
+      },
+      "tool_use_id": {
+       "type": "string"
+      }
+     }
+    },
+    "passos_abertos": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "passo",
+       "chave",
+       "desde"
+      ],
+      "properties": {
+       "passo": {
+        "type": "string"
+       },
+       "chave": {
+        "type": "string"
+       },
+       "desde": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "gasto_hoje_usd": {
+     "type": "number",
+     "minimum": 0
+    },
+    "teto_usd_dia": {
+     "type": "number",
+     "minimum": 0
+    }
+   }
+  },
+  "ping": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "ts"
+   ],
+   "properties": {
+    "ts": {
+     "type": "string"
+    }
+   }
+  }
+ }
+}

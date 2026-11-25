@@ -8,12 +8,18 @@
 //    sem texto < 11 px, e o olhar.cjs da casa na tela de entrada;
 // 5. Cloudflare (25/11): pasta do Drive por link, filme aprovado na página de entregas (todos os estados) e cópia do material,
 //    no celular, com prints claro e escuro em .verificacao/cloudflare/. Desligado, nada disso aparece (conferido no fluxo 3).
+// 6. conversa com o editor (scripts/aceite-conversa.mjs): mandar texto e áudio, resposta escrevendo, ferramentas, pergunta
+//    com botões, cartões de pedido e ajuste, parar, erro, reinício, teto, chave, sessão vencida e dois aparelhos, com prints;
+// 7. mesa ao vivo (scripts/aceite-mesa.mjs, onda 2): quem trabalha agora, passos com achado e custo, decisão da direção,
+//    bastidores, taxímetro, erro e aviso em texto puro, interrupção sem avatar pulsando e rede caindo sem duplicar.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomBytes, scryptSync } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { aceiteConversa } from './aceite-conversa.mjs';
+import { aceiteMesa } from './aceite-mesa.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.resolve(AQUI, '..');
@@ -832,6 +838,12 @@ async function principal() {
     }
   });
   ok('verificação visual logada (4 configurações × 4 telas)', problemas.length === 0, problemas.length ? problemas.slice(0, 6).join(' || ') : `prints em ${path.relative(WEB, PRINTS)}`);
+
+  // ---------- 5. conversa com o editor (onda 1 da conversa): texto, áudio, ferramentas, pergunta, cartões, chave e teto ----------
+  await medir('conversa_s', () => aceiteConversa({ BASE, MOTOR: `http://127.0.0.1:${PORTA_MOTOR}`, TOKEN: env.MOTOR_TOKEN, SENHA, DADOS, ok }));
+
+  // ---------- 6. mesa ao vivo (onda 2 da conversa): a equipe trabalhando, com achado, custo e bastidores ----------
+  await medir('mesa_s', () => aceiteMesa({ BASE, MOTOR: `http://127.0.0.1:${PORTA_MOTOR}`, TOKEN: env.MOTOR_TOKEN, SENHA, DADOS, ok }));
 
   const olhar = acharOlhar();
   if (olhar) {

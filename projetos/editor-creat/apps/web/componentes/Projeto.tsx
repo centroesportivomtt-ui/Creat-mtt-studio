@@ -6,6 +6,12 @@ import Cor from '@/componentes/Cor';
 import LinkCliente from '@/componentes/LinkCliente';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Envio from './Envio';
+import BarraConversa from './conversa/Barra';
+import Fio from './conversa/Fio';
+import MesaAoVivo, { AgoraNaMesa } from './conversa/MesaAoVivo';
+import { useConversa } from './conversa/useConversa';
+import { useFioAoVivo } from '@/lib/fio';
+import { irEntrar } from '@/lib/pendentes';
 import {
   bytesLegiveis, classeEstado, ESTADOS, ETAPA_DO_ESTADO, EXPLICA_ESTADO, ROTULO_ESTADO, rotuloTipo,
   type Evento, type Projeto as TProjeto, type Versao, MODOS, rotuloModo, perguntasDoModo,
@@ -22,7 +28,6 @@ function tc(ms: number) {
   const dois = (n: number) => String(n).padStart(2, '0');
   return h ? `${h}:${dois(m)}:${dois(ss)}` : `${dois(m)}:${dois(ss)}`;
 }
-const hora = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 type Checagem = { id: string; ok: boolean; bloqueia?: boolean; detalhe?: string };
 // O motor grava em versoes.qa um JSON curto (aprovado + checagens); aceita string ou objeto.
@@ -51,7 +56,6 @@ const NOME_CHECAGEM: Record<string, string> = {
 export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parteMB: number }) {
   const [p, setP] = useState(inicial);
   const [eventos, setEventos] = useState<Evento[]>([]);
-  const [conectado, setConectado] = useState(false);
   const [agora, setAgora] = useState<number | null>(null); // só no navegador: evita diferença servidor x cliente
   const [erro, setErro] = useState('');
   const [rascunho, setRascunho] = useState(false);       // o campo do pedido tem texto
@@ -69,7 +73,6 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   const [entregas, setEntregas] = useState<Record<string, Entregas>>({});
   const entregasLigadas = useRef(false);
   const formPedido = useRef<HTMLFormElement>(null);
-  const diarioRef = useRef<HTMLDetailsElement>(null);
   const barraRef = useRef<HTMLDivElement>(null);
   // trava síncrona: o toque duplo chega antes de o React redesenhar o botão apagado, então `disabled` sozinho não basta
   const trava = useRef(false);
@@ -126,29 +129,29 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     return () => clearInterval(t);
   }, [entregaAndando, carregarEntregas]);
 
-  // Status ao vivo: EventSource reconecta sozinho e manda Last-Event-ID (o proxy repassa ao motor).
-  useEffect(() => {
-    const fonte = new EventSource(`/api/motor/v1/projetos/${inicial.id}/eventos`);
-    const vistos = new Set<number>();
-    const receber = (m: MessageEvent) => {
-      let e: Evento;
-      try { e = JSON.parse(m.data); } catch { return; }
-      if (vistos.has(e.id)) return;
-      vistos.add(e.id);
-      setEventos((l) => [...l, e].slice(-400));
-      if (e.estado) {
-        ultimoEstado.current = { estado: e.estado, t: performance.now() };
-        setP((x) => ({ ...x, estado: e.estado! }));
-      }
-      if (['arquivo_recebido', 'etapa_fim', 'estado', 'versao_pronta', 'entregue', 'qa_reprovado', 'etapa_erro'].includes(e.tipo)) recarregar();
-    };
-    for (const t of ['projeto_criado', 'arquivo_recebido', 'etapa_inicio', 'etapa_progresso', 'etapa_fim', 'etapa_erro', 'estado', 'versao_pronta', 'qa_reprovado', 'entregue', 'cliente', 'message']) {
-      fonte.addEventListener(t, receber as EventListener);
+  // Status ao vivo e conversa: UM EventSource (SSE v2) leva a mesa e a conversa (lib/fio.ts). Os eventos que esta tela
+  // já ouvia chegam aqui como antes (deduplicados por id); reconexão com Last-Event-ID, vigia de 40 s e volta da tela.
+  const receber = useCallback((e: Evento) => {
+    setEventos((l) => [...l, e].slice(-400));
+    if (e.estado) {
+      ultimoEstado.current = { estado: e.estado, t: performance.now() };
+      setP((x) => ({ ...x, estado: e.estado! }));
     }
-    fonte.onopen = () => setConectado(true);
-    fonte.onerror = () => setConectado(false);
-    return () => fonte.close();
-  }, [inicial.id, recarregar]);
+    if (['arquivo_recebido', 'etapa_fim', 'estado', 'versao_pronta', 'entregue', 'qa_reprovado', 'etapa_erro'].includes(e.tipo)) recarregar();
+  }, [recarregar]);
+  const fio = useFioAoVivo(inicial.id, receber, useCallback(() => irEntrar(inicial.id), [inicial.id]));
+  const conectado = fio.conectado && !fio.semSinal;      // 20 s sem sinal conta como desconectado (a tela avisa)
+  // contexto da mensagem: a versão no player e o ponto em que ele está (o Nimbus responde "Entendi: 0:12, …")
+  const conversa = useConversa(inicial.id, fio, {
+    aoMudouProjeto: recarregar,
+    contexto: () => {
+      const v = document.querySelector<HTMLVideoElement>('[data-teste=player]');
+      const versao = v?.dataset.versao;
+      // só manda o ponto do player se ele assistiu (o #t=0.1 da capa não conta como "aqui")
+      const t = v && v.played.length > 0 && Number.isFinite(v.currentTime) && v.currentTime > 0.2 ? Math.round(v.currentTime * 10) / 10 : undefined;
+      return { tela: 'fio' as const, ...(versao && /^v[0-9]{1,3}$/.test(versao) ? { versao } : {}), ...(t !== undefined ? { t_player: t } : {}) };
+    },
+  });
 
   // ---------- relógio dos 30 minutos ----------
   const marcas = useMemo(() => {
@@ -278,16 +281,22 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     return () => { ro.disconnect(); raiz.style.removeProperty('--altura-comando'); };
   }, []);
   const irPara = (id: string, foco?: string) => {
-    const el = document.getElementById(id);
-    el?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
-    if (foco) (document.querySelector(foco) as HTMLElement | null)?.focus({ preventScroll: true });
+    const ir = () => {
+      const el = document.getElementById(id);
+      el?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+      if (foco) (document.querySelector(foco) as HTMLElement | null)?.focus({ preventScroll: true });
+    };
+    // com a conversa aberta, o material e o pedido estão escondidos: fecha a conversa e vai depois do redesenho
+    if (conversa.aberta) { conversa.fechar(); window.setTimeout(ir, 60); return; }
+    ir();
   };
 
   const versoes = [...(p.versoes ?? [])].reverse().map((v) => (entregas[v.id] ? { ...v, entregas: entregas[v.id] } : v));
   // Regra do dono: nunca mostrar versão com erro conhecido. Só a versão ENTREGUE (QA aprovado) toca e baixa.
   const assistir = versoes.find((v) => v.estado === 'entregue' && v.video) ?? null;
   const emProducao = versoes.find((v) => v.estado !== 'entregue' && v.estado !== 'reprovada') ?? null;
-  const diario = [...eventos].filter((e) => e.mensagem).slice(-12).reverse();
+  // a mesa ao vivo (onda 2) substitui o diário de 12 linhas: tudo o que a mesa fez, com quem, tempo, custo e achado
+  const temMesa = conversa.montado.itens.some((it) => it.k === 'mesa');
   const trilha = (
     <ol className="trilha" style={{ marginTop: 20 }}>
       {ESTADOS.map((est, i) => {
@@ -421,11 +430,11 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       <>
         <p className="barra-comando__status" role="status">
           <strong>{p.estado === 'erro' ? 'A edição parou com erro' : 'A conferência segurou a entrega'}</strong>
-          <span>o motivo está no diário da ilha</span>
+          <span>o motivo está na mesa ao vivo</span>
         </p>
-        {diario.length > 0 && (
+        {temMesa && (
           <button type="button" className="botao botao--secundario barra-comando__secundario"
-            onClick={() => { if (diarioRef.current) diarioRef.current.open = true; irPara('diario'); }}>Ver motivo</button>
+            onClick={() => irPara('mesa')} data-teste="ver-motivo">Ver motivo</button>
         )}
       </>
     );
@@ -496,7 +505,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       <h2 className="cartao__titulo" id="t-relogio">
         Ilha ao vivo
         {/* entregue: nada está acontecendo, então o ponto "gravando" sai */}
-        {fase !== 'entregue' && <span className="ao-vivo" data-conectado={conectado} style={{ marginLeft: 'auto' }}>{conectado ? 'ao vivo' : 'reconectando'}</span>}
+        {fase !== 'entregue' && <span className="ao-vivo" data-conectado={conectado} style={{ marginLeft: 'auto' }}>{conectado ? 'ao vivo' : fio.semSinal ? 'sem sinal · reconectando' : 'reconectando'}</span>}
       </h2>
       <div className="relogio__linha">
         <p className="relogio__tc" data-correndo={correndo} aria-label={`Tempo de edição: ${tc(decorrido)}`}>{tc(decorrido)}</p>
@@ -506,6 +515,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
             : <>de 30:00<br />{decorrido <= TETO_MS ? `faltam ${tc(TETO_MS - decorrido)}` : `passou ${tc(decorrido - TETO_MS)}`}</>}
         </p>
       </div>
+      {fase !== 'entregue' && <AgoraNaMesa agora={conversa.montado.agora} compacto />}
       <div className="regua" aria-hidden="true">
         <div className="regua__trilho" />
         <div className="regua__feito" style={{ width: `${Math.min(100, (decorrido / TETO_MS) * 100)}%` }} />
@@ -532,7 +542,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       ) : (
         <div className="player-vazio"><p>{
           emProducao?.estado === 'reprovada_qa' ? `A conferência automática segurou a ${emProducao.id.toUpperCase()}: ela não vai para o player.`
-            : emProducao?.estado === 'erro' ? `A ${emProducao.id.toUpperCase()} parou com erro; o motivo está no diário da ilha.`
+            : emProducao?.estado === 'erro' ? `A ${emProducao.id.toUpperCase()} parou com erro; o motivo está na mesa ao vivo.`
             : emProducao ? `A ${emProducao.id.toUpperCase()} está sendo feita. Ela aparece aqui quando passar na conferência.`
             : 'O filme aparece aqui quando passar na conferência.'}</p></div>
       )}
@@ -548,14 +558,11 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       )}
     </section>
   ) : null;
-  const blocoDiario = diario.length > 0 ? (
-    <details key="diario" className="cartao bloco-diario" id="diario" ref={diarioRef}>
-      <summary className="cartao__titulo" style={{ margin: 0 }}>Diário da ilha ({eventos.length})</summary>
-      <ol className="diario" style={{ marginTop: 8 }}>
-        {diario.map((e) => <li key={e.id}><time dateTime={e.ts}>{hora(e.ts)}</time>{e.mensagem}</li>)}
-      </ol>
-    </details>
-  ) : null;
+  // com a conversa aberta, o fio já mostra a mesa (a mesma linha do tempo): o cartão não fica escondido duplicando as linhas
+  const blocoDiario = conversa.aberta ? null : (
+    <MesaAoVivo key="mesa-ao-vivo" montado={conversa.montado} progresso={fio.progresso} arquivos={p.arquivos.map((a) => a.id)} conectado={conectado}
+      aoAbrirConversa={conversa.abrir} />
+  );
   // aberto: material, pedido | pedido: pedido, material | editando: relógio, versões, diário, pedido, material
   // entregue: filme, relógio, diário, pedido, material. No desktop a mesa fica à esquerda e a projeção à direita (CSS).
   const mesa = (
@@ -568,7 +575,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   );
 
   return (
-    <main className="pagina pagina--comando">
+    <main className="pagina pagina--comando" data-conversa={conversa.aberta ? 'aberta' : 'fechada'} data-espera={conversa.montado.espera ? 'sim' : undefined}>
       <div className="cabeca-projeto">
         <div className="cabeca-projeto__linha">
           <p className="sobretitulo">{rotuloTipo(p.tipo_video)} · {p.arquivos.length} arquivo{p.arquivos.length === 1 ? '' : 's'}</p>
@@ -581,15 +588,25 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
         {fase === 'editando' || fase === 'entregue' ? [projecao, mesa] : [mesa, projecao]}
       </div>
 
+      {conversa.aberta && (
+        <Fio c={conversa} arquivos={p.arquivos.map((a) => a.id)} palco={{ nome: p.nome, estado: p.estado, rotuloEstado: ROTULO_ESTADO[p.estado] ?? p.estado,
+          classeEstado: classeEstado(p.estado), tc: tc(decorrido), correndo }} />
+      )}
+
       {/* Tocar num botão da barra com um campo de texto em foco: o botão NÃO pode roubar o foco no toque, senão a navegação
           reaparece, a barra sobe debaixo do dedo e o primeiro toque se perde (achado da conferência final, 25/11). O foco só
           sai do campo no clique, quando o alvo já está decidido. */}
       <div className="barra-comando" role="region" aria-label="Próximo passo" ref={barraRef}
         onMouseDown={(e) => { if ((e.target as HTMLElement).closest('button')) e.preventDefault(); }}
         onClickCapture={(e) => {
+          const alvo = e.target as HTMLElement;
+          // a linha da conversa cuida do próprio foco (o teclado fica aberto entre uma mensagem e outra)
+          if (alvo.closest('.conversa-barra')) return;
+          if (conversa.aberta && alvo.closest('.barra-comando__dentro')) conversa.fechar();
           const foco = document.activeElement as HTMLElement | null;
-          if ((e.target as HTMLElement).closest('button') && foco && /^(TEXTAREA|INPUT|SELECT)$/.test(foco.tagName)) foco.blur();
+          if (alvo.closest('button') && foco && /^(TEXTAREA|INPUT|SELECT)$/.test(foco.tagName)) foco.blur();
         }}>
+        <BarraConversa c={conversa} />
         <div className="barra-comando__dentro" key={`${fase}-${temMaterial}-${temPedido}-${aprovadaAssistir}-${corta}`}>
           {comando}
           {erro && <p className="erro" role="alert">{erro}</p>}

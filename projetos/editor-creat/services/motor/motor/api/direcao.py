@@ -79,6 +79,7 @@ class PedidoEntrada(BaseModel):
 
 class Reprovacao(BaseModel):
     motivo: str = Field(..., min_length=3, max_length=1000)
+    vira_regra: bool = True        # False: refaz só este projeto, sem gravar regra, checagem nem vocabulário da casa
 
 
 def _transcrever_pedido(cfg, arm, chave: str) -> str:
@@ -163,7 +164,13 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
             cerebro = provedor("cerebro", cfg)
         except Exception:  # noqa: BLE001 - sem cérebro, a heurística da loja resolve
             cerebro = None
-        r = Loja().registrar_reprovacao(pid, versao, corpo.motivo, cerebro=cerebro)
+        if corpo.vira_regra:
+            r = Loja().registrar_reprovacao(pid, versao, corpo.motivo, cerebro=cerebro)
+        else:
+            r = {"regra": None, "checagem": None, "vocabulario": []}
+        if r.get("uso"):                                   # a nota virou regra pelo Haiku: o gasto vai ao livro
+            from motor.cerebro import gastos
+            gastos.registrar(cfg, "regra", r["uso"], projeto=pid, versao=versao)
         con.execute("UPDATE versoes SET estado='reprovada', reprovacao=? WHERE projeto=? AND id=?", (corpo.motivo, pid, versao))
         from motor import cliente as _cliente
         _cliente.revogar_versao(con, pid, versao)          # link do cliente desta versão fecha de vez
@@ -172,7 +179,8 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
         d["correcoes_auto"] = 0            # nova rodada pedida pelo dono: o auto-ajuste do QA volta a ter as 2 tentativas
         con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), pid))
         banco.enfileirar(con, "direcao", pid, entrada={"reprovacao": corpo.motivo, "versao_anterior": versao}, prioridade=1)
-        banco.mudar_estado(con, pid, "dirigindo", f"Versão {versao} reprovada: virou regra da casa. Refazendo a direção.")
+        banco.mudar_estado(con, pid, "dirigindo", f"Versão {versao} reprovada: virou regra da casa. Refazendo a direção." if corpo.vira_regra
+                           else f"Versão {versao} reprovada (só neste projeto). Refazendo a direção.")
         return {"regra": r["regra"], "checagem": r["checagem"], "vocabulario": r["vocabulario"], "nova_direcao": True}
 
 

@@ -96,6 +96,7 @@ def depois(con, job: dict, saida: dict | None) -> None:
 def falha_definitiva(con, job: dict, mensagem: str) -> None:
     """Job que não vai mais ser tentado. Arquivo: fica de fora (com aviso) e o projeto segue com o resto.
     Qualquer outra etapa: o projeto vai para 'erro' com a mensagem (o relógio do site para e o dono vê o motivo)."""
+    from motor.etapas import passos
     etapa, projeto, alvo = job["etapa"], job["projeto"], job.get("alvo")
     msg = (mensagem or "").strip().splitlines()[-1][:300] if mensagem else "falhou"
     if etapa in FUNDO:                  # entregas/espelho: o filme e o original estão seguros no editor; o projeto não vai a "erro"
@@ -105,11 +106,14 @@ def falha_definitiva(con, job: dict, mensagem: str) -> None:
         banco.emitir(con, projeto, "aviso", alvo=None if alvo in (None, "-") else alvo,
                      mensagem=f"{o_que} não deu certo agora. O material está seguro no editor.")
         return
+    nums = passos.numeros_do_job(con, job)
     if etapa in ETAPAS_DE_ARQUIVO and alvo not in (None, "-"):
         con.execute("UPDATE arquivos SET estado='falhou' WHERE projeto=? AND id=?", (projeto, alvo))
         nome = con.execute("SELECT nome FROM arquivos WHERE projeto=? AND id=?", (projeto, alvo)).fetchone()
+        # frase para o dono (o nome do arquivo pode aparecer para ele; ao Nimbus só chega como de_fora) e o técnico recolhido
+        quem = f"O vídeo {nums['n']} ({nome['nome'] if nome else alvo})" if nums.get("n") else f"O arquivo {nome['nome'] if nome else alvo}"
         banco.emitir(con, projeto, "aviso", etapa=etapa, alvo=alvo,
-                     mensagem=f"O arquivo {nome['nome'] if nome else alvo} não pôde ser lido e ficou de fora: {msg}")
+                     mensagem=f"{quem} não pôde ser lido e ficou de fora. O resto do material segue.", dados={"detalhe": msg})
         r = con.execute("SELECT SUM(estado='analisado') lidos, SUM(estado NOT IN ('analisado','falhou')) pendentes "
                         "FROM arquivos WHERE projeto=?", (projeto,)).fetchone()
         if (r["pendentes"] or 0) == 0 and not (r["lidos"] or 0) and _dados(con, projeto).get("envio_fechado"):
@@ -119,7 +123,8 @@ def falha_definitiva(con, job: dict, mensagem: str) -> None:
         return
     if etapa in ("montagem", "qa", "entrega") and alvo not in (None, "-"):
         con.execute("UPDATE versoes SET estado='erro' WHERE projeto=? AND id=? AND estado!='entregue'", (projeto, alvo))
-    banco.mudar_estado(con, projeto, "erro", f"A etapa {etapa} falhou de vez: {msg}")
+    banco.mudar_estado(con, projeto, "erro", passos.frase_erro(etapa, n=nums.get("n"), versao=nums.get("versao"), e=msg, vai_tentar=False),
+                       dados={"detalhe": msg})
 
 
 def reconciliar(con) -> int:

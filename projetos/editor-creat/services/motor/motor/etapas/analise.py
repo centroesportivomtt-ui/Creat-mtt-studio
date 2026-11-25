@@ -22,7 +22,7 @@ from pathlib import Path
 import numpy as np
 
 from motor import config
-from motor.etapas import Contexto, ErroDefinitivo, etapa
+from motor.etapas import Contexto, ErroDefinitivo, etapa, passos
 from motor.etapas.ingest import assinatura
 from motor.provedores import provedor
 from motor.provedores.transcricao_fw import eh_fantasma, normalizar
@@ -253,6 +253,7 @@ def analise(ctx: Contexto) -> dict:
 
     # 2. transcrição (com cache próprio)
     t1 = time.time()
+    ps_tr = passos.inicio("analise.transcricao", ferramenta=f"{tr_prov.nome} {tr_modelo}".strip())
     if wav is None:
         tr = {"provedor": "nenhum", "modelo": "-", "idioma": "pt", "vad": False, "segmentos": []}
     else:
@@ -270,6 +271,11 @@ def analise(ctx: Contexto) -> dict:
             arm.gravar_json(ck, {"assinatura": sig_tr, "transcricao": tr, "segundos": round(time.time() - t1, 2)})
         tr = filtrar_transcricao(tr, db)
     tempos["analise_transcricao"] = round(time.time() - t1, 2)
+    falas = tr["segmentos"]
+    ps_tr.anotar(falas=len(falas), palavras=sum(len(x.get("palavras", [])) for x in falas))
+    ps_tr.achou("Sem áudio: nada para ouvir." if wav is None else
+                f"{len(falas)} fala{'s' if len(falas) != 1 else ''} em {midia.get('duracao', 0):.0f} s de vídeo" if falas else "Nenhuma fala neste vídeo.")
+    passos.fim(ps_tr)
 
     # 3. sinais visuais locais
     t2 = time.time()
@@ -293,12 +299,18 @@ def analise(ctx: Contexto) -> dict:
     ctx.progresso(0.9, "Marcando os momentos")
     contexto = {"midia": midia, "transcricao": tr, "sinais": sinais, "picos": pk, "fala_pct": fp}
     folha = arm.caminho_local(der["folha"]) if der.get("folha") else None
-    visao = vis_prov.descrever(folha, [q["t"] for q in der["quadros_chave"]], contexto) if midia["tem_video"] or tr["segmentos"] else None
-    uso = getattr(vis_prov, "ultimo_uso", None)
-    if uso:
-        arm.gravar_json(f"{base}/uso_visao.json", uso)
-        from motor.cerebro import gastos
-        gastos.registrar(ctx.cfg, "visao_leve", uso, projeto=p, ref=f"{base}/uso_visao.json")
+    with ctx.passo("analise.visao", ferramenta=f"visão {getattr(vis_prov, 'nome', '?')}") as ps_vi:
+        visao = vis_prov.descrever(folha, [q["t"] for q in der["quadros_chave"]], contexto) if midia["tem_video"] or tr["segmentos"] else None
+        uso = getattr(vis_prov, "ultimo_uso", None)
+        if uso:
+            arm.gravar_json(f"{base}/uso_visao.json", uso)
+            from motor.cerebro import gastos
+            gastos.registrar(ctx.cfg, "visao_leve", uso, projeto=p, ref=f"{base}/uso_visao.json")
+        momentos = (visao or {}).get("momentos", [])
+        fortes = [m for m in momentos if isinstance(m.get("nota"), (int, float)) and m["nota"] >= 4]
+        ps_vi.anotar(momentos=len(momentos), fortes=len(fortes), rostos=len(sinais.get("rostos") or []), cenas=len(sinais.get("cenas") or []))
+        ps_vi.achou(f"{len(falas)} fala{'s' if len(falas) != 1 else ''}, {len(fortes)} momento{'s' if len(fortes) != 1 else ''} forte{'s' if len(fortes) != 1 else ''}"
+                    + (f" de {len(momentos)} marcados" if len(momentos) != len(fortes) else ""))
     tempos["analise_visao"] = round(time.time() - t3, 2)
     tempos["analise_total"] = round(time.time() - t0, 2)
 
@@ -309,4 +321,5 @@ def analise(ctx: Contexto) -> dict:
     arm.gravar_bytes(f"{base}/analise.ok", json.dumps({"assinatura": sig}).encode())
     n_pal = sum(len(s.get("palavras", [])) for s in tr["segmentos"])
     ctx.progresso(1.0, f"Análise pronta: {len(tr['segmentos'])} falas, {len((visao or {}).get('momentos', []))} momentos")
+    passos.anotar(falas=len(tr["segmentos"]), momentos=len((visao or {}).get("momentos", [])))
     return {"falas": len(tr["segmentos"]), "palavras": n_pal, "segundos": tempos["analise_total"]}

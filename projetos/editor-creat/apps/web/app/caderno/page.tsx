@@ -3,6 +3,7 @@ import Referencias from '@/componentes/Referencias';
 import Backup from '@/componentes/Backup';
 import Biblioteca from '@/componentes/Biblioteca';
 import PedidosCliente from '@/componentes/PedidosCliente';
+import ChaveConversa from '@/componentes/conversa/ChaveConversa';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Caderno da casa' };
@@ -30,6 +31,8 @@ export default async function Caderno() {
           <p className="aviso" style={{ maxWidth: '62ch', marginTop: 8 }}>Tudo o que o editor segue ao montar um filme. Quando você reprova uma versão, o motivo entra aqui como regra nova e passa a valer nas próximas peças.</p>
         </div>
       </div>
+
+      <ChaveConversa variante="cartao" />
 
       <section className="cartao" aria-labelledby="c-modos">
         <h2 className="cartao__titulo" id="c-modos"><span className="num">01</span> Modos de edição</h2>

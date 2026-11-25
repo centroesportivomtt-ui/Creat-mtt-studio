@@ -13,6 +13,7 @@ from __future__ import annotations
 import importlib
 import json
 import pathlib
+import re
 import subprocess
 import sys
 import time
@@ -247,9 +248,16 @@ def conferir(final, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, e
                     montagem=montagem)
     itens = []
     nomes = [n for n in CHECAGENS if not so or n in so]
+    from motor.etapas import passos
     for i, nome in enumerate(nomes):
         c.ja_reprovou = any((not x["ok"]) and x["bloqueia"] for x in itens)     # checagem paga não roda em versão já reprovada
-        itens.append(_rodar(nome, c))
+        # mesa ao vivo: um passo da Lupa por checagem, com o resultado e o achado (o detalhe da checagem, sem o tempo)
+        with passos.passo(f"qa.{nome}", ferramenta=f"motor.etapas.qa.{nome}", nome=nome) as ps:
+            item = _rodar(nome, c)
+            itens.append(item)
+            ps.anotar(resultado="ok" if item["ok"] else ("reprovou" if item["bloqueia"] else "aviso"))
+            det = re.sub(r"\s*\[\d+(\.\d+)? s\]$", "", item.get("detalhe") or "").strip()
+            ps.achou(("reprovou: " if not item["ok"] and item["bloqueia"] else "") + det if det else ("reprovou" if not item["ok"] and item["bloqueia"] else None))
         if progresso:
             progresso((i + 1) / len(nomes), f"Conferência: {nome}")
     rel = {"versao": "1", "projeto": edl.get("projeto", "p"), "video": video_chave or str(final),
@@ -259,6 +267,16 @@ def conferir(final, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, e
     if e:
         raise ErroDefinitivo("relatório de QA fora do schema: " + "; ".join(e[:3]))
     return rel
+
+
+def _resumo_no_passo(rel: dict) -> None:
+    """'Passou em 20 de 21 conferências' no passo raiz do QA (mesa ao vivo)."""
+    from motor.etapas import passos
+    total = len(rel.get("checagens") or [])
+    ok = sum(1 for x in rel.get("checagens") or [] if x.get("ok"))
+    seguram = [x["id"] for x in rel.get("checagens") or [] if not x.get("ok") and x.get("bloqueia")]
+    passos.anotar(aprovadas=ok, total=total)
+    passos.achou(f"Passou em {ok} de {total} conferências" + (f"; segurou a entrega: {', '.join(seguram[:4])}" if seguram else ""))
 
 
 def resumo(rel: dict) -> str:
@@ -311,6 +329,7 @@ def etapa_qa(ctx) -> dict:
         if pathlib.Path(arm.caminho_local(f"{base}/qa.sha256")).read_text().strip() == sha and pode_reaproveitar(ant, chave_ant, chave):
             ctx.con.execute("UPDATE versoes SET estado=?, qa=? WHERE projeto=? AND id=? AND estado!='entregue'",
                             ("aprovada_qa" if ant["aprovado"] else "reprovada_qa", json.dumps(resumo_coluna(ant, f"{base}/qa.json"), ensure_ascii=False), p, v))
+            _resumo_no_passo(ant)
             return {"aprovado": ant["aprovado"], "reaproveitado": True, "resumo": resumo(ant), "sha256": sha,
                     "checagens": [x for x in ant["checagens"] if not x["ok"] and x["bloqueia"]]}
     stems = {n: str(arm.caminho_local(k)) for n, k in (mont.get("chaves", {}).get("stems") or {}).items()}
@@ -330,6 +349,7 @@ def etapa_qa(ctx) -> dict:
     arm.gravar(f"{base}/qa.chave", io.BytesIO(chave.encode()))
     ctx.con.execute("UPDATE versoes SET estado=?, qa=? WHERE projeto=? AND id=?",
                     ("aprovada_qa" if rel["aprovado"] else "reprovada_qa", json.dumps(resumo_coluna(rel, f"{base}/qa.json"), ensure_ascii=False), p, v))
+    _resumo_no_passo(rel)
     # saída curta (vai para o job e, se reprovar, para a próxima direção corrigir)
     return {"aprovado": rel["aprovado"], "resumo": resumo(rel), "sha256": sha,
             "checagens": [{"id": x["id"], "ok": False, "detalhe": x.get("detalhe", ""), "valor": x.get("valor")}
