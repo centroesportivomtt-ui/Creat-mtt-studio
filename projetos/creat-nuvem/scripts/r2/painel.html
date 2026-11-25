@@ -37,7 +37,7 @@ const CL=new URLSearchParams(location.search).get("c");
 const ST=["Para revisar","Aprovado","Postado"],PROX={"Para revisar":"Marcar como aprovado","Aprovado":"Marcar como postado","Postado":"Voltar para revisar"},COR={"Para revisar":"#e3121b","Aprovado":"#2e9e5b","Postado":"#5b7fd6"};
 let FIL="Todos";
 const J=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},SJ=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-const perfis=()=>J("perfis",["@creat.mtt","Super Kal","Elite Draco Gin"]);
+const perfis=()=>J("perfis",["@creat.mtt","Super Kal","Elite Drako Gym"]).map(x=>x==="Elite Draco Gin"?"Elite Drako Gym":x);
 const lg=k=>{try{return localStorage.getItem("st:"+k)||ST[0]}catch(e){return ST[0]}};
 const sg=(k,v)=>{try{localStorage.setItem("st:"+k,v)}catch(e){}};
 Promise.all([fetch(IDX,{cache:"no-store"}).then(r=>r.json()),fetch(META,{cache:"no-store"}).then(r=>r.ok?r.json():{}).catch(()=>({}))]).then(([d,meta])=>{
