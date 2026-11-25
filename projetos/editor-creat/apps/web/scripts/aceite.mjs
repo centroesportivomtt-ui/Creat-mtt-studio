@@ -5,13 +5,16 @@
 //    perto de 40% e retoma sem recomeçar; o arquivo no armazenamento tem o mesmo sha256;
 // 3. fecha o envio e manda o pedido: o status passa por lendo → dirigindo → montando → conferindo → entregue e o player toca;
 // 4. verificação visual logada (celular e desktop, claro e escuro) sem erro de console, sem rolagem horizontal,
-//    sem texto < 11 px, e o olhar.cjs da casa na tela de entrada.
+//    sem texto < 11 px, e o olhar.cjs da casa na tela de entrada;
+// 5. conversa com o editor (scripts/aceite-conversa.mjs): mandar texto e áudio, resposta escrevendo, ferramentas, pergunta
+//    com botões, cartões de pedido e ajuste, parar, erro, reinício, teto, chave, sessão vencida e dois aparelhos, com prints.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomBytes, scryptSync } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { aceiteConversa } from './aceite-conversa.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.resolve(AQUI, '..');
@@ -584,6 +587,9 @@ async function principal() {
     }
   });
   ok('verificação visual logada (4 configurações × 4 telas)', problemas.length === 0, problemas.length ? problemas.slice(0, 6).join(' || ') : `prints em ${path.relative(WEB, PRINTS)}`);
+
+  // ---------- 5. conversa com o editor (onda 1 da conversa): texto, áudio, ferramentas, pergunta, cartões, chave e teto ----------
+  await medir('conversa_s', () => aceiteConversa({ BASE, MOTOR: `http://127.0.0.1:${PORTA_MOTOR}`, TOKEN: env.MOTOR_TOKEN, SENHA, DADOS, ok }));
 
   const olhar = acharOlhar();
   if (olhar) {

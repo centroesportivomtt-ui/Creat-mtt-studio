@@ -2,12 +2,15 @@ import { redirect } from 'next/navigation';
 import { configuracaoPronta, temSessao } from '@/lib/sessao';
 import FormEntrar from '@/componentes/FormEntrar';
 import Iso from '@/componentes/Iso';
+import { voltaSegura } from '@/lib/volta';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Entrar' };
 
-export default async function Entrar() {
-  if (await temSessao()) redirect('/projetos');
+export default async function Entrar({ searchParams }: { searchParams: Promise<{ volta?: string | string[] }> }) {
+  // sessão vencida no meio da conversa: depois da senha, volta para a mesma página (o texto e o áudio estão guardados)
+  const volta = voltaSegura((await searchParams)?.volta);
+  if (await temSessao()) redirect(volta);
   const conf = configuracaoPronta();
   return (
     <main className="entrar">
@@ -23,7 +26,7 @@ export default async function Entrar() {
           <p className="aviso" style={{ marginTop: 12 }}>Você sobe o material, escolhe o modo de edição e faz o pedido. O filme volta pronto e conferido em até 30 minutos.</p>
         </div>
         {conf.ok ? (
-          <FormEntrar />
+          <FormEntrar volta={volta} />
         ) : (
           <p className="erro" role="alert">O site ainda não foi configurado: falta {conf.falta.join(' e ')}. Veja apps/web/README.md.</p>
         )}

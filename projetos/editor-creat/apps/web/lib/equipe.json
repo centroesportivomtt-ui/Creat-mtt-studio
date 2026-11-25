@@ -1,0 +1,39 @@
+{
+  "versao": "1",
+  "descricao": "Quem faz cada passo da mesa e da conversa (docs/plano-conversa-25-11.md, seção 2.5). Só dados: o site monta o rótulo com o agente, o verbo no gerúndio (rodando) e a frase no passado (feito), trocando {chaves} pelos números do evento. Chave com '*' casa qualquer sufixo. Nunca usar nome de arquivo no rótulo: {n} é o número do vídeo na ordem do envio. Avatar = disco com a cor e a inicial até a arte aprovada chegar. Marcos, Xande e Ruan nunca aparecem como avatar de trabalho.",
+  "agentes": {
+    "Nimbus": { "cargo": "Diretor de Operações", "cor": "#8FB3FF", "inicial": "N" },
+    "Faísca": { "cargo": "Diretor Criativo", "cor": "#F2A516", "inicial": "F" },
+    "Cirro":  { "cargo": "Arquiteto", "cor": "#9AD1C7", "inicial": "C" },
+    "Paleta": { "cargo": "Designer", "cor": "#E58FC8", "inicial": "P" },
+    "Órbita": { "cargo": "Animação e 3D", "cor": "#B79CFF", "inicial": "O" },
+    "Eco":    { "cargo": "Som", "cor": "#7CC98F", "inicial": "E" },
+    "Radar":  { "cargo": "Pesquisador", "cor": "#6FC3E8", "inicial": "R" },
+    "Crivo":  { "cargo": "Revisor", "cor": "#FF9F7A", "inicial": "C" },
+    "Lupa":   { "cargo": "Qualidade", "cor": "#F0D264", "inicial": "L" },
+    "Trilho": { "cargo": "DevOps", "cor": "#ADA9A1", "inicial": "T" }
+  },
+  "passos": [
+    { "chave": "ingest.*", "agente": "Trilho", "rodando": "Recebendo o vídeo {n}", "feito": "Recebeu o vídeo {n} · {mb} MB" },
+    { "chave": "analise.transcricao", "agente": "Radar", "rodando": "Ouvindo as falas do vídeo {n}", "feito": "Ouviu {falas} falas" },
+    { "chave": "analise.visao", "agente": "Radar", "rodando": "Olhando os quadros do vídeo {n}", "feito": "Viu {momentos} momentos" },
+    { "chave": "catalogo", "agente": "Radar", "rodando": "Organizando o material", "feito": "Catálogo: {falas} falas, {momentos} momentos" },
+    { "chave": "direcao.diretor", "agente": "Faísca", "rodando": "Dirigindo o filme", "feito": "Dirigiu em {s} s" },
+    { "chave": "direcao.resolvedor", "agente": "Cirro", "rodando": "Encaixando os cortes", "feito": "Encaixou: {dur} s, {blocos} blocos" },
+    { "chave": "direcao.critico", "agente": "Crivo", "rodando": "Revisando a direção", "feito": "Revisão: {resultado}" },
+    { "chave": "montagem.voz", "agente": "Eco", "rodando": "Limpando a voz {i}/{n}", "feito": "Voz limpa" },
+    { "chave": "montagem.planos", "agente": "Paleta", "rodando": "Renderizando planos {i}/{n}", "feito": "{n} planos prontos" },
+    { "chave": "montagem.overlay", "agente": "Órbita", "rodando": "Animando {n} camadas", "feito": "Legendas e motion prontos" },
+    { "chave": "montagem.comp", "agente": "Trilho", "rodando": "Compondo {q}/{Q} quadros", "feito": "Composição pronta" },
+    { "chave": "qa.*", "agente": "Lupa", "rodando": "Conferindo {nome}", "feito": "{nome}: {resultado}" },
+    { "chave": "entrega", "agente": "Trilho", "rodando": "Entregando a {versao}", "feito": "{versao} entregue" },
+    { "chave": "conversa.ver_projeto", "agente": "Nimbus", "rodando": "Olhando o projeto", "feito": "Olhou o projeto" },
+    { "chave": "conversa.ver_material", "agente": "Radar", "rodando": "Lendo as falas do material", "feito": "Leu {n} trechos" },
+    { "chave": "conversa.ver_passo", "agente": "Nimbus", "rodando": "Vendo os bastidores de {agente}", "feito": "Viu os bastidores de {agente}" },
+    { "chave": "conversa.mostrar", "agente": "Nimbus", "rodando": "Abrindo no ponto {mm:ss}", "feito": "Abriu no ponto {mm:ss}" },
+    { "chave": "conversa.perguntar", "agente": "Nimbus", "rodando": null, "feito": null, "cartao": "pergunta" },
+    { "chave": "conversa.propor_ajuste", "agente": "Faísca", "rodando": null, "feito": "Ajuste da {versao} pedido", "cartao": "confirmacao" },
+    { "chave": "conversa.propor_pedido", "agente": "Faísca", "rodando": null, "feito": "Pedido trocado", "cartao": "confirmacao" },
+    { "chave": "conversa.ouvir_audio", "agente": "Radar", "rodando": "Ouvindo seu áudio", "feito": "Ouviu {s_audio} s" }
+  ]
+}

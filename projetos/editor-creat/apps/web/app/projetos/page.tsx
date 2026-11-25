@@ -31,6 +31,11 @@ export default async function Projetos() {
               <Link className="item-projeto" href={`/projetos/${p.id}`}>
                 <span className="item-projeto__nome">{p.nome}</span>
                 <span className={classeEstado(p.estado)}>{ROTULO_ESTADO[p.estado] ?? p.estado}</span>
+                {p.espera && (
+                  <span className="selo-espera" data-teste="selo-espera">
+                    <span className="ponto-espera" aria-hidden="true" />Precisa de você{p.espera === 'confirmacao' ? ' · um toque' : ' · uma pergunta'}
+                  </span>
+                )}
                 <span className="item-projeto__meta">
                   {rotuloTipo(p.tipo_video)} · {p.arquivos} arquivo{p.arquivos === 1 ? '' : 's'} · {quando(p.atualizado)}
                 </span>

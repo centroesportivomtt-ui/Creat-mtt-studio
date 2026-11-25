@@ -4,6 +4,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import ChaveConversa from './conversa/ChaveConversa';
+import { chave, EVENTO_CONVERSA, type EstadoChave } from '@/lib/conversa';
 
 const Icone = {
   projetos: (
@@ -63,6 +65,45 @@ export default function Topo() {
   }, []);
   const fecharMais = () => { if (mais.current) mais.current.open = false; };
 
+  // Quem espera o dono (pergunta ou cartão da conversa): número no item Projetos e título da aba. Lido ao abrir, ao voltar
+  // a página para visível, a cada 30 s com ela visível e sempre que a conversa avisa que mudou (sem push nesta etapa).
+  const [esperando, setEsperando] = useState<EstadoChave['esperando']>([]);
+  useEffect(() => {
+    let vivo = true;
+    const ler = async () => {
+      if (document.visibilityState === 'hidden') return;
+      const r = await chave();
+      if (vivo && r.ok) setEsperando(Array.isArray(r.dados.esperando) ? r.dados.esperando : []);
+    };
+    void ler();
+    const t = window.setInterval(ler, 30_000);
+    const f = () => void ler();
+    document.addEventListener('visibilitychange', f);
+    window.addEventListener(EVENTO_CONVERSA, f);
+    return () => { vivo = false; window.clearInterval(t); document.removeEventListener('visibilitychange', f); window.removeEventListener(EVENTO_CONVERSA, f); };
+  }, []);
+  const base = useRef('');
+  const nosso = useRef('');
+  // título da aba: dentro do projeto que espera, "● Precisa de você · <nome>"; fora, "(N) Precisa de você · Editor"
+  useEffect(() => {
+    const PREFIXO = /^(● Precisa de você · |\(\d+\) Precisa de você · )/;
+    const aplicar = () => {
+      // o título que o Next pôs é a base; o nosso só vai por cima e sai quando ninguém mais espera
+      if (document.title !== nosso.current) base.current = document.title.replace(PREFIXO, '');
+      const pid = /^\/projetos\/(p_[a-z0-9]+)/.exec(rota)?.[1];
+      const aqui = pid ? esperando.find((x) => x.projeto === pid) : undefined;
+      const novo = aqui ? `● Precisa de você · ${aqui.nome}` : esperando.length ? `(${esperando.length}) Precisa de você · Editor` : base.current;
+      nosso.current = novo;
+      if (document.title !== novo) document.title = novo;
+    };
+    aplicar();
+    // o Next troca o título ao navegar: reaplica quando o <title> muda
+    const alvo = document.querySelector('title');
+    const mo = alvo ? new MutationObserver(aplicar) : null;
+    if (alvo && mo) mo.observe(alvo, { childList: true, characterData: true, subtree: true });
+    return () => { mo?.disconnect(); };
+  }, [esperando, rota]);
+
   // "Mais" é um <details> nesta etapa (vira gaveta depois): fecha ao trocar de tela, ao tocar fora e com Esc.
   useEffect(() => {
     if (mais.current) mais.current.open = false;
@@ -104,7 +145,8 @@ export default function Topo() {
       {/* dentro do projeto e no próprio Novo, o âmbar é do botão da tela: o "Novo" da navegação fica calmo */}
       <nav className="nav" aria-label="Principal" data-calmo={noProjeto || rota === '/projetos/novo'}>
         <Link className="nav__item" href="/projetos" aria-current={atual(rota === '/projetos' || noProjeto)}>
-          <span className="nav__icone">{Icone.projetos}</span>Projetos
+          <span className="nav__icone">{Icone.projetos}{esperando.length > 0 && <span className="nav__numero" data-teste="nav-esperando">{esperando.length}</span>}</span>Projetos
+          {esperando.length > 0 && <span className="so-leitor">, {esperando.length} esperando você</span>}
         </Link>
         <Link className="nav__item nav__item--novo" href="/projetos/novo" aria-current={atual(rota === '/projetos/novo')}>
           <span className="nav__icone">{Icone.novo}</span>Novo
@@ -117,6 +159,7 @@ export default function Topo() {
             <span className="nav__icone">{Icone.mais}</span>Mais
           </summary>
           <div className="nav__menu">
+            <ChaveConversa variante="menu" />
             <Link className="nav__menu-item" href="/gastos" onClick={fecharMais}>{Icone.gastos}Gastos do mês</Link>
             <form action="/api/sair" method="post">
               <button className="nav__menu-item nav__menu-item--sair" type="submit">{Icone.sair}Sair</button>

@@ -6,6 +6,11 @@ import Cor from '@/componentes/Cor';
 import LinkCliente from '@/componentes/LinkCliente';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Envio from './Envio';
+import BarraConversa from './conversa/Barra';
+import Fio from './conversa/Fio';
+import { useConversa } from './conversa/useConversa';
+import { useFioAoVivo } from '@/lib/fio';
+import { irEntrar } from '@/lib/pendentes';
 import {
   bytesLegiveis, classeEstado, ESTADOS, ETAPA_DO_ESTADO, EXPLICA_ESTADO, ROTULO_ESTADO, rotuloTipo,
   type Evento, type Projeto as TProjeto, type Versao, MODOS, rotuloModo, perguntasDoModo } from '@/lib/estados';
@@ -50,7 +55,6 @@ const NOME_CHECAGEM: Record<string, string> = {
 export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parteMB: number }) {
   const [p, setP] = useState(inicial);
   const [eventos, setEventos] = useState<Evento[]>([]);
-  const [conectado, setConectado] = useState(false);
   const [agora, setAgora] = useState<number | null>(null); // só no navegador: evita diferença servidor x cliente
   const [erro, setErro] = useState('');
   const [rascunho, setRascunho] = useState(false);       // o campo do pedido tem texto
@@ -84,29 +88,29 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     }, 250);
   }, [inicial.id]);
 
-  // Status ao vivo: EventSource reconecta sozinho e manda Last-Event-ID (o proxy repassa ao motor).
-  useEffect(() => {
-    const fonte = new EventSource(`/api/motor/v1/projetos/${inicial.id}/eventos`);
-    const vistos = new Set<number>();
-    const receber = (m: MessageEvent) => {
-      let e: Evento;
-      try { e = JSON.parse(m.data); } catch { return; }
-      if (vistos.has(e.id)) return;
-      vistos.add(e.id);
-      setEventos((l) => [...l, e].slice(-400));
-      if (e.estado) {
-        ultimoEstado.current = { estado: e.estado, t: performance.now() };
-        setP((x) => ({ ...x, estado: e.estado! }));
-      }
-      if (['arquivo_recebido', 'etapa_fim', 'estado', 'versao_pronta', 'entregue', 'qa_reprovado', 'etapa_erro'].includes(e.tipo)) recarregar();
-    };
-    for (const t of ['projeto_criado', 'arquivo_recebido', 'etapa_inicio', 'etapa_progresso', 'etapa_fim', 'etapa_erro', 'estado', 'versao_pronta', 'qa_reprovado', 'entregue', 'cliente', 'message']) {
-      fonte.addEventListener(t, receber as EventListener);
+  // Status ao vivo e conversa: UM EventSource (SSE v2) leva a mesa e a conversa (lib/fio.ts). Os eventos que esta tela
+  // já ouvia chegam aqui como antes (deduplicados por id); reconexão com Last-Event-ID, vigia de 40 s e volta da tela.
+  const receber = useCallback((e: Evento) => {
+    setEventos((l) => [...l, e].slice(-400));
+    if (e.estado) {
+      ultimoEstado.current = { estado: e.estado, t: performance.now() };
+      setP((x) => ({ ...x, estado: e.estado! }));
     }
-    fonte.onopen = () => setConectado(true);
-    fonte.onerror = () => setConectado(false);
-    return () => fonte.close();
-  }, [inicial.id, recarregar]);
+    if (['arquivo_recebido', 'etapa_fim', 'estado', 'versao_pronta', 'entregue', 'qa_reprovado', 'etapa_erro'].includes(e.tipo)) recarregar();
+  }, [recarregar]);
+  const fio = useFioAoVivo(inicial.id, receber, useCallback(() => irEntrar(inicial.id), [inicial.id]));
+  const conectado = fio.conectado;
+  // contexto da mensagem: a versão no player e o ponto em que ele está (o Nimbus responde "Entendi: 0:12, …")
+  const conversa = useConversa(inicial.id, fio, {
+    aoMudouProjeto: recarregar,
+    contexto: () => {
+      const v = document.querySelector<HTMLVideoElement>('[data-teste=player]');
+      const versao = v?.dataset.versao;
+      // só manda o ponto do player se ele assistiu (o #t=0.1 da capa não conta como "aqui")
+      const t = v && v.played.length > 0 && Number.isFinite(v.currentTime) && v.currentTime > 0.2 ? Math.round(v.currentTime * 10) / 10 : undefined;
+      return { tela: 'fio' as const, ...(versao && /^v[0-9]{1,3}$/.test(versao) ? { versao } : {}), ...(t !== undefined ? { t_player: t } : {}) };
+    },
+  });
 
   // ---------- relógio dos 30 minutos ----------
   const marcas = useMemo(() => {
@@ -234,9 +238,14 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     return () => { ro.disconnect(); raiz.style.removeProperty('--altura-comando'); };
   }, []);
   const irPara = (id: string, foco?: string) => {
-    const el = document.getElementById(id);
-    el?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
-    if (foco) (document.querySelector(foco) as HTMLElement | null)?.focus({ preventScroll: true });
+    const ir = () => {
+      const el = document.getElementById(id);
+      el?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+      if (foco) (document.querySelector(foco) as HTMLElement | null)?.focus({ preventScroll: true });
+    };
+    // com a conversa aberta, o material e o pedido estão escondidos: fecha a conversa e vai depois do redesenho
+    if (conversa.aberta) { conversa.fechar(); window.setTimeout(ir, 60); return; }
+    ir();
   };
 
   const versoes = [...(p.versoes ?? [])].reverse();
@@ -509,7 +518,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   );
 
   return (
-    <main className="pagina pagina--comando">
+    <main className="pagina pagina--comando" data-conversa={conversa.aberta ? 'aberta' : 'fechada'} data-espera={conversa.montado.espera ? 'sim' : undefined}>
       <div className="cabeca-projeto">
         <div className="cabeca-projeto__linha">
           <p className="sobretitulo">{rotuloTipo(p.tipo_video)} · {p.arquivos.length} arquivo{p.arquivos.length === 1 ? '' : 's'}</p>
@@ -522,15 +531,25 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
         {fase === 'editando' || fase === 'entregue' ? [projecao, mesa] : [mesa, projecao]}
       </div>
 
+      {conversa.aberta && (
+        <Fio c={conversa} arquivos={p.arquivos.map((a) => a.id)} palco={{ nome: p.nome, estado: p.estado, rotuloEstado: ROTULO_ESTADO[p.estado] ?? p.estado,
+          classeEstado: classeEstado(p.estado), tc: tc(decorrido), correndo }} />
+      )}
+
       {/* Tocar num botão da barra com um campo de texto em foco: o botão NÃO pode roubar o foco no toque, senão a navegação
           reaparece, a barra sobe debaixo do dedo e o primeiro toque se perde (achado da conferência final, 25/11). O foco só
           sai do campo no clique, quando o alvo já está decidido. */}
       <div className="barra-comando" role="region" aria-label="Próximo passo" ref={barraRef}
         onMouseDown={(e) => { if ((e.target as HTMLElement).closest('button')) e.preventDefault(); }}
         onClickCapture={(e) => {
+          const alvo = e.target as HTMLElement;
+          // a linha da conversa cuida do próprio foco (o teclado fica aberto entre uma mensagem e outra)
+          if (alvo.closest('.conversa-barra')) return;
+          if (conversa.aberta && alvo.closest('.barra-comando__dentro')) conversa.fechar();
           const foco = document.activeElement as HTMLElement | null;
-          if ((e.target as HTMLElement).closest('button') && foco && /^(TEXTAREA|INPUT|SELECT)$/.test(foco.tagName)) foco.blur();
+          if (alvo.closest('button') && foco && /^(TEXTAREA|INPUT|SELECT)$/.test(foco.tagName)) foco.blur();
         }}>
+        <BarraConversa c={conversa} />
         <div className="barra-comando__dentro" key={`${fase}-${temMaterial}-${temPedido}-${aprovadaAssistir}-${corta}`}>
           {comando}
           {erro && <p className="erro" role="alert">{erro}</p>}
