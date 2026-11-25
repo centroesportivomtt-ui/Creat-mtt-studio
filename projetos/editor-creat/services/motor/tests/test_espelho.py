@@ -68,7 +68,7 @@ def test_guarda_com_a_mesma_chave_e_confere_o_tamanho(ligado, amb):
     assert _estado(con, chave) == "guardado"
     s3.subidas.clear()
     assert ESP.guardar(con, arm, "p1", chave) == "guardado" and s3.subidas == []          # idempotente
-    assert ESP.resumo(con, "p1") == {"guardados": 1, "total": 1, "bytes": 10, "pendentes": 0, "fora_do_teto": 0, "teto_gb": 9.0}
+    assert ESP.resumo(con, "p1") == {"guardados": 1, "total": 1, "bytes": 10, "pendentes": 0, "fora_do_teto": 0, "teto_gb": 4.0}
 
 
 def test_tamanho_diferente_e_rede_caindo_ficam_pendentes(ligado, amb):
@@ -139,7 +139,7 @@ def test_rota_do_projeto_mostra_a_nuvem_so_ligada(amb, monkeypatch):
     ESP.guardar(con, arm, "p1", "entrada/p1/a001.mp4")
     p = c.get("/v1/projetos/p1").json()
     assert p["nuvem"]["guardados"] == 1 and p["arquivos"][0]["nuvem"] == "guardado"
-    assert c.get("/v1/saude").json()["espelho"] == {"ligado": True, "teto_gb": 9.0}
+    assert c.get("/v1/saude").json()["espelho"] == {"ligado": True, "teto_gb": 4.0}
 
 
 def test_worker_periodicas_nao_derruba(amb, monkeypatch):
@@ -148,3 +148,39 @@ def test_worker_periodicas_nao_derruba(amb, monkeypatch):
     monkeypatch.setattr(entregas_r2, "reenfileirar_pendentes", lambda con, agora=None: 1 / 0)
     out = worker.periodicas(con)
     assert out == {"espelho": 0} and not con.in_transaction
+
+
+def test_mesmo_tamanho_com_outro_conteudo_nao_conta_como_copia(ligado, amb):
+    s3 = ligado
+    cfg, con, arm = amb
+    chave = _arquivo(con, arm, "a001")
+    s3.put_object(Bucket=B, Key=chave, Body=b"y" * 10)                     # chave reaproveitada, mesmo tamanho, outro filme
+    assert ESP.guardar(con, arm, "p1", chave) == "guardado"
+    assert s3.obj[(B, chave)]["corpo"] == b"x" * 10 and s3.subidas == [chave]
+    import hashlib
+    assert s3.obj[(B, chave)]["Metadata"]["sha256"] == hashlib.sha256(b"x" * 10).hexdigest()
+
+
+def test_original_sumido_nao_volta_para_a_fila_toda_volta(ligado, amb):
+    cfg, con, arm = amb
+    chave = _arquivo(con, arm, "a001")
+    arm.apagar(chave) if hasattr(arm, "apagar") else arm.caminho_local(chave).unlink()
+    for i in range(2, 8):
+        _arquivo(con, arm, f"a{i:03d}", criado="2026-01-01T00:00:00Z")
+    from motor.etapas import Contexto
+    job = {"id": "j", "etapa": "espelho", "projeto": "p1", "alvo": "a001", "entrada": {}}
+    assert ESP.etapa_espelho(Contexto(con=con, cfg=cfg, job=job, armazenamento=arm)) == {"estado": "sem_original"}
+    assert _estado(con, chave) == "sem_original"
+    assert ESP.volta(con) == 5
+    alvos = {r["alvo"] for r in con.execute("SELECT alvo FROM jobs WHERE etapa='espelho'")}
+    assert "a001" not in alvos                                             # os antigos avançam, o sumido não come a vez
+
+
+def test_worker_sem_espelho_e_worker_so_de_espelho(ligado, amb):
+    from motor import worker
+    cfg, con, arm = amb
+    _arquivo(con, arm, "a001")
+    banco.enfileirar(con, "espelho", "p1", "a001", prioridade=9)
+    assert worker.rodar_um(con, cfg, arm, "w1", None, sem=["espelho"]) is False     # o worker da edição não pega upload de GB
+    assert worker.rodar_um(con, cfg, arm, "w2", ["espelho"]) is True
+    assert _estado(con, "entrada/p1/a001.mp4") == "guardado"

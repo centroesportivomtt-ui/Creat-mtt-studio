@@ -77,7 +77,7 @@ function mudarEstado(p, estado, mensagem) {
 // Desligados por padrão, como o motor real sem as variáveis R2_ENTREGAS_* e EDITOR_ESPELHO. O aceite liga e força os estados
 // por /v1/_falso/* (rota só deste motor falso: o proxy do site não deixa passar).
 const ENT = { ligado: process.env.MOTOR_FALSO_ENTREGAS === '1', proximo: null };
-const ESP = { ligado: process.env.MOTOR_FALSO_ESPELHO === '1', teto_gb: 9 };
+const ESP = { ligado: process.env.MOTOR_FALSO_ESPELHO === '1', teto_gb: 4 };
 const PUBLICO = 'https://pub-falso-entregas.r2.dev';
 const CLIENTES_FIXOS = ['super-kal', 'creat-mtt', 'marcos'];
 const semAcento = (t) => String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -107,11 +107,11 @@ async function enviarEntregas(p, v, cliente) {
   if (e.estado !== 'enviando') return;                  // reprovada no meio: a retirada ganha
   const forca = ENT.proximo; ENT.proximo = null;
   if (forca === 'pendente') {
-    gravarEnt(p, v, { estado: 'pendente', motivo: 'EndpointConnectionError: sem conexão com o Cloudflare', proxima: bahia(Date.now() + 15 * 60e3).slice(11, 16) }, 'A página de entregas não respondeu; tento de novo em 15 min.');
+    gravarEnt(p, v, { estado: 'pendente', motivo: 'sem conexão com o Cloudflare agora. O filme continua guardado aqui', proxima: bahia(Date.now() + 15 * 60e3).slice(11, 16) }, 'A página de entregas não respondeu; tento de novo em 15 min.');
     return;
   }
   if (forca === 'falhou') {
-    gravarEnt(p, v, { estado: 'falhou', motivo: 'o filme no editor não é o mesmo que você aprovou (conferência sha256).' }, 'Não deu para mandar para as entregas.');
+    gravarEnt(p, v, { estado: 'falhou', motivo: 'o filme mudou depois que você aprovou, então nada subiu. Aprove de novo para mandar este' }, 'Não deu para mandar para as entregas.');
     return;
   }
   for (const [v2, e2] of Object.entries(p.dados.entregas)) {
@@ -511,14 +511,14 @@ async function rotear(req, res) {
           lerArquivo(p, alvo);
         }
       })();
-      return json(res, 202, { id: a.id, mensagem: 'Importação na fila: o motor baixa e já começa a ler.',
+      return json(res, 202, { id: a.id, mensagem: 'Importação na fila: o editor baixa e já começa a ler.',
         pasta: { nome: 'Gravações do evento', videos: ITENS_PASTA.length, ignorados: 2, subpastas: 1, ja_no_projeto: 0, bytes: null },
-        detalhe: `Pasta “Gravações do evento”: ${ITENS_PASTA.length} vídeos na fila. 2 arquivos que não são vídeo nem áudio ficam de fora.` });
+        detalhe: `Pasta “Gravações do evento”: ${ITENS_PASTA.length} vídeos na fila; vão aparecendo aqui conforme baixam. 2 arquivos que não são vídeo nem áudio ficam de fora.` });
     }
     const a = { id: `a${String(p.arquivos.length + 1).padStart(3, '0')}`, nome: 'importando do link…', chave: null, bytes: 0, estado: 'recebido', criado: agora() };
     p.arquivos.push(a);
     (async () => { await dormir(PASSO); a.nome = decodeURIComponent(u.split('/').pop()?.split('?')[0] || 'arquivo-importado.mp4'); a.bytes = 1; await lerArquivo(p, a); })();
-    return json(res, 202, { id: a.id, mensagem: 'Importação na fila: o motor baixa e já começa a ler.' });
+    return json(res, 202, { id: a.id, mensagem: 'Importação na fila: o editor baixa e já começa a ler.' });
   }
   if (r3 === 'fechar-envio') {
     if (!p.arquivos.length) return falha(res, 409, 'nenhum arquivo enviado ainda');
@@ -557,11 +557,11 @@ async function rotear(req, res) {
     const v = p.versoes.find((x) => x.id === r4);
     if (!v) return falha(res, 404, 'versão não encontrada');
     if (v.estado !== 'entregue') return falha(res, 409, 'só dá para aprovar versão entregue (conferida pelo QA)');
-    if (c.cliente != null && !/^[a-z0-9-]{1,40}$/.test(String(c.cliente))) return falha(res, 422, 'cliente inválido');
+    if (c.cliente != null && !/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(String(c.cliente))) return falha(res, 422, 'cliente inválido');
     p.dados.aprovadas = { ...(p.dados.aprovadas ?? {}), [v.id]: { em: agora(), nota: c.nota ?? null } };
     emitir(pid, 'estado', { mensagem: `Corta! Versão ${v.id} aprovada. Virou caso de referência da casa.` });
     const out = { aprovada: v.id, caso: `${pid}-${v.id}` };
-    if (ENT.ligado) {        // sem as entregas ligadas, a resposta fica idêntica à de antes
+    if (ENT.ligado && c.entregas !== false) {        // sem as entregas ligadas (ou "não mandar"), a resposta fica idêntica à de antes
       const cliente = c.cliente || adivinharCliente(p);
       enviarEntregas(p, v.id, cliente);
       out.entregas = entPublico(p.dados.entregas[v.id]);
@@ -573,7 +573,7 @@ async function rotear(req, res) {
     if (!v) return falha(res, 404, 'versão não encontrada');
     if (!ENT.ligado) return falha(res, 409, 'as entregas no Cloudflare estão desligadas neste editor');
     if (v.estado !== 'entregue' || !p.dados.aprovadas?.[v.id]) return falha(res, 409, 'só vai para a página de entregas a versão que você aprovou');
-    if (c.cliente != null && !/^[a-z0-9-]{1,40}$/.test(String(c.cliente))) return falha(res, 422, 'cliente inválido');
+    if (c.cliente != null && !/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(String(c.cliente))) return falha(res, 422, 'cliente inválido');
     const cliente = c.cliente || p.dados.entregas?.[v.id]?.cliente || adivinharCliente(p);
     enviarEntregas(p, v.id, cliente);
     return json(res, 202, { entregas: entPublico(p.dados.entregas[v.id]) });

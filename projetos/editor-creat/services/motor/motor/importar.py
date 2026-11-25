@@ -26,6 +26,9 @@ from motor import banco
 
 HOSTS = ("dropbox.com", "dropboxusercontent.com", "drive.google.com", "docs.google.com",
          "drive.usercontent.google.com", "googleusercontent.com")
+# googleusercontent.com inteiro cobre também nomes de VM do Google Cloud (*.bc.googleusercontent.com). Dele, só o que o
+# download do Drive usa: drive.usercontent.google.com (acima) e os servidores de arquivo doc-XX-XX-docs.googleusercontent.com.
+_GUC_OK = re.compile(r"^doc-[a-z0-9-]+-docs\.googleusercontent\.com$")
 EXT_VIDEO = {".mov", ".mp4", ".m4v", ".mkv", ".webm", ".avi", ".mts", ".m2ts", ".3gp", ".hevc"}
 EXT_AUDIO = {".m4a", ".mp3", ".wav", ".aac", ".flac", ".ogg", ".opus"}
 EXT_MIDIA = EXT_VIDEO | EXT_AUDIO
@@ -48,6 +51,8 @@ class ErroImportacao(Exception):
 
 def host_permitido(host: str, hosts=HOSTS) -> bool:
     host = (host or "").lower().rstrip(".")
+    if host.endswith(".googleusercontent.com") and "googleusercontent.com" in hosts and not _GUC_OK.match(host):
+        return any(host == h or host.endswith("." + h) for h in hosts if h != "googleusercontent.com")
     return any(host == h or host.endswith("." + h) for h in hosts)
 
 
@@ -248,9 +253,9 @@ def sondar_direto(direto: str, tipo: str = "arquivo", *, hosts=HOSTS, timeout: f
         if e.code in (401, 403, 404, 410):
             raise ErroImportacao("Esse link não existe mais ou não está público. Gere de novo o link com "
                                  "\"Qualquer pessoa com o link\" e cole aqui.") from e
-        return f"o {('Drive' if google else 'Dropbox')} respondeu {e.code}; o motor tenta de novo"
+        return f"o {('Drive' if google else 'Dropbox')} está instável agora; tento de novo sozinho"
     except Exception as e:  # noqa: BLE001 - rede: não bloqueia, o worker tenta de novo
-        return f"sem resposta do link agora ({type(e).__name__}); o motor tenta de novo"
+        return "sem resposta do link agora; tento de novo sozinho"
     if re.search(r'action="https://drive\.usercontent\.google\.com/download', html):
         return None                                             # aviso "arquivo grande, sem antivírus": o baixador confirma
     if google and _pagina_de_cota(html):
@@ -442,7 +447,7 @@ def sondar_pasta(direto: str, *, hosts=HOSTS, timeout: float = 15, prazo_total: 
     except ErroImportacao:
         raise
     except Exception as e:  # noqa: BLE001 - rede: não bloqueia, o worker tenta de novo
-        return None, f"sem resposta do Drive agora ({type(e).__name__}); o motor lista a pasta e tenta de novo"
+        return None, "sem resposta do Drive agora; leio a pasta e tento de novo sozinho"
     if not r["itens"]:
         raise ErroImportacao(MSG_PASTA_SEM_MIDIA)
     return r, None
@@ -451,7 +456,7 @@ def sondar_pasta(direto: str, *, hosts=HOSTS, timeout: float = 15, prazo_total: 
 def detalhe_pasta(resumo: dict, novos: int, ja: int = 0) -> str:
     """Texto pronto para a tela, embaixo do botão."""
     v = lambda n: f"{n} vídeo{'s' if n != 1 else ''}"            # noqa: E731
-    txt = f"Pasta “{resumo.get('nome') or 'do Drive'}”: {v(novos)} na fila."
+    txt = f"Pasta “{resumo.get('nome') or 'do Drive'}”: {v(novos)} na fila" + ("; vão aparecendo aqui conforme baixam." if novos > 1 else ".")
     if ja:
         txt += f" {v(ja)} já estava{'m' if ja != 1 else ''} no projeto."
     k = int(resumo.get("ignorados") or 0)
@@ -538,7 +543,7 @@ def videos_do_zip(caminho: Path, pasta: Path, max_bytes: int = 60 << 30) -> list
 def _checar_disco(pasta: Path, nbytes: int, folga: int = 512 << 20) -> None:
     livre = shutil.disk_usage(pasta).free
     if nbytes + folga > livre:
-        raise ErroImportacao(f"Sem espaço no motor para {nbytes / 2**30:.1f} GB (livre: {livre / 2**30:.1f} GB).")
+        raise ErroImportacao(f"Sem espaço no editor para {nbytes / 2**30:.1f} GB (livre: {livre / 2**30:.1f} GB).")
 
 
 # ---------------- registro de arquivos (usado pela API e pela importação) ----------------

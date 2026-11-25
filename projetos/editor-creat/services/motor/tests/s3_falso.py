@@ -1,4 +1,5 @@
 """S3 falso em dicionário (para os testes do R2 sem rede): o mínimo do boto3 que o motor usa."""
+import hashlib
 import io
 import os
 
@@ -20,9 +21,19 @@ class S3Falso:
         if self.cair:
             raise ConnectionError("Could not connect to the endpoint URL")
 
-    def put_object(self, Bucket, Key, Body, ContentType=None, CacheControl=None, Metadata=None, **k):
+    @staticmethod
+    def _etag(corpo):
+        return '"' + hashlib.md5(corpo).hexdigest() + '"'
+
+    def put_object(self, Bucket, Key, Body, ContentType=None, CacheControl=None, Metadata=None, IfMatch=None, IfNoneMatch=None, **k):
         self._rede()
         corpo = Body if isinstance(Body, bytes) else Body.read()
+        atual = self.obj.get((Bucket, Key))
+        if IfNoneMatch == "*" and atual is not None:            # escrita condicional, como o R2 (412 PreconditionFailed)
+            raise ErroS3("PreconditionFailed", "At least one of the pre-conditions you specified did not hold")
+        if IfMatch is not None and (atual is None or self._etag(atual["corpo"]) != IfMatch):
+            raise ErroS3("PreconditionFailed", "At least one of the pre-conditions you specified did not hold")
+        self.condicionais = getattr(self, "condicionais", []) + ([Key] if (IfMatch or IfNoneMatch) else [])
         self.obj[(Bucket, Key)] = {"corpo": corpo, "ContentType": ContentType, "CacheControl": CacheControl, "Metadata": Metadata or {}}
 
     def upload_file(self, origem, Bucket, Key, Config=None, ExtraArgs=None):
@@ -46,7 +57,9 @@ class S3Falso:
         o = self.obj.get((Bucket, Key))
         if o is None:
             raise ErroS3("NoSuchKey", "The specified key does not exist.")
-        return {"Body": io.BytesIO(o["corpo"])}
+        if getattr(self, "antes_de_ler", None):
+            self.antes_de_ler(Key)
+        return {"Body": io.BytesIO(o["corpo"]), "ETag": self._etag(o["corpo"])}
 
     def delete_object(self, Bucket, Key):
         self._rede()

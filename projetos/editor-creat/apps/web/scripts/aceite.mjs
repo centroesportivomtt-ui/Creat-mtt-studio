@@ -549,8 +549,9 @@ async function principal() {
   // ---------- 5. Cloudflare no celular: pasta do Drive, página de entregas e cópia do material ----------
   {
     const CF = path.join(WEB, '.verificacao', 'cloudflare');
-    fs.rmSync(CF, { recursive: true, force: true });
     fs.mkdirSync(CF, { recursive: true });
+    // só os prints deste aceite saem (prints de QA de outra equipe na mesma pasta, ex.: qa/, ficam)
+    for (const f of fs.readdirSync(CF)) if (/^celular-.*\.png$/.test(f)) fs.rmSync(path.join(CF, f), { force: true });
     // controle do motor falso direto na porta dele (com o token do motor; o proxy do site não deixa passar /_falso)
     const falsoMotor = (rota, corpo) => fetch(`http://127.0.0.1:${PORTA_MOTOR}/v1/_falso/${rota}`, {
       method: 'POST', headers: { authorization: `Bearer ${env.MOTOR_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify(corpo),
@@ -631,6 +632,17 @@ async function principal() {
     const naBarra = await texto('[data-teste=entregas-barra]');
     const opcoes = await fp.locator('[data-teste=entregas-cliente] option').allTextContents();
     await foto('entregas-antes-de-aprovar', '.entregas-cliente');
+    // aprovar SEM mandar: o dono desmarca e o aviso muda (a página é pública); a barra deixa de prometer o envio
+    const avisoMandar = await texto('[data-teste=entregas-aviso]');
+    await tocar('[data-teste=entregas-mandar]');
+    const avisoSem = await texto('[data-teste=entregas-aviso]');
+    const barraSem = await fp.locator('[data-teste=entregas-barra]').count();
+    const seletorTravado = await fp.locator('[data-teste=entregas-cliente]').isDisabled();
+    await tocar('[data-teste=entregas-mandar]');
+    const voltouMandar = await fp.locator('[data-teste=entregas-mandar]').isChecked();
+    const alvoMandar = await fp.locator('.entregas-opcao').first().evaluate((el) => Math.round(el.getBoundingClientRect().height));
+    ok('antes de aprovar: avisa que a página é pública e deixa aprovar sem mandar', /A página é pública/.test(avisoMandar) && /fica só aqui no editor/.test(avisoSem)
+      && barraSem === 0 && seletorTravado && voltouMandar && alvoMandar >= 44, JSON.stringify({ avisoMandar: avisoMandar.slice(0, 80), avisoSem: avisoSem.slice(0, 60), barraSem, seletorTravado, alvoMandar }));
     ok('antes de aprovar: "Vai para as entregas de" com o cliente certo na versão e na barra', cliente === 'super-kal' && /Vai para as entregas de Super Kal/.test(naBarra) && opcoes.includes('creat.MTT'),
       JSON.stringify({ cliente, naBarra, opcoes }));
     const corpo = fp.waitForRequest((r) => r.method() === 'POST' && /\/versoes\/v1\/aprovar$/.test(r.url()), { timeout: 10000 }).then((r) => r.postData()).catch(() => null);
@@ -668,7 +680,7 @@ async function principal() {
       && rotPend === 'Tentar agora' && stTentou === 202 && voltou, JSON.stringify({ pend, msgPend, rotPend, stTentou, voltou }));
 
     // falhou: o motivo em pt-BR e "Tentar de novo"; se a nova tentativa também cair, a tela mostra (nunca some em silêncio)
-    await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'falhou', motivo: 'o filme no editor não é o mesmo que você aprovou (conferência sha256).' });
+    await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'falhou', motivo: 'o filme mudou depois que você aprovou, então nada subiu. Aprove de novo para mandar este' });
     const falhou = await esperarEntregas('falhou');
     const msgFalhou = await texto('[data-teste=entregas-msg]');
     const rotFalhou = await texto('[data-teste=entregas-tentar]');
@@ -679,7 +691,7 @@ async function principal() {
     await tocar('[data-teste=entregas-tentar]');
     const noArDeNovo = await esperarEntregas('no_ar');
     ok('falhou: "Não deu para mandar para as entregas: <motivo>" e "Tentar de novo"; a queda da nova tentativa aparece', falhou
-      && msgFalhou === 'Não deu para mandar para as entregas: o filme no editor não é o mesmo que você aprovou (conferência sha256).' && rotFalhou === 'Tentar de novo' && caiuDeNovo && noArDeNovo,
+      && msgFalhou === 'Não deu para mandar para as entregas: o filme mudou depois que você aprovou, então nada subiu. Aprove de novo para mandar este.' && rotFalhou === 'Tentar de novo' && caiuDeNovo && noArDeNovo,
       JSON.stringify({ falhou, msgFalhou, rotFalhou, caiuDeNovo, noArDeNovo }));
 
     // os outros estados: subindo (print), trocada por outra versão e retirada
@@ -690,6 +702,14 @@ async function principal() {
     await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'substituida', substituida_por: 'v2' });
     const subst = await esperarEntregas('substituida');
     const msgSubst = await texto('[data-teste=entregas-msg]');
+    // retirada que caiu na rede: o filme reprovado AINDA está na página; a tela nunca diz "Retirada" antes da hora
+    await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'retirando', proxima: '15:45', motivo: 'sem conexão com o Cloudflare agora' });
+    await fp.waitForFunction(() => /Ainda não consegui tirar/.test(document.querySelector('[data-teste=entregas-msg]')?.textContent ?? ''), null, { timeout: 8000 }).catch(() => {});
+    const msgRetPend = await texto('[data-teste=entregas-msg]');
+    const tomRetPend = await fp.getAttribute('[data-teste=entregas]', 'data-tom').catch(() => '');
+    await foto('entregas-retirando-pendente', '[data-teste=entregas]');
+    ok('retirada que falhou por rede: diz que o filme ainda não saiu e quando tenta de novo', msgRetPend === 'Ainda não consegui tirar este filme da página de entregas (sem conexão com o Cloudflare agora). Tento de novo sozinho às 15:45.'
+      && tomRetPend === 'atencao', JSON.stringify({ msgRetPend, tomRetPend }));
     await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'retirada' });
     const ret = await esperarEntregas('retirada');
     const msgRet = await texto('[data-teste=entregas-msg]');
@@ -718,7 +738,7 @@ async function principal() {
     ok('material no Cloudflare: guardando, pendente, teto e tudo guardado, com selo só no arquivo conferido',
       /^Guardando no Cloudflare: 1 de 3 arquivos \(393 MB\)\. Você já pode editar\.$/.test(n1.resumo) && n1.selos === 1
       && /^Ainda não guardei 1 arquivo no Cloudflare \(sem conexão agora\)/.test(n2.resumo) && n2.selos === 2
-      && /espaço grátis do Cloudflare \(9 GB\) encheu/.test(n3.resumo) && /^Tudo guardado no Cloudflare \(726 MB\)\.$/.test(n4.resumo) && n4.selos === 3,
+      && /espaço grátis do Cloudflare \(4 GB\) encheu/.test(n3.resumo) && /^Tudo guardado no Cloudflare \(726 MB\)\.$/.test(n4.resumo) && n4.selos === 3,
       JSON.stringify({ n1, n2, n3, n4 }));
 
     // filme aprovado ANTES de ligar as entregas (o projeto do fluxo 3): "Mandar para as entregas" põe no ar com o cliente padrão
@@ -737,10 +757,25 @@ async function principal() {
     const destinos = await texto('[data-teste=backup-destinos]');
     await foto('caderno-cloudflare', '[data-teste=backup]');
     const medidaF = await fp.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
-    ok('Caderno mostra o Cloudflare: entregas ligadas, material guardado e onde ficou o backup', /Página de entregas: ligada/.test(cad) && /guardado também no Cloudflare \(até 9 GB/.test(cad)
+    ok('Caderno mostra o Cloudflare: entregas ligadas, material guardado e onde ficou o backup', /Página de entregas: ligada/.test(cad) && /guardado também no Cloudflare \(até 4 GB/.test(cad)
       && /Cloudflare e Dropbox/.test(destinos) && !medidaF, JSON.stringify({ cad: cad.slice(0, 160), destinos }));
     ok('Cloudflare no celular sem erro de console (fora as recusas 422 esperadas)', errosF.length === 0, errosF.slice(0, 3).join(' | '));
-    ok('prints do Cloudflare (celular claro e escuro)', prints.length === 20, `${prints.length} prints em ${path.relative(WEB, CF)}`);
+    // vários links, um bom e um ruim: o bom entra e SÓ o ruim fica no campo, para o dono corrigir e tocar de novo
+    await fp.goto(`${BASE}/projetos/novo`);
+    await fp.fill('input[name=nome]', 'Links misturados');
+    await fp.check('input[name=tipo][value=evento]', { force: true });
+    await fp.click('main button[type=submit]');
+    await fp.waitForURL(/\/projetos\/p_[a-z0-9]+$/, { timeout: 15000 });
+    const ruim = 'https://exemplo.com/video.mp4';
+    await fp.fill('[data-teste=importar-links]', `https://www.dropbox.com/scl/fi/abc/C0042.MP4?rlkey=x&dl=0\n${ruim}`);
+    await tocar('[data-teste=importar-enviar]');
+    await fp.waitForFunction(() => /na fila/.test(document.querySelector('[data-teste=importar-resultado]')?.textContent ?? ''), null, { timeout: 10000 }).catch(() => {});
+    const sobrou = await fp.inputValue('[data-teste=importar-links]');
+    const resMix = await texto('[data-teste=importar-resultado]');
+    const fontes = await fp.evaluate(() => [...document.querySelectorAll('[data-teste=importar-resultado] p')].map((el) => getComputedStyle(el).fontFamily));
+    ok('vários links: o bom entra, só o ruim fica no campo, e as linhas do resultado na mesma fonte', sobrou === ruim && /1 link na fila: o editor baixa/.test(resMix)
+      && /não é link do Dropbox/.test(resMix) && !/motor/.test(resMix) && fontes.length >= 2 && new Set(fontes).size === 1, JSON.stringify({ sobrou, resMix: resMix.slice(0, 160), fontes }));
+    ok('prints do Cloudflare (celular claro e escuro)', prints.length === 22, `${prints.length} prints em ${path.relative(WEB, CF)}`);
     await falsoMotor('espelho', { ligado: false });
     await falsoMotor('entregas', { ligado: false });
     await fctx.close();

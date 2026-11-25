@@ -53,7 +53,7 @@ export default function Backup() {
       </p>
       {(e?.r2 || (e?.copias?.length ?? 0) > 0) && (
         <p className="aviso" data-teste="backup-destinos">
-          {e?.copias?.length ? <>Último backup guardado em <b>{e.copias.map((c) => NOME_COPIA[c] ?? c).join(' e ')}</b>.</> : <>Vai para o <b>Cloudflare (R2)</b>{e?.destino === 'configurado' ? ' e para o Dropbox, se o link estiver salvo' : ''}.</>}
+          {e?.copias?.length ? <>Último backup guardado em <b>{e.copias.map((c) => NOME_COPIA[c] ?? c).join(' e ')}</b>.</> : <>Vai para o <b>Cloudflare</b>{e?.destino === 'configurado' ? ' e, se você salvar o link, para o Dropbox' : ''}.</>}
         </p>
       )}
       {nuvem && (nuvem.entregas?.ligado || nuvem.espelho?.ligado) && (
@@ -63,7 +63,7 @@ export default function Backup() {
             <p className="aviso" style={{ margin: 0 }}>Página de entregas: <b>ligada</b>. Filme aprovado sobe sozinho{nuvem.entregas.ultimo_ok ? ` · último envio bom em ${quando(nuvem.entregas.ultimo_ok)}` : ''}.</p>
           )}
           {nuvem.espelho?.ligado && (
-            <p className="aviso" style={{ margin: 0 }}>Material enviado: guardado também no Cloudflare (até {String(nuvem.espelho.teto_gb ?? 9).replace('.', ',')} GB grátis).</p>
+            <p className="aviso" style={{ margin: 0 }}>Material enviado: guardado também no Cloudflare (até {String(nuvem.espelho.teto_gb ?? 4).replace('.', ',')} GB grátis).</p>
           )}
         </div>
       )}

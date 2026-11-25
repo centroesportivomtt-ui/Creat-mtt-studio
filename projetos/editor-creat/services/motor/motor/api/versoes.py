@@ -110,7 +110,8 @@ def publicar(pid: str, v: str, corpo: Publicar):
 
 class Aprovar(BaseModel):
     nota: Optional[str] = Field(default=None, max_length=500)
-    cliente: Optional[str] = Field(default=None, pattern=r"^[a-z0-9-]{1,40}$")   # pasta da página de entregas (?c=<cliente>)
+    cliente: Optional[str] = Field(default=None, pattern=r"^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$")   # pasta da página de entregas (?c=<cliente>)
+    entregas: Optional[bool] = None      # False: aprova SEM mandar para a página de entregas (que é pública para quem tem o link)
 
 
 CAMPOS_ENTREGAS = ("estado", "cliente", "nome_cliente", "painel", "video_url", "capa_url", "motivo", "proxima", "substituida_por", "em")
@@ -153,14 +154,14 @@ def aprovar(pid: str, v: str, corpo: Aprovar):
         con.execute("UPDATE projetos SET atualizado=? WHERE id=?", (banco.agora_iso(), pid))
         banco.emitir(con, pid, "estado", etapa="entrega", alvo=v, mensagem=f"Corta! Versão {v} aprovada. Virou caso de referência da casa.")
         out = {"aprovada": v, "caso": caso["id"]}
-        if entregas_r2.ligado():           # sem as variáveis das entregas, a resposta e a fila ficam idênticas às de antes
+        if entregas_r2.ligado() and corpo.entregas is not False:   # sem as variáveis, a resposta e a fila ficam iguais às de antes
             nome = con.execute("SELECT nome FROM projetos WHERE id=?", (pid,)).fetchone()["nome"]
             out["entregas"] = _mandar_para_entregas(con, pid, v, entregas_r2.escolher_cliente(corpo.cliente, pedido, nome))
         return out
 
 
 class TentarEntregas(BaseModel):
-    cliente: Optional[str] = Field(default=None, pattern=r"^[a-z0-9-]{1,40}$")
+    cliente: Optional[str] = Field(default=None, pattern=r"^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$")
 
 
 @rotas.post("/projetos/{pid}/versoes/{v}/entregas", status_code=202)
@@ -180,8 +181,9 @@ def tentar_entregas(pid: str, v: str, corpo: Optional[TentarEntregas] = None):
         if r["estado"] != "entregue" or v not in (d.get("aprovadas") or {}):
             raise HTTPException(409, "só vai para a página de entregas a versão que você aprovou")
         atual = ((d.get("entregas") or {}).get(v) or {})
-        cliente = (corpo.cliente if corpo and corpo.cliente else None) or atual.get("cliente") or \
-            entregas_r2.escolher_cliente(None, _ler(arm, f"projetos/{pid}/pedido.json"), p["nome"])
+        # mesmo caminho do aprovar (normaliza e nunca deixa slug vazio virar pasta "/...")
+        cliente = entregas_r2.escolher_cliente((corpo.cliente if corpo and corpo.cliente else None) or atual.get("cliente"),
+                                               _ler(arm, f"projetos/{pid}/pedido.json"), p["nome"])
         return {"entregas": _mandar_para_entregas(con, pid, v, cliente)}
 
 

@@ -26,7 +26,14 @@ python -m motor.memoria.semear || { echo "AVISO: não consegui juntar a memória
 (python -m motor.modelos || echo "AVISO: modelos locais não baixaram agora; o editor tenta de novo no primeiro filme" >&2) & disown   # recorte de pessoa e voz; disown: o "wait -n" do fim não pode contar este (ele termina e derrubaria o contêiner)
 EDITOR_BACKUP_AGENDAR=1 uvicorn motor.api.app:criar --factory --host 127.0.0.1 --port "$MOTOR_PORTA" --no-access-log &   # sem log de acesso: o caminho do link do cliente leva o token
 for i in $(seq 1 60); do curl -fsS -o /dev/null -H "authorization: Bearer $MOTOR_TOKEN" "http://127.0.0.1:${MOTOR_PORTA}/v1/saude" && break; sleep 0.5; done   # banco criado antes dos workers
-for i in $(seq 1 "${EDITOR_WORKERS:-2}"); do python -m motor.worker & done
+# Espelho do material ligado (EDITOR_ESPELHO=1, só com o "pode" do dono): um worker só para ele, e os da edição não o pegam.
+# Assim um upload de GB para o Cloudflare nunca segura montagem nem ingest.
+if [ "${EDITOR_ESPELHO:-0}" = "1" ]; then
+  for i in $(seq 1 "${EDITOR_WORKERS:-2}"); do python -m motor.worker --sem espelho & done
+  nice -n 10 python -m motor.worker --etapas espelho &
+else
+  for i in $(seq 1 "${EDITOR_WORKERS:-2}"); do python -m motor.worker & done
+fi
 cd /app/projetos/editor-creat/apps/web
 npx next start -H 0.0.0.0 -p "${PORT:-3000}" &
 wait -n

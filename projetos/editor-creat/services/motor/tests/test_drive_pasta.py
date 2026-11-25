@@ -168,7 +168,7 @@ def test_restrita_apagada_ilegivel_vazia(base):
 
 def test_rede_fora_vira_aviso():
     resumo, aviso = importar.sondar_pasta("http://127.0.0.1:9/embeddedfolderview?id=1AbCdEfGhIjKl", hosts=LOCAL, timeout=2)
-    assert resumo is None and "tenta de novo" in aviso
+    assert resumo is None and "tento de novo" in aviso and "Error" not in aviso and "motor" not in aviso
 
 
 def test_tamanho_pelo_range(base):
@@ -187,7 +187,7 @@ def test_detalhe_em_portugues():
     r = {"nome": "Lavínia", "ignorados": 1, "subpastas_fora": 0}
     assert importar.detalhe_pasta(r, 1) == "Pasta “Lavínia”: 1 vídeo na fila. 1 arquivo que não é vídeo nem áudio fica de fora."
     r = {"nome": "X", "ignorados": 3, "subpastas_fora": 2}
-    assert importar.detalhe_pasta(r, 4, 2) == ("Pasta “X”: 4 vídeos na fila. 2 vídeos já estavam no projeto. 3 arquivos que não são "
+    assert importar.detalhe_pasta(r, 4, 2) == ("Pasta “X”: 4 vídeos na fila; vão aparecendo aqui conforme baixam. 2 vídeos já estavam no projeto. 3 arquivos que não são "
                                                "vídeo nem áudio ficam de fora. 2 subpastas restritas ou fundas demais ficaram de fora.")
 
 
@@ -218,7 +218,7 @@ def test_rota_mostra_detalhe_e_recusa_pasta_ja_importada(cli, monkeypatch):
     r = cli.post(f"/v1/projetos/{pid}/importar", json={"url": PASTA_URL})
     assert r.status_code == 202, r.text
     j = r.json()
-    assert j["detalhe"] == "Pasta “Lavínia”: 2 vídeos na fila. 2 arquivos que não são vídeo nem áudio ficam de fora."
+    assert j["detalhe"] == "Pasta “Lavínia”: 2 vídeos na fila; vão aparecendo aqui conforme baixam. 2 arquivos que não são vídeo nem áudio ficam de fora."
     assert j["pasta"] == {"nome": "Lavínia", "videos": 2, "ignorados": 2, "subpastas": 1, "ja_no_projeto": 0, "bytes": None}
     con = banco.conectar(config.carregar().banco)
     for d, a in (("drv0000001", "a001"), ("drv0000002", "a001")):
@@ -326,3 +326,46 @@ def test_arquivo_unico_do_drive_tambem_e_lembrado(dados, monkeypatch):
     row = con.execute("SELECT * FROM arquivos WHERE projeto=? AND id=?", (pid, aid)).fetchone()
     ING._importar(_ctx(con, cfg, arm, pid, aid, url), row, url)
     assert importar.importados_drive(con, pid) == {"1ArquivoUnico0": "a001"}
+
+
+def test_link_colado_nao_fica_no_banco_nem_no_backup(dados, monkeypatch, tmp_path):
+    """Link de pasta com acesso de EDITOR é credencial: depois de baixado sai de jobs.entrada, e o backup nunca leva."""
+    from motor import backup
+    from motor.etapas import Contexto, ingest as ING
+    from motor.provedores.armazenamento_local import ArmazenamentoLocal
+    cfg = config.carregar()
+    con = banco.conectar(cfg.banco)
+    arm = ArmazenamentoLocal(cfg)
+    pid = _projeto(con)
+    monkeypatch.setattr(importar, "listar_pasta_drive", lambda fid, **k: _lista_falsa("drv0000001", "drv0000002"))
+    monkeypatch.setattr(importar, "tamanhos_drive", lambda ids, **k: {i: 10 for i in ids})
+
+    def baixar_falso(link, destino, **k):
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        destino.write_bytes(b"0" * 10)
+        return destino, "qualquer.mp4", 10
+    monkeypatch.setattr(importar, "baixar", baixar_falso)
+    aid, _ = importar.registrar_arquivo(con, pid, "importando do link…", None, 0, entrada={"url": PASTA_URL})
+    jid = con.execute("SELECT id FROM jobs WHERE etapa='ingest' AND alvo=?", (aid,)).fetchone()["id"]
+    row = con.execute("SELECT * FROM arquivos WHERE projeto=? AND id=?", (pid, aid)).fetchone()
+    job = {"id": jid, "etapa": "ingest", "projeto": pid, "alvo": aid, "entrada": {"url": PASTA_URL}}
+    ING._importar(Contexto(con=con, cfg=cfg, job=job, armazenamento=arm), row, PASTA_URL)
+    assert json.loads(con.execute("SELECT entrada FROM jobs WHERE id=?", (jid,)).fetchone()["entrada"]) == {"link_baixado": True}
+    # o 2º vídeo ainda não baixou (o link dele está na fila): no backup, nenhum link sobra
+    assert con.execute("SELECT COUNT(*) n FROM jobs WHERE entrada LIKE '%https:%'").fetchone()["n"] == 1
+    import pathlib
+    destino = tmp_path / "copia.db"
+    backup._copiar_banco(pathlib.Path(cfg.banco), destino)
+    import sqlite3
+    c = sqlite3.connect(destino)
+    assert c.execute("SELECT COUNT(*) FROM jobs WHERE entrada LIKE '%https:%'").fetchone()[0] == 0
+    assert c.execute("SELECT entrada FROM jobs WHERE alvo='a002'").fetchone()[0] == '{"drive_id":"drv0000002"}'
+    c.close()
+
+
+def test_hosts_do_google_so_os_do_download():
+    assert importar.host_permitido("drive.usercontent.google.com")
+    assert importar.host_permitido("doc-0s-8c-docs.googleusercontent.com")
+    assert not importar.host_permitido("123.45.67.89.bc.googleusercontent.com")
+    assert not importar.host_permitido("qualquercoisa.googleusercontent.com")
+    assert importar.host_permitido("www.dropbox.com") and importar.host_permitido("dl.dropboxusercontent.com")

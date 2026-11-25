@@ -533,3 +533,34 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Railway:** com token do dono, guardado no cofre da sessão (o valor nunca apareceu), entraram `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` e `R2_BACKUP_BUCKET=creat-editor-midia`.
   - Os vídeos continuam no disco do servidor: `EDITOR_ARMAZENAMENTO` não mudou. A virada para o R2 exige migração e CORS no bucket, a fazer com teste.
 - **Conferido em produção:** backup ok em 25/11 04:00:59, cópia R2, arquivos no bucket. pytest 452 ok.
+
+## 25/11: Cloudflare e Drive, correções da revisão tripla (código, segurança, QA)
+- **Entregas (R3):**
+  - retirada que cai na rede fica "retirando" com hora marcada; o laço a tenta de novo e nunca desiste;
+  - a tela diz "Ainda não consegui tirar este filme da página", nunca "Retirada" antes da hora;
+  - fila roda uma entrega e um espelho por vez (`banco.UMA_POR_VEZ`);
+  - a etapa relê o projeto depois do upload: uma v1 atrasada não apaga a v2 nem passa por cima de "substituida";
+  - trocar o cliente tira a cópia e a legenda do cliente antigo;
+  - o editor só apaga o que tem o metadado `projeto` dele;
+  - pasta com arquivo de outro projeto ou do chat ganha sufixo do projeto;
+  - META gravado com IfMatch/IfNoneMatch (testado no R2 real) e índice com passada de conferência;
+  - depósito de entregas igual ao do backup ou do material desliga as entregas, com aviso na saúde;
+  - cliente "-" volta 422; o dono pode aprovar sem mandar para a página (aviso de que ela é pública);
+  - motivo para o dono em pt-BR, e o detalhe técnico em `motivo_tecnico`, mascarado por valor (`backup.sem_segredo`).
+- **Drive:**
+  - o link colado sai de `jobs.entrada` depois de baixado, e o backup nunca leva link;
+  - hosts do Google restritos ao download do Drive;
+  - avisos sem nome de exceção e sem a palavra "motor";
+  - "vão aparecendo aqui conforme baixam".
+- **Espelho (desligado):**
+  - sha256 no metadado;
+  - "sem_original" não volta à fila;
+  - teto padrão de 4 GB (os 10 GB grátis são da conta);
+  - ligado, ganha um worker só dele (`--sem espelho` nos da edição).
+- **Site:**
+  - selo com 13 px e "Baixar da página";
+  - sem "R2" no Caderno;
+  - links que falharam ficam no campo;
+  - mesma fonte no resultado e erro 422 legível.
+- **Aceite:** apaga só os próprios prints.
+- **Testes:** pytest 526 ok (antes 505); tipos ok; aceite 64/64 (antes 61).

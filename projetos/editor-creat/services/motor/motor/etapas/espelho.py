@@ -5,9 +5,15 @@ guardados, o R2 cobra o mês. Liga só com o "pode" do dono: EDITOR_ESPELHO=1 + 
 
 - a chave no R2 é IGUAL à chave local (`entrada/<projeto>/<arquivo>.<ext>`): a virada futura para o ArmazenamentoR2 não copia nada;
 - envio multipart de 64/32 MB com no máximo 2 conexões (a edição continua usando a máquina);
-- só vira 'guardado' depois de `head_object` com o tamanho igual ao do disco;
+- só vira 'guardado' depois de `head_object` com o tamanho E o sha256 (metadado) iguais aos do disco: um objeto que já
+  estava lá com o mesmo tamanho mas outro conteúdo não conta como cópia (base para um dia liberar o original com segurança);
+- UM espelho por vez na fila (banco.UMA_POR_VEZ) e, ligado, um worker só para ele (deploy/iniciar.sh): upload de GB nunca
+  prende montagem nem ingest;
 - nunca levanta erro de rede: vira 'pendente' e o laço do worker tenta de novo; o original continua no editor;
-- teto (EDITOR_ESPELHO_TETO_GB, padrão 9) para ficar no espaço grátis do R2: acima dele o arquivo fica 'fora_do_teto'.
+- teto (EDITOR_ESPELHO_TETO_GB, padrão 4) para ficar no espaço grátis do R2: acima dele o arquivo fica 'fora_do_teto'.
+  ATENÇÃO: os 10 GB grátis são da CONTA inteira, e a conta também guarda as entregas (creat-entregas) e o backup (até ~6 GB
+  em 30 dias). O teto conta só o espelho; por isso o padrão é 4 GB, não 9.
+- arquivo registrado cujo original sumiu do disco vira 'sem_original' (não volta à fila a cada 15 min).
 """
 from __future__ import annotations
 
@@ -32,9 +38,9 @@ def ligado() -> bool:
 
 def teto_bytes() -> int:
     try:
-        gb = float(os.environ.get("EDITOR_ESPELHO_TETO_GB", "9") or 9)
+        gb = float(os.environ.get("EDITOR_ESPELHO_TETO_GB", "4") or 4)
     except ValueError:
-        gb = 9.0
+        gb = 4.0
     return int(gb * (1 << 30))
 
 
@@ -57,6 +63,7 @@ def _gravar(con, chave, projeto, nbytes, estado, erro=None, proxima=None):
 def guardar(con, arm, projeto: str, chave: str, s3=None) -> str:
     """Sobe um original para o R2 e confere. Devolve o estado gravado em `nuvem`."""
     if arm is None or not arm.existe(chave):
+        _gravar(con, chave, projeto, 0, "sem_original", erro="o original não está mais no editor")
         return "sem_original"
     local = arm.caminho_local(chave)
     tam = os.path.getsize(local)
@@ -74,19 +81,23 @@ def guardar(con, arm, projeto: str, chave: str, s3=None) -> str:
             h = c.head_object(Bucket=b, Key=chave)
         except Exception:  # noqa: BLE001 - ainda não existe lá
             h = None
-        if not h or int(h.get("ContentLength", -1)) != tam:
+        from motor.etapas.montagem.comum import sha256_arquivo
+        sha = sha256_arquivo(local)
+        if not h or int(h.get("ContentLength", -1)) != tam or (h.get("Metadata") or {}).get("sha256") != sha:
             from boto3.s3.transfer import TransferConfig
             c.upload_file(str(local), b, chave, Config=TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=32 << 20,
-                                                                      max_concurrency=2))
+                                                                      max_concurrency=2), ExtraArgs={"Metadata": {"sha256": sha}})
             h = c.head_object(Bucket=b, Key=chave)
         remoto = int(h.get("ContentLength", -1))
         if remoto != tam:
             raise IOError(f"o R2 guardou {remoto} bytes, esperado {tam}")
+        if (h.get("Metadata") or {}).get("sha256") != sha:
+            raise IOError("a cópia no R2 não tem o mesmo conteúdo (sha256)")
         _gravar(con, chave, projeto, tam, "guardado")
         return "guardado"
     except Exception as e:  # noqa: BLE001 - sem conexão: tenta de novo sozinho, o original continua no editor
-        from motor.backup import _SEGREDO
-        _gravar(con, chave, projeto, tam, "pendente", erro=_SEGREDO.sub("***", f"{type(e).__name__}: {str(e)[:160]}"),
+        from motor.backup import sem_segredo
+        _gravar(con, chave, projeto, tam, "pendente", erro=sem_segredo(f"{type(e).__name__}: {str(e)[:160]}"),
                 proxima=time.time() + REPETIR_S)
         return "pendente"
 

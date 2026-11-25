@@ -637,7 +637,7 @@ details > summary::-webkit-details-marker { display: none; }
 /* selo por arquivo: só quando a cópia no Cloudflare foi conferida (mesmo tamanho) */
 .selo-nuvem {
   display: flex; width: fit-content; align-items: center; gap: 3px; margin-top: 4px; padding: 2px 7px; border-radius: 999px;
-  font: 700 12px/1.3 var(--fonte-dado); color: var(--cor-ok); border: 1px solid color-mix(in srgb, var(--cor-ok) 45%, transparent);
+  font: 700 13px/1.3 var(--fonte-dado); color: var(--cor-ok); border: 1px solid color-mix(in srgb, var(--cor-ok) 45%, transparent);
 }
 .selo-nuvem i { font-style: normal; }
 .nuvem-resumo { margin: var(--r3) 0 0; font-size: 14px; line-height: 1.45; color: var(--cor-tinta-2); padding-left: 12px; border-left: 3px solid var(--cor-linha); }
@@ -646,6 +646,10 @@ details > summary::-webkit-details-marker { display: none; }
 
 /* "Vai para as entregas de:" antes de aprovar, e o cartão "Nas entregas" depois */
 .entregas-cliente .aviso { font-size: 13px; }
+.entregas-opcao { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; cursor: pointer; }
+.entregas-opcao input { width: 22px; height: 22px; margin: 0; accent-color: var(--cor-ok); flex: none; }
+.importar__resultado { display: grid; gap: 4px; }
+.importar__resultado .aviso, .importar__resultado .erro { font-size: 14px; line-height: 1.4; }
 .entregas {
   display: grid; gap: var(--r2); padding: var(--r3); border-radius: var(--r3);
   background: var(--cor-superficie); border: 1px solid var(--cor-linha);

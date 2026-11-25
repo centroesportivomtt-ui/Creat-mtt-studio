@@ -246,6 +246,10 @@ def _importar(ctx: Contexto, row, url: str):
         arm.gravar(chk, ck, mover=True)
         importar.registrar_arquivo(con, p, nk, chk, tk)
     shutil.rmtree(pasta, ignore_errors=True)
+    # baixado: o link colado não fica guardado no banco (nem no backup). Pode ser link de EDITOR do Drive, e o editor só lê.
+    if ctx.job.get("id"):
+        resto = {k: v for k, v in (ctx.job.get("entrada") or {}).items() if k != "url"}
+        con.execute("UPDATE jobs SET entrada=? WHERE id=?", (json.dumps({**resto, "link_baixado": True}), ctx.job["id"]))
     banco.emitir(con, p, "etapa_progresso", etapa="ingest", alvo=a, progresso=0.9,
                  mensagem=f"Link baixado: {len(midias)} arquivo(s)" + (f" ({len(extras)} a mais na fila)" if extras else ""))
     return con.execute("SELECT * FROM arquivos WHERE projeto=? AND id=?", (p, a)).fetchone()

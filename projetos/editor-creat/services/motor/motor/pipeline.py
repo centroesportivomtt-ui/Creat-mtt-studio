@@ -99,8 +99,11 @@ def falha_definitiva(con, job: dict, mensagem: str) -> None:
     etapa, projeto, alvo = job["etapa"], job["projeto"], job.get("alvo")
     msg = (mensagem or "").strip().splitlines()[-1][:300] if mensagem else "falhou"
     if etapa in FUNDO:                  # entregas/espelho: o filme e o original estão seguros no editor; o projeto não vai a "erro"
+        from motor.backup import sem_segredo     # o detalhe técnico fica no log do servidor; o dono lê uma frase clara
+        print(f"[{etapa}] {projeto}/{alvo}: {sem_segredo(msg)}", flush=True)
+        o_que = "O envio para a página de entregas" if etapa == "entregas" else "A cópia do material no Cloudflare"
         banco.emitir(con, projeto, "aviso", alvo=None if alvo in (None, "-") else alvo,
-                     mensagem=f"A cópia no Cloudflare ({etapa}) não deu certo agora: {msg}. O material está seguro no editor.")
+                     mensagem=f"{o_que} não deu certo agora. O material está seguro no editor.")
         return
     if etapa in ETAPAS_DE_ARQUIVO and alvo not in (None, "-"):
         con.execute("UPDATE arquivos SET estado='falhou' WHERE projeto=? AND id=?", (projeto, alvo))

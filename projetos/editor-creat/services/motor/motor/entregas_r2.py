@@ -69,7 +69,7 @@ def corpo_indice(indice: dict) -> bytes:
 CLIENTES_FIXOS = ("super-kal", "creat-mtt", "marcos")
 CLIENTE_PADRAO = "creat-mtt"
 CLIENTES = {"super-kal": r"super\s*-?\s*kal"}          # adivinhação pelo nome do projeto e pelo texto do pedido
-RE_CLIENTE = re.compile(r"^[a-z0-9-]{1,40}$")
+RE_CLIENTE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$")   # slug de verdade: nunca vazio nem "-"
 REPETIR_S = 15 * 60
 DESISTIR_S = 7 * 24 * 3600
 
@@ -82,9 +82,23 @@ def publico() -> str:
     return os.environ.get("R2_ENTREGAS_PUBLICO", "").strip().rstrip("/")
 
 
+def depositos_privados() -> set[str]:
+    """Depósitos que guardam coisa que NUNCA pode ir para a página pública (backup do banco, material bruto)."""
+    return {os.environ.get(n, "").strip() for n in ("R2_BACKUP_BUCKET", "R2_BUCKET", "R2_MIDIA_BUCKET")} - {""}
+
+
+def config_errada() -> str | None:
+    """Erro de configuração que desliga as entregas (com a frase para a saúde/Caderno)."""
+    if bucket() and bucket() in depositos_privados():
+        return ("o depósito das entregas é o mesmo do backup ou do material; a página é pública, então as entregas ficam "
+                "desligadas até R2_ENTREGAS_BUCKET apontar para o creat-entregas")
+    return None
+
+
 def ligado() -> bool:
     return all(os.environ.get(n, "").strip() for n in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY")) \
-        and bool(bucket()) and publico().startswith("https://") and os.environ.get("EDITOR_ENTREGAS", "1").strip() != "0"
+        and bool(bucket()) and publico().startswith("https://") and os.environ.get("EDITOR_ENTREGAS", "1").strip() != "0" \
+        and config_errada() is None
 
 
 def cliente_s3():
@@ -148,9 +162,18 @@ def _lista(s3, b: str, prefixo: str = "") -> list[dict]:
             return out
 
 
+def _codigo(e: Exception) -> str:
+    r = getattr(e, "response", None)
+    return str(((r or {}).get("Error") or {}).get("Code", "")) if isinstance(r, dict) else ""
+
+
 def _nao_existe(e: Exception) -> bool:
-    cod = str(getattr(e, "response", {}).get("Error", {}).get("Code", "")) if hasattr(e, "response") else ""
-    return cod in ("404", "NoSuchKey", "NotFound") or type(e).__name__ in ("NoSuchKey", "KeyError", "FileNotFoundError")
+    """Só a resposta "não existe" do R2. KeyError, arquivo local sumido etc. NÃO contam (senão o META seria regravado do zero)."""
+    return _codigo(e) in ("404", "NoSuchKey", "NotFound")
+
+
+def _conflito(e: Exception) -> bool:
+    return _codigo(e) in ("412", "PreconditionFailed", "409", "ConditionalRequestConflict")
 
 
 def cabecalho(s3, b: str, k: str) -> dict | None:
@@ -162,19 +185,21 @@ def cabecalho(s3, b: str, k: str) -> dict | None:
         raise
 
 
-def subir(s3, b: str, local, k: str, sha: str) -> tuple[bool, int]:
+def subir(s3, b: str, local, k: str, sha: str, projeto: str | None = None) -> tuple[bool, int]:
     """Sobe com o mesmo TransferConfig e os mesmos cabeçalhos do script. Idempotente: se o objeto já está lá com o mesmo
-    tamanho e o mesmo sha256 (metadado), não sobe de novo. Devolve (subiu, bytes) e confere o tamanho lá no fim."""
+    tamanho e o mesmo sha256 (metadado), não sobe de novo. Devolve (subiu, bytes) e confere o tamanho lá no fim.
+    `projeto` vai no metadado: é assim que o editor sabe o que é dele na pasta (nunca apaga o que o chat ou outro projeto pôs)."""
     tam = os.path.getsize(local)
     h = cabecalho(s3, b, k)
-    if h and int(h.get("ContentLength", -1)) == tam and (h.get("Metadata") or {}).get("sha256") == sha:
+    if h and int(h.get("ContentLength", -1)) == tam and (h.get("Metadata") or {}).get("sha256") == sha \
+            and (projeto is None or (h.get("Metadata") or {}).get("projeto") == projeto):
         return False, tam
     from boto3.s3.transfer import TransferConfig
     cfg = TransferConfig(multipart_threshold=64 * 1024 * 1024, multipart_chunksize=32 * 1024 * 1024)
     tipo = mimetypes.guess_type(k)[0] or "application/octet-stream"
     s3.upload_file(str(local), b, k, Config=cfg,
                    ExtraArgs={"ContentType": tipo, "ContentDisposition": f'attachment; filename="{os.path.basename(k)}"',
-                              "Metadata": {"sha256": sha}})
+                              "Metadata": {"sha256": sha, **({"projeto": projeto} if projeto else {})}})
     h = cabecalho(s3, b, k)
     remoto = int((h or {}).get("ContentLength", -1))
     if remoto != tam:
@@ -182,30 +207,47 @@ def subir(s3, b: str, local, k: str, sha: str) -> tuple[bool, int]:
     return True, tam
 
 
-def apagar_versoes_anteriores(s3, b: str, pasta: str, k: str) -> list[str]:
-    """Como o script: na mesma pasta, apaga o arquivo de mesma raiz (mesmo nome sem o vN) que não é o novo."""
+def dono_do_objeto(s3, b: str, k: str) -> str | None:
+    """Projeto do editor que pôs o objeto (metadado `projeto`); None = foi o chat (r2_enviar.py) ou não existe."""
+    h = cabecalho(s3, b, k)
+    return ((h or {}).get("Metadata") or {}).get("projeto")
+
+
+def pasta_de_outro(s3, b: str, pasta: str, projeto: str) -> bool:
+    """A pasta já tem arquivo que não é deste projeto (outro projeto com o mesmo nome no mesmo dia, ou entrega do chat)."""
+    return any(dono_do_objeto(s3, b, o["Key"]) != projeto for o in _lista(s3, b, pasta))
+
+
+def apagar_versoes_anteriores(s3, b: str, pasta: str, k: str, projeto: str) -> list[str]:
+    """Como o script (mesma pasta, mesma raiz do nome sem o vN, não é o novo), mas SÓ o que este projeto pôs: arquivo do chat
+    ou de outro projeto com o mesmo nome nunca é apagado pelo editor."""
     raiz = raiz_versao(os.path.basename(k))
     fora = []
     for o in _lista(s3, b, pasta):
-        if o["Key"] != k and raiz_versao(os.path.basename(o["Key"])) == raiz:
+        if o["Key"] != k and raiz_versao(os.path.basename(o["Key"])) == raiz and dono_do_objeto(s3, b, o["Key"]) == projeto:
             s3.delete_object(Bucket=b, Key=o["Key"])
             fora.append(o["Key"])
     return fora
 
 
-def ler_meta(s3, b: str) -> dict:
-    """META das legendas. Só "não existe" vira {}: qualquer outro erro sobe (senão gravaria por cima das legendas dos outros)."""
+def ler_meta(s3, b: str) -> tuple[dict, str | None]:
+    """(META das legendas, ETag). Só "não existe" vira ({}, None): qualquer outro erro sobe (senão gravaria por cima das
+    legendas dos outros)."""
     try:
-        return json.loads(s3.get_object(Bucket=b, Key=META)["Body"].read() or b"{}")
+        r = s3.get_object(Bucket=b, Key=META)
+        return json.loads(r["Body"].read() or b"{}"), r.get("ETag")
     except Exception as e:  # noqa: BLE001
         if _nao_existe(e):
-            return {}
+            return {}, None
         raise
 
 
-def gravar_meta(s3, b: str, meta: dict) -> None:
+def gravar_meta(s3, b: str, meta: dict, etag: str | None = None, *, novo: bool = False) -> None:
+    """Escrita condicional (o R2 aceita, testado em 25/11): só grava se o META ainda é o que foi lido (IfMatch) ou, se não
+    existia, se continua não existindo (IfNoneMatch). Uma legenda gravada pelo chat no meio do caminho não se perde."""
+    cond = {"IfMatch": etag} if etag else ({"IfNoneMatch": "*"} if novo else {})
     s3.put_object(Bucket=b, Key=META, Body=json.dumps(meta, ensure_ascii=False).encode(),
-                  ContentType="application/json; charset=utf-8", CacheControl="no-store")
+                  ContentType="application/json; charset=utf-8", CacheControl="no-store", **cond)
 
 
 def mexer_legenda(s3, b: str, pasta: str, legenda: str | None, anterior_do_editor: str | None) -> str | None:
@@ -213,27 +255,42 @@ def mexer_legenda(s3, b: str, pasta: str, legenda: str | None, anterior_do_edito
     Legenda registrada pelo chat nunca é sobrescrita. Relê o META logo antes de gravar e só mexe na própria chave.
     `legenda=None` apaga (retirada), também só se for a do editor. Devolve a legenda do editor que ficou lá (ou None)."""
     chave = pasta.rstrip("/")
-    meta = ler_meta(s3, b)
-    atual = (meta.get(chave) or {}).get("legenda")
-    if atual is not None and atual != anterior_do_editor:
-        return None                                     # legenda do chat/dono: não mexe
-    if legenda is None:
-        if atual is None:
-            return None
-        meta.pop(chave, None)
-    else:
-        if atual == legenda:
+    for tentativa in range(4):
+        meta, etag = ler_meta(s3, b)
+        atual = (meta.get(chave) or {}).get("legenda")
+        if atual is not None and atual != anterior_do_editor:
+            return None                                 # legenda do chat/dono: não mexe
+        if legenda is None:
+            if atual is None:
+                return None
+            meta.pop(chave, None)
+        else:
+            if atual == legenda:
+                return legenda
+            meta[chave] = {"legenda": legenda}
+        try:
+            gravar_meta(s3, b, meta, etag, novo=etag is None)
             return legenda
-        meta[chave] = {"legenda": legenda}
-    gravar_meta(s3, b, meta)
+        except Exception as e:  # noqa: BLE001
+            if not _conflito(e) or tentativa == 3:
+                raise                                   # alguém gravou entre a leitura e a escrita: lê de novo e refaz
     return legenda
 
 
 def atualizar_indice(s3, b: str, agora: datetime.datetime | None = None) -> int:
-    """Refaz o índice da página como `atualizar_painel` do script (lista o depósito inteiro), sem subir o html."""
+    """Refaz o índice da página como `atualizar_painel` do script (lista o depósito inteiro), sem subir o html.
+
+    O script da creat-nuvem também regrava o índice (sem trava). Para o editor nunca deixar o índice sem um arquivo que
+    outra escrita pôs no meio do caminho, depois de gravar ele lista de novo e, se o depósito mudou, grava outra vez
+    (até 3 passadas). Sobra uma janela só se o script gravar por último com uma lista velha; o envio seguinte corrige."""
     itens = itens_do_indice(_lista(s3, b))
-    s3.put_object(Bucket=b, Key=INDICE, Body=corpo_indice(montar_indice(itens, agora)),
-                  ContentType="application/json; charset=utf-8", CacheControl="no-store")
+    for _ in range(3):
+        s3.put_object(Bucket=b, Key=INDICE, Body=corpo_indice(montar_indice(itens, agora)),
+                      ContentType="application/json; charset=utf-8", CacheControl="no-store")
+        de_novo = itens_do_indice(_lista(s3, b))
+        if de_novo == itens:
+            break
+        itens = de_novo
     return len(itens)
 
 
@@ -259,10 +316,33 @@ def clientes_do_indice(timeout: float = 5) -> list[str]:
         return []
 
 
+# ---------------------------------------------------------------- frases para o dono (sem jargão, sem nome de exceção)
+def motivo_dono(e: Exception) -> str:
+    """O que aparece no cartão "Nas entregas". O detalhe técnico fica só em `motivo_tecnico` (diário/servidor)."""
+    cod, nome = _codigo(e), type(e).__name__
+    if cod in ("AccessDenied", "403", "InvalidAccessKeyId", "SignatureDoesNotMatch", "Unauthorized", "401"):
+        return "o Cloudflare recusou a chave do editor (permissão). O filme continua guardado aqui"
+    if cod in ("NoSuchBucket",):
+        return "a página de entregas não foi achada no Cloudflare. O filme continua guardado aqui"
+    if cod in ("SlowDown", "503", "500", "InternalError", "ServiceUnavailable") or nome in (
+            "ConnectionError", "EndpointConnectionError", "ConnectTimeoutError", "ReadTimeoutError", "TimeoutError", "URLError",
+            "timeout", "ConnectionClosedError", "SSLError", "ProxyConnectionError", "socket.timeout", "OSError", "IOError"):
+        return "sem conexão com o Cloudflare agora. O filme continua guardado aqui"
+    return "o Cloudflare não respondeu direito agora. O filme continua guardado aqui"
+
+
+def motivo_tecnico(e: Exception) -> str:
+    from motor.backup import sem_segredo
+    return sem_segredo(f"{type(e).__name__}: {str(e)[:180]}")
+
+
 # ---------------------------------------------------------------- fila (re-tentativa sozinha)
 def reenfileirar_pendentes(con, agora: float | None = None) -> int:
     """Laço do worker (a cada 15 min): versão 'pendente' cuja hora chegou volta para a fila (o banco.enfileirar rearma a
-    tarefa terminada). Pendente há mais de 7 dias vira 'falhou' com o motivo."""
+    tarefa terminada). Pendente há mais de 7 dias vira 'falhou' com o motivo.
+
+    Retirada que falhou por rede ('retirando' com hora marcada) também volta para a fila, e esta NUNCA desiste: filme
+    reprovado não pode ficar público calado. Depois de 7 dias o cartão passa a dizer que ainda não saiu."""
     from motor import banco
     if not ligado():
         return 0
@@ -274,18 +354,22 @@ def reenfileirar_pendentes(con, agora: float | None = None) -> int:
         except ValueError:
             continue
         for v, e in ent.items():
-            if not isinstance(e, dict) or e.get("estado") != "pendente":
+            if not isinstance(e, dict) or e.get("estado") not in ("pendente", "retirando"):
                 continue
-            if agora - float(e.get("pendente_desde") or agora) > DESISTIR_S:
+            retirar = e.get("estado") == "retirando"
+            if retirar and not e.get("proxima_ts"):
+                continue                                  # retirada na fila agora (ainda não falhou): a tarefa já existe
+            if not retirar and agora - float(e.get("pendente_desde") or agora) > DESISTIR_S:
                 def desistir(d, v=v):
                     x = d.get("entregas", {}).get(v)
                     if x and x.get("estado") == "pendente":
-                        x.update(estado="falhou", motivo=f"a página de entregas não respondeu por 7 dias ({x.get('motivo') or 'sem resposta'})",
-                                 proxima=None)
+                        x.update(estado="falhou", motivo="não consegui falar com o Cloudflare por 7 dias. O filme continua "
+                                 "guardado aqui; toque em Tentar de novo", proxima=None, proxima_ts=None)
                 banco.atualizar_dados(con, r["id"], desistir)
                 continue
             if float(e.get("proxima_ts") or 0) <= agora:
-                banco.enfileirar(con, "entregas", r["id"], v, entrada={"acao": e.get("acao") or "enviar"}, prioridade=6)
+                banco.enfileirar(con, "entregas", r["id"], v, entrada={"acao": "retirar" if retirar else (e.get("acao") or "enviar")},
+                                 prioridade=6)
                 n += 1
     return n
 
@@ -294,6 +378,8 @@ def estado_saude(cfg, provar: bool = False, s3=None) -> dict:
     """Para a saúde: ligado, último envio bom e (com provar=True) um list_objects_v2 MaxKeys=1 que prova a permissão."""
     import pathlib
     out: dict = {"ligado": ligado()}
+    if config_errada():
+        out["aviso"] = config_errada()
     try:
         e = json.loads((pathlib.Path(cfg.dados) / "entregas_estado.json").read_text(encoding="utf-8"))
         if e.get("ultimo_ok"):

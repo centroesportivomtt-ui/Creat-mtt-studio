@@ -118,7 +118,7 @@ def enviar_r2(arquivos: list[pathlib.Path], cliente=None) -> tuple[bool, str]:
                     c.delete_object(Bucket=b, Key=o["Key"])
         return True, f"{len(arquivos)} arquivo(s) no R2 em {R2_PREFIXO}{dia}/"
     except Exception as e:  # noqa: BLE001 - o motivo vai para a saúde, sem chave nem endereço
-        return False, _SEGREDO.sub("***", f"{type(e).__name__}: {str(e)[:200]}")
+        return False, sem_segredo(f"{type(e).__name__}: {str(e)[:200]}")
 
 
 def configurar(cfg, url: str) -> None:
@@ -157,6 +157,11 @@ def _copiar_banco(origem: pathlib.Path, destino: pathlib.Path) -> None:
     c = sqlite3.connect(str(destino))
     try:                                   # o link de download da versão pode ser pré-assinado (R2): não sai do servidor
         c.execute("UPDATE versoes SET link=NULL")
+        # link colado pelo dono (pode ser de EDITOR no Drive) não vai para o backup: o motor só precisava dele para baixar
+        try:
+            c.execute("UPDATE jobs SET entrada=json_remove(entrada, '$.url') WHERE json_valid(entrada) AND json_extract(entrada, '$.url') IS NOT NULL")
+        except sqlite3.Error:
+            c.execute("UPDATE jobs SET entrada='{}' WHERE entrada LIKE '%\"url\"%'")
         c.commit()
         c.execute("VACUUM")
     except sqlite3.Error:
@@ -286,6 +291,17 @@ def enviar(cfg, arquivos: list[str], url: str, *, limite_s: int = 900) -> tuple[
 
 
 _SEGREDO = re.compile(r"KEY|TOKEN|SECRET|SEGREDO|SENHA|PASS|ANTHROPIC|OPENAI|ELEVEN|HIGGS|R2_|AWS_|DATABASE|PEDIDO|COOKIE|AUTH", re.I)
+
+
+def sem_segredo(texto: str) -> str:
+    """Tira de uma mensagem de erro os VALORES que não podem sair do servidor: o de toda variável com nome de segredo
+    (chave, token, conta do R2...) e o endereço do R2 (leva o id da conta). `_SEGREDO` só serve para NOMES de variável."""
+    t = str(texto or "")
+    for k, v in os.environ.items():
+        v = (v or "").strip()
+        if len(v) >= 6 and _SEGREDO.search(k) and v in t:
+            t = t.replace(v, "***")
+    return re.sub(r"https?://[A-Za-z0-9.-]*r2\.cloudflarestorage\.com\S*", "<cloudflare>", t)
 
 
 def _sem_endereco(saida: str, url: str) -> str:

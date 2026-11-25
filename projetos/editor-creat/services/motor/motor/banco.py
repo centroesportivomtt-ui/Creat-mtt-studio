@@ -156,20 +156,34 @@ def recolher_mortos(con) -> list[dict]:
     return linhas
 
 
-def pegar(con, dono: str, etapas: Iterable[str] | None = None, aluguel_s: float = ALUGUEL_S) -> dict | None:
-    """Pega o próximo job disponível (pendente, ou rodando com aluguel vencido) de forma atômica."""
+UMA_POR_VEZ = ("entregas", "espelho")
+
+
+def pegar(con, dono: str, etapas: Iterable[str] | None = None, aluguel_s: float = ALUGUEL_S,
+          sem: Iterable[str] | None = None) -> dict | None:
+    """Pega o próximo job disponível (pendente, ou rodando com aluguel vencido) de forma atômica.
+    `etapas`: só estas; `sem`: todas menos estas (o worker da edição não pega o espelho quando há um worker só para ele)."""
     t = time.time()
     filtro, args = "", []
     if etapas:
         etapas = list(etapas)
         filtro = f" AND etapa IN ({','.join('?' * len(etapas))})"
         args = etapas
+    if sem:
+        sem = list(sem)
+        filtro += f" AND etapa NOT IN ({','.join('?' * len(sem))})"
+        args = [*args, *sem]
     con.execute("BEGIN IMMEDIATE")
     try:
+        # etapas de fundo que sobem para o Cloudflare rodam UMA de cada vez (cada uma com a sua): duas entregas juntas
+        # disputavam o índice e a versão mais nova da página; dois espelhos de GB prenderiam os dois workers
         r = con.execute(
             f"""SELECT * FROM jobs WHERE (estado='pendente' OR (estado='rodando' AND aluguel_ate < ?))
-                AND tentativas < max_tentativas {filtro} ORDER BY prioridade, criado LIMIT 1""",
-            [t, *args],
+                AND tentativas < max_tentativas {filtro}
+                AND NOT (etapa IN ({','.join('?' * len(UMA_POR_VEZ))}) AND EXISTS (
+                    SELECT 1 FROM jobs j2 WHERE j2.etapa=jobs.etapa AND j2.id<>jobs.id AND j2.estado='rodando' AND j2.aluguel_ate >= ?))
+                ORDER BY prioridade, criado LIMIT 1""",
+            [t, *args, *UMA_POR_VEZ, t],
         ).fetchone()
         if r is None:
             con.execute("COMMIT")

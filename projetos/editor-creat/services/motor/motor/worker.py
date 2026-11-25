@@ -3,6 +3,7 @@
 uso:  python -m motor.worker                 (todas as etapas, roda para sempre)
       python -m motor.worker --ate-ocioso    (sai quando a fila esvazia: testes de aceitação)
       python -m motor.worker --etapas ingest,analise
+      python -m motor.worker --sem espelho         (todas menos o espelho: o worker da edição quando há um só para o espelho)
 Rode com nice -n 5 (a máquina é dividida). Vários workers podem rodar ao mesmo tempo (a fila é atômica).
 """
 from __future__ import annotations
@@ -102,9 +103,9 @@ def _talvez_periodicas(con) -> None:
         periodicas(con)
 
 
-def rodar_um(con, cfg, arm, dono: str, etapas=None) -> bool:
+def rodar_um(con, cfg, arm, dono: str, etapas=None, sem=None) -> bool:
     recolher_mortos(con)
-    job = banco.pegar(con, dono, etapas)
+    job = banco.pegar(con, dono, etapas, sem=sem)
     if not job:
         return False
     proj, et, alvo = job["projeto"], job["etapa"], job.get("alvo")
@@ -154,7 +155,8 @@ def _rodar_fundo(con, cfg, arm, job) -> bool:
         _sair_de_transacao(con)
 
         def registrar():
-            if banco.falhar(con, job["id"], traceback.format_exc()) == "falhou":
+            from motor.backup import sem_segredo
+            if banco.falhar(con, job["id"], sem_segredo(traceback.format_exc())) == "falhou":
                 pipeline.falha_definitiva(con, job, f"{type(e).__name__}: {str(e)[:200]}")
         _transacao(con, registrar)
     return True
@@ -173,6 +175,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ate-ocioso", action="store_true")
     ap.add_argument("--etapas", default="")
+    ap.add_argument("--sem", default="")
     ap.add_argument("--espera", type=float, default=1.0)
     a = ap.parse_args(argv)
     cfg = config.carregar()
@@ -192,10 +195,11 @@ def main(argv=None) -> int:
         traceback.print_exc()
     dono = f"{socket.gethostname()}:{os.getpid()}"
     etapas = [e for e in a.etapas.split(",") if e] or None
+    sem = [e for e in a.sem.split(",") if e] or None
     while True:
         if not a.ate_ocioso:
             _talvez_periodicas(con)
-        if not rodar_um(con, cfg, arm, dono, etapas):
+        if not rodar_um(con, cfg, arm, dono, etapas, sem):
             if a.ate_ocioso:
                 return 0
             time.sleep(a.espera)

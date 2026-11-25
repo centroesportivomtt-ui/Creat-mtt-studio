@@ -139,14 +139,15 @@ def test_rede_caindo_fica_pendente_e_o_projeto_segue_entregue(ligado, s3, amb):
     _mandar(con, "v1")
     s3.cair = True
     out = _rodar(cfg, con, arm, "v1")                                        # não levanta: a tarefa termina sem "falhou"
-    assert out["estado"] == "pendente" and "ConnectionError" in out["motivo"]
+    assert out["estado"] == "pendente" and out["motivo"].startswith("sem conexão com o Cloudflare")
     e = _ent(con, "v1")
+    assert "Error" not in e["motivo"] and e["motivo_tecnico"].startswith("ConnectionError")      # o dono nunca lê jargão
     assert e["estado"] == "pendente" and e["proxima_ts"] > time.time() + 800 and len(e["proxima"]) == 5
     assert "segredo" not in json.dumps(e)
     assert con.execute("SELECT estado FROM projetos WHERE id='p1'").fetchone()["estado"] == "entregue"
     # subiu mas o endereço público não confere: pendente; a nova tentativa pula o upload e só confere de novo
     s3.cair, s3.head_falha = False, True
-    assert _rodar(cfg, con, arm, "v1")["estado"] == "pendente" and "endereço público" in _ent(con, "v1")["motivo"]
+    assert _rodar(cfg, con, arm, "v1")["estado"] == "pendente" and "ainda não mostra" in _ent(con, "v1")["motivo"]
     s3.head_falha = False
     s3.subidas.clear()
     assert _rodar(cfg, con, arm, "v1")["estado"] == "no_ar" and s3.subidas == []
@@ -175,7 +176,8 @@ def test_sha_diferente_do_aprovado_nao_sobe(ligado, s3, amb):
     arm.gravar("saidas/p1/v1/final.mp4", io.BytesIO(b"mexido depois"))
     _mandar(con, "v1")
     out = _rodar(cfg, con, arm, "v1")
-    assert out["estado"] == "falhou" and "sha256" in out["motivo"] and s3.subidas == []
+    assert out["estado"] == "falhou" and "mudou depois que você aprovou" in out["motivo"] and s3.subidas == []
+    assert "sha" not in out["motivo"]
 
 
 def test_versao_nao_aprovada_nao_sobe(ligado, s3, amb):
@@ -328,3 +330,279 @@ def test_worker_roda_a_etapa_de_fundo_sem_linha_do_tempo(ligado, s3, amb):
     tipos = [r["tipo"] for r in con.execute("SELECT tipo FROM eventos WHERE id>?", (antes,))]
     assert tipos == ["estado"]                                              # só o aviso "Filme v1 na página de entregas"
     assert _ent(con, "v1")["estado"] == "no_ar"
+
+
+# ---------------------------------------------------------------- correções da revisão (25/11)
+def test_retirada_com_rede_fora_tenta_de_novo_e_nunca_desiste(ligado, s3, amb):
+    """Reprovar com o Cloudflare oscilando: o filme reprovado não pode ficar público calado (antes ficava 'retirando' para sempre)."""
+    cfg, con, arm = amb
+    _versao(con, arm, "v1")
+    _mandar(con, "v1")
+    _rodar(cfg, con, arm, "v1")
+    from motor.api.direcao import _retirar_das_entregas
+    _retirar_das_entregas(con, "p1", "v1")
+    s3.cair = True
+    out = _rodar(cfg, con, arm, "v1", "retirar")
+    assert out["estado"] == "retirando" and out["motivo"].startswith("sem conexão com o Cloudflare")
+    e = _ent(con, "v1")
+    assert e["estado"] == "retirando" and e["acao"] == "retirar" and e["proxima_ts"] > time.time() + 800 and len(e["proxima"]) == 5
+    con.execute("UPDATE jobs SET estado='feito'")
+    agora = time.time()
+    assert R.reenfileirar_pendentes(con, agora) == 0                         # a hora ainda não chegou
+    assert R.reenfileirar_pendentes(con, agora + 3600) == 1
+    j = con.execute("SELECT estado, entrada FROM jobs WHERE etapa='entregas' AND alvo='v1'").fetchone()
+    assert j["estado"] == "pendente" and json.loads(j["entrada"]) == {"acao": "retirar"}
+    con.execute("UPDATE jobs SET estado='feito'")
+    assert R.reenfileirar_pendentes(con, agora + R.DESISTIR_S + 3600) == 1   # retirar nunca desiste
+    assert _ent(con, "v1")["estado"] == "retirando"
+    s3.cair = False
+    # a tarefa rearmada pode ter vindo com acao=enviar (job antigo): o estado 'retirando' manda retirar do mesmo jeito
+    assert _rodar(cfg, con, arm, "v1", "enviar")["estado"] == "retirada"
+    assert [k for k in s3.chaves(B) if k.endswith((".mp4", ".jpg"))] == [] and _indice(s3)["itens"] == []
+
+
+def test_reprovada_no_meio_do_envio_e_rede_cai_fica_para_retirar(ligado, s3, amb, monkeypatch):
+    cfg, con, arm = amb
+    _versao(con, arm, "v1")
+    _mandar(con, "v1")
+    orig = R.atualizar_indice
+
+    def reprova_e_cai(s, b, agora=None):
+        banco.atualizar_dados(con, "p1", lambda d: d["entregas"]["v1"].update(estado="retirando", acao="retirar"))
+        s3.cair = True
+        return orig(s, b, agora)
+    monkeypatch.setattr(R, "atualizar_indice", reprova_e_cai)
+    _rodar(cfg, con, arm, "v1")
+    e = _ent(con, "v1")
+    assert e["estado"] == "retirando" and e["acao"] == "retirar" and e["proxima_ts"]
+
+
+def test_v2_aprovada_durante_o_envio_da_v1_fica_no_ar_e_a_v1_sai(ligado, s3, amb):
+    """Corrida achada na revisão: a v1 terminava por cima e apagava os arquivos da v2."""
+    cfg, con, arm = amb
+    _versao(con, arm, "v1", b"um", em="2026-11-25T10:00:00Z")
+    _versao(con, arm, "v2", b"dois-nova", em="2026-11-25T10:05:00Z")
+    _mandar(con, "v1")
+    orig = s3.upload_file
+    feito = {}
+
+    def upload(origem, Bucket, Key, **kw):
+        orig(origem, Bucket, Key, **kw)
+        if Key.endswith("_v1.mp4") and not feito:          # enquanto a v1 sobe, o dono aprova a v2 e ela vai inteira
+            feito["v2"] = True
+            _mandar(con, "v2")
+            assert _rodar(cfg, con, arm, "v2")["estado"] == "no_ar"
+    s3.upload_file = upload
+    out = _rodar(cfg, con, arm, "v1")
+    assert out["estado"] == "substituida" and out["substituida_por"] == "v2"
+    assert _ent(con, "v1")["estado"] == "substituida" and _ent(con, "v2")["estado"] == "no_ar"
+    ks = sorted(k.rsplit("/", 1)[1] for k in s3.chaves(B) if k.endswith((".mp4", ".jpg")))
+    assert ks == ["Cerveja_Lavinia_capa_v2.jpg", "Cerveja_Lavinia_v2.mp4"]
+    assert sorted(i["k"].rsplit("/", 1)[1] for i in _indice(s3)["itens"]) == ks
+
+
+def test_fila_roda_uma_entrega_por_vez(ligado, amb):
+    cfg, con, arm = amb
+    banco.enfileirar(con, "entregas", "p1", "v1", entrada={"acao": "enviar"}, prioridade=6)
+    banco.enfileirar(con, "entregas", "p1", "v2", entrada={"acao": "enviar"}, prioridade=6)
+    banco.enfileirar(con, "espelho", "p1", "a001", prioridade=9)
+    banco.enfileirar(con, "espelho", "p1", "a002", prioridade=9)
+    a = banco.pegar(con, "w1")
+    assert a["etapa"] == "entregas"
+    b = banco.pegar(con, "w2")
+    assert b["etapa"] == "espelho"                                          # a outra entrega espera a primeira
+    assert banco.pegar(con, "w3") is None                                   # e o outro espelho espera o primeiro
+    banco.concluir(con, a["id"])
+    assert banco.pegar(con, "w3")["alvo"] == "v2"
+    # entrega presa num worker morto (aluguel vencido) não segura a fila
+    con.execute("UPDATE jobs SET aluguel_ate=? WHERE etapa='espelho' AND estado='rodando'", (time.time() - 1,))
+    assert banco.pegar(con, "w4")["etapa"] == "espelho"
+
+
+def test_trocar_o_cliente_tira_a_copia_do_cliente_antigo(ligado, s3, amb):
+    cfg, con, arm = amb
+    _versao(con, arm, "v1")
+    _mandar(con, "v1", "super-kal")
+    _rodar(cfg, con, arm, "v1")
+    hoje = R.hoje_bahia()
+    assert f"super-kal/{hoje}-cerveja-lavinia" in json.loads(s3.obj[(B, R.META)]["corpo"])
+    _mandar(con, "v1", "marcos")
+    assert _rodar(cfg, con, arm, "v1")["estado"] == "no_ar"
+    midia = [k for k in s3.chaves(B) if k.endswith((".mp4", ".jpg"))]
+    assert midia and all(k.startswith(f"marcos/{hoje}-cerveja-lavinia/") for k in midia), midia
+    assert all(i["k"].startswith("marcos/") for i in _indice(s3)["itens"])
+    assert list(json.loads(s3.obj[(B, R.META)]["corpo"])) == [f"marcos/{hoje}-cerveja-lavinia"]
+    assert _ent(con, "v1")["painel"].endswith("?c=marcos")
+    # e retirar agora tira tudo (antes ficava a cópia órfã em super-kal/)
+    banco.atualizar_dados(con, "p1", lambda d: d["entregas"]["v1"].update(estado="retirando"))
+    _rodar(cfg, con, arm, "v1", "retirar")
+    assert [k for k in s3.chaves(B) if k.endswith((".mp4", ".jpg"))] == []
+
+
+def test_cliente_trocado_no_meio_do_envio_refaz(ligado, s3, amb):
+    cfg, con, arm = amb
+    _versao(con, arm, "v1")
+    _mandar(con, "v1", "super-kal")
+    orig = s3.upload_file
+
+    def upload(origem, Bucket, Key, **kw):
+        orig(origem, Bucket, Key, **kw)
+        if Key.startswith("super-kal/") and Key.endswith(".mp4"):
+            _mandar(con, "v1", "marcos")                   # "Tentar agora" com outro cliente enquanto subia
+    s3.upload_file = upload
+    assert _rodar(cfg, con, arm, "v1")["estado"] == "no_ar"
+    assert all(k.startswith("marcos/") for k in s3.chaves(B) if k.endswith((".mp4", ".jpg")))
+    assert _ent(con, "v1")["cliente"] == "marcos" and _ent(con, "v1")["estado"] == "no_ar"
+
+
+def test_nunca_mexe_no_que_o_chat_ou_outro_projeto_pos(ligado, s3, amb):
+    """Mesmo nome, mesmo cliente, mesmo dia: o editor não sobrescreve nem apaga a entrega de outro (usa pasta com sufixo)."""
+    cfg, con, arm = amb
+    hoje = R.hoje_bahia()
+    do_chat = f"super-kal/{hoje}-cerveja-lavinia/Cerveja_Lavinia_v1.mp4"
+    s3.put_object(Bucket=B, Key=do_chat, Body=b"do chat, outro filme")      # r2_enviar.py: sem metadado `projeto`
+    _versao(con, arm, "v1")
+    _mandar(con, "v1")
+    assert _rodar(cfg, con, arm, "v1")["estado"] == "no_ar"
+    assert s3.obj[(B, do_chat)]["corpo"] == b"do chat, outro filme"
+    e = _ent(con, "v1")
+    assert e["pasta"] == f"super-kal/{hoje}-cerveja-lavinia-p1/" and e["video_url"].endswith("cerveja-lavinia-p1/Cerveja_Lavinia_v1.mp4")
+    assert s3.obj[(B, e["pasta"] + "Cerveja_Lavinia_v1.mp4")]["Metadata"]["projeto"] == "p1"
+    # a v2 cai na mesma pasta do projeto (não cria outra) e só troca o que é do projeto
+    _versao(con, arm, "v2", b"v2", em="2099-01-01T00:00:00Z")
+    _mandar(con, "v2")
+    _rodar(cfg, con, arm, "v2")
+    assert _ent(con, "v2")["pasta"] == e["pasta"] and s3.obj[(B, do_chat)]["corpo"] == b"do chat, outro filme"
+    assert not any(k.endswith("p1/Cerveja_Lavinia_v1.mp4") for k in s3.chaves(B))
+    # a versão anterior do CHAT na mesma pasta (mesma raiz) também nunca é apagada pelo editor
+    assert R.apagar_versoes_anteriores(s3, B, f"super-kal/{hoje}-cerveja-lavinia/", f"super-kal/{hoje}-cerveja-lavinia/Cerveja_Lavinia_v9.mp4", "p1") == []
+
+
+def test_meta_gravado_pelo_chat_no_meio_nao_se_perde(ligado, s3, amb):
+    cfg, con, arm = amb
+    s3.put_object(Bucket=B, Key=R.META, Body=json.dumps({"outro/2026-11-01-x": {"legenda": "x"}}).encode())
+    orig = s3.get_object
+    vez = {"n": 0}
+
+    def get_e_chat_grava(Bucket, Key):
+        r = orig(Bucket=Bucket, Key=Key)
+        if Key == R.META and vez["n"] == 0:                # o chat grava a legenda dele logo depois da nossa leitura
+            vez["n"] += 1
+            m = json.loads(s3.obj[(B, R.META)]["corpo"])
+            m["chat/2026-11-25-y"] = {"legenda": "do chat"}
+            s3.obj[(B, R.META)]["corpo"] = json.dumps(m).encode()
+        return r
+    s3.get_object = get_e_chat_grava
+    _versao(con, arm, "v1")
+    _mandar(con, "v1")
+    assert _rodar(cfg, con, arm, "v1")["estado"] == "no_ar"
+    meta = json.loads(s3.obj[(B, R.META)]["corpo"])
+    assert meta["chat/2026-11-25-y"] == {"legenda": "do chat"} and meta["outro/2026-11-01-x"] == {"legenda": "x"}
+    assert meta[f"super-kal/{R.hoje_bahia()}-cerveja-lavinia"]["legenda"].startswith("Gancho")
+    assert R.META in s3.condicionais                                         # gravou com IfMatch
+
+
+def test_meta_novo_usa_if_none_match(ligado, s3, amb):
+    s3.put_object(Bucket=B, Key=R.META, Body=b"{}")
+    s3.obj.pop((B, R.META))
+    assert R.mexer_legenda(s3, B, "c/2026-11-25-x/", "oi", None) == "oi"
+    assert R.META in s3.condicionais
+
+
+def test_keyerror_no_meta_nao_conta_como_meta_vazio(ligado, s3, amb):
+    cfg, con, arm = amb
+    s3.put_object(Bucket=B, Key=R.META, Body=json.dumps({"outro/2026-11-01-x": {"legenda": "x"}}).encode())
+    orig = s3.get_object
+
+    def get_keyerror(Bucket, Key):
+        if Key == R.META:
+            raise KeyError("Body")
+        return orig(Bucket=Bucket, Key=Key)
+    s3.get_object = get_keyerror
+    _versao(con, arm, "v1")
+    _mandar(con, "v1")
+    assert _rodar(cfg, con, arm, "v1")["estado"] == "pendente"
+    assert json.loads(s3.obj[(B, R.META)]["corpo"]) == {"outro/2026-11-01-x": {"legenda": "x"}}
+
+
+def test_indice_confere_de_novo_se_o_script_subiu_algo_no_meio(ligado, s3, amb):
+    orig = s3.put_object
+    vez = {"n": 0}
+
+    def put(Bucket, Key, Body, **kw):
+        orig(Bucket=Bucket, Key=Key, Body=Body, **kw)
+        if Key == R.INDICE and vez["n"] == 0:              # o chat subiu um vídeo entre a nossa lista e a nossa gravação
+            vez["n"] += 1
+            orig(Bucket=B, Key="super-kal/2026-11-25-outro/Outro_v1.mp4", Body=b"xx")
+    s3.put_object = put
+    assert R.atualizar_indice(s3, B) == 1
+    assert [i["k"] for i in _indice(s3)["itens"]] == ["super-kal/2026-11-25-outro/Outro_v1.mp4"]
+
+
+def test_deposito_privado_nunca_vira_pagina_publica(ligado, monkeypatch, dados):
+    assert R.ligado()
+    for n in ("R2_BACKUP_BUCKET", "R2_BUCKET", "R2_MIDIA_BUCKET"):
+        monkeypatch.setenv(n, B)
+        assert not R.ligado() and "mesmo do backup" in R.config_errada()
+        assert "mesmo do backup" in R.estado_saude(config.carregar())["aviso"]
+        monkeypatch.setenv(n, "outro-deposito")
+    assert R.ligado()
+
+
+def test_motivo_para_o_dono_sem_jargao():
+    from s3_falso import ErroS3
+    assert R.motivo_dono(ErroS3("AccessDenied", "Access Denied")).startswith("o Cloudflare recusou a chave")
+    assert R.motivo_dono(ConnectionError("x")).startswith("sem conexão com o Cloudflare")
+    assert R.motivo_dono(ValueError("x")).startswith("o Cloudflare não respondeu direito")
+    for f in (R.motivo_dono(ErroS3("AccessDenied")), R.motivo_dono(TimeoutError())):
+        assert "Error" not in f and "R2" not in f and "sha" not in f
+
+
+def test_motivo_tecnico_sem_chave_nem_conta(monkeypatch):
+    monkeypatch.setenv("R2_SECRET_ACCESS_KEY", "segredo-super-secreto-123")
+    monkeypatch.setenv("R2_ACCOUNT_ID", "1f70e44ae3dedfd6bbf8a913acdd8af8")
+    t = R.motivo_tecnico(ConnectionError("https://1f70e44ae3dedfd6bbf8a913acdd8af8.r2.cloudflarestorage.com/x falhou "
+                                         "com segredo-super-secreto-123"))
+    assert "segredo-super-secreto" not in t and "1f70e44ae3" not in t and "ConnectionError" in t
+
+
+def test_cliente_invalido_e_vazio_volta_422_e_normaliza(dados, monkeypatch):
+    pytest.importorskip("fastapi")
+    import shutil
+    from fastapi.testclient import TestClient
+    destino = dados.parent / "memoria"
+    shutil.copytree(config.MEMORIA, destino)
+    monkeypatch.setenv("EDITOR_MEMORIA", str(destino))
+    monkeypatch.setenv("MOTOR_TOKEN", "t")
+    for n, v in (("R2_ACCOUNT_ID", "conta"), ("R2_ACCESS_KEY_ID", "id"), ("R2_SECRET_ACCESS_KEY", "segredo"),
+                 ("R2_ENTREGAS_BUCKET", B), ("R2_ENTREGAS_PUBLICO", PUB)):
+        monkeypatch.setenv(n, v)
+    from motor.api.app import criar
+    c = TestClient(criar())
+    c.headers.update({"Authorization": "Bearer t"})
+    con = banco.conectar(config.carregar().banco)
+    t = banco.agora_iso()
+    con.execute("INSERT INTO projetos (id, nome, estado, criado, atualizado, dados) VALUES ('p1','Promo','entregue',?,?,'{}')", (t, t))
+    con.execute("INSERT INTO versoes (id, projeto, estado, criado) VALUES ('v1','p1','entregue',?)", (t,))
+    for ruim in ("-", "--", "-marcos", "marcos-", "a" * 41):
+        assert c.post("/v1/projetos/p1/versoes/v1/aprovar", json={"cliente": ruim}).status_code == 422, ruim
+    assert c.post("/v1/projetos/p1/versoes/v1/aprovar", json={"cliente": "marcos"}).status_code == 200
+    assert c.post("/v1/projetos/p1/versoes/v1/entregas", json={"cliente": "-"}).status_code == 422
+    r = c.post("/v1/projetos/p1/versoes/v1/entregas", json={"cliente": "elite-drako-gym"})
+    assert r.status_code == 202 and r.json()["entregas"]["cliente"] == "elite-drako-gym"
+    # aprovar SEM mandar para as entregas (opção do dono): aprova, não põe nada na fila nem na página
+    con.execute("DELETE FROM jobs")
+    con.execute("INSERT INTO versoes (id, projeto, estado, criado) VALUES ('v2','p1','entregue',?)", (t,))
+    r = c.post("/v1/projetos/p1/versoes/v2/aprovar", json={"entregas": False})
+    assert r.status_code == 200 and r.json()["aprovada"] == "v2" and "entregas" not in r.json()
+    assert con.execute("SELECT COUNT(*) n FROM jobs WHERE etapa='entregas'").fetchone()["n"] == 0
+
+
+def test_aviso_de_falha_de_fundo_sem_jargao(amb, monkeypatch):
+    cfg, con, arm = amb
+    monkeypatch.setenv("R2_SECRET_ACCESS_KEY", "segredo-super-secreto-123")
+    from motor import pipeline
+    pipeline.falha_definitiva(con, {"etapa": "entregas", "projeto": "p1", "alvo": "v1"},
+                              "ClientError: An error occurred (AccessDenied) segredo-super-secreto-123")
+    m = con.execute("SELECT mensagem FROM eventos WHERE tipo='aviso' ORDER BY id DESC").fetchone()["mensagem"]
+    assert m == "O envio para a página de entregas não deu certo agora. O material está seguro no editor."
