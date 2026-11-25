@@ -1,3 +1,3 @@
 self.addEventListener("install",e=>self.skipWaiting());
 self.addEventListener("fetch",()=>{});
-// v4
+// v5

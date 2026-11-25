@@ -19,11 +19,12 @@ main{max-width:960px;margin:0 auto}h2{font-size:13px;letter-spacing:.14em;text-t
 #rf{background:#3a302d;color:var(--tx);border:0;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
 #bq{max-width:960px;margin:0 auto 6px;display:flex;gap:8px}#bq input{flex:1;background:var(--card);border:1px solid #3a302d;color:var(--tx);border-radius:10px;padding:10px 12px;font-size:16px}
 .leg{margin-top:12px;background:#251f1d;border-radius:10px;padding:10px 12px;font-size:14px;white-space:pre-wrap}.leg button,.st button{background:var(--y);color:#241612;border:0;border-radius:8px;padding:7px 12px;font-weight:700;font-size:13px;margin-top:8px;cursor:pointer}
-.st{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap}.st button{margin:0;background:#3a302d;color:var(--tx);font-weight:600}.st button.on{background:var(--ac);color:#fff}
+.sel{color:#fff;border-radius:8px;padding:6px 12px;font-weight:800;font-size:13px}.abas{max-width:960px;margin:10px auto 0;display:flex;gap:6px;overflow-x:auto}.abas button{white-space:nowrap;background:#251f1d;color:var(--tx);border:0;border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px}.abas button.on{background:var(--y);color:#241612}.st{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap;align-items:center}.st button{margin:0;background:#3a302d;color:var(--tx);font-weight:600}.st button.on{background:var(--ac);color:#fff}
 .sem{color:var(--mut);font-size:13px;margin-top:10px}
 </style></head><body>
-<header><h1>Entregas <b>creat.MTT</b></h1><div><span id="at">carregando…</span> <button id="rf" onclick="location.reload()">Atualizar</button></div></header>
-<div id="bq"><input id="q" type="search" placeholder="Buscar cliente, projeto ou arquivo…" autocomplete="off"></div>
+<header><h1><img src="logo-creat.png" alt="creat.MTT" style="height:30px;display:block"><span style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:600">Entregas</span></h1><div><span id="at">carregando…</span> <button id="rf" onclick="location.reload()">Atualizar</button></div></header>
+<div class="abas" id="abas"></div>
+<div id="bq" style="margin-top:10px"><input id="q" type="search" placeholder="Buscar cliente, projeto ou arquivo…" autocomplete="off"></div>
 <main id="m"><p id="vazio">Carregando entregas…</p></main>
 <script>
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
@@ -32,7 +33,8 @@ const mb=t=>(t/1048576).toFixed(1).replace(".",",")+" MB";
 const nome=s=>s.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase());
 const META="_painel/e160f58517f4-meta.json";
 const CL=new URLSearchParams(location.search).get("c");
-const ST=["Para revisar","Aprovado","Postado"];
+const ST=["Para revisar","Aprovado","Postado"],PROX={"Para revisar":"Marcar como aprovado","Aprovado":"Marcar como postado","Postado":"Voltar para revisar"},COR={"Para revisar":"#e3121b","Aprovado":"#2e9e5b","Postado":"#5b7fd6"};
+let FIL="Todos";
 const lg=k=>{try{return localStorage.getItem("st:"+k)||ST[0]}catch(e){return ST[0]}};
 const sg=(k,v)=>{try{localStorage.setItem("st:"+k,v)}catch(e){}};
 Promise.all([fetch(IDX,{cache:"no-store"}).then(r=>r.json()),fetch(META,{cache:"no-store"}).then(r=>r.ok?r.json():{}).catch(()=>({}))]).then(([d,meta])=>{
@@ -58,16 +60,20 @@ Promise.all([fetch(IDX,{cache:"no-store"}).then(r=>r.json()),fetch(META,{cache:"
         g.append(d2);
       }
       box.append(g);
-      const key=c+"/"+p,st=document.createElement("div");st.className="st";
-      const pintar=()=>[...st.children].forEach(b=>b.classList.toggle("on",b.textContent===lg(key)));
-      ST.forEach(x=>{const b=document.createElement("button");b.textContent=x;b.onclick=()=>{sg(key,x);pintar()};st.append(b)});pintar();box.insertBefore(st,t.nextSibling);
+      const key=c+"/"+p,st=document.createElement("div");st.className="st";box.dataset.key=key;
+      const sel=document.createElement("span");sel.className="sel";const bt=document.createElement("button");
+      const pintar=()=>{const v=lg(key);sel.textContent=v;sel.style.background=COR[v];bt.textContent=PROX[v];box.dataset.st=v;filtrar()};
+      bt.onclick=()=>{sg(key,ST[(ST.indexOf(lg(key))+1)%3]);pintar();abas()};st.append(sel,bt);box.insertBefore(st,t.nextSibling);setTimeout(pintar,0);
       const L=meta[key]&&meta[key].legenda;
       if(L){const lb=document.createElement("div");lb.className="leg";lb.textContent=L;const cb=document.createElement("button");cb.textContent="Copiar legenda";cb.onclick=()=>navigator.clipboard.writeText(L).then(()=>{cb.textContent="Copiado ✓";setTimeout(()=>cb.textContent="Copiar legenda",1800)});lb.append(document.createElement("br"),cb);box.append(lb)}
       else{const sm=document.createElement("div");sm.className="sem";sm.textContent="Legenda deste post: peça no chat que eu registro aqui.";box.append(sm)}
       box.dataset.q=(c+" "+p+" "+cli[c][p].map(i=>i.k).join(" ")).toLowerCase();m.append(box);
     }
   }
-  document.getElementById("q").oninput=e=>{const v=e.target.value.toLowerCase().trim();document.querySelectorAll(".proj").forEach(b=>b.style.display=!v||b.dataset.q.includes(v)?"":"none")};
+  window.filtrar=()=>{const v=document.getElementById("q").value.toLowerCase().trim();document.querySelectorAll(".proj").forEach(b=>b.style.display=(!v||b.dataset.q.includes(v))&&(FIL==="Todos"||b.dataset.st===FIL)?"":"none")};
+  window.abas=()=>{const n={};document.querySelectorAll(".proj").forEach(b=>n[b.dataset.st]=(n[b.dataset.st]||0)+1);const tot=document.querySelectorAll(".proj").length;const ab=document.getElementById("abas");ab.innerHTML="";["Todos",...ST].forEach(x=>{const b=document.createElement("button");b.textContent=x+" ("+(x==="Todos"?tot:(n[x]||0))+")";b.className=x===FIL?"on":"";b.onclick=()=>{FIL=x;filtrar();abas()};ab.append(b)})};
+  setTimeout(abas,50);
+  document.getElementById("q").oninput=e=>{const v=e.target.value.toLowerCase().trim();filtrar()};
   if(!d.itens.length)m.innerHTML='<p id="vazio">Nenhuma entrega ainda.</p>';
 }).catch(()=>{document.getElementById("m").innerHTML='<p id="vazio">Não consegui carregar a lista agora. Tente de novo em instantes.</p>'});
 </script></body></html>
