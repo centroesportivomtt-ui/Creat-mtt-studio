@@ -52,8 +52,8 @@ Palavras dele: "sem limites, sem fronteiras, observando tudo… o que os própri
 Palavras dele: "um modo de resposta, onde eu falo alguma coisa, ele pode me perguntar também de volta"; "como eu converso com você aqui, que eu lhe mando um áudio, vejo o que está executando… uma tela de atualização do que está sendo feito ao vivo… eu verifico as ferramentas que está utilizando. Tudo isso, como estivesse eu fazendo com você, tem que ter lá também".
 | item | o quê | estado |
 |---|---|---|
-| C1 | conversa por projeto: texto e áudio, o editor responde e pergunta de volta, com acesso às ações do projeto (pedido, ajuste, trocar música, refazer etapa) | plano pronto (docs/plano-conversa-25-11.md, "Fio Único"); ondas 1 e 2 em construção · 01LA2wrMpbZ · 25/11 |
-| C2 | tela ao vivo do que está sendo feito: etapa, ferramenta em uso, o que ela achou, custo, em linguagem do dono | em construção (onda 2 do plano) · 25/11 |
+| C1 | conversa por projeto: texto e áudio, o editor responde e pergunta de volta, com acesso às ações do projeto (pedido e ajuste, com toque) | **FEITO e no ar em 25/11** (fc45485 + 372b0cf): ligada, chave na tela, teto de US$ 3/dia, custo por resposta. Provada com a API real (5 chamadas, US$ 0,07) e voz provada em produção. Falta: trocar música e refazer etapa como ações (onda 3), retenção das conversas e tela das regras no Caderno |
+| C2 | tela ao vivo do que está sendo feito: etapa, ferramenta em uso, o que ela achou, custo, em linguagem do dono | **FEITO e no ar em 25/11** (mesa ao vivo, onda 2; sons reais também aparecem como passo). Falta ver num filme real em produção |
 Decisão do dono em 25/11 ("o editor é para ter tudo… o que você fizer de melhor, execute"): a conversa vai LIGADA, com chave na tela para ele desligar, teto de US$ 3 por dia travado no código e o custo de cada resposta à vista.
 
 ## Cloudflare e Drive no editor (pedido do dono, 25/11)
