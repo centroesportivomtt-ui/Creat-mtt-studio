@@ -58,6 +58,9 @@ def montar_trilha(edl: dict, arq: pathlib.Path | None) -> tuple[np.ndarray, dict
                 d0 -= (a - pre_a)
                 w = np.sin(np.linspace(0, np.pi / 2, a - pre_a)) ** 2
                 seg[: a - pre_a] *= w[:, None]
+            elif a > 0:                                 # música que começa do meio (auge na virada): entrada suave, sem estalo
+                n0 = min(len(seg), int(round(max(xf, 0.03) * SR)))
+                seg[:n0] *= (np.sin(np.linspace(0, np.pi / 2, n0)) ** 2)[:, None]
             if k < len(emendas) - 1:                    # sai no crossfade
                 prox = int(round(emendas[k + 1][0] * SR))
                 fim = prox - d0

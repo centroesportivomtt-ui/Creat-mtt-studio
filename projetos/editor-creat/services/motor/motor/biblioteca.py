@@ -193,12 +193,20 @@ def registrar(cfg, arm, arquivo: pathlib.Path, *, tipo: str, titulo: str, licenc
             wav = pathlib.Path(d) / "a.wav"
             dur = converter(arquivo, wav, max_s=600 if tipo == "trilha" else 15)
             bpm, fase = andamento(*ler_wav(wav)) if tipo == "trilha" else (None, 0.0)
+            ouvida = {}
+            if tipo == "trilha":                                  # o editor ouve a música: virada, partes e tom (motor/musica.py)
+                try:
+                    from motor import musica
+                    ouvida = musica.mapa(*ler_wav(wav), bpm, fase)
+                except Exception:  # noqa: BLE001 - música sem mapa continua valendo (corte na batida como antes)
+                    ouvida = {}
             arm.gravar(chave, wav)
         item = {"id": ident, "tipo": tipo, "titulo": titulo.strip()[:80], "chave": chave, "dur": round(dur, 2), "ativo": True,
                 "licenca": {**{k: licenca.get(k) for k in ("tipo", "fonte", "autor", "termos_url", "atribuicao")},
                             "uso_comercial": True, "registrado_em": _agora()}, "origem_url": origem_url}
         if tipo == "trilha":
             item.update(bpm=bpm or 120.0, bpm_medido=bpm is not None, fase=fase, clima=(clima or "").strip()[:40] or None)
+            item.update({k: v for k, v in ouvida.items() if v})
         itens = [i for i in itens if i.get("id") != ident] + [item]
         _gravar(cfg, tipo, itens)
         return item

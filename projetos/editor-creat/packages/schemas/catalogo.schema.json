@@ -73,7 +73,7 @@
     "trilhas": {
       "type": "array",
       "description": "Trilhas disponíveis na biblioteca (id, clima, bpm, duração).",
-      "items": { "type": "object", "additionalProperties": false, "required": ["id", "bpm", "dur"], "properties": { "id": { "type": "string" }, "clima": { "type": "string" }, "bpm": { "type": "number" }, "dur": { "type": "number" } } }
+      "items": { "type": "object", "additionalProperties": false, "required": ["id", "bpm", "dur"], "properties": { "id": { "type": "string" }, "clima": { "type": "string" }, "bpm": { "type": "number" }, "dur": { "type": "number" }, "virada": { "type": "number", "description": "Segundo em que a música estoura (maior subida sustentada de energia), na batida." }, "tom": { "type": "string", "description": "Tonalidade estimada, ex.: lá menor." }, "secoes": { "type": "array", "description": "Partes da música com energia de 1 a 5.", "items": { "type": "object", "additionalProperties": false, "required": ["t0", "t1", "energia"], "properties": { "t0": { "type": "number" }, "t1": { "type": "number" }, "energia": { "type": "integer", "minimum": 1, "maximum": 5 } } } } } }
     },
     "modelos": { "type": "array", "items": { "type": "string" }, "description": "Modelos de vídeo (templates) disponíveis: evento-reel, empresa-institucional, daily-vlog, anuncio-produto..." }
   }

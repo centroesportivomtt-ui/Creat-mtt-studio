@@ -474,3 +474,25 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 ## Rodada de 24/11 (leve)
 - Saúde no ar ok (ff1203d), modelos todos carregados, backup em dia (23/11 16:27). Nada em falha.
 - Rodada só de conferência: o dono avisou em 23/11 que está com pouca cota; trabalho novo fica para quando ele pedir.
+
+## 25/11: o editor ouve a música (1ª peça do "filme guiado por música e emoção", pedido do dono)
+- **Pedido do dono:** "instale tudo o que falta": emoção, cenas, sentir o momento. A sessão do Itaitu confirmou o que foi feito lá à mão e o motor não faz.
+- **Feito agora** (`motor/musica.py`): ao registrar uma trilha, o motor mede:
+  - a **virada** (o segundo em que a música estoura), encostada na batida;
+  - as **partes** da música, com energia de 1 a 5;
+  - o **tom** (`musica.combina` diz se duas músicas emendam no mesmo tom).
+- **Catálogo:** mostra virada, partes e tom ao diretor.
+- **Resolvedor:** se a direção marca o bloco do auge (`trilha.drop_em`), a música começa no ponto que faz a virada cair no começo desse bloco.
+  - O deslocamento é em batidas inteiras, com entrada suave.
+  - Só vale com bpm medido e música que cobre o filme.
+- **Revisão do Crivo:** reprovou a 1ª versão (estalo na entrada); corrigido. pytest 378 ok; aceite 35/35.
+- **Limite:** vale para trilha registrada daqui para a frente. As que já estão na biblioteca precisam ser registradas de novo para ganhar o mapa.
+- **Falta** (aguardando a sessão do Itaitu commitar `projetos/itaitu-viagem/motor-render/` para portar com os limiares calibrados):
+  - movimento, tremor e nitidez a cada 0,5 s, com a decisão de estabilizar;
+  - transição casada com o movimento da câmera;
+  - câmera lenta só de fonte 60/120 fps;
+  - ampliação máxima do recorte;
+  - cor viva como padrão;
+  - banco de sons reais;
+  - modo de filme sem fala (cortes pela música);
+  - emenda de duas ou mais músicas no mesmo tom.

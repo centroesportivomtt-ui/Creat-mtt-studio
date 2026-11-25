@@ -179,7 +179,7 @@ def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: i
             if rep:
                 item["ditado"] = rep["id"]
     cat = {"versao": "1", "projeto": projeto, "orcamento": {"tokens_estimados": 0, "limite": limite, "cortes": []}, "clipes": clipes,
-           "trilhas": [{k: t[k] for k in ("id", "clima", "bpm", "dur") if k in t} for t in (trilhas or [])],
+           "trilhas": [{k: t[k] for k in ("id", "clima", "bpm", "dur", "virada", "tom", "secoes") if t.get(k) is not None} for t in (trilhas or [])],
            "modelos": modelos or []}
     # níveis de compressão, aplicados em ordem até caber (§4.2); cada nível inclui os anteriores
     txt, nivel = "", 0
@@ -247,7 +247,12 @@ def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozense
     cl = cat["clipes"]
     total = sum(c["dur"] for c in cl)
     tipos = sorted({m["tipo"] for c in cl for m in c["momentos"]})
-    trilhas = ", ".join(f"{t['id']} ({_num(t['bpm'])} bpm, {_num(t['dur'])} s{', ' + t['clima'] if t.get('clima') else ''})" for t in cat.get("trilhas", []))
+    def _musica(t):
+        extra = (f", {t['tom']}" if t.get("tom") else "") + (f", VIRADA aos {_num(t['virada'])} s" if t.get("virada") else "")
+        if t.get("secoes"):
+            extra += ", partes " + " ".join(f"{_num(x['t0'])}-{_num(x['t1'])}s:e{x['energia']}" for x in t["secoes"][:8])
+        return f"{t['id']} ({_num(t['bpm'])} bpm, {_num(t['dur'])} s{', ' + t['clima'] if t.get('clima') else ''}{extra})"
+    trilhas = ", ".join(_musica(t) for t in cat.get("trilhas", []))
     linhas = [f"# PROJETO {cat['projeto']} · {len(cl)} clipes · {_num(total / 60)} min · momentos: {','.join(tipos)}",
               f"# trilhas: {trilhas or 'nenhuma'} · modelos: {', '.join(cat.get('modelos') or []) or 'evento-reel'}",
               "# C=clipe (arquivo \"nome\" dur · câmera · pessoas · ambientes · resumo) · M=momento t0-t1 tipo nota(1-5) desc · "

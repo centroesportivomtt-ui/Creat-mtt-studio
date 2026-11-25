@@ -732,13 +732,33 @@ class Resolvedor:
         cands.sort()
         return [(lo, hi) for _, lo, hi in cands]
 
+    def _inicio_na_virada(self, trilha, L, dur: float, td: float) -> float | None:
+        """Sentir o momento (25/11): se a direção marcou o bloco do auge (trilha.drop_em) e a música tem virada medida, a música
+        começa no ponto que faz a virada cair no começo desse bloco (a menos de meia batida). O deslocamento é em batidas inteiras, então os
+        cortes continuam na batida. Só vale se a música cobrir o filme inteiro a partir desse ponto."""
+        alvo, v, bpm = (self.d.get("trilha") or {}).get("drop_em"), trilha.get("virada"), trilha.get("bpm")
+        if not alvo or not v or not bpm or not trilha.get("bpm_medido", True):     # bpm chutado (120) não tem grade de verdade
+            return None
+        bl = next((b for b in L["blocos"] if b.get("id") == alvo), None)
+        if bl is None:
+            return None
+        batida = 60.0 / bpm
+        ini = round((float(v) - float(bl["t0"])) / batida) * batida
+        if ini < 0 or ini + dur > td + 1e-6:
+            self.avisos.append(f"a virada da música ({v:.1f} s) não coube no auge do filme ({bl['t0']:.1f} s): a música toca do começo")
+            return None
+        return ini
+
     def _trilha_edl(self, trilha, L) -> dict:
         tm = self.m.get("trilha", {})
         if not trilha:
             return {"chave": None, "bpm": None, "fase": 0, "emendas": [], "ganho_db": tm.get("ganho_db", -14), "ducking": tm.get("ducking", {}), "acorde_final": None}
         dur, td = L["duracao"], trilha.get("dur") or L["duracao"]
         emendas, t, s = [], 0.0, 0.0
-        if td >= dur:
+        ini = self._inicio_na_virada(trilha, L, dur, td)
+        if ini is not None:
+            emendas = [[0.0, round(ini, 3), round(ini + dur, 3), 0.05 if ini > 0 else 0.0]]
+        elif td >= dur:
             emendas = [[0.0, 0.0, round(dur, 3), 0.0]]
         else:                                                     # emenda por compassos inteiros
             compasso = 4 * 60.0 / trilha["bpm"]
