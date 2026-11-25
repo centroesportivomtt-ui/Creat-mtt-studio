@@ -533,3 +533,20 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Railway:** com token do dono, guardado no cofre da sessão (o valor nunca apareceu), entraram `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` e `R2_BACKUP_BUCKET=creat-editor-midia`.
   - Os vídeos continuam no disco do servidor: `EDITOR_ARMAZENAMENTO` não mudou. A virada para o R2 exige migração e CORS no bucket, a fazer com teste.
 - **Conferido em produção:** backup ok em 25/11 04:00:59, cópia R2, arquivos no bucket. pytest 452 ok.
+
+## 25/11: redesenho, onda 1 "Polegar" (no ar) e a conversa com o editor (em construção)
+- **Onda 1 do redesenho, publicada e conferida em produção (versão 243ab9d):**
+  - navegação inferior no celular e barra de comando com um botão só por fase ("Começar a edição" grava o pedido e depois fecha o envio);
+  - telas por fase em vez de uma página comprida; ponto de saúde ligado ao `/api/saude`;
+  - rótulo "Aguardando material" no lugar de "recebendo";
+  - a revisão reprovou 5 pontos (Enter mandava o pedido, ordem fechar/pedido, link não importado, ponto de saúde fixo, primeiro toque perdido depois de digitar); todos corrigidos, com checagem no aceite provada falhando antes da correção.
+  - Aceite 46/46. **Limite:** testado em Chromium emulando celular; não em iPhone/Safari de verdade.
+- **Direção de arte** em `docs/design-editor-25-11.md` ("Mesa de corte"). Ondas 2 a 5 (gaveta, avisos, ícones, Caderno em telas, "o relógio vira o filme") seguem na fila.
+- **Conversa com o editor** (pedido do dono: falar por texto ou áudio, o editor responde e pergunta de volta, e a tela mostra ao vivo o que está sendo feito e com que ferramenta):
+  - mapa do que já existe e três pesquisas (agente, voz, ao vivo) em `docs/conversa-*.md`; plano vencedor do júri "Fio Único" em `docs/plano-conversa-25-11.md`;
+  - **decisão registrada:** a conversa entra LIGADA, com chave na tela para desligar, teto de US$ 3 por dia travado no código e o custo de cada resposta à vista;
+  - o crítico barrou a onda 1 "como estava" (7 correções bloqueantes); a equipe fecha o plano com elas antes de escrever código;
+  - construção das ondas 1 (fio da conversa) e 2 (mesa ao vivo) em cópia de trabalho separada, com revisão de código, de segurança (instrução escondida em fala de vídeo, custo) e uso real no celular.
+  - **Custo:** a estimativa do plano (≈ US$ 0,94 por conversa de 20 turnos) NÃO foi medida; o teste real, até US$ 1, faz parte da revisão.
+- **Em paralelo, cada uma na sua cópia:** M6 (sons reais do banco de 7.546 sons) e Cloudflare/Drive (entrega do filme aprovado pelo R2, guarda do material, pasta do Drive por link).
+- **Ordem de juntar:** M6, depois Cloudflare/Drive, depois a conversa; a cada junção, pytest e aceite completos antes do push e conferência da versão no ar.
