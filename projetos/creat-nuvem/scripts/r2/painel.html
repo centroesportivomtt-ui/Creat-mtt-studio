@@ -15,15 +15,24 @@ main{max-width:960px;margin:0 auto}h2{font-size:13px;letter-spacing:.14em;text-t
 .it .n{padding:8px 10px 2px;font-size:13px;word-break:break-all}.it .m{padding:0 10px;color:var(--mut);font-size:12px}
 .it a{margin:8px 10px 10px;text-align:center;background:var(--ac);color:#fff;text-decoration:none;border-radius:8px;padding:8px;font-weight:600;font-size:14px}
 #vazio{color:var(--mut)}
+#bq{max-width:960px;margin:0 auto 6px;display:flex;gap:8px}#bq input{flex:1;background:var(--card);border:1px solid #3a302d;color:var(--tx);border-radius:10px;padding:10px 12px;font-size:16px}
+.leg{margin-top:12px;background:#251f1d;border-radius:10px;padding:10px 12px;font-size:14px;white-space:pre-wrap}.leg button,.st button{background:var(--y);color:#241612;border:0;border-radius:8px;padding:7px 12px;font-weight:700;font-size:13px;margin-top:8px;cursor:pointer}
+.st{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap}.st button{margin:0;background:#3a302d;color:var(--tx);font-weight:600}.st button.on{background:var(--ac);color:#fff}
+.sem{color:var(--mut);font-size:13px;margin-top:10px}
 </style></head><body>
 <header><h1>Entregas <b>creat.MTT</b></h1><div id="at">carregando…</div></header>
+<div id="bq"><input id="q" type="search" placeholder="Buscar cliente, projeto ou arquivo…" autocomplete="off"></div>
 <main id="m"><p id="vazio">Carregando entregas…</p></main>
 <script>
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 const IDX="_painel/e160f58517f4.json";
 const mb=t=>(t/1048576).toFixed(1).replace(".",",")+" MB";
 const nome=s=>s.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase());
-fetch(IDX,{cache:"no-store"}).then(r=>r.json()).then(d=>{
+const META="_painel/e160f58517f4-meta.json";
+const ST=["Para revisar","Aprovado","Postado"];
+const lg=k=>{try{return localStorage.getItem("st:"+k)||ST[0]}catch(e){return ST[0]}};
+const sg=(k,v)=>{try{localStorage.setItem("st:"+k,v)}catch(e){}};
+Promise.all([fetch(IDX,{cache:"no-store"}).then(r=>r.json()),fetch(META,{cache:"no-store"}).then(r=>r.ok?r.json():{}).catch(()=>({}))]).then(([d,meta])=>{
   document.getElementById("at").textContent="atualizado "+d.atualizado;
   const m=document.getElementById("m");m.innerHTML="";
   const cli={};
@@ -42,9 +51,17 @@ fetch(IDX,{cache:"no-store"}).then(r=>r.json()).then(d=>{
         const a=Object.assign(document.createElement("a"),{href:u,download:f,textContent:"Baixar"});
         d2.append(n,mm,a);g.append(d2);
       }
-      box.append(g);m.append(box);
+      box.append(g);
+      const key=c+"/"+p,st=document.createElement("div");st.className="st";
+      const pintar=()=>[...st.children].forEach(b=>b.classList.toggle("on",b.textContent===lg(key)));
+      ST.forEach(x=>{const b=document.createElement("button");b.textContent=x;b.onclick=()=>{sg(key,x);pintar()};st.append(b)});pintar();box.insertBefore(st,t.nextSibling);
+      const L=meta[key]&&meta[key].legenda;
+      if(L){const lb=document.createElement("div");lb.className="leg";lb.textContent=L;const cb=document.createElement("button");cb.textContent="Copiar legenda";cb.onclick=()=>navigator.clipboard.writeText(L).then(()=>{cb.textContent="Copiado ✓";setTimeout(()=>cb.textContent="Copiar legenda",1800)});lb.append(document.createElement("br"),cb);box.append(lb)}
+      else{const sm=document.createElement("div");sm.className="sem";sm.textContent="Legenda deste post: peça no chat que eu registro aqui.";box.append(sm)}
+      box.dataset.q=(c+" "+p+" "+cli[c][p].map(i=>i.k).join(" ")).toLowerCase();m.append(box);
     }
   }
+  document.getElementById("q").oninput=e=>{const v=e.target.value.toLowerCase().trim();document.querySelectorAll(".proj").forEach(b=>b.style.display=!v||b.dataset.q.includes(v)?"":"none")};
   if(!d.itens.length)m.innerHTML='<p id="vazio">Nenhuma entrega ainda.</p>';
 }).catch(()=>{document.getElementById("m").innerHTML='<p id="vazio">Não consegui carregar a lista agora. Tente de novo em instantes.</p>'});
 </script></body></html>

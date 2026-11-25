@@ -75,6 +75,7 @@ def main():
     p.add_argument("cliente"); p.add_argument("projeto"); p.add_argument("arquivos", nargs="+")
     p.add_argument("--data", default=None)
     p.add_argument("--teste", action="store_true")
+    p.add_argument("--legenda", default=None, help="texto da legenda do post; aparece na pagina com botao Copiar")
     a = p.parse_args()
     data = a.data or datetime.datetime.now(FUSO).strftime("%Y-%m-%d")
     pasta = f"{slug(a.cliente)}/{data}-{slug(a.projeto)}/"
@@ -104,6 +105,15 @@ def main():
             ok = False; print(f"  erro ao conferir: {e}")
         print(f"{'OK   ' if ok else 'FALHA'} {tam/1048576:.1f} MB  {url}")
         falhas += 0 if ok else 1
+    if a.legenda:
+        META = "_painel/e160f58517f4-meta.json"
+        try:
+            meta = json.loads(s3.get_object(Bucket=DEPOSITO, Key=META)["Body"].read())
+        except Exception:
+            meta = {}
+        meta[pasta.rstrip("/")] = {"legenda": a.legenda}
+        s3.put_object(Bucket=DEPOSITO, Key=META, Body=json.dumps(meta, ensure_ascii=False).encode(),
+                      ContentType="application/json; charset=utf-8", CacheControl="no-store")
     atualizar_painel(s3)
     return 1 if falhas else 0
 
