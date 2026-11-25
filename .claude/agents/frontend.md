@@ -2,6 +2,7 @@
 name: frontend
 description: Pixel, Engenheiro Frontend. Use para construir páginas, componentes, layouts responsivos, formulários e interações em HTML/CSS/JS, React, Vue ou Svelte.
 model: opus
+effort: high
 skills: consciencia, melhores-ferramentas, direcao-de-arte, verificacao-visual, navegador, padrao-de-entrega
 ---
 

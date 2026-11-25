@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trilhas de Itaitu: mapa 3D das cachoeiras sem internet</title>
+<meta name="description" content="Mapa 3D das cachoeiras de Itaitu, Jacobina (BA), que funciona sem sinal. Mostra a hora em que a serra tira o sol de cada poço e quando voltar com luz.">
+<meta name="theme-color" content="#3A2618">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Trilhas de Itaitu">
+<meta property="og:title" content="A hora em que a serra tira o sol de cada cachoeira de Itaitu">
+<meta property="og:description" content="Mapa 3D das cachoeiras que funciona sem sinal. Chegue ao poço com sol e volte com luz.">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://centroesportivomtt-ui.github.io/Creat-mtt-studio/itaitu/">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icones/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="./icones/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="./icones/apple-touch-icon.png">
+<link rel="preload" href="./fontes/AtkinsonHyperlegibleNext-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="./vendor/maplibre-gl.css">
+<link rel="stylesheet" href="./css/fontes.css">
+<link rel="stylesheet" href="./css/tokens.css">
+<link rel="stylesheet" href="./css/tabuas.css">
+<link rel="stylesheet" href="./css/regua.css">
+<link rel="stylesheet" href="./css/app.css">
+<link rel="stylesheet" href="./css/hora.css">
+<script src="./vendor/maplibre-gl.js"></script>
+<script type="module" src="./js/app.js"></script>
+</head>
+<body>
+<a class="pular" href="#mapa" data-t="acessibilidade.pular">Pular para o mapa</a>
+
+<!-- topo: marca do parceiro, ações e SOS -->
+<header class="topo">
+  <div class="topo__marca">
+    <span class="topo__filete" aria-hidden="true"></span>
+    <span id="marca-logo" class="topo__logo-slot" hidden></span>
+    <div class="topo__nomes">
+      <h1 id="marca-nome" class="topo__nome" data-t="app.nome">Trilhas de Itaitu</h1>
+      <p class="topo__linha"><span id="marca-cortesia" hidden></span><span id="marca-credito" class="topo__credito" data-t="app.credito">feito pela Creat</span></p>
+    </div>
+    <button id="abrir-sos" class="botao-sos" type="button" aria-haspopup="dialog" aria-label="SOS: ver minha posição e ligar para a emergência" data-t-aria="sos.botao_rotulo">
+      <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-sos"/></svg>
+      <span data-t="sos.botao">SOS</span>
+    </button>
+  </div>
+  <nav class="topo__acoes" aria-label="Menu" data-t-aria="acessibilidade.menu">
+    <button class="acao" type="button" aria-controls="painel-destinos" aria-expanded="false">
+      <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-sol"/></svg>
+      <span data-t="destinos.botao">Cachoeiras</span>
+    </button>
+    <button class="acao" type="button" aria-controls="painel-gravar" aria-expanded="false">
+      <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-gravar"/></svg>
+      <span data-t="gravador.gravar">Gravar trilha</span>
+    </button>
+    <button class="acao" type="button" aria-controls="painel-info" aria-expanded="false">
+      <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-guia"/></svg>
+      <span data-t="informacoes.titulo">Informações</span>
+    </button>
+  </nav>
+  <p id="cache-estado" class="cache-estado" role="status" hidden></p>
+</header>
+
+<!-- controles do mapa (botões de 44 px com nome para leitor de tela) -->
+<div class="controles" role="toolbar" aria-label="Controles do mapa" data-t-aria="mapa.controles" aria-orientation="vertical">
+  <button id="ctl-gps" class="controle" type="button" aria-pressed="false" aria-label="Mostrar onde estou" data-estado="desligado">
+    <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-gps"/></svg>
+    <span class="controle__texto">GPS</span>
+  </button>
+  <button id="ctl-bussola" class="controle" type="button" aria-label="Usar a bússola do celular" data-t-aria="gps.bussola" hidden>
+    <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-norte"/></svg>
+    <span class="controle__texto">N</span>
+  </button>
+  <button id="ctl-3d" class="controle" type="button" aria-pressed="true" aria-label="Ver o mapa em 2D">
+    <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-2d"/></svg>
+    <span class="controle__texto">2D</span>
+  </button>
+  <button id="ctl-camada" class="controle" type="button" aria-pressed="false" aria-label="Ver a foto de satélite de 2016">
+    <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-camadas"/></svg>
+    <span class="controle__texto">Satélite</span>
+  </button>
+  <button id="ctl-norte" class="controle" type="button" aria-label="Voltar o norte para cima" data-t-aria="mapa.norte_rotulo">
+    <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-norte"/></svg>
+    <span class="controle__texto" data-t="mapa.norte">Norte</span>
+  </button>
+  <button id="ctl-centro" class="controle" type="button" aria-label="Coordenada do centro do mapa" data-t-aria="mapa.coord_centro">
+    <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-ponto"/></svg>
+    <span class="controle__texto" data-t="mapa.coord_curto">Coord.</span>
+  </button>
+</div>
+
+<!-- O mapa é a página inteira: nasce na luz do minuto, sem tela de espera -->
+<div id="mapa" class="mapa" role="region" aria-label="Mapa 3D do vale de Itaitu" data-t-aria="acessibilidade.mapa" tabindex="-1"></div>
+<p id="mapa-erro" class="mapa-erro" role="alert" hidden></p>
+<noscript><p class="mapa-erro">Este mapa precisa de JavaScript ligado. Abra o link no Chrome ou no Safari.</p></noscript>
+
+<!-- rodapé: rumo do GPS (A), barra da gravação (A), faixa "saia até" e régua do dia (B) -->
+<div class="rodape">
+  <section id="rota-faixa" class="rota" aria-label="Destino do GPS" data-t-aria="gps.faixa" hidden></section>
+  <div id="gravando-barra" class="gravando-barra" hidden>
+    <span class="gravando-barra__ponto" aria-hidden="true"></span>
+    <p id="gravando-barra-texto" class="gravando-barra__texto num" aria-live="off"></p>
+    <button class="botao botao--linha" type="button" id="gravar-tela-barra" data-t="gravador.tela_escura">Tela escura</button>
+  </div>
+  <div id="hora-faixa" hidden></div>
+  <div id="hora-regua"></div>
+</div>
+
+<!-- Painel: destinos (folha deslizante no celular, coluna no desktop) -->
+<section id="painel-destinos" class="folha" aria-labelledby="painel-destinos-titulo" hidden data-tabuas="0" data-detalhe="0">
+  <div class="folha__cabeca">
+    <h2 id="painel-destinos-titulo" class="folha__titulo" tabindex="-1" data-t="destinos.titulo">Cachoeiras de Itaitu</h2>
+    <button class="folha__fechar" type="button" aria-label="Fechar Cachoeiras de Itaitu" data-t-fechar="destinos.titulo">
+      <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-fechar"/></svg>
+    </button>
+  </div>
+  <div class="folha__corpo">
+    <div id="destino-detalhe" class="destino-detalhe" hidden>
+      <button id="destino-fechar" class="botao botao--texto destino-detalhe__voltar" type="button" data-t="destinos.fechar">Fechar detalhes</button>
+      <div id="destino-corpo"></div>
+    </div>
+    <div class="folha__lista">
+      <p id="boas-vindas" class="boas-vindas" hidden></p>
+      <div id="marca-botoes" class="marca-botoes"></div>
+      <div class="busca" role="search">
+        <label for="busca" class="busca__rotulo" data-t="destinos.buscar_rotulo">Buscar por nome</label>
+        <input id="busca" class="busca__campo" type="search" inputmode="search" autocomplete="off" enterkeyhint="search" placeholder="Buscar cachoeira ou lugar" data-t-placeholder="destinos.buscar" aria-controls="busca-resultados">
+        <ul id="busca-resultados" class="busca__resultados" hidden></ul>
+      </div>
+      <div id="hora-horarios"></div>
+      <div id="hora-tabuas"></div>
+      <div id="destinos-lista" class="destinos-lista"></div>
+      <p id="marca-credito-painel" class="nota credito-painel" data-t="app.credito">feito pela Creat</p>
+    </div>
+  </div>
+</section>
+
+<!-- Painel: gravar trilha, importar GPX, marcar ponto -->
+<section id="painel-gravar" class="folha" aria-labelledby="painel-gravar-titulo" hidden>
+  <div class="folha__cabeca">
+    <h2 id="painel-gravar-titulo" class="folha__titulo" tabindex="-1" data-t="gravador.titulo">Gravar trilha</h2>
+    <button class="folha__fechar" type="button" aria-label="Fechar Gravar trilha" data-t-fechar="gravador.titulo">
+      <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-fechar"/></svg>
+    </button>
+  </div>
+  <div class="folha__corpo">
+    <p class="nota" data-t="gravador.aviso_tela">Página web não grava com a tela bloqueada.</p>
+    <div class="linha-botoes">
+      <button id="gravar-iniciar" class="botao botao--marca botao--grande" type="button">
+        <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-gravar"/></svg>
+        <span data-t="gravador.gravar">Gravar trilha</span>
+      </button>
+      <button id="gravar-pausar" class="botao botao--linha" type="button" hidden>
+        <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-pausa"/></svg>
+        <span data-t="gravador.pausar">Pausar</span>
+      </button>
+      <button id="gravar-parar" class="botao botao--marca" type="button" hidden><span data-t="gravador.parar">Parar e salvar</span></button>
+      <button id="gravar-tela" class="botao botao--linha" type="button" hidden><span data-t="gravador.tela_escura">Tela escura</span></button>
+    </div>
+    <p id="gravar-status" class="status num" aria-live="off"></p>
+
+    <h3 data-t="marcar.titulo">Marcar ponto</h3>
+    <div class="linha-botoes">
+      <button id="marcar-aqui" class="botao botao--linha" type="button" disabled aria-describedby="marcar-status">
+        <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-ponto"/></svg>
+        <span data-t="marcar.botao">Marcar ponto aqui</span>
+      </button>
+      <button id="marcar-ligar-gps" class="botao botao--texto" type="button" data-t="gps.ligar">Mostrar onde estou</button>
+    </div>
+    <p id="marcar-status" class="nota" data-t="marcar.aguardando_gps">aguardando o GPS</p>
+
+    <h3 data-t="gravador.importar_gpx">Importar GPX</h3>
+    <label class="botao botao--linha botao--arquivo" for="gpx-arquivo">
+      <span data-t="gravador.importar_gpx">Importar GPX</span>
+      <input id="gpx-arquivo" class="sr-only" type="file" accept=".gpx,application/gpx+xml,application/xml,text/xml">
+    </label>
+    <p class="nota" data-t="gravador.importar_ajuda">Escolha um arquivo .gpx do celular.</p>
+
+    <h3 data-t="gravador.minhas_trilhas">Minhas trilhas</h3>
+    <ul id="minhas-trilhas" class="lista-itens"></ul>
+
+    <h3 data-t="marcar.meus_pontos">Meus pontos</h3>
+    <p class="nota" data-t="marcar.so_neste_celular">Seus pontos ficam só neste celular.</p>
+    <ul id="meus-pontos" class="lista-itens"></ul>
+    <div id="pontos-exportar" class="linha-botoes" hidden>
+      <button id="pontos-exportar-geojson" class="botao botao--linha" type="button" data-t="marcar.exportar_geojson">Exportar GeoJSON</button>
+      <button id="pontos-exportar-gpx" class="botao botao--linha" type="button" data-t="marcar.exportar_gpx">Exportar GPX</button>
+    </div>
+  </div>
+</section>
+
+<!-- Painel: informações, segurança, leitura, armazenamento e créditos -->
+<section id="painel-info" class="folha" aria-labelledby="painel-info-titulo" hidden>
+  <div class="folha__cabeca">
+    <h2 id="painel-info-titulo" class="folha__titulo" tabindex="-1" data-t="informacoes.titulo">Informações</h2>
+    <button class="folha__fechar" type="button" aria-label="Fechar Informações" data-t-fechar="informacoes.titulo">
+      <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-fechar"/></svg>
+    </button>
+  </div>
+  <div class="folha__corpo">
+    <h2 class="folha__secao" data-t="seguranca.titulo">Segurança e emergência</h2>
+    <div id="info-seguranca"></div>
+
+    <h2 class="folha__secao" data-t="acessibilidade.titulo">Leitura e contraste</h2>
+    <div class="alternadores">
+      <button id="alt-economia" class="alternador" type="button" aria-pressed="false" aria-describedby="alt-economia-desc"><span data-t="economia.botao">Modo economia</span></button>
+      <p id="alt-economia-desc" class="nota" data-t="economia.descricao">Mapa em 2D, sem animação e sem som.</p>
+      <button id="alt-contraste" class="alternador" type="button" aria-pressed="false" aria-describedby="alt-contraste-desc"><span data-t="acessibilidade.contraste">Contraste para sol forte</span></button>
+      <p id="alt-contraste-desc" class="nota" data-t="acessibilidade.contraste_descricao">Preto e branco puros.</p>
+      <button id="alt-texto" class="alternador" type="button" aria-pressed="false"><span data-t="acessibilidade.texto_grande">Texto grande</span></button>
+      <div id="som-slot"></div>
+    </div>
+
+    <h2 class="folha__secao" data-t="armazenamento.guardar">Guardar o mapa no celular</h2>
+    <p id="armaz-rede" class="nota" hidden></p>
+    <p id="armaz-tamanho" class="status num"></p>
+    <p id="armaz-quando" class="nota"></p>
+    <p id="armaz-nova" class="aviso-honesto" data-t="armazenamento.nova_versao" hidden>Há uma versão nova do mapa.</p>
+    <p id="armaz-persistencia" class="nota" data-t="armazenamento.persistencia" hidden>O navegador pode apagar o mapa se faltar espaço.</p>
+    <div class="linha-botoes">
+      <button id="armaz-atualizar" class="botao botao--linha" type="button" data-t="armazenamento.atualizar">Atualizar mapa</button>
+      <button id="armaz-guardar" class="botao botao--linha" type="button" data-t="armazenamento.guardar_resto" hidden>Guardar o que faltou</button>
+    </div>
+    <p class="nota" data-t="armazenamento.instalar_iphone">No iPhone: toque em Compartilhar e depois em Adicionar à Tela de Início.</p>
+
+    <h2 class="folha__secao" data-t="informacoes.sobre">Sobre o mapa</h2>
+    <p data-t="informacoes.sobre_texto">Mapa 3D do vale, com relevo, ruas e rios.</p>
+    <p class="nota" data-t="hora.nublado">Em dia nublado, a hora de escurecer continua valendo.</p>
+    <h3 data-t="informacoes.creditos">Créditos do mapa</h3>
+    <ul id="info-creditos" class="lista-creditos"></ul>
+    <p id="armaz-versao" class="nota num"></p>
+  </div>
+</section>
+
+<!-- Hora da Serra: montagem do frontend B (o A não escreve dentro) -->
+<dialog id="hora-cartao" class="dialogo" aria-label="Cartão da trilha"></dialog>
+<div id="hora-demo-controle" hidden></div>
+<div id="hora-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+<!-- avisos do A -->
+<div id="app-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+<div id="aviso" class="aviso" role="status" hidden></div>
+
+<!-- SOS -->
+<dialog id="sos" class="dialogo dialogo--sos" aria-labelledby="sos-titulo">
+  <div class="sos">
+    <div class="sos__cabeca">
+      <h2 id="sos-titulo" tabindex="-1" data-t="sos.titulo">Sua posição agora</h2>
+      <button id="sos-fechar" class="folha__fechar" type="button" aria-label="Fechar" data-t-aria="sos.fechar">
+        <svg class="icone" aria-hidden="true" focusable="false" width="24" height="24"><use href="./icones/ui.svg#i-fechar"/></svg>
+      </button>
+    </div>
+    <p class="sos__rotulo" data-t="sos.decimal">graus decimais</p>
+    <p id="sos-decimal" class="sos__coord num" translate="no">–</p>
+    <p class="sos__rotulo" data-t="sos.gms">graus, minutos e segundos</p>
+    <p id="sos-gms" class="sos__gms num" translate="no"></p>
+    <p id="sos-info" class="sos__info" aria-live="polite"></p>
+    <a id="sos-sms" class="botao botao--sos-sms" aria-disabled="true">
+      <span data-t="sos.sms">Enviar minha posição por SMS</span>
+    </a>
+    <p class="nota" data-t="sos.sms_dica">SMS às vezes passa onde a internet não passa.</p>
+    <div id="sos-ligacoes" class="sos__ligacoes"></div>
+    <p class="sos__dica" data-t="sos.o_que_dizer">Na ligação, diga: Itaitu, Jacobina, Bahia. Depois leia a coordenada devagar.</p>
+    <p class="nota" data-t="sos.sem_sinal">A ligação não completou? Mande o SMS também.</p>
+    <ul id="sos-avisos" class="lista-info" hidden></ul>
+  </div>
+</dialog>
+
+<!-- Marcar ponto aqui -->
+<dialog id="marcar-ponto" class="dialogo" aria-labelledby="marcar-ponto-titulo">
+  <form id="marcar-form" class="form" method="dialog" novalidate>
+    <h2 id="marcar-ponto-titulo" data-t="marcar.titulo">Marcar ponto</h2>
+    <p id="marcar-aviso" class="nota"></p>
+    <label for="marcar-nome" data-t="marcar.nome">Nome do ponto</label>
+    <input id="marcar-nome" type="text" maxlength="60" required autocomplete="off" aria-describedby="marcar-nome-ajuda marcar-erro">
+    <p id="marcar-nome-ajuda" class="nota" data-t="marcar.nome_ajuda">Até 60 letras.</p>
+    <p id="marcar-erro" class="erro" role="alert" hidden></p>
+    <label for="marcar-tipo" data-t="marcar.tipo">Tipo</label>
+    <select id="marcar-tipo"></select>
+    <label for="marcar-nota" data-t="marcar.nota">Nota</label>
+    <textarea id="marcar-nota" maxlength="280" rows="3" aria-describedby="marcar-nota-ajuda"></textarea>
+    <p id="marcar-nota-ajuda" class="nota" data-t="marcar.nota_ajuda">Até 280 letras.</p>
+    <div class="linha-botoes">
+      <button class="botao botao--marca" type="submit" data-t="marcar.salvar">Salvar ponto</button>
+      <button id="marcar-cancelar" class="botao botao--linha" type="button" data-t="marcar.cancelar">Cancelar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Salvar trilha gravada -->
+<dialog id="salvar-trilha" class="dialogo" aria-labelledby="salvar-trilha-titulo">
+  <form id="salvar-trilha-form" class="form" method="dialog">
+    <h2 id="salvar-trilha-titulo" data-t="gravador.salvar">Salvar trilha</h2>
+    <label for="salvar-trilha-nome" data-t="gravador.nome">Nome da trilha</label>
+    <input id="salvar-trilha-nome" type="text" maxlength="80" autocomplete="off">
+    <label for="salvar-trilha-destino" data-t="gravador.destino">Destino da trilha</label>
+    <select id="salvar-trilha-destino"></select>
+    <div id="salvar-trilha-acoes" class="linha-botoes">
+      <button class="botao botao--marca" type="submit" data-t="gravador.salvar">Salvar trilha</button>
+      <button id="salvar-trilha-voltar" class="botao botao--linha" type="button" data-t="gravador.continuar">Continuar gravando</button>
+      <button id="salvar-trilha-descartar" class="botao botao--texto" type="button" data-t="gravador.descartar">Descartar gravação</button>
+    </div>
+    <div id="salvar-trilha-confirma" class="confirma" hidden>
+      <p data-t="gravador.descartar_pergunta">Descartar esta gravação? O traçado se perde.</p>
+      <div class="linha-botoes">
+        <button id="salvar-trilha-descartar-sim" class="botao botao--perigo" type="button" data-t="gravador.descartar">Descartar gravação</button>
+        <button id="salvar-trilha-descartar-nao" class="botao botao--linha" type="button" data-t="gravador.manter_gravacao">Manter gravação</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- Tela da gravação: quase preta (OLED gasta menos), trava contra toque no bolso -->
+<section id="tela-gravando" class="tela-gravando" aria-labelledby="tela-gravando-titulo" data-travada="0" hidden>
+  <h2 id="tela-gravando-titulo" tabindex="-1" data-t="gravador.titulo">Gravar trilha</h2>
+  <p id="tela-gravando-km" class="tela-gravando__num num">0 km</p>
+  <p id="tela-gravando-tempo" class="tela-gravando__num tela-gravando__num--tempo num">0 min</p>
+  <p id="tela-gravando-status" class="tela-gravando__status" aria-live="polite"></p>
+  <p class="tela-gravando__aviso" data-t="gravador.aviso_tela">Página web não grava com a tela bloqueada.</p>
+  <div class="tela-gravando__botoes" data-some-na-trava>
+    <button id="tela-gravando-travar" class="botao botao--escuro botao--grande" type="button"><span data-t="gravador.travar">Travar tela</span></button>
+    <button id="tela-gravando-pausar" class="botao botao--escuro" type="button"><span data-t="gravador.pausar">Pausar</span></button>
+    <button id="tela-gravando-passagem" class="botao botao--escuro" type="button" data-t="gravador.passagem">Marcar passagem</button>
+    <button id="tela-gravando-mapa" class="botao botao--escuro" type="button"><span data-t="gravador.ver_mapa">Ver o mapa</span></button>
+    <button id="tela-gravando-parar" class="botao botao--escuro" type="button" data-t="gravador.parar">Parar e salvar</button>
+  </div>
+  <p class="tela-gravando__trava" data-t="gravador.trava" hidden data-so-na-trava>Tela travada contra toque no bolso.</p>
+  <button id="tela-gravando-destravar" class="botao botao--escuro botao--grande tela-gravando__destravar" type="button" hidden data-t="gravador.destravar">Toque e segure para destravar</button>
+</section>
+</body>
+</html>

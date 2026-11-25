@@ -83,7 +83,9 @@ function servir(raiz) {
     }
     page.on('console', m => { if (m.type() === 'error') achados.push('console: ' + m.text()); });
     page.on('pageerror', e => achados.push('erro de script: ' + e.message));
-    page.on('requestfailed', r => { if (!/fonts\.(googleapis|gstatic)/.test(r.url())) achados.push('requisição falhou: ' + r.url() + ' (' + (r.failure() && r.failure().errorText) + ')'); });
+    // /api/pa/contar responde 204 a um sendBeacon/keepalive; o Chromium marca ERR_ABORTED e não é falha (alarme falso)
+    const contadorAbortado = r => /ERR_ABORTED/.test((r.failure() && r.failure().errorText) || '') && (() => { try { return new URL(r.url()).pathname === '/api/pa/contar'; } catch { return false; } })();
+    page.on('requestfailed', r => { if (!/fonts\.(googleapis|gstatic)/.test(r.url()) && !contadorAbortado(r)) achados.push('requisição falhou: ' + r.url() + ' (' + (r.failure() && r.failure().errorText) + ')'); });
     try { await page.goto(url, { waitUntil: 'load', timeout: 30000 }); }
     catch (e) { achados.push('não abriu: ' + e.message.split('\n')[0]); }
     await page.waitForTimeout(espera);

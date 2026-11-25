@@ -1,0 +1,112 @@
+{
+ "formato": "itaitu-pacote",
+ "versao": 1,
+ "gerado_em": "2026-11-20T17:40:00-03:00",
+ "pontos": [
+  {
+   "id": "cachoeira-inexistente-fixture",
+   "acao": "confirmar",
+   "nome": "Inexistente",
+   "tipo": "cachoeira",
+   "gps_media": [
+    -40.5012345,
+    -11.3801234
+   ],
+   "alt_m": 590,
+   "precisao_m": 6.5,
+   "n_amostras": 20,
+   "data": "2026-11-20",
+   "nota": "FIXTURE DE TESTE: coordenada fictícia, nunca aplicar nos dados reais"
+  },
+  {
+   "id": "cachoeira-veu-da-noiva",
+   "acao": "novo",
+   "nome": "Véu repetido",
+   "tipo": "cachoeira",
+   "gps_media": [
+    -40.5012345,
+    -11.3801234
+   ],
+   "alt_m": 590,
+   "precisao_m": 6.5,
+   "n_amostras": 20,
+   "data": "2026-11-20",
+   "nota": "FIXTURE DE TESTE: coordenada fictícia, nunca aplicar nos dados reais"
+  }
+ ],
+ "trilhas": [
+  {
+   "id": "pe-veu-da-noiva-1",
+   "destino_id": "cachoeira-do-sossego",
+   "nome": "Trilha do Sossego (fixture)",
+   "modo": "pe",
+   "fincada_por": "ACAGI",
+   "data": "2026-11-20",
+   "km": 1.48,
+   "desnivel_m": 50,
+   "duracao_s": 2280,
+   "coordenadas": [
+    [
+     -40.4950001,
+     -11.3726001,
+     540
+    ],
+    [
+     -40.4960002,
+     -11.3740002,
+     548
+    ],
+    [
+     -40.4975003,
+     -11.3760003,
+     561
+    ],
+    [
+     -40.4990004,
+     -11.3780004,
+     575
+    ],
+    [
+     -40.5012345,
+     -11.3801234,
+     590
+    ]
+   ],
+   "passagens": [
+    {
+     "lon": -40.4975003,
+     "lat": -11.3760003,
+     "nota": "porteira (fixture)"
+    }
+   ],
+   "perfil": [
+    [
+     0,
+     540
+    ],
+    [
+     25,
+     542
+    ],
+    [
+     50,
+     548
+    ],
+    [
+     75,
+     561
+    ],
+    [
+     100,
+     575
+    ],
+    [
+     125,
+     590
+    ]
+   ],
+   "sol_ajuste_min": -5
+  }
+ ],
+ "gpx": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><gpx version=\"1.1\" creator=\"Trilhas de Itaitu\" xmlns=\"http://www.topografix.com/GPX/1/1\"><metadata><name>fixture de teste</name></metadata></gpx>"
+}

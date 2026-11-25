@@ -50,24 +50,47 @@ p{margin:0;text-wrap:pretty}
 .marca{display:flex;align-items:center;gap:10px;text-decoration:none;min-height:var(--alvo);min-width:0}
 .marca svg{width:40px;height:30px;flex:none}
 .marca span{font-family:var(--f-display);font-size:22px;line-height:1;white-space:nowrap}
-.barra-zap{min-height:var(--alvo);padding:8px 16px;font-size:15px}
+.barra-zap{min-height:var(--alvo);padding:8px 16px;font-size:15px;gap:8px}
+.barra-zap .barra-zap-icone{width:20px;height:20px}
+.barra-zap.sem-zap .barra-zap-icone{display:none}
 .barra-links{order:3;width:100%;display:flex;gap:4px;margin:0 0 6px -10px;padding:0;list-style:none}
 .barra-links a{display:inline-flex;align-items:center;min-height:var(--alvo);padding:0 10px;font-weight:700;font-size:var(--t-menor);text-decoration:none;border-radius:10px}
 .barra-links a:hover{text-decoration:underline}
+/* celular: cabeçalho em UMA linha (logo + WhatsApp curto). A navegação mora no rodapé; nada de menu escondido. */
+@media (max-width:719px){
+  .barra .cx{flex-wrap:nowrap;min-height:56px}
+  .barra-links{display:none}
+  .marca{gap:8px}
+  .marca svg{width:36px;height:27px}
+  .marca span{font-size:20px}
+  .barra-zap{padding:6px 14px;gap:6px}
+  .barra-zap-longo{display:none}
+}
 
 /* ---------------------------------------------------------------- hero */
 .heroi{background:var(--ceu);border-bottom:var(--borda) solid var(--linha);padding:var(--r5) 0 var(--r7);position:relative;overflow:hidden}
-.heroi .cx{display:grid;gap:var(--r5)}
-.heroi h1{font-size:var(--t-h1);max-width:14ch}
-.heroi .sub{margin-top:var(--r4);font-size:var(--t-lead);max-width:46ch}
-/* palco da placa: reserva o espaço antes do JS (sem salto de layout) */
-.palco-placa{position:relative;display:grid;place-items:start center;min-height:clamp(250px, 64vw, 420px);margin-inline:auto;width:min(100%, 440px)}
-.palco-placa > svg,.palco-placa > img{width:min(88%, 380px)}
-.palco-placa .dica{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font:500 var(--t-micro)/1.3 var(--f-dado);color:var(--apagado);white-space:nowrap}
+/* Dobra que converte (11/11/2026): no celular o título do nicho, o campo e o botão cabem na 1ª tela
+   (360x640: botão termina antes de 600 px) e a placa vem logo abaixo, com um pedaço à vista chamando a rolar.
+   Ordem (marcação e tela): .heroi-cabeca + .heroi-corpo (formulário) + .palco-placa + .heroi-resto (texto longo) */
+.heroi .cx{display:grid;gap:var(--r4);grid-template-areas:"cabeca" "corpo" "placa" "resto"}
+.heroi-cabeca{grid-area:cabeca}
+.heroi-corpo{grid-area:corpo}
+.heroi-resto{grid-area:resto;display:grid;gap:var(--r4)}
+.heroi h1{font-size:var(--t-h1);max-width:16ch}
+/* título por nicho: <html data-nicho> vem de assets/nicho-cedo.js, antes da primeira pintura; sem JS fica "seu negócio" */
+html[data-nicho] .h1-v[data-v=""]{display:none}
+html[data-nicho="barbearia"] .h1-v[data-v="barbearia"],html[data-nicho="salao"] .h1-v[data-v="salao"],html[data-nicho="academia"] .h1-v[data-v="academia"]{display:inline !important}
+.heroi .apoio{margin-top:var(--r3);font-size:var(--t-lead);font-weight:600;line-height:1.4;max-width:40ch}
+.heroi .sub{font-size:var(--t-lead);max-width:46ch}
+.heroi-resto .origem{margin-top:0}
+/* palco da placa: reserva o espaço antes do JS (sem salto de layout); T6 monta dentro */
+.palco-placa{grid-area:placa;position:relative;display:grid;place-items:start center;height:clamp(250px, 68vw, 320px);margin-inline:auto;width:min(100%, 440px)}
+.palco-placa > :not(.porta){width:min(72%, 320px);margin-top:10px}
 /* quadro de vidro de noite atrás da placa: a porta */
-.porta{position:absolute;inset:0 6% 18px;border:var(--borda-g) solid var(--linha);border-bottom:0;border-radius:28px 28px 0 0;background:linear-gradient(160deg, var(--vidro-reflexo) 0 18%, transparent 18% 32%, var(--vidro-reflexo) 32% 36%, transparent 36%) , var(--vidro);z-index:0}
+.porta{position:absolute;inset:0 6% 0;border:var(--borda-g) solid var(--linha);border-bottom-width:8px;border-radius:28px 28px 0 0;background:linear-gradient(160deg, var(--vidro-reflexo) 0 18%, transparent 18% 32%, var(--vidro-reflexo) 32% 36%, transparent 36%) , var(--vidro);z-index:0}
 .porta::after{content:"";position:absolute;left:50%;top:-2px;width:14px;height:14px;transform:translate(-50%,-50%);border-radius:50%;background:var(--corrente);border:3px solid var(--linha)}
 .palco-placa > :not(.porta){position:relative;z-index:1}
+.palco-placa > .dica-palco{display:none}
 
 /* formulário do hero */
 .abrir{display:grid;gap:var(--r4);margin-top:var(--r5);max-width:520px}
@@ -82,12 +105,18 @@ p{margin:0;text-wrap:pretty}
 .campo[data-estado="erro"] input{border-color:var(--alerta);box-shadow:3px 3px 0 var(--alerta)}
 .campo[data-estado="ok"] .ajuda{color:var(--ok)}
 .contador-giz{font:500 var(--t-micro)/1 var(--f-dado);color:var(--apagado);justify-self:end}
+/* campo do nome: o "0 de 40" na linha do rótulo (uma linha a menos na dobra) */
+.campo-nome{grid-template-columns:minmax(0,1fr) auto;align-items:center}
+.campo-nome label{grid-column:1;grid-row:1}
+.campo-nome .contador-giz{grid-column:2;grid-row:1}
+.campo-nome input,.campo-nome .erro{grid-column:1 / -1}
+.nota-nome{font-size:var(--t-nota);color:var(--apagado);margin-top:calc(-1 * var(--r1))}
 
 /* chips de nicho: alvo de 44 px; os ativos são radio, os outros "avise-me" */
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;border:0}
 .chips legend{font-weight:800;font-size:var(--t-menor);margin-bottom:8px;padding:0}
 .chip{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:var(--alvo);padding:0 16px;border:var(--borda) solid var(--linha);border-radius:var(--raio-pilula);background:var(--papel);font-weight:700;font-size:15px;cursor:pointer;user-select:none;transition:transform var(--duracao-curta) var(--curva-saida),background-color var(--duracao-curta)}
-.chip input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;-webkit-appearance:none;appearance:none;margin:0;cursor:pointer}
 .chip svg{width:22px;height:22px}
 .chip:has(input:checked),.chip[aria-pressed="true"]{background:var(--sol);color:var(--sol-tinta);box-shadow:var(--sombra-p)}
 .chip:has(input:focus-visible){outline:3px solid var(--sol);outline-offset:3px;box-shadow:0 0 0 6px var(--linha)}
@@ -95,6 +124,54 @@ p{margin:0;text-wrap:pretty}
 .chip-avise::after{content:"avise-me";font:500 11.5px/1 var(--f-dado);text-transform:uppercase;letter-spacing:.06em;margin-left:2px}
 .abrir .btn-sol{justify-self:start}
 .dica-arrastar{font-size:var(--t-nota);color:var(--apagado)}
+
+/* site de exemplo do nicho (11/11): só com html[data-nicho] da chegada; 88 px, o lugar da Cidade */
+.exemplo-site{display:none;grid-template-rows:auto 1fr;height:88px;min-width:0;margin-top:-1px;border:var(--borda) solid var(--linha);border-radius:var(--raio-p);background:var(--papel);color:var(--tinta);text-decoration:none;overflow:hidden;box-shadow:var(--sombra-p);-webkit-tap-highlight-color:transparent}
+html[data-nicho="barbearia"]:not([data-sem-exemplo]) .exemplo-site[data-nicho-exemplo="barbearia"],
+html[data-nicho="salao"]:not([data-sem-exemplo]) .exemplo-site[data-nicho-exemplo="salao"],
+html[data-nicho="academia"]:not([data-sem-exemplo]) .exemplo-site[data-nicho-exemplo="academia"]{display:grid}
+/* o selo EXEMPLO tem a linha inteira (marca de honestidade, nunca cortado); nome e pílula dividem a segunda */
+.exemplo-faixa{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:6px;padding:5px 10px 5px 12px;background:var(--lousa);color:var(--giz)}
+.exemplo-selo{grid-column:1 / -1;font:500 11px/1.2 var(--f-dado);letter-spacing:.05em;color:var(--giz-apagado);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exemplo-nome{grid-column:1;grid-row:2;font:400 min(17px, 4.6vw)/1.15 var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exemplo-pilula{grid-column:2;grid-row:2;padding:5px 8px;border:2px solid var(--linha);border-radius:var(--raio-pilula);background:var(--sol);color:var(--sol-tinta);font:800 clamp(12px, 3.6vw, 13px)/1 var(--f-texto);white-space:nowrap}
+.exemplo-linha{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:0;padding:0 14px 0 12px;border-top:var(--borda) solid var(--linha);font-weight:800;font-size:14px;line-height:1.15;text-wrap:balance}
+.exemplo-seta{position:relative;flex:none;width:20px;height:2.5px;margin-right:2px;border-radius:2px;background:currentColor}
+.exemplo-seta::after{content:"";position:absolute;right:-1px;top:50%;width:8px;height:8px;border-top:2.5px solid currentColor;border-right:2.5px solid currentColor;transform:translateY(-50%) rotate(45deg)}
+.exemplo-site:focus-visible{outline:3px solid var(--sol);outline-offset:3px;box-shadow:0 0 0 6px var(--linha)}
+.exemplo-site:hover .exemplo-linha{text-decoration:underline;text-underline-offset:.18em}
+@media (prefers-reduced-motion:no-preference){.exemplo-site,.exemplo-seta{transition:transform var(--duracao-curta) var(--curva-saida)}.exemplo-site:active{transform:translate(2px,2px)}.exemplo-site:hover .exemplo-seta{transform:translateX(3px)}}
+
+/* prévia em modo exemplo: sem copiar, Testar, Quero e preço; um botão leva ao nome */
+.rotulo-prefixo-exemplo,.carregando-exemplo,.carregando-falhou,.previa-exemplo-nome,[data-exemplo-botao]{display:none}
+.previa[data-modo="exemplo"] .rotulo-prefixo,.previa[data-modo="exemplo"] .carregando-montando,
+.previa[data-modo="exemplo"] #previa-copiar,.previa[data-modo="exemplo"] #previa-testar,.previa[data-modo="exemplo"] #previa-quero,
+.previa[data-modo="exemplo"] .previa-nota{display:none}
+.previa[data-modo="exemplo"] .rotulo-prefixo-exemplo{display:inline}
+.previa[data-modo="exemplo"] .carregando-exemplo{display:block}
+/* o exemplo não veio: aviso no lugar do carregando, e o botão do nome embaixo é o caminho */
+.previa[data-modo="exemplo"][data-falhou] .carregando-exemplo{display:none}
+.previa[data-modo="exemplo"][data-falhou] .carregando-falhou{display:block;max-width:30ch;text-wrap:balance}
+.previa[data-modo="exemplo"] .previa-exemplo-nome{display:flex;grid-column:1 / -1;justify-content:center;min-height:56px;font-size:17px}
+.previa[data-exemplo-nicho="barbearia"] [data-exemplo-botao="barbearia"],.previa[data-exemplo-nicho="salao"] [data-exemplo-botao="salao"],.previa[data-exemplo-nicho="academia"] [data-exemplo-botao="academia"]{display:inline}
+
+/* dobra no celular: só o necessário para ver o site; a placa menor logo abaixo do botão */
+@media (max-width:719px){
+  .heroi{padding:var(--r4) 0 var(--r6)}
+  .heroi .olho{display:none}
+  .heroi h1{font-size:clamp(28px, 8.4vw, 40px);max-width:none;line-height:1.08}
+  .heroi .apoio{margin-top:var(--r2);font-size:17px}
+  .abrir{margin-top:0;gap:var(--r3)}
+  .abrir .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .abrir .chip{justify-content:center;text-align:center;min-height:56px;padding:4px 8px;font-size:14px;line-height:1.2;border-radius:var(--raio-p)}
+  .abrir .btn-sol{width:100%}
+  .contador-giz{font-size:var(--t-nota)}
+  .chip-avise::after{font-size:var(--t-nota)}
+  .linha-acao .dica-arrastar{display:none}
+  .palco-placa{height:236px;width:min(100%, 380px)}
+  .palco-placa > :not(.porta){width:min(58%, 230px);margin-top:12px}
+  .palco-placa > .dica-palco{display:block;position:absolute;left:50%;bottom:16px;width:auto;margin:0;transform:translateX(-50%);z-index:2;font-size:var(--t-nota);font-weight:700;color:var(--giz);white-space:nowrap}
+}
 
 /* ---------------------------------------------------------------- prévia em tela cheia */
 .previa{position:fixed;inset:0;z-index:var(--z-previa);display:grid;grid-template-rows:auto 1fr auto;background:var(--fundo)}
@@ -130,8 +207,6 @@ p{margin:0;text-wrap:pretty}
 .cartao-preco h3{font-size:var(--t-h3)}
 .cartao-preco .corpo{display:flex;flex-direction:column;gap:var(--r4);padding:var(--r5);flex:1}
 .cartao-preco .compra{margin-top:auto}
-.cartao-preco.recomendado{border-width:var(--borda-g);box-shadow:var(--sombra-g)}
-.cartao-preco.recomendado header{background:var(--sol);color:var(--sol-tinta)}
 .selo{display:inline-block;margin-bottom:var(--r2);font:500 var(--t-micro)/1 var(--f-dado);letter-spacing:.08em;text-transform:uppercase;border:2px solid currentColor;border-radius:var(--raio-pilula);padding:6px 10px}
 .preco{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;margin-top:var(--r3)}
 .preco strong{font:400 var(--t-preco)/1 var(--f-display)}
@@ -151,7 +226,7 @@ p{margin:0;text-wrap:pretty}
 
 /* ---------------------------------------------------------------- sede ao vivo (janela de vidro de noite) */
 .janela-sede{position:relative;margin:0;background:var(--vidro);border:var(--borda-g) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra-g);overflow:hidden;color:var(--giz)}
-.janela-sede img,.janela-sede canvas{width:100%;aspect-ratio:16/10;object-fit:cover}
+.janela-sede [data-poster] img,.janela-sede > canvas{width:100%;aspect-ratio:16/10;object-fit:cover} /* nunca o que a cena desenha dentro de [data-sede-palco] (classes sv-*) */
 .janela-sede .ver-ao-vivo{position:absolute;left:50%;bottom:var(--r4);transform:translateX(-50%)}
 .janela-sede figcaption{padding:var(--r3) var(--r4);font-size:var(--t-nota);border-top:var(--borda) solid var(--linha);background:var(--vidro)}
 .selo-demo{position:absolute;top:var(--r3);left:var(--r3);font:500 var(--t-micro)/1 var(--f-dado);text-transform:uppercase;letter-spacing:.08em;padding:6px 10px;border-radius:8px;background:var(--giz);color:var(--lousa);border:2px solid var(--linha)}
@@ -185,18 +260,43 @@ p{margin:0;text-wrap:pretty}
 .rodape nav ul{display:flex;flex-wrap:wrap;gap:4px 18px;margin:0;padding:0;list-style:none}
 .rodape nav a{display:inline-flex;align-items:center;min-height:var(--alvo);font-weight:700}
 .rodape .discreto{font-size:var(--t-nota);color:var(--apagado)}
-.rodape .discreto a{color:var(--apagado)}
+.nq{white-space:nowrap}
+.rodape .discreto a{color:var(--apagado);display:inline-flex;align-items:center;min-height:var(--alvo)}
 
 /* ---------------------------------------------------------------- WhatsApp flutuante */
 .zap-flutuante{position:fixed;right:var(--gut-d);bottom:calc(16px + env(safe-area-inset-bottom, 0px));z-index:var(--z-flutuante);min-height:52px;padding:8px 18px 8px 14px;font-size:15px;background:var(--papel)}
 .zap-flutuante svg{width:24px;height:24px}
 body.com-previa .zap-flutuante,body.com-consentimento .zap-flutuante{display:none}
+/* fora da tela enquanto o hero aparece (nunca em cima do campo do nome) e quando cobre um botão principal (vitrine.js) */
+body.heroi-na-tela .zap-flutuante,.zap-flutuante.zap-recolhido{opacity:0;visibility:hidden;pointer-events:none;transform:translateY(12px)}
+@media (prefers-reduced-motion:no-preference){.zap-flutuante{transition:opacity var(--duracao-curta) var(--curva-saida),transform var(--duracao-curta) var(--curva-saida),visibility 0s}body.heroi-na-tela .zap-flutuante,.zap-flutuante.zap-recolhido{transition:opacity var(--duracao-curta) var(--curva-saida),transform var(--duracao-curta) var(--curva-saida),visibility 0s var(--duracao-curta)}}
+@media (prefers-reduced-motion:reduce){body.heroi-na-tela .zap-flutuante,.zap-flutuante.zap-recolhido{transform:none}}
 
 /* ---------------------------------------------------------------- consentimento: aceitar e recusar com o MESMO peso */
-.consentimento{position:fixed;left:var(--gut);right:var(--gut-d);bottom:calc(12px + env(safe-area-inset-bottom, 0px));z-index:var(--z-consentimento);display:grid;gap:var(--r3);max-width:560px;margin-inline:auto;padding:var(--r4);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra)}
+.consentimento{position:fixed;left:var(--gut);right:var(--gut-d);bottom:calc(8px + env(safe-area-inset-bottom, 0px));z-index:var(--z-consentimento);display:grid;gap:var(--r2);max-width:560px;margin-inline:auto;padding:var(--r3) var(--r4);background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio);box-shadow:var(--sombra)}
 .consentimento p{font-size:var(--t-menor)}
+body.com-consentimento{padding-bottom:var(--altura-consentimento,0px)}
+/* sai da frente da sede embutida (vitrine.js): desce em 200 ms; volta subindo em 260 ms */
+.consentimento{transition:transform 260ms var(--curva-saida),opacity 260ms var(--curva-saida),visibility 0s}
+.consentimento.is-recuado{transform:translateY(calc(100% + 24px));opacity:0;visibility:hidden;transition:transform 200ms cubic-bezier(.4,0,1,1),opacity 200ms cubic-bezier(.4,0,1,1),visibility 0s 200ms}
+@media (prefers-reduced-motion:reduce){.consentimento,.consentimento.is-recuado{transform:none}}
 .consentimento .botoes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.consentimento .btn{min-height:48px;background:var(--papel);color:var(--tinta)} /* nenhum dos dois é amarelo: escolha livre */
+.consentimento .btn{min-height:var(--alvo);padding:6px 16px;background:var(--papel);color:var(--tinta)} /* nenhum dos dois é amarelo: escolha livre */
+.consentimento .cons-curto{display:none}
+/* Com um formulário na tela (vitrine.js, CH-05 e PG-12): faixa de até 64 px colada no rodapé, texto curto e os dois
+   botões na mesma linha, com 44 px. O body e o scroll-padding reservam a altura dela, então nenhum campo fica embaixo. */
+.consentimento.is-faixa{left:0;right:0;bottom:0;max-width:none;margin:0;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 10px;padding:6px var(--gut-d) calc(6px + env(safe-area-inset-bottom, 0px)) var(--gut);border-width:var(--borda) 0 0;border-radius:0;box-shadow:none}
+.consentimento.is-faixa .cons-longo{display:none}
+.consentimento.is-faixa .cons-curto{display:block;font-size:12px;line-height:1.25;font-weight:600}
+.consentimento.is-faixa .cons-curto a{font-weight:800}
+.consentimento.is-faixa .botoes{grid-template-columns:auto auto;gap:8px}
+.consentimento.is-faixa .btn{min-height:var(--alvo);padding:0 10px;font-size:14px}
+@media (max-width:379px){.consentimento.is-faixa .cons-curto{font-size:11px;line-height:1.2}.consentimento.is-faixa .btn{padding:0 8px}}
+/* foco num campo (teclado aberto): a faixa sai da frente e volta quando o foco sai */
+.consentimento.is-faixa.is-topo{top:var(--topo-consentimento,0px);bottom:auto;padding-top:6px;padding-bottom:6px;border-width:0 0 var(--borda)}
+.consentimento.is-trocando{opacity:0;transition:none}
+.consentimento.is-sem-lugar,.consentimento.is-digitando{transform:translateY(calc(100% + 24px));opacity:0;visibility:hidden;pointer-events:none}
+@media (min-width:720px){.consentimento.is-faixa{max-width:none}.consentimento.is-faixa .cons-curto{font-size:14px}}
 
 /* ---------------------------------------------------------------- carregamento desenhado (nunca tela branca) */
 .carregando{display:grid;place-items:center;gap:var(--r4);min-height:60vh;padding:var(--r6) var(--gut);background:var(--fundo);color:var(--tinta);text-align:center}
@@ -236,17 +336,35 @@ body.com-previa .aviso{bottom:calc(var(--barra-previa) + 16px + env(safe-area-in
 @media (min-width:1000px){
   .barra-links a{font-size:var(--t-corpo)}
   .heroi{padding:var(--r6) 0 calc(var(--r7) + 16px)}
-  .heroi .cx{grid-template-columns:1.05fr .95fr;grid-template-areas:"texto placa";align-items:start;column-gap:var(--r7)}
-  .heroi-texto{grid-area:texto;padding-top:var(--r5)}
-  .palco-placa{grid-area:placa;min-height:520px;width:100%}
-  .palco-placa > svg,.palco-placa > img{width:min(82%, 420px)}
+  .heroi .cx{grid-template-columns:1.05fr .95fr;grid-template-areas:"cabeca placa" "corpo placa" "resto placa";grid-template-rows:auto auto 1fr;align-items:start;column-gap:var(--r7);row-gap:var(--r5)}
+  .heroi-cabeca{padding-top:var(--r5)}
+  .palco-placa{height:520px;width:100%}
+  .palco-placa > :not(.porta){width:min(82%, 420px);margin-top:16px}
   .passos{grid-template-columns:repeat(4,1fr)}
   .passos li{padding:80px var(--r5) var(--r5)}
   .precos-grade{grid-template-columns:1fr 1fr 1fr;align-items:stretch}
   .precos-grade .abertura{grid-column:auto}
-  .sede-grade{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--r6);align-items:center}
   .chamada .painel{grid-template-columns:1fr auto;align-items:center;padding:var(--r6)}
 }
+
+/* ---------------------------------------------------------------- quem monta o seu site (home e /abrir/)
+   Para quem chegou por anúncio e nunca ouviu falar da Creat: quem é, de onde, como falar, 3 passos.
+   Nada de número de clientes, selo ou depoimento: só o que a página prova (sede e sites rotulados). */
+.quem-monta{display:grid;gap:var(--r4);padding:var(--r5);background:var(--ceu);border:var(--borda) solid var(--linha);border-radius:var(--raio)}
+.quem-monta .olho{margin-bottom:0}
+.quem-monta h2{font-size:var(--t-h3)}
+.quem-monta p{max-width:var(--medida)}
+.quem-passos{margin:0;padding:0;list-style:none;display:grid;gap:10px;counter-reset:quem}
+.quem-passos li{counter-increment:quem;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start}
+.quem-passos li::before{content:counter(quem);display:grid;place-items:center;width:36px;height:36px;background:var(--sol);color:var(--sol-tinta);border:var(--borda) solid var(--linha);border-radius:var(--raio-p);font:400 20px/1 var(--f-display)}
+.quem-passos b{font-weight:800}
+.quem-contato a{font-weight:800;overflow-wrap:anywhere}
+.quem-links{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+.quem-links a{display:inline-flex;align-items:center;gap:8px;min-height:var(--alvo);padding:6px 14px;background:var(--papel);border:var(--borda) solid var(--linha);border-radius:var(--raio-pilula);font-weight:700;font-size:var(--t-menor);text-decoration:none;color:var(--tinta)}
+@media (hover:hover){.quem-links a:hover{background:var(--sol);color:var(--sol-tinta)}}
+.rotulo-exemplo{font:500 var(--t-micro)/1 var(--f-dado);text-transform:uppercase;letter-spacing:.06em;padding:4px 6px;border:1.5px dashed currentColor;border-radius:6px;opacity:.85}
+.quem-monta .notas,.quem-monta .nota{font-size:var(--t-nota);color:var(--apagado)}
+@media (min-width:860px){.quem-passos{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--r4)}}
 
 /* ---------------------------------------------------------------- movimento reduzido */
 @media (prefers-reduced-motion: reduce){
@@ -254,3 +372,23 @@ body.com-previa .aviso{bottom:calc(var(--barra-previa) + 16px + env(safe-area-in
   *,*::before,*::after{animation-duration:1ms !important;animation-iteration-count:1 !important;animation-delay:0s !important;transition-duration:1ms !important}
   .carregando .placa-mini{animation:none}
 }
+
+/* ---------------------------------------------------------------- mutirão de venda, 11/11 */
+/* Prévia aberta sem escolha de medição: a faixa fica sobre a prévia, logo acima dos dois botões de baixo
+   (vitrine.js mede a barra e grava --base-previa). Nunca cobre "Testar" nem "Quero este site no ar". */
+body.com-previa .consentimento.is-faixa{top:auto;bottom:var(--base-previa,0px);padding-bottom:6px;border-width:var(--borda) 0}
+/* "Testar no meu WhatsApp" é o caminho secundário: sem fundo e sem sombra; o único botão cheio é o de pedir */
+.previa-base #previa-testar{background:transparent;box-shadow:none;font-weight:700}
+/* topo da prévia no celular estreito: "copiar link" vira só o ícone (o texto fica para o leitor de tela) e
+   "Prévia do seu site ·" também, porque a faixa PRÉVIA logo abaixo já diz isso; o nome do negócio cabe inteiro */
+#previa-copiar .copiar-icone{display:none}
+@media (max-width:400px){
+  #previa-copiar{width:var(--alvo);padding:0;flex:none}#previa-copiar .copiar-icone{display:block;width:22px;height:22px}
+  #previa-copiar .copiar-texto,.previa-topo .rotulo-prefixo{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+}
+.carregando .placa-mini-aberta{transform-origin:50% 0}
+.carregando-nome{display:block;margin-top:6px;font:400 var(--t-h3)/1.15 var(--f-display);overflow-wrap:anywhere}
+/* seção "Teste de verdade": o pedido do site logo abaixo do formulário */
+.teste-pedir{display:grid;gap:var(--r2);margin-top:var(--r4)}
+.teste-pedir-nome{font-weight:700;overflow-wrap:anywhere}
+.teste-pedir-nota{font-size:var(--t-nota);color:var(--apagado)}

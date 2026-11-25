@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <!-- Ícones da interface (Paleta, 20/11/2026). Grade 24x24, traço 2 em currentColor, ponta redonda.
+       Uso: <svg class="icone" aria-hidden="true"><use href="./icones/ui.svg#i-gps"/></svg>
+       O texto do botão diz o que ele faz; o ícone é sempre aria-hidden.
+       Nenhuma marca de terceiros: i-whatsapp é um balão de conversa genérico, não o logotipo. -->
+
+  <symbol id="i-norte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>norte</title>
+    <path d="M12 2.5 L17.5 20 L12 16.2 L6.5 20 Z"/>
+    <path fill="currentColor" stroke="none" d="M12 2.5 L12 16.2 L6.5 20 Z"/>
+  </symbol>
+
+  <symbol id="i-camadas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>camadas</title>
+    <path d="M12 3.5 L21 8.5 L12 13.5 L3 8.5 Z"/>
+    <path d="M3 12.5 L12 17.5 L21 12.5"/>
+    <path d="M3 16.5 L12 21.5 L21 16.5"/>
+  </symbol>
+
+  <symbol id="i-3d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>relevo 3D</title>
+    <path d="M12 2.5 L20.5 7.2 V16.8 L12 21.5 L3.5 16.8 V7.2 Z"/>
+    <path d="M3.5 7.2 L12 12 L20.5 7.2"/>
+    <path d="M12 12 V21.5"/>
+  </symbol>
+
+  <symbol id="i-2d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>mapa 2D</title>
+    <path d="M3 6.5 L9 4.5 L15 6.5 L21 4.5 V17.5 L15 19.5 L9 17.5 L3 19.5 Z"/>
+    <path d="M9 4.5 V17.5"/>
+    <path d="M15 6.5 V19.5"/>
+  </symbol>
+
+  <symbol id="i-gps" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>minha posição</title>
+    <circle cx="12" cy="12" r="7"/>
+    <circle fill="currentColor" stroke="none" cx="12" cy="12" r="2.8"/>
+    <path d="M12 1.8 V5 M12 19 V22.2 M1.8 12 H5 M19 12 H22.2"/>
+  </symbol>
+
+  <symbol id="i-gravar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>gravar trilha</title>
+    <circle cx="12" cy="12" r="8.5"/>
+    <circle fill="currentColor" stroke="none" cx="12" cy="12" r="4.6"/>
+  </symbol>
+
+  <symbol id="i-pausa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>pausar</title>
+    <rect fill="currentColor" stroke="none" x="6" y="4.5" width="4.2" height="15" rx="1"/>
+    <rect fill="currentColor" stroke="none" x="13.8" y="4.5" width="4.2" height="15" rx="1"/>
+  </symbol>
+
+  <symbol id="i-ponto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>marcar ponto</title>
+    <path d="M12 21.5 C12 21.5 5 14.6 5 9.6 A7 7 0 0 1 19 9.6 C19 14.6 12 21.5 12 21.5 Z"/>
+    <circle fill="currentColor" stroke="none" cx="12" cy="9.6" r="2.6"/>
+  </symbol>
+
+  <symbol id="i-sos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>socorro</title>
+    <circle cx="12" cy="12" r="9.2"/>
+    <circle cx="12" cy="12" r="3.8"/>
+    <path d="M5.5 5.5 L9.3 9.3 M18.5 5.5 L14.7 9.3 M5.5 18.5 L9.3 14.7 M18.5 18.5 L14.7 14.7"/>
+  </symbol>
+
+  <symbol id="i-compartilhar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>compartilhar</title>
+    <path d="M12 3 V14.5"/>
+    <path d="M7.5 7.5 L12 3 L16.5 7.5"/>
+    <path d="M5 11 V20.5 H19 V11"/>
+  </symbol>
+
+  <symbol id="i-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>sol</title>
+    <circle fill="currentColor" stroke="none" cx="12" cy="12" r="4.6"/>
+    <path d="M12 2 V4.4 M12 19.6 V22 M2 12 H4.4 M19.6 12 H22 M4.9 4.9 L6.6 6.6 M17.4 17.4 L19.1 19.1 M4.9 19.1 L6.6 17.4 M17.4 6.6 L19.1 4.9"/>
+  </symbol>
+
+  <symbol id="i-sombra" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>sombra da serra</title>
+    <circle cx="12" cy="12" r="8"/>
+    <path fill="currentColor" stroke="none" d="M12 4 A8 8 0 0 0 12 20 Z"/>
+  </symbol>
+
+  <symbol id="i-guia" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>guia</title>
+    <circle fill="currentColor" stroke="none" cx="10" cy="4.3" r="2.3"/>
+    <path d="M10.2 8.2 L9.4 14 L6.5 21"/>
+    <path d="M9.4 14 L12.6 16.8 L13.4 21"/>
+    <path d="M10.2 9.2 L14.2 12"/>
+    <path d="M16.8 8.5 V21.5"/>
+  </symbol>
+
+  <symbol id="i-comer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>onde comer</title>
+    <path d="M5 3 V8 A2.5 2.5 0 0 0 10 8 V3"/>
+    <path d="M7.5 3 V21"/>
+    <path d="M17.5 21 V3 C15 4.5 14.3 9 15 12.5 H17.5"/>
+  </symbol>
+
+  <symbol id="i-whatsapp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>conversa</title>
+    <path d="M4 20.5 L5.4 16.4 A8.6 8.6 0 1 1 8.6 19.4 Z"/>
+    <circle fill="currentColor" stroke="none" cx="8.6" cy="12" r="1.25"/>
+    <circle fill="currentColor" stroke="none" cx="12.4" cy="12" r="1.25"/>
+    <circle fill="currentColor" stroke="none" cx="16.2" cy="12" r="1.25"/>
+  </symbol>
+
+  <symbol id="i-fechar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <title>fechar</title>
+    <path d="M6 6 L18 18 M18 6 L6 18"/>
+  </symbol>
+</svg>

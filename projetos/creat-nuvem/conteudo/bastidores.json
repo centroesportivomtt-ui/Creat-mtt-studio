@@ -1,0 +1,84 @@
+{
+  "_sobre": "Textos de /bastidores/ (página secundária para quem desenvolve). A primeira linha visível vem antes do preço. Preço por {{precos.bastidores}}: chave nova a acrescentar em dados/precos.json (valor de referência 67). Base: projetos/loja/index.html e projetos/loja/lancamento/.",
+
+  "seo": {
+    "titulo": "Bastidores: a agência de 15 agentes da Creat | Creat",
+    "descricao": "Os 15 agentes, as skills e o kit 3D que a Creat usa por dentro, para quem quer montar a própria agência no Claude Code."
+  },
+
+  "aviso": "Para quem quer montar a própria agência. Exige Claude Code, assinatura paga da Anthropic, por conta de quem compra.",
+
+  "titulo": "A equipe da Creat, por dentro.",
+  "subtitulo": "São os mesmos agentes que montam os sites do Porta Aberta: o diretor planeja, a designer cria as cores, o frontend constrói, o revisor lê o código e o QA testa no navegador. Tudo roda no seu Claude Code, no seu repositório.",
+
+  "pacote": {
+    "titulo": "O que vem no pacote",
+    "itens": [
+      "15 agentes com cargo, regras de qualidade e ferramentas, do diretor ao DevOps",
+      "As skills da casa: ideação, direção de arte, 3D em estilo desenho, verificação visual, navegador e definição de pronto",
+      "O fluxo que divide o projeto em ondas e deixa relatório a cada etapa",
+      "O kit 3D em estilo desenho para Three.js, o mesmo da sede",
+      "A sede 3D com modo ao vivo, que mostra qual agente está trabalhando",
+      "O site Fio no Couro como exemplo de saída: um site de barbearia com pedido de horário pelo WhatsApp, com dados de exemplo para trocar"
+    ]
+  },
+
+  "preco": {
+    "valor": "R$ {{precos.bastidores}}",
+    "periodo": "pagamento único",
+    "botao": "Comprar os Bastidores",
+    "emConfiguracao": "Link de pagamento em configuração",
+    "nota": "O pacote não inclui acesso ao Claude. Os tokens que cada agente usa são cobrados na sua conta da Anthropic."
+  },
+
+  "lite": {
+    "titulo": "Creat Nuvem Lite, grátis",
+    "texto": "Três agentes que trabalham em dupla com você: o frontend constrói, o revisor lê o código e o QA testa no navegador, com prints no celular e no desktop. Bom para ver se o jeito de trabalhar combina com você antes de comprar. Licença MIT.",
+    "botao": "Pedir o Lite por e-mail",
+    "assuntoEmail": "Quero o Creat Nuvem Lite",
+    "corpoEmail": "Olá! Quero receber o Creat Nuvem Lite grátis."
+  },
+
+  "licenca": {
+    "titulo": "A licença, em linguagem simples",
+    "pode": [
+      "Usar em projetos seus e de clientes, inclusive cobrando pelo trabalho.",
+      "Modificar e combinar com outros materiais.",
+      "Entregar ao cliente o site ou o código final que usa partes do pacote."
+    ],
+    "naoPode": [
+      "Revender, dar ou alugar o pacote, inteiro ou em partes, modificado ou não.",
+      "Publicar o pacote em repositório público, site de download, curso ou banco de templates.",
+      "Tirar o aviso de licença das cópias."
+    ],
+    "outras": [
+      "Uma licença por pessoa ou empresa. A equipe da mesma empresa usa a mesma licença.",
+      "O pacote vem como está, sem garantia. Os agentes geram código automaticamente: revise antes de publicar.",
+      "O Lite tem licença MIT: pode usar, copiar e redistribuir mantendo o aviso.",
+      "O texto completo vai no arquivo LICENSE de cada pacote e segue a lei brasileira."
+    ]
+  },
+
+  "perguntas": [
+    {
+      "pergunta": "Preciso de alguma assinatura?",
+      "resposta": "Sim. Os agentes rodam dentro do Claude Code, que exige uma assinatura paga da Anthropic, por sua conta. Para a sede e os prints também é preciso ter Node.js e o Playwright; o guia mostra os comandos."
+    },
+    {
+      "pergunta": "Isso vai me fazer ganhar dinheiro?",
+      "resposta": "Não prometemos ganho financeiro. É uma ferramenta de trabalho: organiza o Claude Code em especialistas com revisão e teste no meio. O resultado depende do que você constrói."
+    },
+    {
+      "pergunta": "É um produto da Anthropic?",
+      "resposta": "Não. A Creat Nuvem é independente e não tem vínculo, patrocínio ou aprovação da Anthropic. Claude e Claude Code são marcas da Anthropic."
+    },
+    {
+      "pergunta": "E se não servir para mim?",
+      "resposta": "Compra pela internet tem 7 dias de arrependimento. Peça a devolução pelo e-mail {{contato.email}}. Na dúvida, peça o Lite antes: é o mesmo jeito de trabalhar, com três agentes."
+    }
+  ],
+
+  "voltar": "Voltar para o Porta Aberta",
+  "voltarTexto": "Tem um negócio local e quer o site pronto, sem mexer em código? Esse é o Porta Aberta.",
+  "rodapeMarcas": "Claude e Claude Code são marcas da Anthropic. A Creat Nuvem não tem vínculo com a Anthropic."
+}

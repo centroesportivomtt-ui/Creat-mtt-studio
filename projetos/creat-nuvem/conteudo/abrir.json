@@ -1,0 +1,169 @@
+{
+  "_sobre": "Textos de /abrir/. {{plano.*}} é o plano escolhido no fragmento (#plano=aberto|vitrine|aberto_anual|vitrine_anual). {{precos.abertura.atual}} = inauguração se ela vale (ADR-005), senão padrão. {{abrir.total}} = o valor do link de pagamento escolhido (hoje, sempre só a Abertura; o anual é cobrado no dia em que o site entra no ar, decisão D3). Ordem no celular (compra curta, 11/11/2026): cartão do negócio, preço de hoje (conta), o que você leva, WhatsApp e e-mail, bloco recolhido com endereço, horário e nome (adiantar), aceite, garantia em uma linha (pagar.garantia) e o botão de pagar; depois, garantia de prazo, 7 dias, o que acontece depois e quem monta. Meta: borda de baixo do botão a no máximo 1.400 px do topo em 360x640 (scripts/testes/funil.test.mjs).",
+  "seo": {
+    "titulo": "Escolha o plano e abra o seu negócio | Creat",
+    "descricao": "Veja o total antes de pagar, informe WhatsApp e e-mail e pague a Abertura por Pix ou cartão. Endereço e horário podem ir depois. Mensalidade só com o site no ar."
+  },
+  "titulo": "Falta pouco para abrir as portas.",
+  "_titulo": "Sem o nome no título (PG-N4: nenhum artigo serve para todo nome). O nome do negócio fica no cartão logo abaixo, com Ver a prévia de novo.",
+  "tituloSemNome": "Falta pouco para abrir o seu negócio.",
+  "voltarPrevia": "Voltar para a prévia",
+  "cabecalhoDuvidas": "Dúvidas",
+  "cabecalhoDuvidasWhatsapp": "Dúvidas no WhatsApp",
+  "cabecalhoDuvidasWhatsappAria": "Tirar dúvidas com o Suporte Creat no WhatsApp",
+  "_cabecalhoDuvidasWhatsapp": "Só com o WhatsApp do Suporte ativo (vitrine.js montarSuporte, data-rotulo-ok + data-rotulo-ok-fim; até 400 px o fim sai da vista e entra o ícone). Sem ele, o link vai por e-mail e fica Dúvidas.",
+  "conta": {
+    "_sobre": "Preço de hoje em duas linhas (Hoje / Por mês), com os números dos dados. A linha da inauguração só aparece com o link de inauguração, e a frase dela mora no HTML (span.conta-inaug de abrir/index.html, com o valor padrão em data-v), não aqui.",
+    "hoje": "Hoje",
+    "abertura": "Abertura, uma vez",
+    "porMes": "Por mês",
+    "soNoAr": "só com o site no ar",
+    "meioMensal": "No cartão, ou anual no Pix.",
+    "comNoAr": "No dia em que o site entra no ar",
+    "anual": "12 meses no Pix. Nada do anual é cobrado antes."
+  },
+  "leva": {
+    "titulo": "O que você leva",
+    "_itens": "Caminhos em conteudo/home.json: o texto mora lá (Abertura e plano Aberto; o Vitrine inclui tudo do Aberto). Mudou lá, muda aqui sozinho.",
+    "itens": [
+      "precos.abertura.inclui.5",
+      "precos.abertura.inclui.1",
+      "precos.abertura.inclui.2",
+      "precos.planos.aberto.inclui.0"
+    ],
+    "vitrine": "precos.planos.vitrine.inclui.1",
+    "_vitrine": "Uma linha a mais, só com o Vitrine ou o Vitrine anual marcado (li[data-se-plano=vitrine] em abrir/index.html): o que o Vitrine soma ao Aberto."
+  },
+  "adiantar": {
+    "_sobre": "Bloco recolhido (details fechado) com endereço, horário e nome. O servidor aceita o pedido sem eles (docs/PEDIDO-API.md); sem endereço ou horário a produção para e o suporte pede pelo WhatsApp (docs/EXECUTOR.md, passo (e)). O prazo dos termos v2 (cláusula 5) conta da confirmação do pagamento: nada aqui diz que ele espera estes dados.",
+    "titulo": "Endereço e horário: agora ou depois",
+    "texto": "O site só é montado com eles. Adiante aqui ou mande logo depois do pagamento, pelo WhatsApp do suporte.",
+    "_textoRegra": "Fato da produção (docs/EXECUTOR.md, passo (e), Saída 6), nunca condição de prazo: a cláusula 5 dos termos v2 conta as 72 h da confirmação do pagamento. Quem manda é o comprador. A política de privacidade, desde a v4 (seção 7), permite ao suporte escrever ao comprador pago sobre os dados que faltam (roteiro R-dados), mas a página não promete esse passo.",
+    "_texto": "Depois do pagamento, a página do pedido (/obrigado/) mostra o bloco faltaDados com o botão do WhatsApp do suporte e o número do pedido.",
+    "horariosAjuda": "Começa com o comum do seu nicho. Ajuste os dias e as horas e marque a confirmação: sem ela, o horário não vai no pedido.",
+    "horariosConfirmo": "Este é o horário do meu negócio"
+  },
+  "plano": {
+    "rotulo": "Seu plano",
+    "trocar": "Trocar de plano",
+    "diferenca": "O Vitrine soma ao Aberto 4 posts por mês para o seu Instagram. Hoje você paga só a Abertura em qualquer plano.",
+    "opcoes": {
+      "aberto": "Aberto · R$ {{precos.planos.aberto}} por mês no cartão",
+      "vitrine": "Vitrine · R$ {{precos.planos.vitrine}} por mês no cartão",
+      "aberto_anual": "Aberto anual · R$ {{precos.anual.aberto}} por 12 meses",
+      "vitrine_anual": "Vitrine anual · R$ {{precos.anual.vitrine}} por 12 meses"
+    },
+    "anualNota": "No anual, você paga {{precos.anualMesesPagos}} meses e leva 12, no Pix. Sem fidelidade: se sair antes, devolvemos os meses não usados."
+  },
+  "total": {
+    "rotulo": "Total",
+    "mensal": "Hoje: R$ {{abrir.total}} (Abertura). A partir do dia em que o site entrar no ar: R$ {{plano.preco}} por mês no cartão, ou anual no Pix. Sem fidelidade.",
+    "anual": "Hoje: R$ {{abrir.total}}, só a Abertura. O plano anual, R$ {{plano.preco}} pelos 12 meses, é cobrado no dia em que o site entrar no ar, no Pix. Nada do anual é cobrado antes. Sem fidelidade.",
+    "inauguracao": "Preço de inauguração.",
+    "nadaMais": "Não existe taxa escondida. A anuidade do domínio, se você quiser um, é paga no seu nome ao Registro.br.",
+    "contador": "Restam {{precos.abertura.inauguracao.vagasRestantes}} vagas com este valor.",
+    "contadorUltima": "Resta 1 vaga com este valor.",
+    "_regraContador": "Contadores desligados (checkout.config.js contadoresAoVivo: false, decisão D1) até o número vir de pedido pago gravado em servidor. Mesmo ligados, só com dados/precos.json de até 48 h. O preço de inauguração vale até 7 dias (ADR-005)."
+  },
+  "campos": {
+    "titulo": "Para registrar o pedido",
+    "_texto": "Antes de pagar, só o indispensável: WhatsApp e e-mail (nome, tipo e cidade vêm da prévia; o campo aparece só se faltar).",
+    "responsavel": {
+      "rotulo": "Seu nome (responsável)",
+      "ajuda": "Quem a equipe chama para aprovar o site."
+    },
+    "whatsapp": {
+      "rotulo": "WhatsApp que recebe os pedidos",
+      "exemplo": "(11) 9XXXX-XXXX",
+      "ajuda": "Com DDD. Os clientes pedem horário por ele."
+    },
+    "endereco": {
+      "rotulo": "Endereço completo",
+      "exemplo": "Rua, número, bairro, cidade-UF, CEP",
+      "ajuda": "Exemplo: Rua das Flores, 120, Centro, Campinas-SP, 13010-000. Aparece no site e no link de como chegar."
+    },
+    "horarios": {
+      "rotulo": "Horário de funcionamento",
+      "ajuda": "Já veio preenchido com o comum do seu nicho. Ajuste os dias e as horas.",
+      "fechado": "Fechado",
+      "abre": "Abre",
+      "fecha": "Fecha",
+      "dias": [
+        "Domingo",
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado"
+      ]
+    },
+    "email": {
+      "rotulo": "E-mail",
+      "exemplo": "voce@exemplo.com.br",
+      "ajuda": "Para os termos e o pedido. Sem propaganda."
+    }
+  },
+  "aceite": {
+    "texto": "Li e aceito os Termos de uso (versão 2). Peço o início imediato da produção e sei que tenho 7 dias para desistir, com o valor devolvido.",
+    "_versao": "A versão escrita aqui é a mesma de checkout.config.js termosVersao e de TERMOS em schema/pedido-regras.mjs (termos-v2, com o sha256 do conteudo/termos.md publicado). As três mudam no mesmo ato.",
+    "linkTermos": "Ler os Termos de uso",
+    "erro": "Marque o aceite para seguir para o pagamento."
+  },
+  "pagamento": {
+    "titulo": "Pagamento",
+    "pix": "Pagar no Pix ou cartão",
+    "parcelas": "Pix ou cartão, sem criar conta no Mercado Pago. As condições de parcelamento aparecem lá antes de você pagar. Em qualquer meio, vale o nosso prazo de 7 dias para desistir, com o valor devolvido (Termos, cláusula 6).",
+    "_parcelas": "Chave antiga. A página usa pagar.parcelas, com o mesmo texto.",
+    "emConfiguracao": "Link de pagamento em configuração",
+    "emConfiguracaoNota": "O pagamento ainda não está liberado nesta página. Chame o Suporte Creat no WhatsApp para fechar o pedido.",
+    "seguranca": "O pagamento é feito no Mercado Pago. A Creat não vê os dados do seu cartão.",
+    "semConta": "Sem criar conta.",
+    "salvoNoAparelho": "Seus dados ficam salvos neste aparelho para a próxima página. Você pode apagar a qualquer momento.",
+    "_salvoNoAparelho": "Vale até o servidor confirmar o registro do pedido (PV-16, pacote 2A): depois disso, e-mail e WhatsApp saem do aparelho.",
+    "totalHoje": "Total de hoje: R$ {{abrir.total}}"
+  },
+  "pagar": {
+    "_sobre": "Linhas coladas no botão Pagar de /abrir/ (pacote 2A). recebedor fica logo acima do primeiro botão; parcelas logo abaixo; aviso_dados ao lado do botão, com o link para /privacidade/ em linkPrivacidade. O CNPJ é o mesmo de checkout.config.js empresa.documento (CNPJ 57.068.874/0001-06); o nome pessoal do titular não entra aqui.",
+    "recebedor": "No Mercado Pago, o recebedor aparece com o CNPJ 57.068.874 (creat.MTT Studio, o mesmo do rodapé).",
+    "parcelas": "Pix ou cartão, sem criar conta no Mercado Pago. As condições de parcelamento aparecem lá antes de você pagar. Em qualquer meio, vale o nosso prazo de 7 dias para desistir, com o valor devolvido (Termos, cláusula 6).",
+    "aviso_dados": "Ao tocar em Pagar, enviamos à Creat os dados deste formulário (nome do negócio, cidade, WhatsApp e e-mail, e também o seu nome, o endereço e o horário se você preencher) para registrar o pedido. Se você não pagar, apagamos em 30 dias.",
+    "garantia": "7 dias para desistir com devolução. Mensalidade só com o site no ar. Sem fidelidade.",
+    "_garantia": "Uma linha colada ao botão de pagar. Termos v2: cláusula 6 (7 dias, devolução) e cláusula 7 (primeira mensalidade só com o site no ar; sem fidelidade nem multa).",
+    "linkPrivacidade": "Ler a política de privacidade",
+    "botaoTeste": "Pagar R$ 1 (teste)"
+  },
+  "garantia": {
+    "titulo": "Garantia de prazo",
+    "texto": "Seu site fica pronto para você aprovar em até {{precos.prazoHoras}} h. Passou do prazo, o 1º mês do plano é grátis.",
+    "regra": "O prazo de {{precos.prazoHoras}} h conta da confirmação do pagamento. Confirmamos pagamentos de segunda a sábado, das 9h às 19h, em até 2 horas. Pagou fora desse horário? A confirmação sai até as 11h do próximo dia de atendimento (segunda a sábado).",
+    "fora": "Ficam fora do relógio o domínio próprio e a verificação do Perfil da Empresa no Google, porque dependem de você e de terceiros. Logo e fotos enviados depois entram como melhoria em até 24 h."
+  },
+  "depois": {
+    "titulo": "O que acontece depois do pagamento",
+    "passos": [
+      "O pedido fica registrado no toque em Pagar, e o Mercado Pago manda o comprovante para o e-mail que você usar lá.",
+      "Você volta para a página do pedido, que mostra a confirmação do pagamento.",
+      "O prazo de {{precos.prazoHoras}} h começa com a confirmação do pagamento.",
+      "O andamento aparece na página do pedido, neste aparelho. Na sede, você vê uma demonstração de como a equipe trabalha, com o nome do seu negócio na fachada.",
+      "Você recebe o link do site pronto no seu WhatsApp, pede ajustes se quiser e aprova.",
+      "O site entra no ar com o seu sim. A mensalidade começa neste dia.",
+      "A equipe manda o passo a passo do domínio e do Perfil da Empresa no Google."
+    ]
+  },
+  "erros": {
+    "responsavel": "Escreva o seu nome para a equipe saber com quem falar.",
+    "whatsappVazio": "Digite o WhatsApp que recebe os pedidos, com DDD.",
+    "whatsappInvalido": "Esse número não parece um celular com DDD. Confira e digite de novo, por exemplo (11) 9XXXX-XXXX.",
+    "endereco": "Escreva o endereço completo: Rua, número, bairro, cidade-UF, CEP.",
+    "horarioNenhumDia": "Marque pelo menos um dia aberto.",
+    "horarioInvertido": "Em {dia}, o horário de fechar está antes do de abrir. Ajuste para seguir.",
+    "email": "Esse e-mail não parece completo. Confira se tem @ e o final, como .com ou .com.br.",
+    "resumo": "Faltam {n} campos. Eles estão marcados em vermelho."
+  },
+  "desistir": {
+    "titulo": "7 dias para desistir com devolução",
+    "texto": "Você tem 7 dias para desistir sem dar motivo, contados do pagamento ou da entrega do site para você aprovar, o que vier por último (Código de Defesa do Consumidor, art. 49). Devolvemos o valor em até 5 dias úteis depois do pedido, pelo mesmo meio de pagamento. Sem fidelidade e sem multa para sair. A mensalidade só começa com o site no ar."
+  },
+  "quemMonta": "Mesmos textos de conteudo/home.json quemMonta."
+}

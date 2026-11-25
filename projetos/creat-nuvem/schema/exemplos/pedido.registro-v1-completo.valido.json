@@ -1,0 +1,23 @@
+{
+  "id": "PA-7K3QX2MD5S",
+  "segredo": "q1Zr8Xn4Lw0bT6yHc9VfEA",
+  "produto": "pa-abertura-inauguracao-2026-11",
+  "valor": 297,
+  "praca": "feira",
+  "plano": "vitrine",
+  "nicho": "barbearia",
+  "negocio": "Barbearia Exemplo",
+  "cidade": "Feira de Santana",
+  "whatsapp": "5575999990000",
+  "email": "contato@exemplo.com.br",
+  "utm_source": "meta",
+  "utm_campaign": "feira",
+  "utm_content": "A1-barbearia-v1",
+  "termos_versao": "termos-v1",
+  "consentimento_dados": true,
+  "hp": "",
+  "aceite_em": "2026-11-10T11:03:00-03:00",
+  "responsavel": "Responsável Exemplo",
+  "endereco": "Rua Exemplo, 100, Centro, Feira de Santana-BA, 44001-000",
+  "horarios": "seg=fechado;ter=09:00-20:00;qua=09:00-20:00;qui=09:00-20:00;sex=09:00-20:00;sab=09:00-18:00;dom=fechado"
+}

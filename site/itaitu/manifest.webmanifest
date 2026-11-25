@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "Trilhas de Itaitu",
+  "short_name": "Itaitu",
+  "description": "Mapa 3D das cachoeiras de Itaitu que funciona sem internet, com GPS e a hora em que a serra tira o sol de cada poço.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#3A2618",
+  "background_color": "#3A2618",
+  "categories": ["travel", "navigation", "sports"],
+  "icons": [
+    { "src": "./icones/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -18,6 +18,15 @@ Nada é "pronto" sem passar por isto. Marque cada item como **ok**, **falhou** o
 - [ ] Contraste AA, `alt` em imagens, rótulo em todo campo.
 - [ ] `prefers-reduced-motion` e tema escuro respeitados.
 
+## No ar (regra do dono, 10/11/2026: "jamais deixe acontecer erros desse nível")
+Teste local verde não prova nada sobre o site real. Em 09 e 10/11 dois defeitos graves ficaram no ar com todos os testes passando: a medição nunca carregou e as demonstrações abriam sem o formulário de pedido.
+- [ ] Antes de publicar: travas locais do projeto (no Porta Aberta: `npm test`, `checar.cjs`, `conferir-moldura.cjs`, `conferir-boot.cjs`, que simula atraso de rede).
+- [ ] **Depois de publicar, sempre:** a conferência no endereço de produção, em celular com agente de usuário real, passou inteira (no Porta Aberta: `node scripts/conferir-no-ar.cjs`). Cole a última linha da saída no relatório.
+- [ ] O que depende de terceiro (medição, pagamento, WhatsApp) foi visto funcionando com o terceiro de verdade, não com simulação. O que não deu para ver vai como **não verificado**, com o motivo.
+- [ ] Se a conferência no ar falhar: pausar os anúncios que levam àquela página, corrigir, publicar e conferir de novo. Só então religar.
+- [ ] Ninguém escreve "publicado", "no ar" ou "funcionando" sem essa conferência. Quem revisa cobra a saída dela.
+- [ ] Cada integração (medição, pagamento, WhatsApp, MCP, gancho, automação) é relatada em **cinco fatos separados**, nunca juntos num "está funcionando": **registrado** (existe no código ou na conta), **configurado** (chave, ID e destino certos), **alcançável** (a página real chega nele), **saudável** (respondeu certo agora, com prova), **autorizado** (o dono deu o "pode" para ligar ou publicar). Publicar é passo autorizado à parte. Ideia do Ruflo, lote de 12/11/2026.
+
 ## Qualidade
 - [ ] Revisado pelo `revisor` (veredito aprovado).
 - [ ] Auditado pela `seguranca` se há formulário, login, API ou dado pessoal.
@@ -26,8 +35,10 @@ Nada é "pronto" sem passar por isto. Marque cada item como **ok**, **falhou** o
 
 ## Experiência
 - [ ] O momento-assinatura da direção de arte está lá e funciona no celular.
-- [ ] Textos reais, sem lorem ipsum e sem `[PREENCHER]` esquecido.
+- [ ] Textos reais, sem lorem ipsum e sem `[PREENCHER]` esquecido: rode a varredura de falso pronto do `revisor` (TODO e FIXME só em maiúscula, para não casar "todo" e "toda"; mock, link `#`, WhatsApp e preço de exemplo), com a expressão exata do `revisor.md`, e cole a saída.
 - [ ] Carregamento: nada de tela branca; estado de carregamento desenhado.
 
 ## Relatório
 O que foi feito · como rodar · status de cada item acima · o que ficou de fora e por quê · próximos passos sugeridos.
+
+**Lição da rodada** (no fim do relatório, no máximo 3 linhas): o que funcionou ou falhou, com a prova (comando e saída, conferência no ar, transcrição comparada, aprovação do dono). Lição sem prova não entra. Agentes com `memory: local` gravam a mesma lição na memória deles; nunca com dado de cliente, gasto ou segredo.

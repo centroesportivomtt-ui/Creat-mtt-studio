@@ -1,0 +1,22 @@
+/* Atkinson Hyperlegible Next 2.001 (Braille Institute; SIL OFL 1.1, ver ../fontes/LICENSE.txt).
+   Fonte oficial: github.com/googlefonts/atkinson-hyperlegible-next, commit 7925f50 (21/02/2025),
+   arquivos fonts/webfonts/*.woff2 sem modificação. 392 glifos: latim básico, Latin-1 e Latin Extended-A
+   (todo acento do português, ·, ±, ≈, –, —, °). Tem 'tnum' (algarismos tabulares, 632/1000 em
+   Regular e Bold), 'case' e 'frac'. Não tem setas (→ ↑): use os ícones de ../icones/ui.svg.
+   Só os dois pesos usados: 400 (texto) e 700 (títulos e números). Juntos, 50,8 KB. */
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('../fontes/AtkinsonHyperlegibleNext-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('../fontes/AtkinsonHyperlegibleNext-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

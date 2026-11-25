@@ -1,0 +1,19 @@
+{
+  "fonte": "Foto da placa 'Guia das Cachoeiras de Itaitu' do Village Serra do Cruzeiro, enviada pelo dono em 20/11/2026",
+  "aviso": "Distâncias e tempos aproximados, podendo variar conforme as condições da estrada e da trilha.",
+  "base": "Village Serra do Cruzeiro",
+  "vila": { "nome": "Vila de Itaitu", "distancia_a_pe_m": 650, "tempo_a_pe": "10 min" },
+  "pontos_da_vila": ["Igreja Matriz", "Praça da Matriz", "Mercados da Vila", "Restaurantes da Vila"],
+  "cachoeiras": [
+    { "nome": "Cachoeira das Arapongas", "carro_km": 4.0, "carro_tempo": "12 min", "trilha_km": 1.2, "trilha_tempo": "25–30 min", "nivel": "Moderada" },
+    { "nome": "Cachoeira do Sossego",    "carro_km": 4.0, "carro_tempo": "12 min", "trilha_km": 1.5, "trilha_tempo": "30–40 min", "nivel": "Moderada" },
+    { "nome": "Poço da Geladeira",       "carro_km": 4.0, "carro_tempo": "12 min", "trilha_km": 1.7, "trilha_tempo": "35–45 min", "nivel": "Moderada" },
+    { "nome": "Cachoeira Véu da Noiva",  "carro_km": 1.2, "carro_tempo": "3 min",  "trilha_km": 2.0, "trilha_tempo": "≈ 30 min",  "nivel": "Fácil" },
+    { "nome": "Cachoeira do Piancó",     "carro_km": 3.7, "carro_tempo": "10 min", "trilha_km": 3.0, "trilha_tempo": "≈ 60 min",  "nivel": "Moderada" },
+    { "nome": "Cachoeira do Coxinho",    "carro_km": 1.2, "carro_tempo": "3 min",  "trilha_km": 1.0, "trilha_tempo": "20–25 min", "nivel": "Fácil" },
+    { "nome": "Cachoeira das Flores",    "carro_km": 1.2, "carro_tempo": "3 min",  "trilha_km": 1.5, "trilha_tempo": "30–40 min", "nivel": "Moderada" }
+  ],
+  "ramos_na_placa": {
+    "observacao": "Leitura do desenho: a estrada sai do Village e se divide em dois ramos. Ramo norte leva a Arapongas, Sossego, Geladeira e Véu da Noiva; ramo sul a Piancó, Coxinho e Flores. A placa é esquemática, não está em escala."
+  }
+}

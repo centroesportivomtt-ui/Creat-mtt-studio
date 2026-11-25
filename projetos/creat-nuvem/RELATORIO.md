@@ -1,0 +1,445 @@
+# Porta Aberta · Fase 1 "A Porta que vende" · RELATORIO FINAL
+
+Projeto `projetos/creat-nuvem/` · 09/11/2026 · briefing em `docs/briefing-porta-aberta-fase1.md`.
+O diário completo de cada agente (T1 a T10, ajustes do revisor e correções do QA) está em `docs/relatorio/DIARIO-COMPLETO.md` e em `docs/relatorio/T*.md`.
+
+## Resumo
+Vitrine com a placa que vira ABERTO, prévia gerada no navegador, motor com 3 nichos (barbearia, salão, academia), checkout com 4 placeholders, sede com a marca do cliente, kit de anúncios e CLI de produção v0 estão construídos, revisados, testados pelo QA e com as correções aplicadas. O deploy está travado de propósito até o Marcos trocar os 4 marcadores. Nada foi publicado, commitado ou pago.
+
+## Como rodar (a partir de `projetos/creat-nuvem/`, Node 22)
+```
+npm ci
+node scripts/checar.cjs                 # código 0
+CREAT_TESTE_TMP=<pasta existente> npm test   # 43 de 43
+node scripts/checar-placeholders.cjs    # código 1 enquanto houver marcador
+node scripts/montar-publico.cjs         # monta dist/publico/
+python3 -m http.server 8080 -d dist/publico
+node ../../.claude/skills/verificacao-visual/olhar.cjs http://127.0.0.1:8080/
+```
+Produção de pedido: `.env` com `ANTHROPIC_API_KEY` e `CREAT_CAMBIO`, depois `node --env-file=.env scripts/producao/produzir.mjs --pedido <arquivo>`. Publicar só com o ok do Marcos: `wrangler@4.158.0 deploy`.
+
+## O que foi feito
+T1 contratos e schemas (Cirro) · T2 direção, tokens e desenhos (Paleta) · T3 textos e kit de marketing (Verbo) · T4 motor e prévia (Pixel) · T5 vitrine, checkout e dados (Pixel) · T6 placa e sede com marca (Órbita) · T7 som (Eco) · T8 salão e academia (Pixel) · T9 CLI de produção (Forja) · T10 deploy, headers e higiene (Trilho). Correções do QA: rolagem lateral em /abrir/, limites de nome, integridade de scripts do CDN, endereço unificado entre vitrine e produção, nome fora da query da sede, mudo na prévia, servidor da sede e trava do `--destino`, rotina diária de vagas, contagem "4 dados".
+
+## Status dos critérios
+| critério | status |
+|---|---|
+| `checar.cjs` código 0 (schemas, presets, dados, sem ocupacaoFicticia, emoji, "agenda") | ok, rodado agora |
+| `npm test` (produção com fixture, sem rede e sem chave; rejeita whatsapp 5500000000000, avaliação sem origem, ocupacaoFicticia; zip SAIR sem domínio Creat; custo.json) | ok, 43 de 43 rodado agora |
+| verificacao-visual: home, /abrir/, /obrigado/, /bastidores/, /termos/, prévia salão e prévia academia (390 e 1440, claro e escuro) | ok, "Tudo limpo" nas 7 rodado agora sobre `dist/publico`. Obs.: a ferramenta usa 1440 no desktop; 1280 foi coberto por scripts Playwright das tarefas |
+| Prévia: nome só no fragmento, sem dado pessoal em query | ok (T4, T5, T6 e correção da sede, testado em rede) |
+| Placa: arrastar >40% e botão equivalentes; rolagem fora da placa; reduced-motion sem giro e sem som | ok no Chromium; gesto em celular real não verificado |
+| Som: nada antes do primeiro gesto, mudo persiste, vale na prévia | ok por contagem de fontes de áudio; timbre não ouvido em aparelho real |
+| Teste de verdade: wa.me do número do visitante, inválido com erro, número fora da rede | ok (T4, T5) |
+| /abrir/: total antes de pagar, aceite obrigatório, botões desativados com marcador, link certo com links de teste | ok (T5 e correções do QA) |
+| Dados velhos (vagas ausente ou >48 h, depoimentos vazio) | ok (T5); rotina diária pronta mas desligada, nunca rodou no GitHub |
+| /obrigado/ sem afirmar pagamento, PEDIDO v1 completo com origem | ok (T5, schema validado) |
+| Sede: `?marca=` troca placa, `<script>` inerte, `?modo=publico` sem estado.json, estado público sem rótulos internos, modo local intacto | ok (T6 e correção; autoteste 22 ok) |
+| Bastidores: "exige Claude Code" antes do preço, sem link na primeira tela da home | ok |
+| Consentimento: sem Pixel e Clarity antes do aceite, PostHog sem cookie, sem PII em evento | ok com chaves de exemplo; chamada real ao PostHog, Pixel e Clarity não verificada na rede (sandbox bloqueia). Muralha precisa conferir `before_send` sem `#` com chaves reais |
+| produzir.mjs com fixture gera dist/<slug> que abre de file:// | ok |
+| 3 nichos sem depoimento, nota, foto de pessoa ou horário inventado | ok |
+| checar-placeholders falha com marcadores e passa trocados; 4 marcadores só em `checkout.config.js`; sem `[PREENCHER]` | ok (grep: nenhum PREENCHER; a cópia em `dist/publico/checkout.config.js` também leva os marcadores) |
+| Home sem sede <= 500 KB; sede só sob demanda no celular | ok (~167 KB mais ~53 KB de fontes, medido na T5) |
+| Textos pt-BR, sem lorem, sem emoji, sem promessa de ganho, preços de `dados/*.json`, REVISAO_JURIDICA_PENDENTE, política da Meta datada | ok; "5 dados" não aparece mais em texto público (só neste diário) |
+| Segredos: varredura (arquivos e 48 commits na T10; grep rápido agora) sem achados; `.env.example`; versões fixadas; `.gitignore` | ok |
+| `dist/` fora do git | **falhou**: `dist/publico/` está versionado por snapshots automáticos e por regra no `.gitignore` da T9. Falta `git rm -r --cached projetos/creat-nuvem/dist` e ajustar o comentário do `.gitignore` |
+| CSP e headers sem violação | ok em `wrangler dev` (T10); `_headers` aplicado pela Cloudflare real não verificado |
+| Linha 17 de `docs/stack-ferramentas-2026.md` | ok |
+| Hashes SRI (three@0.160.0, posthog-js@1.447.3) | não verificado contra o jsDelivr real (CDN bloqueado). Se divergir, a sede perde o 3D; alternativa: hospedar o three no domínio |
+| Revisor (Crivo), QA (Lupa) e segurança (Muralha) | ok: rodaram, apontaram problemas, correções aplicadas e retestadas por testes e verificação visual. Uma segunda passada da Muralha com chaves reais e rede aberta ainda é necessária antes de publicar |
+| Primeira produção real com a API | não verificado: sem `ANTHROPIC_API_KEY`. Custo real e qualidade dos textos pendentes; R$ 0,1028 é da fixture |
+
+## Placeholders abertos (deploy travado)
+Em `checkout.config.js`: `[LINK_ASAAS_ABERTURA_INAUGURACAO]`, `[LINK_ASAAS_ABERTURA_PADRAO]`, `[LINK_CAKTO_BASTIDORES]`, `[WHATSAPP_SUPORTE_55DDDNUMERO]`. Medição (`posthogChave`, `metaPixel`, `clarity`) em formato de exemplo, desligada. Textos: `{{empresa.documento}}`, `{{empresa.endereco}}`, `{{site.url}}`.
+
+## Textos pendentes de revisão jurídica
+`conteudo/termos.md` e `conteudo/privacidade.md` (linha `REVISAO_JURIDICA_PENDENTE` no topo). Pontos: MEI como consumidor (art. 49), liberação do SAIR após 7 dias, devolução proporcional do anual, régua de inadimplência, licença do motor no site exportado, e se a frase dos "4 dados" exige `termos-v2`.
+
+## Números não verificados
+Custo real por pedido e tabela `PRECOS` (cache da skill, 06/10/2026); câmbio R$ 5,50; preços do GitHub Actions e Hetzner (ADR-004); tempo por pedido no executor; metas da calibragem (a definir); prazo de 72 h (promessa do briefing); timbre do som e gesto em celular real; benchmark e ângulo E de anúncios (artigo do SEJ de 29/02/2024 não reaberto).
+
+## Incoerências de oferta e atritos conhecidos (severidade alta)
+- O contador de vagas só desce com `atualizar-vagas.cjs --vendeu` a cada pedido pago. Sem isso a rotina publica um contador maior que o real. Ideal: `produzir.mjs` ou webhook do Mercado Pago chamar `--vendeu`.
+- A sede pública mostra demonstração; o andamento do pedido chega pelo WhatsApp. A publicação ao vivo (`publicar-estado.cjs` a cada 1 a 2 min) não existe. Os fluxos reais precisam seguir o padrão `pedido-*`.
+- O link da inauguração no provedor (Mercado Pago: data de vencimento; Asaas: quantidade máxima) deve ter limite e data de fim; a rotina sai com código 2 se o link real persistir após o fim.
+- Detalhe visual: sombra em L na caixinha "Aberto" dos dias em /abrir/ parece traço solto (Paleta).
+- `projetos/loja/produtos/agencia/sede/servidor.cjs` ainda serve qualquer arquivo da pasta.
+
+## Desvios do briefing
+Quinto nicho da lista de espera chamado `outro`; pigmentação fora do preset da barbearia (política da Meta); R13 sem recompensa e sem `utm_content`; `pago_pagina` renomeado `pedido_enviado_pagina`; sede sem `?modo` vira `publico` fora de localhost, `file:` e artefato; `scripts/montar-publico.cjs` criado (arquivo extra); rodapé "Aberto pela Creat" removido no SAIR; preço do site entregue sempre "sob consulta".
+
+## Depende do Marcos
+1. Trocar os 4 marcadores e pôr as chaves de PostHog, Pixel e Clarity.
+2. Informar CNPJ ou CPF, endereço, domínio final, e-mail de suporte e posts por mês do Vitrine.
+3. Revisão jurídica; metas e regra de parada da calibragem de 16 a 22/11 (bloqueada até lá); decidir recompensa de indicação.
+4. Em GitHub: secrets `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID`, variável `ROTINA_VAGAS_ATIVA=true`, repositório privado (`docs/CHECKLIST-REPOSITORIO-PRIVADO.md`).
+5. Aprovar o primeiro deploy e escolher o executor da Fase 2 (ADR-004).
+6. Autorizar a primeira produção real com a chave do Console.
+
+## Próximos passos
+1. Remover `dist/` do índice do git. 2. Conferir os hashes SRI contra o jsDelivr. 3. Teste em celular real (gesto, som). 4. Muralha e Lupa com chaves reais e rede aberta (aba de rede sem `#`, `n=`, `c=`). 5. Automatizar `--vendeu` e a publicação do estado da sede. 6. Primeira produção real e conferência de custo. 7. Calibragem de anúncios em 16/11, se os bloqueios forem resolvidos.
+
+## Entrega e demos, 09/11/2026
+
+### Trilho · publicação dos sites no app Base44
+Para que serve na venda: o site do cliente entra no ar no mesmo app da vitrine, em `https://creat-nuvem-404b1994.base44.app/sites/<slug>/` (nota de 11/11/2026: hoje o padrão é o canônico `https://nuvem.creatmtt.com.br/sites/<slug>/`; o antigo continua respondendo, `docs/DOMINIO.md`). Sai com um comando, hash conferido e sem risco de apagar o site de outro cliente.
+
+- **Novo `scripts/producao/publicar-site.cjs`** (`npm run publicar-site -- --slug <slug> [--saida] [--destino] [--demo] [--json]`). O script confere `dist/<slug>/`: build válido, slug igual, lista branca de arquivos e nenhum link simbólico. Depois roda `testar-site.cjs`, grava `site-<slug>.zip` com `sites/<slug>/` (mtime fixo, então o mesmo build dá o mesmo sha256) e relê o zip para conferir. No fim, imprime o sha256 e os passos MCP: Drive `create_file` na pasta "Creat Nuvem" com `base64Content` `sha256:<hash>:<caminho>`, `share_file` anyoneWithLink e `run_command` no Base44 com `curl` + `sha256sum -c` + `python3 -m zipfile -e` + cp para `public/sites/<slug>`. Em seguida vêm `git log --oneline -1`, checkpoint e deploy. O script não faz upload nem deploy. Com `--demo`, exige a faixa "demonstração · nome fictício" e o WhatsApp 5575981151202.
+- **Novo `docs/PUBLICACAO.md`** com os dois procedimentos. A vitrine apaga só a lista explícita dos seus caminhos de topo (`404.html _headers abrir assets bastidores checkout.config.js conteudo dados index.html motor obrigado previa privacidade ritual sede termos`) antes do `cp -r dist/publico/. public/`. Nunca apaga `public/sites`. `montar-publico.cjs` agora imprime essa lista e falha se a vitrine tiver `sites/` na raiz.
+- **Endereços padrão** (`lib/comum.cjs`: `HOME_PADRAO`, `URL_SITES_PADRAO`). `CREAT_URL_SITES` vazio vira `https://creat-nuvem-404b1994.base44.app/sites/{slug}/` e `CREAT_HOME` vazio vira `https://creat-nuvem-404b1994.base44.app/`. Com `0`, cada um desliga. O padrão vale em `build-site.cjs` e `produzir.mjs`. (Nota de 11/11/2026, pacote H2: os dois padrões passaram ao canônico `https://nuvem.creatmtt.com.br`, lidos de `ENDERECO` em `lib/comum.cjs`; ver `docs/DOMINIO.md`.) `.env.example` atualizado, com a nova `CREAT_PUBLICAR_DESTINO`.
+- **Decisão (segurança):** `produzir.mjs` deixou de usar a origem do link `previa` do pedido como home do rodapé. Esse campo vem do formulário e não pode decidir para onde aponta o link de um site entregue. A ordem agora é `--home` > `CREAT_HOME` > home da Creat. O host da prévia continua na varredura do SAIR.
+- **SAIR:** passa `url: false` ao build e nunca herda o endereço da Creat. A varredura agora proíbe também o host do app Base44.
+- **Testes:** `CREAT_TESTE_TMP=/tmp npm test` dá 49 de 49 (eram 47). Os 2 novos cobrem o endereço padrão, o `0` e o `{slug}` em subdomínio, e o `publicar-site` (zip, hash reprodutível, passos, recusa de slug com `;`, demo fora da regra e arquivo fora da lista branca).
+- **Verificado à mão:** produção por fixture, depois `publicar-site` (exit 0, 18 arquivos, 93 KB, mesmo sha256 em duas rodadas). O zip abre com `python3 -m zipfile -e`. Servido por HTTP em `/sites/<slug>/`, o site montou no Chromium a 390 px com 2 wa.me e console limpo, porque os caminhos são relativos.
+- **Não verificado:** upload no Drive, download no sandbox do Base44 e deploy. Essas etapas cabem ao chat principal. Também não sei se o Base44 redireciona `/sites/<slug>` (sem barra) para `/sites/<slug>/`; sem esse redirecionamento, os caminhos relativos quebram. O passo 6 do procedimento manda conferir.
+- **Pendências:** (1) O `_headers` (CSP, cache) não vale no Base44. (2) O `robots.txt` e o `sitemap.xml` de cada site ficam em `/sites/<slug>/`, onde o Google não lê. Falta um `sitemap.xml` na raiz da vitrine listando os sites publicados. (3) Rodei `montar-publico.cjs` para conferir a lista, e isso remontou `dist/publico/` a partir da mesma fonte.
+
+### Verbo + Pixel · 3 sites-demonstração pela esteira real e a seção "Veja um site entregue"
+Para que serve na venda: quem chega pela vitrine vê, antes de pagar, um site entregue de verdade no nicho dele e testa o pedido de horário no próprio celular. O pedido do teste cai no WhatsApp do Suporte Creat, então a demonstração também é um canal de contato. Na faixa do topo, "Quero um assim" volta para a vitrine com `utm_source=demo`.
+
+- **Pedidos e textos** em `demos/`: `pedido-{barbearia,salao,academia}.txt` (PEDIDO v1, Riachão do Jacuípe-BA, Centro, CEP 44640-000, WhatsApp 5575981151202, horários plausíveis, responsável e e-mail fictícios) e `resposta-ia-*.json`, com as respostas da IA escritas à mão pelo Verbo no formato exato da API (`--fixture-ia`). Cada resposta leva o campo `_nota` e `usage` zerado: nenhuma chamada foi paga e o custo.json registra R$ 0. Os textos não trazem preço, ano, nota, depoimento, nome de pessoa, comodidade nem "agenda", e todos passaram no `validar-tenant`.
+- **Esteira real, sem chave:** `CREAT_CAMBIO=5.40 node scripts/producao/produzir.mjs --pedido demos/pedido-<k>.txt --fixture-ia demos/resposta-ia-<k>.json --slug demo-<k> --sem-sair --demonstracao --url https://creat-nuvem-404b1994.base44.app/sites/demo-<k>/ --home https://creat-nuvem-404b1994.base44.app`. As três rodadas saíram com código 0 e as 6 etapas ok. O teste headless de 390 px também passou: sem rolagem lateral, menor texto de 12 px, 2 links wa.me/5575981151202, console limpo e faixa presente. Saídas: `dist/demo-barbearia/`, `dist/demo-salao/`, `dist/demo-academia/` (17 arquivos cada) e `sites/demo-*/` (pedido, tenant, custo, RELATORIO e print-390). `publicar-site.cjs --demo` passou nos três; os zips ficaram no scratchpad.
+- **Faixa "demonstração · nome fictício"** (o motor não tinha). Fiz uma mudança mínima e aditiva, motor **v1.1.0**, como opção do site `CREAT_SITE.demonstracao` e nunca como campo do tenant. O validador continua proibindo o bloco `demo` (ADR-001), e um teste cobre isso. A flag é `--demonstracao` em `produzir.mjs` e `build-site.cjs`. Efeitos: a faixa é a primeira coisa da página, com selo, a frase "Site feito pela esteira real da Creat Nuvem. O pedido de horário vai para o WhatsApp da Creat, não para um negócio." e o link "Quero um assim". A faixa também aparece no `<noscript>`. O site sai com `noindex, nofollow` e sem JSON-LD, porque negócio fictício não pode virar LocalBusiness no Google. O `robots.txt` fica Disallow e não há sitemap. `testar-site.cjs` ganhou `exigirFaixaDemo`, que falha se a faixa sumir ou sair do topo. Arquivos: `motor/v1/motor.js`, `motor/v1/styles.css` (`.faixa-demo a`, alvo de 44 px, foco visível), `scripts/producao/{produzir.mjs,build-site.cjs,testar-site.cjs}`. Sem a flag, o motor se comporta exatamente como antes.
+- **Home:** a nova seção `#sites-demo` "Veja um site entregue" fica entre "Como funciona" e "Preços". São 3 cartões com links relativos `sites/demo-*/` (com barra final), o gesto de cada ritual e a nota "Feito pela esteira real, nome fictício. Nenhum desses negócios existe.". O texto mora em `conteudo/home.json` (`sitesDemo`, com `_regra`: não é prova social). A seção "Quem já abriu" continua escondida.
+- **Verificado:** `olhar.cjs --cdn-local` nos três demos (celular e desktop, claro e escuro) deu "Tudo limpo", e olhei os prints. No `navegador`, a home montada (`dist/publico` + `sites/demo-*`) foi aberta no celular. Rolei até a seção, cliquei em "Abrir o salão" e o demo abriu com a faixa e console limpo. Também olhei o desktop escuro: 3 colunas, sem rolagem lateral. Fluxo completo na barbearia: dia → hora → Corte + barba → nome e WhatsApp → "Enviar sem arrastar" → o cartão de confirmação mostra "sob consulta" e o link `wa.me/5575981151202?text=…Corte + barba, quinta, 12/11 às 10h30…`. Console limpo. `node scripts/checar.cjs`: tudo certo, 3 avisos já conhecidos. `CREAT_TESTE_TMP=/tmp npm test`: 53 de 53, com o novo `scripts/testes/demonstracao.test.mjs`, que roda a esteira real nos 3 demos.
+- **Pendências:** (1) Publicar os 3 zips em `public/sites/demo-*/` (chat principal, `docs/PUBLICACAO.md`). Antes disso, os links da home dão 404 no ar. (2) As fontes do Google não carregaram no sandbox, então os prints usam as fontes de reserva; no ar elas carregam. (3) Os endereços são plausíveis, mas os nomes de rua existem em muitas cidades. A faixa e a nota dizem que o negócio não existe. Se o Marcos preferir, troque por "s/n". (4) Quando a IA real rodar com chave, a regra 4 do SYSTEM continua exigindo "o dono confirma pelo WhatsApp". No salão, "a dona" soaria mais natural, mas mudar isso exige ajustar o prompt e o validador juntos.
+
+## Entrega e demos, 09/11/2026
+
+**Pixel.** Rodada de correções da revisão dos 3 sites-demonstração e da seção da home. Nada foi publicado: deploy, checkpoint, commit e push ficam com o chat principal.
+
+**Alta: ordem do deploy (sites primeiro, vitrine depois).**
+- `docs/PUBLICACAO.md` ganhou a **seção 0, "Ordem obrigatória"**: publique `demo-barbearia`, `demo-salao` e `demo-academia` (seção 1) antes da vitrine ou no mesmo deploy, e confira os 3 URLs com 200 antes e depois. A seção 2 agora tem esse pré-requisito e a conferência pós-deploy.
+- Trava nova, `scripts/conferir-sites-no-ar.cjs` (`npm run conferir-sites-no-ar`). Ela lê os links `sites/<slug>/` de `dist/publico/` e faz `curl -L` em cada `/sites/<slug>/` no ar. Exige 200, pelo menos um `wa.me` e, nos demos, a faixa. Sai com 0 para liberar e 1 para bloquear. Usa curl porque o fetch do Node 22 não passa pelo proxy. Hoje, rodada às 17h20, ela dá **1: os 3 demos voltam 404 no ar**, então a vitrine nova ainda não pode subir. Contra um servidor local com `dist/local/`, deu 0.
+- `montar-publico.cjs` agora imprime `sites que a vitrine linka: demo-academia demo-barbearia demo-salao` e o aviso de ordem.
+
+**Média.**
+- **Endereços:** os pedidos passaram a usar `Rua do Exemplo, s/n` (barbearia), `Travessa do Exemplo, s/n` (salão) e `Avenida do Exemplo, s/n` (academia), todos em Centro, Riachão do Jacuípe-BA, com o CEP geral da cidade, 44640-000. Nenhum número leva a um imóvel. No motor, quando `CREAT_SITE.demonstracao` está ligado, `mapaUrl` fica vazio: a demo não tem o botão "Como chegar no Google Maps". O site entregue continua com o link, e um teste cobre os dois casos.
+- **Horário inventado. Decisão:** o horário fica, marcado como exemplo. Sem `funcionamento` o fluxo de pedir horário (fita de dias e horas), que é o que a demo vende, deixa de existir. Para não parecer fato, a faixa agora diz "Endereço e horários são de exemplo". O letreiro leva o selo `EXEMPLO` antes de "Aberto agora" ou "Fechado agora". "Horário da casa" ganhou o selo `EXEMPLO`, e "Onde fica" ganhou a nota "Endereço e horário de exemplo: este negócio não existe.". O rodapé começa com "Horário de exemplo:". Se o Marcos preferir tirar o horário de vez, a demo perde o pedido de horário.
+- **Título da home:** "Veja um site entregue" virou **"Veja um site pronto"**, com o olho "Sites-demonstração", em `index.html` e em `conteudo/home.json`. O título antigo soava como cliente entregue.
+- **Fatos inventados nas respostas de IA** (`demos/resposta-ia-*.json`): saíram "professor na sala", "turma pequena", "o nome de quem vai te receber", "garrafa de água", "toalha limpa", "cadeira limpa", "toalha quente/espuma no pincel", "o pagamento é feito na barbearia" e "o valor depende do comprimento e do tom". Ficaram só descrições do serviço e perguntas encaminhadas ao WhatsApp. As três respostas passaram no `validar-tenant`.
+
+**Baixa.**
+- Salão e academia não dizem mais "o dono confirma". Agora é "o salão confirma pelo WhatsApp" e "o studio confirma pelo WhatsApp". A regra 4 do SYSTEM (`scripts/producao/lib/ia.cjs`) passou a pedir o sujeito natural do nicho. O validador já aceitava qualquer "confirma pelo WhatsApp".
+- Mensagem da academia (`motor/nichos/academia.js`): agora sai "Quero pedir um horário no studio: Aula experimental, quinta, 12/11 às 10h30. Pode confirmar por aqui?". Conferi no navegador.
+- O placeholder e o erro do WhatsApp usam o DDD do negócio, `(75) 91234-5678`, com 11 só como reserva (`motor/v1/agendamento.js`).
+- No salão, o rótulo "PINTE A UNHA." não encosta mais no dedo: `.palco-esmalte > .re-svg { margin-bottom: 5% }`, porque o dedo vai até y=204 num viewBox de 200.
+- No herói da barbearia, `--gravado` passou de 52% para 62%. O contraste sobre o couro liso ficou acima de 5:1 (Poste 5,9, Selaria 5,9 e Lousa 5,4; antes, cerca de 4,4 no liso e 3,8 nos veios). O efeito continua "aço antes de afiar".
+- No escuro, a faixa da demo fica sobre `--fundo-3`, com a tinta clara e um fio do destaque embaixo. Deixou de ser um bloco claro.
+- Na academia, os "-- --" eram a marca do alto do ritual. Viraram uma linha tracejada de ponta a ponta com as pontas fechadas, que fica cheia no destaque quando a barra trava (`motor/v1/rituais/barra.js` e `rituais.css`).
+- Teste local da home: `scripts/montar-local.cjs` monta `dist/local/` com a vitrine e os 3 demos em `sites/` (não vai para o git nem para o ar). Com ele, o clique em "Abrir o studio" abriu o demo.
+- `publicar-site.cjs`: saiu o caminho fixo do scratchpad desta sessão. O destino padrão agora é `CREAT_PUBLICAR_DESTINO` ou `mkdtemp(<tmp>/creat-publicar-)`. `--demo` passa `exigirFaixaDemo` ao `testarSite`, que confere a faixa no topo e o noindex na página renderizada, e confere também `"demonstracao":true` e o noindex no HTML.
+- `demonstracao.test.mjs`: apaga a pasta temporária no `test.after` (`CREAT_TESTE_MANTER` guarda). O teste do validador usa fixture própria. Ganhou 3 testes: Maps fora da demo, endereço `s/n` nos pedidos e a leitura dos links da trava.
+- Motor: **v1.1.1**. Todas as mudanças são aditivas e, sem `--demonstracao`, o site entregue só muda o placeholder do DDD, o `--gravado` e os dois ajustes dos rituais.
+
+**Verificado:**
+- Os 3 demos foram refeitos pela esteira real (`produzir.mjs --fixture-ia --demonstracao`): código 0, 6 etapas ok, teste headless de 390 px ok.
+- `CREAT_TESTE_TMP=/tmp npm test`: 56 de 56, com os 3 testes novos de `demonstracao.test.mjs`.
+- `node scripts/checar.cjs`: tudo certo, com os 3 avisos `[PREENCHER]` já conhecidos.
+- `olhar.cjs --cdn-local` nos 3 demos: "Tudo limpo" nos três. Olhei os prints do salão no desktop claro, da academia no celular claro e no desktop escuro e da barbearia no celular escuro.
+- No navegador: home (`dist/local`) → "Abrir o studio" → quinta → 10h30 → Aula experimental → nome e WhatsApp → Enter. O wa.me sai certo e o console fica limpo. "Onde fica" aparece sem o link do Maps e com os selos.
+- `publicar-site --demo` passou nos 3 com `exigirFaixaDemo`. **Os zips mudaram**, então descarte os antigos. Os novos estão em `<scratchpad>/zips/`:
+  - barbearia `f3c09c28…`
+  - salão `6ab2f243…`
+  - academia `35c40d78…`
+
+**Pendências:**
+- (1) Publicar os 3 zips novos em `public/sites/demo-*/`, rodar `conferir-sites-no-ar.cjs` até sair com 0 e só então publicar a vitrine (`PUBLICACAO.md`, seção 0).
+- (2) O CEP 44640-000 é o geral de Riachão, não aponta para imóvel. Mantido porque o formato do pedido exige CEP.
+
+## Rituais vivos e quem monta, 09/11/2026
+
+### Pixel · "Veja quem monta o seu site" virou a empresa em funcionamento
+Para que serve na venda: a seção da home deixou de ser uma foto parada. Quem rola até ela vê o pedido de um negócio passar de mão em mão na sede 3D e, ao lado, a comanda acender cada passo. Quando Trilho publica, o carimbo NO AR bate e o botão "Abrir o site pronto" fica amarelo e leva ao site-demonstração daquele negócio. Se o visitante já digitou o nome no hero, a fachada mostra o nome dele: é a prova da tese (o cliente assiste a equipe com a marca dele) antes de pagar, e o botão vira "Ver a prévia do seu site".
+
+**Home (`index.html` #sede, `assets/vitrine.js`, `assets/tokens.css`, `conteudo/home.json`)**
+- Três chips (Barbearia Navalha Fictícia, Salão Esmalte Fictício, Studio Barra Fictícia) trocam o nome na fachada da sede, o título da comanda e o link "Abrir o site pronto" (`sites/demo-<k>/`). No celular os chips ficam numa grade de 3 colunas (56 px de altura).
+- Sede embutida: no desktop (≥1000 px, ponteiro fino), o iframe `sede/index.html?modo=demo&lite=1&marca=<nome fictício>` carrega sozinho quando a seção chega perto. No celular, mostra o poster até a pessoa tocar em "Ver ao vivo", para poupar dados (como antes). O nome digitado pelo visitante nunca vai na query: entra pelo fragmento `#marca=` (ADR-002) ou por postMessage.
+- Comanda "Pedido de demonstração" com 7 passos: Nimbus organiza · Verbo escreve · Paleta escolhe as cores · Pixel monta · Lupa testa no celular · Muralha confere a segurança · Trilho publica. Cada passo mostra o ponto na cor do personagem, o estado (feito / agora / na fila, em texto) e `aria-current="step"` no passo ativo. Uma barra de progresso acompanha. A nota diz: "Demonstração: é assim que a equipe aparece quando há um pedido em produção. Os nomes são fictícios e nenhum desses negócios existe." Não há tempo prometido nem dado real.
+- Sincronia: a sede avisa a etapa por postMessage, e a comanda acende o mesmo passo. Antes de a sede carregar, a comanda usa o mesmo relógio da sede (6 s; 9 s com movimento reduzido). O relógio local para fora da tela e com `document.hidden`; a sede embutida para de desenhar e, desde a rodada de correções abaixo, também para o ciclo de etapas quando a janela sai da tela (antes, o `setInterval` dela seguia e a comanda andava fora da tela).
+- A legenda da janela é honesta: diz "Nome fictício na fachada." ou "O nome do seu negócio na fachada, só neste aparelho.". Depois de carregar, troca a dica do celular por "Arraste para girar a ilha e toque num personagem.".
+- Tokens novos `--agente-*` (figurino da sede, iguais nos dois temas, sempre com contorno). Nenhuma cor solta. Movimento (pulo do ponto ativo, carimbo com mola, barra) só com `prefers-reduced-motion: no-preference`.
+- Nenhum evento novo de analytics (contrato inalterado).
+
+**Sede (`sede/index.html`, na raiz do repositório)**
+- `limparMarca()` virou função (mesma regra de antes), e a placa desenha `marcaAtual`.
+- Protocolo com a página que embute, só no modo demo e só aceito do `window.parent` de mesma origem (ou `null` em arquivo):
+  - entrada `{creatSede:1, tipo:'marca', marca, reiniciar}`: troca a fachada (limparMarca + fillText) e reinicia o ciclo;
+  - entrada `{tipo:'visivel', visivel}`: pausa o `frame()`;
+  - saída `{creatSede:1, tipo:'etapa', etapa:0..5, total:5}`: vai para `location.origin`, ou `*` em `file:`, e só leva o número da etapa.
+- Embutida em modo demo, a sede ganha a classe `html.embutida`: saem a marca, o elenco e a dica, e o selo DEMONSTRAÇÃO vai para o canto. Abaixo de 560 px, os botões do topo também saem. Aberta direto, nada muda.
+
+**Sites-demonstração (`motor/v1/motor.js`, `motor/v1/styles.css`)**
+- Só com `CREAT_SITE.demonstracao`: no rodapé entra uma linha discreta "Veja a equipe que montou este site", que leva a `<home>/sede/?modo=demo&marca=<nome>`. A função `hrefSede` só aceita home `https://`, descarta query e fragmento e limpa o nome com a mesma regra da sede (até 28 caracteres, `encodeURIComponent`). O href entra por `setAttribute`. O alvo de toque tem 44 px, e há texto para leitor de tela "(sede 3D da Creat Nuvem, demonstração)". O site entregue não muda. Não mexi em `VERSAO` (v1.1.1) porque os rituais estão sendo mexidos em paralelo; quem fechar a rodada sobe a versão uma vez só.
+- Os 3 demos foram refeitos pela esteira real (`produzir.mjs --fixture-ia --demonstracao`, o comando da seção "Entrega e demos"). Os três saíram com código 0.
+
+**Verificado**
+- `CREAT_TESTE_TMP=/tmp npm test`: 57 de 57. O teste novo em `demonstracao.test.mjs` confere o link da sede na demo, a ausência dele no site entregue, a recusa de `javascript:` e `http:` e a limpeza de `"><script>`.
+- `node scripts/checar.cjs`: tudo certo, com os 3 avisos `[PREENCHER]` já conhecidos.
+- `olhar.cjs --cdn-local` em `dist/local` (home) e nos 3 demos: "Tudo limpo" nos quatro.
+- No `navegador` (`dist/local`, `--cdn-local`):
+  - desktop claro e escuro: o iframe carrega sozinho, a comanda segue a sede (0→5), aparece o carimbo NO AR e o botão amarelo fica legível no escuro;
+  - celular: o poster aparece até o toque em "Ver ao vivo". Depois do toque, a ilha mostra a placa "Barbearia Navalha Fictícia · Aberto pela Creat Nuvem". O chip do salão troca a placa ao vivo (título do iframe "Sede · Salão Esmalte Fictício"), reinicia na etapa 0 e aponta o link para `sites/demo-salao/`;
+  - nome digitado no hero ("Barbearia do Zezinho Cabeleireiro e Cia", cortado em 28): aparece o chip "Barbearia do Zezinho" já marcado, a fachada usa `#marca=` e "Ver a prévia do seu site" abre a prévia;
+  - rodapé dos demos de academia (desktop) e salão (celular escuro): o link aparece, e `/sede/?modo=demo&marca=Studio%20Barra%20Fict%C3%ADcia` abre a sede com o nome na placa.
+  - Console limpo em todos.
+- Prints olhados: `.verificacao/print-*.png`, `.verificacao/home/`, `.verificacao/demo-*/`.
+
+**Pendências**
+- (1) Nada publicado. Os zips dos demos com o link novo foram refeitos (`publicar-site --demo`, exit 0, 17 arquivos cada; sha256 barbearia `de7926f2…`, salão `fd106a20…`, academia `9306e976…`) no destino `CREAT_PUBLICAR_DESTINO` desta sessão. Se a frente dos rituais refizer os demos depois, os zips dela é que valem. Eles sobem antes da vitrine, como manda `docs/PUBLICACAO.md`; a vitrine leva junto a `sede/` nova.
+- (2) No sandbox, a sede embutida roda WebGL por software e as transições da comanda ficam lentas. Em aparelho real não deve acontecer, mas vale conferir num celular de entrada.
+- (3) O iframe da sede segue com `lite=1` (30 quadros por segundo). Os rituais animados (esmalte, barra) são de outra frente e não entraram aqui.
+
+### Órbita · os rituais da apresentação (barra, esmalte, navalha) ganharam vida
+
+**Órbita.** Pedido do Marcos: "faltaram as animações da apresentação do site dos clientes: o supino/a barra, o esmalte". Diagnóstico: os 3 rituais montavam parados até alguém arrastar. Agora cada herói chega em cena, mostra o gesto sozinho e passa a vez para quem visita. Para que serve na venda: quem abre o site do cliente (ou a demo pela vitrine) vê, nos primeiros 2 s, o objeto do ofício se mexendo, entende o gesto sem ler instrução e tem um momento para contar ("a barra caiu no chão e levantou pó"). A seção "Veja quem monta o seu site" da home **não foi mexida por mim**: esta tarefa cobriu só os rituais.
+
+**O que mudou, por arquivo** (só `motor/v1/rituais/*.js`, `rituais.css` e `efeito.js`; interface `CREAT_RITUAIS` e o gesto de arrastar intactos):
+- `rituais/comum.js`: peças novas do ritual vivo. `emDois` (12 poses/s), `curva`, `trecho`, `cena` (laço rAF cujo relógio não salta quando a aba some ou o palco sai da tela), `diretor` (demonstração a cada 6 a 9 s só com o palco ≥35% na tela, aba visível, ninguém mexendo e sem movimento reduzido; `parar()` é definitivo na visita), `dicaVez` (empilha "Arraste você" sobre a dica do palco por 2,6 s) e `nomeNegocio`.
+- `rituais/barra.js` (academia): **entrada em dois**: a barra aparece no alto, sobe um fio (antecipação), cai esticada, bate comprimida, quica, enverga e as anilhas vibram pose sim, pose não, no pó de magnésio. **Demonstração**: agacha, sobe devagar com o meio na frente, segura tremendo, solta e quica. **Celebração**: a faixa de cada anilha ganha o nome do negócio em carimbo (a segunda chega um tique depois). Pegar a barra no meio da cena continua da pose atual; pegar durante a queda não conta como levantar (fica abaixo da trava).
+- `rituais/esmalte.js` (salão): **entrada em dois**: a mão sobe, o vidrinho entra girando em arco e assenta comprimido, e o pincel sai, sacode e volta (cada parte começa antes da outra acabar). **Demonstração**: o pincel sai do vidrinho, voa em arco até a cutícula, pinta a faixa do meio, uma gota escorre pelo dedo enquanto o pincel volta e a tinta da demonstração se apaga (ela não conta na cobertura). **Celebração**: um reflexo atravessa a unha e uma estrela de brilho estala.
+- `efeito.js` (barbearia): a lâmina virou um grupo que gira no rebite e é desenhada atrás do cabo, então a navalha pode estar **fechada**. **Entrada em dois**: aparece fechada, arma para trás, a lâmina estala para fora passando do ponto e, ainda assentando, já desce no couro numa passada longa que deixa marca. **Demonstração**: duas passadas virando a lâmina no eixo longo, e o nome gravado vira cromo por um instante (uma varredura). A demonstração não emite `ritual:passada`, então não tem som nem conta fio. **Celebração**: o risco de luz varre a lâmina, uma estrela estala na ponta e um raio atravessa o couro, sem piscar (fotossensibilidade). O CSS entra por `<style data-ritual-vivo>`, porque a barbearia não carrega `rituais.css`; a CSP do `_headers` permite `style-src 'unsafe-inline'`. A tira de confirmar usa a mesma fábrica de navalha, sempre aberta.
+- `rituais/rituais.css`: a dica "Arraste você" (entra em 260 ms, sai em 160 ms, anel de toque pulsando), a faixa da anilha e o carimbo, o pó com deriva lateral (4 grãos a mais só na batida forte), o reflexo e a estrela da unha. Tudo anima só `transform` e `opacity`.
+- **Regras:** a demonstração para no primeiro toque, tecla ou arrasto no palco (na barbearia, que rola a página, conta o arrasto ou um toque parado, não a rolagem) e não volta na visita. Com `prefers-reduced-motion` não há entrada, loop nem dica: só o estado final, como antes (a faixa da anilha já aparece com o nome). Textos novos: só "Arraste você" (chave `dicaVez` em `ritualTextos`, com reserva no código).
+
+**Verificado:**
+- Demos refeitos com `produzir.mjs --fixture-ia --demonstracao` (código 0, 6 etapas ok nos 3).
+- `olhar.cjs --cdn-local` nos 3 `dist/demo-*`: "Tudo limpo" (celular e desktop, claro e escuro).
+- Script Playwright próprio (`<scratchpad>/vivo/capturar.cjs`): prints a 0,5 s e a 4 s, na demonstração, na dica e na celebração, em 390 px e 1440 px, sem erro de console. Olhei os prints: a 0,5 s, a barra está caindo esticada, o vidrinho está girando no ar e a navalha está fechada; a 4 s, os três estão em repouso. Também olhei as folhas de quadros com relógio controlado (entrada e demonstração dos 3) e a celebração dos 3.
+- Interromper no meio da entrada com arrasto real: os 3 concluem o gesto, não sobra resto de cena e a demonstração não volta em 10 s.
+- Movimento reduzido: os 3 abrem no estado final, sem demonstração.
+- Desempenho (rAF por segundo, 0 a 12 s, desktop headless): 60 qps estáveis depois do 1º segundo, inclusive durante as demonstrações. O 1º segundo da barbearia fica igual ao original (27 a 34 contra 29), por causa da geração do couro.
+- Prévia (`previa/#k=<nicho>`): os 3 nichos montam com a entrada e o console limpo; a faixa da anilha usa o nome digitado.
+- `CREAT_TESTE_TMP=/tmp npm test`: 57 de 57. `node scripts/checar.cjs`: tudo certo, com os 3 avisos `[PREENCHER]` já conhecidos.
+- `publicar-site --demo` nos 3. **Os zips mudaram**, então descarte os anteriores. Novos em `<scratchpad>/zips/`: barbearia `de7926f2…`, salão `fd106a20…`, academia `9306e976…`.
+
+**Pendências:** (1) Publicar os 3 zips novos (chat principal, `docs/PUBLICACAO.md`). (2) A seção "Veja quem monta o seu site" ficou com a frente da home (subseção Pixel acima). (3) Os FPS foram medidos em Chromium headless com renderização por software; falta conferir num celular médio de verdade.
+
+### Pixel · rodada final de demos e zips (rituais vivos + quem monta juntos)
+- Os 3 demos foram refeitos pela esteira real (`produzir.mjs --fixture-ia --slug demo-* --sem-sair --demonstracao`, URLs padrão). Saiu código 0 com as 6 etapas ok e o headless de 390 px ok. `dist/demo-*/motor/v1/rituais/` (comum, barra, esmalte, rituais.css) e `efeito.js` são idênticos à fonte, e o `motor.js` traz o link "Veja a equipe que montou este site".
+- `CREAT_TESTE_TMP=/tmp npm test`: 57 de 57. `node scripts/checar.cjs`: tudo certo, com os 3 avisos `[PREENCHER]` já conhecidos. `montar-publico.cjs`: 67 arquivos.
+- O `montar-publico` avisou que o hash CSP do script inline da sede tinha mudado, porque a sede foi alterada. Copiei o hash novo (`sha256-INEh5a/…`) para o `_headers` da fonte, e a fonte agora bate com `dist/publico/_headers`.
+- **Zips finais.** Estes substituem os sha256 citados acima (`de7926f2…`, `fd106a20…`, `9306e976…`). Estão no scratchpad, em `site-demo-<k>.zip`:
+  - barbearia: `7c678dd64f68880f64ce3a9ecab712094860f6ef1caeb7089a136642aa9c1c17`
+  - salão: `ec765895053fd376d8c19e76c9154d4c41321d8f0fa271e22f2ae087c6b3b08f`
+  - academia: `50c436526e8c83f738c01bb1b622def13fb002baf3bc787a44ce85a61c5a5aea`
+
+### Órbita (com chapéu de Pixel na home) · correções da revisão, rituais e "quem monta"
+Para que serve na venda: quem abre a demo vê o objeto do ofício se mexer em menos de 4 s e, logo depois, um convite "Arraste você" ao lado dele, já na primeira tela do celular. Na home, a comanda nunca volta atrás e o banner de medição sai da frente da placa com o nome do negócio, que é a prova da tese.
+
+**Média**
+- **1ª demonstração logo depois da entrada.** O diretor agora dispara a 1ª demonstração 1,8 a 2,6 s depois da entrada; as seguintes continuam a cada 6 a 9 s (`rituais/comum.js`, `PRIMEIRA_DEMO`; a mesma regra na cópia de `efeito.js`). Medido (Playwright, 3 demos × 390×844, 375×667 e 1440×900 × claro e escuro): a entrada termina entre 1,6 e 2,4 s e a 1ª demonstração começa entre 3,5 e 4,6 s (antes, entre 8,4 e 10,9 s).
+- **"Arraste você" da barbearia visível no celular.** A dica deixou de ficar empilhada no texto do herói, que no celular fica abaixo da dobra. Agora é um selo que flutua logo acima da navalha parada (ou abaixo dela, se não couber), dentro do couro, com o ponto indo e voltando como o gesto (`efeito.js`, `criarDicaVez(couro, navalha)` e `CSS_VIVO .couro-vez`; entra em 260 ms e sai em 160 ms; some com movimento reduzido). Medido: em 390×844 o selo fica em 300–338 px; em 375×667, em 370–408 px; no desktop, em 150–188 px.
+
+**Baixa**
+- **A comanda não volta atrás** quando a sede carrega no celular. Ao tocar em "Ver ao vivo", a comanda segura o passo atual, e a sede é embutida com `?etapa=<passo>` (0 a 5, só no modo demo) e começa dali. Trocar de negócio continua recomeçando do zero, de propósito. Medido: comanda 0,1,2,3 → toque → 3,4,5,0,1, sem regressão (`assets/vitrine.js` `abrir`/`carregarSede`; `sede/index.html` `ETAPA0`).
+- **Fora da tela, o ciclo da sede para.** Com `pausadaPeloPai`, a sede para o `setInterval` do ciclo, e não só o desenho, e retoma 2,5 s depois de voltar. Medido: 16 s fora da tela com a comanda parada na etapa 2; ao voltar, 2,3,4.
+- **O protocolo da sede só existe no modo demo.** O ouvinte de `message` é registrado só com `MODO === 'demo'`, como a documentação dizia.
+- **O banner de medição sai da frente da sede.** Com a janela da sede ≥60% na tela, o banner desce (200 ms) e volta quando ela sai (260 ms). Não recua se o foco do teclado estiver dentro dele, e Pixel/Clarity continuam só depois do Aceitar (`vitrine.js` `montarConsentimento`, `vitrine.css .consentimento.is-recuado`). Conferido no celular e no desktop: com a janela na tela, a placa "Barbearia Navalha Fictícia" fica à vista; longe dela, o banner volta.
+- **Âncora "Sede ao vivo" no celular.** O `scroll-padding-top` acompanha a altura real do cabeçalho (ResizeObserver; 156 px no celular de 2 linhas, 80 px de reserva no CSS). Medido: cabeçalho até y=140 e o olho "SEDE AO VIVO" em y=214.
+- **Selo "Demonstração" da janela:** sai só quando a sede manda a 1ª etapa (`data-sede-pronta`), e não mais quando o iframe é inserido. Se a sede falhar, o selo fica.
+- **Palco do salão e da academia no celular:** passou de `min(50vw, 210px)` para `min(70vw, 280px)` (273 px em 390, contra 195). Ocupa o vazio acima do título, continua alinhado à direita, e no desktop nada muda.
+- **A navalha não sai do couro:** as passadas da entrada e da demonstração ficam dentro da folga real (`h.folga`), e no celular a navalha ficou um pouco menor (66% da largura, contra 74%) para sobrar couro para a passada. Medido: 0 px para fora do couro em todas as amostras.
+- **Texto do herói na demonstração:** o parágrafo ganha a frase "Nesta demonstração, o pedido vai para o WhatsApp da Creat." (`motor.js`, `UI.demoHeroiNota`, só com `CREAT_SITE.demonstracao`). O site entregue não muda.
+- **Textos da seção #sede em 3 lugares:** `checar.cjs` ganhou a regra 6. Cada texto de `conteudo/home.json` `sede.*` tem de aparecer igual no `index.html`, no `vitrine.js` ou na `sede/index.html`, `sede.agora` tem de ser idêntico a `ESTEIRA_AGORA` e os passos da comanda iguais a `sede.passos`. A regra achou um texto morto, `sede.erro`, que nenhum arquivo usava, e ele saiu do `home.json`.
+- **Cópias que mudam juntas:** os cabeçalhos do diretor em `rituais/comum.js` e em `efeito.js` dizem "MUDA JUNTO". Não extraí um arquivo comum, porque isso mudaria o carregamento da barbearia (um script a mais) na mesma rodada que mexe no ritual.
+- **CSS morto:** os dois `@keyframes ra-po` viraram um só (com `--dx`), a regra repetida saiu e a classe `is-em-cena`, sem CSS, saiu de `barra.js` e `esmalte.js`.
+- **`dist/local`** foi remontado depois dos demos novos (`montar-publico` + `montar-local`).
+- **Relatório:** havia duas seções com este título. A segunda virou a subseção "Órbita · os rituais da apresentação" e o "contrato j" foi corrigido.
+- Motor **v1.2.0** (subi uma vez só, fechando a rodada dos rituais vivos + quem monta). O hash CSP do script inline da sede mudou e foi copiado para o `_headers` da fonte (`sha256-bb5Xh+…`), que agora bate com `dist/publico/_headers`.
+
+**Verificado**
+- Os 3 demos foram refeitos pela esteira real (`produzir.mjs --fixture-ia --demonstracao`): código 0, 6 etapas ok e headless de 390 px ok. `dist/demo-*/motor/v1/` é idêntico à fonte.
+- `CREAT_TESTE_TMP=/tmp npm test`: 57 de 57. `node scripts/checar.cjs`: tudo certo, com a nova regra da sede e os 3 avisos `[PREENCHER]` já conhecidos. `montar-publico.cjs`: 67 arquivos.
+- `olhar.cjs --cdn-local` nos 3 `dist/demo-*` e em `dist/local` (home): "Tudo limpo" nos quatro.
+- Playwright próprio (`<scratchpad>/orb/`): tempos e posição da dica nas 18 combinações, sem erro de console e sem rolagem lateral. Movimento reduzido: os 3 ficam parados e sem dica. Um toque durante a 1ª demonstração para tudo, e nada volta em 10 s. Quadros por segundo no celular emulado: 60 do 2º ao 4º segundo, inclusive durante a 1ª demonstração (no 1º segundo, 33 na barbearia por causa da geração do couro, como antes). Na home: âncora, banner, comanda sem regressão, pausa fora da tela e selo, no celular e no desktop, com console limpo.
+- Prints olhados: a dica da barbearia em 390 claro e em 1440 escuro, a academia em 390 escuro e o salão em 375 claro; na home, a âncora em 390 e a sede viva em 390, com o banner recuado e a placa à vista.
+
+**Zips finais** (`publicar-site --demo`, exit 0; substituem todos os sha256 citados acima). Estão no scratchpad, em `site-demo-<k>.zip`:
+- barbearia: `485a04732dbb1a461e3a96c12f85a135e0c194d5aa8d873a5d504fa2ff8e2adc`
+- salão: `1e66f5ba425583ff332435fb28a439fabc55e5a336bfe9f62c4bf152aff270ec`
+- academia: `193fbbfed74b6469c190df27fe9e2d8915d4554883de0217dc10aac3f90603d5`
+
+**Decidi não mudar**
+- Não troquei os textos de IA dos demos ("chega no WhatsApp do Studio Barra"). Eles mostram o que o site do cliente vai dizer, e a frase de demonstração no herói desfaz a contradição sem inventar outro texto.
+- Não extraí o diretor para um arquivo comum (ver "Cópias que mudam juntas").
+- O ponto "não verificado" da revisão continua aberto: fluidez num aparelho real, som dos rituais e celular físico de entrada. No sandbox só há WebGL e Chromium por software.
+
+**Pendências:** (1) Publicar os 3 zips novos antes da vitrine (`docs/PUBLICACAO.md`, seção 0) e depois a vitrine com a `sede/` nova e o `_headers` atualizado. (2) Conferir num celular médio de verdade.
+
+## 10/11/2026 · Fundação do funil para o visitante frio (Pixel)
+
+- **Preço**: inauguração vale com `precos.json` de até 7 dias; "Restam X" e vagas de hoje só até 48 h (ADR-005). A página não volta a R$ 497 sozinha enquanto a oferta de R$ 297 vale.
+- **Medição**: endereço limpo (nome e cidade fora da URL) antes de qualquer medição; Pixel também em `/abrir/` e `/obrigado/` com o consentimento da home; ViewContent na prévia, InitiateCheckout no clique em pagar (saiu da home), Purchase só com volta aprovada e `payment_id`, uma vez por pagamento. Tabela em `docs/MEDICAO-FUNIL.md`.
+- **Praça no pagamento**: origem do primeiro toque (30 dias) escolhe o link de R$ 297 da praça (`linksPorPraca`); anual com inauguração usa os combos de R$ 1.767 e R$ 3.267 só quando o total da tela bate com o link.
+- **Confiança**: objeto `empresa` em `checkout.config.js` (termos, privacidade, rodapés e bloco "Quem monta o seu site"); campo vazio some; `REVISAO_JURIDICA_PENDENTE` só como comentário. `/abrir/` com resumo de preço no topo, garantia, 7 dias e "depois do pagamento" antes dos botões, botão fixo com o total e "Dúvidas" no cabeçalho.
+- **Decisões que contrariam o plano**: (1) os combos anuais entraram no checkout porque a tarefa pediu; o EXPANSAO.md recomenda tirar o anual do checkout de mídia fria. Se o dono preferir, basta apagar `combosAnual` e o anual volta a cobrar só a Abertura hoje. (2) O "Restam X" continua visível com dado de até 48 h, como a tarefa pediu; o EXPANSAO.md quer escondê-lo até o número vir de venda conferida. (3) O título da seção da sede virou "Veja como a equipe trabalha" para não repetir o título do bloco novo "Quem monta o seu site".
+- **Bugs antigos corrigidos de passagem**: termos mostravam `{{precos.prazoHoras}}` e `{{precos.anualMesesPagos}}` crus (regex só aceitava minúscula); o botão de pagar em modo WhatsApp (sem link) era bloqueado pelo próprio clique; a nota do anual em `/abrir/` quebrava o número em linhas.
+
+### 10/11/2026 · Correções da revisão de Crivo, Muralha e Lupa (Pixel)
+Decisões do diretor aplicadas (D1 a D9):
+- **D1 Escassez**: contadores ao vivo desligados por `checkout.config.js` `contadoresAoVivo: false` (código mantido). A home diz "preço de inauguração" e "depois da inauguração, R$ 497" (sem preço riscado, porque o R$ 497 ainda não foi praticado). Os termos explicam a regra das 20 primeiras Aberturas, sem número restante.
+- **D2 Fim da inauguração**: `scripts/atualizar-vagas.cjs` lê o `checkout.config.js` em vm e a `--rotina` falha (código 2) enquanto `aberturaInauguracao` ou qualquer praça estiver publicada com a inauguração encerrada; a ATENÇÃO lista os 9 links a desativar no Mercado Pago (Abertura, 6 praças, 2 combos). Cabeçalho corrigido (7 dias para o preço). Alerta do `.github/workflows/rotina-vagas.yml` atualizado. ADR-005 ganhou a regra "soma das quantidades máximas dos 7 links <= 20, ou corte manual em todos".
+- **D3 Anual**: `/abrir/` cobra hoje só a Abertura em qualquer plano e explica que o anual é cobrado no dia em que o site entra no ar, pelo valor mostrado. `combosAnual` saiu do arquivo público (links só em `docs/INTEGRACAO-PAGAMENTO.md`); `scripts/checar.cjs` falha se voltar.
+- **D4 Clarity**: só na home; `data-clarity-mask="True"` no campo do nome, na placa, no formulário, no rótulo da prévia, no celular do teste e na comanda da sede.
+- **D5 Consentimento**: banner também em `/abrir/` e `/obrigado/` (aparece enquanto não houver escolha), "Preferências de medição" no rodapé das duas e em termos e privacidade (`../#preferencias`). Recusar depois de aceitar revoga o Pixel, apaga `_fbp`/`_fbc` e recarrega. Escolha vale 180 dias.
+- **D6 Privacidade**: `conteudo/privacidade.md` versão 2, com o que sai do endereço, o que fica no aparelho e por quanto tempo, o que vai para a Meta e quando, Google Fonts e o cookie de segurança da hospedagem. "Esquecer meus dados" apaga todas as chaves `creat:` (local e sessão) e os cookies da Meta; chaves com prazo se apagam ao vencer (`limparVencidos` em toda página).
+- **D7 Parcelas**: um botão "Pagar no Pix ou cartão" e, abaixo, "Pix ou cartão em até 2x; as condições do parcelamento aparecem no Mercado Pago antes de você pagar". Termos §7 com o mesmo texto.
+- **D8**: sem `window.__creatPixel` (os testes passam a função de envio a `medirCompra`). O total de `/abrir/` vem sempre do valor do link escolhido. Purchase só com `preference_id` conhecida (saiu o valor guardado do clique e a chave `creat:checkout:v1`).
+- **D9**: CPF/CNPJ e endereço continuam vazios e ocultos; `scripts/checar.cjs` agora avisa a pendência.
+
+Achados de experiência: WhatsApp flutuante fora da tela enquanto o hero aparece (não cobre mais o campo do nome em 390x844); nome sem espaço não estoura `/abrir/` nem `/obrigado/`; "Ver a prévia de novo" abre a prévia direto (`&ver=1`) e o contador mostra o tamanho do nome.
+
+Correção achada nesta rodada: o `fbevents.js` da Meta não manda `Access-Control-Allow-Origin`, e o script era carregado com `crossorigin="anonymous"`. O navegador bloqueava o arquivo e o Pixel nunca carregava de verdade (só a fila local). Agora `crossorigin` só vai junto com SRI (PostHog). Conferido no navegador: `fbq.callMethod` existe depois do aceite.
+
+Pendências do dono (fora do repositório): desligar no Events Manager a correspondência avançada automática e as detecções automáticas antes de publicar (roteiro em `docs/MEDICAO-FUNIL.md`); conferir no Mercado Pago o parcelamento de cada link; CPF/CNPJ e endereço comercial.
+
+## 10/11/2026, tarde · decisões do executor, pagamento real e ensaio
+
+**Decisões da seção 10 de `docs/EXECUTOR.md` (registradas pelo coordenador, com a delegação do dono).**
+- **D1, os 4 dados do pedido:** opção (a). O `/abrir/` manda responsável, endereço e horários no registro do pedido (pacote 2A da onda 2). Quem não preencher cai no roteiro manual do suporte. O prazo vale pela regra dos termos: conta da confirmação do pagamento e da chegada dos dados. **Superada em 11/11/2026 pelo ADR-009** (ver o bloco "D1 decidida em 11/11/2026" logo abaixo): 72 h da confirmação do pagamento, sem condição de dados. A frase "e da chegada dos dados" é da termos-v1 e não vale para nenhum pedido na v2.
+- **D2, conector do Base44:** a tarefa roda na conta atual do dono, com dado mínimo do pedido (resposta "sim" do dono à pergunta P5 da rodada única). As reduções da seção 2 valem: lista de campos sem e-mail e sem responsável, nenhum segredo legível, auditoria das 3 primeiras sessões.
+- **D3, aceite tácito:** desligado até a cláusula entrar nos termos. Rascunho sem resposta só gera aviso ao suporte.
+
+**D1 decidida em 11/11/2026 pelo diretor, sob a delegação permanente do dono ("resolva tudo"); a confirmar com o dono no relatório (ADR-009).** Com a compra curta, o `/abrir/` pede antes do pagamento só WhatsApp, e-mail e o aceite; endereço, horário e nome ficam num bloco recolhido e, vazios, não vão no pedido. Os termos v2 não mudam: o prazo de 72 h conta da confirmação do pagamento (cláusula 5), também para o pedido pago sem endereço e horário, e o `prazo_fim` não é recalculado quando os dados chegam. Sem endereço e horário a produção não monta o site (EXECUTOR.md, passo (e), Saída 6, roteiro R-dados) e nunca usa dado de exemplo. Se os dados chegarem tarde demais, vale a garantia do 1º mês do plano grátis (passo (k)): risco comercial que a Creat aceita, pequeno e a favor do cliente, para destravar a venda. Registrado e não adotado agora: termos v3 com o prazo contado do recebimento dos dados, e a rota `completarPedido` dentro do `/obrigado/`. A medir aqui, por pedido: quantos precisaram do item 3 do R-dados e quantos viraram 1º mês grátis.
+
+**Pagamento real de teste (R$ 1, Pix, 10/11).**
+- Aprovado em 27 s. O aviso instantâneo do Mercado Pago foi recusado na assinatura. Causa achada: a chave de assinatura guardada tem 64 caracteres sem nenhuma letra nem número (forma registrada no diagnóstico, valor nunca lido). A regravação é um clique do dono e vale também para a operação antiga.
+- A assinatura continua obrigatória. A confirmação saiu pela conciliação por consulta (`portaAbertaConciliar`, a cada 10 min): primeira rodada às 18:30 UTC, pagamento registrado, conferido por ensaio às 18:32 UTC. O dono estornou o R$ 1 em seguida.
+- E-mail ao suporte: passou de 422 para "enviado" às 18:39 UTC, depois da entrada do e-mail de suporte como usuário do app. O resumo do dia chegou à caixa de entrada.
+
+**Anúncios.** Troca única do texto concluída: 6 anúncios novos ativos (Abertura e plano mensal declarados), 6 antigos pausados, verba e público sem mudança. Detalhe em `marketing/trafego/textos-troca-unica.md`, seção 6.
+
+**Ensaio do executor.** Iniciado às 18:45 UTC num clone limpo do `main` (165 de 165 testes). Resultado linha a linha entra abaixo quando terminar. A tarefa agendada só é criada com o ensaio inteiro verde.
+
+### Ensaio do executor: resultado (10/11/2026, 18:45 a 22:00 UTC)
+
+Dois ensaios em produção, com pedido de teste e dados inventados, conferidos por qa e segurança em separado.
+
+| linha | o que prova | resultado |
+|---|---|---|
+| 1, 1b, 11c | abertura do ensaio, pedido pago de teste, trava sem `ensaio_ok` nega | verde |
+| 2 a 5 | pedido pago vira rascunho no ar, testado, com `noindex` | verde |
+| 6 | aprovação só com o link; o link antigo morre | verde (critério de console ajustado: ignora só os 3 avisos que a hospedagem injeta) |
+| 7 | site final no ar, sem faixa de rascunho, WhatsApp certo | verde |
+| 8 | desistência com remoção do site final | verde |
+| 9, 10, 11 | trava contra duas sessões, pausa geral, volta atrás | verde |
+| 11b | alerta de pagamento a conferir, uma vez só | verde |
+| 12 | limpeza: nada de ensaio no ar nem no app | verde |
+
+Produção ao fim: conferência no ar com 95 certas e 0 com defeito; as 3 demonstrações em 200.
+
+**Achados que entram antes do primeiro cliente real (decisões do coordenador):**
+- **Portão de conteúdo.** Hoje é lista de frases e deixou passar ordens em paráfrase num campo do pedido. Endurecer: verbos de comando dirigidos ao sistema e campos curtos só com texto de negócio. Na dúvida, o pedido vai para revisão humana.
+- **D4, remoção fora do teto.** A remoção por desistência esperou 55 minutos pelo teto de 3 publicações por hora. Decisão: a remoção não conta no teto nem espera por ele.
+- **Desistência e histórico do app.** O site sai do ar, mas o histórico e os pontos de volta do app guardam a cópia. A política de privacidade e o roteiro de desistência passam a dizer isso, com o prazo.
+- **Checkpoint depois de remoção.** O primeiro checkpoint pode sair com o commit antigo. O roteiro agora manda conferir antes de publicar.
+
+Não verificado: um usuário comum logado nas 4 entidades privadas (falta credencial de teste); os passos de dono na desistência real (estorno e aviso ao cliente).
+
+### Publicação das ondas 2 e 3 (10/11/2026, 23:16 e 23:24 UTC)
+
+**O que foi ao ar, num ato só:** servidor com termos versão 2 e a regra de prazo das 11h; página de compra que grava o pedido no toque em Pagar; página de obrigado que só diz "Pagamento confirmado" com o servidor confirmando; termos v2 e privacidade v3; marca de consentimento nas 8 páginas; contador próprio de visitas sem cookie; as 3 demonstrações novas (preços de exemplo, galeria de ilustrações rotuladas, fecho de venda, "Pedir este", fuso do negócio); vitrine com "Esmalte & Fio" e endereço de exemplo em Feira de Santana.
+
+**Portões antes:** 237 de 237 testes; verificação geral, moldura, início com rede lenta e marcadores sem falha. O que foi montado no aplicativo bateu byte a byte com o que foi testado (4 impressões digitais iguais).
+
+**Conferência no endereço real, depois de cada deploy:** 105 conferências, 105 certas, 0 com defeito; jornada e cookies 10 de 10; as 3 demonstrações em 200; impressão digital dos termos no ar igual à gravada no servidor; `robots.txt` barrando rascunhos; contador respondendo 204.
+
+**Segunda publicação (23:24 UTC):** a compra passou a abrir no plano Aberto (R$ 147), o mesmo que o anúncio promete. Antes abria com o Vitrine (R$ 297) marcado. Vista no celular emulado em 4G lenta, no ar.
+
+**Pontos de volta:** antes das ondas, checkpoint `6af390f85152f3344b8248b0`; ondas 2 e 3, `6af3a5a7b17767a96a3613c7`; no ar agora, `6af3a7aa82d1d83aba5457b6`.
+
+**Não verificado:** usuário comum logado nas 4 entidades privadas (22 itens, falta credencial de teste); aparelho iPhone real; compra real pela página nova (o teste de R$ 1 foi feito antes dela).
+
+**Executor:** a tarefa agendada ainda NÃO foi criada. Falta a separação de papéis decidida no fecho (quem tem o conector não lê texto de cliente; leitor e redator isolados). Até lá, pedido pago é produzido à mão pelo coordenador, no mesmo roteiro.
+
+## Publicação de 11/11/2026, 02:59 UTC (23:59 de 10/11 na Bahia): primeira dobra e endereço único
+
+**Por que.** O contador próprio mostrou, entre 23:16 e 01:50 UTC de 10/11, cerca de 55 visitas de anúncio e nenhuma prévia. No celular de 360x640 o campo do nome ficava em y≈795 e o botão em y≈1178, fora da primeira tela, e o título era igual para todo nicho.
+
+**O que entrou.**
+- Primeira dobra: título pelo nicho (`assets/nicho-cedo.js` marca `<html data-nicho>` antes da pintura), campo do nome e botão "Ver meu site pronto" na primeira tela (botão termina em y=537 em 360x640), cabeçalho em uma linha, placa menor abaixo do formulário. Apóstrofo curvo do teclado passa a valer no nome.
+- Endereço único: `assets/canonico.js` leva quem abre `creat-nuvem-404b1994.base44.app` ao mesmo caminho em `nuvem.creatmtt.com.br`, com consulta e fragmento. O pedido só atravessa vindo do antigo e até 20/11; só a recusa de medição viaja. Canonical, og:url e links dos e-mails no canônico (`pa-regras-1A-2026-11-10f`).
+
+**Como foi publicado.** Repositório no commit `07a66a6`; pacote montado no app com a mesma impressão digital do local (133 arquivos, sha256 do manifesto `5fe5a32e…89f2`). App: checkpoint `6af3da0d852a262ba77a3eb5` (git `9f10c71`). Volta: checkpoint `6af3c32c57d4bf26ea220951` (estado anterior, git `ccd084c`).
+
+**Verificado.** Suíte 295 de 295 (294 mais o teste novo da dobra). Revisor, qa e segurança: aprovado com correções, nenhuma que bloqueasse; as três de "corrigir" em código foram aplicadas antes de publicar. No ar: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 125 de 125, jornada e cookies 10 de 10, salto do antigo ao canônico conferido; os 3 sites de demonstração 200 nos dois endereços. Olhado em 360x640 e 390x844: quem abre o endereço antigo com `?nicho=academia` chega ao novo com o título da academia.
+
+**Não verificado.** Aparelho real (iPhone e Android com teclado de verdade); navegador de dentro do Instagram; compra real pela página nova; usuário comum logado (22 itens); `rascunho_url` numa consulta real no endereço novo.
+
+**Fica sabido.** Com o campo na primeira tela, o visitante novo pede a prévia antes de ver o aviso de medição. O `ViewContent` do Pixel vai contar menos do que antes. A medida de decisão passa a ser o contador próprio (`previa` sobre `visita`). Os anúncios continuam apontando para o endereço antigo até o ato de 13/11.
+
+## Publicação de 11/11/2026, 07:17 UTC (04:17 na Bahia): caminho de compra e cena viva da equipe
+
+**Por que.** Com a primeira dobra corrigida, o teste no ar mostrou que o preço só aparecia depois de "Quero este site no ar", que o aviso de medição chegava depois da prévia e que a seção "Veja como a equipe trabalha" ficava parada. O dono pediu a seção com movimento, mostrando a equipe trabalhando.
+
+**O que entrou.**
+- Caminho de compra: aviso de medição em faixa no primeiro toque no campo do nome; na prévia, "Testar no meu WhatsApp" como passo secundário, "Quero este site no ar" como passo principal e o preço de hoje logo abaixo (Abertura, mensalidade, 7 dias), vindo do arquivo de preços; topo da prévia cabe o nome em telas de até 400 px; em `/abrir/` a barra de pagar não fica atrás do aviso; cabeçalho "Dúvidas no WhatsApp".
+- Cena viva da equipe (`assets/sede-viva/`): os personagens montam o site do negócio em cima de um celular, em 7 passos e 16 s, tocando sozinha quando entra na tela, com Pausar, troca de negócio pelos três botões e versão parada para movimento reduzido e economia de dados. Carrega só 600 px antes da seção (cerca de 226 KB) e não pesa na primeira tela.
+
+**Como foi publicado.** Repositório no commit `1c60c12`; pacote montado no app com a mesma impressão digital do local (145 arquivos, sha256 do manifesto `83ba3083…50d2`). App: checkpoint `6af416835f4ce863cc5a0304` (git `4648040`). Volta: checkpoint `6af3da0d852a262ba77a3eb5` (git `9f10c71`).
+
+**Verificado.** Suíte 306 de 306; moldura e boot verdes; portão da cena (`conferir-sede-viva.cjs`) verde com 59,8 quadros por segundo em celular com CPU 4x mais lenta, sem erro de console nem violação de CSP. No ar: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 125 de 125, jornada e cookies 10 de 10; os 3 sites de demonstração 200 nos dois endereços. Olhado no ar em 360x640: campo do nome com a faixa do aviso, prévia com os dois botões e o preço, seção da equipe.
+
+**Achado depois de publicar, corrigido no repositório e ainda não no ar.** Chegando à seção da equipe sem ter escolhido a medição, a caixa grande do aviso cobria os botões de negócio e o topo da cena até a cena ocupar 60% da tela. Agora a seção conta como formulário para o aviso, que vira faixa de até 64 px (teste novo em `funil.test.mjs`). Entra na próxima publicação, junto da página de compra curta.
+
+**Fica sabido.** O portão `conferir-sede-viva.cjs` compara a primeira tela com uma versão de base; depois de um merge com outras mudanças na home, passe `SEDE_BASE=<commit anterior à cena>` para medir só o que a cena acrescenta.
+
+**Não verificado.** Aparelho real (iPhone e Android com teclado de verdade); navegador de dentro do Instagram; compra real; usuário comum logado (22 itens).
+
+## Publicação de 11/11/2026, 09:51 UTC (06:51 na Bahia): compra curta
+
+**Por que.** No ar, em 360x640, o botão de pagar de `/abrir/` ficava a 5.532 px do topo (8,6 telas), depois de 6 campos obrigatórios; o pior era o endereço numa linha só, com CEP no formato exato.
+
+**O que entrou.**
+- `/abrir/`: antes de pagar a pessoa informa WhatsApp, e-mail e o aceite dos termos. Nome do responsável, endereço e horário ficam num bloco recolhido e, vazios, não vão no pedido. O horário de exemplo do nicho só vai com a caixa "Este é o horário do meu negócio" marcada. Ordem: negócio, preço de hoje e mensalidade, o que você leva, campos, aceite, garantia em uma linha, botão. Plano Aberto marcado; os outros em "Trocar de plano". Botão de pagar a cerca de 1.340 px do topo (2 telas).
+- `/obrigado/`: com dado faltando, abre com "Falta pouco para a produção começar" e um botão para mandar pelo WhatsApp do suporte (mensagem só com o número do pedido).
+- Política de privacidade versão 4: dados depois do pagamento e contato do suporte só sobre pedido pago.
+- Aviso de medição em faixa na seção da equipe (correção de 11/11 07:17).
+- Decisão registrada no ADR-009: os termos v2 não mudam; as 72 h continuam contando da confirmação do pagamento, também para pedido sem endereço e horário. Decidido pelo diretor sob delegação, a confirmar com o dono.
+
+**Como foi publicado.** Repositório no commit `3ba885d` (conteúdo do site; `4cf29ec` só ajusta testes); pacote montado no app com a mesma impressão digital do local (145 arquivos, sha256 do manifesto `253e792a…0e90`). App: checkpoint `6af43aa22b6e60a2c4cc0150` (git `e931be1`). Volta: checkpoint `6af416835f4ce863cc5a0304` (git `4648040`).
+
+**Verificado.** Segurança e revisão: aprovado com correções, nenhuma que bloqueasse; todas as de "corrigir" aplicadas. Suíte 317 de 318 na bateria em paralelo (o único vermelho era o teste novo do aviso, por tempo curto; com a folga, `funil.test.mjs` deu 61 de 61). Moldura, boot e portão da cena verdes (o portão 3 vezes seguidas). Antes de publicar: nenhum pedido pago real existia na base (só linhas de teste), então ninguém aceitou a política v3. No ar: pedido de teste `pa-teste` registrado pela página nova só com WhatsApp, e-mail e aceite; o servidor gravou com `endereco`, `horarios` e `responsavel` nulos e `termos-v2`.
+
+No ar, depois: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 125 de 125 e jornada 10 de 10 na segunda rodada (a primeira, logo após o deploy, deu 124: o salto do endereço antigo em `/obrigado/` não aconteceu naquela tentativa; repetido 4 vezes à mão, saltou em 2,2 s todas as vezes); os 3 sites de demonstração 200.
+
+**Fica sabido.** O portão da cena falhava de modo intermitente no passo do rosto: o Tab até o fim da seção tirava o palco da tela e, fora da tela, a cena fica parada de propósito. O portão agora volta ao palco antes. A resposta rápida "Como funciona?" do WhatsApp Business ainda fala em "4 dados": o texto novo está em `marketing/trafego/anuncios-meta.md` e precisa ser trocado no aplicativo.
+
+**Não verificado.** Aparelho real; navegador de dentro do Instagram; compra real; se a equipe consegue gravar endereço e horário pelo painel do app e voltar o pedido para produção (linha 11d do ensaio do executor); usuário comum logado (22 itens).
+
+## Publicação de 11/11/2026, 14:19 UTC (11:19 na Bahia): site de exemplo na primeira tela e contador com 9 eventos
+
+**Por que.** Até 10h30 de 11/11 eram 340 visitas reais de anúncio na vida toda e nenhuma prévia pedida; 57 delas já com a primeira tela nova e o público fechado. O diagnóstico com o navegador de dentro do Instagram (Android e iPhone, rede lenta) não achou defeito: campo e botão aparecem em 1,4 a 4 s e a prévia abre. O anúncio diz "Grátis para ver. Sem cadastro" e a primeira tela mostrava três campos e nenhuma imagem de site; o primeiro site de exemplo ficava 7,6 telas abaixo. Duas causas possíveis, nenhuma provada: a página pede trabalho antes de mostrar algo, ou o público "quem administra página" não é dono de barbearia e salão.
+
+**O que entrou.**
+- Primeira tela (para quem chega com `?nicho=`): entre o tipo de negócio e o botão, um cartão de 88 px do site de exemplo do nicho, com o selo "EXEMPLO · nome fictício", que abre o site de demonstração dentro da prévia sem digitar nada e sem contar `previa`. O campo Cidade desceu para depois do botão. O botão "Ver meu site pronto" continua terminando em 539 px em 360x640.
+- Servidor: a lista fechada de eventos do contador passou de 4 para 9 (`ficou_10s`, `rolou`, `tocou_nome`, `digitou_nome`, `tocou_exemplo`), regras `pa-regras-1A-2026-11-11a`, e o esquema de `ContadorDia.evento` ganhou os 5 valores. A página ainda não emite os 5: isso sai junto com a política de privacidade versão 5 (pacote B).
+- `conferir-no-ar.cjs` ganhou o grupo "C exemplo" (6 conferências).
+
+**Como foi publicado.** Repositório no commit `c337add`; pacote montado no app com a mesma impressão digital do local (145 arquivos, sha256 do manifesto `a5970ff1…6141`); `src/lib/pa/regras.js` igual a `schema/pedido-regras.mjs` (sha256 `e91dbbe2…b30f`, 46.830 bytes). Ordem: esquema da entidade, regras, página. App: checkpoint `6af4795e9cdf34cb5624c4e1` (git `55e6925`). Volta: checkpoint `6af43aa22b6e60a2c4cc0150` (git `e931be1`). O app trouxe sozinho a atualização do pacote da hospedagem de 0.8.59 para 0.8.60.
+
+**Verificado.** Suíte 331 de 331; moldura, boot e portão da cena verdes. Teste, revisão e segurança: aprovado com correções, todas aplicadas (o selo não corta em 320, 360 e 390 px; aviso curto quando o exemplo não abre; o exemplo apaga do aparelho o que gravou ao fechar). No ar: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 131 de 131, jornada e cookies 10 de 10, grupo C exemplo 6 de 6 nos três nichos; os 3 sites de demonstração 200. Telas olhadas no ar em 360x640.
+
+**Como saber se funcionou.** Regra escrita antes: nas próximas 100 visitas reais de anúncio (praça feira ou salvador-rms, anúncio R7, R9 ou F1), sem outra mudança de página, preço, criativo ou público, só correção de erro. Mede-se prévia pedida sobre visita e, quando o pacote B estiver no ar, toque no exemplo, toque no campo, rolagem e permanência.
+
+**Não verificado.** Aparelho real e o navegador de dentro do Instagram de verdade (só emulação); compra real; usuário comum logado (22 itens); com o exemplo aberto a hospedagem injeta dois scripts que a CSP da própria demonstração recusa (erro de console que já existia ao abrir a demonstração direto).
+
+## Publicação de 11/11/2026, 16:18 UTC (13:18 na Bahia): medição de interesse, privacidade versão 5 e demonstrações sem guardar dados
+
+**Por que.** O contador próprio só sabia que a visita chegou. Com cerca de 370 visitas reais de anúncio e nenhuma prévia pedida, faltava saber se a pessoa sai em segundos, rola, toca no campo ou abre o site de exemplo.
+
+**O que entrou.**
+- A home emite 5 sinais novos pelo mesmo contador sem cookie: `ficou_10s` (10 s com a página na tela, contados da primeira pintura), `rolou` (meia tela, só por gesto), `tocou_nome`, `digitou_nome` (2 letras ou números, sem o texto) e `tocou_exemplo`. Um por carga, sempre depois da visita, nunca por ação do código, nunca com o link de teste.
+- Política de privacidade versão 5: lista os 9 passos contados, o que o site de exemplo guarda e que o "Pedir horário" do exemplo abre o WhatsApp com mensagem para a Creat. Aviso de medição: "Contamos visitas e toques sem cookie."
+- Demonstrações: nome e WhatsApp do pedido de horário ficam só na memória da página e o `:cliente` antigo é apagado ao abrir; a pergunta sobre dados das 3 demonstrações diz isso. O site entregue ao cliente não muda (registro no ADR-006).
+- `checar.cjs` passa a comparar o aviso de medição do JSON com as 3 páginas.
+
+**Como foi publicado.** Repositório no commit `f5179ee`; pacote montado no app com a mesma impressão digital do local (145 arquivos, com as 3 demonstrações, sha256 do manifesto `8c680972…07dc`); `src/lib/pa/regras.js` já era o novo desde 14:19 UTC. App: checkpoint `6af4953ec3e97cec70be456d` (git `066943c`). Volta: checkpoint `6af4795e9cdf34cb5624c4e1` (git `55e6925`).
+
+**Verificado.** Três rodadas de conferência: a primeira aprovou com correções; a revisão extra do último ajuste reprovou (texto das demonstrações contradizendo o motor, política incompleta, teste intermitente, demonstrações fora da conferência de publicação); depois das correções, revisão aprovou e segurança liberou com a condição da conferência de conteúdo no ar. Suíte 336 de 336; moldura, boot e portão da cena verdes. No ar: `conferir-no-ar.cjs --exigir-funcoes --exigir-jornada` com 131 de 131, jornada 10 de 10. Conferência de conteúdo no endereço real: nas 3 demonstrações o `agendamento.js` servido tem o texto novo, um `:cliente` plantado some ao abrir, a nota do formulário e a pergunta sobre dados dizem que nada fica salvo; `/privacidade/` renderizada mostra "Versão 5 · 11/11/2026" e as duas frases novas; na home os 5 sinais saem uma vez cada, com corpo de 4 chaves e sem o texto digitado, e abrir o exemplo não conta prévia. O servidor gravou o primeiro `ficou_10s` de visitante real 2 minutos depois do deploy.
+
+**Fica sabido.** No roteiro de conferência, a rolagem sintetizada do navegador de teste não rola a página; o sinal `rolou` só aparece com toque de verdade enviado ponto a ponto. Achados de polimento deixados para a próxima mexida: comentário do `ficou_10s` no `vitrine.js`, exemplo de comando na nota do `PUBLICACAO.md`, `tenant.parcial.json` das demonstrações com a frase do preset.
+
+**Não verificado.** Aparelho real e o navegador de dentro do Instagram (o comportamento de aba escondida e de toque só foi visto em emulação); `ficou_10s` no iPhone; revisão jurídica da política.

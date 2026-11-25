@@ -1,0 +1,25 @@
+{
+  "versao": 1,
+  "slug": "demo-village",
+  "nome_app": "Trilhas de Itaitu",
+  "parceiro": "Village Serra do Cruzeiro (demonstração)",
+  "cor": "#8E2C6E",
+  "logo": "",
+  "ponto_base_id": "village-serra-do-cruzeiro",
+  "whatsapp": "",
+  "instagram": "",
+  "boas_vindas": "Antes de sair do Village, veja a hora em que a serra tira o sol de cada cachoeira, calculada pelo relevo. Assim você chega ao poço com sol e volta com luz, mesmo sem sinal.",
+  "credito": "feito pela Creat",
+  "parceiros": [
+    { "nome": "ACAGI · Condutores e Guias de Itaitu", "tipo": "guia", "link": "https://www.instagram.com/guiasdeitaitu/" }
+  ],
+  "_nota": "Marca de demonstração, sem contato e sem logo. O Village entra só pelo nome em texto, como na placa da recepção, e como ponto-base. O nome leva (demonstração) para ninguém tomar a página por um app oficial da pousada. A cor é de demonstração (7,0:1 sobre o creme), não é a cor da marca dele.",
+  "_pendente": {
+    "logo": "preencher quando o parceiro autorizar",
+    "whatsapp": "preencher quando o parceiro autorizar",
+    "instagram": "preencher quando o parceiro autorizar",
+    "cor": "trocar pela cor da marca do parceiro quando ele enviar",
+    "parceiro": "tirar o (demonstração) quando o parceiro assinar",
+    "parceiros": "onde comer: preencher com os restaurantes que autorizarem (nome, link https e ponto no mapa). Até lá o botão Onde comer não aparece"
+  }
+}

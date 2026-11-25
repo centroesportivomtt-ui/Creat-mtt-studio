@@ -1,0 +1,150 @@
+{
+  "gerado_em": "2026-11-20T16:05:36.659Z",
+  "bbox": [
+    -40.6,
+    -11.42,
+    -40.4,
+    -11.26
+  ],
+  "zooms": [
+    8,
+    14
+  ],
+  "fontes": {
+    "dem": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
+    "sat": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg (Sentinel-2 cloudless 2016, CC BY 4.0)"
+  },
+  "tipos": {
+    "dem": {
+      "por_zoom": {
+        "8": {
+          "esperados": 1,
+          "novos": 1,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 75974
+        },
+        "9": {
+          "esperados": 1,
+          "novos": 1,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 72311
+        },
+        "10": {
+          "esperados": 2,
+          "novos": 2,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 109702
+        },
+        "11": {
+          "esperados": 4,
+          "novos": 4,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 205270
+        },
+        "12": {
+          "esperados": 9,
+          "novos": 9,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 391021
+        },
+        "13": {
+          "esperados": 25,
+          "novos": 25,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 862703
+        },
+        "14": {
+          "esperados": 90,
+          "novos": 90,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 9631247
+        }
+      },
+      "arquivos": 132,
+      "bytes": 11348228,
+      "ausentes_404": [],
+      "erros": []
+    },
+    "sat": {
+      "por_zoom": {
+        "8": {
+          "esperados": 1,
+          "novos": 1,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 21476
+        },
+        "9": {
+          "esperados": 1,
+          "novos": 1,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 21244
+        },
+        "10": {
+          "esperados": 2,
+          "novos": 2,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 41354
+        },
+        "11": {
+          "esperados": 4,
+          "novos": 4,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 72634
+        },
+        "12": {
+          "esperados": 9,
+          "novos": 9,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 134626
+        },
+        "13": {
+          "esperados": 25,
+          "novos": 25,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 319463
+        },
+        "14": {
+          "esperados": 90,
+          "novos": 90,
+          "ja": 0,
+          "ausentes_404": 0,
+          "erros": 0,
+          "bytes": 610404
+        }
+      },
+      "arquivos": 132,
+      "bytes": 1221201,
+      "ausentes_404": [],
+      "erros": []
+    }
+  },
+  "reducao_sat_z14": null,
+  "bytes_total": 12569429,
+  "meta_bytes": 20971520
+}

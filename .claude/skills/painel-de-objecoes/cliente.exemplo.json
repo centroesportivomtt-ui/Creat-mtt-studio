@@ -1,0 +1,32 @@
+{
+  "negocio": "EXEMPLO FICTÍCIO: site com agendamento pelo WhatsApp para salão de beleza, vendido por anúncio",
+  "publico": "dona ou dono de salão de beleza pequeno, de 1 a 4 cadeiras, em cidade de médio porte, que agenda tudo pelo WhatsApp e pelo caderno",
+  "frase_renda": "Seu salão fatura cerca de {valor} por mês.",
+  "idade": [24, 58],
+  "segmentos": [
+    {"nome": "Salão de uma cadeira, quem é dono atende sozinho", "parcela": 0.45, "renda_mensal": [3000, 7000]},
+    {"nome": "Salão de 2 a 4 cadeiras com ajudante", "parcela": 0.40, "renda_mensal": [7000, 18000]},
+    {"nome": "Salão estabelecido que já pagou agência", "parcela": 0.15, "renda_mensal": [15000, 35000]}
+  ],
+  "comportamentos": [
+    {"nome": "Desconfia de internet", "parcela": 0.25, "como": "Já caiu em golpe ou conhece quem caiu; só paga depois de ver."},
+    {"nome": "Sem tempo", "parcela": 0.20, "como": "Lê o anúncio entre uma cliente e outra; se precisar preencher muito, desiste."},
+    {"nome": "Caça preço", "parcela": 0.20, "como": "Compara com o sobrinho que faz site e com plano grátis."},
+    {"nome": "Acha que o Instagram basta", "parcela": 0.20, "como": "Recebe cliente pelo direct e não vê por que ter site."},
+    {"nome": "Quer crescer", "parcela": 0.15, "como": "Quer encher a agenda dos dias fracos e aceita testar coisa nova."}
+  ],
+  "objecoes": [
+    "Isso é golpe? Nunca ouvi falar dessa empresa",
+    "Meu Instagram já resolve",
+    "Vou ter que pagar todo mês?",
+    "Não tenho tempo de mexer em site",
+    "E se ninguém agendar por ali?",
+    "Meu sobrinho faz isso de graça"
+  ],
+  "habitos": [
+    "você responde WhatsApp de cliente até tarde da noite",
+    "terça e quarta a agenda fica vazia",
+    "você posta foto de trabalho no Instagram quando sobra tempo",
+    "você anota os horários num caderno no balcão"
+  ]
+}

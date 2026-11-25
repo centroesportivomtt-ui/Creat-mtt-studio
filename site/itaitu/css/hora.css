@@ -1,0 +1,181 @@
+/* =====================================================================
+   hora.css · encaixe dos #hora-* (Pixel, frontend B, 20/11/2026).
+   Só posição, espaço e tamanho do que o designer não cobre (tabuas.css e regua.css).
+   Nenhuma cor nova: tudo vem de tokens.css.
+   ===================================================================== */
+
+/* ----- régua: botão "voltar para agora" no meio da linha de eventos ----- */
+#hora-regua { width: 100%; }
+#hora-regua .regua__eventos { align-items: center; }
+.hora-regua__agora {
+  flex: none;
+  min-height: var(--alvo);
+  padding: 0 var(--ritmo-3);
+  border: var(--borda) solid var(--tinta-ui);
+  border-radius: var(--raio-pilula);
+  background: var(--superficie);
+  color: var(--tinta-ui);
+  font: inherit;
+  font-size: var(--t-pequeno);
+  font-weight: var(--peso-forte);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.hora-regua__agora[hidden] { display: none; }
+.hora-regua__agora:focus-visible {
+  outline: 3px solid var(--foco-claro);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--foco-escuro);
+}
+.regua__janela[hidden], .regua__sol[hidden] { display: none; }
+.hora-regua__marcas, .hora-regua__eventos { position: absolute; inset: 0; }
+/* com o botão no meio, os textos de nascer e pôr podem quebrar em duas linhas sem empurrar a régua */
+#hora-regua .regua__eventos > span { min-width: 0; text-wrap: balance; }
+
+/* ----- etiqueta de hora no mapa: o embrulho é o elemento do Marker (o MapLibre põe transform nele) ----- */
+.hora-etiqueta { pointer-events: none; z-index: var(--z-etiqueta); }
+/* selo "amanhã" da etiqueta (régua em amanhã): aparece junto com a hora, nunca sozinho */
+.hora-etiqueta__amanha[hidden], .etiqueta-hora[data-acesa='0'] .hora-etiqueta__amanha { display: none; }
+
+/* ----- faixa: a nota de honestidade fica sempre na faixa, mesmo estreita ----- */
+#hora-faixa .faixa-saia__nota { color: inherit; }
+/* sem número grande (texto do Verbo que não começa pelo número): o destino ocupa o resto da linha */
+#hora-faixa > .faixa-saia__rotulo + .faixa-saia__destino { grid-column: 2 / -1; }
+
+/* ----- painel: títulos dos grupos de tábuas ----- */
+.hora-tabuas__titulo {
+  margin: var(--ritmo-4) 0 var(--ritmo-2);
+  font-size: var(--t-destaque);
+  font-weight: var(--peso-forte);
+  line-height: var(--entrelinha-justa);
+  text-wrap: balance;
+}
+.hora-tabuas__titulo:first-child { margin-top: var(--ritmo-2); }
+.hora-tabuas__nota { margin: 0 0 var(--ritmo-3); }
+.hora-tabua__situacao { font-weight: var(--peso-texto); }
+.hora-lugares { margin-top: var(--ritmo-2); }
+
+/* ----- horários do dia (topo do painel de destinos) ----- */
+.hora-horarios { display: grid; gap: var(--ritmo-2); margin: var(--ritmo-3) 0; }
+.hora-horarios p { margin: 0; }
+.hora-horarios__linha { font-size: var(--t-apoio); line-height: var(--entrelinha); }
+.hora-horarios__linha b { font-weight: var(--peso-forte); font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; white-space: nowrap; }
+.hora-horarios__alerta {
+  padding: var(--ritmo-3);
+  border: var(--borda-forte) solid var(--tinta-ui);
+  border-radius: var(--raio-controle);
+  font-size: var(--t-corpo);
+  font-weight: var(--peso-forte);
+}
+.hora-horarios__alerta[hidden] { display: none; }
+.hora-horarios__como summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--alvo);
+  font-weight: var(--peso-forte);
+  cursor: pointer;
+}
+.hora-horarios__como p { margin: 0 0 var(--ritmo-2); font-size: var(--t-apoio); max-width: 65ch; }
+
+/* ----- cartão (#hora-cartao é <dialog class="dialogo">) ----- */
+.hora-cartao { display: grid; gap: var(--ritmo-3); padding: var(--ritmo-3) var(--margem) var(--ritmo-5); }
+.hora-cartao__cabeca { display: flex; align-items: center; justify-content: space-between; gap: var(--ritmo-2); }
+.hora-cartao__cabeca h2:focus { outline: none; }
+.hora-cartao__cabeca h2 { margin: 0; font-size: var(--t-titulo); line-height: var(--entrelinha-justa); text-wrap: balance; }
+.hora-cartao__img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(62dvh, 640px);
+  aspect-ratio: 1080 / 1920;
+  margin-inline: auto;
+  border: var(--borda) solid var(--madeira);
+  border-radius: var(--raio-tabua);
+  background: var(--madeira);
+}
+.hora-cartao__frase { margin: 0; font-size: var(--t-corpo); font-weight: var(--peso-forte); font-variant-numeric: tabular-nums; }
+.hora-cartao__legenda { margin: 0; font-size: var(--t-apoio); }
+.hora-cartao__status { margin: 0; min-height: 1.35em; color: var(--tinta-ui-apoio); font-size: var(--t-pequeno); }
+.hora-cartao .linha-botoes { margin: 0; }
+
+/* ----- demonstração: um cartão no canto, abaixo do topo, sem cobrir os controles do mapa ----- */
+#hora-demo-controle {
+  position: fixed;
+  top: calc(var(--topo-h) + var(--ritmo-3));
+  left: var(--margem);
+  right: calc(var(--margem) + 56px + var(--ritmo-3));
+  z-index: var(--z-painel);
+  max-width: 420px;
+  pointer-events: none;
+}
+#hora-demo-controle[hidden] { display: none; }
+.hora-demo {
+  display: grid;
+  gap: var(--ritmo-2);
+  padding: var(--ritmo-2) var(--ritmo-3) var(--ritmo-3);
+  background: var(--superficie);
+  color: var(--tinta-ui);
+  border: var(--borda) solid var(--madeira);
+  border-radius: var(--raio-controle);
+  box-shadow: var(--sombra-flutua);
+  pointer-events: auto;
+}
+.hora-demo__selo {
+  justify-self: start;
+  padding: 2px var(--ritmo-2);
+  border: var(--borda) solid currentColor;
+  border-radius: var(--raio-controle);
+  font-size: var(--t-pequeno);
+  font-weight: var(--peso-forte);
+  letter-spacing: var(--tracking-rotulo);
+}
+.hora-demo__topo { display: flex; align-items: center; gap: var(--ritmo-3); }
+.hora-demo__legenda { margin: 0; font-size: var(--t-pequeno); font-weight: var(--peso-forte); line-height: var(--entrelinha-justa); text-wrap: balance; }
+.hora-demo__trilho { display: block; flex: 1; height: 4px; border-radius: var(--raio-pilula); background: var(--superficie-2); overflow: hidden; }
+.hora-demo__progresso { display: block; width: var(--feito, 0%); height: 100%; background: var(--tinta-ui); }
+.hora-demo__botoes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ritmo-2); }
+.hora-demo__botao {
+  min-height: var(--alvo);
+  padding: var(--ritmo-1) var(--ritmo-2);
+  font-size: var(--t-pequeno);
+  line-height: 1.15;
+  text-wrap: balance;
+  justify-content: center;
+  text-align: center;
+}
+
+/* demonstração: o cartão abre sem modal (dlg.show()), logo abaixo do painel da demo, para "Pausar" e
+   "Sair da demonstração" continuarem à mão. --hora-cartao-topo vem do cartao.js (fundo do painel + respiro). */
+:root[data-demo='1'] #hora-cartao[open]:not(:modal) {
+  position: fixed;
+  top: var(--hora-cartao-topo, calc(var(--topo-h) + 168px));
+  bottom: auto;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  max-height: calc(100dvh - var(--hora-cartao-topo, calc(var(--topo-h) + 168px)) - var(--ritmo-3));
+  z-index: calc(var(--z-polegar) + 1);
+}
+:root[data-demo='1'] #hora-cartao:not(:modal) .hora-cartao__img {
+  max-height: max(200px, calc(100dvh - var(--hora-cartao-topo, calc(var(--topo-h) + 168px)) - 210px));
+}
+:root[data-demo='1'] #hora-demo-controle { z-index: calc(var(--z-polegar) + 2); }
+
+/* o painel de destinos aberto no desktop: a demo vai para depois dele */
+@media (min-width: 900px) {
+  :root[data-painel] #hora-demo-controle { left: calc(var(--folha-largura, 360px) + var(--margem) * 2); }
+}
+
+/* modo sol: os blocos da Hora da Serra também em preto e branco */
+:root[data-contraste='sol'] .hora-demo,
+:root[data-contraste='sol'] .hora-regua__agora,
+:root[data-contraste='sol'] .hora-horarios__alerta { background: #fff; color: #000; border-color: #000; box-shadow: none; }
+:root[data-contraste='sol'] .hora-demo__progresso { background: #000; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hora-demo__progresso { transition: none; }
+}
+
+/* [hidden] vence as classes do A que dão display (aviso-honesto, nota) */
+#hora-horarios [hidden], #hora-tabuas [hidden], #hora-cartao [hidden], #hora-demo-controle [hidden] { display: none !important; }

@@ -1,0 +1,149 @@
+# Publicação no app Base44 "Creat Nuvem"
+
+App `6aefffe66b684db9404b1994`, no ar no endereço canônico **https://nuvem.creatmtt.com.br** (domínio do dono, desde 11/11/2026) e, com o mesmo conteúdo, no endereço antigo https://creat-nuvem-404b1994.base44.app, que **nunca sai do ar** enquanto houver anúncio ou preferência do Mercado Pago apontando para ele. O que mudou, o que ainda aponta para o antigo e como voltar atrás: `docs/DOMINIO.md`. O endereço vem de um lugar só (`ENDERECO` em `scripts/producao/lib/comum.cjs`); `CREAT_HOST` troca tudo de uma vez. Os arquivos estáticos ficam em `public/` do app:
+
+| o quê | onde, no app | endereço |
+|---|---|---|
+| vitrine Porta Aberta (`dist/publico/`, montada por `scripts/montar-publico.cjs`) | `public/<caminhos da vitrine>` | `https://nuvem.creatmtt.com.br/` (o antigo leva ao mesmo caminho no canônico, pelo `assets/canonico.js`) |
+| site de cliente ou demo (`dist/<slug>/`, gerado por `produzir.mjs` / `build-site.cjs`) | `public/sites/<slug>/` | `https://nuvem.creatmtt.com.br/sites/<slug>/` (também responde no antigo; sem salto, motor congelado) |
+
+**Regra de ouro: a publicação da vitrine nunca apaga `public/sites/`.** A pasta tem os sites dos clientes, e eles não existem em `dist/publico/`. Por isso não rode `rm -rf public/*`, `rm -rf public/` nem nenhum `rsync --delete` em `public/`. Apague só os caminhos da lista abaixo, um por um.
+
+Quem executa:
+- **Sites de cliente** (rascunho, site final, remoção): a tarefa executora, pelo MCP do Base44, sem Google Drive (`docs/EXECUTOR.md`, procedimento P1 a P9, com `write_file` em vez do zip pelo Drive). Os passos do Drive abaixo continuam valendo só para quem publica à mão. O campo `passos` do `publicar-site.cjs --json` descreve esse caminho pelo Drive: o executor ignora o campo.
+- **Vitrine, motor e demonstrações:** o coordenador (chat principal), pelos MCPs do Google Drive e do Base44.
+
+## Quem dá o ok do deploy (regra nova, 10/11/2026, pacote 1D)
+
+A regra antiga dizia que todo deploy esperava o ok do Marcos. Ela foi trocada porque punha o dono no meio de cada entrega e travava o prazo de 72 horas (consciência, regra 3: a venda roda sem o dono).
+
+**Site de CLIENTE.** O ok é o conjunto de portões, todos verdes, mais a aprovação do próprio cliente:
+1. portão de conteúdo (`produzir.mjs`, código 5 = para; pacote 1C);
+2. `testar-site.cjs` e `publicar-site.cjs --rascunho` ou `--aprovado` (390 px, console limpo, faixa e botão de 44 px no rascunho);
+3. `conferir-boot.cjs <slug>` (atraso de 0, 350 e 900 ms) e a CSP do template ativa;
+4. a trava de publicação (`scripts/trava-deploy.cjs`: trava própria com TTL de 20 min, parada geral desligada em todas as linhas `pausado`, no máximo 3 deploys por hora e `ensaio_ok` gravado. O `ensaio_ok` é exigido por padrão em todo rascunho e todo site final; só o ensaio passa sem ele, com `--ensaio --pedido <id>` e a linha `ensaio_pedido` aberta pelo coordenador);
+5. depois do deploy, `conferir-sites-no-ar.cjs --slugs <slug>` e `conferir-no-ar.cjs`; falhou, volta ao checkpoint anterior;
+6. para o site final em `/sites/<slug>/`: a aprovação do cliente (`aprovarRascunho`). O aceite tácito (7 dias sem resposta ao rascunho) **ainda não vale**: só depois que a cláusula de aceite tácito constar nos termos (pedido ao copywriter, onda 2). A transição `rascunho_enviado` para `no_ar` já está em `TRANSICOES` do 1A, com a regra `aceiteTacitoPermitido`; falta só a cláusula. Até lá, rascunho sem resposta gera aviso ao suporte e o site não vai ao ar sozinho (`docs/EXECUTOR.md`, passo l).
+
+**Vitrine e motor.** Continua igual: `qa` e `seguranca` aprovam, a ordem "sites primeiro, vitrine depois" (seção 0) e as travas da seção 2. Quem publica é o coordenador, com a trava de publicação (`--tipo vitrine`).
+
+**Remoção** (desistência ou pedido do titular): não espera ok de ninguém. É obrigação legal e sai no mesmo dia (`docs/DESISTENCIA.md`).
+
+## 0. Ordem obrigatória: sites primeiro, vitrine depois
+
+A home tem a seção `#sites-demo` com 3 botões relativos: `sites/demo-barbearia/`, `sites/demo-salao/` e `sites/demo-academia/`. Se a vitrine subir antes desses sites, a página de vendas fica com 3 botões que dão 404 (hoje, sem os sites, `/sites/demo-salao/` devolve 307 para `/sites/demo-salao` e depois 404). Por isso:
+
+1. **Publique os sites que a vitrine linka (seção 1) antes da vitrine, ou no mesmo deploy.** `node scripts/montar-publico.cjs` imprime a linha `sites que a vitrine linka: ...` com a lista exata. Hoje ela traz `demo-academia demo-barbearia demo-salao`.
+2. **Antes do deploy da vitrine**, rode a trava:
+   ```bash
+   node scripts/conferir-sites-no-ar.cjs     # ou: npm run conferir-sites-no-ar
+   ```
+   Ela lê os links `sites/<slug>/` de `dist/publico/`, faz `curl -L` em `https://nuvem.creatmtt.com.br/sites/<slug>/` e no antigo `https://creat-nuvem-404b1994.base44.app/sites/<slug>/` e exige 200 nos dois, pelo menos um `wa.me` e, nos `demo-*`, a faixa "demonstração · nome fictício". Saída 0 libera a vitrine. Saída 1 bloqueia: **não publique a vitrine** e volte à seção 1 para os slugs que falharam.
+3. **Depois do deploy da vitrine**, rode a trava de novo e confira os 3 URLs com 200.
+
+Se os 3 sites e a vitrine forem no mesmo deploy: faça os passos 1 a 5 da seção 1 para cada demo, depois o `cp` da vitrine (seção 2), um só checkpoint e um só deploy. Depois do deploy, rode a trava. Se ela falhar, a vitrine já está no ar com botões quebrados: corrija os sites na hora ou volte o checkpoint anterior.
+
+## 1. Site de cliente ou demo
+
+A partir de `projetos/creat-nuvem/`:
+
+```bash
+npm run produzir -- --pedido <pedido.txt|.json>      # gera sites/<slug>/ e dist/<slug>/
+npm run publicar-site -- --slug <slug>               # confere, testa, zipa e imprime o passo a passo
+npm run publicar-site -- --slug <slug> --demo        # demo: exige a faixa no topo da página renderizada, noindex, "demonstracao":true e o WhatsApp 5575981151202
+```
+
+`publicar-site.cjs` faz o seguinte:
+1. Confere `dist/<slug>/`: é um build (`tenant.json`, `index.html`, `tenant.js`, `motor/v1/`), o slug bate com o pedido, não há link simbólico e só há arquivos da lista branca (index, tenant, robots, sitemap, motor). Se houver `custo.json`, RELATORIO ou qualquer outro arquivo interno, o script recusa.
+2. Roda `testar-site.cjs`: Chromium a 390 px, console limpo, sem rolagem lateral, texto de pelo menos 11 px e todos os wa.me com o número do tenant.
+3. Grava `site-<slug>.zip` com `sites/<slug>/...` dentro. O mtime é fixo, então o mesmo build dá o mesmo sha256. O script relê o zip para conferir. Destino: `--destino`, ou `CREAT_PUBLICAR_DESTINO`, ou uma pasta nova e exclusiva criada com `mkdtemp` em `<tmp>/creat-publicar-XXXXXX` (o script imprime o caminho). A sessão que publica passa o próprio scratchpad em `CREAT_PUBLICAR_DESTINO`.
+4. Imprime o sha256 e os passos abaixo já preenchidos (com `--json`, imprime em formato de máquina).
+
+Códigos de saída: 0 ok · 1 entrada ou dist inválido · 2 ambiente · 3 teste do site falhou.
+
+Passos do chat principal (o script imprime cada um com o hash e o caminho certos):
+
+1. **Drive `create_file`**: title `site-<slug>-<sha8>.zip`, `contentMimeType` `application/zip`, `disableConversionToGoogleType` true, `parentId` `1C5Msox1Q-zVEDMfneH2yU9GUrNbPW1zN` (pasta "Creat Nuvem") e `base64Content` `sha256:<hash>:<caminho absoluto do zip>`. Guarde o id.
+2. **Drive `share_file`**: `fileId` = o id, `permissionId` `anyoneWithLink`, `role` `reader`.
+3. **Base44 `run_command`** (na raiz do app):
+   ```bash
+   rm -rf /tmp/s /tmp/s.zip && curl -sSL -o /tmp/s.zip "https://drive.google.com/uc?export=download&id=<id>" \
+   && echo "<hash>  /tmp/s.zip" | sha256sum -c - && python3 -m zipfile -e /tmp/s.zip /tmp/s \
+   && test -f /tmp/s/sites/<slug>/index.html && mkdir -p public/sites && rm -rf public/sites/<slug> \
+   && cp -r /tmp/s/sites/<slug> public/sites/ && ls public/sites/<slug>
+   ```
+   Se o `sha256sum -c` falhar, o Drive devolveu outra coisa (link ainda privado ou página de aviso). Pare e refaça o passo 2. O `rm -rf` só atinge `public/sites/<slug>`, nunca `public/sites`.
+4. **Base44 `run_command`**: `git log --oneline -1`. Ele precisa mostrar o auto-commit com `public/sites/<slug>`. Se não mostrar, não siga.
+5. **Base44 `create_checkpoint`** com o nome `site <slug> <sha8>`.
+6. **Deploy** do app, depois de pegar a trava (`node scripts/trava-deploy.cjs pegar`, `pode-publicar`) e com os portões da seção "Quem dá o ok do deploy" verdes. Depois confira: `curl -sI https://nuvem.creatmtt.com.br/sites/<slug>/` precisa voltar 200 e a página precisa ter pelo menos um `wa.me`. Abra também sem a barra final (`/sites/<slug>`). Os caminhos do site são relativos (`motor/...`, `tenant.js`), então sem a barra eles só funcionam se o host redirecionar.
+7. **Drive `trash_file`** no zip temporário.
+
+Para tirar um site do ar: `rm -rf public/sites/<slug>`, depois os passos 4 a 6, e confira o 404. Desistência e pedido do titular seguem `docs/DESISTENCIA.md`.
+
+Endereço padrão: `build-site.cjs` e `produzir.mjs` gravam canonical, og:url, sitemap e JSON-LD com `https://nuvem.creatmtt.com.br/sites/<slug>/` e o rodapé com a home `https://nuvem.creatmtt.com.br/` (fonte única `ENDERECO` em `lib/comum.cjs`). `CREAT_HOST` troca a origem de tudo de uma vez (é o "voltar atrás", `docs/DOMINIO.md`); as variáveis `CREAT_URL_SITES` (com `{slug}`) e `CREAT_HOME` mudam cada endereço por cima, e `0` desliga cada um. O pacote SAIR nunca herda esses endereços.
+
+## 2. Vitrine
+
+A partir de `projetos/creat-nuvem/`:
+
+```bash
+node scripts/checar-placeholders.cjs     # avisa dos links que faltam
+node scripts/montar-publico.cjs          # monta dist/publico/ e imprime "vitrine (topo de public/): ..." e "sites que a vitrine linka: ..."
+CREAT_TESTE_TMP=/tmp npm test
+node scripts/conferir-sites-no-ar.cjs    # TRAVA (seção 0): os sites linkados já respondem 200 no ar? Saída 1 = não publique a vitrine
+```
+
+**Pré-requisito:** a trava acima saiu com 0. Se não saiu, publique antes os sites da lista (seção 1). Para testar a home com os demos fora do ar, use `node scripts/montar-local.cjs` (monta `dist/local/` = vitrine + `sites/<slug>/`, nunca publicado).
+
+Leve `dist/publico/` ao app pelo mesmo caminho dos sites: zip, Drive, `share_file`, `curl` e `sha256sum -c`. Depois, no Base44, **apague só os caminhos de topo da vitrine** e copie por cima.
+
+Lista atual dos caminhos de topo da vitrine (10/11/2026; é a lista `ENTRA` de `montar-publico.cjs` mais `sede` e `robots.txt`, que o `montar-publico.cjs` gera):
+
+```
+404.html _headers abrir assets bastidores checkout.config.js conteudo dados index.html motor obrigado previa privacidade ritual robots.txt sede termos
+```
+
+```bash
+# no Base44, raiz do app, com a vitrine descompactada de modo que exista <origem>/dist/publico/
+cd public && rm -rf 404.html _headers abrir assets bastidores checkout.config.js conteudo dados \
+  index.html motor obrigado previa privacidade ritual robots.txt sede termos && cd .. \
+&& cp -r <origem>/dist/publico/. public/ && ls public public/sites 2>/dev/null
+```
+
+- Antes de rodar, compare a lista com a linha `vitrine (topo de public/)` que `montar-publico.cjs` imprimiu. Se for diferente, atualize este documento primeiro. Item novo entra na lista. Item que saiu continua na lista por uma publicação, para ser apagado, e depois sai.
+- `montar-publico.cjs` falha se a vitrine tiver `sites/` na raiz, porque esse caminho apagaria os sites dos clientes.
+- Nada fora da lista é tocado: `public/sites/` e os arquivos do template do Base44 continuam onde estão.
+- Depois do cp: `git log --oneline -1` (auto-commit), `create_checkpoint` ("vitrine <data>") e deploy, com a trava de publicação (`--tipo vitrine`) e o aval de `qa` e `seguranca`. Confira se `/` e `/abrir/` respondem 200 e rode `node scripts/conferir-sites-no-ar.cjs` de novo: os 3 `/sites/demo-*/` precisam voltar 200.
+
+## O que o Base44 não aplica
+
+O `_headers` (CSP e cache) é formato da Cloudflare, e o Base44 não o lê. No Base44 a vitrine e os sites ficam sem esses cabeçalhos. Se a CSP precisar valer, o caminho é o deploy da Cloudflare (`wrangler.toml`) ou a configuração de cabeçalhos do Base44, se existir. `robots.txt` e `sitemap.xml` de cada site ficam em `/sites/<slug>/`. O Google só lê o `robots.txt` da raiz (desde 10/11 gerado pelo `montar-publico.cjs`, com `Disallow: /sites/*--r-` para os rascunhos), então para indexar os sites é preciso um `sitemap.xml` na raiz da vitrine que liste cada `/sites/<slug>/` (pendência registrada no RELATORIO).
+
+## Molduras e o cabeçalho da hospedagem (09/11/2026)
+
+A Base44 responde todas as páginas com `X-Frame-Options: DENY` e ignora o `_headers`. Página nossa não abre em iframe por endereço: a prévia e a sede embutidas ficavam em branco no ar. Desde 09/11 o `assets/vitrine.js` carrega as duas como documento blob (`carregarNoQuadro`), e a sede lê a query de `window.__creatLocal`.
+
+Antes de publicar qualquer mudança na vitrine, na prévia ou na sede, rode `node scripts/conferir-moldura.cjs`. Ele sobe um servidor com o mesmo bloqueio e falha se a prévia ou a sede ficarem em branco. Teste local sem esse cabeçalho não pega o defeito.
+
+## Início do motor em rede real (10/11/2026)
+
+Os sites carregam `motor.js`, `efeito.js`, `som.js` e `agendamento.js` com `defer`. Em localhost os quatro chegam juntos. Na hospedagem, com latência, o motor iniciava antes dos outros três e o site abria sem o gesto do nicho e sem o formulário de pedido: as demonstrações de barbearia e academia ficaram assim no ar até 10/11. O `motor.js` agora espera o `DOMContentLoaded` (que só dispara depois do último `defer`), com `load` de reserva, e módulo que chega atrasado roda na hora.
+
+Antes de publicar qualquer site ou mudança em `motor/`, rode `node scripts/conferir-boot.cjs` (ou `npm run conferir-boot`). Ele serve cada `dist/<slug>/` com atraso de 0, 350 e 900 ms nos scripts que vêm depois do motor e falha se o formulário ou o gesto não aparecerem. Teste local sem atraso não pega esse defeito.
+
+Cada site publicado tem a própria cópia de `motor/v1/`. Correção no motor exige republicar `public/motor/` (prévia da vitrine) e `public/sites/<slug>/motor/` de todos os sites no ar.
+
+**Nota (11/11/2026): motor e demonstrações andam juntos.** Mudança em `motor/` exige reconstruir as 3 demonstrações (`node scripts/producao/build-site.cjs --slug demo-<k> --demonstracao`, com `k` = barbearia, salao e academia) e publicá-las no mesmo deploy da vitrine. Depois do deploy, confira no ar que o `/sites/demo-*/motor/v1/agendamento.js` servido nas 3 demos tem o texto novo (por exemplo, `curl -s https://nuvem.creatmtt.com.br/sites/demo-barbearia/motor/v1/agendamento.js | grep -c '<trecho novo>'` maior que 0). Sem isso, a vitrine nova sobe com demos que ainda rodam o motor antigo.
+
+## Depois de todo deploy: conferência no ar (obrigatória desde 10/11/2026)
+
+```bash
+node scripts/conferir-no-ar.cjs          # ou: npm run conferir-no-ar
+```
+
+Ela confere no endereço canônico (`https://nuvem.creatmtt.com.br`; `--base` troca). Grupo E (endereço, desde 11/11): o canônico responde 200 com cadeado nas 8 páginas e nas 3 demos, `/api/pa/contar` e `/api/pa/confirmarPagamento` respondem nos dois endereços, o antigo continua 200 e o canônico nunca redireciona; quando a página nova estiver publicada (o HTML do canônico cita `assets/canonico.js` ou traz `window.CREAT_ENDERECO`), abrir o antigo num navegador tem de levar ao canônico com caminho, consulta e fragmento em `/`, `/abrir/?nicho=barbearia&utm_source=teste-pixel` e `/obrigado/?payment_id=99999999999&resultado=aprovado`. Antes da publicação esses 3 saem como NÃO VERIFICADO e não reprovam. São, além do grupo E, as conferências no endereço de produção, em celular com agente de usuário de Android real: páginas (200 e 404), caminho do anúncio nos 3 nichos (nome, prévia, formulário dentro da prévia), medição (o arquivo da Meta carrega e os eventos saem do navegador; o envio é cancelado para não sujar a conta), demonstrações em 3 cargas cada, botão de pagar por praça e os 7 links no Mercado Pago (abre, mostra o item, R$ 297, Pix e cartão; não paga), identificação da empresa e sede.
+
+- Saída 0: pode dizer que está publicado. Cole a última linha no relatório.
+- Saída 1: **defeito no ar**. Pause as campanhas que levam ao site, corrija, publique e rode de novo. Só então religue.
+- Ela não substitui `npm test`, `checar.cjs`, `conferir-moldura.cjs` e `conferir-boot.cjs`, que rodam **antes** do deploy. Ela pega o que eles não veem: rede real, terceiros de verdade e o que a hospedagem faz com os arquivos.
+- A rotina diária do gestor de tráfego roda esta conferência antes de ler qualquer número (ROTINA-GESTOR.md, passo 0).
