@@ -613,3 +613,12 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Rastro meu no projeto do dono:** o teste de voz em produção deixou duas linhas no fio do "Itaitu daily" ("não entendi o áudio" e "Ouviu 5 s"). Não há rota para apagar evento.
 - **Não provado ainda:** conversa com um filme real em andamento (mesa ao vivo num render de verdade); "sem sinal · reconectando…" (teste manual); microfone e teclado no iPhone/Safari reais; `pip-audit` e `pnpm audit`.
 - **Fica para a onda 3:** trocar música e refazer etapa como ações da conversa; prazo de guarda das conversas (proposta: 90 dias); tela no Caderno para ver e apagar regras; apagar projeto.
+
+## 25/11: onda 3, correções da revisão tripla (motor e site)
+- **Troca de música:** "Trocar a música de novo" passa pelas mesmas regras da troca (versão aprovada não troca). A troca que falha não leva mais o projeto a "erro": volta para "entregue" com o motivo, e a versão de antes continua pronta.
+- **Apagar projeto:** agora leva junto os quadros e clipes do projeto guardados nos caches, a conferência por IA e a dos números, e os casos de referência. A prévia conta as respostas de cliente ainda não vistas e diz que as regras ficam com o texto do ajuste. Enter com o nome incompleto diz o que falta.
+- **Segurança:** o proxy barra `..%2F`, `..%5C` e pedaço com ponto no começo. Ids validados sem aceitar quebra de linha. O aviso "repete algo que veio de fora" vale para nota e pedido. `onde_esta` só devolve id e função de bloco no formato da direção. Apagar conferência sem janela de corrida. Palavra igual à da casa não apaga as duas.
+- **Site:** abrir o endereço de um projeto sem sessão volta para o mesmo projeto depois da senha. Entrar e Novo projeto só acendem com a página pronta (antes do JavaScript, o envio comum punha a senha no endereço). A linha do prazo da conversa avisa que o backup guarda por mais tempo. O cartão de nota diz que cabem 50.
+- **Testes estáveis:** o teste do rascunho do SSE ignorava o rascunho vazio de fim de bloco (falhava 2 em 5, desde 3603428). O aceite para com frase clara se a porta estiver ocupada, mata o next-server que escapa do grupo do npx e registra "lendo" antes do clique.
+- **Testes:** pytest **759 ok** (5 pulados, 2 pagos fora), tipos ok, aceite **132/132**, todos com saída 0.
+

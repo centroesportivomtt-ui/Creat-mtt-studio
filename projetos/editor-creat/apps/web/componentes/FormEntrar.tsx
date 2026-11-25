@@ -1,10 +1,14 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { voltaSegura } from '@/lib/volta';
 
 export default function FormEntrar({ volta = '/projetos' }: { volta?: string }) {
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
+  // Antes de o JavaScript da página carregar (4G lento), tocar em Entrar faria o envio comum do navegador, com a senha no
+  // endereço. O botão só acende depois de a página estar pronta; e o form é POST, para nunca pôr a senha na URL.
+  const [pronto, setPronto] = useState(false);
+  useEffect(() => setPronto(true), []);
 
   async function entrar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,7 +27,7 @@ export default function FormEntrar({ volta = '/projetos' }: { volta?: string }) 
   }
 
   return (
-    <form className="entrar__form" onSubmit={entrar} noValidate>
+    <form className="entrar__form" method="post" onSubmit={entrar} noValidate data-pronto={pronto ? 'sim' : undefined}>
       <input type="text" name="usuario" autoComplete="username" value="creat.MTT" readOnly hidden />
       <label className="campo">
         <span className="campo__rotulo">Senha da casa</span>
@@ -31,7 +35,7 @@ export default function FormEntrar({ volta = '/projetos' }: { volta?: string }) 
           aria-invalid={erro ? true : undefined} aria-describedby={erro ? 'erro-senha' : undefined} />
       </label>
       {erro && <p className="erro" id="erro-senha" role="alert">{erro}</p>}
-      <button className="botao botao--principal botao--largo" type="submit" disabled={enviando}>
+      <button className="botao botao--principal botao--largo" type="submit" disabled={enviando || !pronto}>
         {enviando ? 'Conferindo…' : 'Entrar'}
       </button>
     </form>

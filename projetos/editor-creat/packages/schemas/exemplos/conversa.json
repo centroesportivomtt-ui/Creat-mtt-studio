@@ -541,7 +541,7 @@
    "custo_usd_est": 0.0,
    "minutos_est": 0.0,
    "vira_regra": false,
-   "volta": "A nota fica na lista de notas do projeto.",
+   "volta": "A nota fica na lista de notas do projeto (cabem até 50 por projeto).",
    "botao": "Guardar a nota",
    "entrada_hash": "254bb97b57f12e1608fefc4517de768427b2fd6d2cffbbfcbc09f3c818198d5f"
   }

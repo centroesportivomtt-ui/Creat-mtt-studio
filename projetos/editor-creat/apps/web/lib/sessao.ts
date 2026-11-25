@@ -3,6 +3,7 @@
 // Cookie: v1.<expira-em-segundos>.<nonce>.<assinatura base64url> — sem estado no servidor.
 import { createHmac, randomBytes, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from 'node:crypto';
 import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export const COOKIE = 'ec_sessao';
 const DURACAO_S = 30 * 24 * 3600; // 30 dias: o dono usa no celular e não quer digitar senha toda hora
@@ -78,6 +79,12 @@ export function tokenValido(valor: string | undefined | null, agora = Date.now()
 export async function temSessao(): Promise<boolean> {
   const c = await cookies();
   return tokenValido(c.get(COOKIE)?.value);
+}
+
+/** Página que exige senha: sem sessão, vai a /entrar e volta para `volta` depois da senha (o endereço aberto direto, num
+ *  link antigo ou depois de a sessão vencer). `volta` é sempre um caminho do próprio site, montado pelo código. */
+export async function exigirSessao(volta: string): Promise<void> {
+  if (!(await temSessao())) redirect(`/entrar?volta=${encodeURIComponent(volta)}`);
 }
 
 /** Para rotas que recebem Request diretamente (tus, proxy). */

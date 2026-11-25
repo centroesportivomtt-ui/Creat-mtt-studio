@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { motorJson } from '@/lib/motor';
+import { exigirSessao } from '@/lib/sessao';
 import { classeEstado, quando, ROTULO_ESTADO, rotuloTipo, type ResumoProjeto } from '@/lib/estados';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Projetos' };
 
 export default async function Projetos({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  await exigirSessao('/projetos');
   const busca = await searchParams;
   const apagado = busca.apagado === '1';   // onda 3: volta do "Apagar para sempre"
   const r = await motorJson<ResumoProjeto[]>('/v1/projetos?limite=100');

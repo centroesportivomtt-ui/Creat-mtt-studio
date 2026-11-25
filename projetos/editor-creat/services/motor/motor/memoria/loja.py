@@ -36,6 +36,7 @@ def _grava(caminho: pathlib.Path, obj) -> None:
 APAGADOS = "apagados.json"
 TIPOS_APAGAVEIS = ("regras", "checagens", "vocabulario")
 ORIGEM_DONO = "reprovação do dono"
+TAMBEM_DA_CASA = "essa palavra também é fixa da casa; apagar levaria a da casa junto"
 RE_ORIGEM = re.compile(r"^reprovação do dono · (p_[a-z0-9]+)/(v[0-9]{1,3}) · (\d{4}-\d{2}-\d{2})$")
 RE_APAGAVEL = {"regra": re.compile(r"^r_dono_[0-9a-f]{8}$"), "checagem": re.compile(r"^c_dono_[0-9a-f]{8}$"),
                "vocabulario": re.compile(r"^v_[0-9a-f]{8}$")}
@@ -49,11 +50,11 @@ def id_vocabulario(de: str) -> str:
 
 def pode_apagar(tipo: str, ident: str) -> bool:
     r = RE_APAGAVEL.get(tipo)
-    return bool(r and isinstance(ident, str) and r.match(ident))
+    return bool(r and isinstance(ident, str) and r.fullmatch(ident))
 
 
 def de_onde(origem: str | None) -> dict | None:
-    m = RE_ORIGEM.match(str(origem or ""))
+    m = RE_ORIGEM.fullmatch(str(origem or ""))
     if not m:
         return None
     return {"projeto": m.group(1), "versao": m.group(2), "data": m.group(3)}
@@ -123,9 +124,14 @@ class Loja:
             regras.append(_item_caderno(dict(r), "regra", r.get("id", ""), r.get("origem")))
         checagens = [_item_caderno(dict(c), "checagem", c.get("id", ""), c.get("origem")) for c in self.checagens()]
         voc = []
-        for v in self.vocabulario():
-            item = dict(v, id=id_vocabulario(v.get("de", "")))
-            voc.append(_item_caderno(item, "vocabulario", item["id"], v.get("origem")))
+        todos = self.vocabulario()
+        da_casa = {id_vocabulario(v.get("de", "")) for v in todos if not str(v.get("origem", "")).startswith(ORIGEM_DONO)}
+        for v in todos:
+            item = _item_caderno(dict(v, id=id_vocabulario(v.get("de", ""))), "vocabulario", id_vocabulario(v.get("de", "")), v.get("origem"))
+            if item["apagavel"] and item["id"] in da_casa:      # mesma palavra fixa da casa: apagar levaria as duas
+                item["apagavel"] = False
+                item.pop("ao_apagar", None)
+            voc.append(item)
         return {"regras": regras, "checagens": checagens, "vocabulario": voc}
 
     def apagar(self, tipo: str, ident: str) -> dict:
@@ -167,10 +173,15 @@ class Loja:
             texto = item.get("descricao") or item.get("motivo") or item.get("tipo", "")
         else:
             reg = self._ler("regras.json", {"versao": "1", "regras": [], "vocabulario": []})
-            item = next((v for v in reg.get("vocabulario", []) if id_vocabulario(v.get("de", "")) == ident), None)
-            if item is None or not str(item.get("origem", "")).startswith(ORIGEM_DONO):
+            mesmos = [v for v in reg.get("vocabulario", []) if id_vocabulario(v.get("de", "")) == ident]
+            item = next((v for v in mesmos if str(v.get("origem", "")).startswith(ORIGEM_DONO)), None)
+            if item is None:
                 raise KeyError(ident)
-            reg["vocabulario"] = [v for v in reg["vocabulario"] if id_vocabulario(v.get("de", "")) != ident]
+            if any(not str(v.get("origem", "")).startswith(ORIGEM_DONO) for v in mesmos):
+                # a mesma palavra (sem diferença de maiúscula e acento) também é fixa da casa: a lápide é pelo id e
+                # esconderia a da casa junto. Recusa em vez de apagar as duas (revisão da onda 3).
+                raise PermissionError(TAMBEM_DA_CASA)
+            reg["vocabulario"] = [v for v in reg["vocabulario"] if v is not item]
             _grava(self.raiz / "regras.json", reg)
             texto = f"{item.get('de', '')} → {item.get('para', '')}"
         lapides[chave][ident] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

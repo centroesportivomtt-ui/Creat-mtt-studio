@@ -9,6 +9,7 @@ import { bytesLegiveis } from '@/lib/estados';
 import { irEntrar } from '@/lib/pendentes';
 
 type Fase = 'fechado' | 'abrindo' | 'aberto' | 'apagando';
+const NOME_NAO_CONFERE = 'Digite o nome do projeto exatamente como aparece no topo.';
 
 export default function ApagarProjeto({ pid, nome, enviando }: { pid: string; nome: string; enviando: number }) {
   const [fase, setFase] = useState<Fase>('fechado');
@@ -60,7 +61,8 @@ export default function ApagarProjeto({ pid, nome, enviando }: { pid: string; no
   }
 
   async function apagar() {
-    if (trava.current || !previa?.pode || !A.mesmoNome(digitado, previa.nome)) return;
+    if (trava.current || !previa?.pode) return;
+    if (!A.mesmoNome(digitado, previa.nome)) { setErro(NOME_NAO_CONFERE); return; }
     trava.current = true;
     setFase('apagando'); setErro('');
     try {
@@ -86,7 +88,7 @@ export default function ApagarProjeto({ pid, nome, enviando }: { pid: string; no
           <p className="aviso" role="status">Conferindo o que será apagado…</p>
         ) : (
           <>
-            <p className="aviso">Apaga para sempre o material, as versões e a conversa deste projeto. Antes, mostro o que vai e o que fica.</p>
+            <p className="aviso">Apaga do editor, para sempre, o material, as versões, a conversa e as cópias de trabalho deste projeto. Antes, mostro o que vai e o que fica.</p>
             <button type="button" className="botao botao--perigo botao--pequeno apagar__abrir" onClick={() => void abrir()} data-teste="apagar-abrir">
               Apagar projeto…
             </button>
@@ -129,6 +131,12 @@ export default function ApagarProjeto({ pid, nome, enviando }: { pid: string; no
             Vai apagar para sempre: {n.videos} vídeo{n.videos === 1 ? '' : 's'} enviado{n.videos === 1 ? '' : 's'}{n.bytes > 0 ? ` (${bytesLegiveis(n.bytes)})` : ''},
             {' '}{n.versoes} {n.versoes === 1 ? 'versão' : 'versões'}, a conversa e a mesa deste projeto.
           </p>
+          {(n.respostas_cliente_sem_ver ?? 0) > 0 && (
+            <p className="apagar__vai" data-teste="apagar-respostas">
+              {n.respostas_cliente_sem_ver === 1 ? '1 resposta de cliente que você ainda não marcou como vista também sai.'
+                : `${n.respostas_cliente_sem_ver} respostas de cliente que você ainda não marcou como vistas também saem.`}
+            </p>
+          )}
           {n.links_cliente_ativos > 0 && (
             <p className="apagar__vai">{n.links_cliente_ativos} link{n.links_cliente_ativos === 1 ? '' : 's'} de cliente {n.links_cliente_ativos === 1 ? 'para' : 'param'} de abrir.</p>
           )}
@@ -150,6 +158,9 @@ export default function ApagarProjeto({ pid, nome, enviando }: { pid: string; no
             <span className="campo__rotulo">Digite o nome do projeto para confirmar: <b className="apagar__nome">{p.nome}</b></span>
             <input ref={campo} className="entrada" value={digitado} onChange={(e) => { setDigitado(e.currentTarget.value); setErro(''); }}
               autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false} enterKeyHint="done" maxLength={200}
+              /* com o botão apagado o navegador não envia o formulário no Enter (nem no "ok" do teclado do celular): aqui o
+                 Enter com o nome incompleto diz o que falta, em vez de não fazer nada */
+              onKeyDown={(e) => { if (e.key === 'Enter' && !A.mesmoNome(e.currentTarget.value, p.nome)) { e.preventDefault(); setErro(NOME_NAO_CONFERE); } }}
               disabled={fase === 'apagando'} data-teste="apagar-nome" aria-describedby={erro ? 'apagar-erro' : undefined} />
           </label>
           <div className="linha-acoes apagar__botoes">

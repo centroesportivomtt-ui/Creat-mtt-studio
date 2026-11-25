@@ -349,7 +349,10 @@ def test_sse_v2_instantaneo_rascunho_sem_id(app_conversa):
         assert dados_inst["dados"]["ligada"] is True and dados_inst["dados"]["turno_rodando"]
         assert len(rasc) >= 3
         textos = [json.loads(b["data"])["dados"]["texto"] for b in rasc]
-        assert textos[-1].startswith(textos[1][:5]) and len(textos[-1]) > len(textos[1])
+        # o rascunho volta a "" quando o bloco de texto fecha (laco.py, content_block_stop: o próximo bloco começa vazio);
+        # se o turno terminar dentro da janela, o último rascunho é esse vazio. O que importa é o texto crescer.
+        cheios = [t for t in textos if t]
+        assert len(cheios) >= 2 and cheios[-1].startswith(cheios[0][:5]) and len(cheios[-1]) > len(cheios[0])
         for b in inst + rasc:
             assert validar_contra("evento-efemero.schema.json", json.loads(b["data"])) == []
         esperar_fim(pid, timeout=15)

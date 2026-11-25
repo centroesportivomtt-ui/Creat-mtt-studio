@@ -3,8 +3,11 @@
 Ordem (D27): diário em <dados>/apagar/<pid>.json -> banco numa transação (BEGIN IMMEDIATE, com as recusas lidas dentro
 dela) -> arquivos em segundo plano. A varredura do worker (`varrer`, a cada 15 min) limpa o que sobrar por 7 dias.
 
-O que fica de propósito: o livro de gastos (gastos.jsonl), as regras e os casos que nasceram do projeto, os caches por
-conteúdo (cache/olho, cache/fatos, cache/planos) e os backups já feitos. Nada aqui recebe lista: uma chamada, um pid.
+O que fica de propósito: o livro de gastos (gastos.jsonl), as regras, checagens e palavras que nasceram dos ajustes do dono
+(o dono apaga no Caderno; tirá-las daqui mudaria a chave da conferência de outros projetos) e os backups já feitos. Sai junto
+(revisão da onda 3): os casos de referência do projeto (memoria/casos/<pid>-vN, que guardam o texto do pedido e a nota) e
+as entradas dos caches por conteúdo que este projeto gerou (cache/planos com os quadros antes/depois, cache/olho e
+cache/fatos), achadas pelos arquivos das versões antes de eles saírem. Nada aqui recebe lista: uma chamada, um pid.
 
 Defesas contra apagar o que não devia:
 - o pid passa em ^p_[a-z0-9]{4,40}$ antes de qualquer coisa (sem barra, ponto nem maiúscula);
@@ -40,8 +43,9 @@ FRASE_JOB = {"ingest": "um vídeo está chegando", "analise": "o editor está le
              "espelho": "a cópia do material para o Cloudflare está rodando"}
 NA_PAGINA = ("no_ar", "pendente", "enviando")
 FICA = ["O livro de gastos (o que já foi gasto continua contado).",
-        "As regras e os casos que nasceram deste projeto (apague as regras no Caderno, se quiser).",
+        "As regras que nasceram dos seus ajustes neste projeto, com o texto do ajuste (apague no Caderno, se quiser).",
         "As cópias nos backups: no Cloudflare somem em até 30 dias; as do Dropbox ficam."]
+RE_HEX = re.compile(r"[0-9a-f]{16,128}")
 CONVERSA_RODANDO = "a conversa está respondendo agora neste projeto; toque em Parar a resposta ou espere terminar"
 NOME_ERRADO = "o nome não confere; digite o nome do projeto como aparece no topo"
 
@@ -53,7 +57,7 @@ class Recusa(Exception):
 
 
 def pid_valido(pid) -> bool:
-    return isinstance(pid, str) and bool(RE_PID.match(pid))
+    return isinstance(pid, str) and bool(RE_PID.fullmatch(pid))
 
 
 def mesmo_nome(a: str, b: str) -> bool:
@@ -74,7 +78,7 @@ def _dados(con, pid: str) -> dict:
 
 
 def _ordem_v(v: str) -> int:
-    m = re.match(r"^v([0-9]{1,3})$", v or "")
+    m = re.fullmatch(r"v([0-9]{1,3})", v or "")
     return int(m.group(1)) if m else 10 ** 6
 
 
@@ -117,10 +121,17 @@ def _contar(con, pid: str) -> dict:
     if _tem_tabela(con, "links_cliente"):
         links = con.execute("SELECT COUNT(*) n FROM links_cliente WHERE projeto=? AND revogado IS NULL AND expira > ?",
                             (pid, _agora_iso())).fetchone()["n"]
-    return {"videos": int(a["n"]), "bytes": int(a["b"]),
-            "versoes": int(con.execute("SELECT COUNT(*) n FROM versoes WHERE projeto=?", (pid,)).fetchone()["n"]),
-            "mensagens_conversa": int(con.execute("SELECT COUNT(*) n FROM conversa_msgs WHERE projeto=?", (pid,)).fetchone()["n"]),
-            "links_cliente_ativos": int(links)}
+    out = {"videos": int(a["n"]), "bytes": int(a["b"]),
+           "versoes": int(con.execute("SELECT COUNT(*) n FROM versoes WHERE projeto=?", (pid,)).fetchone()["n"]),
+           "mensagens_conversa": int(con.execute("SELECT COUNT(*) n FROM conversa_msgs WHERE projeto=?", (pid,)).fetchone()["n"]),
+           "links_cliente_ativos": int(links)}
+    if _tem_tabela(con, "links_cliente"):
+        # resposta de cliente que o dono ainda não marcou como vista sai junto: a prévia conta (revisão da onda 3)
+        n = con.execute("SELECT COUNT(*) n FROM links_cliente WHERE projeto=? AND resposta IS NOT NULL AND tratado IS NULL",
+                        (pid,)).fetchone()["n"]
+        if n:
+            out["respostas_cliente_sem_ver"] = int(n)
+    return out
 
 
 def previa(con, pid: str, *, conversa_rodando: bool = False) -> dict:
@@ -266,6 +277,71 @@ def _apagar_chave(arm, chave: str) -> None:
     arm.apagar(chave)
 
 
+def _limpar_caches(cfg, pid: str, rel: dict) -> None:
+    """As entradas dos caches por conteúdo que este projeto gerou, achadas pelos arquivos das versões (por isso roda antes de
+    eles saírem): clipes de cache/planos e os quadros antes/depois ao lado, cache/olho pelo qa.sha256 e cache/fatos pela chave
+    guardada no EDL. Só nomes em hexadecimal, só dentro da pasta de cada cache. Outro projeto com o mesmo conteúdo exato
+    perde o atalho e refaz (só tempo de máquina, ou o custo do olho de novo)."""
+    from motor import refazer
+    cache = pathlib.Path(cfg.dados) / "cache"
+    try:
+        arm = refazer._arm(cfg)
+        chaves = [k for k in arm.listar(f"saidas/{pid}/") if isinstance(k, str) and k.startswith(f"saidas/{pid}/")]
+    except Exception as e:  # noqa: BLE001 - sem armazenamento: a varredura tenta de novo
+        rel["restos"].append(f"caches: {type(e).__name__}")
+        return
+    alvos: set[pathlib.Path] = set()
+    for k in chaves:
+        nome = k.rsplit("/", 1)[-1]
+        if nome == "montagem.json":
+            m = refazer._json(arm, k) or {}
+            for pl in ((m.get("planos") if isinstance(m, dict) else None) or {}).values():
+                a = pathlib.PurePath(str((pl or {}).get("arquivo") or "") if isinstance(pl, dict) else "")
+                if a.suffix == ".mp4" and RE_HEX.fullmatch(a.stem):
+                    alvos.update((cache / "planos").glob(a.stem + ".*"))
+        elif nome == "qa.sha256":
+            sha = refazer._texto(arm, k) or ""
+            if RE_HEX.fullmatch(sha):
+                alvos.update((cache / "olho").glob(sha + ".*"))
+        elif nome == "edl.json":
+            edl = refazer._json(arm, k) or {}
+            f = ((edl.get("qa") or {}).get("fatos") or {}) if isinstance(edl, dict) else {}
+            for c in (f.get("chave"), f.get("chave_saida")) if isinstance(f, dict) else ():
+                if isinstance(c, str) and RE_HEX.fullmatch(c):
+                    alvos.add(cache / "fatos" / f"{c}.json")
+    for a in sorted(alvos):
+        try:
+            if a.is_symlink() or a.is_file():
+                a.unlink()
+                rel["apagados"] += 1
+        except OSError as e:
+            rel["restos"].append(f"cache/{a.parent.name}: {type(e).__name__}")
+
+
+def _limpar_casos(pid: str, rel: dict) -> None:
+    """Os casos de referência deste projeto (memoria/casos/<pid>-vN/): guardam o texto do pedido, o conceito e a nota do
+    dono e entram no prompt da direção. Nome exato (`p_abcd-v1` não casa `p_abcd1-v1`)."""
+    from motor.memoria.loja import Loja
+    casos = Loja().raiz / "casos"
+    if not casos.is_dir():
+        return
+    padrao = re.compile(re.escape(pid) + r"-v[0-9]{1,3}")
+    for p in sorted(casos.iterdir()):
+        if not padrao.fullmatch(p.name):
+            continue
+        try:
+            if p.is_symlink():
+                p.unlink()
+            elif p.resolve().parent == casos.resolve() and p.is_dir():
+                shutil.rmtree(p)
+            else:
+                rel["recusados"] += 1
+                continue
+            rel["apagados"] += 1
+        except OSError as e:
+            rel["restos"].append(f"casos/{p.name}: {type(e).__name__}")
+
+
 def nome_do_projeto(nome: str, pid: str) -> bool:
     """A pasta é deste projeto: `<pid>` exato, ou `import_<pid>_*` / `ingest_<pid>_*` em tmp/ (o "_" depois do pid impede
     casar outro projeto cujo id começa igual)."""
@@ -333,6 +409,8 @@ def limpar_arquivos(cfg, pid: str, con=None) -> dict:
         except Exception as e:  # noqa: BLE001
             arm = None
             rel["restos"].append(f"armazenamento: {type(e).__name__}")
+        _limpar_caches(cfg, pid, rel)            # antes de saidas/ sair: é por ela que se acha o que o projeto pôs nos caches
+        _limpar_casos(pid, rel)
         if arm is not None:
             for pref in PREFIXOS:
                 prefixo = f"{pref}{pid}/"
@@ -402,7 +480,7 @@ def varrer(con, agora: float | None = None) -> dict:
     if not pasta.is_dir():
         return out
     for arq in sorted(pasta.iterdir()):
-        if not RE_DIARIO.match(arq.name) or not arq.is_file() or arq.is_symlink():
+        if not RE_DIARIO.fullmatch(arq.name) or not arq.is_file() or arq.is_symlink():
             continue
         pid = arq.name[:-5]
         d = _ler_diario(arq)

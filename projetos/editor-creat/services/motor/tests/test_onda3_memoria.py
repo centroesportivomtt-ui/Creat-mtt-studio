@@ -146,3 +146,59 @@ def test_retencao_dias_na_chave_da_conversa(dados, tmp_path, monkeypatch):
         with TestClient(criar()) as c:
             assert c.get("/v1/conversa").json()["retencao_dias"] == esperado
             assert c.post("/v1/conversa", json={"ligada": False}).json()["retencao_dias"] == esperado
+
+
+def test_apagar_conferencia_le_a_fila_e_grava_na_mesma_transacao(cli, monkeypatch):
+    """Revisão da onda 3 (achado 4): entre ler a fila e gravar a lápide nenhuma conferência pode começar. Durante o
+    apagamento, outra conexão que tenta enfileirar um job qa fica travada (a transação de escrita está aberta)."""
+    import sqlite3
+    c, con, mem = cli
+    cid = _reprovar(c, "o fecho precisa ter o telefone")["checagem"]["id"]
+    real = Loja.apagar
+    visto = {}
+
+    def apagar_e_tentar_enfileirar(self, tipo, ident):
+        outra = sqlite3.connect(str(config.carregar().banco), timeout=0.2, isolation_level=None)
+        try:
+            outra.execute("PRAGMA busy_timeout=200")
+            try:
+                outra.execute("BEGIN IMMEDIATE")
+                outra.execute("ROLLBACK")
+                visto["travou"] = False
+            except sqlite3.OperationalError as e:
+                visto["travou"] = "locked" in str(e)
+        finally:
+            outra.close()
+        return real(self, tipo, ident)
+    monkeypatch.setattr(Loja, "apagar", apagar_e_tentar_enfileirar)
+    assert c.post(f"/v1/memoria/checagens/{cid}/apagar", json={}).status_code == 200
+    assert visto == {"travou": True}
+
+
+def test_palavra_do_dono_igual_a_da_casa_nao_apaga_as_duas(cli):
+    """Revisão da onda 3 (achado 6): o id da palavra é pelo texto normalizado. Se a casa tem a mesma palavra (outra caixa),
+    apagar a do dono levaria a da casa junto (a lápide é pelo id): fica sem botão e a rota recusa com 409."""
+    c, con, mem = cli
+    _reprovar(c, "não é 'voando', é 'Ruan'")
+    reg = json.loads((mem / "regras.json").read_text(encoding="utf-8"))
+    reg["vocabulario"].append({"de": "Voando", "para": "Ruan", "origem": "casa"})
+    (mem / "regras.json").write_text(json.dumps(reg, ensure_ascii=False), encoding="utf-8")
+    vid = id_vocabulario("voando")
+    itens = [v for v in c.get("/v1/memoria").json()["vocabulario"] if v["id"] == vid]
+    assert len(itens) == 2 and all(v["apagavel"] is False and "ao_apagar" not in v for v in itens)
+    r = c.post(f"/v1/memoria/vocabulario/{vid}/apagar", json={})
+    assert r.status_code == 409 and r.json()["detail"] == "essa palavra também é fixa da casa; apagar levaria a da casa junto"
+    depois = json.loads((mem / "regras.json").read_text(encoding="utf-8"))["vocabulario"]
+    assert len([v for v in depois if id_vocabulario(v["de"]) == vid]) == 2
+    assert vid not in json.loads((mem / "apagados.json").read_text(encoding="utf-8")).get("vocabulario", {}) if (mem / "apagados.json").exists() else True
+
+
+def test_ids_com_quebra_de_linha_no_fim_nao_passam():
+    """Revisão da onda 3: `$` do Python aceita um \\n no fim; as validações usam fullmatch."""
+    from motor import apagar as AP
+    from motor import refazer as RF
+    from motor.memoria.loja import pode_apagar
+    assert AP.pid_valido("p_abcd") and not AP.pid_valido("p_abcd\n")
+    assert pode_apagar("regra", "r_dono_abcdef12") and not pode_apagar("regra", "r_dono_abcdef12\n")
+    assert not pode_apagar("vocabulario", "v_abcdef12\n") and not pode_apagar("checagem", "c_dono_abcdef12\n")
+    assert RF._num("v1") == 1 and RF._num("v1\n") is None

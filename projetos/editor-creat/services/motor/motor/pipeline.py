@@ -93,6 +93,43 @@ def depois(con, job: dict, saida: dict | None) -> None:
         banco.emitir(con, projeto, "entregue", etapa="entrega", alvo=alvo, dados=saida)
 
 
+MOTIVOS_TROCA = ("a música escolhida saiu da biblioteca", "a música nova não encaixou no filme", "pedido de troca de música inválido")
+
+
+def _volta_da_troca(con, job: dict, msg: str) -> bool:
+    """Troca de música que falhou de vez (onda 3): a versão de origem continua entregue e intacta, então o projeto volta para
+    'entregue' com a frase do motivo, em vez de ir a 'erro' (o dono não perde a tela do filme pronto por uma troca opcional).
+    Só quando a versão de origem ainda existe e está entregue; senão segue o caminho de sempre ('erro')."""
+    import re
+    ent = job.get("entrada")
+    if isinstance(ent, str):
+        try:
+            ent = json.loads(ent or "{}")
+        except ValueError:
+            ent = {}
+    tt = (ent or {}).get("trocar_trilha") if isinstance(ent, dict) else None
+    if not isinstance(tt, dict):
+        return False
+    de = str(tt.get("de") or "")
+    if not re.match(r"^v[0-9]{1,3}\Z", de):
+        return False
+    r = con.execute("SELECT estado FROM versoes WHERE projeto=? AND id=?", (job["projeto"], de)).fetchone()
+    if r is None or r["estado"] != "entregue":
+        return False
+    base = (msg or "").split(":", 1)[0].strip()
+    if base in MOTIVOS_TROCA or re.match(r"^a v[0-9]{1,3} não tem direção guardada\Z", base):
+        motivo = base.replace(f"a {de} ", f"a {de.upper()} ")
+    elif base.startswith("a direção da versão de origem ficou fora do schema"):
+        motivo = f"a direção guardada da {de.upper()} não pôde ser reaproveitada"
+    else:
+        from motor.etapas import passos
+        motivo = passos.causa(msg or "")
+    frase = ("A troca de música não deu certo" + (f" ({motivo})" if motivo else "") +
+             f". A {de.upper()} continua pronta e guardada; se quiser, peça outra música na conversa.")
+    banco.mudar_estado(con, job["projeto"], "entregue", frase, dados={"detalhe": (msg or "")[:300]})
+    return True
+
+
 def falha_definitiva(con, job: dict, mensagem: str) -> None:
     """Job que não vai mais ser tentado. Arquivo: fica de fora (com aviso) e o projeto segue com o resto.
     Qualquer outra etapa: o projeto vai para 'erro' com a mensagem (o relógio do site para e o dono vê o motivo)."""
@@ -120,6 +157,8 @@ def falha_definitiva(con, job: dict, mensagem: str) -> None:
             banco.mudar_estado(con, projeto, "erro", "Nenhum arquivo do envio pôde ser lido. Mande o material de novo.")
         else:
             tentar_dirigir(con, projeto)
+        return
+    if etapa == "direcao" and _volta_da_troca(con, job, msg):
         return
     if etapa in ("montagem", "qa", "entrega") and alvo not in (None, "-"):
         con.execute("UPDATE versoes SET estado='erro' WHERE projeto=? AND id=? AND estado!='entregue'", (projeto, alvo))

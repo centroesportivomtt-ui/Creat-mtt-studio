@@ -17,7 +17,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from motor import banco, config
-from motor.memoria.loja import Loja, pode_apagar
+from motor.memoria.loja import TAMBEM_DA_CASA, Loja, pode_apagar
 
 rotas = APIRouter(tags=["memoria"])
 NAO_E_SEU = "só dá para apagar o que nasceu de um ajuste seu"
@@ -30,26 +30,43 @@ class Vazio(BaseModel):
     pass
 
 
-def _conferencia_rodando() -> bool:
+def _conferencia_rodando(con) -> bool:
     """D32: a chave da conferência inclui as checagens; trocar no meio derrubaria a entrega com erro."""
-    con = banco.conectar(config.carregar().banco)
+    return con.execute("SELECT 1 FROM jobs WHERE etapa IN ('qa','entrega') AND estado IN ('pendente','rodando') LIMIT 1").fetchone() is not None
+
+
+def _apagar_na_loja(tipo: str, ident: str) -> dict:
     try:
-        return con.execute("SELECT 1 FROM jobs WHERE etapa IN ('qa','entrega') AND estado IN ('pendente','rodando') LIMIT 1").fetchone() is not None
-    finally:
-        con.close()
+        return Loja().apagar(tipo, ident)
+    except PermissionError as e:
+        if str(e) == TAMBEM_DA_CASA:
+            raise HTTPException(409, TAMBEM_DA_CASA) from None
+        raise HTTPException(404, NAO_E_SEU) from None
+    except KeyError:
+        raise HTTPException(404, NAO_EXISTE[tipo]) from None
 
 
 def _apagar(tipo: str, ident: str) -> dict:
     if not pode_apagar(tipo, ident):
         raise HTTPException(404, NAO_E_SEU)
-    if tipo == "checagem" and _conferencia_rodando():
-        raise HTTPException(409, CONFERENCIA_RODANDO)
-    try:
-        r = Loja().apagar(tipo, ident)
-    except PermissionError:
-        raise HTTPException(404, NAO_E_SEU) from None
-    except KeyError:
-        raise HTTPException(404, NAO_EXISTE[tipo]) from None
+    if tipo != "checagem":
+        r = _apagar_na_loja(tipo, ident)
+    else:
+        # D32 sem janela: a fila é lida e a checagem sai DENTRO da mesma transação de escrita (BEGIN IMMEDIATE). Enquanto ela
+        # está aberta ninguém enfileira nem pega um job de conferência, então nenhuma conferência começa entre ler e gravar.
+        con = banco.conectar(config.carregar().banco)
+        try:
+            con.execute("BEGIN IMMEDIATE")
+            try:
+                if _conferencia_rodando(con):
+                    raise HTTPException(409, CONFERENCIA_RODANDO)
+                r = _apagar_na_loja(tipo, ident)
+                con.execute("COMMIT")
+            except BaseException:
+                con.execute("ROLLBACK")
+                raise
+        finally:
+            con.close()
     return {"apagado": {"tipo": r["tipo"], "id": r["id"], "texto": str(r.get("texto") or "")[:600]}}
 
 

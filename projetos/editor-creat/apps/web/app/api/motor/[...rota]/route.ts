@@ -8,7 +8,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // onda 3: apagar uma regra, conferência ou palavra do Caderno (só as que nasceram de ajuste do dono; o formato do id já filtra)
-const PERMITIDAS = /^v1\/(saude|conversa|memoria|memoria\/(regras\/r_dono_|checagens\/c_dono_|vocabulario\/v_)[0-9a-f]{8}\/apagar|referencias|backup|backup\/config|backup\/rodar|gastos|entregas\/clientes|clientes|clientes\/lc_[a-f0-9]{12}\/(revogar|tratar)|biblioteca|biblioteca\/(trilha|sfx)\/[a-z0-9_-]{2,41}\/retirar|projetos|projetos\/p_[a-z0-9]{4,40}(\/[A-Za-z0-9_\-./]+)?|arquivos\/[A-Za-z0-9_\-./]+)$/;
+// Cada pedaço do caminho começa com letra, número, "_" ou "-" (nunca "."), então ".." não passa nem escondido: o Next
+// decodifica "..%2F" dentro de UM pedaço, e o fetch normalizaria o caminho para fora da lista (revisão da onda 3).
+const PERMITIDAS = /^v1\/(saude|conversa|memoria|memoria\/(regras\/r_dono_|checagens\/c_dono_|vocabulario\/v_)[0-9a-f]{8}\/apagar|referencias|backup|backup\/config|backup\/rodar|gastos|entregas\/clientes|clientes|clientes\/lc_[a-f0-9]{12}\/(revogar|tratar)|biblioteca|biblioteca\/(trilha|sfx)\/[a-z0-9_-]{2,41}\/retirar|projetos|projetos\/p_[a-z0-9]{4,40}(\/[A-Za-z0-9_-][A-Za-z0-9_.-]*)*|arquivos(\/[A-Za-z0-9_-][A-Za-z0-9_.-]*)+)$/;
 const ENTRA = ['content-type', 'range', 'if-range', 'last-event-id', 'accept'];
 const SAI = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'cache-control', 'last-modified', 'etag', 'content-disposition'];
 
@@ -19,7 +21,7 @@ async function repassar(req: Request, ctx: Ctx): Promise<Response> {
   if (req.method === 'POST' && !mesmaOrigem(req)) return NextResponse.json({ detail: 'origem não permitida' }, { status: 403 });
   const { rota } = await ctx.params;
   const caminho = rota.join('/');
-  if (!PERMITIDAS.test(caminho) || rota.some((p) => p === '..' || p === '.')) {
+  if (!rota.length || rota.some((p) => !p || p.startsWith('.') || /[\/\\%\s]/.test(p)) || !PERMITIDAS.test(caminho)) {
     return NextResponse.json({ detail: 'rota do motor não permitida' }, { status: 404 });
   }
   const busca = new URL(req.url).search;
@@ -37,7 +39,7 @@ async function repassar(req: Request, ctx: Ctx): Promise<Response> {
   }
   let r: Response;
   try {
-    r = await fetch(`${MOTOR_URL}/${caminho}${busca}`, {
+    r = await fetch(`${MOTOR_URL}/${rota.map(encodeURIComponent).join('/')}${busca}`, {
       method: req.method, headers: cabecalhosMotor(h), body: corpo, cache: 'no-store', signal: req.signal, redirect: 'manual',
     });
   } catch {

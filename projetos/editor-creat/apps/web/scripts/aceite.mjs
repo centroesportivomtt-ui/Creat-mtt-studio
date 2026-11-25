@@ -66,8 +66,47 @@ function subir(nome, cmd, argv, env) {
   filhos.push(p);
   return p;
 }
+// Todos os descendentes de um processo (lidos de /proc): o next-server que o `next start` cria pode sair do grupo do npx,
+// e um servidor que sobra numa porta faz a rodada seguinte falar com o site velho (outra senha) e falhar no login.
+function descendentes(raiz) {
+  const filhosDe = new Map();
+  let dirs = [];
+  try { dirs = fs.readdirSync('/proc').filter((d) => /^\d+$/.test(d)); } catch { return []; }
+  for (const d of dirs) {
+    try {
+      const st = fs.readFileSync(`/proc/${d}/stat`, 'utf8');
+      const ppid = Number(st.slice(st.lastIndexOf(')') + 2).split(' ')[1]);
+      if (!filhosDe.has(ppid)) filhosDe.set(ppid, []);
+      filhosDe.get(ppid).push(Number(d));
+    } catch { /* processo saiu no meio da leitura */ }
+  }
+  const out = [];
+  const fila = [raiz];
+  while (fila.length) for (const f of filhosDe.get(fila.shift()) ?? []) { out.push(f); fila.push(f); }
+  return out;
+}
+const vivo = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 function encerrar() {
+  const todos = new Set();
+  for (const p of filhos) { if (p.pid) { todos.add(p.pid); for (const d of descendentes(p.pid)) todos.add(d); } }
   for (const p of filhos) { try { process.kill(-p.pid, 'SIGTERM'); } catch { /* já saiu */ } }
+  for (const pid of todos) { try { process.kill(pid, 'SIGTERM'); } catch { /* já saiu */ } }
+  const espera = new Int32Array(new SharedArrayBuffer(4));
+  const t = Date.now();
+  while (Date.now() - t < 4000 && [...todos].some(vivo)) Atomics.wait(espera, 0, 0, 100);
+  for (const pid of todos) { if (vivo(pid)) { try { process.kill(pid, 'SIGKILL'); } catch { /* já saiu */ } } }
+}
+// Porta ocupada no começo = outro aceite (ou um servidor que sobrou) nela: para já, com a causa, em vez de falhar no login.
+async function portaLivre(porta) {
+  const net = await import('node:net');
+  return new Promise((ok) => {
+    const srv = net.createServer();
+    srv.once('error', () => ok(false));
+    srv.listen(porta, '127.0.0.1', () => srv.close(() => ok(true)));
+  });
+}
+for (const sinal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+  process.once(sinal, () => { encerrar(); process.exit(130); });
 }
 async function sha256(arquivo) {
   const h = createHash('sha256');
@@ -94,6 +133,11 @@ function criarArquivo(f) {
 }
 
 async function principal() {
+  for (const [porta, nome] of [[PORTA_WEB, 'ACEITE_PORTA_WEB'], [PORTA_MOTOR, 'ACEITE_PORTA_MOTOR']]) {
+    if (!(await portaLivre(porta))) {
+      throw new Error(`a porta ${porta} já está em uso (outro aceite rodando, ou um servidor que sobrou). Escolha outra com ${nome}=… ou pare o que está nela.`);
+    }
+  }
   fs.rmSync(SCRATCH, { recursive: true, force: true });
   fs.mkdirSync(DADOS, { recursive: true });
   fs.rmSync(PRINTS, { recursive: true, force: true });
@@ -172,7 +216,7 @@ async function principal() {
     await page.fill('input[name=nome]', 'Aceite frente D · bastidor');
     await page.check('input[name=tipo][value=bastidor]', { force: true });
     await page.click('main button[type=submit]');
-    await page.waitForURL(/\/projetos\/p_[a-z0-9]+$/, { timeout: 15000 });
+    await page.waitForURL(/\/projetos\/p_[a-z0-9]+$/, { timeout: 30000 });
     pid = page.url().split('/').pop();
     ok('projeto criado pela tela', /^p_[a-z0-9]+$/.test(pid), pid);
   });
@@ -246,6 +290,9 @@ async function principal() {
     const nUltra = await page.locator('[data-teste=perguntas] fieldset').count();
     ok('as perguntas mudam com o modo (ultra pergunta do mascote e da IA)', nUltra > nPerguntas, `${nPerguntas} -> ${nUltra}`);
     await page.check('input[name=q_proibido][value="palavrão"]');
+    // o estado antes do clique entra na lista: com a máquina carregada, a primeira leitura do laço pode já pegar 'dirigindo'
+    const antesDoPedido = await page.getAttribute('[data-teste=estado]', 'data-estado');
+    if (antesDoPedido) vistos.push(antesDoPedido);
     await page.click('[data-teste=mandar-pedido]');
     const t0 = Date.now();
     while (Date.now() - t0 < 90000) {

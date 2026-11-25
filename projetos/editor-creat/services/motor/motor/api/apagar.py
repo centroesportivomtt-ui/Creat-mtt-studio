@@ -107,6 +107,6 @@ def _retirar(cfg, pid: str, v: str) -> dict:
 @rotas.post("/projetos/{pid}/versoes/{v}/retirar", status_code=202)
 def retirar(pid: str, v: str, corpo: Optional[Vazio] = None):
     _pid(pid)
-    if not RE_V.match(v or ""):
+    if not RE_V.fullmatch(v or ""):
         raise HTTPException(404, "versão não encontrada")
     return _retirar(config.carregar(), pid, v)

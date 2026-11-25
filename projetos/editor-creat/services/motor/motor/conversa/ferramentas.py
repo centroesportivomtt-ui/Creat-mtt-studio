@@ -27,6 +27,10 @@ VERSAO = {"type": "string", "pattern": "^v[0-9]{1,3}$", "maxLength": 4}
 LIVRE, PERGUNTA, CONFIRMA = "livre", "pergunta", "confirma"
 
 
+RE_BLOCO = re.compile(r"B[0-9]{1,2}")
+FUNCOES_BLOCO = ("gancho", "contexto", "prova", "bastidor", "virada", "climax", "emocao", "oferta", "convite")   # direcao.schema.json
+
+
 def de_fora(texto) -> dict:
     t = _CONTROLE.sub(" ", str(texto if texto is not None else ""))
     t = " ".join(t.split()).replace("<", "‹")
@@ -350,7 +354,7 @@ def f_ver_passo(ctx: Ctx, con, e: dict) -> tuple[dict, str, None]:
 
 
 def _num_versao(v: str | None) -> int | None:
-    m = acoes.RE_VERSAO.match(v or "")
+    m = acoes.RE_VERSAO.fullmatch(v or "")
     return int(m.group(1)) if m else None
 
 
@@ -481,7 +485,16 @@ def f_onde_esta(ctx: Ctx, con, e: dict) -> tuple[dict, str, None]:
             if pl:
                 bloco = {"id": pl["bloco"]}
         if bloco:
-            out["bloco"] = {"id": str(bloco.get("id"))[:20], **({"funcao": str(bloco["funcao"])[:30]} if bloco.get("funcao") else {})}
+            # id e função vêm do EDL, que pode ter nascido de um EDL fixo ou de uma direção fora do padrão: só passam no formato
+            # da direção (B1..B99 e a lista fechada de funções). Texto livre aqui seria um canal de instrução sem de_fora.
+            bid, fn = str(bloco.get("id") or ""), str(bloco.get("funcao") or "")
+            b_out = {}
+            if RE_BLOCO.fullmatch(bid):
+                b_out["id"] = bid
+            if fn in FUNCOES_BLOCO:
+                b_out["funcao"] = fn
+            if b_out:
+                out["bloco"] = b_out
         voz = next((x for x in edl.get("voz") or [] if float(x.get("t0", -1)) <= t < float(x.get("t1", -1))), None)
         if voz:
             frase = _fala_em(edl, float(voz["t0"]), float(voz["t1"])) or str(voz.get("texto") or "")

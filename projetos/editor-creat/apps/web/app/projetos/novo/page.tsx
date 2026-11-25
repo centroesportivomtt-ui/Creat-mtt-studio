@@ -1,8 +1,12 @@
 import NovoProjeto from '@/componentes/NovoProjeto';
+import { exigirSessao } from '@/lib/sessao';
 
 export const metadata = { title: 'Novo projeto' };
 
-export default function Novo() {
+export const dynamic = 'force-dynamic';
+
+export default async function Novo() {
+  await exigirSessao('/projetos/novo');
   return (
     <main className="pagina">
       <div className="cabeca-pagina">

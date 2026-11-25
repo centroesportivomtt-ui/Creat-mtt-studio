@@ -32,7 +32,7 @@ NOME_CAMPO = {"texto": "Pedido", "formato": "Formato", "destino": "Onde vai sair
 
 
 def _num(v: str) -> int:
-    m = RE_VERSAO.match(v or "")
+    m = RE_VERSAO.fullmatch(v or "")
     return int(m.group(1)) if m else -1
 
 
@@ -195,7 +195,7 @@ def cartao_nota(cfg, con, pid: str, e: dict) -> dict:
         onde += f" da {e['versao']}"
     c = {"acao": "nota", "titulo": "Guardar uma nota", "texto_exato": e["texto"], "faz": f"Guardar esta nota no projeto{onde}. Não refaz nada e não gasta.",
          "refaz": [], "comeca_agora": False, "custo_usd_est": 0.0, "minutos_est": 0.0, "vira_regra": False,
-         "volta": "A nota fica na lista de notas do projeto.", "botao": "Guardar a nota"}
+         "volta": "A nota fica na lista de notas do projeto (cabem até 50 por projeto).", "botao": "Guardar a nota"}
     if e.get("versao"):
         c["versao"] = e["versao"]
     if e.get("tempo_s") is not None:
@@ -277,7 +277,25 @@ def _cartao_ajuste(cfg, con, pid, e, *, turno, tool_use_id, ja_lidos=None):
 
 
 def _cartao_pedido(cfg, con, pid, e, *, turno, tool_use_id, ja_lidos=None):
-    return cartao_pedido(cfg, con, pid, e, turno=turno, tool_use_id=tool_use_id)
+    c = cartao_pedido(cfg, con, pid, e, turno=turno, tool_use_id=tool_use_id)
+    return _com_atencao(c, con, pid, " ".join(str(e.get(k) or "") for k in ("texto", "obrigatorio", "proibido")), ja_lidos)
+
+
+ATENCAO_DE_FORA = "Este texto repete algo que veio de fora (fala de vídeo ou texto de cliente): “{trecho}”. Confira antes de tocar."
+
+
+def _com_atencao(c: dict, con, pid: str, texto: str, ja_lidos) -> dict:
+    """Revisão da onda 3: o aviso "repete algo que veio de fora" vale para todo cartão cujo texto o Nimbus escreveu (nota e
+    pedido), não só para o ajuste. Uma fala de vídeo com instrução escondida não vira nota nem pedido sem o dono ver."""
+    trecho = repete_de_fora(texto, textos_de_fora(con, pid, ja_lidos))
+    if trecho is not None:
+        c["atencao"] = ATENCAO_DE_FORA.format(trecho=trecho)
+    return c
+
+
+def _cartao_nota(cfg, con, pid, e, *, turno, tool_use_id, ja_lidos=None):
+    c = {"turno": turno, "tool_use_id": tool_use_id, **cartao_nota(cfg, con, pid, e)}
+    return _com_atencao(c, con, pid, e.get("texto") or "", ja_lidos)
 
 
 def _com_ids(f):
@@ -308,7 +326,7 @@ CARTOES = {
     "propor_refazer": Cartao(lambda cfg, con, pid, e: normalizar_refazer(con, pid, e), guarda_refazer, _com_ids(_cartao_refazer), _exec_refazer),
     "propor_trilha": Cartao(lambda cfg, con, pid, e: {"versao": e["versao"], "trilha": e["trilha"]}, guarda_trilha,
                             _com_ids(_cartao_trilha), _exec_trilha),
-    "anotar": Cartao(lambda cfg, con, pid, e: normalizar_nota(e), guarda_nota, _com_ids(cartao_nota), _exec_nota),
+    "anotar": Cartao(lambda cfg, con, pid, e: normalizar_nota(e), guarda_nota, _cartao_nota, _exec_nota),
 }
 
 

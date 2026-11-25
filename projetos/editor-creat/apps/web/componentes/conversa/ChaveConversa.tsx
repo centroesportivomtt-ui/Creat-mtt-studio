@@ -61,7 +61,7 @@ export default function ChaveConversa({ variante }: { variante: 'menu' | 'cartao
         // onda 3 (R20): por quanto tempo a conversa fica guardada, numa linha
         <p className="aviso caderno__retencao" data-teste="caderno-retencao">
           {e.retencao_dias > 0
-            ? `As mensagens da conversa ficam guardadas ${e.retencao_dias} dias depois de encerradas (ao aprovar um vídeo ou quando a conversa fica longa); a conversa em andamento nunca é apagada.`
+            ? `As mensagens da conversa ficam guardadas ${e.retencao_dias} dias depois de encerradas (ao aprovar um vídeo ou quando a conversa fica longa); a conversa em andamento nunca é apagada. As cópias de segurança (backup) levam o banco inteiro e podem guardar por mais tempo: no Cloudflare até 30 dias, no Dropbox até alguém apagar.`
             : 'As mensagens da conversa ficam guardadas sem prazo.'}
         </p>
       )}

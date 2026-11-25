@@ -88,7 +88,7 @@ memoria\/(regras\/r_dono_|checagens\/c_dono_|vocabulario\/v_)[0-9a-f]{8}\/apagar
 ```
 A expressão inteira fica:
 ```
-/^v1\/(saude|conversa|memoria|memoria\/(regras\/r_dono_|checagens\/c_dono_|vocabulario\/v_)[0-9a-f]{8}\/apagar|referencias|backup|backup\/config|backup\/rodar|gastos|entregas\/clientes|clientes|clientes\/lc_[a-f0-9]{12}\/(revogar|tratar)|biblioteca|biblioteca\/(trilha|sfx)\/[a-z0-9_-]{2,41}\/retirar|projetos|projetos\/p_[a-z0-9]{4,40}(\/[A-Za-z0-9_\-./]+)?|arquivos\/[A-Za-z0-9_\-./]+)$/
+/^v1\/(saude|conversa|memoria|memoria\/(regras\/r_dono_|checagens\/c_dono_|vocabulario\/v_)[0-9a-f]{8}\/apagar|referencias|backup|backup\/config|backup\/rodar|gastos|entregas\/clientes|clientes|clientes\/lc_[a-f0-9]{12}\/(revogar|tratar)|biblioteca|biblioteca\/(trilha|sfx)\/[a-z0-9_-]{2,41}\/retirar|projetos|projetos\/p_[a-z0-9]{4,40}(\/[A-Za-z0-9_-][A-Za-z0-9_.-]*)*|arquivos(\/[A-Za-z0-9_-][A-Za-z0-9_.-]*)+)$/
 ```
 Nenhum método novo no proxy: tudo que muda é `POST` (o proxy só exporta GET, HEAD e POST e exige mesma origem no POST).
 
@@ -299,7 +299,7 @@ o texto da nota e a tela põe aspas, como no ajuste. `vira_regra` é sempre `fal
 | refazer · entrega | "Entregar de novo a {V}" | "Conferir a {V} (aproveita a conferência se nada mudou) e entregar de novo. Não publica nem manda para o cliente." | `refaz: [qa, entrega]` | "O filme não muda." | "Entregar de novo" |
 | refazer · leitura | "Ler de novo o vídeo {N}" | "Tentar ler o vídeo {N} de novo: ouvir as falas e olhar os quadros. Ele ficou de fora porque não deu para ler." | `refaz: [leitura]`; se a leitura pode começar a edição: `atencao` = "Se der certo e o resto já estiver lido, a edição começa sozinha." e a parte "Direção, se a edição começar" | "Os outros vídeos não mudam." | "Ler de novo" |
 | trilha | "Trocar a música da {V}" | "Trocar a música da {V} por “{título novo}” ({bpm} bpm), sem nova direção." (sem bpm conhecido, sem o parêntese) | `mudancas: [{campo: "Música", antes: "{título atual}", depois: "{título novo}"}]`; `nao_muda` = "Os mesmos trechos, falas, legendas, cor e fecho."; `atencao` = "Os cortes andam até uma batida para casar com a música nova, então a duração pode mudar um pouco." (+ " Hoje a {V} tem {k} músicas; a versão nova fica com uma só." quando `trilha.ids` tem 2 ou 3); `refaz: [encaixe, montagem, qa, entrega]` | "A {V} continua guardada e pode ser aprovada. A música nova sai na {V+1}. Se a conferência reprovar, o editor para e espera você." | "Trocar a música" |
-| nota | "Guardar uma nota" | o texto da nota | `faz` = "Guardar esta nota no projeto{ em mm:ss da V2}. Não refaz nada e não gasta." | "A nota fica na lista de notas do projeto." | "Guardar a nota" |
+| nota | "Guardar uma nota" | o texto da nota | `faz` = "Guardar esta nota no projeto{ em mm:ss da V2}. Não refaz nada e não gasta." | "A nota fica na lista de notas do projeto (cabem até 50 por projeto)." | "Guardar a nota" |
 
 Título da trilha: `titulo` da biblioteca (o dono digitou ao registrar); sem título, o `id`. Faixa atual: a da biblioteca com
 a mesma `chave` de `edl.trilha.chave`; sem achar, "a música atual".
@@ -412,8 +412,9 @@ batida) e a duração.
 | Filme na página de entregas | **recusa** (7.2) até sair de lá pela R15. Com as entregas desligadas no servidor e estado `no_ar` guardado: deixa apagar e a prévia avisa em `restos_previstos.pagina_desligada` |
 | Cópia do material no Cloudflare (espelho) | ligado: apaga o prefixo `entrada/{pid}/` do depósito do espelho; desligado com linhas `guardado`: não dá para apagar daqui e a prévia diz `copia_material: n` |
 | `gastos.jsonl` | **não é apagado** (o livro de gastos fica; a tela de gastos mostra o id do projeto) |
-| Regras, checagens, vocabulário e casos que nasceram do projeto | ficam (são da casa). As regras podem ser apagadas no Caderno (seção 8); casos não têm tela nesta onda |
-| Caches por conteúdo (`cache/olho`, `cache/fatos`, `cache/planos`) | ficam: a chave é o conteúdo, não o projeto |
+| Regras, checagens e vocabulário que nasceram do projeto | ficam (são da casa), com o texto do ajuste; o dono apaga no Caderno (seção 8). Tirar daqui mudaria a chave da conferência de outros projetos |
+| Casos de referência do projeto (`memoria/casos/<pid>-vN/`) | **saem junto** (revisão da onda 3, RV1): guardam o texto do pedido, o conceito e a nota do dono |
+| Caches por conteúdo (`cache/olho`, `cache/fatos`, `cache/planos`) | **as entradas deste projeto saem** (revisão RV1): achadas por `montagem.json`, `qa.sha256` e `edl.qa.fatos` das versões antes de elas saírem. O resto do cache fica |
 | Backups já feitos | ficam: no Cloudflare somem em até 30 dias (`backup.py:77`); as cópias já mandadas ao Dropbox continuam lá |
 | Pedaço de envio do tus em `armazenamento/.envio/` | fica; o tus apaga em 7 dias (`app/api/envio/[[...tus]]/route.ts:29`) |
 
@@ -476,7 +477,7 @@ projeto, que não existem mais depois do `COMMIT`.
 
 ### 7.4 Prévia (R13): as frases de `fica`
 1. "O livro de gastos (o que já foi gasto continua contado)."
-2. "As regras e os casos que nasceram deste projeto (apague as regras no Caderno, se quiser)."
+2. "As regras que nasceram dos seus ajustes neste projeto, com o texto do ajuste (apague no Caderno, se quiser)."
 3. "As cópias nos backups: no Cloudflare somem em até 30 dias; as do Dropbox ficam."
 `pode = false` e `porque` com a frase da recusa (7.2) quando houver.
 
@@ -840,3 +841,23 @@ correção quando for regressão.
 | C6 | Retenção com `json_extract(dados, '$.acao')` | O aviso `{acao: "retomar"}` é conferido em Python | `json_extract` não confirmado na imagem do Railway (seção 16) |
 | C7 | Varredura: diário "apagado" com o projeto vivo não estava previsto | O diário sai e nada do projeto é tocado (log de aviso) | `limpar_arquivos` nunca toca projeto que existe no banco |
 | C8 | R12: ordem dos erros | 404 do projeto antes do 422 "diga qual vídeo" | Projeto inexistente não deve receber pedido de dado |
+
+## 18. Revisão tripla da onda 3: o que mudou no contrato (Forja, 25/11)
+
+| # | Achado | Decisão |
+|---|---|---|
+| RV1 | "Apagar para sempre" deixava caches com quadros e falas do projeto e os casos com o texto do pedido | Saem junto (7.3). Regras, checagens e palavras ficam com o texto do ajuste, e a prévia diz isso; apagar fica no Caderno |
+| RV2 | Backup leva o `motor.db` inteiro, e a linha do prazo prometia 90 dias sem ressalva | A linha do Caderno diz que as cópias de segurança podem guardar por mais tempo (Cloudflare até 30 dias, Dropbox até alguém apagar). O backup não foi filtrado: a cópia serve para recuperar tudo, conversa inclusive |
+| RV3 | "Trocar a música de novo" pulava as regras da troca | A guarda de refazer `direcao` com `trocar_trilha` é a mesma `porque_trilha` (aprovada, não é a mais nova, reprovada, não entregue, música fora da biblioteca) |
+| RV4 | Troca de música que falha levava o projeto a `erro` | Com a versão de origem entregue, o projeto volta para `entregue` com a frase do motivo. Sem ela, segue para `erro` |
+| RV5 | Proxy aceitava `..%2F` dentro de um pedaço | Cada pedaço começa com letra, número, `_` ou `-`, sem `/`, `\`, `%` nem espaço; a URL do motor é montada com `encodeURIComponent` por pedaço (regex na seção 3) |
+| RV6 | Apagar conferência lia a fila fora da transação | Lê a fila e grava dentro do mesmo `BEGIN IMMEDIATE` |
+| RV7 | Palavra do dono igual a uma da casa (outra caixa) | Fica sem botão e a rota recusa com 409: a lápide é pelo id e esconderia a da casa |
+| RV8 | Limite de 50 notas sem aviso | Fica o limite (A3.9); o cartão diz "cabem até 50 por projeto". Apagar nota não entra nesta onda |
+| RV9 | Aviso "repete algo que veio de fora" só no ajuste | Vale também para os cartões de nota e de pedido |
+| RV10 | Ids validados com `$` aceitavam `\n` no fim | `fullmatch` em todas as validações de id da onda 3 |
+| RV11 | `onde_esta` devolvia id e função de bloco do EDL sem `de_fora` | Só passam no formato da direção (`B1`..`B99` e a lista fechada de funções) |
+| RV12 | Abrir `/projetos/<id>` sem sessão voltava para `/projetos` | Cada página protegida manda a própria volta para `/entrar` |
+| RV13 | "v1" minúsculo nas frases do motor e "V1" nos botões | Fica como está: os cartões das ondas 1 e 2 já usam "v1" ("Pedir ajuste da v1"); padronizar mexe em todas as ondas e no prompt do Nimbus, fora desta revisão |
+| RV14 | Apagar some com a conversa aberta | Fica: com a conversa aberta a página inteira do projeto (cabeçalho, mesa, material) também some; fechar a conversa mostra tudo, o Apagar junto |
+

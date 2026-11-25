@@ -163,6 +163,50 @@ def test_musica_que_saiu_da_biblioteca_para_com_frase_clara(app_conversa, trilha
         j = _sql("SELECT estado, erro FROM jobs WHERE projeto=? AND etapa='direcao'", pid)[0]
         assert j["estado"] == "falhou" and "a música escolhida saiu da biblioteca" in j["erro"]
         assert _sql("SELECT estado FROM versoes WHERE projeto=? AND id='v1'", pid)[0]["estado"] == "entregue"
+        # revisão da onda 3 (achado 2): a troca opcional que falhou não tira o dono da tela do filme pronto
+        assert _sql("SELECT estado FROM projetos WHERE id=?", pid)[0]["estado"] == "entregue"
+        ult = [e for e in eventos(pid, "estado")][-1]
+        assert ult["estado"] == "entregue" and ult["mensagem"] == (
+            "A troca de música não deu certo (a música escolhida saiu da biblioteca). "
+            "A V1 continua pronta e guardada; se quiser, peça outra música na conversa.")
         trilhas.write_text(json.dumps([A, B]))
         ops = c.get(f"/v1/projetos/{pid}/refazer").json()["opcoes"]
         assert [o["titulo"] for o in ops] == ["Trocar a música de novo"] and ops[0]["pela_conversa"] is False
+
+
+def test_troca_que_falhou_sem_a_versao_de_origem_vai_a_erro(app_conversa, trilhas):
+    """Sem a versão de origem entregue não há filme pronto para voltar: segue o caminho de sempre ('erro')."""
+    with app_conversa() as c:
+        pid = _projeto_entregue(c)
+        _sql("UPDATE versoes SET estado='erro' WHERE projeto=?", pid)
+        k = con()
+        banco.enfileirar(k, "direcao", pid, entrada={"trocar_trilha": {"de": "v1", "trilha": "feira"}})
+        k.close()
+        trilhas.write_text(json.dumps([A]))
+        assert worker.main(["--ate-ocioso", "--etapas", "direcao"]) == 0
+        assert _sql("SELECT estado FROM projetos WHERE id=?", pid)[0]["estado"] == "erro"
+
+
+def test_trocar_de_novo_respeita_as_regras_da_troca(app_conversa, trilhas):
+    """Revisão da onda 3 (achado 1): "Trocar a música de novo" passa pela mesma guarda da troca. Versão aprovada depois da
+    falha: a opção some do GET /refazer e o POST recusa com 409, sem enfileirar nada."""
+    with app_conversa() as c:
+        pid = _projeto_entregue(c)
+        k = con()
+        banco.enfileirar(k, "direcao", pid, entrada={"trocar_trilha": {"de": "v1", "trilha": "feira"}})
+        k.close()
+        trilhas.write_text(json.dumps([A]))
+        assert worker.main(["--ate-ocioso", "--etapas", "direcao"]) == 0
+        trilhas.write_text(json.dumps([A, B]))
+        assert [o["de"] for o in c.get(f"/v1/projetos/{pid}/refazer").json()["opcoes"]] == ["direcao"]
+        _sql("UPDATE projetos SET dados=json_set(dados, '$.aprovadas', json('{\"v1\": {\"em\": \"2026-11-25\"}}')) WHERE id=?", pid)
+        assert c.get(f"/v1/projetos/{pid}/refazer").json()["opcoes"] == []
+        r = c.post(f"/v1/projetos/{pid}/refazer", json={"de": "direcao"})
+        assert r.status_code == 409 and r.json()["detail"] == "não deu: a v1 já foi aprovada"
+        assert _sql("SELECT estado FROM jobs WHERE projeto=? AND etapa='direcao'", pid)[0]["estado"] == "falhou"
+        assert not _sql("SELECT 1 FROM versoes WHERE projeto=? AND id='v2'", pid)
+        # música que saiu da biblioteca de novo: a mesma frase da troca
+        _sql("UPDATE projetos SET dados=json_remove(dados, '$.aprovadas') WHERE id=?", pid)
+        trilhas.write_text(json.dumps([A]))
+        r = c.post(f"/v1/projetos/{pid}/refazer", json={"de": "direcao"})
+        assert r.status_code == 409 and r.json()["detail"] == "não deu: essa música não está na biblioteca (ou não tem licença registrada)"

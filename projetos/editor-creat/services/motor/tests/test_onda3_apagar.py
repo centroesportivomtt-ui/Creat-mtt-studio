@@ -398,3 +398,47 @@ def test_tirar_da_pagina(app_conversa, monkeypatch):
         _dados_proj(pid, entregas={"v1": {"estado": "retirada"}})
         r = c.post(f"/v1/projetos/{pid}/versoes/v1/retirar", json={})
         assert r.status_code == 409 and r.json()["detail"] == "esta versão não está na página de entregas"
+
+
+# ---------------- revisão da onda 3: o que "para sempre" tem de levar junto ----------------
+def test_apagar_leva_caches_e_casos_do_projeto_e_conta_respostas(app_conversa):
+    from motor import refazer
+    cfg = config.carregar()
+    d = pathlib.Path(cfg.dados)
+    mem = pathlib.Path(os.environ["EDITOR_MEMORIA"])
+    with app_conversa() as c:
+        _encher(cfg, "p_aaaa1111")
+        _encher(cfg, "p_bbbb2222", "Outro projeto")
+        arm = refazer._arm(cfg)
+        cache_de = {}
+        for pid, x in (("p_aaaa1111", "a"), ("p_bbbb2222", "b")):
+            h, sha, fat = x * 40, (x + "1") * 32, (x + "2") * 32
+            arm.gravar_json(f"saidas/{pid}/v1/montagem.json", {"planos": {"P1": {"arquivo": f"/outra/maquina/cache/planos/{h}.mp4"},
+                                                                         "P2": {"arquivo": "/etc/passwd"}}})
+            arm.gravar_bytes(f"saidas/{pid}/v1/qa.sha256", sha.encode())
+            arm.gravar_json(f"saidas/{pid}/v1/edl.json", {"qa": {"fatos": {"chave": fat, "chave_saida": "../../motor"}}})
+            arqs = [d / "cache" / "planos" / f"{h}{s}" for s in (".mp4", ".antes.jpg", ".depois.jpg", ".cor.json")]
+            arqs += [d / "cache" / "olho" / f"{sha}.o3.json", d / "cache" / "fatos" / f"{fat}.json"]
+            for a in arqs:
+                a.parent.mkdir(parents=True, exist_ok=True)
+                a.write_bytes(b"rosto e fala")
+            cache_de[pid] = arqs
+        outro_cache = d / "cache" / "planos" / ("f" * 40 + ".mp4")
+        outro_cache.write_bytes(b"de ninguem")
+        for nome in ("p_aaaa1111-v1", "p_aaaa1111-v2", "p_aaaa11112-v1", "p_bbbb2222-v1"):
+            (mem / "casos" / nome).mkdir(parents=True, exist_ok=True)
+            (mem / "casos" / nome / "caso.json").write_text('{"pedido": "texto do cliente"}')
+        k = con()
+        k.execute("UPDATE links_cliente SET resposta='ajuste', texto='mais vermelho', respondido=? WHERE projeto='p_aaaa1111'", (banco.agora_iso(),))
+        k.close()
+        pv = c.get("/v1/projetos/p_aaaa1111/apagar").json()
+        assert pv["vai_apagar"]["respostas_cliente_sem_ver"] == 1
+        assert pv["fica"] == AP.FICA and not any("casos" in f for f in pv["fica"])
+        r = c.post("/v1/projetos/p_aaaa1111/apagar", json={"nome": "Feira de Natal"})
+        assert r.status_code == 200
+        esperar(lambda: not any(a.exists() for a in cache_de["p_aaaa1111"]), timeout=15)
+        esperar(lambda: not (mem / "casos" / "p_aaaa1111-v1").exists(), timeout=15)
+        assert not (mem / "casos" / "p_aaaa1111-v2").exists()
+        assert (mem / "casos" / "p_aaaa11112-v1" / "caso.json").exists() and (mem / "casos" / "p_bbbb2222-v1" / "caso.json").exists()
+        assert all(a.exists() for a in cache_de["p_bbbb2222"]) and outro_cache.exists()
+        assert pathlib.Path("/etc/passwd").exists() and (d / "motor.db").exists()

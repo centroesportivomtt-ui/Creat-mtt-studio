@@ -1,11 +1,10 @@
-import { redirect } from 'next/navigation';
 import Topo from '@/componentes/Topo';
-import { temSessao } from '@/lib/sessao';
 
 export const dynamic = 'force-dynamic';
 
+// A senha é conferida em CADA página daqui (exigirSessao), não no layout: o layout não sabe o endereço aberto e mandaria
+// sempre para /projetos depois da senha. Página nova embaixo de /projetos chama exigirSessao com o próprio caminho.
 export default async function LayoutProjetos({ children }: { children: React.ReactNode }) {
-  if (!(await temSessao())) redirect('/entrar');
   return (
     <>
       <Topo />

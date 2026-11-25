@@ -280,6 +280,9 @@ export async function aceiteOnda3({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     const fica = await texto(A, '[data-teste=apagar-fica]');
     await A.fill('[data-teste=apagar-nome]', 'Aceite onda3 · Apagar');
     const apagadoComErrado = await A.isDisabled('[data-teste=apagar-confirmar]');
+    await A.press('[data-teste=apagar-nome]', 'Enter');              // o "ok" do teclado com o nome incompleto diz o que falta
+    const enterErrado = await texto(A, '[data-teste=apagar-erro]');
+    const aindaAqui = await A.locator('[data-teste=apagar][data-pode=true]').count();
     await A.fill('[data-teste=apagar-nome]', '  aceite ONDA3 ·  apagar já ');
     const acesoComCaixa = await A.isEnabled('[data-teste=apagar-confirmar]');
     await B.fill('[data-teste=apagar-nome]', 'Aceite onda3 · Apagar Já');
@@ -294,8 +297,9 @@ export async function aceiteOnda3({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     const noMotor = await fetch(`${MOTOR}/v1/projetos/${pidD}`, { headers: { authorization: `Bearer ${TOKEN}` } }).then((r) => r.status);
     ok('onda 3 · S3.5: apagar mostra o que vai e o que fica; nome errado deixa o botão apagado, outra caixa acende; apaga e volta para a lista com "Projeto apagado."',
       /Vai apagar para sempre: 2 vídeos enviados \(8 KB\), 0 versões, a conversa e a mesa deste projeto/.test(vai) && /livro de gastos/.test(fica) && /backups/.test(fica)
-        && apagadoComErrado && acesoComCaixa && longeDoAprovar && /^Projeto apagado\. Os arquivos somem do servidor em alguns minutos\.$/.test(aviso) && naLista === 0 && noMotor === 404,
-      `${vai} | errado apagado=${apagadoComErrado} caixa aceso=${acesoComCaixa} | ${aviso} | motor ${noMotor}`);
+        && apagadoComErrado && enterErrado === 'Digite o nome do projeto exatamente como aparece no topo.' && aindaAqui === 1
+        && acesoComCaixa && longeDoAprovar && /^Projeto apagado\. Os arquivos somem do servidor em alguns minutos\.$/.test(aviso) && naLista === 0 && noMotor === 404,
+      `${vai} | errado apagado=${apagadoComErrado} enter="${enterErrado}" caixa aceso=${acesoComCaixa} | ${aviso} | motor ${noMotor}`);
 
     // ---------- S3.6: filme na página de entregas: recusa com frase, "Tirar a V1 da página", depois apaga ----------
     const pidE = await projeto(A, 'Aceite onda3 · Na Página', { pedido: true });
@@ -380,7 +384,8 @@ export async function aceiteOnda3({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     await print(C2, '12-caderno-prazo', 'claro', '[data-teste=caderno-conversa]');
     await motor('_teste/conversa', { retencao: 90 });
     ok('onda 3 · S3.8: o Caderno diz por quanto tempo a conversa fica guardada (90 dias) e "sem prazo" com 0',
-      /ficam guardadas 90 dias depois de encerradas/.test(ret90) && /a conversa em andamento nunca é apagada/.test(ret90) && ret0 === 'As mensagens da conversa ficam guardadas sem prazo.', `${ret90.slice(0, 70)} | ${ret0}`);
+      /ficam guardadas 90 dias depois de encerradas/.test(ret90) && /a conversa em andamento nunca é apagada/.test(ret90)
+        && /cópias de segurança \(backup\) levam o banco inteiro e podem guardar por mais tempo/.test(ret90) && ret0 === 'As mensagens da conversa ficam guardadas sem prazo.', `${ret90.slice(0, 70)} | ${ret0}`);
 
     // ---------- S3.11: proxy: só o formato do id do dono passa ----------
     {
@@ -390,11 +395,48 @@ export async function aceiteOnda3({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
       const casa2 = await api(P, 'memoria/regras/r_retencao/apagar', {});
       const volta = await api(P, 'memoria/regras/r_dono_0123abcd/../x', {});
       const cod = await api(P, 'memoria/regras/r_dono_0123abcd/%2e%2e/apagar', {});
+      // revisão da onda 3: ".." escondido dentro de UM pedaço (o navegador não normaliza; o Next decodifica o %2F)
+      const escondidos = [];
+      for (const r of ['projetos/p_abcd1234/..%2F..%2F..%2Fopenapi.json', 'projetos/p_abcd1234/..%2f..%2fcliente%2fxyz',
+        'projetos/p_abcd1234/..%5C..%5Cx', 'projetos/p_abcd1234/%2e%2e%2F%2e%2e%2Fsaude', 'arquivos/saidas%2F..%2F..%2Fopenapi.json',
+        'projetos/p_abcd1234/.oculto']) {
+        escondidos.push([r, await api(P, r)]);
+      }
+      const legit = await api(P, `projetos/${pidA}/versoes`);
       await P.close();
       const bloq = (r) => r.status === 404 && r.corpo?.detail === 'rota do motor não permitida';
       ok('onda 3 · S3.11: o proxy deixa passar /memoria/regras/r_dono_…/apagar até o motor e barra r_retencao e caminhos com ..',
         passa.status === 404 && passa.corpo?.detail === 'essa regra não existe mais' && bloq(casa2) && bloq(volta) && bloq(cod),
         `${passa.status} ${passa.corpo?.detail} | ${casa2.corpo?.detail} | ${volta.corpo?.detail} | ${cod.corpo?.detail}`);
+      ok('onda 3 · S3.11b: o proxy barra ".." escondido (..%2F, ..%5C, %2e%2e%2F, pedaço com ponto no começo) e ainda deixa passar o caminho certo',
+        escondidos.every(([, r]) => bloq(r)) && legit.status === 200,
+        escondidos.filter(([, r]) => !bloq(r)).map(([q, r]) => `${q} → ${r.status} ${JSON.stringify(r.corpo).slice(0, 60)}`).join(' | ') || `ok, legítimo ${legit.status}`);
+    }
+
+    // ---------- revisão: abrir o endereço do projeto sem sessão volta para o projeto depois da senha ----------
+    {
+      const semSessao = await celular('light');
+      const S = await semSessao.newPage();
+      vigiar(S, 'sem-sessao');
+      await S.goto(`${BASE}/projetos/${pidA}`);
+      await S.waitForURL(/\/entrar\?volta=/, { timeout: 15000 });
+      const foiPara = new URL(S.url());
+      await S.fill('input[name=senha]', SENHA);
+      await S.click('main button[type=submit]');
+      await S.waitForURL(`${BASE}/projetos/${pidA}`, { timeout: 20000 }).catch(() => {});
+      const voltou = S.url();
+      const titulo = await S.title();
+      await S.close();                          // a página do projeto aberta veria 401 quando o cookie sair
+      await semSessao.clearCookies();
+      const cad = await semSessao.newPage();
+      await cad.goto(`${BASE}/caderno`);
+      await cad.waitForURL(/\/entrar\?volta=/, { timeout: 15000 }).catch(() => {});
+      const cadVolta = new URL(cad.url()).searchParams.get('volta');
+      await semSessao.close();
+      ok('onda 3 · revisão: abrir /projetos/<id> sem sessão vai a /entrar com a volta certa e, depois da senha, cai no mesmo projeto (o Caderno também)',
+        foiPara.pathname === '/entrar' && foiPara.searchParams.get('volta') === `/projetos/${pidA}` && voltou === `${BASE}/projetos/${pidA}` && cadVolta === '/caderno'
+          && /Super Kal/.test(titulo || ''),
+        `${foiPara.pathname}?volta=${foiPara.searchParams.get('volta')} → ${voltou} | caderno volta=${cadVolta} | título "${titulo}"`);
     }
 
     await C1.close(); await C2.close();

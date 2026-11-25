@@ -101,11 +101,14 @@ Contrato: `docs/plano-onda3-25-11.md`. Tudo sem rede nos testes (`tests/test_ond
   só pela tela, com o nome digitado (sem caixa, espaços normalizados; acento conta). Recusa com a conversa respondendo,
   com qualquer job pendente ou rodando (de fundo inclusive) e com filme na página de entregas ("Tirar da página" primeiro).
   Ordem: diário em `<dados>/apagar/<pid>.json`, banco numa transação, arquivos em segundo plano; a varredura do worker
-  limpa sobras por 7 dias. Ficam: `gastos.jsonl`, regras e casos, caches por conteúdo e backups. O id passa no formato
+  limpa sobras por 7 dias. Saem junto os casos do projeto (`memoria/casos/<pid>-vN`) e as entradas que ele pôs nos caches
+  (`cache/planos`, `cache/olho`, `cache/fatos`, achadas pelos arquivos das versões). Ficam: `gastos.jsonl`, as regras (com o
+  texto do ajuste; o dono apaga no Caderno) e os backups. O id passa no formato (`fullmatch`, sem `\n` no fim)
   antes de abrir o banco; link simbólico é apagado só como link; projeto que existe nunca é tocado pela limpeza.
 - **Regras no Caderno** (`POST /v1/memoria/{regras|checagens|vocabulario}/{id}/apagar`): só o que nasceu de ajuste do dono.
   Vira lápide em `memoria/apagados.json` (no volume; fora do git), respeitada pela `Loja` e pelo `semear`. Reprovar de
-  novo com o mesmo texto traz de volta. Apagar conferência recusa com `qa`/`entrega` rodando em qualquer projeto.
+  novo com o mesmo texto traz de volta. Apagar conferência recusa com `qa`/`entrega` rodando em qualquer projeto (fila lida
+  e lápide gravada na mesma transação). Palavra do dono igual a uma da casa: sem botão e 409.
   Nenhuma dessas rotas enfileira job, mexe em versão ou emite evento. `GET /v1/memoria` ganhou, opcionais, `id`
   (vocabulário), `apagavel`, `de_onde` e `ao_apagar`.
 - **Cérebro falso** (`EDITOR_CONVERSA_CEREBRO=falso`, só para teste): "tenta de novo" propõe refazer a primeira opção de

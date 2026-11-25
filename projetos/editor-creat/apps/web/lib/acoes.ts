@@ -25,7 +25,7 @@ export type Opcoes = { opcoes: Opcao[]; sugerida: number | null };
 export type EstadoNaPagina = 'no_ar' | 'pendente' | 'enviando' | 'retirando';
 export type Previa = {
   pode: boolean; porque?: string; nome: string;
-  vai_apagar: { videos: number; bytes: number; versoes: number; mensagens_conversa: number; links_cliente_ativos: number };
+  vai_apagar: { videos: number; bytes: number; versoes: number; mensagens_conversa: number; links_cliente_ativos: number; respostas_cliente_sem_ver?: number };
   na_pagina: { versao: string; estado: EstadoNaPagina; proxima?: string }[];
   fica: string[];
   restos_previstos?: { pagina_desligada?: string[]; copia_material?: number };

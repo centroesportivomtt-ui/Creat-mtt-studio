@@ -77,7 +77,7 @@ def _json(arm, chave: str):
 
 
 def _num(v: str | None) -> int | None:
-    m = RE_V.match(v or "")
+    m = RE_V.fullmatch(v or "")
     return int(m.group(1)) if m else None
 
 
@@ -199,7 +199,7 @@ def porque(cfg, con, pid: str, de: str, *, versao: str | None = None, arquivo_id
             return f"a entrega da {v} não falhou"
         return None
     if de == "leitura":
-        if not arquivo_id or not RE_AID.match(arquivo_id):
+        if not arquivo_id or not RE_AID.fullmatch(arquivo_id):
             return "diga qual vídeo"
         a = next((x for x in _arquivos(con, pid) if x["id"] == arquivo_id), None)
         if a is None:
@@ -219,8 +219,15 @@ def porque(cfg, con, pid: str, de: str, *, versao: str | None = None, arquivo_id
     if f:
         return _frase_fila(f)
     etapa = "catalogo" if de == "catalogo" else "direcao"
-    if (_job(con, pid, etapa) or {}).get("estado") != "falhou":
+    j = _job(con, pid, etapa) or {}
+    if j.get("estado") != "falhou":
         return "o catálogo não falhou" if de == "catalogo" else "a direção não falhou"
+    tt = (j.get("entrada") or {}).get("trocar_trilha") if de == "direcao" and isinstance(j.get("entrada"), dict) else None
+    if isinstance(tt, dict):
+        # "Trocar a música de novo" é a mesma troca: valem as regras dela (versão aprovada, que não é a mais nova, reprovada,
+        # não entregue, música fora da biblioteca). Sem isto a troca rodava sobre uma versão já aprovada.
+        return porque_trilha(cfg, con, pid, str(tt.get("de") or "") or None, str(tt.get("trilha") or "") or None, arm=arm) \
+            if tt.get("de") and tt.get("trilha") else "o pedido de troca de música que falhou está incompleto"
     return None
 
 
@@ -262,7 +269,7 @@ def porque_trilha(cfg, con, pid: str, versao: str | None, trilha: str | None, *,
         if not any(t.get("id") != (atual or {}).get("id") for t in trilhas):
             return "não há outra música na biblioteca com licença registrada"
         return None
-    if not RE_TRILHA.match(trilha) or not any(t.get("id") == trilha for t in trilhas):
+    if not RE_TRILHA.fullmatch(trilha) or not any(t.get("id") == trilha for t in trilhas):
         return "essa música não está na biblioteca (ou não tem licença registrada)"
     if atual is not None and atual.get("id") == trilha:
         return f"a {v} já usa essa música"
@@ -296,7 +303,7 @@ def _olho_em_cache(cfg, arm, pid: str, v: str) -> bool:
     import pathlib
     from motor.etapas.qa import olho_ia
     sha = _texto(arm, f"saidas/{pid}/{v}/qa.sha256")
-    if not sha or not re.match(r"^[0-9a-f]{64}$", sha):
+    if not sha or not re.fullmatch(r"[0-9a-f]{64}", sha):
         return False
     return (pathlib.Path(cfg.dados) / "cache" / "olho" / f"{sha}.{olho_ia.VERSAO}.json").is_file()
 
@@ -543,10 +550,12 @@ def executar(cfg, pid: str, de: str, *, versao: str | None = None, arquivo_id: s
                 banco.mudar_estado(con, pid, "dirigindo", "Organizando o material de novo, a seu pedido.")
             else:
                 ent = (_job(con, pid, "direcao") or {}).get("entrada") or {}
-                if isinstance(ent, dict) and ent.get("trocar_trilha"):
+                troca = ent.get("trocar_trilha") if isinstance(ent, dict) else None
+                if troca:
                     _gravar_dados(con, pid, _sem_correcao_auto)
                 banco.enfileirar(con, "direcao", pid, entrada=ent if isinstance(ent, dict) else {}, prioridade=2)
-                banco.mudar_estado(con, pid, "dirigindo", "Tentando a direção de novo, a seu pedido.")
+                banco.mudar_estado(con, pid, "dirigindo", f"Trocando a música da {troca.get('de')} de novo, sem nova direção."
+                                   if isinstance(troca, dict) else "Tentando a direção de novo, a seu pedido.")
             out["estado"] = con.execute("SELECT estado FROM projetos WHERE id=?", (pid,)).fetchone()["estado"]
             con.execute("COMMIT")
         except BaseException:

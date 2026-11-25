@@ -1370,7 +1370,7 @@ async function rotaRefazer(req, res, p, M) {
 
 // ---------- apagar projeto (R13/R14) e tirar da página de entregas (R15) ----------
 const FICA = ['O livro de gastos (o que já foi gasto continua contado).',
-  'As regras e os casos que nasceram deste projeto (apague as regras no Caderno, se quiser).',
+  'As regras que nasceram dos seus ajustes neste projeto, com o texto do ajuste (apague no Caderno, se quiser).',
   'As cópias nos backups: no Cloudflare somem em até 30 dias; as do Dropbox ficam.'];
 const FRASE_JOB = { analise: 'o editor está lendo um vídeo', catalogo: 'a direção está trabalhando', direcao: 'a direção está trabalhando',
   montagem: 'a montagem está rodando', qa: 'a conferência está rodando', entrega: 'a entrega está rodando' };
@@ -1400,6 +1400,8 @@ function previaF(p) {
   const out = { pode: !porque, nome: p.nome, vai_apagar: { videos: p.arquivos.length, bytes: p.arquivos.reduce((t, a) => t + (a.bytes || 0), 0), versoes: p.versoes.length,
     mensagens_conversa: msgs, links_cliente_ativos: LINKS.filter((l) => l.projeto === p.id && !l.revogado && l.expira > agora()).length }, na_pagina: [], fica: [...FICA] };
   if (porque) out.porque = porque;
+  const semVer = LINKS.filter((l) => l.projeto === p.id && l.resposta && !l.tratado).length;
+  if (semVer) out.vai_apagar.respostas_cliente_sem_ver = semVer;
   const pagina = naPaginaF(p);
   if (ENT.ligado) out.na_pagina = pagina;
   else if (pagina.length) out.restos_previstos = { pagina_desligada: pagina.map((e) => e.versao) };
@@ -1576,7 +1578,7 @@ function cartaoNotaF(texto, versao, tempo) {
   const onde = versao && typeof tempo === 'number' ? ` em ${Math.floor(tempo / 60)}:${String(Math.floor(tempo % 60)).padStart(2, '0')} da ${versao}` : versao ? ` da ${versao}` : '';
   return { acao: 'nota', ...(versao ? { versao } : {}), ...(typeof tempo === 'number' ? { tempo_s: Math.round(tempo * 10) / 10 } : {}), titulo: 'Guardar uma nota', texto_exato: texto,
     faz: `Guardar esta nota no projeto${onde}. Não refaz nada e não gasta.`, refaz: [], comeca_agora: false, custo_usd_est: 0, minutos_est: 0, vira_regra: false,
-    volta: 'A nota fica na lista de notas do projeto.', botao: 'Guardar a nota' };
+    volta: 'A nota fica na lista de notas do projeto (cabem até 50 por projeto).', botao: 'Guardar a nota' };
 }
 function abrirCartaoF(pid, ctx, prefixo, dados, entrada) {
   const tid = novaFerramenta(prefixo);

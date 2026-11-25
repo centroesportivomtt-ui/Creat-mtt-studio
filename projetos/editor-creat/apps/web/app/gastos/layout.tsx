@@ -1,11 +1,10 @@
-import { redirect } from 'next/navigation';
 import Topo from '@/componentes/Topo';
-import { temSessao } from '@/lib/sessao';
+import { exigirSessao } from '@/lib/sessao';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LayoutGastos({ children }: { children: React.ReactNode }) {
-  if (!(await temSessao())) redirect('/entrar');
+  await exigirSessao('/gastos');
   return (
     <>
       <Topo />

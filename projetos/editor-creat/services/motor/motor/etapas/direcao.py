@@ -294,8 +294,8 @@ def _trocar_trilha(ctx, arm, indice: dict, chave: str, correcao: dict, *, catalo
     p = ctx.projeto
     tt = correcao.get("trocar_trilha") or {}
     de, tid = str(tt.get("de") or ""), str(tt.get("trilha") or "")
-    m = re.match(r"^v([0-9]{1,3})$", de)
-    if not m or not re.match(r"^[a-z0-9_-]{2,41}$", tid):
+    m = re.fullmatch(r"v([0-9]{1,3})", de)
+    if not m or not re.fullmatch(r"[a-z0-9_-]{2,41}", tid):
         raise ErroDefinitivo("pedido de troca de música inválido")
     try:
         d_ant = arm.ler_json(f"projetos/{p}/direcao_{int(m.group(1))}.json")
