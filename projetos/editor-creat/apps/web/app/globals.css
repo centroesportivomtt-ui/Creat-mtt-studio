@@ -1029,3 +1029,78 @@ details > summary.ferr__linha { display: grid; }
 @media (orientation: landscape) and (max-height: 500px) {
   body:has(#fio) .barra-comando__dentro { display: none; }
 }
+
+/* ---------- onda 3: refazer uma etapa, cartões novos, apagar projeto, notas e regras do Caderno ---------- */
+/* perigo cheio: só no último passo de uma ação que não volta (depois de digitar o nome ou de ler o que acontece) */
+.botao--perigo-cheio { background: var(--cor-alerta); color: var(--cor-sobre-alerta); border-color: transparent; }
+.botao--perigo-cheio:hover:not([disabled]) { background: color-mix(in srgb, var(--cor-alerta) 88%, var(--cor-tinta)); }
+.botao--perigo-cheio[disabled] { opacity: 1; background: var(--cor-superficie-2); color: var(--cor-tinta-2); border-color: var(--cor-linha); }
+
+/* barra de comando com "Tentar de novo": o que aconteceu, o que o toque faz e quanto custa, em cima dos botões */
+.barra-comando__dentro:has(.barra-comando__contexto) { grid-template-areas: 'contexto contexto' 'principal secundario' 'motivo motivo' 'erro erro'; }
+.barra-comando__dentro:has(.barra-comando__contexto):not(:has(.barra-comando__secundario)) { grid-template-areas: 'contexto' 'principal' 'motivo' 'erro'; }
+.barra-comando__contexto { grid-area: contexto; display: grid; gap: 2px; min-width: 0; }
+.barra-comando__contexto strong { font: 650 17px/1.2 var(--fonte-texto); }
+.barra-comando__faz { font-size: 14px; line-height: 1.35; color: var(--cor-tinta); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.barra-comando__custo { font: 700 13px/1.3 var(--fonte-dado); color: var(--cor-tinta-2); font-variant-numeric: tabular-nums; }
+@media (min-width: 960px), (orientation: landscape) and (max-height: 500px) {
+  .barra-comando__dentro:has(.barra-comando__contexto),
+  .barra-comando__dentro:has(.barra-comando__contexto):not(:has(.barra-comando__secundario)) {
+    grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'contexto secundario principal' 'erro erro erro';
+  }
+}
+
+/* vídeo que ficou de fora: "Ler de novo" embaixo da linha do vídeo */
+.arquivo--fora { flex-wrap: wrap; }
+.arquivo > span:nth-of-type(2) { font: 700 13px/1.4 var(--fonte-dado); color: var(--cor-tinta-2); white-space: nowrap; }
+.arquivo--fora > span:nth-of-type(2) { color: var(--cor-alerta); }
+.arquivo__ler { flex-basis: 100%; display: grid; gap: 4px; justify-items: start; padding-top: 4px; }
+.arquivo__custo { font: 700 13px/1.3 var(--fonte-dado); color: var(--cor-tinta-2); }
+.arquivo__atencao { font-size: 14px; line-height: 1.4; color: var(--cor-tinta-2); max-width: 62ch; }
+
+/* cartões da conversa: a frase do código (sem aspas), o que não muda e de onde vem o custo */
+.cartao-fio__faz { font-size: 16px; line-height: 1.45; overflow-wrap: anywhere; }
+.cartao-fio__faz--apoio { font-size: 14px; color: var(--cor-tinta-2); }
+.cartao-fio__nao-muda { font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
+.cartao-fio__partes { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; font-size: 13px; color: var(--cor-tinta-2); }
+
+/* apagar projeto: discreto, no fim da página, longe do Aprovar */
+.apagar { margin-top: var(--r6); display: grid; gap: var(--r3); border-style: dashed; }
+.apagar .cartao__titulo { margin-bottom: 0; }
+.apagar__abrir { justify-self: start; }
+.apagar--aberto { border-style: solid; border-color: color-mix(in srgb, var(--cor-alerta) 55%, var(--cor-linha)); }
+.apagar__form { display: grid; gap: var(--r3); }
+.apagar__vai { font-size: 16px; line-height: 1.45; overflow-wrap: anywhere; }
+.apagar__rotulo { font: 700 13px/1.3 var(--fonte-dado); color: var(--cor-tinta-2); margin-bottom: 4px; }
+.apagar__fica { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: 14px; color: var(--cor-tinta-2); }
+.apagar__resto { font-size: 14px; line-height: 1.4; padding: 8px 12px; border-radius: var(--r2); color: var(--cor-tinta);
+  border: 1px solid var(--cor-acao); background: color-mix(in srgb, var(--cor-acao) 12%, transparent); }
+.apagar__nome { color: var(--cor-tinta); overflow-wrap: anywhere; }
+.apagar__porque { font-size: 16px; line-height: 1.45; overflow-wrap: anywhere; }
+.apagar__botoes { margin-top: 0; }
+.apagar__botoes .botao { min-height: 48px; }
+.aviso-apagado { margin: 0 0 var(--r4); padding: 12px 14px; border-radius: var(--raio); border: 1px solid var(--cor-ok);
+  background: color-mix(in srgb, var(--cor-ok) 12%, transparent); font-size: 15px; }
+
+/* notas do dono */
+.notas__lista { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--r2); }
+.notas__item { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid var(--cor-linha); }
+.notas__item:first-child { border-top: 0; padding-top: 0; }
+.notas__onde { font: 700 13px/1.3 var(--fonte-dado); color: var(--cor-tinta-2); font-variant-numeric: tabular-nums; }
+.notas__texto { font-size: 15px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.notas > .botao { margin-top: var(--r3); }
+
+/* regras do Caderno: de onde veio e "Apagar" com confirmação no próprio item */
+.memoria__item { display: grid; gap: 4px; justify-items: start; }
+.memoria__item > p, .memoria__item > small { justify-self: stretch; overflow-wrap: anywhere; }
+.memoria--voc { list-style: none; padding-left: 0; }
+.memoria__voc { font: 700 14px/1.4 var(--fonte-dado); }
+.memoria__voc s { color: var(--cor-erro); }
+.memoria__apagar { margin-left: calc(-1 * var(--r3)); }
+.memoria__confirma { justify-self: stretch; display: grid; gap: 8px; padding: 10px 12px; border-radius: var(--r2);
+  border: 1px solid color-mix(in srgb, var(--cor-alerta) 55%, var(--cor-linha)); background: var(--cor-superficie-2); font-size: 15px; }
+.memoria__confirma .linha-acoes { margin-top: 0; }
+.memoria__feito { margin: 0; font: 700 14px/1.4 var(--fonte-texto); color: var(--cor-ok); }
+.memoria__feito:not(:empty) { margin: 0 0 var(--r3); }
+.caderno__retencao { margin-top: 8px; max-width: 62ch; font-size: 13px; }

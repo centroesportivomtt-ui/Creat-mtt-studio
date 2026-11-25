@@ -4,31 +4,43 @@ import Backup from '@/componentes/Backup';
 import Biblioteca from '@/componentes/Biblioteca';
 import PedidosCliente from '@/componentes/PedidosCliente';
 import ChaveConversa from '@/componentes/conversa/ChaveConversa';
+import MemoriaLista, { type ItemMemoria } from '@/componentes/MemoriaLista';
+import type { ItemCaderno } from '@/lib/acoes';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Caderno da casa' };
 
-type Regra = { id: string; texto: string; origem?: string; data?: string; tipos?: string[] | null };
-type Checagem = { id: string; descricao: string; origem?: string; gravidade?: string };
+// onda 3 (R19): cada item ganha, opcionais, apagavel, de_onde e ao_apagar; o vocabulário ganha id
+type Regra = ItemCaderno & { id: string; texto: string; origem?: string; data?: string; tipos?: string[] | null };
+type Checagem = ItemCaderno & { id: string; descricao: string; origem?: string; gravidade?: string };
+type Palavra = ItemCaderno & { de: string; para: string };
 type Modo = { id: string; nome: string; descricao: string; sem_transicoes?: string[]; zoom_max?: number };
 const NOME_FX: Record<string, string> = { whip: 'chicote', aba71: 'Aba 71', impacto: 'impacto', flash: 'flash', mascara: 'máscara' };
 type Look = { id: string; nome: string; desc: string };
-type Memoria = { regras: Regra[]; checagens: Checagem[]; vocabulario: { de: string; para: string }[]; modos?: Modo[]; looks?: Look[] };
+type Memoria = { regras: Regra[]; checagens: Checagem[]; vocabulario: Palavra[]; modos?: Modo[]; looks?: Look[] };
 
 // O que o editor sabe: as regras que o dono ensinou (cada reprovação vira uma), o que ele confere antes de entregar e os modos de edição.
 export default async function Caderno() {
   const r = await motorJson<Memoria>('/v1/memoria');
   if (!r.ok) return <main className="pagina"><p className="erro" role="alert">Não deu para abrir o caderno: {r.erro}.</p></main>;
   const { regras, checagens, vocabulario, modos = [], looks = [] } = r.dados;
-  const doDono = regras.filter((x) => x.id.startsWith('r_dono_'));
-  const daCasa = regras.filter((x) => !x.id.startsWith('r_dono_'));
+  // do dono primeiro (as que dá para apagar), depois as fixas da casa
+  const dono = (x: { apagavel?: boolean; id?: string }) => x.apagavel ?? Boolean(x.id?.startsWith('r_dono_'));
+  const listaRegras: ItemMemoria[] = [...regras.filter(dono), ...regras.filter((x) => !dono(x))].map((x) => ({
+    ...x, apagavel: Boolean(x.apagavel), detalhe: `${x.origem ?? 'casa'}${x.tipos && x.tipos.length ? ` · vale para ${x.tipos.join(', ')}` : ''}`,
+  }));
+  const gravidade = (g?: string) => (g === 'bloqueia' ? 'segura a entrega' : g === 'observacao' ? 'em observação: por enquanto só avisa' : 'avisa');
+  const listaChecagens: ItemMemoria[] = checagens.map((c) => ({
+    ...c, texto: c.descricao, apagavel: Boolean(c.apagavel), detalhe: `${gravidade(c.gravidade)} · ${c.origem ?? 'casa'}`,
+  }));
+  const listaPalavras: ItemMemoria[] = vocabulario.map((v) => ({ ...v, id: v.id ?? `v-${v.de}`, texto: v.de, para: v.para, apagavel: Boolean(v.apagavel && v.id), detalhe: v.origem }));
   return (
     <main className="pagina caderno">
       <div className="cabeca-pagina">
         <div>
           <p className="sobretitulo">Treinamento do editor</p>
           <h1 className="titulo">Caderno da casa</h1>
-          <p className="aviso" style={{ maxWidth: '62ch', marginTop: 8 }}>Tudo o que o editor segue ao montar um filme. Quando você reprova uma versão, o motivo entra aqui como regra nova e passa a valer nas próximas peças.</p>
+          <p className="aviso" style={{ maxWidth: '62ch', marginTop: 8 }}>Tudo o que o editor segue ao montar um filme. Quando você reprova uma versão, o motivo entra aqui como regra nova e passa a valer nas próximas peças. Você pode apagar as que nasceram dos seus ajustes.</p>
         </div>
       </div>
 
@@ -73,38 +85,13 @@ export default async function Caderno() {
         <Referencias />
       </section>
 
-      <section className="cartao" aria-labelledby="c-regras">
-        <h2 className="cartao__titulo" id="c-regras"><span className="num">03</span> Regras ({regras.length})</h2>
-        {doDono.length > 0 && <p className="aviso">Aprendidas com as suas reprovações: {doDono.length}.</p>}
-        <ol className="caderno__lista" data-teste="caderno-regras">
-          {[...doDono, ...daCasa].map((x) => (
-            <li key={x.id}>
-              <p>{x.texto}</p>
-              <small>{x.origem ?? 'casa'}{x.tipos && x.tipos.length ? ` · vale para ${x.tipos.join(', ')}` : ''}</small>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <MemoriaLista tipo="regra" num="03" titulo="Regras" idSecao="c-regras" teste="caderno-regras" itens={listaRegras}
+        aviso="Aprendidas com as suas reprovações: {n}." irmas={checagens.map((c) => c.id)} />
 
-      <section className="cartao" aria-labelledby="c-checa">
-        <h2 className="cartao__titulo" id="c-checa"><span className="num">04</span> O que ele confere antes de entregar ({checagens.length})</h2>
-        <ul className="caderno__lista">
-          {checagens.map((c) => (
-            <li key={c.id}>
-              <p>{c.descricao}</p>
-              <small>{c.gravidade === 'bloqueia' ? 'segura a entrega' : c.gravidade === 'observacao' ? 'em observação: por enquanto só avisa' : 'avisa'} · {c.origem ?? 'casa'}</small>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <MemoriaLista tipo="checagem" num="04" titulo="O que ele confere antes de entregar" idSecao="c-checa" teste="caderno-checagens" itens={listaChecagens} />
 
-      {vocabulario.length > 0 && (
-        <section className="cartao" aria-labelledby="c-voc">
-          <h2 className="cartao__titulo" id="c-voc"><span className="num">05</span> Palavras que a transcrição erra</h2>
-          <ul className="caderno__voc">
-            {vocabulario.map((v) => <li key={v.de}><s>{v.de}</s> → <b>{v.para}</b></li>)}
-          </ul>
-        </section>
+      {listaPalavras.length > 0 && (
+        <MemoriaLista tipo="vocabulario" num="05" titulo="Palavras que a transcrição erra" idSecao="c-voc" teste="caderno-vocabulario" itens={listaPalavras} />
       )}
       <section className="cartao" aria-labelledby="c-bib" id="biblioteca">
         <h2 className="cartao__titulo" id="c-bib"><span className="num">05b</span> Trilhas e efeitos da casa</h2>

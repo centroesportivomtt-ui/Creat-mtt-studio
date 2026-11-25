@@ -7,7 +7,8 @@ import { mesmaOrigem, sessaoDaRequisicao } from '@/lib/sessao';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PERMITIDAS = /^v1\/(saude|conversa|memoria|referencias|backup|backup\/config|backup\/rodar|gastos|entregas\/clientes|clientes|clientes\/lc_[a-f0-9]{12}\/(revogar|tratar)|biblioteca|biblioteca\/(trilha|sfx)\/[a-z0-9_-]{2,41}\/retirar|projetos|projetos\/p_[a-z0-9]{4,40}(\/[A-Za-z0-9_\-./]+)?|arquivos\/[A-Za-z0-9_\-./]+)$/;
+// onda 3: apagar uma regra, conferência ou palavra do Caderno (só as que nasceram de ajuste do dono; o formato do id já filtra)
+const PERMITIDAS = /^v1\/(saude|conversa|memoria|memoria\/(regras\/r_dono_|checagens\/c_dono_|vocabulario\/v_)[0-9a-f]{8}\/apagar|referencias|backup|backup\/config|backup\/rodar|gastos|entregas\/clientes|clientes|clientes\/lc_[a-f0-9]{12}\/(revogar|tratar)|biblioteca|biblioteca\/(trilha|sfx)\/[a-z0-9_-]{2,41}\/retirar|projetos|projetos\/p_[a-z0-9]{4,40}(\/[A-Za-z0-9_\-./]+)?|arquivos\/[A-Za-z0-9_\-./]+)$/;
 const ENTRA = ['content-type', 'range', 'if-range', 'last-event-id', 'accept'];
 const SAI = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'cache-control', 'last-modified', 'etag', 'content-disposition'];
 

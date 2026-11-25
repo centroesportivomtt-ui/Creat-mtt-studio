@@ -205,6 +205,12 @@ async function rodarVersao(p) {
   const versao = { id: v, estado: 'montando', video: null, qa: null, link: null, reprovacao: null, criado: agora() };
   p.versoes.push(versao);
   mudarEstado(p, 'montando', `Montando a versão ${v}.`);
+  await fimDaVersao(p, versao, true);
+}
+// montagem (opcional) -> conferência -> entrega de uma versão: o fim de toda edição, do refazer e da troca de música
+async function fimDaVersao(p, versao, montar, msgConferindo) {
+  const v = versao.id;
+  if (montar) {
   await etapa(p, 'montagem', v, ['Cortando os planos…', 'Planos 1080x1920 prontos (12 de 12)', 'Legendas e motion renderizados', 'Mix: voz, trilha com ducking e tom de sala']);
   const chave = `saidas/${p.id}/${v}/final.mp4`;
   const destino = path.join(ARM, chave);
@@ -212,10 +218,11 @@ async function rodarVersao(p) {
   try { fs.rmSync(destino, { force: true }); fs.linkSync(AMOSTRA, destino); } catch { fs.copyFileSync(AMOSTRA, destino); }
   versao.video = chave;
   gravarCorFalsa(p.id, v);
-  mudarEstado(p, 'conferindo', `Conferindo a versão ${v} (QA automático).`);
+  } else versao.estado = 'montada';       // conferir de novo: o filme montado volta para a conferência
+  mudarEstado(p, 'conferindo', msgConferindo ?? `Conferindo a versão ${v} (QA automático).`);
   await etapa(p, 'qa', v, ['Conferindo LUFS, pico, quadros pretos e zona segura…', 'Transcrevendo o mix e o tom de sala']);
   versao.qa = JSON.stringify({
-    versao: '1', projeto: p.id, video: chave, aprovado: true, tempo_s: 41,
+    versao: '1', projeto: p.id, video: versao.video, aprovado: true, tempo_s: 41,
     checagens: [
       { id: 'lufs', ok: true, bloqueia: true, valor: -14.1 },
       { id: 'true_peak', ok: true, bloqueia: true, valor: -1.4 },
@@ -232,9 +239,9 @@ async function rodarVersao(p) {
   emitir(p.id, 'versao_pronta', { alvo: v, mensagem: `Versão ${v} pronta e aprovada no QA.` });
   await etapa(p, 'entrega', v, ['Gerando link e capa…']);
   versao.estado = 'entregue';
-  versao.link = `/v1/arquivos/${chave}`;
+  versao.link = `/v1/arquivos/${versao.video}`;
   p.estado = 'entregue';
-  emitir(p.id, 'entregue', { alvo: v, estado: 'entregue', mensagem: `Versão ${v} entregue.`, dados: { video: chave } });
+  emitir(p.id, 'entregue', { alvo: v, estado: 'entregue', mensagem: `Versão ${v} entregue.`, dados: { video: versao.video } });
 }
 
 // ---------- HTTP ----------
@@ -344,6 +351,12 @@ async function rotear(req, res) {
       if (p && c.versao && c.estado) gravarEnt(p, c.versao, { estado: c.estado, motivo: c.motivo ?? null, proxima: c.proxima ?? null, substituida_por: c.substituida_por ?? null }, `entregas da ${c.versao}: ${c.estado}`);
       return json(res, 200, { ligado: ENT.ligado, entregas: p ? Object.fromEntries(Object.entries(p.dados.entregas ?? {}).map(([k, e]) => [k, entPublico(e)])) : null });
     }
+    if (pid === 'cenario') {                  // onda 3: põe o projeto em erro, com a conferência segurando ou com vídeo de fora
+      const p = projetos.get(c.projeto);
+      if (!p) return falha(res, 404, 'projeto não encontrado');
+      return json(res, 200, cenarioF(p, c));
+    }
+    if (pid === 'memoria') return json(res, 200, semearMemoriaF(c));
     if (pid === 'espelho') {
       if (typeof c.ligado === 'boolean') ESP.ligado = c.ligado;
       const p = projetos.get(c.projeto);
@@ -365,7 +378,8 @@ async function rotear(req, res) {
     return json(res, 200, out);
   }
   if (r1 === 'arquivos' && (M === 'GET' || M === 'HEAD')) return servirArquivo(req, res, partes.slice(2).join('/'));
-  if (r1 === 'memoria' && M === 'GET') return json(res, 200, memoriaDaCasa());
+  if (r1 === 'memoria' && M === 'GET' && !pid) return json(res, 200, memoriaOnda3(memoriaDaCasa()));
+  if (r1 === 'memoria' && M === 'POST') return rotaApagarMemoria(res, partes);          // R16 a R18 (onda 3)
   if (r1 === 'referencias' && M === 'GET') return json(res, 200, { andamento: [], referencias: REFS });
   if (r1 === 'referencias' && M === 'POST') {
     const c = (await lerCorpo(req)) ?? {};
@@ -469,9 +483,13 @@ async function rotear(req, res) {
     return falha(res, 405, 'método não permitido');
   }
 
+  if ((r3 === 'refazer' || r3 === 'apagar' || r5 === 'retirar') && !RE_PID.test(pid)) return falha(res, 404, 'projeto não encontrado');
   const p = projetos.get(pid);
   if (!p) return falha(res, 404, 'projeto não encontrado');
   if (!r3 && M === 'GET') return json(res, 200, verProjeto(p));
+  if (r3 === 'refazer' && !r4) return rotaRefazer(req, res, p, M);                  // R11 / R12 (onda 3)
+  if (r3 === 'apagar' && !r4) return rotaApagar(req, res, p, M);                    // R13 / R14 (onda 3)
+  if (r3 === 'versoes' && r4 && r5 === 'retirar' && M === 'POST') return rotaRetirar(res, p, r4);   // R15 (onda 3)
   if (r3 === 'eventos' && M === 'GET') return sse(req, res, pid, url);
   // mesmo formato do motor real ({projeto, versoes}); "entregas" só com as entregas ligadas
   if (r3 === 'versoes' && !r4 && M === 'GET') return json(res, 200, { projeto: pid, versoes: p.versoes.map((v) => ({ ...v, ...(ENT.ligado && p.dados.entregas?.[v.id] ? { entregas: entPublico(p.dados.entregas[v.id]) } : {}) })) });
@@ -652,6 +670,7 @@ const CONVERSA = {
   interrompido: new Map(),// pid -> turno com aviso "retomar" ativo
   decididos: new Set(),
   v: 0,
+  retencao: Number.isInteger(Number(process.env.MOTOR_FALSO_RETENCAO)) && process.env.MOTOR_FALSO_RETENCAO !== '' ? Number(process.env.MOTOR_FALSO_RETENCAO) : 90,
 };
 const DELTA_MS = Number(process.env.MOTOR_FALSO_DELTA_MS || 100);
 const PING_MS = Number(process.env.MOTOR_FALSO_PING_MS || 15000);
@@ -672,6 +691,7 @@ function estadoChaveC() {
     ligada, ...(ligada ? {} : { motivo: CONVERSA.servidor ? 'desligada_pelo_dono' : 'sem_chave' }),
     teto_usd_dia: CONVERSA.teto, gasto_hoje_usd: +CONVERSA.gasto.toFixed(4), dia_vira_em: amanha.toISOString().replace(/\.\d{3}Z$/, 'Z'),
     esperando: [...CONVERSA.espera].map(([pid, e]) => ({ projeto: pid, nome: projetos.get(pid)?.nome ?? pid, tipo: e.tipo, desde: e.desde })),
+    retencao_dias: CONVERSA.retencao,          // onda 3 (R20)
   };
 }
 function instantaneoC(pid) {
@@ -764,6 +784,7 @@ async function rodarTurnoC(pid, ctx, texto, contexto) {
     }
     if (!(await escreverC(pid, ctx, `${eco} Vou olhar o projeto primeiro.`))) return;
     if (!(await ferramentaC(pid, ctx, 'ver_projeto', {}, `Olhou o projeto: ${p.arquivos.length} vídeo(s), ${p.versoes.length} versão(ões)`))) return;
+    if (await turnoOnda3(pid, ctx, texto, contexto)) return;     // onda 3: refazer, trocar a música, anotar, procurar no filme
     if (/pergunta|gancho/.test(t)) {
       const tid = novaFerramenta('per');
       const dados = { turno: ctx.turno, tool_use_id: tid, texto: 'Abro com o gancho da troca de palavra ou com você falando?',
@@ -908,6 +929,7 @@ async function rotearConversa(req, res, url, partes) {
       if (typeof c.gasto === 'number') CONVERSA.gasto = c.gasto;
       if (typeof c.servidor === 'boolean') CONVERSA.servidor = c.servidor;
       if (typeof c.ligada === 'boolean') CONVERSA.ligada = c.ligada;
+      if (Number.isInteger(c.retencao) && c.retencao >= 0) CONVERSA.retencao = c.retencao;
       return json(res, 200, estadoChaveC());
     }
     if (pid === 'mesa-erro' && projetos.has(r3)) return json(res, 200, mesaErro(projetos.get(r3)));
@@ -1014,6 +1036,7 @@ async function rotearConversa(req, res, url, partes) {
     CONVERSA.decididos.add(tid);
     const ev = { tool_use_id: tid, tipo: 'confirmacao', sim: c.sim, por: 'dono' };
     if (!c.sim) { emitirC(pid, 'resposta', { ...ev, resultado: 'cancelado', detalhe: 'Cancelado. Nada mudou.' }); return json(res, 200, { feito: false }); }
+    if (['refazer', 'trilha', 'nota'].includes(esp.dados.acao)) { const [st, corpo] = confirmarOnda3(p, esp, ev); return json(res, st, corpo); }
     const porque = esp.dados.acao === 'ajuste' ? guardaAjuste(p, esp.entrada.versao) : guardaPedido(p);
     if (porque) { emitirC(pid, 'resposta', { ...ev, resultado: 'nao_deu', detalhe: `não deu: ${porque}` }); return falha(res, 409, `não deu: ${porque}`); }
     if (esp.dados.acao === 'ajuste') {                          // o mesmo que o botão "Pedir ajuste"
@@ -1193,4 +1216,454 @@ function mesaInterrompida(p) {
   emitirPasso(p, 'montagem', v, { passo: filho, pai: raiz, chave: 'montagem.comp', fase: 'interrompido' });
   emitirPasso(p, 'montagem', v, { passo: raiz, chave: 'montagem', fase: 'interrompido' });
   return { ok: true, versao: v };
+}
+
+// =====================================================================================================================
+// Onda 3 (docs/plano-onda3-25-11.md): refazer uma etapa (R11/R12), apagar projeto (R13/R14), tirar da página de entregas
+// (R15), regras do Caderno (R16 a R19), prazo da conversa (R20) e os cartões novos da conversa (refazer, trilha, nota).
+// Mesmos textos e frases do motor real (services/motor/motor/refazer.py, apagar.py, api/memoria.py, memoria/loja.py).
+// O aceite põe o projeto num cenário por /v1/_falso/cenario e semeia regras do dono por /v1/_falso/memoria.
+// A memória da casa (projetos/editor-creat/memoria) é só LIDA: o que se apaga aqui fica em memória do processo.
+// =====================================================================================================================
+const RE_PID = /^p_[a-z0-9]{4,40}$/;
+const ATENCAO_DIRECAO = 'Se a conferência reprovar, o editor pode tentar corrigir sozinho até 2 vezes, cada uma com custo de direção.';
+const ROTULO_FILA = { catalogo: 'organizando o material', direcao: 'a direção', montagem: 'a montagem', qa: 'a conferência', entrega: 'a entrega' };
+const nVideo = (p, aid) => p.arquivos.findIndex((a) => a.id === aid) + 1;
+const maisNova = (p) => p.versoes[p.versoes.length - 1] ?? null;
+const contaF = (rotulo, usd, ate) => ({ custo_usd_est: usd, custo_ate: ate, ...(usd > 0 ? { partes: [{ rotulo, usd }] } : {}) });
+
+function opcaoF(p, de, { v, aid } = {}) {
+  const o = { de, pela_conversa: ['montagem', 'conferencia', 'entrega', 'leitura'].includes(de), ...(v ? { versao: v } : {}) };
+  if (de === 'montagem') return { ...o, titulo: `Montar de novo a ${v}`, faz: `Montar de novo a ${v} com a mesma direção. Depois o editor confere e entrega sozinho.`,
+    refaz: ['montagem', 'qa', 'entrega'], minutos_est: 9, volta: 'Nada da direção muda. Se a conferência reprovar, o editor para e espera você (não gasta com correção automática).',
+    botao: 'Montar de novo', ...contaF('Olhar o filme novo com IA (conferência)', 0.3, true) };
+  if (de === 'conferencia') return { ...o, titulo: `Conferir de novo a ${v}`, faz: `Rodar a conferência automática de novo na ${v}, sem montar de novo. Se aprovar, entrega sozinho.`,
+    volta: 'O filme não muda. Se reprovar de novo, o editor para e espera você.', botao: 'Conferir de novo', refaz: ['qa', 'entrega'], minutos_est: 3,
+    ...contaF('Olhar o filme com IA (conferência)', 0.12, false) };
+  if (de === 'entrega') return { ...o, titulo: `Entregar de novo a ${v}`, faz: `Conferir a ${v} (aproveita a conferência se nada mudou) e entregar de novo. Não publica nem manda para o cliente.`,
+    volta: 'O filme não muda.', botao: 'Entregar de novo', refaz: ['qa', 'entrega'], minutos_est: 3, ...contaF('Olhar o filme com IA (conferência)', 0, false) };
+  if (de === 'leitura') {
+    const n = nVideo(p, aid);
+    const outrosLidos = p.arquivos.every((a) => a.id === aid || a.estado === 'analisado');
+    const comeca = Boolean(p.dados.envio_fechado && p.dados.pedido && outrosLidos);
+    const partes = [{ rotulo: 'Ler o vídeo com IA (visão)', usd: 0.05 }, ...(comeca ? [{ rotulo: 'Direção, se a edição começar', usd: 0.4 }] : [])];
+    return { ...o, arquivo_id: aid, n_video: n, titulo: `Ler de novo o vídeo ${n}`,
+      faz: `Tentar ler o vídeo ${n} de novo: ouvir as falas e olhar os quadros. Ele ficou de fora porque não deu para ler.`,
+      refaz: ['leitura'], minutos_est: comeca ? 14 : 2, volta: 'Os outros vídeos não mudam.', botao: 'Ler de novo',
+      custo_usd_est: +partes.reduce((t, x) => t + x.usd, 0).toFixed(2), custo_ate: true, partes,
+      ...(comeca ? { atencao: `Se der certo e o resto já estiver lido, a edição começa sozinha. ${ATENCAO_DIRECAO}` } : {}) };
+  }
+  if (de === 'catalogo') return { ...o, titulo: 'Organizar o material de novo', faz: 'Organizar o material de novo e seguir sozinho para a direção, a montagem, a conferência e a entrega.',
+    refaz: ['direcao', 'montagem', 'qa', 'entrega'], minutos_est: 12, atencao: ATENCAO_DIRECAO, volta: 'O material e o pedido não mudam.', botao: 'Tentar de novo', ...contaF('Direção do filme', 0.4, false) };
+  return { ...o, titulo: 'Tentar a direção de novo', faz: 'Pedir a direção de novo com o mesmo material e o mesmo pedido. Depois o editor monta, confere e entrega sozinho.',
+    refaz: ['direcao', 'montagem', 'qa', 'entrega'], minutos_est: 11, atencao: ATENCAO_DIRECAO, volta: 'O material e o pedido não mudam.', botao: 'Tentar de novo', ...contaF('Direção do filme', 0.4, false) };
+}
+
+/** A guarda (seção 2.3), na mesma ordem e com as mesmas frases do motor. null = pode. */
+function porqueF(p, de, { versao, arquivo_id } = {}) {
+  if (de === 'leitura') {
+    const a = p.arquivos.find((x) => x.id === arquivo_id);
+    if (!a) return 'esse vídeo não existe neste projeto';
+    const n = nVideo(p, a.id);
+    if (a.estado !== 'falhou') return `o vídeo ${n} não ficou de fora`;
+    if (p.versoes.length || p.rodando) return 'a edição já começou; um vídeo lido agora não entra mais neste filme';
+    if (a.lendo) return `o vídeo ${n} já está sendo lido`;
+    return null;
+  }
+  if (de === 'catalogo' || de === 'direcao') {
+    if (p.rodando) return `a mesa está trabalhando neste projeto agora (${ROTULO_FILA[p.etapaAgora] ?? 'a montagem'}); espere terminar`;
+    return p.falhou?.de === de ? null : de === 'catalogo' ? 'o catálogo não falhou' : 'a direção não falhou';
+  }
+  const m = maisNova(p);
+  const V = versao ?? m?.id;
+  const v = p.versoes.find((x) => x.id === V);
+  if (!v) return `a versão ${V ?? 'v1'} não existe`;
+  if (v.id !== m.id) return `a ${V} não é a mais nova; a mais nova é a ${m.id}`;
+  if (p.dados.aprovadas?.[V]) return `a ${V} já foi aprovada`;
+  if (v.estado === 'reprovada') return `a ${V} foi reprovada por você; a direção nova já cuida dela`;
+  if (p.rodando) return `a mesa está trabalhando neste projeto agora (${ROTULO_FILA[p.etapaAgora] ?? 'a montagem'}); espere terminar`;
+  if (de === 'montagem') return p.falhou?.de === 'montagem' && p.falhou.versao === V ? null : `a montagem da ${V} não falhou; montar de novo daria o mesmo filme`;
+  if (de === 'conferencia') {
+    if (p.falhou?.de === 'conferencia' && p.falhou.versao === V) return null;
+    return p.estado === 'reprovado_qa' && v.estado === 'reprovada_qa' && p.regrasMudaram ? null : `nada mudou desde a última conferência da ${V}; o resultado seria o mesmo`;
+  }
+  if (de === 'entrega') return p.falhou?.de === 'entrega' && p.falhou.versao === V ? null : `a entrega da ${V} não falhou`;
+  return 'isso não dá para refazer';
+}
+function opcoesF(p) {
+  const out = [];
+  const m = maisNova(p);
+  if (m) for (const de of ['montagem', 'conferencia', 'entrega']) if (!porqueF(p, de, { versao: m.id })) out.push(opcaoF(p, de, { v: m.id }));
+  for (const a of p.arquivos) if (a.estado === 'falhou' && !porqueF(p, 'leitura', { arquivo_id: a.id })) out.push(opcaoF(p, 'leitura', { aid: a.id }));
+  for (const de of ['catalogo', 'direcao']) if (!porqueF(p, de)) out.push(opcaoF(p, de));
+  let sugerida = null;
+  if (p.estado === 'reprovado_qa') { const i = out.findIndex((o) => o.de === 'conferencia'); sugerida = i >= 0 ? i : null; }
+  else if (p.falhou) { const i = out.findIndex((o) => o.de === p.falhou.de && (o.de !== 'leitura' || o.arquivo_id === p.falhou.arquivo_id)); sugerida = i >= 0 ? i : null; }
+  return { opcoes: out, sugerida };
+}
+const TEXTO_FEITO = {
+  montagem: (o) => `Feito. A montagem da ${o.versao} recomeçou; acompanhe na mesa.`,
+  conferencia: (o) => `Feito. A conferência da ${o.versao} recomeçou.`,
+  entrega: (o) => `Feito. A ${o.versao} está sendo conferida e entregue de novo.`,
+  leitura: (o) => `Feito. O vídeo ${o.n_video} está sendo lido de novo.`,
+};
+/** Executa o refazer (a guarda já passou): grava o estado, como o motor real, e roda o resto da cadeia em segundo plano. */
+function executarF(p, de, { versao, arquivo_id } = {}) {
+  const falhou = p.falhou;
+  p.falhou = null;
+  p.regrasMudaram = false;
+  if (de === 'leitura') {
+    const a = p.arquivos.find((x) => x.id === arquivo_id);
+    const n = nVideo(p, a.id);
+    a.estado = 'ingerido'; a.lendo = true;
+    const msg = `Lendo o vídeo ${n} de novo, a seu pedido.`;
+    if (p.estado === 'erro') mudarEstado(p, 'lendo', msg); else emitir(p.id, 'aviso', { mensagem: msg });
+    (async () => {
+      emitir(p.id, 'etapa_inicio', { etapa: 'analise', alvo: a.id, mensagem: `Transcrevendo as falas de ${a.nome}` });
+      const ma = mesaInicio(p, 'analise', a.id);
+      await ma.trecho(0, 1, PASSO / 2);
+      a.estado = 'analisado'; a.lendo = false;
+      ma.fim();
+      emitir(p.id, 'etapa_fim', { etapa: 'analise', alvo: a.id, progresso: 1, mensagem: `${a.nome}: falas, momentos e rostos lidos` });
+      tentarDirigir(p);
+    })();
+    return { alvo: a.id, estado: p.estado };
+  }
+  if (de === 'catalogo' || de === 'direcao') {
+    p.estado = 'lendo';
+    if (!tentarDirigir(p)) { p.falhou = falhou; return null; }
+    return { alvo: '-', estado: p.estado };
+  }
+  const v = p.versoes.find((x) => x.id === (versao ?? maisNova(p).id));
+  p.rodando = true;
+  p.dados.correcoes_auto = 2;
+  if (de === 'montagem') {
+    v.estado = 'montando';
+    mudarEstado(p, 'montando', `Montando a ${v.id} de novo, a seu pedido.`);
+  } else {
+    mudarEstado(p, 'conferindo', de === 'entrega' ? `Conferindo e entregando a ${v.id} de novo, a seu pedido.` : `Conferindo a ${v.id} de novo, a seu pedido.`);
+  }
+  fimDaVersao(p, v, de === 'montagem', de === 'entrega' ? `Conferindo e entregando a ${v.id} de novo, a seu pedido.` : `Conferindo a ${v.id} de novo, a seu pedido.`)
+    .finally(() => { p.rodando = false; });
+  return { alvo: v.id, estado: p.estado };
+}
+// a etapa que está rodando agora (para a frase "a mesa está trabalhando… (a montagem)" e a recusa do apagar)
+const ETAPA_DO_EST = { lendo: 'analise', dirigindo: 'direcao', montando: 'montagem', conferindo: 'qa' };
+function marcarEtapa(p) { p.etapaAgora = ETAPA_DO_EST[p.estado] ?? 'entrega'; return p.etapaAgora; }
+
+async function rotaRefazer(req, res, p, M) {
+  if (M === 'GET') return json(res, 200, opcoesF(p));
+  if (M !== 'POST') return falha(res, 405, 'método não permitido');
+  const c = await lerCorpo(req);
+  const des = ['montagem', 'conferencia', 'entrega', 'leitura', 'catalogo', 'direcao'];
+  if (!c || !des.includes(c.de) || (c.versao != null && !/^v[0-9]{1,3}$/.test(c.versao)) || (c.arquivo_id != null && !/^[A-Za-z0-9_-]{1,40}$/.test(c.arquivo_id))) {
+    return falha(res, 422, 'pedido inválido');
+  }
+  if (c.de === 'leitura' && !c.arquivo_id) return falha(res, 422, 'diga qual vídeo');
+  marcarEtapa(p);
+  const porque = porqueF(p, c.de, c);
+  if (porque) return falha(res, 409, `não deu: ${porque}`);
+  const r = executarF(p, c.de, c);
+  if (!r) return falha(res, 409, 'não deu: a mesa está trabalhando neste projeto agora; espere terminar');
+  return json(res, 202, { feito: true, de: c.de, alvo: r.alvo, estado: r.estado });
+}
+
+// ---------- apagar projeto (R13/R14) e tirar da página de entregas (R15) ----------
+const FICA = ['O livro de gastos (o que já foi gasto continua contado).',
+  'As regras e os casos que nasceram deste projeto (apague as regras no Caderno, se quiser).',
+  'As cópias nos backups: no Cloudflare somem em até 30 dias; as do Dropbox ficam.'];
+const FRASE_JOB = { analise: 'o editor está lendo um vídeo', catalogo: 'a direção está trabalhando', direcao: 'a direção está trabalhando',
+  montagem: 'a montagem está rodando', qa: 'a conferência está rodando', entrega: 'a entrega está rodando' };
+const NA_PAGINA = ['no_ar', 'pendente', 'enviando'];
+function naPaginaF(p) {
+  return Object.entries(p.dados.entregas ?? {}).filter(([, e]) => [...NA_PAGINA, 'retirando'].includes(e.estado))
+    .sort(([a], [b]) => Number(a.slice(1)) - Number(b.slice(1)))
+    .map(([v, e]) => ({ versao: v, estado: e.estado, ...(e.estado === 'retirando' && e.proxima ? { proxima: String(e.proxima).slice(0, 5) } : {}) }));
+}
+function recusaApagarF(p) {
+  if (CONVERSA.rodando.has(p.id)) return 'a conversa está respondendo agora neste projeto; toque em Parar a resposta ou espere terminar';
+  if (p.rodando || p.arquivos.some((a) => a.lendo || a.estado === 'recebido' || a.estado === 'ingerido')) {
+    const et = p.arquivos.some((a) => a.lendo || a.estado === 'ingerido' || a.estado === 'recebido') && !p.rodando ? 'analise' : marcarEtapa(p);
+    return `${FRASE_JOB[et] ?? 'a mesa está trabalhando'} agora; espere terminar para apagar`;
+  }
+  if (ENT.ligado) {
+    for (const e of naPaginaF(p)) {
+      if (NA_PAGINA.includes(e.estado)) return `a ${e.versao} está na página de entregas; tire de lá primeiro (botão Tirar da página) e apague depois`;
+      return `a ${e.versao} está saindo da página de entregas; espere terminar${e.proxima ? ` (tento de novo sozinho às ${e.proxima})` : ''}`;
+    }
+  }
+  return null;
+}
+function previaF(p) {
+  const porque = recusaApagarF(p);
+  const msgs = eventos.filter((e) => e.projeto === p.id && (e.tipo === 'fala_dono' || e.tipo === 'fala_editor')).length;
+  const out = { pode: !porque, nome: p.nome, vai_apagar: { videos: p.arquivos.length, bytes: p.arquivos.reduce((t, a) => t + (a.bytes || 0), 0), versoes: p.versoes.length,
+    mensagens_conversa: msgs, links_cliente_ativos: LINKS.filter((l) => l.projeto === p.id && !l.revogado && l.expira > agora()).length }, na_pagina: [], fica: [...FICA] };
+  if (porque) out.porque = porque;
+  const pagina = naPaginaF(p);
+  if (ENT.ligado) out.na_pagina = pagina;
+  else if (pagina.length) out.restos_previstos = { pagina_desligada: pagina.map((e) => e.versao) };
+  return out;
+}
+const mesmoNomeF = (a, b) => String(a ?? '').split(/\s+/).filter(Boolean).join(' ').toLowerCase() === String(b ?? '').split(/\s+/).filter(Boolean).join(' ').toLowerCase();
+async function rotaApagar(req, res, p, M) {
+  if (M === 'GET') return json(res, 200, previaF(p));
+  if (M !== 'POST') return falha(res, 405, 'método não permitido');
+  const c = await lerCorpo(req);
+  const nome = typeof c?.nome === 'string' ? c.nome : '';
+  if (!nome || nome.length > 200) return falha(res, 422, 'nome entre 1 e 200 caracteres');
+  const porque = recusaApagarF(p);
+  if (porque) return falha(res, 409, porque);
+  if (!mesmoNomeF(nome, p.nome)) return falha(res, 422, 'o nome não confere; digite o nome do projeto como aparece no topo');
+  // banco primeiro (aqui: os mapas do processo), depois os arquivos, só dentro das pastas deste pid
+  projetos.delete(p.id);
+  for (let i = eventos.length - 1; i >= 0; i--) if (eventos[i].projeto === p.id) eventos.splice(i, 1);
+  for (let i = LINKS.length - 1; i >= 0; i--) if (LINKS[i].projeto === p.id) LINKS.splice(i, 1);
+  for (const m of [CONVERSA.espera, CONVERSA.rodando, CONVERSA.rascunho, CONVERSA.interrompido]) m.delete(p.id);
+  if (RE_PID.test(p.id)) {
+    for (const base of ['entrada', 'derivados', 'projetos', 'saidas']) {
+      const alvo = path.join(ARM, base, p.id);
+      if (path.dirname(alvo) === path.join(ARM, base)) fs.rmSync(alvo, { recursive: true, force: true });
+    }
+  }
+  return json(res, 200, { apagado: true, arquivos: 'apagando' });
+}
+function rotaRetirar(res, p, v) {
+  if (!/^v[0-9]{1,3}$/.test(v ?? '') || !p.versoes.some((x) => x.id === v)) return falha(res, 404, 'versão não encontrada');
+  if (!ENT.ligado) return falha(res, 503, 'a página de entregas está desligada neste servidor');
+  const e = p.dados.entregas?.[v];
+  if (e?.estado === 'retirando') return json(res, 202, { estado: 'retirando' });
+  if (!NA_PAGINA.includes(e?.estado)) return falha(res, 409, 'esta versão não está na página de entregas');
+  retirarEntregas(p, v);
+  return json(res, 202, { estado: 'retirando' });
+}
+
+// ---------- regras da casa no Caderno (R16 a R19) ----------
+const MEM = { regras: [], checagens: [], vocabulario: [], apagados: new Set() };
+const idVoc = (de) => 'v_' + createHash('sha1').update(semAcento(String(de ?? '')).toLowerCase().trim()).digest('hex').slice(0, 8);
+const RE_ORIGEM = /^reprovação do dono · (p_[a-z0-9]+)\/(v[0-9]{1,3}) · (\d{4}-\d{2}-\d{2})$/;
+const RE_APAGAVEL = { regra: /^r_dono_[0-9a-f]{8}$/, checagem: /^c_dono_[0-9a-f]{8}$/, vocabulario: /^v_[0-9a-f]{8}$/ };
+const TIPOS_CHECAGEM_DONO = ['legenda_proibida', 'fecho_contem', 'duracao_max', 'duracao_min', 'vazio_max_s', 'revisao_humana'];
+function deOndeF(origem) {
+  const m = RE_ORIGEM.exec(String(origem ?? ''));
+  if (!m) return null;
+  const nome = projetos.get(m[1])?.nome;
+  return { projeto: m[1], versao: m[2], data: m[3], ...(nome ? { nome } : {}) };
+}
+function aoApagarF(tipo, it) {
+  if (tipo === 'regra') return 'Deixa de valer nos próximos filmes. Nenhum filme é refeito.';
+  if (tipo === 'checagem') return TIPOS_CHECAGEM_DONO.includes(it.tipo) ? 'O editor para de conferir isto nos próximos filmes. Nenhum filme é refeito.'
+    : 'Some só o seu pedido; a conferência fixa do editor continua. Nenhum filme é refeito.';
+  return `A legenda deixa de trocar “${it.de}” por “${it.para}” nos próximos filmes. Nenhum filme é refeito.`;
+}
+function itemDono(tipo, it) {
+  const onde = deOndeF(it.origem);
+  return { ...it, apagavel: true, ...(onde ? { de_onde: onde } : {}), ao_apagar: aoApagarF(tipo, it) };
+}
+function memoriaOnda3(base) {
+  const fora = MEM.apagados;
+  return {
+    ...base,
+    regras: [...MEM.regras.filter((r) => !fora.has(r.id)).map((r) => itemDono('regra', r)), ...base.regras.map((r) => ({ ...r, apagavel: false }))],
+    checagens: [...MEM.checagens.filter((c) => !fora.has(c.id)).map((c) => itemDono('checagem', c)), ...base.checagens.map((c) => ({ ...c, apagavel: false }))],
+    vocabulario: [...MEM.vocabulario.filter((v) => !fora.has(v.id)).map((v) => itemDono('vocabulario', v)), ...base.vocabulario.map((v) => ({ ...v, id: idVoc(v.de), apagavel: false }))],
+  };
+}
+async function rotaApagarMemoria(res, partes) {
+  const [, , qual, ident, acao] = partes;
+  const tipo = { regras: 'regra', checagens: 'checagem', vocabulario: 'vocabulario' }[qual];
+  if (!tipo || acao !== 'apagar' || partes.length !== 5) return falha(res, 404, 'rota não encontrada');
+  if (!RE_APAGAVEL[tipo].test(ident ?? '')) return falha(res, 404, 'só dá para apagar o que nasceu de um ajuste seu');
+  const lista = MEM[{ regra: 'regras', checagem: 'checagens', vocabulario: 'vocabulario' }[tipo]];
+  const it = lista.find((x) => x.id === ident);
+  if (!it || MEM.apagados.has(ident)) return falha(res, 404, { regra: 'essa regra não existe mais', checagem: 'essa conferência não existe mais', vocabulario: 'essa palavra não existe mais' }[tipo]);
+  if (tipo === 'checagem' && [...projetos.values()].some((p) => p.rodando && ['qa', 'entrega'].includes(marcarEtapa(p)))) {
+    return falha(res, 409, 'uma conferência ou entrega está rodando agora; apague quando ela terminar');
+  }
+  MEM.apagados.add(ident);
+  const texto = tipo === 'regra' ? it.texto : tipo === 'checagem' ? it.descricao : `${it.de} → ${it.para}`;
+  return json(res, 200, { apagado: { tipo, id: ident, texto } });
+}
+function semearMemoriaF(c) {
+  const de = c.projeto && projetos.has(c.projeto) ? c.projeto : 'p_aceite0000';
+  const hoje = new Date().toISOString().slice(0, 10);
+  MEM.apagados.clear();
+  MEM.regras = [
+    { id: 'r_dono_1a2b3c4d', texto: 'Nunca abrir com tela preta: o primeiro quadro já mostra o produto.', origem: `reprovação do dono · ${de}/v2 · ${hoje}` },
+    { id: 'r_dono_5e6f7a8b', texto: 'Legenda nunca cobre o rosto de quem fala.', origem: 'reprovação do dono · p_jaapagado01/v1 · 2026-11-12' },
+  ];
+  MEM.checagens = [{ id: 'c_dono_1a2b3c4d', tipo: 'legenda_proibida', descricao: 'A legenda não pode ter “clique no link”.', gravidade: 'bloqueia', origem: `reprovação do dono · ${de}/v2 · ${hoje}` }];
+  MEM.vocabulario = [{ id: idVoc('criete'), de: 'criete', para: 'creat', origem: `reprovação do dono · ${de}/v2 · ${hoje}` }];
+  return { regras: MEM.regras.length, checagens: MEM.checagens.length, vocabulario: MEM.vocabulario.length, vocabulario_id: MEM.vocabulario[0].id };
+}
+
+// ---------- cenários do aceite (/v1/_falso/cenario) ----------
+function cenarioF(p, c) {
+  const qual = String(c.cenario ?? '');
+  const garantirVersao = (estado) => {
+    let v = maisNova(p);
+    if (!v || v.estado === 'reprovada' || p.dados.aprovadas?.[v.id]) {
+      v = { id: `v${p.versoes.length + 1}`, estado, video: null, qa: null, link: null, reprovacao: null, criado: agora() };
+      p.versoes.push(v);
+    }
+    v.estado = estado;
+    return v;
+  };
+  if (qual === 'erro_montagem' || qual === 'erro_entrega') {
+    const de = qual === 'erro_montagem' ? 'montagem' : 'entrega';
+    const v = garantirVersao(qual === 'erro_montagem' ? 'erro' : 'aprovada_qa');
+    p.falhou = { de, versao: v.id };
+    p.estado = 'erro';
+    emitir(p.id, 'etapa_erro', { etapa: de, alvo: v.id, mensagem: de === 'montagem' ? `A montagem da ${v.id.toUpperCase()} parou: o render caiu no meio.` : `A entrega da ${v.id.toUpperCase()} parou.`, dados: { detalhe: 'RuntimeError: ffmpeg saiu com código 137', vai_tentar: false } });
+    emitir(p.id, 'estado', { estado: 'erro', mensagem: `A ${de} da ${v.id} parou com erro.` });
+    return { ok: true, versao: v.id };
+  }
+  if (qual === 'reprovado_qa') {
+    const v = garantirVersao('reprovada_qa');
+    p.falhou = null;
+    p.regrasMudaram = Boolean(c.mudou);
+    p.estado = 'reprovado_qa';
+    emitir(p.id, 'estado', { estado: 'reprovado_qa', mensagem: `A conferência segurou a ${v.id}.` });
+    return { ok: true, versao: v.id };
+  }
+  if (qual === 'regras_mudaram') { p.regrasMudaram = true; emitir(p.id, 'estado', { mensagem: 'As regras da casa mudaram.' }); return { ok: true }; }
+  if (qual === 'video_falhou') {
+    const a = p.arquivos[Number.isInteger(c.n) ? c.n - 1 : p.arquivos.length - 1];
+    if (!a) return { ok: false };
+    a.estado = 'falhou';
+    emitir(p.id, 'etapa_erro', { etapa: 'analise', alvo: a.id, mensagem: `A leitura do vídeo ${nVideo(p, a.id)} parou.`, dados: { detalhe: 'ValueError: moov atom not found', vai_tentar: false } });
+    if (c.erro) { p.estado = 'erro'; p.falhou = { de: 'leitura', arquivo_id: a.id }; emitir(p.id, 'estado', { estado: 'erro', mensagem: `O vídeo ${nVideo(p, a.id)} não pôde ser lido.` }); }
+    else emitir(p.id, 'aviso', { alvo: a.id, mensagem: `O vídeo ${nVideo(p, a.id)} não pôde ser lido e ficou de fora. O resto do material segue.` });
+    return { ok: true, arquivo_id: a.id };
+  }
+  if (qual === 'ocupar') { p.rodando = Boolean(c.ligado); return { ok: true }; }
+  return { ok: false };
+}
+
+// ---------- conversa: as trilhas da casa (falso), os cartões novos e o que acontece no toque ----------
+const TRILHAS_F = [{ id: 'noite-clara', titulo: 'Noite Clara', bpm: 96, dur_s: 64, clima: 'calmo' }, { id: 'pulso-de-feira', titulo: 'Pulso de Feira', bpm: 104, dur_s: 58, clima: 'animado' }];
+const trilhaDa = (v) => TRILHAS_F.find((t) => t.id === (v?.trilha ?? 'noite-clara')) ?? TRILHAS_F[0];
+function porqueTrilhaF(p, V, trilha) {
+  const m = maisNova(p);
+  const v = p.versoes.find((x) => x.id === V);
+  if (!v) return `a versão ${V} não existe`;
+  if (v.id !== m.id) return `a ${V} não é a mais nova; a mais nova é a ${m.id}`;
+  if (p.dados.aprovadas?.[V]) return `a ${V} já foi aprovada`;
+  if (p.rodando) return `a mesa está trabalhando neste projeto agora (${ROTULO_FILA[marcarEtapa(p)] ?? 'a montagem'}); espere terminar`;
+  if (v.estado !== 'entregue') return `a ${V} ainda não foi entregue (está ${v.estado})`;
+  if (!TRILHAS_F.some((t) => t.id === trilha)) return 'essa música não está na biblioteca (ou não tem licença registrada)';
+  if (trilhaDa(v).id === trilha) return `a ${V} já usa essa música`;
+  return null;
+}
+function cartaoTrilhaF(p, V, trilha) {
+  const nova = TRILHAS_F.find((t) => t.id === trilha);
+  const atual = trilhaDa(p.versoes.find((x) => x.id === V));
+  const faz = `Trocar a música da ${V} por “${nova.titulo}” (${nova.bpm} bpm), sem nova direção.`;
+  return { acao: 'trilha', versao: V, titulo: `Trocar a música da ${V}`, texto_exato: faz, faz,
+    mudancas: [{ campo: 'Música', antes: atual.titulo, depois: nova.titulo }], nao_muda: 'Os mesmos trechos, falas, legendas, cor e fecho.',
+    atencao: 'Os cortes andam até uma batida para casar com a música nova, então a duração pode mudar um pouco.',
+    refaz: ['encaixe', 'montagem', 'qa', 'entrega'], comeca_agora: true, custo_usd_est: 0.12, custo_ate: false,
+    partes: [{ rotulo: 'Olhar o filme novo com IA (conferência)', usd: 0.12 }], minutos_est: 10, vira_regra: false, botao: 'Trocar a música',
+    volta: `A ${V} continua guardada e pode ser aprovada. A música nova sai na v${p.versoes.length + 1}. Se a conferência reprovar, o editor para e espera você.` };
+}
+function cartaoRefazerF(o) {
+  const c = { acao: 'refazer', de: o.de, titulo: o.titulo, texto_exato: o.faz, faz: o.faz, refaz: o.refaz, comeca_agora: true, custo_usd_est: o.custo_usd_est,
+    custo_ate: o.custo_ate, minutos_est: o.minutos_est, vira_regra: false, volta: o.volta, botao: o.botao };
+  for (const k of ['versao', 'arquivo_id', 'n_video', 'atencao', 'partes']) if (o[k] !== undefined) c[k] = o[k];
+  return c;
+}
+function cartaoNotaF(texto, versao, tempo) {
+  const onde = versao && typeof tempo === 'number' ? ` em ${Math.floor(tempo / 60)}:${String(Math.floor(tempo % 60)).padStart(2, '0')} da ${versao}` : versao ? ` da ${versao}` : '';
+  return { acao: 'nota', ...(versao ? { versao } : {}), ...(typeof tempo === 'number' ? { tempo_s: Math.round(tempo * 10) / 10 } : {}), titulo: 'Guardar uma nota', texto_exato: texto,
+    faz: `Guardar esta nota no projeto${onde}. Não refaz nada e não gasta.`, refaz: [], comeca_agora: false, custo_usd_est: 0, minutos_est: 0, vira_regra: false,
+    volta: 'A nota fica na lista de notas do projeto.', botao: 'Guardar a nota' };
+}
+function abrirCartaoF(pid, ctx, prefixo, dados, entrada) {
+  const tid = novaFerramenta(prefixo);
+  const d = { turno: ctx.turno, tool_use_id: tid, ...dados, entrada_hash: hashC(tid, entrada) };
+  CONVERSA.espera.set(pid, { tipo: 'confirmacao', tool_use_id: tid, turno: ctx.turno, desde: agora(), dados: d, entrada });
+  emitirC(pid, 'confirmacao', d);
+}
+/** Os roteiros novos do cérebro falso ("tenta de novo", "troca a música", "anota …", "onde …"). true = tratou o turno. */
+async function turnoOnda3(pid, ctx, texto, contexto) {
+  const p = projetos.get(pid);
+  const t = texto.toLowerCase();
+  if (/tenta(r)? de novo/.test(t)) {
+    const o = opcoesF(p).opcoes.find((x) => x.pela_conversa);
+    if (!o) { await escreverC(pid, ctx, 'Não há etapa que falhou para refazer agora. Se quiser mudar o filme, peça um ajuste.'); fimC(pid, ctx, 'end_turn'); return true; }
+    await escreverC(pid, ctx, `${o.titulo}: preparei o cartão. Não chama a direção; confira o custo antes de tocar.`, 8);
+    abrirCartaoF(pid, ctx, 'ref', cartaoRefazerF(o), { de: o.de, versao: o.versao ?? null, arquivo_id: o.arquivo_id ?? null });
+    fimC(pid, ctx, 'pausa');
+    return true;
+  }
+  if (/troca(r)? (a|de) m[uú]sica/.test(t)) {
+    const v = maisNova(p);
+    const emUso = trilhaDa(v);
+    if (!(await ferramentaC(pid, ctx, 'ver_trilhas', {}, `Viu ${TRILHAS_F.length} trilhas`, 1500))) return true;
+    const nova = TRILHAS_F.find((x) => x.id !== emUso.id);
+    const porque = v ? porqueTrilhaF(p, v.id, nova.id) : 'ainda não há versão pronta';
+    if (porque) { await escreverC(pid, ctx, `Ainda não dá para trocar a música: ${porque}.`); fimC(pid, ctx, 'end_turn'); return true; }
+    await escreverC(pid, ctx, `Escolhi “${nova.titulo}”, a trilha da casa que não está tocando. Só a música muda; confira no cartão.`, 8);
+    abrirCartaoF(pid, ctx, 'mus', cartaoTrilhaF(p, v.id, nova.id), { versao: v.id, trilha: nova.id });
+    fimC(pid, ctx, 'pausa');
+    return true;
+  }
+  if (/^anota\b/.test(t)) {
+    const nota = texto.replace(/^anota\s*(a[ií]\s*)?[:,-]?\s*/i, '').replace(/\s+/g, ' ').trim().slice(0, 500);
+    if (!nota) { await escreverC(pid, ctx, 'O que você quer que eu anote?'); fimC(pid, ctx, 'end_turn'); return true; }
+    if ((p.dados.notas ?? []).length >= 50) { await escreverC(pid, ctx, 'Não dá para anotar: o projeto já tem 50 notas.'); fimC(pid, ctx, 'end_turn'); return true; }
+    const versao = typeof contexto?.versao === 'string' ? contexto.versao : undefined;
+    const tempo = typeof contexto?.t_player === 'number' ? contexto.t_player : undefined;
+    await escreverC(pid, ctx, 'Montei a nota. Ela só é guardada se você tocar no cartão.', 6);
+    abrirCartaoF(pid, ctx, 'not', cartaoNotaF(nota, versao, tempo), { texto: nota, versao: versao ?? null, tempo_s: tempo ?? null });
+    fimC(pid, ctx, 'pausa');
+    return true;
+  }
+  if (/^onde\b/.test(t)) {
+    const v = maisNova(p);
+    if (!(await ferramentaC(pid, ctx, 'onde_esta', { versao: v?.id ?? null, busca: texto.slice(5, 40) }, v ? 'Achou 2 pontos' : 'Não achou a versão', 600))) return true;
+    await continuarC(pid, ctx, v ? `Na ${v.id.toUpperCase()} isso aparece em **0:04** e em **0:11**. Toque no ponto para abrir no player.` : 'Ainda não há filme para procurar.');
+    return true;
+  }
+  return false;
+}
+/** R6 para os cartões novos. Devolve [status, corpo] já respondido ao fio (evento resposta). */
+function confirmarOnda3(p, esp, ev) {
+  const pid = p.id;
+  const acao = esp.dados.acao;
+  const negar = (porque) => { emitirC(pid, 'resposta', { ...ev, resultado: 'nao_deu', detalhe: `não deu: ${porque}` }); return [409, { detail: `não deu: ${porque}` }]; };
+  if (acao === 'refazer') {
+    const e = esp.entrada;
+    const porque = porqueF(p, e.de, { versao: e.versao ?? undefined, arquivo_id: e.arquivo_id ?? undefined });
+    if (porque) return negar(porque);
+    const o = opcaoF(p, e.de, { v: e.versao ?? undefined, aid: e.arquivo_id ?? undefined });
+    executarF(p, e.de, { versao: e.versao ?? undefined, arquivo_id: e.arquivo_id ?? undefined });
+    emitirC(pid, 'resposta', { ...ev, resultado: 'feito', detalhe: TEXTO_FEITO[e.de](o) });
+    return [200, { feito: true, resultado: { refazendo: e.de } }];
+  }
+  if (acao === 'trilha') {
+    const { versao, trilha } = esp.entrada;
+    const porque = porqueTrilhaF(p, versao, trilha);
+    if (porque) return negar(porque);
+    p.rodando = true;
+    p.dados.correcoes_auto = 2;
+    mudarEstado(p, 'dirigindo', `Trocando a música da ${versao}, sem nova direção.`);
+    (async () => {
+      await etapa(p, 'direcao', null, ['Trocando só a música, sem nova direção…', 'Encaixando os cortes na batida da música nova']);
+      const nova = { id: `v${p.versoes.length + 1}`, estado: 'montando', video: null, qa: null, link: null, reprovacao: null, criado: agora(), trilha };
+      p.versoes.push(nova);
+      mudarEstado(p, 'montando', `Música trocada (${nova.id}). Custo da direção: US$ 0,00.`);
+      await fimDaVersao(p, nova, true);
+    })().finally(() => { p.rodando = false; });
+    emitirC(pid, 'resposta', { ...ev, resultado: 'feito', detalhe: 'Feito. A música está sendo trocada; a versão nova aparece na mesa.' });
+    return [200, { feito: true, resultado: { trocando_musica: true } }];
+  }
+  // nota
+  if ((p.dados.notas ?? []).length >= 50) return negar('o projeto já tem 50 notas');
+  const { texto, versao, tempo_s } = esp.entrada;
+  if (versao && !p.versoes.some((x) => x.id === versao)) return negar(`a versão ${versao} não existe`);
+  const n = { id: 'n_' + randomBytes(3).toString('hex'), texto, ...(versao ? { versao } : {}), ...(typeof tempo_s === 'number' ? { t: tempo_s } : {}), em: agora(), por: 'conversa' };
+  (p.dados.notas ??= []).push(n);
+  emitirC(pid, 'resposta', { ...ev, resultado: 'feito', detalhe: 'Nota guardada.' });
+  return [200, { feito: true, resultado: { nota: n.id } }];
 }

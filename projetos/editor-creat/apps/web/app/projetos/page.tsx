@@ -5,7 +5,9 @@ import { classeEstado, quando, ROTULO_ESTADO, rotuloTipo, type ResumoProjeto } f
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Projetos' };
 
-export default async function Projetos() {
+export default async function Projetos({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const busca = await searchParams;
+  const apagado = busca.apagado === '1';   // onda 3: volta do "Apagar para sempre"
   const r = await motorJson<ResumoProjeto[]>('/v1/projetos?limite=100');
   return (
     <main className="pagina">
@@ -16,6 +18,9 @@ export default async function Projetos() {
         </div>
         <Link className="botao botao--principal" href="/projetos/novo">Novo projeto</Link>
       </div>
+      {apagado && (
+        <p className="aviso-apagado" role="status" data-teste="projeto-apagado">Projeto apagado. Os arquivos somem do servidor em alguns minutos.</p>
+      )}
       {!r.ok ? (
         <p className="erro" role="alert">Não deu para falar com o motor: {r.erro}.</p>
       ) : r.dados.length === 0 ? (

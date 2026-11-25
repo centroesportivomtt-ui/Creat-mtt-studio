@@ -15,10 +15,13 @@ export type DadosFerramenta = {
 export type Opcao = { id: string; rotulo: string; efeito?: string };
 export type DadosPergunta = { turno: Turno; tool_use_id: string; texto: string; opcoes: Opcao[]; sugestao?: string; aceita_texto: boolean };
 export type DadosConfirmacao = {
-  turno: Turno; tool_use_id: string; acao: 'ajuste' | 'pedido'; versao?: string; titulo: string; texto_exato: string;
-  mudancas?: { campo: string; antes: string; depois: string }[]; refaz: ('direcao' | 'montagem' | 'qa')[]; comeca_agora: boolean;
+  turno: Turno; tool_use_id: string; acao: 'ajuste' | 'pedido' | 'refazer' | 'trilha' | 'nota'; versao?: string; titulo: string; texto_exato: string;
+  mudancas?: { campo: string; antes: string; depois: string }[]; refaz: ('direcao' | 'montagem' | 'qa' | 'entrega' | 'leitura' | 'encaixe')[]; comeca_agora: boolean;
   custo_usd_est: number; minutos_est: number; vira_regra: boolean; volta: string; entrada_hash: string;
   atencao?: string;      // escrito pelo motor: o texto repete algo de fora (fala de vídeo, texto de cliente)
+  // onda 3 (refazer uma etapa, trocar a música, guardar uma nota): todos opcionais e montados pelo código do motor
+  de?: 'montagem' | 'conferencia' | 'entrega' | 'leitura'; arquivo_id?: string; n_video?: number;
+  faz?: string; nao_muda?: string; partes?: { rotulo: string; usd: number }[]; custo_ate?: boolean; botao?: string; tempo_s?: number;
 };
 export type DadosResposta = {
   tool_use_id: string; tipo: 'pergunta' | 'confirmacao'; escolha_id?: string; texto?: string; sim?: boolean;
@@ -59,6 +62,7 @@ export const TIPOS_EFEMEROS = ['rascunho', 'instantaneo', 'ping'] as const;
 export type EstadoChave = {
   ligada: boolean; motivo?: MotivoDesligada; teto_usd_dia: number; gasto_hoje_usd: number; dia_vira_em?: string;
   esperando: { projeto: string; nome: string; tipo: 'pergunta' | 'confirmacao'; desde: string }[];
+  retencao_dias?: number;   // onda 3 (R20): dias que a conversa encerrada fica guardada; 0 = sem prazo
 };
 
 export type Resultado<T> = { ok: true; status: number; dados: T } | { ok: false; status: number; erro: string };
@@ -88,7 +92,7 @@ export const enviar = (pid: string, corpo: { texto: string; via: 'texto' | 'audi
 export const responder = (pid: string, corpo: { tool_use_id: string; escolha_id?: string; texto?: string }) =>
   chamar<{ turno: Turno }>(`/projetos/${pid}/conversa/responder`, json(corpo));
 export const confirmar = (pid: string, corpo: { tool_use_id: string; sim: boolean; entrada_hash: string; so_neste_projeto?: boolean }) =>
-  chamar<{ feito: boolean; resultado?: { nova_direcao?: boolean; dirigindo?: boolean } }>(`/projetos/${pid}/conversa/confirmar`, json(corpo));
+  chamar<{ feito: boolean; resultado?: { nova_direcao?: boolean; dirigindo?: boolean; refazendo?: string; trocando_musica?: boolean; nota?: string } }>(`/projetos/${pid}/conversa/confirmar`, json(corpo));
 export const parar = (pid: string) => chamar<{ parou: boolean }>(`/projetos/${pid}/conversa/parar`, json({}));
 export const retomar = (pid: string) => chamar<{ turno: Turno }>(`/projetos/${pid}/conversa/retomar`, json({}));
 /** R4: só transcreve; o texto volta para o campo e nada é enviado sem o toque do dono. */

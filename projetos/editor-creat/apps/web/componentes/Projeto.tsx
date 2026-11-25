@@ -5,13 +5,16 @@
 import Cor from '@/componentes/Cor';
 import LinkCliente from '@/componentes/LinkCliente';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import ApagarProjeto from './ApagarProjeto';
 import Envio from './Envio';
+import Notas, { lerNotas } from './Notas';
 import BarraConversa from './conversa/Barra';
 import Fio from './conversa/Fio';
 import MesaAoVivo, { AgoraNaMesa } from './conversa/MesaAoVivo';
 import { useConversa } from './conversa/useConversa';
 import { useFioAoVivo } from '@/lib/fio';
 import { irEntrar } from '@/lib/pendentes';
+import * as Acoes from '@/lib/acoes';
 import {
   bytesLegiveis, classeEstado, ESTADOS, ETAPA_DO_ESTADO, EXPLICA_ESTADO, ROTULO_ESTADO, rotuloTipo,
   type Evento, type Projeto as TProjeto, type Versao, MODOS, rotuloModo, perguntasDoModo,
@@ -78,6 +81,11 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   const trava = useRef(false);
   const recarga = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultimoEstado = useRef<{ estado: string; t: number } | null>(null);
+  // onda 3: o que dá para refazer agora (R11). Lido com o projeto em erro, com a conferência segurando ou com vídeo de fora.
+  const [refazerOps, setRefazerOps] = useState<Acoes.Opcoes | null>(null);
+  const [refazendo, setRefazendo] = useState<string | null>(null);   // chave da opção tocada (trava visível)
+  const leituraR11 = useRef(0);
+  const [sinalR11, setSinalR11] = useState(0);                         // cada evento estado/etapa_erro relê a R11
 
   // O estado das entregas mora em GET /versoes (o mesmo contrato do motor); só é pedido com as entregas ligadas.
   const carregarEntregas = useCallback(async () => {
@@ -129,6 +137,30 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     return () => clearInterval(t);
   }, [entregaAndando, carregarEntregas]);
 
+  // R11: lido ao abrir, a cada mudança do projeto (estado, vídeo que ficou de fora, versão) e quando a tela volta.
+  const temFora = p.arquivos.some((a) => a.estado === 'falhou');
+  const precisaR11 = ['erro', 'reprovado_qa'].includes(p.estado) || temFora;
+  const chaveR11 = `${p.estado}|${p.arquivos.map((a) => `${a.id}:${a.estado}`).join(',')}|${(p.versoes ?? []).map((v) => `${v.id}:${v.estado}`).join(',')}`;
+  const lerRefazer = useCallback(async () => {
+    const n = ++leituraR11.current;
+    const r = await Acoes.refazerOpcoes(inicial.id);
+    if (n !== leituraR11.current) return;               // resposta atrasada não desfaz uma leitura mais nova
+    if (r.ok) setRefazerOps(r.dados);
+    else if (r.status === 401) window.location.assign('/entrar');
+  }, [inicial.id]);
+  useEffect(() => {
+    if (!precisaR11) { leituraR11.current++; setRefazerOps(null); return; }
+    // a reconexão do SSE repassa a história: vários eventos juntos viram UMA leitura
+    const t = window.setTimeout(() => void lerRefazer(), 250);
+    return () => window.clearTimeout(t);
+  }, [precisaR11, chaveR11, sinalR11, lerRefazer]);
+  useEffect(() => {
+    if (!precisaR11) return;
+    const vis = () => { if (document.visibilityState === 'visible') void lerRefazer(); };
+    document.addEventListener('visibilitychange', vis);
+    return () => document.removeEventListener('visibilitychange', vis);
+  }, [precisaR11, lerRefazer]);
+
   // Status ao vivo e conversa: UM EventSource (SSE v2) leva a mesa e a conversa (lib/fio.ts). Os eventos que esta tela
   // já ouvia chegam aqui como antes (deduplicados por id); reconexão com Last-Event-ID, vigia de 40 s e volta da tela.
   const receber = useCallback((e: Evento) => {
@@ -138,6 +170,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       setP((x) => ({ ...x, estado: e.estado! }));
     }
     if (['arquivo_recebido', 'etapa_fim', 'estado', 'versao_pronta', 'entregue', 'qa_reprovado', 'etapa_erro'].includes(e.tipo)) recarregar();
+    if (e.tipo === 'estado' || e.tipo === 'etapa_erro' || e.tipo === 'aviso') setSinalR11((n) => n + 1);
   }, [recarregar]);
   const fio = useFioAoVivo(inicial.id, receber, useCallback(() => irEntrar(inicial.id), [inicial.id]));
   const conectado = fio.conectado && !fio.semSinal;      // 20 s sem sinal conta como desconectado (a tela avisa)
@@ -261,6 +294,30 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     trava.current = true;
     try { return await postar(`/versoes/${vid}/reprovar`, { motivo }); } finally { trava.current = false; }
   }
+  // "Tentar de novo", "Conferir de novo" e "Ler de novo": a mesma rota e a mesma guarda da conversa (R12). Trava síncrona.
+  async function refazerEtapa(o: Acoes.Opcao) {
+    if (trava.current) return;
+    trava.current = true;
+    const chave = `${o.de}:${o.versao ?? ''}:${o.arquivo_id ?? ''}`;
+    setRefazendo(chave);
+    setErro('');
+    navigator.vibrate?.(8);
+    try {
+      const r = await Acoes.refazer(p.id, o);
+      if (r.ok) {
+        if (typeof r.dados.estado === 'string') {
+          ultimoEstado.current = { estado: r.dados.estado, t: performance.now() };
+          setP((x) => ({ ...x, estado: r.dados.estado }));
+        }
+        recarregar();
+        return;
+      }
+      if (r.status === 401) { window.location.assign('/entrar'); return; }
+      setErro(r.erro);
+      void lerRefazer();
+    } finally { trava.current = false; setRefazendo(null); }
+  }
+  const chaveOpcao = (o: Acoes.Opcao) => `${o.de}:${o.versao ?? ''}:${o.arquivo_id ?? ''}`;
   // requestSubmit não existe no Safari < 16: cai para reportValidity + evento de submit
   const submeterPedido = () => {
     const f = formPedido.current;
@@ -426,18 +483,42 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       </>
     );
   } else if (['erro', 'reprovado_qa'].includes(p.estado)) {
-    comando = (
-      <>
-        <p className="barra-comando__status" role="status">
-          <strong>{p.estado === 'erro' ? 'A edição parou com erro' : 'A conferência segurou a entrega'}</strong>
-          <span>o motivo está na mesa ao vivo</span>
-        </p>
-        {temMesa && (
-          <button type="button" className="botao botao--secundario barra-comando__secundario"
-            onClick={() => irPara('mesa')} data-teste="ver-motivo">Ver motivo</button>
-        )}
-      </>
+    const reprovado = p.estado === 'reprovado_qa';
+    const sugerida = refazerOps && refazerOps.sugerida !== null ? refazerOps.opcoes[refazerOps.sugerida] ?? null : null;
+    const alvo = reprovado ? (refazerOps?.opcoes.find((o) => o.de === 'conferencia') ?? null) : sugerida;
+    const verMotivo = temMesa && (
+      <button type="button" className="botao botao--secundario barra-comando__secundario"
+        onClick={() => irPara('mesa')} data-teste="ver-motivo">Ver motivo</button>
     );
+    if (alvo) {
+      const indo = refazendo === chaveOpcao(alvo);
+      comando = (
+        <>
+          <div className="barra-comando__contexto" role="status" data-teste="refazer-contexto">
+            <strong>{reprovado ? 'A conferência segurou a entrega' : 'A edição parou com erro'}</strong>
+            <span className="barra-comando__faz">{reprovado ? 'As regras mudaram desde a última conferência.' : alvo.faz}</span>
+            <span className="barra-comando__custo" data-teste="refazer-custo">{Acoes.custoTexto(alvo.custo_usd_est, alvo.custo_ate)} · {Acoes.minutosTexto(alvo.minutos_est)}</span>
+          </div>
+          <button type="button" className="botao botao--principal barra-comando__principal" disabled={Boolean(refazendo)}
+            data-teste={reprovado ? 'conferir-de-novo' : 'tentar-de-novo'} data-de={alvo.de}
+            onClick={() => void refazerEtapa(alvo)}>
+            {indo ? 'Tentando…' : reprovado ? 'Conferir de novo' : 'Tentar de novo'}
+          </button>
+          {verMotivo}
+        </>
+      );
+    } else {
+      comando = (
+        <>
+          <p className="barra-comando__status" role="status">
+            <strong>{reprovado ? 'A conferência segurou a entrega' : 'A edição parou com erro'}</strong>
+            <span>o motivo está na mesa ao vivo</span>
+            {!reprovado && refazerOps && <span data-teste="refazer-nada">Não achei o que tentar de novo. Peça na conversa.</span>}
+          </p>
+          {verMotivo}
+        </>
+      );
+    }
   } else {
     // editando: o relógio já é o primeiro cartão da tela, então a barra só informa (sem "Ver ao vivo" repetido)
     comando = (
@@ -465,17 +546,30 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       {p.nuvem && <ResumoNuvemLinha n={p.nuvem} />}
       {p.arquivos.length > 0 && (
         <ul className="arquivos" aria-label="Arquivos no projeto">
-          {p.arquivos.map((a) => (
-            <li className="arquivo" key={a.id} data-nuvem={a.nuvem ?? undefined}>
+          {p.arquivos.map((a) => {
+            const ler = refazerOps?.opcoes.find((o) => o.de === 'leitura' && o.arquivo_id === a.id) ?? null;
+            return (
+            <li className={`arquivo${ler ? ' arquivo--fora' : ''}`} key={a.id} data-nuvem={a.nuvem ?? undefined} data-estado-arquivo={a.estado}>
               <span>{a.nome}
                 {/* selo só com a cópia CONFERIDA no Cloudflare (tamanho igual ao do editor); não é span: o aceite lê o último span */}
                 {a.nuvem === 'guardado' && <b className="selo-nuvem" data-teste="selo-nuvem" title="Cópia conferida no Cloudflare">
                   <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   <i className="so-leitor">cópia guardada no </i>Cloudflare</b>}
               </span>
-              <span>{a.bytes > 1 ? `${bytesLegiveis(a.bytes)} · ` : ''}{a.estado === 'analisado' ? 'lido' : a.estado === 'ingerido' ? 'lendo falas' : 'na fila'}</span>
+              <span>{a.bytes > 1 ? `${bytesLegiveis(a.bytes)} · ` : ''}{a.estado === 'analisado' ? 'lido' : a.estado === 'ingerido' ? 'lendo falas' : a.estado === 'falhou' ? 'ficou de fora' : 'na fila'}</span>
+              {ler && (
+                <div className="arquivo__ler" data-teste="ler-de-novo-bloco">
+                  <button type="button" className="botao botao--secundario botao--pequeno" disabled={Boolean(refazendo)}
+                    onClick={() => void refazerEtapa(ler)} data-teste="ler-de-novo" data-arquivo={a.id}>
+                    {refazendo === chaveOpcao(ler) ? 'Lendo…' : 'Ler de novo'}
+                  </button>
+                  <p className="arquivo__custo">{Acoes.custoTexto(ler.custo_usd_est, ler.custo_ate)} · {Acoes.minutosTexto(ler.minutos_est)}</p>
+                  {ler.atencao && <p className="arquivo__atencao">{ler.atencao}</p>}
+                </div>
+              )}
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
       {aberto && !fechado && (
@@ -492,6 +586,8 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       )}
     </section>
   );
+  const notas = lerNotas(p.dados?.notas);
+  const blocoNotas = notas.length ? <Notas key="notas" notas={notas} /> : null;
   const blocoPedido = (
     <section key="pedido" className="cartao bloco-pedido" aria-labelledby="t-pedido">
       <h2 className="cartao__titulo" id="t-pedido">Pedido</h2>
@@ -566,7 +662,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   // aberto: material, pedido | pedido: pedido, material | editando: relógio, versões, diário, pedido, material
   // entregue: filme, relógio, diário, pedido, material. No desktop a mesa fica à esquerda e a projeção à direita (CSS).
   const mesa = (
-    <div className="mesa__mesa" key="mesa">{fase === 'aberto' ? [blocoMaterial, blocoPedido] : [blocoPedido, blocoMaterial]}</div>
+    <div className="mesa__mesa" key="mesa">{fase === 'aberto' ? [blocoMaterial, blocoPedido, blocoNotas] : [blocoNotas, blocoPedido, blocoMaterial]}</div>
   );
   const projecao = (
     <div className="mesa__projecao" key="projecao">
@@ -587,6 +683,9 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       <div className="mesa" data-fase={fase}>
         {fase === 'editando' || fase === 'entregue' ? [projecao, mesa] : [mesa, projecao]}
       </div>
+
+      {/* apagar: no fim da página, longe do Aprovar e da barra de comando; nunca pela conversa */}
+      {!conversa.aberta && <ApagarProjeto key={p.id} pid={p.id} nome={p.nome} enviando={enviando} />}
 
       {conversa.aberta && (
         <Fio c={conversa} arquivos={p.arquivos.map((a) => a.id)} palco={{ nome: p.nome, estado: p.estado, rotuloEstado: ROTULO_ESTADO[p.estado] ?? p.estado,

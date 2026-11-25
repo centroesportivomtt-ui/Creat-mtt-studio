@@ -12,6 +12,8 @@
 //    com botões, cartões de pedido e ajuste, parar, erro, reinício, teto, chave, sessão vencida e dois aparelhos, com prints;
 // 7. mesa ao vivo (scripts/aceite-mesa.mjs, onda 2): quem trabalha agora, passos com achado e custo, decisão da direção,
 //    bastidores, taxímetro, erro e aviso em texto puro, interrupção sem avatar pulsando e rede caindo sem duplicar.
+// 8. onda 3 (scripts/aceite-onda3.mjs): "Tentar de novo", "Conferir de novo", "Ler de novo", cartões de trilha, refazer e nota,
+//    apagar projeto (com a recusa da página de entregas), regras do Caderno com "Apagar" e o prazo da conversa, com prints.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomBytes, scryptSync } from 'node:crypto';
 import fs from 'node:fs';
@@ -20,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { aceiteConversa } from './aceite-conversa.mjs';
 import { aceiteMesa } from './aceite-mesa.mjs';
+import { aceiteOnda3 } from './aceite-onda3.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.resolve(AQUI, '..');
@@ -844,6 +847,9 @@ async function principal() {
 
   // ---------- 6. mesa ao vivo (onda 2 da conversa): a equipe trabalhando, com achado, custo e bastidores ----------
   await medir('mesa_s', () => aceiteMesa({ BASE, MOTOR: `http://127.0.0.1:${PORTA_MOTOR}`, TOKEN: env.MOTOR_TOKEN, SENHA, DADOS, ok }));
+
+  // ---------- 7. onda 3: refazer uma etapa, cartões novos, apagar projeto, regras do Caderno e prazo da conversa ----------
+  await medir('onda3_s', () => aceiteOnda3({ BASE, MOTOR: `http://127.0.0.1:${PORTA_MOTOR}`, TOKEN: env.MOTOR_TOKEN, SENHA, DADOS, ok }));
 
   const olhar = acharOlhar();
   if (olhar) {

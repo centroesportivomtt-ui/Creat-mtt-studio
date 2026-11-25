@@ -57,6 +57,14 @@ export default function ChaveConversa({ variante }: { variante: 'menu' | 'cartao
         Teto de {usd(e?.teto_usd_dia ?? 3)} por dia, travado no editor. Chegou no teto, a conversa para, avisa e volta à meia-noite
         (horário da Bahia). A mesa e os botões de sempre continuam funcionando. Cada resposta mostra quanto custou.
       </p>
+      {e && typeof e.retencao_dias === 'number' && (
+        // onda 3 (R20): por quanto tempo a conversa fica guardada, numa linha
+        <p className="aviso caderno__retencao" data-teste="caderno-retencao">
+          {e.retencao_dias > 0
+            ? `As mensagens da conversa ficam guardadas ${e.retencao_dias} dias depois de encerradas (ao aprovar um vídeo ou quando a conversa fica longa); a conversa em andamento nunca é apagada.`
+            : 'As mensagens da conversa ficam guardadas sem prazo.'}
+        </p>
+      )}
       {noServidor && <p className="aviso" style={{ marginTop: 8 }}>A conversa está desligada no servidor. Aqui não dá para religar: avise o suporte.</p>}
       {erro && <p className="erro" role="alert" style={{ marginTop: 8 }}>{erro}</p>}
     </section>
