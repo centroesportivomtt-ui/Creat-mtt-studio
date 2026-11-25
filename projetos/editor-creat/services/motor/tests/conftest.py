@@ -14,6 +14,8 @@ SCRATCH = pathlib.Path("/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936
 def dados(tmp_path, monkeypatch):
     monkeypatch.setenv("EDITOR_DADOS", str(tmp_path / "dados"))
     monkeypatch.setenv("EDITOR_NICE", "0")
+    for n in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "R2_BACKUP_BUCKET"):
+        monkeypatch.delenv(n, raising=False)                  # chaves reais do R2 na máquina não vazam para o teste
     monkeypatch.setenv("EDITOR_SONDAR_LINK", "0")             # a rota de importar não confere o link na internet (test_sondar usa servidor local)
     monkeypatch.setenv("EDITOR_MODELOS_BAIXAR", "0")         # teste nunca baixa modelo da internet (quem precisa, liga no próprio teste)
     return tmp_path / "dados"

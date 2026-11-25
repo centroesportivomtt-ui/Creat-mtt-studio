@@ -284,3 +284,74 @@ def test_tenta_de_novo_quando_sobe_versao_nova(dados, monkeypatch):
     arq.write_text(json.dumps({"estado": "ok", "commit": "aaaaaaa"}))
     monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "bbbbbbb")
     assert not backup.tentar_no_boot(cfg)
+
+
+class _S3Falso:
+    """Cliente S3/R2 falso: guarda em memória, como o boto3 (upload_file, head_object, paginador, delete_object)."""
+    def __init__(self):
+        self.obj = {}
+
+    def upload_file(self, origem, bucket, chave):
+        self.obj[(bucket, chave)] = pathlib.Path(origem).read_bytes()
+
+    def head_object(self, Bucket, Key):
+        return {"ContentLength": len(self.obj[(Bucket, Key)])}
+
+    def delete_object(self, Bucket, Key):
+        self.obj.pop((Bucket, Key), None)
+
+    def get_paginator(self, _nome):
+        s3 = self
+
+        class P:
+            def paginate(self, Bucket, Prefix):
+                return [{"Contents": [{"Key": k} for (b, k) in sorted(s3.obj) if b == Bucket and k.startswith(Prefix)]}]
+        return P()
+
+
+def _r2_env(monkeypatch):
+    for n, v in (("R2_ACCOUNT_ID", "conta"), ("R2_ACCESS_KEY_ID", "id"), ("R2_SECRET_ACCESS_KEY", "segredo"), ("R2_BUCKET", "balde")):
+        monkeypatch.setenv(n, v)
+
+
+def test_r2_e_o_destino_principal_e_o_dropbox_vira_segunda_copia(tmp_path, dados, monkeypatch):
+    from motor import backup, config
+    cfg = config.carregar()
+    monkeypatch.delenv("EDITOR_BACKUP_PEDIDO", raising=False)
+    assert not backup.r2_configurado() and not backup.precisa_rodar(cfg)
+    _r2_env(monkeypatch)
+    assert backup.r2_configurado() and backup.precisa_rodar(cfg)          # só com o R2, o backup já agenda
+    s3 = _S3Falso()
+    e = backup.rodar(cfg, enviar_r2_fn=lambda arqs: backup.enviar_r2(arqs, cliente=s3))
+    assert e["estado"] == "ok" and e["copias"] == ["R2"] and e["r2"] is True
+    chaves = [k for (_, k) in s3.obj]
+    assert len(chaves) == 2 and all(k.startswith("backup-editor/") for k in chaves)
+    assert any(k.endswith(".zip") for k in chaves) and any("editor-memoria-" in k for k in chaves)
+    # Dropbox configurado mas falhando: o R2 garante a cópia; a falha do Dropbox fica escrita
+    monkeypatch.setenv("EDITOR_BACKUP_PEDIDO", "https://www.dropbox.com/request/abcdefghij")
+    e = backup.rodar(cfg, enviar_fn=lambda c, a, u: (False, "pagina fechada"), enviar_r2_fn=lambda arqs: backup.enviar_r2(arqs, cliente=s3))
+    assert e["estado"] == "ok" and e["copias"] == ["R2"] and "Dropbox" in e["erro"]
+    # os dois falham: falha, com os dois motivos
+    e = backup.rodar(cfg, enviar_fn=lambda c, a, u: (False, "x"), enviar_r2_fn=lambda arqs: (False, "sem rede"))
+    assert e["estado"] == "falha" and "R2: sem rede" in e["erro"] and "Dropbox" in e["erro"]
+
+
+def test_r2_guarda_so_30_dias_e_confere_tamanho(tmp_path, monkeypatch):
+    from motor import backup
+    _r2_env(monkeypatch)
+    s3 = _S3Falso()
+    for d in range(1, 36):
+        s3.obj[("balde", f"backup-editor/2026-10-{d:02d}/a.zip")] = b"x"
+    s3.obj[("balde", "outra-coisa/video.mp4")] = b"v"                       # fora do prefixo: nunca é apagado
+    a = tmp_path / "editor-backup-1.zip"
+    a.write_bytes(b"12345")
+    ok, msg = backup.enviar_r2([a], cliente=s3)
+    dias = {k.split("/")[1] for (_, k) in s3.obj if k.startswith("backup-editor/")}
+    assert ok and len(dias) == 30 and ("balde", "outra-coisa/video.mp4") in s3.obj
+    assert "2026-10-01" not in dias and "segredo" not in msg
+
+    class Curto(_S3Falso):
+        def head_object(self, Bucket, Key):
+            return {"ContentLength": 1}
+    ok, msg = backup.enviar_r2([a], cliente=Curto())
+    assert not ok and "esperado 5" in msg

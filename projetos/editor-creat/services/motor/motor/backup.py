@@ -68,6 +68,59 @@ def pedido(cfg) -> str:
     return url if PEDIDO_OK.match(url) else ""
 
 
+# ---------------------------------------------------------------- destino R2 (Cloudflare), 25/11
+# Pedido do dono: o backup vai para o Cloudflare R2 dele. Com as 4 variáveis do R2 na hospedagem (R2_ACCOUNT_ID,
+# R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY e R2_BUCKET, ou R2_BACKUP_BUCKET só para o backup), o R2 vira o destino PRINCIPAL:
+# é API, não depende de página do Dropbox (que travou em 23/11 com a conta em avaliação). O Dropbox continua como segunda
+# cópia quando o pedido de arquivos estiver configurado. Não muda onde os vídeos ficam (EDITOR_ARMAZENAMENTO segue igual).
+R2_PREFIXO = "backup-editor/"
+R2_MANTER = 30                    # pacotes guardados no R2 (um por dia: um mês)
+
+
+def r2_configurado() -> bool:
+    return all(os.environ.get(n, "").strip() for n in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY")) \
+        and bool(_r2_bucket())
+
+
+def _r2_bucket() -> str:
+    return (os.environ.get("R2_BACKUP_BUCKET") or os.environ.get("R2_BUCKET") or "").strip()
+
+
+def _r2_cliente():
+    import boto3
+    from botocore.config import Config as BotoConfig
+    conta = os.environ["R2_ACCOUNT_ID"].strip()
+    return boto3.client("s3", endpoint_url=f"https://{conta}.r2.cloudflarestorage.com", region_name="auto",
+                        aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"].strip(),
+                        aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"].strip(),
+                        config=BotoConfig(signature_version="s3v4", retries={"max_attempts": 4, "mode": "standard"}))
+
+
+def enviar_r2(arquivos: list[pathlib.Path], cliente=None) -> tuple[bool, str]:
+    """Sobe os arquivos para <bucket>/backup-editor/AAAA-MM-DD/, confere o tamanho de cada um lá e guarda só os 30 dias
+    mais recentes. Devolve (ok, mensagem sem segredo)."""
+    try:
+        c = cliente or _r2_cliente()
+        b = _r2_bucket()
+        dia = time.strftime("%Y-%m-%d", time.gmtime())
+        for a in map(pathlib.Path, arquivos):
+            chave = f"{R2_PREFIXO}{dia}/{a.name}"
+            c.upload_file(str(a), b, chave)
+            tam = int(c.head_object(Bucket=b, Key=chave)["ContentLength"])
+            if tam != a.stat().st_size:                       # noqa: SIM102
+                return False, f"o R2 guardou {tam} bytes de {a.name}, esperado {a.stat().st_size}"
+        dias = sorted({o["Key"][len(R2_PREFIXO):].split("/", 1)[0]
+                       for pg in c.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=R2_PREFIXO)
+                       for o in pg.get("Contents", []) or []})
+        for velho in dias[:-R2_MANTER]:
+            for pg in c.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=f"{R2_PREFIXO}{velho}/"):
+                for o in pg.get("Contents", []) or []:
+                    c.delete_object(Bucket=b, Key=o["Key"])
+        return True, f"{len(arquivos)} arquivo(s) no R2 em {R2_PREFIXO}{dia}/"
+    except Exception as e:  # noqa: BLE001 - o motivo vai para a saúde, sem chave nem endereço
+        return False, _SEGREDO.sub("***", f"{type(e).__name__}: {str(e)[:200]}")
+
+
 def configurar(cfg, url: str) -> None:
     url = (url or "").strip()
     if not PEDIDO_OK.match(url):
@@ -254,10 +307,12 @@ def _arq_estado(cfg) -> pathlib.Path:
 def estado(cfg) -> dict:
     """Para a saúde e a tela: nunca devolve o endereço do destino, só se existe."""
     e = _ler_json(_arq_estado(cfg), {})
-    out = {"destino": "configurado" if pedido(cfg) else "falta configurar", "estado": e.get("estado", "nunca rodou")}
+    out = {"destino": "configurado" if (pedido(cfg) or r2_configurado()) else "falta configurar", "estado": e.get("estado", "nunca rodou")}
+    if r2_configurado():
+        out["r2"] = True
     if PEDIDO_OK.match(os.environ.get("EDITOR_BACKUP_PEDIDO", "").strip()):
         out["destino_fixo"] = True                      # veio da variável da hospedagem: a tela não troca
-    for k in ("ultimo_ok", "ultima_tentativa", "bytes", "arquivos", "erro", "midia_fora"):
+    for k in ("ultimo_ok", "ultima_tentativa", "bytes", "arquivos", "erro", "midia_fora", "copias"):
         if e.get(k) is not None:
             out[k] = e[k]
     if e.get("ultimo_ok_ts"):
@@ -265,7 +320,7 @@ def estado(cfg) -> dict:
     return out
 
 
-def rodar(cfg, *, enviar_fn=None) -> dict:
+def rodar(cfg, *, enviar_fn=None, enviar_r2_fn=None) -> dict:
     """Monta e envia. Um por vez (trava). Sem destino, monta o pacote local e diz que falta configurar."""
     if not _TRAVA.acquire(blocking=False):
         return dict(estado(cfg), estado="rodando")
@@ -276,15 +331,20 @@ def rodar(cfg, *, enviar_fn=None) -> dict:
         try:
             pac = montar(cfg)
             novo.update(bytes=pac["bytes"], arquivos=pac["arquivos"], midia_fora=pac["midia_fora"])
-            url = pedido(cfg)
-            if not url:
-                novo.update(estado="sem destino", erro="pacote montado no servidor, mas falta o endereço do Dropbox (tela Backup do Caderno)")
+            url, arqs = pedido(cfg), [pac["zip"], pac["memoria"]]
+            copias, erros = [], []
+            if r2_configurado():                          # principal: Cloudflare R2 (API)
+                ok, msg = (enviar_r2_fn or enviar_r2)(arqs)
+                (copias if ok else erros).append("R2" if ok else f"R2: {msg}")
+            if url:                                       # segunda cópia: pedido de arquivos do Dropbox
+                ok, msg = (enviar_fn or enviar)(cfg, arqs, url)
+                (copias if ok else erros).append("Dropbox" if ok else f"o Dropbox não confirmou o envio: {msg}")
+            if not url and not r2_configurado():
+                novo.update(estado="sem destino", erro="pacote montado no servidor, mas falta o endereço do destino (variáveis do R2 na hospedagem ou link do Dropbox na tela Backup)")
+            elif copias:                                  # uma cópia fora do servidor já protege; a falha da outra fica visível
+                novo.update(estado="ok", ultimo_ok=_agora(), ultimo_ok_ts=time.time(), copias=copias, erro="; ".join(erros) or None)
             else:
-                ok, msg = (enviar_fn or enviar)(cfg, [pac["zip"], pac["memoria"]], url)
-                if ok:
-                    novo.update(estado="ok", ultimo_ok=_agora(), ultimo_ok_ts=time.time(), erro=None)
-                else:
-                    novo.update(estado="falha", erro=f"o Dropbox não confirmou o envio: {msg}")
+                novo.update(estado="falha", copias=[], erro="; ".join(erros))
         except Exception as e:  # noqa: BLE001 - o motivo fica visível na saúde
             novo.update(estado="falha", erro=f"{type(e).__name__}: {str(e)[:200]}")
         _gravar_json(_arq_estado(cfg), novo)
@@ -305,14 +365,14 @@ def _commit() -> str | None:
 
 def tentar_no_boot(cfg) -> bool:
     """Falhou numa versão anterior do editor? Então a versão nova (que pode ter a correção) tenta já, sem esperar 1 hora."""
-    if not pedido(cfg):
+    if not pedido(cfg) and not r2_configurado():
         return False
     e = _ler_json(_arq_estado(cfg), {})
     return e.get("estado") == "falha" and e.get("commit") != _commit()
 
 
 def precisa_rodar(cfg, agora: float | None = None) -> bool:
-    if not pedido(cfg):
+    if not pedido(cfg) and not r2_configurado():
         return False
     e = _ler_json(_arq_estado(cfg), {})
     agora = agora or time.time()
