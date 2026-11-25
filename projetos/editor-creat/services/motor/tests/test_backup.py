@@ -276,7 +276,7 @@ def test_tenta_de_novo_quando_sobe_versao_nova(dados, monkeypatch):
     monkeypatch.setenv("EDITOR_BACKUP_PEDIDO", "https://www.dropbox.com/request/ZZZZZZZZ9999")
     arq = pathlib.Path(cfg.dados) / "backup_estado.json"
     arq.parent.mkdir(parents=True, exist_ok=True)
-    arq.write_text(json.dumps({"estado": "falha", "commit": "aaaaaaa"}))
+    arq.write_text(json.dumps({"estado": "falha", "commit": "aaaaaaa", "destinos": ["dropbox"]}))
     monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "bbbbbbbcccc")
     assert backup.tentar_no_boot(cfg)                                          # versão nova: tenta já
     monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "aaaaaaa999")
@@ -355,3 +355,13 @@ def test_r2_guarda_so_30_dias_e_confere_tamanho(tmp_path, monkeypatch):
             return {"ContentLength": 1}
     ok, msg = backup.enviar_r2([a], cliente=Curto())
     assert not ok and "esperado 5" in msg
+
+
+def test_destino_novo_tenta_no_boot_sem_esperar(tmp_path, dados, monkeypatch):
+    from motor import backup, config
+    cfg = config.carregar()
+    monkeypatch.setenv("EDITOR_BACKUP_PEDIDO", "https://www.dropbox.com/request/abcdefghij")
+    backup.rodar(cfg, enviar_fn=lambda c, a, u: (False, "pagina fechada"))
+    assert not backup.tentar_no_boot(cfg)                          # mesma versão, mesmo destino: espera o intervalo
+    _r2_env(monkeypatch)
+    assert backup.tentar_no_boot(cfg)                              # o R2 entrou na hospedagem: tenta já no boot

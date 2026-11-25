@@ -327,7 +327,7 @@ def rodar(cfg, *, enviar_fn=None, enviar_r2_fn=None) -> dict:
     try:
         ant = _ler_json(_arq_estado(cfg), {})
         novo = {k: ant.get(k) for k in ("ultimo_ok", "ultimo_ok_ts")}
-        novo.update(ultima_tentativa=_agora(), ultima_tentativa_ts=time.time(), commit=_commit())
+        novo.update(ultima_tentativa=_agora(), ultima_tentativa_ts=time.time(), commit=_commit(), destinos=_destinos(cfg))
         try:
             pac = montar(cfg)
             novo.update(bytes=pac["bytes"], arquivos=pac["arquivos"], midia_fora=pac["midia_fora"])
@@ -363,12 +363,17 @@ def _commit() -> str | None:
     return (os.environ.get("RAILWAY_GIT_COMMIT_SHA") or "")[:7] or None
 
 
+def _destinos(cfg) -> list[str]:
+    return (["r2"] if r2_configurado() else []) + (["dropbox"] if pedido(cfg) else [])
+
+
 def tentar_no_boot(cfg) -> bool:
-    """Falhou numa versão anterior do editor? Então a versão nova (que pode ter a correção) tenta já, sem esperar 1 hora."""
+    """Falhou numa versão anterior do editor, ou ganhou destino novo (ex.: as variáveis do R2 entraram na hospedagem)? Então
+    tenta já, sem esperar 1 hora."""
     if not pedido(cfg) and not r2_configurado():
         return False
     e = _ler_json(_arq_estado(cfg), {})
-    return e.get("estado") == "falha" and e.get("commit") != _commit()
+    return e.get("estado") in ("falha", "sem destino") and (e.get("commit") != _commit() or e.get("destinos") != _destinos(cfg))
 
 
 def precisa_rodar(cfg, agora: float | None = None) -> bool:
