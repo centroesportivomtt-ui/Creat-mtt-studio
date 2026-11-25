@@ -22,8 +22,10 @@ import revelacao from "./modelos/revelacao.js";
 import legenda_revelada from "./modelos/legenda_revelada.js";
 import laboratorio from "./modelos/laboratorio.js";
 import papel from "./modelos/papel.js";
+// agenda da semana (reunião de alinhamento, 24/11)
+import semana from "./modelos/semana.js";
 
-const modelos = { fundo, gancho, legenda, chip, transicao, hud, fecho, heroi, abas, gancho2, selo, checklist, rotulo, camadas, stats, pilha, fecho2, revelacao, legenda_revelada, laboratorio, papel };
+const modelos = { fundo, gancho, legenda, chip, transicao, hud, fecho, heroi, abas, gancho2, selo, checklist, rotulo, camadas, stats, pilha, fecho2, revelacao, legenda_revelada, laboratorio, papel, semana };
 
 async function fontes() {
   await Promise.all([
