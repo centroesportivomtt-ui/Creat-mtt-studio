@@ -48,7 +48,7 @@ Promise.all([fetch(IDX,{cache:"no-store"}).then(r=>r.json()),fetch(META,{cache:"
         const md=/\.(mp4|mov|webm)$/i.test(f)?Object.assign(document.createElement("video"),{src:u,controls:true,preload:"metadata",playsInline:true}):/\.(jpe?g|png|webp)$/i.test(f)?Object.assign(document.createElement("img"),{src:u,loading:"lazy",alt:f}):null;
         if(md)d2.append(md);
         const n=document.createElement("div");n.className="n";n.textContent=f;const mm=document.createElement("div");mm.className="m";mm.textContent=mb(it.t)+" · original, sem recompressão";
-        const a=Object.assign(document.createElement("a"),{href:u,download:f,textContent:"Baixar"});
+        const a=Object.assign(document.createElement("a"),{href:u,download:f,target:"_blank",rel:"noopener",textContent:"Baixar"});
         d2.append(n,mm,a);g.append(d2);
       }
       box.append(g);

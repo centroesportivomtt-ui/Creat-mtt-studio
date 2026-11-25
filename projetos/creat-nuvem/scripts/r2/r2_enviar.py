@@ -91,7 +91,7 @@ def main():
     for f, k in plano:
         tam = os.path.getsize(f)
         tipo = mimetypes.guess_type(f)[0] or "application/octet-stream"
-        s3.upload_file(f, DEPOSITO, k, Config=cfg, ExtraArgs={"ContentType": tipo})
+        s3.upload_file(f, DEPOSITO, k, Config=cfg, ExtraArgs={"ContentType": tipo, "ContentDisposition": f'attachment; filename="{os.path.basename(k)}"'})
         raiz = raiz_versao(os.path.basename(k))
         for o in s3.list_objects_v2(Bucket=DEPOSITO, Prefix=pasta).get("Contents", []):
             if o["Key"] != k and raiz_versao(os.path.basename(o["Key"])) == raiz:
