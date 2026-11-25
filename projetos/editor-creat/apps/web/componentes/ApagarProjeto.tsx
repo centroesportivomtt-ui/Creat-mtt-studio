@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as A from '@/lib/acoes';
 import { bytesLegiveis } from '@/lib/estados';
+import { irEntrar } from '@/lib/pendentes';
 
 type Fase = 'fechado' | 'abrindo' | 'aberto' | 'apagando';
 
@@ -22,7 +23,7 @@ export default function ApagarProjeto({ pid, nome, enviando }: { pid: string; no
   const ler = useCallback(async (): Promise<A.Previa | null> => {
     const r = await A.previaApagar(pid);
     if (r.ok) { setPrevia(r.dados); setErro(''); return r.dados; }
-    if (r.status === 401) { window.location.assign('/entrar'); return null; }
+    if (r.status === 401) { irEntrar(pid); return null; }
     setErro(r.erro);
     return null;
   }, [pid]);
@@ -53,7 +54,7 @@ export default function ApagarProjeto({ pid, nome, enviando }: { pid: string; no
     try {
       const r = await A.retirar(pid, v);
       if (r.ok) { setTirando(v); await ler(); return; }
-      if (r.status === 401) { window.location.assign('/entrar'); return; }
+      if (r.status === 401) { irEntrar(pid); return; }
       setErro(r.erro);
     } finally { trava.current = false; }
   }
@@ -65,7 +66,7 @@ export default function ApagarProjeto({ pid, nome, enviando }: { pid: string; no
     try {
       const r = await A.apagar(pid, digitado);
       if (r.ok) { window.location.assign('/projetos?apagado=1'); return; }
-      if (r.status === 401) { window.location.assign('/entrar'); return; }
+      if (r.status === 401) { irEntrar(pid); return; }
       setErro(r.erro);
       setFase('aberto');
       if (r.status === 409) void ler();     // o motivo mudou (job novo, conversa respondendo): a prévia mostra o de agora

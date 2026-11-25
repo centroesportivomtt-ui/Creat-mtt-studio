@@ -43,7 +43,7 @@ export default function MemoriaLista({ tipo, titulo, num, idSecao, itens: inicia
         relogio.current = window.setTimeout(() => setFeito(''), 6000);
         return;
       }
-      if (r.status === 401) { window.location.assign('/entrar'); return; }
+      if (r.status === 401) { window.location.assign('/entrar?volta=%2Fcaderno'); return; }
       setErros((e) => ({ ...e, [it.id]: r.erro }));
     } finally { trava.current = false; setIndo(null); }
   }

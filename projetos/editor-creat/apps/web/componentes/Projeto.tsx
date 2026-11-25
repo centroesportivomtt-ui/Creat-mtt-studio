@@ -111,7 +111,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
         const u = ultimoEstado.current;
         if (u && u.t > pedidoEm) novo.estado = u.estado;
         setP(novo);
-      } else if (r?.status === 401) window.location.assign('/entrar');
+      } else if (r?.status === 401) irEntrar(inicial.id);
     }, 250);
   }, [inicial.id, carregarEntregas]);
 
@@ -146,7 +146,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     const r = await Acoes.refazerOpcoes(inicial.id);
     if (n !== leituraR11.current) return;               // resposta atrasada não desfaz uma leitura mais nova
     if (r.ok) setRefazerOps(r.dados);
-    else if (r.status === 401) window.location.assign('/entrar');
+    else if (r.status === 401) irEntrar(inicial.id);
   }, [inicial.id]);
   useEffect(() => {
     if (!precisaR11) { leituraR11.current++; setRefazerOps(null); return; }
@@ -231,7 +231,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     if (!r) { setErro('Sem conexão com o site. Tente de novo.'); return null; }
     const c = await r.json().catch(() => null);
     if (!r.ok) {
-      if (r.status === 401) { window.location.assign('/entrar'); return null; }
+      if (r.status === 401) { irEntrar(p.id); return null; }
       setErro(typeof c?.detail === 'string' ? c.detail : r.status === 422 ? 'O pedido veio quebrado. Recarregue a página e tente de novo.' : `O editor não conseguiu agora (erro ${r.status}). Tente de novo.`);
       return null;
     }
@@ -312,7 +312,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
         recarregar();
         return;
       }
-      if (r.status === 401) { window.location.assign('/entrar'); return; }
+      if (r.status === 401) { irEntrar(p.id); return; }
       setErro(r.erro);
       void lerRefazer();
     } finally { trava.current = false; setRefazendo(null); }
@@ -802,7 +802,7 @@ function Importar({ aberto, projeto, aoTerminar, aoMudar }: {
       await Promise.all(Array.from({ length: Math.min(4, fila.length) }, async () => {
         for (let u = fila.shift(); u !== undefined && !saiu; u = fila.shift()) await um(u);
       }));
-      if (saiu) { window.location.assign('/entrar'); return; }
+      if (saiu) { irEntrar(projeto); return; }
       setIndo(false);
       const erros = [...porMotivo].map(([m, quais]) => {
         const nomes = quais.slice(0, 3).join(', ') + (quais.length > 3 ? ` e mais ${quais.length - 3}` : '');
@@ -1112,7 +1112,7 @@ function NasEntregas({ pid, v, cliente, aoMudar }: { pid: string; v: Versao; cli
       const r = await fetch(`/api/motor/v1/projetos/${pid}/versoes/${v.id}/entregas`, {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(!e && cliente ? { cliente } : {}),
       });
-      if (r.status === 401) { window.location.assign('/entrar'); return; }
+      if (r.status === 401) { irEntrar(pid); return; }
       const c = await r.json().catch(() => null);
       if (!r.ok) {
         const d = typeof c?.detail === 'string' ? c.detail : 'O editor não conseguiu agora. Tente de novo em instantes.';
