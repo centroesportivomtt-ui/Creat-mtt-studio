@@ -520,3 +520,16 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Auditoria de lacunas** (`docs/lacunas-25-11.md`): 48 confirmadas.
 - **Backup em FALHA desde 23/11 16:27:** todos os pedidos de arquivo do Dropbox respondem "fechada, excluída ou nunca existiu", inclusive um criado em 24/11. Causa do lado da conta (espaço ou plano, não confirmado). Aguardando o dono.
 - **Comando oficial de 25/11:** pesquisas e plano em `docs/`. O crítico barrou as ondas de cor e exportação até 8 correções; podem começar a Onda 0, a 1 (leitura da gravação) e a 5a (modos como dados).
+
+## 25/11: backup resolvido pelo Cloudflare R2
+- **Causa da falha desde 23/11:** os pedidos de arquivo do Dropbox abrem como "fechada, excluída ou nunca existiu", até um criado agora.
+  - O dono confirmou isso pelo próprio navegador, logado.
+  - A equipe está em "Versão de avaliação do Dropbox Standard" (painel do Admin).
+- **Solução:** `backup.py` ganhou o R2 como destino principal, por API.
+  - Grava em `<bucket>/backup-editor/AAAA-MM-DD/`, confere o tamanho de cada arquivo e guarda 30 dias.
+  - O Dropbox fica como segunda cópia.
+  - O backup tenta na hora quando ganha destino novo.
+  - A saúde mostra `r2` e `copias`.
+- **Railway:** com token do dono, guardado no cofre da sessão (o valor nunca apareceu), entraram `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` e `R2_BACKUP_BUCKET=creat-editor-midia`.
+  - Os vídeos continuam no disco do servidor: `EDITOR_ARMAZENAMENTO` não mudou. A virada para o R2 exige migração e CORS no bucket, a fazer com teste.
+- **Conferido em produção:** backup ok em 25/11 04:00:59, cópia R2, arquivos no bucket. pytest 452 ok.
