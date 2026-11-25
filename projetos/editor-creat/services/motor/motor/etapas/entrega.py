@@ -89,10 +89,29 @@ def entregar(arm, cfg, projeto: str, versao: str, *, publicar_em: str | None = N
         pub = provedor("publicacao", cfg).publicar(arm.url(f"{base}/final.mp4", 7 * 24 * 3600), texto, rede=publicar_em)
     rel = {"versao": versao, "link": arm.url(f"{base}/final.mp4", 7 * 24 * 3600), "capa": arm.url(f"{base}/capa.jpg", 7 * 24 * 3600),
            "legenda_post": texto, "sha256": sha, "publicacao": pub, "qa": f"{base}/qa.json"}
+    lic = licencas(arm, base)
+    if lic:
+        rel["licencas"] = lic
     arm.gravar(f"{base}/entrega.json", io.BytesIO(json.dumps(rel, ensure_ascii=False, indent=1).encode()))
     for d in (pathlib.Path(cfg.dados) / "tmp" / "montagem" / projeto / versao, pathlib.Path(cfg.dados) / "tmp" / "qa" / projeto / versao, tmp):
         shutil.rmtree(d, ignore_errors=True)
     return rel
+
+
+def licencas(arm, base: str) -> list[dict]:
+    """Sons reais do banco que entraram no filme (M6): lista curta para a licença (pacote, biblioteca, nome, item do
+    archive.org). Só metadado; o áudio nunca sai do cache."""
+    if not arm.existe(f"{base}/montagem.json"):
+        return []
+    try:
+        mont = json.loads(pathlib.Path(arm.caminho_local(f"{base}/montagem.json")).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    sr = mont.get("sons_reais") or {}
+    out = [{k: x.get(k) for k in ("pacote", "biblioteca", "nome", "item")} for x in sr.get("itens") or []]
+    if out:
+        out = [{**x, "licenca": (sr.get("licenca") or {}).get("nome")} for x in out]
+    return out
 
 
 @etapa("entrega")

@@ -18,6 +18,15 @@ def _env(nome: str, padrao: str = "") -> str:
     return os.environ.get(nome, padrao).strip()
 
 
+def _num_env(nome: str, padrao: float) -> float:
+    """Número do ambiente; valor vazio, inválido ou <= 0 cai no padrão (nunca derruba o motor na partida)."""
+    try:
+        v = float(_env(nome) or padrao)
+    except ValueError:
+        return padrao
+    return v if v > 0 else padrao
+
+
 def _tem(nome: str) -> bool:
     if nome == "ANTHROPIC_API_KEY":
         return bool(chave_anthropic())
@@ -57,6 +66,11 @@ class Config:
     publicacao: str = field(default_factory=lambda: _env("EDITOR_PUBLICACAO", "nenhuma"))          # nenhuma | metricool | meta
     motor_token: str = field(default_factory=lambda: _env("MOTOR_TOKEN"))
     som: str = field(default_factory=lambda: _env("MK_SOM"))
+    # banco de sons reais (M6): índice local + download educado do archive.org, cache em <dados>/cache/sons_reais
+    sfx_banco: str = field(default_factory=lambda: _env("EDITOR_SFX_BANCO"))                     # sqlite do kit (dev); vazio = cópia do motor
+    sons_reais: str = field(default_factory=lambda: _env("EDITOR_SONS_REAIS", "1"))               # 1 ligado | 0 desligado
+    sons_reais_mb: float = field(default_factory=lambda: _num_env("EDITOR_SONS_REAIS_MB", 150.0))     # teto de download por filme
+    cache_sons_mb: float = field(default_factory=lambda: _num_env("EDITOR_CACHE_SONS_MB", 2000.0))   # teto do cache
 
     @property
     def banco(self) -> pathlib.Path:

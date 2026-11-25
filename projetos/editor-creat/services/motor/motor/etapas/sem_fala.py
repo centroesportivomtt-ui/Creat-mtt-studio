@@ -620,6 +620,8 @@ def resolver(R) -> dict:
         R._casar_transicoes(planos, fx, sfx)                  # whip no sentido em que a câmera já vai (M2)
     if abs(D - alvo) > 0.1 * alvo:
         R.avisos.append(f"duração {D:.1f} s fora de ±10% do alvo {alvo:.0f} s")
+    from motor.etapas import sons_reais as SONS
+    sons = SONS.resolver_seguro(R, L, planos)                        # som real pedido pela direção (M6); sem pedido: None, EDL igual
 
     tm = R.m.get("trilha", {})
     if trilha and not cabe:                                   # música curta: emenda alinhada na fase (a grade continua na batida)
@@ -642,11 +644,12 @@ def resolver(R) -> dict:
         "origem": {"direcao": hashlib.sha256(json.dumps(d, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16],
                    "catalogo": R.cat.get("projeto"), "modelo": R.m["id"], "vel_aplicada": 1.0, "avisos": R.avisos,
                    "conceito": d.get("conceito"), "alem_do_pedido": d.get("alem_do_pedido", []), "modo": "sem_fala", "musica": musica,
-                   **({"ampliacao": R._ampliados} if R._ampliados else {})},
+                   **({"ampliacao": R._ampliados} if R._ampliados else {}),
+                   **({"sons_reais": R._sons_reais} if sons is not None else {})},
         "formato": dict(R.formato), "duracao": D, "vel_fala": 1.0, "blocos": L_blocos,
         "fontes": R._fontes({p["fonte"] for p in planos}), "voz": [], "planos": planos, "motion": motion,
         "legendas": {"modelo": R.m.get("legenda", {}).get("modelo", "legenda"), "y": R.m.get("legenda", {}).get("y", 0.62), "palavras": []},
-        "fx": fx, "trilha": tr_edl, "sfx": sfx, "tom_sala": None,
+        "fx": fx, "trilha": tr_edl, "sfx": sfx, **({"sons_reais": sons} if sons is not None else {}), "tom_sala": None,
         "master": {"lufs": -14, "tp": -1.0, "crf": 17},
         "qa": {"logos": [{"t": round(L["fecho_t"] + 0.6, 3), "chave": R.m["fecho"]["logo"]}]
                + ([{"t": round(L["fecho_t"] + 0.6, 3), "chave": f"marcas/{d['fecho']['logo_cliente']}/logo.png"}] if d["fecho"].get("logo_cliente") else []),

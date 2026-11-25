@@ -289,10 +289,16 @@ _RE_SAIDA = re.compile(r"^saidas/([^/]+)/([^/]+)/(.+)$")
 _SO_ENTREGUE = re.compile(r"^(final\.mp4|mix\.wav|stems/.*|capa\.jpg|entrega\.json|cor\.json|cor/.*)$")
 
 
+_NUNCA_SERVIDO = re.compile(r"^stems/reais(\.[A-Za-z0-9]+)?$")   # som do banco (Sonniss) isolado: a licença proíbe redistribuir
+
+
 def _liberado(chave: str) -> None:
     """Regra do dono: nunca mostrar/baixar versão com erro conhecido. O vídeo (e o áudio) de uma versão só saem
-    depois que a versão está 'entregue' (QA aprovado e mesmo sha256). Evidências do QA continuam visíveis."""
+    depois que a versão está 'entregue' (QA aprovado e mesmo sha256). Evidências do QA continuam visíveis.
+    O stem `reais` (sons do banco sozinhos, M6) nunca sai, nem entregue: só o filme e o mix completo, que são a obra."""
     m = _RE_SAIDA.match(chave)
+    if m and _NUNCA_SERVIDO.match(m.group(3)):
+        raise HTTPException(403, "o som do banco isolado não é servido (licença: só dentro do filme)")
     if not m or not _SO_ENTREGUE.match(m.group(3)):
         return
     with _con() as con:

@@ -16,6 +16,7 @@ from motor import movimento as MV
 from motor import musica as MU
 from motor.etapas import cor as COR
 from motor.etapas import sem_fala as SF
+from motor.etapas import sons_reais as SONS
 from motor.etapas.catalogo import EQUIPE, norm, tokens
 
 LETRA = "a-zà-öø-ÿ"
@@ -407,6 +408,7 @@ class Resolvedor:
         if abs(L["duracao"] - alvo) > 0.1 * alvo:
             self.avisos.append(f"duração {L['duracao']:.1f} s fora de ±10% do alvo {alvo:.0f} s")
         planos = self._planos(L)
+        sons = SONS.resolver_seguro(self, L, planos)              # som real pedido pela direção (M6); sem pedido: None, EDL igual
         motion, fx, sfx = self._motion(L)
         self._casar_transicoes(planos, fx, sfx)
         ampliados = getattr(self, "_ampliados", {})
@@ -421,7 +423,8 @@ class Resolvedor:
                        "catalogo": self.cat.get("projeto"), "modelo": self.m["id"], "vel_aplicada": vel, "avisos": self.avisos,
                        "conceito": d.get("conceito"), "alem_do_pedido": d.get("alem_do_pedido", []),
                        **({"vozes": self.vozes} if getattr(self, "vozes", None) else {}),
-                       **({"ampliacao": ampliados} if ampliados else {})},
+                       **({"ampliacao": ampliados} if ampliados else {}),
+                       **({"sons_reais": self._sons_reais} if sons is not None else {})},
             "formato": dict(self.formato),
             "duracao": L["duracao"], "vel_fala": vel,
             "blocos": L["blocos"],
@@ -429,7 +432,7 @@ class Resolvedor:
             "voz": [{k: v[k] for k in ("id", "bloco", "fala", "fonte", "s0", "s1", "t0", "t1", "vel")} | {"ganho_db": 0, "limpeza": {"atenuacao_db": 15, "mistura": 0.8, "auto": True},
                      "texto": None} for v in L["voz"]],
             "planos": planos, "motion": motion, "legendas": legendas, "fx": fx,
-            "trilha": self._trilha_edl(trilha, L), "sfx": sfx, "tom_sala": tom,
+            "trilha": self._trilha_edl(trilha, L), "sfx": sfx, **({"sons_reais": sons} if sons is not None else {}), "tom_sala": tom,
             "master": {"lufs": -14, "tp": -1.0, "crf": 17},
             "qa": {"logos": [{"t": round(L["fecho_t"] + 0.6, 3), "chave": self.m["fecho"]["logo"]}]
                    + ([{"t": round(L["fecho_t"] + 0.6, 3), "chave": f"marcas/{d['fecho']['logo_cliente']}/logo.png"}] if d["fecho"].get("logo_cliente") else []),
@@ -731,6 +734,7 @@ class Resolvedor:
                 self.avisos.append(f"cobertura {m['id']} trocada por {eq[1]['id']}: {c['id']} ampliaria {_br(amp)}x para "
                                    f"{self.formato['w']}x{self.formato['h']}, {eq[0]['id']} é nativo")
                 self._mom_usados.add(eq[1]["id"])
+                self.__dict__.setdefault("_mom_trocado", {})[cb["m"]] = eq[1]["id"]   # o som pontual do momento segue a troca
                 c, m = eq
                 # a velocidade depende do fps do clipe NOVO: recalcula antes de escolher o trecho (s0) que o plano lê
                 vel = self._vel_real(c["id"], lento) if ef == "lento" else 1.0

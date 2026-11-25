@@ -29,15 +29,17 @@ from motor.etapas.montagem import fx as FX
 from motor.etapas.montagem import mix as MIX
 from motor.etapas.montagem import overlay as OV
 from motor.etapas.montagem import planos as PL
+from motor.etapas.montagem import reais as REAIS
 from motor.etapas.montagem import trilha as TR
 from motor.etapas.montagem import voz as VZ
-from motor.etapas.montagem.comum import Fontes, gravar_json, hash_obj
+from motor.etapas.montagem.comum import SR, Fontes, gravar_json, hash_obj
 
 _PY_SCHEMAS = str(config.SCHEMAS / "py")
 if _PY_SCHEMAS not in sys.path:
     sys.path.insert(0, _PY_SCHEMAS)
 
 VERSAO = "m1"
+STEMS_PRIVADOS = ("reais",)          # nunca vão para o armazenamento (licença dos sons do banco)
 
 
 def validar_edl(edl: dict) -> None:
@@ -60,7 +62,8 @@ def validar_edl(edl: dict) -> None:
 
 
 def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tuple[float, float] | None = None,
-           progresso=None, cache_planos: pathlib.Path | None = None) -> dict:
+           progresso=None, cache_planos: pathlib.Path | None = None, sons_reais: dict | None = None) -> dict:
+    """`sons_reais` = relatório de `motor.sons_reais.preparar` (a etapa chama antes; aqui não há rede)."""
     validar_edl(edl)
     trabalho = pathlib.Path(trabalho)
     trabalho.mkdir(parents=True, exist_ok=True)
@@ -92,9 +95,22 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
         trilha, rel_tr = cronometro("trilha", TR.montar_trilha, edl, arq_tr, arquivos)
         from motor import biblioteca as BIB
         sfx, rel_sfx = TR.montar_sfx(edl, getattr(cfg, "som", "") or os.environ.get("MK_SOM") or str(BIB.pasta_sfx(cfg)))
-        rel_mix = cronometro("mix", MIX.mixar, edl, voz, trilha, sfx, fontes, trabalho / "audio", cfg)
+        pista, rel_reais = None, None
+        if edl.get("sons_reais"):                           # som real (M6): só o que já está no cache, nunca a rede
+            from motor import sons_reais as SONS
+            try:
+                carregados = SONS.carregar(edl, cfg)
+            except Exception as e:  # noqa: BLE001 - cache ilegível não derruba o filme: sai sem os sons reais
+                carregados, rel_reais = [], {"sons": [], "erro": f"{type(e).__name__}: {str(e)[:120]}"}
+            if carregados:
+                try:
+                    pista, rel_reais = REAIS.pista(edl, carregados, int(round(edl["duracao"] * SR)))
+                except Exception as e:  # noqa: BLE001 - conta que quebra na pista não derruba o áudio: sai sem os sons reais
+                    pista, rel_reais = None, {"sons": [], "erro": f"{type(e).__name__}: {str(e)[:120]}"}
+            rel_reais = rel_reais or {"sons": []}
+        rel_mix = cronometro("mix", MIX.mixar, edl, voz, trilha, sfx, fontes, trabalho / "audio", cfg, reais=pista)
         shutil.rmtree(trabalho / "tmp_audio", ignore_errors=True)
-        return {"voz": rel_voz, "trilha": rel_tr, "sfx": rel_sfx, **rel_mix}
+        return {"voz": rel_voz, "trilha": rel_tr, "sfx": rel_sfx, **({"reais": rel_reais} if rel_reais is not None else {}), **rel_mix}
 
     t_ini = time.time()
     prog(0.02, "Montagem: planos, motion e áudio em paralelo")
@@ -132,9 +148,57 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
         "avisos_trilha": list((res_au.get("trilha") or {}).get("avisos") or []),   # música que acabou antes do filme (M4)
         "composicao": res_comp, "tempos": tempos,
     }
+    if edl.get("sons_reais"):
+        rel["sons_reais"] = _sons_no_relatorio(edl, sons_reais, res_au.get("reais"))
     gravar_json(trabalho / "montagem.json", rel)
     prog(1.0, "Montagem pronta")
     return rel
+
+
+def pode_reaproveitar(ant: dict, edl: dict) -> bool:
+    """montagem.json antigo vale se o EDL, a versão e o kit são os mesmos E nenhum som real ficou pendente por rede (com
+    pendência, a próxima montagem tenta baixar de novo; senão o filme sem som seria reaproveitado para sempre)."""
+    return (ant.get("edl_hash") == hash_obj(edl) and ant.get("versao") == VERSAO and ant.get("kit") == OV._versao_kit()
+            and int((ant.get("sons_reais") or {}).get("pendentes") or 0) == 0)
+
+
+def _sons_no_relatorio(edl: dict, preparo: dict | None, mixados: dict | None) -> dict:
+    """montagem.json.sons_reais: o que entrou (metadado, nunca áudio), o que faltou e por quê, pendências e a licença.
+
+    Item que a preparação deixou pronto e que NÃO entrou na mixagem (o cache perdeu o arquivo no meio, a pista quebrou) fica
+    pendente: senão a montagem seria reaproveitada para sempre sem o som. O descartado por nível (quase mudo) não é pendente."""
+    from motor import sons_reais as SONS
+    prep = preparo or {}
+    mix = {m["id"]: m for m in (mixados or {}).get("sons") or []}
+    por_id = {x["id"]: x for x in prep.get("itens") or []}
+    itens = []
+    for it in edl.get("sons_reais") or []:
+        if it["id"] not in mix:
+            continue
+        x = por_id.get(it["id"], {})
+        itens.append({"id": it["id"], "papel": it["papel"], "desc": it["desc"], "id_banco": mix[it["id"]]["id_banco"],
+                      "item": x.get("item", it["item"]), "pacote": x.get("pacote", it["pacote"]), "biblioteca": x.get("biblioteca", it["biblioteca"]),
+                      "nome": x.get("nome", it["nome"]), "url": x.get("url", it["url"]), "t0": it["t0"], "t1": it["t1"],
+                      "origem": x.get("origem", "cache"), "verificacao": x.get("verificacao"), "voz": x.get("voz"),
+                      "ganho_db": mix[it["id"]].get("ganho_db")})
+    entrou = {x["id"] for x in itens}
+    faltaram = list(prep.get("faltaram") or [])
+    descartados = {d["id"]: d for d in (mixados or {}).get("descartados") or []}
+    erro_pista = (mixados or {}).get("erro")
+    for it in edl.get("sons_reais") or []:
+        if it["id"] in entrou or any(f["id"] == it["id"] for f in faltaram):
+            continue
+        if it["id"] in descartados:
+            faltaram.append({"id": it["id"], "desc": it["desc"], "motivo": descartados[it["id"]]["motivo"], "pendente": False})
+        elif preparo is None:
+            faltaram.append({"id": it["id"], "desc": it["desc"], "motivo": "não está no cache (a preparação não rodou)", "pendente": True})
+        else:
+            motivo = f"a pista quebrou ({erro_pista})" if erro_pista else "estava pronto e sumiu do cache antes da mixagem"
+            faltaram.append({"id": it["id"], "desc": it["desc"], "motivo": motivo, "pendente": True})
+    return {"itens": itens, "faltaram": faltaram, "pendentes": sum(1 for f in faltaram if f.get("pendente")),
+            "sem_som_na_direcao": ((edl.get("origem") or {}).get("sons_reais") or {}).get("sem_som") or [],
+            "pedidos_http": prep.get("pedidos_http", 0), "bytes": prep.get("bytes", 0), "avisos": list(prep.get("avisos") or []),
+            "licenca": dict(prep.get("licenca") or SONS.LICENCA)}
 
 
 def revisao_cor(edl: dict, res_pl: dict, pasta: pathlib.Path) -> list[dict]:
@@ -186,15 +250,30 @@ def etapa_montagem(ctx) -> dict:
     chave_rel = f"saidas/{p}/{v}/montagem.json"
     if arm.existe(chave_rel) and arm.existe(f"saidas/{p}/{v}/final.mp4"):
         ant = json.loads(pathlib.Path(arm.caminho_local(chave_rel)).read_text(encoding="utf-8"))
-        if ant.get("edl_hash") == hash_obj(edl) and ant.get("versao") == VERSAO and ant.get("kit") == OV._versao_kit():
+        if pode_reaproveitar(ant, edl):
             return {"versao": v, "reaproveitada": True, "final": f"saidas/{p}/{v}/final.mp4"}
-    rel = montar(edl, trabalho, Fontes(edl, arm, ctx.cfg.dados), ctx.cfg, progresso=ctx.progresso)
+    sons = None
+    if edl.get("sons_reais"):                               # a rede só é usada AQUI, antes do render (M6); falha = aviso
+        from motor import sons_reais as SONS
+        ctx.progresso(0.01, f"Montagem: buscando {len(edl['sons_reais'])} som(ns) real(is) do banco")
+        try:
+            sons = SONS.preparar(edl, ctx.cfg)
+        except Exception as e:  # noqa: BLE001 - nada dos sons reais derruba a montagem
+            sons = {"itens": [], "faltaram": [{"id": it["id"], "desc": it["desc"], "motivo": f"preparação quebrou ({type(e).__name__})", "pendente": True}
+                                              for it in edl["sons_reais"]], "pendentes": len(edl["sons_reais"]), "avisos": [], "licenca": SONS.LICENCA}
+    rel = montar(edl, trabalho, Fontes(edl, arm, ctx.cfg.dados), ctx.cfg, progresso=ctx.progresso, sons_reais=sons)
     base = f"saidas/{p}/{v}"
     _gravar(arm, f"{base}/final.mp4", pathlib.Path(rel["final"]))
     _gravar(arm, f"{base}/mix.wav", pathlib.Path(rel["mix"]))
-    for nome, arq in rel["stems"].items():
+    publicos = {n: a for n, a in rel["stems"].items() if n not in STEMS_PRIVADOS}
+    for nome, arq in publicos.items():
         _gravar(arm, f"{base}/stems/{nome}.flac", pathlib.Path(arq))
-    rel["chaves"] = {"final": f"{base}/final.mp4", "mix": f"{base}/mix.wav", "stems": {n: f"{base}/stems/{n}.flac" for n in rel["stems"]}}
+    rel["chaves"] = {"final": f"{base}/final.mp4", "mix": f"{base}/mix.wav", "stems": {n: f"{base}/stems/{n}.flac" for n in publicos}}
+    # o stem `reais` é o som do banco ISOLADO: a licença proíbe redistribuir som solto. Fica só no disco de trabalho (o QA
+    # ouve dali; a entrega apaga a pasta), nunca no armazenamento, que é servido e vai para o R2
+    privados = {n: a for n, a in rel["stems"].items() if n in STEMS_PRIVADOS}
+    if privados:
+        rel["stems_locais"] = privados
     for item in rel.get("cor") or []:                       # revisão da cor: imagens e medição ao lado do vídeo
         for lado in ("antes", "depois"):
             chave = f"{base}/cor/{item['plano']}_{lado}.jpg"

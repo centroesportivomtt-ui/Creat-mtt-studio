@@ -30,6 +30,7 @@ if _PY_SCHEMAS not in sys.path:
 CHECAGENS = ("formato", "duracao", "sincronia", "lufs", "true_peak", "quadros_pretos", "zona_segura", "legenda_x_fala",
              "fala_cortada", "voz_externa", "cobertura_sintonia",
              "frase_repetida", "tom_sala_sem_voz", "logo_100", "legenda_sobre_rosto", "telas_desfocadas", "regra_memoria", "cor_medida", "fatos",
+             "sons_reais",                    # M6: o que entrou do banco de sons reais e voz escondida no stem 'reais'
              "olho_ia")                       # olho_ia por último: não gasta em versão que já reprovou (ja_reprovou)
 
 
@@ -43,8 +44,10 @@ def normalizar(txt: str) -> str:
 class Conferencia:
     """Tudo que as checagens precisam, carregado só quando alguma pede (transcrição é cara: cache por arquivo)."""
 
-    def __init__(self, final: pathlib.Path, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None, cor=None):
+    def __init__(self, final: pathlib.Path, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None, cor=None,
+                 montagem: dict | None = None):
         self.cor = cor or []
+        self.montagem = montagem or {}          # montagem.json (sons reais: o que entrou e o que faltou)
         self.final = pathlib.Path(final)
         self.edl = edl
         self.cfg = cfg
@@ -238,9 +241,10 @@ def _rodar(nome: str, c: Conferencia) -> dict:
 
 
 def conferir(final, edl: dict, cfg, *, mix=None, stems=None, overlay_dir=None, evidencias=None, fontes=None, cor=None,
-             video_chave: str | None = None, so: list[str] | None = None, progresso=None) -> dict:
+             video_chave: str | None = None, so: list[str] | None = None, progresso=None, montagem: dict | None = None) -> dict:
     t0 = time.time()
-    c = Conferencia(final, edl, cfg, mix=mix, stems=stems, overlay_dir=overlay_dir, evidencias=evidencias, fontes=fontes, cor=cor)
+    c = Conferencia(final, edl, cfg, mix=mix, stems=stems, overlay_dir=overlay_dir, evidencias=evidencias, fontes=fontes, cor=cor,
+                    montagem=montagem)
     itens = []
     nomes = [n for n in CHECAGENS if not so or n in so]
     for i, nome in enumerate(nomes):
@@ -310,10 +314,13 @@ def etapa_qa(ctx) -> dict:
             return {"aprovado": ant["aprovado"], "reaproveitado": True, "resumo": resumo(ant), "sha256": sha,
                     "checagens": [x for x in ant["checagens"] if not x["ok"] and x["bloqueia"]]}
     stems = {n: str(arm.caminho_local(k)) for n, k in (mont.get("chaves", {}).get("stems") or {}).items()}
+    for n, local in (mont.get("stems_locais") or {}).items():        # stem privado (som do banco isolado): só no disco de trabalho
+        if n not in stems and local and pathlib.Path(local).exists():
+            stems[n] = str(local)
     mix = arm.caminho_local(mont["chaves"]["mix"]) if mont.get("chaves", {}).get("mix") else None
     evid = pathlib.Path(ctx.cfg.dados) / "tmp" / "qa" / p / v
     rel = conferir(final, edl, ctx.cfg, mix=mix, stems=stems, overlay_dir=mont.get("overlay_dir"), evidencias=evid, cor=mont.get("cor"),
-                   fontes=Fontes(edl, arm, ctx.cfg.dados), video_chave=f"{base}/final.mp4", progresso=ctx.progresso)
+                   fontes=Fontes(edl, arm, ctx.cfg.dados), video_chave=f"{base}/final.mp4", progresso=ctx.progresso, montagem=mont)
     for arq in sorted(evid.glob("*")):
         if arq.is_file() and not arq.name.startswith("_"):
             arm.gravar(f"{base}/qa/{arq.name}", arq)

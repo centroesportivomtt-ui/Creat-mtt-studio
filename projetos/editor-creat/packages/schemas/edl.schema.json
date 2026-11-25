@@ -155,6 +155,38 @@
       "type": "array",
       "items": { "type": "object", "additionalProperties": false, "required": ["t", "som"], "properties": { "t": { "type": "number" }, "som": { "type": "string" }, "g": { "type": "number", "default": -8 }, "pan": { "type": "number", "default": 0 } } }
     },
+    "sons_reais": {
+      "type": "array", "maxItems": 8,
+      "description": "Sons REAIS do banco (Sonniss #GameAudioGDC no archive.org), pedidos pela direção (blocos[].sons) e resolvidos aqui. Opcional: sem ele o filme é o de antes da M6. O áudio é baixado antes do render (cache fora do armazenamento) e só entra conferido (MD5 ou cabeçalho+tamanho, triagem de voz). Faltou = aviso, nunca som sintético no lugar.",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "papel", "desc", "origem", "id_banco", "item", "pacote", "biblioteca", "nome", "url", "formato", "md5", "trecho", "t0", "t1", "ganho_db", "fade", "reservas"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^R[0-9]{2}$" },
+          "papel": { "enum": ["ambiente", "pontual"] },
+          "desc": { "type": "string", "maxLength": 60 },
+          "bloco": { "type": ["string", "null"] },
+          "blocos": { "type": "array", "items": { "type": "string" }, "description": "Blocos seguidos que o mesmo ambiente cobre (um item só, sem costura)." },
+          "m": { "type": "string" },
+          "origem": { "const": "direcao" },
+          "id_banco": { "type": "integer" },
+          "item": { "type": "string", "description": "Item do archive.org." },
+          "pacote": { "type": "string" },
+          "biblioteca": { "type": "string" },
+          "nome": { "type": "string" },
+          "url": { "type": "string" },
+          "formato": { "enum": ["wav", "flac"] },
+          "md5": { "type": ["string", "null"], "description": "MD5 do arquivo INTEIRO naquele formato (índice). Só é conferido quando o arquivo vem inteiro." },
+          "trecho": { "type": ["array", "null"], "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "[ini_s, dur_s] baixados por pedido parcial (só WAV); null = arquivo inteiro." },
+          "tam": { "type": ["integer", "null"], "description": "Bytes do arquivo inteiro naquele formato (índice)." },
+          "t0": { "type": "number", "description": "Pontual: onde cai o ATAQUE do som." },
+          "t1": { "type": "number" },
+          "ganho_db": { "type": "number", "description": "Ambiente: alvo em LUFS medido no próprio trecho (-28 com fala, -24 sem fala). Pontual: pico em dBFS (-10 + força)." },
+          "fade": { "type": "array", "items": { "type": "number", "minimum": 0 }, "minItems": 2, "maxItems": 2, "description": "[entrada_s, saída_s] em igual potência." },
+          "reservas": { "type": "array", "maxItems": 2, "items": { "type": "object", "additionalProperties": false, "required": ["id_banco", "url", "formato"], "properties": { "id_banco": { "type": "integer" }, "url": { "type": "string" }, "formato": { "enum": ["wav", "flac"] }, "md5": { "type": ["string", "null"] }, "trecho": { "type": ["array", "null"], "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }, "tam": { "type": ["integer", "null"] } } } }
+        }
+      }
+    },
     "tom_sala": {
       "type": ["object", "null"], "additionalProperties": false, "required": ["fonte", "s0", "s1"],
       "properties": { "fonte": { "type": "string" }, "s0": { "type": "number" }, "s1": { "type": "number" }, "db": { "type": "number", "default": -48 }, "difuso": { "type": "boolean", "default": false, "description": "true = ambiente sintetizado com o espectro médio do trecho e fase aleatória: timbre do lugar, nenhuma palavra inteligível, nível constante (lugar com gente falando ao fundo)." } },

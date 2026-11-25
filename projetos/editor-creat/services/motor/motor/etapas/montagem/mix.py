@@ -8,7 +8,11 @@ Reaproveita V2/py/mix.py (aprovado pelo dono em 17/11), como biblioteca:
 - tom de sala SÓ do trecho `tom_sala` do EDL (o resolvedor escolhe trecho sem fala; o QA confere transcrevendo o stem
   'ambiente' — lição do laço "vai competir" de 17/11) + piso de ruído rosa a -66 dB para nunca haver silêncio digital;
 - master: ganho para `master.lufs` (-14) e limitador de pico real (4x) com teto `master.tp` - 0,8 dB (o AAC sobe o pico);
-- stems separados (voz, trilha, sfx, direto, ambiente) para o QA ouvir cada um.
+- stems separados (voz, trilha, sfx, direto, ambiente) para o QA ouvir cada um;
+- sons reais do banco (M6, opcional, `reais` = {"ambiente", "pontual"} de montagem/reais.py): ducking de -8 dB no ambiente e
+  -4 dB no pontual com o MESMO envelope da voz, o ambiente segue a música (respiro +4 dB, drop -4 dB) e entra na folga extra
+  junto com a cama; stem próprio `reais`. O som direto dos planos cobertos (> 50%) pelo ambiente real que ENTROU
+  (`reais["ambiente_em"]`) desce 6 dB. Com reais=None a saída é idêntica à de antes.
 """
 from __future__ import annotations
 
@@ -99,13 +103,28 @@ def tom_de_sala(edl: dict, fontes: Fontes, N: int, cfg=None) -> tuple[np.ndarray
     return _st(out) + piso, {"tom_sala": [ts["fonte"], ts["s0"], ts["s1"]], "laco_s": round(len(x) / SR, 2)}
 
 
-def som_direto(edl: dict, fontes: Fontes, N: int, cfg=None) -> np.ndarray:
-    """Som do próprio plano como textura (V1 'nat'), no ganho pedido, com fades de 40 ms."""
+DIRETO_SOB_REAL_DB = 6.0
+
+
+def sob_ambiente_real(p: dict, ambiente_em) -> bool:
+    """O plano está mais da metade sob um ambiente real que entrou na pista?"""
+    if not ambiente_em:
+        return False
+    dur = max(1e-6, float(p["t1"]) - float(p["t0"]))
+    cob = sum(max(0.0, min(float(p["t1"]), float(b)) - max(float(p["t0"]), float(a))) for a, b in ambiente_em)
+    return cob / dur > 0.5
+
+
+def som_direto(edl: dict, fontes: Fontes, N: int, cfg=None, ambiente_em=None) -> np.ndarray:
+    """Som do próprio plano como textura (V1 'nat'), no ganho pedido, com fades de 40 ms. Sob ambiente real que entrou
+    (`ambiente_em`, M6), 6 dB abaixo: dois "lugares" ao mesmo tempo embolam."""
     out = np.zeros(N, np.float32)
     for p in edl.get("planos", []):
         g = p.get("som_direto_db")
         if g is None:
             continue
+        if sob_ambiente_real(p, ambiente_em):
+            g = float(g) - DIRETO_SOB_REAL_DB
         vel = float(p.get("vel", 1.0) or 1.0)
         dur = p["t1"] - p["t0"]
         try:
@@ -125,7 +144,8 @@ def som_direto(edl: dict, fontes: Fontes, N: int, cfg=None) -> np.ndarray:
     return out
 
 
-def mixar(edl: dict, voz: np.ndarray, trilha: np.ndarray, fx: np.ndarray, fontes: Fontes, saida: pathlib.Path, cfg=None) -> dict:
+def mixar(edl: dict, voz: np.ndarray, trilha: np.ndarray, fx: np.ndarray, fontes: Fontes, saida: pathlib.Path, cfg=None,
+          reais: dict | None = None) -> dict:
     import pyloudnorm as pyln
     import soundfile as sf
     from scipy.ndimage import maximum_filter1d, uniform_filter1d
@@ -143,6 +163,11 @@ def mixar(edl: dict, voz: np.ndarray, trilha: np.ndarray, fx: np.ndarray, fontes
         if np.isfinite(lt):
             trilha = trilha * 10 ** ((float(tr.get("ganho_db", -14)) - lt) / 20)
 
+    gmus = None
+    if reais is not None:                                   # o ambiente real segue a música (envelope ANTES do ducking)
+        from motor.etapas.montagem.reais import ganho_musica
+        gmus = ganho_musica(trilha, N)[:, None]
+
     # ducking pelo envelope da voz (V2)
     h = int(0.01 * SR)
     e = np.sqrt(np.convolve(voz ** 2, np.ones(h) / h, "same")[::h] + 1e-12)
@@ -158,11 +183,16 @@ def mixar(edl: dict, voz: np.ndarray, trilha: np.ndarray, fx: np.ndarray, fontes
     gm = np.interp(tt, t, 10 ** (-duck["db"] * g / 20)).astype(np.float32)[:, None]
     trilha = trilha * gm
     fx = fx * np.interp(tt, t, 10 ** (-4.0 * g / 20)).astype(np.float32)[:, None]
+    rr = None
+    if reais is not None:                                   # som real: -8 dB (ambiente) / -4 dB (pontual) sob a voz
+        ra = reais["ambiente"][:N] * gmus * np.interp(tt, t, 10 ** (-8.0 * g / 20)).astype(np.float32)[:, None]
+        rp = reais["pontual"][:N] * np.interp(tt, t, 10 ** (-4.0 * g / 20)).astype(np.float32)[:, None]
+        rr = (ra + rp).astype(np.float32)
 
     # folga extra onde a voz está fraca: cama desce até a voz ficar >= 9 dB acima na banda da fala
     sosb = butter(2, [250, 4000], "bp", fs=SR, output="sos")
     vb = sosfilt(sosb, voz).astype(np.float32)
-    cb = sosfilt(sosb, (trilha + fx).mean(1)).astype(np.float32)
+    cb = sosfilt(sosb, (trilha + fx + (rr if rr is not None else 0)).mean(1)).astype(np.float32)
     hw = int(0.2 * SR)
     nh = N // hw
     extra_max = 0.0
@@ -174,12 +204,17 @@ def mixar(edl: dict, voz: np.ndarray, trilha: np.ndarray, fx: np.ndarray, fontes
         extra = uniform_filter1d(maximum_filter1d(extra, 5), 4)
         ge = np.interp(tt, (np.arange(nh) + 0.5) * 0.2, 10 ** (-extra / 20)).astype(np.float32)[:, None]
         trilha, fx = trilha * ge, fx * ge
+        if rr is not None:
+            rr = rr * ge
         extra_max = float(extra.max())
 
     amb, rel_amb = tom_de_sala(edl, fontes, N, cfg)
-    direto = _st(som_direto(edl, fontes, N, cfg))
+    ambiente_em = (reais or {}).get("ambiente_em") if reais is not None else None
+    direto = _st(som_direto(edl, fontes, N, cfg, ambiente_em))
     vz = _st(voz)
     mix = (vz + trilha + fx + amb + direto).astype(np.float32)
+    if rr is not None:
+        mix = (mix + rr).astype(np.float32)
 
     master = {"lufs": -14.0, "tp": -1.0, **(edl.get("master") or {})}
     teto = float(master["tp"]) - 0.8
@@ -196,7 +231,7 @@ def mixar(edl: dict, voz: np.ndarray, trilha: np.ndarray, fx: np.ndarray, fontes
         mix[-fd:] *= (np.linspace(1, 0, fd) ** 1.5)[:, None]
     sf.write(str(saida / "mix.wav"), mix, SR, subtype="PCM_24")
     stems = {}
-    for nome, x in (("voz", vz), ("trilha", trilha), ("sfx", fx), ("direto", direto), ("ambiente", amb)):
+    for nome, x in (("voz", vz), ("trilha", trilha), ("sfx", fx), ("direto", direto), ("ambiente", amb)) + ((("reais", rr),) if rr is not None else ()):
         p = saida / f"stem_{nome}.flac"
         sf.write(str(p), np.clip(x * gt, -1, 1).astype(np.float32), SR, subtype="PCM_24")
         stems[nome] = str(p)
@@ -204,8 +239,10 @@ def mixar(edl: dict, voz: np.ndarray, trilha: np.ndarray, fx: np.ndarray, fontes
     margem = None
     if fm.any():                                            # margem na banda da fala (o grave do bumbo não mascara a voz)
         rv_ = np.sqrt(np.mean(sosfilt(sosb, voz)[fm] ** 2))
-        rt_ = np.sqrt(np.mean(sosfilt(sosb, (trilha + fx + amb).mean(1))[fm] ** 2)) + 1e-12
+        rt_ = np.sqrt(np.mean(sosfilt(sosb, (trilha + fx + amb + (rr if rr is not None else 0)).mean(1))[fm] ** 2)) + 1e-12
         margem = round(float(20 * np.log10(rv_ / rt_)), 1)
     return {"mix": str(saida / "mix.wav"), "stems": stems, "lufs": round(float(meter.integrated_loudness(mix.astype(np.float64))), 2),
             "true_peak_db": round(true_peak_db(mix), 2), "ganho_total_db": round(20 * np.log10(gt), 2), "voz_sobre_cama_db": margem,
-            "folga_extra_max_db": round(extra_max, 1), **rel_amb}
+            "folga_extra_max_db": round(extra_max, 1), **rel_amb,
+            **({"direto_sob_real": [p.get("id") for p in edl.get("planos", []) if p.get("som_direto_db") is not None
+                                    and sob_ambiente_real(p, ambiente_em)]} if reais is not None else {})}
