@@ -382,6 +382,157 @@ async function principal() {
   ok('painel de gastos do mês: total, por tipo, por projeto e últimas chamadas', /US\$ 0,378/.test(totalG ?? '') && nUlt === 3 && !rolaG, `total "${totalG}" · ${nUlt} linhas`);
   ok('fluxo sem erro de console', errosConsole.length === 0, errosConsole.slice(0, 3).join(' | '));
 
+  // ---------- barra de comando no celular: as travas que não deixam perder nada (onda 1) ----------
+  {
+    const mctx = await navegador.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'pt-BR', storageState: await ctx.storageState() });
+    const mp = await mctx.newPage();
+    const errosM = [];
+    mp.on('console', (m) => { if (m.type() === 'error') errosM.push(m.text()); });
+    mp.on('pageerror', (e) => errosM.push(String(e)));
+    mp.on('dialog', (d) => d.accept().catch(() => {}));
+    const posts = [];
+    mp.on('request', (r) => {
+      const m = /\/api\/motor\/v1\/projetos\/p_[a-z0-9]+\/(pedido|fechar-envio|versoes\/[^/]+\/aprovar)$/.exec(r.url());
+      if (r.method() === 'POST' && m) posts.push(m[1].replace(/^versoes\/[^/]+\//, ''));
+    });
+    const barra = () => mp.evaluate(() => {
+      const b = document.querySelector('[data-teste=mandar-pedido]');
+      return { existe: Boolean(b), apagado: Boolean(b?.disabled), rotulo: b?.textContent?.trim() ?? '',
+        motivo: document.querySelector('.barra-comando .motivo')?.textContent?.trim() ?? '', texto: document.querySelector('.barra-comando')?.textContent?.trim() ?? '' };
+    });
+    await mp.goto(`${BASE}/projetos/novo`);
+    await mp.fill('input[name=nome]', 'Aceite barra de comando');
+    await mp.check('input[name=tipo][value=bastidor]', { force: true });
+    await mp.click('main button[type=submit]');
+    await mp.waitForURL(/\/projetos\/p_[a-z0-9]+$/, { timeout: 15000 });
+
+    // envio interrompido (a aba recarrega no meio): a barra segura até o dono retomar ou dizer "seguir sem ele"
+    const arquivoPequeno = (nome) => ({ name: nome, mimeType: 'video/mp4', buffer: randomBytes(2 * 1024 * 1024) });
+    await mp.route('**/api/envio/**', async (r) => {
+      if (r.request().method() !== 'PATCH') return r.continue();
+      await dormir(6000); // segura a parte no meio: a página recarrega antes
+      await r.abort().catch(() => {});
+    });
+    const criou = mp.waitForResponse((r) => /\/api\/envio\/?$/.test(new URL(r.url()).pathname) && r.request().method() === 'POST', { timeout: 15000 });
+    await mp.setInputFiles('[data-teste=entrada-arquivo]', arquivoPequeno('interrompido.mp4'));
+    await criou;
+    await dormir(400);
+    await mp.reload();
+    await mp.unrouteAll({ behavior: 'ignoreErrors' });
+    await mp.waitForSelector('[data-pendente]', { timeout: 15000 }).catch(() => null);
+    const comPendente = await barra();
+    const erroClique = await mp.click('[data-teste=envio-esquecer]', { timeout: 8000 }).then(() => '', (e) => String(e).slice(0, 160));
+    await mp.waitForSelector('[data-pendente]', { state: 'detached', timeout: 5000 }).catch(() => {});
+    await mp.waitForFunction(() => !document.querySelector('[data-teste=mandar-pedido]'), null, { timeout: 4000 }).catch(() => {});
+    const semPendente = await barra();
+    const nPend = await mp.locator('[data-pendente]').count();
+    ok('envio interrompido segura o Começar ("Falta: retomar") até o dono escolher seguir sem ele', comPendente.existe && comPendente.apagado && /retomar 1 vídeo interrompido/.test(comPendente.motivo)
+      && !semPendente.existe && /Escolher vídeos/.test(semPendente.texto), JSON.stringify({ comPendente: comPendente.motivo, semPendente: semPendente.texto.slice(0, 40), nPend, erroClique }));
+    errosM.length = 0; // a parte abortada de propósito acima não conta
+
+    await mp.setInputFiles('[data-teste=entrada-arquivo]', arquivoPequeno('pronto.mp4'));
+    await mp.waitForSelector('[data-envio][data-estado=concluido]', { timeout: 30000 });
+    await mp.waitForFunction(() => document.querySelector('.arquivo span:last-child')?.textContent?.includes('lido'), null, { timeout: 30000 });
+    const soPedido = await barra();
+    await mp.click('[data-teste=mandar-pedido]');
+    await dormir(300);
+    const focou = await mp.evaluate(() => document.activeElement?.id);
+    ok('só falta o pedido: o botão da barra é "Escrever o pedido" (âmbar vivo) e leva o foco até ele', soPedido.rotulo === 'Escrever o pedido' && !soPedido.apagado && focou === 'pedido-texto', JSON.stringify({ ...soPedido, focou }));
+
+    // link colado e não importado: fechar o envio o perderia em silêncio
+    await mp.fill('[data-teste=importar-links]', 'https://www.dropbox.com/scl/fi/zzz999/D.MOV?rlkey=q&dl=0');
+    await mp.fill('#pedido-texto', 'Teste das travas da barra');
+    await mp.waitForFunction(() => /importar/.test(document.querySelector('.barra-comando .motivo')?.textContent ?? ''), null, { timeout: 4000 }).catch(() => {});
+    const comLink = await barra();
+    const fecharComLink = await mp.isDisabled('[data-teste=fechar-envio]');
+    await mp.fill('[data-teste=importar-links]', '');
+    await mp.waitForFunction(() => !document.querySelector('[data-teste=mandar-pedido]')?.disabled, null, { timeout: 4000 }).catch(() => {});
+    const semLink = await barra();
+    ok('link colado e não importado segura o Começar e o Terminei de enviar', comLink.apagado && /importar \(ou apagar\) o link colado/.test(comLink.motivo) && fecharComLink
+      && !semLink.apagado && semLink.rotulo === 'Começar a edição', JSON.stringify({ comLink, fecharComLink, semLink }));
+
+    // Enter (o "ir" do teclado do iPhone) no campo opcional não manda o pedido por fora das travas
+    await mp.fill('input[name=precisa]', 'a frase mais forte');
+    await mp.press('input[name=precisa]', 'Enter');
+    await dormir(900);
+    const estadoDepoisEnter = await mp.getAttribute('[data-teste=estado]', 'data-estado');
+    ok('Enter no campo "Algo que precisa aparecer?" não manda nada', posts.length === 0 && estadoDepoisEnter === 'recebendo', JSON.stringify({ posts, estadoDepoisEnter }));
+
+    // o rascunho do pedido volta depois de recarregar a aba
+    await mp.reload();
+    await mp.waitForFunction(() => document.querySelector('#pedido-texto')?.value === 'Teste das travas da barra', null, { timeout: 8000 }).catch(() => {});
+    const voltou = await mp.evaluate(() => ({ texto: document.querySelector('#pedido-texto')?.value, precisa: document.querySelector('input[name=precisa]')?.value }));
+    const depoisReload = await barra();
+    ok('rascunho do pedido sobrevive a recarregar a página', voltou.texto === 'Teste das travas da barra' && voltou.precisa === 'a frase mais forte' && depoisReload.rotulo === 'Começar a edição' && !depoisReload.apagado, JSON.stringify({ ...voltou, barra: depoisReload.rotulo }));
+
+    // teclado aberto (tela de 390x500): a navegação some, a barra desce e nenhum campo focado fica atrás dela
+    await mp.setViewportSize({ width: 390, height: 500 });
+    await mp.focus('#pedido-texto');
+    await dormir(250);
+    const teclado = await mp.evaluate(() => {
+      const nav = document.querySelector('.nav'); const b = document.querySelector('.barra-comando').getBoundingClientRect();
+      const t = document.querySelector('#pedido-texto').getBoundingClientRect();
+      return { navSome: getComputedStyle(nav).display === 'none', barraNoFundo: Math.abs(b.bottom - innerHeight) < 2, campoAcima: t.bottom <= b.top + 1 && t.top >= 0 };
+    });
+    const cobertos = [];
+    for (let i = 0; i < 16; i++) {
+      await mp.keyboard.press('Tab');
+      await dormir(120);
+      const r = await mp.evaluate(() => {
+        const el = document.activeElement;
+        if (!el || el === document.body || el.closest('.barra-comando, .nav, .topo')) return null;
+        const alvo = el.closest('label') ?? el;
+        const q = alvo.getBoundingClientRect();
+        const x = q.left + q.width / 2, y = q.top + q.height / 2;
+        const hit = y >= 0 && y <= innerHeight ? document.elementFromPoint(x, y) : null;
+        return { nome: `${el.getAttribute('name') ?? el.id ?? el.tagName}=${el.value ?? ''}`, coberto: !hit || !(alvo.contains(hit) || hit.contains(alvo)) };
+      });
+      if (r?.coberto) cobertos.push(r.nome);
+    }
+    await mp.evaluate(() => document.activeElement?.blur());
+    await mp.setViewportSize({ width: 390, height: 844 });
+    ok('teclado aberto: navegação some, barra desce e nenhum campo focado fica atrás das barras', teclado.navSome && teclado.barraNoFundo && teclado.campoAcima && cobertos.length === 0, JSON.stringify({ ...teclado, cobertos: cobertos.slice(0, 5) }));
+
+    // primeiro toque logo depois de digitar (campo ainda em foco, "teclado aberto"): o botão não rouba o foco, a barra não
+    // foge do dedo e o toque vale. Toque de verdade (aperta e solta no mesmo ponto), seguido de dois cliques no mesmo instante.
+    await mp.focus('#pedido-texto');
+    await mp.keyboard.type(' ');
+    await dormir(250);
+    const alvoToque = await mp.evaluate(() => { const q = document.querySelector('[data-teste=mandar-pedido]').getBoundingClientRect(); return { x: q.left + q.width / 2, y: q.top + q.height / 2 }; });
+    const antesDoToque = posts.length;
+    await mp.mouse.move(alvoToque.x, alvoToque.y);
+    await mp.mouse.down();
+    const focoNoAperto = await mp.evaluate(() => document.activeElement?.id);
+    await mp.mouse.up();
+    await mp.waitForFunction(() => document.querySelector('[data-teste=estado]')?.getAttribute('data-estado') !== 'recebendo' || document.querySelector('[data-teste=mandar-pedido]')?.disabled, null, { timeout: 5000 }).catch(() => {});
+    ok('primeiro toque em Começar a edição logo depois de digitar vale (o botão não rouba o foco do campo)', focoNoAperto === 'pedido-texto' && posts.length > antesDoToque && posts.includes('pedido'), JSON.stringify({ focoNoAperto, posts }));
+    // toque duplo em "Começar a edição": um pedido e um fechar-envio, e o pedido vai ANTES de fechar
+    await mp.evaluate(() => { const b = document.querySelector('[data-teste=mandar-pedido]'); b?.click(); b?.click(); });
+    await mp.waitForSelector('[data-teste=aprovar]', { timeout: 60000 }).catch(() => {});
+    const nPedido = posts.filter((x) => x === 'pedido').length, nFechar = posts.filter((x) => x === 'fechar-envio').length;
+    ok('toque duplo em Começar a edição: um pedido só, gravado antes de fechar o envio', nPedido === 1 && nFechar === 1 && posts.indexOf('pedido') < posts.indexOf('fechar-envio'), JSON.stringify(posts));
+
+    // toque duplo no Aprovar: uma aprovação só, e o "Corta!" aparece na própria barra
+    await mp.evaluate(() => { const b = document.querySelector('[data-teste=aprovar]'); b?.click(); b?.click(); });
+    const cortaNaBarra = await mp.waitForSelector('[data-teste=corta-barra]', { timeout: 4000 }).then(() => true, () => false);
+    const depoisCorta = await mp.waitForSelector('.barra-comando >> text=Mandar para o cliente', { timeout: 6000 }).then(() => true, () => false);
+    ok('toque duplo no Aprovar: uma aprovação só; "Corta!" na barra e depois "Mandar para o cliente"', posts.filter((x) => x === 'aprovar').length === 1 && cortaNaBarra && depoisCorta, JSON.stringify({ posts, cortaNaBarra, depoisCorta }));
+
+    // a barra é medida: o fim da página nunca fica atrás dela; deitado, o filme ganha a altura da tela
+    await mp.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await dormir(200);
+    const fim = await mp.evaluate(() => ({ mesa: document.querySelector('.mesa').getBoundingClientRect().bottom, barra: document.querySelector('.barra-comando').getBoundingClientRect().top }));
+    await mp.setViewportSize({ width: 844, height: 390 });
+    await dormir(400);
+    const deitado = await mp.evaluate(() => {
+      const v = document.querySelector('[data-teste=player]').getBoundingClientRect(); const b = document.querySelector('.barra-comando').getBoundingClientRect();
+      return { altura: Math.round(v.height), cabe: v.height <= b.top - 4, topoFixo: getComputedStyle(document.querySelector('.topo')).position === 'sticky', rolagem: document.documentElement.scrollWidth > innerWidth + 1 };
+    });
+    ok('fim da página acima da barra medida; deitado (844x390) o filme tem altura útil e cabe acima da barra', fim.mesa <= fim.barra + 1 && deitado.altura >= 220 && deitado.cabe && !deitado.topoFixo && !deitado.rolagem, JSON.stringify({ fim, deitado }));
+    ok('barra de comando no celular sem erro de console', errosM.length === 0, errosM.slice(0, 3).join(' | '));
+    await mctx.close();
+  }
+
   // ---------- 4. verificação visual logada ----------
   const estado = await ctx.storageState();
   const configs = [
