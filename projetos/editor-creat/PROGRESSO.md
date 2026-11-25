@@ -470,3 +470,7 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 
 ## 23/11, fim do dia
 - Verificação de fatos: número sem fonte ou conferência que falhou vira AVISO ("confira antes de postar"), não trava a entrega. Motivo: o dono vai usar o editor sozinho por um tempo e não teria como liberar a trava. A correção automática do número errado continua. pytest 374 ok, aceite 35/35.
+
+## Rodada de 24/11 (leve)
+- Saúde no ar ok (ff1203d), modelos todos carregados, backup em dia (23/11 16:27). Nada em falha.
+- Rodada só de conferência: o dono avisou em 23/11 que está com pouca cota; trabalho novo fica para quando ele pedir.
