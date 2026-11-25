@@ -13,3 +13,4 @@ dados/
 *.npy
 packages/kit/stills/
 memoria/.trava
+memoria/apagados.json

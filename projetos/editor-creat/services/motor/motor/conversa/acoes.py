@@ -90,16 +90,226 @@ def guarda_pedido(con, pid: str, *, tool_use_id: str | None = None) -> str | Non
     return None
 
 
-def pode(con, pid: str) -> dict:
-    """O que a conversa pode propor agora (vai em ver_projeto.pode)."""
+def pode(con, pid: str, cfg=None) -> dict:
+    """O que a conversa pode propor agora (vai em ver_projeto.pode). Onda 3: troca de música, nota e o que dá para
+    refazer (só as opções que a conversa pode propor; catálogo e direção são da tela)."""
+    from motor import config as _config, refazer
+    cfg = cfg or _config.carregar()
     vs = versoes(con, pid)
     ajuste = guarda_ajuste(con, pid, vs[-1]["id"]) if vs else "ainda não há versão pronta"
     pedido = guarda_pedido(con, pid)
-    out = {"propor_ajuste": ajuste is None, "propor_pedido": pedido is None}
-    porque = [p for p in ((f"ajuste: {ajuste}" if ajuste else None), (f"pedido: {pedido}" if pedido else None)) if p]
+    trilha = guarda_trilha(cfg, con, pid, {"versao": vs[-1]["id"], "trilha": None}) if vs else "ainda não há versão pronta"
+    nota = guarda_nota(cfg, con, pid, {})
+    out = {"propor_ajuste": ajuste is None, "propor_pedido": pedido is None, "propor_trilha": trilha is None, "anotar": nota is None}
+    try:
+        ops = refazer.opcoes(cfg, con, pid)["opcoes"]
+    except Exception:  # noqa: BLE001 - sem as opções, a conversa só não propõe refazer
+        ops = []
+    outra = _outra_confirmacao(con, pid, None)
+    out["refazer"] = [] if outra else [{k: o[k] for k in ("de", "versao", "arquivo_id", "n_video") if o.get(k) is not None}
+                                       for o in ops if o.get("pela_conversa")]
+    motivos = [(f"ajuste: {ajuste}" if ajuste else None), (f"pedido: {pedido}" if pedido else None),
+               (f"trocar a música: {trilha}" if trilha else None), (f"nota: {nota}" if nota else None),
+               (None if out["refazer"] else ("refazer: já existe outro cartão esperando o seu toque" if outra
+                                              else "refazer: nada falhou que dê para refazer agora"))]
+    porque = [p for p in motivos if p]
     if porque:
         out["porque"] = "; ".join(porque)
     return out
+
+
+# ---------------- onda 3: refazer, trocar a música e nota (cartões montados pelo código) ----------------
+MAX_NOTAS = 50
+TEXTO_AJUSTE_FEITO = "Pedido de ajuste enviado. A direção recomeça; acompanhe na mesa."
+TEXTO_AJUSTE_SO_AQUI = "Pedido de ajuste enviado, só para este projeto (não virou regra). A direção recomeça; acompanhe na mesa."
+TEXTO_PEDIDO_FEITO = "Pedido trocado."
+TEXTO_PEDIDO_DIRIGINDO = "Pedido trocado. A edição começou; acompanhe na mesa."
+TEXTO_TRILHA_FEITO = "Feito. A música está sendo trocada; a versão nova aparece na mesa."
+TEXTO_NOTA_FEITO = "Nota guardada."
+
+
+def _mmss(t: float) -> str:
+    t = max(0, int(round(float(t))))
+    return f"{t // 60}:{t % 60:02d}"
+
+
+def normalizar_refazer(con, pid: str, e: dict) -> dict:
+    from motor import refazer
+    out = {"de": e["de"]}
+    if e["de"] == "leitura":
+        if e.get("arquivo_id"):
+            out["arquivo_id"] = e["arquivo_id"]
+    else:
+        out["versao"] = e.get("versao") or refazer.mais_nova(con, pid)
+    return out
+
+
+def guarda_refazer(cfg, con, pid: str, e: dict, *, tool_use_id: str | None = None) -> str | None:
+    from motor import refazer
+    if e.get("de") not in refazer.DE_CONVERSA:
+        return "pela conversa dá para montar, conferir ou entregar de novo, ou ler de novo um vídeo"
+    p = refazer.porque(cfg, con, pid, e["de"], versao=e.get("versao"), arquivo_id=e.get("arquivo_id"))
+    if p:
+        return p
+    if _outra_confirmacao(con, pid, tool_use_id):
+        return "já existe outro cartão esperando o seu toque"
+    return None
+
+
+def guarda_trilha(cfg, con, pid: str, e: dict, *, tool_use_id: str | None = None) -> str | None:
+    from motor import refazer
+    p = refazer.porque_trilha(cfg, con, pid, e.get("versao"), e.get("trilha"))
+    if p:
+        return p
+    if _outra_confirmacao(con, pid, tool_use_id):
+        return "já existe outro cartão esperando o seu toque"
+    return None
+
+
+def normalizar_nota(e: dict) -> dict:
+    out = {"texto": " ".join(str(e.get("texto", "")).split())}
+    if e.get("versao"):
+        out["versao"] = e["versao"]
+    if e.get("tempo_s") is not None:
+        out["tempo_s"] = round(float(e["tempo_s"]), 1)
+    return out
+
+
+def guarda_nota(cfg, con, pid: str, e: dict, *, tool_use_id: str | None = None, cartoes: bool = True) -> str | None:
+    if con.execute("SELECT 1 FROM projetos WHERE id=?", (pid,)).fetchone() is None:
+        return "projeto não encontrado"
+    if len(_dados(con, pid).get("notas") or []) >= MAX_NOTAS:
+        return f"o projeto já tem {MAX_NOTAS} notas"
+    if e.get("versao") and con.execute("SELECT 1 FROM versoes WHERE projeto=? AND id=?", (pid, e["versao"])).fetchone() is None:
+        return f"a versão {e['versao']} não existe"
+    if cartoes and _outra_confirmacao(con, pid, tool_use_id):
+        return "já existe outro cartão esperando o seu toque"
+    return None
+
+
+def cartao_nota(cfg, con, pid: str, e: dict) -> dict:
+    onde = ""
+    if e.get("tempo_s") is not None:
+        onde += f" em {_mmss(e['tempo_s'])}"
+    if e.get("versao"):
+        onde += f" da {e['versao']}"
+    c = {"acao": "nota", "titulo": "Guardar uma nota", "texto_exato": e["texto"], "faz": f"Guardar esta nota no projeto{onde}. Não refaz nada e não gasta.",
+         "refaz": [], "comeca_agora": False, "custo_usd_est": 0.0, "minutos_est": 0.0, "vira_regra": False,
+         "volta": "A nota fica na lista de notas do projeto.", "botao": "Guardar a nota"}
+    if e.get("versao"):
+        c["versao"] = e["versao"]
+    if e.get("tempo_s") is not None:
+        c["tempo_s"] = e["tempo_s"]
+    return c
+
+
+def anotar(cfg, pid: str, e: dict) -> dict:
+    """Guarda a nota em projetos.dados.notas (BEGIN IMMEDIATE, guarda lida de novo lá dentro). Não refaz nada e não gasta."""
+    import secrets
+    from motor import refazer
+    con = banco.conectar(cfg.banco)
+    try:
+        con.execute("BEGIN IMMEDIATE")
+        try:
+            p = guarda_nota(cfg, con, pid, e, cartoes=False)          # a espera deste cartão já foi tomada no toque
+            if p:
+                raise refazer.Recusa(p)
+            nid = "n_" + secrets.token_hex(3)
+            nota = {"id": nid, "texto": e["texto"][:500], "em": banco.agora_iso(), "por": "conversa"}
+            if e.get("versao"):
+                nota["versao"] = e["versao"]
+            if e.get("tempo_s") is not None:
+                nota["t"] = e["tempo_s"]
+            r = con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()
+            d = json.loads(r["dados"] or "{}")
+            d.setdefault("notas", []).append(nota)
+            con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), pid))
+            con.execute("COMMIT")
+        except BaseException:
+            con.execute("ROLLBACK")
+            raise
+    finally:
+        con.close()
+    return {"feito": True, "nota": nid}
+
+
+def _exec_ajuste(cfg, pid, e, esp, so_neste_projeto):
+    vira = bool((esp["cartao"].get("evento") or {}).get("vira_regra", True)) and not so_neste_projeto
+    res = executar_ajuste(pid, e["versao"], e["o_que_mudar"], vira_regra=vira)
+    return res, (TEXTO_AJUSTE_FEITO if vira else TEXTO_AJUSTE_SO_AQUI)
+
+
+def _exec_pedido(cfg, pid, e, esp, so_neste_projeto):
+    res = executar_pedido(cfg, pid, e)
+    return res, (TEXTO_PEDIDO_DIRIGINDO if res.get("dirigindo") else TEXTO_PEDIDO_FEITO)
+
+
+def _exec_refazer(cfg, pid, e, esp, so_neste_projeto):
+    from motor import refazer
+    r = refazer.executar(cfg, pid, e["de"], versao=e.get("versao"), arquivo_id=e.get("arquivo_id"))
+    v = e.get("versao")
+    detalhe = {"montagem": f"Feito. A montagem da {v} recomeçou; acompanhe na mesa.",
+               "conferencia": f"Feito. A conferência da {v} recomeçou.",
+               "entrega": f"Feito. A {v} está sendo conferida e entregue de novo.",
+               "leitura": f"Feito. O vídeo {r.get('n_video')} está sendo lido de novo."}[e["de"]]
+    return {"feito": True, "refazendo": e["de"]}, detalhe
+
+
+def _exec_trilha(cfg, pid, e, esp, so_neste_projeto):
+    from motor import refazer
+    return refazer.trocar_musica(cfg, pid, e["versao"], e["trilha"]), TEXTO_TRILHA_FEITO
+
+
+def _exec_nota(cfg, pid, e, esp, so_neste_projeto):
+    return anotar(cfg, pid, e), TEXTO_NOTA_FEITO
+
+
+class Cartao:
+    """Uma ação da conversa com toque: normalizar (vira a entrada do entrada_hash), guarda (ao criar e no toque), montar o
+    cartão (texto do código) e executar (as funções das rotas; as novas abrem a própria transação e levantam Recusa)."""
+
+    def __init__(self, normalizar, guarda, montar, executar):
+        self.normalizar, self.guarda, self.montar, self.executar = normalizar, guarda, montar, executar
+
+
+def _cartao_ajuste(cfg, con, pid, e, *, turno, tool_use_id, ja_lidos=None):
+    return cartao_ajuste(cfg, con, pid, e, turno=turno, tool_use_id=tool_use_id, ja_lidos=ja_lidos)
+
+
+def _cartao_pedido(cfg, con, pid, e, *, turno, tool_use_id, ja_lidos=None):
+    return cartao_pedido(cfg, con, pid, e, turno=turno, tool_use_id=tool_use_id)
+
+
+def _com_ids(f):
+    def montar(cfg, con, pid, e, *, turno, tool_use_id, ja_lidos=None):
+        return {"turno": turno, "tool_use_id": tool_use_id, **f(cfg, con, pid, e)}
+    return montar
+
+
+def _cartao_refazer(cfg, con, pid, e):
+    from motor import refazer
+    return refazer.cartao_refazer(cfg, con, pid, e)
+
+
+def _cartao_trilha(cfg, con, pid, e):
+    from motor import refazer
+    return refazer.cartao_trilha(cfg, con, pid, e)
+
+
+CARTOES = {
+    "propor_ajuste": Cartao(
+        lambda cfg, con, pid, e: {"versao": e["versao"], "o_que_mudar": " ".join(e["o_que_mudar"].split())},
+        lambda cfg, con, pid, e, tool_use_id=None: guarda_ajuste(con, pid, e["versao"], tool_use_id=tool_use_id),
+        _cartao_ajuste, _exec_ajuste),
+    "propor_pedido": Cartao(
+        lambda cfg, con, pid, e: normalizar_pedido(e),
+        lambda cfg, con, pid, e, tool_use_id=None: guarda_pedido(con, pid, tool_use_id=tool_use_id),
+        _cartao_pedido, _exec_pedido),
+    "propor_refazer": Cartao(lambda cfg, con, pid, e: normalizar_refazer(con, pid, e), guarda_refazer, _com_ids(_cartao_refazer), _exec_refazer),
+    "propor_trilha": Cartao(lambda cfg, con, pid, e: {"versao": e["versao"], "trilha": e["trilha"]}, guarda_trilha,
+                            _com_ids(_cartao_trilha), _exec_trilha),
+    "anotar": Cartao(lambda cfg, con, pid, e: normalizar_nota(e), guarda_nota, _com_ids(cartao_nota), _exec_nota),
+}
 
 
 # ---------------- custo e tempo do cartão (números do código) ----------------

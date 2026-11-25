@@ -190,9 +190,22 @@ def memoria():
     from motor.etapas import cor as COR
     from motor.etapas.direcao import MODOS
     from motor.etapas.qa import EM_OBSERVACAO
+    # onda 3 (R19): cada item ganha, opcionais, apagavel, de_onde (com o nome do projeto, se ele ainda existe) e ao_apagar;
+    # o vocabulário ganha id. O resto igual
+    cad = loja.itens_caderno()
+    pids = {i["de_onde"]["projeto"] for t in cad.values() for i in t if i.get("de_onde")}
+    nomes = {}
+    if pids:
+        with _con() as (_cfg, con):
+            q = ",".join("?" * len(pids))
+            nomes = {r["id"]: r["nome"] for r in con.execute(f"SELECT id, nome FROM projetos WHERE id IN ({q})", tuple(pids))}
+    for t in cad.values():
+        for i in t:
+            if i.get("de_onde") and i["de_onde"]["projeto"] in nomes:
+                i["de_onde"]["nome"] = nomes[i["de_onde"]["projeto"]]
     checagens = [dict(c, gravidade="observacao") if c.get("tipo") in EM_OBSERVACAO and c.get("gravidade") == "bloqueia" else c
-                 for c in loja.checagens()]          # o Caderno diz a verdade: checagem em observação ainda só avisa
-    return {"regras": loja.regras(), "checagens": checagens, "vocabulario": loja.vocabulario(), "modelos": loja.nomes_modelos(),
+                 for c in cad["checagens"]]          # o Caderno diz a verdade: checagem em observação ainda só avisa
+    return {"regras": cad["regras"], "checagens": checagens, "vocabulario": cad["vocabulario"], "modelos": loja.nomes_modelos(),
             "modos": [m for m in (loja.modo(n) for n in MODOS) if m],
             "looks": COR.catalogo(),
             "raiz_isolada": bool(os.environ.get("EDITOR_MEMORIA"))}

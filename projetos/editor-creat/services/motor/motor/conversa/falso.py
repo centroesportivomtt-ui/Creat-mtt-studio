@@ -63,13 +63,93 @@ class CerebroFalso:
         return None
 
     # ---------------- comportamento padrão (aceite do site) ----------------
+    # onda 3 (contrato 3.5): frases que o roteiro padrão reconhece para o site testar as ações novas
+    TENTAR = ("tenta de novo", "tentar de novo", "tente de novo")
+    MUSICA = ("troca a música", "trocar a música", "troca a musica", "trocar a musica", "outra música", "outra musica")
+
+    @staticmethod
+    def _pedido_do_dono(corpo: dict) -> str:
+        """Último texto do dono no histórico (sem a linha [tela: ...] e sem a ficha do capítulo)."""
+        import re
+        for m in reversed(corpo.get("messages") or []):
+            if m.get("role") != "user":
+                continue
+            cont = m.get("content")
+            blocos = cont if isinstance(cont, list) else [{"type": "text", "text": cont}]
+            txt = " ".join(b.get("text", "") for b in blocos if b.get("type") == "text" and not str(b.get("text", "")).startswith("FICHA DO PROJETO"))
+            if txt.strip():
+                return re.sub(r"^\[[^\]\n]*\]\s*", "", txt.strip()).lower()
+        return ""
+
+    @staticmethod
+    def _ultimo_resultado(blocos: list) -> dict:
+        for b in reversed(blocos):
+            if b.get("type") == "tool_result":
+                c = b.get("content")
+                try:
+                    r = json.loads(c) if isinstance(c, str) else c
+                except ValueError:
+                    return {}
+                return {"_erro": True, **(r if isinstance(r, dict) else {})} if b.get("is_error") else (r if isinstance(r, dict) else {})
+        return {}
+
+    @classmethod
+    def _depois_da_ferramenta(cls, corpo: dict, blocos: list) -> dict | None:
+        pedido = cls._pedido_do_dono(corpo)
+        res = cls._ultimo_resultado(blocos)
+        if res.get("_erro"):
+            return {"blocos": [{"tipo": "texto", "texto": "Não deu agora: " + str(res.get("detalhe") or "a ação não cabe neste momento")[:200]}]}
+        if any(x in pedido for x in cls.TENTAR) and isinstance(res.get("pode"), dict):
+            ops = res["pode"].get("refazer") or []
+            if not ops:
+                motivo = res["pode"].get("porque") or "nada falhou que dê para refazer agora"
+                return {"blocos": [{"tipo": "texto", "texto": f"Olhei: não há etapa para tentar de novo agora ({motivo[:160]})."}]}
+            op = ops[0]
+            entrada = {"de": op["de"], **({"arquivo_id": op["arquivo_id"]} if op.get("arquivo_id") else {}),
+                       **({"versao": op["versao"]} if op.get("versao") and op["de"] != "leitura" else {})}
+            return {"blocos": [{"tipo": "texto", "texto": "Achei o que falhou. Preparei o cartão para tentar de novo."},
+                               {"tipo": "ferramenta", "nome": "propor_refazer", "entrada": entrada}], "stop": "tool_use"}
+        if any(x in pedido for x in cls.MUSICA) and isinstance(res.get("trilhas"), list):
+            livre = next((t for t in res["trilhas"] if not t.get("em_uso")), None)
+            versao = (res.get("atual") or {}).get("versao")
+            if not livre or not versao:
+                return {"blocos": [{"tipo": "texto", "texto": "Olhei a biblioteca: não há outra música que dê para usar agora."}]}
+            return {"blocos": [{"tipo": "texto", "texto": "Escolhi uma trilha que a versão ainda não usa. Preparei o cartão."},
+                               {"tipo": "ferramenta", "nome": "propor_trilha", "entrada": {"versao": versao, "trilha": livre["id"]}}],
+                    "stop": "tool_use"}
+        if "achados" in res or "t_s" in res:
+            n = len(res.get("achados") or []) if "achados" in res else 1
+            return {"blocos": [{"tipo": "texto", "texto": f"Achei {n} ponto(s) no filme da {res.get('versao', 'versão')}."}]}
+        return None
+
     @staticmethod
     def padrao(corpo: dict) -> dict:
         ult = corpo["messages"][-1]["content"]
         blocos = ult if isinstance(ult, list) else [{"type": "text", "text": ult}]
         texto = " ".join(b.get("text", "") for b in blocos if b.get("type") == "text").lower()
         if any(b.get("type") == "tool_result" for b in blocos) and not texto.strip():
+            depois = CerebroFalso._depois_da_ferramenta(corpo, blocos)
+            if depois:
+                return depois
             return {"blocos": [{"tipo": "texto", "texto": "Pronto. Olhei o projeto e está tudo no lugar. O que você quer mudar?"}]}
+        import re
+        dono = re.sub(r"^\[[^\]\n]*\]\s*", "", texto.strip())
+        if any(x in dono for x in CerebroFalso.TENTAR):
+            return {"blocos": [{"tipo": "texto", "texto": "Entendi: tentar de novo o que falhou. Vou olhar o projeto."},
+                               {"tipo": "ferramenta", "nome": "ver_projeto", "entrada": {}}], "stop": "tool_use"}
+        if any(x in dono for x in CerebroFalso.MUSICA):
+            return {"blocos": [{"tipo": "texto", "texto": "Entendi: trocar só a música. Vou ver as trilhas da casa."},
+                               {"tipo": "ferramenta", "nome": "ver_trilhas", "entrada": {}}], "stop": "tool_use"}
+        m = re.match(r"^(?:anota|anote|anotar)\b[\s:,-]*(.*)$", dono)
+        if m:
+            nota = (m.group(1) or "").strip() or "lembrete do Marcos"
+            return {"blocos": [{"tipo": "texto", "texto": "Entendi: guardar uma nota. Preparei o cartão."},
+                               {"tipo": "ferramenta", "nome": "anotar", "entrada": {"texto": nota[:500]}}], "stop": "tool_use"}
+        m = re.match(r"^onde\b\s*(?:está|esta|fica|aparece|tem)?\s*(.*)$", dono)
+        if m:
+            busca = re.sub(r"^(?:a palavra|a fala|o trecho|a|o)\s+", "", re.sub(r"[?!.]+$", "", (m.group(1) or "").strip()))[:80] or "creat"
+            return {"blocos": [{"tipo": "texto", "texto": "Entendi: achar um ponto no filme. Vou procurar."},
+                               {"tipo": "ferramenta", "nome": "onde_esta", "entrada": {"busca": busca}}], "stop": "tool_use"}
         if "pergunt" in texto:
             return {"blocos": [{"tipo": "texto", "texto": "Entendi: você quer que eu pergunte antes. Uma dúvida:"},
                                {"tipo": "ferramenta", "nome": "perguntar", "entrada": {

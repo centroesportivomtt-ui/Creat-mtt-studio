@@ -131,6 +131,24 @@ def _encaixe(ps, edl: dict | None, problemas: list, direcao: dict) -> None:
     ps.achou(txt)
 
 
+def _resolver_uma(d: dict, *, catalogo: dict, analises, loja: Loja, pedido: dict | None, trilhas: list[dict], energias: dict | None = None,
+                  movimentos: dict | None = None, vocabulario: list | None = None,
+                  ferramenta: str = "resolvedor do editor (encaixe por palavra e batida)") -> tuple[dict | None, list]:
+    """Uma passada do resolvedor (direção -> EDL) dentro do passo da mesa. Devolve (edl, []) ou (None, problemas).
+    Usada pela direção de sempre (dirigir_e_resolver) e pela troca de música sem cérebro (onda 3, _trocar_trilha)."""
+    voc = loja.vocabulario() if vocabulario is None else vocabulario
+    modelo = loja.modelo_com_modo(d.get("modelo") or "evento-reel", (pedido or {}).get("modo"))
+    with passos.passo("direcao.resolvedor", ferramenta=ferramenta) as pr:
+        try:
+            r = resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, movimentos=movimentos,
+                         projeto=catalogo["projeto"],
+                         ambiente=(pedido or {}).get("ambiente"), vozes=(pedido or {}).get("vozes")), []
+        except ErroResolucao as e:
+            r = None, e.problemas
+        _encaixe(pr, r[0], r[1], d)
+        return r
+
+
 def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str, pedido: dict, analises: dict, trilhas: list[dict],
                        energias: dict | None = None, correcao: dict | None = None, criticar: bool = True, cfg=None,
                        movimentos: dict | None = None, ao_usar=None) -> dict:
@@ -158,16 +176,8 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
     voc = loja.vocabulario()
 
     def tentar(d):
-        modelo = loja.modelo_com_modo(d.get("modelo") or "evento-reel", (pedido or {}).get("modo"))
-        with passos.passo("direcao.resolvedor", ferramenta="resolvedor do editor (encaixe por palavra e batida)") as pr:
-            try:
-                r = resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, movimentos=movimentos,
-                             projeto=catalogo["projeto"],
-                             ambiente=(pedido or {}).get("ambiente"), vozes=(pedido or {}).get("vozes")), []
-            except ErroResolucao as e:
-                r = None, e.problemas
-            _encaixe(pr, r[0], r[1], d)
-            return r
+        return _resolver_uma(d, catalogo=catalogo, analises=analises, loja=loja, pedido=pedido, trilhas=trilhas, energias=energias,
+                             movimentos=movimentos, vocabulario=voc)
 
     edl, problemas = tentar(direcao)
     critica = "não rodou"
@@ -219,12 +229,14 @@ def rodar(ctx) -> dict:
         raise ErroDefinitivo("catálogo ainda não foi montado") from e
     pedido = arm.pedido(p) or {"versao": "1", "projeto": p, "texto": ""}
     entrada = ctx.job.get("entrada") or {}
-    correcao = {k: entrada[k] for k in ("corrigir_qa", "reprovacao", "versao_anterior") if k in entrada} or None
+    correcao = {k: entrada[k] for k in ("corrigir_qa", "reprovacao", "versao_anterior", "trocar_trilha") if k in entrada} or None
     indice = arm.ler_json(f"projetos/{p}/direcoes.json", padrao={"por_entrada": {}, "ultima": 0})
     chave = _hash(orcamento.estimar_tokens(cat_txt), armazem_b_hash(cat_txt), pedido, correcao)
     feito = indice["por_entrada"].get(chave)
     if feito and arm.existe(f"saidas/{p}/{feito}/edl.json"):
-        return {"versao": feito, "reaproveitada": True, "cerebro": ctx.cfg.cerebro}
+        return {"versao": feito, "reaproveitada": True, "cerebro": "sem_cerebro" if (correcao or {}).get("trocar_trilha") else ctx.cfg.cerebro}
+    if correcao and correcao.get("trocar_trilha"):          # onda 3 (D25): troca só a música, sem chamar o cérebro
+        return _trocar_trilha(ctx, arm, indice, chave, correcao, catalogo=catalogo, pedido=pedido)
     if correcao and correcao.get("versao_anterior"):
         n_ant = int(str(correcao["versao_anterior"]).lstrip("v") or 0)
         try:
@@ -270,6 +282,67 @@ def rodar(ctx) -> dict:
                  mensagem=f"Direção pronta ({r['edl']['duracao']:.0f} s, {len(r['edl']['voz'])} trechos de fala). Custo: US$ {total['custo_usd']:.2f}.",
                  dados={"tokens": total, "avisos": r["avisos"][:5]})
     return {"versao": v, "duracao": r["edl"]["duracao"], "tokens_saida": total["saida"], "custo_usd": total["custo_usd"], "cerebro": cerebro.nome}
+
+
+def _trocar_trilha(ctx, arm, indice: dict, chave: str, correcao: dict, *, catalogo: dict, pedido: dict) -> dict:
+    """Troca de música sem cérebro (onda 3, seção 5): copia a direção da versão de origem, troca trilha.id e roda SÓ o
+    resolvedor. Mesmos blocos e falas; os cortes andam até uma batida (a grade é da música) e a duração pode mudar. A versão
+    de origem não é tocada (continua entregue e aprovável). Custo da direção: US$ 0."""
+    import copy
+    import re
+    import validar
+    p = ctx.projeto
+    tt = correcao.get("trocar_trilha") or {}
+    de, tid = str(tt.get("de") or ""), str(tt.get("trilha") or "")
+    m = re.match(r"^v([0-9]{1,3})$", de)
+    if not m or not re.match(r"^[a-z0-9_-]{2,41}$", tid):
+        raise ErroDefinitivo("pedido de troca de música inválido")
+    try:
+        d_ant = arm.ler_json(f"projetos/{p}/direcao_{int(m.group(1))}.json")
+    except FileNotFoundError as e:
+        raise ErroDefinitivo(f"a {de} não tem direção guardada") from e
+    d = copy.deepcopy(d_ant)
+    tr = d.setdefault("trilha", {"clima": "energia"})
+    tr["id"] = tid
+    tr.pop("ids", None)
+    tr.pop("troca_em", None)
+    erros = validar.erros("direcao", d)
+    if erros:
+        raise ErroDefinitivo("a direção da versão de origem ficou fora do schema: " + "; ".join(erros[:3]))
+    trilhas = armazem_b.trilhas(ctx.cfg)
+    if not any(t.get("id") == tid for t in trilhas):
+        raise ErroDefinitivo("a música escolhida saiu da biblioteca")
+    analises = {}
+    for k in arm.listar(f"derivados/{p}/"):
+        if k.endswith("/analise.json"):
+            a = arm.ler_json(k)
+            analises[a["arquivo"]["id"]] = a
+    ctx.progresso(0.2, f"Trocando a música da {de}, sem nova direção.")
+    loja = Loja()
+    edl, problemas = _resolver_uma(d, catalogo=catalogo, analises=analises, loja=loja, pedido=pedido, trilhas=trilhas,
+                                   energias=_energias(arm, analises), movimentos=_movimentos(arm, analises),
+                                   ferramenta="resolvedor do editor (troca de música, sem nova direção)")
+    if edl is None:
+        raise ErroDefinitivo("a música nova não encaixou no filme: " + "; ".join(str(x) for x in problemas[:3]))
+    validar.validar("edl", edl)
+    n = int(indice.get("ultima", 0)) + 1
+    v = f"v{n}"
+    edl["origem"].update({"versao": v, "cerebro": "sem_cerebro", "critica": "troca de música, sem crítica", "trocou_trilha_de": de})
+    arm.gravar_json(f"projetos/{p}/direcao_{n}.json", d)
+    passos.emitir_decisao(v, d, f"troca de música da {de}, sem nova direção")
+    total = {"entrada": 0, "saida": 0, "custo_usd": 0.0}
+    arm.gravar_json(f"projetos/{p}/uso_{n}.json", {"versao": v, "chamadas": [], "total": total, "cerebro": "sem_cerebro",
+                                                    "troca_de_trilha": {"de": de, "trilha": tid}})
+    arm.gravar_json(f"saidas/{p}/{v}/edl.json", edl)
+    passos.anotar(versao=v, dur=round(float(edl["duracao"])), falas=len(edl["voz"]))
+    passos.achou(f"{v.upper()}: música trocada, {edl['duracao']:.0f} s, {len(edl['voz'])} trechos de fala; sem nova direção")
+    indice.setdefault("por_entrada", {})[chave] = v
+    indice["ultima"] = n
+    arm.gravar_json(f"projetos/{p}/direcoes.json", indice)
+    ctx.con.execute("INSERT OR REPLACE INTO versoes (id, projeto, estado, criado) VALUES (?,?,?,?)", (v, p, "montando", banco.agora_iso()))
+    banco.emitir(ctx.con, p, "etapa_progresso", etapa="direcao", alvo=v, progresso=1.0,
+                 mensagem=f"Música trocada ({v}, {edl['duracao']:.0f} s). Custo da direção: US$ 0,00.", dados={"tokens": total})
+    return {"versao": v, "duracao": edl["duracao"], "tokens_saida": 0, "custo_usd": 0.0, "cerebro": "sem_cerebro"}
 
 
 def _dirigir_com_edl_fixo(ctx, arm, indice, chave, correcao) -> dict:

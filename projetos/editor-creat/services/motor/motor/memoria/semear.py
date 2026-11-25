@@ -55,9 +55,19 @@ def semear(git: pathlib.Path, volume: pathlib.Path) -> dict:
     rg, rv = _ler(git / "regras.json", {"versao": "1", "regras": [], "vocabulario": []}), _ler(volume / "regras.json", {})
     regras, rel["regras_do_servidor"] = _unir(rg.get("regras", []), rv.get("regras", []), "id")
     voc, rel["vocabulario_do_servidor"] = _unir(rg.get("vocabulario", []), rv.get("vocabulario", []), "de")
+    # lápides (onda 3): o que o dono apagou no Caderno não volta do git. O apagados.json é só do volume: nunca vem do git
+    # e nunca é sobrescrito aqui
+    from motor.memoria.loja import APAGADOS, id_vocabulario
+    lap = _ler(volume / APAGADOS, {})
+    lap = lap if isinstance(lap, dict) else {}
+    fora_r, fora_c, fora_v = (set((lap.get(t) or {}).keys()) for t in ("regras", "checagens", "vocabulario"))
+    regras = [x for x in regras if not (isinstance(x, dict) and x.get("id") in fora_r)]
+    voc = [x for x in voc if not (isinstance(x, dict) and id_vocabulario(x.get("de", "")) in fora_v)]
+    rel["apagados_respeitados"] = len(fora_r) + len(fora_c) + len(fora_v)
     _gravar(volume / "regras.json", {**rg, "regras": regras, "vocabulario": voc})
     cg, cv = _ler(git / "checagens.json", {"versao": "1", "checagens": []}), _ler(volume / "checagens.json", {})
     checagens, rel["checagens_do_servidor"] = _unir(cg.get("checagens", []), cv.get("checagens", []), "id")
+    checagens = [x for x in checagens if not (isinstance(x, dict) and x.get("id") in fora_c)]
     _gravar(volume / "checagens.json", {**cg, "checagens": checagens})
     for nome in DO_CODIGO:
         if (git / nome).is_dir():

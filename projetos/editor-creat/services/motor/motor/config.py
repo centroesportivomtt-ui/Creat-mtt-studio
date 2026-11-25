@@ -81,6 +81,24 @@ def _conversa_cerebro() -> str:
     return v
 
 
+RETENCAO_CONVERSA_PADRAO = 90
+
+
+def _retencao_conversa() -> int:
+    """Dias que um capítulo fechado da conversa fica guardado (onda 3, seção 9). 0 = para sempre. Inválido ou negativo: 90,
+    com aviso no log (nunca derruba o motor na partida)."""
+    bruto = _env("EDITOR_CONVERSA_RETENCAO_DIAS", str(RETENCAO_CONVERSA_PADRAO))
+    try:
+        v = int(bruto)
+    except ValueError:
+        v = -1
+    if v < 0:
+        import logging
+        logging.getLogger("motor.config").warning("EDITOR_CONVERSA_RETENCAO_DIAS=%r inválido; vale %d dias", bruto[:20], RETENCAO_CONVERSA_PADRAO)
+        return RETENCAO_CONVERSA_PADRAO
+    return v
+
+
 def _esforco_conversa() -> str:
     v = _env("EDITOR_CONVERSA_ESFORCO", "medium").lower()
     return v if v in ("low", "medium", "high") else "medium"
@@ -119,6 +137,7 @@ class Config:
     teto_conversa_usd_dia: float = field(default_factory=_teto_conversa)
     andamento_conversa: bool = field(default_factory=lambda: _env("EDITOR_CONVERSA_ANDAMENTO", "1") != "0")
     sse_novo: bool = field(default_factory=lambda: _env("EDITOR_SSE_NOVO", "1") != "0")
+    retencao_conversa_dias: int = field(default_factory=_retencao_conversa)                               # 0 = para sempre
 
     @property
     def banco(self) -> pathlib.Path:

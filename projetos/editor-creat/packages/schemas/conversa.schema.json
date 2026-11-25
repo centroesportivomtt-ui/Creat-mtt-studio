@@ -146,7 +146,10 @@
       "ver_material",
       "ver_passo",
       "ver_projeto",
-      "ouvir_audio"
+      "ouvir_audio",
+      "onde_esta",
+      "ver_regras",
+      "ver_trilhas"
      ]
     },
     "fase": {
@@ -256,7 +259,10 @@
     "acao": {
      "enum": [
       "ajuste",
-      "pedido"
+      "pedido",
+      "refazer",
+      "trilha",
+      "nota"
      ]
     },
     "versao": {
@@ -299,7 +305,10 @@
       "enum": [
        "direcao",
        "montagem",
-       "qa"
+       "qa",
+       "entrega",
+       "leitura",
+       "encaixe"
       ]
      }
     },
@@ -328,6 +337,73 @@
      "type": "string",
      "maxLength": 600,
      "description": "Aviso do servidor: o texto repete algo de fora (fala de vídeo, texto de cliente); o ajuste não vira regra. Opcional."
+    },
+    "de": {
+     "enum": [
+      "montagem",
+      "conferencia",
+      "entrega",
+      "leitura"
+     ],
+     "description": "Onda 3 (refazer): qual etapa roda de novo. Opcional."
+    },
+    "arquivo_id": {
+     "type": "string",
+     "maxLength": 40,
+     "pattern": "^[A-Za-z0-9_-]+$",
+     "description": "Onda 3 (refazer leitura): o vídeo. Opcional; a tela nunca mostra o nome do arquivo."
+    },
+    "n_video": {
+     "type": "integer",
+     "minimum": 1,
+     "description": "Onda 3: número do vídeo na ordem do envio. Opcional."
+    },
+    "faz": {
+     "type": "string",
+     "maxLength": 400,
+     "description": "Onda 3: o que o toque faz, escrito pelo código (a tela mostra sem aspas). Opcional."
+    },
+    "nao_muda": {
+     "type": "string",
+     "maxLength": 300,
+     "description": "Onda 3 (trilha): o que não muda. Opcional."
+    },
+    "partes": {
+     "type": "array",
+     "maxItems": 4,
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "rotulo",
+       "usd"
+      ],
+      "properties": {
+       "rotulo": {
+        "type": "string",
+        "maxLength": 60
+       },
+       "usd": {
+        "type": "number",
+        "minimum": 0
+       }
+      }
+     },
+     "description": "Onda 3: de onde vem o custo. Opcional."
+    },
+    "custo_ate": {
+     "type": "boolean",
+     "description": "Onda 3: true = 'custa até US$ x' (sem histórico). Opcional."
+    },
+    "botao": {
+     "type": "string",
+     "maxLength": 30,
+     "description": "Onda 3: o verbo exato do botão principal. Opcional."
+    },
+    "tempo_s": {
+     "type": "number",
+     "minimum": 0,
+     "description": "Onda 3 (nota): ponto do filme. Opcional."
     }
    }
   },

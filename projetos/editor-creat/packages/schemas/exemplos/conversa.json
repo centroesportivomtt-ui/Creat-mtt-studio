@@ -344,5 +344,245 @@
    },
    "achado": "Passou em 20 de 21 conferências; segurou a entrega: zona_segura"
   }
+ },
+ {
+  "id": 16,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "ferramenta",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01ond",
+   "nome": "onde_esta",
+   "fase": "fim",
+   "resumo": "Achou 2 pontos",
+   "s": 0.04,
+   "entrada": {
+    "busca": "creat"
+   }
+  }
+ },
+ {
+  "id": 17,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "ferramenta",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01tri",
+   "nome": "ver_trilhas",
+   "fase": "fim",
+   "resumo": "Viu 3 trilhas",
+   "s": 0.02,
+   "entrada": {}
+  }
+ },
+ {
+  "id": 18,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "ferramenta",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01reg",
+   "nome": "ver_regras",
+   "fase": "fim",
+   "resumo": "Leu 12 regras",
+   "s": 0.03,
+   "entrada": {
+    "tipo": "regra"
+   }
+  }
+ },
+ {
+  "id": 19,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "confirmacao",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01ref",
+   "acao": "refazer",
+   "de": "montagem",
+   "versao": "v2",
+   "titulo": "Montar de novo a v2",
+   "texto_exato": "Montar de novo a v2 com a mesma direção. Depois o editor confere e entrega sozinho.",
+   "faz": "Montar de novo a v2 com a mesma direção. Depois o editor confere e entrega sozinho.",
+   "refaz": [
+    "montagem",
+    "qa",
+    "entrega"
+   ],
+   "comeca_agora": true,
+   "custo_usd_est": 0.3,
+   "custo_ate": true,
+   "partes": [
+    {
+     "rotulo": "Olhar o filme novo com IA (conferência)",
+     "usd": 0.3
+    }
+   ],
+   "minutos_est": 9.0,
+   "vira_regra": false,
+   "volta": "Nada da direção muda. Se a conferência reprovar, o editor para e espera você (não gasta com correção automática).",
+   "botao": "Montar de novo",
+   "entrada_hash": "3ff6c05723bb069d19953340320fa9512f0be584742703e60226ded28bb43861"
+  }
+ },
+ {
+  "id": 20,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "resposta",
+  "dados": {
+   "tool_use_id": "toolu_01ref",
+   "tipo": "confirmacao",
+   "sim": true,
+   "por": "dono",
+   "resultado": "feito",
+   "detalhe": "Feito. A montagem da v2 recomeçou; acompanhe na mesa."
+  }
+ },
+ {
+  "id": 21,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "confirmacao",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01mus",
+   "acao": "trilha",
+   "versao": "v2",
+   "titulo": "Trocar a música da v2",
+   "texto_exato": "Trocar a música da v2 por “Pulso de Feira” (104 bpm), sem nova direção.",
+   "faz": "Trocar a música da v2 por “Pulso de Feira” (104 bpm), sem nova direção.",
+   "mudancas": [
+    {
+     "campo": "Música",
+     "antes": "Noite Clara",
+     "depois": "Pulso de Feira"
+    }
+   ],
+   "nao_muda": "Os mesmos trechos, falas, legendas, cor e fecho.",
+   "atencao": "Os cortes andam até uma batida para casar com a música nova, então a duração pode mudar um pouco.",
+   "refaz": [
+    "encaixe",
+    "montagem",
+    "qa",
+    "entrega"
+   ],
+   "comeca_agora": true,
+   "custo_usd_est": 0.12,
+   "custo_ate": false,
+   "partes": [
+    {
+     "rotulo": "Olhar o filme novo com IA (conferência)",
+     "usd": 0.12
+    }
+   ],
+   "minutos_est": 10.0,
+   "vira_regra": false,
+   "volta": "A v2 continua guardada e pode ser aprovada. A música nova sai na v3. Se a conferência reprovar, o editor para e espera você.",
+   "botao": "Trocar a música",
+   "entrada_hash": "b49b6976120c927c29fde58d6ff2cb92216b5ac4a258bb6cf03309fdc8d2e8b8"
+  }
+ },
+ {
+  "id": 22,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "confirmacao",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01not",
+   "acao": "nota",
+   "versao": "v2",
+   "tempo_s": 12.3,
+   "titulo": "Guardar uma nota",
+   "texto_exato": "Usar este corte no reel do Super Kal de dezembro.",
+   "faz": "Guardar esta nota no projeto em 0:12 da v2. Não refaz nada e não gasta.",
+   "refaz": [],
+   "comeca_agora": false,
+   "custo_usd_est": 0.0,
+   "minutos_est": 0.0,
+   "vira_regra": false,
+   "volta": "A nota fica na lista de notas do projeto.",
+   "botao": "Guardar a nota",
+   "entrada_hash": "254bb97b57f12e1608fefc4517de768427b2fd6d2cffbbfcbc09f3c818198d5f"
+  }
+ },
+ {
+  "id": 23,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "confirmacao",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01lei",
+   "acao": "refazer",
+   "de": "leitura",
+   "arquivo_id": "a_3f2e1d",
+   "n_video": 3,
+   "titulo": "Ler de novo o vídeo 3",
+   "texto_exato": "Tentar ler o vídeo 3 de novo: ouvir as falas e olhar os quadros. Ele ficou de fora porque não deu para ler.",
+   "faz": "Tentar ler o vídeo 3 de novo: ouvir as falas e olhar os quadros. Ele ficou de fora porque não deu para ler.",
+   "refaz": [
+    "leitura"
+   ],
+   "comeca_agora": true,
+   "custo_usd_est": 0.05,
+   "custo_ate": true,
+   "partes": [
+    {
+     "rotulo": "Ler o vídeo com IA (visão)",
+     "usd": 0.05
+    }
+   ],
+   "minutos_est": 2.0,
+   "vira_regra": false,
+   "volta": "Os outros vídeos não mudam.",
+   "botao": "Ler de novo",
+   "entrada_hash": "7d296c79bdb526d6baadda6cfbd308fc809c1eb9d376fdba2b9ab153f3870d45"
+  }
  }
 ]

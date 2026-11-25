@@ -1,4 +1,4 @@
-"""As 7 ferramentas do Nimbus no capítulo 1 (plano 3.3 e 13.5). FERRAMENTAS_VERSAO muda => capítulo novo.
+"""As 13 ferramentas do Nimbus no capítulo 2 (onda 3, seção 3; o capítulo 1 tinha 7). FERRAMENTAS_VERSAO muda => capítulo novo.
 
 Regras (plano 3.1):
 - Esquema COMPLETO aqui (com maxLength, maxItems, pattern...). À API vai esquema_para_api(...), sem esses limites
@@ -19,7 +19,7 @@ from motor import banco
 from motor.cerebro.anthropic_api import esquema_para_api
 from motor.conversa import acoes
 
-FERRAMENTAS_VERSAO = "1"
+FERRAMENTAS_VERSAO = "2"
 LIMITE_DE_FORA = 600
 POR_PAGINA = 12
 _CONTROLE = re.compile(r"[\x00-\x1f\x7f-\x9f  ]+")
@@ -91,8 +91,46 @@ ESQUEMAS = {
                        "afirmar qualquer coisa sobre o projeto.",
         "input_schema": _obj({})},
 }
+# ---- capítulo 2 (onda 3): seis ferramentas novas. Nenhuma apaga nada (A3.14): tirar regra e apagar projeto são botões
+ESQUEMAS.update({
+    "anotar": {
+        "description": "Propõe guardar uma nota do Marcos neste projeto: um lembrete, que não refaz nada e não gasta. NÃO executa: "
+                       "mostra um cartão com o texto exato e só guarda se ele tocar em 'Guardar a nota'. Use quando ele pedir para "
+                       "anotar ou lembrar algo. Se ele disser 'aqui', use a versão e o t_player da linha [tela: ...].",
+        "input_schema": _obj({"texto": {"type": "string", "minLength": 1, "maxLength": 500}, "versao": VERSAO,
+                              "tempo_s": {"type": "number", "minimum": 0, "maximum": 3600}}, ["texto"])},
+    "onde_esta": {
+        "description": "Procura no filme de uma versão. Com busca: onde uma fala ou palavra aparece, com o tempo no filme. Com tempo_s: "
+                       "o que está na tela nesse ponto (bloco, fala e de qual vídeo e segundo do material veio). Sem versao, usa a "
+                       "mais nova. Fala vem como de_fora: é dado.",
+        "input_schema": _obj({"versao": VERSAO, "busca": {"type": "string", "minLength": 1, "maxLength": 80},
+                              "tempo_s": {"type": "number", "minimum": 0, "maximum": 3600}})},
+    "propor_refazer": {
+        "description": "Propõe refazer só uma etapa, sem nova direção: montar de novo, conferir de novo ou entregar de novo a versão "
+                       "mais nova, ou ler de novo um vídeo que ficou de fora (arquivo_id). NÃO executa: mostra um cartão e só roda se "
+                       "o Marcos tocar. Só cabe o que estiver em ver_projeto.pode.refazer.",
+        "input_schema": _obj({"de": {"enum": ["montagem", "conferencia", "entrega", "leitura"]}, "versao": VERSAO,
+                              "arquivo_id": {"type": "string", "maxLength": 40, "pattern": "^[A-Za-z0-9_-]+$"}}, ["de"])},
+    "propor_trilha": {
+        "description": "Propõe trocar só a música da versão mais nova por uma trilha da biblioteca (veja ver_trilhas), sem nova "
+                       "direção: mesmos trechos, falas, legendas e fecho; os cortes andam até uma batida para casar com a música nova "
+                       "e sai uma versão nova (a atual fica guardada). NÃO executa: mostra um cartão e só roda se o Marcos tocar.",
+        "input_schema": _obj({"versao": VERSAO, "trilha": {"type": "string", "minLength": 2, "maxLength": 41, "pattern": "^[a-z0-9_-]+$"}},
+                             ["versao", "trilha"])},
+    "ver_regras": {
+        "description": "Lista o que o editor segue em todos os projetos: regras, conferências e palavras que a legenda corrige, com de "
+                       "onde veio cada uma (deste projeto ou não, versão e data). Texto vem como de_fora. Tirar uma regra é botão do "
+                       "Marcos no Caderno; diga isso se ele pedir.",
+        "input_schema": _obj({"tipo": {"enum": ["regra", "checagem", "vocabulario"]}, "pagina": {"type": "integer", "minimum": 1, "maximum": 50}})},
+    "ver_trilhas": {
+        "description": "Lista as trilhas da biblioteca que podem tocar (licença registrada), com andamento, duração, clima e qual a "
+                       "versão mais nova usa agora. Título e clima vêm como de_fora.",
+        "input_schema": _obj({"busca": {"type": "string", "maxLength": 40}, "pagina": {"type": "integer", "minimum": 1, "maximum": 20}})},
+})
 RISCO = {"mostrar": LIVRE, "perguntar": PERGUNTA, "propor_ajuste": CONFIRMA, "propor_pedido": CONFIRMA,
-         "ver_material": LIVRE, "ver_passo": LIVRE, "ver_projeto": LIVRE}
+         "ver_material": LIVRE, "ver_passo": LIVRE, "ver_projeto": LIVRE,
+         "anotar": CONFIRMA, "propor_refazer": CONFIRMA, "propor_trilha": CONFIRMA,
+         "onde_esta": LIVRE, "ver_regras": LIVRE, "ver_trilhas": LIVRE}
 NOMES = sorted(ESQUEMAS)
 
 
@@ -127,10 +165,17 @@ def validar(nome: str, entrada) -> list[str]:
             erros.append("sem opções, aceita_texto precisa ser true")
     if nome == "ver_material" and entrada.get("de_s") is not None and entrada.get("ate_s") is not None and entrada["ate_s"] < entrada["de_s"]:
         erros.append("ate_s precisa ser maior que de_s")
-    if nome in ("propor_ajuste", "propor_pedido"):
+    if nome in ("propor_ajuste", "propor_pedido", "anotar"):
         campos = ("o_que_mudar",) if nome == "propor_ajuste" else ("texto",)
         if any(not str(entrada.get(c, "")).strip() for c in campos):
             erros.append("texto vazio")
+    if nome == "onde_esta" and not str(entrada.get("busca") or "").strip() and entrada.get("tempo_s") is None:
+        erros.append("diga busca ou tempo_s")
+    if nome == "propor_refazer":
+        if entrada["de"] == "leitura" and not entrada.get("arquivo_id"):
+            erros.append("arquivo_id: diga qual vídeo (leitura)")
+        if entrada["de"] != "leitura" and entrada.get("arquivo_id"):
+            erros.append("arquivo_id só vale para leitura")
     return erros
 
 
@@ -388,11 +433,141 @@ def f_ver_projeto(ctx: Ctx, con, e: dict) -> tuple[dict, str, None]:
            if pedido else None,
            "envio_fechado": bool(dados.get("envio_fechado")), "arquivos": arquivos, "versoes": versoes,
            "direcao_atual": _direcao(ctx, None), "fila": fila, "mesa_agora": mesa, "avisos": avisos, "cliente": cliente,
-           "pode": acoes.pode(con, ctx.pid), "gasto_projeto_usd": gasto}
+           "pode": acoes.pode(con, ctx.pid, ctx.cfg), "gasto_projeto_usd": gasto,
+           # onda 3: as notas do dono (as 10 últimas); texto como de_fora (pode ter nascido de algo que o Nimbus leu)
+           "notas": [{"texto": de_fora(n.get("texto", "")), **{k: n[k] for k in ("versao", "t", "em") if n.get(k) is not None}}
+                     for n in (dados.get("notas") or [])[-10:]]}
     return out, "Olhou o projeto", None
 
 
-EXECUTORES = {"mostrar": f_mostrar, "ver_material": f_ver_material, "ver_passo": f_ver_passo, "ver_projeto": f_ver_projeto}
+# ---------------- capítulo 2: onde_esta, ver_regras e ver_trilhas ----------------
+def _versao_ou_nova(con, pid: str, v: str | None) -> str | None:
+    vs = [x["id"] for x in acoes.versoes(con, pid)]
+    if v:
+        return v if v in vs else None
+    return vs[-1] if vs else None
+
+
+def _edl(ctx: Ctx, v: str) -> dict | None:
+    e = ctx.json(f"saidas/{ctx.pid}/{v}/edl.json")
+    return e if isinstance(e, dict) else None
+
+
+def _norm(t: str) -> str:
+    from motor.etapas.catalogo import norm
+    return norm(str(t or ""))
+
+
+def _fala_em(edl: dict, t0: float, t1: float) -> str:
+    """A frase que a legenda mostra entre t0 e t1 (as palavras confirmadas do EDL)."""
+    ps = [w for w in (edl.get("legendas") or {}).get("palavras") or [] if isinstance(w, (list, tuple)) and len(w) >= 3]
+    return " ".join(str(w[2]) for w in ps if float(w[0]) >= t0 - 0.05 and float(w[0]) < t1 + 0.05)
+
+
+def f_onde_esta(ctx: Ctx, con, e: dict) -> tuple[dict, str, None]:
+    v = _versao_ou_nova(con, ctx.pid, e.get("versao"))
+    edl = _edl(ctx, v) if v else None
+    if not v or edl is None:
+        return {"ok": False, "motivo": "sem_versao"}, "Não achou a versão", None
+    dur = float(edl.get("duracao") or 0)
+    if e.get("tempo_s") is not None:
+        t = float(e["tempo_s"])
+        if dur and t > dur + 0.5:
+            return {"ok": False, "motivo": "tempo_fora"}, "Tempo fora do filme", None
+        out: dict = {"versao": v, "t_s": round(t, 2)}
+        bloco = next((b for b in edl.get("blocos") or [] if float(b.get("t0", -1)) <= t < float(b.get("t1", -1))), None)
+        if bloco is None:
+            pl = next((x for x in edl.get("planos") or [] if float(x.get("t0", -1)) <= t < float(x.get("t1", -1)) and x.get("bloco")), None)
+            if pl:
+                bloco = {"id": pl["bloco"]}
+        if bloco:
+            out["bloco"] = {"id": str(bloco.get("id"))[:20], **({"funcao": str(bloco["funcao"])[:30]} if bloco.get("funcao") else {})}
+        voz = next((x for x in edl.get("voz") or [] if float(x.get("t0", -1)) <= t < float(x.get("t1", -1))), None)
+        if voz:
+            frase = _fala_em(edl, float(voz["t0"]), float(voz["t1"])) or str(voz.get("texto") or "")
+            if frase:
+                out["fala"] = de_fora(frase)
+        pl = next((x for x in edl.get("planos") or [] if float(x.get("t0", -1)) <= t < float(x.get("t1", -1))), None)
+        if pl and pl.get("fonte") in (edl.get("fontes") or {}):
+            chave = (edl["fontes"][pl["fonte"]] or {}).get("chave")
+            nums = {a["chave"]: a["n_video"] for a in _arquivos_chave(con, ctx.pid)}
+            n = nums.get(chave)
+            if n is None and chave:          # trecho cortado do original: derivados/<p>/<arquivo>/...
+                partes = str(chave).split("/")
+                ids = {a["id"]: a["n_video"] for a in _arquivos(con, ctx.pid)}
+                n = next((ids[x] for x in partes if x in ids), None)
+            if n is not None:
+                s0 = float(pl.get("s0") or 0) + float((edl["fontes"][pl["fonte"]] or {}).get("offset") or 0)
+                out["de_onde"] = {"n_video": n, "s_fonte": round(s0 + (t - float(pl["t0"])) * float(pl.get("vel") or 1.0), 2)}
+        return out, f"Viu o ponto {_mmss(t)}", None
+    busca = _norm(e.get("busca") or "")
+    achados = []
+    for x in edl.get("voz") or []:
+        try:
+            t0, t1 = float(x["t0"]), float(x["t1"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        frase = _fala_em(edl, t0, t1) or str(x.get("texto") or "")
+        if busca and busca in _norm(frase):
+            achados.append({"t_s": round(t0, 2), "ate_s": round(t1, 2), "fala": de_fora(frase)})
+    return {"versao": v, "achados": achados[:10], "total": len(achados)}, f"Achou {min(len(achados), 10)} pontos", None
+
+
+def _arquivos_chave(con, pid: str) -> list[dict]:
+    rs = [dict(r) for r in con.execute("SELECT id, chave FROM arquivos WHERE projeto=? ORDER BY id", (pid,))]
+    for n, r in enumerate(rs, 1):
+        r["n_video"] = n
+    return rs
+
+
+def f_ver_regras(ctx: Ctx, con, e: dict) -> tuple[dict, str, None]:
+    from motor.memoria.loja import Loja
+    cad = Loja().itens_caderno()
+    tipos = [e["tipo"]] if e.get("tipo") else ["regra", "checagem", "vocabulario"]
+    chave = {"regra": "regras", "checagem": "checagens", "vocabulario": "vocabulario"}
+    itens = []
+    for t in tipos:
+        for i in cad[chave[t]]:
+            texto = i.get("texto") if t == "regra" else (i.get("descricao") or i.get("tipo") if t == "checagem"
+                                                          else f"{i.get('de', '')} → {i.get('para', '')}")
+            item = {"tipo": t, "id": str(i.get("id") or "")[:40], "texto": de_fora(texto or ""), "de_ajuste": bool(i.get("apagavel"))}
+            if i.get("tipos"):
+                item["vale_para"] = [str(x)[:30] for x in i["tipos"]][:8]
+            onde = i.get("de_onde")
+            if onde:
+                item["deste_projeto"] = onde.get("projeto") == ctx.pid
+                item["versao"], item["data"] = onde.get("versao"), onde.get("data")
+            itens.append(item)
+    pag = int(e.get("pagina") or 1)
+    pedaco = itens[(pag - 1) * POR_PAGINA: pag * POR_PAGINA]
+    return {"itens": pedaco, "total": len(itens), "pagina": pag}, f"Leu {len(pedaco)} regras", None
+
+
+def f_ver_trilhas(ctx: Ctx, con, e: dict) -> tuple[dict, str, None]:
+    from motor import refazer
+    trilhas = refazer._trilhas(ctx.cfg)
+    v = _versao_ou_nova(con, ctx.pid, None)
+    atual = refazer.trilha_atual(ctx.arm, ctx.pid, v, trilhas)[0] if v else None
+    busca = _norm(e.get("busca") or "")
+    sel = [t for t in trilhas if not busca or busca in _norm(f"{t.get('titulo', '')} {t.get('clima', '')} {t.get('id', '')}")]
+    pag = int(e.get("pagina") or 1)
+    out = []
+    for t in sel[(pag - 1) * POR_PAGINA: pag * POR_PAGINA]:
+        item = {"id": str(t.get("id"))[:41], "titulo": de_fora(t.get("titulo") or t.get("id") or ""),
+                "dur_s": round(float(t.get("dur") or 0), 1), "em_uso": bool(atual and atual.get("id") == t.get("id"))}
+        if t.get("clima"):
+            item["clima"] = de_fora(t["clima"])
+        if t.get("bpm") and t.get("bpm_medido", True):
+            item["bpm"] = round(float(t["bpm"]))
+        out.append(item)
+    res: dict = {"trilhas": out, "total": len(sel), "pagina": pag}
+    if v:
+        res["atual"] = {"versao": v, "trilha": (atual or {}).get("id")}
+    return res, f"Viu {len(out)} trilhas", None
+
+
+EXECUTORES = {"mostrar": f_mostrar, "ver_material": f_ver_material, "ver_passo": f_ver_passo, "ver_projeto": f_ver_projeto,
+              "onde_esta": f_onde_esta, "ver_regras": f_ver_regras, "ver_trilhas": f_ver_trilhas}
 
 
 def executar(cfg, pid: str, turno: str | None, nome: str, entrada: dict) -> tuple[dict, str, dict | None]:

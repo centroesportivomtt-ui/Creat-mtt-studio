@@ -32,6 +32,54 @@ def _grava(caminho: pathlib.Path, obj) -> None:
     os.replace(tmp, caminho)
 
 
+# ---------- o Caderno (onda 3): ids estáveis, lápides e o texto de "ao apagar" ----------
+APAGADOS = "apagados.json"
+TIPOS_APAGAVEIS = ("regras", "checagens", "vocabulario")
+ORIGEM_DONO = "reprovação do dono"
+RE_ORIGEM = re.compile(r"^reprovação do dono · (p_[a-z0-9]+)/(v[0-9]{1,3}) · (\d{4}-\d{2}-\d{2})$")
+RE_APAGAVEL = {"regra": re.compile(r"^r_dono_[0-9a-f]{8}$"), "checagem": re.compile(r"^c_dono_[0-9a-f]{8}$"),
+               "vocabulario": re.compile(r"^v_[0-9a-f]{8}$")}
+TIPOS_CHECAGEM_DO_DONO = ("legenda_proibida", "fecho_contem", "duracao_max", "duracao_min", "vazio_max_s", "revisao_humana")
+
+
+def id_vocabulario(de: str) -> str:
+    """Id estável de uma palavra do vocabulário: calculado na leitura, nada muda no arquivo."""
+    return "v_" + hashlib.sha1(norm(str(de or "")).encode()).hexdigest()[:8]
+
+
+def pode_apagar(tipo: str, ident: str) -> bool:
+    r = RE_APAGAVEL.get(tipo)
+    return bool(r and isinstance(ident, str) and r.match(ident))
+
+
+def de_onde(origem: str | None) -> dict | None:
+    m = RE_ORIGEM.match(str(origem or ""))
+    if not m:
+        return None
+    return {"projeto": m.group(1), "versao": m.group(2), "data": m.group(3)}
+
+
+def ao_apagar(tipo: str, item: dict) -> str:
+    if tipo == "regra":
+        return "Deixa de valer nos próximos filmes. Nenhum filme é refeito."
+    if tipo == "checagem":
+        if item.get("tipo") in TIPOS_CHECAGEM_DO_DONO:
+            return "O editor para de conferir isto nos próximos filmes. Nenhum filme é refeito."
+        return "Some só o seu pedido; a conferência fixa do editor continua. Nenhum filme é refeito."
+    return f"A legenda deixa de trocar “{item.get('de', '')}” por “{item.get('para', '')}” nos próximos filmes. Nenhum filme é refeito."
+
+
+def _item_caderno(item: dict, tipo: str, ident: str, origem: str | None) -> dict:
+    do_dono = str(origem or "").startswith(ORIGEM_DONO)
+    item["apagavel"] = pode_apagar(tipo, ident) and do_dono
+    onde = de_onde(origem)
+    if onde:
+        item["de_onde"] = onde
+    if item["apagavel"]:
+        item["ao_apagar"] = ao_apagar(tipo, item)
+    return item
+
+
 class Loja:
     def __init__(self, raiz: pathlib.Path | str | None = None):
         self.raiz = pathlib.Path(raiz) if raiz else _raiz()
@@ -43,15 +91,105 @@ class Loja:
         except FileNotFoundError:
             return padrao
 
+    def apagados(self) -> dict:
+        """Lápides (onda 3, D30): o que o dono apagou no Caderno. Fica no volume, nunca vem do git; o `semear` e a leitura
+        respeitam. Arquivo ilegível conta como vazio (nada some por engano)."""
+        try:
+            a = json.loads((self.raiz / APAGADOS).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            a = {}
+        if not isinstance(a, dict):
+            a = {}
+        return {t: dict(a.get(t) or {}) for t in TIPOS_APAGAVEIS}
+
     def regras(self, tipo_video: str | None = None) -> list[dict]:
-        todas = self._ler("regras.json", {"regras": []})["regras"]
+        fora = self.apagados()["regras"]
+        todas = [r for r in self._ler("regras.json", {"regras": []})["regras"] if r.get("id") not in fora]
         return [r for r in todas if not r.get("tipos") or not tipo_video or tipo_video in r["tipos"] or tipo_video == "auto"]
 
     def vocabulario(self) -> list[dict]:
-        return self._ler("regras.json", {}).get("vocabulario", [])
+        fora = self.apagados()["vocabulario"]
+        return [v for v in self._ler("regras.json", {}).get("vocabulario", []) if id_vocabulario(v.get("de", "")) not in fora]
 
     def checagens(self) -> list[dict]:
-        return self._ler("checagens.json", {"checagens": []})["checagens"]
+        fora = self.apagados()["checagens"]
+        return [c for c in self._ler("checagens.json", {"checagens": []})["checagens"] if c.get("id") not in fora]
+
+    # ---------- o Caderno: ver de onde veio e apagar (onda 3, seção 8) ----------
+    def itens_caderno(self) -> dict:
+        """Os itens que valem hoje (sem os apagados), com id, se dá para apagar, de onde vieram e o que acontece ao apagar."""
+        regras = []
+        for r in self.regras():
+            regras.append(_item_caderno(dict(r), "regra", r.get("id", ""), r.get("origem")))
+        checagens = [_item_caderno(dict(c), "checagem", c.get("id", ""), c.get("origem")) for c in self.checagens()]
+        voc = []
+        for v in self.vocabulario():
+            item = dict(v, id=id_vocabulario(v.get("de", "")))
+            voc.append(_item_caderno(item, "vocabulario", item["id"], v.get("origem")))
+        return {"regras": regras, "checagens": checagens, "vocabulario": voc}
+
+    def apagar(self, tipo: str, ident: str) -> dict:
+        """Tira o item do arquivo e grava a lápide (o `semear` não traz de volta). Só o que nasceu de ajuste do dono.
+        Item que não existe: KeyError. Sob a mesma trava de arquivo de registrar_reprovacao."""
+        import fcntl
+        if tipo not in ("regra", "checagem", "vocabulario"):
+            raise ValueError("tipo desconhecido")
+        self.raiz.mkdir(parents=True, exist_ok=True)
+        with open(self.raiz / ".trava", "a+") as trava:
+            fcntl.flock(trava, fcntl.LOCK_EX)
+            try:
+                return self._apagar(tipo, ident)
+            finally:
+                fcntl.flock(trava, fcntl.LOCK_UN)
+
+    def _apagar(self, tipo: str, ident: str) -> dict:
+        if not pode_apagar(tipo, ident):
+            raise PermissionError("só dá para apagar o que nasceu de um ajuste seu")
+        lapides = self.apagados()
+        chave = {"regra": "regras", "checagem": "checagens", "vocabulario": "vocabulario"}[tipo]
+        if ident in lapides[chave]:
+            raise KeyError(ident)
+        if tipo == "regra":
+            reg = self._ler("regras.json", {"versao": "1", "regras": [], "vocabulario": []})
+            item = next((r for r in reg.get("regras", []) if r.get("id") == ident), None)
+            if item is None:
+                raise KeyError(ident)
+            reg["regras"] = [r for r in reg["regras"] if r.get("id") != ident]
+            _grava(self.raiz / "regras.json", reg)
+            texto = item.get("texto", "")
+        elif tipo == "checagem":
+            ch = self._ler("checagens.json", {"versao": "1", "checagens": []})
+            item = next((c for c in ch.get("checagens", []) if c.get("id") == ident), None)
+            if item is None:
+                raise KeyError(ident)
+            ch["checagens"] = [c for c in ch["checagens"] if c.get("id") != ident]
+            _grava(self.raiz / "checagens.json", ch)
+            texto = item.get("descricao") or item.get("motivo") or item.get("tipo", "")
+        else:
+            reg = self._ler("regras.json", {"versao": "1", "regras": [], "vocabulario": []})
+            item = next((v for v in reg.get("vocabulario", []) if id_vocabulario(v.get("de", "")) == ident), None)
+            if item is None or not str(item.get("origem", "")).startswith(ORIGEM_DONO):
+                raise KeyError(ident)
+            reg["vocabulario"] = [v for v in reg["vocabulario"] if id_vocabulario(v.get("de", "")) != ident]
+            _grava(self.raiz / "regras.json", reg)
+            texto = f"{item.get('de', '')} → {item.get('para', '')}"
+        lapides[chave][ident] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        self._gravar_apagados(lapides)
+        return {"tipo": tipo, "id": ident, "texto": texto}
+
+    def _gravar_apagados(self, lapides: dict) -> None:
+        _grava(self.raiz / APAGADOS, {"versao": "1", **{t: lapides.get(t) or {} for t in TIPOS_APAGAVEIS}})
+
+    def _tirar_lapides(self, regras=(), checagens=(), vocabulario=()) -> None:
+        lapides = self.apagados()
+        mudou = False
+        for chave, ids in (("regras", regras), ("checagens", checagens), ("vocabulario", vocabulario)):
+            for i in ids:
+                if i in lapides[chave]:
+                    lapides[chave].pop(i)
+                    mudou = True
+        if mudou:
+            self._gravar_apagados(lapides)
 
     def modelo(self, nome: str) -> dict:
         m = self._ler(f"modelos/{nome}.json", None)
@@ -186,6 +324,9 @@ class Loja:
         ch = self._ler("checagens.json", {"versao": "1", "checagens": []})
         ch["checagens"] = [c for c in ch["checagens"] if c["id"] != chec["id"]] + [chec]
         _grava(self.raiz / "checagens.json", ch)
+        # reprovar de novo com o mesmo texto traz de volta o que o dono tinha apagado no Caderno (D30)
+        self._tirar_lapides(regras=[regra["id"]], checagens=[chec["id"]],
+                            vocabulario=[id_vocabulario(v["de"]) for v in proposta.get("vocabulario", [])])
         return {"regra": regra, "checagem": chec, "vocabulario": proposta.get("vocabulario", []), "uso": uso}
 
     # ---------- checagens que o próprio EDL responde (o QA da frente C chama) ----------

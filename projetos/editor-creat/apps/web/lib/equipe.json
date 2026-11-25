@@ -1,6 +1,6 @@
 {
-  "versao": "2",
-  "descricao": "Quem faz cada passo da mesa e da conversa (docs/plano-conversa-25-11.md, seção 2.5). Só dados: o site monta o rótulo com o agente, o verbo no gerúndio (rodando) e a frase no passado (feito), trocando {chaves} pelos números do evento. Chave com '*' casa qualquer sufixo. Nunca usar nome de arquivo no rótulo: {n} é o número do vídeo na ordem do envio. Avatar = disco com a cor e a inicial até a arte aprovada chegar. Marcos, Xande e Ruan nunca aparecem como avatar de trabalho. Versão 2 (onda 2, mesa ao vivo): chaves raiz por etapa (o passo raiz de cada job), montagem.fatos (Verbo) e montagem.mix (Eco), rodando só com números que existem no início, e o nome de cada checagem do QA em 'checagens'.",
+  "versao": "3",
+  "descricao": "Quem faz cada passo da mesa e da conversa (docs/plano-conversa-25-11.md, seção 2.5). Só dados: o site monta o rótulo com o agente, o verbo no gerúndio (rodando) e a frase no passado (feito), trocando {chaves} pelos números do evento. Chave com '*' casa qualquer sufixo. Nunca usar nome de arquivo no rótulo: {n} é o número do vídeo na ordem do envio. Avatar = disco com a cor e a inicial até a arte aprovada chegar. Marcos, Xande e Ruan nunca aparecem como avatar de trabalho. Versão 2 (onda 2, mesa ao vivo): chaves raiz por etapa (o passo raiz de cada job), montagem.fatos (Verbo) e montagem.mix (Eco), rodando só com números que existem no início, e o nome de cada checagem do QA em 'checagens'. Versão 3 (onda 3): conversa.ver_regras, conversa.ver_trilhas, conversa.onde_esta e os cartões conversa.anotar, conversa.propor_refazer e conversa.propor_trilha.",
   "agentes": {
     "Nimbus": { "cargo": "Diretor de Operações", "cor": "#8FB3FF", "inicial": "N" },
     "Faísca": { "cargo": "Diretor Criativo", "cor": "#F2A516", "inicial": "F" },
@@ -43,7 +43,13 @@
     { "chave": "conversa.perguntar", "agente": "Nimbus", "rodando": null, "feito": null, "cartao": "pergunta" },
     { "chave": "conversa.propor_ajuste", "agente": "Faísca", "rodando": null, "feito": "Ajuste da {versao} pedido", "cartao": "confirmacao" },
     { "chave": "conversa.propor_pedido", "agente": "Faísca", "rodando": null, "feito": "Pedido trocado", "cartao": "confirmacao" },
-    { "chave": "conversa.ouvir_audio", "agente": "Radar", "rodando": "Ouvindo seu áudio", "feito": "Ouviu {s_audio} s" }
+    { "chave": "conversa.ouvir_audio", "agente": "Radar", "rodando": "Ouvindo seu áudio", "feito": "Ouviu {s_audio} s" },
+    { "chave": "conversa.ver_regras", "agente": "Nimbus", "rodando": "Lendo as regras da casa", "feito": "Leu {n} regras" },
+    { "chave": "conversa.ver_trilhas", "agente": "Eco", "rodando": "Ouvindo as trilhas da casa", "feito": "Viu {n} trilhas" },
+    { "chave": "conversa.onde_esta", "agente": "Radar", "rodando": "Procurando no filme", "feito": "Achou {n} pontos" },
+    { "chave": "conversa.anotar", "agente": "Nimbus", "rodando": null, "feito": "Nota guardada", "cartao": "confirmacao" },
+    { "chave": "conversa.propor_refazer", "agente": "Trilho", "rodando": null, "feito": "Etapa refeita", "cartao": "confirmacao" },
+    { "chave": "conversa.propor_trilha", "agente": "Eco", "rodando": null, "feito": "Música trocada", "cartao": "confirmacao" }
   ],
   "checagens": {
     "frase_repetida": "frase repetida",

@@ -107,11 +107,16 @@ class Vazio(BaseModel):
 
 
 # ---------------- R1 / R2 ----------------
+def _com_retencao(cfg, estado: dict) -> dict:
+    """R20 (onda 3): por quanto tempo a conversa fica guardada (0 = para sempre). O Caderno mostra numa linha."""
+    return {**estado, "retencao_dias": int(cfg.retencao_conversa_dias)}
+
+
 @rotas.get("/conversa")
 async def ver_chave():
     cfg = _cfg()
     m = laco.mesa()
-    return await asyncio.to_thread(m.estado, cfg)
+    return _com_retencao(cfg, await asyncio.to_thread(m.estado, cfg))
 
 
 @rotas.post("/conversa")
@@ -125,7 +130,7 @@ async def mudar_chave(corpo: Chave):
     await asyncio.to_thread(preferencia.gravar, cfg, corpo.ligada)
     if not corpo.ligada:
         await m.parar_todos()
-    return await asyncio.to_thread(m.estado, cfg)
+    return _com_retencao(cfg, await asyncio.to_thread(m.estado, cfg))
 
 
 # ---------------- R3 ----------------

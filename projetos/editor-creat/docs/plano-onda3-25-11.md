@@ -825,3 +825,18 @@ correção quando for regressão.
 - O custo da virada para o capítulo 2 (≈ US$ 0,06 por projeto, pela conta; não medido na API).
 - Tempo de apagar um projeto grande no R2 (centenas de objetos em `derivados/`); por isso a limpeza roda em segundo plano.
 - `json_extract` presente no SQLite da imagem do Railway (vem embutido desde o SQLite 3.38; a versão da imagem não foi lida).
+
+---
+
+## 17. Correções do contrato feitas na construção do motor (Forja, 25/11)
+
+| # | O que estava | O que ficou | Por quê |
+|---|---|---|---|
+| C1 | Seção 4 mexia só em `$defs.confirmacao` | `$defs.ferramenta.nome` também ganhou `onde_esta`, `ver_regras` e `ver_trilhas` | Sem isso o evento `ferramenta` das leituras novas não valida no `conversa.schema.json` (A1.24) |
+| C2 | Descrição de `ver_regras` dizia "Apagar é botão do Marcos" | "Tirar uma regra é botão do Marcos no Caderno" | "Apagar" na descrição reprova o próprio A3.14 (`apag` em `para_api()`) |
+| C3 | `apps/web/lib/equipe.json` só na Frente C | Copiado byte a byte junto com `packages/schemas/equipe.json` (versão 3) | `test_mesa_ao_vivo.py` compara as duas cópias: o pytest da Frente A quebraria sem a cópia. A Frente C não precisa mexer nele |
+| C4 | `atencao` da leitura: só "Se der certo e o resto já estiver lido, a edição começa sozinha." | A mesma frase + " Se a conferência reprovar, o editor pode tentar corrigir sozinho até 2 vezes, cada uma com custo de direção." | A leitura que começa a edição segue a edição normal (não grava `correcoes_auto = 2`, tabela 2.4); o cartão precisa dizer o custo que pode vir depois |
+| C5 | Catálogo e direção (tela) sem texto na seção 4 | Títulos "Organizar o material de novo", "Tentar a direção de novo" e, com `trocar_trilha` guardado, "Trocar a música de novo"; `botao` "Tentar de novo" | O R11 precisa de `titulo`, `faz` e `volta` para toda opção |
+| C6 | Retenção com `json_extract(dados, '$.acao')` | O aviso `{acao: "retomar"}` é conferido em Python | `json_extract` não confirmado na imagem do Railway (seção 16) |
+| C7 | Varredura: diário "apagado" com o projeto vivo não estava previsto | O diário sai e nada do projeto é tocado (log de aviso) | `limpar_arquivos` nunca toca projeto que existe no banco |
+| C8 | R12: ordem dos erros | 404 do projeto antes do 422 "diga qual vídeo" | Projeto inexistente não deve receber pedido de dado |

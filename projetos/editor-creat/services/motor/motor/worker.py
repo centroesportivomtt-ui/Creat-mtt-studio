@@ -104,10 +104,27 @@ def periodicas(con, agora: float | None = None) -> dict:
     return out
 
 
+def limpezas(con, agora: float | None = None) -> dict:
+    """Onda 3, a cada 15 min junto das periódicas: o prazo de guarda das conversas (conversa/retencao.py) e a varredura
+    dos projetos apagados (apagar.py). Cada uma no seu try: nunca derruba o worker e a conexão sai sem transação."""
+    out = {}
+    for nome, fn in (("retencao", "motor.conversa.retencao:volta"), ("apagar", "motor.apagar:varrer")):
+        try:
+            import importlib
+            mod, f = fn.split(":")
+            out[nome] = getattr(importlib.import_module(mod), f)(con, agora)
+        except Exception:  # noqa: BLE001
+            traceback.print_exc()
+            _sair_de_transacao(con)
+            out[nome] = {"erro": True}
+    return out
+
+
 def _talvez_periodicas(con) -> None:
     if time.time() - _ULTIMA_VOLTA["t"] >= PERIODO_S:
         _ULTIMA_VOLTA["t"] = time.time()
         periodicas(con)
+        limpezas(con)
 
 
 def rodar_um(con, cfg, arm, dono: str, etapas=None, sem=None) -> bool:

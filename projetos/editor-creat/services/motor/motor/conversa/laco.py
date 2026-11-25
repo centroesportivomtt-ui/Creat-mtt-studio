@@ -30,7 +30,7 @@ from motor.conversa import acoes, ferramentas, preferencia, repo, teto
 
 log = logging.getLogger("motor.conversa")
 
-PROMPT_VERSAO = "nimbus-1"
+PROMPT_VERSAO = "nimbus-2"          # onda 3: capítulo 2 com 13 ferramentas (anotar, onde_esta, propor_refazer, propor_trilha, ver_regras, ver_trilhas)
 MAX_VOLTAS = 8
 MAX_TURNOS_PROCESSO = 3
 CAPITULO_MAX_TOKENS = 60000
@@ -39,10 +39,10 @@ CACHE_RECENTE_S = 55 * 60
 BETA_FALLBACK = "server-side-fallback-2026-07-01"
 BETA_ANDAMENTO = "thinking-display-updates-2026-08-18"
 CACHE_1H = {"type": "ephemeral", "ttl": "1h"}
-TEXTO_AJUSTE_FEITO = "Pedido de ajuste enviado. A direção recomeça; acompanhe na mesa."
-TEXTO_AJUSTE_SO_AQUI = "Pedido de ajuste enviado, só para este projeto (não virou regra). A direção recomeça; acompanhe na mesa."
-TEXTO_PEDIDO_FEITO = "Pedido trocado."
-TEXTO_PEDIDO_DIRIGINDO = "Pedido trocado. A edição começou; acompanhe na mesa."
+TEXTO_AJUSTE_FEITO = acoes.TEXTO_AJUSTE_FEITO
+TEXTO_AJUSTE_SO_AQUI = acoes.TEXTO_AJUSTE_SO_AQUI
+TEXTO_PEDIDO_FEITO = acoes.TEXTO_PEDIDO_FEITO
+TEXTO_PEDIDO_DIRIGINDO = acoes.TEXTO_PEDIDO_DIRIGINDO
 TEXTO_LIVRO_FALHOU = "não consegui anotar o gasto desta resposta; a conversa parou por segurança"
 TAXA_SAIDA_MAX = 120                # tokens/s: teto pessimista do que o modelo gera (estimativa de chamada cortada)
 # marcador que o sistema escreve antes da fala do dono ([tela: fio · versão aberta: v1 · t_player: 0:12]); se o modelo
@@ -183,6 +183,9 @@ def _preparar_mensagem(cfg, pid: str, turno: str, texto: str, conteudo_txt: str,
     with _Con(cfg) as con:
         con.execute("BEGIN IMMEDIATE")
         try:
+            # onda 3 (7.3): projeto apagado entre a rota e a trava não ganha linha órfã na conversa
+            if con.execute("SELECT 1 FROM projetos WHERE id=?", (pid,)).fetchone() is None:
+                raise ErroConversa(404, "projeto não encontrado")
             ja = repo.por_cliente_msg_id(con, pid, cmid)
             if ja:
                 con.execute("COMMIT")
@@ -558,7 +561,7 @@ class Mesa:
             if status == 409:
                 raise ErroConversa(409, (ev or {}).get("detalhe") or "esse cartão já foi decidido")
             out = {"feito": bool(res.get("feito"))}
-            extra = {k: res[k] for k in ("nova_direcao", "dirigindo") if k in res}
+            extra = {k: res[k] for k in ("nova_direcao", "dirigindo", "refazendo", "trocando_musica", "nota") if k in res}
             if extra:
                 out["resultado"] = extra
             return out
@@ -580,21 +583,27 @@ class Mesa:
                 res = {"feito": False, "motivo": "dono_disse_nao"}
                 ev.update(resultado="cancelado", detalhe="Cancelado. Nada mudou.")
             else:
-                porque = (acoes.guarda_ajuste(con, pid, entrada["versao"], tool_use_id=esp["tool_use_id"]) if nome == "propor_ajuste"
-                          else acoes.guarda_pedido(con, pid, tool_use_id=esp["tool_use_id"]))
+                from motor import refazer
+                acao = acoes.CARTOES.get(nome)
+                try:
+                    porque = ("ação desconhecida" if acao is None
+                              else acao.guarda(cfg, con, pid, entrada, tool_use_id=esp["tool_use_id"]))
+                except Exception as e:  # noqa: BLE001 - guarda que quebra conta como "não deu"
+                    log.warning("conversa %s: guarda do cartão %s falhou: %s", pid, nome, type(e).__name__)
+                    porque = "não consegui conferir o estado do projeto agora"
                 if porque:
                     res = {"feito": False, "motivo": "estado_mudou", "detalhe": porque}
                     ev.update(resultado="nao_deu", detalhe=f"não deu: {porque}")
                     status = 409
                 else:
                     try:
-                        if nome == "propor_ajuste":
-                            vira = bool((esp["cartao"].get("evento") or {}).get("vira_regra", True)) and not so_neste_projeto
-                            res = acoes.executar_ajuste(pid, entrada["versao"], entrada["o_que_mudar"], vira_regra=vira)
-                            ev.update(resultado="feito", detalhe=TEXTO_AJUSTE_FEITO if vira else TEXTO_AJUSTE_SO_AQUI)
-                        else:
-                            res = acoes.executar_pedido(cfg, pid, entrada)
-                            ev.update(resultado="feito", detalhe=TEXTO_PEDIDO_DIRIGINDO if res.get("dirigindo") else TEXTO_PEDIDO_FEITO)
+                        # so_neste_projeto só vale para o ajuste (as outras ações ignoram)
+                        res, detalhe = acao.executar(cfg, pid, entrada, esp, so_neste_projeto)
+                        ev.update(resultado="feito", detalhe=detalhe)
+                    except refazer.Recusa as e:      # a guarda de dentro da transação decidiu (D21)
+                        res = {"feito": False, "motivo": "estado_mudou", "detalhe": e.porque[:300]}
+                        ev.update(resultado="nao_deu", detalhe=f"não deu: {e.porque[:200]}")
+                        status = 409
                     except HTTPException as e:
                         res = {"feito": False, "motivo": "estado_mudou", "detalhe": str(e.detail)[:300]}
                         ev.update(resultado="nao_deu", detalhe=f"não deu: {str(e.detail)[:200]}")
@@ -963,19 +972,13 @@ class Mesa:
 
     @staticmethod
     def _criar_cartao(cfg, pid, nome, entrada, turno, tid, ja_lidos=None) -> tuple[str | None, dict | None]:
+        acao = acoes.CARTOES[nome]
         with _Con(cfg) as con:
-            if nome == "propor_ajuste":
-                norm = {"versao": entrada["versao"], "o_que_mudar": " ".join(entrada["o_que_mudar"].split())}
-                porque = acoes.guarda_ajuste(con, pid, norm["versao"])
-                if porque:
-                    return porque, None
-                cartao = acoes.cartao_ajuste(cfg, con, pid, norm, turno=turno, tool_use_id=tid, ja_lidos=ja_lidos)
-            else:
-                norm = acoes.normalizar_pedido(entrada)
-                porque = acoes.guarda_pedido(con, pid)
-                if porque:
-                    return porque, None
-                cartao = acoes.cartao_pedido(cfg, con, pid, norm, turno=turno, tool_use_id=tid)
+            norm = acao.normalizar(cfg, con, pid, entrada)
+            porque = acao.guarda(cfg, con, pid, norm)
+            if porque:
+                return porque, None
+            cartao = acao.montar(cfg, con, pid, norm, turno=turno, tool_use_id=tid, ja_lidos=ja_lidos)
             h = acoes.entrada_hash(tid, norm)
             cartao["entrada_hash"] = h
             con.execute("DELETE FROM conversa_espera WHERE projeto=?", (pid,))
