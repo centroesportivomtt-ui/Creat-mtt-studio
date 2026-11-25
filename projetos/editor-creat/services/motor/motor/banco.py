@@ -41,6 +41,11 @@ CREATE TABLE IF NOT EXISTS eventos (
   etapa TEXT, alvo TEXT, progresso REAL, estado TEXT, mensagem TEXT, dados TEXT
 );
 CREATE INDEX IF NOT EXISTS eventos_proj ON eventos (projeto, id);
+CREATE TABLE IF NOT EXISTS nuvem (
+  chave TEXT PRIMARY KEY, projeto TEXT NOT NULL, bytes INTEGER NOT NULL DEFAULT 0, estado TEXT NOT NULL DEFAULT 'pendente',
+  conferido_em TEXT, erro TEXT, tentativas INTEGER NOT NULL DEFAULT 0, proxima REAL
+);
+CREATE INDEX IF NOT EXISTS nuvem_proj ON nuvem (projeto, estado);
 """
 
 
@@ -70,6 +75,23 @@ def conectar(caminho) -> sqlite3.Connection:
     con.execute("PRAGMA synchronous=NORMAL")
     _com_tentativas(lambda: con.executescript(ESQUEMA))
     return con
+
+
+def atualizar_dados(con, projeto: str, mexer) -> dict:
+    """Lê, muda (mexer(dados) altera o dict no lugar) e grava projetos.dados numa transação só: duas rotas ou um worker
+    mexendo ao mesmo tempo não apagam o que o outro gravou. Não pode ser chamada de dentro de outra transação."""
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        r = con.execute("SELECT dados FROM projetos WHERE id=?", (projeto,)).fetchone()
+        d = json.loads(r["dados"] or "{}") if r else {}
+        mexer(d)
+        if r is not None:
+            con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), projeto))
+        con.execute("COMMIT")
+    except BaseException:
+        con.execute("ROLLBACK")
+        raise
+    return d
 
 
 # ---------------- eventos (status ao vivo) ----------------

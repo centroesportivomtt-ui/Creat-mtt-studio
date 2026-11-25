@@ -2,7 +2,10 @@
 
 GET  /v1/projetos/{pid}/versoes                 -> versões com estado, link, capa, QA (aprovado + falhas) e tempos da montagem
 POST /v1/projetos/{pid}/versoes/{v}/publicar    {rede, quando?} -> só versão entregue e aprovada pelo QA
-POST /v1/projetos/{pid}/versoes/{v}/aprovar     {nota?} -> o dono aprova a versão entregue; vira caso de referência da casa
+POST /v1/projetos/{pid}/versoes/{v}/aprovar     {nota?, cliente?} -> o dono aprova a versão entregue; vira caso de referência da
+                                                casa e (com as entregas no Cloudflare ligadas) vai para a página de entregas
+POST /v1/projetos/{pid}/versoes/{v}/entregas    {cliente?} -> "Tentar agora" (só versão aprovada)
+GET  /v1/entregas/clientes?projeto=<pid>        -> clientes para escolher antes de aprovar + o sugerido para o projeto
 """
 from __future__ import annotations
 
@@ -15,7 +18,7 @@ from typing import Literal, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from motor import banco, config
+from motor import banco, config, entregas_r2
 
 rotas = APIRouter(tags=["versoes"])
 ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
@@ -53,6 +56,8 @@ def listar(pid: str):
         if con.execute("SELECT 1 FROM projetos WHERE id=?", (pid,)).fetchone() is None:
             raise HTTPException(404, "projeto não encontrado")
         out = []
+        dados_p = json.loads(con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()["dados"] or "{}")
+        ent_r2 = (dados_p.get("entregas") or {}) if entregas_r2.ligado() else {}
         for r in con.execute("SELECT * FROM versoes WHERE projeto=? ORDER BY criado", (pid,)):
             d = dict(r)
             base = f"saidas/{pid}/{d['id']}"
@@ -70,6 +75,8 @@ def listar(pid: str):
             d["capa"] = arm.url(f"{base}/capa.jpg") if arm is not None and arm.existe(f"{base}/capa.jpg") else None
             d["legenda_post"] = ent.get("legenda_post") if ent else None
             d["tempos_montagem"] = mont.get("tempos") if mont else None
+            if d["id"] in ent_r2:          # só com as entregas no Cloudflare ligadas (sem as variáveis, o campo não existe)
+                d["entregas"] = _entregas_publico(ent_r2[d["id"]])
             out.append(d)
         return {"projeto": pid, "versoes": out}
 
@@ -103,6 +110,28 @@ def publicar(pid: str, v: str, corpo: Publicar):
 
 class Aprovar(BaseModel):
     nota: Optional[str] = Field(default=None, max_length=500)
+    cliente: Optional[str] = Field(default=None, pattern=r"^[a-z0-9-]{1,40}$")   # pasta da página de entregas (?c=<cliente>)
+
+
+CAMPOS_ENTREGAS = ("estado", "cliente", "nome_cliente", "painel", "video_url", "capa_url", "motivo", "proxima", "substituida_por", "em")
+
+
+def _entregas_publico(e: dict) -> dict:
+    out = {k: e.get(k) for k in CAMPOS_ENTREGAS if k != "nome_cliente"}
+    out["nome_cliente"] = entregas_r2.nome_cliente(e.get("cliente") or entregas_r2.CLIENTE_PADRAO)
+    return out
+
+
+def _mandar_para_entregas(con, pid: str, v: str, cliente: str) -> dict:
+    """Marca a versão como 'enviando' e põe a etapa de fundo na fila. A data da pasta é a da 1ª aprovação (fuso da Bahia):
+    re-aprovar no dia seguinte cai na mesma pasta da página."""
+    def mexer(d):
+        d.setdefault("entregas_data", entregas_r2.hoje_bahia())
+        e = d.setdefault("entregas", {}).setdefault(v, {})
+        e.update(estado="enviando", cliente=cliente, motivo=None, proxima=None, proxima_ts=None, pendente_desde=None, acao="enviar")
+    d = banco.atualizar_dados(con, pid, mexer)
+    banco.enfileirar(con, "entregas", pid, v, entrada={"acao": "enviar"}, prioridade=6)
+    return _entregas_publico(d["entregas"][v])
 
 
 @rotas.post("/projetos/{pid}/versoes/{v}/aprovar")
@@ -120,10 +149,60 @@ def aprovar(pid: str, v: str, corpo: Aprovar):
         direcao = _ler(arm, f"projetos/{pid}/direcao_{n}.json") if n.isdigit() else None
         from motor.memoria.loja import Loja
         caso = Loja().registrar_aprovacao(pid, v, pedido=pedido, direcao=direcao, nota=corpo.nota)
-        linha = con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()
-        dados = json.loads(linha["dados"] or "{}")
-        dados.setdefault("aprovadas", {})[v] = {"em": banco.agora_iso(), "nota": corpo.nota}
-        with con:
-            con.execute("UPDATE projetos SET dados=?, atualizado=? WHERE id=?", (json.dumps(dados), banco.agora_iso(), pid))
-            banco.emitir(con, pid, "estado", etapa="entrega", alvo=v, mensagem=f"Corta! Versão {v} aprovada. Virou caso de referência da casa.")
-        return {"aprovada": v, "caso": caso["id"]}
+        banco.atualizar_dados(con, pid, lambda d: d.setdefault("aprovadas", {}).__setitem__(v, {"em": banco.agora_iso(), "nota": corpo.nota}))
+        con.execute("UPDATE projetos SET atualizado=? WHERE id=?", (banco.agora_iso(), pid))
+        banco.emitir(con, pid, "estado", etapa="entrega", alvo=v, mensagem=f"Corta! Versão {v} aprovada. Virou caso de referência da casa.")
+        out = {"aprovada": v, "caso": caso["id"]}
+        if entregas_r2.ligado():           # sem as variáveis das entregas, a resposta e a fila ficam idênticas às de antes
+            nome = con.execute("SELECT nome FROM projetos WHERE id=?", (pid,)).fetchone()["nome"]
+            out["entregas"] = _mandar_para_entregas(con, pid, v, entregas_r2.escolher_cliente(corpo.cliente, pedido, nome))
+        return out
+
+
+class TentarEntregas(BaseModel):
+    cliente: Optional[str] = Field(default=None, pattern=r"^[a-z0-9-]{1,40}$")
+
+
+@rotas.post("/projetos/{pid}/versoes/{v}/entregas", status_code=202)
+def tentar_entregas(pid: str, v: str, corpo: Optional[TentarEntregas] = None):
+    """Botão "Tentar agora" / "Tentar de novo" (e troca de cliente): só para versão aprovada pelo dono."""
+    _valida(pid, v)
+    if not entregas_r2.ligado():
+        raise HTTPException(409, "as entregas no Cloudflare estão desligadas neste editor")
+    with _ctx() as (cfg, con, arm):
+        p = con.execute("SELECT nome, dados FROM projetos WHERE id=?", (pid,)).fetchone()
+        if p is None:
+            raise HTTPException(404, "projeto não encontrado")
+        r = con.execute("SELECT estado FROM versoes WHERE projeto=? AND id=?", (pid, v)).fetchone()
+        if r is None:
+            raise HTTPException(404, "versão não encontrada")
+        d = json.loads(p["dados"] or "{}")
+        if r["estado"] != "entregue" or v not in (d.get("aprovadas") or {}):
+            raise HTTPException(409, "só vai para a página de entregas a versão que você aprovou")
+        atual = ((d.get("entregas") or {}).get(v) or {})
+        cliente = (corpo.cliente if corpo and corpo.cliente else None) or atual.get("cliente") or \
+            entregas_r2.escolher_cliente(None, _ler(arm, f"projetos/{pid}/pedido.json"), p["nome"])
+        return {"entregas": _mandar_para_entregas(con, pid, v, cliente)}
+
+
+@rotas.get("/entregas/clientes")
+def clientes_entregas(projeto: Optional[str] = None):
+    """Lista para o "Vai para as entregas de: [ ▾ ]": fixos + os que já têm entrega na página (sem rede: só os fixos)."""
+    if projeto is not None:
+        _valida(projeto)
+    slugs = list(entregas_r2.CLIENTES_FIXOS)
+    if entregas_r2.ligado():
+        slugs += [c for c in entregas_r2.clientes_do_indice() if c not in slugs and entregas_r2.RE_CLIENTE.match(c)]
+    out = {"ligado": entregas_r2.ligado(), "clientes": [{"slug": c, "nome": entregas_r2.nome_cliente(c)} for c in slugs],
+           "padrao": entregas_r2.CLIENTE_PADRAO}
+    if projeto:
+        with _ctx() as (cfg, con, arm):
+            p = con.execute("SELECT nome, dados FROM projetos WHERE id=?", (projeto,)).fetchone()
+            if p is None:
+                raise HTTPException(404, "projeto não encontrado")
+            d = json.loads(p["dados"] or "{}")
+            ultimo = next((e.get("cliente") for e in reversed(list((d.get("entregas") or {}).values())) if e.get("cliente")), None)
+            out["sugerido"] = ultimo or entregas_r2.escolher_cliente(None, _ler(arm, f"projetos/{projeto}/pedido.json"), p["nome"])
+            if out["sugerido"] not in slugs:
+                out["clientes"].append({"slug": out["sugerido"], "nome": entregas_r2.nome_cliente(out["sugerido"])})
+    return out

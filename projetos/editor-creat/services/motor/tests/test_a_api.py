@@ -62,10 +62,13 @@ def test_registrar_arquivo(cli, arm):
 def test_importar(cli):
     pid = cli.post("/v1/projetos", json={"nome": "t"}).json()["id"]
     assert cli.post(f"/v1/projetos/{pid}/importar", json={"url": "https://evil.example.com/v.mov"}).status_code == 422
+    r = cli.post(f"/v1/projetos/{pid}/importar", json={"url": "https://drive.google.com/drive/folders/curto"})
+    assert r.status_code == 422 and "id da pasta" in r.json()["detail"]
+    # pasta do Drive agora é aceita (sem sondar, o worker lista); a linha "importando do link…" entra na fila
     r = cli.post(f"/v1/projetos/{pid}/importar", json={"url": "https://drive.google.com/drive/folders/1AbCdEfGhIjKl"})
-    assert r.status_code == 422 and "Pasta do Google Drive" in r.json()["detail"]
-    r = cli.post(f"/v1/projetos/{pid}/importar", json={"url": "https://www.dropbox.com/scl/fi/abc/v.mov?rlkey=k&dl=0"})
     assert r.status_code == 202 and r.json()["id"] == "a001"
+    r = cli.post(f"/v1/projetos/{pid}/importar", json={"url": "https://www.dropbox.com/scl/fi/abc/v.mov?rlkey=k&dl=0"})
+    assert r.status_code == 202 and r.json()["id"] == "a002"
     j = cli.get(f"/v1/projetos/{pid}").json()["jobs"][0]
     assert j["etapa"] == "ingest"
 

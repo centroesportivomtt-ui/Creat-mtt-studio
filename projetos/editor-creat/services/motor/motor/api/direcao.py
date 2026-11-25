@@ -124,6 +124,23 @@ def gravar_pedido(pid: str, corpo: PedidoEntrada):
         return {"pedido": pedido, "dirigindo": dirigindo}
 
 
+def _retirar_das_entregas(con, pid: str, versao: str) -> None:
+    """Versão reprovada que estava (ou ia) na página de entregas do Cloudflare sai de lá (etapa de fundo, sem esperar a rede)."""
+    from motor import entregas_r2
+    if not entregas_r2.ligado():
+        return
+    marcou = {}
+
+    def mexer(d):
+        e = (d.get("entregas") or {}).get(versao)
+        if e and e.get("estado") in ("no_ar", "pendente", "enviando"):
+            e.update(estado="retirando", acao="retirar", proxima=None, proxima_ts=None)
+            marcou["sim"] = True
+    banco.atualizar_dados(con, pid, mexer)
+    if marcou:
+        banco.enfileirar(con, "entregas", pid, versao, entrada={"acao": "retirar"}, prioridade=6)
+
+
 @rotas.post("/projetos/{pid}/versoes/{versao}/reprovar")
 def reprovar(pid: str, versao: str, corpo: Reprovacao):
     with _con() as (cfg, con):
@@ -150,6 +167,7 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
         con.execute("UPDATE versoes SET estado='reprovada', reprovacao=? WHERE projeto=? AND id=?", (corpo.motivo, pid, versao))
         from motor import cliente as _cliente
         _cliente.revogar_versao(con, pid, versao)          # link do cliente desta versão fecha de vez
+        _retirar_das_entregas(con, pid, versao)
         d = _projeto(con, pid)["dados"]
         d["correcoes_auto"] = 0            # nova rodada pedida pelo dono: o auto-ajuste do QA volta a ter as 2 tentativas
         con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), pid))

@@ -124,6 +124,13 @@ def ver_projeto(pid: str):
         p["jobs"] = banco.jobs_do_projeto(con, pid)
         for j in p["jobs"]:
             j["erro"] = (j["erro"] or "").strip().splitlines()[-1][:300] if j["erro"] else None
+        from motor.etapas import espelho
+        nuvem = espelho.resumo(con, pid)
+        if nuvem is not None:             # só com o espelho ligado (EDITOR_ESPELHO=1): desligado, nada aparece na tela
+            p["nuvem"] = nuvem
+            est = {r["chave"]: r["estado"] for r in con.execute("SELECT chave, estado FROM nuvem WHERE projeto=?", (pid,))}
+            for a in p["arquivos"]:
+                a["nuvem"] = est.get(a["chave"])
         return p
 
 
@@ -173,17 +180,33 @@ def registrar_arquivo(pid: str, corpo: NovoArquivo):
 
 @rotas.post("/projetos/{pid}/importar", status_code=202)
 def importar_link(pid: str, corpo: Importacao):
+    """Link do Dropbox (arquivo ou pasta) ou do Drive (arquivo ou PASTA). Pasta do Drive é listada na hora: o dono vê
+    quantos vídeos entraram (`detalhe`) e pasta restrita, apagada, vazia ou já importada volta 422 com o passo a passo."""
+    pasta = None
     try:
-        importar.link_direto(corpo.url)          # valida antes de enfileirar (host, formato, pasta do Drive)
-        aviso = importar.sondar(corpo.url) if os.environ.get("EDITOR_SONDAR_LINK", "1") == "1" else None
+        direto, tipo = importar.link_direto(corpo.url)          # valida antes de enfileirar (host, formato)
+        sondar = os.environ.get("EDITOR_SONDAR_LINK", "1") == "1"
+        if tipo == "pasta_drive":
+            pasta, aviso = importar.sondar_pasta(direto) if sondar else (None, None)
+        else:
+            aviso = importar.sondar(corpo.url) if sondar else None
     except importar.ErroImportacao as e:      # link que pede login ou não existe: o motivo aparece embaixo do botão, na hora
         raise HTTPException(422, str(e)) from e
     with _con() as con:
         p = _projeto(con, pid)
         if p["estado"] not in ESTADOS_ABERTOS:
             raise HTTPException(409, "o projeto já está em direção/montagem")
+        extra: dict = {}
+        if pasta is not None:
+            ja = importar.importados_drive(con, pid)
+            novos = [i for i in pasta["itens"] if i["id"] not in ja]
+            if not novos:
+                raise HTTPException(422, importar.msg_pasta_ja_importada(len(pasta["itens"])))
+            extra["pasta"] = {"nome": pasta["nome"], "videos": len(novos), "ignorados": pasta["ignorados"],
+                              "subpastas": pasta["subpastas"], "ja_no_projeto": len(pasta["itens"]) - len(novos), "bytes": None}
+            extra["detalhe"] = importar.detalhe_pasta(pasta, len(novos), len(pasta["itens"]) - len(novos))
         aid, _ = importar.registrar_arquivo(con, pid, "importando do link…", None, 0, entrada={"url": corpo.url.strip()})
-        return {"id": aid, "mensagem": "Importação na fila: o motor baixa e já começa a ler.", **({"aviso": aviso} if aviso else {})}
+        return {"id": aid, "mensagem": "Importação na fila: o motor baixa e já começa a ler.", **({"aviso": aviso} if aviso else {}), **extra}
 
 
 def _recolher_orfaos(con, cfg, arm, pid: str) -> int:

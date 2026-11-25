@@ -34,7 +34,7 @@ MAX_TOTAL = 200 * 1024 * 1024
 ENTRE_MANUAIS_S = 600
 MANTER_LOCAIS = 3
 INTERVALO_OK_S, INTERVALO_FALHA_S = 24 * 3600, 3600
-SO_ESTES_EM_SAIDAS = {"edl.json", "qa.json", "montagem.json", "entrega.json", "cor.json"}
+SO_ESTES_EM_SAIDAS = {"edl.json", "qa.json", "montagem.json", "entrega.json", "cor.json", "entregas.json"}   # entregas.json: recibo do R2
 _TRAVA = threading.Lock()
 
 

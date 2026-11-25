@@ -46,6 +46,7 @@ def test_armazenamento_local_ciclo(dados):
     ("https://www.dropbox.com/scl/fo/abc/xyz?rlkey=k&dl=0", "dl=1", "pasta_zip"),
     ("https://drive.google.com/file/d/1AbCdEfGhIjKlMnOp/view?usp=sharing", "id=1AbCdEfGhIjKlMnOp&export=download&confirm=t", "arquivo"),
     ("https://drive.google.com/open?id=1AbCdEfGhIjKlMnOp", "drive.usercontent.google.com", "arquivo"),
+    ("https://drive.google.com/drive/folders/1AbCdEfGhIjKl?usp=sharing", "embeddedfolderview?id=1AbCdEfGhIjKl", "pasta_drive"),
 ])
 def test_link_direto(url, esperado, tipo):
     u, t = importar.link_direto(url)
@@ -54,7 +55,7 @@ def test_link_direto(url, esperado, tipo):
 
 
 @pytest.mark.parametrize("url", ["http://www.dropbox.com/s/a/b.mov", "https://evil.com/x.mov", "https://dropbox.com.evil.com/s/a",
-                                 "https://drive.google.com/drive/folders/1AbCdEfGhIjKl", "https://drive.google.com/file/d/x/view",
+                                 "https://drive.google.com/drive/folders/curto", "https://drive.google.com/file/d/x/view",
                                  "https://169.254.169.254/latest"])
 def test_link_recusado(url):
     with pytest.raises(importar.ErroImportacao):
