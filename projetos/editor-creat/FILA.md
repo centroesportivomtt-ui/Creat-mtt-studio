@@ -48,6 +48,13 @@ Palavras dele: "sem limites, sem fronteiras, observando tudo… o que os própri
 | O3 | dezenas de modos de edição (biblioteca de estilos: ritmo, cor, tipografia, transição, som), escolhíveis no pedido | pesquisa em andamento · 25/11 |
 | O4 | o que os creators premium fazem agora, virando técnica do editor | pesquisa em andamento · 25/11 |
 
+## Conversa com o editor (pedido do dono, 25/11, "com ênfase: o que há de melhor")
+Palavras dele: "um modo de resposta, onde eu falo alguma coisa, ele pode me perguntar também de volta"; "como eu converso com você aqui, que eu lhe mando um áudio, vejo o que está executando… uma tela de atualização do que está sendo feito ao vivo… eu verifico as ferramentas que está utilizando. Tudo isso, como estivesse eu fazendo com você, tem que ter lá também".
+| item | o quê | estado |
+|---|---|---|
+| C1 | conversa por projeto: texto e áudio, o editor responde e pergunta de volta, com acesso às ações do projeto (pedido, ajuste, trocar música, refazer etapa) | pesquisa e projeto em andamento · 25/11 |
+| C2 | tela ao vivo do que está sendo feito: etapa, ferramenta em uso, o que ela achou, custo, em linguagem do dono | pesquisa e projeto em andamento · 25/11 |
+
 ## Mapa original (depois da fila do dono)
 | item | o quê | estado |
 |---|---|---|
