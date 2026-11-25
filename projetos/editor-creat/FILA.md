@@ -61,9 +61,9 @@ Palavras dele: "anexe no editor a plataforma nova que eu estou utilizando, o Clo
 | item | o quê | estado |
 |---|---|---|
 | R1 | backup do editor no Cloudflare R2 | feito · 18b70f6 · 25/11 (conferido em produção) |
-| R2 | pasta do Google Drive por link (colou a pasta, o editor pega os vídeos de dentro) | em andamento · 01LA2wrMpbZ · 25/11 |
-| R3 | filme aprovado vai sozinho para a página de entregas no Cloudflare (creat-entregas), com link na versão | em andamento · 01LA2wrMpbZ · 25/11 |
-| R4 | material enviado guardado no Cloudflare (creat-editor-midia) sem quebrar os projetos que já existem | em andamento · 01LA2wrMpbZ · 25/11 |
+| R2 | pasta do Google Drive por link (colou a pasta, o editor pega os vídeos de dentro) | feito · d678aa0 · 25/11 (no ar; falta colar uma pasta real do dono em produção) |
+| R3 | filme aprovado vai sozinho para a página de entregas no Cloudflare (creat-entregas), com link na versão | feito · d678aa0 · 25/11 (ligado em produção, permissão ok; falta aprovar um filme real. PENDENTE DO DONO: a página é uma só, quem tem o link vê as entregas de todos os clientes) |
+| R4 | material enviado guardado no Cloudflare (creat-editor-midia) sem quebrar os projetos que já existem | construído e DESLIGADO (EDITOR_ESPELHO=0) · d678aa0 · 25/11. Custa saída do Railway (US$ 0,05/GB; cerca de US$ 0,50 a cada 10 GB, uma vez): espera o "pode" do dono |
 
 ## Mapa original (depois da fila do dono)
 | item | o quê | estado |

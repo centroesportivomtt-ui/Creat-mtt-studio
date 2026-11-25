@@ -593,3 +593,12 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - mesma fonte no resultado e erro 422 legível.
 - **Aceite:** apaga só os próprios prints.
 - **Testes:** pytest 526 ok (antes 505); tipos ok; aceite 64/64 (antes 61).
+
+## 25/11: Cloudflare e Drive no ar (junção, testes e conferência em produção)
+- **Junção** da cópia de trabalho na `claude/editor-creat` (d678aa0), com o M6 já dentro. Um conflito só, neste arquivo.
+- **Testes depois da junção:** pytest **594 ok**, tipos ok, aceite **64/64**, todos com saída 0.
+- **Produção:** versão d678aa0 conferida no ar. Entraram no Railway `R2_ENTREGAS_BUCKET=creat-entregas` e `R2_ENTREGAS_PUBLICO` (endereço público do r2.dev, não é segredo). `GET /v1/saude?entregas=1`, logado: `{"ligado": true, "permissao": "ok"}`.
+- **Escrita provada:** com a mesma chave da produção, gravei e apaguei um arquivo de teste em `creat-entregas/_teste-editor/` (não sobrou nada).
+- **Não provado ainda:** nenhum filme real foi aprovado em produção com a entrega ligada, e nenhuma pasta real do dono foi colada em produção. O download de pasta do Drive foi provado pela equipe com pastas públicas reais, fora da produção.
+- **Guarda do material (espelho):** fica desligada até o dono autorizar o custo de saída do Railway.
+- **Decisão do dono em aberto:** a página de entregas é uma só e pública; o `?c=` filtra a vista, mas não separa clientes. A tela avisa antes de aprovar e deixa aprovar sem mandar.
