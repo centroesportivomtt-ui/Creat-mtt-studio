@@ -218,7 +218,7 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir, aoMudarAti
         )}
         {!aberto && <p className="aviso">O envio foi fechado: este projeto já está sendo editado.</p>}
         {aviso && <p className="erro" role="alert" data-teste="envio-aviso">{aviso}</p>}
-        <p className="aviso">No Dropbox? Cole o link logo abaixo (pasta também vale): o servidor baixa direto.</p>
+        <p className="aviso">No Dropbox ou no Drive? Cole o link logo abaixo (pasta também vale): o servidor baixa direto.</p>
       </div>
 
       {interrompidosVisiveis.length > 0 && (

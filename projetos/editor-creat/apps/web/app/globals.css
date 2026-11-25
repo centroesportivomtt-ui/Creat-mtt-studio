@@ -615,3 +615,57 @@ details > summary::-webkit-details-marker { display: none; }
 .link-cliente { display: grid; gap: 8px; padding: 10px 12px; border: 1px dashed var(--cor-linha); border-radius: var(--r3); margin-top: 8px; }
 .link-cliente__url { font: 600 13px/1.3 var(--fonte-dado); overflow-wrap: anywhere; user-select: all; }
 .link-toque { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* ---------- Cloudflare no editor (25/11): pasta do Drive, entregas do filme aprovado, cópia do material ----------
+   Sem cor nova: verde = conferido/no ar, âmbar só no ponto "subindo" (passo atual), coral = precisa de você. */
+.importar__pasta { font: 600 14px/1.4 var(--fonte-texto); letter-spacing: 0; overflow-wrap: anywhere; }
+/* celular: o link colado é comprido; campo na largura toda e o Importar logo abaixo, no polegar */
+@media (max-width: 599px) {
+  .importar .entrada { flex: 1 1 100%; }
+  .importar > .botao { flex: 1 1 100%; }
+}
+.ajuda-link { flex-basis: 100%; }
+.ajuda-link > summary {
+  display: inline-flex; align-items: center; min-height: 44px; cursor: pointer;
+  font: 600 14px/1.3 var(--fonte-texto); color: var(--cor-tinta-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px;
+}
+.ajuda-link > summary::-webkit-details-marker { display: none; }
+.ajuda-link[open] > summary { color: var(--cor-tinta); }
+.ajuda-link .aviso { margin: 0 0 var(--r2); max-width: 62ch; }
+.ajuda-link b { color: var(--cor-tinta); }
+
+/* selo por arquivo: só quando a cópia no Cloudflare foi conferida (mesmo tamanho) */
+.selo-nuvem {
+  display: flex; width: fit-content; align-items: center; gap: 3px; margin-top: 4px; padding: 2px 7px; border-radius: 999px;
+  font: 700 13px/1.3 var(--fonte-dado); color: var(--cor-ok); border: 1px solid color-mix(in srgb, var(--cor-ok) 45%, transparent);
+}
+.selo-nuvem i { font-style: normal; }
+.nuvem-resumo { margin: var(--r3) 0 0; font-size: 14px; line-height: 1.45; color: var(--cor-tinta-2); padding-left: 12px; border-left: 3px solid var(--cor-linha); }
+.nuvem-resumo[data-tipo='ok'] { border-left-color: var(--cor-ok); color: var(--cor-tinta); }
+.nuvem-resumo[data-tipo='atencao'] { border-left-color: var(--cor-alerta); color: var(--cor-tinta); }
+
+/* "Vai para as entregas de:" antes de aprovar, e o cartão "Nas entregas" depois */
+.entregas-cliente .aviso { font-size: 13px; }
+.entregas-opcao { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; cursor: pointer; }
+.entregas-opcao input { width: 22px; height: 22px; margin: 0; accent-color: var(--cor-ok); flex: none; }
+.importar__resultado { display: grid; gap: 4px; }
+.importar__resultado .aviso, .importar__resultado .erro { font-size: 14px; line-height: 1.4; }
+.entregas {
+  display: grid; gap: var(--r2); padding: var(--r3); border-radius: var(--r3);
+  background: var(--cor-superficie); border: 1px solid var(--cor-linha);
+}
+.entregas[data-tom='ok'] { border-color: color-mix(in srgb, var(--cor-ok) 50%, var(--cor-linha)); }
+.entregas[data-tom='atencao'] { border-color: color-mix(in srgb, var(--cor-alerta) 55%, var(--cor-linha)); }
+.entregas__titulo {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--r2); flex-wrap: wrap; margin: 0;
+  font: 700 13px/1.3 var(--fonte-dado); letter-spacing: 0.06em; text-transform: uppercase; color: var(--cor-tinta-2);
+}
+.entregas__cliente { font: 650 14px/1.2 var(--fonte-texto); letter-spacing: 0; text-transform: none; color: var(--cor-tinta); }
+.entregas__msg { margin: 0; font-size: 15px; line-height: 1.45; color: var(--cor-tinta); overflow-wrap: anywhere; }
+.entregas[data-tom='ok'] .entregas__msg b { color: var(--cor-ok); }
+.entregas__ponto { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--cor-acao); vertical-align: 1px; animation: pulso 1.4s ease-in-out infinite; }
+.entregas__acoes { margin-top: 0; }
+.entregas__acoes .botao { flex: 1 1 120px; }
+.entregas__acoes .entregas__abrir { flex-basis: 100%; }
+.nuvem-caderno { display: grid; gap: 4px; padding: var(--r3); border-radius: var(--r3); background: var(--cor-superficie-2); }
+.nuvem-caderno b { color: var(--cor-ok); }

@@ -5,7 +5,9 @@
 //    perto de 40% e retoma sem recomeçar; o arquivo no armazenamento tem o mesmo sha256;
 // 3. fecha o envio e manda o pedido: o status passa por lendo → dirigindo → montando → conferindo → entregue e o player toca;
 // 4. verificação visual logada (celular e desktop, claro e escuro) sem erro de console, sem rolagem horizontal,
-//    sem texto < 11 px, e o olhar.cjs da casa na tela de entrada.
+//    sem texto < 11 px, e o olhar.cjs da casa na tela de entrada;
+// 5. Cloudflare (25/11): pasta do Drive por link, filme aprovado na página de entregas (todos os estados) e cópia do material,
+//    no celular, com prints claro e escuro em .verificacao/cloudflare/. Desligado, nada disso aparece (conferido no fluxo 3).
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomBytes, scryptSync } from 'node:crypto';
 import fs from 'node:fs';
@@ -197,6 +199,9 @@ async function principal() {
   ok('sem restos do tus depois do fim', restos.length === 0, restos.join(', '));
   await page.waitForSelector('.arquivo', { timeout: 15000 });
   ok('motor recebeu o arquivo (aparece na lista)', (await page.locator('.arquivo').count()) === 1);
+  const dica = (await page.getAttribute('[data-teste=importar-links]', 'placeholder')) ?? '';
+  const ajudaEnvio = (await page.locator('.soltar').textContent().catch(() => '')) ?? '';
+  ok('o campo de links fala de Dropbox e Drive, arquivo ou pasta', /Dropbox/.test(dica) && /Drive/.test(dica) && /pasta/.test(dica) && /No Dropbox ou no Drive\?/.test(ajudaEnvio), `"${dica}"`);
   // links do Dropbox: vários de uma vez, e o resultado aparece embaixo do botão (o dono colou 4 links e "o botão não ia")
   await page.fill('[data-teste=importar-links]', 'olha os videos https://www.dropbox.com/scl/fi/abc123/C0016.MP4?rlkey=x&dl=0\nhttps://exemplo.com/nao.mp4');
   const rotuloImp = await page.textContent('[data-teste=importar-enviar]');
@@ -264,9 +269,17 @@ async function principal() {
   ok('player toca a versão (Range pelo proxy)', !player.erro && player.tempo >= 1 && player.largura > 0, JSON.stringify(player));
   const r206 = await page.evaluate(async (src) => (await fetch(src, { headers: { range: 'bytes=0-1023' } })).status, await page.getAttribute('[data-teste=player]', 'src'));
   ok('Range responde 206 pelo proxy', r206 === 206, `status ${r206}`);
+  // Cloudflare desligado (motor sem R2_ENTREGAS_* e sem espelho): nada novo na tela e o aprovar vai exatamente como antes
+  const novosAntes = await page.locator('[data-teste=entregas-cliente], [data-teste=entregas-barra], [data-teste=selo-nuvem], [data-teste=nuvem-resumo]').count();
+  const corpoAprovar = page.waitForRequest((r) => r.method() === 'POST' && /\/versoes\/[^/]+\/aprovar$/.test(r.url()), { timeout: 10000 }).then((r) => r.postData()).catch(() => null);
   await page.click('[data-teste=aprovar]');
   const aprovou = await page.waitForSelector('[data-teste=aprovada]', { timeout: 10000 }).then(() => true).catch(() => false);
   ok('aprovar bate a claquete e marca a versão', aprovou, aprovou ? 'aprovada' : 'não marcou');
+  await dormir(600);
+  const novosDepois = await page.locator('[data-teste=entregas], [data-teste=selo-nuvem], [data-teste=nuvem-resumo]').count();
+  const corpoAprov = await corpoAprovar;
+  ok('Cloudflare desligado: sem escolha de cliente, sem cartão de entregas, sem selo, e o aprovar vai sem cliente', novosAntes === 0 && novosDepois === 0 && corpoAprov === '{}',
+    JSON.stringify({ novosAntes, novosDepois, corpoAprov }));
 
   // ---------- link de aprovação do cliente (página pública, sem sessão) ----------
   await page.click('[data-teste=link-cliente-gerar]');
@@ -531,6 +544,241 @@ async function principal() {
     ok('fim da página acima da barra medida; deitado (844x390) o filme tem altura útil e cabe acima da barra', fim.mesa <= fim.barra + 1 && deitado.altura >= 220 && deitado.cabe && !deitado.topoFixo && !deitado.rolagem, JSON.stringify({ fim, deitado }));
     ok('barra de comando no celular sem erro de console', errosM.length === 0, errosM.slice(0, 3).join(' | '));
     await mctx.close();
+  }
+
+  // ---------- 5. Cloudflare no celular: pasta do Drive, página de entregas e cópia do material ----------
+  {
+    const CF = path.join(WEB, '.verificacao', 'cloudflare');
+    fs.mkdirSync(CF, { recursive: true });
+    // só os prints deste aceite saem (prints de QA de outra equipe na mesma pasta, ex.: qa/, ficam)
+    for (const f of fs.readdirSync(CF)) if (/^celular-.*\.png$/.test(f)) fs.rmSync(path.join(CF, f), { force: true });
+    // controle do motor falso direto na porta dele (com o token do motor; o proxy do site não deixa passar /_falso)
+    const falsoMotor = (rota, corpo) => fetch(`http://127.0.0.1:${PORTA_MOTOR}/v1/_falso/${rota}`, {
+      method: 'POST', headers: { authorization: `Bearer ${env.MOTOR_TOKEN}`, 'content-type': 'application/json' }, body: JSON.stringify(corpo),
+    }).then((r) => r.json());
+    await falsoMotor('entregas', { ligado: true });
+    const fctx = await navegador.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'pt-BR', colorScheme: 'light', storageState: await ctx.storageState() });
+    await fctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
+    const fp = await fctx.newPage();
+    const errosF = [];
+    fp.on('console', (m) => { if (m.type() === 'error') errosF.push(m.text()); });
+    fp.on('pageerror', (e) => errosF.push(String(e)));
+    fp.on('dialog', (d) => d.accept().catch(() => {}));
+    const recusasEsperadas = (antes) => { const n = errosF.splice(antes); errosF.push(...n.filter((t) => !/status of 422/.test(t))); return n.length - (errosF.length - antes); };
+    // o dono vê de verdade: o trecho rola para o meio da tela (acima da barra), e sai um print em cada tema
+    const prints = [];
+    const foto = async (nome, sel) => {
+      for (const [tema, rotulo] of [['light', 'claro'], ['dark', 'escuro']]) {
+        await fp.emulateMedia({ colorScheme: tema });
+        if (sel) await fp.locator(sel).first().evaluate((el) => { el.scrollIntoView({ block: 'start' }); window.scrollBy(0, -72); }).catch(() => {});
+        await dormir(250);
+        const f = path.join(CF, `celular-${rotulo}-${nome}.png`);
+        await fp.screenshot({ path: f });
+        prints.push(path.relative(WEB, f));
+      }
+      await fp.emulateMedia({ colorScheme: 'light' });
+    };
+    const tocar = async (sel) => {
+      await fp.locator(sel).first().evaluate((el) => el.scrollIntoView({ block: 'center' }));
+      await dormir(120);
+      await fp.click(sel);
+    };
+    const texto = (sel) => fp.locator(sel).first().textContent({ timeout: 3000 }).then((t) => (t ?? '').replace(/\s+/g, ' ').trim(), () => '');
+    const esperarEntregas = (estado, t = 12000) => fp.waitForSelector(`[data-teste=entregas][data-estado=${estado}]`, { timeout: t }).then(() => true, () => false);
+
+    await fp.goto(`${BASE}/projetos/novo`);
+    await fp.fill('input[name=nome]', 'Super Kal · Black Friday');
+    await fp.check('input[name=tipo][value=evento]', { force: true });
+    await fp.click('main button[type=submit]');
+    await fp.waitForURL(/\/projetos\/p_[a-z0-9]+$/, { timeout: 15000 });
+    const pidF = fp.url().split('/').pop();
+
+    // pasta do Drive restrita: o motivo e o passo a passo aparecem embaixo do botão, e nada entra
+    const e0 = errosF.length;
+    await fp.fill('[data-teste=importar-links]', 'https://drive.google.com/drive/folders/1restritaXYZ?usp=sharing');
+    await tocar('[data-teste=importar-enviar]');
+    await fp.waitForFunction(() => /restrita/.test(document.querySelector('[data-teste=importar-resultado]')?.textContent ?? ''), null, { timeout: 10000 }).catch(() => {});
+    const resRestrita = await texto('[data-teste=importar-resultado]');
+    await tocar('[data-teste=ajuda-link] summary');
+    const ajuda = await texto('[data-teste=ajuda-link]');
+    await foto('drive-pasta-restrita', '.bloco-material');
+    ok('pasta do Drive restrita: recusada na hora, com o passo a passo (Leitor basta) e a ajuda de leitor x editor', /restrita/.test(resRestrita) && /Qualquer pessoa com o link/.test(resRestrita) && /Leitor/.test(resRestrita)
+      && /leitor ou de editor/.test(ajuda) && (await fp.locator('.arquivo').count()) === 0 && recusasEsperadas(e0) === 1, resRestrita.slice(0, 160));
+
+    // pasta do Drive aberta (link de editor, celular): "Importar a pasta", o que foi achado em verde, e os vídeos de dentro entram
+    await fp.fill('[data-teste=importar-links]', 'https://drive.google.com/drive/u/0/folders/1AbCdEfGhIjKlMn?usp=drive_link');
+    const rotuloPasta = await texto('[data-teste=importar-enviar]');
+    await tocar('[data-teste=importar-enviar]');
+    const achou = await fp.waitForSelector('[data-teste=importar-pasta]', { timeout: 15000 }).then(() => texto('[data-teste=importar-pasta]'), () => '');
+    await fp.waitForFunction(() => { const a = [...document.querySelectorAll('.arquivo span:last-child')]; return a.length === 3 && a.every((x) => x.textContent.includes('lido')); }, null, { timeout: 20000 }).catch(() => {});
+    const nomes = await fp.locator('.arquivo span:first-child').allTextContents();
+    await foto('drive-pasta-importada', '.bloco-material');
+    ok('pasta do Drive: "Importar a pasta", mostra o que achou e cada vídeo de dentro vira um arquivo', rotuloPasta === 'Importar a pasta' && /Pasta “Gravações do evento”: 3 vídeos na fila/.test(achou)
+      && nomes.length === 3 && nomes.some((n) => /voz-lapela\.WAV/.test(n)), JSON.stringify({ rotuloPasta, achou: achou.slice(0, 120), nomes }));
+    const e1 = errosF.length;
+    await fp.fill('[data-teste=importar-links]', 'https://drive.google.com/drive/folders/1AbCdEfGhIjKlMn');
+    await tocar('[data-teste=importar-enviar]');
+    await fp.waitForFunction(() => /já está no projeto/.test(document.querySelector('[data-teste=importar-resultado]')?.textContent ?? ''), null, { timeout: 10000 }).catch(() => {});
+    const resDe = await texto('[data-teste=importar-resultado]');
+    ok('a mesma pasta de novo não duplica: "já está no projeto (3 vídeos)"', /já está no projeto \(3 vídeos\)/.test(resDe) && (await fp.locator('.arquivo').count()) === 3 && recusasEsperadas(e1) === 1, resDe.slice(0, 120));
+
+    // edição até a entrega
+    await fp.fill('#pedido-texto', 'Reels de 30 s da Black Friday do Super Kal, abre com a fala mais forte.');
+    await tocar('[data-teste=mandar-pedido]');
+    await fp.waitForSelector('[data-teste=aprovar]', { timeout: 60000 }).catch(() => {});
+
+    // antes de aprovar: para qual cliente vai (adivinhado pelo nome) na versão e na barra
+    const cliente = await fp.locator('[data-teste=entregas-cliente]').inputValue({ timeout: 8000 }).catch(() => '');
+    const naBarra = await texto('[data-teste=entregas-barra]');
+    const opcoes = await fp.locator('[data-teste=entregas-cliente] option').allTextContents();
+    await foto('entregas-antes-de-aprovar', '.entregas-cliente');
+    // aprovar SEM mandar: o dono desmarca e o aviso muda (a página é pública); a barra deixa de prometer o envio
+    const avisoMandar = await texto('[data-teste=entregas-aviso]');
+    await tocar('[data-teste=entregas-mandar]');
+    const avisoSem = await texto('[data-teste=entregas-aviso]');
+    const barraSem = await fp.locator('[data-teste=entregas-barra]').count();
+    const seletorTravado = await fp.locator('[data-teste=entregas-cliente]').isDisabled();
+    await tocar('[data-teste=entregas-mandar]');
+    const voltouMandar = await fp.locator('[data-teste=entregas-mandar]').isChecked();
+    const alvoMandar = await fp.locator('.entregas-opcao').first().evaluate((el) => Math.round(el.getBoundingClientRect().height));
+    ok('antes de aprovar: avisa que a página é pública e deixa aprovar sem mandar', /A página é pública/.test(avisoMandar) && /fica só aqui no editor/.test(avisoSem)
+      && barraSem === 0 && seletorTravado && voltouMandar && alvoMandar >= 44, JSON.stringify({ avisoMandar: avisoMandar.slice(0, 80), avisoSem: avisoSem.slice(0, 60), barraSem, seletorTravado, alvoMandar }));
+    ok('antes de aprovar: "Vai para as entregas de" com o cliente certo na versão e na barra', cliente === 'super-kal' && /Vai para as entregas de Super Kal/.test(naBarra) && opcoes.includes('creat.MTT'),
+      JSON.stringify({ cliente, naBarra, opcoes }));
+    const corpo = fp.waitForRequest((r) => r.method() === 'POST' && /\/versoes\/v1\/aprovar$/.test(r.url()), { timeout: 10000 }).then((r) => r.postData()).catch(() => null);
+    await fp.click('[data-teste=aprovar]');
+    const corpoAp = await corpo;
+    const viuEnviando = await esperarEntregas('enviando', 4000);
+    const noAr = await esperarEntregas('no_ar');
+    const links = noAr ? await fp.evaluate(() => {
+      const a = document.querySelector('[data-teste=entregas-abrir]'); const b = document.querySelector('[data-teste=entregas-baixar]');
+      const alvos = [...document.querySelectorAll('[data-teste=entregas] a, [data-teste=entregas] button')].map((el) => el.getBoundingClientRect()).filter((r) => r.height < 44 || r.width < 44).length;
+      return { abrir: a?.href, alvo: a?.target, rel: a?.rel, baixar: b?.href, download: b?.hasAttribute('download'), alvos };
+    }) : {};
+    const msgNoAr = await texto('[data-teste=entregas-msg]');
+    await tocar('[data-teste=entregas-copiar]');
+    const copiouTxt = await fp.waitForFunction(() => /Link copiado/.test(document.querySelector('[data-teste=entregas-copiar]')?.textContent ?? ''), null, { timeout: 3000 }).then(() => true, () => false);
+    const area = await fp.evaluate(() => navigator.clipboard.readText().catch(() => ''));
+    await foto('entregas-no-ar', '[data-teste=entregas]');
+    ok('aprovou: vai com o cliente escolhido, mostra "subindo" e fica no ar com Abrir nas entregas, Baixar e Copiar link',
+      corpoAp === '{"cliente":"super-kal"}' && viuEnviando && noAr && /No ar na página de entregas de Super Kal/.test(msgNoAr)
+      && links.abrir === 'https://pub-falso-entregas.r2.dev/entregas.html?c=super-kal' && links.alvo === '_blank' && /noopener/.test(links.rel ?? '')
+      && /\/super-kal\/\d{4}-\d{2}-\d{2}-super-kal-black-friday\/Super_Kal_Black_Friday_v1\.mp4$/.test(links.baixar ?? '') && links.download && links.alvos === 0
+      && copiouTxt && area === links.abrir, JSON.stringify({ corpoAp, viuEnviando, noAr, msgNoAr, links, copiouTxt, area }));
+
+    // pendente (a página de entregas não respondeu): diz quando tenta de novo sozinho, e "Tentar agora" manda já
+    await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'pendente', proxima: '14:30', motivo: 'EndpointConnectionError' });
+    const pend = await esperarEntregas('pendente');
+    const msgPend = await texto('[data-teste=entregas-msg]');
+    const rotPend = await texto('[data-teste=entregas-tentar]');
+    await foto('entregas-pendente', '[data-teste=entregas]');
+    const tentou = fp.waitForResponse((r) => r.request().method() === 'POST' && /\/versoes\/v1\/entregas$/.test(r.url()), { timeout: 8000 }).then((r) => r.status()).catch(() => 0);
+    await tocar('[data-teste=entregas-tentar]');
+    const stTentou = await tentou;
+    const voltou = await esperarEntregas('no_ar');
+    ok('pendente: "o filme está seguro aqui; tento de novo sozinho às 14:30" e "Tentar agora" põe no ar', pend && /O filme está seguro aqui; tento de novo sozinho às 14:30\./.test(msgPend)
+      && rotPend === 'Tentar agora' && stTentou === 202 && voltou, JSON.stringify({ pend, msgPend, rotPend, stTentou, voltou }));
+
+    // falhou: o motivo em pt-BR e "Tentar de novo"; se a nova tentativa também cair, a tela mostra (nunca some em silêncio)
+    await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'falhou', motivo: 'o filme mudou depois que você aprovou, então nada subiu. Aprove de novo para mandar este' });
+    const falhou = await esperarEntregas('falhou');
+    const msgFalhou = await texto('[data-teste=entregas-msg]');
+    const rotFalhou = await texto('[data-teste=entregas-tentar]');
+    await foto('entregas-falhou', '[data-teste=entregas]');
+    await falsoMotor('entregas', { proximo: 'pendente' });
+    await tocar('[data-teste=entregas-tentar]');
+    const caiuDeNovo = await esperarEntregas('pendente');
+    await tocar('[data-teste=entregas-tentar]');
+    const noArDeNovo = await esperarEntregas('no_ar');
+    ok('falhou: "Não deu para mandar para as entregas: <motivo>" e "Tentar de novo"; a queda da nova tentativa aparece', falhou
+      && msgFalhou === 'Não deu para mandar para as entregas: o filme mudou depois que você aprovou, então nada subiu. Aprove de novo para mandar este.' && rotFalhou === 'Tentar de novo' && caiuDeNovo && noArDeNovo,
+      JSON.stringify({ falhou, msgFalhou, rotFalhou, caiuDeNovo, noArDeNovo }));
+
+    // os outros estados: subindo (print), trocada por outra versão e retirada
+    await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'enviando' });
+    const env1 = await esperarEntregas('enviando');
+    const msgEnv = await texto('[data-teste=entregas-msg]');
+    await foto('entregas-subindo', '[data-teste=entregas]');
+    await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'substituida', substituida_por: 'v2' });
+    const subst = await esperarEntregas('substituida');
+    const msgSubst = await texto('[data-teste=entregas-msg]');
+    // retirada que caiu na rede: o filme reprovado AINDA está na página; a tela nunca diz "Retirada" antes da hora
+    await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'retirando', proxima: '15:45', motivo: 'sem conexão com o Cloudflare agora' });
+    await fp.waitForFunction(() => /Ainda não consegui tirar/.test(document.querySelector('[data-teste=entregas-msg]')?.textContent ?? ''), null, { timeout: 8000 }).catch(() => {});
+    const msgRetPend = await texto('[data-teste=entregas-msg]');
+    const tomRetPend = await fp.getAttribute('[data-teste=entregas]', 'data-tom').catch(() => '');
+    await foto('entregas-retirando-pendente', '[data-teste=entregas]');
+    ok('retirada que falhou por rede: diz que o filme ainda não saiu e quando tenta de novo', msgRetPend === 'Ainda não consegui tirar este filme da página de entregas (sem conexão com o Cloudflare agora). Tento de novo sozinho às 15:45.'
+      && tomRetPend === 'atencao', JSON.stringify({ msgRetPend, tomRetPend }));
+    await falsoMotor('entregas', { projeto: pidF, versao: 'v1', estado: 'retirada' });
+    const ret = await esperarEntregas('retirada');
+    const msgRet = await texto('[data-teste=entregas-msg]');
+    const botoesRet = await fp.locator('[data-teste=entregas] a, [data-teste=entregas] button').count();
+    ok('subindo, trocada e retirada: cada estado com a sua frase', env1 && msgEnv === 'Subindo o filme para a sua página de entregas…' && subst && msgSubst === 'Trocada pela V2 na página de entregas.'
+      && ret && msgRet === 'Retirada da página de entregas.' && botoesRet === 0, JSON.stringify({ msgEnv, msgSubst, msgRet, botoesRet }));
+
+    // cópia do material no Cloudflare: selo por arquivo só no conferido, e a linha geral em cada situação
+    let resumoAntes = '';
+    const nuvem = async (estados) => {
+      await falsoMotor('espelho', { ligado: true, projeto: pidF, estados });
+      // espera a tela trocar de verdade (a linha geral muda a cada situação), não só o número de selos
+      await fp.waitForFunction(([n, antes]) => {
+        const r = document.querySelector('[data-teste=nuvem-resumo]')?.textContent ?? '';
+        return document.querySelectorAll('[data-teste=selo-nuvem]').length === n && r && r !== antes;
+      }, [estados.filter((x) => x === 'guardado').length, resumoAntes], { timeout: 8000 }).catch(() => {});
+      resumoAntes = await texto('[data-teste=nuvem-resumo]');
+      return { resumo: resumoAntes, selos: await fp.locator('[data-teste=selo-nuvem]').count() };
+    };
+    const n1 = await nuvem(['guardado', null, null]);
+    const n2 = await nuvem(['guardado', 'guardado', 'pendente']);
+    await foto('material-cloudflare-pendente', '.bloco-material');
+    const n3 = await nuvem(['guardado', 'guardado', 'fora_do_teto']);
+    const n4 = await nuvem(['guardado', 'guardado', 'guardado']);
+    await foto('material-cloudflare-guardado', '.bloco-material');
+    ok('material no Cloudflare: guardando, pendente, teto e tudo guardado, com selo só no arquivo conferido',
+      /^Guardando no Cloudflare: 1 de 3 arquivos \(393 MB\)\. Você já pode editar\.$/.test(n1.resumo) && n1.selos === 1
+      && /^Ainda não guardei 1 arquivo no Cloudflare \(sem conexão agora\)/.test(n2.resumo) && n2.selos === 2
+      && /espaço grátis do Cloudflare \(4 GB\) encheu/.test(n3.resumo) && /^Tudo guardado no Cloudflare \(726 MB\)\.$/.test(n4.resumo) && n4.selos === 3,
+      JSON.stringify({ n1, n2, n3, n4 }));
+
+    // filme aprovado ANTES de ligar as entregas (o projeto do fluxo 3): "Mandar para as entregas" põe no ar com o cliente padrão
+    await fp.goto(`${BASE}/projetos/${pid}`);
+    const fora = await esperarEntregas('fora');
+    const msgFora = await texto('[data-teste=entregas-msg]');
+    await tocar('[data-teste=entregas-tentar]');
+    const foraNoAr = await esperarEntregas('no_ar');
+    const abrirFora = await fp.getAttribute('[data-teste=entregas-abrir]', 'href').catch(() => null);
+    ok('filme aprovado antes de ligar: "Mandar para as entregas" põe no ar (cliente padrão creat.MTT)', fora && /ainda não está na página de entregas de creat\.MTT/.test(msgFora) && foraNoAr
+      && abrirFora === 'https://pub-falso-entregas.r2.dev/entregas.html?c=creat-mtt', JSON.stringify({ fora, msgFora, foraNoAr, abrirFora }));
+
+    // Caderno: o estado do Cloudflare junto do backup
+    await fp.goto(`${BASE}/caderno#backup`);
+    const cad = await fp.waitForSelector('[data-teste=caderno-cloudflare]', { timeout: 10000 }).then(() => texto('[data-teste=caderno-cloudflare]'), () => '');
+    const destinos = await texto('[data-teste=backup-destinos]');
+    await foto('caderno-cloudflare', '[data-teste=backup]');
+    const medidaF = await fp.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+    ok('Caderno mostra o Cloudflare: entregas ligadas, material guardado e onde ficou o backup', /Página de entregas: ligada/.test(cad) && /guardado também no Cloudflare \(até 4 GB/.test(cad)
+      && /Cloudflare e Dropbox/.test(destinos) && !medidaF, JSON.stringify({ cad: cad.slice(0, 160), destinos }));
+    ok('Cloudflare no celular sem erro de console (fora as recusas 422 esperadas)', errosF.length === 0, errosF.slice(0, 3).join(' | '));
+    // vários links, um bom e um ruim: o bom entra e SÓ o ruim fica no campo, para o dono corrigir e tocar de novo
+    await fp.goto(`${BASE}/projetos/novo`);
+    await fp.fill('input[name=nome]', 'Links misturados');
+    await fp.check('input[name=tipo][value=evento]', { force: true });
+    await fp.click('main button[type=submit]');
+    await fp.waitForURL(/\/projetos\/p_[a-z0-9]+$/, { timeout: 15000 });
+    const ruim = 'https://exemplo.com/video.mp4';
+    await fp.fill('[data-teste=importar-links]', `https://www.dropbox.com/scl/fi/abc/C0042.MP4?rlkey=x&dl=0\n${ruim}`);
+    await tocar('[data-teste=importar-enviar]');
+    await fp.waitForFunction(() => /na fila/.test(document.querySelector('[data-teste=importar-resultado]')?.textContent ?? ''), null, { timeout: 10000 }).catch(() => {});
+    const sobrou = await fp.inputValue('[data-teste=importar-links]');
+    const resMix = await texto('[data-teste=importar-resultado]');
+    const fontes = await fp.evaluate(() => [...document.querySelectorAll('[data-teste=importar-resultado] p')].map((el) => getComputedStyle(el).fontFamily));
+    ok('vários links: o bom entra, só o ruim fica no campo, e as linhas do resultado na mesma fonte', sobrou === ruim && /1 link na fila: o editor baixa/.test(resMix)
+      && /não é link do Dropbox/.test(resMix) && !/motor/.test(resMix) && fontes.length >= 2 && new Set(fontes).size === 1, JSON.stringify({ sobrou, resMix: resMix.slice(0, 160), fontes }));
+    ok('prints do Cloudflare (celular claro e escuro)', prints.length === 22, `${prints.length} prints em ${path.relative(WEB, CF)}`);
+    await falsoMotor('espelho', { ligado: false });
+    await falsoMotor('entregas', { ligado: false });
+    await fctx.close();
   }
 
   // ---------- 4. verificação visual logada ----------

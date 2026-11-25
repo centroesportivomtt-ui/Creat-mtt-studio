@@ -163,6 +163,46 @@ def folha_contato(quadros: list[tuple[float, Path]], destino: Path, largura: int
 
 
 # ---------------- importação por link ----------------
+def _preparar_pasta_drive(ctx: Contexto, direto: str, pasta: Path) -> tuple[str, str]:
+    """Pasta do Drive colada: lista, tira o que já está no projeto, confere teto e disco, registra cada vídeo novo como um
+    arquivo do projeto (cada um com o seu ingest: download próprio, retomável, e falha de um não derruba os outros) e devolve
+    (url do 1º vídeo, nome) para ESTA tarefa baixar no lugar da linha "importando do link…". Repetir a tarefa (rede caiu no
+    meio) não duplica nada: o par id do Drive -> arquivo fica em projetos.dados.importados_drive."""
+    con, p, a = ctx.con, ctx.projeto, ctx.alvo
+    fid, rk = importar.id_da_pasta(direto)
+    ctx.progresso(0.02, "Lendo a lista da pasta do Drive")
+    lista = importar.listar_pasta_drive(fid, resourcekey=rk)
+    if not lista["itens"]:
+        raise importar.ErroImportacao(importar.MSG_PASTA_SEM_MIDIA)
+    ja = importar.importados_drive(con, p)
+    meu = next((d for d, x in ja.items() if x == a), None)            # repetição da tarefa: o 1º já foi escolhido
+    novos = [i for i in lista["itens"] if i["id"] not in ja]
+    if meu is None and not novos:
+        raise importar.ErroImportacao(importar.msg_pasta_ja_importada(len(lista["itens"])))
+    tam = importar.tamanhos_drive([i["id"] for i in novos])
+    total = sum(t or 0 for t in tam.values())
+    if total > importar.MAX_BYTES:
+        raise importar.ErroImportacao(f"A pasta tem {total / 2**30:.1f} GB de vídeo, acima do limite de {importar.MAX_BYTES / 2**30:.0f} GB.")
+    importar._checar_disco(pasta, total)
+    if meu is None:
+        primeiro, novos = novos[0], novos[1:]
+        meu = primeiro["id"]
+        nome1 = importar.nome_do_item(primeiro)
+        con.execute("UPDATE arquivos SET nome=?, bytes=? WHERE projeto=? AND id=?", (nome1, int(tam.get(meu) or 0), p, a))
+        importar.marcar_importado_drive(con, p, meu, a)
+    else:
+        nome1 = next((importar.nome_do_item(i) for i in lista["itens"] if i["id"] == meu), None) or \
+            con.execute("SELECT nome FROM arquivos WHERE projeto=? AND id=?", (p, a)).fetchone()["nome"]
+    for it in novos:
+        url_it = importar.url_do_arquivo_drive(it["id"])
+        aid, _ = importar.registrar_arquivo(con, p, importar.nome_do_item(it), None, int(tam.get(it["id"]) or 0),
+                                            entrada={"url": url_it, "drive_id": it["id"]}, ext=Path(it["nome"]).suffix.lower()[:8])
+        importar.marcar_importado_drive(con, p, it["id"], aid)
+    det = importar.detalhe_pasta(lista, len(novos) + 1, len(lista["itens"]) - len(novos) - 1)
+    banco.emitir(con, p, "etapa_progresso", etapa="ingest", alvo=a, progresso=0.05, mensagem=det)
+    return importar.url_do_arquivo_drive(meu), nome1
+
+
 def _importar(ctx: Contexto, row, url: str):
     con, arm, p, a = ctx.con, ctx.armazenamento, ctx.projeto, ctx.alvo
     pasta = Path(ctx.cfg.dados) / "tmp" / f"import_{p}_{a}"
@@ -170,21 +210,26 @@ def _importar(ctx: Contexto, row, url: str):
 
     def prog(feito, total):
         ctx.progresso(min(0.9, feito / total) if total else 0.05, f"Baixando do link: {feito / 2**20:.0f} MB" + (f" de {total / 2**20:.0f} MB" if total else ""))
+    nome_fixo = None
     try:
-        link, _tipo = importar.link_direto(url)
+        link, tipo = importar.link_direto(url)
+        if tipo == "pasta_drive":
+            url, nome_fixo = _preparar_pasta_drive(ctx, link, pasta)
+            link, tipo = importar.link_direto(url)
         caminho, nome, nb = importar.baixar(link, pasta / "download", progresso=prog)
-        if importar.eh_zip(caminho, nome):
+        if importar.eh_zip(caminho, nome) and not nome_fixo:
             midias = importar.videos_do_zip(caminho, pasta)
             caminho.unlink(missing_ok=True)
             if not midias:
                 raise importar.ErroImportacao("A pasta do link não tem vídeo nem áudio.")
         else:
-            ext = Path(nome).suffix.lower()
+            ext = Path(nome_fixo or nome).suffix.lower()
             if ext not in importar.EXT_MIDIA:
-                ext = ".mp4"
-            midias = [(caminho.rename(pasta / f"orig{ext}"), nome)]
+                ext = Path(nome).suffix.lower() if Path(nome).suffix.lower() in importar.EXT_MIDIA else ".mp4"
+            midias = [(caminho.rename(pasta / f"orig{ext}"), nome_fixo or nome)]
     except importar.ErroImportacao as e:
         con.execute("DELETE FROM arquivos WHERE projeto=? AND id=?", (p, a))   # não trava a direção do projeto
+        importar.esquecer_importado_drive(con, p, a)                         # colar a pasta de novo traz este de volta
         shutil.rmtree(pasta, ignore_errors=True)
         raise ErroDefinitivo(str(e)) from e
     (c0, n0), extras = midias[0], midias[1:]
@@ -192,12 +237,19 @@ def _importar(ctx: Contexto, row, url: str):
     tam = c0.stat().st_size
     arm.gravar(chave, c0, mover=True)
     con.execute("UPDATE arquivos SET chave=?, nome=?, bytes=? WHERE projeto=? AND id=?", (chave, n0, tam, p, a))
+    did = (ctx.job.get("entrada") or {}).get("drive_id") or importar.drive_id_de(url)
+    if did:                                                    # arquivo do Drive: lembrar que já entrou (pasta colada de novo)
+        importar.marcar_importado_drive(con, p, did, a)
     for k, (ck, nk) in enumerate(extras, start=1):
         chk = f"entrada/{p}/{a}_z{k:03d}{ck.suffix.lower()}"
         tk = ck.stat().st_size
         arm.gravar(chk, ck, mover=True)
         importar.registrar_arquivo(con, p, nk, chk, tk)
     shutil.rmtree(pasta, ignore_errors=True)
+    # baixado: o link colado não fica guardado no banco (nem no backup). Pode ser link de EDITOR do Drive, e o editor só lê.
+    if ctx.job.get("id"):
+        resto = {k: v for k, v in (ctx.job.get("entrada") or {}).items() if k != "url"}
+        con.execute("UPDATE jobs SET entrada=? WHERE id=?", (json.dumps({**resto, "link_baixado": True}), ctx.job["id"]))
     banco.emitir(con, p, "etapa_progresso", etapa="ingest", alvo=a, progresso=0.9,
                  mensagem=f"Link baixado: {len(midias)} arquivo(s)" + (f" ({len(extras)} a mais na fila)" if extras else ""))
     return con.execute("SELECT * FROM arquivos WHERE projeto=? AND id=?", (p, a)).fetchone()

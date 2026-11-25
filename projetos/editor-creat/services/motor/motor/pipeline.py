@@ -20,6 +20,7 @@ def _dados(con, projeto: str) -> dict:
 
 
 ETAPAS_DE_ARQUIVO = ("ingest", "analise")
+FUNDO = ("entregas", "espelho")         # etapas de fundo (motor/etapas/__init__.FUNDO): fora do encadeamento do filme
 ESTADOS_FINAIS = ("entregue", "erro", "reprovado_qa")
 
 
@@ -55,6 +56,8 @@ def depois(con, job: dict, saida: dict | None) -> None:
         banco.enfileirar(con, "analise", projeto, alvo, prioridade=4)
     elif etapa == "analise":
         con.execute("UPDATE arquivos SET estado='analisado' WHERE projeto=? AND id=?", (projeto, alvo))
+        from motor.etapas import espelho
+        espelho.enfileirar(con, projeto, alvo)          # cópia no Cloudflare (desligada sem o "pode" do dono); não atrasa a edição
         tentar_dirigir(con, projeto)
     elif etapa == "catalogo":
         banco.enfileirar(con, "direcao", projeto, entrada=saida, prioridade=2)
@@ -95,6 +98,13 @@ def falha_definitiva(con, job: dict, mensagem: str) -> None:
     Qualquer outra etapa: o projeto vai para 'erro' com a mensagem (o relógio do site para e o dono vê o motivo)."""
     etapa, projeto, alvo = job["etapa"], job["projeto"], job.get("alvo")
     msg = (mensagem or "").strip().splitlines()[-1][:300] if mensagem else "falhou"
+    if etapa in FUNDO:                  # entregas/espelho: o filme e o original estão seguros no editor; o projeto não vai a "erro"
+        from motor.backup import sem_segredo     # o detalhe técnico fica no log do servidor; o dono lê uma frase clara
+        print(f"[{etapa}] {projeto}/{alvo}: {sem_segredo(msg)}", flush=True)
+        o_que = "O envio para a página de entregas" if etapa == "entregas" else "A cópia do material no Cloudflare"
+        banco.emitir(con, projeto, "aviso", alvo=None if alvo in (None, "-") else alvo,
+                     mensagem=f"{o_que} não deu certo agora. O material está seguro no editor.")
+        return
     if etapa in ETAPAS_DE_ARQUIVO and alvo not in (None, "-"):
         con.execute("UPDATE arquivos SET estado='falhou' WHERE projeto=? AND id=?", (projeto, alvo))
         nome = con.execute("SELECT nome FROM arquivos WHERE projeto=? AND id=?", (projeto, alvo)).fetchone()
@@ -120,10 +130,12 @@ def reconciliar(con) -> int:
     abertos = con.execute(f"SELECT id FROM projetos WHERE estado NOT IN ({','.join('?' * len(ESTADOS_FINAIS))})", ESTADOS_FINAIS).fetchall()
     for p in abertos:
         pid = p["id"]
-        ativo = con.execute("SELECT 1 FROM jobs WHERE projeto=? AND estado IN ('pendente','rodando') LIMIT 1", (pid,)).fetchone()
+        ativo = con.execute("SELECT 1 FROM jobs WHERE projeto=? AND estado IN ('pendente','rodando') AND etapa NOT IN (?,?) LIMIT 1",
+                            (pid, *FUNDO)).fetchone()
         if ativo:
             continue
-        j = con.execute("SELECT * FROM jobs WHERE projeto=? AND estado='feito' ORDER BY atualizado DESC LIMIT 1", (pid,)).fetchone()
+        j = con.execute("SELECT * FROM jobs WHERE projeto=? AND estado='feito' AND etapa NOT IN (?,?) ORDER BY atualizado DESC LIMIT 1",
+                        (pid, *FUNDO)).fetchone()
         if j is None:
             continue
         job = dict(j)

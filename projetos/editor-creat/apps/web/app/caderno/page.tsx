@@ -111,7 +111,7 @@ export default async function Caderno() {
 
       <section className="cartao" aria-labelledby="c-backup" id="backup">
         <h2 className="cartao__titulo" id="c-backup"><span className="num">06</span> Backup</h2>
-        <p className="aviso" style={{ maxWidth: '62ch' }}>Uma vez por dia, o que não se refaz (projetos, pedidos, direções, relatórios, regras e casos da casa) vai para uma pasta do seu Dropbox.</p>
+        <p className="aviso" style={{ maxWidth: '62ch' }}>Uma vez por dia, o que não se refaz (projetos, pedidos, direções, relatórios, regras e casos da casa) sai do servidor e fica guardado no Cloudflare e, se você salvar o link, numa pasta do seu Dropbox.</p>
         <Backup />
       </section>
     </main>

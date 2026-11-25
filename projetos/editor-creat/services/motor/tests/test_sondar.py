@@ -89,7 +89,7 @@ def test_aviso_do_drive_passa(base):
 
 def test_rede_fora_nao_bloqueia():
     aviso = importar.sondar_direto("http://127.0.0.1:9/v.mov", hosts=("127.0.0.1",), timeout=2)
-    assert aviso and "tenta de novo" in aviso
+    assert aviso and "tento de novo" in aviso and "Error" not in aviso and "motor" not in aviso
 
 
 def test_baixar_tambem_explica_o_link_restrito(base, tmp_path):
@@ -110,9 +110,9 @@ def test_rota_recusa_link_restrito_na_hora(dados, monkeypatch):
     r = c.post(f"/v1/projetos/{pid}/importar", json={"url": "https://www.dropbox.com/scl/fi/abc/v.mov?rlkey=k&dl=0"})
     assert r.status_code == 422 and "Qualquer pessoa com o link" in r.json()["detail"]
     assert c.get(f"/v1/projetos/{pid}").json()["arquivos"] == []          # nada entrou na fila
-    monkeypatch.setattr(importar, "sondar", lambda url, **k: "sem resposta do link agora (TimeoutError); o motor tenta de novo")
+    monkeypatch.setattr(importar, "sondar", lambda url, **k: "sem resposta do link agora; tento de novo sozinho")
     r = c.post(f"/v1/projetos/{pid}/importar", json={"url": "https://www.dropbox.com/scl/fi/abc/v.mov?rlkey=k&dl=0"})
-    assert r.status_code == 202 and "tenta de novo" in r.json()["aviso"]
+    assert r.status_code == 202 and "tento de novo" in r.json()["aviso"]
 
 
 def test_drive_privado_manda_para_o_login(base):

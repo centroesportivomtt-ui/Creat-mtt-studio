@@ -4,7 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 type Estado = {
   destino: string; estado: string; ultimo_ok?: string; ultima_tentativa?: string; bytes?: number; arquivos?: number; erro?: string | null;
   horas_desde_o_ultimo?: number; midia_fora?: { arquivos: number; bytes: number }; destino_fixo?: boolean;
+  r2?: boolean; copias?: string[];
 };
+// Cloudflare no editor (GET /saude): entregas do filme aprovado e espelho do material. Campo ausente = desligado.
+type Nuvem = { entregas?: { ligado?: boolean; ultimo_ok?: string }; espelho?: { ligado?: boolean; teto_gb?: number } };
+const NOME_COPIA: Record<string, string> = { R2: 'Cloudflare', Dropbox: 'Dropbox' };
 
 const ROTULO: Record<string, string> = {
   ok: 'em dia', falha: 'falhou', rodando: 'fazendo agora…', 'sem destino': 'falta o endereço do Dropbox', 'nunca rodou': 'ainda não rodou',
@@ -12,11 +16,16 @@ const ROTULO: Record<string, string> = {
 const mb = (n?: number) => (typeof n === 'number' ? `${(n / 1048576).toFixed(n < 1048576 ? 2 : 1).replace('.', ',')} MB` : '');
 const quando = (iso?: string) => (iso ? new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '');
 
-// Backup diário: o que não se refaz (banco, memória da casa, direções e relatórios) vai para o Dropbox do dono. Vídeo não entra.
+// Backup diário: o que não se refaz (banco, memória da casa, direções e relatórios) vai para o Cloudflare (R2) e/ou o Dropbox
+// do dono. Vídeo não entra.
 export default function Backup() {
   const [e, setE] = useState<Estado | null>(null);
   const [erro, setErro] = useState('');
   const [indo, setIndo] = useState(false);
+  const [nuvem, setNuvem] = useState<Nuvem | null>(null);
+  useEffect(() => {
+    fetch('/api/motor/v1/saude', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((c) => { if (c) setNuvem(c); }).catch(() => {});
+  }, []);
   const carregar = useCallback(async () => {
     try {
       const r = await fetch('/api/motor/v1/backup', { cache: 'no-store' });
@@ -42,6 +51,22 @@ export default function Backup() {
         {e?.ultimo_ok ? ` · último backup bom em ${quando(e.ultimo_ok)}` : ''}
         {e?.bytes ? ` · ${e.arquivos} arquivos, ${mb(e.bytes)}` : ''}
       </p>
+      {(e?.r2 || (e?.copias?.length ?? 0) > 0) && (
+        <p className="aviso" data-teste="backup-destinos">
+          {e?.copias?.length ? <>Último backup guardado em <b>{e.copias.map((c) => NOME_COPIA[c] ?? c).join(' e ')}</b>.</> : <>Vai para o <b>Cloudflare</b>{e?.destino === 'configurado' ? ' e, se você salvar o link, para o Dropbox' : ''}.</>}
+        </p>
+      )}
+      {nuvem && (nuvem.entregas?.ligado || nuvem.espelho?.ligado) && (
+        <div className="nuvem-caderno" data-teste="caderno-cloudflare">
+          <p className="campo__rotulo" style={{ margin: 0 }}>Cloudflare no editor</p>
+          {nuvem.entregas?.ligado && (
+            <p className="aviso" style={{ margin: 0 }}>Página de entregas: <b>ligada</b>. Filme aprovado sobe sozinho{nuvem.entregas.ultimo_ok ? ` · último envio bom em ${quando(nuvem.entregas.ultimo_ok)}` : ''}.</p>
+          )}
+          {nuvem.espelho?.ligado && (
+            <p className="aviso" style={{ margin: 0 }}>Material enviado: guardado também no Cloudflare (até {String(nuvem.espelho.teto_gb ?? 4).replace('.', ',')} GB grátis).</p>
+          )}
+        </div>
+      )}
       {erro && <p className="erro" role="alert" style={{ overflowWrap: 'anywhere' }}>{erro}</p>}
       {e?.erro && <p className="erro" style={{ overflowWrap: 'anywhere' }}>{e.erro}</p>}
       {e?.midia_fora && e.midia_fora.arquivos > 0 && (

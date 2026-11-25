@@ -73,6 +73,70 @@ function mudarEstado(p, estado, mensagem) {
   emitir(p.id, 'estado', { estado, mensagem });
 }
 
+// ---------- Cloudflare: entregas do filme aprovado e espelho do material (mesmo contrato do motor real) ----------
+// Desligados por padrão, como o motor real sem as variáveis R2_ENTREGAS_* e EDITOR_ESPELHO. O aceite liga e força os estados
+// por /v1/_falso/* (rota só deste motor falso: o proxy do site não deixa passar).
+const ENT = { ligado: process.env.MOTOR_FALSO_ENTREGAS === '1', proximo: null };
+const ESP = { ligado: process.env.MOTOR_FALSO_ESPELHO === '1', teto_gb: 4 };
+const PUBLICO = 'https://pub-falso-entregas.r2.dev';
+const CLIENTES_FIXOS = ['super-kal', 'creat-mtt', 'marcos'];
+const semAcento = (t) => String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const slug = (t) => semAcento(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const nomeArquivo = (t) => semAcento(t).replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '');
+const nomeCliente = (c) => c.replace(/-/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+const bahia = (ms = Date.now()) => new Date(ms - 3 * 3600e3).toISOString();
+const adivinharCliente = (p) => (/super\s*-?\s*kal/i.test(semAcento(`${p.nome} ${p.dados.pedido?.texto ?? ''}`)) ? 'super-kal' : 'creat-mtt');
+const CAMPOS_ENT = ['estado', 'cliente', 'painel', 'video_url', 'capa_url', 'motivo', 'proxima', 'substituida_por', 'em'];
+function entPublico(e) {
+  const o = Object.fromEntries(CAMPOS_ENT.map((k) => [k, e[k] ?? null]));
+  o.nome_cliente = nomeCliente(e.cliente || 'creat-mtt');
+  return o;
+}
+function gravarEnt(p, v, campos, mensagem) {
+  const e = ((p.dados.entregas ??= {})[v] ??= {});
+  Object.assign(e, campos);
+  // como a etapa de fundo do motor: evento "estado" da etapa entrega, sem mudar o estado do projeto (o site recarrega)
+  emitir(p.id, 'estado', { etapa: 'entrega', alvo: v, mensagem, dados: { entregas: entPublico(e) } });
+  return e;
+}
+async function enviarEntregas(p, v, cliente) {
+  p.dados.entregas_data ??= bahia().slice(0, 10);       // data da 1ª aprovação: re-aprovar cai na mesma pasta
+  gravarEnt(p, v, { estado: 'enviando', cliente, motivo: null, proxima: null, substituida_por: null }, `Subindo a ${v} para a página de entregas.`);
+  await dormir(PASSO * 2);
+  const e = p.dados.entregas[v];
+  if (e.estado !== 'enviando') return;                  // reprovada no meio: a retirada ganha
+  const forca = ENT.proximo; ENT.proximo = null;
+  if (forca === 'pendente') {
+    gravarEnt(p, v, { estado: 'pendente', motivo: 'sem conexão com o Cloudflare agora. O filme continua guardado aqui', proxima: bahia(Date.now() + 15 * 60e3).slice(11, 16) }, 'A página de entregas não respondeu; tento de novo em 15 min.');
+    return;
+  }
+  if (forca === 'falhou') {
+    gravarEnt(p, v, { estado: 'falhou', motivo: 'o filme mudou depois que você aprovou, então nada subiu. Aprove de novo para mandar este' }, 'Não deu para mandar para as entregas.');
+    return;
+  }
+  for (const [v2, e2] of Object.entries(p.dados.entregas)) {
+    if (v2 !== v && ['no_ar', 'enviando', 'pendente'].includes(e2.estado)) gravarEnt(p, v2, { estado: 'substituida', substituida_por: v }, `${v2} trocada pela ${v} na página de entregas.`);
+  }
+  const pasta = `${slug(cliente)}/${p.dados.entregas_data}-${slug(p.nome).slice(0, 60) || 'projeto'}`;
+  gravarEnt(p, v, { estado: 'no_ar', painel: `${PUBLICO}/entregas.html?c=${cliente}`, video_url: `${PUBLICO}/${pasta}/${nomeArquivo(p.nome) || 'Projeto'}_${v}.mp4`,
+    capa_url: `${PUBLICO}/${pasta}/${nomeArquivo(p.nome) || 'Projeto'}_capa_${v}.jpg`, motivo: null, proxima: null, em: agora() }, `A ${v} está na página de entregas.`);
+}
+async function retirarEntregas(p, v) {
+  gravarEnt(p, v, { estado: 'retirando' }, `Tirando a ${v} da página de entregas.`);
+  await dormir(PASSO);
+  gravarEnt(p, v, { estado: 'retirada', motivo: null, proxima: null }, `A ${v} saiu da página de entregas.`);
+}
+// Pasta do Google Drive: mesmas formas de link e mesmos textos do motor real (importar.py)
+const RE_PASTA_DRIVE = /^https:\/\/drive\.google\.com\/(?:drive\/(?:u\/\d+\/|mobile\/)?folders\/([^/?#]+)|(?:embedded)?folderview\?(?:[^#]*&)?id=([^&#]+))/;
+const MSG_PASTA = {
+  restrita: 'Essa pasta do Google Drive está restrita. No Drive: toque nos 3 pontinhos da pasta > Compartilhar > Acesso geral: "Qualquer pessoa com o link" (pode deixar como Leitor) > Copiar link, e cole aqui de novo.',
+  apagada: 'Essa pasta do Drive não existe mais (foi apagada ou o link veio pela metade). Copie o link de novo e cole aqui.',
+  vazia: 'A pasta do Drive não tem vídeo nem áudio. Confira se colou a pasta certa.',
+};
+const ITENS_PASTA = [
+  { nome: 'C0001.MP4', bytes: 412334100 }, { nome: 'C0002.MP4', bytes: 288100442 }, { nome: 'Audio/voz-lapela.WAV', bytes: 61200000 },
+];
+
 // ---------- simulação ----------
 async function lerArquivo(p, a) {
   emitir(p.id, 'arquivo_recebido', { alvo: a.id, mensagem: `Chegou: ${a.nome}` });
@@ -190,8 +254,15 @@ function chaveValida(chave) {
 }
 
 function verProjeto(p) {
-  const { rodando, ...resto } = p;
-  return { ...resto, arquivos: p.arquivos.map((a) => ({ ...a })), versoes: p.versoes.map((v) => ({ ...v })), jobs: [] };
+  const { rodando, nuvemEstados, ...resto } = p;
+  const out = { ...resto, arquivos: p.arquivos.map((a) => ({ ...a })), versoes: p.versoes.map((v) => ({ ...v })), jobs: [] };
+  if (ESP.ligado) {          // igual ao motor real: com o espelho desligado, nenhum destes campos existe
+    out.arquivos.forEach((a, i) => { a.nuvem = nuvemEstados?.[i] ?? null; });
+    const conta = (e) => out.arquivos.filter((a) => a.nuvem === e);
+    out.nuvem = { guardados: conta('guardado').length, total: out.arquivos.length, bytes: conta('guardado').reduce((t, a) => t + a.bytes, 0),
+      pendentes: conta('pendente').length, fora_do_teto: conta('fora_do_teto').length, teto_gb: ESP.teto_gb };
+  }
+  return out;
 }
 
 function servirArquivo(req, res, chave) {
@@ -252,7 +323,37 @@ async function rotear(req, res) {
   const [, r1, pid, r3, r4, r5] = partes;
   const M = req.method;
 
-  if (r1 === 'saude' && M === 'GET') return json(res, 200, { ok: true, falso: true, provedores: { armazenamento: 'local', transcricao: 'falso', visao: 'falso', cerebro: 'fixture', render: 'falso', publicacao: 'nenhuma' } });
+  if (r1 === 'saude' && M === 'GET') return json(res, 200, { ok: true, falso: true, provedores: { armazenamento: 'local', transcricao: 'falso', visao: 'falso', cerebro: 'fixture', render: 'falso', publicacao: 'nenhuma' },
+    entregas: { ligado: ENT.ligado }, ...(ESP.ligado ? { espelho: { ligado: true, teto_gb: ESP.teto_gb } } : {}) });
+  if (r1 === '_falso' && M === 'POST') {      // controle do aceite (o proxy do site não deixa passar: só quem tem o token do motor)
+    const c = (await lerCorpo(req)) ?? {};
+    if (pid === 'entregas') {
+      if (typeof c.ligado === 'boolean') ENT.ligado = c.ligado;
+      if (c.proximo !== undefined) ENT.proximo = c.proximo;
+      const p = projetos.get(c.projeto);
+      if (p && c.versao && c.estado) gravarEnt(p, c.versao, { estado: c.estado, motivo: c.motivo ?? null, proxima: c.proxima ?? null, substituida_por: c.substituida_por ?? null }, `entregas da ${c.versao}: ${c.estado}`);
+      return json(res, 200, { ligado: ENT.ligado, entregas: p ? Object.fromEntries(Object.entries(p.dados.entregas ?? {}).map(([k, e]) => [k, entPublico(e)])) : null });
+    }
+    if (pid === 'espelho') {
+      if (typeof c.ligado === 'boolean') ESP.ligado = c.ligado;
+      const p = projetos.get(c.projeto);
+      if (p && Array.isArray(c.estados)) { p.nuvemEstados = c.estados; emitir(p.id, 'estado', { etapa: 'entrega', mensagem: 'espelho do material atualizado' }); }
+      return json(res, 200, { ligado: ESP.ligado });
+    }
+    return falha(res, 404, 'rota não encontrada');
+  }
+  if (r1 === 'entregas' && pid === 'clientes' && M === 'GET') {
+    const slugs = [...CLIENTES_FIXOS];
+    const out = { ligado: ENT.ligado, clientes: slugs.map((c) => ({ slug: c, nome: nomeCliente(c) })), padrao: 'creat-mtt' };
+    const p = projetos.get(url.searchParams.get('projeto') ?? '');
+    if (url.searchParams.get('projeto') && !p) return falha(res, 404, 'projeto não encontrado');
+    if (p) {
+      const ultimo = Object.values(p.dados.entregas ?? {}).map((e) => e.cliente).filter(Boolean).pop();
+      out.sugerido = ultimo ?? adivinharCliente(p);
+      if (!slugs.includes(out.sugerido)) out.clientes.push({ slug: out.sugerido, nome: nomeCliente(out.sugerido) });
+    }
+    return json(res, 200, out);
+  }
   if (r1 === 'arquivos' && (M === 'GET' || M === 'HEAD')) return servirArquivo(req, res, partes.slice(2).join('/'));
   if (r1 === 'memoria' && M === 'GET') return json(res, 200, memoriaDaCasa());
   if (r1 === 'referencias' && M === 'GET') return json(res, 200, { andamento: [], referencias: REFS });
@@ -299,7 +400,7 @@ async function rotear(req, res) {
       return json(res, 200, BACKUP);
     }
     if (pid === 'rodar' && M === 'POST') {
-      Object.assign(BACKUP, { estado: 'ok', ultimo_ok: agora(), bytes: 25014, arquivos: 22, horas_desde_o_ultimo: 0, midia_fora: { arquivos: 7, bytes: 15304535 } });
+      Object.assign(BACKUP, { estado: 'ok', ultimo_ok: agora(), bytes: 25014, arquivos: 22, horas_desde_o_ultimo: 0, midia_fora: { arquivos: 7, bytes: 15304535 }, r2: true, copias: ['R2', 'Dropbox'] });
       return json(res, 202, { ...BACKUP, estado: 'rodando' });
     }
     return falha(res, 404, 'rota não encontrada');
@@ -362,7 +463,8 @@ async function rotear(req, res) {
   if (!p) return falha(res, 404, 'projeto não encontrado');
   if (!r3 && M === 'GET') return json(res, 200, verProjeto(p));
   if (r3 === 'eventos' && M === 'GET') return sse(req, res, pid, url);
-  if (r3 === 'versoes' && !r4 && M === 'GET') return json(res, 200, p.versoes);
+  // mesmo formato do motor real ({projeto, versoes}); "entregas" só com as entregas ligadas
+  if (r3 === 'versoes' && !r4 && M === 'GET') return json(res, 200, { projeto: pid, versoes: p.versoes.map((v) => ({ ...v, ...(ENT.ligado && p.dados.entregas?.[v.id] ? { entregas: entPublico(p.dados.entregas[v.id]) } : {}) })) });
   if (r3 === 'links-cliente' && M === 'GET') return json(res, 200, { links: LINKS.filter((l) => l.projeto === pid).map(linkDono).reverse() });
   if (M !== 'POST') return falha(res, 405, 'método não permitido');
   const c = await lerCorpo(req);
@@ -392,10 +494,31 @@ async function rotear(req, res) {
     if (!ABERTOS.includes(p.estado)) return falha(res, 409, 'o projeto já está em direção/montagem');
     // como o motor de verdade (importar.sondar): link restrito da equipe é recusado NA HORA, com o passo a passo
     if (/restrito/.test(u)) return falha(res, 422, 'Esse link do Dropbox só abre para quem está logado (link restrito da equipe). No app do Dropbox: Compartilhar > Configurações do link > "Qualquer pessoa com o link" > Copiar link, e cole aqui de novo.');
+    const pasta = RE_PASTA_DRIVE.exec(u);
+    if (pasta) {               // pasta do Drive: lida na hora; cada vídeo de dentro vira um arquivo do projeto
+      const fid = pasta[1] ?? pasta[2];
+      for (const k of Object.keys(MSG_PASTA)) if (fid.includes(k)) return falha(res, 422, MSG_PASTA[k]);
+      if ((p.dados.pastas_drive ??= {})[fid]) return falha(res, 422, `Essa pasta já está no projeto (${ITENS_PASTA.length} vídeos). Não tem vídeo novo nela.`);
+      p.dados.pastas_drive[fid] = true;
+      const a = { id: `a${String(p.arquivos.length + 1).padStart(3, '0')}`, nome: 'importando do link…', chave: null, bytes: 0, estado: 'recebido', criado: agora() };
+      p.arquivos.push(a);
+      (async () => {
+        await dormir(PASSO);
+        for (const [i, it] of ITENS_PASTA.entries()) {
+          const alvo = i === 0 ? a : { id: `a${String(p.arquivos.length + 1).padStart(3, '0')}`, nome: '', chave: null, bytes: 0, estado: 'recebido', criado: agora() };
+          if (i > 0) p.arquivos.push(alvo);
+          Object.assign(alvo, { nome: `Gravacoes do evento/${it.nome}`, bytes: it.bytes });
+          lerArquivo(p, alvo);
+        }
+      })();
+      return json(res, 202, { id: a.id, mensagem: 'Importação na fila: o editor baixa e já começa a ler.',
+        pasta: { nome: 'Gravações do evento', videos: ITENS_PASTA.length, ignorados: 2, subpastas: 1, ja_no_projeto: 0, bytes: null },
+        detalhe: `Pasta “Gravações do evento”: ${ITENS_PASTA.length} vídeos na fila; vão aparecendo aqui conforme baixam. 2 arquivos que não são vídeo nem áudio ficam de fora.` });
+    }
     const a = { id: `a${String(p.arquivos.length + 1).padStart(3, '0')}`, nome: 'importando do link…', chave: null, bytes: 0, estado: 'recebido', criado: agora() };
     p.arquivos.push(a);
     (async () => { await dormir(PASSO); a.nome = decodeURIComponent(u.split('/').pop()?.split('?')[0] || 'arquivo-importado.mp4'); a.bytes = 1; await lerArquivo(p, a); })();
-    return json(res, 202, { id: a.id, mensagem: 'Importação na fila: o motor baixa e já começa a ler.' });
+    return json(res, 202, { id: a.id, mensagem: 'Importação na fila: o editor baixa e já começa a ler.' });
   }
   if (r3 === 'fechar-envio') {
     if (!p.arquivos.length) return falha(res, 409, 'nenhum arquivo enviado ainda');
@@ -424,6 +547,7 @@ async function rotear(req, res) {
     if (motivo.length < 3 || motivo.length > 1000) return falha(res, 422, 'motivo entre 3 e 1000 caracteres');
     v.estado = 'reprovada';
     v.reprovacao = motivo;
+    if (ENT.ligado && ['no_ar', 'enviando', 'pendente'].includes(p.dados.entregas?.[v.id]?.estado)) retirarEntregas(p, v.id);
     emitir(pid, 'estado', { mensagem: `Versão ${v.id} reprovada: ${motivo.slice(0, 120)}. Virou regra da casa.` });
     p.estado = 'lendo';
     setTimeout(() => tentarDirigir(p), PASSO);
@@ -433,9 +557,26 @@ async function rotear(req, res) {
     const v = p.versoes.find((x) => x.id === r4);
     if (!v) return falha(res, 404, 'versão não encontrada');
     if (v.estado !== 'entregue') return falha(res, 409, 'só dá para aprovar versão entregue (conferida pelo QA)');
+    if (c.cliente != null && !/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(String(c.cliente))) return falha(res, 422, 'cliente inválido');
     p.dados.aprovadas = { ...(p.dados.aprovadas ?? {}), [v.id]: { em: agora(), nota: c.nota ?? null } };
     emitir(pid, 'estado', { mensagem: `Corta! Versão ${v.id} aprovada. Virou caso de referência da casa.` });
-    return json(res, 200, { aprovada: v.id, caso: `${pid}-${v.id}` });
+    const out = { aprovada: v.id, caso: `${pid}-${v.id}` };
+    if (ENT.ligado && c.entregas !== false) {        // sem as entregas ligadas (ou "não mandar"), a resposta fica idêntica à de antes
+      const cliente = c.cliente || adivinharCliente(p);
+      enviarEntregas(p, v.id, cliente);
+      out.entregas = entPublico(p.dados.entregas[v.id]);
+    }
+    return json(res, 200, out);
+  }
+  if (r3 === 'versoes' && r4 && r5 === 'entregas') {          // "Tentar agora" / "Mandar para as entregas"
+    const v = p.versoes.find((x) => x.id === r4);
+    if (!v) return falha(res, 404, 'versão não encontrada');
+    if (!ENT.ligado) return falha(res, 409, 'as entregas no Cloudflare estão desligadas neste editor');
+    if (v.estado !== 'entregue' || !p.dados.aprovadas?.[v.id]) return falha(res, 409, 'só vai para a página de entregas a versão que você aprovou');
+    if (c.cliente != null && !/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(String(c.cliente))) return falha(res, 422, 'cliente inválido');
+    const cliente = c.cliente || p.dados.entregas?.[v.id]?.cliente || adivinharCliente(p);
+    enviarEntregas(p, v.id, cliente);
+    return json(res, 202, { entregas: entPublico(p.dados.entregas[v.id]) });
   }
   if (r3 === 'versoes' && r4 && r5 === 'link-cliente') {
     const v = p.versoes.find((x) => x.id === r4);

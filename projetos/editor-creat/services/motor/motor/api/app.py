@@ -46,7 +46,7 @@ def criar():
     app = FastAPI(title="Motor do Editor creat.MTT", version="0.1.0", dependencies=[Depends(autorizado)])
 
     @app.get("/v1/saude")
-    def saude(chave: bool = False, direcao: bool = False, olho: bool = False):
+    def saude(chave: bool = False, direcao: bool = False, olho: bool = False, entregas: bool = False):
         out = {"ok": True, "provedores": {t: cfg.provedor_efetivo(t) for t in ("armazenamento", "transcricao", "visao", "cerebro", "render", "publicacao")}}
         if chave:
             from motor.cerebro.diagnostico import checar_chave
@@ -81,6 +81,11 @@ def criar():
         out["backup"] = {k: v for k, v in _bk.items() if k in ("destino", "estado", "ultimo_ok", "horas_desde_o_ultimo", "r2", "copias")}
         if _bk.get("estado") == "falha" and _bk.get("erro"):   # causa da falha, sem caminhos internos (a saúde é pública)
             out["backup"]["erro"] = _re.sub(r"(/[\w.@-]+)+/?", "<caminho>", str(_bk["erro"]))[:160]
+        from motor import entregas_r2 as _ent
+        out["entregas"] = _ent.estado_saude(cfg, provar=entregas)    # ?entregas=1 prova a permissão do token (list MaxKeys=1)
+        from motor.etapas import espelho as _esp
+        if _esp.ligado():
+            out["espelho"] = {"ligado": True, "teto_gb": round(_esp.teto_bytes() / (1 << 30), 1)}
         return out
 
     if os.environ.get("EDITOR_BACKUP_AGENDAR") == "1":            # só no servidor (iniciar.sh); testes e aceites não agendam

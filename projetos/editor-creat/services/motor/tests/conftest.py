@@ -10,6 +10,18 @@ sys.path.insert(0, str(AQUI.parents[2] / "packages" / "schemas" / "py"))
 SCRATCH = pathlib.Path("/tmp/claude-0/-home-user/419713a1-4270-5c49-aaae-4d19936ab01f/scratchpad/drako")
 
 
+VARS_NUVEM = ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "R2_BACKUP_BUCKET", "R2_ENTREGAS_BUCKET",
+              "R2_ENTREGAS_PUBLICO", "R2_MIDIA_BUCKET", "EDITOR_ESPELHO", "EDITOR_ESPELHO_TETO_GB", "EDITOR_ENTREGAS")
+
+
+@pytest.fixture(autouse=True)
+def _sem_nuvem_real(monkeypatch):
+    """Nenhum teste fala com o Cloudflare de verdade: as chaves reais do R2 desta máquina somem do ambiente de todo teste
+    (quem precisa liga variáveis falsas no próprio teste e injeta um cliente S3 falso)."""
+    for n in VARS_NUVEM:
+        monkeypatch.delenv(n, raising=False)
+
+
 @pytest.fixture()
 def dados(tmp_path, monkeypatch):
     monkeypatch.setenv("EDITOR_DADOS", str(tmp_path / "dados"))
