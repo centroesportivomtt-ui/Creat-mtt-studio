@@ -55,6 +55,15 @@ Palavras dele: "um modo de resposta, onde eu falo alguma coisa, ele pode me perg
 | C1 | conversa por projeto: texto e áudio, o editor responde e pergunta de volta, com acesso às ações do projeto (pedido, ajuste, trocar música, refazer etapa) | pesquisa e projeto em andamento · 25/11 |
 | C2 | tela ao vivo do que está sendo feito: etapa, ferramenta em uso, o que ela achou, custo, em linguagem do dono | pesquisa e projeto em andamento · 25/11 |
 
+## Cloudflare e Drive no editor (pedido do dono, 25/11)
+Palavras dele: "anexe no editor a plataforma nova que eu estou utilizando, o Cloudflare"; "a parte de anexo dos links do Drive… é só colar o link e ele já pega a pasta com os arquivos dentro"; "quando o editor for mandar os vídeos ou eu for upar os vídeos, deixe tudo coordenado e perfeito".
+| item | o quê | estado |
+|---|---|---|
+| R1 | backup do editor no Cloudflare R2 | feito · 18b70f6 · 25/11 (conferido em produção) |
+| R2 | pasta do Google Drive por link (colou a pasta, o editor pega os vídeos de dentro) | em andamento · 01LA2wrMpbZ · 25/11 |
+| R3 | filme aprovado vai sozinho para a página de entregas no Cloudflare (creat-entregas), com link na versão | em andamento · 01LA2wrMpbZ · 25/11 |
+| R4 | material enviado guardado no Cloudflare (creat-editor-midia) sem quebrar os projetos que já existem | em andamento · 01LA2wrMpbZ · 25/11 |
+
 ## Mapa original (depois da fila do dono)
 | item | o quê | estado |
 |---|---|---|
