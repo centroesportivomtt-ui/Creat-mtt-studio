@@ -1,0 +1,1128 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://creatmtt.local/schemas/conversa.schema.json",
+ "title": "Eventos gravados da conversa e da mesa ao vivo (SSE com id)",
+ "description": "Formato de cada evento novo da conversa com o editor e da mesa ao vivo (docs/plano-conversa-25-11.md, seção 13.3). Linha da tabela eventos: estado e mensagem são sempre nulos; o conteúdo vai em dados. Texto de passo.achado e de decisao é gerado por modelo: a tela mostra como texto puro. O arquivo valida uma LISTA de eventos (exemplos/conversa.json).",
+ "type": "array",
+ "items": {
+  "anyOf": [
+   {
+    "$ref": "#/$defs/ev_fala_dono"
+   },
+   {
+    "$ref": "#/$defs/ev_fala_editor"
+   },
+   {
+    "$ref": "#/$defs/ev_ferramenta"
+   },
+   {
+    "$ref": "#/$defs/ev_pergunta"
+   },
+   {
+    "$ref": "#/$defs/ev_confirmacao"
+   },
+   {
+    "$ref": "#/$defs/ev_resposta"
+   },
+   {
+    "$ref": "#/$defs/ev_turno_fim"
+   },
+   {
+    "$ref": "#/$defs/ev_mostrar"
+   },
+   {
+    "$ref": "#/$defs/ev_aviso_retomar"
+   },
+   {
+    "$ref": "#/$defs/ev_passo"
+   },
+   {
+    "$ref": "#/$defs/ev_decisao"
+   }
+  ]
+ },
+ "$defs": {
+  "fala_dono": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "turno",
+    "texto",
+    "via"
+   ],
+   "properties": {
+    "turno": {
+     "type": "string",
+     "pattern": "^t_[0-9a-f]{10}$"
+    },
+    "texto": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 4000
+    },
+    "via": {
+     "enum": [
+      "texto",
+      "audio"
+     ]
+    },
+    "na_fila": {
+     "type": "boolean"
+    },
+    "contexto": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [],
+     "properties": {
+      "versao": {
+       "type": "string",
+       "pattern": "^v[0-9]{1,3}$"
+      },
+      "t_player": {
+       "type": "number",
+       "minimum": 0
+      },
+      "tela": {
+       "enum": [
+        "fio",
+        "player",
+        "caderno"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "fala_editor": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "turno",
+    "bloco",
+    "texto"
+   ],
+   "properties": {
+    "turno": {
+     "type": "string",
+     "pattern": "^t_[0-9a-f]{10}$"
+    },
+    "bloco": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "texto": {
+     "type": "string"
+    }
+   }
+  },
+  "ferramenta": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "turno",
+    "tool_use_id",
+    "nome",
+    "fase"
+   ],
+   "properties": {
+    "turno": {
+     "anyOf": [
+      {
+       "type": "string",
+       "pattern": "^t_[0-9a-f]{10}$"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "tool_use_id": {
+     "type": "string",
+     "maxLength": 80
+    },
+    "nome": {
+     "enum": [
+      "mostrar",
+      "ver_material",
+      "ver_passo",
+      "ver_projeto",
+      "ouvir_audio"
+     ]
+    },
+    "fase": {
+     "enum": [
+      "inicio",
+      "fim",
+      "erro"
+     ]
+    },
+    "entrada": {
+     "type": "object"
+    },
+    "resumo": {
+     "type": "string",
+     "maxLength": 160
+    },
+    "s": {
+     "type": "number",
+     "minimum": 0
+    }
+   }
+  },
+  "pergunta": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "turno",
+    "tool_use_id",
+    "texto",
+    "opcoes",
+    "aceita_texto"
+   ],
+   "properties": {
+    "turno": {
+     "type": "string",
+     "pattern": "^t_[0-9a-f]{10}$"
+    },
+    "tool_use_id": {
+     "type": "string",
+     "maxLength": 80
+    },
+    "texto": {
+     "type": "string",
+     "maxLength": 200
+    },
+    "opcoes": {
+     "type": "array",
+     "maxItems": 4,
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "id",
+       "rotulo"
+      ],
+      "properties": {
+       "id": {
+        "type": "string",
+        "maxLength": 20
+       },
+       "rotulo": {
+        "type": "string",
+        "maxLength": 40
+       },
+       "efeito": {
+        "type": "string",
+        "maxLength": 100
+       }
+      }
+     }
+    },
+    "sugestao": {
+     "type": "string",
+     "maxLength": 20
+    },
+    "aceita_texto": {
+     "type": "boolean"
+    }
+   }
+  },
+  "confirmacao": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "turno",
+    "tool_use_id",
+    "acao",
+    "titulo",
+    "texto_exato",
+    "refaz",
+    "comeca_agora",
+    "custo_usd_est",
+    "minutos_est",
+    "vira_regra",
+    "volta",
+    "entrada_hash"
+   ],
+   "properties": {
+    "turno": {
+     "type": "string",
+     "pattern": "^t_[0-9a-f]{10}$"
+    },
+    "tool_use_id": {
+     "type": "string",
+     "maxLength": 80
+    },
+    "acao": {
+     "enum": [
+      "ajuste",
+      "pedido"
+     ]
+    },
+    "versao": {
+     "type": "string",
+     "pattern": "^v[0-9]{1,3}$"
+    },
+    "titulo": {
+     "type": "string"
+    },
+    "texto_exato": {
+     "type": "string",
+     "maxLength": 4000
+    },
+    "mudancas": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "campo",
+       "antes",
+       "depois"
+      ],
+      "properties": {
+       "campo": {
+        "type": "string"
+       },
+       "antes": {
+        "type": "string"
+       },
+       "depois": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "refaz": {
+     "type": "array",
+     "items": {
+      "enum": [
+       "direcao",
+       "montagem",
+       "qa"
+      ]
+     }
+    },
+    "comeca_agora": {
+     "type": "boolean"
+    },
+    "custo_usd_est": {
+     "type": "number",
+     "minimum": 0
+    },
+    "minutos_est": {
+     "type": "number",
+     "minimum": 0
+    },
+    "vira_regra": {
+     "type": "boolean"
+    },
+    "volta": {
+     "type": "string"
+    },
+    "entrada_hash": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    }
+   }
+  },
+  "resposta": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "tool_use_id",
+    "tipo",
+    "por"
+   ],
+   "properties": {
+    "tool_use_id": {
+     "type": "string",
+     "maxLength": 80
+    },
+    "tipo": {
+     "enum": [
+      "pergunta",
+      "confirmacao"
+     ]
+    },
+    "escolha_id": {
+     "type": "string",
+     "maxLength": 20
+    },
+    "texto": {
+     "type": "string",
+     "maxLength": 1000
+    },
+    "sim": {
+     "type": "boolean"
+    },
+    "resultado": {
+     "enum": [
+      "feito",
+      "cancelado",
+      "nao_deu"
+     ]
+    },
+    "detalhe": {
+     "type": "string"
+    },
+    "por": {
+     "enum": [
+      "dono",
+      "mensagem"
+     ]
+    }
+   }
+  },
+  "turno_fim": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "turno",
+    "stop",
+    "custo_usd",
+    "s",
+    "gasto_hoje_usd",
+    "tokens"
+   ],
+   "properties": {
+    "turno": {
+     "type": "string",
+     "pattern": "^t_[0-9a-f]{10}$"
+    },
+    "stop": {
+     "enum": [
+      "end_turn",
+      "pausa",
+      "parado",
+      "erro",
+      "teto",
+      "recusa",
+      "limite"
+     ]
+    },
+    "custo_usd": {
+     "type": "number",
+     "minimum": 0
+    },
+    "estimado": {
+     "type": "boolean"
+    },
+    "s": {
+     "type": "number",
+     "minimum": 0
+    },
+    "texto_parcial": {
+     "type": "string"
+    },
+    "gasto_hoje_usd": {
+     "type": "number",
+     "minimum": 0
+    },
+    "tokens": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "entrada",
+      "cache_lida",
+      "cache_escrita",
+      "saida"
+     ],
+     "properties": {
+      "entrada": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "cache_lida": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "cache_escrita": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "saida": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    },
+    "detalhe": {
+     "type": "string",
+     "maxLength": 300
+    }
+   }
+  },
+  "mostrar": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [],
+   "properties": {
+    "versao": {
+     "type": "string",
+     "pattern": "^v[0-9]{1,3}$"
+    },
+    "arquivo_id": {
+     "type": "string",
+     "maxLength": 40
+    },
+    "tempo_s": {
+     "type": "number",
+     "minimum": 0
+    }
+   }
+  },
+  "aviso_retomar": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "acao",
+    "turno"
+   ],
+   "properties": {
+    "acao": {
+     "const": "retomar"
+    },
+    "turno": {
+     "type": "string",
+     "pattern": "^t_[0-9a-f]{10}$"
+    }
+   }
+  },
+  "passo": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "passo",
+    "chave",
+    "fase"
+   ],
+   "properties": {
+    "passo": {
+     "type": "string",
+     "pattern": "^ps_[0-9a-f]{10}$"
+    },
+    "pai": {
+     "type": "string"
+    },
+    "chave": {
+     "type": "string",
+     "maxLength": 60
+    },
+    "fase": {
+     "enum": [
+      "inicio",
+      "fim",
+      "erro",
+      "interrompido"
+     ]
+    },
+    "modelo": {
+     "type": "string"
+    },
+    "esforco": {
+     "enum": [
+      "low",
+      "medium",
+      "high"
+     ]
+    },
+    "s": {
+     "type": "number",
+     "minimum": 0
+    },
+    "custo_usd": {
+     "type": "number",
+     "minimum": 0
+    },
+    "tokens": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "entrada",
+      "cache_lida",
+      "cache_escrita",
+      "saida"
+     ],
+     "properties": {
+      "entrada": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "cache_lida": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "cache_escrita": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "saida": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    },
+    "conta": {
+     "type": "string"
+    },
+    "numeros": {
+     "type": "object",
+     "additionalProperties": {
+      "type": [
+       "number",
+       "string"
+      ]
+     }
+    },
+    "achado": {
+     "type": "string",
+     "maxLength": 280
+    }
+   }
+  },
+  "decisao": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "conceito",
+    "gancho",
+    "alem_do_pedido",
+    "riscos",
+    "critica"
+   ],
+   "properties": {
+    "conceito": {
+     "type": "string"
+    },
+    "gancho": {
+     "type": "string"
+    },
+    "alem_do_pedido": {
+     "type": "string"
+    },
+    "riscos": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "critica": {
+     "type": "string"
+    }
+   }
+  },
+  "ev_fala_dono": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "fala_dono"
+    },
+    "etapa": {
+     "type": "null"
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/fala_dono"
+    }
+   }
+  },
+  "ev_fala_editor": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "fala_editor"
+    },
+    "etapa": {
+     "type": "null"
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/fala_editor"
+    }
+   }
+  },
+  "ev_ferramenta": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "ferramenta"
+    },
+    "etapa": {
+     "type": "null"
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/ferramenta"
+    }
+   }
+  },
+  "ev_pergunta": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "pergunta"
+    },
+    "etapa": {
+     "type": "null"
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/pergunta"
+    }
+   }
+  },
+  "ev_confirmacao": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "confirmacao"
+    },
+    "etapa": {
+     "type": "null"
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/confirmacao"
+    }
+   }
+  },
+  "ev_resposta": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "resposta"
+    },
+    "etapa": {
+     "type": "null"
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/resposta"
+    }
+   }
+  },
+  "ev_turno_fim": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "turno_fim"
+    },
+    "etapa": {
+     "type": "null"
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/turno_fim"
+    }
+   }
+  },
+  "ev_mostrar": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "mostrar"
+    },
+    "etapa": {
+     "type": "null"
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/mostrar"
+    }
+   }
+  },
+  "ev_aviso_retomar": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "aviso"
+    },
+    "etapa": {
+     "type": "null"
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/aviso_retomar"
+    }
+   }
+  },
+  "ev_passo": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "passo"
+    },
+    "etapa": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/passo"
+    }
+   }
+  },
+  "ev_decisao": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id",
+    "projeto",
+    "ts",
+    "tipo",
+    "dados"
+   ],
+   "properties": {
+    "id": {
+     "type": "integer"
+    },
+    "projeto": {
+     "type": "string"
+    },
+    "ts": {
+     "type": "string"
+    },
+    "tipo": {
+     "const": "decisao"
+    },
+    "etapa": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "alvo": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "progresso": {
+     "type": "null"
+    },
+    "estado": {
+     "type": "null"
+    },
+    "mensagem": {
+     "type": "null"
+    },
+    "dados": {
+     "$ref": "#/$defs/decisao"
+    }
+   }
+  }
+ }
+}

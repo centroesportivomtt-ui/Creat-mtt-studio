@@ -147,6 +147,9 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
         except Exception:  # noqa: BLE001 - sem cérebro, a heurística da loja resolve
             cerebro = None
         r = Loja().registrar_reprovacao(pid, versao, corpo.motivo, cerebro=cerebro)
+        if r.get("uso"):                                   # a nota virou regra pelo Haiku: o gasto vai ao livro
+            from motor.cerebro import gastos
+            gastos.registrar(cfg, "regra", r["uso"], projeto=pid, versao=versao)
         con.execute("UPDATE versoes SET estado='reprovada', reprovacao=? WHERE projeto=? AND id=?", (corpo.motivo, pid, versao))
         from motor import cliente as _cliente
         _cliente.revogar_versao(con, pid, versao)          # link do cliente desta versão fecha de vez

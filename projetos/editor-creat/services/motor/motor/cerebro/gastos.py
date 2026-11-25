@@ -20,7 +20,8 @@ log = logging.getLogger("motor.gastos")
 
 NOMES = {"direcao": "direção do filme", "critico": "crítico da direção", "visao_leve": "leitura do material (visão)",
          "olho_ia": "olho de IA (revisão)", "olho_ia_falhou": "olho de IA (falhou depois de cobrado, estimado)",
-         "olho_ia_autoteste": "autoteste do olho de IA", "direcao_autoteste": "autoteste da direção", "chave_teste": "teste da chave"}
+         "olho_ia_autoteste": "autoteste do olho de IA", "direcao_autoteste": "autoteste da direção", "chave_teste": "teste da chave",
+         "conversa": "conversa com o editor", "regra": "nota virando regra (Haiku)"}
 
 
 def _arq(cfg) -> pathlib.Path:

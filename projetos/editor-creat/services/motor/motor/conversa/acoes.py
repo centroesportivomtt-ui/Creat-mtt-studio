@@ -1,0 +1,215 @@
+"""As duas ações que a conversa faz com o toque do dono (plano 3.2): guarda de estado, cartão e execução.
+
+- propor_ajuste: chama a MESMA função da rota POST /versoes/{v}/reprovar (api/direcao.reprovar), com o texto do
+  cartão como motivo. Igual ao botão "Pedir ajuste": refaz direção, montagem e conferência, e vira regra da casa.
+- propor_pedido: chama a MESMA função da rota POST /pedido (api/direcao.gravar_pedido) com os campos novos por cima
+  do pedido.json atual.
+
+A guarda roda ao criar o cartão e de novo no toque (sob trava por projeto no laço). Ela é mais estrita que os
+botões: o ajuste só vale para a versão mais nova, entregue e não aprovada, com a fila do projeto vazia; o pedido só
+antes de existir versão ou job de edição. As rotas antigas não mudam.
+O cartão é montado aqui, pelo código: o modelo não escreve o resumo que o dono lê antes de tocar.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import statistics
+
+from motor import banco
+
+ETAPAS_EDICAO = ("catalogo", "direcao", "montagem", "qa", "entrega")
+RE_VERSAO = re.compile(r"^v([0-9]{1,3})$")
+CUSTO_PADRAO_USD = 0.40
+MINUTOS_PADRAO = 10
+CAMPOS_PEDIDO = ("texto", "formato", "destino", "duracao_alvo", "obrigatorio", "proibido", "vozes", "ambiente")
+NOME_CAMPO = {"texto": "Pedido", "formato": "Formato", "destino": "Onde vai sair", "duracao_alvo": "Duração",
+              "obrigatorio": "Precisa ter", "proibido": "Não pode ter", "vozes": "Vozes", "ambiente": "Ambiente"}
+
+
+def _num(v: str) -> int:
+    m = RE_VERSAO.match(v or "")
+    return int(m.group(1)) if m else -1
+
+
+def _dados(con, pid: str) -> dict:
+    r = con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()
+    return json.loads(r["dados"] or "{}") if r else {}
+
+
+def versoes(con, pid: str) -> list[dict]:
+    vs = [dict(r) for r in con.execute("SELECT id, estado FROM versoes WHERE projeto=?", (pid,))]
+    return sorted(vs, key=lambda v: _num(v["id"]))
+
+
+def _outra_confirmacao(con, pid: str, tool_use_id: str | None) -> bool:
+    r = con.execute("SELECT tool_use_id FROM conversa_espera WHERE projeto=? AND tipo='confirmacao'", (pid,)).fetchone()
+    return r is not None and r["tool_use_id"] != tool_use_id
+
+
+def guarda_ajuste(con, pid: str, versao: str, *, tool_use_id: str | None = None) -> str | None:
+    """None = pode. Senão, o porquê em pt-BR simples (vai para o Nimbus e para o cartão 'Não deu')."""
+    vs = versoes(con, pid)
+    v = next((x for x in vs if x["id"] == versao), None)
+    if v is None:
+        return f"a versão {versao} não existe"
+    if v["estado"] != "entregue":
+        return f"a {versao} ainda não foi entregue (está {v['estado']})"
+    if versao in (_dados(con, pid).get("aprovadas") or {}):
+        return f"a {versao} já foi aprovada"
+    nova = vs[-1]["id"]
+    if nova != versao:
+        return f"a {versao} não é a mais nova; a mais nova é a {nova}"
+    q = ",".join("?" * len(ETAPAS_EDICAO))
+    if con.execute(f"SELECT 1 FROM jobs WHERE projeto=? AND etapa IN ({q}) AND estado IN ('pendente','rodando') LIMIT 1",
+                   (pid, *ETAPAS_EDICAO)).fetchone():
+        return f"a {versao} já está sendo refeita ou conferida; espere terminar"
+    if _outra_confirmacao(con, pid, tool_use_id):
+        return "já existe outro cartão esperando o seu toque"
+    return None
+
+
+def guarda_pedido(con, pid: str, *, tool_use_id: str | None = None) -> str | None:
+    r = con.execute("SELECT estado FROM projetos WHERE id=?", (pid,)).fetchone()
+    if r is None:
+        return "projeto não encontrado"
+    if r["estado"] not in ("recebendo", "lendo"):
+        return "a edição já começou; para mudar agora, peça um ajuste da versão pronta"
+    if con.execute("SELECT 1 FROM versoes WHERE projeto=? LIMIT 1", (pid,)).fetchone():
+        return "já existe versão deste projeto; peça um ajuste da versão pronta"
+    q = ",".join("?" * len(ETAPAS_EDICAO))
+    if con.execute(f"SELECT 1 FROM jobs WHERE projeto=? AND etapa IN ({q}) AND estado IN ('pendente','rodando','feito') LIMIT 1",
+                   (pid, *ETAPAS_EDICAO)).fetchone():
+        return "a edição já começou; para mudar agora, peça um ajuste da versão pronta"
+    if _outra_confirmacao(con, pid, tool_use_id):
+        return "já existe outro cartão esperando o seu toque"
+    return None
+
+
+def pode(con, pid: str) -> dict:
+    """O que a conversa pode propor agora (vai em ver_projeto.pode)."""
+    vs = versoes(con, pid)
+    ajuste = guarda_ajuste(con, pid, vs[-1]["id"]) if vs else "ainda não há versão pronta"
+    pedido = guarda_pedido(con, pid)
+    out = {"propor_ajuste": ajuste is None, "propor_pedido": pedido is None}
+    porque = [p for p in ((f"ajuste: {ajuste}" if ajuste else None), (f"pedido: {pedido}" if pedido else None)) if p]
+    if porque:
+        out["porque"] = "; ".join(porque)
+    return out
+
+
+# ---------------- custo e tempo do cartão (números do código) ----------------
+def custo_e_minutos(cfg, con) -> tuple[float, float]:
+    from motor.cerebro import gastos
+    grupos: dict[tuple, float] = {}
+    for d in gastos.ler(cfg):
+        if d.get("o_que") in ("direcao", "critico"):
+            k = (d.get("projeto"), d.get("versao"))
+            grupos[k] = grupos.get(k, 0.0) + float(d.get("custo_usd") or 0)
+    ult = list(grupos.values())[-5:]
+    custo = round(statistics.mean(ult), 2) if ult else CUSTO_PADRAO_USD
+    total_s = 0.0
+    tem = False
+    for etapa in ("direcao", "montagem", "qa"):
+        ss = []
+        for r in con.execute("SELECT dados FROM eventos WHERE tipo='etapa_fim' AND etapa=? ORDER BY id DESC LIMIT 5", (etapa,)):
+            try:
+                s = float((json.loads(r["dados"] or "{}") or {}).get("s") or 0)
+            except (TypeError, ValueError):
+                s = 0
+            if s > 0:
+                ss.append(s)
+        if ss:
+            tem = True
+            total_s += statistics.mean(ss)
+    minutos = max(1, round(total_s / 60)) if tem else MINUTOS_PADRAO
+    return custo, float(minutos)
+
+
+def entrada_hash(tool_use_id: str, entrada: dict) -> str:
+    canon = json.dumps(entrada, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(f"{tool_use_id}\n{canon}".encode("utf-8")).hexdigest()
+
+
+def _pedido_atual(cfg, pid: str) -> dict:
+    from motor.api.direcao import _armazem
+    try:
+        return _armazem(cfg).ler_json(f"projetos/{pid}/pedido.json", padrao={})
+    except Exception:  # noqa: BLE001 - pedido ilegível: o cartão mostra tudo como novo
+        return {}
+
+
+def _fmt(v) -> str:
+    if v is None or v == "" or v == []:
+        return "—"
+    if isinstance(v, list):
+        return "; ".join(str(x) for x in v)
+    if isinstance(v, float) and v.is_integer():
+        return f"{int(v)} s"
+    if isinstance(v, (int, float)):
+        return f"{v} s"
+    return str(v)
+
+
+def normalizar_pedido(entrada: dict) -> dict:
+    out = {}
+    for k in CAMPOS_PEDIDO:
+        if k not in entrada:
+            continue
+        v = entrada[k]
+        if isinstance(v, str):
+            v = v.strip()
+        elif isinstance(v, list):
+            v = [x.strip() if isinstance(x, str) else x for x in v]
+            v = [x for x in v if x != ""]
+        out[k] = v
+    return out
+
+
+def cartao_ajuste(cfg, con, pid: str, entrada: dict, *, turno: str, tool_use_id: str) -> dict:
+    custo, minutos = custo_e_minutos(cfg, con)
+    v = entrada["versao"]
+    return {"turno": turno, "tool_use_id": tool_use_id, "acao": "ajuste", "versao": v, "titulo": f"Pedir ajuste da {v}",
+            "texto_exato": entrada["o_que_mudar"], "refaz": ["direcao", "montagem", "qa"], "comeca_agora": True,
+            "custo_usd_est": custo, "minutos_est": minutos, "vira_regra": True,
+            "volta": f"A {v} continua guardada. Vira regra da casa, como no botão Pedir ajuste."}
+
+
+def cartao_pedido(cfg, con, pid: str, entrada: dict, *, turno: str, tool_use_id: str) -> dict:
+    atual = _pedido_atual(cfg, pid)
+    mudancas = []
+    for k in CAMPOS_PEDIDO:
+        if k in entrada and entrada[k] != atual.get(k):
+            mudancas.append({"campo": NOME_CAMPO[k], "antes": _fmt(atual.get(k)), "depois": _fmt(entrada[k])})
+    d = _dados(con, pid)
+    r = con.execute("SELECT SUM(estado='analisado') lidos, SUM(estado NOT IN ('analisado','falhou')) pendentes FROM arquivos WHERE projeto=?",
+                    (pid,)).fetchone()
+    comeca = bool(d.get("envio_fechado")) and (r["pendentes"] or 0) == 0 and (r["lidos"] or 0) > 0
+    custo, minutos = custo_e_minutos(cfg, con)
+    return {"turno": turno, "tool_use_id": tool_use_id, "acao": "pedido", "titulo": "Trocar o pedido",
+            "texto_exato": entrada.get("texto", atual.get("texto", "")), "mudancas": mudancas,
+            "refaz": ["direcao", "montagem", "qa"] if comeca else [], "comeca_agora": comeca,
+            "custo_usd_est": custo if comeca else 0.0, "minutos_est": minutos if comeca else 0.0, "vira_regra": False,
+            "volta": ("A edição começa agora." if comeca else "Guarda o pedido. A edição começa quando você tocar em Começar a edição.")}
+
+
+# ---------------- execução (as mesmas funções das rotas antigas) ----------------
+def executar_ajuste(pid: str, versao: str, texto: str) -> dict:
+    from motor.api import direcao
+    r = direcao.reprovar(pid, versao, direcao.Reprovacao(motivo=texto))
+    return {"feito": True, "nova_direcao": bool(r.get("nova_direcao"))}
+
+
+def executar_pedido(cfg, pid: str, entrada: dict) -> dict:
+    from motor.api import direcao
+    atual = _pedido_atual(cfg, pid)
+    base = {k: atual.get(k) for k in ("tipo_video", "modo", "ambiente", "vozes", "duracao_alvo", "destino", "formato", "cliente",
+                                      "obrigatorio", "proibido", "ajustes_de") if atual.get(k) is not None}
+    corpo = direcao.PedidoEntrada(**{**base, **entrada})
+    r = direcao.gravar_pedido(pid, corpo)
+    return {"feito": True, "dirigindo": bool(r.get("dirigindo"))}
+
+
+def agora() -> str:
+    return banco.agora_iso()

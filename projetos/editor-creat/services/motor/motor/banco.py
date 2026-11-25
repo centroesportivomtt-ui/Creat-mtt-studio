@@ -41,6 +41,23 @@ CREATE TABLE IF NOT EXISTS eventos (
   etapa TEXT, alvo TEXT, progresso REAL, estado TEXT, mensagem TEXT, dados TEXT
 );
 CREATE INDEX IF NOT EXISTS eventos_proj ON eventos (projeto, id);
+CREATE TABLE IF NOT EXISTS conversa_capitulos (
+  projeto TEXT NOT NULL, capitulo INTEGER NOT NULL, modelo TEXT NOT NULL,
+  prompt_versao TEXT NOT NULL, ferramentas_versao TEXT NOT NULL,
+  system_json TEXT NOT NULL, tools_json TEXT NOT NULL,
+  criado TEXT NOT NULL, fechado TEXT, PRIMARY KEY (projeto, capitulo)
+);
+CREATE TABLE IF NOT EXISTS conversa_msgs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, projeto TEXT NOT NULL, capitulo INTEGER NOT NULL,
+  papel TEXT NOT NULL CHECK (papel IN ('user','assistant','system','parcial')),
+  conteudo TEXT NOT NULL, turno TEXT NOT NULL, cliente_msg_id TEXT, uso TEXT, criado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS conversa_msgs_cap ON conversa_msgs (projeto, capitulo, id);
+CREATE UNIQUE INDEX IF NOT EXISTS conversa_msgs_cmid ON conversa_msgs (projeto, cliente_msg_id) WHERE cliente_msg_id IS NOT NULL;
+CREATE TABLE IF NOT EXISTS conversa_espera (
+  projeto TEXT PRIMARY KEY, tipo TEXT NOT NULL CHECK (tipo IN ('pergunta','confirmacao')),
+  tool_use_id TEXT NOT NULL, turno TEXT NOT NULL, entrada_hash TEXT, cartao TEXT NOT NULL, desde TEXT NOT NULL
+);
 """
 
 
@@ -72,6 +89,15 @@ def conectar(caminho) -> sqlite3.Connection:
     return con
 
 
+def conectar_leitura(caminho) -> sqlite3.Connection:
+    """Conexão só de leitura para quem fica muito tempo aberto (um cliente SSE): sem PRAGMA de escrita, sem esquema.
+    check_same_thread=False porque o SSE consulta por asyncio.to_thread (a thread muda a cada consulta)."""
+    con = sqlite3.connect(str(caminho), timeout=5, isolation_level=None, check_same_thread=False)
+    con.row_factory = sqlite3.Row
+    con.execute("PRAGMA query_only=1")
+    return con
+
+
 # ---------------- eventos (status ao vivo) ----------------
 def emitir(con, projeto: str, tipo: str, *, etapa=None, alvo=None, progresso=None, estado=None, mensagem=None, dados=None) -> int:
     cur = con.execute(
@@ -81,8 +107,14 @@ def emitir(con, projeto: str, tipo: str, *, etapa=None, alvo=None, progresso=Non
     return cur.lastrowid
 
 
-def eventos_desde(con, projeto: str, depois_de: int = 0, limite: int = 200) -> list[dict]:
-    linhas = con.execute("SELECT * FROM eventos WHERE projeto=? AND id>? ORDER BY id LIMIT ?", (projeto, depois_de, limite)).fetchall()
+def eventos_desde(con, projeto: str, depois_de: int = 0, limite: int = 200, sem: Iterable[str] | None = None) -> list[dict]:
+    """Eventos depois de `depois_de`. `sem`: tipos que ficam de fora, filtrados no SQL (o cursor anda sobre o que sobra)."""
+    sem = [t for t in (sem or ()) if t]
+    if sem:
+        linhas = con.execute(f"SELECT * FROM eventos WHERE projeto=? AND id>? AND tipo NOT IN ({','.join('?' * len(sem))}) ORDER BY id LIMIT ?",
+                             (projeto, depois_de, *sem, limite)).fetchall()
+    else:
+        linhas = con.execute("SELECT * FROM eventos WHERE projeto=? AND id>? ORDER BY id LIMIT ?", (projeto, depois_de, limite)).fetchall()
     out = []
     for r in linhas:
         d = dict(r)

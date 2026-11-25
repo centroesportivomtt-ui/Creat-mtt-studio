@@ -37,6 +37,35 @@ def cliente_anthropic():
     return anthropic.Anthropic(api_key=chave_anthropic(), base_url=os.environ.get("EDITOR_ANTHROPIC_URL") or "https://api.anthropic.com")
 
 
+def cliente_anthropic_async(cfg=None):
+    """Cliente assíncrono da conversa com o editor. Igual ao cliente_anthropic(), com AsyncAnthropic.
+    Com EDITOR_CONVERSA_CEREBRO=falso devolve o cérebro roteirizado (motor/conversa/falso.py): sem rede e sem chave."""
+    cfg = cfg or carregar()
+    if cfg.conversa_cerebro == "falso":
+        from motor.conversa import falso
+        return falso.cliente()
+    import anthropic
+    return anthropic.AsyncAnthropic(api_key=chave_anthropic(), base_url=os.environ.get("EDITOR_ANTHROPIC_URL") or "https://api.anthropic.com")
+
+
+TETO_CONVERSA_MAX_USD = 3.00     # decisão do dono (25/11): teto travado no código; o ambiente só baixa
+
+
+def _teto_conversa() -> float:
+    try:
+        v = float(_env("EDITOR_CONVERSA_TETO_USD_DIA", "3.00").replace(",", "."))
+    except ValueError:
+        v = TETO_CONVERSA_MAX_USD
+    if v != v or v < 0:          # NaN ou negativo: vale o teto
+        v = TETO_CONVERSA_MAX_USD
+    return round(min(v, TETO_CONVERSA_MAX_USD), 2)
+
+
+def _esforco_conversa() -> str:
+    v = _env("EDITOR_CONVERSA_ESFORCO", "medium").lower()
+    return v if v in ("low", "medium", "high") else "medium"
+
+
 @dataclass(frozen=True)
 class Config:
     dados: pathlib.Path = field(default_factory=lambda: pathlib.Path(_env("EDITOR_DADOS", str(RAIZ_REPO / "dados"))))
@@ -57,6 +86,14 @@ class Config:
     publicacao: str = field(default_factory=lambda: _env("EDITOR_PUBLICACAO", "nenhuma"))          # nenhuma | metricool | meta
     motor_token: str = field(default_factory=lambda: _env("MOTOR_TOKEN"))
     som: str = field(default_factory=lambda: _env("MK_SOM"))
+    # conversa com o editor (docs/plano-conversa-25-11.md, seção 13.6)
+    conversa: str = field(default_factory=lambda: _env("EDITOR_CONVERSA", "auto").lower())               # auto | 0
+    conversa_cerebro: str = field(default_factory=lambda: _env("EDITOR_CONVERSA_CEREBRO", "anthropic").lower())  # anthropic | falso
+    modelo_conversa: str = field(default_factory=lambda: _env("EDITOR_MODELO_CONVERSA", "claude-opus-5-5"))
+    esforco_conversa: str = field(default_factory=_esforco_conversa)
+    teto_conversa_usd_dia: float = field(default_factory=_teto_conversa)
+    andamento_conversa: bool = field(default_factory=lambda: _env("EDITOR_CONVERSA_ANDAMENTO", "1") != "0")
+    sse_novo: bool = field(default_factory=lambda: _env("EDITOR_SSE_NOVO", "1") != "0")
 
     @property
     def banco(self) -> pathlib.Path:

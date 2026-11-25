@@ -92,15 +92,23 @@ class FasterWhisper:
             return _MODELOS[chave]
 
     def transcrever(self, wav: pathlib.Path, *, idioma: str = "pt", palavras: bool = True, dicas: list[str] | None = None,
-                    progresso=None) -> dict:
+                    progresso=None, forcar_dicas: bool = False, no_repeat_ngram_size: int | None = None) -> dict:
+        """forcar_dicas: passa as dicas como initial_prompt só nesta chamada (a voz do dono na conversa, áudio curto e
+        sem música). no_repeat_ngram_size: segunda tentativa quando a primeira saiu em laço. Os padrões não mudam nada."""
         m = self._carregar()
         audio = ler_16k(wav)   # PyAV desta máquina é incompatível com o decode_audio do faster-whisper: ffmpeg direto
+        extra = {}
+        if forcar_dicas and dicas:
+            extra["initial_prompt"] = ", ".join(dicas) + "."
+        if no_repeat_ngram_size:
+            extra["no_repeat_ngram_size"] = int(no_repeat_ngram_size)
         segs, info = m.transcribe(
             audio, language=idioma, task="transcribe", beam_size=self.beam, word_timestamps=palavras,
             vad_filter=False, condition_on_previous_text=False, temperature=self.temperaturas,
             # hotwords/initial_prompt induzem laço de alucinação em música/tom ("marcos marcos marcos", medido em 18/11):
             # desligados por padrão; nomes próprios são corrigidos na direção (`corrigir`).
             hotwords=" ".join(dicas) if dicas and os.environ.get("EDITOR_WHISPER_DICAS") == "1" else None,
+            **extra,
         )
         out, ultimo = [], 0.0
         dur = float(info.duration or 0) or 1.0
