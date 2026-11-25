@@ -103,12 +103,27 @@ export function quando(iso: string | null | undefined): string {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
-export type Arquivo = { id: string; nome: string; chave: string | null; bytes: number; estado: string; criado: string };
-export type Versao = { id: string; estado: string; video: string | null; qa: unknown; link: string | null; reprovacao: string | null; criado: string };
+// nuvem: cópia do arquivo no Cloudflare (espelho do material). Só vem com o espelho ligado no motor; desligado, o campo não existe.
+export type EstadoNuvem = 'guardado' | 'pendente' | 'fora_do_teto';
+export type Arquivo = { id: string; nome: string; chave: string | null; bytes: number; estado: string; criado: string; nuvem?: EstadoNuvem | null };
+export type ResumoNuvem = { guardados: number; total: number; bytes: number; pendentes: number; fora_do_teto?: number; teto_gb?: number };
+// Filme aprovado na página de entregas do Cloudflare (GET /projetos/{pid}/versoes). Só vem com as entregas ligadas no motor.
+export type EstadoEntregas = 'enviando' | 'no_ar' | 'pendente' | 'falhou' | 'substituida' | 'retirando' | 'retirada';
+export type Entregas = {
+  estado: EstadoEntregas | string; cliente?: string | null; nome_cliente?: string | null; painel?: string | null; video_url?: string | null;
+  capa_url?: string | null; motivo?: string | null; proxima?: string | null; substituida_por?: string | null; em?: string | null;
+};
+export type Versao = { id: string; estado: string; video: string | null; qa: unknown; link: string | null; reprovacao: string | null; criado: string; entregas?: Entregas };
+// Lista do "Vai para as entregas de:" (GET /entregas/clientes?projeto=). ligado=false: nada de entregas aparece na tela.
+export type ClientesEntregas = { ligado: boolean; clientes: { slug: string; nome: string }[]; padrao: string; sugerido?: string };
+// O motor escreve o nome do cliente como a página de entregas ("Creat Mtt"); na tela do dono vale a grafia da marca.
+const GRAFIA_CLIENTE: Record<string, string> = { 'creat-mtt': 'creat.MTT', 'super-kal': 'Super Kal' };
+export const nomeCliente = (slug: string | null | undefined, nome?: string | null) =>
+  (slug && GRAFIA_CLIENTE[slug]) || nome || (slug ?? '').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 export type Projeto = {
   id: string; nome: string; estado: string; tipo_video: string | null; criado: string; atualizado: string;
   dados: { envio_fechado?: boolean; envio_fechado_em?: string; pedido?: { texto: string; tipo_video?: string; modo?: string }; aprovadas?: Record<string, { em: string; nota: string | null }> } & Record<string, unknown>;
-  arquivos: Arquivo[]; versoes: Versao[];
+  arquivos: Arquivo[]; versoes: Versao[]; nuvem?: ResumoNuvem;
 };
 export type ResumoProjeto = { id: string; nome: string; estado: string; tipo_video: string | null; criado: string; atualizado: string; arquivos: number };
 export type Evento = {

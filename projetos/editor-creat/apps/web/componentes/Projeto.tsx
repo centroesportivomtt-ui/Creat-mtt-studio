@@ -8,7 +8,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import Envio from './Envio';
 import {
   bytesLegiveis, classeEstado, ESTADOS, ETAPA_DO_ESTADO, EXPLICA_ESTADO, ROTULO_ESTADO, rotuloTipo,
-  type Evento, type Projeto as TProjeto, type Versao, MODOS, rotuloModo, perguntasDoModo } from '@/lib/estados';
+  type Evento, type Projeto as TProjeto, type Versao, MODOS, rotuloModo, perguntasDoModo,
+  type ClientesEntregas, type Entregas, type ResumoNuvem, nomeCliente } from '@/lib/estados';
 
 type EstadoImportar = { indo: boolean; pendente: boolean };
 const SEM_IMPORTACAO: EstadoImportar = { indo: false, pendente: false };
@@ -61,6 +62,11 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   const [batendo, setBatendo] = useState(false);         // claquete do Aprovar
   const [corta, setCorta] = useState(false);             // "Corta! Aprovada" na barra logo depois do Aprovar
   const [ajusteDe, setAjusteDe] = useState<string | null>(null); // versão com o formulário de ajuste aberto
+  // Página de entregas no Cloudflare: só aparece quando o motor diz que está ligada (sem as variáveis, nada muda na tela).
+  const [clientesEnt, setClientesEnt] = useState<ClientesEntregas | null>(null);
+  const [clienteEnt, setClienteEnt] = useState('');      // "Vai para as entregas de:" (escolhido ANTES de aprovar)
+  const [entregas, setEntregas] = useState<Record<string, Entregas>>({});
+  const entregasLigadas = useRef(false);
   const formPedido = useRef<HTMLFormElement>(null);
   const diarioRef = useRef<HTMLDetailsElement>(null);
   const barraRef = useRef<HTMLDivElement>(null);
@@ -69,9 +75,22 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   const recarga = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultimoEstado = useRef<{ estado: string; t: number } | null>(null);
 
+  // O estado das entregas mora em GET /versoes (o mesmo contrato do motor); só é pedido com as entregas ligadas.
+  const carregarEntregas = useCallback(async () => {
+    if (!entregasLigadas.current) return;
+    const r = await fetch(`/api/motor/v1/projetos/${inicial.id}/versoes`, { cache: 'no-store' }).catch(() => null);
+    if (!r?.ok) return;                       // rede caiu: fica o último estado conhecido, nada some da tela
+    const c = await r.json().catch(() => null);
+    const lista: Versao[] = Array.isArray(c) ? c : Array.isArray(c?.versoes) ? c.versoes : [];
+    const m: Record<string, Entregas> = {};
+    for (const v of lista) if (v?.entregas && typeof v.entregas.estado === 'string') m[v.id] = v.entregas;
+    setEntregas(m);
+  }, [inicial.id]);
+
   const recarregar = useCallback(() => {
     if (recarga.current) clearTimeout(recarga.current);
     recarga.current = setTimeout(async () => {
+      void carregarEntregas();
       const pedidoEm = performance.now();
       const r = await fetch(`/api/motor/v1/projetos/${inicial.id}`, { cache: 'no-store' }).catch(() => null);
       if (r?.ok) {
@@ -82,7 +101,28 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
         setP(novo);
       } else if (r?.status === 401) window.location.assign('/entrar');
     }, 250);
-  }, [inicial.id]);
+  }, [inicial.id, carregarEntregas]);
+
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      const r = await fetch(`/api/motor/v1/entregas/clientes?projeto=${encodeURIComponent(inicial.id)}`, { cache: 'no-store' }).catch(() => null);
+      const c = r?.ok ? ((await r.json().catch(() => null)) as ClientesEntregas | null) : null;
+      if (!vivo || !c?.ligado || !Array.isArray(c.clientes) || !c.clientes.length) return;
+      entregasLigadas.current = true;
+      setClientesEnt(c);
+      setClienteEnt((x) => x || c.sugerido || c.padrao || c.clientes[0].slug);
+      void carregarEntregas();
+    })();
+    return () => { vivo = false; };
+  }, [inicial.id, carregarEntregas]);
+  // subindo ou retirando: confere de 4 em 4 s até terminar (o evento do motor também recarrega; isto é a rede de segurança)
+  const entregaAndando = Object.values(entregas).some((e) => e.estado === 'enviando' || e.estado === 'retirando');
+  useEffect(() => {
+    if (!entregaAndando) return;
+    const t = setInterval(() => void carregarEntregas(), 4000);
+    return () => clearInterval(t);
+  }, [entregaAndando, carregarEntregas]);
 
   // Status ao vivo: EventSource reconecta sozinho e manda Last-Event-ID (o proxy repassa ao motor).
   useEffect(() => {
@@ -203,7 +243,9 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     setBatendo(true);
     navigator.vibrate?.(8);
     try {
-      if (await postar(`/versoes/${vid}/aprovar`, {})) {
+      const c = await postar(`/versoes/${vid}/aprovar`, clientesEnt && clienteEnt ? { cliente: clienteEnt } : {});
+      if (c) {
+        if (c.entregas && typeof c.entregas.estado === 'string') setEntregas((m) => ({ ...m, [vid]: c.entregas as Entregas }));
         setCorta(true);
         window.setTimeout(() => setCorta(false), 1800);
       }
@@ -239,7 +281,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     if (foco) (document.querySelector(foco) as HTMLElement | null)?.focus({ preventScroll: true });
   };
 
-  const versoes = [...(p.versoes ?? [])].reverse();
+  const versoes = [...(p.versoes ?? [])].reverse().map((v) => (entregas[v.id] ? { ...v, entregas: entregas[v.id] } : v));
   // Regra do dono: nunca mostrar versão com erro conhecido. Só a versão ENTREGUE (QA aprovado) toca e baixa.
   const assistir = versoes.find((v) => v.estado === 'entregue' && v.video) ?? null;
   const emProducao = versoes.find((v) => v.estado !== 'entregue' && v.estado !== 'reprovada') ?? null;
@@ -339,7 +381,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     comando = (
       <p className="barra-comando__status barra-comando__corta" role="status" data-teste="corta-barra">
         <strong><span className="claquete claquete--bateu" aria-hidden="true" />Corta! {assistir.id.toUpperCase()} aprovada</strong>
-        <span>agora é mandar para o cliente</span>
+        <span>{clientesEnt ? 'subindo para a página de entregas' : 'agora é mandar para o cliente'}</span>
       </p>
     );
   } else if (fase === 'entregue' && assistir && !aprovadaAssistir) {
@@ -353,6 +395,13 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
           onClick={() => { setAjusteDe(assistir.id); setTimeout(() => irPara(`ajuste-${assistir.id}`, `#ajuste-${assistir.id} textarea`), 30); }}>
           Pedir ajuste
         </button>
+        {clientesEnt && clienteEnt && (
+          // a página de entregas filtra por cliente: o dono vê para quem vai ANTES de aprovar, e o toque leva à escolha
+          <a className="motivo" href={`#entregas-cliente-${assistir.id}`} data-teste="entregas-barra"
+            onClick={(e) => { e.preventDefault(); irPara(`entregas-cliente-${assistir.id}`, `#entregas-cliente-${assistir.id}`); }}>
+            Vai para as entregas de <b>{nomeCliente(clienteEnt, clientesEnt.clientes.find((x) => x.slug === clienteEnt)?.nome)}</b>
+          </a>
+        )}
       </>
     );
   } else if (fase === 'entregue' && assistir) {
@@ -402,11 +451,17 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       ) : (
         <p className="material-fechado">Envio fechado: o editor está trabalhando com este material. Material novo entra numa nova versão.</p>
       )}
+      {p.nuvem && <ResumoNuvemLinha n={p.nuvem} />}
       {p.arquivos.length > 0 && (
         <ul className="arquivos" aria-label="Arquivos no projeto">
           {p.arquivos.map((a) => (
-            <li className="arquivo" key={a.id}>
-              <span>{a.nome}</span>
+            <li className="arquivo" key={a.id} data-nuvem={a.nuvem ?? undefined}>
+              <span>{a.nome}
+                {/* selo só com a cópia CONFERIDA no Cloudflare (tamanho igual ao do editor); não é span: o aceite lê o último span */}
+                {a.nuvem === 'guardado' && <b className="selo-nuvem" data-teste="selo-nuvem" title="Cópia conferida no Cloudflare">
+                  <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <i className="so-leitor">cópia guardada no </i>Cloudflare</b>}
+              </span>
               <span>{a.bytes > 1 ? `${bytesLegiveis(a.bytes)} · ` : ''}{a.estado === 'analisado' ? 'lido' : a.estado === 'ingerido' ? 'lendo falas' : 'na fila'}</span>
             </li>
           ))}
@@ -484,7 +539,9 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
           {versoes.map((v) => <LinhaVersao key={v.id} pid={p.id} v={v} aprovada={Boolean(p.dados?.aprovadas?.[v.id])}
             naBarra={v.id === assistir?.id} ajusteAberto={ajusteDe === v.id} aoAbrirAjuste={(sim) => setAjusteDe(sim ? v.id : null)}
             aoAprovar={() => aprovar(v.id)} batendo={batendo}
-            aoReprovar={(motivo) => reprovar(v.id, motivo)} />)}
+            aoReprovar={(motivo) => reprovar(v.id, motivo)}
+            clientes={clientesEnt} cliente={clienteEnt} aoTrocarCliente={setClienteEnt}
+            aoMudarEntregas={(e) => { setEntregas((m) => ({ ...m, [v.id]: e })); recarregar(); }} />)}
         </ul>
       )}
     </section>
@@ -547,8 +604,18 @@ export function extrairLinks(texto: string): string[] {
   return [...new Set(achados.map((u) => u.replace(/[),.;!?]+$/, '')))].slice(0, 30);
 }
 
+// Pasta do Google Drive (o motor lista os vídeos de dentro): /drive/folders/<id>, /drive/u/0/folders, /drive/mobile/folders,
+// folderview?id= e embeddedfolderview?id=. Serve só para o texto de espera ("Lendo a pasta…"); quem decide é o motor.
+export function ehPastaDrive(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return /(^|\.)drive\.google\.com$/i.test(u.hostname) && (/\/folders\//.test(u.pathname) || /^\/(embedded)?folderview\/?$/.test(u.pathname));
+  } catch { return false; }
+}
+
 // nome curto do link para a mensagem: o arquivo do caminho (C0016.MP4) ou o site
 function rotuloLink(url: string): string {
+  if (ehPastaDrive(url)) return 'pasta do Drive';
   try {
     const u = new URL(url);
     const ultimo = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() ?? '');
@@ -565,8 +632,9 @@ function Importar({ aberto, projeto, aoTerminar, aoMudar }: {
 }) {
   const [texto, setTexto] = useState('');
   const [indo, setIndo] = useState(false);
-  const [resultado, setResultado] = useState<{ ok: number; erros: string[]; avisos: string[] } | null>(null);
+  const [resultado, setResultado] = useState<{ ok: number; erros: string[]; avisos: string[]; pastas: string[] } | null>(null);
   const links = extrairLinks(texto);
+  const temPasta = links.some(ehPastaDrive);
   // pendente = colado e nunca tentado. Se o Importar já foi tocado e o link foi recusado, o erro está na tela: não segura.
   const [tentado, setTentado] = useState('');
   const pendente = texto.trim().length > 0 && !indo && texto !== tentado;
@@ -575,13 +643,14 @@ function Importar({ aberto, projeto, aoTerminar, aoMudar }: {
   return (
     <form className="importar" noValidate data-teste="importar" onSubmit={async (e) => {
       e.preventDefault();
-      if (!links.length) { setResultado({ ok: 0, erros: ['Não achei nenhum link https no que foi colado.'], avisos: [] }); return; }
+      if (!links.length) { setResultado({ ok: 0, erros: ['Não achei nenhum link https no que foi colado.'], avisos: [], pastas: [] }); return; }
       setIndo(true); setResultado(null); setTentado(texto);
       let ok = 0;
       // o motor confere cada link na hora; o mesmo motivo (ex.: link restrito da equipe) aparece UMA vez, com quantos links tem
       const porMotivo = new Map<string, string[]>();
       const falhar = (url: string, motivo: string) => porMotivo.set(motivo, [...(porMotivo.get(motivo) ?? []), rotuloLink(url)]);
       const avisos = new Set<string>();
+      const pastas: string[] = [];   // o que o motor achou em cada pasta do Drive ("Pasta “X”: 4 vídeos na fila…")
       const um = async (url: string) => {
         let host = '';
         try { host = new URL(url).hostname.toLowerCase(); } catch { /* inválido */ }
@@ -595,7 +664,11 @@ function Importar({ aberto, projeto, aoTerminar, aoMudar }: {
           });
           if (r.status === 401) { saiu = true; return; }
           const c = await r.json().catch(() => null);
-          if (r.ok) { ok += 1; if (typeof c?.aviso === 'string') avisos.add(c.aviso); }
+          if (r.ok) {
+            if (typeof c?.detalhe === 'string' && c.detalhe) pastas.push(c.detalhe);   // pasta: o resumo já diz quantos vídeos
+            else ok += 1;
+            if (typeof c?.aviso === 'string') avisos.add(c.aviso);
+          }
           else falhar(url, typeof c?.detail === 'string' ? c.detail : `O motor recusou (erro ${r.status}).`);
         } catch {
           falhar(url, 'sem conexão com o editor agora. Confira a internet e toque em Importar de novo.');
@@ -613,22 +686,29 @@ function Importar({ aberto, projeto, aoTerminar, aoMudar }: {
         const nomes = quais.slice(0, 3).join(', ') + (quais.length > 3 ? ` e mais ${quais.length - 3}` : '');
         return links.length > 1 ? `${quais.length} de ${links.length} links (${nomes}): ${m}` : `${nomes}: ${m}`;
       });
-      setResultado({ ok, erros, avisos: [...avisos] });
-      if (ok) { setTexto(''); aoTerminar(); }
+      setResultado({ ok, erros, avisos: [...avisos], pastas });
+      if (ok || pastas.length) { setTexto(''); aoTerminar(); }
     }}>
-      <label className="so-leitor" htmlFor="link-importar">Links compartilhados do Dropbox ou do Drive</label>
-      <textarea id="link-importar" className="entrada" rows={2} inputMode="url" placeholder="Ou cole links do Dropbox ou Drive"
+      <label className="so-leitor" htmlFor="link-importar">Links compartilhados do Dropbox ou do Drive, de arquivo ou de pasta</label>
+      <textarea id="link-importar" className="entrada" rows={2} inputMode="url" placeholder="Ou cole links do Dropbox ou do Drive (pasta também vale)"
         value={texto} onChange={(e) => setTexto(e.target.value)} disabled={!aberto} data-teste="importar-links" style={{ resize: 'vertical', minHeight: 48 }} />
       <button className="botao botao--fantasma" type="submit" disabled={!aberto || indo || !texto.trim()} data-teste="importar-enviar">
-        {indo ? 'Conferindo o link…' : links.length > 1 ? `Importar ${links.length} links` : 'Importar'}
+        {indo ? (temPasta ? 'Lendo a pasta…' : 'Conferindo o link…') : links.length > 1 ? `Importar ${links.length} links` : temPasta ? 'Importar a pasta' : 'Importar'}
       </button>
       {resultado && (
         <div style={{ flexBasis: '100%' }} role="status" data-teste="importar-resultado">
+          {resultado.pastas.map((d, i) => <p key={`p-${i}`} className="aprovada importar__pasta" style={{ margin: 0 }} data-teste="importar-pasta">{d}</p>)}
           {resultado.ok > 0 && <p className="aprovada" style={{ margin: 0 }}>{resultado.ok} link{resultado.ok > 1 ? 's' : ''} na fila: o motor baixa e já começa a ler.</p>}
           {resultado.avisos.map((av) => <p key={av} className="aviso" style={{ margin: '4px 0 0' }}>Aviso: {av}.</p>)}
           {resultado.erros.map((er) => <p key={er} className="erro" style={{ margin: '4px 0 0', overflowWrap: 'anywhere' }}>{er}</p>)}
         </div>
       )}
+      <details className="ajuda-link" data-teste="ajuda-link">
+        <summary>Como compartilhar a pasta do Drive</summary>
+        <p className="aviso">No Drive: 3 pontinhos da pasta &gt; Compartilhar &gt; Acesso geral: <b>Qualquer pessoa com o link</b> &gt; Copiar link, e cole aqui.
+          Pode ser link de leitor ou de editor: os dois funcionam. Leitor é mais seguro (com editor, quem tiver o link pode apagar os vídeos).
+          O editor pega os vídeos e áudios de dentro da pasta (e das subpastas).</p>
+      </details>
     </form>
   );
 }
@@ -759,9 +839,10 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
 }
 
 // naBarra: é a versão no player; o Aprovar e o "Pedir ajuste" dela moram na barra de comando (data-teste num lugar só).
-function LinhaVersao({ pid, v, aprovada, naBarra, ajusteAberto, aoAbrirAjuste, batendo, aoAprovar, aoReprovar }: {
+function LinhaVersao({ pid, v, aprovada, naBarra, ajusteAberto, aoAbrirAjuste, batendo, aoAprovar, aoReprovar, clientes, cliente, aoTrocarCliente, aoMudarEntregas }: {
   pid: string; v: Versao; aprovada: boolean; naBarra: boolean; ajusteAberto: boolean; aoAbrirAjuste: (sim: boolean) => void;
   batendo: boolean; aoAprovar: () => Promise<unknown>; aoReprovar: (motivo: string) => Promise<unknown>;
+  clientes: ClientesEntregas | null; cliente: string; aoTrocarCliente: (c: string) => void; aoMudarEntregas: (e: Entregas) => void;
 }) {
   const aberto = ajusteAberto;
   const setAberto = aoAbrirAjuste;
@@ -777,6 +858,16 @@ function LinhaVersao({ pid, v, aprovada, naBarra, ajusteAberto, aoAbrirAjuste, b
         <span className="versao__nome">{v.id.toUpperCase()}</span>
         <span className={estado} data-estado-versao={v.estado}>{ROTULO_VERSAO[v.estado] ?? v.estado}</span>
       </div>
+      {entregue && v.video && !aprovada && clientes && (
+        <label className="campo entregas-cliente">
+          <span className="campo__rotulo">Vai para as entregas de</span>
+          <select className="entrada" id={`entregas-cliente-${v.id}`} value={cliente} data-teste="entregas-cliente"
+            onChange={(e) => aoTrocarCliente(e.currentTarget.value)}>
+            {clientes.clientes.map((c) => <option key={c.slug} value={c.slug}>{nomeCliente(c.slug, c.nome)}</option>)}
+          </select>
+          <span className="aviso">Ao aprovar, o filme sobe sozinho para a página de entregas desse cliente.</span>
+        </label>
+      )}
       {qa && (
         <>
           <p className="aviso">QA {ok}/{qa.checagens.length} {qa.aprovado ? 'aprovado' : 'com pendência'}</p>
@@ -796,6 +887,9 @@ function LinhaVersao({ pid, v, aprovada, naBarra, ajusteAberto, aoAbrirAjuste, b
       {entregue && v.video && <div id={`cliente-${v.id}`}><LinkCliente pid={pid} versao={v.id} /></div>}
       {v.reprovacao && <p className="aviso">Reprovada: “{v.reprovacao}”</p>}
       {aprovada && <p className="aprovada" data-teste="aprovada"><span className="claquete claquete--bateu" aria-hidden="true" />Corta! Aprovada por você. Bora postar.</p>}
+      {(v.entregas || (aprovada && entregue && clientes)) && (
+        <NasEntregas pid={pid} v={v} cliente={cliente} aoMudar={aoMudarEntregas} />
+      )}
       {podeReprovar && (
         aberto ? (
           <form className="form" id={`ajuste-${v.id}`} style={{ gap: 8, maxWidth: 'none' }} onSubmit={async (e) => {
@@ -827,5 +921,119 @@ function LinhaVersao({ pid, v, aprovada, naBarra, ajusteAberto, aoAbrirAjuste, b
         )
       )}
     </li>
+  );
+}
+
+// Cópia do material no Cloudflare (espelho). Só existe com o espelho ligado no motor; o original nunca sai do editor.
+function ResumoNuvemLinha({ n }: { n: ResumoNuvem }) {
+  if (!n.total) return null;
+  const qtd = (k: number) => `${k} arquivo${k === 1 ? '' : 's'}`;
+  const gb = bytesLegiveis(n.bytes);
+  let texto: string, tipo: 'ok' | 'andando' | 'atencao';
+  if ((n.fora_do_teto ?? 0) > 0) {
+    texto = `O espaço grátis do Cloudflare (${String(n.teto_gb ?? 9).replace('.', ',')} GB) encheu. Os vídeos novos ficam só no editor até você liberar mais espaço.`;
+    tipo = 'atencao';
+  } else if (n.pendentes > 0) {
+    texto = `Ainda não guardei ${qtd(n.pendentes)} no Cloudflare (sem conexão agora). Tento de novo sozinho; o original continua aqui no editor.`;
+    tipo = 'atencao';
+  } else if (n.guardados >= n.total) {
+    texto = `Tudo guardado no Cloudflare (${gb}).`;
+    tipo = 'ok';
+  } else {
+    texto = `Guardando no Cloudflare: ${n.guardados} de ${qtd(n.total)}${n.guardados ? ` (${gb})` : ''}. Você já pode editar.`;
+    tipo = 'andando';
+  }
+  return <p className="nuvem-resumo" data-teste="nuvem-resumo" data-tipo={tipo} role="status">{texto}</p>;
+}
+
+const sem_ponto = (t: string) => t.trim().replace(/[.;:!\s]+$/, '');
+async function copiar(texto: string): Promise<boolean> {
+  try { await navigator.clipboard.writeText(texto); return true; } catch { /* Safari sem permissão: cai para o jeito antigo */ }
+  try {
+    const t = document.createElement('textarea');
+    t.value = texto; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select();
+    const ok = document.execCommand('copy');
+    t.remove();
+    return ok;
+  } catch { return false; }
+}
+
+// "Nas entregas": o filme aprovado na página de entregas do Cloudflare (a mesma página das outras entregas da creat).
+// Falha de rede nunca some em silêncio: o estado diz o que houve e o botão tenta de novo.
+function NasEntregas({ pid, v, cliente, aoMudar }: { pid: string; v: Versao; cliente: string; aoMudar: (e: Entregas) => void }) {
+  const [indo, setIndo] = useState(false);
+  const [erro, setErro] = useState('');
+  const [copiado, setCopiado] = useState(false);
+  const e = v.entregas;
+  const estado = e?.estado ?? 'fora';
+  const nome = nomeCliente(e?.cliente ?? cliente, e?.nome_cliente);
+  async function tentar() {
+    if (indo) return;
+    setIndo(true); setErro('');
+    try {
+      // sem estado ainda (aprovada antes de ligar as entregas): manda com o cliente escolhido; senão mantém o da 1ª vez
+      const r = await fetch(`/api/motor/v1/projetos/${pid}/versoes/${v.id}/entregas`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(!e && cliente ? { cliente } : {}),
+      });
+      if (r.status === 401) { window.location.assign('/entrar'); return; }
+      const c = await r.json().catch(() => null);
+      if (!r.ok) {
+        const d = typeof c?.detail === 'string' ? c.detail : 'O editor não conseguiu agora. Tente de novo em instantes.';
+        setErro(d.charAt(0).toUpperCase() + d.slice(1));
+        return;
+      }
+      if (c?.entregas && typeof c.entregas.estado === 'string') aoMudar(c.entregas as Entregas);
+    } catch {
+      setErro('Sem conexão com o editor agora. Confira a internet e toque de novo.');
+    } finally { setIndo(false); }
+  }
+  let msg: React.ReactNode;
+  let acoes: React.ReactNode = null;
+  const botaoTentar = (rotulo: string) => (
+    <button type="button" className="botao botao--secundario botao--pequeno" onClick={() => void tentar()} disabled={indo} data-teste="entregas-tentar">
+      {indo ? 'Mandando…' : rotulo}
+    </button>
+  );
+  if (estado === 'enviando') {
+    msg = <><span className="entregas__ponto" aria-hidden="true" />Subindo o filme para a sua página de entregas…</>;
+  } else if (estado === 'no_ar' && e?.painel) {
+    msg = <>No ar na página de entregas de <b>{nome}</b>.</>;
+    acoes = (
+      <>
+        <a className="botao botao--secundario botao--pequeno entregas__abrir" href={e.painel} target="_blank" rel="noopener noreferrer" data-teste="entregas-abrir">Abrir nas entregas</a>
+        {e.video_url && <a className="botao botao--fantasma botao--pequeno" href={e.video_url} download rel="noopener noreferrer" data-teste="entregas-baixar"
+          aria-label="Baixar o filme da página de entregas">Baixar</a>}
+        <button type="button" className="botao botao--fantasma botao--pequeno" data-teste="entregas-copiar"
+          onClick={async () => { if (await copiar(e.painel!)) { setCopiado(true); window.setTimeout(() => setCopiado(false), 2000); } else setErro('Não consegui copiar. Toque em "Abrir nas entregas" e copie o endereço de lá.'); }}>
+          {copiado ? 'Link copiado' : 'Copiar link'}
+        </button>
+      </>
+    );
+  } else if (estado === 'pendente') {
+    msg = <>A página de entregas não respondeu agora. O filme está seguro aqui; tento de novo sozinho{e?.proxima ? <> às <b>{e.proxima}</b></> : ''}.</>;
+    acoes = botaoTentar('Tentar agora');
+  } else if (estado === 'falhou' || (estado === 'no_ar' && !e?.painel)) {
+    msg = <>Não deu para mandar para as entregas{e?.motivo ? `: ${sem_ponto(e.motivo)}` : ''}.</>;
+    acoes = botaoTentar('Tentar de novo');
+  } else if (estado === 'substituida') {
+    msg = <>Trocada pela {(e?.substituida_por ?? 'versão nova').toUpperCase()} na página de entregas.</>;
+  } else if (estado === 'retirando' || estado === 'retirada') {
+    msg = <>Retirada da página de entregas.</>;
+  } else if (estado === 'fora') {
+    msg = <>Este filme ainda não está na página de entregas de <b>{nome}</b>.</>;
+    acoes = botaoTentar('Mandar para as entregas');
+  } else {
+    msg = <>Página de entregas: {estado}.</>;
+  }
+  // pendente não é erro (ele tenta sozinho): borda neutra. Coral só quando precisa do dono (falhou).
+  const tom = estado === 'no_ar' ? 'ok' : estado === 'falhou' ? 'atencao' : estado === 'enviando' ? 'andando' : 'neutro';
+  return (
+    <div className="entregas" data-teste="entregas" data-estado={estado} data-tom={tom}>
+      <p className="entregas__titulo">Nas entregas{nome ? <span className="entregas__cliente">{nome}</span> : null}</p>
+      <p className="entregas__msg" role="status" data-teste="entregas-msg">{msg}</p>
+      {acoes && <div className="linha-acoes entregas__acoes">{acoes}</div>}
+      {erro && <p className="erro" role="alert" style={{ margin: 0, overflowWrap: 'anywhere' }}>{erro}</p>}
+    </div>
   );
 }
