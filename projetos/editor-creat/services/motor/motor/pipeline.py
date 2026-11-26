@@ -149,8 +149,13 @@ def falha_definitiva(con, job: dict, mensagem: str) -> None:
         nome = con.execute("SELECT nome FROM arquivos WHERE projeto=? AND id=?", (projeto, alvo)).fetchone()
         # frase para o dono (o nome do arquivo pode aparecer para ele; ao Nimbus só chega como de_fora) e o técnico recolhido
         quem = f"O vídeo {nums['n']} ({nome['nome'] if nome else alvo})" if nums.get("n") else f"O arquivo {nome['nome'] if nome else alvo}"
-        banco.emitir(con, projeto, "aviso", etapa=etapa, alvo=alvo,
-                     mensagem=f"{quem} não pôde ser lido e ficou de fora. O resto do material segue.", dados={"detalhe": msg})
+        from motor import importar                            # aqui dentro: importar já puxa o banco, e a mesa não precisa dele no boot
+        if str(msg).startswith(importar.MSG_SEM_ESPACO):      # o disco encheu: o vídeo não tem defeito, e o dono precisa saber
+            resto = str(msg)[len(importar.MSG_SEM_ESPACO) + 2:]
+            frase = f"Nada foi importado: faltou espaço no disco do editor. {resto[:1].upper()}{resto[1:]}"
+        else:
+            frase = f"{quem} não pôde ser lido e ficou de fora. O resto do material segue."
+        banco.emitir(con, projeto, "aviso", etapa=etapa, alvo=alvo, mensagem=frase, dados={"detalhe": msg})
         r = con.execute("SELECT SUM(estado='analisado') lidos, SUM(estado NOT IN ('analisado','falhou')) pendentes "
                         "FROM arquivos WHERE projeto=?", (projeto,)).fetchone()
         if (r["pendentes"] or 0) == 0 and not (r["lidos"] or 0) and _dados(con, projeto).get("envio_fechado"):

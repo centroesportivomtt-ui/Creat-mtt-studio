@@ -540,10 +540,18 @@ def videos_do_zip(caminho: Path, pasta: Path, max_bytes: int = 60 << 30) -> list
     return out
 
 
+MSG_SEM_ESPACO = "Sem espaço no editor"       # começo fixo: a mesa reconhece e diz ao dono que foi o disco, não o vídeo
+
+
+def _gb(n: int) -> str:
+    return f"{n / 2**30:.1f}".replace(".", ",")
+
+
 def _checar_disco(pasta: Path, nbytes: int, folga: int = 512 << 20) -> None:
     livre = shutil.disk_usage(pasta).free
     if nbytes + folga > livre:
-        raise ErroImportacao(f"Sem espaço no editor para {nbytes / 2**30:.1f} GB (livre: {livre / 2**30:.1f} GB).")
+        raise ErroImportacao(f"{MSG_SEM_ESPACO}: o material tem {_gb(nbytes)} GB e o disco só tem {_gb(livre)} GB livres "
+                             f"(o editor ainda guarda {_gb(folga)} GB de folga para trabalhar).")
 
 
 # ---------------- registro de arquivos (usado pela API e pela importação) ----------------

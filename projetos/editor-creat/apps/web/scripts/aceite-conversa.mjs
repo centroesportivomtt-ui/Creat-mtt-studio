@@ -402,15 +402,39 @@ export async function aceiteConversa({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
       await S.fill('[data-teste=conversa-campo]', 'Mensagem escrita antes de a sessão vencer');
       const cookies = await escuro.cookies();
       await escuro.clearCookies();
-      await S.click('[data-teste=conversa-enviar]');
-      await S.waitForURL(/\/entrar\?volta=%2Fprojetos%2Fp_/, { timeout: 10000 });
+      // Dois caminhos válidos: o toque em Enviar descobre a sessão vencida (a mensagem fica na fila e sai ao voltar), ou uma
+      // consulta de fundo da página descobre antes do toque (o texto fica guardado no campo). Nos dois, nada se perde.
+      await S.click('[data-teste=conversa-enviar]', { timeout: 5000, noWaitAfter: true }).catch(() => {});
+      // O toque e a consulta de fundo podem mandar para a senha ao mesmo tempo: a segunda navegação aborta a primeira e o
+      // waitForURL do Playwright estoura com ERR_ABORTED. Olhar o endereço em laço não depende de qual das duas venceu.
+      const chegar = async (onde, teste, ms) => {
+        const fim = Date.now() + ms;
+        while (Date.now() < fim) {
+          if (teste(S.url())) { await S.waitForLoadState('domcontentloaded').catch(() => {}); if (teste(S.url())) return; }
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        throw new Error(`a página não chegou ${onde} (está em ${S.url()})`);
+      };
+      await chegar('na senha', (u) => /\/entrar\?volta=%2Fprojetos%2Fp_/.test(u), 15000);
       const urlEntrar = S.url();
+      await S.waitForSelector('main button[type=submit]:not([disabled])', { timeout: 15000 });
       await S.fill('input[name=senha]', SENHA);
-      await S.click('main button[type=submit]');
-      await S.waitForURL(`${BASE}/projetos/${pidAudio}`, { timeout: 15000 });
-      await S.waitForSelector('[data-teste=fala-dono]:has-text("Mensagem escrita antes de a sessão vencer")', { timeout: 15000 }).catch(() => {});
-      const voltou = await S.locator('[data-teste=fala-dono]', { hasText: 'Mensagem escrita antes de a sessão vencer' }).count();
-      ok('conversa (A1.23): sessão vencida no meio: vai para a senha com volta, e a mensagem guardada sai ao voltar, uma vez só', voltou === 1 && /volta=%2Fprojetos%2Fp_/.test(urlEntrar), `${urlEntrar.replace(BASE, '')} · ${voltou}`);
+      await S.click('main button[type=submit]', { noWaitAfter: true });
+      await chegar('de volta no projeto', (u) => u.split('#')[0] === `${BASE}/projetos/${pidAudio}`, 15000);   // a conversa aberta põe #conversa no endereço
+      const falaVencida = S.locator('[data-teste=fala-dono]', { hasText: 'Mensagem escrita antes de a sessão vencer' });
+      await S.waitForSelector('[data-teste=fala-dono]:has-text("Mensagem escrita antes de a sessão vencer")', { timeout: 8000 }).catch(() => {});
+      let caminho = 'saiu da fila ao voltar';
+      if (!(await falaVencida.count())) {
+        await abrirConversa(S);
+        const noCampo = await S.inputValue('[data-teste=conversa-campo]').catch(() => '');
+        caminho = `texto guardado no campo: ${noCampo === 'Mensagem escrita antes de a sessão vencer'}`;
+        if (noCampo === 'Mensagem escrita antes de a sessão vencer') {
+          await S.click('[data-teste=conversa-enviar]');
+          await S.waitForSelector('[data-teste=fala-dono]:has-text("Mensagem escrita antes de a sessão vencer")', { timeout: 15000 }).catch(() => {});
+        }
+      }
+      const voltou = await falaVencida.count();
+      ok('conversa (A1.23): sessão vencida no meio: vai para a senha com volta, e o que o dono escreveu não se perde (sai uma vez só)', voltou === 1 && /volta=%2Fprojetos%2Fp_/.test(urlEntrar), `${urlEntrar.replace(BASE, '')} · ${voltou} · ${caminho}`);
       if (!(await escuro.cookies()).length) await escuro.addCookies(cookies);
       // destino de volta de fora é ignorado
       const fora = await fetch(`${BASE}/entrar?volta=//site-malicioso.example`, { redirect: 'manual', headers: { cookie: (await escuro.cookies()).map((c) => `${c.name}=${c.value}`).join('; ') } });

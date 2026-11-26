@@ -97,6 +97,12 @@ def criar():
         out["backup"] = {k: v for k, v in _bk.items() if k in ("destino", "estado", "ultimo_ok", "horas_desde_o_ultimo", "r2", "copias")}
         if _bk.get("estado") == "falha" and _bk.get("erro"):   # causa da falha, sem caminhos internos (a saúde é pública)
             out["backup"]["erro"] = _re.sub(r"(/[\w.@-]+)+/?", "<caminho>", str(_bk["erro"]))[:160]
+        try:                                                # espaço no disco dos dados: o material entra e é montado aqui
+            import shutil as _sh
+            _du = _sh.disk_usage(cfg.dados)
+            out["disco"] = {"livre_gb": round(_du.free / 2**30, 1), "total_gb": round(_du.total / 2**30, 1)}
+        except OSError:
+            out["disco"] = None
         from motor import entregas_r2 as _ent
         out["entregas"] = _ent.estado_saude(cfg, provar=entregas)    # ?entregas=1 prova a permissão do token (list MaxKeys=1)
         from motor.etapas import espelho as _esp
