@@ -45,6 +45,7 @@ Nota: `.claude/agents/leitor-pedido.md`, `.claude/agents/redator-pedido.md` e `.
 - `agent-browser`: o navegador da casa com o método do agent-browser (sessão por tarefa, espera por condição).
 - `estudar-referencia`: o processo fixo quando o dono manda um vídeo ou post de referência de qualquer nicho (ler, transcrever, olhar quadros, classificar, separar diferencial de modismo, trazer pelo caminho seguro, responder curto, registrar em `docs/referencias/README.md`).
 - `edicao-de-video`: o processo de edição do bruto à entrega no Dropbox, com o pulo do gato, o portão de áudio e a ferramenta de inventário `edicao-de-video/ingerir.py`.
+- `social-media`: o padrão fixo de social media da creat.MTT, igual para toda empresa atendida. Por mês, 5 frentes: estratégia, agenda na Google Agenda com a cor da empresa, carrossel em PNG, apresentação em PDF e atendente do Direct. Tudo entregue em `/Marcos/<EMPRESA>/Social Media <Mês>/`; os modelos de arte, sem custo, ficam em `social-media/modelos/`.
 - `painel-de-objecoes`: compradores simulados para achar objeção, frase e gancho antes de anunciar ou editar (hipótese, nunca previsão). Vem do founder-skill (MIT).
 - `calculadora-de-oferta`: a conta da oferta em reais, com CAC, mensalidade, LTV, teto de CAC e veredito calculado. Vem do founder-skill (MIT).
 - `oferta-empilhada`: montar a oferta (obstáculos, bônus que matam objeção, garantia com custo, equação de valor). Vem do founder-skill (MIT).

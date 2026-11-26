@@ -1,0 +1,46 @@
+{
+  "_o_que_e": "Empresas do padrão social-media da creat.MTT: cor fixa na Google Agenda (colorId da API do Google Calendar, tabela oficial lida em 26/11/2026: 1 Lavanda, 2 Sálvia, 3 Uva, 4 Flamingo, 5 Banana, 6 Tangerina, 7 Pavão, 8 Grafite, 9 Mirtilo, 10 Manjericão, 11 Tomate) e arquivo de marca dos modelos. Só nome, cor e caminho: dado de cliente fica no Dropbox.",
+  "empresas": {
+    "creat.MTT": {
+      "colorId": "11",
+      "cor": "Tomate",
+      "marca": "modelos/marca-creat-mtt.json"
+    },
+    "Creat Nuvem": {
+      "colorId": "7",
+      "cor": "Pavão",
+      "marca": null
+    },
+    "Super Kal": {
+      "colorId": "5",
+      "cor": "Banana",
+      "marca": "modelos/marcas/super-kal.json"
+    },
+    "Elite Drako Gym": {
+      "colorId": "8",
+      "cor": "Grafite",
+      "marca": "modelos/marcas/elite-drako.json"
+    },
+    "CT MTT": {
+      "colorId": "10",
+      "cor": "Manjericão",
+      "marca": "modelos/marcas/ct-mtt.json"
+    },
+    "Brabus Lounge": {
+      "colorId": "3",
+      "cor": "Uva",
+      "marca": null
+    },
+    "Lavínia Cervejas": {
+      "colorId": "6",
+      "cor": "Tangerina",
+      "marca": null
+    }
+  },
+  "cores_livres": [
+    "4",
+    "9",
+    "2",
+    "1"
+  ]
+}

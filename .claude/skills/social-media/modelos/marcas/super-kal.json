@@ -1,0 +1,29 @@
+{
+  "nome": "Super Kal",
+  "arroba": "@superkalsupermercado",
+  "logo": "super-kal-logo.png",
+  "logo_completo": "super-kal-logo.png",
+  "cores": {
+    "fundo": "#0b0b0a",
+    "brilho": "#3d2e00",
+    "destaque": "#fdbd02",
+    "sobre_destaque": "#111111",
+    "tinta": "#f7f4ec",
+    "tinta_suave": "#c2b99f",
+    "linha": "#3b3422"
+  },
+  "fontes": {
+    "display": {
+      "arquivo": "../fontes/Archivo-VF.ttf",
+      "familia": "Archivo",
+      "peso": 900,
+      "largura": 112
+    },
+    "texto": {
+      "arquivo": "../fontes/Sora-VF.ttf",
+      "familia": "Sora",
+      "peso": 400,
+      "peso_forte": 700
+    }
+  }
+}

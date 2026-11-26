@@ -1,0 +1,50 @@
+{
+  "tema": "Perfil que vende",
+  "legenda": "Seu perfil pode ser bonito e mesmo assim não vender. Separamos 5 travas que fazem o cliente desistir antes de chamar no WhatsApp, e o que trocar em cada uma.\n\nQuer ver o site do seu negócio pronto antes de pagar qualquer coisa? Comenta VITRINE que a gente te manda o link.",
+  "cartoes": [
+    {
+      "tipo": "capa",
+      "etiqueta": "Dica · Negócio local",
+      "titulo": "Seu perfil é bonito. Mas *ninguém consegue comprar* por ele.",
+      "texto": "5 travas que fazem o cliente desistir antes de chamar no WhatsApp, e o que trocar em cada uma."
+    },
+    {
+      "tipo": "conteudo",
+      "etiqueta": "Trava · Bio",
+      "titulo": "A bio fala de você, não do que o cliente ganha.",
+      "texto": "Troque \"amor pelo que faço\" por *o que você faz, para quem e onde*. Quem chega de um anúncio decide em segundos se ficou no lugar certo, e a bio é a primeira coisa que ele lê."
+    },
+    {
+      "tipo": "conteudo",
+      "etiqueta": "Trava · Link",
+      "titulo": "O link da bio leva para uma lista de links.",
+      "texto": "Cada clique a mais é uma pessoa a menos. O link precisa abrir *uma página só*, com o serviço, o preço e um botão que já cai no WhatsApp com a mensagem escrita."
+    },
+    {
+      "tipo": "conteudo",
+      "etiqueta": "Trava · Preço",
+      "titulo": "O preço só aparece depois de \"chama no direct\".",
+      "texto": "Quem não te conhece não pergunta preço: vai embora. Mostrar *a partir de quanto* filtra curioso e dá segurança para quem já quer comprar."
+    },
+    {
+      "tipo": "conteudo",
+      "etiqueta": "Trava · Prova",
+      "titulo": "Não tem rosto, cliente real nem bastidor.",
+      "texto": "A maior objeção de quem compra pela internet é confiança. Mostre *quem faz*, um trabalho entregue com o nome do cliente e o processo acontecendo de verdade.",
+      "botao": "Salva pra depois"
+    },
+    {
+      "tipo": "conteudo",
+      "etiqueta": "Trava · Resposta",
+      "titulo": "Quem pediu informação ficou dias sem resposta.",
+      "texto": "Comentário e Direct parados esfriam a venda. Deixe *respostas automáticas* prontas para as perguntas de sempre e responda o resto no mesmo dia."
+    },
+    {
+      "tipo": "fecho",
+      "etiqueta": "Porta Aberta · creat.MTT",
+      "titulo": "Quer ver o site do seu negócio *pronto antes de pagar?*",
+      "texto": "Barbearia, salão ou academia: a gente monta a prévia com o nome do seu negócio e você decide depois de ver.",
+      "botao": "Comenta VITRINE"
+    }
+  ]
+}

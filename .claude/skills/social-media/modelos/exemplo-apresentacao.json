@@ -1,0 +1,124 @@
+{
+  "titulo": "Plano de dezembro · creat.MTT",
+  "slides": [
+    {
+      "tipo": "capa",
+      "nota": "Social Media · Dezembro 2026",
+      "titulo": "O perfil que *recebe quem chega* do anúncio.",
+      "subtitulo": "Estratégia, calendário e números do mês para o @creat.mtt, no padrão fixo de social media da creat.MTT."
+    },
+    {
+      "tipo": "secao",
+      "nota": "Onde estamos",
+      "titulo": "O que os números de novembro disseram",
+      "subtitulo": "Lidos pela API oficial da Meta e pelo Metricool. Só entra número com fonte e data."
+    },
+    {
+      "tipo": "numeros",
+      "titulo": "Gente de verdade prende. *Frase solta, não.*",
+      "subtitulo": "Os quatro números que decidem o plano de dezembro.",
+      "itens": [
+        {
+          "valor": "000",
+          "rotulo": "curtidas no *post de exemplo*",
+          "fonte": "exemplo: troque pelo número real com fonte e data"
+        },
+        {
+          "valor": "00",
+          "rotulo": "Directs recebidos no mês",
+          "fonte": "exemplo: Caixa de entrada da Meta"
+        },
+        {
+          "valor": "R$ 0,00",
+          "rotulo": "por visita ao perfil",
+          "fonte": "exemplo: Gerenciador de Anúncios"
+        },
+        {
+          "valor": "0",
+          "rotulo": "pedidos de orçamento",
+          "fonte": "exemplo: contagem do dono"
+        }
+      ],
+      "nota": "Conclusão: a história traz gente, o rosto dá confiança, o perfil entrega o link e o produto aparece dentro da cena."
+    },
+    {
+      "tipo": "lista",
+      "titulo": "Os 6 pilares do mês",
+      "subtitulo": "Cada post responde: para quem, qual dor, qual prova e qual próximo passo.",
+      "itens": [
+        "História — gente de verdade, com rosto e nome, contando o que mudou no negócio dela.",
+        "Bastidor — a equipe e o processo acontecendo, para provar que existe gente por trás.",
+        "Produto dentro da cena — o site e o vídeo aparecendo no uso, nunca como intervalo comercial.",
+        "Resposta — toda pergunta de comentário e Direct vira post ou resposta pronta no mesmo dia.",
+        "Prova de cliente — um case por semana, com o nome do cliente e o trabalho entregue.",
+        "Convite — um pedido claro por post: comentar, salvar ou ver a prévia do site."
+      ],
+      "nota": "Fora do plano: frase motivacional solta, sorteio e anúncio para ganhar seguidor."
+    },
+    {
+      "tipo": "secao",
+      "nota": "Execução",
+      "titulo": "Calendário das duas primeiras semanas",
+      "subtitulo": "Agendado no Metricool depois do seu \"pode\". O que depende de gravação entra quando a edição chega ao Dropbox."
+    },
+    {
+      "tipo": "calendario",
+      "titulo": "Dezembro, semanas 1 e 2",
+      "itens": [
+        "01 | ter | Reel | Case Super Kal: a fila do açougue",
+        "02 | qua | Carrossel | 5 travas do perfil que não vende",
+        "03 | qui | Stories | Bastidor da gravação",
+        "04* | sex | Reel | Episódio 3 da série com os amigos",
+        "05 | sáb | Stories | Caixa de perguntas",
+        "06 | dom | Foto | Equipe e sede, com rosto",
+        "07 | seg | Stories | Resposta às perguntas",
+        "08 | ter | Reel | Case Elite Drako Gym",
+        "09 | qua | Carrossel | Como fica o site da sua barbearia",
+        "10 | qui | Stories | Prévia de site ao vivo",
+        "11* | sex | Reel | Episódio 4 da série com os amigos",
+        "12 | sáb | Stories | Enquete: qual o próximo case",
+        "13 | dom | Foto | Bastidor do fim de semana",
+        "14 | seg | Stories | Resultado da enquete"
+      ],
+      "nota": "Dias em destaque: episódios da série, os posts que mais trouxeram visita ao perfil em novembro."
+    },
+    {
+      "tipo": "lista",
+      "titulo": "O que muda no Direct",
+      "subtitulo": "Respostas automáticas oficiais do Meta Business Suite, por palavra-chave.",
+      "itens": [
+        "VITRINE — manda o link da prévia do site com o nome do negócio.",
+        "PREÇO — manda a abertura e o plano mensal com o que está incluso.",
+        "VÍDEO — manda dois cases e pergunta o tipo de negócio.",
+        "Sem palavra-chave — responde em até um dia útil, com o seu texto."
+      ]
+    },
+    {
+      "tipo": "numeros",
+      "titulo": "Como vamos medir dezembro",
+      "subtitulo": "Meta mínima definida antes, para não virar o plano a cada 24 horas.",
+      "itens": [
+        {
+          "valor": "14 dias",
+          "rotulo": "de amostra antes de mudar qualquer pilar",
+          "fonte": "Regra do dono, 10/11"
+        },
+        {
+          "valor": "1 dia",
+          "rotulo": "útil para responder todo Direct",
+          "fonte": "Plano do Instagram, 13/11"
+        }
+      ]
+    },
+    {
+      "tipo": "fecho",
+      "titulo": "Aprova e a equipe *põe no ar*.",
+      "subtitulo": "Você grava, responde o Direct e aprova. O resto a agência agenda e acompanha.",
+      "itens": [
+        "@creat.mtt",
+        "Dropbox: Social Media Dezembro"
+      ],
+      "nota": "Pode agendar"
+    }
+  ]
+}

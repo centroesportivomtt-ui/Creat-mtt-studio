@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Carrossel</title>
+<style>
+/* Conceito: Uma tomada só — o carrossel é um plano contínuo cortado em cartões,
+   como uma timeline de edição (a creat.MTT é estúdio de vídeo).
+   Momento-assinatura: o ponto vermelho do "creat." vira a emenda entre os cartões:
+   metade fica na borda direita de um cartão e a outra metade abre o próximo, em cima da
+   régua (a timeline), que avança um trecho vermelho a cada cartão (1/7, 2/7...).
+   O brilho vinho do fundo também atravessa as emendas. Seta "arrasta" só na capa.
+   Layout: margem de 80 px; topo = etiqueta + contador; corpo; régua; rodapé com logo e @.
+   Uma ousadia só (a emenda); o resto fica calmo, na linha dos modelos da marca. */
+:root{
+  --cor-fundo:#0a0a0a; --cor-brilho:#4a0b14; --cor-brilho-rgb:74,11,20; --cor-destaque:#e3132c;
+  --cor-sobre-destaque:#fff; --cor-tinta:#f5f1f1; --cor-tinta-suave:#b8a9ab; --cor-linha:#3a2a2d;
+  --fonte-display:sans-serif; --fonte-texto:sans-serif;
+  --peso-display:900; --largura-display:112; --peso-texto:400; --peso-texto-forte:700;
+  --w:1080px; --h:1350px; --m:80px;          /* cartão e zona segura */
+  --y-regua:1166px; --y-rodape:1196px;       /* timeline e assinatura */
+  --emenda:64px;                             /* lado do ponto que atravessa as bordas */
+  --t-etiqueta:28px; --t-texto:36px; --t-botao:30px; --t-arroba:30px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--cor-fundo)}
+body{font-family:var(--fonte-texto);color:var(--cor-tinta);-webkit-font-smoothing:antialiased}
+em{font-style:normal;color:var(--cor-destaque)}
+
+.faixa{position:relative;height:var(--h);overflow:hidden;background:var(--cor-fundo)}
+.brilho{position:absolute;width:1500px;height:1500px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(var(--cor-brilho-rgb),1) 0%,rgba(var(--cor-brilho-rgb),.55) 45%,rgba(var(--cor-brilho-rgb),0) 100%)}
+.trilho{position:absolute;left:0;right:0;top:var(--y-regua);height:2px;background:var(--cor-linha)}
+.emenda{position:absolute;top:calc(var(--y-regua) + 1px - var(--emenda)/2);width:var(--emenda);height:var(--emenda);background:var(--cor-destaque)}
+
+.cartao{position:absolute;top:0;width:var(--w);height:var(--h)}
+.topo{position:absolute;left:var(--m);right:var(--m);top:96px;display:flex;justify-content:space-between;align-items:baseline;gap:32px}
+.etiqueta{font:var(--peso-texto-forte) var(--t-etiqueta)/1.2 var(--fonte-texto);letter-spacing:.06em;text-transform:uppercase;color:var(--cor-destaque);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contador{font-family:var(--fonte-display);font-weight:800;font-variation-settings:"wdth" 100;font-size:28px;color:var(--cor-tinta-suave);font-variant-numeric:tabular-nums;white-space:nowrap}
+.contador b{color:var(--cor-tinta);font-weight:800}
+
+.corpo{position:absolute;left:var(--m);right:var(--m);top:176px;height:920px;display:flex;flex-direction:column;overflow:hidden}
+.titulo{font-family:var(--fonte-display);font-weight:var(--peso-display);font-variation-settings:"wdth" var(--largura-display);
+  line-height:.98;letter-spacing:-.018em;text-wrap:balance;overflow-wrap:normal;hyphens:manual}
+.texto{font:var(--peso-texto) var(--t-texto)/1.38 var(--fonte-texto);color:var(--cor-tinta-suave);max-width:900px;text-wrap:pretty}
+.texto strong{color:var(--cor-tinta);font-weight:var(--peso-texto-forte)}
+.numero{font-family:var(--fonte-display);font-weight:900;font-variation-settings:"wdth" 125;font-size:250px;line-height:.78;letter-spacing:-.04em;color:var(--cor-tinta)}
+.botao{align-self:flex-start;display:inline-block;font:var(--peso-texto-forte) var(--t-botao)/1 var(--fonte-texto);letter-spacing:.04em;text-transform:uppercase;
+  background:var(--cor-destaque);color:var(--cor-sobre-destaque);padding:24px 48px;border-radius:999px;white-space:nowrap}
+
+/* capa: título grande no meio, apoio abaixo, "arrasta" no pé apontando para a emenda */
+.capa .corpo{justify-content:center;gap:40px;padding-bottom:96px}
+.capa .titulo{font-size:124px}
+.arrasta{position:absolute;right:var(--m);top:1078px;display:flex;align-items:center;gap:20px;
+  font:var(--peso-texto-forte) 28px/1 var(--fonte-texto);letter-spacing:.14em;text-transform:uppercase;color:var(--cor-tinta)}
+.arrasta svg{display:block}
+
+/* conteúdo: número enorme, título, texto, botão opcional */
+.conteudo .corpo{justify-content:flex-start;gap:0}
+.conteudo .numero{margin-top:24px;margin-bottom:64px}
+.conteudo .titulo{font-size:80px;margin-bottom:36px}
+.conteudo .botao{margin-top:48px}
+.conteudo.sem-numero .titulo{font-size:96px;margin-top:40px}
+
+/* fecho: pergunta/convite grande, texto, botão, assinatura forte */
+.fecho .corpo{justify-content:center;gap:44px;padding-bottom:40px}
+.fecho .titulo{font-size:104px}
+
+.regua{position:absolute;left:var(--m);top:calc(var(--y-regua) - 2px);height:6px;background:var(--cor-destaque)}
+.rodape{position:absolute;left:var(--m);right:var(--m);top:var(--y-rodape);height:68px;display:flex;justify-content:space-between;align-items:center}
+.rodape img{display:block;height:60px;width:auto;max-width:420px;object-fit:contain;object-position:left center}
+.rodape .nome-marca{font-family:var(--fonte-display);font-weight:900;font-size:40px;color:var(--cor-tinta)}
+.arroba{font:var(--peso-texto) var(--t-arroba)/1 var(--fonte-texto);color:var(--cor-tinta-suave)}
+</style>
+<script src="comum.js"></script>
+</head>
+<body>
+<div class="faixa" id="faixa"></div>
+<script>
+const W = 1080, H = 1350, M = 80;
+// posições do brilho: alterna os cantos para o vinho cruzar as emendas
+const BRILHOS = [[0.30, 0.92], [0.95, 0.10], [0.20, 0.55], [0.85, 0.95], [0.10, 0.12], [0.70, 0.60]];
+
+function seta() {
+  return '<svg width="132" height="28" viewBox="0 0 132 28" aria-hidden="true"><path d="M0 14H124" stroke="var(--cor-destaque)" stroke-width="5"/>' +
+         '<path d="M110 2L126 14L110 26" fill="none" stroke="var(--cor-destaque)" stroke-width="5" stroke-linejoin="miter"/></svg>';
+}
+
+window.montar = async function ({ dados, marca }) {
+  const { esc, enfase, aplicarMarca, esperarFontes, ajustar, conferir } = window.Comum;
+  aplicarMarca(marca);
+  const cartoes = dados.cartoes || [];
+  const n = cartoes.length;
+  const faixa = document.getElementById('faixa');
+  faixa.style.width = n * W + 'px';
+
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    const [bx, by] = BRILHOS[i % BRILHOS.length];
+    html += `<div class="brilho" style="left:${i * W + bx * W - 750}px;top:${by * H - 750}px"></div>`;
+  }
+  html += '<div class="trilho"></div>';
+  for (let i = 1; i < n; i++) html += `<div class="emenda" style="left:${i * W - 32}px"></div>`;
+
+  let contaConteudo = 0;
+  cartoes.forEach((c, i) => {
+    const tipo = ['capa', 'conteudo', 'fecho'].includes(c.tipo) ? c.tipo : 'conteudo';
+    if (tipo === 'conteudo') contaConteudo++;
+    const numero = tipo === 'conteudo' ? (c.numero === '' || c.numero == null ? String(contaConteudo).padStart(2, '0') : String(c.numero)) : '';
+    const semNumero = tipo === 'conteudo' && c.numero === '-';
+    const pos = String(i + 1).padStart(2, '0'), tot = String(n).padStart(2, '0');
+    const logo = marca.logo ? `<img src="${marca.logo}" alt="${esc(marca.nome)}" data-seguro="logo">` : `<span class="nome-marca" data-seguro="logo">${esc(marca.nome)}</span>`;
+    html += `<section class="cartao ${tipo}${semNumero ? ' sem-numero' : ''}" style="left:${i * W}px" data-i="${i}">
+      <div class="topo"><span class="etiqueta" data-seguro="etiqueta" data-texto="etiqueta">${esc(c.etiqueta || dados.tema || '')}</span>
+        <span class="contador" data-seguro="contador" data-texto="contador"><b>${pos}</b> / ${tot}</span></div>
+      <div class="corpo" data-seguro="corpo">
+        ${numero && !semNumero ? `<div class="numero" data-texto="numero">${esc(numero)}</div>` : ''}
+        ${c.titulo ? `<h2 class="titulo" data-texto="titulo">${enfase(c.titulo)}</h2>` : ''}
+        ${c.texto ? `<p class="texto" data-texto="texto">${enfase(c.texto).replace(/<em>/g, '<strong>').replace(/<\/em>/g, '</strong>')}</p>` : ''}
+        ${c.botao ? `<span class="botao" data-texto="botao">${esc(c.botao)}</span>` : ''}
+      </div>
+      ${tipo === 'capa' ? `<div class="arrasta" data-seguro="arrasta" data-texto="arrasta">Arrasta ${seta()}</div>` : ''}
+      <div class="regua" style="width:${((W - 2 * M) * (i + 1)) / n}px"></div>
+      <div class="rodape">${logo}<span class="arroba" data-seguro="arroba" data-texto="arroba">${esc(marca.arroba)}</span></div>
+    </section>`;
+  });
+  faixa.innerHTML = html;
+
+  const faltam = await esperarFontes(marca);
+  const avisos = faltam.map((f) => `fonte não carregou: ${f}`);
+  await Promise.all([...document.images].map((im) => im.complete ? 0 : new Promise((r) => { im.onload = im.onerror = r; })));
+  [...document.images].forEach((im) => { if (!im.naturalWidth) avisos.push('logo não carregou: ' + im.src); });
+
+  document.querySelectorAll('.cartao').forEach((el) => {
+    const i = +el.dataset.i, rot = `cartão ${i + 1}`;
+    const corpo = el.querySelector('.corpo');
+    const minTitulo = el.classList.contains('conteudo') ? 56 : 68;
+    const ok = ajustar(corpo, [
+      { el: el.querySelector('.numero'), min: 180 },
+      { el: el.querySelector('.titulo'), min: minTitulo },
+      { el: el.querySelector('.texto'), min: 30 },
+    ]);
+    if (!ok) avisos.push(`${rot}: texto demais para o cartão (corte o título ou o texto)`);
+    const et = el.querySelector('.etiqueta');
+    if (et.scrollWidth > et.clientWidth + 1) avisos.push(`${rot}: etiqueta longa demais, ficou com reticências`);
+    avisos.push(...conferir(el, { x0: M, y0: M, x1: W - M, y1: H - M }, 28, rot));
+  });
+  return { n, avisos };
+};
+</script>
+</body>
+</html>
