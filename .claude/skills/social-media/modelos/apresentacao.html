@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Apresentação</title>
+<style>
+/* Conceito: Uma tomada só, em 16:9 — a apresentação é a mesma timeline do carrossel.
+   Momento-assinatura: o ponto vermelho do "creat." é a agulha (playhead) da régua do rodapé:
+   na capa ele está no começo, em cada slide anda um trecho, no fecho chega ao fim.
+   Layout: margem 120 px nas laterais, 80 px em cima e embaixo; topo = nome do documento +
+   contador; corpo; régua com a agulha; rodapé com logo e @. Brilho vinho muda de canto a cada slide. */
+:root{
+  --cor-fundo:#0a0a0a; --cor-brilho:#4a0b14; --cor-brilho-rgb:74,11,20; --cor-destaque:#e3132c;
+  --cor-sobre-destaque:#fff; --cor-tinta:#f5f1f1; --cor-tinta-suave:#b8a9ab; --cor-linha:#3a2a2d;
+  --fonte-display:sans-serif; --fonte-texto:sans-serif;
+  --peso-display:900; --largura-display:112; --peso-texto:400; --peso-texto-forte:700;
+  --w:1920px; --h:1080px; --mx:120px; --my:80px;
+  --y-regua:924px; --y-rodape:948px; --agulha:40px;
+}
+@page{size:1920px 1080px;margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--cor-fundo)}
+body{font-family:var(--fonte-texto);color:var(--cor-tinta);-webkit-font-smoothing:antialiased;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+em{font-style:normal;color:var(--cor-destaque)}
+
+.slide{position:relative;width:var(--w);height:var(--h);overflow:hidden;background:var(--cor-fundo);break-after:page;page-break-after:always}
+.slide:last-child{break-after:auto;page-break-after:auto}
+.brilho{position:absolute;width:1700px;height:1700px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(var(--cor-brilho-rgb),1) 0%,rgba(var(--cor-brilho-rgb),.55) 45%,rgba(var(--cor-brilho-rgb),0) 100%)}
+
+.topo{position:absolute;left:var(--mx);right:var(--mx);top:var(--my);display:flex;justify-content:space-between;align-items:baseline;gap:40px}
+.etiqueta{font:var(--peso-texto-forte) 28px/1.2 var(--fonte-texto);letter-spacing:.06em;text-transform:uppercase;color:var(--cor-destaque);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.contador{font-family:var(--fonte-display);font-weight:800;font-size:28px;color:var(--cor-tinta-suave);font-variant-numeric:tabular-nums;white-space:nowrap}
+.contador b{color:var(--cor-tinta);font-weight:800}
+
+.corpo{position:absolute;left:var(--mx);right:var(--mx);top:160px;height:716px;display:flex;flex-direction:column;overflow:hidden}
+.titulo{font-family:var(--fonte-display);font-weight:var(--peso-display);font-variation-settings:"wdth" var(--largura-display);line-height:.98;letter-spacing:-.018em;text-wrap:balance}
+.sub{font:var(--peso-texto) 40px/1.35 var(--fonte-texto);color:var(--cor-tinta-suave);max-width:1300px;text-wrap:pretty}
+.sub strong,.item strong{color:var(--cor-tinta);font-weight:var(--peso-texto-forte)}
+.nota{font:var(--peso-texto) 28px/1.35 var(--fonte-texto);color:var(--cor-tinta-suave);margin-top:auto;padding-top:24px}
+.botao{align-self:flex-start;font:var(--peso-texto-forte) 32px/1 var(--fonte-texto);letter-spacing:.04em;text-transform:uppercase;background:var(--cor-destaque);color:var(--cor-sobre-destaque);padding:26px 56px;border-radius:999px;white-space:nowrap}
+
+/* capa */
+.capa .corpo{justify-content:center;gap:40px}
+.capa .titulo{font-size:156px;max-width:1600px}
+.capa .etq-capa{font:var(--peso-texto-forte) 32px/1.2 var(--fonte-texto);letter-spacing:.08em;text-transform:uppercase;color:var(--cor-destaque)}
+
+/* seção: número enorme à esquerda, título à direita */
+.secao .corpo{flex-direction:row;align-items:center;gap:96px}
+.secao .numero{font-family:var(--fonte-display);font-weight:900;font-variation-settings:"wdth" 125;font-size:400px;line-height:.78;letter-spacing:-.04em;color:var(--cor-tinta);flex:none}
+.secao .lado{display:flex;flex-direction:column;justify-content:center;gap:36px;min-width:0;flex:1;max-height:100%;overflow:hidden}
+.secao .titulo{font-size:112px}
+
+/* lista */
+.lista .corpo,.calendario .corpo,.numeros .corpo{gap:0}
+.cabeca{display:flex;flex-direction:column;gap:20px;margin-bottom:56px}
+.cabeca .titulo{font-size:84px}
+.cabeca .sub{font-size:36px}
+.itens{display:grid;column-gap:80px;row-gap:0;align-content:start}
+.itens.duas{grid-template-columns:1fr 1fr}
+.item{display:grid;grid-template-columns:72px 1fr;gap:0 16px;align-items:baseline;padding:28px 0;border-top:2px solid var(--cor-linha);font:var(--peso-texto) 34px/1.35 var(--fonte-texto);color:var(--cor-tinta-suave)}
+.item .n{font-family:var(--fonte-display);font-weight:900;font-size:32px;color:var(--cor-destaque);font-variant-numeric:tabular-nums}
+
+/* calendário */
+.calendario .cabeca{margin-bottom:40px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:28px 20px}
+.dia{border-top:4px solid var(--cor-linha);padding-top:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.dia .ds{display:flex;align-items:baseline;gap:12px}
+.dia.marcado{border-top-color:var(--cor-destaque)}
+.dia .d{font-family:var(--fonte-display);font-weight:900;font-variation-settings:"wdth" 112;font-size:56px;line-height:.9;color:var(--cor-tinta)}
+.dia .s{font:var(--peso-texto-forte) 28px/1.1 var(--fonte-texto);letter-spacing:.06em;text-transform:uppercase;color:var(--cor-tinta-suave)}
+.dia .f{font:var(--peso-texto-forte) 28px/1.15 var(--fonte-texto);color:var(--cor-destaque);margin-top:4px}
+.dia .t{font:var(--peso-texto) 28px/1.28 var(--fonte-texto);color:var(--cor-tinta);overflow-wrap:anywhere;hyphens:auto}
+
+/* números */
+.nums{display:grid;gap:64px;align-items:start;margin-top:16px}
+.num{border-top:4px solid var(--cor-destaque);padding-top:28px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.num .v{font-family:var(--fonte-display);font-weight:900;font-variation-settings:"wdth" 112;font-size:136px;line-height:.9;letter-spacing:-.03em;color:var(--cor-tinta);white-space:nowrap}
+.num .r{font:var(--peso-texto-forte) 34px/1.3 var(--fonte-texto);color:var(--cor-tinta)}
+.num .o{font:var(--peso-texto) 28px/1.35 var(--fonte-texto);color:var(--cor-tinta-suave)}
+
+/* fecho */
+.fecho .corpo{justify-content:center;gap:40px}
+.fecho .titulo{font-size:132px;max-width:1600px}
+.contatos{display:flex;flex-wrap:wrap;gap:12px 56px;font:var(--peso-texto-forte) 34px/1.3 var(--fonte-texto);color:var(--cor-tinta)}
+
+/* régua e agulha */
+.trilho{position:absolute;left:0;right:0;top:var(--y-regua);height:2px;background:var(--cor-linha)}
+.regua{position:absolute;left:var(--mx);top:calc(var(--y-regua) - 2px);height:6px;background:var(--cor-destaque)}
+.agulha{position:absolute;top:calc(var(--y-regua) + 1px - var(--agulha)/2);width:var(--agulha);height:var(--agulha);background:var(--cor-destaque)}
+.rodape{position:absolute;left:var(--mx);right:var(--mx);top:var(--y-rodape);height:64px;display:flex;justify-content:space-between;align-items:center}
+.rodape img{display:block;height:60px;width:auto;max-width:480px;object-fit:contain;object-position:left center}
+.rodape .nome-marca{font-family:var(--fonte-display);font-weight:900;font-size:40px}
+.arroba{font:var(--peso-texto) 30px/1 var(--fonte-texto);color:var(--cor-tinta-suave)}
+</style>
+<script src="comum.js"></script>
+</head>
+<body>
+<main id="deck"></main>
+<script>
+const W = 1920, H = 1080, MX = 120, MY = 80;
+const BRILHOS = [[0.22, 1.0], [0.92, 0.05], [0.08, 0.15], [0.80, 1.05], [0.50, 1.15], [1.0, 0.55]];
+
+function itemCal(x) {
+  if (x && typeof x === 'object') return { dia: x.dia, semana: x.semana, formato: x.formato, tema: x.tema, marcado: !!x.destaque };
+  const [dia, semana, formato, tema] = String(x).split('|').map((s) => s.trim());
+  return { dia, semana, formato, tema: tema || '', marcado: /\*$/.test(dia || '') };
+}
+function itemNum(x) {
+  if (x && typeof x === 'object') return { valor: x.valor, rotulo: x.rotulo, fonte: x.fonte };
+  const [valor, rotulo, fonte] = String(x).split('|').map((s) => s.trim());
+  return { valor, rotulo, fonte };
+}
+// "Cabeça — descrição" vira cabeça em negrito
+function itemLista(x, enfase) {
+  const s = String(x);
+  const k = s.indexOf(' — ');
+  return k > 0 ? `<strong>${enfase(s.slice(0, k))}</strong> — ${enfase(s.slice(k + 3))}` : enfase(s).replace(/<em>/g, '<strong>').replace(/<\/em>/g, '</strong>');
+}
+
+window.montar = async function ({ dados, marca }) {
+  const { esc, enfase, aplicarMarca, esperarFontes, ajustar, conferir } = window.Comum;
+  aplicarMarca(marca);
+  const slides = dados.slides || [];
+  const n = slides.length;
+  const deck = document.getElementById('deck');
+  const sub = (s) => enfase(s).replace(/<em>/g, '<strong>').replace(/<\/em>/g, '</strong>');
+  const logo = marca.logo ? `<img src="${marca.logo}" alt="${esc(marca.nome)}" data-seguro="logo">` : `<span class="nome-marca" data-seguro="logo">${esc(marca.nome)}</span>`;
+  let contaSecao = 0, html = '';
+
+  slides.forEach((s, i) => {
+    const tipo = ['capa', 'secao', 'lista', 'calendario', 'numeros', 'fecho'].includes(s.tipo) ? s.tipo : 'lista';
+    const itens = Array.isArray(s.itens) ? s.itens : [];
+    const [bx, by] = BRILHOS[i % BRILHOS.length];
+    const prog = n > 1 ? i / (n - 1) : 1;       // capa = 0, fecho = 1
+    const xAgulha = MX + 20 + (W - 2 * MX - 40) * prog;   // a agulha nunca passa da margem
+    let corpo = '';
+    const nota = s.nota ? `<p class="nota" data-texto="nota">${sub(s.nota)}</p>` : '';
+    const cabeca = `<div class="cabeca"><h2 class="titulo" data-texto="titulo">${enfase(s.titulo || '')}</h2>${s.subtitulo ? `<p class="sub" data-texto="subtitulo">${sub(s.subtitulo)}</p>` : ''}</div>`;
+
+    if (tipo === 'capa') {
+      corpo = `${s.nota ? `<span class="etq-capa" data-texto="nota">${esc(s.nota)}</span>` : ''}
+        <h1 class="titulo" data-texto="titulo">${enfase(s.titulo || dados.titulo || '')}</h1>
+        ${s.subtitulo ? `<p class="sub" data-texto="subtitulo">${sub(s.subtitulo)}</p>` : ''}`;
+    } else if (tipo === 'secao') {
+      contaSecao++;
+      corpo = `<div class="numero" data-texto="numero">${String(contaSecao).padStart(2, '0')}</div>
+        <div class="lado">${s.nota ? `<span class="etiqueta" data-texto="nota">${esc(s.nota)}</span>` : ''}
+        <h2 class="titulo" data-texto="titulo">${enfase(s.titulo || '')}</h2>${s.subtitulo ? `<p class="sub" data-texto="subtitulo">${sub(s.subtitulo)}</p>` : ''}</div>`;
+    } else if (tipo === 'lista') {
+      corpo = cabeca + `<div class="itens${itens.length > 3 ? ' duas' : ''}">` +
+        itens.map((x, k) => `<div class="item" data-texto="item ${k + 1}"><span class="n">${String(k + 1).padStart(2, '0')}</span><span>${itemLista(x, enfase)}</span></div>`).join('') +
+        '</div>' + nota;
+    } else if (tipo === 'calendario') {
+      corpo = cabeca + '<div class="cal">' + itens.map(itemCal).map((c, k) =>
+        `<div class="dia${c.marcado ? ' marcado' : ''}"><div class="ds"><span class="d" data-texto="dia ${k + 1}">${esc(String(c.dia || '').replace(/\*$/, ''))}</span>
+          <span class="s" data-texto="semana ${k + 1}">${esc(c.semana || '')}</span></div>
+          ${c.formato ? `<span class="f" data-texto="formato ${k + 1}">${esc(c.formato)}</span>` : ''}
+          <span class="t" data-texto="tema ${k + 1}">${esc(c.tema)}</span></div>`).join('') + '</div>' + nota;
+    } else if (tipo === 'numeros') {
+      const ns = itens.map(itemNum);
+      corpo = cabeca + `<div class="nums" style="grid-template-columns:repeat(${Math.max(1, ns.length)},1fr)">` + ns.map((x, k) =>
+        `<div class="num"><span class="v" data-texto="valor ${k + 1}">${esc(x.valor)}</span><span class="r" data-texto="rótulo ${k + 1}">${sub(x.rotulo || '')}</span>
+          ${x.fonte ? `<span class="o" data-texto="fonte ${k + 1}">${esc(x.fonte)}</span>` : ''}</div>`).join('') + '</div>' + nota;
+    } else {
+      corpo = `<h2 class="titulo" data-texto="titulo">${enfase(s.titulo || '')}</h2>
+        ${s.subtitulo ? `<p class="sub" data-texto="subtitulo">${sub(s.subtitulo)}</p>` : ''}
+        ${itens.length ? `<div class="contatos">${itens.map((x, k) => `<span data-texto="contato ${k + 1}">${esc(x)}</span>`).join('')}</div>` : ''}
+        ${s.nota ? `<span class="botao" data-texto="botão">${esc(s.nota)}</span>` : ''}`;
+    }
+
+    const pos = String(i + 1).padStart(2, '0'), tot = String(n).padStart(2, '0');
+    html += `<section class="slide ${tipo}" data-i="${i}" data-tipo="${tipo}">
+      <div class="brilho" style="left:${bx * W - 850}px;top:${by * H - 850}px"></div>
+      <div class="topo">${tipo === 'capa' ? '<span></span>' : `<span class="etiqueta" data-seguro="etiqueta" data-texto="etiqueta">${esc(dados.titulo || '')}</span>`}
+        <span class="contador" data-seguro="contador" data-texto="contador"><b>${pos}</b> / ${tot}</span></div>
+      <div class="corpo" data-seguro="corpo">${corpo}</div>
+      <div class="trilho"></div>
+      <div class="regua" style="width:${xAgulha - MX - 20}px"></div>
+      <div class="agulha" style="left:${xAgulha - 20}px"></div>
+      <div class="rodape">${logo}<span class="arroba" data-seguro="arroba" data-texto="arroba">${esc(marca.arroba)}</span></div>
+    </section>`;
+  });
+  deck.innerHTML = html;
+
+  const faltam = await esperarFontes(marca);
+  const avisos = faltam.map((f) => `fonte não carregou: ${f}`);
+  await Promise.all([...document.images].map((im) => im.complete ? 0 : new Promise((r) => { im.onload = im.onerror = r; })));
+  [...document.images].forEach((im) => { if (!im.naturalWidth) avisos.push('logo não carregou: ' + im.src); });
+
+  document.querySelectorAll('.slide').forEach((el) => {
+    const i = +el.dataset.i, rot = `slide ${i + 1} (${el.dataset.tipo})`;
+    const corpo = el.querySelector('.corpo');
+    const q = (s) => el.querySelector(s);
+    const qa = (s) => [...el.querySelectorAll(s)];
+    const regras = [{ el: q('.titulo'), min: el.dataset.tipo === 'capa' || el.dataset.tipo === 'fecho' ? 88 : 60 }, { el: q('.sub'), min: 30 }];
+    qa('.item').forEach((it) => regras.push({ el: it, min: 28 }));
+    qa('.num .v').forEach((v) => regras.push({ el: v, min: 80 }));
+    // valor grande que não cabe na coluna também conta como estouro
+    const largos = () => qa('.num .v').some((v) => v.scrollWidth > v.parentElement.clientWidth + 1);
+    let ok = ajustar(corpo, regras);
+    if (q('.lado')) ok = ajustar(q('.lado'), regras) && ok;
+    qa('.num .v').forEach((v) => { let px = parseFloat(getComputedStyle(v).fontSize); while (v.scrollWidth > v.parentElement.clientWidth + 1 && px > 80) { px -= 4; v.style.fontSize = px + 'px'; } });
+    if (largos()) ok = false;
+    // no calendário e nos números todas as colunas ficam no mesmo tamanho do menor
+    const vs = qa('.num .v'); if (vs.length) { const m = Math.min(...vs.map((v) => parseFloat(getComputedStyle(v).fontSize))); vs.forEach((v) => (v.style.fontSize = m + 'px')); }
+    const its = qa('.item'); if (its.length) { const m = Math.min(...its.map((v) => parseFloat(getComputedStyle(v).fontSize))); its.forEach((v) => (v.style.fontSize = m + 'px')); }
+    if (!ok) avisos.push(`${rot}: conteúdo demais para o slide (corte texto ou divida em dois)`);
+    const et = q('.topo .etiqueta');
+    if (et && et.scrollWidth > et.clientWidth + 1) avisos.push(`${rot}: título do documento longo demais para o topo`);
+    avisos.push(...conferir(el, { x0: MX, y0: MY - 8, x1: W - MX, y1: H - 64 }, 28, rot));
+  });
+  return { n, avisos };
+};
+</script>
+</body>
+</html>
