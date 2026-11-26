@@ -673,3 +673,12 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - aceite **147/147** (antes 144), saída 0 duas vezes seguidas nas portas 3091/8891.
 - **Prova de que os testes novos falham sem a correção:** sem as correções do site, o aceite ficou em 145/147 (5.6g com `scrollWidth` 470 e 6.4e sem a segurada). Sem a de sincronia, 7 testes do pytest falham.
 - **Sem push, sem deploy, sem chamada paga.**
+
+## 26/11: onda 4 no ar (ouvido fino, corte pelo som, tom de sala limpo, conferência de diálogo, marca do cliente, versão segurada)
+- **Junção:** `wt-onda4` (plano, MOTOR-A, MOTOR-B, SITE+API e correções da revisão tripla) entrou em f85c4de. Na árvore principal: pytest **896 ok** (6 pulados, 2 pagos fora), tipos ok, aceite **147/147**, todos com saída 0.
+- **No ar (conferido em produção):** `/v1/marcas` responde; a versão segurada abre com sessão e mostra os motivos em frase do dono (V3 da Black: "Uma fala foi cortada antes de terminar", com os instantes); a conversa segue ligada (prazo 90 dias). Rotas antigas iguais.
+- **Logo do Super Kal cadastrada** em `marcas/super-kal/logo.png` (2048 px, com transparência), pela rota nova; o fecho dos próximos filmes do Super Kal usa a logo quando o pedido traz o cliente.
+- **Ouvido fino:** padrão `turbo` (medição local: pico 2,1 GB e 25 s por minuto de fala; o large-v3 deu 4,3 GB). Cai para a transcrição atual se faltar memória ou o modelo não baixar.
+- **Não provado ainda:** turbo acertando Guerreiro, Sisal e Bacia do Jacuípe no áudio real; segurada sobre filme real com clique duplo; nada disso roda sem a API da Anthropic com saldo (a direção ainda depende dela).
+- **Falta:** poses do mascote (espiada, placa, moto, carro, aceno) no cadastro da marca; os recortes do vídeo da Black existem, mas precisam sair do fundo verde antes.
+
