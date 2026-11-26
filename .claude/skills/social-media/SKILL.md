@@ -22,7 +22,7 @@ O script confere tudo e barra o que estiver errado: data fora do mês, hora inv�
 
 Empresa nova: uma linha em `empresas.json`, com a próxima cor livre, e um arquivo de marca em `modelos/marcas/<empresa>.json` (veja `modelos/LEIA-ME.md`).
 
-**Automação mensal:** no dia 24 de cada mês, uma tarefa agendada roda o mês seguinte de cada empresa que já tem pasta "Social Media" no Dropbox. Ela entrega tudo em "0 - Para aprovar" e avisa o dono. Nada é publicado sem o "pode" dele.
+**Automação mensal (pronta para ligar):** no dia 24 de cada mês, às 05h38 (horário da Bahia), uma tarefa agendada roda o mês seguinte de cada empresa que já tem pasta "Social Media" no Dropbox. Ela entrega tudo em "0 - Para aprovar" e avisa o dono pelo celular. Nada é publicado sem o "pode" dele. Em 26/11 a criação da tarefa foi barrada pela trava de permissão da sessão; liga com o "pode" do dono.
 
 ## 0. A ficha da empresa (uma vez por empresa)
 
