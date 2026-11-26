@@ -114,7 +114,7 @@ def criar():
         from motor import backup as _backup_ag
         _backup_ag.agendar(cfg)
     for nome in ("projetos", "direcao", "versoes", "referencias", "backup", "gastos", "biblioteca", "cliente", "conversa",
-                 "refazer", "apagar", "memoria"):
+                 "refazer", "apagar", "memoria", "marcas"):
         try:
             mod = importlib.import_module(f"motor.api.{nome}")
         except ModuleNotFoundError as e:

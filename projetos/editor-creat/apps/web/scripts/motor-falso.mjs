@@ -286,7 +286,7 @@ function servirArquivo(req, res, chave) {
   const ms = /^saidas\/([^/]+)\/([^/]+)\/(final\.mp4|mix\.wav|stems\/.*|capa\.jpg|cor\.json|cor\/.*)$/.exec(chave);
   if (ms) {
     const ver = projetos.get(ms[1])?.versoes.find((x) => x.id === ms[2]);
-    if (!ver || ver.estado !== 'entregue') return falha(res, 403, 'esta versão ainda não passou na conferência automática (QA)');
+    if (!ver || ver.estado !== 'entregue') return falha(res, 403, 'esta versão não foi entregue: não baixa, não tem link e não vai para o cliente (a segurada pela conferência dá para assistir só na tela do projeto)');
   }
   const tam = fs.statSync(f).size;
   const tipo = f.endsWith('.mp4') ? 'video/mp4' : f.endsWith('.json') ? 'application/json' : f.endsWith('.jpg') ? 'image/jpeg' : 'application/octet-stream';
@@ -460,6 +460,7 @@ async function rotear(req, res) {
     if (r3 === 'tratar' && M === 'POST') { if (!l.resposta) return falha(res, 404, 'pedido não encontrado'); l.tratado = l.tratado || agora(); return json(res, 200, linkDono(l)); }
     return falha(res, 404, 'rota não encontrada');
   }
+  if (r1 === 'marcas') return rotaMarcas(req, res, partes);                         // onda 4, item 5
   if (r1 !== 'projetos') return falha(res, 404, 'rota não encontrada');
 
   if (!pid) {
@@ -492,7 +493,8 @@ async function rotear(req, res) {
   if (r3 === 'versoes' && r4 && r5 === 'retirar' && M === 'POST') return rotaRetirar(res, p, r4);   // R15 (onda 3)
   if (r3 === 'eventos' && M === 'GET') return sse(req, res, pid, url);
   // mesmo formato do motor real ({projeto, versoes}); "entregas" só com as entregas ligadas
-  if (r3 === 'versoes' && !r4 && M === 'GET') return json(res, 200, { projeto: pid, versoes: p.versoes.map((v) => ({ ...v, ...(ENT.ligado && p.dados.entregas?.[v.id] ? { entregas: entPublico(p.dados.entregas[v.id]) } : {}) })) });
+  if (r3 === 'versoes' && !r4 && M === 'GET') return json(res, 200, { projeto: pid, versoes: p.versoes.map((v) => ({ ...v, segurada: seguradaF(p, v), ...(ENT.ligado && p.dados.entregas?.[v.id] ? { entregas: entPublico(p.dados.entregas[v.id]) } : {}) })) });
+  if (r3 === 'versoes' && r4 && r5 === 'segurada' && (M === 'GET' || M === 'HEAD')) return rotaSegurada(req, res, p, r4, partes[6]);   // onda 4, item 6
   if (r3 === 'links-cliente' && M === 'GET') return json(res, 200, { links: LINKS.filter((l) => l.projeto === pid).map(linkDono).reverse() });
   if (M !== 'POST') return falha(res, 405, 'método não permitido');
   const c = await lerCorpo(req);
@@ -562,7 +564,12 @@ async function rotear(req, res) {
     if (texto.length > 4000) return falha(res, 422, 'pedido longo demais (até 4000 caracteres)');
     if (c.duracao_alvo != null && (Number(c.duracao_alvo) < 5 || Number(c.duracao_alvo) > 600)) return falha(res, 422, 'duração alvo entre 5 e 600 s');
     if (c.modo != null && !['auto', 'criativo', 'ultra', 'cinema', 'ia', 'clean', 'serio', 'fala'].includes(c.modo)) return falha(res, 422, 'modo inválido');
-    p.dados.pedido = { texto: texto.slice(0, 200), tipo_video: c.tipo_video ?? 'auto', modo: c.modo ?? 'auto' };
+    let cliente = null;                        // como o motor real: "Super Kal" e "super_kal" viram "super-kal"; "-" é 422
+    if (c.cliente != null && String(c.cliente).trim()) {
+      cliente = slug(String(c.cliente)).slice(0, 40).replace(/-+$/, '');
+      if (!RE_CLIENTE_F.test(cliente)) return falha(res, 422, 'nome de cliente inválido');
+    }
+    p.dados.pedido = { texto: texto.slice(0, 200), tipo_video: c.tipo_video ?? 'auto', modo: c.modo ?? 'auto', ...(cliente ? { cliente } : {}) };
     p.dados.pedido.respostas = { formato: c.formato ?? null, destino: c.destino ?? null, obrigatorio: c.obrigatorio ?? [], proibido: c.proibido ?? [] };
     emitir(pid, 'estado', { mensagem: 'Pedido recebido.', dados: { pedido: texto.slice(0, 200) } });
     const dirigindo = tentarDirigir(p);
@@ -1522,6 +1529,13 @@ function cenarioF(p, c) {
   }
   if (qual === 'reprovado_qa') {
     const v = garantirVersao('reprovada_qa');
+    if (c.segurada !== false) {                // onda 4: a segurada tem o filme montado e o relatório que reprovou
+      const chave = `saidas/${p.id}/${v.id}/final.mp4`;
+      const destino = path.join(ARM, chave);
+      if (!fs.existsSync(destino)) { fs.mkdirSync(path.dirname(destino), { recursive: true }); fs.copyFileSync(AMOSTRA, destino); }
+      v.video = chave;
+      v.qa = JSON.stringify(QA_SEGURADA(p.id, v.id));
+    } else { v.video = null; }
     p.falhou = null;
     p.regrasMudaram = Boolean(c.mudou);
     p.estado = 'reprovado_qa';
@@ -1668,4 +1682,194 @@ function confirmarOnda3(p, esp, ev) {
   (p.dados.notas ??= []).push(n);
   emitirC(pid, 'resposta', { ...ev, resultado: 'feito', detalhe: 'Nota guardada.' });
   return [200, { feito: true, resultado: { nota: n.id } }];
+}
+
+
+// ---------- onda 4: marca do cliente (logo e mascote) e versão segurada pela conferência ----------
+// Mesmas rotas, status e frases do motor real (motor/api/marcas.py, motor/api/versoes.py, motor/api/motivos_qa.py). A conferência
+// da imagem aqui é só pelo cabeçalho (o motor real regrava a imagem com o Pillow); grava em $EDITOR_DADOS/armazenamento/marcas.
+const RE_CLIENTE_F = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
+const POSES_F = ['espiada', 'placa', 'moto', 'carro', 'aceno'];
+const TIPOS_IMG = ['image/png', 'image/jpeg', 'image/webp'];
+const LIMITE_IMG = 8 * 1024 * 1024;
+const slugMarca = (t) => { const x = slug(String(t ?? '')).slice(0, 40).replace(/-+$/, ''); return RE_CLIENTE_F.test(x) ? x : null; };
+const MARCAS_DIR = path.join(ARM, 'marcas');
+function lerMarcaF(s) {
+  const f = path.join(MARCAS_DIR, s, 'marca.json');
+  let m = { slug: s, nome: nomeCliente(s), logo: null, mascote: {} };
+  try { m = { ...m, ...JSON.parse(fs.readFileSync(f, 'utf8')) }; } catch { /* sem ficha */ }
+  if (m.logo && !fs.existsSync(path.join(MARCAS_DIR, s, 'logo.png'))) m.logo = null;
+  return m;
+}
+function gravarMarcaF(m) {
+  fs.mkdirSync(path.join(MARCAS_DIR, m.slug), { recursive: true });
+  fs.writeFileSync(path.join(MARCAS_DIR, m.slug, 'marca.json'), JSON.stringify(m));
+}
+function lerBruto(req, limite) {
+  return new Promise((ok) => {
+    let t = 0; const partes = []; let estourou = false;
+    req.on('data', (c) => { t += c.length; if (t > limite) { estourou = true; partes.length = 0; } else if (!estourou) partes.push(c); });
+    req.on('end', () => ok(estourou ? null : Buffer.concat(partes)));
+    req.on('error', () => ok(null));
+  });
+}
+// cabeçalho da imagem: [largura, altura, alfa, animada] ou null (não é PNG, JPEG nem WEBP)
+function medirImagem(b) {
+  if (b.length > 24 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) && b.toString('latin1', 12, 16) === 'IHDR') {
+    const w = b.readUInt32BE(16), h = b.readUInt32BE(20), tipo = b[25];
+    return [w, h, tipo === 4 || tipo === 6 || b.includes(Buffer.from('tRNS')), b.includes(Buffer.from('acTL'))];
+  }
+  if (b.length > 4 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) {
+    for (let i = 2; i + 9 < b.length;) {
+      if (b[i] !== 0xff) { i++; continue; }
+      const mk = b[i + 1];
+      if (mk >= 0xc0 && mk <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(mk)) return [b.readUInt16BE(i + 7), b.readUInt16BE(i + 5), false, false];
+      i += 2 + b.readUInt16BE(i + 2);
+    }
+    return null;
+  }
+  if (b.length > 30 && b.toString('latin1', 0, 4) === 'RIFF' && b.toString('latin1', 8, 12) === 'WEBP') {
+    const k = b.toString('latin1', 12, 16);
+    if (k === 'VP8X') return [1 + b.readUIntLE(24, 3), 1 + b.readUIntLE(27, 3), Boolean(b[20] & 0x10), Boolean(b[20] & 0x02)];
+    if (k === 'VP8L') { const v = b.readUInt32LE(21); return [1 + (v & 0x3fff), 1 + ((v >> 14) & 0x3fff), Boolean((v >> 28) & 1), false]; }
+    if (k === 'VP8 ') return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff, false, false];
+  }
+  return null;
+}
+function listaMarcasF() {
+  let dirs = [];
+  try { dirs = fs.readdirSync(MARCAS_DIR).filter((d) => slugMarca(d) === d).sort(); } catch { /* nenhuma */ }
+  const out = [];
+  for (const s of dirs) {
+    const m = lerMarcaF(s);
+    const poses = POSES_F.filter((x) => m.mascote?.[x] && fs.existsSync(path.join(MARCAS_DIR, s, 'mascote', `${x}.png`)));
+    if (!m.logo && !poses.length) continue;
+    const datas = [m.logo?.enviado_em, ...poses.map((x) => m.mascote[x].enviado_em)].filter(Boolean).sort();
+    out.push({ slug: s, nome: m.nome, logo: Boolean(m.logo), atualizado: datas.pop() ?? null, mascote: poses,
+      medidas: m.logo ? { w: m.logo.w, h: m.logo.h, alfa: m.logo.alfa } : null });
+  }
+  return out;
+}
+function servirPng(res, f) {
+  if (!fs.existsSync(f)) return falha(res, 404, 'imagem não cadastrada');
+  const b = fs.readFileSync(f);
+  res.writeHead(200, { 'content-type': 'image/png', 'content-length': b.length, 'x-content-type-options': 'nosniff', 'cache-control': 'private, no-cache' });
+  res.end(b);
+}
+async function rotaMarcas(req, res, partes) {
+  const M = req.method;
+  const [, , cliente, alvo, pose, fim] = partes;
+  if (!cliente) return M === 'GET' ? json(res, 200, { marcas: listaMarcasF(), fixos: CLIENTES_FIXOS }) : falha(res, 405, 'método não permitido');
+  const s = slugMarca(cliente);
+  if (!s) return falha(res, 422, 'nome de cliente inválido');
+  const ehLogo = alvo === 'logo';
+  if (!ehLogo && alvo !== 'mascote') return falha(res, 404, 'rota não encontrada');
+  if (!ehLogo && !POSES_F.includes(pose ?? '')) return falha(res, 404, 'pose do mascote não existe');
+  const apagar = ehLogo ? pose === 'apagar' : fim === 'apagar';
+  const arq = ehLogo ? path.join(MARCAS_DIR, s, 'logo.png') : path.join(MARCAS_DIR, s, 'mascote', `${pose}.png`);
+  if (M === 'GET' && !apagar && (ehLogo ? !pose : !fim)) return servirPng(res, arq);
+  if (M !== 'POST') return falha(res, 405, 'método não permitido');
+  const m = lerMarcaF(s);
+  if (apagar) {
+    fs.rmSync(arq, { force: true });
+    if (ehLogo) m.logo = null; else delete m.mascote[pose];
+    gravarMarcaF(m);
+    return json(res, 200, ehLogo ? { slug: s, logo: false } : { slug: s, pose, apagada: true });
+  }
+  if (ehLogo ? pose : fim) return falha(res, 404, 'rota não encontrada');
+  const tipo = String(req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
+  if (!TIPOS_IMG.includes(tipo)) return falha(res, 415, 'tipo de arquivo não aceito: mande a imagem em PNG, JPEG ou WEBP');
+  if (Number(req.headers['content-length'] ?? 0) > LIMITE_IMG) return falha(res, 413, 'imagem grande demais: mande com até 8 MB');
+  const b = await lerBruto(req, LIMITE_IMG);
+  if (b === null) return falha(res, 413, 'imagem grande demais: mande com até 8 MB');
+  const med = b.length ? medirImagem(b) : null;
+  if (!med) return falha(res, 422, 'não é uma imagem válida');
+  let [w, h, alfa, animada] = med;
+  if (w * h > 40_000_000) return falha(res, 422, 'imagem grande demais: mande com até 40 milhões de pixels');
+  if (animada) return falha(res, 422, 'imagem animada não serve como logo');
+  if (Math.max(w, h) < 512) return falha(res, 422, 'imagem pequena demais: mande com pelo menos 512 px no lado maior');
+  if (!ehLogo && !alfa) return falha(res, 422, 'o mascote precisa de fundo transparente');
+  if (Math.max(w, h) > 2048) { const k = 2048 / Math.max(w, h); w = Math.round(w * k); h = Math.round(h * k); }
+  fs.mkdirSync(path.dirname(arq), { recursive: true });
+  fs.writeFileSync(arq, b);              // o motor real regrava em PNG; o falso guarda como chegou (só serve à tela)
+  const ficha = { sha256: createHash('sha256').update(b).digest('hex'), w, h, alfa, enviado_em: agora() };
+  if (ehLogo) m.logo = ficha; else m.mascote = { ...(m.mascote ?? {}), [pose]: ficha };
+  gravarMarcaF(m);
+  return json(res, 200, ehLogo ? { slug: s, logo: true, w, h, alfa } : { slug: s, pose, w, h, alfa });
+}
+
+const MOTIVOS_F = {
+  fala_cortada: ['Fala cortada', 'Uma fala foi cortada antes de terminar'],
+  voz_externa: ['Voz de fora', 'Dá para ouvir a voz de alguém que não devia estar no filme'],
+  cobertura_sintonia: ['Boca fora de sincronia', 'Aparece alguém falando fora de sincronia com a voz'],
+  frase_repetida: ['Frase em laço', 'Uma frase se repete no fundo, como em laço'],
+  tom_sala_sem_voz: ['Fundo com conversa', 'O som de fundo tem gente conversando'],
+  legenda_x_fala: ['Legenda diferente da fala', 'A legenda não bate com o que foi dito'],
+};
+// o caso real de 26/11 (diálogo do Super Kal), num filme de amostra de 5 s
+const QA_SEGURADA = (pid, v) => ({
+  versao: '1', projeto: pid, video: `saidas/${pid}/${v}/final.mp4`, aprovado: false, tempo_s: 52,
+  checagens: [
+    { id: 'duracao', ok: true, bloqueia: true, valor: { video_s: 5, edl_s: 5 } },
+    { id: 'lufs', ok: true, bloqueia: true, valor: -14.1 },
+    { id: 'fala_cortada', ok: false, bloqueia: true, detalhe: '2 de 9 falas cortadas no fim', valor: { problemas: [{ id: 'V3', onde: 'fim', t: 1.2, s: 81.3 }, { id: 'V7', onde: 'fim', t: 3.6, s: 9.9 }] } },
+    { id: 'voz_externa', ok: false, bloqueia: true, detalhe: 'conversa no som direto do plano P2', valor: { achados: [{ id: 'P2', t: [2.4, 3.1] }] } },
+    { id: 'cobertura_sintonia', ok: false, bloqueia: true, detalhe: 'segunda câmera com rosto sobre a fala', valor: { coberturas: { P4: { trechos: [{ plano: 'P4', t0: 4.1, t1: 4.9 }] } } } },
+    { id: 'tom_sala_sem_voz', ok: false, bloqueia: true, detalhe: 'tom de sala com gente conversando' },
+    { id: 'legenda_sobre_rosto', ok: false, bloqueia: false, detalhe: 'aviso', valor: [{ t: 0.5 }] },
+  ],
+});
+function quandoF(valor, dur) {
+  const ts = [];
+  const andar = (x, prof = 0) => {
+    if (prof > 6 || !x || typeof x !== 'object') return;
+    if (Array.isArray(x)) { x.slice(0, 60).forEach((y) => andar(y, prof + 1)); return; }
+    for (const k of ['t', 'pior_t']) { const t = x[k]; if (typeof t === 'number') ts.push(t); else if (Array.isArray(t) && typeof t[0] === 'number') ts.push(t[0]); }
+    if (typeof x.t0 === 'number' && typeof x.t1 === 'number') ts.push(x.t0);
+    for (const [k, y] of Object.entries(x)) if (!['t', 'pior_t', 't0', 't1', 's', 's0', 's1'].includes(k) && y && typeof y === 'object') andar(y, prof + 1);
+  };
+  andar(valor);
+  const out = [];
+  for (const t of ts.sort((a, b) => a - b)) {
+    if (t < 0 || (dur && t > dur + 0.5)) continue;
+    const r = Math.round(t * 10) / 10;
+    if (!out.length || r - out[out.length - 1] >= 1) out.push(r);
+    if (out.length >= 6) break;
+  }
+  return out.length ? out : null;
+}
+function seguradaF(p, v) { return v.estado === 'reprovada_qa' && Boolean(v.video) && fs.existsSync(path.join(ARM, v.video)); }
+function rotaSegurada(req, res, p, vid, resto) {
+  const v = p.versoes.find((x) => x.id === vid);
+  if (!v) return falha(res, 404, 'versão não encontrada');
+  if (resto && resto !== 'video') return falha(res, 404, 'rota não encontrada');
+  if (v.estado !== 'reprovada_qa') return falha(res, 409, 'esta versão não está segurada pela conferência');
+  if (!seguradaF(p, v)) return falha(res, 410, 'o vídeo desta versão não existe mais');
+  if (resto === 'video') {
+    const f = path.join(ARM, v.video);
+    const tam = fs.statSync(f).size;
+    const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+    let ini = 0, fim = tam - 1, status = 200;
+    if (m && (m[1] || m[2])) {
+      if (m[1]) { ini = Number(m[1]); fim = m[2] ? Math.min(Number(m[2]), tam - 1) : tam - 1; } else ini = Math.max(0, tam - Number(m[2]));
+      if (ini > fim || ini >= tam) { res.writeHead(416, { 'content-range': `bytes */${tam}` }); return res.end(); }
+      status = 206;
+    }
+    const h = { 'content-type': 'video/mp4', 'accept-ranges': 'bytes', 'content-length': fim - ini + 1, 'content-disposition': 'inline',
+      'cache-control': 'no-store, private', 'x-robots-tag': 'noindex, nofollow', 'x-content-type-options': 'nosniff' };
+    if (status === 206) h['content-range'] = `bytes ${ini}-${fim}/${tam}`;
+    res.writeHead(status, h);
+    if (req.method === 'HEAD') return res.end();
+    return fs.createReadStream(f, { start: ini, end: fim }).pipe(res);
+  }
+  if (req.method === 'HEAD') return falha(res, 405, 'método não permitido');
+  let qa = null;
+  try { qa = typeof v.qa === 'string' ? JSON.parse(v.qa) : v.qa; } catch { qa = null; }
+  const dur = qa?.checagens?.find((c) => c.id === 'duracao')?.valor?.video_s ?? null;
+  const motivos = (qa?.checagens ?? []).filter((c) => !c.ok && c.bloqueia !== false).map((c) => {
+    const [titulo, frase] = MOTIVOS_F[c.id] ?? ['Conferência técnica', `Uma conferência técnica não passou (${c.id})`];
+    return { id: c.id, titulo, frase, quando: quandoF(c.valor, dur) };
+  });
+  return json(res, 200, { versao: v.id, estado: 'reprovada_qa', nao_entregue: true, video: `/v1/projetos/${p.id}/versoes/${v.id}/segurada/video`,
+    duracao: dur, motivos, regra: 'Só para assistir aqui. Não foi entregue: não baixa, não compartilha e não vai para o cliente.' });
 }

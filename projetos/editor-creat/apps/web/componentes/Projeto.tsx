@@ -8,6 +8,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import ApagarProjeto from './ApagarProjeto';
 import Envio from './Envio';
 import Notas, { lerNotas } from './Notas';
+import Segurada from './Segurada';
+import { lerMarcas, type ListaMarcas } from './Marcas';
 import BarraConversa from './conversa/Barra';
 import Fio from './conversa/Fio';
 import MesaAoVivo, { AgoraNaMesa } from './conversa/MesaAoVivo';
@@ -69,6 +71,9 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   const [batendo, setBatendo] = useState(false);         // claquete do Aprovar
   const [corta, setCorta] = useState(false);             // "Corta! Aprovada" na barra logo depois do Aprovar
   const [ajusteDe, setAjusteDe] = useState<string | null>(null); // versão com o formulário de ajuste aberto
+  // versão segurada pela conferência: qual está no lugar do player e se o dono abriu para assistir (onda 4, item 6)
+  const [seguradaSel, setSeguradaSel] = useState<string | null>(null);
+  const [seguradaAberta, setSeguradaAberta] = useState(false);
   // Página de entregas no Cloudflare: só aparece quando o motor diz que está ligada (sem as variáveis, nada muda na tela).
   const [clientesEnt, setClientesEnt] = useState<ClientesEntregas | null>(null);
   const [clienteEnt, setClienteEnt] = useState('');      // "Vai para as entregas de:" (escolhido ANTES de aprovar)
@@ -352,6 +357,15 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   // Regra do dono: nunca mostrar versão com erro conhecido. Só a versão ENTREGUE (QA aprovado) toca e baixa.
   const assistir = versoes.find((v) => v.estado === 'entregue' && v.video) ?? null;
   const emProducao = versoes.find((v) => v.estado !== 'entregue' && v.estado !== 'reprovada') ?? null;
+  // A segurada pela conferência pode ser ASSISTIDA aqui (rota própria, marcada como não entregue); nunca baixa nem tem link.
+  const seguradas = versoes.filter((v) => v.estado === 'reprovada_qa' && v.video);
+  const seguradaPadrao = emProducao?.estado === 'reprovada_qa' && emProducao.video ? emProducao.id : null;
+  const seguradaNaTela = seguradaSel && seguradas.some((v) => v.id === seguradaSel) ? seguradaSel : seguradaPadrao;
+  const assistirSegurada = (vid: string) => {
+    setSeguradaSel(vid);
+    setSeguradaAberta(true);
+    window.setTimeout(() => irPara('t-versoes'), 40);
+  };
   // a mesa ao vivo (onda 2) substitui o diário de 12 linhas: tudo o que a mesa fez, com quem, tempo, custo e achado
   const temMesa = conversa.montado.itens.some((it) => it.k === 'mesa');
   const trilha = (
@@ -512,10 +526,14 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
         <>
           <p className="barra-comando__status" role="status">
             <strong>{reprovado ? 'A conferência segurou a entrega' : 'A edição parou com erro'}</strong>
-            <span>o motivo está na mesa ao vivo</span>
+            <span>{reprovado && seguradaPadrao ? (seguradaAberta && seguradaNaTela === seguradaPadrao ? 'os motivos estão embaixo do vídeo'
+              : 'dá para assistir aqui, marcada como não entregue') : 'o motivo está na mesa ao vivo'}</span>
             {!reprovado && refazerOps && <span data-teste="refazer-nada">Não achei o que tentar de novo. Peça na conversa.</span>}
           </p>
-          {verMotivo}
+          {reprovado && seguradaPadrao && !(seguradaAberta && seguradaNaTela === seguradaPadrao) ? (
+            <button type="button" className="botao botao--secundario barra-comando__secundario" data-teste="assistir-segurada-barra"
+              onClick={() => assistirSegurada(seguradaPadrao)}>Assistir a {seguradaPadrao.toUpperCase()}</button>
+          ) : verMotivo}
         </>
       );
     }
@@ -593,7 +611,8 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       <h2 className="cartao__titulo" id="t-pedido">Pedido</h2>
       <Pedido pid={p.id} atual={p.dados?.pedido?.texto ?? null} aberto={aberto} formRef={formPedido}
         aoMudarTexto={setRascunho} aoMandar={enviarPedido} />
-      {p.dados?.pedido?.texto && <p className="aviso" data-teste="modo-atual">Modo de edição: {rotuloModo(p.dados.pedido.modo)}</p>}
+      {p.dados?.pedido?.texto && <p className="aviso" data-teste="modo-atual">Modo de edição: {rotuloModo(p.dados.pedido.modo)}
+        {(p.dados.pedido as { cliente?: string | null }).cliente ? ` · para ${nomeCliente((p.dados.pedido as { cliente?: string }).cliente)}` : ''}</p>}
     </section>
   );
   const blocoRelogio = (
@@ -635,9 +654,11 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       {assistir ? (
         <video key={assistir.id} className="player" controls playsInline preload="metadata" data-teste="player" data-versao={assistir.id}
           src={`/api/motor/v1/arquivos/${assistir.video}#t=0.1`} aria-label={`Versão ${assistir.id}`} />
+      ) : seguradaNaTela ? (
+        <Segurada key={seguradaNaTela} pid={p.id} versao={seguradaNaTela} aberta={seguradaAberta} aoAbrir={setSeguradaAberta} />
       ) : (
         <div className="player-vazio"><p>{
-          emProducao?.estado === 'reprovada_qa' ? `A conferência automática segurou a ${emProducao.id.toUpperCase()}: ela não vai para o player.`
+          emProducao?.estado === 'reprovada_qa' ? `A conferência automática segurou a ${emProducao.id.toUpperCase()}: ela não foi entregue. O motivo está na mesa ao vivo.`
             : emProducao?.estado === 'erro' ? `A ${emProducao.id.toUpperCase()} parou com erro; o motivo está na mesa ao vivo.`
             : emProducao ? `A ${emProducao.id.toUpperCase()} está sendo feita. Ela aparece aqui quando passar na conferência.`
             : 'O filme aparece aqui quando passar na conferência.'}</p></div>
@@ -647,6 +668,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
           {versoes.map((v) => <LinhaVersao key={v.id} pid={p.id} v={v} aprovada={Boolean(p.dados?.aprovadas?.[v.id])}
             naBarra={v.id === assistir?.id} ajusteAberto={ajusteDe === v.id} aoAbrirAjuste={(sim) => setAjusteDe(sim ? v.id : null)}
             aoAprovar={() => aprovar(v.id)} batendo={batendo}
+            seguradaNaTela={!assistir && seguradaAberta && seguradaNaTela === v.id} aoAssistirSegurada={() => assistirSegurada(v.id)}
             aoReprovar={(motivo) => reprovar(v.id, motivo)}
             clientes={clientesEnt} cliente={clienteEnt} aoTrocarCliente={setClienteEnt} mandar={mandarEnt} aoMandar={setMandarEnt}
             aoMudarEntregas={(e) => { setEntregas((m) => ({ ...m, [v.id]: e })); recarregar(); }} />)}
@@ -852,6 +874,30 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
   const [modoSel, setModoSel] = useState('auto');
   const chave = `ec-pedido-${pid}`;
   const mostraForm = !(atual && !aberto);
+  // Para qual cliente (onda 4, item 5): as marcas cadastradas + os clientes fixos, com a sugestão das entregas para o projeto.
+  // Com a logo cadastrada, o fecho do filme assina com ela; "Nenhum" deixa só a creat.MTT.
+  const [marcas, setMarcas] = useState<ListaMarcas | null>(null);
+  const [clienteSel, setClienteSel] = useState('');
+  const escolheu = useRef(false);
+  useEffect(() => {
+    if (!mostraForm) return;
+    let vivo = true;
+    (async () => {
+      const [m, c] = await Promise.all([
+        lerMarcas(),
+        fetch(`/api/motor/v1/entregas/clientes?projeto=${encodeURIComponent(pid)}`, { cache: 'no-store' })
+          .then((r) => (r.ok ? r.json() : null)).catch(() => null) as Promise<ClientesEntregas | null>,
+      ]);
+      if (!vivo) return;
+      setMarcas(m);
+      const sug = c?.sugerido && c.sugerido !== c.padrao ? c.sugerido : '';
+      if (!escolheu.current && sug) setClienteSel(sug);
+    })();
+    return () => { vivo = false; };
+  }, [pid, mostraForm]);
+  const opcoesCliente = [...new Set([...(marcas?.fixos ?? []), ...(marcas?.marcas ?? []).map((m) => m.slug), ...(clienteSel ? [clienteSel] : [])])]
+    .filter((s) => s !== 'creat-mtt');
+  const comLogo = (s: string) => Boolean(marcas?.marcas.find((m) => m.slug === s)?.logo);
   useEffect(() => {
     const f = formRef.current;
     if (!mostraForm || !f) return;
@@ -903,6 +949,7 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
       }
       const livre = String(f.get('precisa') ?? '').trim();
       if (livre) (extra.obrigatorio as string[]).push(livre.slice(0, 200));
+      if (clienteSel) extra.cliente = clienteSel;
       if (await aoMandar({ texto, modo, ...extra, ...(duracao ? { duracao_alvo: duracao } : {}) })) {
         form.reset();
         setModoSel('auto');
@@ -949,6 +996,17 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
             enterKeyHint="done" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }} />
         </label>
       </div>
+      <div className="campo" data-teste="pedido-cliente-campo">
+        <label className="campo__rotulo" htmlFor={`pedido-cliente-${pid}`}>Para qual cliente?</label>
+        <select className="entrada" id={`pedido-cliente-${pid}`} name="cliente" value={clienteSel} data-teste="pedido-cliente" aria-describedby={`pedido-cliente-aviso-${pid}`}
+          onChange={(e) => { escolheu.current = true; setClienteSel(e.currentTarget.value); }}>
+          <option value="">Nenhum: só a marca da creat.MTT</option>
+          {opcoesCliente.map((s) => <option key={s} value={s}>{nomeCliente(s, marcas?.marcas.find((m) => m.slug === s)?.nome)}{comLogo(s) ? ' · com logo' : ''}</option>)}
+        </select>
+        <span className="aviso" id={`pedido-cliente-aviso-${pid}`} data-teste="pedido-cliente-aviso">{!clienteSel ? 'O fim do filme assina só com a creat.MTT.'
+          : comLogo(clienteSel) ? `O fim do filme assina com a logo de ${nomeCliente(clienteSel)}.`
+            : <>{nomeCliente(clienteSel)} ainda não tem logo cadastrada: o fim sai com a creat.MTT. <a className="ref-link" href="/caderno#marcas">Cadastrar no Caderno</a></>}</span>
+      </div>
       <label className="campo">
         <span className="campo__rotulo">Duração</span>
         <select className="entrada" name="duracao" defaultValue="0">
@@ -966,8 +1024,10 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
 }
 
 // naBarra: é a versão no player; o Aprovar e o "Pedir ajuste" dela moram na barra de comando (data-teste num lugar só).
-function LinhaVersao({ pid, v, aprovada, naBarra, ajusteAberto, aoAbrirAjuste, batendo, aoAprovar, aoReprovar, clientes, cliente, aoTrocarCliente, aoMudarEntregas, mandar, aoMandar }: {
+function LinhaVersao({ pid, v, aprovada, naBarra, ajusteAberto, aoAbrirAjuste, batendo, aoAprovar, aoReprovar, clientes, cliente, aoTrocarCliente, aoMudarEntregas, mandar, aoMandar, seguradaNaTela, aoAssistirSegurada }: {
   pid: string; v: Versao; aprovada: boolean; naBarra: boolean; ajusteAberto: boolean; aoAbrirAjuste: (sim: boolean) => void;
+  /** a segurada desta linha já está aberta no lugar do player; o toque abre a versão segurada lá em cima */
+  seguradaNaTela: boolean; aoAssistirSegurada: () => void;
   batendo: boolean; aoAprovar: () => Promise<unknown>; aoReprovar: (motivo: string) => Promise<unknown>;
   clientes: ClientesEntregas | null; cliente: string; aoTrocarCliente: (c: string) => void; aoMudarEntregas: (e: Entregas) => void;
   mandar: boolean; aoMandar: (sim: boolean) => void;
@@ -1045,6 +1105,11 @@ function LinhaVersao({ pid, v, aprovada, naBarra, ajusteAberto, aoAbrirAjuste, b
         ) : (
           <div className="linha-acoes" style={{ marginTop: 0 }}>
             {entregue && v.video && <a className="botao botao--fantasma botao--pequeno" href={`/api/motor/v1/arquivos/${v.video}`} download data-teste="baixar">Baixar</a>}
+            {v.estado === 'reprovada_qa' && v.video && !seguradaNaTela && (
+              <button className="botao botao--secundario botao--pequeno" type="button" data-teste="assistir-segurada-linha" onClick={aoAssistirSegurada}>
+                Assistir a {v.id.toUpperCase()} segurada
+              </button>
+            )}
             {entregue && !aprovada && !naBarra && (
               <button className="botao botao--ok botao--pequeno" type="button" disabled={batendo} onClick={() => void aoAprovar()}>
                 <span className={`claquete${batendo ? ' claquete--bateu' : ''}`} aria-hidden="true" />{batendo ? 'Batendo…' : 'Aprovar'}

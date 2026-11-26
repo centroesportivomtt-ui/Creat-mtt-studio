@@ -14,6 +14,8 @@
 //    bastidores, taxímetro, erro e aviso em texto puro, interrupção sem avatar pulsando e rede caindo sem duplicar.
 // 8. onda 3 (scripts/aceite-onda3.mjs): "Tentar de novo", "Conferir de novo", "Ler de novo", cartões de trilha, refazer e nota,
 //    apagar projeto (com a recusa da página de entregas), regras do Caderno com "Apagar" e o prazo da conversa, com prints.
+// 9. onda 4 (scripts/aceite-onda4.mjs): logo do cliente no Caderno (enviar, trocar, recusar, apagar), "Para qual cliente" no
+//    pedido e a versão segurada pela conferência à vista (faixa NÃO ENTREGUE, motivos com o tempo, sem baixar), com prints.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomBytes, scryptSync } from 'node:crypto';
 import fs from 'node:fs';
@@ -23,6 +25,7 @@ import { chromium } from 'playwright';
 import { aceiteConversa } from './aceite-conversa.mjs';
 import { aceiteMesa } from './aceite-mesa.mjs';
 import { aceiteOnda3 } from './aceite-onda3.mjs';
+import { aceiteOnda4 } from './aceite-onda4.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.resolve(AQUI, '..');
@@ -897,6 +900,9 @@ async function principal() {
 
   // ---------- 7. onda 3: refazer uma etapa, cartões novos, apagar projeto, regras do Caderno e prazo da conversa ----------
   await medir('onda3_s', () => aceiteOnda3({ BASE, MOTOR: `http://127.0.0.1:${PORTA_MOTOR}`, TOKEN: env.MOTOR_TOKEN, SENHA, DADOS, ok }));
+
+  // ---------- 8. onda 4: marca do cliente (logo no Caderno e cliente no pedido) e versão segurada à vista, com os motivos ----------
+  await medir('onda4_s', () => aceiteOnda4({ BASE, MOTOR: `http://127.0.0.1:${PORTA_MOTOR}`, TOKEN: env.MOTOR_TOKEN, SENHA, DADOS, ok }));
 
   const olhar = acharOlhar();
   if (olhar) {

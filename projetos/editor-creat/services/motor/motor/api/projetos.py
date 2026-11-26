@@ -389,9 +389,16 @@ _SO_ENTREGUE = re.compile(r"^(final\.mp4|mix\.wav|stems/.*|capa\.jpg|entrega\.js
 _NUNCA_SERVIDO = re.compile(r"^stems/reais(\.[A-Za-z0-9]+)?$")   # som do banco (Sonniss) isolado: a licença proíbe redistribuir
 
 
+REGRA_NAO_ENTREGUE = ("Versão não entregue nunca sai do editor: não baixa, não tem link e não vai para o cliente. A segurada pela "
+                      "conferência pode ser assistida só aqui, na tela do projeto, marcada como não entregue.")
+
+
 def _liberado(chave: str) -> None:
-    """Regra do dono: nunca mostrar/baixar versão com erro conhecido. O vídeo (e o áudio) de uma versão só saem
-    depois que a versão está 'entregue' (QA aprovado e mesmo sha256). Evidências do QA continuam visíveis.
+    """Regra do dono: versão não entregue nunca sai do editor: não baixa, não tem link e não vai para o cliente. O vídeo (e o
+    áudio) de uma versão só saem por aqui depois que a versão está 'entregue' (QA aprovado e mesmo sha256). A segurada pela
+    conferência pode ser assistida só na tela do projeto, marcada como não entregue, pela rota própria
+    `/v1/projetos/{pid}/versoes/{v}/segurada/video` (api/versoes.py), que nunca passa por esta função nem redireciona para o R2.
+    Evidências do QA continuam visíveis.
     O stem `reais` (sons do banco sozinhos, M6) nunca sai, nem entregue: só o filme e o mix completo, que são a obra."""
     m = _RE_SAIDA.match(chave)
     if m and _NUNCA_SERVIDO.match(m.group(3)):
@@ -401,7 +408,8 @@ def _liberado(chave: str) -> None:
     with _con() as con:
         r = con.execute("SELECT estado FROM versoes WHERE projeto=? AND id=?", (m.group(1), m.group(2))).fetchone()
     if r is None or r["estado"] != "entregue":
-        raise HTTPException(403, "esta versão ainda não passou na conferência automática (QA); o vídeo sai só depois de aprovado")
+        raise HTTPException(403, "esta versão não foi entregue: não baixa, não tem link e não vai para o cliente (a segurada pela "
+                                 "conferência dá para assistir só na tela do projeto)")
 
 
 def _cabecalhos_tipo(nome: str) -> tuple[str, dict]:
@@ -428,8 +436,13 @@ def servir_arquivo(chave: str, range: Optional[str] = Header(default=None)):
     if getattr(arm, "nome", "") != "local":
         return RedirectResponse(arm.url(chave), status_code=307)
     caminho = arm.caminho_local(chave)
-    total = caminho.stat().st_size
     tipo, extra = _cabecalhos_tipo(caminho.name)
+    return com_range(caminho, range, tipo, {"Cache-Control": "private, max-age=3600", **extra})
+
+
+def com_range(caminho: pathlib.Path, range: Optional[str], tipo: str, cabecalhos: dict) -> StreamingResponse:
+    """Arquivo local em streaming com Range (200 inteiro, 206 pedaço, 416 fora). Usado pelo player e pela versão segurada."""
+    total = caminho.stat().st_size
     ini, fim, status = 0, total - 1, 200
     if range:
         m = _RE_RANGE.match(range.strip())
@@ -456,7 +469,7 @@ def servir_arquivo(chave: str, range: Optional[str] = Header(default=None)):
                 falta -= len(bloco)
                 yield bloco
 
-    cab = {"Accept-Ranges": "bytes", "Content-Length": str(tamanho), "Cache-Control": "private, max-age=3600", **extra}
+    cab = {"Accept-Ranges": "bytes", "Content-Length": str(tamanho), **cabecalhos}
     if status == 206:
         cab["Content-Range"] = f"bytes {ini}-{fim}/{total}"
     return StreamingResponse(ler(), status_code=status, media_type=tipo, headers=cab)

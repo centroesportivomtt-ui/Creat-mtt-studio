@@ -6,6 +6,13 @@ POST /v1/projetos/{pid}/versoes/{v}/aprovar     {nota?, cliente?} -> o dono apro
                                                 casa e (com as entregas no Cloudflare ligadas) vai para a página de entregas
 POST /v1/projetos/{pid}/versoes/{v}/entregas    {cliente?} -> "Tentar agora" (só versão aprovada)
 GET  /v1/entregas/clientes?projeto=<pid>        -> clientes para escolher antes de aprovar + o sugerido para o projeto
+GET  /v1/projetos/{pid}/versoes/{v}/segurada    -> versão segurada pela conferência: motivos em frase do dono + endereço do vídeo
+GET|HEAD /v1/projetos/{pid}/versoes/{v}/segurada/video -> o filme segurado, só para assistir na tela (onda 4, D50)
+
+Regra do dono: versão não entregue nunca sai do editor: não baixa, não tem link e não vai para o cliente. A segurada pela
+conferência pode ser assistida só aqui, na tela do projeto, marcada como não entregue. Por isso a rota da segurada responde só
+com a sessão do site (o proxy exige), só para `reprovada_qa`, com `no-store` e `inline`, e nunca redireciona para o R2
+(`/v1/arquivos/...final.mp4` continua 403 para ela).
 """
 from __future__ import annotations
 
@@ -15,7 +22,8 @@ import re
 from contextlib import contextmanager
 from typing import Literal, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from motor import banco, config, entregas_r2
@@ -69,7 +77,9 @@ def listar(pid: str):
                 "falhas": [{"id": c["id"], "detalhe": c.get("detalhe", "")} for c in qa["checagens"] if not c["ok"] and c["bloqueia"]],
                 "avisos": [{"id": c["id"], "detalhe": c.get("detalhe", "")} for c in qa["checagens"] if not c["ok"] and not c["bloqueia"]]}
             entregue = d["estado"] == "entregue"
-            if not entregue:         # versão não entregue não tem link nem vídeo para o site (regra: nunca a versão com erro)
+            # segurada pela conferência: dá para ASSISTIR na tela do projeto (rota própria), nunca baixar nem ter link
+            d["segurada"] = d["estado"] == "reprovada_qa" and arm is not None and arm.existe(f"{base}/final.mp4")
+            if not entregue:         # versão não entregue não tem link nem vídeo para o site: não baixa, não vai para o cliente
                 d["video"] = None
             d["link"] = (d.get("link") or (arm.url(f"{base}/final.mp4") if arm is not None and arm.existe(f"{base}/final.mp4") else None)) if entregue else None
             d["capa"] = arm.url(f"{base}/capa.jpg") if arm is not None and arm.existe(f"{base}/capa.jpg") else None
@@ -208,3 +218,65 @@ def clientes_entregas(projeto: Optional[str] = None):
             if out["sugerido"] not in slugs:
                 out["clientes"].append({"slug": out["sugerido"], "nome": entregas_r2.nome_cliente(out["sugerido"])})
     return out
+
+
+# ---------------------------------------------------------------- versão segurada pela conferência (onda 4, D50/D51)
+REGRA_SEGURADA = "Só para assistir aqui. Não foi entregue: não baixa, não compartilha e não vai para o cliente."
+CAB_SEGURADA = {"Content-Disposition": "inline", "Cache-Control": "no-store, private", "X-Robots-Tag": "noindex, nofollow",
+                "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer"}
+
+
+def _segurada(con, arm, pid: str, v: str) -> str:
+    """Confere tudo e devolve a chave do final.mp4 da versão segurada (404, 409 ou 410 com a frase do dono)."""
+    if con.execute("SELECT 1 FROM projetos WHERE id=?", (pid,)).fetchone() is None:
+        raise HTTPException(404, "projeto não encontrado")
+    r = con.execute("SELECT estado FROM versoes WHERE projeto=? AND id=?", (pid, v)).fetchone()
+    if r is None:
+        raise HTTPException(404, "versão não encontrada")
+    if r["estado"] != "reprovada_qa":
+        raise HTTPException(409, "esta versão não está segurada pela conferência")
+    chave = f"saidas/{pid}/{v}/final.mp4"
+    if arm is None or not arm.existe(chave):
+        raise HTTPException(410, "o vídeo desta versão não existe mais")
+    if getattr(arm, "nome", "") != "local":       # nunca 307 para o R2: o endereço assinado viraria um link copiável
+        raise HTTPException(409, "assistir a versão segurada só funciona com o armazenamento local")
+    return chave
+
+
+def _duracao(qa: dict | None) -> float | None:
+    for c in (qa or {}).get("checagens") or []:
+        val = c.get("valor") if isinstance(c, dict) else None
+        if c.get("id") == "duracao" and isinstance(val, dict) and isinstance(val.get("video_s"), (int, float)):
+            return round(float(val["video_s"]), 2)
+    return None
+
+
+@rotas.get("/projetos/{pid}/versoes/{v}/segurada")
+def ver_segurada(pid: str, v: str):
+    _valida(pid, v)
+    from motor.api import motivos_qa
+    with _ctx() as (cfg, con, arm):
+        _segurada(con, arm, pid, v)
+        qa = _ler(arm, f"saidas/{pid}/{v}/qa.json")
+        dur = _duracao(qa)
+        return {"versao": v, "estado": "reprovada_qa", "nao_entregue": True, "video": f"/v1/projetos/{pid}/versoes/{v}/segurada/video",
+                "duracao": dur, "motivos": motivos_qa.motivos(qa, dur), "regra": REGRA_SEGURADA}
+
+
+@rotas.get("/projetos/{pid}/versoes/{v}/segurada/video")
+def video_segurada(pid: str, v: str, range: Optional[str] = Header(default=None)):
+    _valida(pid, v)
+    from motor.api.projetos import com_range
+    with _ctx() as (cfg, con, arm):
+        chave = _segurada(con, arm, pid, v)
+        caminho = arm.caminho_local(chave)
+    return com_range(caminho, range, "video/mp4", dict(CAB_SEGURADA))
+
+
+@rotas.head("/projetos/{pid}/versoes/{v}/segurada/video")
+def cabecalho_segurada(pid: str, v: str):
+    _valida(pid, v)
+    with _ctx() as (cfg, con, arm):
+        chave = _segurada(con, arm, pid, v)
+        tam = arm.tamanho(chave)
+    return Response(headers={"Accept-Ranges": "bytes", "Content-Length": str(tam), "Content-Type": "video/mp4", **CAB_SEGURADA})
