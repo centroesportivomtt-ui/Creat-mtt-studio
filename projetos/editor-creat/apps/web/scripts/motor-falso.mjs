@@ -1511,7 +1511,8 @@ function cenarioF(p, c) {
   const qual = String(c.cenario ?? '');
   const garantirVersao = (estado) => {
     let v = maisNova(p);
-    if (!v || v.estado === 'reprovada' || p.dados.aprovadas?.[v.id]) {
+    // nova: true deixa a versão entregue como está e cria a seguinte (o fluxo do ajuste: V1 entregue, V2 segurada)
+    if (!v || v.estado === 'reprovada' || p.dados.aprovadas?.[v.id] || (c.nova === true && v.estado === 'entregue')) {
       v = { id: `v${p.versoes.length + 1}`, estado, video: null, qa: null, link: null, reprovacao: null, criado: agora() };
       p.versoes.push(v);
     }
@@ -1785,7 +1786,7 @@ async function rotaMarcas(req, res, partes) {
   const med = b.length ? medirImagem(b) : null;
   if (!med) return falha(res, 422, 'não é uma imagem válida');
   let [w, h, alfa, animada] = med;
-  if (w * h > 40_000_000) return falha(res, 422, 'imagem grande demais: mande com até 40 milhões de pixels');
+  if (w * h > 16_000_000) return falha(res, 422, 'imagem grande demais: mande com até 16 milhões de pixels (4000 × 4000)');
   if (animada) return falha(res, 422, 'imagem animada não serve como logo');
   if (Math.max(w, h) < 512) return falha(res, 422, 'imagem pequena demais: mande com pelo menos 512 px no lado maior');
   if (!ehLogo && !alfa) return falha(res, 422, 'o mascote precisa de fundo transparente');

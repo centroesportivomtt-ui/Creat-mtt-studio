@@ -485,3 +485,31 @@ Kal entra de `espiada` e de `placa`, e o código de `moto`/`carro` fica pronto e
 **Critérios (onda 4b):** 3 entradas com tipos diferentes num filme de 45 s, nenhuma nos 3 s iniciais nem no fecho, nenhuma sobre a legenda
 (zona segura do kit); `moto` sem pose vira `espiada` com aviso; pedido sem mascote ou modo `serio` não gera entrada; cena demo do kit
 renderizada com print no celular; som pedido ao banco e, sem som no banco, aviso "pedido sem som".
+
+---
+
+## 10. Revisão tripla da onda 4 (código, segurança e QA): o que foi corrigido e o que ficou, com motivo
+
+Corrigido com teste que falha sem a correção: A1 (5.6b, o recado só aparece depois de a ficha reler a lista), A2 (6.4e, a segurada abre
+por cima da versão entregue), A3 (sincronia mantém o `s0_antes` da 1ª medição: a 2ª montagem não renderiza de novo), A4 (corte dentro de
+pausa de 180 ms ou mais anda para dentro dela), A6 (o batimento repete a última frase e a fração), A7/S1 (teto de 16 milhões de pixels e
+um decodificador por vez), A8 (com `gravado_em` nas duas fontes e mais de 60 s de diferença, a busca centra na diferença; campo opcional
+`edl.fontes[].gravado_em`), A9 parte 2 (tom de sala de outro ambiente só no diálogo), A10 (palavra funcional sozinha não cobre murmúrio),
+S2 (o proxy lê o corpo por blocos e para no teto), S6 (tarefa do filho em 0600, sem `preexec_fn`), QA-A1 (nome comprido quebra na ficha).
+Sem teste que falhe, por natureza: S5 (`pillow>=11`), QA-A3 (aviso na tela de que o mascote ainda não entra no filme).
+
+Ficou como está, com motivo:
+- **A5, padrão `turbo`:** segue o critério escrito na seção 4 (1.11: pico do large-v3 acima de 4 GB, o padrão passa a turbo). Voltar ao
+  large-v3 arrisca derrubar o ouvido fino por memória no Railway. **Não provado:** que o turbo acerta Guerreiro, Sisal e Bacia do Jacuípe
+  no áudio do Black. O teste 1.11 ganhou `EDITOR_TESTE_NOMES` para essa prova (local, sem custo); `EDITOR_WHISPER_MODELO_FINO=large-v3` é a
+  alavanca. O modelo ainda baixa na primeira catalogação de cada deploy: pré-baixar na imagem é tarefa do `devops` (Dockerfile) e não foi
+  feito aqui, para não mexer no build sem testá-lo.
+- **A9 parte 1, logo do cliente sobre `fecho.logo_cliente = null`:** é a decisão D48 (o diretor não precisa lembrar). O "sem logo" do dono
+  é escolher "Nenhum" no campo do cliente do pedido.
+- **A11, motor falso em JS:** as rotas novas do motor real são cobertas pelo pytest (`test_onda4_segurada.py`, `test_onda4_marcas.py`); o
+  falso prova o proxy e a tela. O risco de os dois divergirem continua; o teto de pixels foi trocado nos dois lugares nesta rodada.
+- **S3, "não baixa":** é "sem botão de baixar". Com a sessão, a URL direta abre; a regra do dono aceita (só com sessão, sem link público).
+- **S4, evidências do QA (`qa/*.jpg`) de versão não entregue servidas com a sessão:** já existia e a mesa ao vivo usa essas imagens; só com a
+  sessão. Decidir junto com S3 se a segurada passa a servir as evidências por rota própria.
+- **S6, conversa:** `motor/conversa/ouvir.py` (fora do diff da onda 4) ainda usa `preexec_fn`; fica registrado para a próxima rodada.
+- **QA-A5:** a faixa da segurada sobre um filme real, com muitos motivos, e o clique duplo não foram vistos (só o motor falso).

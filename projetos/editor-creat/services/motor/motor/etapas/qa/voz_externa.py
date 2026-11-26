@@ -177,15 +177,45 @@ def _tokens(txt) -> list[str]:
     return normalizar(txt or "").split()
 
 
+# palavras funcionais: aparecem em qualquer frase, então sozinhas não provam que o murmúrio é a fala escolhida (revisão, A10)
+_VAZIAS_TXT = ("a o as os de do da dos das e é que um uma uns umas em no na nos nas num numa pra pro pros pras por pelo pela para "
+               "com sem não se eu tu ele ela nós vocês você me te lhe isso isto aquilo aí né tá já mas ou mais bem sim então aqui "
+               "lá só ao aos à às seu sua meu minha tem vai foi era ser ter tá ah eh hum")
+_VAZIAS: set[str] | None = None
+
+
+def _vazias() -> set[str]:
+    global _VAZIAS
+    if _VAZIAS is None:
+        _VAZIAS = set(_tokens(_VAZIAS_TXT))
+    return _VAZIAS
+
+
 def coberta_por_palavras(a: float, b: float, palavras: list, texto: str, conf_min: float = DIALOGO_CONF_MIN) -> float:
     """Função pura: parte de [a, b] (tempo de fonte) coberta por palavras [[s, e, palavra, conf]] com conf >= conf_min cuja
-    forma normalizada está no `texto` da peça."""
+    forma normalizada está no `texto` da peça. Palavra funcional ("que", "de", "não", "pro") só conta dentro de uma sequência
+    de palavras do texto que tenha pelo menos uma palavra de conteúdo: "vem pro" conta inteiro; "que" sozinho, não."""
     if b - a <= 0:
         return 0.0
-    do_texto = set(_tokens(texto))
-    trechos = sorted((max(a, float(w[0])), min(b, float(w[1]))) for w in palavras or []
-                     if (w[3] if len(w) > 3 and w[3] is not None else 1.0) >= conf_min
-                     and any(t in do_texto for t in _tokens(w[2])) and min(b, float(w[1])) > max(a, float(w[0])))
+    do_texto, vazias = set(_tokens(texto)), _vazias()
+    ordem = sorted((w for w in palavras or [] if len(w) >= 3), key=lambda w: float(w[0]))
+    bate = [(w[3] if len(w) > 3 and w[3] is not None else 1.0) >= conf_min and any(t in do_texto for t in _tokens(w[2]))
+            for w in ordem]
+    conta = [False] * len(ordem)
+    i = 0
+    while i < len(ordem):                                   # sequências de palavras seguidas que batem com o texto
+        if not bate[i]:
+            i += 1
+            continue
+        j = i
+        while j + 1 < len(ordem) and bate[j + 1]:
+            j += 1
+        if any(t not in vazias for k in range(i, j + 1) for t in _tokens(ordem[k][2])):
+            for k in range(i, j + 1):
+                conta[k] = True
+        i = j + 1
+    trechos = sorted((max(a, float(w[0])), min(b, float(w[1]))) for w, c in zip(ordem, conta)
+                     if c and min(b, float(w[1])) > max(a, float(w[0])))
     total, fim = 0.0, a
     for x, y in trechos:
         x = max(x, fim)

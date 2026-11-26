@@ -51,6 +51,7 @@ ALGO = "escuta-1"
 # Medição 1.11 (26/11, local, 4 núcleos, 60 s de fala, beam 5, int8): large-v3 pico de 4.322 MB residentes e 81,5 s; turbo
 # 2.131 MB e 24,6 s. O critério do plano era "pico acima de 4 GB, o padrão vira turbo": virou. large-v3 continua a um env de distância.
 MODELO_PADRAO = "turbo"
+BATIMENTO_S = 10.0            # de quanto em quanto tempo o pai renova o lease do job (e repete a última frase na tela)
 LIMIAR_DB = -38.0          # o da entrega à mão de 26/11 (retranscrever.py)
 PAUSA_S = 0.6
 FALA_PCT_MIN = 0.02
@@ -284,13 +285,22 @@ def ambiente(n_threads: int) -> dict:
     return env
 
 
-def _limitar() -> None:
-    """preexec_fn: primeiro a morrer num aperto de memória do contêiner (o render de outro projeto fica)."""
+def _limitar(pid: int | None = None) -> None:
+    """Primeiro a morrer num aperto de memória do contêiner (o render de outro projeto fica). O PAI escreve no /proc do filho
+    logo depois de abri-lo: preexec_fn num processo com threads (a API) pode travar no fork, como a documentação do Python avisa
+    (revisão de segurança, S6). Subir o oom_score_adj do próprio filho não exige privilégio."""
     try:
-        with open("/proc/self/oom_score_adj", "w") as f:
+        with open(f"/proc/{pid or 'self'}/oom_score_adj", "w") as f:
             f.write("1000")
     except OSError:
         pass
+
+
+def _gravar_tarefa(arq: pathlib.Path, tarefa: dict) -> None:
+    """Arquivo de tarefa só para o dono (0600): leva as dicas do pedido (nomes de cliente) e caminhos do projeto."""
+    fd = os.open(str(arq), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(json.dumps(tarefa, ensure_ascii=False))
 
 
 def _matar(proc) -> None:
@@ -332,7 +342,7 @@ def _travar(caminho: pathlib.Path, ate: float, renovar):
             if time.monotonic() >= ate:
                 fd.close()
                 return None
-            if renovar and time.monotonic() - ultimo > 10:
+            if renovar and time.monotonic() - ultimo > BATIMENTO_S:
                 ultimo = time.monotonic()
                 renovar(None)
             time.sleep(0.25)
@@ -351,10 +361,11 @@ def rodar_filho(tarefa: dict, dados: pathlib.Path, tempo_s: float, ao_chegar, re
     arq = pasta / f"{uuid.uuid4().hex}.json"
     proc = None
     try:
-        arq.write_text(json.dumps(tarefa, ensure_ascii=False), encoding="utf-8")
+        _gravar_tarefa(arq, tarefa)
         try:
             proc = subprocess.Popen(comando(arq), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=ambiente(int(tarefa.get("threads") or 1)),
-                                    cwd=str(raiz_motor()), preexec_fn=_limitar, start_new_session=True)
+                                    cwd=str(raiz_motor()), start_new_session=True)
+            _limitar(proc.pid)
         except OSError as e:
             log.warning("ouvido fino não abriu o processo: %s", e)
             return {"motivo": "erro", "codigo": None, "pico_mb": 0.0, "s": 0.0}
@@ -415,7 +426,7 @@ def rodar_filho(tarefa: dict, dados: pathlib.Path, tempo_s: float, ao_chegar, re
                 if motivo:
                     _matar(proc)
                     break
-            if renovar and time.monotonic() - ultimo_renovar > 10:
+            if renovar and time.monotonic() - ultimo_renovar > BATIMENTO_S:
                 ultimo_renovar = time.monotonic()
                 renovar(None)
         for t in th:
@@ -443,7 +454,7 @@ def rodar_filho(tarefa: dict, dados: pathlib.Path, tempo_s: float, ao_chegar, re
 # ------------------------------------------------------------------ o passo
 def ouvir(arm, p: str, analises: list[dict], pedido: dict | None, cfg, *, dicas_projeto=None, vocabulario=None,
           progresso=None) -> dict:
-    """`catalogo.escuta`. `analises` (as do catálogo) são atualizadas no lugar. Devolve o relatório:
+    """`catalogo.escuta`. `progresso(mensagem, fracao)`: fração de 0 a 1 dos vídeos já ouvidos (também no batimento). `analises` (as do catálogo) são atualizadas no lugar. Devolve o relatório:
     {"estado": "desligado"|"sem_fala"|"pronto"|"queda", "videos", "finos", "do_cache", "falas", "modelo", "motivo", "frase", ...}."""
     modelo = modelo_fino(cfg)
     base = {"modelo": modelo, "videos": 0, "finos": 0, "do_cache": 0, "falas": 0, "motivo": None, "frase": None}
@@ -482,6 +493,13 @@ def ouvir(arm, p: str, analises: list[dict], pedido: dict | None, cfg, *, dicas_
         return {**rel, "estado": "pronto", "finos": finos, "do_cache": do_cache, "falas": falas, "mudou": mudou}
     n_total = len(pendentes)
     feitos = {"n": 0}
+    # o batimento (renova o lease a cada 10 s) repete a ÚLTIMA frase e a fração feita: com None a tela trocava
+    # "Ouvindo de novo o vídeo 3 de 9" por nada e a barra parava (revisão tripla, A6)
+    ultima = {"m": f"Ouvindo de novo {n_total} vídeo{'s' if n_total != 1 else ''}", "f": 0.0}
+
+    def avisar(_m=None):
+        if progresso:
+            progresso(ultima["m"], ultima["f"])
 
     def ao_chegar(linha: dict):
         nonlocal finos, falas, mudou
@@ -495,11 +513,11 @@ def ouvir(arm, p: str, analises: list[dict], pedido: dict | None, cfg, *, dicas_
         m, n = aplicar(arm, p, aid, por_id[aid], tr)
         finos, falas, mudou = finos + 1, falas + n, mudou + int(m)
         feitos["n"] += 1
-        if progresso:
-            progresso(f"Ouvindo de novo o vídeo {feitos['n']} de {n_total}")
+        ultima["m"], ultima["f"] = f"Ouvindo de novo o vídeo {feitos['n']} de {n_total}", feitos["n"] / n_total
+        avisar()
     tarefa = {"modelo": modelo, "threads": threads(), "beam": beam(), "pausa": PAUSA_S, "arquivos": pendentes}
     seg_fala = sum(segundos_de_fala(por_id[x["id"]]) for x in pendentes)
-    r = rodar_filho(tarefa, pathlib.Path(cfg.dados), tempo_max(seg_fala), ao_chegar, renovar=progresso)
+    r = rodar_filho(tarefa, pathlib.Path(cfg.dados), tempo_max(seg_fala), ao_chegar, renovar=avisar if progresso else None)
     out = {**rel, "finos": finos, "do_cache": do_cache, "falas": falas, "mudou": mudou, "pico_mb": r["pico_mb"], "s": r["s"]}
     if r["motivo"]:
         k = finos

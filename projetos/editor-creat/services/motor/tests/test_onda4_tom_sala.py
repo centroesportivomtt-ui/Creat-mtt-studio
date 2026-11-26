@@ -52,11 +52,12 @@ def _material(tmp_path, *, a_com_equipe=True, b_ambiente="salao", b_com_equipe=F
     return a, b
 
 
-def _resolver(tmp_path, a, b, ouvinte=True):
+def _resolver(tmp_path, a, b, ouvinte=True, vozes=None):
     cat, _ = catalogo.montar([a, b], {"texto": "reel"}, "p_t")
     loja = Loja()
     ouv = DIR.ouvinte(armazem_b.Armazem(dados=tmp_path), {a["arquivo"]["id"]: a, b["arquivo"]["id"]: b}) if ouvinte else None
-    return resolvedor.resolver(direcao(), cat, [a, b], loja.modelo("evento-reel"), TRILHAS, vocabulario=loja.vocabulario(), ouvinte=ouv)
+    return resolvedor.resolver(direcao(), cat, [a, b], loja.modelo("evento-reel"), TRILHAS, vocabulario=loja.vocabulario(), ouvinte=ouv,
+                               **({"vozes": vozes} if vozes else {}))
 
 
 def test_3_1_trecho_sem_palavra_mas_com_voz_e_recusado(tmp_path):
@@ -76,9 +77,20 @@ def test_3_1_sem_ouvinte_a_regra_antiga_pegaria_a_conversa(tmp_path):
 
 
 def test_3_2_unico_trecho_limpo_em_clipe_de_outro_ambiente(tmp_path):
+    """No diálogo (duas câmeras, o caso real): o único trecho limpo está num clipe de outro ambiente, e ele é o escolhido."""
     a, b = _material(tmp_path, b_ambiente="rua")
-    edl = _resolver(tmp_path, a, b)
+    edl = _resolver(tmp_path, a, b, vozes="varias")
     assert edl["tom_sala"] and edl["tom_sala"]["fonte"] == "C02"
+
+
+@pytest.mark.parametrize("vozes", ["uma", None])
+def test_3_2_com_uma_voz_fundo_de_outro_ambiente_nao_entra(tmp_path, vozes):
+    """O outro lado (revisão tripla, A9): com uma voz só (ou sem dizer), fundo de outro lugar por baixo da fala soaria estranho;
+    sem trecho limpo no mesmo ambiente, sai sem tom de sala, como antes da onda 4."""
+    a, b = _material(tmp_path, b_ambiente="rua")
+    edl = _resolver(tmp_path, a, b, vozes=vozes)
+    assert edl["tom_sala"] is None, edl["tom_sala"]
+    assert edl["origem"]["tom_sala"]["motivo"].startswith("não achei trecho sem ninguém falando")
 
 
 def test_3_3_sem_trecho_limpo_sai_sem_tom_de_sala_e_diz(tmp_path):

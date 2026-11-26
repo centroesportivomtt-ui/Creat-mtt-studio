@@ -4,6 +4,7 @@
 //   ACEITE_BASE=… ACEITE_MOTOR=… MOTOR_TOKEN=… ACEITE_SENHA=… EDITOR_DADOS=… node scripts/aceite-onda4.mjs
 // Prints de celular claro e escuro em apps/web/.verificacao/onda4/.
 import fs from 'node:fs';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -165,16 +166,18 @@ export async function aceiteOnda4({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     await print(A, '02-marcas-com-logo', 'escuro', ficha('super-kal'));
     await print(B, '02-marcas-com-logo', 'claro', ficha('super-kal'));
 
+    // o recado só aparece depois que a ficha releu a lista: lido o recado, o estado da ficha já tem de dizer 800 × 800 (sem corrida)
     await A.setInputFiles(`${ficha('super-kal')} [data-teste=marca-enviar] input`, LOGO2);
     await A.waitForFunction((sel) => /800 × 800 px/.test(document.querySelector(sel)?.textContent ?? ''), `${ficha('super-kal')} [data-teste=marca-recado]`, { timeout: 10000 }).catch(() => {});
-    const trocou = /800 × 800 px/.test(await texto(A, `${ficha('super-kal')} .marca__estado`));
+    const estadoTroca = await A.evaluate((sel) => document.querySelector(sel)?.textContent ?? '', `${ficha('super-kal')} .marca__estado`);
+    const trocou = /800 × 800 px/.test(estadoTroca);
     await A.setInputFiles(`${ficha('super-kal')} [data-teste=marca-enviar] input`, PEQUENA);
     await A.waitForFunction((sel) => /pequena demais/.test(document.querySelector(sel)?.textContent ?? ''), `${ficha('super-kal')} [data-teste=marca-recado]`, { timeout: 10000 }).catch(() => {});
     const recusa = await texto(A, `${ficha('super-kal')} [data-teste=marca-recado]`);
     await print(A, '03-marcas-recusa', 'escuro', ficha('super-kal'));
     const ficouAMesma = /800 × 800 px/.test(await texto(A, `${ficha('super-kal')} .marca__estado`));
     ok('onda 4 · 5.6b: trocar a logo vale na hora; a imagem pequena é recusada com a frase do dono e a logo anterior fica',
-      trocou && /imagem pequena demais: mande com pelo menos 512 px no lado maior/.test(recusa) && ficouAMesma, `${recusa}`);
+      trocou && /imagem pequena demais: mande com pelo menos 512 px no lado maior/.test(recusa) && ficouAMesma, `trocou ${trocou} (${estadoTroca.slice(0, 60)}) | ficou ${ficouAMesma} | ${recusa}`);
 
     await A.click(`${ficha('super-kal')} [data-teste=marca-apagar]`);
     await A.waitForSelector(`${ficha('super-kal')} [data-teste=marca-apagar-sim]`, { timeout: 5000 });
@@ -200,6 +203,14 @@ export async function aceiteOnda4({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
       lista.status === 200 && JSON.stringify(lista.corpo?.marcas?.map((m) => [m.slug, m.logo])) === JSON.stringify([['padaria-pao-quente', true], ['super-kal', true]])
         && JSON.stringify(lista.corpo?.fixos) === JSON.stringify(['super-kal', 'creat-mtt', 'marcos']), JSON.stringify(lista.corpo).slice(0, 200));
 
+    // nome de cliente comprido sem espaço (60 letras, o máximo do campo) não cria rolagem lateral no celular
+    await A.fill('[data-teste=marca-novo]', 'A'.repeat(60));
+    await A.click('[data-teste=marca-novo-ok]');
+    const fichaLonga = await A.waitForSelector(ficha('a'.repeat(40)), { timeout: 5000 }).then(() => true, () => false);
+    const largura = await A.evaluate(() => ({ rola: document.documentElement.scrollWidth, tela: document.documentElement.clientWidth }));
+    ok('onda 4 · 5.6g: nome de cliente com 60 letras sem espaço quebra dentro da ficha, sem rolagem lateral em 390 px',
+      fichaLonga && largura.rola <= largura.tela + 1, JSON.stringify({ fichaLonga, ...largura }));
+
     // proxy: 8 MB só no envio de imagem; o resto continua com 1 MB; 9 MB é 413 antes de chegar ao motor
     const corpos = await A.evaluate(async () => {
       const nove = new Uint8Array(9 * 1024 * 1024); nove.set([0x89, 0x50, 0x4e, 0x47]);
@@ -210,6 +221,29 @@ export async function aceiteOnda4({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     });
     ok('onda 4 · 5.2/5.6e: pelo proxy, 9 MB de imagem é 413 com a frase do dono; 2 MB fora do envio de imagem continua 413',
       corpos.nove === 413 && /8 MB/.test(corpos.noveMsg ?? '') && corpos.dois === 413, JSON.stringify(corpos));
+    // envio em pedaços (chunked, sem Content-Length): o proxy lê por blocos e para no teto, sem guardar o corpo inteiro
+    const cookie = (await escuro.cookies()).map((c) => `${c.name}=${c.value}`).join('; ');
+    const emPedacos = await new Promise((fim) => {
+      const u = new URL(`${BASE}/api/motor/v1/marcas/super-kal/logo`);
+      let resposta = null;
+      const q = http.request({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST',
+        headers: { cookie, origin: new URL(BASE).origin, 'content-type': 'image/png', 'transfer-encoding': 'chunked' } }, (r) => {
+        let b = '';
+        r.on('data', (d) => { b += d; });
+        r.on('end', () => { resposta = { status: r.statusCode, chunked: !q.getHeader('content-length'), detail: (() => { try { return JSON.parse(b).detail; } catch { return b.slice(0, 80); } })() }; fim(resposta); });
+      });
+      q.on('error', (e) => { if (!resposta) fim({ status: 0, erro: String(e) }); });
+      const bloco = Buffer.alloc(512 * 1024);
+      let n = 0;
+      const mandar = () => {
+        while (n < 40 && !resposta) { n++; if (!q.write(bloco)) { q.once('drain', mandar); return; } }
+        q.end();
+      };
+      mandar();
+      setTimeout(() => { if (!resposta) { q.destroy(); fim({ status: -1, erro: 'sem resposta em 20 s' }); } }, 20000);
+    });
+    ok('onda 4 · 5.6h: envio em pedaços (sem Content-Length) de 20 MB para no teto e volta 413 com a frase do dono',
+      emPedacos.status === 413 && emPedacos.chunked && /8 MB/.test(emPedacos.detail ?? ''), JSON.stringify(emPedacos));
 
     // ---------- 5.6f: no pedido do projeto, "Para qual cliente" já vem com o sugerido e o POST leva o cliente ----------
     const pid = await projeto(A, 'Aceite onda 4 · Super Kal Black');
@@ -307,6 +341,30 @@ export async function aceiteOnda4({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     await A.waitForSelector('[data-teste=player-segurada]', { timeout: 10000 });
     const linhaSumiu = (await A.locator('[data-teste=assistir-segurada-linha]').count()) === 0;
     ok('onda 4 · 6.4c: fechar a segurada volta ao convite; a linha da V1 também abre a segurada', daLinha === 1 && linhaSumiu);
+
+    // ---------- 6.4e: o fluxo do ajuste: V1 entregue continua no player e a V2 segurada abre por cima dela ----------
+    const pid2 = await projeto(A, 'Aceite onda 4 · ajuste com V2 segurada');
+    await api(A, `projetos/${pid2}/fechar-envio`, {});
+    await api(A, `projetos/${pid2}/pedido`, { texto: 'Anúncio curto da Black, as duas pessoas conversando' });
+    await esperarEstado(pid2, 'entregue');
+    const cen2 = await motor('_falso/cenario', { projeto: pid2, cenario: 'reprovado_qa', mudou: false, nova: true });
+    await A.goto(`${BASE}/projetos/${pid2}`);
+    await A.waitForSelector('[data-teste=player][data-versao=v1]', { timeout: 15000 });
+    const conviteSemPedir = await A.locator('[data-teste=segurada-convite]').count();
+    await A.click('[data-teste=assistir-segurada-linha]');
+    const abriu = await A.waitForSelector('[data-teste=player-segurada]', { timeout: 10000 }).then(() => true, () => false);
+    const tela2 = await A.evaluate(() => ({
+      segurada: document.querySelector('[data-teste=segurada]')?.getAttribute('data-versao') ?? null,
+      entregue: document.querySelector('[data-teste=player]')?.getAttribute('data-versao') ?? null,
+      linha: document.querySelectorAll('[data-teste=assistir-segurada-linha]').length,
+    }));
+    if (abriu) await print(A, '09-segurada-com-entregue', 'escuro', '[data-teste=segurada]');
+    await A.click('[data-teste=segurada-fechar]').catch(() => {});
+    const fechou = await A.waitForSelector('[data-teste=segurada]', { state: 'detached', timeout: 5000 }).then(() => true, () => false);
+    const v1Ficou = (await A.locator('[data-teste=player][data-versao=v1]').count()) === 1;
+    ok('onda 4 · 6.4e: com a V1 entregue, "Assistir a V2 segurada" abre a V2 (faixa e motivos) por cima do player da V1; fechar volta só à V1',
+      cen2?.versao === 'v2' && conviteSemPedir === 0 && abriu && tela2.segurada === 'v2' && tela2.entregue === 'v1' && tela2.linha === 0 && fechou && v1Ficou,
+      JSON.stringify({ cen: cen2?.versao, conviteSemPedir, abriu, ...tela2, fechou, v1Ficou }));
 
     await escuro.close(); await claro.close();
   } catch (e) {

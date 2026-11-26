@@ -252,3 +252,51 @@ def test_cli_semear(dados, tmp_path, capsys):
     assert marcas.main(["semear", "super-kal", str(pequeno)]) == 1
     assert marcas.main(["listar"]) == 0
     assert "super-kal: logo sim" in capsys.readouterr().out
+
+
+# ------------------------------------------------------------------ revisão tripla, A7/S1: teto de pixels e um decodificador por vez
+def test_png_pequeno_que_abriria_370_mb_e_recusado_pelo_cabecalho():
+    """PNG sólido de 6300 x 6300 (~170 KB no disco) decodificava a ~370 MB extra na API. Agora o teto é 16 milhões de pixels,
+    conferido no cabeçalho, antes de decodificar."""
+    from motor import marcas
+    b = io.BytesIO()
+    Image.new("RGBA", (6300, 6300), (10, 120, 200, 255)).save(b, "PNG")
+    assert len(b.getvalue()) < 300_000
+    with pytest.raises(marcas.ErroImagem) as e:
+        marcas.validar_imagem(b.getvalue(), "image/png")
+    assert e.value.status == 422 and "16 milhões de pixels" in e.value.frase
+    ok = io.BytesIO()
+    Image.new("RGBA", (4000, 4000), (10, 120, 200, 0)).save(ok, "PNG")
+    _png_ok, w, h, alfa = marcas.validar_imagem(ok.getvalue(), "image/png")      # 4000 x 4000 ainda entra (sai com 2048)
+    assert (w, h, alfa) == (2048, 2048, True)
+
+
+def test_decodificacao_e_uma_por_vez():
+    import threading
+
+    from motor import marcas
+    ativos, pico, trava = [0], [0], threading.Lock()
+    real = marcas._decodificar
+
+    def contando(*a, **k):
+        with trava:
+            ativos[0] += 1
+            pico[0] = max(pico[0], ativos[0])
+        try:
+            import time
+            time.sleep(0.05)
+            return real(*a, **k)
+        finally:
+            with trava:
+                ativos[0] -= 1
+    marcas._decodificar = contando
+    try:
+        img = _png(600, 600, alfa=True)
+        ts = [threading.Thread(target=marcas.validar_imagem, args=(img, "image/png")) for _ in range(4)]
+        for t in ts:
+            t.start()
+        for t in ts:
+            t.join()
+    finally:
+        marcas._decodificar = real
+    assert pico[0] == 1

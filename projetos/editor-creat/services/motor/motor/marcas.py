@@ -10,7 +10,7 @@ O slug é o mesmo da página de entregas (`entregas_r2.slug` + `RE_CLIENTE`): "s
     python -m motor.marcas semear super-kal caminho/da/logo.png      # mesma validação da tela (teste local, servidor próprio)
     python -m motor.marcas listar
 
-Envio malicioso não passa: o tipo é lido nos bytes (o content-type do navegador não vale), imagem acima de 40 milhões de
+Envio malicioso não passa: o tipo é lido nos bytes (o content-type do navegador não vale), imagem acima de 16 milhões de
 pixels é recusada ANTES de decodificar (bomba de descompressão), o Pillow confere o arquivo (`verify`) e a imagem é regravada
 do zero em PNG (o que vier junto, como metadados, perfil ou um HTML colado no fim, não sobrevive). Apagar projeto não apaga
 marca: ela é do cliente, não do projeto.
@@ -29,7 +29,8 @@ from motor import entregas_r2
 
 LIMITE_BYTES = 8 * 1024 * 1024          # o proxy do site corta no mesmo teto, só nesta rota
 LADO_MIN, LADO_MAX = 512, 2048
-MAX_PIXELS = 40_000_000
+MAX_PIXELS = 16_000_000                 # 4000 × 4000: folga para logo (sai com até 2048 px) sem pico de ~500 MB na API (revisão, A7/S1)
+_DECODIFICANDO = threading.BoundedSemaphore(1)   # uma imagem decodificada por vez: envios juntos não somam o pico no contêiner do render
 POSES = ("espiada", "placa", "moto", "carro", "aceno")
 TIPOS = ("image/png", "image/jpeg", "image/webp")
 _TRAVA = threading.Lock()               # marca.json é lido, mexido e regravado: um escritor por vez no processo
@@ -80,7 +81,7 @@ def validar_imagem(dados: bytes, tipo: str | None, *, exigir_alfa: bool = False)
     import warnings
 
     from PIL import Image
-    with warnings.catch_warnings():
+    with _DECODIFICANDO, warnings.catch_warnings():
         warnings.simplefilter("error", Image.DecompressionBombWarning)
         return _decodificar(dados, formato, exigir_alfa)
 
@@ -91,7 +92,7 @@ def _decodificar(dados: bytes, formato: str, exigir_alfa: bool) -> tuple[bytes, 
         with Image.open(io.BytesIO(dados), formats=[formato]) as im:
             w, h = im.size                          # só o cabeçalho: nada decodificado ainda
             if w * h > MAX_PIXELS:
-                raise ErroImagem(422, "imagem grande demais: mande com até 40 milhões de pixels")
+                raise ErroImagem(422, "imagem grande demais: mande com até 16 milhões de pixels (4000 × 4000)")
             if getattr(im, "is_animated", False) or getattr(im, "n_frames", 1) > 1:
                 raise ErroImagem(422, "imagem animada não serve como logo")
             im.verify()
@@ -102,7 +103,7 @@ def _decodificar(dados: bytes, formato: str, exigir_alfa: bool) -> tuple[bytes, 
     except ErroImagem:
         raise
     except (Image.DecompressionBombError, Image.DecompressionBombWarning) as e:   # o próprio Pillow barrou pelo tamanho
-        raise ErroImagem(422, "imagem grande demais: mande com até 40 milhões de pixels") from e
+        raise ErroImagem(422, "imagem grande demais: mande com até 16 milhões de pixels (4000 × 4000)") from e
     except Exception as e:  # noqa: BLE001 - qualquer quebra do decodificador é "não é imagem", nunca derruba o motor
         raise ErroImagem(422, "não é uma imagem válida") from e
     if max(rgba.size) < LADO_MIN:

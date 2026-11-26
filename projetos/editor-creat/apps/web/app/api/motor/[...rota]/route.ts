@@ -25,6 +25,25 @@ const SAI = ['content-type', 'content-length', 'content-range', 'accept-ranges',
 
 type Ctx = { params: Promise<{ rota: string[] }> };
 
+/** Corpo lido por blocos, parando no teto: envio sem Content-Length (chunked) não enche a memória do Node antes do 413. */
+async function lerAteOTeto(req: Request, teto: number): Promise<ArrayBuffer | null> {
+  if (!req.body) return new ArrayBuffer(0);
+  const leitor = req.body.getReader();
+  const partes: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await leitor.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > teto) { await leitor.cancel().catch(() => {}); return null; }
+    partes.push(value);
+  }
+  const tudo = new Uint8Array(total);
+  let i = 0;
+  for (const p of partes) { tudo.set(p, i); i += p.byteLength; }
+  return tudo.buffer;
+}
+
 async function repassar(req: Request, ctx: Ctx): Promise<Response> {
   if (!sessaoDaRequisicao(req)) return NextResponse.json({ detail: 'entre com a senha de novo' }, { status: 401 });
   if (req.method === 'POST' && !mesmaOrigem(req)) return NextResponse.json({ detail: 'origem não permitida' }, { status: 403 });
@@ -46,8 +65,9 @@ async function repassar(req: Request, ctx: Ctx): Promise<Response> {
     const grande = imagem ? 'imagem grande demais: mande com até 8 MB' : 'corpo grande demais';
     const tamanho = Number(req.headers.get('content-length') ?? 0);
     if (tamanho > teto) return NextResponse.json({ detail: grande }, { status: 413 });
-    corpo = await req.arrayBuffer();
-    if (corpo.byteLength > teto) return NextResponse.json({ detail: grande }, { status: 413 });
+    const lido = await lerAteOTeto(req, teto);
+    if (lido === null) return NextResponse.json({ detail: grande }, { status: 413 });
+    corpo = lido;
   }
   let r: Response;
   try {

@@ -394,7 +394,7 @@ def _ouvido_fino(ctx, arm, p: str, analises: list[dict], pedido: dict | None) ->
                       videos=len(alvos)) as ps:
         try:
             rel = escuta.ouvir(arm, p, analises, pedido, ctx.cfg, dicas_projeto=dicas_proj, vocabulario=vocab,
-                               progresso=lambda m: ctx.progresso(0.1, m))
+                               progresso=lambda m, fr=0.0: ctx.progresso(0.05 + 0.1 * fr, m))
         except Exception as e:  # noqa: BLE001 - o ouvido fino nunca derruba o catálogo
             rel = {"estado": "queda", "motivo": "erro", "videos": len(alvos), "finos": 0, "falas": 0,
                    "frase": escuta.QUEDAS["erro"]}

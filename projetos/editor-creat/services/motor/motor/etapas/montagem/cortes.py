@@ -105,6 +105,14 @@ def _fim_novo(env: dict, s1: float, teto: float | None) -> tuple[float, str]:
         while b < len(e) and e[b] <= lim:
             b += 1
         if (b - a) * AF.PASSO >= PAUSA_MIN:
+            # pausa que cabe a folga depois da voz E o silêncio antes da próxima palavra: o corte anda o mínimo para dentro dela
+            # (antes ficava onde estava, perto da palavra seguinte, e a conferência segurava a versão por fala_cortada)
+            lo, hi = a * AF.PASSO + FOLGA_MIN, b * AF.PASSO - SILENCIO_DEPOIS
+            if teto is not None:
+                hi = min(hi, teto)
+            if hi >= lo:
+                novo = round(float(np.clip(s1, lo, hi)), 3)
+                return novo, f"corte numa pausa de {(b - a) * 10:.0f} ms: {'fica' if abs(novo - s1) < 1e-4 else f'anda {novo - s1:+.2f} s'} dentro da pausa"
             return s1, f"corte numa pausa de {(b - a) * 10:.0f} ms com a palavra seguinte logo depois: fica, OUVIR"
     if f["fim"] is None or f["fim"] - s1 > LONGE:
         return max(s1, f["vale"]), "fim no vale (palavra seguinte colada): OUVIR"

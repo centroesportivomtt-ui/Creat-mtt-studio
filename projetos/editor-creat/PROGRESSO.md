@@ -645,3 +645,31 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Entrega da noite (feita na nuvem da sessão, com o motor do editor):** transcrição refeita com `large-v3` e vocabulário do pedido (o `small` errou Guerreiro, Sisal, Bacia do Jacuípe), direção nova, `ajustar_cortes` e tom de sala trocado por trecho sem voz. Filme de 44 s no Dropbox, em `Creat.MTT Studio/Super Kal - Black Friday/0 - Para aprovar/Vídeos`. Sem música (a biblioteca de trilhas do editor está vazia, em produção também) e com o fecho da creat.MTT (não há logo do Super Kal cadastrada).
 - **Lacunas do editor que este trabalho provou (prioridade):** (1) transcrição grande com vocabulário do pedido por padrão; (2) corte de fala pelo áudio já na montagem (`ajustar_cortes` automático); (3) tom de sala nunca de trecho com voz; (4) conferência que entenda diálogo de duas pessoas e duas câmeras (sincronia entre câmeras pelo áudio); (5) biblioteca de trilhas com licença; (6) marca do cliente cadastrada (logo) e fecho com ela; (7) o dono poder assistir a versão segurada pela conferência, com os motivos ao lado.
 
+
+## 26/11: onda 4, correções da revisão tripla (código, segurança, QA), cópia wt-onda4
+- **Aceite firme (A1):** o recado "800 × 800 px" da ficha da marca só aparece depois de a ficha reler a lista; o 5.6b deixou de ler o estado antigo.
+- **Segurada no fluxo do ajuste (A2):** com a V1 entregue e a V2 segurada, "Assistir a V2 segurada" abre a V2 por cima do player da V1. Antes o botão não mostrava nada. Aceite novo 6.4e.
+- **Motor:**
+  - a sincronia guarda o `s0` original: a 2ª montagem grava o mesmo EDL e não renderiza de novo (A3);
+  - câmeras ligadas com mais de 60 s de diferença têm a busca centrada no `gravado_em` (A8, campo opcional `edl.fontes[].gravado_em`);
+  - o corte dentro de pausa de 180 ms ou mais anda para dentro dela e passa na régua (A4);
+  - o batimento do ouvido fino repete a última frase e a fração (A6);
+  - tom de sala de outro ambiente só no diálogo (A9);
+  - "que" ou "de" sozinhos não cobrem murmúrio (A10).
+- **Segurança:**
+  - logo até 16 milhões de pixels, uma imagem decodificada por vez (A7/S1);
+  - o proxy lê o corpo por blocos e para em 8 MB (S2);
+  - `pillow>=11` (S5);
+  - a tarefa do filho é criada com permissão 0600 e o filho abre sem `preexec_fn` (S6).
+- **Site:** nome de cliente de 60 letras não cria rolagem lateral (QA-A1); o Caderno diz que o mascote ainda não entra no filme (QA-A3).
+- **Ficou, com motivo** (`docs/plano-onda4-26-11.md`, seção 10):
+  - padrão `turbo` pelo critério de memória do plano, sem prova de que acerta os nomes do Black (A5);
+  - logo sobre `null` do diretor, que é a decisão D48 (A9);
+  - "não baixa" é visual (S3) e as evidências do QA continuam servidas com a sessão (S4);
+  - `conversa/ouvir.py` ainda usa `preexec_fn`.
+- **Testes:**
+  - pytest **896 ok** (6 pulados, 2 pagos fora);
+  - tipos ok e `equipe.json` idêntico;
+  - aceite **147/147** (antes 144), saída 0 duas vezes seguidas nas portas 3091/8891.
+- **Prova de que os testes novos falham sem a correção:** sem as correções do site, o aceite ficou em 145/147 (5.6g com `scrollWidth` 470 e 6.4e sem a segurada). Sem a de sincronia, 7 testes do pytest falham.
+- **Sem push, sem deploy, sem chamada paga.**

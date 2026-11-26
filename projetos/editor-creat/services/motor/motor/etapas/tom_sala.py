@@ -5,8 +5,8 @@ A transcrição rápida não ouviu ninguém e o envelope passou; a conferência 
 segurou a V1, a V2 e a V3. Antes a busca olhava só o clipe principal, os clipes da fala e os do mesmo ambiente.
 
 Regras:
-1. Candidatos de TODOS os clipes do catálogo, nesta ordem: mesmo ambiente da voz principal (o principal primeiro), depois os
-   outros clipes da fala, depois o resto. Dentro de cada clipe, o critério de nível que já existia (`Resolvedor._silencios`).
+1. Candidatos, nesta ordem: mesmo ambiente da voz principal (o principal primeiro), depois os outros clipes da fala e, só no
+   diálogo (`vozes = varias`), o resto do catálogo (outro ambiente). Com uma voz, fundo de outro lugar não entra. Dentro de cada clipe, o critério de nível que já existia (`Resolvedor._silencios`).
 2. Fora: palavra da transcrição (agora a fina) a menos de 0,35 s, e envelope com sílabas (`silabas_teto_db`): os dois já
    estão em `_silencios`.
 3. Fora: voz contínua na régua física da conferência (`qa.voz_externa.voz_continua`, piso da fonte + 6 dB por >= 0,4 s),
@@ -34,7 +34,9 @@ def ordem(r, L) -> list[str]:
     g1 = [principal] + [c for c in peso if c != principal and amb in amb_de.get(c, [])] \
         + [c for c in todos if c not in peso and amb in amb_de.get(c, [])]
     g2 = [c for c in peso if c not in g1]
-    g3 = [c for c in todos if c not in g1 and c not in g2]
+    # clipe de OUTRO ambiente, fora da fala, só no diálogo (`vozes = varias`, o caso real das duas câmeras): com uma voz só, um
+    # fundo de outro lugar por baixo da fala soa estranho, e vale a regra de antes (melhor sem tom do que tom de outro ambiente)
+    g3 = [c for c in todos if c not in g1 and c not in g2] if getattr(r, "vozes", None) == "varias" else []
     vistos, out = set(), []
     for c in g1 + g2 + g3:
         if c not in vistos and c in r.clipe:

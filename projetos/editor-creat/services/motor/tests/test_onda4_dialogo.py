@@ -293,6 +293,16 @@ def test_4b_coberta_por_palavras_pura():
     assert coberta_por_palavras(1.0, 1.0, pal, "vem") == 0.0
 
 
+def test_4b_palavra_funcional_sozinha_nao_cobre_o_murmurio():
+    """Revisão tripla (A10): murmúrio que o Whisper transcreve como "que" (conf 0,9) cobria 100% do trecho porque "que" está no
+    texto da peça. Palavra funcional só conta numa sequência com palavra de conteúdo."""
+    from motor.etapas.qa.voz_externa import coberta_por_palavras
+    assert coberta_por_palavras(0, 2, [[0, 2, "que", 0.9]], "eu quero que você venha") == 0.0
+    assert coberta_por_palavras(0, 2, [[0, 1, "de", 0.9], [1, 2, "que", 0.9]], "de que lado você está") == 0.0
+    seq = [[0, 0.5, "que", 0.9], [0.5, 1.0, "você", 0.9], [1.0, 2.0, "venha", 0.9]]
+    assert coberta_por_palavras(0, 2, seq, "eu quero que você venha") == pytest.approx(1.0)
+
+
 # ================================================================== 4c fala_cortada
 GLUED = [_peca("V4", "camA", 33.9, 35.70, 0.0, "e a picanha está barata"),
          _peca("V5", "camB", 35.70 + D, 37.2 + D, 1.8, "corre que acaba hoje")]

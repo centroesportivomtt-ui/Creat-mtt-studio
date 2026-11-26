@@ -1118,7 +1118,7 @@ details > summary.ferr__linha { display: grid; }
 .marca__xadrez span { font: 400 30px/1 var(--fonte-display); color: var(--cor-tinta-2); background: var(--cor-superficie-2); padding: 4px 6px; border-radius: var(--r1); }
 .marca__xadrez--pequeno { width: 64px; height: 64px; background-size: 12px 12px; }
 .marca__xadrez--pequeno span { font-size: 18px; }
-.marca__corpo { display: grid; gap: var(--r2); min-width: 0; }
+.marca__corpo { display: grid; gap: var(--r2); min-width: 0; overflow-wrap: anywhere; }   /* nome de cliente sem espaço (60 letras) não empurra a tela */
 .marca__nome { margin: 0; font: 400 24px/1 var(--fonte-display); text-transform: uppercase; overflow-wrap: anywhere; }
 .marca__estado { margin: 0; font-size: 14px; color: var(--cor-tinta-2); }
 .marca__acoes { display: flex; flex-wrap: wrap; gap: var(--r2); align-items: center; }

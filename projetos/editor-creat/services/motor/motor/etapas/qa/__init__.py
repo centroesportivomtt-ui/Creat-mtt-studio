@@ -132,7 +132,7 @@ class Conferencia:
                 av = ap = None
             if av is not None and ap is not None:
                 from motor.etapas import sincronia_cameras as SINC
-                m = SINC.offset(av[0], ap[0], 16000)
+                m = SINC.offset(av[0], ap[0], 16000, **SINC.busca_por_gravacao(self.edl.get("fontes") or {}, fonte_voz, fonte_plano))
                 if m is not None:
                     self.memo[k] = {**m, "delta": round(SINC.delta_fonte(m, av[1], ap[1]), 4)}
         return self.memo[k]

@@ -302,3 +302,19 @@ def test_sincronia_so_no_dialogo_e_com_import_protegido(monkeypatch, pausa_boa):
     monkeypatch.setitem(sys.modules, "motor.etapas.sincronia_cameras", None)         # módulo da outra frente ausente
     monkeypatch.delattr(E, "sincronia_cameras", raising=False)
     assert M._sincronizar(edl, Fontes(edl), None) is None
+
+
+# ------------------------------------------------------------------ revisão tripla, A4: corte dentro de pausa longa
+@pytest.mark.parametrize("s1", [1.80, 1.84])
+def test_corte_na_pausa_perto_da_palavra_seguinte_anda_para_dentro_da_pausa(pausa_boa, s1):
+    """Pausa de 300 ms (palavra até 1,6 s, a seguinte em 1,9 s) e o corte a 60-100 ms da palavra seguinte: antes ficava onde
+    estava ("fica, OUVIR") e a conferência segurava por fala_cortada. Agora anda o mínimo para dentro da pausa e passa."""
+    edl = _edl(pausa_boa, _voz2(s1_v1=s1))
+    assert ("V1", "fim") in _reprovadas(edl)
+    r = C.ajustar_edl(edl, Fontes(edl))
+    assert ("V1", "fim") not in _reprovadas(edl), r["notas"]
+    v1 = edl["voz"][0]
+    assert 1.6 + C.FOLGA_MIN - 0.011 <= v1["s1"] <= 1.9 - C.SILENCIO_DEPOIS + 0.011, v1
+    assert not any("OUVIR" in n for n in r["notas"] if n.startswith("V1")), r["notas"]
+    r2 = C.ajustar_edl(edl, Fontes(edl), forcar_marca=True)              # segunda rodada: nada a fazer
+    assert r2["estado"] == "sem_mudanca", r2

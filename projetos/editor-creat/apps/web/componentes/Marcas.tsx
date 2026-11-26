@@ -94,8 +94,9 @@ function FichaMarca({ slug, m, aoMudar }: { slug: string; m: Marca | null; aoMud
       if (r.status === 401) setRecado({ tipo: 'erro', texto: 'A sessão venceu. Entre com a senha de novo.' });
       else if (!r.ok) setRecado({ tipo: 'erro', texto: `Não entrou: ${typeof c?.detail === 'string' ? c.detail : `erro ${r.status}`}.` });
       else {
-        setRecado({ tipo: 'ok', texto: `${rotulo} de ${nome} cadastrada (${c.w} × ${c.h} px${c.alfa ? ', fundo transparente' : ', fundo cheio'}).` });
+        // a ficha relê a lista ANTES do recado: o recado "800 × 800 px" nunca aparece ao lado do estado antigo (1024 × 1024)
         await aoMudar();
+        setRecado({ tipo: 'ok', texto: `${rotulo} de ${nome} cadastrada (${c.w} × ${c.h} px${c.alfa ? ', fundo transparente' : ', fundo cheio'}).` });
       }
     } catch { setRecado({ tipo: 'erro', texto: 'Sem conexão. Tente de novo.' }); }
     setIndo(null);
@@ -105,7 +106,7 @@ function FichaMarca({ slug, m, aoMudar }: { slug: string; m: Marca | null; aoMud
     try {
       const r = await fetch(`/api/motor/v1/marcas/${slug}/${alvo}/apagar`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
       if (!r.ok) setRecado({ tipo: 'erro', texto: `Não apaguei agora (erro ${r.status}). Tente de novo.` });
-      else { setRecado({ tipo: 'ok', texto: `${rotulo} de ${nome} apagada. Os próximos filmes saem com a marca da creat.MTT no fecho.` }); await aoMudar(); }
+      else { await aoMudar(); setRecado({ tipo: 'ok', texto: `${rotulo} de ${nome} apagada. Os próximos filmes saem com a marca da creat.MTT no fecho.` }); }
     } catch { setRecado({ tipo: 'erro', texto: 'Sem conexão. Tente de novo.' }); }
     setIndo(null); setConfirmar(false);
     window.setTimeout(() => voltaFoco.current?.focus(), 30);
@@ -148,6 +149,7 @@ function FichaMarca({ slug, m, aoMudar }: { slug: string; m: Marca | null; aoMud
         <details className="marca__mascote">
           <summary>Mascote · {m?.mascote.length ?? 0} de {POSES.length} poses</summary>
           <p className="aviso">PNG com fundo transparente, a arte aprovada de cada pose. O editor nunca redesenha o mascote.</p>
+          <p className="aviso" data-teste="mascote-ainda-nao">Por enquanto as poses só ficam guardadas aqui: o filme ainda não usa o mascote (só a logo entra no fecho).</p>
           <ul className="marca__poses">
             {POSES.map((p) => {
               const tem = Boolean(m?.mascote.includes(p.id));

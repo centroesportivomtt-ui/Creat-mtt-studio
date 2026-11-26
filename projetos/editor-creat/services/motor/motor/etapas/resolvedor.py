@@ -322,6 +322,8 @@ class Resolvedor:
             else:
                 out[fid] = {"chave": a["arquivo"]["chave"], "audio": a["derivados"].get("audio_wav"), "offset": 0.0, "rotacao": 0,
                             "fps": a["midia"].get("fps")}
+            if a["arquivo"].get("gravado_em"):           # a sincronia entre câmeras centra a busca na diferença (onda 4)
+                out[fid]["gravado_em"] = a["arquivo"]["gravado_em"]
         return out
 
     # --- grade da trilha

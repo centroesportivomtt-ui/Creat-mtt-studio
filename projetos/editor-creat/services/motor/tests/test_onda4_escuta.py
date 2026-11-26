@@ -31,6 +31,7 @@ neto = subprocess.Popen(["sleep", "60"]) if modo in ("memoria", "tempo") else No
 if reg:
     with open(reg, "a", encoding="utf-8") as f:
         f.write(json.dumps({"pid": os.getpid(), "neto": neto.pid if neto else None, "ids": [a["id"] for a in t["arquivos"]],
+                            "oom": open("/proc/self/oom_score_adj").read().strip(), "modo_tarefa": oct(os.stat(sys.argv[1]).st_mode & 0o777),
                             "dicas": [a["dicas"] for a in t["arquivos"]], "env": sorted(os.environ), "modelo": t["modelo"],
                             "beam": t["beam"]}) + "\n")
 if modo == "modelo":
@@ -44,6 +45,8 @@ for k, a in enumerate(t["arquivos"]):
         time.sleep(60)
     if modo == "tempo" and k == 1:
         time.sleep(60)
+    if modo == "lento":
+        time.sleep(0.9)
     pal = [[1.0, 1.3, "Bacia", 0.9], [1.3, 1.45, "do", 0.9], [1.45, 1.9, "Jacuípe", 0.9], [2.0, 2.5, "Guerreiro", 0.9]]
     print(json.dumps({"id": a["id"], "segmentos": [{"s": 1.0, "e": 2.5, "texto": "Bacia do Jacuípe Guerreiro", "falante": None,
                       "conf": 0.9, "palavras": pal}], "trechos": 1, "segundos": 0.1}, ensure_ascii=False), flush=True)
@@ -321,15 +324,51 @@ def test_1_11_medicao_do_modelo_grande(tmp_path, dados, monkeypatch):
               "arquivos": [{"id": "x", "wav": wav, "energia": str(tmp_path / "energia.npy"), "dur": dur, "limiar": ESC.limiar_de(db),
                             "dicas": ESC.prompt(["Super Kal", "Guerreiro", "Sisal", "Bacia do Jacuípe"])}]}
     r = ESC.rodar_filho(tarefa, config.carregar().dados, 1800.0, linhas.append)
+    texto = " ".join(s["texto"] for s in (linhas[-1].get("segmentos") or [])) if linhas else ""
     print(json.dumps({"modelo": tarefa["modelo"], "audio_s": round(dur, 1), "pico_mb": r["pico_mb"], "s": r["s"], "threads": tarefa["threads"],
-                      "falas": len(linhas[-1].get("segmentos") or []) if linhas else 0,
-                      "texto": " ".join(s["texto"] for s in (linhas[-1].get("segmentos") or []))[:300] if linhas else ""}, ensure_ascii=False))
+                      "falas": len(linhas[-1].get("segmentos") or []) if linhas else 0, "texto": texto[:300]}, ensure_ascii=False))
     assert r["motivo"] is None, r
+    # a razão do item 1: acertar os nomes do caso real. Com o áudio do Black, EDITOR_TESTE_NOMES="Guerreiro,Sisal,Bacia do Jacuípe"
+    # compara turbo e large-v3 (EDITOR_TESTE_MODELO); sem a variável, só mede memória e tempo
+    nomes = [n.strip() for n in os.environ.get("EDITOR_TESTE_NOMES", "").split(",") if n.strip()]
+    faltam = [n for n in nomes if n.lower() not in texto.lower()]
+    assert not faltam, f"{tarefa['modelo']} não acertou {faltam}: {texto[:300]}"
 
 
-def test_1_11_padrao_e_o_turbo_pela_medicao(monkeypatch):
-    """Medição 1.11 (26/11): large-v3 com pico de 4.322 MB (> 4 GB) -> o padrão passa a turbo (2.131 MB, 24,6 s por 60 s)."""
+def test_1_11_padrao_segue_o_criterio_de_memoria_e_large_v3_e_a_alavanca(monkeypatch):
+    """Critério do plano (1.11): pico do large-v3 acima de 4 GB -> o padrão passa a turbo. Medido em 26/11: 4.322 MB e 81,5 s
+    contra 2.131 MB e 24,6 s por 60 s de fala. ATENÇÃO: isto prova só a regra de memória e a alavanca; que o turbo acerta os
+    nomes do caso real (Guerreiro, Sisal, Bacia do Jacuípe) NÃO está provado aqui (ver test_1_11_medicao_do_modelo_grande com
+    EDITOR_TESTE_NOMES e o áudio do Black)."""
     monkeypatch.delenv("EDITOR_WHISPER_MODELO_FINO", raising=False)
-    assert ESC.modelo_fino() == "turbo" and config.Config().whisper_modelo_fino == "turbo"
+    assert ESC.modelo_fino() == ESC.MODELO_PADRAO == config.Config().whisper_modelo_fino == "turbo"
+    monkeypatch.setenv("EDITOR_WHISPER_MODELO_FINO", "large-v3")                     # a alavanca: um env, sem deploy de código
+    assert ESC.modelo_fino() == "large-v3" and config.Config().whisper_modelo_fino == "large-v3"
     monkeypatch.setenv("EDITOR_WHISPER_MODELO_FINO", "0")
     assert ESC.modelo_fino() == "" and ESC.modelo_fino(config.Config()) == ""
+
+
+# ------------------------------------------------------------------ revisão tripla: A6 (batimento) e S6 (tarefa 0600, sem preexec_fn)
+def test_batimento_repete_a_ultima_frase_e_a_barra_anda(projeto, monkeypatch):
+    """O batimento que renova o lease emitia etapa_progresso com mensagem None a cada 10 s e o site trocava "Ouvindo de novo
+    o vídeo 1 de 2" por nada, com a barra parada em 10%. Agora repete a última frase e a fração."""
+    monkeypatch.setenv("EDITOR_FALSO_MODO", "lento")
+    monkeypatch.setattr(ESC, "BATIMENTO_S", 0.2)
+    _com_mesa(projeto, lambda: _rodar(projeto))
+    evs = [dict(r) for r in projeto["con"].execute("SELECT progresso, mensagem FROM eventos WHERE tipo='etapa_progresso' ORDER BY id")]
+    assert len(evs) >= 4, evs                                        # houve batimento (o falso leva ~2 s)
+    assert all(e["mensagem"] for e in evs), [e["mensagem"] for e in evs]
+    msgs = [e["mensagem"] for e in evs]
+    assert "Ouvindo de novo o vídeo 1 de 2" in msgs and "Ouvindo de novo o vídeo 2 de 2" in msgs
+    i1 = msgs.index("Ouvindo de novo o vídeo 1 de 2")
+    depois = [e["progresso"] for e in evs[i1:] if e["mensagem"].startswith("Ouvindo de novo o vídeo")]
+    assert depois == sorted(depois) and max(depois) > 0.1, depois  # a barra anda conforme os vídeos chegam
+
+
+def test_filho_nasce_com_oom_1000_e_a_tarefa_so_do_dono(projeto):
+    _com_mesa(projeto, lambda: _rodar(projeto))
+    ch = _chamadas(projeto)[0]
+    assert ch["modo_tarefa"] == "0o600", ch["modo_tarefa"]
+    assert ch["oom"] in ("1000", "0"), ch["oom"]                    # 0 só onde o /proc não deixa escrever (fora de Linux)
+    import inspect
+    assert "preexec_fn" not in inspect.getsource(ESC.rodar_filho)  # fork de processo com threads não roda código Python

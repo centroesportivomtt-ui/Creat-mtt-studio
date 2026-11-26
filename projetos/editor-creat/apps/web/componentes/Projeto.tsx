@@ -651,12 +651,15 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   const blocoVersoes = (versoes.length > 0 || !aberto) ? (
     <section key="versoes" className={`cartao bloco-versoes${assistir ? ' palco' : ''}`} aria-labelledby="t-versoes">
       <h2 className={assistir ? 'so-leitor' : 'cartao__titulo'} id="t-versoes">{assistir ? 'Filme pronto e versões' : 'Versões'}</h2>
+      {/* A segurada aberta vem ANTES do filme entregue: no fluxo de ajuste (V1 entregue, V2 segurada) o dono pede para assistir a V2
+          e ela tem de aparecer, sem tirar a V1 da tela. Sem versão entregue, o convite para assistir ocupa o lugar do player. */}
+      {seguradaNaTela && (seguradaAberta || !assistir) && (
+        <Segurada key={seguradaNaTela} pid={p.id} versao={seguradaNaTela} aberta={seguradaAberta} aoAbrir={setSeguradaAberta} />
+      )}
       {assistir ? (
         <video key={assistir.id} className="player" controls playsInline preload="metadata" data-teste="player" data-versao={assistir.id}
           src={`/api/motor/v1/arquivos/${assistir.video}#t=0.1`} aria-label={`Versão ${assistir.id}`} />
-      ) : seguradaNaTela ? (
-        <Segurada key={seguradaNaTela} pid={p.id} versao={seguradaNaTela} aberta={seguradaAberta} aoAbrir={setSeguradaAberta} />
-      ) : (
+      ) : seguradaNaTela ? null : (
         <div className="player-vazio"><p>{
           emProducao?.estado === 'reprovada_qa' ? `A conferência automática segurou a ${emProducao.id.toUpperCase()}: ela não foi entregue. O motivo está na mesa ao vivo.`
             : emProducao?.estado === 'erro' ? `A ${emProducao.id.toUpperCase()} parou com erro; o motivo está na mesa ao vivo.`
@@ -668,7 +671,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
           {versoes.map((v) => <LinhaVersao key={v.id} pid={p.id} v={v} aprovada={Boolean(p.dados?.aprovadas?.[v.id])}
             naBarra={v.id === assistir?.id} ajusteAberto={ajusteDe === v.id} aoAbrirAjuste={(sim) => setAjusteDe(sim ? v.id : null)}
             aoAprovar={() => aprovar(v.id)} batendo={batendo}
-            seguradaNaTela={!assistir && seguradaAberta && seguradaNaTela === v.id} aoAssistirSegurada={() => assistirSegurada(v.id)}
+            seguradaNaTela={seguradaAberta && seguradaNaTela === v.id} aoAssistirSegurada={() => assistirSegurada(v.id)}
             aoReprovar={(motivo) => reprovar(v.id, motivo)}
             clientes={clientesEnt} cliente={clienteEnt} aoTrocarCliente={setClienteEnt} mandar={mandarEnt} aoMandar={setMandarEnt}
             aoMudarEntregas={(e) => { setEntregas((m) => ({ ...m, [v.id]: e })); recarregar(); }} />)}

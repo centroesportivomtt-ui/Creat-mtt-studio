@@ -165,3 +165,63 @@ def test_gancho_da_montagem_com_o_modulo_de_verdade(tmp_path):
     assert edl["planos"][0]["s0"] == pytest.approx(10.6 + 0.5 + D, abs=0.010)
     edl1 = {**_edl_dialogo(), "fontes": m["fontes"], "origem": {"vozes": "uma"}}
     assert M._sincronizar(edl1, Fontes(edl1), None) is None and edl1["planos"][0]["s0"] == 50.0
+
+
+# ------------------------------------------------------------------ correções da revisão tripla (A3 e A8)
+def test_segunda_montagem_grava_o_mesmo_edl_e_nao_renderiza_de_novo(tmp_path):
+    """A3: na 2ª passagem pela montagem (reinício do servidor, refazer montagem, nova conferência) o plano já está alinhado;
+    antes o relatório trocava s0_antes (50,0 -> o s0 alinhado), o hash do EDL mudava e o filme era renderizado de novo."""
+    from motor.etapas import montagem as M
+    from motor.etapas.montagem.comum import Fontes
+    m = S.escrever(tmp_path)
+    edl = {**_edl_dialogo(), "fontes": m["fontes"]}
+    M._sincronizar(edl, Fontes(edl), None)
+    h1 = M.hash_obj(edl)
+    assert edl["origem"]["sincronia"]["planos"]["P1"]["s0_antes"] == 50.0
+    M._sincronizar(edl, Fontes(edl), None)
+    M._sincronizar(edl, Fontes(edl), None)
+    assert M.hash_obj(edl) == h1
+    assert edl["origem"]["sincronia"]["planos"]["P1"]["s0_antes"] == 50.0       # o s0 do diretor continua registrado
+
+
+def test_s0_antes_de_outra_medida_nao_e_herdado(cameras):
+    """Se o diretor (ou o ajuste) mexeu no plano depois da 1ª medição, o s0 de agora é o 'antes' (não o de outra rodada)."""
+    xa, xb = cameras
+    edl = _edl_dialogo(s0_plano=40.0)
+    edl["origem"]["sincronia"] = {"planos": {"P1": {"s0_antes": 50.0, "s0_depois": 13.0, "par": "camA|camB"}}}
+    rel = SC.alinhar(edl, _audio_de(xa, xb), "varias")
+    assert rel["planos"]["P1"]["s0_antes"] == 40.0
+
+
+def test_cameras_ligadas_com_150_s_de_diferenca_alinham_pelo_gravado_em(cameras):
+    """A8: duas câmeras ligadas com mais de 120 s de diferença ficam fora da busca padrão; com o gravado_em dos dois arquivos
+    a busca centra na diferença e acha o atraso."""
+    xa, xb = cameras
+    longe = np.concatenate([np.zeros(150 * 16000, np.float32), xb])            # b começou a gravar 150 s antes
+    assert SC.offset(xa, longe, 16000) is None
+    fontes = {"camA": {"chave": "/x/a.mov", "gravado_em": "2026-11-26T19:42:33-03:00"},
+              "camB": {"chave": "/x/b.mov", "gravado_em": "2026-11-26T19:40:00-03:00"}}
+    busca = SC.busca_por_gravacao(fontes, "camA", "camB")
+    assert busca == {"janela_s": SC.BUSCA_S, "centro_s": 153.0}
+    m = SC.offset(xa, longe, 16000, **busca)
+    assert m is not None and abs(m["offset_s"] - (150 + D)) <= 0.010, m
+    edl = {**_edl_dialogo(), "fontes": fontes}
+    rel = SC.alinhar(edl, _audio_de(xa, longe), "varias")
+    assert edl["planos"][0]["s0"] == pytest.approx(10.6 + 0.5 + 150 + D, abs=0.010), rel
+
+
+@pytest.mark.parametrize("ga, gb", [
+    ("2026-11-26T19:40:30-03:00", "2026-11-26T19:40:00-03:00"),     # perto: vale a busca padrão
+    ("2026-11-26T19:42:33-03:00", None),                            # uma sem data
+    ("2026-11-26T19:42:33-03:00", "2026-11-26T19:40:00"),           # uma com fuso, outra sem
+    ("ontem", "2026-11-26T19:40:00-03:00"),                         # ilegível
+])
+def test_busca_por_gravacao_so_decide_com_as_duas_datas(ga, gb):
+    fontes = {"a": {"chave": "x", "gravado_em": ga}, "b": {"chave": "y", "gravado_em": gb}}
+    assert SC.busca_por_gravacao(fontes, "a", "b") == {}
+
+
+def test_busca_por_gravacao_soma_o_deslocamento_do_trecho():
+    fontes = {"a": {"chave": "x", "gravado_em": "2026-11-26T19:40:00+00:00", "offset": 200.0},
+              "b": {"chave": "y", "gravado_em": "2026-11-26T19:40:00+00:00"}}
+    assert SC.busca_por_gravacao(fontes, "a", "b") == {"janela_s": SC.BUSCA_S, "centro_s": 200.0}

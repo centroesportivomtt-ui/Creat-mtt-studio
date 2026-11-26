@@ -37,6 +37,7 @@ CRUZA_MIN_S = 0.5             # plano que cobre uma peça de voz por menos que i
 JA_SINC_S = 0.02              # |Δ| menor que isso: já está em sincronia, nada muda
 VEL_TOL = 0.01                # velocidade do plano e da voz precisam ser iguais para a boca bater do começo ao fim
 ALGO = "sinc-1"
+LONGE_S = 60.0                # câmeras iniciadas com mais que isso de diferença: a busca centra na diferença do gravado_em
 
 
 def _base(fid: str) -> str:
@@ -196,6 +197,31 @@ def _refinar(xa: np.ndarray, xb: np.ndarray, sr: int, grosso: float, ea: np.ndar
     return base_b + g[0]
 
 
+def _inicio(f: dict | None):
+    """Instante (datetime) em que o ARQUIVO lido começa: gravado_em do original + o deslocamento do trecho. None sem data."""
+    from datetime import datetime, timedelta
+    g = (f or {}).get("gravado_em")
+    if not g:
+        return None
+    try:
+        d = datetime.fromisoformat(str(g).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return d + timedelta(seconds=float((f or {}).get("offset") or 0.0))
+
+
+def busca_por_gravacao(fontes: dict, fa: str, fb: str) -> dict:
+    """Parâmetros de busca para `medir`/`offset` a partir do `gravado_em` das duas fontes do EDL (plano da onda 4, 3.4d).
+    Câmeras ligadas com até 60 s de diferença: {} (vale a busca padrão de ±120 s em volta de zero, que já cobre).
+    Mais longe que isso: {"janela_s": 120, "centro_s": Δ}, com Δ = início de a - início de b (o atraso esperado de b).
+    Sem data, data ilegível ou uma com fuso e outra sem: {} (a hora do arquivo não decide nada sozinha)."""
+    ia, ib = _inicio((fontes or {}).get(fa)), _inicio((fontes or {}).get(fb))
+    if ia is None or ib is None or (ia.tzinfo is None) != (ib.tzinfo is None):
+        return {}
+    c = (ia - ib).total_seconds()
+    return {"janela_s": BUSCA_S, "centro_s": round(c, 2)} if abs(c) > LONGE_S else {}
+
+
 # ------------------------------------------------------------------ montagem: alinhar a segunda câmera
 def _src(x: dict, t: float) -> float:
     return float(x["s0"]) + (t - float(x["t0"])) * float(x.get("vel", 1.0) or 1.0)
@@ -211,7 +237,8 @@ def alinhar(edl: dict, audio_de, modo_vozes: str) -> dict | None:
     """No diálogo (`modo_vozes == "varias"`): cada plano de OUTRA câmera que cobre uma peça de voz por >= 0,5 s, sem rampa de
     tempo, com `cobertura.olhar` diferente de "produto", com a mesma velocidade da voz e com o atraso entre as câmeras medido com
     confiança, passa a mostrar o instante em sincronia com a voz (muda `s0` no lugar), desde que esse trecho exista no arquivo do
-    plano. Já em sincronia (|Δ| < 20 ms): nada muda, e por isso rodar duas vezes dá o mesmo EDL.
+    plano. Já em sincronia (|Δ| < 20 ms): nada muda, e o `s0_antes` da medição anterior (edl.origem.sincronia) é mantido;
+    por isso rodar duas vezes dá o mesmo EDL, relatório incluído.
 
     `audio_de(fonte) -> (áudio mono 16 kHz, deslocamento_s) | None` (deslocamento: o tempo s do EDL cai em s - deslocamento no
     arquivo). Devolve o dict de `origem.sincronia`: {"algo", "pares": {"voz|plano": {offset_s, conf, razao}}, "planos":
@@ -219,6 +246,10 @@ def alinhar(edl: dict, audio_de, modo_vozes: str) -> dict | None:
     if modo_vozes != "varias":
         return None
     voz = edl.get("voz") or []
+    fontes = edl.get("fontes") or {}
+    # o s0 ORIGINAL de cada plano vem da medição anterior: a segunda montagem do mesmo EDL grava o mesmo relatório (sem isso o
+    # hash do EDL mudava e o filme era renderizado de novo sem nada mudar)
+    ant = ((edl.get("origem") or {}).get("sincronia") or {}).get("planos") or {}
     rel: dict = {"algo": ALGO, "pares": {}, "planos": {}, "sem_sincronia": [], "pulados": []}
     medidas: dict = {}
     for p in edl.get("planos") or []:
@@ -243,7 +274,7 @@ def alinhar(edl: dict, audio_de, modo_vozes: str) -> dict | None:
             if av is None or ap is None:
                 medidas[par] = ({"aceito": False, "motivo": "fonte sem áudio"}, None, None)
             else:
-                medidas[par] = (medir(av[0], ap[0], SR), av, ap)
+                medidas[par] = (medir(av[0], ap[0], SR, **busca_por_gravacao(fontes, v["fonte"], p["fonte"])), av, ap)
             m = medidas[par][0]
             if m.get("aceito"):
                 rel["pares"][par] = {"offset_s": m["offset_s"], "conf": m["conf"], "razao": m["razao"]}
@@ -263,7 +294,10 @@ def alinhar(edl: dict, audio_de, modo_vozes: str) -> dict | None:
         antes = float(p["s0"])
         if abs(s0_novo - antes) >= JA_SINC_S:
             p["s0"] = round(s0_novo, 3)
-        rel["planos"][p["id"]] = {"s0_antes": round(antes, 3), "s0_depois": round(float(p["s0"]), 3), "par": par}
+        a0 = ant.get(p["id"]) or {}
+        original = a0["s0_antes"] if a0.get("par") == par and isinstance(a0.get("s0_antes"), (int, float)) \
+            and abs(float(a0.get("s0_depois", float("nan"))) - antes) < 1e-6 else antes
+        rel["planos"][p["id"]] = {"s0_antes": round(float(original), 3), "s0_depois": round(float(p["s0"]), 3), "par": par}
     rel["sem_sincronia"] = rel["sem_sincronia"][:20]
     rel["pulados"] = rel["pulados"][:20]
     return rel
