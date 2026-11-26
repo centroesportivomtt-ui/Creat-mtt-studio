@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Entrega creat.MTT pelo Cloudflare R2 (deposito creat-entregas). Uso: python3 r2_enviar.py "<cliente>" "<projeto>" arquivos... [--data AAAA-MM-DD]. Chaves so no ambiente (R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY). painel.html fica ao lado e vira a pagina de entregas."""
+"""Entrega creat.MTT pelo Cloudflare R2 (deposito creat-entregas). Uso: python3 r2_enviar.py "<cliente>" "<projeto>" arquivos... [--data AAAA-MM-DD] [--legenda "..."] [--legendas opcoes.txt]. Arquivar (some da pagina, fica guardado em _arquivo/): python3 r2_enviar.py --arquivar <chave ou pasta/> ... Chaves so no ambiente (R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY). painel.html fica ao lado e vira a pagina de entregas."""
 import argparse, datetime, json, mimetypes, os, re, sys, unicodedata, urllib.request
 
 CONTA = "1f70e44ae3dedfd6bbf8a913acdd8af8"
@@ -71,11 +71,25 @@ def main():
     if sys.argv[1:] == ["--painel"]:
         atualizar_painel(cliente_s3())
         return 0
+    if sys.argv[1:2] == ["--arquivar"]:
+        s3 = cliente_s3()
+        for alvo in sys.argv[2:]:
+            chaves = [o["Key"] for o in s3.list_objects_v2(Bucket=DEPOSITO, Prefix=alvo).get("Contents", [])] if alvo.endswith("/") else [alvo]
+            for k in chaves:
+                if k.startswith("_"):
+                    continue
+                s3.copy_object(Bucket=DEPOSITO, Key="_arquivo/" + k, CopySource={"Bucket": DEPOSITO, "Key": k})
+                s3.head_object(Bucket=DEPOSITO, Key="_arquivo/" + k)
+                s3.delete_object(Bucket=DEPOSITO, Key=k)
+                print(f"arquivado: {k} -> _arquivo/{k}")
+        atualizar_painel(s3)
+        return 0
     p = argparse.ArgumentParser()
     p.add_argument("cliente"); p.add_argument("projeto"); p.add_argument("arquivos", nargs="+")
     p.add_argument("--data", default=None)
     p.add_argument("--teste", action="store_true")
     p.add_argument("--legenda", default=None, help="texto da legenda do post; aparece na pagina com botao Copiar")
+    p.add_argument("--legendas", default=None, help="arquivo com varias opcoes de legenda separadas por uma linha '---'; o dono escolhe uma na pagina")
     a = p.parse_args()
     data = a.data or datetime.datetime.now(FUSO).strftime("%Y-%m-%d")
     pasta = f"{slug(a.cliente)}/{data}-{slug(a.projeto)}/"
@@ -105,13 +119,15 @@ def main():
             ok = False; print(f"  erro ao conferir: {e}")
         print(f"{'OK   ' if ok else 'FALHA'} {tam/1048576:.1f} MB  {url}")
         falhas += 0 if ok else 1
+    if a.legendas:
+        a.legenda = [t.strip() for t in open(a.legendas, encoding="utf-8").read().split("\n---\n") if t.strip()]
     if a.legenda:
         META = "_painel/e160f58517f4-meta.json"
         try:
             meta = json.loads(s3.get_object(Bucket=DEPOSITO, Key=META)["Body"].read())
         except Exception:
             meta = {}
-        meta[pasta.rstrip("/")] = {"legenda": a.legenda}
+        meta[pasta.rstrip("/")] = {"legendas": a.legenda} if isinstance(a.legenda, list) else {"legenda": a.legenda}
         s3.put_object(Bucket=DEPOSITO, Key=META, Body=json.dumps(meta, ensure_ascii=False).encode(),
                       ContentType="application/json; charset=utf-8", CacheControl="no-store")
     atualizar_painel(s3)
