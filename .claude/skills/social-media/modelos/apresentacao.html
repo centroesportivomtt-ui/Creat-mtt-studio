@@ -208,6 +208,7 @@ window.montar = async function ({ dados, marca }) {
     if (!ok) avisos.push(`${rot}: conteúdo demais para o slide (corte texto ou divida em dois)`);
     const et = q('.topo .etiqueta');
     if (et && et.scrollWidth > et.clientWidth + 1) avisos.push(`${rot}: título do documento longo demais para o topo`);
+    qa('.etiqueta').filter((e) => e !== et && e.scrollWidth > e.clientWidth + 1).forEach(() => avisos.push(`${rot}: etiqueta (campo "nota") longa demais, ficou com reticências`));
     avisos.push(...conferir(el, { x0: MX, y0: MY - 8, x1: W - MX, y1: H - 64 }, 28, rot));
   });
   return { n, avisos };

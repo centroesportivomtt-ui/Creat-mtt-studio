@@ -26,6 +26,8 @@ for (const a of arquivos) if (!fs.existsSync(a) || !fs.statSync(a).isFile()) fal
 // Medido em 11/11/2026: a página diz "Envio concluído" e DESCARTA em silêncio arquivo com acento ou cedilha no nome.
 // Envie com nome sem acento e renomeie depois pelo conector do Dropbox (move). Confira sempre a pasta depois do envio.
 for (const a of arquivos) if (/[^\x20-\x7E]/.test(path.basename(a))) falha('nome com acento é descartado pelo Dropbox: ' + path.basename(a));
+// Medido em 26/11/2026: acento na PASTA local (ex.: "5 - Relatórios/") também faz o arquivo não entrar no formulário.
+for (const a of arquivos) if (/[^\x20-\x7E]/.test(path.resolve(a))) falha('caminho com acento não entra no formulário do Dropbox; copie para uma pasta sem acento: ' + path.resolve(a));
 
 (async () => {
   const browser = await chromium.launch();

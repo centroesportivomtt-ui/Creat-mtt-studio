@@ -9,6 +9,21 @@ Nasceu em 26/11/2026 do post que o dono mandou (@socialmediadeelite, "Skills do 
 
 **Regra de ouro:** uma empresa, uma pasta por mês, as mesmas 5 frentes, a mesma ordem. O dono não precisa explicar de novo: ele diz "roda dezembro do Super Kal" e a casa faz tudo.
 
+## O sistema em um comando
+
+Depois que o Verbo grava os 5 textos do mês numa pasta (`estrategia-<mês>.md`, `agenda.json`, `carrossel.json`, `apresentacao.json`, `atendente-direct.md`, e a ficha, se houver):
+
+```bash
+node .claude/skills/social-media/rodar-mes.cjs --empresa "Super Kal" --mes janeiro --ano 2027 \
+     --textos <scratchpad>/<empresa>/textos --saida <scratchpad>/<empresa>/mes
+```
+
+O script confere tudo e barra o que estiver errado: data fora do mês, hora inválida, texto que estoura o cartão, número sem fonte, etiqueta cortada. Também gera o carrossel e a apresentação, monta a pasta de entrega igual à do Dropbox e grava o `manifesto.json`. O manifesto lista cada arquivo com o nome final e o nome de envio, e traz os eventos da Google Agenda já com `[EMPRESA]` e a cor da empresa (`empresas.json`). O resto é feito pelos conectores, seguindo o manifesto: Dropbox (seção 6) e Google Agenda (seção 2).
+
+Empresa nova: uma linha em `empresas.json`, com a próxima cor livre, e um arquivo de marca em `modelos/marcas/<empresa>.json` (veja `modelos/LEIA-ME.md`).
+
+**Automação mensal:** no dia 24 de cada mês, uma tarefa agendada roda o mês seguinte de cada empresa que já tem pasta "Social Media" no Dropbox. Ela entrega tudo em "0 - Para aprovar" e avisa o dono. Nada é publicado sem o "pode" dele.
+
 ## 0. A ficha da empresa (uma vez por empresa)
 
 Sem ficha não se faz o mês. O modelo está em `ficha-da-empresa.md` (nesta pasta). A ficha preenchida mora **no Dropbox, nunca no repositório** (repositório é público): `/Marcos/<EMPRESA>/Social Media <Mês>/4 - Textos/<EMPRESA> - Ficha da empresa.md`, e cada mês novo leva uma cópia atualizada.
@@ -34,7 +49,9 @@ A agenda do dono é uma só para todas as empresas; **a cor diz de quem é o com
 | CT MTT (Centro Esportivo) | Manjericão, verde (10) |
 | Brabus Lounge | Uva, roxo (3) |
 | Lavínia Cervejas | Tangerina, laranja (6) |
-| empresa nova | a primeira cor livre de: Flamingo (4), Mirtilo (9), Sálvia (2), Lavanda (1); registre aqui |
+| empresa nova | a primeira cor livre de: Flamingo (4), Mirtilo (9), Sálvia (2), Lavanda (1); registre aqui e em `empresas.json` |
+
+Provado em 26/11: o conector cria evento com cor (`colorId`) e no fuso da agenda do dono (America/Bahia).
 
 Como criar (conector do Google Calendar, agenda principal do dono):
 1. Antes de criar, procure com `list_events` (`fullText` = `[<EMPRESA>]`, intervalo do mês) e não duplique o que já existe.
@@ -87,7 +104,11 @@ Ligar, em duas fases:
 ```
 
 - No conector do Dropbox, `/Marcos` aparece como `/Creat.MTT Studio`.
-- Texto entra pelo conector (`create_file`); PNG e PDF entram por `projetos/creat-nuvem/scripts/dropbox-enviar.cjs` com `DROPBOX_REMETENTE_NOME` = nome da EMPRESA, por uma solicitação de arquivos da pasta (`list_file_requests`; se a pasta não tiver uma, crie com `create_file_request` apontando para ela). Nome com acento é descartado em silêncio: envie sem acento, renomeie com `move` e confira a pasta.
+- Texto entra pelo conector (`create_file`). PNG e PDF entram por `projetos/creat-nuvem/scripts/dropbox-enviar.cjs`, com `DROPBOX_REMETENTE_NOME` igual ao nome da EMPRESA, por uma solicitação de arquivos da pasta (`list_file_requests`; se a pasta não tiver uma, crie com `create_file_request` apontando para ela).
+- Medido em 26/11:
+  - O Dropbox descarta em silêncio o arquivo que tem acento no nome **ou em qualquer pasta do caminho local**. O `rodar-mes.cjs` já monta tudo sem acento.
+  - O Dropbox acrescenta "<remetente> - " na frente do nome do arquivo. Por isso o envio sai sem o prefixo da empresa.
+  - Depois do envio, renomeie com `move` para o nome final, com acento (está no manifesto), e liste a pasta para conferir.
 - Só existe pasta com conteúdo. Versão trocada vai para `9 - Versões antigas` na mesma rodada.
 - Projeto novo entra na lista de `/Marcos/COMO ESTÁ ORGANIZADO - regra oficial.md`.
 
