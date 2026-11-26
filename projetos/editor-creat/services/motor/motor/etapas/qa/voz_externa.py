@@ -23,6 +23,17 @@ O pedido manda (`edl.origem.vozes`):
   microfone dentro da peça e conversa no som direto continuam reprovando (é a equipe dirigindo, não quem fala no vídeo);
 - automático: a assinatura reprova quando a voz principal tem 65% ou mais do tempo de fala (o resto é intruso: "vai", "de novo",
   "isso"); com as vozes equilibradas é conversa e a assinatura só relata. A régua 1 vale sempre.
+Diálogo (onda 4, D46, SÓ com "varias"; em "uma" e no automático nada muda), com limites escritos:
+- voz LONGE do microfone dentro da peça é aceita (relatada, não reprova) quando >= 60% do trecho achado está coberto por
+  palavras da transcrição fina da MESMA fonte (`analise.json`, conf >= 0,5) que estão no `texto` da peça: é a segunda pessoa do
+  diálogo, que a direção escolheu. Murmúrio sem transcrição (ou com palavras que não estão no texto) continua reprovando;
+- conversa no som direto de um plano é aceita quando o plano é da MESMA CENA (mesma câmera com a janela de fonte a até 2 s de
+  uma peça de voz que toca junto, ou outra câmera com o atraso MEDIDO pela conferência e a janela, no relógio da voz, a até 2 s
+  da peça), E >= 60% das palavras ouvidas na janela (o mesmo transcritor da conferência) batem com as palavras das peças que
+  tocam junto, E o som direto fica >= 12 dB abaixo da voz no cruzamento, medido nos stems "voz" e "direto" (sem os stems não
+  há prova: reprova). Perto disso é eco: reprova. Plano de outra cena com conversa reprova.
+  A "outra pessoa longe do microfone" achada em peça sem fala que se ouça (só a linha de tom) NÃO entra nesse aceite: sem
+  fala acima do nível não há palavra que prove que é o diálogo.
 Dispensa: `edl.qa.vozes_confirmadas` (ids de peça ou de plano), sempre listados no detalhe. NÃO VERIFICADO (reprova, sem
 dispensa): sem as fontes; sem o modelo de voz; trecho que passa do fim do áudio da fonte; peça de voz sem fala que se ouça na
 fonte (áudio mudo ou só ruído não pode aprovar calado: vozes_de_fora devolveria [])."""
@@ -45,6 +56,13 @@ TOM_LONGE = 0.20
 PRINCIPAL_MIN = 0.65
 RAZAO_TOM = 0.72          # tom abaixo de 72% da voz principal = outra pessoa (o mesmo de audio_fala.vozes_de_fora)
 LONGE_GLOBAL_DB = 12.0    # peça inteira 12 dB abaixo da fala da mesma fonte = voz longe do microfone
+# diálogo (varias, onda 4)
+DIALOGO_COBRE_MIN = 0.60  # parte do trecho de voz longe coberta por palavras da transcrição fina que estão no texto da peça
+DIALOGO_CONF_MIN = 0.5    # confiança mínima da palavra da transcrição fina
+CENA_GAP_S = 2.0          # janela do som direto a até 2 s (no relógio da voz) de uma peça que toca junto = a mesma cena
+PALAVRAS_BATEM_MIN = 0.60  # palavras ouvidas no som direto que batem com as das peças que tocam junto
+ECO_DB = 12.0             # som direto pelo menos 12 dB abaixo da voz no cruzamento (perto disso é eco)
+CRUZA_S = 0.08
 
 
 def _fatia_principal(pecas: list[dict], trechos: dict, f0_ref) -> float:
@@ -151,6 +169,115 @@ def julgar_assinaturas(voz: list[dict], assin: list, durs: list[float], tons: li
     elif fora and modo != "uma" and fatia < PRINCIPAL_MIN:
         relato = "várias vozes com tempo equilibrado: tratado como conversa. Se for peça de uma pessoa só, marque no pedido"
     return {"pecas": val, "fora": fora, "reprova": bool(fora) and relato is None, "resumo": resumo, "relato": relato, "curtas": sem}
+
+
+# ------------------------------------------------------------------ diálogo (varias, onda 4)
+def _tokens(txt) -> list[str]:
+    from motor.etapas.qa import normalizar
+    return normalizar(txt or "").split()
+
+
+def coberta_por_palavras(a: float, b: float, palavras: list, texto: str, conf_min: float = DIALOGO_CONF_MIN) -> float:
+    """Função pura: parte de [a, b] (tempo de fonte) coberta por palavras [[s, e, palavra, conf]] com conf >= conf_min cuja
+    forma normalizada está no `texto` da peça."""
+    if b - a <= 0:
+        return 0.0
+    do_texto = set(_tokens(texto))
+    trechos = sorted((max(a, float(w[0])), min(b, float(w[1]))) for w in palavras or []
+                     if (w[3] if len(w) > 3 and w[3] is not None else 1.0) >= conf_min
+                     and any(t in do_texto for t in _tokens(w[2])) and min(b, float(w[1])) > max(a, float(w[0])))
+    total, fim = 0.0, a
+    for x, y in trechos:
+        x = max(x, fim)
+        if y > x:
+            total += y - x
+            fim = y
+    return total / (b - a)
+
+
+def longe_no_dialogo(c, v: dict, achado: dict) -> tuple[bool, str]:
+    """A voz longe achada na peça é a segunda pessoa do diálogo? (palavras da transcrição fina da fonte, no texto da peça)."""
+    pal = fala_cortada._palavras_fonte(c, v["fonte"])
+    if not pal:
+        return False, "sem transcrição da fonte para provar que é fala do diálogo"
+    frac = coberta_por_palavras(achado["s"][0], achado["s"][1], pal, v.get("texto") or "")
+    if frac >= DIALOGO_COBRE_MIN:
+        return True, f"{frac:.0%} do trecho com palavras da transcrição que estão no texto da peça"
+    return False, f"só {frac:.0%} do trecho com palavras da transcrição que estão no texto da peça (precisa {DIALOGO_COBRE_MIN:.0%}): murmúrio"
+
+
+def _db(x) -> float:
+    x = np.asarray(x, np.float64)
+    return float(20 * np.log10(np.sqrt(np.mean(x * x)) + 1e-9)) if len(x) else -120.0
+
+
+def _stem(c, nome: str):
+    k = ("stem_mono", nome)
+    if k not in c.memo:
+        import soundfile as sf
+        x, sr = sf.read(str(c.stems[nome]), dtype="float32", always_2d=True)
+        c.memo[k] = (x.mean(1), sr)
+    return c.memo[k]
+
+
+def _no_filme(x: np.ndarray, sr: int, trechos: list[tuple[float, float]]) -> np.ndarray:
+    return np.concatenate([x[max(0, int(a * sr)):max(0, int(b * sr))] for a, b in trechos] or [np.zeros(0, np.float32)])
+
+
+def cena_do_som_direto(c, p: dict, voz: list[dict]) -> dict:
+    """O som direto do plano `p` é o próprio diálogo (mesma cena, mesmas palavras, bem abaixo da voz)? Cache por plano.
+    Devolve {"aceito", "motivo", "medida"}. Só faz sentido em "varias" (quem chama decide)."""
+    from motor.etapas.qa import cobertura_sintonia as COB
+    k = ("cena_direto", p["id"])
+    if k in c.memo:
+        return c.memo[k]
+    vel = float(p.get("vel", 1.0) or 1.0)
+    ps0 = float(p["s0"])
+    ps1 = ps0 + (float(p["t1"]) - float(p["t0"])) * vel
+
+    def fim(r):
+        c.memo[k] = r
+        return r
+    juntas = [v for v in voz if min(float(p["t1"]), float(v["t1"])) - max(float(p["t0"]), float(v["t0"])) >= CRUZA_S]
+    if not juntas:
+        return fim({"aceito": False, "motivo": "nenhuma fala toca junto com este plano", "medida": ""})
+    cena, onde = [], []
+    for v in juntas:
+        vs0, vs1 = float(v["s0"]), fala_cortada.fim_na_fonte(v)
+        if COB._base(v["fonte"]) == COB._base(p["fonte"]):
+            a, b, como = ps0, ps1, "mesma câmera"
+        else:
+            m = c.sincronia(v["fonte"], p["fonte"])
+            if m is None:
+                continue
+            a, b, como = ps0 - m["delta"], ps1 - m["delta"], f"outra câmera, atraso medido {m['offset_s']:+.3f} s (semelhança {m['conf']:.2f})"
+        dist = max(0.0, a - vs1, vs0 - b)
+        if dist <= CENA_GAP_S:
+            cena.append(v)
+            onde.append(f"{v['id']}: {como}, {dist:.2f} s da peça")
+    if not cena:
+        return fim({"aceito": False, "motivo": "outra cena (a janela do som direto não está perto de nenhuma fala que toca junto)", "medida": ""})
+    tr = c.transcrever_janela(p["fonte"], ps0, ps1)
+    if tr is None or tr.get("erro"):
+        return fim({"aceito": False, "motivo": "sem como ouvir as palavras do som direto", "medida": "; ".join(onde)})
+    ouvidas = [w[2] for w in c.palavras(tr) if len(w[2]) >= 2]
+    if not ouvidas:
+        return fim({"aceito": False, "motivo": "conversa sem palavras reconhecidas no som direto (murmúrio)", "medida": "; ".join(onde)})
+    esperadas = {t for v in cena for t in _tokens(v.get("texto"))}
+    frac = sum(1 for w in ouvidas if w in esperadas) / len(ouvidas)
+    if frac < PALAVRAS_BATEM_MIN:
+        return fim({"aceito": False, "motivo": f"só {frac:.0%} das palavras do som direto batem com a fala que toca junto",
+                    "medida": "; ".join(onde)})
+    trechos = [(max(float(p["t0"]), float(v["t0"])), min(float(p["t1"]), float(v["t1"]))) for v in cena]
+    if "voz" not in c.stems or "direto" not in c.stems:   # sem os stems não há como medir o eco: sem prova, não aceita
+        return fim({"aceito": False, "motivo": "sem os stems de voz e de som direto para medir se é eco",
+                    "medida": "; ".join(onde) + f"; {frac:.0%} das palavras batem"})
+    (xv, srv), (xd, srd) = _stem(c, "voz"), _stem(c, "direto")
+    dv, dd = _db(_no_filme(xv, srv, trechos)), _db(_no_filme(xd, srd, trechos))
+    medida = "; ".join(onde) + f"; {frac:.0%} das palavras batem; som direto {dv - dd:.1f} dB abaixo da voz nos stems"
+    if dv - dd < ECO_DB:
+        return fim({"aceito": False, "motivo": f"som direto só {dv - dd:.1f} dB abaixo da voz (eco: precisa {ECO_DB:.0f} dB)", "medida": medida})
+    return fim({"aceito": True, "motivo": "a conversa do som direto é o próprio diálogo da cena", "medida": medida})
 
 
 def checar(c):
@@ -269,6 +396,27 @@ def checar(c):
                         "motivo": "outra voz pela assinatura", "texto": str(v.get("texto") or "")[:40],
                         "medida": f"semelhança {prox:.2f} com a voz principal ({ass['resumo']})"}
                 (achados if ass["reprova"] else permitidos).append(item)
+    # diálogo (varias): a segunda pessoa longe do microfone com palavras no texto e o som direto da própria cena são aceitos
+    dialogo = []
+    if modo == "varias":
+        pid = {p["id"]: p for p in diretos}
+        vid = {v["id"]: v for v in voz}
+        resto = []
+        for a in achados:
+            if a["tipo"] == "som_direto" and a["id"] in pid:
+                r = cena_do_som_direto(c, pid[a["id"]], voz)
+                if r["aceito"]:
+                    dialogo.append({**a, "motivo": r["motivo"], "medida": f"{a['medida']}; {r['medida']}"})
+                    continue
+                a = {**a, "medida": f"{a['medida']}; não é o diálogo: {r['motivo']}"}
+            elif a["tipo"] == "voz" and a["motivo"] == "longe do microfone" and a["id"] in vid:
+                ok, med = longe_no_dialogo(c, vid[a["id"]], a)
+                if ok:
+                    dialogo.append({**a, "motivo": "segunda pessoa do diálogo, longe do microfone", "medida": f"{a['medida']}; {med}"})
+                    continue
+                a = {**a, "medida": f"{a['medida']}; não é o diálogo: {med}"}
+            resto.append(a)
+        achados = resto
     falhas = [a for a in achados if a["id"] not in confirmadas]
     dispensados = [a for a in achados if a["id"] in confirmadas]
 
@@ -297,9 +445,11 @@ def checar(c):
         motivo = (ass or {}).get("relato") if ass and ass["fora"] and not ass["reprova"] else None
         det.append(f"{len(permitidos)} fala(s) de outra voz, {motivo or 'permitido pelo pedido (várias pessoas falam)'}: "
                    + "; ".join(linha(a) for a in permitidos[:5]))
+    if dialogo:
+        det.append(f"{len(dialogo)} trecho(s) aceito(s) como o diálogo do pedido (várias pessoas falam): " + "; ".join(linha(a) for a in dialogo[:5]))
     if dispensados:
         det.append("confirmadas pelo diretor (vozes_confirmadas): " + "; ".join(linha(a) for a in dispensados))
     return {"ok": not falhas and not surdos and not sem_modelo, "bloqueia": True,
             "valor": {"achados": falhas[:30], "confirmadas": sorted({a["id"] for a in dispensados}), "nao_verificados": surdos[:30],
-                      "permitidos": permitidos[:30], "modo": modo, "pecas": (ass or {}).get("pecas", [])},
+                      "permitidos": permitidos[:30], "dialogo": dialogo[:30], "modo": modo, "pecas": (ass or {}).get("pecas", [])},
             "detalhe": "; ".join(det)}

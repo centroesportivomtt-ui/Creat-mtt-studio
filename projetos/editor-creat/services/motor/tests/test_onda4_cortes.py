@@ -290,6 +290,9 @@ def test_sincronia_so_no_dialogo_e_com_import_protegido(monkeypatch, pausa_boa):
         return {"algo": "sinc-1", "pares": {}, "planos": {"P1": {"s0_antes": 0.95, "s0_depois": 1.45, "par": "A|A"}}}
     falso.alinhar = alinhar
     monkeypatch.setitem(sys.modules, "motor.etapas.sincronia_cameras", falso)
+    # junção com MOTOR-B: o módulo de verdade já pode estar importado (atributo do pacote ganha de sys.modules no "from ... import")
+    import motor.etapas as E
+    monkeypatch.setattr(E, "sincronia_cameras", falso, raising=False)
     edl = _edl(pausa_boa, _voz2())
     edl["origem"]["vozes"] = "uma"
     assert M._sincronizar(edl, Fontes(edl), None) is None and chamadas == []          # caso de uma voz: nada muda
@@ -297,4 +300,5 @@ def test_sincronia_so_no_dialogo_e_com_import_protegido(monkeypatch, pausa_boa):
     rel = M._sincronizar(edl, Fontes(edl), None)
     assert chamadas == [("varias", 16000 * 5, 0.0)] and edl["origem"]["sincronia"] == rel and edl["planos"][0]["s0"] == 1.45
     monkeypatch.setitem(sys.modules, "motor.etapas.sincronia_cameras", None)         # módulo da outra frente ausente
+    monkeypatch.delattr(E, "sincronia_cameras", raising=False)
     assert M._sincronizar(edl, Fontes(edl), None) is None

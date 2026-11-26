@@ -42,6 +42,11 @@ def normalizar(txt: str) -> str:
     return " ".join("".join(ch if ch.isalnum() else " " for ch in t).split())
 
 
+def nome_janela(fid: str, a: float, b: float) -> str:
+    """Nome de cache da transcrição de uma janela de fonte (o teste usa para montar o transcritor falso)."""
+    return f"janela:{fid}:{float(a):.2f}-{float(b):.2f}"
+
+
 class Conferencia:
     """Tudo que as checagens precisam, carregado só quando alguma pede (transcrição é cara: cache por arquivo)."""
 
@@ -108,6 +113,48 @@ class Conferencia:
             from motor.etapas.montagem.comum import ler_audio
             self._fonte_audio[k] = (ler_audio(self.fontes.audio(fid), sr=sr, cfg=self.cfg), float(self.fontes.offset(fid)))
         return self._fonte_audio[k]
+
+    # ---------- diálogo (onda 4, D46/D47): só vale com edl.origem.vozes == "varias"
+    def modo_vozes(self) -> str:
+        """O que o pedido diz sobre quem fala: "uma", "varias" ou "auto" (padrão)."""
+        return str((self.edl.get("origem") or {}).get("vozes") or "auto")
+
+    def sincronia(self, fonte_voz: str, fonte_plano: str) -> dict | None:
+        """A conferência MEDE de novo o atraso entre as duas câmeras (não confia em edl.origem.sincronia), com cache.
+        Devolve {"offset_s", "conf", "razao", "delta"} (tempo de fonte do plano = tempo de fonte da voz + delta) ou None
+        (sem as fontes, áudio que não se lê ou sincronia sem confiança)."""
+        k = ("sincronia", fonte_voz, fonte_plano)
+        if k not in self.memo:
+            self.memo[k] = None
+            try:
+                av, ap = self.audio_fonte(fonte_voz, 16000), self.audio_fonte(fonte_plano, 16000)
+            except Exception:  # noqa: BLE001 - fonte que não se lê: sem sincronia (vale a regra de sempre)
+                av = ap = None
+            if av is not None and ap is not None:
+                from motor.etapas import sincronia_cameras as SINC
+                m = SINC.offset(av[0], ap[0], 16000)
+                if m is not None:
+                    self.memo[k] = {**m, "delta": round(SINC.delta_fonte(m, av[1], ap[1]), 4)}
+        return self.memo[k]
+
+    def transcrever_janela(self, fid: str, a: float, b: float) -> dict | None:
+        """Transcrição, pelo mesmo transcritor da conferência, do trecho [a, b] (tempo de fonte do EDL) da fonte `fid` (cache
+        por janela). As palavras voltam em tempo relativo à janela. None sem as fontes ou sem transcritor."""
+        nome = nome_janela(fid, a, b)
+        if nome in self._tr:
+            return self._tr[nome]
+        au = self.audio_fonte(fid, 16000)
+        if au is None or b - a <= 0.05:
+            return None
+        import soundfile as sf
+        x, off = au
+        i, j = max(0, round((a - off) * 16000)), max(0, round((b - off) * 16000))
+        arq = self.evid / f"_{nome.replace(':', '_').replace('/', '_')}.wav"
+        sf.write(str(arq), np.asarray(x[i:j], np.float32), 16000, subtype="PCM_16")
+        try:
+            return self.transcrever(nome, arq)
+        finally:
+            arq.unlink(missing_ok=True)
 
     def salvar_quadro(self, img, nome: str) -> str:
         import cv2

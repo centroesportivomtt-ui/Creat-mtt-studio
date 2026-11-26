@@ -17,14 +17,20 @@ e OLHOU o take; sem ela, ou com assunto vazio, reprova. olhar 'camera' = rosto f
 fora de sincronia): reprova sempre. Sem detector, com cobertura para conferir: NÃO VERIFICADO, reprova. "Fora do assunto" é
 semântica: fica com a revisão por IA (olho do Claude) e com o `assunto` anotado.
 
-A decisão é pura (`cruzamentos`, `coberturas`, `decidir`) e o detector é injetável (`checar(c, detector=)`, `c._rostos` ou
-`_detector`), para teste."""
+Diálogo com duas câmeras (onda 4, D47, só com `edl.origem.vozes == "varias"`): também é sincronizado o plano de OUTRA câmera
+cujo atraso em relação à câmera da voz a conferência MEDE de novo pelo som (`sincronia_cameras.offset`, via `c.sincronia`; o
+`edl.origem.sincronia` da montagem não é usado) e cujo tempo de fonte fica a menos de 0,10 s do tempo da voz + atraso no começo,
+no meio e no fim do cruzamento. Sincronizado não é cobertura e não pede rosto. Em "uma" e no automático nada muda.
+
+A decisão é pura (`cruzamentos`, `coberturas`, `decidir`, com `deltas` = {(fonte da voz, fonte do plano): atraso}) e o detector
+é injetável (`checar(c, detector=)`, `c._rostos` ou `_detector`), para teste."""
 from __future__ import annotations
 
 import math
 
 ID, BLOQUEIA = "cobertura_sintonia", True
 SINC_TOL_S = 0.25
+SINC_CAMERAS_TOL_S = 0.10      # outra câmera: a boca precisa bater mais justo que no mesmo relógio (o atraso foi medido)
 PASSO_AMOSTRA = 0.4
 MIN_AMOSTRAS = 2
 ROSTO_ALTURA_MIN = 0.05
@@ -45,24 +51,35 @@ def _src(x: dict, t: float) -> float:
     return float(x["s0"]) + (t - float(x["t0"])) * float(x.get("vel", 1.0) or 1.0)
 
 
-def cruzamentos(planos: list[dict], vozes: list[dict]) -> list[dict]:
-    """Cada par plano x peça de voz que se cruza no filme: {"plano", "voz", "a", "b", "sincronizado"}."""
+def cruzamentos(planos: list[dict], vozes: list[dict], deltas: dict | None = None) -> list[dict]:
+    """Cada par plano x peça de voz que se cruza no filme: {"plano", "voz", "a", "b", "sincronizado", "camera"?}.
+
+    `deltas` (diálogo, medido pela conferência): {(fonte da voz, fonte do plano): delta} com tempo de fonte do plano = tempo de
+    fonte da voz + delta. Com ele, o plano de outra câmera em sincronia (< SINC_CAMERAS_TOL_S nas três pontas) também é
+    sincronizado ("camera": "outra")."""
+    deltas = deltas or {}
     out = []
     for p in planos:
         for v in vozes:
             a, b = max(float(p["t0"]), float(v["t0"])), min(float(p["t1"]), float(v["t1"]))
             if b - a < CRUZAMENTO_MIN_S:
                 continue
+            ts = (a, (a + b) / 2, b)
             sinc = (not p.get("rampa") and _base(p["fonte"]) == _base(v["fonte"])
-                    and all(abs(_src(p, t) - _src(v, t)) < SINC_TOL_S for t in (a, (a + b) / 2, b)))
-            out.append({"plano": p["id"], "voz": v["id"], "a": round(a, 3), "b": round(b, 3), "sincronizado": bool(sinc)})
+                    and all(abs(_src(p, t) - _src(v, t)) < SINC_TOL_S for t in ts))
+            item = {"plano": p["id"], "voz": v["id"], "a": round(a, 3), "b": round(b, 3), "sincronizado": bool(sinc)}
+            d = deltas.get((v["fonte"], p["fonte"]))
+            if not sinc and d is not None and not p.get("rampa") and _base(p["fonte"]) != _base(v["fonte"]):
+                if all(abs(_src(p, t) - (_src(v, t) + float(d))) < SINC_CAMERAS_TOL_S for t in ts):
+                    item["sincronizado"], item["camera"] = True, "outra"
+            out.append(item)
     return out
 
 
-def coberturas(planos: list[dict], vozes: list[dict]) -> dict[str, list[tuple[float, float]]]:
+def coberturas(planos: list[dict], vozes: list[dict], deltas: dict | None = None) -> dict[str, list[tuple[float, float]]]:
     """Planos de cobertura (dedup por id) -> trechos do filme em que cobrem fala que não é deles."""
     out: dict[str, list] = {}
-    for x in cruzamentos(planos, vozes):
+    for x in cruzamentos(planos, vozes, deltas):
         if not x["sincronizado"]:
             out.setdefault(x["plano"], []).append((x["a"], x["b"]))
     return out
@@ -96,7 +113,8 @@ def tempos_amostra(trechos: list[tuple[float, float]], passo: float = PASSO_AMOS
 
 
 def decidir(planos: list[dict], vozes: list[dict], fracao_rosto: dict[str, float | None],
-            seguidas: dict[str, int] | None = None, primeiro_plano: dict[str, float | None] | None = None) -> list[dict]:
+            seguidas: dict[str, int] | None = None, primeiro_plano: dict[str, float | None] | None = None,
+            deltas: dict | None = None) -> list[dict]:
     """Função pura: planos, vozes, a fração de quadros com rosto de cada plano de cobertura, (opcional) a maior sequência de
     amostras seguidas com rosto e (opcional) a largura do maior rosto quando ele está em primeiro plano (>= ROSTO_MIN) na
     maioria das amostras -> reprovações. A pessoa está na tela se fração >= FRACAO_ROSTO_MIN OU seguidas >= SEGUIDAS_ROSTO_MIN
@@ -108,7 +126,7 @@ def decidir(planos: list[dict], vozes: list[dict], fracao_rosto: dict[str, float
     primeiro_plano = primeiro_plano or {}
     pid = {p["id"]: p for p in planos}
     out = []
-    for i, trechos in coberturas(planos, vozes).items():
+    for i, trechos in coberturas(planos, vozes, deltas).items():
         cob = pid[i].get("cobertura") or {}
         olhar = cob.get("olhar")
         fr = fracao_rosto.get(i)
@@ -183,11 +201,34 @@ def medir_rosto(c, det, ts: list[float]) -> dict:
             "primeiro_plano": max(grandes) if len(grandes) * 2 > len(larguras) else None}
 
 
+def deltas_medidos(c, planos: list[dict], vozes: list[dict]) -> dict:
+    """Diálogo (`varias`) com as fontes: o atraso de cada par (câmera da voz, outra câmera) que se cruza no filme, MEDIDO pela
+    conferência no áudio. Fora do diálogo ou sem as fontes: {} (nada muda)."""
+    if str((c.edl.get("origem") or {}).get("vozes") or "auto") != "varias" or getattr(c, "fontes", None) is None:
+        return {}
+    out = {}
+    for x in cruzamentos(planos, vozes):
+        if x["sincronizado"]:
+            continue
+        p = next(q for q in planos if q["id"] == x["plano"])
+        v = next(q for q in vozes if q["id"] == x["voz"])
+        if _base(p["fonte"]) == _base(v["fonte"]) or (v["fonte"], p["fonte"]) in out:
+            continue
+        m = c.sincronia(v["fonte"], p["fonte"])
+        if m is not None:
+            out[(v["fonte"], p["fonte"])] = m["delta"]
+    return out
+
+
 def checar(c, detector=None):
     planos, vozes = c.edl.get("planos") or [], c.edl.get("voz") or []
-    cob = coberturas(planos, vozes)
+    deltas = deltas_medidos(c, planos, vozes)
+    cob = coberturas(planos, vozes, deltas)
+    outra = sorted({x["plano"] for x in cruzamentos(planos, vozes, deltas) if x.get("camera") == "outra"})
+    sinc_txt = (f"; {len(outra)} plano(s) da outra câmera em sincronia pelo som: " + ", ".join(outra)) if outra else ""
     if not cob:
-        return {"ok": True, "detalhe": f"nenhuma cobertura: {len(planos)} plano(s), todo trecho com fala mostra o take da fala (ou nenhuma imagem por cima de fala)"}
+        return {"ok": True, "valor": {"sincronizados_outra_camera": outra} if outra else None,
+                "detalhe": f"nenhuma cobertura: {len(planos)} plano(s), todo trecho com fala mostra o take da fala (ou nenhuma imagem por cima de fala)" + sinc_txt}
     pid = {p["id"]: p for p in planos}
     medir = [i for i in cob if (pid[i].get("cobertura") or {}).get("olhar") != "camera"]
     det = detector
@@ -200,7 +241,7 @@ def checar(c, detector=None):
     fracao = {i: m["fracao"] for i, m in med.items()}
     seguidas = {i: m["seguidas"] for i, m in med.items()}
     primeiro = {i: m["primeiro_plano"] for i, m in med.items()}
-    reprov = decidir(planos, vozes, fracao, seguidas, primeiro)
+    reprov = decidir(planos, vozes, fracao, seguidas, primeiro, deltas)
     evid = []
     for r in reprov:
         t, q = (med.get(r["id"]) or {}).get("quadro") or (None, None)
@@ -214,7 +255,7 @@ def checar(c, detector=None):
               + (f", {seguidas[r['id']]} amostras seguidas" if seguidas.get(r["id"], 0) >= SEGUIDAS_ROSTO_MIN else "")
               + f"): {r['motivo']}" for r in reprov]
     nome = getattr(det, "nome", "detector") if det is not None else "sem detector"
-    d = [f"{len(cob)} plano(s) de cobertura sobre fala; rosto medido em {len(medir)} ({nome})"]
+    d = [f"{len(cob)} plano(s) de cobertura sobre fala; rosto medido em {len(medir)} ({nome})" + sinc_txt]
     if linhas:
         d.append(f"{len(reprov)} reprovado(s): " + "; ".join(linhas))
     anotados = [i for i in cob if pid[i].get("cobertura") and i not in {r['id'] for r in reprov}]
@@ -225,5 +266,5 @@ def checar(c, detector=None):
             "valor": {"coberturas": {i: {"trechos": cob[i], "fracao_rosto": None if fracao.get(i) is None else round(fracao[i], 2),
                                          "seguidas": seguidas.get(i), "rosto_largura": (med.get(i) or {}).get("larguras"),
                                          "primeiro_plano": primeiro.get(i)} for i in cob},
-                      "reprovados": [r["id"] for r in reprov]},
+                      "reprovados": [r["id"] for r in reprov], "sincronizados_outra_camera": outra},
             "detalhe": "; ".join(d)}
