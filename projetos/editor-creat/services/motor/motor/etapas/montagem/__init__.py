@@ -25,6 +25,7 @@ from motor.etapas import cor as CR
 from motor.etapas import fatos
 from motor.etapas import pessoa as PESSOA
 from motor.etapas.montagem import comp as COMP
+from motor.etapas.montagem import cortes as CORTES
 from motor.etapas.montagem import fx as FX
 from motor.etapas.montagem import mix as MIX
 from motor.etapas.montagem import overlay as OV
@@ -252,6 +253,8 @@ def _achado_mix(edl: dict, res_au: dict) -> str:
         partes.append(f"o acorde final cai aos {_mmss(tr['acorde_final'])}")
     if not tr.get("chave") and not faixas:
         partes.append("sem música")
+    if edl.get("voz") and not edl.get("tom_sala") and ((edl.get("origem") or {}).get("tom_sala") or {}).get("motivo"):
+        partes.append("sem tom de sala: " + str(edl["origem"]["tom_sala"]["motivo"]))      # onda 4, D45: dito, nunca calado
     return "; ".join(partes) or "Mix pronto"
 
 
@@ -301,6 +304,14 @@ def etapa_montagem(ctx) -> dict:
     with passos.passo("montagem.fatos", ferramenta="Claude com busca na web (fonte oficial) e leitura do rótulo nos quadros") as ps_ft:
         rel_ft = fatos.revisar(edl, ctx.cfg, Fontes(edl, arm, ctx.cfg.dados), contexto=_contexto(ctx, arm, p), projeto=p, trabalho=trabalho / "fatos")
         _achado_fatos(ps_ft, rel_ft or {})
+    # corte de fala pelo som (onda 4, D44): só a ponta que a conferência reprovaria muda; a marca em origem.cortes_audio faz a
+    # segunda montagem do mesmo EDL não mexer em nada (e o render reaproveitado continua valendo)
+    fontes_edl = Fontes(edl, arm, ctx.cfg.dados)
+    with passos.passo("montagem.cortes", ferramenta="régua de fala do editor (envelope do áudio da fonte, sem modelo)",
+                      n=len(edl.get("voz") or [])) as ps_ct:
+        rel_ct = CORTES.ajustar_edl(edl, fontes_edl, ctx.cfg)
+        ps_ct.anotar(mexidas=rel_ct.get("mexidas"), juntadas=rel_ct.get("juntadas")).achou(CORTES.achado(rel_ct))
+    _sincronizar(edl, fontes_edl, ctx.cfg)
     if hash_obj(edl) != antes:
         arm.gravar(chave_edl, _bytes_json(edl))
     chave_rel = f"saidas/{p}/{v}/montagem.json"
@@ -346,6 +357,40 @@ def etapa_montagem(ctx) -> dict:
     ctx.con.execute("UPDATE versoes SET estado='montada', video=? WHERE projeto=? AND id=?", (f"{base}/final.mp4", p, v))
     PL.limpar_cache(pathlib.Path(ctx.cfg.dados) / "cache" / "planos", int(os.environ.get("EDITOR_CACHE_PLANOS_MB", "1200")))
     return {"versao": v, "final": f"{base}/final.mp4", "tempos": rel["tempos"], "overlay_ms_quadro": rel["overlay"]["ms_quadro_efetivo"]}
+
+
+def _sincronizar(edl: dict, fontes: Fontes, cfg) -> dict | None:
+    """Passo `montagem.sincronia` (onda 4, D47): no diálogo (`vozes = varias`), o plano da segunda câmera passa para o ponto
+    em sincronia com a voz, medido pelo áudio (`etapas/sincronia_cameras.py`, frente MOTOR-B). Sem o módulo, fora do diálogo
+    ou com falha: nada muda (a conferência mede a sincronia de novo e não confia no EDL)."""
+    if (edl.get("origem") or {}).get("vozes") != "varias" or not edl.get("planos") or not edl.get("voz"):
+        return None
+    try:
+        from motor.etapas import sincronia_cameras as SINC
+    except ImportError:
+        return None
+    from motor.etapas.montagem.comum import ler_audio
+    memo: dict = {}
+
+    def audio_de(fid: str):
+        if fid not in memo:
+            try:
+                memo[fid] = (ler_audio(fontes.audio(fid), sr=16000, cfg=cfg), float(fontes.offset(fid)))
+            except Exception:  # noqa: BLE001 - fonte sem áudio: esse plano não é alinhado
+                memo[fid] = None
+        return memo[fid]
+    with passos.passo("montagem.sincronia", ferramenta="correlação do áudio entre as câmeras (envelope + GCC-PHAT, local)") as ps:
+        try:
+            rel = SINC.alinhar(edl, audio_de, "varias")
+        except Exception as e:  # noqa: BLE001 - sincronia que quebra não derruba a montagem: os planos ficam como vieram
+            ps.achou(f"Sincronia não rodou ({type(e).__name__}); os planos ficam como o diretor pôs")
+            return None
+        if isinstance(rel, dict):
+            edl.setdefault("origem", {})["sincronia"] = rel
+            alinhados = sum(1 for p in (rel.get("planos") or {}).values() if abs(float(p.get("s0_depois", 0)) - float(p.get("s0_antes", 0))) >= 0.02)
+            ps.anotar(alinhados=alinhados, pares=len(rel.get("pares") or {}))
+            ps.achou(f"{alinhados} plano{'s' if alinhados != 1 else ''} em sincronia com a voz" if alinhados else "Nenhum plano precisou de sincronia")
+        return rel
 
 
 def _achado_fatos(ps, rel: dict) -> None:

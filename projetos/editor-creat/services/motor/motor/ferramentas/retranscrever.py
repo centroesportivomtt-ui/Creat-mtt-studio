@@ -8,7 +8,9 @@ com tempos somados ao início do trecho. Nomes de marca entram como `initial_pro
 
 uso:
   python -m motor.ferramentas.retranscrever <projeto> [arquivo_id ...] [--modelo large-v3] [--dicas "Stella Pure Gold, Amstel Ultra"]
-Grava `transcricao.json` (assinatura própria, a análise não refaz) e atualiza a transcrição dentro de `analise.json`.
+Desde a onda 4 o mesmo trabalho roda sozinho no fluxo (passo `catalogo.escuta`, `etapas/escuta.py`) e esta ferramenta usa as
+mesmas funções. Grava `transcricao_fina.json` (o cache do ouvido fino: com as mesmas dicas que o fluxo calcularia, o catálogo
+reaplica sem rodar o modelo de novo) e atualiza a transcrição dentro de `analise.json`.
 Depois: refaça o catálogo/direção do projeto (novo pedido ou `fechar-envio`).
 """
 from __future__ import annotations
@@ -22,7 +24,7 @@ import numpy as np
 
 from motor import config
 from motor.provedores import armazenamento_de
-from motor.provedores.transcricao_fw import eh_fantasma, ler_16k
+from motor.provedores.transcricao_fw import eh_fantasma, ler_16k, normalizar
 
 PASSO = 0.05  # passo da série de energia gravada pela análise (energia.npy)
 
@@ -67,15 +69,16 @@ def em_laco(txt: str) -> bool:
     return False
 
 
-def transcrever_trechos(modelo, audio16: np.ndarray, trechos, dicas: str | None) -> list[dict]:
-    from motor.provedores.transcricao_fw import normalizar
+def transcrever_trechos(modelo, audio16: np.ndarray, trechos, dicas: str | None, beam_size: int = 5) -> list[dict]:
+    """Transcreve cada trecho sozinho (tempos somados ao início do trecho). Usada aqui e pelo ouvido fino do fluxo
+    (`etapas/escuta_filho.py`), com os mesmos filtros de fantasma e laço."""
     segs = []
     for a, b in trechos:
         pedaco = audio16[int(a * 16000):int(b * 16000)]
         if len(pedaco) < 1600:
             continue
         # vocabulário só em trecho longo: em trecho curto/sem fala o prompt vira laço ("Amstel Ultra, Amstel Ultra...")
-        r, _ = modelo.transcribe(pedaco, language="pt", word_timestamps=True, vad_filter=False, beam_size=5,
+        r, _ = modelo.transcribe(pedaco, language="pt", word_timestamps=True, vad_filter=False, beam_size=int(beam_size),
                                  temperature=0, condition_on_previous_text=False,
                                  initial_prompt=(dicas or None) if b - a >= 2.0 else None)
         for s in r:
@@ -101,6 +104,7 @@ def main(argv=None) -> int:
     ap.add_argument("--dicas", default="")
     ap.add_argument("--limiar", type=float, default=-38.0)
     ap.add_argument("--pausa", type=float, default=0.6)
+    ap.add_argument("--beam", type=int, default=5)
     a = ap.parse_args(argv)
     cfg = config.carregar()
     arm = armazenamento_de(cfg)
@@ -108,6 +112,8 @@ def main(argv=None) -> int:
     m = WhisperModel(a.modelo, device="cpu", compute_type="int8", cpu_threads=int(getattr(cfg, "threads", 4) or 4))
     base = pathlib.Path(arm.caminho_local(f"derivados/{a.projeto}"))
     ids = a.arquivos or sorted(p.name for p in base.iterdir() if (p / "analise.json").exists())
+    from motor.etapas import escuta as ESC
+    dicas = [d.strip() for d in a.dicas.split(",") if d.strip()]
     for aid in ids:
         pref = f"derivados/{a.projeto}/{aid}"
         an = arm.ler_json(f"{pref}/analise.json")
@@ -115,13 +121,15 @@ def main(argv=None) -> int:
         db = np.load(arm.caminho_local(f"{pref}/energia.npy"))
         tr_ = trechos_por_energia(db, dur, a.limiar, a.pausa)
         audio = ler_16k(pathlib.Path(arm.caminho_local(f"{pref}/audio.wav")))
-        segs = transcrever_trechos(m, audio, tr_, a.dicas)
-        tr = {"provedor": "faster-whisper", "modelo": f"{a.modelo}+trechos", "idioma": "pt", "vad": False, "segmentos": segs}
-        an["transcricao"] = tr
+        segs = transcrever_trechos(m, audio, tr_, ESC.prompt(dicas), beam_size=a.beam)
+        tr = ESC.transcricao(segs, a.modelo)
+        sig = ESC.assinatura(ESC._sig_ingest(arm, a.projeto, aid, an), a.modelo, dicas, a.limiar) if a.pausa == ESC.PAUSA_S else None
+        arm.gravar_json(f"{pref}/transcricao_fina.json", {"assinatura": sig, "modelo": a.modelo, "dicas": dicas, "trechos": len(tr_),
+                                                         "segundos": None, "transcricao": tr, "ferramenta": True})
+        from motor.etapas import analise as A
+        an["transcricao"] = A.filtrar_transcricao(tr, db)
+        A.validar_analise(an)
         arm.gravar_json(f"{pref}/analise.json", an)
-        c = arm.ler_json(f"{pref}/transcricao.json") if arm.existe(f"{pref}/transcricao.json") else {}
-        c.update({"transcricao": tr, "retranscrito": {"modelo": a.modelo, "trechos": len(tr_), "dicas": a.dicas}})
-        arm.gravar_json(f"{pref}/transcricao.json", c)
         print(f"{aid} {an['arquivo'].get('nome')}: {len(tr_)} trechos, {len(segs)} falas")
         for s in segs:
             print(f"   {s['s']:.1f}-{s['e']:.1f} {s['texto']}")

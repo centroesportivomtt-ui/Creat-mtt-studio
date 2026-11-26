@@ -20,6 +20,8 @@ def _sem_nuvem_real(monkeypatch):
     (quem precisa liga variáveis falsas no próprio teste e injeta um cliente S3 falso)."""
     for n in VARS_NUVEM:
         monkeypatch.delenv(n, raising=False)
+    # o ouvido fino (onda 4) nunca carrega o Whisper grande na suíte: quem testa o passo liga no próprio teste, com filho falso
+    monkeypatch.setenv("EDITOR_WHISPER_MODELO_FINO", "0")
 
 
 @pytest.fixture()

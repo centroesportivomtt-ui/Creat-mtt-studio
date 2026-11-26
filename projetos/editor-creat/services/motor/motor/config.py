@@ -110,6 +110,9 @@ class Config:
     armazenamento: str = field(default_factory=lambda: _env("EDITOR_ARMAZENAMENTO", "local"))       # local | r2
     transcricao: str = field(default_factory=lambda: _env("EDITOR_TRANSCRICAO", "faster-whisper"))  # faster-whisper | parakeet | scribe
     whisper_modelo: str = field(default_factory=lambda: _env("EDITOR_WHISPER_MODELO", "small"))
+    # ouvido fino (onda 4, D40): o Whisper grande ouve de novo as falas no começo do catálogo; "0" ou vazio desliga.
+    # Padrão turbo pela medição 1.11 (26/11, 4 núcleos, 60 s de fala): large-v3 com pico de 4.322 MB e 81 s; turbo 2.131 MB e 25 s
+    whisper_modelo_fino: str = field(default_factory=lambda: _env("EDITOR_WHISPER_MODELO_FINO", "turbo"))
     visao: str = field(default_factory=lambda: _env("EDITOR_VISAO", "local"))                      # local | claude-leve | gemini
     cerebro: str = field(default_factory=lambda: _env("EDITOR_CEREBRO", "fixture"))                # fixture | anthropic | sessao
     modelo_direcao: str = field(default_factory=lambda: _env("EDITOR_MODELO_DIRECAO", "claude-opus-5-5"))

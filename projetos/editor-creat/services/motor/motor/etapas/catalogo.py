@@ -371,6 +371,40 @@ def hash_texto(txt: str) -> str:
 
 
 # ---------------- etapa ----------------
+def _ouvido_fino(ctx, arm, p: str, analises: list[dict], pedido: dict | None) -> dict | None:
+    """Passo `catalogo.escuta` (onda 4, D40): o Whisper grande ouve de novo as falas, com os nomes do pedido, antes do catálogo
+    (etapas/escuta.py). Atualiza `analises` no lugar; nunca leva o projeto a erro (queda segura = a transcrição rápida)."""
+    from motor.etapas import escuta, passos
+    modelo = escuta.modelo_fino(ctx.cfg)
+    alvos = [a for a in analises if escuta.tem_fala(a)]
+    if not modelo or not alvos or ctx.cfg.provedor_efetivo("transcricao") != "faster-whisper":
+        return None
+    try:
+        linha = ctx.con.execute("SELECT dados FROM projetos WHERE id=?", (p,)).fetchone()
+        dicas_proj = (json.loads((linha["dados"] if linha else None) or "{}") or {}).get("dicas") or []
+    except Exception:  # noqa: BLE001 - sem dados do projeto, as dicas do pedido e da casa bastam
+        dicas_proj = []
+    try:
+        from motor.memoria import loja
+        vocab = loja.Loja().vocabulario()
+    except Exception:  # noqa: BLE001
+        vocab = []
+    ctx.progresso(0.05, f"Ouvindo de novo as falas de {len(alvos)} vídeo{'s' if len(alvos) != 1 else ''}.")
+    with passos.passo("catalogo.escuta", ferramenta=f"faster-whisper {modelo} por trechos, com os nomes do pedido (local)",
+                      videos=len(alvos)) as ps:
+        try:
+            rel = escuta.ouvir(arm, p, analises, pedido, ctx.cfg, dicas_projeto=dicas_proj, vocabulario=vocab,
+                               progresso=lambda m: ctx.progresso(0.1, m))
+        except Exception as e:  # noqa: BLE001 - o ouvido fino nunca derruba o catálogo
+            rel = {"estado": "queda", "motivo": "erro", "videos": len(alvos), "finos": 0, "falas": 0,
+                   "frase": escuta.QUEDAS["erro"]}
+            import logging
+            logging.getLogger("motor.catalogo").warning("ouvido fino quebrou: %s: %s", type(e).__name__, e)
+        ps.anotar(videos=rel.get("videos"), falas=rel.get("falas"), finos=rel.get("finos"), pico_mb=rel.get("pico_mb"))
+        ps.achou(escuta.achado(rel))
+    return rel
+
+
 try:
     from motor.etapas import ErroDefinitivo, etapa
 except ImportError:  # pragma: no cover
@@ -388,6 +422,7 @@ if etapa is not None:
             raise ErroDefinitivo("nenhuma análise pronta para montar o catálogo")
         pedido = arm.pedido(p)
         from motor.etapas import passos
+        _ouvido_fino(ctx, arm, p, analises, pedido)
         falas = sum(len((a.get("transcricao") or {}).get("segmentos") or []) for a in analises)
         momentos = sum(len((a.get("visao") or {}).get("momentos") or []) for a in analises)
         passos.anotar(falas=falas, momentos=momentos, videos=len(analises))

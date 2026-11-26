@@ -145,8 +145,12 @@ def _silabas_db(serie, passo: float) -> float:
 class Resolvedor:
     def __init__(self, direcao: dict, catalogo: dict, analises: dict, modelo: dict, trilhas: list[dict] | None = None,
                  vocabulario: list[dict] | None = None, energias: dict | None = None, projeto: str | None = None,
-                 ambiente: str | None = None, vozes: str | None = None, movimentos: dict | None = None):
+                 ambiente: str | None = None, vozes: str | None = None, movimentos: dict | None = None,
+                 ouvinte=None, marca_existe=None, cliente: str | None = None):
         self.d, self.cat, self.an, self.m = direcao, catalogo, analises, modelo
+        # tom de sala (onda 4, D45): ouvinte(arquivo_id, s0, s1) -> trechos de voz contínua, a régua física da conferência
+        self.ouvinte = ouvinte
+        self._tom_info: dict | None = None
         self.mov = movimentos or {}                         # arquivo -> série de motor/movimento.py (opcional)
         self.formato = {"w": 1080, "h": 1920, "fps": 30}
         self._amp: dict[str, float] = {}                    # clipe -> maior ampliação usada (aviso no fim)
@@ -165,6 +169,8 @@ class Resolvedor:
         self.avisos: list[str] = []
         self._usadas_por: dict[str, str] = {}             # repetição -> id do ditado que o diretor escolheu
         self.r = modelo["ritmo"]
+        if marca_existe is not None:                         # logo do cliente pelo código (onda 4, D48)
+            self.d = _com_logo_cliente(direcao, cliente, marca_existe, self.avisos)
 
     def pal(self, cid: str) -> list[list]:
         if cid not in self._pal:
@@ -424,7 +430,8 @@ class Resolvedor:
                        "conceito": d.get("conceito"), "alem_do_pedido": d.get("alem_do_pedido", []),
                        **({"vozes": self.vozes} if getattr(self, "vozes", None) else {}),
                        **({"ampliacao": ampliados} if ampliados else {}),
-                       **({"sons_reais": self._sons_reais} if sons is not None else {})},
+                       **({"sons_reais": self._sons_reais} if sons is not None else {}),
+                       **({"tom_sala": self._tom_info} if self._tom_info is not None else {})},
             "formato": dict(self.formato),
             "duracao": L["duracao"], "vel_fala": vel,
             "blocos": L["blocos"],
@@ -869,22 +876,14 @@ class Resolvedor:
 
     # --- tom de sala: trecho SEM fala, do mesmo ambiente da voz principal
     def _tom_sala(self, L):
+        """Trecho sem ninguém falando, de qualquer clipe do projeto, ouvido com a régua da conferência (etapas/tom_sala.py)."""
         if not L["voz"]:
             return None
-        peso = {}
-        for v in L["voz"]:
-            peso[v["clipe"]] = peso.get(v["clipe"], 0) + v["s1"] - v["s0"]
-        principal = max(peso, key=peso.get)
-        amb = self._ambiente(principal, L["voz"][0]["s0"])
-        ordem = [principal] + [c for c in peso if c != principal] + [c["id"] for c in self.cat["clipes"] if c["id"] not in peso and amb in c.get("ambientes", [])]
-        min_s = self.m.get("tom_sala", {}).get("min_s", 1.5)
-        for cid in ordem:
-            cand = self._silencios(cid, min_s)
-            if cand:
-                s0, s1 = cand[0]
-                return {"fonte": self.fonte_de(cid, s0), "s0": round(s0, 3), "s1": round(s1, 3), "db": self.m.get("tom_sala", {}).get("db", -48)}
-        self.avisos.append("nenhum trecho sem fala para o tom de sala")
-        return None
+        from motor.etapas import tom_sala as TS
+        tom, self._tom_info = TS.escolher(self, L, self.ouvinte)
+        if tom is None:
+            self.avisos.append(f"sem tom de sala: {self._tom_info['motivo']}")
+        return tom
 
     def _silencios(self, cid: str, min_s: float) -> list[tuple[float, float]]:
         a = self.an[self.clipe[cid]["arquivo"]]
@@ -1096,6 +1095,34 @@ class Resolvedor:
 def _bpm_real(t: dict) -> float | None:
     """bpm da música só se foi medido; o 120 de reserva da biblioteca (bpm_medido falso) não vale como grade."""
     return float(t["bpm"]) if t.get("bpm") and t.get("bpm_medido", True) else None
+
+
+def _com_logo_cliente(direcao: dict, cliente: str | None, existe, avisos: list) -> dict:
+    """Cópia da direção com `fecho.logo_cliente` decidido pelo código (onda 4, D48): a logo que o diretor pôs só fica se está
+    cadastrada (`marcas/<slug>/logo.png`); sem ela, a do cliente do pedido entra sozinha quando existe. Nunca chega ao overlay
+    uma logo que não existe."""
+    from motor.entregas_r2 import RE_CLIENTE, slug
+    if not isinstance(direcao.get("fecho"), dict):
+        return direcao
+    fe = dict(direcao["fecho"])
+    pedida = fe.get("logo_cliente")
+    lc = None
+    if pedida:
+        s = slug(str(pedida))
+        if RE_CLIENTE.match(s) and existe(s):
+            lc = s
+        else:
+            avisos.append(f"logo do cliente «{str(pedida)[:40]}» não está cadastrada: saiu do fecho")
+    if lc is None and cliente:
+        s = slug(str(cliente))
+        if RE_CLIENTE.match(s) and existe(s):
+            lc = s
+    if lc == pedida:
+        return direcao
+    fe["logo_cliente"] = lc
+    if lc is None:
+        fe.pop("logo_cliente", None)
+    return {**direcao, "fecho": fe}
 
 
 def resolver(direcao: dict, catalogo: dict, analises, modelo_video: dict, trilhas: list[dict] | None = None, **kw) -> dict:
