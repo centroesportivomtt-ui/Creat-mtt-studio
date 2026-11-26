@@ -1,0 +1,20 @@
+{
+  "nome": "creat.MTT",
+  "arroba": "@creat.mtt",
+  "logo": "marcas/creat-mtt-logo-assinatura.png",
+  "logo_completo": "marcas/creat-mtt-logo.png",
+  "cores": {
+    "fundo": "#0a0a0a",
+    "brilho": "#4a0b14",
+    "destaque": "#e3132c",
+    "sobre_destaque": "#ffffff",
+    "tinta": "#f5f1f1",
+    "tinta_suave": "#b8a9ab",
+    "linha": "#3a2a2d"
+  },
+  "fontes": {
+    "display": { "arquivo": "fontes/Archivo-VF.ttf", "familia": "Archivo", "peso": 900, "largura": 112 },
+    "texto": { "arquivo": "fontes/Sora-VF.ttf", "familia": "Sora", "peso": 400, "peso_forte": 700 }
+  },
+  "_como_trocar": "Para outra empresa, copie este arquivo, troque nome, arroba, logo (PNG ou SVG com fundo transparente, caminho relativo a este arquivo) e as 7 cores. 'sobre_destaque' é a cor do texto em cima do destaque (branco no vermelho, preto no amarelo). 'brilho' é a cor do brilho radial do fundo. As fontes podem ficar como estão; se trocar, use arquivo .ttf/.woff2 local com licença livre."
+}
