@@ -43,6 +43,11 @@ const marcaArg = arg('marca', false);
 const iMes = MESES.indexOf(mes);
 if (iMes < 0) falha(`mês "${mes}" inválido (use: ${MESES.join(', ')})`);
 if (!(ano >= 2026 && ano <= 2100)) falha('ano inválido');
+const dentro = (pai, filho) => { const r = path.relative(pai, filho); return r === '' || (!r.startsWith('..') && !path.isAbsolute(r)); };
+if (dentro(saida, pastaTextos) || dentro(saida, process.cwd()) || dentro(saida, require('os').homedir()) || dentro(saida, path.resolve(AQUI, '..', '..', '..')))
+  falha(`--saida (${saida}) contém os textos, a pasta atual, o home ou o repositório: escolha uma pasta só para a saída`);
+if (fs.existsSync(saida) && fs.readdirSync(saida).length && !fs.existsSync(path.join(saida, 'manifesto.json')))
+  falha(`--saida (${saida}) já existe e não é de uma rodada anterior (sem manifesto.json): escolha uma pasta vazia`);
 if (/[^\x20-\x7E]/.test(saida)) falha(`--saida com acento (${saida}): o envio ao Dropbox barra caminho com acento; use uma pasta sem acento`);
 
 const empresas = lerJson(path.join(AQUI, 'empresas.json')).empresas;
@@ -71,11 +76,14 @@ const problemas = [];
 const inicioJanela = new Date(Date.UTC(ano, iMes, 1) - 7 * 864e5);   // aceita a semana anterior (arrumação do perfil)
 const fimJanela = new Date(Date.UTC(ano, iMes + 1, 1));
 agenda.forEach((e, i) => {
+  if (!e || typeof e !== 'object') return problemas.push(`evento ${i + 1}: não é um objeto`);
   const onde = `evento ${i + 1} (${e.titulo || 'sem título'})`;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(e.data || '')) return problemas.push(`${onde}: data fora do formato AAAA-MM-DD`);
   const d = new Date(e.data + 'T00:00:00Z');
-  if (isNaN(d) || d < inicioJanela || d >= fimJanela) problemas.push(`${onde}: data ${e.data} fora de ${mes}/${ano}`);
-  if (!/^\d{2}:\d{2}$/.test(e.inicio || '') || !/^\d{2}:\d{2}$/.test(e.fim || '')) problemas.push(`${onde}: hora fora do formato HH:MM`);
+  if (isNaN(d) || d.toISOString().slice(0, 10) !== e.data) problemas.push(`${onde}: data ${e.data} não existe no calendário`);
+  else if (d < inicioJanela || d >= fimJanela) problemas.push(`${onde}: data ${e.data} fora de ${mes}/${ano}`);
+  const hora = /^([01]\d|2[0-3]):[0-5]\d$/;
+  if (!hora.test(e.inicio || '') || !hora.test(e.fim || '')) problemas.push(`${onde}: hora fora do formato HH:MM`);
   else if (e.fim <= e.inicio) problemas.push(`${onde}: fim (${e.fim}) não é depois do início (${e.inicio})`);
   if (!e.titulo || e.titulo.length > 70) problemas.push(`${onde}: título vazio ou com mais de 70 caracteres`);
 });
@@ -89,14 +97,17 @@ fs.mkdirSync(trabalho, { recursive: true });
 function rodar(script, a) {
   const r = spawnSync(process.execPath, [path.join(MODELOS, script), ...a, '--marca', marca], { encoding: 'utf8' });
   process.stdout.write(r.stdout || ''); process.stderr.write(r.stderr || '');
-  if (r.status !== 0) falha(`${script} terminou com código ${r.status}: corrija o texto apontado acima e rode de novo`);
+  return r.status === 0 ? null : `${script} terminou com código ${r.status}`;
 }
-rodar('render-carrossel.cjs', [ent.carrossel, path.join(trabalho, 'carrossel')]);
-rodar('render-apresentacao.cjs', [ent.apresentacao, path.join(trabalho, 'apresentacao.pdf')]);
+const erros = [
+  rodar('render-carrossel.cjs', [ent.carrossel, path.join(trabalho, 'carrossel')]),
+  rodar('render-apresentacao.cjs', [ent.apresentacao, path.join(trabalho, 'apresentacao.pdf')])
+].filter(Boolean);
+if (erros.length) falha(erros.join('; ') + ': corrija o texto apontado acima e rode de novo');
 
 // 3. Entrega igual ao Dropbox
 const carrossel = lerJson(ent.carrossel);
-const temaCurto = (carrossel.tema_curto || carrossel.tema || 'carrossel').split(/[:.]/)[0].trim().slice(0, 40);
+const temaCurto = (carrossel.tema_curto || carrossel.tema || 'carrossel').split(/[:.]/)[0].replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40) || 'carrossel';
 const entrega = path.join(saida, 'entrega');
 const manifesto = { empresa, mes, ano, pasta_dropbox: `/Marcos/${empresa}/${pasta}`, arquivos: [], eventos: [] };
 function por(sub, nomeFinal, origem, conteudo) {

@@ -1,0 +1,29 @@
+{
+  "nome": "CT MTT",
+  "arroba": "",
+  "logo": "ct-mtt-logo-sobre-escuro.png",
+  "logo_completo": "ct-mtt-logo-sobre-escuro.png",
+  "cores": {
+    "fundo": "#0a0909",
+    "brilho": "#3f0405",
+    "destaque": "#c8202a",
+    "sobre_destaque": "#ffffff",
+    "tinta": "#f4f1f1",
+    "tinta_suave": "#b9abab",
+    "linha": "#3a2a2a"
+  },
+  "fontes": {
+    "display": {
+      "arquivo": "../fontes/Archivo-VF.ttf",
+      "familia": "Archivo",
+      "peso": 900,
+      "largura": 112
+    },
+    "texto": {
+      "arquivo": "../fontes/Sora-VF.ttf",
+      "familia": "Sora",
+      "peso": 400,
+      "peso_forte": 700
+    }
+  }
+}

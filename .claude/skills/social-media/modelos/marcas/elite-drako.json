@@ -1,0 +1,29 @@
+{
+  "nome": "Elite Drako Gym",
+  "arroba": "",
+  "logo": "elite-drako-logo.png",
+  "logo_completo": "elite-drako-logo.png",
+  "cores": {
+    "fundo": "#0a0a0a",
+    "brilho": "#420b0d",
+    "destaque": "#d42a2a",
+    "sobre_destaque": "#ffffff",
+    "tinta": "#f4f1f1",
+    "tinta_suave": "#b9abab",
+    "linha": "#3a2a2a"
+  },
+  "fontes": {
+    "display": {
+      "arquivo": "../fontes/Archivo-VF.ttf",
+      "familia": "Archivo",
+      "peso": 900,
+      "largura": 112
+    },
+    "texto": {
+      "arquivo": "../fontes/Sora-VF.ttf",
+      "familia": "Sora",
+      "peso": 400,
+      "peso_forte": 700
+    }
+  }
+}
