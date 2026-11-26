@@ -16,8 +16,19 @@ Régua 4, de ouvido no mix final: voz ativa no corte e a última palavra da peç
 O fim de cada peça é o fim REAL na fonte: min(s1, s0 + (t1 - t0) * vel) (peça encurtada na linha do tempo acaba antes de s1).
 Peças coladas não contam na emenda: a próxima no filme é da mesma fonte, começa onde esta acaba na fonte (|Δs| < 0,03 s) E
 encosta nela no filme (|Δt| < 0,02 s, a mesma tolerância da montagem para o crossfade; com vão no filme cada peça entra com fade
-próprio e o corte no meio da palavra se ouve). Dispensa: `edl.qa.cortes_confirmados` (ids que o diretor ouviu e manteve de
-propósito), sempre listados no detalhe. NÃO VERIFICADO (reprova e bloqueia, sem dispensa): conferência sem as fontes, áudio
+próprio e o corte no meio da palavra se ouve).
+
+Diálogo (onda 4, D46, SÓ com `edl.origem.vozes == "varias"`; em "uma" e no automático nada muda): no diálogo uma pessoa
+responde colada na outra e não há pausa onde cortar. A régua 1 aceita (com a nota "colada em outra pessoa, corte no vale") o fim
+de peça cuja próxima fala na fonte começa a até 0,25 s do corte quando TODOS: a fala seguinte é de OUTRA pessoa (assinatura de
+voz com cosseno < 0,42 em trecho >= 0,45 s, ou mediana do F0 >= 20% longe da peça); o corte está no vale (|corte - vale| <=
+0,03 s, vale = mínimo do envelope em [corte - 0,15; corte + 0,15]); o vale fica >= 6 dB abaixo do pico dos 0,3 s antes; e a
+última palavra da peça (transcrição da fonte) termina antes de corte + 0,04 s. O começo da peça seguinte, colado no fim da
+fala da outra pessoa, tem a mesma conta espelhada (pico dos 0,3 s depois; a primeira palavra começa depois de corte - 0,04 s).
+Sem transcrição da fonte não há prova: reprova. As réguas 2, 3 e 4 continuam valendo. A mesma pessoa continuando, corte fora
+do vale, vale raso ou palavra passando do corte: reprova como sempre.
+
+Dispensa: `edl.qa.cortes_confirmados` (ids que o diretor ouviu e manteve de propósito), sempre listados no detalhe. NÃO VERIFICADO (reprova e bloqueia, sem dispensa): conferência sem as fontes, áudio
 da fonte que não se lê, e peça sem fala que se ouça na fonte (áudio mudo, só ruído ou mais curto que a peça: o envelope sem
 fala diria "a fala já tinha terminado" e aprovaria calado)."""
 from __future__ import annotations
@@ -37,6 +48,17 @@ SR_FALA = 16000
 PASSO = 0.01                  # s por amostra do envelope da régua 2
 ANTES, DEPOIS = 1.0, 0.6      # janela da régua 2 em volta do corte
 CAUDA_MS = (50, 450)
+# diálogo (varias, onda 4)
+COLADA_OUTRA_S = 0.25         # a outra fala começa (ou acabou) a até 0,25 s do corte
+VALE_JANELA_S = 0.15          # vale = mínimo do envelope em [corte - 0,15; corte + 0,15]
+VALE_TOL_S = 0.03             # o corte a até 30 ms do vale
+VALE_ABAIXO_DB = 6.0          # o vale >= 6 dB abaixo do pico dos 0,3 s do lado da peça
+PICO_LADO_S = 0.30
+PALAVRA_FOLGA_S = 0.04        # a última palavra da peça termina antes de corte + 0,04 s (a primeira começa depois de corte - 0,04)
+OUTRA_COS = 0.42              # assinatura: cosseno abaixo disso = outra pessoa (o mesmo limiar de falante.LIMIAR)
+OUTRA_MIN_S = 0.45            # trecho mínimo para a assinatura valer
+OUTRA_TOM = 0.20              # mediana do F0 20% ou mais longe = outra pessoa
+TRECHO_MAX_S = 3.0            # quanto da peça e da outra fala se ouve para comparar as vozes
 
 
 def fim_na_fonte(v: dict) -> float:
@@ -166,6 +188,127 @@ def medir_fim(x: np.ndarray, sr: int, fim_arq: float) -> dict:
     return medir_corte(env, min(len(env), int(round((fim_arq - a) / PASSO))))
 
 
+# ------------------------------------------------------------------ diálogo: fala colada de outra pessoa (varias, onda 4)
+def corte_no_vale(env: dict, s_arq: float, onde: str) -> tuple[bool, str]:
+    """Função pura: o corte em `s_arq` (tempo do arquivo) está no vale entre duas falas coladas? A outra fala começa (fim) ou
+    acabou (início) a até COLADA_OUTRA_S do corte; o corte fica a até VALE_TOL_S do vale; o vale fica VALE_ABAIXO_DB abaixo do
+    pico dos PICO_LADO_S do lado da peça."""
+    e, lim = env["db"], env["limiar"]
+    P = audio_fala.PASSO
+    j = int(round(s_arq / P))
+    if onde == "fim":
+        outra = next((k for k in range(j, min(len(e), j + int(round(COLADA_OUTRA_S / P)) + 1)) if e[k] > lim), None)
+    else:
+        outra = next((k for k in range(j, max(-1, j - int(round(COLADA_OUTRA_S / P)) - 1), -1) if 0 <= k < len(e) and e[k] > lim), None)
+    if outra is None:
+        return False, f"nenhuma fala colada a até {COLADA_OUTRA_S:.2f} s do corte"
+    a, b = max(0, j - int(round(VALE_JANELA_S / P))), min(len(e), j + int(round(VALE_JANELA_S / P)) + 1)
+    if b <= a:
+        return False, "corte fora do áudio"
+    iv = a + int(np.argmin(e[a:b]))
+    vale = iv * P
+    if abs(vale - s_arq) > VALE_TOL_S + 1e-9:
+        return False, f"corte {abs(vale - s_arq) * 1000:.0f} ms fora do vale (em {vale:.2f} s; tolerância {VALE_TOL_S * 1000:.0f} ms)"
+    lado = (s_arq - PICO_LADO_S, s_arq) if onde == "fim" else (s_arq, s_arq + PICO_LADO_S)
+    pico = audio_fala._pico(e, *lado)
+    if pico - float(e[iv]) < VALE_ABAIXO_DB:
+        return False, f"vale raso: só {pico - float(e[iv]):.1f} dB abaixo do pico da fala (precisa {VALE_ABAIXO_DB:.0f} dB)"
+    return True, f"corte no vale ({abs(vale - s_arq) * 1000:.0f} ms), {pico - float(e[iv]):.0f} dB abaixo do pico"
+
+
+def _fala_vizinha(env: dict, s_arq: float, onde: str) -> tuple[float, float] | None:
+    """Trecho (tempo do arquivo) da outra fala colada ao corte: depois dele (fim) ou antes (início), até a primeira pausa de 80
+    ms ou TRECHO_MAX_S."""
+    e, lim = env["db"], env["limiar"]
+    P = audio_fala.PASSO
+    j = int(round(s_arq / P))
+    passo = 1 if onde == "fim" else -1
+    k0 = next((k for k in range(j, j + passo * (int(round(COLADA_OUTRA_S / P)) + 1), passo) if 0 <= k < len(e) and e[k] > lim), None)
+    if k0 is None:
+        return None
+    k, quietos, n = k0, 0, 0
+    while 0 <= k < len(e) and n * P < TRECHO_MAX_S:
+        quietos = quietos + 1 if e[k] <= lim else 0
+        if quietos >= 8:
+            k -= passo * 7
+            break
+        k += passo
+        n += 1
+    a, b = sorted((k0 * P, max(0, min(len(e) - 1, k)) * P))
+    return (a, b + P) if b + P - a > 0.05 else None
+
+
+def outra_pessoa(peca: np.ndarray, outra: np.ndarray, sr: int, assinador=None) -> tuple[bool | None, str]:
+    """A fala `outra` é de outra pessoa que a `peca`? Assinatura (cosseno < OUTRA_COS, os dois trechos >= OUTRA_MIN_S) ou altura
+    da voz (mediana do F0 >= OUTRA_TOM longe). None quando não dá para medir nenhuma das duas."""
+    from motor.etapas import falante as F
+    medidas = []
+    if assinador is not None and getattr(assinador, "disponivel", False) and len(peca) >= OUTRA_MIN_S * sr and len(outra) >= OUTRA_MIN_S * sr:
+        ea, eb = assinador.assinar(peca, sr, minimo=OUTRA_MIN_S), assinador.assinar(outra, sr, minimo=OUTRA_MIN_S)
+        if ea is not None and eb is not None:
+            cos = float(np.dot(ea, eb) / (np.linalg.norm(ea) * np.linalg.norm(eb) + 1e-9))
+            if cos < OUTRA_COS:
+                return True, f"assinatura {cos:.2f} (outra pessoa abaixo de {OUTRA_COS})"
+            medidas.append(f"assinatura {cos:.2f}")
+    ta, tb = F.tom_hz(peca, sr), F.tom_hz(outra, sr)
+    if ta and tb:
+        r = tb / ta
+        if abs(r - 1.0) >= OUTRA_TOM:
+            return True, f"altura da voz {tb:.0f} Hz contra {ta:.0f} Hz da peça"
+        medidas.append(f"altura da voz {tb:.0f} Hz contra {ta:.0f} Hz da peça")
+    if not medidas:
+        return None, "sem como comparar as vozes (trechos curtos ou sem voz clara)"
+    return False, "a mesma pessoa continuando (" + ", ".join(medidas) + ")"
+
+
+def palavra_dentro(pal: list | None, s: float, s0: float, onde: str) -> tuple[bool, str]:
+    """Função pura: a última (fim) ou a primeira (início) palavra da peça na transcrição da fonte respeita o corte em `s`?"""
+    if not pal:
+        return False, "sem transcrição da fonte para provar que a palavra terminou"
+    if onde == "fim":
+        w = next((w for w in reversed(pal) if float(w[0]) < s and float(w[1]) > s0), None)
+        if w is None:
+            return False, "nenhuma palavra da transcrição dentro da peça"
+        if float(w[1]) > s + PALAVRA_FOLGA_S:
+            return False, f"a palavra «{str(w[2]).strip()}» termina {round((float(w[1]) - s) * 1000)} ms depois do corte"
+        return True, f"«{str(w[2]).strip()}» termina antes do corte"
+    w = next((w for w in pal if float(w[1]) > s), None)
+    if w is None:
+        return False, "nenhuma palavra da transcrição dentro da peça"
+    if float(w[0]) < s - PALAVRA_FOLGA_S:
+        return False, f"a palavra «{str(w[2]).strip()}» começa {round((s - float(w[0])) * 1000)} ms antes do corte"
+    return True, f"«{str(w[2]).strip()}» começa depois do corte"
+
+
+def colada_em_outra(c, v: dict, onde: str, env: dict, off: float, pal: list | None) -> tuple[bool, str]:
+    """Diálogo: a ponta `onde` da peça `v` encosta na fala de OUTRA pessoa, com o corte no vale e a palavra inteira?"""
+    from motor.etapas.qa import voz_externa as VE
+    s = fim_na_fonte(v) if onde == "fim" else float(v["s0"])
+    s_arq = s - off
+    ok, vale = corte_no_vale(env, s_arq, onde)
+    if not ok:
+        return False, vale
+    ok, pw = palavra_dentro(pal, s, float(v["s0"]), onde)
+    if not ok:
+        return False, pw
+    viz = _fala_vizinha(env, s_arq, onde)
+    if viz is None:
+        return False, "nenhuma fala colada para comparar a voz"
+    x, _ = c.audio_fonte(v["fonte"], SR_FALA)
+    a0, a1 = float(v["s0"]) - off, fim_na_fonte(v) - off
+    a0, a1 = (max(a0, a1 - TRECHO_MAX_S), a1) if onde == "fim" else (a0, min(a1, a0 + TRECHO_MAX_S))
+    peca = VE._trecho(x, SR_FALA, a0, a1)
+    outra = VE._trecho(x, SR_FALA, viz[0], viz[1])
+    try:
+        assinador = VE._assinador(c)
+    except Exception:  # noqa: BLE001 - sem modelo de voz: só a altura da voz decide
+        assinador = None
+    eh, quem = outra_pessoa(peca, outra, SR_FALA, assinador)
+    if not eh:
+        return False, quem
+    return True, f"colada em outra pessoa, corte no vale: {quem}; {vale}; {pw}"
+
+
 # ------------------------------------------------------------------ régua 3 (palavras da fonte)
 def _palavras_fonte(c, fid: str) -> list | None:
     try:
@@ -243,11 +386,26 @@ def checar(c):
     surdas = nao_ouvidas(voz, envs, offs)
     surdas_ids = {p["id"] for p in surdas}
     probs = [p for p in conferir_pecas(voz, envs, offs) if p["id"] not in surdas_ids]
+    pal_cache: dict = {}
+    dialogo = []
+    if str((c.edl.get("origem") or {}).get("vozes") or "auto") == "varias" and probs:                   # diálogo: fala colada de outra pessoa com o corte no vale
+        vid = {v["id"]: v for v in voz}
+        resto = []
+        for p in probs:
+            v = vid[p["id"]]
+            if v["fonte"] not in pal_cache:
+                pal_cache[v["fonte"]] = _palavras_fonte(c, v["fonte"])
+            ok, nota = colada_em_outra(c, v, p["onde"], envs[v["fonte"]], offs[v["fonte"]], pal_cache[v["fonte"]])
+            if ok:
+                dialogo.append({**p, "motivo": nota})
+            else:
+                resto.append({**p, "motivo": f"{p['motivo']} (não é diálogo colado: {nota})"})
+        probs = resto
     # réguas 2, 3 e 4 no fim de cada peça (a transcrição do mix vem do cache da legenda_x_fala)
     tr = c.transcrever("mix", c.mix if c.mix is not None else c.final)
     ouvidas = c.palavras(tr) if tr and not tr.get("erro") else None
     sem_fim, _ = emendas(voz)
-    fins, obs, pal_cache = [], [], {}
+    fins, obs = [], []
     for v in voz:
         if v["id"] in sem_fim or v["id"] in surdas_ids:
             continue
@@ -284,11 +442,15 @@ def checar(c):
         det.append(f"{len({p['id'] for p in falhas})} peça(s) com a fala cortada: " + "; ".join(_linha(p) for p in falhas))
     elif not surdas:
         det.append(f"{len(fins)} fim(ns) de fala conferido(s): nenhum corte antes da última sílaba")
+    if dialogo:
+        det.append(f"{len(dialogo)} ponta(s) aceita(s) no diálogo (várias pessoas falam): "
+                   + "; ".join(f"{p['id']} ({p['onde']}, {p['t']:.2f} s do filme): {p['motivo']}" for p in dialogo[:5]))
     if dispensados:
         det.append("confirmados pelo diretor (cortes_confirmados): " + "; ".join(_linha(p) for p in dispensados))
     if obs:
         det.append("observação: " + "; ".join(obs[:3]))
     return {"ok": not falhas and not surdas, "bloqueia": True,
             "valor": {"pecas": len(voz), "reprovadas": sorted({p["id"] for p in falhas}), "problemas": falhas[:30],
-                      "confirmadas": sorted({p["id"] for p in dispensados}), "nao_verificadas": surdas[:30], "fins": fins[:60]},
+                      "confirmadas": sorted({p["id"] for p in dispensados}), "nao_verificadas": surdas[:30], "fins": fins[:60],
+                      "dialogo": dialogo[:30]},
             "detalhe": "; ".join(det)}

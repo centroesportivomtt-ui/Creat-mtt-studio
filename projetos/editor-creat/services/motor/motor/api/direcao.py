@@ -56,7 +56,9 @@ class PedidoEntrada(BaseModel):
     duracao_alvo: Optional[float] = Field(None, ge=5, le=600)
     destino: list[Destino] = Field(default_factory=lambda: ["reels"], max_length=6)
     formato: Literal["9:16", "1:1", "4:5", "16:9"] = "9:16"
-    cliente: Optional[str] = Field(None, max_length=80, pattern=r"^[a-z0-9_-]+$")
+    # para qual cliente é o filme (onda 4, D48): mesmo slug das entregas e das marcas ("Super Kal" e "super_kal" -> "super-kal").
+    # Com logo cadastrada em marcas/<slug>/logo.png, o fecho assina com ela sem o diretor precisar lembrar.
+    cliente: Optional[str] = Field(None, max_length=80)
     obrigatorio: list[str] = Field(default_factory=list, max_length=20)
     proibido: list[str] = Field(default_factory=list, max_length=20)
     ajustes_de: Optional[str] = Field(None, pattern=r"^v[0-9]{1,3}$")
@@ -67,6 +69,17 @@ class PedidoEntrada(BaseModel):
         if any(len(x) > 200 for x in v):
             raise ValueError("cada item tem no máximo 200 caracteres")
         return [x.strip() for x in v if x.strip()]
+
+    @field_validator("cliente")
+    @classmethod
+    def _cliente(cls, v):
+        if v is None or not v.strip():
+            return None
+        from motor import marcas
+        s = marcas.slug(v)
+        if s is None:
+            raise ValueError("nome de cliente inválido")
+        return s
 
     @model_validator(mode="after")
     def _um_dos_dois(self):
@@ -118,7 +131,7 @@ def gravar_pedido(pid: str, corpo: PedidoEntrada):
         arm.gravar_json(f"projetos/{pid}/pedido.json", pedido)
         r = con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()
         dados = json.loads(r["dados"] or "{}")
-        dados["pedido"] = {"texto": texto[:200], "tipo_video": tipo, "modo": corpo.modo}
+        dados["pedido"] = {"texto": texto[:200], "tipo_video": tipo, "modo": corpo.modo, **({"cliente": corpo.cliente} if corpo.cliente else {})}
         con.execute("UPDATE projetos SET dados=?, atualizado=? WHERE id=?", (json.dumps(dados), banco.agora_iso(), pid))
         banco.emitir(con, pid, "estado", mensagem="Pedido recebido.", dados={"pedido": texto[:200]})
         dirigindo = pipeline.tentar_dirigir(con, pid)

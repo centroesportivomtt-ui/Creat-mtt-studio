@@ -105,6 +105,46 @@ def _movimentos(arm: armazem_b.Armazem, analises: dict) -> dict:
     return out
 
 
+def ouvinte(arm: armazem_b.Armazem, analises: dict):
+    """A régua física da conferência para o tom de sala (onda 4, D45), do lado de quem escolhe: `ouvir(arquivo_id, s0, s1)`
+    devolve os trechos [(a, b)] (tempo do arquivo) com voz contínua, com a mesma conta de `qa/tom_sala_sem_voz.conversa_na_origem`
+    (`audio_fala.f0_serie` + `voz_externa.voz_continua`, piso = o menor entre o do arquivo e o do trecho). Arquivo sem áudio
+    levanta (o trecho é recusado: a conferência também não o ouviria)."""
+    import numpy as np
+    from motor import audio_fala
+    from motor.etapas.montagem.comum import ler_audio
+    from motor.etapas.qa import voz_externa as VE
+    memo: dict = {}
+
+    def audio(aid: str):
+        if aid not in memo:
+            chave = ((analises.get(aid) or {}).get("derivados") or {}).get("audio_wav")
+            if not chave:
+                raise FileNotFoundError(f"{aid} sem áudio")
+            x = ler_audio(arm.caminho(chave), sr=VE.SR_FALA)
+            _, _, lv = audio_fala.f0_serie(x, VE.SR_FALA)
+            memo[aid] = (x, float(np.percentile(lv, 10)) if len(lv) else -90.0)
+        return memo[aid]
+
+    def ouvir(aid: str, s0: float, s1: float) -> list[tuple[float, float]]:
+        x, piso = audio(aid)
+        t, f, lv = audio_fala.f0_serie(VE._trecho(x, VE.SR_FALA, s0, s1), VE.SR_FALA)
+        if len(lv):
+            piso = min(piso, float(np.percentile(lv, 10)))
+        return [(round(s0 + a, 2), round(s0 + b, 2)) for a, b in VE.voz_continua(t, f, lv, piso)]
+    return ouvir
+
+
+def marca_existe(arm: armazem_b.Armazem):
+    """`existe(slug)`: a logo do cliente está cadastrada em `marcas/<slug>/logo.png` (frente SITE+API grava; aqui só lê)."""
+    def existe(slug: str) -> bool:
+        try:
+            return bool(slug) and arm.existe(f"marcas/{slug}/logo.png")
+        except Exception:  # noqa: BLE001 - armazenamento que não responde: sem logo, nunca uma chave quebrada
+            return False
+    return existe
+
+
 def _ferramenta_cerebro(cerebro) -> str:
     nome = getattr(cerebro, "nome", "?")
     return {"anthropic": "Claude (Messages API, JSON estrito, cache do catálogo)", "fixture": "cérebro fixture (direção gravada, sem chamar a API)",
@@ -133,7 +173,8 @@ def _encaixe(ps, edl: dict | None, problemas: list, direcao: dict) -> None:
 
 def _resolver_uma(d: dict, *, catalogo: dict, analises, loja: Loja, pedido: dict | None, trilhas: list[dict], energias: dict | None = None,
                   movimentos: dict | None = None, vocabulario: list | None = None,
-                  ferramenta: str = "resolvedor do editor (encaixe por palavra e batida)") -> tuple[dict | None, list]:
+                  ferramenta: str = "resolvedor do editor (encaixe por palavra e batida)", ouvinte=None,
+                  marca_existe=None) -> tuple[dict | None, list]:
     """Uma passada do resolvedor (direção -> EDL) dentro do passo da mesa. Devolve (edl, []) ou (None, problemas).
     Usada pela direção de sempre (dirigir_e_resolver) e pela troca de música sem cérebro (onda 3, _trocar_trilha)."""
     voc = loja.vocabulario() if vocabulario is None else vocabulario
@@ -142,7 +183,8 @@ def _resolver_uma(d: dict, *, catalogo: dict, analises, loja: Loja, pedido: dict
         try:
             r = resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, movimentos=movimentos,
                          projeto=catalogo["projeto"],
-                         ambiente=(pedido or {}).get("ambiente"), vozes=(pedido or {}).get("vozes")), []
+                         ambiente=(pedido or {}).get("ambiente"), vozes=(pedido or {}).get("vozes"), ouvinte=ouvinte,
+                         marca_existe=marca_existe, cliente=(pedido or {}).get("cliente")), []
         except ErroResolucao as e:
             r = None, e.problemas
         _encaixe(pr, r[0], r[1], d)
@@ -151,7 +193,7 @@ def _resolver_uma(d: dict, *, catalogo: dict, analises, loja: Loja, pedido: dict
 
 def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str, pedido: dict, analises: dict, trilhas: list[dict],
                        energias: dict | None = None, correcao: dict | None = None, criticar: bool = True, cfg=None,
-                       movimentos: dict | None = None, ao_usar=None) -> dict:
+                       movimentos: dict | None = None, ao_usar=None, ouvinte=None, marca_existe=None) -> dict:
     """Núcleo testável sem banco: devolve {direcao, edl, usos, prompt_tokens, direcao_tokens, avisos, critica}.
     Mesa ao vivo: diretor, resolvedor e crítico viram passos (sem job, não emitem nada). `ao_usar(uso, i)` é chamado logo
     depois de cada chamada ao cérebro, para o gasto entrar no livro (e no passo certo) na hora."""
@@ -177,7 +219,7 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
 
     def tentar(d):
         return _resolver_uma(d, catalogo=catalogo, analises=analises, loja=loja, pedido=pedido, trilhas=trilhas, energias=energias,
-                             movimentos=movimentos, vocabulario=voc)
+                             movimentos=movimentos, vocabulario=voc, ouvinte=ouvinte, marca_existe=marca_existe)
 
     edl, problemas = tentar(direcao)
     critica = "não rodou"
@@ -214,7 +256,8 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
 def _dirigir(cerebro, loja, catalogo, cat_txt, pedido, analises, arm, ctx, correcao, ao_usar=None):
     return dirigir_e_resolver(cerebro=cerebro, loja=loja, catalogo=catalogo, catalogo_txt=cat_txt, pedido=pedido, analises=analises,
                               trilhas=armazem_b.trilhas(ctx.cfg), energias=_energias(arm, analises), correcao=correcao, cfg=ctx.cfg,
-                              movimentos=_movimentos(arm, analises), ao_usar=ao_usar)
+                              movimentos=_movimentos(arm, analises), ao_usar=ao_usar, ouvinte=ouvinte(arm, analises),
+                              marca_existe=marca_existe(arm))
 
 
 @etapa("direcao")
@@ -321,7 +364,8 @@ def _trocar_trilha(ctx, arm, indice: dict, chave: str, correcao: dict, *, catalo
     loja = Loja()
     edl, problemas = _resolver_uma(d, catalogo=catalogo, analises=analises, loja=loja, pedido=pedido, trilhas=trilhas,
                                    energias=_energias(arm, analises), movimentos=_movimentos(arm, analises),
-                                   ferramenta="resolvedor do editor (troca de música, sem nova direção)")
+                                   ferramenta="resolvedor do editor (troca de música, sem nova direção)",
+                                   ouvinte=ouvinte(arm, analises), marca_existe=marca_existe(arm))
     if edl is None:
         raise ErroDefinitivo("a música nova não encaixou no filme: " + "; ".join(str(x) for x in problemas[:3]))
     validar.validar("edl", edl)

@@ -27,7 +27,7 @@ DE_TODOS = ("montagem", "conferencia", "entrega", "leitura", "catalogo", "direca
 DE_CONVERSA = ("montagem", "conferencia", "entrega", "leitura")
 ROTULO_FILA = {"catalogo": "organizando o material", "direcao": "a direção", "montagem": "a montagem", "qa": "a conferência",
                "entrega": "a entrega"}
-MIN_PADRAO = {"ingest": 1, "analise": 2, "catalogo": 1, "direcao": 2, "montagem": 6, "qa": 2, "entrega": 1}
+MIN_PADRAO = {"ingest": 1, "analise": 2, "catalogo": 6, "direcao": 2, "montagem": 6, "qa": 2, "entrega": 1}
 OLHO_TETO_PADRAO = 0.30
 LEITURA_PADRAO = 0.05          # visão por IA de um vídeo sem histórico: valor de precaução, NÃO medido (cartão diz "até")
 ATENCAO_DIRECAO = "Se a conferência reprovar, o editor pode tentar corrigir sozinho até 2 vezes, cada uma com custo de direção."

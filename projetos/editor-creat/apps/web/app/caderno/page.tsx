@@ -2,6 +2,7 @@ import { motorJson } from '@/lib/motor';
 import Referencias from '@/componentes/Referencias';
 import Backup from '@/componentes/Backup';
 import Biblioteca from '@/componentes/Biblioteca';
+import Marcas from '@/componentes/Marcas';
 import PedidosCliente from '@/componentes/PedidosCliente';
 import ChaveConversa from '@/componentes/conversa/ChaveConversa';
 import MemoriaLista, { type ItemMemoria } from '@/componentes/MemoriaLista';
@@ -74,8 +75,14 @@ export default async function Caderno() {
         </section>
       )}
 
+      <section className="cartao" aria-labelledby="c-marcas" id="marcas">
+        <h2 className="cartao__titulo" id="c-marcas"><span className="num">01c</span> Clientes e marcas</h2>
+        <p className="aviso" style={{ maxWidth: '62ch' }}>Com a logo do cliente aqui, o fim de cada filme dele assina com ela sozinho. Mande PNG com fundo transparente, de 512 a 2048 px. Sem logo, o fecho sai com a marca da creat.MTT.</p>
+        <Marcas />
+      </section>
+
       <section className="cartao" aria-labelledby="c-clientes" id="clientes">
-        <h2 className="cartao__titulo" id="c-clientes"><span className="num">01c</span> O que os clientes responderam</h2>
+        <h2 className="cartao__titulo" id="c-clientes"><span className="num">01d</span> O que os clientes responderam</h2>
         <PedidosCliente />
       </section>
 

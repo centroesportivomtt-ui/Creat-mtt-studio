@@ -43,7 +43,7 @@ def pronto_para_dirigir(con, projeto: str) -> bool:
 def tentar_dirigir(con, projeto: str) -> bool:
     if pronto_para_dirigir(con, projeto):
         banco.enfileirar(con, "catalogo", projeto, prioridade=3)
-        banco.mudar_estado(con, projeto, "dirigindo", "Material lido. Montando o catálogo para a direção.")
+        banco.mudar_estado(con, projeto, "dirigindo", "Material lido. Ouvindo as falas de novo e montando o catálogo.")
         return True
     return False
 

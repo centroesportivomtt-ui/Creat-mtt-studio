@@ -9,7 +9,8 @@ repositório: vem de EDITOR_BACKUP_PEDIDO (variável da hospedagem) ou de `<dado
 "Backup" do Caderno. Junto do .zip vai um .json só com a memória (regras, vocabulário, checagens, casos, referências),
 legível como texto: é por ele que a sessão de engenharia traz para o git o que o servidor aprendeu.
 
-Nunca entram: `.segredos`, vídeo, áudio, imagem, modelos baixados, cache. Arquivo acima de 5 MB fica de fora e é
+Nunca entram: `.segredos`, vídeo, áudio, imagem, modelos baixados, cache. Exceção de imagem: as marcas dos clientes
+(`armazenamento/marcas/<slug>/`, logo e poses do mascote, PNG de até 2048 px), que vêm do cliente e não se refazem (onda 4). Arquivo acima de 5 MB fica de fora e é
 listado no MANIFESTO.json. O agendador (thread do motor) roda uma vez por dia; falha tenta de novo em 1 hora.
 """
 from __future__ import annotations
@@ -200,6 +201,11 @@ def _candidatos(dados: pathlib.Path, memoria: pathlib.Path):
             if sub == "derivados" and p.name not in ("analise.json", "ingest.json", "uso_visao.json"):
                 continue
             yield f"armazenamento/{p.relative_to(arm).as_posix()}", p
+    marcas = arm / "marcas"                             # logo e mascote de cada cliente (onda 4): não se refazem a partir do material
+    if marcas.is_dir():
+        for p in sorted(marcas.rglob("*")):
+            if p.is_file() and p.suffix in (".png", ".json") and not p.name.startswith("."):
+                yield f"armazenamento/{p.relative_to(arm).as_posix()}", p
     bib = dados / "biblioteca"                          # fichas de licença das trilhas e efeitos (o áudio fica no volume)
     if bib.is_dir():
         for p in sorted(bib.glob("*.json")):

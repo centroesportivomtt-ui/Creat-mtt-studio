@@ -1104,3 +1104,61 @@ details > summary.ferr__linha { display: grid; }
 .memoria__feito { margin: 0; font: 700 14px/1.4 var(--fonte-texto); color: var(--cor-ok); }
 .memoria__feito:not(:empty) { margin: 0 0 var(--r3); }
 .caderno__retencao { margin-top: 8px; max-width: 62ch; font-size: 13px; }
+
+/* ---------- onda 4: clientes e marcas (Caderno) ----------
+   A logo aparece num fundo xadrez, como no arquivo de design: o dono vê na hora se o fundo é transparente de verdade. */
+.marcas { display: grid; gap: var(--r4); }
+.marcas__lista { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--r2); }
+.marca { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--r3); align-items: start; padding: var(--r3);
+  border: 1px solid var(--cor-linha); border-radius: var(--raio); background: var(--cor-superficie-2); min-width: 0; }
+.marca__xadrez { width: 96px; height: 96px; border-radius: var(--r2); display: grid; place-items: center; overflow: hidden;
+  border: 1px solid var(--cor-linha);
+  background: conic-gradient(var(--cor-superficie) 25%, var(--cor-linha) 0 50%, var(--cor-superficie) 0 75%, var(--cor-linha) 0) 0 0 / 16px 16px; }
+.marca__xadrez img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+.marca__xadrez span { font: 400 30px/1 var(--fonte-display); color: var(--cor-tinta-2); background: var(--cor-superficie-2); padding: 4px 6px; border-radius: var(--r1); }
+.marca__xadrez--pequeno { width: 64px; height: 64px; background-size: 12px 12px; }
+.marca__xadrez--pequeno span { font-size: 18px; }
+.marca__corpo { display: grid; gap: var(--r2); min-width: 0; overflow-wrap: anywhere; }   /* nome de cliente sem espaço (60 letras) não empurra a tela */
+.marca__nome { margin: 0; font: 400 24px/1 var(--fonte-display); text-transform: uppercase; overflow-wrap: anywhere; }
+.marca__estado { margin: 0; font-size: 14px; color: var(--cor-tinta-2); }
+.marca__acoes { display: flex; flex-wrap: wrap; gap: var(--r2); align-items: center; }
+.marca__confirmar { display: inline-flex; flex-wrap: wrap; gap: var(--r2); }
+.marca__arquivo { position: relative; cursor: pointer; }
+.marca__arquivo:focus-within { outline: 2px solid var(--cor-foco); outline-offset: 2px; }
+.marca__arquivo[aria-busy='true'] { opacity: 0.75; cursor: progress; }
+.marca__ok { margin: 0; font-size: 14px; color: var(--cor-ok); overflow-wrap: anywhere; }
+.marca__mascote > summary { font-weight: 600; font-size: 15px; }
+.marca__mascote > summary::after { content: 'ver'; margin-left: var(--r2); font-weight: 400; color: var(--cor-tinta-2); text-decoration: underline; text-underline-offset: 3px; }
+.marca__mascote[open] > summary::after { content: 'fechar'; }
+.marca__poses { list-style: none; margin: var(--r2) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: var(--r2); }
+.marca__pose { display: grid; gap: 6px; justify-items: center; text-align: center; font-size: 14px; }
+.marca__pose .botao { width: 100%; }
+.marcas__novo { display: flex; flex-wrap: wrap; gap: var(--r2); align-items: flex-end; }
+.marcas__novo .campo { flex: 1 1 220px; min-width: 0; }
+@media (max-width: 380px) { .marca { grid-template-columns: 1fr; } }
+
+/* ---------- onda 4: versão segurada pela conferência ----------
+   Ela pode ser ASSISTIDA, nunca confundida com entrega: faixa fixa coral sobre o filme e a regra escrita embaixo. */
+.segurada-convite { gap: var(--r3); align-content: center; }
+.segurada-convite p { margin: 0; max-width: 40ch; }
+.segurada { display: grid; gap: var(--r3); }
+.segurada__tela { position: relative; display: grid; }
+.segurada__tela .player { outline: 2px solid var(--cor-alerta); outline-offset: -2px; }
+.segurada__faixa { position: absolute; inset: 0 0 auto 0; margin: 0; padding: 8px 12px; pointer-events: none; user-select: none;
+  border-radius: var(--r3) var(--r3) 0 0; background: var(--cor-alerta); color: var(--cor-sobre-alerta);
+  font: 700 13px/1.2 var(--fonte-dado); letter-spacing: 0.04em; text-transform: uppercase; text-align: center; }
+.segurada__faixa b { font-weight: 700; letter-spacing: 0.08em; }
+.segurada__motivos { display: grid; gap: var(--r2); }
+.segurada__titulo { margin: 0; font: 400 22px/1.05 var(--fonte-display); text-transform: uppercase; }
+.segurada__lista { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--r2); counter-reset: motivo; }
+.segurada__lista > li { display: grid; gap: 4px; padding: var(--r3); border-radius: var(--raio); background: var(--cor-superficie);
+  border-left: 3px solid var(--cor-alerta); min-width: 0; }
+.segurada__lista strong { font-size: 15px; }
+.segurada__lista span { font-size: 15px; color: var(--cor-tinta-2); overflow-wrap: anywhere; }
+.segurada__tempos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.segurada__ir { font-family: var(--fonte-dado); font-weight: 700; }
+.segurada__regra { margin: 0; font-size: 14px; color: var(--cor-tinta-2); max-width: 62ch; }
+@media (min-width: 960px) {
+  .palco .segurada__tela .player, .segurada__tela .player { width: auto; height: min(62dvh, calc(100dvh - 320px)); max-width: 100%; justify-self: center; }
+  .segurada__faixa { left: 50%; right: auto; transform: translateX(-50%); width: min(100%, calc(min(62dvh, 100dvh - 320px) * 9 / 16)); }
+}

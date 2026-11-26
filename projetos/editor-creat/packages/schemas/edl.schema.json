@@ -34,7 +34,8 @@
           "audio": { "type": ["string", "null"] },
           "offset": { "type": "number", "default": 0, "description": "tempo_fonte = offset + tempo_no_arquivo (trechos cortados)." },
           "rotacao": { "type": "integer", "default": 0 },
-          "fps": { "type": ["number", "null"] }
+          "fps": { "type": ["number", "null"] },
+          "gravado_em": { "type": ["string", "null"], "description": "Hora em que o arquivo começou a ser gravado (ISO 8601). A sincronia entre câmeras centra a busca na diferença entre dois arquivos (onda 4)." }
         }
       }
     },
