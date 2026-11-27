@@ -17,6 +17,12 @@ from collections import Counter
 ID, BLOQUEIA = "frase_repetida", True
 
 
+def janelas_direto(edl: dict, folga: float = 0.3) -> list[tuple[float, float]]:
+    """Trechos do filme (s) em que o stem direto tem som: os planos com som_direto_db, com folga nas pontas."""
+    return [(float(p["t0"]) - folga, float(p["t1"]) + folga) for p in edl.get("planos") or []
+            if p.get("som_direto_db") is not None and p.get("t1") is not None]
+
+
 def _ngramas(toks, n):
     return Counter(tuple(toks[i:i + n]) for i in range(len(toks) - n + 1))
 
@@ -125,7 +131,14 @@ def checar(c):
         falta = c.nao_verificado(tr, nome if nome == "mix" else f"stem {nome}")
         if falta:
             return falta
-        toks = [w[2] for w in c.palavras(tr)]
+        pal = c.palavras(tr)
+        if nome == "direto":
+            # 27/11 (V9 dos Bastidores): o stem direto só tem som nos planos com som_direto_db; o resto é silêncio, que a
+            # normalização de nível sobe até o Whisper inventar ("e o que" 74x num stem com 2,2 s de som). Palavra fora das
+            # janelas com som direto não existe no filme: não conta.
+            jan = janelas_direto(c.edl)
+            pal = [w for w in pal if any(a <= float(w[0]) <= b for a, b in jan)]
+        toks = [w[2] for w in pal]
         ouvidos[nome] = len(toks)
         for ng, k in _ngramas(toks, n).items():
             esp = esperado.get(ng, 0) if nome == "mix" else (esperado_direto.get(ng, 0) if nome == "direto" else 0)
