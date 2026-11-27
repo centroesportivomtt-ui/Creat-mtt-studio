@@ -682,3 +682,19 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
 - **Não provado ainda:** turbo acertando Guerreiro, Sisal e Bacia do Jacuípe no áudio real; segurada sobre filme real com clique duplo; nada disso roda sem a API da Anthropic com saldo (a direção ainda depende dela).
 - **Falta:** poses do mascote (espiada, placa, moto, carro, aceno) no cadastro da marca; os recortes do vídeo da Black existem, mas precisam sair do fundo verde antes.
 
+
+## 27/11 (madrugada): mão por cima da legenda, rosto nunca (técnica do filme Black do Super Kal)
+- **Saúde no começo da rodada:** site, motor, chave do cérebro e backup ok (último às 00:37 UTC), versão no ar 2ff439d, disco com 3,2 GB livres. M5: `projetos/itaitu-viagem/motor-render/` ainda não existe.
+- **O que entrou:** `motor/etapas/montagem/maos.py`. Mão e braço da pessoa passam por cima da legenda da frente; o rosto nunca.
+  - Detecção: pele (YCrCb) dentro da máscara de pessoa, em 1/4 da resolução. A maior pele no alto da silhueta é o rosto e sai; pedaços com menos de 25 px (grade de 270) também saem.
+  - Borda: suavizada e recortada pela máscara.
+  - Custo: ligado por padrão só onde a máscara já é calculada no quadro (pele, desfoque, destaque ou texto atrás), então não há custo extra. `pessoa.maos_na_frente: 0` no EDL desliga (schema atualizado).
+  - Novo campo de relatório: `pessoa.maos_quadros`.
+- **Origem:** provado à mão no filme Black do Super Kal (27/11). O dono exige "nada cobrindo rosto ou mãos", e a revisão independente aprovou o efeito: "a borda segue o borrão da mão, sem halo e sem serrilhado".
+- **Testes:**
+  - `tests/test_maos_na_frente.py` com 7 testes; os 2 de integração falham sem a mudança (provado);
+  - pytest **903 ok** (6 pulados, 2 pagos fora);
+  - tipos ok;
+  - aceite **147/147**.
+- **Limite conhecido:** quando o braço encosta no rosto, a pele vira um componente só e conta como rosto; nesses quadros a letra fica por cima do braço. Caminho medido na revisão: detector de rosto (YuNet) para separar.
+- **Próximo, pedido do dono via sessão principal (27/11):** publicar o redesenho visual "Mesa de corte" inteiro, ondas 2 a 5 de `docs/design-editor-25-11.md`.
