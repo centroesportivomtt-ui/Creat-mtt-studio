@@ -93,7 +93,10 @@ def test_corpo_sem_limites_nem_tool_choice_e_entrada_invalida_nao_executa(app_co
     bruto = json.dumps(f.pedidos[0]["tools"])
     for proibido in ('"maxLength"', '"minLength"', '"maxItems"', '"minItems"', '"minimum"', '"maximum"', '"pattern"'):
         assert proibido not in bruto
-    assert all(t["strict"] is True for t in f.pedidos[0]["tools"])
+    # 27/11: strict só nas que mudam algo (a API recusa mais de 24 opcionais somados nas strict); as livres validam aqui
+    for t in f.pedidos[0]["tools"]:
+        assert t.get("strict", False) is ferramentas._strict(t["name"])
+    assert sum(ferramentas.opcionais(t["input_schema"]) for t in f.pedidos[0]["tools"] if t.get("strict")) <= ferramentas.LIMITE_OPCIONAIS_STRICT
     assert [t["name"] for t in f.pedidos[0]["tools"]] == sorted(t["name"] for t in f.pedidos[0]["tools"])
     for p in f.pedidos:
         assert "tool_choice" not in p
