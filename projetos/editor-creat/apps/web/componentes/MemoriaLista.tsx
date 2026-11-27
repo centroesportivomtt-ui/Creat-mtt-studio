@@ -49,14 +49,8 @@ export default function MemoriaLista({ tipo, titulo, num, idSecao, itens: inicia
   }
 
   const doDono = itens.filter((x) => x.apagavel);
-  return (
-    <section className="cartao" aria-labelledby={idSecao} data-teste={teste}>
-      <h2 className="cartao__titulo" id={idSecao}><span className="num">{num}</span> {titulo} ({itens.length})</h2>
-      {aviso && doDono.length > 0 && <p className="aviso">{aviso.replace('{n}', String(doDono.length))}</p>}
-      <p className="memoria__feito" role="status" data-teste="memoria-feito">{feito}</p>
-      {itens.length === 0 && vazio && <p className="aviso">{vazio}</p>}
-      <ol className={`caderno__lista memoria${tipo === 'vocabulario' ? ' memoria--voc' : ''}`}>
-        {itens.map((x) => (
+  const daCasa = itens.filter((x) => !x.apagavel);
+  const item = (x: ItemMemoria) => (
           <li key={x.id} className="memoria__item" data-teste="memoria-item" data-id={x.id} data-apagavel={x.apagavel ? 'sim' : 'nao'}>
             {tipo === 'vocabulario'
               ? <p className="memoria__voc"><s>{x.texto}</s> → <b>{x.para}</b></p>
@@ -84,8 +78,27 @@ export default function MemoriaLista({ tipo, titulo, num, idSecao, itens: inicia
             )}
             {erros[x.id] && <p className="erro" role="alert" data-teste="memoria-erro">{erros[x.id]}</p>}
           </li>
-        ))}
-      </ol>
+  );
+  return (
+    <section className="cartao" aria-labelledby={idSecao} data-teste={teste}>
+      <h2 className="cartao__titulo" id={idSecao}><span className="num">{num}</span> {titulo} ({itens.length})</h2>
+      {aviso && doDono.length > 0 && <p className="aviso">{aviso.replace('{n}', String(doDono.length))}</p>}
+      <p className="memoria__feito" role="status" data-teste="memoria-feito">{feito}</p>
+      {itens.length === 0 && vazio && <p className="aviso">{vazio}</p>}
+      {/* onda 4 (Caderno em telas): as do dono ficam à vista; as fixas da casa, recolhidas numa linha */}
+      {doDono.length > 0 && (
+        <ol className={`caderno__lista memoria${tipo === 'vocabulario' ? ' memoria--voc' : ''}`}>
+          {doDono.map(item)}
+        </ol>
+      )}
+      {daCasa.length > 0 && (
+        <details className="recolhido memoria__casa">
+          <summary className="recolhido__linha"><span className="memoria__casa-titulo">Fixas da casa</span><span className="recolhido__resumo">{daCasa.length}</span><span className="recolhido__ver" aria-hidden="true">ver</span></summary>
+          <ol className={`caderno__lista memoria${tipo === 'vocabulario' ? ' memoria--voc' : ''}`}>
+            {daCasa.map(item)}
+          </ol>
+        </details>
+      )}
     </section>
   );
 }

@@ -489,7 +489,7 @@ export async function aceiteConversa({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     await A.waitForSelector('[data-teste=conversa-servidor]', { timeout: 10000 });
     await print(A, '24-desligada-no-servidor', 'escuro');
     const caderno = await escuro.newPage();
-    await caderno.goto(`${BASE}/caderno#conversa`);
+    await caderno.goto(`${BASE}/sistema#conversa`);
     await caderno.waitForSelector('[data-teste=chave-conversa-cartao][disabled]', { timeout: 10000 });
     await caderno.locator('[data-teste=caderno-conversa]').scrollIntoViewIfNeeded();
     await print(caderno, '25-caderno-servidor', 'escuro');
@@ -498,7 +498,7 @@ export async function aceiteConversa({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     ok('conversa: desligada no servidor, a barra só informa e a chave do Caderno fica travada', travada && (await contar(A, '[data-teste=conversa-ligar]')) === 0);
     await motor('_teste/conversa', { servidor: true, ligada: true });
     const cad2 = await claro.newPage();
-    await cad2.goto(`${BASE}/caderno#conversa`);
+    await cad2.goto(`${BASE}/sistema#conversa`);
     await cad2.waitForSelector('[data-teste=chave-conversa-cartao][aria-checked=true]', { timeout: 10000 });
     await cad2.locator('[data-teste=caderno-conversa]').scrollIntoViewIfNeeded();
     await print(cad2, '25-caderno-chave', 'claro');

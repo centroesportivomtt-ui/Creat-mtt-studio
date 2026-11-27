@@ -1291,3 +1291,56 @@ html:has(.barra-comando) { --avisos-baixo: calc(var(--altura-nav) + var(--altura
 .recolhido[open] .recolhido__ver { font-size: 0; }
 .recolhido[open] .recolhido__ver::after { content: 'fechar'; font-size: 15px; }
 .recolhido__corpo { padding: 4px 0 var(--r3); }
+
+/* ---------- onda 4: Caderno em telas (índice no topo) ---------- */
+.indice { display: flex; flex-wrap: wrap; gap: var(--r2); }
+.indice a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--cor-linha); background: var(--cor-superficie); font: 600 15px/1 var(--fonte-texto); color: var(--cor-tinta); text-decoration: none;
+}
+.indice a:hover { border-color: var(--cor-tinta-2); }
+.indice--outras a { background: none; color: var(--cor-tinta-2); }
+.caderno > .cartao:has(> details.recolhido) { padding-block: 4px; }
+
+/* ---------- onda 4: momento-assinatura "o relógio vira o filme" (600 ms, uma vez por versão) ---------- */
+.filme { position: relative; display: grid; width: 100%; justify-self: center; }
+@media (min-width: 960px), (orientation: landscape) and (max-height: 500px) { .filme { width: auto; max-width: 100%; } }
+/* a etiqueta mora no canto de cima do filme (os controles do player ficam embaixo) */
+.filme__etiqueta {
+  position: absolute; top: 10px; left: 10px; z-index: 2; pointer-events: none;
+  display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px 5px 5px; border-radius: 999px;
+  background: rgb(10 10 12 / 0.72); color: #f4f1ea; font: 700 13px/1 var(--fonte-dado); font-variant-numeric: tabular-nums;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.etiqueta-aba {
+  font: 900 13px/1 var(--fonte-marca); letter-spacing: 0.02em; background: var(--cor-aba); color: #fff;
+  padding: 4px 6px 3px; border-radius: 3px; transform: rotate(-3deg);
+}
+.filme__tc {
+  position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; pointer-events: none;
+  font: 400 clamp(72px, 22vw, 120px)/1 var(--fonte-display); font-variant-numeric: tabular-nums; color: var(--cor-acao);
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* a régua se fecha num quadro 9:16: o filme abre de uma faixa fina no meio até o quadro inteiro */
+  .filme[data-revelar='sim'] .player { animation: filme-abre 600ms var(--curva-entrada) both; }
+  /* o timecode grande encolhe e voa para o canto, onde vira a etiqueta */
+  .filme[data-revelar='sim'] .filme__tc { animation: tc-vira-etiqueta 600ms var(--curva-entrada) both; transform-origin: 18% 4%; }
+  .filme[data-revelar='sim'] .filme__etiqueta { animation: etiqueta-entra 240ms var(--curva-entrada) 480ms both; }
+}
+@media (prefers-reduced-motion: reduce) { .filme__tc { display: none; } }
+@keyframes filme-abre { from { clip-path: inset(47% 0 47% 0 round 3px); } to { clip-path: inset(0 0 0 0 round 12px); } }
+@keyframes tc-vira-etiqueta {
+  0% { opacity: 1; transform: none; }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-30%, -44%) scale(0.16); }
+}
+@keyframes etiqueta-entra { from { opacity: 0; transform: translateY(-4px) scale(0.92); } }
+
+/* ✓ desenhado como traço quando a etapa fica feita (240 ms) */
+@media (prefers-reduced-motion: no-preference) {
+  .passo[data-situacao='feito'] .passo__ponto svg path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: traco 240ms var(--curva-entrada) forwards; }
+}
+@keyframes traco { to { stroke-dashoffset: 0; } }
+.memoria__casa { margin-top: var(--r2); border-top: 1px solid var(--cor-linha); }
+.memoria__casa-titulo { font: 650 16px/1.2 var(--fonte-texto); }
+.memoria__casa > ol { margin-top: var(--r2); }

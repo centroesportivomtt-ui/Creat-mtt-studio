@@ -1,10 +1,6 @@
+import Link from 'next/link';
 import { motorJson } from '@/lib/motor';
 import Referencias from '@/componentes/Referencias';
-import Backup from '@/componentes/Backup';
-import Biblioteca from '@/componentes/Biblioteca';
-import Marcas from '@/componentes/Marcas';
-import PedidosCliente from '@/componentes/PedidosCliente';
-import ChaveConversa from '@/componentes/conversa/ChaveConversa';
 import MemoriaLista, { type ItemMemoria } from '@/componentes/MemoriaLista';
 import type { ItemCaderno } from '@/lib/acoes';
 
@@ -28,7 +24,7 @@ export default async function Caderno() {
   // do dono primeiro (as que dá para apagar), depois as fixas da casa
   const dono = (x: { apagavel?: boolean; id?: string }) => x.apagavel ?? Boolean(x.id?.startsWith('r_dono_'));
   const listaRegras: ItemMemoria[] = [...regras.filter(dono), ...regras.filter((x) => !dono(x))].map((x) => ({
-    ...x, apagavel: Boolean(x.apagavel), detalhe: `${x.origem ?? 'casa'}${x.tipos && x.tipos.length ? ` · vale para ${x.tipos.join(', ')}` : ''}`,
+    ...x, apagavel: dono(x), detalhe: `${x.origem ?? 'casa'}${x.tipos && x.tipos.length ? ` · vale para ${x.tipos.join(', ')}` : ''}`,
   }));
   const gravidade = (g?: string) => (g === 'bloqueia' ? 'segura a entrega' : g === 'observacao' ? 'em observação: por enquanto só avisa' : 'avisa');
   const listaChecagens: ItemMemoria[] = checagens.map((c) => ({
@@ -41,14 +37,38 @@ export default async function Caderno() {
         <div>
           <p className="sobretitulo">Treinamento do editor</p>
           <h1 className="titulo">Caderno da casa</h1>
-          <p className="aviso" style={{ maxWidth: '62ch', marginTop: 8 }}>Tudo o que o editor segue ao montar um filme. Quando você reprova uma versão, o motivo entra aqui como regra nova e passa a valer nas próximas peças. Você pode apagar as que nasceram dos seus ajustes.</p>
+          <p className="aviso" style={{ maxWidth: '62ch', marginTop: 8 }}>Tudo o que o editor segue ao montar um filme. Quando você pede um ajuste que vale como regra, ele entra aqui e passa a valer nas próximas peças. Você pode apagar as que nasceram dos seus ajustes.</p>
         </div>
       </div>
 
-      <ChaveConversa variante="cartao" />
+      {/* onda 4: índice no topo; clientes, trilhas e sistema viraram telas próprias (a página tinha 11 telas de rolagem) */}
+      <nav className="indice" aria-label="Nesta página">
+        <a href="#c-regras">Regras · {regras.length}</a>
+        <a href="#c-checa">Conferências · {checagens.length}</a>
+        {listaPalavras.length > 0 && <a href="#c-voc">Palavras · {listaPalavras.length}</a>}
+        <a href="#c-modos">Modos · {modos.length}</a>
+        {looks.length > 0 && <a href="#c-cor">Cor · {looks.length}</a>}
+        <a href="#c-refs">Estudos de caso</a>
+      </nav>
+      <nav className="indice indice--outras" aria-label="Outras telas">
+        <Link href="/clientes">Clientes e marcas</Link>
+        <Link href="/biblioteca">Trilhas e efeitos</Link>
+        <Link href="/sistema">Sistema e backup</Link>
+      </nav>
+
+
+      <MemoriaLista tipo="regra" num="03" titulo="Regras" idSecao="c-regras" teste="caderno-regras" itens={listaRegras}
+        aviso="Aprendidas com os seus ajustes: {n}." irmas={checagens.map((c) => c.id)} />
+
+      <MemoriaLista tipo="checagem" num="04" titulo="O que ele confere antes de entregar" idSecao="c-checa" teste="caderno-checagens" itens={listaChecagens} />
+
+      {listaPalavras.length > 0 && (
+        <MemoriaLista tipo="vocabulario" num="05" titulo="Palavras que a transcrição erra" idSecao="c-voc" teste="caderno-vocabulario" itens={listaPalavras} />
+      )}
 
       <section className="cartao" aria-labelledby="c-modos">
-        <h2 className="cartao__titulo" id="c-modos"><span className="num">01</span> Modos de edição</h2>
+        <details className="recolhido">
+        <summary className="recolhido__linha"><h2 className="cartao__titulo" id="c-modos">Modos de edição</h2><span className="recolhido__resumo">{modos.length} modos</span><span className="recolhido__ver" aria-hidden="true">ver</span></summary>
         <ul className="caderno__grade" data-teste="caderno-modos">
           {modos.map((m) => (
             <li key={m.id} className="caderno__modo">
@@ -58,11 +78,13 @@ export default async function Caderno() {
             </li>
           ))}
         </ul>
+        </details>
       </section>
 
       {looks.length > 0 && (
         <section className="cartao" aria-labelledby="c-cor">
-          <h2 className="cartao__titulo" id="c-cor"><span className="num">01b</span> Cor por ambiente</h2>
+          <details className="recolhido">
+          <summary className="recolhido__linha"><h2 className="cartao__titulo" id="c-cor">Cor por ambiente</h2><span className="recolhido__resumo">{looks.length} looks</span><span className="recolhido__ver" aria-hidden="true">ver</span></summary>
           <p className="aviso" style={{ maxWidth: '62ch' }}>Cada cena é medida (luz, branco e tom de pele) e ganha o look do lugar onde foi gravada. A pele fica protegida. Na versão, você vê o antes e o depois de cada plano.</p>
           <ul className="caderno__grade" data-teste="caderno-looks">
             {looks.map((l) => (
@@ -72,19 +94,9 @@ export default async function Caderno() {
               </li>
             ))}
           </ul>
+          </details>
         </section>
       )}
-
-      <section className="cartao" aria-labelledby="c-marcas" id="marcas">
-        <h2 className="cartao__titulo" id="c-marcas"><span className="num">01c</span> Clientes e marcas</h2>
-        <p className="aviso" style={{ maxWidth: '62ch' }}>Com a logo do cliente aqui, o fim de cada filme dele assina com ela sozinho. Mande PNG com fundo transparente, de 512 a 2048 px. Sem logo, o fecho sai com a marca da creat.MTT.</p>
-        <Marcas />
-      </section>
-
-      <section className="cartao" aria-labelledby="c-clientes" id="clientes">
-        <h2 className="cartao__titulo" id="c-clientes"><span className="num">01d</span> O que os clientes responderam</h2>
-        <PedidosCliente />
-      </section>
 
       <section className="cartao" aria-labelledby="c-refs">
         <h2 className="cartao__titulo" id="c-refs"><span className="num">02</span> Estudos de caso</h2>
@@ -92,25 +104,6 @@ export default async function Caderno() {
         <Referencias />
       </section>
 
-      <MemoriaLista tipo="regra" num="03" titulo="Regras" idSecao="c-regras" teste="caderno-regras" itens={listaRegras}
-        aviso="Aprendidas com as suas reprovações: {n}." irmas={checagens.map((c) => c.id)} />
-
-      <MemoriaLista tipo="checagem" num="04" titulo="O que ele confere antes de entregar" idSecao="c-checa" teste="caderno-checagens" itens={listaChecagens} />
-
-      {listaPalavras.length > 0 && (
-        <MemoriaLista tipo="vocabulario" num="05" titulo="Palavras que a transcrição erra" idSecao="c-voc" teste="caderno-vocabulario" itens={listaPalavras} />
-      )}
-      <section className="cartao" aria-labelledby="c-bib" id="biblioteca">
-        <h2 className="cartao__titulo" id="c-bib"><span className="num">05b</span> Trilhas e efeitos da casa</h2>
-        <p className="aviso" style={{ maxWidth: '62ch' }}>Só toca no filme o que tiver licença registrada para uso em vídeo de cliente e anúncio. Cole o link do arquivo; o editor mede a duração e o andamento.</p>
-        <Biblioteca />
-      </section>
-
-      <section className="cartao" aria-labelledby="c-backup" id="backup">
-        <h2 className="cartao__titulo" id="c-backup"><span className="num">06</span> Backup</h2>
-        <p className="aviso" style={{ maxWidth: '62ch' }}>Uma vez por dia, o que não se refaz (projetos, pedidos, direções, relatórios, regras e casos da casa) sai do servidor e fica guardado no Cloudflare e, se você salvar o link, numa pasta do seu Dropbox.</p>
-        <Backup />
-      </section>
     </main>
   );
 }

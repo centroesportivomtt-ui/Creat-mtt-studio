@@ -358,6 +358,33 @@ async function principal() {
   ok('player toca a versão (Range pelo proxy)', !player.erro && player.tempo >= 1 && player.largura > 0, JSON.stringify(player));
   const r206 = await page.evaluate(async (src) => (await fetch(src, { headers: { range: 'bytes=0-1023' } })).status, await page.getAttribute('[data-teste=player]', 'src'));
   ok('Range responde 206 pelo proxy', r206 === 206, `status ${r206}`);
+  // onda 4: "o relógio vira o filme" — uma vez por versão, com a etiqueta Aba 71 + "feito em"; com e sem movimento reduzido
+  {
+    const feito = (await page.textContent('[data-teste=feito-em]').catch(() => '')) ?? '';
+    // a marca "já mostrei" entra quando o movimento termina (1,2 s depois da entrega)
+    const lembrou = await page.waitForFunction((id) => sessionStorage.getItem(`ec-revelou-${id}-v1`), pid, { timeout: 6000 }).then((h) => h.jsonValue(), () => null);
+    const resultado = {};
+    for (const mov of ['reduce', 'no-preference']) {
+      const mctx = await navegador.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'pt-BR', reducedMotion: mov, storageState: await ctx.storageState() });
+      const mp = await mctx.newPage();
+      const errosM = [];
+      mp.on('console', (m) => { if (m.type() === 'error') errosM.push(m.text()); });
+      mp.on('pageerror', (e) => errosM.push(String(e)));
+      await mp.goto(`${BASE}/projetos/${pid}`);
+      // espera a hidratação ligar o movimento (a etiqueta já vem no HTML do servidor) e depois ele acabar
+      await mp.waitForSelector('[data-teste=filme][data-revelar=sim]', { timeout: 10000 }).catch(() => {});
+      const anim = await mp.evaluate(() => getComputedStyle(document.querySelector('[data-teste=player]')).animationName);
+      await mp.waitForSelector('[data-teste=filme]:not([data-revelar])', { timeout: 6000 }).catch(() => {});
+      await mp.screenshot({ path: path.join(PRINTS, `onda4-filme-${mov}.png`) });
+      const depois = await mp.evaluate(() => ({ tc: Boolean(document.querySelector('.filme__tc')), etiqueta: Boolean(document.querySelector('[data-teste=feito-em]')) }));
+      resultado[mov] = { anim, ...depois, erros: errosM.length };
+      await mctx.close();
+    }
+    ok('onda 4: o relógio vira a etiqueta "Aba 71 · feito em" no filme, uma vez por versão; sem erro com e sem movimento reduzido',
+      /feito em \d{2}:\d{2}/.test(feito) && lembrou === '1' && resultado.reduce.anim === 'none' && resultado['no-preference'].anim === 'filme-abre'
+      && !resultado.reduce.tc && !resultado['no-preference'].tc && resultado.reduce.etiqueta && resultado.reduce.erros === 0 && resultado['no-preference'].erros === 0,
+      JSON.stringify({ feito, lembrou, resultado }));
+  }
   // onda 2: "Pedir ajuste" abre a gaveta (texto, só neste vídeo ou regra, consequência) e Cancelar fecha sem pedir nada
   {
     const posts = [];
@@ -444,7 +471,7 @@ async function principal() {
   await cctx.close();
   const viuNoProjeto = await page.waitForSelector('[data-teste=link-cliente-resposta] >> text=música do final', { timeout: 20000 }).then(() => true).catch(() => false);
   await page.keyboard.press('Escape');
-  await page.goto(`${BASE}/caderno#clientes`);
+  await page.goto(`${BASE}/clientes#clientes`);
   const noCaderno = await page.waitForSelector('[data-teste=pedidos-cliente] >> text=música do final', { timeout: 10000 }).then(() => true).catch(() => false);
   await page.click('[data-teste=pedido-tratar]').catch(() => {});
   const tratou = await page.waitForSelector('[data-teste=pedidos-cliente] >> text=Ajuste (resolvido)', { timeout: 10000 }).then(() => true).catch(() => false);
@@ -483,6 +510,7 @@ async function principal() {
   await page.goto(`${BASE}/caderno`);
   const nLooks = await page.locator('[data-teste=caderno-looks] li').count();
   ok('caderno mostra a biblioteca de cor por ambiente', nLooks >= 5, `${nLooks} looks`);
+  await page.goto(`${BASE}/biblioteca`);
   {
     const f = '[data-teste=form-biblioteca]';
     await page.fill(`${f} input[name=url]`, 'https://www.dropbox.com/scl/fi/abc123/trilha.wav?rlkey=x');
@@ -496,6 +524,8 @@ async function principal() {
     const pode = await page.locator('[data-teste=biblioteca-lista] >> text=pode tocar').count();
     ok('biblioteca: sem confirmar a licença não entra; com licença a trilha aparece e pode tocar', pediuLicenca && entrou && pode >= 1, `pediu licença ${pediuLicenca} · entrou ${entrou} · pode tocar ${pode}`);
   }
+  await page.goto(`${BASE}/sistema`);
+  await page.waitForFunction(() => { const t = document.querySelector('[data-teste=backup-estado]')?.textContent ?? ''; return t && !/carregando/.test(t); }, null, { timeout: 10000 }).catch(() => {});
   {
     const antes = (await page.locator('[data-teste=backup-estado]').textContent({ timeout: 10000 }).catch(() => '')) ?? '';
     await page.fill('[data-teste=backup-pedido]', 'https://exemplo.com/nao-e-dropbox');
@@ -510,6 +540,7 @@ async function principal() {
     ok('backup: endereço errado recusado, destino salvo, backup feito e o link não fica na tela', /ainda não rodou/.test(antes) && recusou && emDia && !html.includes('AbCdEfGh1234567890'),
       `antes "${antes.trim().slice(0, 40)}" · recusou ${recusou} · em dia ${emDia}`);
   }
+  await page.goto(`${BASE}/caderno`);
   await page.fill('[data-teste=form-referencia] input[name=url]', 'https://www.instagram.com/reel/TESTE123/');
   await page.click('[data-teste=ler-referencia]');
   const leu = await page.waitForSelector('[data-teste=referencias] li >> text=planos', { timeout: 10000 }).then(() => true).catch(() => false);
@@ -878,7 +909,7 @@ async function principal() {
       && abrirFora === 'https://pub-falso-entregas.r2.dev/entregas.html?c=creat-mtt', JSON.stringify({ fora, msgFora, foraNoAr, abrirFora }));
 
     // Caderno: o estado do Cloudflare junto do backup
-    await fp.goto(`${BASE}/caderno#backup`);
+    await fp.goto(`${BASE}/sistema#backup`);
     const cad = await fp.waitForSelector('[data-teste=caderno-cloudflare]', { timeout: 10000 }).then(() => texto('[data-teste=caderno-cloudflare]'), () => '');
     const destinos = await texto('[data-teste=backup-destinos]');
     await foto('caderno-cloudflare', '[data-teste=backup]');
@@ -915,7 +946,7 @@ async function principal() {
     { nome: 'desktop-claro', viewport: { width: 1440, height: 900 }, colorScheme: 'light' },
     { nome: 'desktop-escuro', viewport: { width: 1440, height: 900 }, colorScheme: 'dark' },
   ];
-  const paginas = [['entrar', '/entrar', false], ['projetos', '/projetos', true], ['novo', '/projetos/novo', true], ['projeto', `/projetos/${pid}`, true], ['caderno', '/caderno', true], ['gastos', '/gastos', true], ['cliente', `/c/${tokCliente}`, false]];
+  const paginas = [['entrar', '/entrar', false], ['projetos', '/projetos', true], ['novo', '/projetos/novo', true], ['projeto', `/projetos/${pid}`, true], ['caderno', '/caderno', true], ['clientes', '/clientes', true], ['biblioteca', '/biblioteca', true], ['sistema', '/sistema', true], ['gastos', '/gastos', true], ['cliente', `/c/${tokCliente}`, false]];
   const problemas = [];
   await medir('verificacao_visual_s', async () => {
     for (const c of configs) {

@@ -374,11 +374,14 @@ export async function aceiteOnda3({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
       /O editor para de conferir isto/.test(confChe) && feitoChe === 'Conferência apagada.' && /deixa de trocar “criete” por “creat”/.test(confVoc) && feitoVoc === 'Palavra apagada.'
         && !depois.regras.some((r) => r.id === 'r_dono_1a2b3c4d') && !depois.checagens.some((x) => x.id === 'c_dono_1a2b3c4d') && !depois.vocabulario.some((v) => v.id === sem?.vocabulario_id),
       `${feitoChe} | ${feitoVoc}`);
+    // onda 4 do redesenho: o prazo da conversa mora em Sistema (o Caderno virou telas)
+    await C1.goto(`${BASE}/sistema`);
+    await C1.waitForSelector('[data-teste=caderno-retencao]', { timeout: 10000 });
     const ret90 = await texto(C1, '[data-teste=caderno-retencao]');
     await C1.locator('[data-teste=caderno-conversa]').scrollIntoViewIfNeeded();
     await print(C1, '12-caderno-prazo', 'escuro', '[data-teste=caderno-conversa]');
     await motor('_teste/conversa', { retencao: 0 });
-    await C2.reload();
+    await C2.goto(`${BASE}/sistema`);
     await C2.waitForSelector('[data-teste=caderno-retencao]', { timeout: 10000 });
     const ret0 = await texto(C2, '[data-teste=caderno-retencao]');
     await print(C2, '12-caderno-prazo', 'claro', '[data-teste=caderno-conversa]');

@@ -141,8 +141,8 @@ export default function Topo() {
         <img className="topo__logo logo-escuro" src="/marca/logo_creatMTT_escuro.png" alt="" width={128} height={22} />
         <span className="topo__editor" aria-hidden="true">Editor</span>
       </Link>
-      <Link className="topo__saude" href="/caderno#backup" data-saude={saude ?? undefined}
-        aria-label={saude === 'ok' ? 'Sistema no ar: ver backup e saúde no Caderno' : saude === 'falha' ? 'Sistema com problema: ver no Caderno' : 'Conferindo o sistema: ver no Caderno'}
+      <Link className="topo__saude" href="/sistema" data-saude={saude ?? undefined}
+        aria-label={saude === 'ok' ? 'Sistema no ar: ver backup e saúde' : saude === 'falha' ? 'Sistema com problema: ver o que houve' : 'Conferindo o sistema'}
         title={saude === 'ok' ? 'Sistema no ar' : saude === 'falha' ? 'Sistema com problema' : 'Conferindo o sistema'} />
       {/* dentro do projeto e no próprio Novo, o âmbar é do botão da tela: o "Novo" da navegação fica calmo */}
       <nav className="nav" aria-label="Principal" data-calmo={noProjeto || rota === '/projetos/novo'}>
@@ -157,7 +157,7 @@ export default function Topo() {
           <span className="nav__icone">{Icone.caderno}</span>Caderno
         </Link>
         <button type="button" className="nav__item" data-teste="nav-mais" aria-haspopup="dialog" aria-expanded={maisAberto}
-          aria-current={atual(rota.startsWith('/gastos'))} onClick={() => setMaisAberto(true)}>
+          aria-current={atual(/^\/(gastos|clientes|biblioteca|sistema)(\/|$)/.test(rota))} onClick={() => setMaisAberto(true)}>
           <span className="nav__icone">{Icone.mais}</span>Mais
         </button>
         <Gaveta aberta={maisAberto} aoMudar={setMaisAberto} titulo="Mais" teste="gaveta-mais"
@@ -165,9 +165,9 @@ export default function Topo() {
           <div className="nav__menu">
             <ChaveConversa variante="menu" />
             <Link className="nav__menu-item" href="/gastos" onClick={irDepois}>{Icone.gastos}Gastos do mês</Link>
-            <Link className="nav__menu-item" href="/caderno#marcas" onClick={irDepois}>{Icone.clientes}Clientes e marcas</Link>
-            <Link className="nav__menu-item" href="/caderno#biblioteca" onClick={irDepois}>{Icone.biblioteca}Trilhas e efeitos</Link>
-            <Link className="nav__menu-item" href="/caderno#backup" onClick={irDepois}>{Icone.sistema}Sistema e backup</Link>
+            <Link className="nav__menu-item" href="/clientes" onClick={irDepois}>{Icone.clientes}Clientes e marcas</Link>
+            <Link className="nav__menu-item" href="/biblioteca" onClick={irDepois}>{Icone.biblioteca}Trilhas e efeitos</Link>
+            <Link className="nav__menu-item" href="/sistema" onClick={irDepois}>{Icone.sistema}Sistema e backup</Link>
             <form action="/api/sair" method="post" onSubmit={(e) => {
               // antes de sair, o aparelho esquece o que a conversa guardou; depois o formulário segue normal
               const f = e.currentTarget;

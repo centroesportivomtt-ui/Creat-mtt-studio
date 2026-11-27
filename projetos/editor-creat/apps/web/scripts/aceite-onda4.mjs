@@ -145,7 +145,7 @@ export async function aceiteOnda4({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     vigiar(B, 'claro');
 
     // ---------- 5.6: no Caderno, enviar a logo, ver a prévia, trocar, recusar a pequena e apagar ----------
-    await A.goto(`${BASE}/caderno#marcas`);
+    await A.goto(`${BASE}/clientes#marcas`);
     await A.waitForSelector(`${ficha('super-kal')}[data-logo=nao]`, { timeout: 15000 });
     const fichasAntes = await A.locator('[data-teste^=marca-][data-logo]').count();
     await print(A, '01-marcas-sem-logo', 'escuro', '#marcas');
@@ -161,7 +161,7 @@ export async function aceiteOnda4({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     ok('onda 4 · 5.6a: no Caderno, enviar a logo do Super Kal grava em marcas/super-kal e mostra a prévia com o tamanho',
       fichasAntes >= 3 && Boolean(previa?.w) && previa.alt === 'Logo de Super Kal' && noDisco && /1024 × 1024 px/.test(recado1) && /fundo transparente/.test(estado1),
       `${fichasAntes} fichas | prévia ${JSON.stringify(previa)} | ${recado1} | ${estado1}`);
-    await B.goto(`${BASE}/caderno#marcas`);
+    await B.goto(`${BASE}/clientes#marcas`);
     await B.waitForSelector(`${ficha('super-kal')}[data-logo=sim] img[data-teste=marca-previa]`, { timeout: 15000 });
     await print(A, '02-marcas-com-logo', 'escuro', ficha('super-kal'));
     await print(B, '02-marcas-com-logo', 'claro', ficha('super-kal'));

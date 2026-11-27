@@ -19,6 +19,7 @@ import MesaAoVivo, { AgoraNaMesa } from './conversa/MesaAoVivo';
 import { useConversa } from './conversa/useConversa';
 import { useFioAoVivo } from '@/lib/fio';
 import { irEntrar } from '@/lib/pendentes';
+import { baterClaquete } from '@/lib/som';
 import * as Acoes from '@/lib/acoes';
 import {
   bytesLegiveis, classeEstado, ESTADOS, ETAPA_DO_ESTADO, EXPLICA_ESTADO, ROTULO_ESTADO, rotuloTipo,
@@ -291,6 +292,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     trava.current = true;
     setBatendo(true);
     navigator.vibrate?.(8);
+    baterClaquete();   // só toca se o dono ligou em Sistema
     try {
       const c = await postar(`/versoes/${vid}/aprovar`, clientesEnt ? (mandarEnt ? (clienteEnt ? { cliente: clienteEnt } : {}) : { entregas: false }) : {});
       if (c) {
@@ -432,6 +434,18 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     </ol>
   );
   const aprovadaAssistir = assistir ? Boolean(p.dados?.aprovadas?.[assistir.id]) : false;
+  // onda 4, momento-assinatura "o relógio vira o filme": uma vez por versão, quando ela chega (a sessão da aba lembra).
+  const [revelar, setRevelar] = useState(false);
+  const vidEntregue = p.estado === 'entregue' && assistir ? assistir.id : null;
+  useEffect(() => {
+    if (!vidEntregue) return;
+    const chave = `ec-revelou-${p.id}-${vidEntregue}`;
+    try { if (sessionStorage.getItem(chave)) return; } catch { return; }
+    setRevelar(true);
+    // a marca "já mostrei" só entra quando o movimento termina: efeito desmontado no meio não deixa o relógio preso
+    const t = window.setTimeout(() => { setRevelar(false); try { sessionStorage.setItem(chave, '1'); } catch { /* sem armazenamento */ } }, 1200);
+    return () => { window.clearTimeout(t); setRevelar(false); };
+  }, [vidEntregue, p.id]);
   // fase da tela: decide a ordem dos cartões (CSS) e o que a barra de comando oferece
   const fase = p.estado === 'entregue' && assistir ? 'entregue' : aberto ? (fechado ? 'pedido' : 'aberto') : 'editando';
   const faltaMin = Math.max(0, TETO_MS - decorrido);
@@ -715,8 +729,15 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
         <Segurada key={seguradaNaTela} pid={p.id} versao={seguradaNaTela} aberta={seguradaAberta} aoAbrir={setSeguradaAberta} />
       )}
       {assistir ? (
-        <video key={assistir.id} className="player" controls playsInline preload="metadata" data-teste="player" data-versao={assistir.id}
-          src={`/api/motor/v1/arquivos/${assistir.video}#t=0.1`} aria-label={`Versão ${assistir.id}`} />
+        <div className="filme" key={assistir.id} data-revelar={revelar ? 'sim' : undefined} data-teste="filme">
+          <video className="player" controls playsInline preload="metadata" data-teste="player" data-versao={assistir.id}
+            src={`/api/motor/v1/arquivos/${assistir.video}#t=0.1`} aria-label={`Versão ${assistir.id}`} />
+          {/* o relógio vira a etiqueta: assinatura Aba 71 + quanto tempo a edição levou */}
+          {inicioRelogio !== null && fimRelogio !== null && (
+            <p className="filme__etiqueta" data-teste="feito-em"><span className="etiqueta-aba" aria-hidden="true">Aba 71</span>feito em {tc(decorrido)}</p>
+          )}
+          {revelar && inicioRelogio !== null && <p className="filme__tc" aria-hidden="true">{tc(decorrido)}</p>}
+        </div>
       ) : seguradaNaTela ? null : (
         <div className="player-vazio"><p>{
           emProducao?.estado === 'reprovada_qa' ? `A conferência automática segurou a ${emProducao.id.toUpperCase()}: ela não foi entregue. O motivo está na mesa ao vivo.`
@@ -1091,7 +1112,7 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
         </select>
         <span className="aviso" id={`pedido-cliente-aviso-${pid}`} data-teste="pedido-cliente-aviso">{!clienteSel ? 'O fim do filme assina só com a creat.MTT.'
           : comLogo(clienteSel) ? `O fim do filme assina com a logo de ${nomeCliente(clienteSel)}.`
-            : <>{nomeCliente(clienteSel)} ainda não tem logo cadastrada: o fim sai com a creat.MTT. <a className="ref-link" href="/caderno#marcas">Cadastrar no Caderno</a></>}</span>
+            : <>{nomeCliente(clienteSel)} ainda não tem logo cadastrada: o fim sai com a creat.MTT. <a className="ref-link" href="/clientes#marcas">Cadastrar a logo</a></>}</span>
       </div>
       <p className="aviso">Quando estiver pronto, toque em <strong>Começar a edição</strong>, aqui embaixo.</p>
       <GavetaPergunta id={perguntaAberta} ultima={ultimaPergunta.current} respostas={respostas}
@@ -1334,7 +1355,7 @@ function GavetasDaVersao({ pid, versoes, aprovadas, ajusteDe, aoFecharAjuste, ao
 
       {/* fica montada depois de aberta: o link novo aparece uma vez só e não pode sumir ao fechar a gaveta */}
       <Gaveta aberta={Boolean(clienteDe)} aoMudar={(a) => { if (!a) aoFecharCliente(); }} teste="gaveta-cliente" manterMontada
-        titulo="Mandar para o cliente" descricao="O cliente abre no celular, assiste e aprova ou pede ajuste, sem senha. A resposta aparece aqui e no Caderno.">
+        titulo="Mandar para o cliente" descricao="O cliente abre no celular, assiste e aprova ou pede ajuste, sem senha. A resposta aparece aqui e em Clientes.">
         {vCliente && <div id={`cliente-${vCliente}`}><LinkCliente pid={pid} versao={vCliente} /></div>}
       </Gaveta>
     </>
