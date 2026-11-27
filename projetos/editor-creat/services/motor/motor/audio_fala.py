@@ -157,6 +157,7 @@ def corte_inicial_ok(env: dict, s0: float) -> tuple[bool, str]:
     return True, ""
 
 
+ESTALO_MAX = 0.04         # 27/11: som isolado mais curto que isto (estalo) não é fala
 SILABA_MAX = 0.30          # resto de palavra: som de até 300 ms antes de um silêncio (o "-zer" real tinha 260 ms)
 
 
@@ -170,8 +171,19 @@ def comeco_colado(env: dict, s0: float, minimo: float = 0.15, alcance: float = 0
     if p is None or p == 0:
         return None
     q = p - 1
-    while q >= 0 and e[q] <= lim and (p - q) * PASSO <= alcance:
-        q -= 1
+    while q >= 0 and (p - q) * PASSO <= alcance:
+        if e[q] <= lim:
+            q -= 1
+            continue
+        # 27/11 (V10 dos Bastidores, «… | Aqui»): um estalo de 10 ms (boca, roupa, clique) no meio da pausa não é fala; som
+        # mais curto que ESTALO_MAX com silêncio antes conta como pausa. Sílaba real tem 60 ms ou mais.
+        r = q
+        while r >= 0 and e[r] > lim:
+            r -= 1
+        if (q - r) * PASSO < ESTALO_MAX and r >= 0:
+            q = r
+            continue
+        break
     if q < 0 or e[q] <= lim:
         return None                                   # nada de fala no alcance: começo limpo
     pausa = (p - q - 1) * PASSO

@@ -371,3 +371,24 @@ def test_deixar_comecar_respeita_outra_peca_da_mesma_fonte(comeco_colado):
     env = AF.envelope(x[::3], 16000)
     assert C._deixar_comecar(env, 1.69) is not None
     assert C._deixar_comecar(env, 1.69, limite=1.53) is None    # outra peça termina depois da pausa: não repete fala
+
+
+def _env_de(partes, lim=-40.0):
+    """Envelope sintético em passos de 10 ms: [(som?, segundos)]."""
+    db = []
+    for som, s in partes:
+        db += [-20.0 if som else -60.0] * int(round(s / AF.PASSO))
+    return {"db": np.array(db, dtype=np.float32), "limiar": lim}
+
+
+def test_estalo_curto_na_pausa_nao_e_fala():
+    """V10 dos Bastidores (27/11): fala, pausa, ESTALO de 10 ms, 130 ms, «Aqui»: começo limpo (o estalo não é fala)."""
+    env = _env_de([(True, 0.5), (False, 0.4), (True, 0.01), (False, 0.13), (True, 0.2), (False, 0.08), (True, 0.5)])
+    assert AF.comeco_colado(env, 1.03) is None
+    assert AF.corte_inicial_ok(env, 1.03)[0]
+
+
+def test_silaba_de_verdade_antes_continua_colada():
+    """Som de 80 ms (sílaba) a 130 ms do começo continua sendo resto de palavra colado."""
+    env = _env_de([(True, 0.5), (False, 0.4), (True, 0.08), (False, 0.13), (True, 0.2), (False, 0.08), (True, 0.5)])
+    assert AF.comeco_colado(env, 1.10) is not None
