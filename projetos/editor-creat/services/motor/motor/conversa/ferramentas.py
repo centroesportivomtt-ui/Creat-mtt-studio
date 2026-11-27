@@ -61,8 +61,11 @@ ESQUEMAS = {
     "propor_ajuste": {
         "description": "Propõe pedir um ajuste da versão pronta (o mesmo que o botão Pedir ajuste). NÃO executa: mostra um cartão e só roda se "
                        "o Marcos tocar em 'Pedir o ajuste'. Refaz direção, montagem e conferência, e vira regra da casa. Escreva o_que_mudar "
-                       "como ele diria a um montador: o que muda, onde (mm:ss) e o que não pode mudar. Confira antes ver_projeto.pode.",
-        "input_schema": _obj({"versao": VERSAO, "o_que_mudar": {"type": "string", "minLength": 3, "maxLength": 1000}},
+                       "como ele diria a um montador: o que muda, onde (mm:ss) e o que não pode mudar. Vale também para a versão que a "
+                       "conferência segurou. vozes (opcional) troca o campo Vozes do pedido junto: 'varias' quando mais de uma pessoa fala "
+                       "de propósito (bastidor, entrevista, conversa), senão a conferência reprova a outra voz. Confira antes ver_projeto.pode.",
+        "input_schema": _obj({"versao": VERSAO, "o_que_mudar": {"type": "string", "minLength": 3, "maxLength": 1000},
+                              "vozes": {"enum": ["auto", "uma", "varias"]}},
                              ["versao", "o_que_mudar"])},
     "propor_pedido": {
         "description": "Propõe trocar o pedido antes de a edição começar (o mesmo que mandar o pedido de novo). NÃO executa: mostra um cartão "

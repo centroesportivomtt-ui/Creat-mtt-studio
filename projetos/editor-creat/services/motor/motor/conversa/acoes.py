@@ -26,6 +26,8 @@ ETAPAS_EDICAO = ("catalogo", "direcao", "montagem", "qa", "entrega")
 RE_VERSAO = re.compile(r"^v([0-9]{1,3})$")
 CUSTO_PADRAO_USD = 0.40
 MINUTOS_PADRAO = 10
+ROTULO_VOZES = {"auto": "automático", "uma": "uma voz", "varias": "várias vozes (conversa)"}
+AJUSTAVEIS = ("entregue", "reprovada_qa", "erro")      # os mesmos do botão "Pedir ajuste" da tela
 CAMPOS_PEDIDO = ("texto", "formato", "destino", "duracao_alvo", "obrigatorio", "proibido", "vozes", "ambiente")
 NOME_CAMPO = {"texto": "Pedido", "formato": "Formato", "destino": "Onde vai sair", "duracao_alvo": "Duração",
               "obrigatorio": "Precisa ter", "proibido": "Não pode ter", "vozes": "Vozes", "ambiente": "Ambiente"}
@@ -57,8 +59,10 @@ def guarda_ajuste(con, pid: str, versao: str, *, tool_use_id: str | None = None)
     v = next((x for x in vs if x["id"] == versao), None)
     if v is None:
         return f"a versão {versao} não existe"
-    if v["estado"] != "entregue":
-        return f"a {versao} ainda não foi entregue (está {v['estado']})"
+    # 27/11 (Bastidores do Super Kal): a versão que a conferência segurou também pede ajuste, como o botão da tela; senão o
+    # projeto reprovado depois das 2 correções automáticas ficava sem saída nenhuma
+    if v["estado"] not in AJUSTAVEIS:
+        return f"a {versao} ainda não está pronta (está {v['estado']})"
     if versao in (_dados(con, pid).get("aprovadas") or {}):
         return f"a {versao} já foi aprovada"
     nova = vs[-1]["id"]
@@ -235,7 +239,7 @@ def anotar(cfg, pid: str, e: dict) -> dict:
 
 def _exec_ajuste(cfg, pid, e, esp, so_neste_projeto):
     vira = bool((esp["cartao"].get("evento") or {}).get("vira_regra", True)) and not so_neste_projeto
-    res = executar_ajuste(pid, e["versao"], e["o_que_mudar"], vira_regra=vira)
+    res = executar_ajuste(pid, e["versao"], e["o_que_mudar"], vira_regra=vira, vozes=e.get("vozes"), cfg=cfg)
     return res, (TEXTO_AJUSTE_FEITO if vira else TEXTO_AJUSTE_SO_AQUI)
 
 
@@ -316,7 +320,8 @@ def _cartao_trilha(cfg, con, pid, e):
 
 CARTOES = {
     "propor_ajuste": Cartao(
-        lambda cfg, con, pid, e: {"versao": e["versao"], "o_que_mudar": " ".join(e["o_que_mudar"].split())},
+        lambda cfg, con, pid, e: {"versao": e["versao"], "o_que_mudar": " ".join(e["o_que_mudar"].split()),
+                                  **({"vozes": e["vozes"]} if e.get("vozes") in ("auto", "uma", "varias") else {})},
         lambda cfg, con, pid, e, tool_use_id=None: guarda_ajuste(con, pid, e["versao"], tool_use_id=tool_use_id),
         _cartao_ajuste, _exec_ajuste),
     "propor_pedido": Cartao(
@@ -467,7 +472,11 @@ def cartao_ajuste(cfg, con, pid: str, entrada: dict, *, turno: str, tool_use_id:
     custo, minutos = custo_e_minutos(cfg, con)
     v = entrada["versao"]
     trecho = repete_de_fora(entrada["o_que_mudar"], textos_de_fora(con, pid, ja_lidos))
+    vozes_antes = _pedido_atual(cfg, pid).get("vozes") or "auto"
+    muda_vozes = entrada.get("vozes") and entrada["vozes"] != vozes_antes
     c = {"turno": turno, "tool_use_id": tool_use_id, "acao": "ajuste", "versao": v, "titulo": f"Pedir ajuste da {v}",
+         **({"mudancas": [{"campo": NOME_CAMPO["vozes"], "antes": ROTULO_VOZES.get(vozes_antes, vozes_antes),
+                                "depois": ROTULO_VOZES[entrada["vozes"]]}]} if muda_vozes else {}),
          "texto_exato": entrada["o_que_mudar"], "refaz": ["direcao", "montagem", "qa"], "comeca_agora": True,
          "custo_usd_est": custo, "minutos_est": minutos, "vira_regra": trecho is None,
          "volta": (f"A {v} continua guardada. Vira regra da casa e vale para TODOS os projetos, como no botão Pedir ajuste."
@@ -497,8 +506,14 @@ def cartao_pedido(cfg, con, pid: str, entrada: dict, *, turno: str, tool_use_id:
 
 
 # ---------------- execução (as mesmas funções das rotas antigas) ----------------
-def executar_ajuste(pid: str, versao: str, texto: str, vira_regra: bool = True) -> dict:
+def executar_ajuste(pid: str, versao: str, texto: str, vira_regra: bool = True, *, vozes: str | None = None, cfg=None) -> dict:
     from motor.api import direcao
+    if vozes and vozes != _pedido_atual(cfg, pid).get("vozes"):
+        # a direção nova lê o pedido.json: grava o campo antes de pedir o ajuste (o resto do pedido fica igual)
+        arm = direcao._armazem(cfg or __import__("motor.config", fromlist=["carregar"]).carregar())
+        ped = arm.ler_json(f"projetos/{pid}/pedido.json", padrao={}) or {}
+        if ped:
+            arm.gravar_json(f"projetos/{pid}/pedido.json", {**ped, "vozes": vozes})
     r = direcao.reprovar(pid, versao, direcao.Reprovacao(motivo=texto, vira_regra=vira_regra))
     out = {"feito": True, "nova_direcao": bool(r.get("nova_direcao"))}
     if not vira_regra:

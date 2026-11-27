@@ -273,6 +273,14 @@ export async function aceiteOnda4({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     await B.waitForSelector('[data-teste=assistir-segurada]', { timeout: 15000 });
     const convite = await texto(A, '[data-teste=segurada-convite]');
     const naBarra = await A.locator('[data-teste=assistir-segurada-barra]').count();
+    // 27/11 (Bastidores do Super Kal): a barra também leva ao ajuste da segurada (antes o projeto ficava sem saída)
+    const ajusteBarra = await texto(A, '[data-teste=pedir-ajuste-segurada]');
+    await A.click('[data-teste=pedir-ajuste-segurada]');
+    const gavetaAjuste = await A.waitForSelector('[data-teste=gaveta-ajuste]', { timeout: 8000 }).then(() => true).catch(() => false);
+    await A.keyboard.press('Escape');
+    await A.waitForFunction(() => !document.querySelector('[data-teste=gaveta-ajuste]'), null, { timeout: 8000 }).catch(() => {});
+    ok('27/11: projeto segurado pela conferência tem "Pedir ajuste da V1" na barra e abre a gaveta do ajuste',
+      /Pedir ajuste da V1/.test(ajusteBarra) && gavetaAjuste, `${ajusteBarra} | gaveta ${gavetaAjuste}`);
     await print(A, '06-segurada-convite', 'escuro', '[data-teste=segurada-convite]');
     await print(B, '06-segurada-convite', 'claro', '[data-teste=segurada-convite]');
     await A.click('[data-teste=assistir-segurada]');

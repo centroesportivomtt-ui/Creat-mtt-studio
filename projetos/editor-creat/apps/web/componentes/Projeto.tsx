@@ -558,6 +558,8 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     const reprovado = p.estado === 'reprovado_qa';
     const sugerida = refazerOps && refazerOps.sugerida !== null ? refazerOps.opcoes[refazerOps.sugerida] ?? null : null;
     const alvo = reprovado ? (refazerOps?.opcoes.find((o) => o.de === 'conferencia') ?? null) : sugerida;
+    // a versão mais nova que a conferência segurou (ou que parou com erro) pede ajuste, como na lista de versões
+    const ajustavel = emProducao && ['reprovada_qa', 'erro'].includes(emProducao.estado) && !p.dados?.aprovadas?.[emProducao.id] ? emProducao.id : null;
     const verMotivo = temMesa && (
       <button type="button" className="botao botao--secundario barra-comando__secundario"
         onClick={() => irPara('mesa')} data-teste="ver-motivo">Ver motivo</button>
@@ -588,6 +590,11 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
               : 'dá para assistir aqui, marcada como não entregue') : 'o motivo está na mesa ao vivo'}</span>
             {!reprovado && refazerOps && <span data-teste="refazer-nada">Não achei o que tentar de novo. Peça na conversa.</span>}
           </p>
+          {ajustavel && (
+            // 27/11: depois das 2 correções automáticas, o caminho é o dono pedir o ajuste (direção nova, V seguinte)
+            <button type="button" className="botao botao--principal barra-comando__principal" data-teste="pedir-ajuste-segurada"
+              onClick={() => setAjusteDe(ajustavel)}>Pedir ajuste da {ajustavel.toUpperCase()}</button>
+          )}
           {reprovado && seguradaPadrao && !(seguradaAberta && seguradaNaTela === seguradaPadrao) ? (
             <button type="button" className="botao botao--secundario barra-comando__secundario" data-teste="assistir-segurada-barra"
               onClick={() => assistirSegurada(seguradaPadrao)}>Assistir a {seguradaPadrao.toUpperCase()}</button>

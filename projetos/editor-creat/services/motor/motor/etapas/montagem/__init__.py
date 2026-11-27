@@ -288,12 +288,40 @@ def _gravar(arm, chave: str, origem: pathlib.Path) -> str:
         return arm.gravar(chave, origem)
 
 
+def limpar_versoes_antigas(dados, p: str, v: str) -> int:
+    """Pastas de trabalho (montagem e conferência) das OUTRAS versões do projeto saem quando uma versão nova começa a montar.
+    Antes só a entrega apagava: versão reprovada nunca é entregue e ficava no disco (27/11, Bastidores do Super Kal: V1 a V3
+    comeram ~2,8 GB do volume de 5 GB). O filme, a mixagem e os stems públicos de cada versão continuam no armazenamento."""
+    apagado = 0
+    for etapa_dir in ("montagem", "qa"):
+        base = pathlib.Path(dados) / "tmp" / etapa_dir / p
+        if not base.is_dir():
+            continue
+        for d in base.iterdir():
+            if d.is_dir() and d.name != v:
+                apagado += sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
+                shutil.rmtree(d, ignore_errors=True)
+    return apagado
+
+
+def limite_cache_planos_mb(dados) -> int:
+    """Teto do cache de planos: o da variável (1200 MB) e no máximo 15% do disco (volume de 5 GB -> 750 MB)."""
+    teto = int(os.environ.get("EDITOR_CACHE_PLANOS_MB", "1200"))
+    try:
+        total_mb = shutil.disk_usage(dados).total / 1e6
+    except OSError:
+        return teto
+    return max(200, min(teto, int(total_mb * 0.15)))
+
+
 @etapa("montagem")
 def etapa_montagem(ctx) -> dict:
     p, v = ctx.projeto, ctx.alvo or "v1"
     arm = ctx.armazenamento
     if arm is None:
         raise ErroDefinitivo("armazenamento indisponível")
+    limpar_versoes_antigas(ctx.cfg.dados, p, v)
+    PL.limpar_cache(pathlib.Path(ctx.cfg.dados) / "cache" / "planos", limite_cache_planos_mb(ctx.cfg.dados))
     chave_edl = f"saidas/{p}/{v}/edl.json"
     if not arm.existe(chave_edl):
         raise ErroDefinitivo(f"sem EDL em {chave_edl}")
@@ -355,7 +383,7 @@ def etapa_montagem(ctx) -> dict:
         rel["chaves"]["cor"] = f"{base}/cor.json"
     arm.gravar(chave_rel, _bytes_json(rel))
     ctx.con.execute("UPDATE versoes SET estado='montada', video=? WHERE projeto=? AND id=?", (f"{base}/final.mp4", p, v))
-    PL.limpar_cache(pathlib.Path(ctx.cfg.dados) / "cache" / "planos", int(os.environ.get("EDITOR_CACHE_PLANOS_MB", "1200")))
+    PL.limpar_cache(pathlib.Path(ctx.cfg.dados) / "cache" / "planos", limite_cache_planos_mb(ctx.cfg.dados))
     return {"versao": v, "final": f"{base}/final.mp4", "tempos": rel["tempos"], "overlay_ms_quadro": rel["overlay"]["ms_quadro_efetivo"]}
 
 
