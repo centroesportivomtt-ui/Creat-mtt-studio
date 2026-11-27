@@ -70,6 +70,12 @@ def escolher(r, L, ouvinte=None) -> tuple[dict | None, dict]:
                                       "motivo": "voz contínua em " + ", ".join(f"{a:.2f}-{b:.2f} s" for a, b in voz[:3])})
                     continue
             tom = {"fonte": fonte, "s0": round(s0, 3), "s1": round(s1, 3), "db": db}
+            if tm.get("difuso", True):
+                # 27/11 (V7 dos Bastidores): o laço do trecho real, com o nível normalizado, fazia o Whisper da conferência
+                # "ouvir" «isso o que é» 17 vezes num trecho sem ninguém falando, e a versão era segurada. O difuso guarda o
+                # timbre do lugar (espectro médio) com fase aleatória: sem palavra possível, sem emenda de laço, nível
+                # constante, e a conferência prova pela física (modulação do envelope). `tom_sala.difuso: false` volta ao laço.
+                tom["difuso"] = True
             return tom, {"escolhido": {"fonte": fonte, "s0": tom["s0"], "s1": tom["s1"]}, "recusados": recusados[:MAX_RECUSADOS],
                          "ouvidos": ouvidos, "motivo": None}
     return None, {"escolhido": None, "recusados": recusados[:MAX_RECUSADOS], "ouvidos": ouvidos, "motivo": MOTIVO_SEM}
