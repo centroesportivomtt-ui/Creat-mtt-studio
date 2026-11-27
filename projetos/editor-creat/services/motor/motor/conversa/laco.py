@@ -147,7 +147,7 @@ def _ficha(cfg, con, pid: str, n: int) -> str:
     linhas = [f"FICHA DO PROJETO (escrita pelo sistema no começo do capítulo {n} da conversa)"]
     if pedido.get("texto"):
         linhas.append(f"Pedido do Marcos: {pedido['texto']}")
-        extra = [f"{k}: {pedido[k]}" for k in ("formato", "destino", "duracao_alvo") if pedido.get(k)]
+        extra = [f"{k}: {pedido[k]}" for k in ("formato", "destino", "duracao_alvo", "vozes") if pedido.get(k)]
         if extra:
             linhas.append("; ".join(map(str, extra)))
     vs = acoes.versoes(con, pid)

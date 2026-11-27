@@ -19,7 +19,7 @@ from motor import banco
 from motor.cerebro.anthropic_api import esquema_para_api
 from motor.conversa import acoes
 
-FERRAMENTAS_VERSAO = "2"
+FERRAMENTAS_VERSAO = "3"   # 27/11: propor_ajuste ganhou "vozes" (capítulo novo para quem já conversava)
 LIMITE_DE_FORA = 600
 POR_PAGINA = 12
 _CONTROLE = re.compile(r"[\x00-\x1f\x7f-\x9f  ]+")

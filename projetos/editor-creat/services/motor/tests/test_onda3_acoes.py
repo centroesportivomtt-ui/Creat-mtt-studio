@@ -480,7 +480,7 @@ def test_capitulo_2_com_13_ferramentas(app_conversa):
         mandar(c, pid, "e agora?")
         esperar_fim(pid)
         caps = _sql("SELECT capitulo, ferramentas_versao, prompt_versao, tools_json, fechado FROM conversa_capitulos WHERE projeto=? ORDER BY capitulo", pid)
-        assert [(x["capitulo"], x["ferramentas_versao"], x["prompt_versao"]) for x in caps] == [(1, "1", "nimbus-1"), (2, "2", "nimbus-2")]
+        assert [(x["capitulo"], x["ferramentas_versao"], x["prompt_versao"]) for x in caps] == [(1, "1", "nimbus-1"), (2, ferramentas.FERRAMENTAS_VERSAO, "nimbus-2")]
         assert caps[0]["fechado"] is not None
         tools = json.loads(caps[1]["tools_json"])
         assert [t["name"] for t in tools] == sorted(ferramentas.ESQUEMAS) and len(tools) == 13
