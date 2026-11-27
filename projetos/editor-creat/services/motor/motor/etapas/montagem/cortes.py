@@ -161,6 +161,36 @@ def _deixar_terminar(env: dict, s1: float, limite: float | None = None) -> float
     return None
 
 
+def _deixar_comecar(env: dict, s0: float, limite: float | None = None) -> float | None:
+    """Espelho de _deixar_terminar para o COMEÇO (27/11, V4 dos Bastidores: «E | você», «… | Aqui»): quando a peça começa
+    colada no fim de outra fala e não há corte limpo ali, ela volta até a primeira PAUSA de verdade antes (até ESTENDER_MAX s)
+    e começa logo antes da voz, desde que passe em corte_inicial_ok. `limite` (tempo do arquivo): não volta antes daqui (outra
+    peça da mesma fonte termina ali; repetir fala é pior). None = não achou."""
+    e, lim, P = env["db"], env["limiar"], AF.PASSO
+    j = min(len(e) - 1, max(0, int(round(s0 / P))))
+    ini = max(0, j - int(round(ESTENDER_MAX / P)))
+    k = j
+    while k > ini:
+        if e[k - 1] > lim:
+            k -= 1
+            continue
+        b = k                                      # a voz volta em b*P; o silêncio vai de a*P até b*P
+        while k > 0 and e[k - 1] <= lim:
+            k -= 1
+        a = k
+        if (b - a) * P < PAUSA_MIN + FOLGA_MIN + 0.02:  # pausa de frase: comeco_colado pede 150 ms
+            continue
+        for cand in (b * P - PRE, b * P - 0.03, (a + b) * P / 2):
+            cand = round(cand, 3)
+            if cand >= s0 or cand < a * P + 0.02 or (limite is not None and cand < limite):
+                continue
+            if AF.corte_inicial_ok(env, cand)[0]:
+                return cand
+        if limite is not None and b * P < limite:
+            return None
+    return None
+
+
 def _inicio_novo(env: dict, s0: float, pal: list) -> tuple[float, str | None]:
     """Começo (tempo do arquivo) para o corte que reprova em corte_inicial_ok (a regra da ferramenta ajustar_cortes)."""
     if AF.comeco_colado(env, s0) is not None and not (AF._pico(env["db"], s0 - 0.06, s0) > env["limiar"]):
@@ -205,6 +235,11 @@ def novos_limites(edl: dict, envs: dict, offs: dict, pals: dict | None = None, f
             v["_nota"].append(nota)
         if (v["id"], "inicio") in ruins:
             s0n, nota = _inicio_novo(env, v["s0"] - off, pal)
+            if nota and "OUVIR" in nota:
+                antes = [o["s1"] - off for o in vz if o is not v and o["fonte"] == v["fonte"] and o["s1"] - off < v["s0"] - off - 0.05]
+                ext = _deixar_comecar(env, v["s0"] - off, (max(antes) + 0.05) if antes else None)
+                if ext is not None and ext < s0n:
+                    s0n, nota = ext, f"frase desde o começo, depois da pausa: -{(v['s0'] - off) - ext:.2f} s"
             v["_s0"] = round(s0n + off, 3)
             if abs(v["_s0"] - v["s0"]) > 1e-4:
                 v["_mexeu"].add("inicio")

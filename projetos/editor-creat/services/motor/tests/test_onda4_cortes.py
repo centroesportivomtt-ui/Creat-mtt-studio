@@ -344,3 +344,30 @@ def test_deixar_terminar_respeita_outra_peca_da_mesma_fonte(colada):
     env = AF.envelope(x[::3], 16000)
     assert C._deixar_terminar(env, 1.40) is not None
     assert C._deixar_terminar(env, 1.40, limite=1.9) is None    # outra peça começa antes da pausa: não repete fala
+
+
+@pytest.fixture()
+def comeco_colado(tmp_path):
+    """V4 dos Bastidores (27/11): «… | E você»: frase em 0,5 s; pausa de 600 ms; «E» curto (1,50-1,62); 90 ms; «vo-cê» (1,71)."""
+    return _fonte(tmp_path, [(0.5, 0.4), (1.5, 0.12), (1.71, 0.2), (1.98, 0.3)])
+
+
+def _voz_comeco(s0_v2=1.69):
+    return [{"id": "V1", "fonte": "A", "s0": 0.45, "s1": 0.98, "t0": 0.0, "t1": 0.53, "vel": 1.0, "texto": "frase"},
+            {"id": "V2", "fonte": "A", "s0": s0_v2, "s1": 2.4, "t0": 0.6, "t1": round(0.6 + 2.4 - s0_v2, 4), "vel": 1.0, "texto": "você"}]
+
+
+def test_comeco_colado_volta_ate_a_pausa_e_pega_a_frase_inteira(comeco_colado):
+    edl = _edl(comeco_colado, _voz_comeco(), dur=1.4)
+    assert ("V2", "inicio") in _reprovadas(edl)
+    C.ajustar_edl(edl, Fontes(edl))
+    v2 = next(v for v in edl["voz"] if v["id"] == "V2")
+    assert 1.2 < v2["s0"] <= 1.50, v2                      # começa logo antes do «E», depois da pausa de verdade
+    assert ("V2", "inicio") not in _reprovadas(edl)        # a conferência aprova o começo
+
+
+def test_deixar_comecar_respeita_outra_peca_da_mesma_fonte(comeco_colado):
+    x, _ = sf.read(comeco_colado, dtype="float32")
+    env = AF.envelope(x[::3], 16000)
+    assert C._deixar_comecar(env, 1.69) is not None
+    assert C._deixar_comecar(env, 1.69, limite=1.53) is None    # outra peça termina depois da pausa: não repete fala
