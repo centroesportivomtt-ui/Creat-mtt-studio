@@ -764,12 +764,17 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   );
   // aberto: material, pedido | pedido: pedido, material | editando: relógio, versões, diário, pedido, material
   // entregue: filme, relógio, diário, pedido, material. No desktop a mesa fica à esquerda e a projeção à direita (CSS).
+  // onda 5 (desktop): o palco fica à direita e PARADO na tela (sticky): o filme entregue, ou o relógio e as versões
+  // enquanto edita. O diário (e, na entrega, o relógio) desce para a coluna da esquerda. No celular as duas colunas se
+  // desfazem numa só e a ordem do olho é a mesma de antes: projeção, depois mesa.
   const mesa = (
-    <div className="mesa__mesa" key="mesa">{fase === 'aberto' ? [blocoMaterial, blocoPedido, blocoNotas] : [blocoNotas, blocoPedido, blocoMaterial]}</div>
+    <div className="mesa__mesa" key="mesa">{fase === 'aberto' ? [blocoMaterial, blocoPedido, blocoNotas]
+      : fase === 'entregue' ? [blocoRelogio, blocoDiario, blocoNotas, blocoPedido, blocoMaterial]
+        : fase === 'editando' ? [blocoDiario, blocoNotas, blocoPedido, blocoMaterial] : [blocoNotas, blocoPedido, blocoMaterial]}</div>
   );
   const projecao = (
     <div className="mesa__projecao" key="projecao">
-      {fase === 'entregue' ? [blocoVersoes, blocoRelogio, blocoDiario] : [blocoRelogio, blocoVersoes, blocoDiario]}
+      {fase === 'entregue' ? [blocoVersoes] : fase === 'editando' ? [blocoRelogio, blocoVersoes] : [blocoRelogio, blocoVersoes, blocoDiario]}
     </div>
   );
 

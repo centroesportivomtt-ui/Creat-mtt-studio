@@ -41,12 +41,11 @@ export default function AprovacaoCliente({ token, inicial }: { token: string; in
 
   return (
     <div className="cliente__corpo" data-teste="cliente">
-      <div>
-        <p className="sobretitulo">Para sua aprovação · versão {p.versao.replace(/^v/, '')}</p>
-        <h1 className="cliente__titulo" style={{ overflowWrap: 'anywhere' }}>{p.titulo}</h1>
-      </div>
+      {/* onda 5: o vídeo começa perto do topo (até 120 px); o título fica menor, logo abaixo dele */}
+      <p className="sobretitulo cliente__para" style={{ margin: 0 }}>Para sua aprovação · versão {p.versao.replace(/^v/, '')}</p>
       <video className="player" controls playsInline preload="metadata" data-teste="cliente-player"
         src={`/api/cliente/${token}/video#t=0.1`} poster={p.capa ? `/api/cliente/${token}/capa` : undefined} aria-label={`Vídeo ${p.titulo}`} onError={() => setSemVideo(true)} />
+      <h1 className="cliente__titulo" style={{ overflowWrap: 'anywhere' }}>{p.titulo}</h1>
       {semVideo && <p className="aviso" role="alert">O vídeo não carregou. Recarregue a página; se continuar, este link pode ter sido fechado: peça um novo a quem te mandou.</p>}
 
       {p.resposta === 'aprovar' && (

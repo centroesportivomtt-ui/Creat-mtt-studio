@@ -1344,3 +1344,54 @@ html:has(.barra-comando) { --avisos-baixo: calc(var(--altura-nav) + var(--altura
 .memoria__casa { margin-top: var(--r2); border-top: 1px solid var(--cor-linha); }
 .memoria__casa-titulo { font: 650 16px/1.2 var(--fonte-texto); }
 .memoria__casa > ol { margin-top: var(--r2); }
+
+/* ---------- onda 5: entrar no terço de baixo, mostrar senha ---------- */
+.entrar { place-items: stretch center; padding-top: calc(var(--r5) + env(safe-area-inset-top)); padding-bottom: calc(var(--r5) + env(safe-area-inset-bottom)); }
+.entrar__caixa { min-height: calc(100dvh - 2 * var(--r5) - env(safe-area-inset-top) - env(safe-area-inset-bottom)); grid-template-rows: auto 1fr auto; align-content: stretch; }
+.entrar__cima { align-self: center; }
+.entrar__baixo { display: grid; gap: var(--r5); align-self: end; }
+@media (min-width: 960px) and (min-height: 700px) {
+  .entrar__caixa { min-height: 0; grid-template-rows: auto auto auto; align-content: center; }
+  .entrar { place-items: center; }
+}
+.entrar__tc[data-correndo='sim'] { color: var(--cor-relogio); font-variant-numeric: tabular-nums; }
+.senha { position: relative; display: block; }
+.senha .entrada { padding-right: 56px; }
+.senha__olho {
+  position: absolute; top: 50%; right: 2px; transform: translateY(-50%);
+  display: grid; place-items: center; width: 48px; height: 44px; border: 0; border-radius: 10px; background: none;
+  color: var(--cor-tinta-2); cursor: pointer;
+}
+.senha__olho:hover, .senha__olho[aria-pressed='true'] { color: var(--cor-tinta); }
+
+/* ---------- onda 5: página do cliente (vídeo perto do topo, título menor, assinatura no rodapé) ---------- */
+.cliente { padding-top: calc(var(--r4) + env(safe-area-inset-top)); }
+.cliente__caixa { gap: var(--r3); }
+.cliente__corpo { gap: var(--r3); }
+.cliente__titulo { font-size: clamp(26px, 7vw, 34px); line-height: 1.02; margin-top: 4px; }
+.cliente__para { color: var(--cor-tinta-2); }
+.cliente__assina {
+  display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: var(--r5); padding-top: var(--r4);
+  border-top: 1px solid var(--cor-linha); font: 700 13px/1 var(--fonte-dado); letter-spacing: 0.08em; text-transform: uppercase; color: var(--cor-tinta-2);
+}
+
+/* ---------- onda 5: desktop = mesa de duas colunas com o palco parado e a navegação num trilho lateral ---------- */
+@media (min-width: 960px) and (min-height: 501px) {
+  :root { --trilho: 72px; }
+  /* sem backdrop-filter no topo: ele prenderia o trilho fixo dentro do cabeçalho de 56 px */
+  .topo { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--cor-fundo); }
+  .nav {
+    position: fixed; left: 0; top: calc(var(--altura-topo) + env(safe-area-inset-top)); bottom: 0; width: var(--trilho); z-index: 29;
+    display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin: 0; padding: var(--r3) 4px;
+    background: var(--cor-fundo); border-right: 1px solid var(--cor-linha);
+  }
+  .nav__item { flex-direction: column; gap: 4px; min-height: 64px; padding: 6px 2px; font-size: 13px; }
+  .nav__icone { width: 44px; height: 30px; }
+  .topo__saude { margin-left: auto; order: 0; }
+  .pagina { padding-left: calc(var(--trilho) + var(--r5)); padding-right: var(--r5); width: min(100%, calc(var(--largura) + var(--trilho))); }
+  .barra-comando { left: var(--trilho); }
+  /* o palco (filme, ou relógio e versões) não sai da tela enquanto a coluna da esquerda rola */
+  /* só com o filme ou o relógio no palco (sem rolagem interna: a página rola, o palco fica) */
+  .mesa:is([data-fase='entregue'], [data-fase='editando']) .mesa__projecao { position: sticky; top: calc(var(--altura-topo) + var(--r4)); }
+  .palco .player { height: max(320px, calc(100dvh - var(--altura-topo) - var(--altura-comando) - 220px)); max-height: none; }
+}

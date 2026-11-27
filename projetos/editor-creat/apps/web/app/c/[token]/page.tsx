@@ -30,7 +30,8 @@ function Marca() {
   );
 }
 function Assina() {
-  return <p className="entrar__assina cliente__assina"><Iso tamanho={20} gato />Feito pela creat.MTT</p>;
+  // onda 5: a assinatura de quem entrega, discreta no rodapé: a etiqueta Aba 71 e "feito pela creat.MTT"
+  return <footer className="cliente__assina" data-teste="cliente-assina"><span className="etiqueta-aba" aria-hidden="true">Aba 71</span><Iso tamanho={20} gato />feito pela creat.MTT</footer>;
 }
 
 export default async function PaginaCliente({ params }: { params: Promise<{ token: string }> }) {

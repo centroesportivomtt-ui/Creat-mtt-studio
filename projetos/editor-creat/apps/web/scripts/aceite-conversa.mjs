@@ -338,6 +338,8 @@ export async function aceiteConversa({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
       (conta ?? '').slice(0, 160));
     await print(A, '16-ajuste-feito', 'escuro');
     await print(B, '16-ajuste-feito', 'claro');
+    // o outro aparelho recebe pelo fio: espera até 5 s ele alcançar o primeiro antes de comparar (corrida vista 1 vez em 7 rodadas)
+    for (let i = 0; i < 25 && (await idsUnicos(B)).total < (await idsUnicos(A)).total; i++) await A.waitForTimeout(200);
     const dup2 = await idsUnicos(B);
     ok('conversa: no fim, o outro aparelho tem o mesmo fio, sem nenhum item repetido', dup2.total === dup2.unicos && dup2.total === (await idsUnicos(A)).total, JSON.stringify({ B: dup2, A: await idsUnicos(A) }));
 

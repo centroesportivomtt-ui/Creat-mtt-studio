@@ -205,6 +205,12 @@ async function principal() {
     const msg = await page.textContent('main .erro[role=alert]');
     const cookies = await ctx.cookies();
     ok('senha errada recusada', /incorreta/i.test(msg ?? '') && page.url().endsWith('/entrar') && !cookies.some((c) => c.name === 'ec_sessao'), `mensagem: "${msg}"`);
+    // onda 5: "mostrar senha" troca o campo para texto e volta (o botão não envia o formulário)
+    await page.click('[data-teste=mostrar-senha]');
+    const tipo1 = await page.getAttribute('input[name=senha]', 'type');
+    await page.click('[data-teste=mostrar-senha]');
+    const tipo2 = await page.getAttribute('input[name=senha]', 'type');
+    ok('onda 5: mostrar senha liga e desliga sem enviar', tipo1 === 'text' && tipo2 === 'password' && page.url().endsWith('/entrar'), `${tipo1} → ${tipo2}`);
     await page.fill('input[name=senha]', SENHA);
     await page.click('main button[type=submit]');
     await page.waitForURL(`${BASE}/projetos`, { timeout: 15000 });
@@ -415,6 +421,23 @@ async function principal() {
   ok('Cloudflare desligado: sem escolha de cliente, sem cartão de entregas, sem selo, e o aprovar vai sem cliente', novosAntes === 0 && novosDepois === 0 && corpoAprov === '{}',
     JSON.stringify({ novosAntes, novosDepois, corpoAprov }));
 
+  // onda 5: no desktop o filme fica parado à direita enquanto a página rola, e a navegação mora no trilho da esquerda
+  {
+    const antes = await page.evaluate(() => Math.round(document.querySelector('[data-teste=player]').getBoundingClientRect().top));
+    // rola a coluna da esquerda até o meio (no fim da página o palco sai junto com a mesa, como deve)
+    await page.evaluate(() => window.scrollTo(0, Math.min(700, document.documentElement.scrollHeight - innerHeight - 500)));
+    await dormir(300);
+    const d = await page.evaluate(() => {
+      const v = document.querySelector('[data-teste=player]').getBoundingClientRect();
+      const n = document.querySelector('.nav').getBoundingClientRect();
+      return { topo: Math.round(v.top), fundo: Math.round(v.bottom), alto: innerHeight, rolou: Math.round(scrollY), trilho: Math.round(n.width), navEsq: Math.round(n.left), navAlto: Math.round(n.height),
+        lateral: document.documentElement.scrollWidth > innerWidth + 1 };
+    });
+    await page.screenshot({ path: path.join(PRINTS, 'onda5-desktop-palco-parado.png') });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    ok('onda 5: desktop com o filme parado na tela ao rolar e a navegação no trilho lateral de 72 px', d.rolou > 200 && d.topo >= 56 && d.fundo <= d.alto && d.trilho === 72 && d.navEsq === 0 && d.navAlto >= d.alto - 60 && !d.lateral,
+      JSON.stringify({ antes, ...d }));
+  }
   // ---------- link de aprovação do cliente (página pública, sem sessão) ----------
   // onda 2: o aviso "V1 aprovada. Corta!" sobe acima da barra, e o link mora na gaveta "Mandar para o cliente"
   const toastAprov = await page.waitForSelector('[data-sonner-toast] >> text=aprovada. Corta!', { timeout: 6000 }).then(() => true, () => false);
@@ -453,7 +476,11 @@ async function principal() {
     rolagem: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     menu: Boolean(document.querySelector('.topo, a[href^="/projetos"], a[href="/caderno"]')),
     alvos: [...document.querySelectorAll('button, a, textarea, input')].filter((el) => { const r = el.getBoundingClientRect(); return r.width && r.height && r.height < 44; }).length,
+    videoTopo: Math.round(document.querySelector('[data-teste=cliente-player]')?.getBoundingClientRect().top ?? 999),
+    assina: document.querySelector('[data-teste=cliente-assina]')?.textContent ?? '',
   }));
+  ok('onda 5: página do cliente com o vídeo a até 120 px do topo e a assinatura "Aba 71 · feito pela creat.MTT" no rodapé', medCli.videoTopo <= 120 && /Aba 71/.test(medCli.assina) && /feito pela creat\.MTT/i.test(medCli.assina),
+    JSON.stringify({ videoTopo: medCli.videoTopo, assina: medCli.assina }));
   await cp.screenshot({ path: path.join(PRINTS, 'cliente-celular-antes.png'), fullPage: true });
   const semSessaoCli = await cctx.request.get(`${BASE}/api/motor/v1/projetos`).then((r) => r.status());
   const outraVersao = await cctx.request.get(`${BASE}/api/cliente/${tokCliente}/mix`).then((r) => r.status());
