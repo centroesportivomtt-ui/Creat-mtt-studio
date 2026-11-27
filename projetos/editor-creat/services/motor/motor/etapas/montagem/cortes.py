@@ -45,6 +45,7 @@ PRE = 0.05
 LONGE = 0.6                 # fim da voz a mais que isto do corte: é outra frase colada, corta no vale
 PAUSA_MIN = 0.13            # silêncio em volta do corte a partir disto é pausa entre palavras, não oclusão (oclusão: até ~100 ms)
 NOTAS_MAX = 20
+PAUSA_FRASE = 0.16          # 27/11: 150 ms da conferência (audio_fala.comeco_colado) + um passo do envelope
 ESTENDER_MAX = 1.6          # 27/11: "deixa a frase terminar" anda no máximo isto para frente, até uma pausa de verdade
 
 
@@ -161,7 +162,12 @@ def _deixar_terminar(env: dict, s1: float, limite: float | None = None) -> float
     return None
 
 
-def _deixar_comecar(env: dict, s0: float, limite: float | None = None) -> float | None:
+def _dentro_de_palavra(pal: list, t: float, folga: float = 0.03) -> bool:
+    """`t` (tempo do arquivo) cai no meio de uma palavra da transcrição (com folga nas pontas, que o Whisper marca solto)?"""
+    return any(w[0] + folga < t < w[1] - folga for w in pal or [])
+
+
+def _deixar_comecar(env: dict, s0: float, limite: float | None = None, pal: list | None = None) -> float | None:
     """Espelho de _deixar_terminar para o COMEÇO (27/11, V4 dos Bastidores: «E | você», «… | Aqui»): quando a peça começa
     colada no fim de outra fala e não há corte limpo ali, ela volta até a primeira PAUSA de verdade antes (até ESTENDER_MAX s)
     e começa logo antes da voz, desde que passe em corte_inicial_ok. `limite` (tempo do arquivo): não volta antes daqui (outra
@@ -178,11 +184,11 @@ def _deixar_comecar(env: dict, s0: float, limite: float | None = None) -> float 
         while k > 0 and e[k - 1] <= lim:
             k -= 1
         a = k
-        if (b - a) * P < PAUSA_MIN + FOLGA_MIN + 0.02:  # pausa de frase: comeco_colado pede 150 ms
+        if (b - a) * P < PAUSA_FRASE - 1e-9:        # pausa de frase: comeco_colado pede 150 ms (Bastidores real: 160 ms)
             continue
         for cand in (b * P - PRE, b * P - 0.03, (a + b) * P / 2):
             cand = round(cand, 3)
-            if cand >= s0 or cand < a * P + 0.02 or (limite is not None and cand < limite):
+            if cand >= s0 or cand < a * P + 0.02 or (limite is not None and cand < limite) or _dentro_de_palavra(pal, cand):
                 continue
             if AF.corte_inicial_ok(env, cand)[0]:
                 return cand
@@ -237,7 +243,8 @@ def novos_limites(edl: dict, envs: dict, offs: dict, pals: dict | None = None, f
             s0n, nota = _inicio_novo(env, v["s0"] - off, pal)
             if nota and "OUVIR" in nota:
                 antes = [o["s1"] - off for o in vz if o is not v and o["fonte"] == v["fonte"] and o["s1"] - off < v["s0"] - off - 0.05]
-                ext = _deixar_comecar(env, v["s0"] - off, (max(antes) + 0.05) if antes else None)
+                pal_f = [(w[0] - off, w[1] - off) for w in pal if len(w) > 1]
+                ext = _deixar_comecar(env, v["s0"] - off, (max(antes) + 0.05) if antes else None, pal_f)
                 if ext is not None and ext < s0n:
                     s0n, nota = ext, f"frase desde o começo, depois da pausa: -{(v['s0'] - off) - ext:.2f} s"
             v["_s0"] = round(s0n + off, 3)
