@@ -71,13 +71,18 @@ def falas_do_arquivo(analise: dict) -> list[dict]:
         texto = (s.get("texto") or "").strip()
         if not texto:
             continue
-        f = s.get("falante")
-        if out and out[-1]["falante"] == f and s["s"] - out[-1]["t1"] <= GAP_JUNTA_S and s["e"] - out[-1]["t0"] <= MAX_FALA_S:
+        f, voz = s.get("falante"), s.get("voz")
+        ditado = (s.get("ditado") or {}).get("s")
+        ditado_arq = (s.get("ditado") or {}).get("arquivo")
+        # junta só a MESMA voz (item 4): o ditado da equipe e a repetição de quem fala viram falas separadas; ditado não junta
+        if out and out[-1]["falante"] == f and out[-1].get("voz") == voz and ditado is None and out[-1].get("ditado_s") is None \
+                and s["s"] - out[-1]["t1"] <= GAP_JUNTA_S and s["e"] - out[-1]["t0"] <= MAX_FALA_S:
             out[-1]["t1"] = s["e"]
             out[-1]["texto"] += " " + texto
             out[-1]["confs"].append(s.get("conf"))
         else:
-            out.append({"t0": s["s"], "t1": s["e"], "falante": f, "texto": texto, "confs": [s.get("conf")]})
+            out.append({"t0": s["s"], "t1": s["e"], "falante": f, "texto": texto, "confs": [s.get("conf")], "voz": voz, "ditado_s": ditado,
+                        "ditado_arq": ditado_arq})
     return out
 
 
@@ -114,10 +119,17 @@ def _energia_rel(serie, passo, t0, t1, ref) -> float | None:
 
 # ---------------- montagem ----------------
 def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: int = 15000, trilhas: list[dict] | None = None,
-           modelos: list[str] | None = None, armazenamento=None, dados=None) -> tuple[dict, str]:
+           modelos: list[str] | None = None, armazenamento=None, dados=None, cfg=None) -> tuple[dict, str]:
     pedido = pedido or {}
     palavras_pedido = {w for w in tokens(pedido.get("texto", "") + " " + " ".join(pedido.get("obrigatorio", [])))
                        if len(w) >= 5 and w not in GENERICAS}
+    if cfg is not None and armazenamento is not None:      # item 4: quem fala em cada trecho (ditado da equipe separado)
+        from motor.etapas import vozes
+
+        def audio_de(a):
+            from motor.etapas.montagem.comum import ler_audio
+            return ler_audio(armazenamento.caminho_local(a["arquivo"]["chave"]), sr=vozes.SR, cfg=cfg), 0.0
+        analises = vozes.rotular(analises, audio_de, cfg=cfg)
     ordenadas = sorted(analises, key=lambda a: (a["arquivo"].get("gravado_em") is None, a["arquivo"].get("gravado_em") or "",
                                                 a["arquivo"]["nome"], a["arquivo"]["id"]))
     clipes = []
@@ -132,9 +144,16 @@ def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: i
             import numpy as np
             ref = float(np.percentile(serie, 99))
         falas = []
-        for k, f in enumerate(falas_do_arquivo(a), 1):
-            falas.append({"id": f"F{num}.{k}", "t0": round(f["t0"], 2), "t1": round(f["t1"], 2), "falante": f["falante"],
-                          "texto": f["texto"], "truncado": False, "energia": _energia_rel(serie, passo, f["t0"], f["t1"], ref)})
+        brutas = falas_do_arquivo(a)
+        for k, f in enumerate(brutas, 1):
+            item = {"id": f"F{num}.{k}", "t0": round(f["t0"], 2), "t1": round(f["t1"], 2), "falante": f["falante"],
+                    "texto": f["texto"], "truncado": False, "energia": _energia_rel(serie, passo, f["t0"], f["t1"], ref)}
+            if f.get("voz"):
+                item["voz"] = f["voz"]
+            falas.append(item)
+        for item, f in zip(falas, brutas):                   # ditado: resolvido depois de todos os clipes (pode estar no take seguinte)
+            if f.get("ditado_s") is not None:
+                item["_dit"] = (f.get("ditado_arq") or a["arquivo"]["id"], f["ditado_s"])
         momentos = []
         for k, m in enumerate(sorted(vis.get("momentos", []), key=lambda m: (m["t0"], m["t1"])), 1):
             momentos.append({"id": f"M{num}.{k}", "t0": round(m["t0"], 2), "t1": round(m["t1"], 2), "tipo": m["tipo"],
@@ -148,9 +167,21 @@ def montar(analises: list[dict], pedido: dict | None, projeto: str, *, limite: i
             "id": cid, "arquivo": a["arquivo"]["id"], "nome": a["arquivo"]["nome"], "dur": round(a["midia"]["duracao"], 2),
             "resumo": " ".join((vis.get("resumo") or "").split()[:22])[:240],
             "pessoas": pessoas[:160], "camera": _camera(a, vis)[:80], "ambientes": amb, "momentos": momentos, "falas": falas,
+            **({"movimento": mv} if (mv := _movimento(a)) else {}),
         })
+    _nitidez_relativa(clipes, ordenadas)
+    for c in clipes:                                          # ditado -> id da fala (deste ou de outro clipe) onde a voz A repete
+        for item in c["falas"]:
+            alvo = item.pop("_dit", None)
+            if alvo is None:
+                continue
+            arq, s = alvo
+            rep = next((g for c2 in clipes if c2["arquivo"] == arq for g in c2["falas"]
+                        if g["t0"] - 0.05 <= s <= g["t1"] + 0.05 and g.get("voz") == "A"), None)
+            if rep:
+                item["ditado"] = rep["id"]
     cat = {"versao": "1", "projeto": projeto, "orcamento": {"tokens_estimados": 0, "limite": limite, "cortes": []}, "clipes": clipes,
-           "trilhas": [{k: t[k] for k in ("id", "clima", "bpm", "dur") if k in t} for t in (trilhas or [])],
+           "trilhas": [{k: t[k] for k in ("id", "clima", "bpm", "dur", "virada", "tom", "secoes") if t.get(k) is not None} for t in (trilhas or [])],
            "modelos": modelos or []}
     # níveis de compressão, aplicados em ordem até caber (§4.2); cada nível inclui os anteriores
     txt, nivel = "", 0
@@ -184,7 +215,62 @@ def _pessoas(falas, momentos) -> str:
     return ", ".join(f"{n} {_num(a)}-{_num(b)}" for n, (a, b) in faixas.items())
 
 
+def _movimento(a: dict) -> dict | None:
+    """Resumo do movimento para o resolvedor e o diretor (sinais.movimento da análise; análise antiga fica sem)."""
+    mv = a["sinais"].get("movimento")
+    if not mv:
+        return None
+    from motor import movimento as MV
+    m = a["midia"]
+    esc = MV.escala_saida(m.get("w"), m.get("h"))     # tremor em px da SAÍDA 9:16, o mesmo critério do resolvedor
+    out = {"tremor": round(mv.get("tremor_p90", 0.0) * esc, 2), "nota": mv.get("nota", 0.0), "borrado_pct": mv.get("borrado_pct", 0.0),
+           "melhores": [x[:3] for x in mv.get("melhores") or []][:3], "tremidos": [x[:3] for x in mv.get("tremidos") or []][:3]}
+    if mv.get("falhas"):
+        out["falhas"] = mv["falhas"]
+    amp = MV.ampliacao(m.get("w"), m.get("h"))
+    if amp is not None:
+        out["ampliacao"] = amp
+    return out
+
+
+MOLE_REL = 0.35        # nitidez_ref abaixo de 35% da mediana do projeto = clipe inteiro mole (foco perdido, lente suja)
+
+
+def _nitidez_relativa(clipes: list[dict], analises: list[dict]) -> None:
+    """A nitidez da série é relativa ao próprio clipe: um clipe TODO fora de foco sairia com nota alta. Aqui ele é
+    comparado com a mediana do projeto (precisa de 3 clipes medidos; com menos não há base e nada muda)."""
+    import numpy as np
+    refs = {c["id"]: float((a["sinais"].get("movimento") or {}).get("nitidez_ref") or 0.0)
+            for c, a in zip(clipes, analises) if c.get("movimento")}
+    refs = {k: v for k, v in refs.items() if v > 0}
+    if len(refs) < 3:
+        return
+    med = float(np.median(list(refs.values())))
+    for c in clipes:
+        if c["id"] in refs and med > 0:
+            c["movimento"]["nitidez_rel"] = round(refs[c["id"]] / med, 2)
+
+
+def _qualidade(c: dict) -> float:
+    """Nota do clipe para o diretor priorizar o material de mais alta qualidade: firme e nítido, pixel nativo na saída.
+    Clipe mole perto do resto do projeto cai na proporção; tremor que não foi medido (quadros sem textura) vale a metade."""
+    from motor import movimento as MV
+    mv = c["movimento"]
+    amp = mv.get("ampliacao") or 1.0
+    q = mv["nota"] * (1.0 if amp <= 1.0 else 1.0 / amp)
+    rel = mv.get("nitidez_rel")
+    if rel is not None and rel < 1.0:
+        q *= max(0.0, rel)
+    if (mv.get("falhas") or 0.0) > MV.FALHAS_MAX:
+        q *= 0.5
+    return q
+
+
 def _camera(a, vis) -> str:
+    if a["sinais"].get("movimento"):                  # medição fina a cada 0,5 s vence a dos quadros-chave
+        from motor import movimento as MV
+        w, h = a["midia"].get("w"), a["midia"].get("h")
+        return MV.texto_camera(a["sinais"]["movimento"], w, h, MV.escala_saida(w, h))
     t = a["sinais"].get("tremor") or {}
     trechos = t.get("trechos") or []
     if trechos:
@@ -201,8 +287,9 @@ def falas_protegidas(clipes: list[dict]) -> frozenset:
     momento 'fala' nota >= 4 ("fala com rosto em quadro") fica INTEIRA no catálogo. Sem isso, a fala base do Reel
     (regra do dono: construir sobre a fala dele) seria truncada a 4 palavras nos níveis de compressão.
     Com falante rotulado em qualquer fala do projeto, vale a regra normal (equipe inteira)."""
+    ditados = {f["ditado"] for c in clipes for f in c["falas"] if f.get("ditado")}   # a repetição do ditado nunca some
     if any(f.get("falante") for c in clipes for f in c["falas"]):
-        return frozenset()
+        return frozenset(ditados)
     ids = set()
     for c in clipes:
         fortes = [m for m in c["momentos"] if m["tipo"].startswith("fala")
@@ -210,18 +297,36 @@ def falas_protegidas(clipes: list[dict]) -> frozenset:
         for f in c["falas"]:
             if any(m["t0"] < f["t1"] and m["t1"] > f["t0"] for m in fortes):
                 ids.add(f["id"])
-    return frozenset(ids)
+    return frozenset(ids | ditados)
 
 
 def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozenset()) -> str:
     cl = cat["clipes"]
     total = sum(c["dur"] for c in cl)
     tipos = sorted({m["tipo"] for c in cl for m in c["momentos"]})
-    trilhas = ", ".join(f"{t['id']} ({_num(t['bpm'])} bpm, {_num(t['dur'])} s{', ' + t['clima'] if t.get('clima') else ''})" for t in cat.get("trilhas", []))
+    def _musica(t):
+        extra = (f", {t['tom']}" if t.get("tom") else "") + (f", VIRADA aos {_num(t['virada'])} s" if t.get("virada") else "")
+        if t.get("secoes"):
+            extra += ", partes " + " ".join(f"{_num(x['t0'])}-{_num(x['t1'])}s:e{x['energia']}" for x in t["secoes"][:8])
+        return f"{t['id']} ({_num(t['bpm'])} bpm, {_num(t['dur'])} s{', ' + t['clima'] if t.get('clima') else ''}{extra})"
+    trilhas = ", ".join(_musica(t) for t in cat.get("trilhas", []))
     linhas = [f"# PROJETO {cat['projeto']} · {len(cl)} clipes · {_num(total / 60)} min · momentos: {','.join(tipos)}",
               f"# trilhas: {trilhas or 'nenhuma'} · modelos: {', '.join(cat.get('modelos') or []) or 'evento-reel'}",
               "# C=clipe (arquivo \"nome\" dur · câmera · pessoas · ambientes · resumo) · M=momento t0-t1 tipo nota(1-5) desc · "
               "F=fala t0-t1 FALANTE e.energia «texto». Tempos em s da fonte. Use só estes ids."]
+    com_mov = [c for c in cl if c.get("movimento")]
+    if com_mov:                                       # pedido do dono: foco nos vídeos de mais alta qualidade
+        melhores = [c for c in sorted(com_mov, key=lambda c: (-_qualidade(c), c["id"])) if _qualidade(c) >= 0.5][:6]
+        from motor import movimento as MV
+        evite = [c["id"] for c in com_mov if c["movimento"]["tremor"] > MV.LIMIAR_FORTE and not c["movimento"]["melhores"]
+                 or c["movimento"].get("borrado_pct", 0) >= 0.5 or c["movimento"].get("nitidez_rel", 1.0) < MOLE_REL]
+        linhas.append("# câmera: 'melhor a-b' = trecho mais nítido e firme"
+                      + (f"; prefira {', '.join(c['id'] for c in melhores)}" if melhores else "")
+                      + (f"; evite {', '.join(evite)} (tremido forte, borrado ou mole)" if evite else "")
+                      + "; horizontal vira vertical ampliando (perde nitidez)")
+    if any(f.get("voz") for c in cl for f in c["falas"]):
+        linhas.append("# vozA = voz principal (quem fala no vídeo); vozB = outra pessoa (em geral a equipe dirigindo). "
+                      "DITADO→F.. = a equipe ditou a frase e a voz principal repetiu em F..: use F.., nunca o ditado.")
     P = NIVEIS[nivel]
     trunca = P["trunca"]
     for c in cl:
@@ -255,7 +360,9 @@ def _texto(cat: dict, nivel: int, palavras_pedido: set[str], protegidas=frozense
                 continue
             texto = f["texto"] if (not trunca or inteira) else _corta(f["texto"], trunca)[0]
             e = f" e.{int(round(f['energia'] * 10))}" if f.get("energia") is not None else ""
-            linhas.append(f" {f['id']} {_num(f['t0'])}-{_num(f['t1'])} {f['falante'] or '?'}{e} «{texto}»")
+            voz = f" voz{f['voz']}" if f.get("voz") else ""
+            dit = f" DITADO→{f['ditado']}" if f.get("ditado") else ""
+            linhas.append(f" {f['id']} {_num(f['t0'])}-{_num(f['t1'])} {f['falante'] or '?'}{voz}{dit}{e} «{texto}»")
     return "\n".join(linhas) + "\n"
 
 
@@ -264,6 +371,40 @@ def hash_texto(txt: str) -> str:
 
 
 # ---------------- etapa ----------------
+def _ouvido_fino(ctx, arm, p: str, analises: list[dict], pedido: dict | None) -> dict | None:
+    """Passo `catalogo.escuta` (onda 4, D40): o Whisper grande ouve de novo as falas, com os nomes do pedido, antes do catálogo
+    (etapas/escuta.py). Atualiza `analises` no lugar; nunca leva o projeto a erro (queda segura = a transcrição rápida)."""
+    from motor.etapas import escuta, passos
+    modelo = escuta.modelo_fino(ctx.cfg)
+    alvos = [a for a in analises if escuta.tem_fala(a)]
+    if not modelo or not alvos or ctx.cfg.provedor_efetivo("transcricao") != "faster-whisper":
+        return None
+    try:
+        linha = ctx.con.execute("SELECT dados FROM projetos WHERE id=?", (p,)).fetchone()
+        dicas_proj = (json.loads((linha["dados"] if linha else None) or "{}") or {}).get("dicas") or []
+    except Exception:  # noqa: BLE001 - sem dados do projeto, as dicas do pedido e da casa bastam
+        dicas_proj = []
+    try:
+        from motor.memoria import loja
+        vocab = loja.Loja().vocabulario()
+    except Exception:  # noqa: BLE001
+        vocab = []
+    ctx.progresso(0.05, f"Ouvindo de novo as falas de {len(alvos)} vídeo{'s' if len(alvos) != 1 else ''}.")
+    with passos.passo("catalogo.escuta", ferramenta=f"faster-whisper {modelo} por trechos, com os nomes do pedido (local)",
+                      videos=len(alvos)) as ps:
+        try:
+            rel = escuta.ouvir(arm, p, analises, pedido, ctx.cfg, dicas_projeto=dicas_proj, vocabulario=vocab,
+                               progresso=lambda m, fr=0.0: ctx.progresso(0.05 + 0.1 * fr, m))
+        except Exception as e:  # noqa: BLE001 - o ouvido fino nunca derruba o catálogo
+            rel = {"estado": "queda", "motivo": "erro", "videos": len(alvos), "finos": 0, "falas": 0,
+                   "frase": escuta.QUEDAS["erro"]}
+            import logging
+            logging.getLogger("motor.catalogo").warning("ouvido fino quebrou: %s: %s", type(e).__name__, e)
+        ps.anotar(videos=rel.get("videos"), falas=rel.get("falas"), finos=rel.get("finos"), pico_mb=rel.get("pico_mb"))
+        ps.achou(escuta.achado(rel))
+    return rel
+
+
 try:
     from motor.etapas import ErroDefinitivo, etapa
 except ImportError:  # pragma: no cover
@@ -280,17 +421,25 @@ if etapa is not None:
         if not analises:
             raise ErroDefinitivo("nenhuma análise pronta para montar o catálogo")
         pedido = arm.pedido(p)
+        from motor.etapas import passos
+        _ouvido_fino(ctx, arm, p, analises, pedido)
+        falas = sum(len((a.get("transcricao") or {}).get("segmentos") or []) for a in analises)
+        momentos = sum(len((a.get("visao") or {}).get("momentos") or []) for a in analises)
+        passos.anotar(falas=falas, momentos=momentos, videos=len(analises))
+        passos.achou(f"{falas} falas e {momentos} momentos de {len(analises)} vídeo{'s' if len(analises) != 1 else ''}, prontos para o diretor")
         trilhas = armazem_b.trilhas(ctx.cfg)
         from motor.memoria import loja
         modelos = loja.Loja().nomes_modelos()
+        from motor.etapas import falante as _fal, vozes as _vz
+        voz_pronta = _fal.modelo_presente(ctx.cfg)           # o catálogo com e sem vozes rotuladas são diferentes
         chave_in = hash_texto(json.dumps([a["arquivo"]["id"] for a in analises]) + json.dumps(pedido, sort_keys=True, ensure_ascii=False)
-                              + json.dumps([len(json.dumps(a)) for a in analises]))
+                              + json.dumps([len(json.dumps(a)) for a in analises]) + f"|vozes {_vz.VERSAO} {voz_pronta}")
         meta = arm.ler_json(f"projetos/{p}/catalogo.meta.json", padrao={})
         if meta.get("entrada") == chave_in and arm.existe(f"projetos/{p}/catalogo.txt"):
             return {"catalogo": meta.get("hash"), "tokens": meta.get("tokens"), "reaproveitado": True}
         ctx.progresso(0.2, f"Montando o catálogo de {len(analises)} arquivos.")
         cat, txt = montar(analises, pedido, p, limite=ctx.cfg.orcamento_entrada, trilhas=trilhas, modelos=modelos,
-                          armazenamento=ctx.armazenamento, dados=ctx.cfg.dados)
+                          armazenamento=ctx.armazenamento, dados=ctx.cfg.dados, cfg=ctx.cfg)
         validar.validar("catalogo", cat)
         arm.gravar_json(f"projetos/{p}/catalogo.json", cat)
         arm.gravar_texto(f"projetos/{p}/catalogo.txt", txt)

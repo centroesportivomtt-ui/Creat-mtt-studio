@@ -34,7 +34,8 @@
           "audio": { "type": ["string", "null"] },
           "offset": { "type": "number", "default": 0, "description": "tempo_fonte = offset + tempo_no_arquivo (trechos cortados)." },
           "rotacao": { "type": "integer", "default": 0 },
-          "fps": { "type": ["number", "null"] }
+          "fps": { "type": ["number", "null"] },
+          "gravado_em": { "type": ["string", "null"], "description": "Hora em que o arquivo começou a ser gravado (ISO 8601). A sincronia entre câmeras centra a busca na diferença entre dois arquivos (onda 4)." }
         }
       }
     },
@@ -52,7 +53,7 @@
           "t0": { "type": "number" }, "t1": { "type": "number" },
           "vel": { "type": "number", "default": 1.0 },
           "ganho_db": { "type": "number", "default": 0 },
-          "limpeza": { "type": "object", "additionalProperties": false, "properties": { "atenuacao_db": { "type": "number", "default": 15 }, "mistura": { "type": "number", "default": 0.8 } } },
+          "limpeza": { "type": "object", "additionalProperties": false, "properties": { "atenuacao_db": { "type": "number", "default": 15, "description": "Obsoleto desde 21/11 (a limpeza em ONNX não tem limite de atenuação): quem controla a força é `mistura`." }, "mistura": { "type": "number", "default": 0.8 }, "auto": { "type": "boolean", "default": false, "description": "A montagem escolhe a mistura por fonte com o medidor de voz (DNSMOS); `mistura` vira só o valor de reserva." } } },
           "texto": { "type": ["string", "null"] }
         }
       }
@@ -72,13 +73,18 @@
           "rampa": { "type": "array", "description": "[[u, s_fonte], ...] remapeamento de tempo (V1 ts).", "items": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 } },
           "enquadre": { "$ref": "#/$defs/kf" },
           "estab": { "enum": ["auto", "sim", "nao"], "default": "auto" },
-          "cor": { "type": "string", "default": "neutro", "description": "Look por ambiente (salao, mesa, corredor, claro, laranja, palco, frio, sala...)." },
+          "cor": { "type": "string", "default": "neutro", "description": "Look da biblioteca de cor (loja, rua_dia, rua_noite, academia, palco, neutro) ou da tabela antiga (salao, mesa, corredor, claro, laranja, frio, sala...)." },
+          "balanco": { "type": ["object", "null"], "additionalProperties": false, "required": ["ganho", "exp"], "description": "Primárias da cena medidas na análise (nó 1 do DaVinci): ganho de branco por canal e exposição.",
+            "properties": { "ganho": { "type": "array", "items": { "type": "number", "minimum": 0.5, "maximum": 2 }, "minItems": 3, "maxItems": 3 }, "exp": { "type": "number", "minimum": 0.5, "maximum": 2 } } },
           "som_direto_db": { "type": ["number", "null"], "description": "Som do próprio plano como textura (V1 nat)." },
           "flash": { "$ref": "#/$defs/evt" },
           "tremor": { "$ref": "#/$defs/evt" },
-          "desfocar": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 }, "description": "Caixas normalizadas a desfocar (telas com dados de terceiros)." },
+          "desfocar": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 5 }, "description": "Caixas normalizadas a desfocar (telas com dados de terceiros): [x0, y0, x1, y1] e, opcional, o desfoque (sigma) em px do quadro de 1080 (padrão 16)." },
           "janela": { "type": ["object", "null"], "description": "PiP/janela-aba (V2 janelas): {x,y,w,h,titulo}." },
-          "mblur": { "type": "boolean", "default": false }
+          "mblur": { "type": "boolean", "default": false },
+          "fundo": { "type": ["object", "null"], "additionalProperties": false, "description": "Fundo atrás da pessoa (máscara de pessoa na composição).", "properties": { "desfoque": { "type": "number", "minimum": 0, "maximum": 1, "description": "0 = nada, 1 = lente bem aberta." }, "destaque": { "type": "number", "minimum": 0, "maximum": 1, "description": "Janela de luz na pessoa: fundo até ~1/3 de ponto mais escuro e com menos cor." } } },
+          "pessoa": { "type": ["object", "null"], "additionalProperties": false, "description": "Tratamento só em quem aparece (máscara de pessoa).", "properties": { "pele": { "type": "number", "minimum": 0, "maximum": 1, "description": "Pele tratada: textura fina suavizada só na pele da pessoa (0 = nada)." }, "maos_na_frente": { "type": "number", "minimum": 0, "maximum": 1, "description": "Mão e braço da pessoa passam por cima da legenda da frente (o rosto nunca). Ausente = 1 (ligado); 0 desliga." } } },
+          "cobertura": { "type": ["object", "null"], "additionalProperties": false, "required": ["olhar"], "description": "Conferência de sintonia de quem dirigiu e OLHOU o take, quando o plano cobre uma fala que não é dele e mostra a pessoa (QA cobertura_sintonia). olhar 'camera' = rosto falando para a câmera fora do take da fala: reprova sempre.", "properties": { "olhar": { "enum": ["produto", "camera", "acao"] }, "assunto": { "type": "string", "description": "O que a fala diz e a imagem mostra." } } }
         }
       }
     },
@@ -87,7 +93,8 @@
       "description": "Camadas do kit (mesmo contrato de packages/kit/cenas/*.json -> camadas).",
       "items": {
         "type": "object", "additionalProperties": false, "required": ["id", "modelo", "de", "ate", "props"],
-        "properties": { "id": { "type": "string" }, "modelo": { "type": "string" }, "de": { "type": "number" }, "ate": { "type": "number" }, "props": { "type": "object" } }
+        "properties": { "id": { "type": "string" }, "modelo": { "type": "string" }, "de": { "type": "number" }, "ate": { "type": "number" }, "props": { "type": "object" },
+          "atras": { "type": "boolean", "default": false, "description": "Camada ATRÁS da pessoa: entra entre o fundo e quem aparece no plano (máscara de pessoa na composição). Sem pessoa no quadro, aparece normal." } }
       }
     },
     "legendas": {
@@ -104,8 +111,16 @@
       "items": {
         "type": "object", "additionalProperties": false, "required": ["tipo", "t"],
         "properties": {
-          "tipo": { "enum": ["whip", "mascara", "aba71", "impacto", "bloom", "leak", "zoomt", "gagueira", "rush", "foto", "flash", "match", "fade"] },
-          "t": { "type": "number" }, "dur": { "type": "number" }, "forca": { "type": "number" }, "dir": { "type": "number" }, "nome": { "type": "string" }
+          "tipo": { "enum": ["whip", "mascara", "aba71", "impacto", "bloom", "leak", "zoomt", "gagueira", "rush", "foto", "flash", "match", "fade", "revela", "salto"] },
+          "t": { "type": "number" }, "dur": { "type": "number" }, "forca": { "type": "number" }, "dir": { "type": "number" }, "nome": { "type": "string" },
+          "modo": { "enum": ["abre", "fecha"], "default": "abre", "description": "revela: 'abre' = negativo vira positivo a partir da origem; 'fecha' = o negativo cresce a partir da origem e fica." },
+          "origem": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "revela: centro da frente [x, y] em px do quadro 1080x1920 (padrão [540,960] no abre, [540,1980] no fecha)." },
+          "rmax": { "type": "number", "exclusiveMinimum": 0, "description": "revela: raio final da frente em px; sem ele, cobre o quadro inteiro." },
+          "soft": { "type": "number", "exclusiveMinimum": 0, "default": 40, "description": "revela: largura da borda da frente em px." },
+          "amp": { "type": "number", "minimum": 0, "default": 70, "description": "revela: amplitude do ruído na borda em px." },
+          "seed": { "type": "integer", "default": 7, "description": "revela: semente do ruído (mesma semente = mesma borda)." },
+          "desde": { "type": "number", "description": "revela abre: início da janela (antes da frente tudo é negativo); padrão = início do plano que contém t." },
+          "ate": { "type": "number", "description": "revela fecha: fim da janela (depois da frente tudo fica negativo); padrão = fim do plano que contém t." }
         }
       }
     },
@@ -118,16 +133,64 @@
         "emendas": { "type": "array", "description": "[t_filme, s_trilha_de, s_trilha_ate, xf]: trechos da trilha na ordem (V1 trilha2 / V2 corte km).", "items": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 } },
         "ganho_db": { "type": "number", "default": -14 },
         "ducking": { "type": "object", "additionalProperties": false, "properties": { "db": { "type": "number", "default": 10 }, "desce": { "type": "number", "default": 0.4 }, "sobe": { "type": "number", "default": 0.55 } } },
-        "acorde_final": { "type": ["number", "null"], "description": "t do filme onde o acorde final cai (logo)." }
+        "acorde_final": { "type": ["number", "null"], "description": "t do filme onde o acorde final cai (logo)." },
+        "faixas": {
+          "type": "array", "minItems": 1, "maxItems": 4,
+          "description": "Opcional (M4): 2 ou 3 músicas em sequência; com faixas, emendas não é usado. A 1a faixa é a de trilha.chave.",
+          "items": { "type": "object", "additionalProperties": false, "required": ["chave", "entra_em", "s_de"], "properties": {
+            "chave": { "type": "string" },
+            "id": { "type": "string" },
+            "entra_em": { "type": "number", "minimum": 0, "description": "s do filme em que a faixa começa (início do cruzamento com a anterior)." },
+            "s_de": { "type": "number", "description": "s da música (sem esticar) tocando em entra_em." },
+            "xf": { "type": "number", "minimum": 0, "default": 0, "description": "Cruzamento de igual potência com a faixa anterior, em s do filme." },
+            "razao": { "type": "number", "minimum": 0.5, "maximum": 2, "default": 1, "description": "s de música por s de filme, sem mudar o tom (fatiado na batida com bpm medido; atempo do ffmpeg só sem bpm)." },
+            "bpm": { "type": ["number", "null"] },
+            "fase": { "type": "number" },
+            "modo": { "type": "string", "enum": ["casada", "respiro"] },
+            "troca_em": { "type": "number", "description": "s do filme do 1 do compasso em que esta faixa assume." }
+          } }
+        }
       }
     },
     "sfx": {
       "type": "array",
       "items": { "type": "object", "additionalProperties": false, "required": ["t", "som"], "properties": { "t": { "type": "number" }, "som": { "type": "string" }, "g": { "type": "number", "default": -8 }, "pan": { "type": "number", "default": 0 } } }
     },
+    "sons_reais": {
+      "type": "array", "maxItems": 8,
+      "description": "Sons REAIS do banco (Sonniss #GameAudioGDC no archive.org), pedidos pela direção (blocos[].sons) e resolvidos aqui. Opcional: sem ele o filme é o de antes da M6. O áudio é baixado antes do render (cache fora do armazenamento) e só entra conferido (MD5 ou cabeçalho+tamanho, triagem de voz). Faltou = aviso, nunca som sintético no lugar.",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "papel", "desc", "origem", "id_banco", "item", "pacote", "biblioteca", "nome", "url", "formato", "md5", "trecho", "t0", "t1", "ganho_db", "fade", "reservas"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^R[0-9]{2}$" },
+          "papel": { "enum": ["ambiente", "pontual"] },
+          "desc": { "type": "string", "maxLength": 60 },
+          "bloco": { "type": ["string", "null"] },
+          "blocos": { "type": "array", "items": { "type": "string" }, "description": "Blocos seguidos que o mesmo ambiente cobre (um item só, sem costura)." },
+          "m": { "type": "string" },
+          "origem": { "const": "direcao" },
+          "id_banco": { "type": "integer" },
+          "item": { "type": "string", "description": "Item do archive.org." },
+          "pacote": { "type": "string" },
+          "biblioteca": { "type": "string" },
+          "nome": { "type": "string" },
+          "url": { "type": "string" },
+          "formato": { "enum": ["wav", "flac"] },
+          "md5": { "type": ["string", "null"], "description": "MD5 do arquivo INTEIRO naquele formato (índice). Só é conferido quando o arquivo vem inteiro." },
+          "trecho": { "type": ["array", "null"], "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "[ini_s, dur_s] baixados por pedido parcial (só WAV); null = arquivo inteiro." },
+          "tam": { "type": ["integer", "null"], "description": "Bytes do arquivo inteiro naquele formato (índice)." },
+          "t0": { "type": "number", "description": "Pontual: onde cai o ATAQUE do som." },
+          "t1": { "type": "number" },
+          "ganho_db": { "type": "number", "description": "Ambiente: alvo em LUFS medido no próprio trecho (-28 com fala, -24 sem fala). Pontual: pico em dBFS (-10 + força)." },
+          "fade": { "type": "array", "items": { "type": "number", "minimum": 0 }, "minItems": 2, "maxItems": 2, "description": "[entrada_s, saída_s] em igual potência." },
+          "reservas": { "type": "array", "maxItems": 2, "items": { "type": "object", "additionalProperties": false, "required": ["id_banco", "url", "formato"], "properties": { "id_banco": { "type": "integer" }, "url": { "type": "string" }, "formato": { "enum": ["wav", "flac"] }, "md5": { "type": ["string", "null"] }, "trecho": { "type": ["array", "null"], "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }, "tam": { "type": ["integer", "null"] } } } }
+        }
+      }
+    },
     "tom_sala": {
       "type": ["object", "null"], "additionalProperties": false, "required": ["fonte", "s0", "s1"],
-      "properties": { "fonte": { "type": "string" }, "s0": { "type": "number" }, "s1": { "type": "number" }, "db": { "type": "number", "default": -48 } },
+      "properties": { "fonte": { "type": "string" }, "s0": { "type": "number" }, "s1": { "type": "number" }, "db": { "type": "number", "default": -48 }, "difuso": { "type": "boolean", "default": false, "description": "true = ambiente sintetizado com o espectro médio do trecho e fase aleatória: timbre do lugar, nenhuma palavra inteligível, nível constante (lugar com gente falando ao fundo)." } },
       "description": "Trecho SEM voz (o QA confere transcrevendo o stem; lição do laço 'vai competir')."
     },
     "master": {
@@ -139,6 +202,10 @@
       "properties": {
         "logos": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["t", "chave"], "properties": { "t": { "type": "number" }, "chave": { "type": "string" } } } },
         "falas_confirmadas": { "type": "array", "items": { "type": "string" } },
+        "fatos": { "type": "object", "description": "Verificação de fatos (motor/etapas/fatos.py): números de produto da tela, fonte de cada um e trocas feitas na legenda e nos cartões. Escrito pela montagem." },
+        "numeros_confirmados": { "type": "array", "items": { "type": "string" }, "description": "Trechos (ex.: \"275 ml\") que o dono confirmou à mão: a checagem fatos não segura a entrega por eles." },
+        "cortes_confirmados": { "type": "array", "items": { "type": "string" }, "description": "Ids de peça de voz cujo corte o diretor ouviu e manteve de propósito (QA fala_cortada não reprova, só lista)." },
+        "vozes_confirmadas": { "type": "array", "items": { "type": "string" }, "description": "Ids de peça de voz ou de plano com voz de fora ouvida e aceita pelo diretor (QA voz_externa não reprova, só lista)." },
         "riscos": { "type": "array", "items": { "type": "string" } }
       }
     }

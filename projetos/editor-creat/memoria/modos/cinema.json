@@ -1,0 +1,27 @@
+{
+ "id": "cinema",
+ "nome": "Cinema",
+ "descricao": "Transições cinematográficas, cor por ambiente, trilha com curva emocional, pouco texto.",
+ "ajustes": {
+  "ritmo": {
+   "pausa_max": 0.35,
+   "gap_bloco": 0.4
+  },
+  "trilha": {
+   "ducking": {
+    "desce": 0.6,
+    "sobe": 0.9
+   }
+  }
+ },
+ "sem_transicoes": [
+  "aba71",
+  "flash"
+ ],
+ "sem_sons": [
+  "texto_tela",
+  "chip"
+ ],
+ "zoom_max": 1.08,
+ "fx_pico": null
+}

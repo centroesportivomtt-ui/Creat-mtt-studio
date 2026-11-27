@@ -1,0 +1,33 @@
+# Editor creat.MTT em um servidor: site + motor (API) + worker + HTTPS.
+#   cp .env.example .env   (preencha; nunca suba o .env para o git)
+#   docker compose up -d --build
+name: editor-creat
+services:
+  motor:
+    build: { context: .., dockerfile: deploy/Dockerfile.motor }
+    env_file: .env
+    environment: { MOTOR_HOST: "0.0.0.0" }
+    volumes: [dados:/dados, memoria:/app/projetos/editor-creat/memoria]
+    restart: unless-stopped
+  worker:
+    build: { context: .., dockerfile: deploy/Dockerfile.motor }
+    env_file: .env
+    command: ["python", "-m", "motor.worker"]
+    volumes: [dados:/dados, memoria:/app/projetos/editor-creat/memoria]
+    restart: unless-stopped
+    deploy: { replicas: 2 }
+  web:
+    build: { context: .., dockerfile: deploy/Dockerfile.web }
+    env_file: .env
+    environment: { MOTOR_URL: "http://motor:8787", EDITOR_DADOS: "/dados" }
+    volumes: [dados:/dados]
+    depends_on: [motor]
+    restart: unless-stopped
+  caddy:
+    image: caddy:2.8.4
+    env_file: .env
+    ports: ["80:80", "443:443"]
+    volumes: [./Caddyfile:/etc/caddy/Caddyfile:ro, caddy:/data]
+    depends_on: [web]
+    restart: unless-stopped
+volumes: { dados: {}, memoria: {}, caddy: {} }

@@ -276,6 +276,24 @@ Avaliações: Brevo Capterra 4,6 (3.528), G2 cerca de 4,5; MailerLite G2 cerca d
 | em uso (nova função: transcrição e inventário; sem comparação) | faster-whisper 1.2.1 (modelo `small`, `int8`, CPU) | Grátis, licença MIT (metadado do pacote instalado, 12/11/2026) | Transcreve com tempo de cada trecho a fala de gravação e de vídeo de referência, dentro da sessão, sem mandar áudio para fora. Usado no evento de 11/11 e na ferramenta da casa `.claude/skills/edicao-de-video/ingerir.py` (12/11). O modelo vem do cache do Hugging Face (baixa só no primeiro uso). Não comparado com transcrição paga (ElevenLabs, Deepgram) em português; erra gíria e nome próprio em áudio ruim (`--modelo medium` ajuda). Comparação fica para a revisão de segunda. | https://github.com/SYSTRAN/faster-whisper |
 | em uso (nova função: baixar vídeo de referência para estudo) | yt-dlp 2026.10.26 (já instalado no ambiente) | Grátis, domínio público (Unlicense) | Baixa Reel, TikTok e YouTube para a skill `estudar-referencia`, só para estudo, no scratchpad, apagado no fim. Instagram pode recusar sem login: nunca entrar com conta do dono; o caminho alternativo é o dono mandar o arquivo. Licença não reconferida na fonte nesta rodada. | https://github.com/yt-dlp/yt-dlp |
 
+**Editor creat.MTT, limpeza de voz (21/11/2026):**
+- **Escolhido:** DeepFilterNet3 em ONNX (MIT/Apache; local; 48 kHz; RTF ~0,03 nesta CPU).
+- **Medidor:** DNSMOS P.835 (Microsoft, CC BY 4.0), que escolhe a mistura sem estragar a voz.
+- **Reserva:** RNNoise `arnndn`, que já vem no ffmpeg.
+- **Descartados:**
+  - pip `deepfilternet` (torch de 210 MB e `deepfilterlib` sem wheel);
+  - Resemble Enhance (torch 2.1.1 fixo);
+  - GTCRN (só 16 kHz);
+  - MossFormer2_SE_48K (229 MB, RTF 0,2 sem o frontend).
+- **Fontes:** huggingface.co/SayedShaun/DeepFilterNet3-onnx ; github.com/microsoft/DNS-Challenge.
+
+**Editor creat.MTT, recorte de pessoa (20/11/2026):**
+- **Escolhido:** Robust Video Matting MobileNetV3 (ONNX, 15 MB, local e grátis). É temporal, então a borda não treme. Rodando no editor deu 37 a 48 ms por quadro em 640 px com redução 0,4, contra 11 ms medidos pelo Radar sem a redução. A redução 0,25 é 2× mais rápida, mas abriu buraco no topo da cabeça no teste real.
+- **Licença:** GPL-3.0. Uso só no servidor, sem distribuir o modelo. Se o editor virar programa entregue a terceiros, trocar.
+- **Reserva:** MODNet (Apache-2.0), quadro a quadro, de 80 a 140 ms.
+- **Descartados:** MatAnyone 2, o melhor em qualidade, tem licença NTU S-Lab, e uso comercial exige acordo. SAM 2.1 é inviável em CPU (cerca de 2 s por quadro).
+- **Fontes:** github.com/PeterL1n/RobustVideoMatting ; huggingface.co/Xenova/modnet.
+
 Voto cego (Artificial Analysis, 08/11/2026): vídeo, 1º Wan 3.0 (1172), 5º Seedance 2.5, 23º Veo 3.1; o Kling 4.0 não aparece. [Em 09/11/2026 o refutador leu Wan 3.0 em 1º com 1175, Seedance 2.5 em 4º, FLUX 3 Max em 5º e Veo 3.1 em 24º com 965; o Kling 4.0 segue ausente.] Evitar: Sora (encerrado; o CapCut ainda lista Sora 2 e não há fonte oficial lida sobre o encerramento), Udio, Midjourney em automação, Adobe Firefly como principal. Nenhuma nota G2 verificada.
 
 ### 3.9 Métricas, analytics e testes
@@ -495,3 +513,33 @@ HOJE, versão mínima: oferta 1:1 no WhatsApp e Instagram, link Pix (Asaas, Cakt
 | Analytics e UTM dos sites do estúdio | PostHog Cloud Free com cookieless_mode always, só nos sites do próprio estúdio | 1 milhão de eventos grátis, UTM, funis e MCP oficial; sem replay nem A/B de visitante recorrente nesse modo, e o grátis tem 1 projeto só. | R$ 0 dentro da franquia (excedente é descartado no plano sem cartão). Em sites de clientes é pay-as-you-go com cartão; para eles use Umami self-hosted. Sem cláusulas da ANPD no DPA: transferência internacional não coberta. | Sim. https://mcp.posthog.com/mcp, comece com readonly=true. Evento de 'Pix confirmado' via webhook do gateway não foi testado: sem ele o PostHog mede visita, não venda. |
 | Heatmap e gravação de sessão | Microsoft Clarity | Grátis sem limite de tráfego e com MCP oficial, mas só 10 requisições por dia por projeto e 30 dias de gravação. | R$ 0. Não é cookieless e a base legal LGPD precisa de decisão com advogado antes de instalar em site de cliente. | Sim, @microsoft/clarity-mcp-server (leitura diária pela manhã). |
 | 3D para o kit 3D (só no mês de produção) | Meshy Pro com MCP para Blender | Pro com API, MCP/Skill e licença privada por US$ 20; o grátis exige atribuição (CC BY 4.0). Qualidade comparada ao Tripo não tem benchmark independente. | cerca de R$ 114 (US$ 20 mais IOF), só enquanto produzir; cancele depois. O MCP oficial do Blender executa código gerado pela IA sem proteção: use máquina sem dados sensíveis. | Sim (MCP da comunidade para Blender; tutorial do Meshy). |
+
+## Revisão do editor, 23/11/2026
+
+Janela olhada: últimas 2 a 4 semanas (cerca de 26/10 a 23/11/2026), só CPU e licença que permita uso comercial. Fontes de release lidas em 23/11/2026; a data de modelos em Hugging Face nem sempre aparece, e isso está dito na linha.
+
+| função | atual | candidato | ganho comprovado | licença | fonte | recomendação |
+|---|---|---|---|---|---|---|
+| Transcrição pt-BR com tempo por palavra | faster-whisper + Parakeet | faster-whisper 1.2.1 (31/10); sherpa-onnx 2.0.2/2.0.3 (19 e 22/11) com alinhamento forçado e scripts de exportação "Parakeet Ultra/Redux" | Nenhum ganho medido em pt-BR. O 1.2.1 só troca o VAD para Silero V6 e corrige tokens. O alinhamento forçado do sherpa-onnx é novo, sem número publicado. Não achei modelo, licença nem benchmark dos Parakeet Ultra/Redux. | faster-whisper MIT (não conferi na página); sherpa-onnx e Parakeet Ultra/Redux: não confirmado | https://github.com/SYSTRAN/faster-whisper/releases ; https://github.com/k2-fsa/sherpa-onnx/releases | manter (testar o alinhamento forçado do sherpa-onnx só se o tempo por palavra do Whisper voltar a cortar fala) |
+| Limpeza e separação de voz | DeepFilterNet3 ONNX + DNSMOS | nada novo achado | Nenhuma versão nova de modelo de limpeza de voz com licença comercial encontrada na janela. | n/a | https://github.com/k2-fsa/sherpa-onnx/releases (sem item de limpeza) | manter |
+| Diarização e assinatura de quem fala | CAM++ (WeSpeaker, ONNX, fbank próprio) | pyannote.audio 4.1.0 (17/11) e 4.1.1 (19/11); sherpa-onnx 2.0.2 corrige o pooling do CAM++ | pyannote: mudanças de interface e correções (VBxClustering, DER), sem modelo novo nem ganho de qualidade; licença do pipeline community-1 não confirmada (a página só exige aceitar termos). sherpa-onnx 2.0.2: CAM++ passou a usar count_include_pad=False (issue #4201) e 2.0.3 tirou um Pad inútil. | pyannote: não confirmado; sherpa-onnx: não conferi | https://github.com/pyannote/pyannote-audio/releases ; https://github.com/k2-fsa/sherpa-onnx/releases | manter; conferir se o nosso export do CAM++ tem o mesmo defeito de pooling (verificação de 1 hora, sem risco) |
+| Recorte de pessoa (matting) | RVM MobileNetV3 ONNX (GPL-3.0, só servidor) | Longpipe (ONNX; matting por quadro, estabilização temporal fica no SDK de navegador) | Sem benchmark contra RVM e sem tempo em CPU publicado; data do modelo não aparece. Não achei sucessor do RVM com licença permissiva e temporal. | MIT (código e pesos, segundo a página) | https://huggingface.co/Longpipe/longpipe | manter (RVM; Longpipe só vira teste se a GPL virar problema) |
+| Detecção de rosto | nenhum | YuNet 2026may (peso idêntico ao 2023mar, entrada de tamanho dinâmico) | AP no WIDER Face 0,834 fácil / 0,824 médio / 0,708 difícil. A novidade de 2026 é só o formato (dinâmico), não a qualidade. | MIT | https://huggingface.co/pollen-robotics/face_detection_yunet_2026may ; https://huggingface.co/opencv/face_detection_yunet | trocar (adotar, é função nova no item 4) |
+| Reconhecimento de rosto (item 4) | nenhum | SFace 2021dec (OpenCV Zoo); alternativa AuraFace v1 | SFace: acurácia 0,9940 (fp32), 0,9932 (int8) no avaliador do OpenCV Zoo (protocolo não nomeado na página). AuraFace v1: LFW 0,99650 declarado no cartão do modelo, ResNet-100 (mais pesado; tamanho não confirmado). | SFace Apache-2.0; AuraFace Apache-2.0. Evitar pacotes buffalo/SCRFD do InsightFace (só pesquisa, segundo fontes secundárias) | https://github.com/opencv/opencv_zoo/tree/main/models/face_recognition_sface ; https://huggingface.co/fal/AuraFace-v1 | trocar (adotar SFace; testar AuraFace só se SFace errar nos 3 rostos) |
+| Estabilização de vídeo em CPU | ffmpeg (medição por plano e estabilização) | nada achado | A busca só devolveu comparativos comerciais; nenhuma versão nova de ferramenta aberta com fonte. | n/a | n/a | manter |
+| OCR de rótulo de produto | nenhum | RapidOCR 3.10.0 (08/10, fora da janela) com PP-OCRv6 small (padrão desde 3.9.0, 23/06) | Wheel de 29 MB (era 15 MB) com ONNX Runtime em CPU; sem benchmark de rótulo de produto nem de pt-BR; a página não lista idiomas. | Apache-2.0 (RapidOCR); modelos derivados do PaddleOCR | https://github.com/RapidAI/RapidOCR/releases | testar (rótulo de supermercado com 20 fotos reais antes de adotar) |
+
+Conclusão:
+- Na janela de 2 a 4 semanas não saiu nada comprovadamente melhor para transcrição, limpeza de voz, matting ou estabilização: ficam as escolhas atuais.
+- O que existe de novo é manutenção (faster-whisper 1.2.1, pyannote 4.1.x, sherpa-onnx 2.0.x), sem ganho medido em pt-BR.
+- Única ação barata: conferir se o nosso CAM++ tem o defeito de pooling que o sherpa-onnx corrigiu em 19/11.
+- Rosto (item 4) é função nova, não troca: YuNet (detecção) + SFace (reconhecimento), ambos pelo OpenCV, licença MIT e Apache-2.0.
+- Não deu para confirmar: licença do pyannote community-1, modelo e licença dos Parakeet Ultra/Redux, tamanho em MB do YuNet e do SFace, e qualquer ganho de OCR em português.
+
+## Componentes de interface do editor (27/11/2026, redesenho "Mesa de corte", onda 2)
+| função | escolha | por quê | fonte |
+|---|---|---|---|
+| Gaveta (bottom sheet) | Base UI `@base-ui/react` 1.9.0 (MIT), só o Drawer | gesto de arrastar para fechar, foco preso e Esc prontos, sem estilo próprio (usa os tokens da casa). O Vaul, que era a referência, está sem manutenção desde 12/2024 ("This repo is unmaintained") | https://base-ui.com/react/components/drawer · https://github.com/emilkowalski/vaul · `npm view @base-ui/react` |
+| Avisos (toasts) | sonner 2.0.8 (MIT) | empilha, arrasta no celular, pouco código; o Base UI também tem Toast, que fica como troca possível para zerar uma dependência | `npm view sonner` |
+
+Fonte de verdade do desenho: `projetos/editor-creat/docs/design-editor-25-11.md`, seção (e).

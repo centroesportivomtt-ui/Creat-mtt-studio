@@ -1,0 +1,1401 @@
+{
+ "formato": "H",
+ "largura": 1920,
+ "altura": 1080,
+ "fps": 30,
+ "dur": 96.91,
+ "titulo": "ITAITU",
+ "conceito": "Road movie em quatro atos com moldura de cinema 2.39:1 que abre para 16:9 só no drop do mirante: a viagem de Marcos e Glenda a Itaitu (Chapada Diamantina, 19 a 22/11/2026). Abre com a janela do porta-malas se abrindo para o verde e fecha com a mesma tampa batendo. I · A ESTRADA (Loser: contemplação), II · A MATA (só natureza e a voz dela; depois Dancin: ritmo da trilha), III · O MIRANTE (break e DROP 2 de Dancin; a moldura abre), IV · NÓS (a porta do carro fecha o mundo: conversa real, depois Messy no beijo, a praça à noite, a manhã de volta).",
+ "musica": [
+  {
+   "n": 1,
+   "musica": "m1_loser",
+   "src_ini": 52.55,
+   "src_fim": 69.61,
+   "saida_ini": 3.66,
+   "ganho_db": 0,
+   "fade_in": 1.2,
+   "fade_out": 1.2,
+   "porque": "Contemplação/estrada. Depois do diálogo do clipe (até ~47 s). Entra baixo sob o título; o groove (55,89) cai no corte de 7,00; 'It's now or never' (60-62) cai no plano dele dirigindo sem camisa. Sai em passa-baixa quando o corpo dele cobre a lente (20,72 = m1 69,61, tempo): a mata engole a música."
+  },
+  {
+   "n": 2,
+   "musica": "m2_dancin",
+   "src_ini": 28.1,
+   "src_fim": 46.6,
+   "saida_ini": 30.72,
+   "ganho_db": 0,
+   "fade_in": 0.3,
+   "fade_out": 0.6,
+   "porque": "Trilha/alegria/ritmo. Entra DEPOIS da fala da Glenda (que termina em 30,5), no pré-drop instrumental-vocal 'Only one means to me'; drop real em 32,1 = 34,72 (pés). Cortes a cada compasso de 2 s (120 BPM). O bumbo para em 46,0 = 48,62 e a água assume."
+  },
+  {
+   "n": 3,
+   "musica": "m2_dancin",
+   "src_ini": 142.0,
+   "src_fim": 160.4,
+   "saida_ini": 53.12,
+   "ganho_db": 0,
+   "fade_in": 0.2,
+   "fade_out": 0.4,
+   "porque": "Clímax diferente do V: o break de 2 s ('Get above my flow', 142-144) é a subida e o DROP 2 em 144,0 = 55,12 abre a moldura no vale. Fecha a frase de 16 compassos em 160,0 ('Blue, baby') = 71,12, exatamente na porta do carro: nos últimos 0,4 s a música passa por passa-baixa (o mundo fica lá fora quando a porta fecha). O V usa o drop de 128,1; aqui ele não entra."
+  },
+  {
+   "n": 4,
+   "musica": "m3_messy",
+   "src_ini": 7.75,
+   "src_fim": 26.66,
+   "saida_ini": 74.82,
+   "ganho_db": 0,
+   "fade_in": 0.05,
+   "fade_out": 0.05,
+   "porque": "Casal/emoção com atitude. Entra no tempo 7,75, no corte para o beijo (depois da conversa, sem voz contra voz). Só a primeira estrofe, sem palavrão (o 'fucking' só aparece a partir de 54,4). Corta seco em 26,66 = 93,73, no estrondo da tampa."
+  }
+ ],
+ "segmentos": [
+  {
+   "n": 1,
+   "saida_ini": 0.0,
+   "saida_fim": 1.5,
+   "clip": "c33",
+   "src_ini": 38.95,
+   "src_fim": 40.45,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático (câmera no chão)"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (fonte -70 dB: não subir chiado). A pisada é foley real limpo do c28 5,5-7,7 (ver ambiente) + sub-hit grave no quadro 1"
+   },
+   "batida": "antes da música: o gancho é a pisada",
+   "texto": null,
+   "porque": "Gancho em 0 s: ele vem sem camisa pela mata, com a mochila na mão, e as pernas passam rente à câmera de chão até cobrir a lente (40,2-40,45). Movimento e pisada já no quadro 1. É o ÚNICO plano do c33 no filme (o 23-25 ficou para o V)."
+  },
+  {
+   "n": 2,
+   "saida_ini": 1.5,
+   "saida_fim": 3.0,
+   "clip": "c44",
+   "src_ini": 0.0,
+   "src_fim": 1.5,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (fonte -53,6 dB: não subir). Cama c39 por baixo"
+   },
+   "batida": "antes da música",
+   "texto": null,
+   "porque": "A janela traseira do carro se abre para o verde: a cortina do filme. A mesma tampa fecha o filme no plano 34 (moldura exclusiva do H)."
+  },
+  {
+   "n": 3,
+   "saida_ini": 3.0,
+   "saida_fim": 7.0,
+   "clip": "c30",
+   "src_ini": 12.0,
+   "src_fim": 16.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "travelling da fonte + push-in leve 1,00→1,04"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "estrada_dourada",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.3
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (c30 tem música comercial no som do carro). Cama de carro c01 com passa-baixa por baixo"
+   },
+   "batida": "m1 entra baixo em 3,66 (m1 52,55)",
+   "texto": "ITAITU",
+   "porque": "Título sobre o túnel de árvores da estrada de terra vermelha: o road movie se apresenta. Substitui o arco de pedra do c37 no título, para a serra aparecer UMA vez só, no drop."
+  },
+  {
+   "n": 4,
+   "saida_ini": 7.0,
+   "saida_fim": 9.88,
+   "clip": "c02",
+   "src_ini": 35.5,
+   "src_fim": 38.38,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (c02 tem música do som do carro)"
+   },
+   "batida": "groove de m1 (55,89) cai no corte de 7,00; 4 tempos",
+   "texto": "I · A ESTRADA",
+   "porque": "O sol baixo atravessa a janela e acende o rosto dele; Glenda ao lado. Único plano do c02 antes do beijo (o c02 volta só no beijo, 65 s depois)."
+  },
+  {
+   "n": 5,
+   "saida_ini": 9.88,
+   "saida_fim": 12.78,
+   "clip": "c31",
+   "src_ini": 20.6,
+   "src_fim": 23.5,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (c31 tem conversa de bastidor de 23,7 a 37,4 e música de 0 a 24)"
+   },
+   "batida": "m1 58,77 (4 tempos depois do groove)",
+   "texto": null,
+   "porque": "Ele dirigindo sem camisa, em contraluz na janela: outro dia, outra luz, mesma estrada."
+  },
+  {
+   "n": 6,
+   "saida_ini": 12.78,
+   "saida_fim": 15.66,
+   "clip": "c04",
+   "src_ini": 72.6,
+   "src_fim": 75.48,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (rádio do carro na fonte)"
+   },
+   "batida": "m1 61,67 (4 tempos)",
+   "texto": null,
+   "porque": "Alegria no carro: Glenda relaxa com a mão na testa, ele canta e gesticula. A estrada como festa a dois."
+  },
+  {
+   "n": 7,
+   "saida_ini": 15.66,
+   "saida_fim": 20.72,
+   "clip": "c32",
+   "src_ini": 121.4,
+   "src_fim": 126.46,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático (tripé)"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": 8,
+    "nota": "passos dele na estrada de terra e vento nos eucaliptos (c32 105-127 passou limpo no medium sem VAD). m1 fecha em passa-baixa nos últimos 1,2 s: a mata engole a música"
+   },
+   "batida": "m1 64,55 no corte; a lente coberta cai em m1 69,61 (tempo), onde a música sai",
+   "texto": null,
+   "porque": "Ele vem pela estrada, ao lado do carro, e passa rente à lente (126,2-126,46), cobrindo o quadro: a cortina humana que leva para dentro da mata. Termina antes do tranco da câmera em 126,5 (tremor 1,61)."
+  },
+  {
+   "n": 8,
+   "saida_ini": 20.72,
+   "saida_fim": 23.72,
+   "clip": "c35",
+   "src_ini": 10.3,
+   "src_fim": 13.3,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "descida da fonte (copa → trilha) + push-in 1,00→1,04"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.5
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO INTEIRO: o c35 tem um \"Oi!\" de bastidor em 10,1 s. Cama c39 e passos de foley c28"
+   },
+   "batida": "sem música: SÓ NATUREZA",
+   "texto": "II · A MATA",
+   "porque": "Sol em estrela na copa e a câmera desce até a trilha (3 s, não mais). Respiro de música, só mata."
+  },
+  {
+   "n": 9,
+   "saida_ini": 23.72,
+   "saida_fim": 26.72,
+   "clip": "c39",
+   "src_ini": 0.3,
+   "src_fim": 3.3,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "a câmera passa o tronco de eucalipto e revela a porteira"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "som do c39 segue como cama (limpo). A VOZ dela entra aqui, fora de quadro (J-cut): \"Aqui é filha do mato\" (c40 5,2-6,8)"
+   },
+   "batida": "sem música",
+   "texto": null,
+   "porque": "Descoberta: o tronco abre e mostra Glenda pequena na porteira. A voz dela chega antes do rosto, como em cinema."
+  },
+  {
+   "n": 10,
+   "saida_ini": 26.72,
+   "saida_fim": 30.72,
+   "clip": "c40",
+   "src_ini": 6.8,
+   "src_fim": 10.8,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.3,
+    "zoom": 1.15,
+    "mov": "estático (zoom 1,15 encostado no topo da fonte: o rosto fica inteiro abaixo da barra 2.39)"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "NÃO duplicar: o som deste plano é a camada FALAS (c40 5,2-10,6 a +6 dB, que já inclui a mata do lugar). A fala da Glenda continua em sincronia (mesmo deslocamento do J-cut); ela repete \"filha do mato\" na câmera (9,5-10,4). Sem música por baixo: voz limpa"
+   },
+   "batida": "sem música; m2 entra no corte seguinte",
+   "texto": "Aqui é filha do mato… filha do mato.",
+   "porque": "A troca de ideia do casal: pendurada na porteira, ela repete a brincadeira olhando para ele. O plano começa em 6,8, quando o rosto já está inteiro abaixo da barra 2.39."
+  },
+  {
+   "n": 11,
+   "saida_ini": 30.72,
+   "saida_fim": 32.72,
+   "clip": "c24",
+   "src_ini": 2.5,
+   "src_fim": 4.5,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.45,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo (c24 0-2 tem alucinação \"Obrigado\"); foley de folha c28 por baixo"
+   },
+   "batida": "m2 28,1 entra no corte (pré-drop \"Only one means to me\")",
+   "texto": null,
+   "porque": "Glenda entra na mata e some entre as árvores finas: ela puxa o filme para dentro."
+  },
+  {
+   "n": 12,
+   "saida_ini": 32.72,
+   "saida_fim": 34.72,
+   "clip": "c14",
+   "src_ini": 13.6,
+   "src_fim": 15.6,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático; a samambaia ocupa o quadro e o corpo dela passa na borda"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "folhagem",
+    "dur": 0.25
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (c14 tem vento e alucinação de fala no medium)"
+   },
+   "batida": "m2 30,1",
+   "texto": null,
+   "porque": "A samambaia amarelo-limão em primeiro plano com o corpo dela passando: transição de folhagem para o drop."
+  },
+  {
+   "n": 13,
+   "saida_ini": 34.72,
+   "saida_fim": 36.72,
+   "clip": "c46",
+   "src_ini": 0.4,
+   "src_fim": 2.4,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático (câmera no chão)"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "flash",
+    "dur": 0.08
+   },
+   "som_direto": {
+    "ganho_db": 6,
+    "nota": "botas pisando folhas e pedras (0-3,6 s, limpo no medium; a conversa de bastidor só começa em 3,6)"
+   },
+   "batida": "DROP m2 32,1",
+   "texto": null,
+   "porque": "Drop da trilha com os pés dele: as botas entram no quadro em cima das pedras."
+  },
+  {
+   "n": 14,
+   "saida_ini": 36.72,
+   "saida_fim": 38.72,
+   "clip": "c29",
+   "src_ini": 1.0,
+   "src_fim": 3.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.62,
+    "zoom": 1.0,
+    "mov": "POV dos próprios pés andando nas pedras"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "match",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo; passos em pedra e água do c29 4-11 na cama"
+   },
+   "batida": "m2 34,1",
+   "texto": null,
+   "porque": "Match de pés: das botas vistas do chão para o olhar dele para os próprios pés nas pedras."
+  },
+  {
+   "n": 15,
+   "saida_ini": 38.72,
+   "saida_fim": 40.72,
+   "clip": "c08",
+   "src_ini": 15.0,
+   "src_fim": 17.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.36,
+    "zoom": 1.0,
+    "mov": "seguindo por trás"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (c08 tem \"Eu tô aqui\" de bastidor)"
+   },
+   "batida": "m2 36,1",
+   "texto": null,
+   "porque": "Glenda sobe a trilha na frente dele, bolsa balançando: o casal se revezando no quadro."
+  },
+  {
+   "n": 16,
+   "saida_ini": 40.72,
+   "saida_fim": 42.72,
+   "clip": "c11",
+   "src_ini": 21.5,
+   "src_fim": 23.5,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.55,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "m2 38,1",
+   "texto": null,
+   "porque": "Ele passa a mão no cabelo e olha para o alto da mata: respiro de personagem no meio do ritmo."
+  },
+  {
+   "n": 17,
+   "saida_ini": 42.72,
+   "saida_fim": 44.72,
+   "clip": "c26",
+   "src_ini": 3.0,
+   "src_fim": 5.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo (fonte -52 dB); foley c28"
+   },
+   "batida": "m2 40,1",
+   "texto": null,
+   "porque": "Glenda surge na curva da trilha vermelha e vem para a câmera entre os galhos (sem passar rente à lente: esse recurso fica só no gancho e no c32)."
+  },
+  {
+   "n": 18,
+   "saida_ini": 44.72,
+   "saida_fim": 46.72,
+   "clip": "c21",
+   "src_ini": 4.0,
+   "src_fim": 6.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "m2 42,1",
+   "texto": null,
+   "porque": "Ele vem lá do fundo, sob a moldura de folhas de palmeira: profundidade."
+  },
+  {
+   "n": 19,
+   "saida_ini": 46.72,
+   "saida_fim": 48.62,
+   "clip": "c16",
+   "src_ini": 15.5,
+   "src_fim": 17.4,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.55,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo; a água entra na cama"
+   },
+   "batida": "m2 44,1; o bumbo para em 46,0 = fim do plano",
+   "texto": null,
+   "porque": "Os dois no mesmo quadro na beira do poço cor de chá: ele sentado na pedra, ela em pé na borda. Leva direto para a água."
+  },
+  {
+   "n": 20,
+   "saida_ini": 48.62,
+   "saida_fim": 51.12,
+   "clip": "c15",
+   "src_ini": 50.6,
+   "src_fim": 51.85,
+   "vel": 0.5,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "descida lenta (tilt simulado no recorte, cy 0,45→0,55)"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "dissolve",
+    "dur": 0.5
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo; riacho do c15 45-50 (limpo) alto na cama"
+   },
+   "batida": "break de m2 (46,0): sem bumbo, a música sai e fica só a água",
+   "texto": null,
+   "porque": "A água cor de chá do riacho vista de cima, com o tronco submerso, em câmera lenta real (60 fps a 0,5x). Não é mergulho: é a água como transição entre a mata e o alto."
+  },
+  {
+   "n": 21,
+   "saida_ini": 51.12,
+   "saida_fim": 55.12,
+   "clip": "c43",
+   "src_ini": 6.0,
+   "src_fim": 10.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.4,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.4
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo (fonte -62 dB); vento dos eucaliptos c32 na cama"
+   },
+   "batida": "só vento até 53,12; o break de m2 (142,0-144,0, \"Get above my flow\") entra em 53,12 como subida",
+   "texto": "III · O MIRANTE",
+   "porque": "Ele chega ao alto no capim, olha o horizonte e sorri: a promessa do topo, com gente no quadro."
+  },
+  {
+   "n": 22,
+   "saida_ini": 55.12,
+   "saida_fim": 59.12,
+   "clip": "c37",
+   "src_ini": 7.5,
+   "src_fim": 11.5,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "revelação da fonte (paredão → vale) + moldura abre de 2.39 para 16:9 em 12 quadros"
+   },
+   "moldura": "16:9",
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "flash",
+    "dur": 0.1
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo; impacto grave e ar aberto"
+   },
+   "batida": "DROP 2 de m2 (144,0) — não é o drop de 128,1 que o V usa",
+   "texto": null,
+   "porque": "Pico de imagem no pico da música: a câmera sai do paredão e abre o vale, e a moldura abre junto. ÚNICA aparição da serra no filme (inédita até aqui)."
+  },
+  {
+   "n": 23,
+   "saida_ini": 59.12,
+   "saida_fim": 61.12,
+   "clip": "c43",
+   "src_ini": 37.0,
+   "src_fim": 39.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.36,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "16:9",
+   "estabilizar": true,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "m2 148,0",
+   "texto": null,
+   "porque": "Retrato frontal no alto, camiseta no ombro, vale atrás: olhar firme."
+  },
+  {
+   "n": 24,
+   "saida_ini": 61.12,
+   "saida_fim": 63.12,
+   "clip": "c13",
+   "src_ini": 20.8,
+   "src_fim": 21.3,
+   "vel": 0.25,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático (tripé), câmera lenta 0,25x de 120 fps"
+   },
+   "moldura": "16:9",
+   "estabilizar": false,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.2
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (c13 tem vento batendo no microfone)"
+   },
+   "batida": "m2 150,0",
+   "texto": null,
+   "porque": "O feixe de luz atravessando a névoa sobre a mata do mirante, a 0,25x real: luz pura no auge."
+  },
+  {
+   "n": 25,
+   "saida_ini": 63.12,
+   "saida_fim": 65.12,
+   "clip": "c25",
+   "src_ini": 10.1,
+   "src_fim": 12.1,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.45,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "16:9",
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "m2 152,0",
+   "texto": null,
+   "porque": "Glenda de braços abertos atravessando o tronco caído: a liberdade dela no pico da música."
+  },
+  {
+   "n": 26,
+   "saida_ini": 65.12,
+   "saida_fim": 67.12,
+   "clip": "c12",
+   "src_ini": 3.0,
+   "src_fim": 5.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.4,
+    "zoom": 1.0,
+    "mov": "estático (selfie baixo)"
+   },
+   "moldura": "16:9",
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "m2 154,0",
+   "texto": null,
+   "porque": "Ele de óculos escuros olha para o alto, camisa creme, o mato do barranco atrás: gente no pico, entre a Glenda e o gesto da garrafa. (Troca o c10 12,2-14,2, colado no c10 10-12 que o V usa.)"
+  },
+  {
+   "n": 27,
+   "saida_ini": 67.12,
+   "saida_fim": 69.12,
+   "clip": "c45",
+   "src_ini": 56.0,
+   "src_fim": 58.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático (moldura da janela do carro)"
+   },
+   "moldura": "16:9",
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (c45 52-74 tem rumor chapado de -30 dB)"
+   },
+   "batida": "m2 156,0",
+   "texto": null,
+   "porque": "Pela janela do carro, ele pega a garrafa e se afasta com a serra e a caixa d'água em contraluz (não bebe: é o gesto de \"pegar as coisas\" no alto)."
+  },
+  {
+   "n": 28,
+   "saida_ini": 69.12,
+   "saida_fim": 71.12,
+   "clip": "c14",
+   "src_ini": 0.5,
+   "src_fim": 2.5,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "16:9",
+   "estabilizar": false,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO"
+   },
+   "batida": "m2 158,0-160,0 (\"Blue, baby\", fim da frase de 16 compassos)",
+   "texto": "−11,3332  −40,5036",
+   "porque": "O vale aberto do mirante, com as coordenadas reais do arquivo: o último respiro do alto. Único plano de vale além do c37 (o c13 do vale saiu)."
+  },
+  {
+   "n": 29,
+   "saida_ini": 71.12,
+   "saida_fim": 74.82,
+   "clip": "c04",
+   "src_ini": 37.3,
+   "src_fim": 41.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "NÃO duplicar: o som deste plano é a camada FALAS (c04 37,3-41,0 a -4 dB com limitador; fonte com pico de 0 dBFS e RMS -14 dB). CONVERSA REAL: troca curta entre os dois (37,74-38,58 frase / 39,30-39,56 \"Hã?\" / 39,90-40,70 frase repetida). Rádio do carro baixo na fonte = ambiente. Corte antes de 41,9 (palavrão em 42-44). Porta do carro (c32 88,4) bate no corte"
+   },
+   "batida": "m2 acaba em 160,0 com a porta; sem música sob a conversa; m3 entra no corte seguinte",
+   "texto": "IV · NÓS",
+   "porque": "A conversa no carro, de verdade: ela fala, ele pergunta \"hã?\", ela repete rindo. A porta fecha o mundo lá fora e a música vira silêncio de cabine."
+  },
+  {
+   "n": 30,
+   "saida_ini": 74.82,
+   "saida_fim": 79.14,
+   "clip": "c02",
+   "src_ini": 16.3,
+   "src_fim": 20.62,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.55,
+    "cy": 0.48,
+    "zoom": 1.0,
+    "mov": "push-in lento 1,00→1,12 até o beijo (17,5-18,2)"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (rádio na fonte); rumor de carro c01 baixo"
+   },
+   "batida": "m3 entra em 7,75 no corte; o plano fecha no tempo 12,07",
+   "texto": null,
+   "porque": "O beijo no carro, na luz dourada de 19/11: o coração do filme, guardado até aqui e com enquadre próprio (push-in)."
+  },
+  {
+   "n": 31,
+   "saida_ini": 79.14,
+   "saida_fim": 81.3,
+   "clip": "c42",
+   "src_ini": 2.7,
+   "src_fim": 4.86,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "noite_som",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.3
+   },
+   "som_direto": {
+    "ganho_db": -16,
+    "nota": "multidão e show do c42, com passa-baixa de 900 Hz (festa ao longe: a voz do cantor não compete com Messy)"
+   },
+   "batida": "m3 12,07 → 14,23",
+   "texto": null,
+   "porque": "A luz do sol vira luz de palco: a noite na praça."
+  },
+  {
+   "n": 32,
+   "saida_ini": 81.3,
+   "saida_fim": 84.02,
+   "clip": "c41",
+   "src_ini": 13.0,
+   "src_fim": 15.72,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.4,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "noite_som",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": -18,
+    "nota": "multidão do c41 com passa-baixa de 900 Hz"
+   },
+   "batida": "m3 14,23 → 16,95",
+   "texto": null,
+   "porque": "Os dois parados, encantados, olhando para cima, luz colorida passando nos rostos."
+  },
+  {
+   "n": 33,
+   "saida_ini": 84.02,
+   "saida_fim": 86.16,
+   "clip": "c05",
+   "src_ini": 11.6,
+   "src_fim": 13.74,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.33,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": true,
+   "look": "noite_som",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "MUDO (fala de bastidor dele: \"tá topzera\")"
+   },
+   "batida": "m3 16,95 → 19,09",
+   "texto": null,
+   "porque": "Glenda na porta de vidro da pousada olha por cima do ombro e sorri para ele: o olhar mais íntimo do filme."
+  },
+  {
+   "n": 34,
+   "saida_ini": 86.16,
+   "saida_fim": 91.58,
+   "clip": "c44",
+   "src_ini": 13.0,
+   "src_fim": 18.42,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "push-in muito lento 1,00→1,05"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "dissolve",
+    "dur": 0.6
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo (fonte -65 dB); cama c39"
+   },
+   "batida": "m3 19,09 → 24,52",
+   "texto": null,
+   "porque": "Manhã: emoldurado pelo vidro do porta-malas, ele caminha pela estrada e fica pequeno no verde (continua visível; não some). Respiro final, com movimento."
+  },
+  {
+   "n": 35,
+   "saida_ini": 91.58,
+   "saida_fim": 93.91,
+   "clip": "c44",
+   "src_ini": 23.43,
+   "src_fim": 25.76,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": -6,
+    "nota": "ESTRONDO real da tampa (fonte 25,58) em 93,73 do filme; Messy corta seco junto. Pico da fonte -0,7 dBFS: -6 dB (antes estava +6 e clipava)"
+   },
+   "batida": "m3 26,66 = estrondo",
+   "texto": null,
+   "porque": "Ele volta e fecha a tampa: o quadro escurece. A mesma moldura que abriu o filme."
+  },
+  {
+   "n": 36,
+   "saida_ini": 93.91,
+   "saida_fim": 96.91,
+   "clip": "preto",
+   "src_ini": 0.0,
+   "src_fim": 3.0,
+   "vel": 1,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "moldura": "2.39",
+   "estabilizar": false,
+   "look": "nenhum",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "cauda natural do estrondo + cama c39 saindo em fade"
+   },
+   "batida": "depois da música",
+   "texto": null,
+   "porque": "Quadro preto de encerramento em espelho com a abertura: silêncio de 0,4 s, a mata volta baixinho e 'ITAITU' + 'fim.' (ver textos). Sem marca: Instagram pessoal."
+  }
+ ],
+ "ambiente": [
+  {
+   "clip": "c39",
+   "src_ini": 0.5,
+   "src_fim": 4.2,
+   "saida_ini": 0.0,
+   "ganho_db": 4,
+   "fade": 0.8,
+   "nota": "cama de mata (insetos, pássaros, vento) sob o gancho e a janela; limpa no medium sem VAD"
+  },
+  {
+   "clip": "c28",
+   "src_ini": 5.5,
+   "src_fim": 7.7,
+   "saida_ini": 0.0,
+   "ganho_db": 10,
+   "fade": 0.1,
+   "nota": "foley real de bota na folha seca para a pisada do gancho (no lugar de subir o c33, que é -70 dB). c28 limpo no medium"
+  },
+  {
+   "clip": "c01",
+   "src_ini": 2.0,
+   "src_fim": 19.72,
+   "saida_ini": 3.0,
+   "ganho_db": -10,
+   "fade": 0.8,
+   "nota": "rumor de carro com passa-baixa de 200 Hz + passa-alta de 30 Hz (o rumor mora abaixo de 150 Hz; qualquer voz fica ininteligível). Troca a cama c31 22-39, que tinha conversa. Fecha em passa-baixa junto com m1 em 19,5-20,72. Stem processado conferido no medium sem VAD (ver Revisão)"
+  },
+  {
+   "clip": "c39",
+   "src_ini": 5.0,
+   "src_fim": 15.0,
+   "saida_ini": 20.72,
+   "ganho_db": 2,
+   "fade": 0.6,
+   "nota": "cama de mata do respiro (só natureza) e da porteira, sob a fala"
+  },
+  {
+   "clip": "c28",
+   "src_ini": 3.0,
+   "src_fim": 5.5,
+   "saida_ini": 21.2,
+   "ganho_db": 6,
+   "fade": 0.2,
+   "nota": "passos em folha seca sob a descida da câmera no c35"
+  },
+  {
+   "clip": "c28",
+   "src_ini": 3.0,
+   "src_fim": 5.5,
+   "saida_ini": 30.9,
+   "ganho_db": 6,
+   "fade": 0.2,
+   "nota": "passos de folha sob a Glenda entrando na mata (c24 é mudo)"
+  },
+  {
+   "clip": "c46",
+   "src_ini": 0.0,
+   "src_fim": 3.6,
+   "saida_ini": 34.32,
+   "ganho_db": 6,
+   "fade": 0.2,
+   "nota": "botas pisando folhas e pedras, em sincronia com o plano 13 (antes da conversa de bastidor, que começa em 3,6)"
+  },
+  {
+   "clip": "c29",
+   "src_ini": 4.0,
+   "src_fim": 11.0,
+   "saida_ini": 36.72,
+   "ganho_db": 6,
+   "fade": 0.3,
+   "nota": "passos em pedra molhada e riacho sob o drop (natureza com música por cima); limpo no medium"
+  },
+  {
+   "clip": "c15",
+   "src_ini": 45.0,
+   "src_fim": 50.0,
+   "saida_ini": 46.2,
+   "ganho_db": 14,
+   "fade": 0.5,
+   "nota": "riacho: a água assume quando o bumbo para (48,62); limpo no medium"
+  },
+  {
+   "clip": "c32",
+   "src_ini": 109.0,
+   "src_fim": 126.0,
+   "saida_ini": 50.8,
+   "ganho_db": 8,
+   "fade": 0.8,
+   "nota": "vento nos eucaliptos e pássaros, sem voz (c32 105-127 vazio no medium): o ar aberto do alto, sob o break e o drop 2 até a porta"
+  },
+  {
+   "clip": "c32",
+   "src_ini": 88.3,
+   "src_fim": 89.3,
+   "saida_ini": 71.02,
+   "ganho_db": 10,
+   "fade": 0.05,
+   "nota": "PONTE DE SOM: baque real de porta de carro (transiente grave em 88,4) em 71,12, no corte do mirante para a cabine; o m2 some em passa-baixa junto"
+  },
+  {
+   "clip": "c01",
+   "src_ini": 20.0,
+   "src_fim": 24.4,
+   "saida_ini": 74.82,
+   "ganho_db": -14,
+   "fade": 0.4,
+   "nota": "rumor de carro baixo (passa-baixa 200 Hz) sob o beijo"
+  },
+  {
+   "clip": "c41",
+   "src_ini": 15.72,
+   "src_fim": 18.2,
+   "saida_ini": 84.02,
+   "ganho_db": -20,
+   "fade": 0.6,
+   "nota": "a festa continua ao longe sob o olhar da Glenda (c05 é mudo): multidão e show do c41 com passa-baixa de 900 Hz, a voz do cantor some"
+  },
+  {
+   "clip": "c39",
+   "src_ini": 0.5,
+   "src_fim": 7.8,
+   "saida_ini": 86.16,
+   "ganho_db": 0,
+   "fade": 0.6,
+   "nota": "manhã: mata limpa sob o plano final do porta-malas (entra no dissolve)"
+  },
+  {
+   "clip": "c39",
+   "src_ini": 12.0,
+   "src_fim": 15.0,
+   "saida_ini": 93.91,
+   "ganho_db": -4,
+   "fade": 2.5,
+   "nota": "cauda depois do estrondo, sai em fade sob a assinatura"
+  }
+ ],
+ "falas": [
+  {
+   "clip": "c40",
+   "src_ini": 5.2,
+   "src_fim": 10.6,
+   "saida_ini": 25.12,
+   "texto_conferido": "Aqui é filha do mato… filha do mato. (medium: \"Aqui é filha do mato, filha do mato.\"; o small ouve \"filho\", mas o medium em duas rodadas e o contexto, ela falando de si, dão \"filha\"). 1ª frase 5,3-6,8 fora de quadro sobre o c39; 2ª frase 9,5-10,4 na câmera",
+   "legenda": true
+  },
+  {
+   "clip": "c04",
+   "src_ini": 37.3,
+   "src_fim": 41.0,
+   "saida_ini": 71.12,
+   "texto_conferido": "Troca curta entre os dois, palavras ininteligíveis: frase (37,74-38,58), \"Hã?\" (39,30-39,56), a mesma frase repetida (39,90-40,70). Medium: \"Nem tu, amor! / Hã? / Nem tu!\"; small: \"Thank you / Ah? / Thank you\"; small com passa-faixa: \"Tenho duomo! / Tenho duomo!\". Os modelos divergem nas palavras e concordam no ritmo (frase, pergunta, repetição): é conversa real, mas sem legenda. Corte em 41,0, antes do palavrão de 42-44",
+   "legenda": false
+  }
+ ],
+ "looks": {
+  "cabine": {
+   "descricao": "Interior do carro: pele quente e natural, janelas com leve halo, contraste medio.",
+   "receita_ffmpeg": "eq=contrast=1.05:gamma=1.02:saturation=1.0,colorbalance=rm=0.03:bm=-0.03:bs=0.03,curves=master='0/0.02 0.5/0.5 1/0.96',gblur=sigma=0 ,vignette=PI/4,noise=alls=6:allf=t"
+  },
+  "estrada_dourada": {
+   "descricao": "Por do sol e estrada: altas ambar, sombras puxadas para azul petroleo, flare preservado.",
+   "receita_ffmpeg": "eq=contrast=1.08:saturation=1.12,colorbalance=rs=-0.04:bs=0.06:rh=0.08:gh=0.03:bh=-0.06,curves=b='0/0.04 0.5/0.48 1/0.94',vignette=PI/4.5,noise=alls=5:allf=t"
+  },
+  "mata_verde": {
+   "descricao": "Dentro da mata: verdes profundos tendendo a esmeralda, amarelos-verdes contidos, pretos levemente levantados (filme), pele protegida.",
+   "receita_ffmpeg": "eq=contrast=1.06:saturation=1.04:gamma=0.98,colorbalance=rs=-0.03:gs=0.02:bs=0.04:gm=0.02:rh=0.04:bh=-0.04,hue=h=-4,curves=master='0/0.03 0.25/0.22 0.5/0.5 0.75/0.79 1/0.97',vignette=PI/5,noise=alls=5:allf=t"
+  },
+  "cerrado_verde": {
+   "descricao": "Mirante e cerrado ao sol duro: segura o ceu, tira o verde-limao estourado, mais densidade.",
+   "receita_ffmpeg": "eq=contrast=1.04:saturation=0.95:gamma=0.97,colorbalance=gm=-0.02:bm=0.02:rh=0.03:bh=-0.03,hue=h=-6:s=0.95,curves=master='0/0.02 0.5/0.47 1/0.95',vignette=PI/5,noise=alls=5:allf=t"
+  },
+  "agua_ambar": {
+   "descricao": "Riacho e poco de agua escura: realca o ambar e o vermelho do tanino, sombras profundas.",
+   "receita_ffmpeg": "eq=contrast=1.1:saturation=1.18,colorbalance=rm=0.05:bm=-0.05:bs=0.04,curves=master='0/0 0.3/0.26 0.7/0.74 1/1',vignette=PI/4.5,noise=alls=5:allf=t"
+  },
+  "cume_ouro": {
+   "descricao": "Serra e golden hour. Varios destes arquivos (c37, c38, c43, c45, c44, c32) ja vieram com filtro teal/laranja do app: aqui e so casar, tirando o ciano exagerado e aquecendo as altas. Usado também em c33, c46 e c32, que vieram com o mesmo filtro do app.",
+   "receita_ffmpeg": "eq=contrast=1.02:saturation=0.92,colorbalance=bs=-0.03:gs=-0.02:rh=0.05:gh=0.02:bh=-0.05,curves=master='0/0.03 0.5/0.5 1/0.97',vignette=PI/5,noise=alls=5:allf=t"
+  },
+  "noite_som": {
+   "descricao": "Festa na praca: pretos firmes, luzes praticas quentes, magenta e verde do palco preservados, grao mais forte.",
+   "receita_ffmpeg": "eq=contrast=1.12:saturation=1.1:brightness=-0.02,colorbalance=rs=-0.02:bs=0.05:rh=0.06:bh=-0.04,curves=master='0/0 0.15/0.08 0.5/0.5 1/0.98',vignette=PI/3.5,noise=alls=9:allf=t"
+  },
+  "nenhum": {
+   "descricao": "quadro preto gerado",
+   "receita_ffmpeg": "color=c=black"
+  }
+ },
+ "textos": [
+  {
+   "saida_ini": 3.3,
+   "saida_fim": 6.75,
+   "texto": "ITAITU",
+   "estilo": "título central, serifa fina de cinema (ex.: Cormorant Garamond Light), caixa alta, tracking +600, branco 92%, entra em fade de 0,6 s com leve desfoque saindo"
+  },
+  {
+   "saida_ini": 4.4,
+   "saida_fim": 6.75,
+   "texto": "Chapada Diamantina · Bahia · 19–22.11.2026",
+   "estilo": "linha pequena abaixo do título, sans fina (Inter Light), 22 px, tracking +200, branco 70%"
+  },
+  {
+   "saida_ini": 7.2,
+   "saida_fim": 9.7,
+   "texto": "I · A ESTRADA",
+   "estilo": "letreiro de capítulo na barra preta inferior da moldura 2.39, sans fina 20 px, tracking +300, branco 75%, alinhado à esquerda na margem de 96 px"
+  },
+  {
+   "saida_ini": 7.2,
+   "saida_fim": 9.7,
+   "texto": "19.11 · 17h10",
+   "estilo": "mesma linha, à direita, mono 18 px, branco 55%. Hora real do arquivo original c02 (com GPS): início 17:09:43 + 35,5 s = 17:10"
+  },
+  {
+   "saida_ini": 20.9,
+   "saida_fim": 23.6,
+   "texto": "II · A MATA",
+   "estilo": "letreiro de capítulo (mesmo estilo), sem hora (c35 passou pelo app: hora não confiável)"
+  },
+  {
+   "saida_ini": 25.15,
+   "saida_fim": 26.8,
+   "texto": "Aqui é filha do mato…",
+   "estilo": "legenda de fala, sans 34 px, branco com sombra suave, dentro da imagem acima da barra inferior; palavras entram no tempo da fala (voz fora de quadro, sobre o c39)"
+  },
+  {
+   "saida_ini": 29.35,
+   "saida_fim": 30.55,
+   "texto": "…filha do mato.",
+   "estilo": "legenda de fala (mesmo estilo), com ela na câmera"
+  },
+  {
+   "saida_ini": 51.3,
+   "saida_fim": 54.6,
+   "texto": "III · O MIRANTE",
+   "estilo": "letreiro de capítulo (mesmo estilo), sem altitude"
+  },
+  {
+   "saida_ini": 69.3,
+   "saida_fim": 71.0,
+   "texto": "−11,3332  −40,5036",
+   "estilo": "mono pequeno no canto inferior direito, branco 55%, sem moldura (está aberta): GPS real do arquivo original c14 (mirante, 20.11)"
+  },
+  {
+   "saida_ini": 71.4,
+   "saida_fim": 73.9,
+   "texto": "IV · NÓS",
+   "estilo": "letreiro de capítulo (mesmo estilo), na barra inferior da moldura que voltou a 2.39"
+  },
+  {
+   "saida_ini": 94.35,
+   "saida_fim": 96.91,
+   "texto": "ITAITU",
+   "estilo": "o MESMO título da abertura (mesma fonte, tamanho e tracking), centro, fade-in 0,6 s, fade-out nos últimos 0,4 s"
+  },
+  {
+   "saida_ini": 94.85,
+   "saida_fim": 96.91,
+   "texto": "fim.",
+   "estilo": "Playfair Display itálico, ~26 px, branco 60%, centralizado logo abaixo do título, fade-in 0,5 s"
+  }
+ ],
+ "assinatura": "SEM MARCA (vídeo para o Instagram PESSOAL do Marcos; nada de creat.MTT). Encerramento em espelho com a abertura: a tampa do porta-malas bate em 93,73 e o quadro fica preto; 0,4 s de silêncio total; depois a mata volta baixinho (grilos/vento do próprio material, sem voz) e o título 'ITAITU' reaparece no mesmo estilo da abertura (fade 0,6 s), com 'fim.' embaixo em Playfair Display itálico pequeno (branco 60%) 0,5 s depois. Segura até 96,91 e funde para o preto."
+}

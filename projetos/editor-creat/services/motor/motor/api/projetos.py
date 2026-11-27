@@ -110,8 +110,10 @@ def listar_projetos(limite: int = 50):
     with _con() as con:
         linhas = con.execute(
             """SELECT p.id, p.nome, p.estado, p.tipo_video, p.criado, p.atualizado,
-                      (SELECT COUNT(*) FROM arquivos a WHERE a.projeto=p.id) AS arquivos
-               FROM projetos p ORDER BY p.atualizado DESC LIMIT ?""", (limite,)).fetchall()
+                      (SELECT COUNT(*) FROM arquivos a WHERE a.projeto=p.id) AS arquivos,
+                      ce.tipo AS espera
+               FROM projetos p LEFT JOIN conversa_espera ce ON ce.projeto=p.id
+               ORDER BY p.atualizado DESC LIMIT ?""", (limite,)).fetchall()
         return [dict(r) for r in linhas]
 
 
@@ -124,6 +126,13 @@ def ver_projeto(pid: str):
         p["jobs"] = banco.jobs_do_projeto(con, pid)
         for j in p["jobs"]:
             j["erro"] = (j["erro"] or "").strip().splitlines()[-1][:300] if j["erro"] else None
+        from motor.etapas import espelho
+        nuvem = espelho.resumo(con, pid)
+        if nuvem is not None:             # só com o espelho ligado (EDITOR_ESPELHO=1): desligado, nada aparece na tela
+            p["nuvem"] = nuvem
+            est = {r["chave"]: r["estado"] for r in con.execute("SELECT chave, estado FROM nuvem WHERE projeto=?", (pid,))}
+            for a in p["arquivos"]:
+                a["nuvem"] = est.get(a["chave"])
         return p
 
 
@@ -173,16 +182,33 @@ def registrar_arquivo(pid: str, corpo: NovoArquivo):
 
 @rotas.post("/projetos/{pid}/importar", status_code=202)
 def importar_link(pid: str, corpo: Importacao):
+    """Link do Dropbox (arquivo ou pasta) ou do Drive (arquivo ou PASTA). Pasta do Drive é listada na hora: o dono vê
+    quantos vídeos entraram (`detalhe`) e pasta restrita, apagada, vazia ou já importada volta 422 com o passo a passo."""
+    pasta = None
     try:
-        importar.link_direto(corpo.url)          # valida antes de enfileirar (host, formato, pasta do Drive)
-    except importar.ErroImportacao as e:
+        direto, tipo = importar.link_direto(corpo.url)          # valida antes de enfileirar (host, formato)
+        sondar = os.environ.get("EDITOR_SONDAR_LINK", "1") == "1"
+        if tipo == "pasta_drive":
+            pasta, aviso = importar.sondar_pasta(direto) if sondar else (None, None)
+        else:
+            aviso = importar.sondar(corpo.url) if sondar else None
+    except importar.ErroImportacao as e:      # link que pede login ou não existe: o motivo aparece embaixo do botão, na hora
         raise HTTPException(422, str(e)) from e
     with _con() as con:
         p = _projeto(con, pid)
         if p["estado"] not in ESTADOS_ABERTOS:
             raise HTTPException(409, "o projeto já está em direção/montagem")
+        extra: dict = {}
+        if pasta is not None:
+            ja = importar.importados_drive(con, pid)
+            novos = [i for i in pasta["itens"] if i["id"] not in ja]
+            if not novos:
+                raise HTTPException(422, importar.msg_pasta_ja_importada(len(pasta["itens"])))
+            extra["pasta"] = {"nome": pasta["nome"], "videos": len(novos), "ignorados": pasta["ignorados"],
+                              "subpastas": pasta["subpastas"], "ja_no_projeto": len(pasta["itens"]) - len(novos), "bytes": None}
+            extra["detalhe"] = importar.detalhe_pasta(pasta, len(novos), len(pasta["itens"]) - len(novos))
         aid, _ = importar.registrar_arquivo(con, pid, "importando do link…", None, 0, entrada={"url": corpo.url.strip()})
-        return {"id": aid, "mensagem": "Importação na fila: o motor baixa e já começa a ler."}
+        return {"id": aid, "mensagem": "Importação na fila: o motor baixa e já começa a ler.", **({"aviso": aviso} if aviso else {}), **extra}
 
 
 def _recolher_orfaos(con, cfg, arm, pid: str) -> int:
@@ -242,29 +268,47 @@ def fechar_envio(pid: str):
 
 
 # ---------------- eventos ao vivo (SSE) ----------------
-def _buscar_eventos(pid: str, depois: int) -> list[dict]:
+_RE_SEM = re.compile(r"^[a-z_]+(,[a-z_]+)*$")
+
+
+def _buscar_eventos(pid: str, depois: int, sem: tuple = ()) -> list[dict]:
     with _con() as con:
-        return banco.eventos_desde(con, pid, depois)
+        return banco.eventos_desde(con, pid, depois, sem=sem)
 
 
 def _formatar(e: dict) -> str:
     return f"id: {e['id']}\nevent: {e['tipo']}\ndata: {json.dumps(e, ensure_ascii=False)}\n\n"
 
 
+def _efemero(pid: str, tipo: str, dados: dict) -> str:
+    """Evento sem id (evento-efemero.schema.json): não fica no banco e não mexe no Last-Event-ID."""
+    return f"event: {tipo}\ndata: {json.dumps({'tipo': tipo, 'projeto': pid, 'dados': dados}, ensure_ascii=False)}\n\n"
+
+
 @rotas.get("/projetos/{pid}/eventos")
-async def eventos(pid: str, request: Request, depois: int = 0, seguir: bool = True, ate: float = 3600.0,
-                  last_event_id: Optional[str] = Header(default=None)):
+async def eventos(pid: str, request: Request, depois: int = 0, seguir: bool = True, ate: Optional[float] = None,
+                  v: int = 1, sem: Optional[str] = None, last_event_id: Optional[str] = Header(default=None)):
+    """v=1 (padrão): o SSE de sempre. v=2: o gerador da conversa (rascunho, instantâneo, ping com dados, ate de 600 s).
+    EDITOR_SSE_NOVO=0 faz v=2 servir o gerador antigo, byte a byte. sem: tipos fora (filtrados no SQL), nos dois."""
     with _con() as con:
         _projeto(con, pid)
+    if sem is not None and not _RE_SEM.match(sem):
+        raise HTTPException(422, "sem: tipos separados por vírgula, só letras minúsculas e _")
+    filtro = tuple(sorted(set(sem.split(",")))) if sem else ()
     cursor = max(depois, int(last_event_id) if (last_event_id or "").isdigit() else 0)
-    ate = max(1.0, min(ate, 6 * 3600.0))
+    cfg, _ = _config()
+    if v == 2 and cfg.sse_novo:
+        return StreamingResponse(_gerar_v2(cfg, pid, request, cursor, seguir, max(1.0, min(600.0 if ate is None else ate, 6 * 3600.0)), filtro),
+                                 media_type="text/event-stream",
+                                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
+    ate = max(1.0, min(3600.0 if ate is None else ate, 6 * 3600.0))
 
     async def gerar():
         nonlocal cursor
         inicio, ultimo_ping = time.monotonic(), time.monotonic()
         yield "retry: 2000\n\n"
         while True:
-            novos = await asyncio.to_thread(_buscar_eventos, pid, cursor)
+            novos = await asyncio.to_thread(_buscar_eventos, pid, cursor, filtro)
             for e in novos:
                 cursor = e["id"]
                 yield _formatar(e)
@@ -280,24 +324,92 @@ async def eventos(pid: str, request: Request, depois: int = 0, seguir: bool = Tr
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
 
 
+async def _gerar_v2(cfg, pid: str, request: Request, cursor: int, seguir: bool, ate: float, filtro: tuple):
+    """SSE v2 (plano 13.4): uma conexão de leitura por cliente, fechada no finally; backlog filtrado no SQL; um
+    instantâneo ao esvaziar o backlog; tique de 150 ms com turno rodando (0,5 s sem); rascunho só quando muda;
+    event: ping com dados a cada 15 s; teto de 600 s (o EventSource reconecta com Last-Event-ID)."""
+    from motor.conversa import laco
+    con = await asyncio.to_thread(banco.conectar_leitura, cfg.banco)
+    try:
+        inicio, ultimo_ping, ultimo_v = time.monotonic(), time.monotonic(), -1
+        yield "retry: 2000\n\n"
+        while True:
+            novos = await asyncio.to_thread(banco.eventos_desde, con, pid, cursor, 200, filtro)
+            for e in novos:
+                cursor = e["id"]
+                yield _formatar(e)
+            if len(novos) < 200:
+                break
+        m = laco.atual()
+        if m is not None:
+            inst = await asyncio.to_thread(m.instantaneo, cfg, pid, con)
+            ultimo_v = (inst.get("rascunho") or {}).get("v", -1)
+        else:
+            from motor.conversa import preferencia, teto
+            ligada, motivo = preferencia.estado(cfg, dono_do_lock=True)
+            from motor.etapas import passos
+            ab = await asyncio.to_thread(passos.abertos, con, pid)
+            inst = {"ligada": ligada, "gasto_hoje_usd": round(await asyncio.to_thread(teto.gasto_hoje_usd, cfg), 4),
+                    "teto_usd_dia": teto.teto_usd_dia(cfg), **({"motivo": motivo} if motivo else {}), **({"passos_abertos": ab} if ab else {})}
+        yield _efemero(pid, "instantaneo", inst)
+        if not seguir:
+            return
+        while True:
+            m = laco.atual()
+            rodando = m is not None and m.rodando(pid)
+            novos = await asyncio.to_thread(banco.eventos_desde, con, pid, cursor, 200, filtro)
+            for e in novos:
+                cursor = e["id"]
+                yield _formatar(e)
+            if rodando:
+                r = m.rascunho.get(pid)
+                if r and r.get("v", -1) != ultimo_v and r.get("turno"):
+                    ultimo_v = r["v"]
+                    yield _efemero(pid, "rascunho", dict(r))
+            if novos:
+                continue
+            if time.monotonic() - inicio > ate or await request.is_disconnected():
+                return
+            if time.monotonic() - ultimo_ping > 15:
+                ultimo_ping = time.monotonic()
+                yield _efemero(pid, "ping", {"ts": banco.agora_iso()})
+            await asyncio.sleep(0.15 if rodando else 0.5)
+    finally:
+        con.close()
+
+
 # ---------------- arquivos do armazenamento (player) com Range ----------------
 _RE_RANGE = re.compile(r"^bytes=(\d*)-(\d*)$")
 
 
 _RE_SAIDA = re.compile(r"^saidas/([^/]+)/([^/]+)/(.+)$")
-_SO_ENTREGUE = re.compile(r"^(final\.mp4|mix\.wav|stems/.*|capa\.jpg|entrega\.json)$")
+_SO_ENTREGUE = re.compile(r"^(final\.mp4|mix\.wav|stems/.*|capa\.jpg|entrega\.json|cor\.json|cor/.*)$")
+
+
+_NUNCA_SERVIDO = re.compile(r"^stems/reais(\.[A-Za-z0-9]+)?$")   # som do banco (Sonniss) isolado: a licença proíbe redistribuir
+
+
+REGRA_NAO_ENTREGUE = ("Versão não entregue nunca sai do editor: não baixa, não tem link e não vai para o cliente. A segurada pela "
+                      "conferência pode ser assistida só aqui, na tela do projeto, marcada como não entregue.")
 
 
 def _liberado(chave: str) -> None:
-    """Regra do dono: nunca mostrar/baixar versão com erro conhecido. O vídeo (e o áudio) de uma versão só saem
-    depois que a versão está 'entregue' (QA aprovado e mesmo sha256). Evidências do QA continuam visíveis."""
+    """Regra do dono: versão não entregue nunca sai do editor: não baixa, não tem link e não vai para o cliente. O vídeo (e o
+    áudio) de uma versão só saem por aqui depois que a versão está 'entregue' (QA aprovado e mesmo sha256). A segurada pela
+    conferência pode ser assistida só na tela do projeto, marcada como não entregue, pela rota própria
+    `/v1/projetos/{pid}/versoes/{v}/segurada/video` (api/versoes.py), que nunca passa por esta função nem redireciona para o R2.
+    Evidências do QA continuam visíveis.
+    O stem `reais` (sons do banco sozinhos, M6) nunca sai, nem entregue: só o filme e o mix completo, que são a obra."""
     m = _RE_SAIDA.match(chave)
+    if m and _NUNCA_SERVIDO.match(m.group(3)):
+        raise HTTPException(403, "o som do banco isolado não é servido (licença: só dentro do filme)")
     if not m or not _SO_ENTREGUE.match(m.group(3)):
         return
     with _con() as con:
         r = con.execute("SELECT estado FROM versoes WHERE projeto=? AND id=?", (m.group(1), m.group(2))).fetchone()
     if r is None or r["estado"] != "entregue":
-        raise HTTPException(403, "esta versão ainda não passou na conferência automática (QA); o vídeo sai só depois de aprovado")
+        raise HTTPException(403, "esta versão não foi entregue: não baixa, não tem link e não vai para o cliente (a segurada pela "
+                                 "conferência dá para assistir só na tela do projeto)")
 
 
 def _cabecalhos_tipo(nome: str) -> tuple[str, dict]:
@@ -324,8 +436,13 @@ def servir_arquivo(chave: str, range: Optional[str] = Header(default=None)):
     if getattr(arm, "nome", "") != "local":
         return RedirectResponse(arm.url(chave), status_code=307)
     caminho = arm.caminho_local(chave)
-    total = caminho.stat().st_size
     tipo, extra = _cabecalhos_tipo(caminho.name)
+    return com_range(caminho, range, tipo, {"Cache-Control": "private, max-age=3600", **extra})
+
+
+def com_range(caminho: pathlib.Path, range: Optional[str], tipo: str, cabecalhos: dict) -> StreamingResponse:
+    """Arquivo local em streaming com Range (200 inteiro, 206 pedaço, 416 fora). Usado pelo player e pela versão segurada."""
+    total = caminho.stat().st_size
     ini, fim, status = 0, total - 1, 200
     if range:
         m = _RE_RANGE.match(range.strip())
@@ -352,7 +469,7 @@ def servir_arquivo(chave: str, range: Optional[str] = Header(default=None)):
                 falta -= len(bloco)
                 yield bloco
 
-    cab = {"Accept-Ranges": "bytes", "Content-Length": str(tamanho), "Cache-Control": "private, max-age=3600", **extra}
+    cab = {"Accept-Ranges": "bytes", "Content-Length": str(tamanho), **cabecalhos}
     if status == 206:
         cab["Content-Range"] = f"bytes {ini}-{fim}/{total}"
     return StreamingResponse(ler(), status_code=status, media_type=tipo, headers=cab)

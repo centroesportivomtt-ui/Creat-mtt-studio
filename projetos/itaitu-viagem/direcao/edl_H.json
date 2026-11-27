@@ -1,0 +1,1654 @@
+{
+ "formato": "H",
+ "largura": 1920,
+ "altura": 1080,
+ "fps": 30,
+ "dur_alvo": 96.0,
+ "trilha": {
+  "bpm": 100,
+  "descricao": "Trilha original organica afro-brasileira/downtempo: percussao de mato (caxixi, alfaia, atabaque abafado), berimbau como textura, kalimba, baixo quente, pads com ar, vocal feminino sem letra (so 'ooh/aah'). Compasso de 2.4 s; todos os cortes caem em tempo ou meio tempo.",
+  "prompt": "Original instrumental track, 96 seconds, 100 BPM, organic afro-brazilian downtempo / organic house. Brazilian backlands forest mood: caxixi shakers, alfaia and muted atabaque drums, berimbau texture, kalimba plucks, warm round analog bass, airy evolving pads, distant wordless female vocal chant (no lyrics, only 'ooh' and 'aah'). Structure: 0-4.8s filtered intro with tension; 4.8-14.4s soft pulse, kalimba motif; 14.4-28.8s hand percussion enters; 28.8-48s groove builds, full percussion, rising energy; 48-60s breakdown, drums drop out, only pads, plucks and water-like textures; riser into 60s; 60-76.8s euphoric full drop, big warm bass and vocal chant; 76.8-86.4s night section, deeper bass and festive percussion; 86.4-96s outro, elements fall away, final warm chord resolves at 93.6s and rings out. Cinematic, warm, no vocals with words, no copyrighted melodies.",
+  "estrutura": [
+   {
+    "ini": 0,
+    "fim": 4.8,
+    "secao": "gancho",
+    "energia": 4,
+    "nota": "Trilha quase ausente: o som do carro (diegetico) domina 0-1.2 s; a trilha nasce filtrada quando a mata abre."
+   },
+   {
+    "ini": 4.8,
+    "fim": 14.4,
+    "secao": "estrada",
+    "energia": 3,
+    "nota": "Pulso leve, motivo de kalimba; titulo ZOADA."
+   },
+   {
+    "ini": 14.4,
+    "fim": 28.8,
+    "secao": "entrada na mata",
+    "energia": 5,
+    "nota": "Entra a percussao de mao; passos e folhas casados no tempo."
+   },
+   {
+    "ini": 28.8,
+    "fim": 48,
+    "secao": "ritmo da trilha",
+    "energia": 7,
+    "nota": "Groove cheio, cortes a cada 1.2 s; riser no fim."
+   },
+   {
+    "ini": 48,
+    "fim": 60,
+    "secao": "agua (break)",
+    "energia": 3,
+    "nota": "Bateria sai; agua e gotas viram o ritmo; riser de 4.8 s para o drop."
+   },
+   {
+    "ini": 60,
+    "fim": 76.8,
+    "secao": "cume (drop)",
+    "energia": 9,
+    "nota": "Drop no 60.0 s com o flare; vocal sem letra; matte do H abre."
+   },
+   {
+    "ini": 76.8,
+    "fim": 86.4,
+    "secao": "noite / som",
+    "energia": 8,
+    "nota": "Sub drop na luz vermelha; grave mais fundo; som ao vivo da praca por cima, curto."
+   },
+   {
+    "ini": 86.4,
+    "fim": 96,
+    "secao": "volta e assinatura",
+    "energia": 2,
+    "nota": "Silencio de 0.3 s, passaros da manha, acorde final resolve em 93.6 s sob a assinatura."
+   }
+  ]
+ },
+ "looks": {
+  "cabine": {
+   "descricao": "Interior do carro: pele quente e natural, janelas com leve halo, contraste medio.",
+   "receita_ffmpeg": "eq=contrast=1.05:gamma=1.02:saturation=1.0,colorbalance=rm=0.03:bm=-0.03:bs=0.03,curves=master='0/0.02 0.5/0.5 1/0.96',gblur=sigma=0 ,vignette=PI/4,noise=alls=6:allf=t"
+  },
+  "estrada_dourada": {
+   "descricao": "Por do sol e estrada: altas ambar, sombras puxadas para azul petroleo, flare preservado.",
+   "receita_ffmpeg": "eq=contrast=1.08:saturation=1.12,colorbalance=rs=-0.04:bs=0.06:rh=0.08:gh=0.03:bh=-0.06,curves=b='0/0.04 0.5/0.48 1/0.94',vignette=PI/4.5,noise=alls=5:allf=t"
+  },
+  "mata_verde": {
+   "descricao": "Dentro da mata: verdes profundos tendendo a esmeralda, amarelos-verdes contidos, pretos levemente levantados (filme), pele protegida.",
+   "receita_ffmpeg": "eq=contrast=1.06:saturation=1.04:gamma=0.98,colorbalance=rs=-0.03:gs=0.02:bs=0.04:gm=0.02:rh=0.04:bh=-0.04,hue=h=-4,curves=master='0/0.03 0.25/0.22 0.5/0.5 0.75/0.79 1/0.97',vignette=PI/5,noise=alls=5:allf=t"
+  },
+  "cerrado_verde": {
+   "descricao": "Mirante e cerrado ao sol duro: segura o ceu, tira o verde-limao estourado, mais densidade.",
+   "receita_ffmpeg": "eq=contrast=1.04:saturation=0.95:gamma=0.97,colorbalance=gm=-0.02:bm=0.02:rh=0.03:bh=-0.03,hue=h=-6:s=0.95,curves=master='0/0.02 0.5/0.47 1/0.95',vignette=PI/5,noise=alls=5:allf=t"
+  },
+  "agua_ambar": {
+   "descricao": "Riacho e poco de agua escura: realca o ambar e o vermelho do tanino, sombras profundas.",
+   "receita_ffmpeg": "eq=contrast=1.1:saturation=1.18,colorbalance=rm=0.05:bm=-0.05:bs=0.04,curves=master='0/0 0.3/0.26 0.7/0.74 1/1',vignette=PI/4.5,noise=alls=5:allf=t"
+  },
+  "cume_ouro": {
+   "descricao": "Serra e golden hour. Varios destes arquivos (c37, c38, c43, c45, c44, c32) ja vieram com filtro teal/laranja do app: aqui e so casar, tirando o ciano exagerado e aquecendo as altas.",
+   "receita_ffmpeg": "eq=contrast=1.02:saturation=0.92,colorbalance=bs=-0.03:gs=-0.02:rh=0.05:gh=0.02:bh=-0.05,curves=master='0/0.03 0.5/0.5 1/0.97',vignette=PI/5,noise=alls=5:allf=t"
+  },
+  "noite_som": {
+   "descricao": "Festa na praca: pretos firmes, luzes praticas quentes, magenta e verde do palco preservados, grao mais forte.",
+   "receita_ffmpeg": "eq=contrast=1.12:saturation=1.1:brightness=-0.02,colorbalance=rs=-0.02:bs=0.05:rh=0.06:bh=-0.04,curves=master='0/0 0.15/0.08 0.5/0.5 1/0.98',vignette=PI/3.5,noise=alls=9:allf=t"
+  },
+  "luz_vermelha": {
+   "descricao": "Transicao da mao sobre a lente (c34 32.6-33.8): manter o vermelho, adicionar brilho.",
+   "receita_ffmpeg": "eq=saturation=1.1:brightness=0.02,split[a][b];[b]gblur=sigma=25[g];[a][g]blend=all_mode=screen:all_opacity=0.35,noise=alls=8:allf=t"
+  }
+ },
+ "nota_looks": "Em TODOS os looks: grao como ultimo filtro; H com matte cinemascope 2.39:1 (barras de 138 px) de 0 a 60 s, abrindo para 16:9 cheio em 0.5 s no drop (60.0 s).",
+ "segmentos": [
+  {
+   "n": 1,
+   "clip": "c02",
+   "src_ini": 8.0,
+   "src_fim": 9.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.05,
+    "mov": "push-in leve"
+   },
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "som do carro do proprio c02 8-9.2 s ALTO (-6 dB), cheio, e no ultimo 0.3 s low-pass fechando (como se a porta abrisse para fora)",
+    "camadas": [],
+    "sfx": [
+     "sub-hit grave no quadro 0",
+     "respiro de porta/vidro no corte"
+    ]
+   },
+   "texto": null,
+   "porque": "Gancho humano em 0 s: o casal na estrada, som do carro na cara. Promessa de viagem.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 0,
+   "t_fim_filme": 1.2
+  },
+  {
+   "n": 2,
+   "clip": "c13",
+   "src_ini": 0.5,
+   "src_fim": 1.1,
+   "vel": 0.25,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "pan lento do proprio plano (120 fps a 0.25x)"
+   },
+   "estabilizar": true,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "chicote",
+    "dur": 0.2,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "vento_cume: c13 2-6 s entra a -18 dB e a mata 'explode' em largura (estereo largo)"
+    ],
+    "sfx": [
+     "whoosh de chicote",
+     "cigarras subindo (pegar do c32)"
+    ]
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°19′S 40°30′W · 665 m"
+   },
+   "porque": "A janela abre: o som do carro e engolido pela zoada da mata. Imagem em camera lenta 120 fps, o primeiro 'como fizeram'.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 1.2,
+   "t_fim_filme": 3.6
+  },
+  {
+   "n": 3,
+   "clip": "c38",
+   "src_ini": 1.0,
+   "src_fim": 1.6,
+   "vel": 0.5,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estatico, flare respirando"
+   },
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "flash",
+    "dur": 0.1,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "vento_cume continua"
+    ],
+    "sfx": [
+     "impacto + reverse cymbal saindo"
+    ]
+   },
+   "texto": null,
+   "porque": "Flare do sol batendo na serra: o pico de luz que fecha o gancho em 4.8 s.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 3.6,
+   "t_fim_filme": 4.8
+  },
+  {
+   "n": 4,
+   "clip": "c30",
+   "src_ini": 12.0,
+   "src_fim": 14.4,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "travelling para frente (o proprio carro)"
+   },
+   "estabilizar": true,
+   "look": "estrada_dourada",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "som do carro c30 12-14.4 s a -20 dB, low-pass 800 Hz (musica vira so grave e motor)",
+    "camadas": [
+     "carro: c02 20-23 s por baixo, -24 dB"
+    ],
+    "sfx": []
+   },
+   "texto": {
+    "tipo": "titulo",
+    "txt": "ZOADA",
+    "sub": "Itaitu · Bahia · novembro 2026"
+   },
+   "porque": "Tunel de arvores: a estrada como portal. Entra o titulo.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 4.8,
+   "t_fim_filme": 7.2
+  },
+  {
+   "n": 5,
+   "clip": "c01",
+   "src_ini": 9.0,
+   "src_fim": 11.4,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.55,
+    "zoom": 1.1,
+    "mov": "lateral do carro, sol refletindo no alagado"
+   },
+   "estabilizar": false,
+   "look": "estrada_dourada",
+   "entrada": {
+    "tipo": "dissolve",
+    "dur": 0.4,
+    "sobrepoe": true
+   },
+   "som": {
+    "direto": "vento de estrada do c01 9-11.4 s a -22 dB",
+    "camadas": [
+     "estrada: c01 0-8 s por baixo"
+    ],
+    "sfx": [
+     "shimmer leve no flare"
+    ]
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°38′S 39°35′W · 277 m"
+   },
+   "porque": "Por do sol da chegada (19/11). Recorte 16:9 da fonte vertical 4K, sem perda.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 6.8,
+   "t_fim_filme": 9.2
+  },
+  {
+   "n": 6,
+   "clip": "c45",
+   "src_ini": 55.0,
+   "src_fim": 57.4,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estatico pela janela lateral"
+   },
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.3,
+    "sobrepoe": true
+   },
+   "som": {
+    "direto": "mudo (plano exportado sem som util)",
+    "camadas": [
+     "mata: c32 10-13 s a -22 dB"
+    ],
+    "sfx": [
+     "porta de carro abrindo (foley)"
+    ]
+   },
+   "texto": null,
+   "porque": "A moldura da janela: ele sai do carro de cara para a serra contraluz.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 8.9,
+   "t_fim_filme": 11.3
+  },
+  {
+   "n": 7,
+   "clip": "c32",
+   "src_ini": 68.4,
+   "src_fim": 71.4,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estatico, ele anda ate cobrir a lente"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "ambiente do c32 68-71.4 s a -18 dB (passaros, vento)",
+    "camadas": [
+     "mata"
+    ],
+    "sfx": [
+     "passos em areia chegando perto"
+    ]
+   },
+   "texto": null,
+   "porque": "Ele caminha ate a camera e o corpo cobre a lente: e a cortina para entrar na mata.",
+   "dur_saida": 3.0,
+   "t_ini_filme": 11.3,
+   "t_fim_filme": 14.3
+  },
+  {
+   "n": 8,
+   "clip": "c35",
+   "src_ini": 5.0,
+   "src_fim": 7.4,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.05,
+    "mov": "push-in leve digital"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "match",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "ambiente do c35 5-7.4 s a -20 dB (sem fala; a fala 'oi' e em 10-11 s, fora)",
+    "camadas": [
+     "mata"
+    ],
+    "sfx": [
+     "swish de corpo saindo da lente"
+    ]
+   },
+   "texto": null,
+   "porque": "Match de corpo: da escuridao do corpo para os raios de sol dentro da mata.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 14.3,
+   "t_fim_filme": 16.7
+  },
+  {
+   "n": 9,
+   "clip": "c14",
+   "src_ini": 14.0,
+   "src_fim": 15.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.1,
+    "mov": "folhagem em primeiro plano, balancando"
+   },
+   "estabilizar": true,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "folhagem",
+    "dur": 0.3,
+    "sobrepoe": true
+   },
+   "som": {
+    "direto": "ambiente do c14 14-15.2 s a -22 dB",
+    "camadas": [
+     "vento_cume"
+    ],
+    "sfx": [
+     "folhas roçando (foley) panoramico E>D"
+    ]
+   },
+   "texto": null,
+   "porque": "A folhagem varre a tela: transicao feita com a propria mata.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 16.4,
+   "t_fim_filme": 17.6
+  },
+  {
+   "n": 10,
+   "clip": "c14",
+   "src_ini": 21.5,
+   "src_fim": 22.7,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.1,
+    "mov": "ela entra pelo canto direito"
+   },
+   "estabilizar": true,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "ambiente do c14 21.5-22.7 s a -22 dB",
+    "camadas": [
+     "vento_cume"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "Ela invade o quadro pela direita: corpo como cortina, continuidade de acao.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 17.6,
+   "t_fim_filme": 18.8
+  },
+  {
+   "n": 11,
+   "clip": "c14",
+   "src_ini": 24.0,
+   "src_fim": 26.4,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "ela desce a pedra"
+   },
+   "estabilizar": true,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "ambiente do c14 24-26.4 s a -20 dB",
+    "camadas": [
+     "passos_pedra -26 dB"
+    ],
+    "sfx": []
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°19′S 40°30′W · 665 m"
+   },
+   "porque": "A descida entre a pedra e o angico: escala humana no cerrado.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 18.8,
+   "t_fim_filme": 21.2
+  },
+  {
+   "n": 12,
+   "clip": "c36",
+   "src_ini": 8.0,
+   "src_fim": 9.2,
+   "vel": 0.5,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "travelling para frente na trilha (60 fps a 0.5x)"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "mata: c36 0-8 s a -18 dB",
+     "passos_folha -24 dB no tempo"
+    ],
+    "sfx": [
+     "respiro grave"
+    ]
+   },
+   "texto": null,
+   "porque": "Raio de sol rasgando a trilha em camera lenta.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 21.2,
+   "t_fim_filme": 23.6
+  },
+  {
+   "n": 13,
+   "clip": "c08",
+   "src_ini": 11.5,
+   "src_fim": 12.7,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.45,
+    "zoom": 1.0,
+    "mov": "ela vira para a camera"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo (tem fala de bastidor em 13.8-17.8 s; plano termina antes)",
+    "camadas": [
+     "mata"
+    ],
+    "sfx": []
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°20′S 40°30′W · 650 m"
+   },
+   "porque": "Olhar dela para a lente: o primeiro rosto dentro da mata.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 23.6,
+   "t_fim_filme": 24.8
+  },
+  {
+   "n": 14,
+   "clip": "c46",
+   "src_ini": 0.0,
+   "src_fim": 1.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.6,
+    "zoom": 1.0,
+    "mov": "camera no chao, botas entrando"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "match",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "direto do c46 0-1.2 s (pisadas no cascalho) a -14 dB, sem fala",
+    "camadas": [
+     "passos_pedra"
+    ],
+    "sfx": [
+     "pisada grave sincronizada no tempo 1"
+    ]
+   },
+   "texto": null,
+   "porque": "Match de passos: as botas chegam no chao junto com a batida.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 24.8,
+   "t_fim_filme": 26.0
+  },
+  {
+   "n": 15,
+   "clip": "c19",
+   "src_ini": 57.0,
+   "src_fim": 58.2,
+   "vel": 0.5,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.4,
+    "zoom": 1.0,
+    "mov": "camera seguindo pelas costas (60 fps a 0.5x)"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo (c19 tem fala de bastidor no audio inteiro)",
+    "camadas": [
+     "riacho: c15 46-49 s a -20 dB",
+     "passos_pedra"
+    ],
+    "sfx": []
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°19′S 40°30′W · 664 m"
+   },
+   "porque": "Atravessando o riacho de costas: puxa a curiosidade para onde ele vai.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 26.0,
+   "t_fim_filme": 28.4
+  },
+  {
+   "n": 16,
+   "clip": "c22",
+   "src_ini": 1.4,
+   "src_fim": 3.2,
+   "vel": 0.5,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.45,
+    "zoom": 1.0,
+    "mov": "ele vem de longe pela trilha (60 fps a 0.5x)"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "speed-ramp",
+    "dur": 0.3,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo (c22 tem fala no audio)",
+    "camadas": [
+     "mata",
+     "passos_folha no tempo"
+    ],
+    "sfx": [
+     "riser curto de percussao"
+    ]
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°19′S 40°30′W · 724 m"
+   },
+   "porque": "Entrada do groove: ele avanca em camera lenta enquanto a percussao cresce.",
+   "dur_saida": 3.6,
+   "t_ini_filme": 28.4,
+   "t_fim_filme": 32.0
+  },
+  {
+   "n": 17,
+   "clip": "c25",
+   "src_ini": 13.5,
+   "src_fim": 14.7,
+   "vel": 0.5,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "ela se equilibra no tronco, bracos abertos (60 fps a 0.5x)"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "mata"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "Equilibrio no tronco: gesto bonito, leve, em camera lenta.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 32.0,
+   "t_fim_filme": 34.4
+  },
+  {
+   "n": 18,
+   "clip": "c11",
+   "src_ini": 33.5,
+   "src_fim": 34.7,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.48,
+    "zoom": 1.05,
+    "mov": "ele olha para cima"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "mata"
+    ],
+    "sfx": []
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°20′S 40°30′W · 661 m"
+   },
+   "porque": "Olhar para cima prepara o match com a copa.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 34.4,
+   "t_fim_filme": 35.6
+  },
+  {
+   "n": 19,
+   "clip": "c10",
+   "src_ini": 11.0,
+   "src_fim": 12.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.25,
+    "zoom": 1.0,
+    "mov": "contra-plongee para a copa"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "match",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "mata: passaros do c32 em destaque"
+    ],
+    "sfx": [
+     "passaro cantando no corte"
+    ]
+   },
+   "texto": null,
+   "porque": "Match de olhar: o que ele ve, a copa contra o ceu.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 35.6,
+   "t_fim_filme": 36.8
+  },
+  {
+   "n": 20,
+   "clip": "c34",
+   "src_ini": 3.0,
+   "src_fim": 4.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.45,
+    "zoom": 1.0,
+    "mov": "POV andando contra o sol"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.2,
+    "sobrepoe": true
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "passos_folha no tempo"
+    ],
+    "sfx": [
+     "shimmer de flare"
+    ]
+   },
+   "texto": null,
+   "porque": "POV em primeira pessoa contra o sol: o espectador entra na trilha.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 36.6,
+   "t_fim_filme": 37.8
+  },
+  {
+   "n": 21,
+   "clip": "c26",
+   "src_ini": 5.5,
+   "src_fim": 6.7,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "ela vem em direcao a camera"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "mata"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "Contra-campo: ela vem na direcao da lente, ritmo de batida.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 37.8,
+   "t_fim_filme": 39.0
+  },
+  {
+   "n": 22,
+   "clip": "c24",
+   "src_ini": 1.0,
+   "src_fim": 2.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "ela entra entre os troncos"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "ambiente do c24 1-2.2 s a -20 dB (sem fala)",
+    "camadas": [
+     "mata"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "Troncos claros como moldura natural; novidade de composicao.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 39.0,
+   "t_fim_filme": 40.2
+  },
+  {
+   "n": 23,
+   "clip": "c27",
+   "src_ini": 11.4,
+   "src_fim": 12.6,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.4,
+    "zoom": 1.0,
+    "mov": "close extremo, olhos"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "respiracao/vento baixo"
+    ],
+    "sfx": [
+     "batida seca"
+    ]
+   },
+   "texto": null,
+   "porque": "Close extremo no olhar: pausa humana no meio do ritmo.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 40.2,
+   "t_fim_filme": 41.4
+  },
+  {
+   "n": 24,
+   "clip": "c15",
+   "src_ini": 128.0,
+   "src_fim": 129.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.4,
+    "zoom": 1.0,
+    "mov": "selfie andando, regata com MTT"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "ambiente do c15 128-129.2 s a -22 dB (sem fala)",
+    "camadas": [
+     "mata"
+    ],
+    "sfx": []
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°19′S 40°30′W · 724 m"
+   },
+   "porque": "A regata com MTT aparece de forma natural: marca dentro da historia, sem anuncio.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 41.4,
+   "t_fim_filme": 42.6
+  },
+  {
+   "n": 25,
+   "clip": "c20",
+   "src_ini": 14.0,
+   "src_fim": 15.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.33,
+    "zoom": 1.0,
+    "mov": "ele passa rente a camera"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "mata"
+    ],
+    "sfx": [
+     "swish curto"
+    ]
+   },
+   "texto": null,
+   "porque": "Bone azul passando rente: energia e pele.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 42.6,
+   "t_fim_filme": 43.8
+  },
+  {
+   "n": 26,
+   "clip": "c21",
+   "src_ini": 5.0,
+   "src_fim": 8.6,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.45,
+    "zoom": 1.0,
+    "mov": "ele vem ate a lente e passa, corpo cobre o quadro"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo (c21 tem fala no audio)",
+    "camadas": [
+     "passos_folha alto e perto",
+     "riser para o break"
+    ],
+    "sfx": [
+     "whoosh de corpo cobrindo a lente no fim"
+    ]
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°19′S 40°30′W · 726 m"
+   },
+   "porque": "Fecha a sequencia com o corpo cobrindo a lente: cortina para a agua.",
+   "dur_saida": 3.6,
+   "t_ini_filme": 43.8,
+   "t_fim_filme": 47.4
+  },
+  {
+   "n": 27,
+   "clip": "c15",
+   "src_ini": 51.5,
+   "src_fim": 52.7,
+   "vel": 0.5,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.6,
+    "zoom": 1.0,
+    "mov": "plongee sobre o riacho ambar (60 fps a 0.5x)"
+   },
+   "estabilizar": true,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "dissolve",
+    "dur": 0.4,
+    "sobrepoe": true
+   },
+   "som": {
+    "direto": "direto do c15 51.5-52.7 s (riacho) a -14 dB",
+    "camadas": [
+     "riacho: c15 46-58 s em estereo largo"
+    ],
+    "sfx": [
+     "gota d'agua no tempo (sample)"
+    ]
+   },
+   "texto": null,
+   "porque": "Break: musica respira, so agua. A cor ambar do riacho e o 'uau' do material.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 47.0,
+   "t_fim_filme": 49.4
+  },
+  {
+   "n": 28,
+   "clip": "c16",
+   "src_ini": 19.2,
+   "src_fim": 20.4,
+   "vel": 0.5,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.6,
+    "zoom": 1.0,
+    "mov": "pan lento na queda (60 fps a 0.5x)"
+   },
+   "estabilizar": true,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "direto do c16 19.2-20.4 s (cachoeira) a -16 dB",
+    "camadas": [
+     "cachoeira: c16 12-23 s"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "A queda e o poco vermelho: a cor mais rara da viagem.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 49.4,
+   "t_fim_filme": 51.8
+  },
+  {
+   "n": 29,
+   "clip": "c29",
+   "src_ini": 2.0,
+   "src_fim": 3.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.6,
+    "zoom": 1.0,
+    "mov": "POV pisando nas pedras"
+   },
+   "estabilizar": true,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "direto do c29 2-3.2 s (pisadas na agua) a -14 dB",
+    "camadas": [
+     "passos_pedra"
+    ],
+    "sfx": []
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°19′S 40°30′W · 707 m"
+   },
+   "porque": "Pisada na pedra molhada: textura sonora e visual.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 51.8,
+   "t_fim_filme": 53.0
+  },
+  {
+   "n": 30,
+   "clip": "c16",
+   "src_ini": 11.8,
+   "src_fim": 14.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.45,
+    "zoom": 1.0,
+    "mov": "selfie, ela no poco vermelho ao fundo"
+   },
+   "estabilizar": true,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "direto do c16 12-14.2 s a -18 dB (depois da fala 'vamos', que termina em 11.9 s)",
+    "camadas": [
+     "cachoeira"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "O casal e o poco vermelho no mesmo quadro: o momento postal da viagem.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 53.0,
+   "t_fim_filme": 55.4
+  },
+  {
+   "n": 31,
+   "clip": "c46",
+   "src_ini": 30.0,
+   "src_fim": 34.6,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "camera no chao, ele diante das pedras do rio"
+   },
+   "estabilizar": false,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo (c46 tem fala de bastidor 3.6-55.8 s)",
+    "camadas": [
+     "riacho",
+     "vento_cume subindo (riser para o drop)"
+    ],
+    "sfx": [
+     "riser longo + respiro reverso"
+    ]
+   },
+   "texto": null,
+   "porque": "Plano parado e contemplativo, segura o folego antes do drop.",
+   "dur_saida": 4.6,
+   "t_ini_filme": 55.4,
+   "t_fim_filme": 60.0
+  },
+  {
+   "n": 32,
+   "clip": "c37",
+   "src_ini": 0.6,
+   "src_fim": 1.8,
+   "vel": 0.5,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "pan do sol para a serra (60 fps a 0.5x)"
+   },
+   "estabilizar": true,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "speed-ramp",
+    "dur": 0.4,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "vento_cume largo"
+    ],
+    "sfx": [
+     "impacto grave no drop",
+     "flare whoosh"
+    ]
+   },
+   "texto": null,
+   "porque": "DROP: a moldura do cinemascope abre para 16:9 cheio e o sol estoura na serra.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 60.0,
+   "t_fim_filme": 62.4
+  },
+  {
+   "n": 33,
+   "clip": "c13",
+   "src_ini": 19.0,
+   "src_fim": 19.6,
+   "vel": 0.25,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "névoa de luz entre as folhas (120 fps a 0.25x)"
+   },
+   "estabilizar": true,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "vento_cume"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "Camera superlenta de 120 fps: textura de cinema.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 62.4,
+   "t_fim_filme": 64.8
+  },
+  {
+   "n": 34,
+   "clip": "c43",
+   "src_ini": 10.4,
+   "src_fim": 11.6,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.42,
+    "zoom": 1.0,
+    "mov": "selfie, ele olha a serra, luz dourada"
+   },
+   "estabilizar": true,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "vento_cume"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "Rosto dourado contra o capim: a recompensa da subida.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 64.8,
+   "t_fim_filme": 66.0
+  },
+  {
+   "n": 35,
+   "clip": "c43",
+   "src_ini": 13.6,
+   "src_fim": 16.0,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.45,
+    "zoom": 1.0,
+    "mov": "a camera gira e revela a serra"
+   },
+   "estabilizar": true,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "vento_cume"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "O ponto de vista dele: a serra inteira.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 66.0,
+   "t_fim_filme": 68.4
+  },
+  {
+   "n": 36,
+   "clip": "c39",
+   "src_ini": 8.0,
+   "src_fim": 10.4,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.45,
+    "zoom": 1.0,
+    "mov": "estatico, ela pula a porteira"
+   },
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "ambiente do c39 8-10.4 s a -20 dB (sem fala)",
+    "camadas": [
+     "vento_cume"
+    ],
+    "sfx": [
+     "madeira rangendo (foley leve)"
+    ]
+   },
+   "texto": {
+    "tipo": "hud",
+    "txt": "11°21′S 40°29′W"
+   },
+   "porque": "Porteira de madeira e ceu azul: liberdade, gesto de passagem.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 68.4,
+   "t_fim_filme": 70.8
+  },
+  {
+   "n": 37,
+   "clip": "c37",
+   "src_ini": 6.0,
+   "src_fim": 7.2,
+   "vel": 0.5,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "pan termina no vale aberto (60 fps a 0.5x)"
+   },
+   "estabilizar": true,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "vento_cume"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "O vale aberto: respiro largo no meio do drop.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 70.8,
+   "t_fim_filme": 73.2
+  },
+  {
+   "n": 38,
+   "clip": "c43",
+   "src_ini": 29.0,
+   "src_fim": 32.6,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.55,
+    "zoom": 1.0,
+    "mov": "selfie, rosto com a serra ao fundo"
+   },
+   "estabilizar": true,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "vento_cume"
+    ],
+    "sfx": [
+     "riser para a noite"
+    ]
+   },
+   "texto": null,
+   "porque": "Plano final do dia, olhar firme: ponte para a noite.",
+   "dur_saida": 3.6,
+   "t_ini_filme": 73.2,
+   "t_fim_filme": 76.8
+  },
+  {
+   "n": 39,
+   "clip": "c34",
+   "src_ini": 32.6,
+   "src_fim": 33.8,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "luz vermelha da mao na lente"
+   },
+   "estabilizar": false,
+   "look": "luz_vermelha",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.2,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "noite: c42 0-1.2 s entra abafado (low-pass) e abre"
+    ],
+    "sfx": [
+     "sub drop grave",
+     "whoosh"
+    ]
+   },
+   "texto": null,
+   "porque": "Transicao real e organica: o vermelho da mao sobre a lente vira o pôr do sol que vira noite.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 76.8,
+   "t_fim_filme": 78.0
+  },
+  {
+   "n": 40,
+   "clip": "c42",
+   "src_ini": 1.0,
+   "src_fim": 3.4,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.6,
+    "zoom": 1.0,
+    "mov": "estatico, multidao e luzes"
+   },
+   "estabilizar": true,
+   "look": "noite_som",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "direto do c42 1-3.4 s a -12 dB (som ao vivo, so como ambiente diegetico curto)",
+    "camadas": [
+     "noite"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "O 'som' da viagem: a praca cheia, luzes de palco.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 78.0,
+   "t_fim_filme": 80.4
+  },
+  {
+   "n": 41,
+   "clip": "c41",
+   "src_ini": 11.0,
+   "src_fim": 13.4,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "selfie do casal na praca"
+   },
+   "estabilizar": true,
+   "look": "noite_som",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "direto do c41 11-13.4 s a -16 dB por baixo da trilha",
+    "camadas": [
+     "noite"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "O casal na festa: o fecho humano da viagem.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 80.4,
+   "t_fim_filme": 82.8
+  },
+  {
+   "n": 42,
+   "clip": "c41",
+   "src_ini": 37.5,
+   "src_fim": 39.9,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.55,
+    "zoom": 1.0,
+    "mov": "contra-plongee, eles olham para cima"
+   },
+   "estabilizar": true,
+   "look": "noite_som",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "direto do c41 37.5-39.9 s a -16 dB",
+    "camadas": [
+     "noite"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "Eles olham para cima, sorrindo: emocao do pico da noite.",
+   "dur_saida": 2.4,
+   "t_ini_filme": 82.8,
+   "t_fim_filme": 85.2
+  },
+  {
+   "n": 43,
+   "clip": "c41",
+   "src_ini": 24.0,
+   "src_fim": 25.2,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "selfie do casal, luz de palco"
+   },
+   "estabilizar": true,
+   "look": "noite_som",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "direto do c41 24-25.2 s a -18 dB, corta seco no fim",
+    "camadas": [],
+    "sfx": [
+     "corte seco de som: silencio de 0.3 s"
+    ]
+   },
+   "texto": null,
+   "porque": "Ultimo beat da noite, o som corta seco para o silencio da manha.",
+   "dur_saida": 1.2,
+   "t_ini_filme": 85.2,
+   "t_fim_filme": 86.4
+  },
+  {
+   "n": 44,
+   "clip": "c45",
+   "src_ini": 60.0,
+   "src_fim": 62.4,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estatico pela janela lateral, contraluz"
+   },
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "dissolve",
+    "dur": 0.4,
+    "sobrepoe": true
+   },
+   "som": {
+    "direto": "mudo",
+    "camadas": [
+     "mata: c32 0-6 s (passaros da manha) a -20 dB"
+    ],
+    "sfx": []
+   },
+   "texto": null,
+   "porque": "Manha: ele de novo pela janela do carro, a viagem fecha onde comecou (moldura do vidro).",
+   "dur_saida": 2.4,
+   "t_ini_filme": 86.0,
+   "t_fim_filme": 88.4
+  },
+  {
+   "n": 45,
+   "clip": "c44",
+   "src_ini": 6.0,
+   "src_fim": 13.6,
+   "vel": 1,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estatico pelo vidro traseiro; ele sai do quadro e caminha para o verde"
+   },
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0,
+    "sobrepoe": false
+   },
+   "som": {
+    "direto": "mudo (c44 sem som util)",
+    "camadas": [
+     "mata: c32 a -20 dB",
+     "carro: c02 40-44 s muito baixo e abafado como lembranca"
+    ],
+    "sfx": [
+     "acorde final da trilha resolve em 93.6 s"
+    ]
+   },
+   "texto": {
+    "tipo": "assinatura",
+    "txt": "creat.MTT",
+    "sub": "sua viagem merece um filme"
+   },
+   "porque": "Bookend: de dentro do carro, ele caminha para a mata. A assinatura entra sobre o verde.",
+   "dur_saida": 7.6,
+   "t_ini_filme": 88.4,
+   "t_fim_filme": 96.0
+  }
+ ],
+ "assinatura": "Sobre c44 (ele caminhando para o verde, visto pelo vidro traseiro): 'creat.MTT' em fonte fina, branco 90%, tracking largo, entra em fade de 0.8 s em 92.4 s, com a linha pequena 'sua viagem merece um filme' 0.4 s depois; acorde final resolve em 93.6 s; ultimo 0.6 s so passaros. Logo em vetor ou PNG de alta (conferir a 100% no quadro final). Sem tela preta longa: corta para preto so no ultimo quadro.",
+ "camadas_de_ambiente": {
+  "carro": "c02 0-48 s (som do carro + motor, sem fala) / c31 0-45 s / c30 13-22 s",
+  "estrada": "c01 0-34 s (vento de estrada, sem fala)",
+  "mata": "c32 0-133 s (eucalipto: vento e passaros, sem fala) + c36 0-16.9 s + c15 0-45 s (trilha, sem fala)",
+  "passos_folha": "c28 0-9.4 s (passos em folha seca)",
+  "passos_pedra": "c29 1-31 s (pisada em pedra e agua rasa; NAO usar 0-0.5 s, tem fala)",
+  "riacho": "c15 46-58 s (riacho ambar, sem fala)",
+  "cachoeira": "c16 12-23 s (queda d'agua; NAO usar 9-12 s, tem 'vamos')",
+  "vento_cume": "c13 0-28 s (vento de mirante, sem fala) + c14 0-28 s (NAO usar 29-36 s, tem fala)",
+  "noite": "c42 0-6.5 s + c41 5-35 s (multidao e som ao vivo, sem fala transcrita)"
+ }
+}

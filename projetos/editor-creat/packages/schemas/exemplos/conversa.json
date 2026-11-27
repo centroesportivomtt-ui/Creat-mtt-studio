@@ -1,0 +1,588 @@
+[
+ {
+  "id": 1,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T06:30:57Z",
+  "tipo": "fala_dono",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "turno": "t_ff4f7cbe52",
+   "texto": "corta esse silêncio aqui",
+   "via": "texto",
+   "contexto": {
+    "versao": "v1",
+    "t_player": 12.0,
+    "tela": "player"
+   }
+  }
+ },
+ {
+  "id": 2,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T06:30:58Z",
+  "tipo": "fala_editor",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "turno": "t_ff4f7cbe52",
+   "bloco": 0,
+   "texto": "Entendi: 0:12, você quer cortar o silêncio. Vou olhar a versão."
+  }
+ },
+ {
+  "id": 3,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T06:30:58Z",
+  "tipo": "ferramenta",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "turno": "t_ff4f7cbe52",
+   "tool_use_id": "toolu_01ver",
+   "nome": "ver_projeto",
+   "fase": "inicio"
+  }
+ },
+ {
+  "id": 4,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T06:30:59Z",
+  "tipo": "ferramenta",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "turno": "t_ff4f7cbe52",
+   "tool_use_id": "toolu_01ver",
+   "nome": "ver_projeto",
+   "fase": "fim",
+   "resumo": "Olhou o projeto",
+   "s": 0.0,
+   "entrada": {}
+  }
+ },
+ {
+  "id": 5,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T06:30:59Z",
+  "tipo": "mostrar",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "versao": "v1",
+   "tempo_s": 12.0
+  }
+ },
+ {
+  "id": 6,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T06:30:59Z",
+  "tipo": "pergunta",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "turno": "t_ff4f7cbe52",
+   "tool_use_id": "toolu_01per",
+   "texto": "Abro com o gancho da troca de palavra ou com você falando?",
+   "opcoes": [
+    {
+     "id": "gancho",
+     "rotulo": "Pelo gancho",
+     "efeito": "abre com FILMAR riscado virando CONTAR"
+    },
+    {
+     "id": "fala",
+     "rotulo": "Pela sua fala",
+     "efeito": "abre com você apresentando a equipe"
+    }
+   ],
+   "aceita_texto": true,
+   "sugestao": "gancho"
+  }
+ },
+ {
+  "id": 7,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T06:30:59Z",
+  "tipo": "turno_fim",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "turno": "t_ff4f7cbe52",
+   "stop": "pausa",
+   "custo_usd": 0.0352,
+   "s": 1.2,
+   "gasto_hoje_usd": 0.0352,
+   "tokens": {
+    "entrada": 1800,
+    "cache_lida": 40000,
+    "cache_escrita": 1000,
+    "saida": 600
+   }
+  }
+ },
+ {
+  "id": 8,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T06:30:59Z",
+  "tipo": "resposta",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "tool_use_id": "toolu_01per",
+   "tipo": "pergunta",
+   "por": "dono",
+   "escolha_id": "gancho"
+  }
+ },
+ {
+  "id": 9,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T06:30:59Z",
+  "tipo": "confirmacao",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "turno": "t_ff4f7cbe52",
+   "tool_use_id": "toolu_01aju",
+   "acao": "ajuste",
+   "versao": "v1",
+   "titulo": "Pedir ajuste da v1",
+   "texto_exato": "Cortar o silêncio de 0:12 a 0:14 e abrir com o gancho FILMAR → CONTAR. A fala do dono continua inteira.",
+   "refaz": [
+    "direcao",
+    "montagem",
+    "qa"
+   ],
+   "comeca_agora": true,
+   "custo_usd_est": 0.4,
+   "minutos_est": 10.0,
+   "vira_regra": true,
+   "volta": "A v1 continua guardada. Vira regra da casa, como no botão Pedir ajuste.",
+   "entrada_hash": "83567543bf43eb5d2dd8ab013b377b2021633eb0890996d33e7304b04326ea10"
+  }
+ },
+ {
+  "id": 10,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T06:30:59Z",
+  "tipo": "resposta",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "tool_use_id": "toolu_01aju",
+   "tipo": "confirmacao",
+   "sim": true,
+   "por": "dono",
+   "resultado": "feito",
+   "detalhe": "Pedido de ajuste enviado. A direção recomeça; acompanhe na mesa."
+  }
+ },
+ {
+  "id": 11,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T14:02:00Z",
+  "tipo": "aviso",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "acao": "retomar",
+   "turno": "t_ff4f7cbe52"
+  }
+ },
+ {
+  "id": 12,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T14:03:00Z",
+  "tipo": "passo",
+  "etapa": "direcao",
+  "alvo": "v2",
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "passo": "ps_3f9a1c2b4d",
+   "pai": "ps_00aa11bb22",
+   "chave": "direcao.diretor",
+   "fase": "fim",
+   "modelo": "claude-opus-5-5",
+   "esforco": "high",
+   "s": 41.2,
+   "custo_usd": 0.184,
+   "tokens": {
+    "entrada": 1200,
+    "cache_lida": 15000,
+    "cache_escrita": 0,
+    "saida": 3100
+   },
+   "conta": "1.200 × 4 + 15.000 × 0,20 + 3.100 × 20, ÷ 1e6",
+   "ferramenta": "Claude (Messages API, JSON estrito, cache do catálogo)",
+   "numeros": {
+    "blocos": 3
+   },
+   "achado": "Conceito: A equipe chega e o salão vira palco."
+  }
+ },
+ {
+  "id": 13,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T14:03:30Z",
+  "tipo": "decisao",
+  "etapa": "direcao",
+  "alvo": "v2",
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "conceito": "A equipe chega e o salão vira palco.",
+   "gancho": "NÃO É SÓ / FILMAR. → CONTAR",
+   "alem_do_pedido": "Gancho com troca de palavra no quadro 0",
+   "riscos": [
+    "'creat' transcrito com confiança 0,7: conferir"
+   ],
+   "critica": "aprovada com 1 ajuste no fecho",
+   "blocos": [
+    {
+     "id": "B1",
+     "funcao": "gancho",
+     "intensidade": 4
+    },
+    {
+     "id": "B2",
+     "funcao": "prova",
+     "intensidade": 5
+    },
+    {
+     "id": "B3",
+     "funcao": "convite",
+     "intensidade": 5
+    }
+   ],
+   "trilha": {
+    "clima": "energia",
+    "drop_em": "B2"
+   }
+  }
+ },
+ {
+  "id": 14,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T14:09:10Z",
+  "tipo": "passo",
+  "etapa": "qa",
+  "alvo": "v2",
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "passo": "ps_7c1d2e3f4a",
+   "pai": "ps_5b6c7d8e9f",
+   "chave": "qa.fatos",
+   "fase": "fim",
+   "ferramenta": "motor.etapas.qa.fatos",
+   "s": 0.4,
+   "numeros": {
+    "nome": "fatos",
+    "resultado": "ok"
+   },
+   "achado": "275 ml confere com o rótulo"
+  }
+ },
+ {
+  "id": 15,
+  "projeto": "p_exemplo01",
+  "ts": "2026-11-25T14:09:30Z",
+  "tipo": "passo",
+  "etapa": "qa",
+  "alvo": "v2",
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "dados": {
+   "passo": "ps_5b6c7d8e9f",
+   "chave": "qa",
+   "fase": "fim",
+   "s": 48.3,
+   "custo_total_usd": 0.031,
+   "numeros": {
+    "versao": "v2",
+    "aprovadas": 20,
+    "total": 21
+   },
+   "achado": "Passou em 20 de 21 conferências; segurou a entrega: zona_segura"
+  }
+ },
+ {
+  "id": 16,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "ferramenta",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01ond",
+   "nome": "onde_esta",
+   "fase": "fim",
+   "resumo": "Achou 2 pontos",
+   "s": 0.04,
+   "entrada": {
+    "busca": "creat"
+   }
+  }
+ },
+ {
+  "id": 17,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "ferramenta",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01tri",
+   "nome": "ver_trilhas",
+   "fase": "fim",
+   "resumo": "Viu 3 trilhas",
+   "s": 0.02,
+   "entrada": {}
+  }
+ },
+ {
+  "id": 18,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "ferramenta",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01reg",
+   "nome": "ver_regras",
+   "fase": "fim",
+   "resumo": "Leu 12 regras",
+   "s": 0.03,
+   "entrada": {
+    "tipo": "regra"
+   }
+  }
+ },
+ {
+  "id": 19,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "confirmacao",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01ref",
+   "acao": "refazer",
+   "de": "montagem",
+   "versao": "v2",
+   "titulo": "Montar de novo a v2",
+   "texto_exato": "Montar de novo a v2 com a mesma direção. Depois o editor confere e entrega sozinho.",
+   "faz": "Montar de novo a v2 com a mesma direção. Depois o editor confere e entrega sozinho.",
+   "refaz": [
+    "montagem",
+    "qa",
+    "entrega"
+   ],
+   "comeca_agora": true,
+   "custo_usd_est": 0.3,
+   "custo_ate": true,
+   "partes": [
+    {
+     "rotulo": "Olhar o filme novo com IA (conferência)",
+     "usd": 0.3
+    }
+   ],
+   "minutos_est": 9.0,
+   "vira_regra": false,
+   "volta": "Nada da direção muda. Se a conferência reprovar, o editor para e espera você (não gasta com correção automática).",
+   "botao": "Montar de novo",
+   "entrada_hash": "3ff6c05723bb069d19953340320fa9512f0be584742703e60226ded28bb43861"
+  }
+ },
+ {
+  "id": 20,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "resposta",
+  "dados": {
+   "tool_use_id": "toolu_01ref",
+   "tipo": "confirmacao",
+   "sim": true,
+   "por": "dono",
+   "resultado": "feito",
+   "detalhe": "Feito. A montagem da v2 recomeçou; acompanhe na mesa."
+  }
+ },
+ {
+  "id": 21,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "confirmacao",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01mus",
+   "acao": "trilha",
+   "versao": "v2",
+   "titulo": "Trocar a música da v2",
+   "texto_exato": "Trocar a música da v2 por “Pulso de Feira” (104 bpm), sem nova direção.",
+   "faz": "Trocar a música da v2 por “Pulso de Feira” (104 bpm), sem nova direção.",
+   "mudancas": [
+    {
+     "campo": "Música",
+     "antes": "Noite Clara",
+     "depois": "Pulso de Feira"
+    }
+   ],
+   "nao_muda": "Os mesmos trechos, falas, legendas, cor e fecho.",
+   "atencao": "Os cortes andam até uma batida para casar com a música nova, então a duração pode mudar um pouco.",
+   "refaz": [
+    "encaixe",
+    "montagem",
+    "qa",
+    "entrega"
+   ],
+   "comeca_agora": true,
+   "custo_usd_est": 0.12,
+   "custo_ate": false,
+   "partes": [
+    {
+     "rotulo": "Olhar o filme novo com IA (conferência)",
+     "usd": 0.12
+    }
+   ],
+   "minutos_est": 10.0,
+   "vira_regra": false,
+   "volta": "A v2 continua guardada e pode ser aprovada. A música nova sai na v3. Se a conferência reprovar, o editor para e espera você.",
+   "botao": "Trocar a música",
+   "entrada_hash": "b49b6976120c927c29fde58d6ff2cb92216b5ac4a258bb6cf03309fdc8d2e8b8"
+  }
+ },
+ {
+  "id": 22,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "confirmacao",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01not",
+   "acao": "nota",
+   "versao": "v2",
+   "tempo_s": 12.3,
+   "titulo": "Guardar uma nota",
+   "texto_exato": "Usar este corte no reel do Super Kal de dezembro.",
+   "faz": "Guardar esta nota no projeto em 0:12 da v2. Não refaz nada e não gasta.",
+   "refaz": [],
+   "comeca_agora": false,
+   "custo_usd_est": 0.0,
+   "minutos_est": 0.0,
+   "vira_regra": false,
+   "volta": "A nota fica na lista de notas do projeto (cabem até 50 por projeto).",
+   "botao": "Guardar a nota",
+   "entrada_hash": "254bb97b57f12e1608fefc4517de768427b2fd6d2cffbbfcbc09f3c818198d5f"
+  }
+ },
+ {
+  "id": 23,
+  "projeto": "p_exemplo01",
+  "etapa": null,
+  "alvo": null,
+  "progresso": null,
+  "estado": null,
+  "mensagem": null,
+  "ts": "2026-11-25T07:10:00Z",
+  "tipo": "confirmacao",
+  "dados": {
+   "turno": "t_ab12cd34ef",
+   "tool_use_id": "toolu_01lei",
+   "acao": "refazer",
+   "de": "leitura",
+   "arquivo_id": "a_3f2e1d",
+   "n_video": 3,
+   "titulo": "Ler de novo o vídeo 3",
+   "texto_exato": "Tentar ler o vídeo 3 de novo: ouvir as falas e olhar os quadros. Ele ficou de fora porque não deu para ler.",
+   "faz": "Tentar ler o vídeo 3 de novo: ouvir as falas e olhar os quadros. Ele ficou de fora porque não deu para ler.",
+   "refaz": [
+    "leitura"
+   ],
+   "comeca_agora": true,
+   "custo_usd_est": 0.05,
+   "custo_ate": true,
+   "partes": [
+    {
+     "rotulo": "Ler o vídeo com IA (visão)",
+     "usd": 0.05
+    }
+   ],
+   "minutos_est": 2.0,
+   "vira_regra": false,
+   "volta": "Os outros vídeos não mudam.",
+   "botao": "Ler de novo",
+   "entrada_hash": "7d296c79bdb526d6baadda6cfbd308fc809c1eb9d376fdba2b9ab153f3870d45"
+  }
+ }
+]

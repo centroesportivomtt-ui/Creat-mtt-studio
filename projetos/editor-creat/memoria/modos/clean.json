@@ -1,0 +1,29 @@
+{
+ "id": "clean",
+ "nome": "Clean",
+ "descricao": "Limpo e neutro: cortes secos e precisos, legenda discreta, muito respiro.",
+ "ajustes": {
+  "ritmo": {
+   "pausa_max": 0.28,
+   "gap_bloco": 0.3
+  },
+  "trilha": {
+   "ganho_db": -17
+  }
+ },
+ "sem_transicoes": [
+  "whip",
+  "aba71",
+  "impacto",
+  "flash",
+  "mascara"
+ ],
+ "sem_sons": [
+  "troca",
+  "chip",
+  "texto_tela",
+  "drop"
+ ],
+ "zoom_max": 1.04,
+ "fx_pico": null
+}

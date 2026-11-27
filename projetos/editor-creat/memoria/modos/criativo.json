@@ -1,0 +1,14 @@
+{
+ "id": "criativo",
+ "nome": "Criativo",
+ "descricao": "Ritmo vivo, tipografia em movimento, transições puxadas pela fala.",
+ "ajustes": {
+  "ritmo": {
+   "pausa_max": 0.18
+  }
+ },
+ "sem_transicoes": [],
+ "sem_sons": [],
+ "zoom_max": 1.18,
+ "fx_pico": "bloom"
+}

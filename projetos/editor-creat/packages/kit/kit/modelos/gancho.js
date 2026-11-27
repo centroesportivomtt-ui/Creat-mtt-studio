@@ -30,7 +30,7 @@ export default function gancho(ctx, c) {
     // mede a linha com a versão mais larga (antes ou depois da troca)
     const versoes = [ps.map((w) => w.t).join(" ")];
     if (troca) versoes.push(ps.map((w) => (w.t === troca.de ? troca.para + (troca.ponto === false ? "" : ".") : w.t)).join(" "));
-    const tam = p.tamanho ?? Math.min(...versoes.map((v) => ajustar(v + (ps.some((w) => w.ponto) ? "." : ""), "Anton", larg / 1.03, p.maximo ?? 300)));
+    const tam = p.tamanho ?? Math.min(...versoes.map((v) => ajustar(v + (ps.some((w) => w.ponto) ? "." : ""), "Anton", larg / 1.03, p.maximo ?? 300, 34)));
     const ln = el("div", "mk-display mk-sombra", bloco, { fontSize: tam + "px", marginTop: (linhasEl.length ? gap : 0) + "px" });
     ps.forEach((w, i) => {
       const s = el("span", "mk-palavra" + (w.destaque ? " mk-destaque" : ""), ln);

@@ -1,0 +1,22 @@
+# Editor creat.MTT em UM contêiner (site + motor + worker), para hospedagens que dão um endereço pronto (Railway, Render).
+# O site escuta em $PORT (a hospedagem define); o motor fica só em 127.0.0.1. Dados em /dados (monte um volume aí).
+FROM mcr.microsoft.com/playwright:v1.63.0-noble
+ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv python3-pip ffmpeg fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/* && corepack enable && corepack prepare pnpm@9.15.0 --activate
+WORKDIR /app/projetos/editor-creat
+COPY packages ./packages
+COPY memoria ./memoria
+COPY services/motor ./services/motor
+RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install -e "./services/motor[transcricao,cerebro,r2]"
+RUN cd packages/kit && npm install --omit=dev --no-audit --no-fund && npm install --no-save --no-audit --no-fund playwright@1.63.0
+# também global: o envio do backup (20/11) não achou o playwright local do kit no servidor. O kit (ferramentas/comum.cjs)
+# procura nas pastas globais; NODE_PATH cobre qualquer outro script node da casa.
+RUN npm install -g --no-audit --no-fund playwright@1.63.0 && node -e "require('/app/projetos/editor-creat/packages/kit/ferramentas/comum.cjs').playwright()"
+COPY apps/web ./apps/web
+RUN cd apps/web && pnpm install --frozen-lockfile && pnpm build
+COPY deploy/iniciar.sh /usr/local/bin/iniciar.sh
+RUN chmod +x /usr/local/bin/iniciar.sh
+ENV PATH=/opt/venv/bin:$PATH EDITOR_DADOS=/dados MOTOR_URL=http://127.0.0.1:8787 NODE_ENV=production NODE_PATH=/usr/lib/node_modules:/usr/local/lib/node_modules
+EXPOSE 3000
+CMD ["/usr/local/bin/iniciar.sh"]

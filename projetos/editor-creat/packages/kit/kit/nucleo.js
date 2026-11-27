@@ -56,11 +56,15 @@ export function ajustar(texto, fonte, largura, max = 260, min = 60) {
 }
 
 // "FOI *EDITADO*." -> [{t:"FOI"}, {t:"EDITADO", destaque:true, ponto:true}]
+// destaque de várias palavras: "*SUPER KAL*" -> as duas em âmbar (antes imprimia os asteriscos)
 export function palavras(linha) {
+  let aberto = false;
   return linha.trim().split(/\s+/).filter(Boolean).map((bruta) => {
-    let t = bruta, ponto = false, destaque = false;
+    let t = bruta, ponto = false, destaque = aberto;
     if (/\.\*?$/.test(t) && !/\.\.$/.test(t)) { ponto = true; t = t.replace(/\.(\*?)$/, "$1"); }
-    if (/^\*.*\*$/.test(t)) { destaque = true; t = t.slice(1, -1); }
+    if (/^\*.*\*$/.test(t) && t.length > 1) { destaque = true; t = t.slice(1, -1); }
+    else if (/^\*/.test(t)) { destaque = true; aberto = true; t = t.slice(1); }
+    else if (/\*$/.test(t) && aberto) { destaque = true; aberto = false; t = t.slice(0, -1); }
     return { t, destaque, ponto };
   });
 }

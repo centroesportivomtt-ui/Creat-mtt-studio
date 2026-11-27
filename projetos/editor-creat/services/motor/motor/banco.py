@@ -41,6 +41,28 @@ CREATE TABLE IF NOT EXISTS eventos (
   etapa TEXT, alvo TEXT, progresso REAL, estado TEXT, mensagem TEXT, dados TEXT
 );
 CREATE INDEX IF NOT EXISTS eventos_proj ON eventos (projeto, id);
+CREATE TABLE IF NOT EXISTS nuvem (
+  chave TEXT PRIMARY KEY, projeto TEXT NOT NULL, bytes INTEGER NOT NULL DEFAULT 0, estado TEXT NOT NULL DEFAULT 'pendente',
+  conferido_em TEXT, erro TEXT, tentativas INTEGER NOT NULL DEFAULT 0, proxima REAL
+);
+CREATE INDEX IF NOT EXISTS nuvem_proj ON nuvem (projeto, estado);
+CREATE TABLE IF NOT EXISTS conversa_capitulos (
+  projeto TEXT NOT NULL, capitulo INTEGER NOT NULL, modelo TEXT NOT NULL,
+  prompt_versao TEXT NOT NULL, ferramentas_versao TEXT NOT NULL,
+  system_json TEXT NOT NULL, tools_json TEXT NOT NULL,
+  criado TEXT NOT NULL, fechado TEXT, PRIMARY KEY (projeto, capitulo)
+);
+CREATE TABLE IF NOT EXISTS conversa_msgs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, projeto TEXT NOT NULL, capitulo INTEGER NOT NULL,
+  papel TEXT NOT NULL CHECK (papel IN ('user','assistant','system','parcial')),
+  conteudo TEXT NOT NULL, turno TEXT NOT NULL, cliente_msg_id TEXT, uso TEXT, criado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS conversa_msgs_cap ON conversa_msgs (projeto, capitulo, id);
+CREATE UNIQUE INDEX IF NOT EXISTS conversa_msgs_cmid ON conversa_msgs (projeto, cliente_msg_id) WHERE cliente_msg_id IS NOT NULL;
+CREATE TABLE IF NOT EXISTS conversa_espera (
+  projeto TEXT PRIMARY KEY, tipo TEXT NOT NULL CHECK (tipo IN ('pergunta','confirmacao')),
+  tool_use_id TEXT NOT NULL, turno TEXT NOT NULL, entrada_hash TEXT, cartao TEXT NOT NULL, desde TEXT NOT NULL
+);
 """
 
 
@@ -48,12 +70,51 @@ def agora_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _com_tentativas(fn, tentativas: int = 40, espera: float = 0.25):
+    """Abrir o banco no boot disputa o PRAGMA journal_mode=WAL e o esquema entre API e workers (o sqlite devolve 'database is locked'
+    sem respeitar o timeout nessa hora). Tenta de novo por até ~10 s; qualquer outro erro sobe na hora."""
+    for i in range(tentativas):
+        try:
+            return fn()
+        except sqlite3.OperationalError as e:
+            if "locked" not in str(e).lower() and "busy" not in str(e).lower():
+                raise
+            if i == tentativas - 1:
+                raise
+            time.sleep(espera)
+
+
 def conectar(caminho) -> sqlite3.Connection:
     con = sqlite3.connect(str(caminho), timeout=30, isolation_level=None)
     con.row_factory = sqlite3.Row
-    con.execute("PRAGMA journal_mode=WAL")
+    con.execute("PRAGMA busy_timeout=30000")
+    _com_tentativas(lambda: con.execute("PRAGMA journal_mode=WAL"))
     con.execute("PRAGMA synchronous=NORMAL")
-    con.executescript(ESQUEMA)
+    _com_tentativas(lambda: con.executescript(ESQUEMA))
+    return con
+
+
+def atualizar_dados(con, projeto: str, mexer) -> dict:
+    """Lê, muda (mexer(dados) altera o dict no lugar) e grava projetos.dados numa transação só: duas rotas ou um worker
+    mexendo ao mesmo tempo não apagam o que o outro gravou. Não pode ser chamada de dentro de outra transação."""
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        r = con.execute("SELECT dados FROM projetos WHERE id=?", (projeto,)).fetchone()
+        d = json.loads(r["dados"] or "{}") if r else {}
+        mexer(d)
+        if r is not None:
+            con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), projeto))
+        con.execute("COMMIT")
+    except BaseException:
+        con.execute("ROLLBACK")
+        raise
+    return d
+def conectar_leitura(caminho) -> sqlite3.Connection:
+    """Conexão só de leitura para quem fica muito tempo aberto (um cliente SSE): sem PRAGMA de escrita, sem esquema.
+    check_same_thread=False porque o SSE consulta por asyncio.to_thread (a thread muda a cada consulta)."""
+    con = sqlite3.connect(str(caminho), timeout=5, isolation_level=None, check_same_thread=False)
+    con.row_factory = sqlite3.Row
+    con.execute("PRAGMA query_only=1")
     return con
 
 
@@ -66,8 +127,14 @@ def emitir(con, projeto: str, tipo: str, *, etapa=None, alvo=None, progresso=Non
     return cur.lastrowid
 
 
-def eventos_desde(con, projeto: str, depois_de: int = 0, limite: int = 200) -> list[dict]:
-    linhas = con.execute("SELECT * FROM eventos WHERE projeto=? AND id>? ORDER BY id LIMIT ?", (projeto, depois_de, limite)).fetchall()
+def eventos_desde(con, projeto: str, depois_de: int = 0, limite: int = 200, sem: Iterable[str] | None = None) -> list[dict]:
+    """Eventos depois de `depois_de`. `sem`: tipos que ficam de fora, filtrados no SQL (o cursor anda sobre o que sobra)."""
+    sem = [t for t in (sem or ()) if t]
+    if sem:
+        linhas = con.execute(f"SELECT * FROM eventos WHERE projeto=? AND id>? AND tipo NOT IN ({','.join('?' * len(sem))}) ORDER BY id LIMIT ?",
+                             (projeto, depois_de, *sem, limite)).fetchall()
+    else:
+        linhas = con.execute("SELECT * FROM eventos WHERE projeto=? AND id>? ORDER BY id LIMIT ?", (projeto, depois_de, limite)).fetchall()
     out = []
     for r in linhas:
         d = dict(r)
@@ -76,9 +143,9 @@ def eventos_desde(con, projeto: str, depois_de: int = 0, limite: int = 200) -> l
     return out
 
 
-def mudar_estado(con, projeto: str, estado: str, mensagem: str | None = None) -> None:
+def mudar_estado(con, projeto: str, estado: str, mensagem: str | None = None, dados: dict | None = None) -> None:
     con.execute("UPDATE projetos SET estado=?, atualizado=? WHERE id=?", (estado, agora_iso(), projeto))
-    emitir(con, projeto, "estado", estado=estado, mensagem=mensagem)
+    emitir(con, projeto, "estado", estado=estado, mensagem=mensagem, dados=dados)
 
 
 # ---------------- fila ----------------
@@ -119,20 +186,34 @@ def recolher_mortos(con) -> list[dict]:
     return linhas
 
 
-def pegar(con, dono: str, etapas: Iterable[str] | None = None, aluguel_s: float = ALUGUEL_S) -> dict | None:
-    """Pega o próximo job disponível (pendente, ou rodando com aluguel vencido) de forma atômica."""
+UMA_POR_VEZ = ("entregas", "espelho")
+
+
+def pegar(con, dono: str, etapas: Iterable[str] | None = None, aluguel_s: float = ALUGUEL_S,
+          sem: Iterable[str] | None = None) -> dict | None:
+    """Pega o próximo job disponível (pendente, ou rodando com aluguel vencido) de forma atômica.
+    `etapas`: só estas; `sem`: todas menos estas (o worker da edição não pega o espelho quando há um worker só para ele)."""
     t = time.time()
     filtro, args = "", []
     if etapas:
         etapas = list(etapas)
         filtro = f" AND etapa IN ({','.join('?' * len(etapas))})"
         args = etapas
+    if sem:
+        sem = list(sem)
+        filtro += f" AND etapa NOT IN ({','.join('?' * len(sem))})"
+        args = [*args, *sem]
     con.execute("BEGIN IMMEDIATE")
     try:
+        # etapas de fundo que sobem para o Cloudflare rodam UMA de cada vez (cada uma com a sua): duas entregas juntas
+        # disputavam o índice e a versão mais nova da página; dois espelhos de GB prenderiam os dois workers
         r = con.execute(
             f"""SELECT * FROM jobs WHERE (estado='pendente' OR (estado='rodando' AND aluguel_ate < ?))
-                AND tentativas < max_tentativas {filtro} ORDER BY prioridade, criado LIMIT 1""",
-            [t, *args],
+                AND tentativas < max_tentativas {filtro}
+                AND NOT (etapa IN ({','.join('?' * len(UMA_POR_VEZ))}) AND EXISTS (
+                    SELECT 1 FROM jobs j2 WHERE j2.etapa=jobs.etapa AND j2.id<>jobs.id AND j2.estado='rodando' AND j2.aluguel_ate >= ?))
+                ORDER BY prioridade, criado LIMIT 1""",
+            [t, *args, *UMA_POR_VEZ, t],
         ).fetchone()
         if r is None:
             con.execute("COMMIT")

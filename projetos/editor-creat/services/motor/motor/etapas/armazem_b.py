@@ -73,8 +73,21 @@ class Armazem:
 
 
 def trilhas(cfg) -> list[dict]:
-    """Biblioteca de trilhas: <dados>/biblioteca/trilhas.json [{id, clima, bpm, dur, fase, chave}]. Áudio fica fora do git."""
-    p = pathlib.Path(os.environ.get("EDITOR_TRILHAS") or (pathlib.Path(cfg.dados) / "biblioteca" / "trilhas.json"))
+    """Trilhas que podem tocar: as da biblioteca da casa com licença registrada para uso comercial (motor/biblioteca.py).
+    EDITOR_TRILHAS (arquivo de testes e ferramentas de bancada) continua lido como está."""
+    if not os.environ.get("EDITOR_TRILHAS"):
+        from motor import biblioteca
+        from motor.provedores import armazenamento_de
+        try:
+            arm = armazenamento_de(cfg)
+        except Exception:  # noqa: BLE001
+            arm = None
+        ok, fora = biblioteca.trilhas_validas(cfg, arm)
+        for f in fora[:5]:
+            import logging
+            logging.getLogger("motor.biblioteca").warning("fora do catálogo: %s", f)
+        return ok
+    p = pathlib.Path(os.environ["EDITOR_TRILHAS"])
     try:
         return json.loads(p.read_text(encoding="utf-8"))
     except (FileNotFoundError, ValueError):

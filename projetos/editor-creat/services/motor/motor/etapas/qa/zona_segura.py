@@ -10,8 +10,9 @@ import numpy as np
 
 ID, BLOQUEIA = "zona_segura", True
 ZONA = {"topo": 285, "base": 440, "direita": 120, "esquerda": 60}
-TELA_CHEIA = {"fecho", "fecho2", "fundo", "transicao", "hud", "abas", "heroi", "camadas", "pilha", "stats"}
+TELA_CHEIA = {"fecho", "fecho2", "vitrine", "fundo", "transicao", "hud", "abas", "heroi", "camadas", "pilha", "stats", "papel"}
 TOL = 16
+CHEIO = 0.95        # quadro com >= 95% do overlay opaco é tela cheia (preto inicial, cartão): não há texto "fora" a medir
 
 
 def checar(c):
@@ -42,6 +43,8 @@ def checar(c):
             else:
                 a = o[:, :, 3] > 200
                 ys, xs = np.where(a.any(1))[0], np.where(a.any(0))[0]
+                if a.mean() >= CHEIO:          # caixa = quadro inteiro sempre reprovaria: é grafismo de tela cheia
+                    ys = xs = []
                 cache[ino] = None if len(ys) == 0 else (int(xs[0]), int(ys[0]), int(xs[-1]), int(ys[-1]))
         bb = cache[ino]
         if bb is None:

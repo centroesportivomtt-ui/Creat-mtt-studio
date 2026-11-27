@@ -3,6 +3,7 @@
 // Cookie: v1.<expira-em-segundos>.<nonce>.<assinatura base64url> — sem estado no servidor.
 import { createHmac, randomBytes, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from 'node:crypto';
 import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export const COOKIE = 'ec_sessao';
 const DURACAO_S = 30 * 24 * 3600; // 30 dias: o dono usa no celular e não quer digitar senha toda hora
@@ -80,6 +81,12 @@ export async function temSessao(): Promise<boolean> {
   return tokenValido(c.get(COOKIE)?.value);
 }
 
+/** Página que exige senha: sem sessão, vai a /entrar e volta para `volta` depois da senha (o endereço aberto direto, num
+ *  link antigo ou depois de a sessão vencer). `volta` é sempre um caminho do próprio site, montado pelo código. */
+export async function exigirSessao(volta: string): Promise<void> {
+  if (!(await temSessao())) redirect(`/entrar?volta=${encodeURIComponent(volta)}`);
+}
+
 /** Para rotas que recebem Request diretamente (tus, proxy). */
 export function sessaoDaRequisicao(req: Request): boolean {
   const bruto = req.headers.get('cookie') ?? '';
@@ -106,6 +113,16 @@ export function mesmaOrigem(req: Request): boolean {
   } catch {
     return false;
   }
+}
+
+// IP para os limites de tentativa. O PRIMEIRO valor do X-Forwarded-For é do cliente (ele escolhe o que quiser):
+// girando o cabeçalho, o limite virava infinito. Vale o que o proxy de produção põe: x-real-ip, ou o ÚLTIMO salto
+// do X-Forwarded-For (quem acrescentou foi o nosso proxy).
+export function ipDe(req: { headers: Headers }): string {
+  const real = (req.headers.get('x-real-ip') ?? '').trim();
+  if (real) return real;
+  const saltos = (req.headers.get('x-forwarded-for') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  return saltos.at(-1) || 'local';
 }
 
 // Tentativas de senha por IP (memória do processo): 8 a cada 10 min.

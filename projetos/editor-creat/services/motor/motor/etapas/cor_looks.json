@@ -1,0 +1,200 @@
+{
+ "versao": "c1",
+ "descricao": "Biblioteca de cor por ambiente (estilo DaVinci). lift/gamma/gain por canal r,g,b; con = contraste em S; sat = saturação; pele = quanto a pele fica fora da saturação do look (0 a 1); alvo = luma mediana desejada; wb = força da correção de branco (0 = respeita a luz do lugar). Lida por services/motor/motor/etapas/cor.py; dessatura = true só em look pedido pela direção para sair menos saturado que a fonte (sem isso, a saturação nunca fica abaixo da fonte: regra do dono, cor viva).",
+ "looks": {
+  "loja": {
+   "nome": "Interno de loja",
+   "lift": [
+    0.0,
+    0.0,
+    0.004
+   ],
+   "gamma": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "gain": [
+    1.02,
+    1.0,
+    0.97
+   ],
+   "con": 0.12,
+   "sat": 1.1,
+   "pele": 0.7,
+   "alvo": 0.47,
+   "wb": 0.75,
+   "desc": "Luz fria de gôndola vira branco limpo; produto com cor viva e pele protegida."
+  },
+  "rua_dia": {
+   "nome": "Rua de dia",
+   "lift": [
+    0.0,
+    0.002,
+    0.008
+   ],
+   "gamma": [
+    1.0,
+    1.0,
+    0.99
+   ],
+   "gain": [
+    1.03,
+    1.0,
+    0.96
+   ],
+   "con": 0.16,
+   "sat": 1.06,
+   "pele": 0.6,
+   "alvo": 0.5,
+   "wb": 0.6,
+   "desc": "Sol: céu azul preservado, sombras levemente frias, pele quente."
+  },
+  "rua_noite": {
+   "nome": "Rua à noite",
+   "lift": [
+    0.0,
+    0.004,
+    0.012
+   ],
+   "gamma": [
+    0.98,
+    1.0,
+    1.03
+   ],
+   "gain": [
+    1.03,
+    1.0,
+    0.95
+   ],
+   "con": 0.18,
+   "sat": 0.94,
+   "pele": 0.8,
+   "alvo": 0.32,
+   "wb": 0.35,
+   "desc": "Noite: pretos limpos, sombras azuladas, luz de poste quente sem estourar."
+  },
+  "academia": {
+   "nome": "Academia",
+   "lift": [
+    0.004,
+    0.0,
+    0.0
+   ],
+   "gamma": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "gain": [
+    1.02,
+    1.0,
+    0.98
+   ],
+   "con": 0.22,
+   "sat": 0.96,
+   "pele": 0.7,
+   "alvo": 0.42,
+   "wb": 0.6,
+   "desc": "Contraste alto e textura (suor, músculo), saturação contida."
+  },
+  "palco": {
+   "nome": "Palco",
+   "lift": [
+    0.0,
+    0.0,
+    0.006
+   ],
+   "gamma": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "gain": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "con": 0.14,
+   "sat": 1.04,
+   "pele": 0.85,
+   "alvo": 0.3,
+   "wb": 0.25,
+   "desc": "Luz de show: mantém a cor dos refletores, segura as altas, rosto protegido."
+  },
+  "neutro": {
+   "nome": "Neutro",
+   "lift": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "gamma": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "gain": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "con": 0.08,
+   "sat": 1.0,
+   "pele": 0.0,
+   "alvo": 0.45,
+   "wb": 0.5,
+   "desc": "Só o equilíbrio da cena, sem assinatura."
+  },
+  "matriz_pos_chuva": {
+   "nome": "Praça depois da chuva",
+   "lift": [
+    0.012,
+    0.01,
+    0.008
+   ],
+   "gamma": [
+    1.0,
+    1.0,
+    1.02
+   ],
+   "gain": [
+    1.03,
+    1.0,
+    0.96
+   ],
+   "con": 0.1,
+   "sat": 0.92,
+   "pele": 0.75,
+   "alvo": 0.46,
+   "wb": 0.4,
+   "dessatura": true,
+   "desc": "Pedra molhada e céu lavado: pretos quentes de laboratório, altas um pouco frias, cor contida e pele protegida (Reel O Mestre)."
+  },
+  "matriz_memoria": {
+   "nome": "Praça em memória",
+   "lift": [
+    0.012,
+    0.01,
+    0.008
+   ],
+   "gamma": [
+    1.0,
+    1.0,
+    1.02
+   ],
+   "gain": [
+    1.04,
+    1.0,
+    0.95
+   ],
+   "con": 0.1,
+   "sat": 0.85,
+   "pele": 0.75,
+   "alvo": 0.46,
+   "wb": 0.4,
+   "dessatura": true,
+   "desc": "Mesma praça, mais lembrança que presente: um pouco mais quente e menos saturada (blocos de memória do Reel O Mestre)."
+  }
+ }
+}

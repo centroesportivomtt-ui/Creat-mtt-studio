@@ -1,0 +1,1697 @@
+{
+ "formato": "V",
+ "largura": 1080,
+ "altura": 1920,
+ "fps": 30,
+ "dur": 104.9,
+ "titulo": "ITAITU · PULSO",
+ "conceito": "PULSO, versão 3. O vertical conta a viagem pelo casal, não pela paisagem (essa é a do H). Abre com quatro relances no drop principal do Dancin (o perfil dele na luz dourada, ela espiando entre os troncos, a serra, a praça à noite), que nenhum outro plano repete. Daí vêm quatro estados, cada um com a sua música. Dancin = carro, alegria e conversa: a voz real dos dois no breakdown e o build da chegada, que corta para o silêncio no drop que não vem. Só mata por 3,5 s. Loser = trilha, luz e água: a pausa da música é o corpo dele saindo do quadro, e a volta é o poço. A mão vermelha vira a noite, e o Messy fica com o casal até o beijo no refrão. O fim é a porta acesa do chalé: o dia termina em casa, que a conversa do carro já anunciava (\"olha só, essas aqui…\", sobre os chalés da estrada).",
+ "musica": [
+  {
+   "n": 1,
+   "musica": "m2_dancin",
+   "src_ini": 80.1,
+   "src_fim": 97.358,
+   "saida_ini": 0.0,
+   "ganho_db": -5.8,
+   "fade_in": 0.0,
+   "fade_out": 0.0,
+   "porque": "GANCHO + CARRO, alegria e ritmo. O drop principal do Dancin (\"Dancing is what to do\", 80,1-96,3), que o H não usa (o H usa 15,6-46,6 e 120,1-142,0). Abre seco no primeiro bumbo. Loudness do trecho -8,2 LUFS, levado a -14."
+  },
+  {
+   "n": 2,
+   "musica": "m2_dancin",
+   "src_ini": 97.358,
+   "src_fim": 118.98,
+   "saida_ini": 17.258,
+   "ganho_db": -0.5,
+   "fade_in": 0.0,
+   "fade_out": 0.0,
+   "porque": "Continuação sem emenda (só automação de ganho): o breakdown (97,4-113) é a cama da conversa no carro, com a música 10 dB abaixo durante a fala (17,4-19,2); o build (113-119) sobe com a chegada e o corte seco em 118,98, no bumbo do drop 2, deixa só a mata. Breakdown -13,5 LUFS, levado a -14."
+  },
+  {
+   "n": 3,
+   "musica": "m1_loser",
+   "src_ini": 130.334,
+   "src_fim": 160.729,
+   "saida_ini": 42.4,
+   "ganho_db": -4.6,
+   "fade_in": 0.3,
+   "fade_out": 0.35,
+   "porque": "TRILHA, LUZ e ÁGUA, contemplação. Entra depois de 3,5 s de mata pura, na retomada que vem depois da pausa de 129,9-130,5. A parada seca de 141,95-142,15 é a saída dele do quadro, e a volta em 142,25 é a revelação do poço. Letra no trecho: \"I get the message… / Desperate times… / I fell into you\", que termina antes de \"Tried to correct it…\" (161,3). O H usa 52,55-73,24, então não há sobreposição. Trecho -9,4 LUFS, levado a -14."
+  },
+  {
+   "n": 4,
+   "musica": "m3_messy",
+   "src_ini": 36.966,
+   "src_fim": 54.22,
+   "saida_ini": 72.795,
+   "ganho_db": -4.2,
+   "fade_in": 0.03,
+   "fade_out": 0.04,
+   "porque": "O CASAL, emoção. Entra no vermelho com \"Listen to me\" (37,42), começando na batida 36,97, depois de \"life\" (36,3). Sai em 54,22, depois de \"be\" (53,58) e antes de \"Cause\" (54,30-54,62). Trecho -9,8 LUFS, levado a -14."
+  },
+  {
+   "n": 5,
+   "musica": "m3_messy",
+   "src_ini": 62.88,
+   "src_fim": 71.564,
+   "saida_ini": 90.049,
+   "ganho_db": -6.5,
+   "fade_in": 0.03,
+   "fade_out": 0.08,
+   "porque": "Refrão limpo no beijo: \"And I'm too perfect / so I opened my big mouth / I want to be me / is that not allowed?\". A emenda de 16 batidas (54,22 → 62,88, com a mesma defasagem de -0,04 s nas duas pontas) pula \"too f*** clean\" (57,3) e \"where the hell I've been\" (61,2-62,85). O corte sai em 71,56, antes de \"And I'm too clever\" (72,0) e do palavrão de 74,6. Trecho -7,8 LUFS, levado a -14,3."
+  },
+  {
+   "n": 6,
+   "musica": "m3_messy",
+   "src_ini": 262.45,
+   "src_fim": 268.617,
+   "saida_ini": 98.733,
+   "ganho_db": -1.0,
+   "fade_in": 0.15,
+   "fade_out": 2.0,
+   "porque": "Outro sem voz para a assinatura. A última frase (\"get the f*** on\") termina em 262,30, e o medium não ouve voz entre 262,3 e 276. Entra em 262,45."
+  }
+ ],
+ "segmentos": [
+  {
+   "n": 1,
+   "saida_ini": 0,
+   "saida_fim": 1.004,
+   "clip": "c43",
+   "src_ini": 23.0,
+   "src_fim": 24.004,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "quadro 0 = primeiro bumbo do drop do Dancin (80,10)",
+   "texto": null,
+   "porque": "Gancho: o perfil dele, barba e ombro acesos pela luz dourada contra o capim. Pele + luz + textura param o polegar no primeiro bumbo. Trecho do c43 que o H não usa (o H usa 6-10 e 37-39)."
+  },
+  {
+   "n": 2,
+   "saida_ini": 1.004,
+   "saida_fim": 2.002,
+   "clip": "c25",
+   "src_ini": 29.6,
+   "src_fim": 30.598,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.62,
+    "cy": 0.52,
+    "zoom": 1.35,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "flash",
+    "dur": 0.06
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "2 batidas (82,15)",
+   "texto": null,
+   "porque": "Glenda espia entre dois troncos e olha para a lente no fim do plano (30,4): o olhar dela no 1º segundo. Recorte 1,35 porque ela é pequena no quadro inteiro."
+  },
+  {
+   "n": 3,
+   "saida_ini": 2.002,
+   "saida_fim": 3.001,
+   "clip": "c45",
+   "src_ini": 28.0,
+   "src_fim": 28.999,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.55,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "flash",
+    "dur": 0.06
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "2 batidas (83,15)",
+   "texto": null,
+   "porque": "O pico da serra contra o céu: a escala do lugar. O H usa c45 23,2-27,2; este é o trecho seguinte da panorâmica, com o paredão inteiro no 9:16."
+  },
+  {
+   "n": 4,
+   "saida_ini": 3.001,
+   "saida_fim": 3.999,
+   "clip": "c42",
+   "src_ini": 1.65,
+   "src_fim": 2.648,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "noite_som",
+   "entrada": {
+    "tipo": "flash",
+    "dur": 0.06
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "2 batidas (84,15)",
+   "texto": null,
+   "porque": "A praça à noite, multidão e o holofote em feixe: promessa da noite. Trecho do c42 antes do que o H usa (H: 2,7-4,86)."
+  },
+  {
+   "n": 5,
+   "saida_ini": 3.999,
+   "saida_fim": 6.019,
+   "clip": "c30",
+   "src_ini": 16.0,
+   "src_fim": 18.02,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.42,
+    "zoom": 1.12,
+    "mov": "travelling para a frente (é o próprio carro andando)"
+   },
+   "estabilizar": false,
+   "look": "estrada_dourada",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.2
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: o c30 tem a música do som do carro alta"
+   },
+   "batida": "4 batidas (86,17)",
+   "texto": "ITAITU · -11.336, -40.497 · 672 m",
+   "porque": "Túnel de árvores na estrada de terra: a viagem começa. Zoom 1,12 e cy 0,42 escondem o painel que entra embaixo em 18,0. O H usa c30 7,0-9,88; aqui é 16-18."
+  },
+  {
+   "n": 6,
+   "saida_ini": 6.019,
+   "saida_fim": 7.505,
+   "clip": "c04",
+   "src_ini": 2.3,
+   "src_fim": 3.786,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.36,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (87,66)",
+   "texto": "HUD 19.11.2026 · 17:23 · 311 m",
+   "porque": "Glenda com o braço para fora da janela, vento: o clima da estrada. Recorte nela (cx 0,36)."
+  },
+  {
+   "n": 7,
+   "saida_ini": 7.505,
+   "saida_fim": 9.015,
+   "clip": "c04",
+   "src_ini": 66.6,
+   "src_fim": 68.11,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.74,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (89,17)",
+   "texto": null,
+   "porque": "Ele dança no banco com o punho fechado no ritmo: carro = alegria. Recorte nele (cx 0,74). O H usa c04 60-64,36; aqui é 66,6."
+  },
+  {
+   "n": 8,
+   "saida_ini": 9.015,
+   "saida_fim": 11.012,
+   "clip": "c02",
+   "src_ini": 22.6,
+   "src_fim": 24.597,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.58,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "estrada_dourada",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "4 batidas (91,16)",
+   "texto": null,
+   "porque": "Plano de dois: ele dirigindo em primeiro plano, ela ao fundo olhando a estrada. Os dois no mesmo quadro 9:16 (cx 0,58, conferido). Tremor 0,43: estabilizar."
+  },
+  {
+   "n": 9,
+   "saida_ini": 11.012,
+   "saida_fim": 12.521,
+   "clip": "c04",
+   "src_ini": 34.4,
+   "src_fim": 35.909,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.38,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (92,67)",
+   "texto": null,
+   "porque": "Glenda sorri de canto com a mão no cabelo."
+  },
+  {
+   "n": 10,
+   "saida_ini": 12.521,
+   "saida_fim": 14.007,
+   "clip": "c04",
+   "src_ini": 81.3,
+   "src_fim": 82.786,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.74,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (94,16)",
+   "texto": null,
+   "porque": "Ele gesticula com a mão aberta e vira o rosto para ela: começa a troca."
+  },
+  {
+   "n": 11,
+   "saida_ini": 14.007,
+   "saida_fim": 15.516,
+   "clip": "c04",
+   "src_ini": 82.786,
+   "src_fim": 84.295,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.38,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (95,67)",
+   "texto": null,
+   "porque": "Contraplano no mesmo instante do take (continuação exata da fonte): ela ouve, ajeita os óculos. O par de recortes do mesmo momento monta a troca de ideia em vertical, já que no 16:9 os dois não cabem juntos num 9:16."
+  },
+  {
+   "n": 12,
+   "saida_ini": 15.516,
+   "saida_fim": 17.258,
+   "clip": "c04",
+   "src_ini": 19.55,
+   "src_fim": 21.292,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.52,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "fim do drop (96,27) até a entrada do breakdown (97,41)",
+   "texto": null,
+   "porque": "Ele faz o muque ao lado dela; o recorte pega o rosto dela e o braço dele (a brincadeira entre os dois). O rosto dele fica fora: os dois rostos não cabem num 9:16 deste take."
+  },
+  {
+   "n": 13,
+   "saida_ini": 17.258,
+   "saida_fim": 19.06,
+   "clip": "c31",
+   "src_ini": 23.5,
+   "src_fim": 25.302,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": 0,
+    "nota": "CONVERSA NO CARRO: som direto inteiro, voz em sincronia; só passa-alta 120 Hz e limpeza leve de ruído de estrada, sem cortar o tom de sala"
+   },
+   "batida": "breakdown do Dancin (97,41); a fala cai em 17,6-19,06 com a música 10 dB abaixo",
+   "texto": "Olha só, essas aqui…",
+   "porque": "A conversa real dos dois no carro, ouvida: a voz no carro diz \"Olha só, essas aqui têm banh…\" comentando os chalés da beira da estrada. A legenda mostra só o que as 5 transcrições confirmam (\"Olha só, essas aqui…\"), e o corte sai em 25,30, antes de um trecho que um dos modelos ouviu como palavrão. Ele dirige sem camisa, plano vertical nativo."
+  },
+  {
+   "n": 14,
+   "saida_ini": 19.06,
+   "saida_fim": 21.275,
+   "clip": "c02",
+   "src_ini": 42.6,
+   "src_fim": 44.815,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.63,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "estrada_dourada",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "cai na batida 101,43",
+   "texto": null,
+   "porque": "Plano de dois com o sol lateral: ela atrás, atenta; ele ao volante. Responde à fala sem precisar de palavra (sem atribuir fala a ninguém). Trecho firme (tremor 0,37)."
+  },
+  {
+   "n": 15,
+   "saida_ini": 21.275,
+   "saida_fim": 22.761,
+   "clip": "c04",
+   "src_ini": 104.0,
+   "src_fim": 105.486,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.74,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (102,91)",
+   "texto": null,
+   "porque": "Ele ao volante olha para a estrada e para ela: contraplano da conversa."
+  },
+  {
+   "n": 16,
+   "saida_ini": 22.761,
+   "saida_fim": 24.758,
+   "clip": "c04",
+   "src_ini": 44.0,
+   "src_fim": 45.997,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.42,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cabine",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "4 batidas (104,91)",
+   "texto": null,
+   "porque": "Glenda olha na direção dele e sorri de leve: fecha a conversa do carro."
+  },
+  {
+   "n": 17,
+   "saida_ini": 24.758,
+   "saida_fim": 26.755,
+   "clip": "c45",
+   "src_ini": 16.0,
+   "src_fim": 17.997,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.22,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "4 batidas (106,91)",
+   "texto": null,
+   "porque": "Chegada: o carro branco parado no mirante e ele abrindo o porta-malas (camada \"pegando as coisas\"). Recorte cx 0,22 no carro. Placa: a tampa aberta esconde a placa traseira; ainda assim borrar com rastreio se algum caractere aparecer."
+  },
+  {
+   "n": 18,
+   "saida_ini": 26.755,
+   "saida_fim": 28.264,
+   "clip": "c40",
+   "src_ini": 34.0,
+   "src_fim": 35.509,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cerrado_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (108,41)",
+   "texto": null,
+   "porque": "Glenda no carro ajeitando a bolsa entre os mourões da cerca: ela se preparando."
+  },
+  {
+   "n": 19,
+   "saida_ini": 28.264,
+   "saida_fim": 29.773,
+   "clip": "c46",
+   "src_ini": 3.0,
+   "src_fim": 4.509,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.64,
+    "cy": 0.6,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: bastidor no c46; a pisada vem do c28 na camada de ambiente"
+   },
+   "batida": "3 batidas (109,92)",
+   "texto": null,
+   "porque": "As botas dele pisando nas folhas secas e nas pedras: os pés. O H usa c46 0,5-2,5 e 22,5-24,5; aqui é 3,0-4,5."
+  },
+  {
+   "n": 20,
+   "saida_ini": 29.773,
+   "saida_fim": 31.283,
+   "clip": "c08",
+   "src_ini": 12.8,
+   "src_fim": 14.31,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (111,43)",
+   "texto": null,
+   "porque": "Glenda sobe a trilha com a bolsa balançando: começou."
+  },
+  {
+   "n": 21,
+   "saida_ini": 31.283,
+   "saida_fim": 33.256,
+   "clip": "c12",
+   "src_ini": 42.6,
+   "src_fim": 44.573,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "4 batidas (113,41)",
+   "texto": null,
+   "porque": "Ele de óculos escuros na trilha, peito aberto para a mata."
+  },
+  {
+   "n": 22,
+   "saida_ini": 33.256,
+   "saida_fim": 35.276,
+   "clip": "c10",
+   "src_ini": 10.0,
+   "src_fim": 12.02,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "4 batidas (115,43)",
+   "texto": null,
+   "porque": "Contra-plongée com a copa e o céu: a mata fica maior que eles. Tremor 0,43 e giro de até 9: estabilizar."
+  },
+  {
+   "n": 23,
+   "saida_ini": 35.276,
+   "saida_fim": 38.88,
+   "clip": "c22",
+   "src_ini": 2.5,
+   "src_fim": 5.614,
+   "vel": 1.0,
+   "rampa": {
+    "de": 1.0,
+    "para": 0.5,
+    "em": 37.9
+   },
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: bastidor ao fundo no c22"
+   },
+   "batida": "o build sobe; o corte cai em 118,98, o bumbo do drop 2 que nunca chega",
+   "texto": null,
+   "porque": "Ele vem pela trilha com a passada firme e cresce até encher o quadro; desacelera para 0,5x no último segundo (60 fps) e o filme corta para o silêncio da mata no lugar do drop. A troca de mundo é o drop que não vem."
+  },
+  {
+   "n": 24,
+   "saida_ini": 38.88,
+   "saida_fim": 42.4,
+   "clip": "c19",
+   "src_ini": 1.0,
+   "src_fim": 4.52,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: bastidor no c19; o som é a mata limpa do c24 (camada de ambiente)"
+   },
+   "batida": "silêncio de música: 3,5 s de mata",
+   "texto": null,
+   "porque": "Ele entra de costas na mata fechada, entre bambus e palmeiras, e a mata se fecha atrás dele. Silêncio de música depois do build: só a mata respira (som do c24, sem voz no medium)."
+  },
+  {
+   "n": 25,
+   "saida_ini": 42.4,
+   "saida_fim": 45.302,
+   "clip": "c34",
+   "src_ini": 0.9,
+   "src_fim": 3.802,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.3
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "o Loser entra em 130,33 junto com o flare",
+   "texto": null,
+   "porque": "A trilha com o sol vazando entre as folhas e flare colorido: o Loser nasce aqui."
+  },
+  {
+   "n": 26,
+   "saida_ini": 45.302,
+   "saida_fim": 47.462,
+   "clip": "c36",
+   "src_ini": 4.5,
+   "src_fim": 5.58,
+   "vel": 0.5,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "folhagem",
+    "dur": 0.15
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (135,40)",
+   "texto": null,
+   "porque": "Folhas passam na frente e abrem para o sol com raio diagonal, a 0,5x real (60 fps)."
+  },
+  {
+   "n": 27,
+   "saida_ini": 47.462,
+   "saida_fim": 50.364,
+   "clip": "c25",
+   "src_ini": 8.5,
+   "src_fim": 9.951,
+   "vel": 0.5,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "4 batidas (138,30)",
+   "texto": null,
+   "porque": "Glenda atravessa o tronco caído de braços abertos, a 0,5x real (60 fps)."
+  },
+  {
+   "n": 28,
+   "saida_ini": 50.364,
+   "saida_fim": 52.524,
+   "clip": "c12",
+   "src_ini": 31.7,
+   "src_fim": 33.86,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (140,46)",
+   "texto": null,
+   "porque": "Ele olha para a copa e aponta o sol que estoura em flare: o gesto de \"olha isso\", sem precisar da fala."
+  },
+  {
+   "n": 29,
+   "saida_ini": 52.524,
+   "saida_fim": 54.316,
+   "clip": "c20",
+   "src_ini": 18.2,
+   "src_fim": 19.992,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "a parada da música (141,95-142,15) cai na saída dele do quadro",
+   "texto": null,
+   "porque": "Ele desce a trilha e passa rente à lente, saindo pela esquerda: a passagem do corpo vira o corte para a água."
+  },
+  {
+   "n": 30,
+   "saida_ini": 54.316,
+   "saida_fim": 56.866,
+   "clip": "c16",
+   "src_ini": 19.5,
+   "src_fim": 21.99,
+   "vel": 0.976,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "match",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "a cachoeira vem do ambiente c16 12-17,5"
+   },
+   "batida": "volta da música em 142,25 = revelação do poço",
+   "texto": null,
+   "porque": "O poço escuro com a borda âmbar e a cachoeira, no instante em que o Loser volta da parada: o \"uau\" do lugar. Trecho firme 19,5-22,0 (o chicote de 18,0-19,5 fica de fora: tremor acima de 1,0)."
+  },
+  {
+   "n": 31,
+   "saida_ini": 56.866,
+   "saida_fim": 59.048,
+   "clip": "c19",
+   "src_ini": 63.2,
+   "src_fim": 65.382,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: bastidor no c19; pisada na água vem do c29"
+   },
+   "batida": "3 batidas (146,98)",
+   "texto": null,
+   "porque": "Os pés dele nas pedras do riacho com a água cor de chá: pés na água. O H usa c19 60,5-62,5; aqui é 63,2-65,4."
+  },
+  {
+   "n": 32,
+   "saida_ini": 59.048,
+   "saida_fim": 61.231,
+   "clip": "c17",
+   "src_ini": 109.2,
+   "src_fim": 111.383,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: monólogo de bastidor no c17"
+   },
+   "batida": "3 batidas (149,17)",
+   "texto": "HUD 771 m",
+   "porque": "O poço e a cachoeira vistos da pedra onde eles descansaram, com o tênis dela na borda. 771 m é a altitude real do GPS do c17, o ponto mais alto do material."
+  },
+  {
+   "n": 33,
+   "saida_ini": 61.231,
+   "saida_fim": 63.39,
+   "clip": "c14",
+   "src_ini": 28.0,
+   "src_fim": 30.159,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.62,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (151,32)",
+   "texto": null,
+   "porque": "Glenda desce as pedras entre a samambaia e o tronco. O H usa c14 25-27; aqui é 28-30,2."
+  },
+  {
+   "n": 34,
+   "saida_ini": 63.39,
+   "saida_fim": 66.27,
+   "clip": "c13",
+   "src_ini": 26.0,
+   "src_fim": 26.72,
+   "vel": 0.25,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: vento batendo no microfone no c13"
+   },
+   "batida": "4 batidas (154,20)",
+   "texto": null,
+   "porque": "Folhagem acesa pelo sol em câmera lenta real (120 fps a 0,25x): o respiro do Loser em \"desperate measures\"."
+  },
+  {
+   "n": 35,
+   "saida_ini": 66.27,
+   "saida_fim": 68.429,
+   "clip": "c38",
+   "src_ini": 4.4,
+   "src_fim": 6.559,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "cume_ouro",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (156,36)",
+   "texto": null,
+   "porque": "O vale verde com um raio de sol descendo pelo paredão e o capim na frente: a serra. O H usa c38 0,5-2,5."
+  },
+  {
+   "n": 36,
+   "saida_ini": 68.429,
+   "saida_fim": 70.612,
+   "clip": "c36",
+   "src_ini": 10.5,
+   "src_fim": 12.683,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "3 batidas (158,55)",
+   "texto": null,
+   "porque": "A trilha vermelha em curva entre os troncos, câmera firme andando: o caminho continua (\"I fell into you\")."
+  },
+  {
+   "n": 37,
+   "saida_ini": 70.612,
+   "saida_fim": 72.075,
+   "clip": "c11",
+   "src_ini": 44.6,
+   "src_fim": 46.063,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "2 batidas (160,01)",
+   "texto": null,
+   "porque": "Ele olha para o alto da mata com o flare azulado: o último olhar do dia."
+  },
+  {
+   "n": 38,
+   "saida_ini": 72.075,
+   "saida_fim": 72.795,
+   "clip": "c34",
+   "src_ini": 30.48,
+   "src_fim": 31.2,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "luz_vermelha",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.15
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "última batida do Loser (160,73)",
+   "texto": null,
+   "porque": "Uma mão cobre a lente e o quadro fica vermelho: o vermelho vira a noite. Tremor 0,51 num plano de 0,72 s de lente tampada; estabilizar."
+  },
+  {
+   "n": 39,
+   "saida_ini": 72.795,
+   "saida_fim": 75.465,
+   "clip": "c06",
+   "src_ini": 0.5,
+   "src_fim": 3.17,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.45,
+    "cy": 0.38,
+    "zoom": 1.3,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "noite_chale",
+   "entrada": {
+    "tipo": "luz",
+    "dur": 0.15
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "ambiente c06 14-20 por baixo"
+   },
+   "batida": "o Messy entra em 36,97 (\"Listen to me\")",
+   "texto": null,
+   "porque": "Noite da chegada: ele leva as sacolas para dentro do chalé (pegando as coisas). Zoom 1,3 com cy 0,38 deixa a placa do carro fora do quadro (conferido)."
+  },
+  {
+   "n": 40,
+   "saida_ini": 75.465,
+   "saida_fim": 77.648,
+   "clip": "c41",
+   "src_ini": 16.5,
+   "src_fim": 18.683,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "noite_som",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: o show ao vivo tem letra em português"
+   },
+   "batida": "4 batidas (41,82)",
+   "texto": null,
+   "porque": "A praça à noite: os dois juntos e ele abre um sorriso largo. 1º de 2 trechos do c41 (o H usa 13,0-15,7)."
+  },
+  {
+   "n": 41,
+   "saida_ini": 77.648,
+   "saida_fim": 79.784,
+   "clip": "c18",
+   "src_ini": 35.3,
+   "src_fim": 37.436,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: conversa íntima com ruído"
+   },
+   "batida": "4 batidas (43,96)",
+   "texto": null,
+   "porque": "Na trilha, ela vai à frente e olha para trás para ele: a troca de olhar dos dois."
+  },
+  {
+   "n": 42,
+   "saida_ini": 79.784,
+   "saida_fim": 81.41,
+   "clip": "c23",
+   "src_ini": 0.25,
+   "src_fim": 1.876,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: direção de bastidor no c23"
+   },
+   "batida": "3 batidas (45,58)",
+   "texto": null,
+   "porque": "Ela abre os braços e anda pela trilha: liberdade."
+  },
+  {
+   "n": 43,
+   "saida_ini": 81.41,
+   "saida_fim": 82.501,
+   "clip": "c08",
+   "src_ini": 11.0,
+   "src_fim": 12.091,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: bastidor no c08"
+   },
+   "batida": "2 batidas (46,67)",
+   "texto": null,
+   "porque": "Ela gira na trilha e fica de frente para a câmera, de óculos escuros (o giro termina em 11,5-12,0; tempo corrigido)."
+  },
+  {
+   "n": 44,
+   "saida_ini": 82.501,
+   "saida_fim": 84.684,
+   "clip": "c15",
+   "src_ini": 109.2,
+   "src_fim": 111.383,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: picos de voz de bastidor no c15"
+   },
+   "batida": "4 batidas (48,86)",
+   "texto": null,
+   "porque": "Ele com a toalha no ombro olhando as palmeiras, de baixo para cima: o lado dele."
+  },
+  {
+   "n": 45,
+   "saida_ini": 84.684,
+   "saida_fim": 86.843,
+   "clip": "c41",
+   "src_ini": 31.6,
+   "src_fim": 33.759,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "noite_som",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: show ao vivo"
+   },
+   "batida": "4 batidas (51,01)",
+   "texto": null,
+   "porque": "Os dois olhando para o céu da praça. 2º e último trecho do c41."
+  },
+  {
+   "n": 46,
+   "saida_ini": 86.843,
+   "saida_fim": 90.049,
+   "clip": "c16",
+   "src_ini": 12.03,
+   "src_fim": 13.995,
+   "vel": 0.613,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "agua_ambar",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "até a emenda do Messy (54,22 → 62,88)",
+   "texto": null,
+   "porque": "O casal no poço, ele em primeiro plano e ela na borda da água, em câmera lenta real (60 fps a 0,613x): o último plano antes do beijo."
+  },
+  {
+   "n": 47,
+   "saida_ini": 90.049,
+   "saida_fim": 92.765,
+   "clip": "c02",
+   "src_ini": 17.2,
+   "src_fim": 19.916,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.63,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "push-in leve (1,00 a 1,06)"
+   },
+   "estabilizar": true,
+   "look": "estrada_dourada",
+   "entrada": {
+    "tipo": "flash",
+    "dur": 0.1
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "entra na emenda do Messy, \"And I'm too perfect\" (63,06); flash + impacto grave escondem a emenda",
+   "texto": null,
+   "porque": "O BEIJO no carro, na luz dourada, no refrão. Único plano em comum com o H (é o único beijo do material); aqui ele entra mais curto (2,7 s), recortado em 9:16 e no refrão do Messy, enquanto o H usa o take inteiro no Messy do começo."
+  },
+  {
+   "n": 48,
+   "saida_ini": 92.765,
+   "saida_fim": 96.016,
+   "clip": "c25",
+   "src_ini": 20.55,
+   "src_fim": 22.988,
+   "vel": 0.75,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": false,
+   "look": "mata_verde",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo"
+   },
+   "batida": "\"I want to be me\" (67,46)",
+   "texto": null,
+   "porque": "Ela vira, sorri espontânea e faz joinha para ele, a 0,75x (60 fps): a cumplicidade."
+  },
+  {
+   "n": 49,
+   "saida_ini": 96.016,
+   "saida_fim": 98.733,
+   "clip": "c05",
+   "src_ini": 31.4,
+   "src_fim": 34.117,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.5,
+    "cy": 0.5,
+    "zoom": 1.0,
+    "mov": "estático"
+   },
+   "estabilizar": true,
+   "look": "noite_chale",
+   "entrada": {
+    "tipo": "corte",
+    "dur": 0.0
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: direção de bastidor no c05"
+   },
+   "batida": "\"Is that not allowed?\" (69,66-71,0); o refrão fecha em 71,56",
+   "texto": null,
+   "porque": "À noite, ela abre a porta do chalé e olha para trás, para ele. Liga com o final."
+  },
+  {
+   "n": 50,
+   "saida_ini": 98.733,
+   "saida_fim": 104.9,
+   "clip": "c06",
+   "src_ini": 110.0,
+   "src_fim": 116.167,
+   "vel": 1.0,
+   "rampa": null,
+   "enquadre": {
+    "cx": 0.45,
+    "cy": 0.38,
+    "zoom": 1.3,
+    "mov": "push-in lento (1,30 a 1,38)"
+   },
+   "estabilizar": false,
+   "look": "noite_chale",
+   "entrada": {
+    "tipo": "dissolve",
+    "dur": 0.4
+   },
+   "som_direto": {
+    "ganho_db": null,
+    "nota": "mudo: o medium normalizado ouve voz repetida neste trecho; a cama da noite vem do c06 26,3-32,5"
+   },
+   "batida": "outro instrumental do Messy (262,45)",
+   "texto": null,
+   "porque": "Final: os dois entram no chalé iluminado; a luz da porta cresce num clarão quente que casa com o vazamento de luz do primeiro quadro (laço do Reel). Sem marca: Instagram pessoal."
+  }
+ ],
+ "ambiente": [
+  {
+   "clip": "c02",
+   "src_ini": 21.0,
+   "src_fim": 41.76,
+   "saida_ini": 3.999,
+   "ganho_db": -18,
+   "fade": 0.4,
+   "nota": "CARRO: vento e rodagem do c02 (medium não ouve voz em 2,5-47,9). Cai para -26 dB durante a fala do c31 (17,26-19,06)."
+  },
+  {
+   "clip": "c32",
+   "src_ini": 30.0,
+   "src_fim": 44.12,
+   "saida_ini": 24.758,
+   "ganho_db": 10,
+   "fade": 0.4,
+   "nota": "CHEGADA: vento e passarinho da estradinha de eucaliptos (c32 30-44, -54 dB, sem voz no medium normalizado). Substitui o c45, que o medium ouviu como \"E aí\" repetido 5 vezes: frase repetida é defeito até prova em contrário."
+  },
+  {
+   "clip": "c28",
+   "src_ini": 3.0,
+   "src_fim": 7.7,
+   "saida_ini": 28.262,
+   "ganho_db": -4,
+   "fade": 0.2,
+   "nota": "PÉS: pisadas em folha seca sob as botas (c28 sem fala)."
+  },
+  {
+   "clip": "c24",
+   "src_ini": 2.55,
+   "src_fim": 6.0,
+   "saida_ini": 38.88,
+   "ganho_db": 8,
+   "fade": 0.2,
+   "nota": "SÓ NATUREZA: a mata limpa do c24 (folhas, passarinho, passos leves; sem voz no medium, nem normalizado), +8 dB, sem música."
+  },
+  {
+   "clip": "c36",
+   "src_ini": 0.0,
+   "src_fim": 14.4,
+   "saida_ini": 41.6,
+   "ganho_db": 0,
+   "fade": 1.0,
+   "nota": "MATA: folhas, vento e passarinho sob o Loser (c36 sem fala, -50 dB, normalizar para -38 LUFS de cama)."
+  },
+  {
+   "clip": "c16",
+   "src_ini": 12.0,
+   "src_fim": 17.5,
+   "saida_ini": 54.316,
+   "ganho_db": -8,
+   "fade": 0.3,
+   "nota": "ÁGUA: a cachoeira sobe junto com a revelação do poço (depois do \"vamos lá\", que vai até 11,9)."
+  },
+  {
+   "clip": "c29",
+   "src_ini": 2.0,
+   "src_fim": 8.0,
+   "saida_ini": 56.866,
+   "ganho_db": -6,
+   "fade": 0.3,
+   "nota": "ÁGUA: pisadas nas pedras molhadas e água correndo sob os pés no riacho (a única fala do c29 está em 0-0,5)."
+  },
+  {
+   "clip": "c06",
+   "src_ini": 14.0,
+   "src_fim": 20.0,
+   "saida_ini": 72.795,
+   "ganho_db": 6,
+   "fade": 0.5,
+   "nota": "NOITE: insetos e o silêncio da pousada sob o Messy (trecho sem voz do c06; as vozes ficam em 6,6-12,8 e 43,5-73,1)."
+  },
+  {
+   "clip": "c06",
+   "src_ini": 26.3,
+   "src_fim": 32.467,
+   "saida_ini": 98.733,
+   "ganho_db": 6,
+   "fade": 0.5,
+   "nota": "FIM: insetos da noite do chalé sob o outro do Messy (c06 26,3-32,5, sem voz no medium normalizado). O som direto do próprio plano (110-116) fica mudo: o medium normalizado ouviu \"Eu estou fazendo o quê?\" duas vezes."
+  }
+ ],
+ "falas": [
+  {
+   "clip": "c31",
+   "src_ini": 23.8,
+   "src_fim": 25.3,
+   "saida_ini": 17.558,
+   "texto_conferido": "Ouve-se, em sincronia: \"Olha só, essas aqui têm [banh…]\", uma voz no carro comentando os chalés da beira da estrada. Cinco transcrições: medium em janela longa (\"Olha só, essas aqui tem banheiro…\"), medium em janela curta (\"Olha só, essas aqui tem banheiro…\"), medium no trecho exato (\"Olha só, essas aqui tem banho ali\"), small (\"Olha, essas aqui tem banheirinho já, né?\") e small em janela curta (\"Essa daqui tem banheira…\"). Cinco de cinco ouvem \"essas aqui\"; quatro de cinco ouvem \"Olha (só)\"; a última palavra muda em cada passada. Por isso a legenda mostra só a parte confirmada. O corte sai em 25,30, antes de 25,38, onde um dos modelos ouviu um palavrão.",
+   "legenda": true
+  }
+ ],
+ "looks": {
+  "cabine": {
+   "descricao": "Interior do carro: pele quente e natural, janelas com leve halo, contraste médio.",
+   "receita_ffmpeg": "eq=contrast=1.05:gamma=1.02:saturation=1.0,colorbalance=rm=0.03:bm=-0.03:bs=0.03,curves=master='0/0.02 0.5/0.5 1/0.96',vignette=PI/4,noise=alls=6:allf=t"
+  },
+  "estrada_dourada": {
+   "descricao": "Pôr do sol e estrada: altas âmbar, sombras azul-petróleo, flare preservado.",
+   "receita_ffmpeg": "eq=contrast=1.08:saturation=1.12,colorbalance=rs=-0.04:bs=0.06:rh=0.08:gh=0.03:bh=-0.06,curves=b='0/0.04 0.5/0.48 1/0.94',vignette=PI/4.5,noise=alls=5:allf=t"
+  },
+  "mata_verde": {
+   "descricao": "Dentro da mata: verdes esmeralda, amarelo-verde contido, pretos de filme, pele protegida.",
+   "receita_ffmpeg": "eq=contrast=1.06:saturation=1.04:gamma=0.98,colorbalance=rs=-0.03:gs=0.02:bs=0.04:gm=0.02:rh=0.04:bh=-0.04,hue=h=-4,curves=master='0/0.03 0.25/0.22 0.5/0.5 0.75/0.79 1/0.97',vignette=PI/5,noise=alls=5:allf=t"
+  },
+  "cerrado_verde": {
+   "descricao": "Porteira, porta-malas e cerrado ao sol duro: segura o céu e tira o verde-limão estourado.",
+   "receita_ffmpeg": "eq=contrast=1.04:saturation=0.95:gamma=0.97,colorbalance=gm=-0.02:bm=0.02:rh=0.03:bh=-0.03,hue=h=-6:s=0.95,curves=master='0/0.02 0.5/0.47 1/0.95',vignette=PI/5,noise=alls=5:allf=t"
+  },
+  "agua_ambar": {
+   "descricao": "Riacho e poço: realça o âmbar e o vermelho do tanino, sombras profundas.",
+   "receita_ffmpeg": "eq=contrast=1.1:saturation=1.18,colorbalance=rm=0.05:bm=-0.05:bs=0.04,curves=master='0/0 0.3/0.26 0.7/0.74 1/1',vignette=PI/4.5,noise=alls=5:allf=t"
+  },
+  "cume_ouro": {
+   "descricao": "Serra e sol (c37, c38, c43, c45 já vêm com filtro teal/laranja do app): só casar, tirar ciano e aquecer as altas. Não empilhar LUT.",
+   "receita_ffmpeg": "eq=contrast=1.02:saturation=0.92,colorbalance=bs=-0.03:gs=-0.02:rh=0.05:gh=0.02:bh=-0.05,curves=master='0/0.03 0.5/0.5 1/0.97',vignette=PI/5,noise=alls=5:allf=t"
+  },
+  "noite_som": {
+   "descricao": "Praça à noite: pretos firmes, luzes práticas quentes, magenta e verde do palco preservados, grão maior.",
+   "receita_ffmpeg": "eq=contrast=1.12:saturation=1.1:brightness=-0.02,colorbalance=rs=-0.02:bs=0.05:rh=0.06:bh=-0.04,curves=master='0/0 0.15/0.08 0.5/0.5 1/0.98',vignette=PI/3.5,noise=alls=9:allf=t"
+  },
+  "luz_vermelha": {
+   "descricao": "A mão sobre a lente (c34 30,4-31,1): mantém o vermelho e abre um brilho que vira a noite.",
+   "receita_ffmpeg": "eq=saturation=1.1:brightness=0.02,split[a][b];[b]gblur=sigma=25[g];[a][g]blend=all_mode=screen:all_opacity=0.35,noise=alls=8:allf=t"
+  },
+  "noite_chale": {
+   "descricao": "Fachada do chalé à noite (c06): luz quente das arandelas e da porta, pretos limpos sem esmagar, ruído de sensor contido; o mesmo calor da noite da praça, mais calmo. Fade ao preto só nos 0,4 s finais.",
+   "receita_ffmpeg": "hqdn3d=3:3:4:4,eq=contrast=1.08:saturation=1.05:brightness=-0.02,colorbalance=rs=-0.02:bs=0.04:rh=0.07:gh=0.02:bh=-0.05,curves=master='0/0 0.15/0.09 0.5/0.5 1/0.97',vignette=PI/4,noise=alls=7:allf=t,fade=t=out:st=5.77:d=0.4"
+  }
+ },
+ "textos": [
+  {
+   "saida_ini": 4.1,
+   "saida_fim": 5.95,
+   "texto": "ITAITU  ·  -11.336, -40.497  ·  672 m",
+   "estilo": "título: ITAITU grande em caixa alta com tracking largo, entra com o vazamento de luz; a linha de GPS menor embaixo (GPS real do c30)"
+  },
+  {
+   "saida_ini": 6.15,
+   "saida_fim": 7.4,
+   "texto": "19.11.2026  ·  17:23  ·  311 m",
+   "estilo": "HUD: mono fino, branco 70%, canto inferior esquerdo, números digitam em 0,3 s (data, hora e altitude do arquivo c04)"
+  },
+  {
+   "saida_ini": 17.6,
+   "saida_fim": 19.06,
+   "texto": "Olha só, essas aqui…",
+   "estilo": "legenda de fala animada palavra a palavra, caixa alta, terço inferior, pop de escala 1,1→1,0 por palavra; sem nome de quem fala"
+  },
+  {
+   "saida_ini": 59.15,
+   "saida_fim": 61.1,
+   "texto": "771 m",
+   "estilo": "HUD: o número sobe de 672 para 771 em 0,4 s (altitude real do GPS do c17, no poço)"
+  },
+  {
+   "saida_ini": 101.2,
+   "saida_fim": 103.9,
+   "texto": "ITAITU  ·  19–22.11.2026",
+   "estilo": "mesma família do título de abertura, pequeno, branco 85%, centro na altura da porta (dentro da zona segura), fade 0,4 s; sai antes do clarão final"
+  }
+ ],
+ "assinatura": "SEM MARCA (Instagram PESSOAL do Marcos; nada de creat.MTT). Encerramento em LAÇO: os dois entram no chalé e a porta acesa vira um clarão quente que se funde no vazamento de luz da abertura, para o Reel recomeçar sem emenda (o último quadro casa com o primeiro em cor e luz; o fim do Messy em fade se encaixa sob o primeiro bumbo do Dancin quando o vídeo repete). Texto final pequeno e elegante: 'ITAITU · 19–22.11.2026' sobre a porta, fade 0,4 s, sai antes do clarão. Sem quadro preto no fim."
+}

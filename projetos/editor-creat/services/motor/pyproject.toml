@@ -10,15 +10,17 @@ dependencies = [
   "soundfile>=0.12",
   "pyloudnorm>=0.1.1",
   "opencv-python-headless>=4.9",
-  "pillow>=10",
+  "pillow>=11",                      # WEBP do dono é decodificado aqui: fora do libwebp do CVE-2023-4863 (10.0.0)
   "fastapi>=0.115",
   "uvicorn>=0.30",
+  "yt-dlp>=2025.1",
+  "onnxruntime>=1.17",
 ]
 
 [project.optional-dependencies]
 transcricao = ["faster-whisper>=1.2.1"]
 parakeet = ["sherpa-onnx>=1.10"]
-cerebro = ["anthropic>=0.70"]
+cerebro = ["anthropic>=2.10,<3"]
 r2 = ["boto3>=1.34"]
 voz = ["deepfilternet>=0.5.6"]
 teste = ["pytest>=8"]

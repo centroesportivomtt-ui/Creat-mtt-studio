@@ -12,6 +12,13 @@ type Item = {
 };
 type Pendente = { nome: string; tamanho: number; fracao: number | null; storageKey: string; url: string };
 
+// No celular a parte é menor (16 MB): se o iPhone corta a conexão (tela bloqueada, troca de app, 4G oscilando),
+// perde no máximo 16 MB em vez de 64 e retoma logo. Computador segue com EDITOR_ENVIO_PARTE_MB.
+function tamanhoParte(parteMB: number): number {
+  const celular = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+  return celular ? Math.min(parteMB, 16) : parteMB;
+}
+
 const impressao = (projeto: string, f: File) => ['ec', projeto, f.name, f.size, f.lastModified].join('|');
 
 async function offsetRemoto(url: string): Promise<number | null> {
@@ -24,8 +31,12 @@ async function offsetRemoto(url: string): Promise<number | null> {
   }
 }
 
-export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
+export default function Envio({ projeto, parteMB, aberto, aoConcluir, aoMudarAtivos, aoMudarInterrompidos }: {
   projeto: string; parteMB: number; aberto: boolean; aoConcluir: () => void;
+  /** quantos envios ainda estão subindo: a barra de comando não deixa começar a edição no meio de um envio */
+  aoMudarAtivos?: (n: number) => void;
+  /** quantos envios pararam (interrompidos ao recarregar, pausados, com erro): fechar o envio perderia esses vídeos */
+  aoMudarInterrompidos?: (n: number) => void;
 }) {
   const [itens, setItens] = useState<Item[]>([]);
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
@@ -59,6 +70,15 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
 
   useEffect(() => { void carregarPendentes(); }, [carregarPendentes]);
 
+  const ativos = itens.filter((i) => i.estado === 'enviando' || i.estado === 'preparando').length;
+  useEffect(() => { aoMudarAtivos?.(ativos); }, [ativos, aoMudarAtivos]);
+  useEffect(() => () => aoMudarAtivos?.(0), [aoMudarAtivos]);
+  // um pendente do armazenamento que já está na lista desta aba (subindo, pausado ou com erro) aparece só uma vez
+  const interrompidosVisiveis = pendentes.filter((x) => !itens.some((i) => i.nome === x.nome && i.tamanho === x.tamanho));
+  const parados = interrompidosVisiveis.length + itens.filter((i) => i.estado === 'pausado' || i.estado === 'erro').length;
+  useEffect(() => { aoMudarInterrompidos?.(parados); }, [parados, aoMudarInterrompidos]);
+  useEffect(() => () => aoMudarInterrompidos?.(0), [aoMudarInterrompidos]);
+
   // Avisa antes de fechar a aba com envio em andamento (o envio continua depois, mas o dono precisa saber).
   useEffect(() => {
     const ativo = itens.some((i) => i.estado === 'enviando' || i.estado === 'preparando');
@@ -73,7 +93,7 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
     setItens((l) => [{ chave, nome: arquivo.name, tamanho: arquivo.size, enviados: 0, estado: 'preparando', retomadoDe: null, velocidade: 0, mensagem: 'Preparando…' }, ...l]);
     const upload = new tus.Upload(arquivo, {
       endpoint: '/api/envio',
-      chunkSize: parteMB * 1024 * 1024,
+      chunkSize: tamanhoParte(parteMB) * 1024 * 1024,
       retryDelays: [0, 1000, 3000, 5000, 10000, 20000, 30000, 60000],
       metadata: { projeto, nome: arquivo.name, filetype: arquivo.type || 'application/octet-stream' },
       fingerprint: async (f) => impressao(projeto, f as File),
@@ -132,14 +152,44 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
     setPendentes((p) => p.filter((x) => !(x.nome === arquivo.name && x.tamanho === arquivo.size)));
   }, [projeto, parteMB, atualizar, aoConcluir, carregarPendentes]);
 
+  const [aviso, setAviso] = useState('');
+  // Entre tocar em "Escolher" e o seletor devolver os vídeos, o iPhone prepara/baixa cada um (do app Dropbox ou da
+  // galeria) e a página fica parada: sem este aviso parece que "o botão não vai para lugar nenhum".
+  const [esperandoSeletor, setEsperandoSeletor] = useState(false);
+  useEffect(() => {
+    const el = entrada.current;
+    if (!el) return;
+    const cancelou = () => setEsperandoSeletor(false);
+    el.addEventListener('cancel', cancelou);
+    return () => el.removeEventListener('cancel', cancelou);
+  }, []);
+  // Safari antigo não avisa quando a pessoa cancela: o aviso some sozinho em 3 min
+  useEffect(() => {
+    if (!esperandoSeletor) return;
+    const t = window.setTimeout(() => setEsperandoSeletor(false), 180_000);
+    return () => window.clearTimeout(t);
+  }, [esperandoSeletor]);
   const escolher = (lista: FileList | null) => {
-    if (!lista) return;
-    for (const f of Array.from(lista)) void comecar(f);
+    setEsperandoSeletor(false);
+    const arquivos = lista ? Array.from(lista) : [];
+    // o seletor do iPhone com arquivos do app Dropbox pode voltar VAZIO (ele precisa baixar os vídeos antes e às vezes desiste)
+    setAviso(arquivos.length ? '' : 'Nenhum arquivo chegou do seletor. Vídeos do app Dropbox: o celular baixa tudo antes de entregar, '
+      + 'e com vídeo grande isso pode falhar. Mais rápido: cole aqui embaixo o link do Dropbox (da pasta ou dos vídeos).');
+    for (const f of arquivos) void comecar(f);
     if (entrada.current) entrada.current.value = '';
   };
 
   const pausar = (i: Item) => { void i.upload?.abort(); atualizar(i.chave, { estado: 'pausado', mensagem: 'Pausado. Toque em continuar quando quiser.' }); };
   const continuar = (i: Item) => { i.upload?.start(); atualizar(i.chave, { estado: 'enviando', mensagem: '' }); };
+  // Seguir sem um vídeo é escolha explícita do dono: ele tira da lista e só então o envio pode fechar.
+  const tirar = (i: Item) => {
+    void i.upload?.abort(true).catch(() => null);
+    setItens((l) => l.filter((x) => x.chave !== i.chave));
+  };
+  const esquecer = async (x: Pendente) => {
+    try { if (x.storageKey) await tus.defaultOptions.urlStorage.removeUpload(x.storageKey); } catch { /* já saiu */ }
+    setPendentes((l) => l.filter((y) => y.storageKey !== x.storageKey));
+  };
 
   return (
     <div>
@@ -150,27 +200,40 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
         onDragLeave={() => setArrastando(false)}
         onDrop={(e) => { e.preventDefault(); setArrastando(false); if (aberto) escolher(e.dataTransfer.files); }}
       >
-        <p className="soltar__grande">Solte o material aqui</p>
-        <p className="aviso">Vídeos de vários GB, direto do celular ou do computador. Se a rede cair, continua de onde parou.</p>
-        <label className="botao botao--principal" style={{ marginTop: 6 }} aria-disabled={!aberto}>
-          Escolher arquivos
-          <input ref={entrada} className="so-leitor" type="file" multiple disabled={!aberto}
+        {/* No celular não existe arrastar: lá o gesto é escolher os vídeos da galeria (o título some e o botão vem primeiro). */}
+        <p className="soltar__grande so-mouse">Solte o material aqui</p>
+        <label className="botao botao--secundario" aria-disabled={!aberto}>
+          <span className="so-mouse">Escolher arquivos</span><span className="so-toque">Escolher vídeos</span>
+          <input ref={entrada} id="entrada-arquivo" className="so-leitor" type="file" multiple disabled={!aberto}
             accept="video/*,audio/*,image/*,.mov,.mp4,.mts,.m4a,.wav,.zip,.pdf"
+            onClick={() => setEsperandoSeletor(true)}
             onChange={(e) => escolher(e.currentTarget.files)} data-teste="entrada-arquivo" />
         </label>
+        <p className="aviso">Vídeos de vários GB. Se a rede cair, continua de onde parou.</p>
+        {esperandoSeletor && (
+          <p className="aviso" role="status" data-teste="envio-esperando">
+            Escolheu? Se o celular mostrar &quot;Preparando&quot; ou &quot;Baixando&quot;, espere nesta tela: ele está pegando os vídeos
+            (do app Dropbox pode levar alguns minutos). O envio começa sozinho.
+          </p>
+        )}
         {!aberto && <p className="aviso">O envio foi fechado: este projeto já está sendo editado.</p>}
+        {aviso && <p className="erro" role="alert" data-teste="envio-aviso">{aviso}</p>}
+        <p className="aviso">No Dropbox ou no Drive? Cole o link logo abaixo (pasta também vale): o servidor baixa direto.</p>
       </div>
 
-      {pendentes.length > 0 && (
+      {interrompidosVisiveis.length > 0 && (
         <ul className="envios" aria-label="Envios interrompidos">
-          {pendentes.map((p) => (
+          {interrompidosVisiveis.map((p) => (
             <li className="envio" key={p.storageKey} data-estado="pausado" data-pendente={p.nome}>
               <div className="envio__linha">
                 <span className="envio__nome">{p.nome}</span>
                 <span className="envio__num">{p.fracao !== null ? `${Math.floor(p.fracao * 100)}%` : '…'}</span>
               </div>
               <div className="barra"><i style={{ transform: `scaleX(${p.fracao ?? 0})` }} /></div>
-              <p className="envio__info">Interrompido. Escolha o mesmo arquivo de novo para continuar de onde parou.</p>
+              <div className="envio__linha">
+                <p className="envio__info">Interrompido. Escolha o mesmo arquivo de novo para continuar de onde parou.</p>
+                <button type="button" className="botao botao--fantasma botao--pequeno" data-teste="envio-esquecer" onClick={() => void esquecer(p)}>Seguir sem ele</button>
+              </div>
             </li>
           ))}
         </ul>
@@ -198,6 +261,7 @@ export default function Envio({ projeto, parteMB, aberto, aoConcluir }: {
                   </span>
                   {i.estado === 'enviando' && <button type="button" className="botao botao--fantasma botao--pequeno" onClick={() => pausar(i)}>Pausar</button>}
                   {(i.estado === 'pausado' || i.estado === 'erro') && i.upload && <button type="button" className="botao botao--fantasma botao--pequeno" onClick={() => continuar(i)}>Continuar</button>}
+                  {(i.estado === 'pausado' || i.estado === 'erro') && <button type="button" className="botao botao--fantasma botao--pequeno" onClick={() => tirar(i)}>Seguir sem ele</button>}
                 </div>
               </li>
             );

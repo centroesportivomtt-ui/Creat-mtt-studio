@@ -17,6 +17,9 @@ from dataclasses import dataclass
 from typing import Callable
 
 ORDEM = ("ingest", "analise", "catalogo", "direcao", "montagem", "qa", "entrega")
+# Etapas de fundo, fora do encadeamento do filme: nunca põem o projeto em erro e não aparecem na linha do tempo do site.
+#   entregas: filme aprovado -> página de entregas no Cloudflare R2;  espelho: original enviado -> cópia no R2 (desligado).
+FUNDO = ("entregas", "espelho")
 _REGISTRO: dict[str, Callable] = {}
 
 
@@ -45,9 +48,15 @@ class Contexto:
         banco.emitir(self.con, self.projeto, "etapa_progresso", etapa=self.job["etapa"], alvo=self.alvo, progresso=round(p, 3), mensagem=mensagem)
         banco.renovar(self.con, self.job["id"])
 
+    def passo(self, chave: str, **kw):
+        """Mesa ao vivo: `with ctx.passo("analise.visao", ferramenta=..., modelo=...) as p:` emite o par de eventos `passo`
+        (etapas/passos.py). ctx.progresso continua igual."""
+        from motor.etapas import passos
+        return passos.passo(chave, **kw)
+
 
 def etapa(nome: str):
-    if nome not in ORDEM:
+    if nome not in ORDEM and nome not in FUNDO:
         raise ValueError(f"etapa desconhecida: {nome}")
 
     def reg(fn):
@@ -58,7 +67,7 @@ def etapa(nome: str):
 
 def carregar_todas() -> dict[str, Callable]:
     """Importa os módulos de etapa que já existem (uma frente pode ainda não ter entregue o seu)."""
-    for nome in ORDEM:
+    for nome in ORDEM + FUNDO:
         try:
             importlib.import_module(f"motor.etapas.{nome}")
         except ModuleNotFoundError as e:

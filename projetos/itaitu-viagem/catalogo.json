@@ -1,0 +1,2176 @@
+[
+{
+"clip": "c01",
+"lugar": "Estrada rural do sertão baiano a caminho de Itaitu, pela janela do carro (GPS -11.638/-39.597), pôr do sol de 19/11 às 17h08",
+"descricao": "Pôr do sol visto da janela do passageiro em movimento: sol baixo e grande atrás de caatinga, cactos, árvores secas e poças d'água na beira da estrada; retrovisor no canto nos primeiros segundos. A partir de 25s a câmera sai da janela e fica livre apontando o sol alaranjado por trás da neblina, com silhuetas de arbustos e mandacaru. Fecha em 34s voltando ao retrovisor.",
+"luz": "Contraluz direto de fim de tarde, sol estourado com estrelas de flare e reflexos verdes de lente; céu azul-acinzentado na primeira metade e laranja esfumaçado na segunda. Sombras fechadas e o sol clipa (sem detalhe no disco), mas o clima é lindo e funciona como cor de abertura.",
+"tremor": 2,
+"som": "Só rumor grave de carro e vento (energia concentrada abaixo de 500 Hz, quase nada de voz ou música, nível constante em torno de -14 dB). Sem fala. Bom como cama de estrada, mas precisa de música e sound design por cima.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0,
+"fim": 3.5,
+"descricao": "Abertura da janela: sol com flare estrelado nascendo atrás da vegetação, retrovisor entrando no canto, estrada correndo em baixo. Dá para abrir o filme com 'a viagem começou'.",
+"nota": 7,
+"serve": "V",
+"movimento": "câmera na janela do carro, deslocamento lateral pelo carro em movimento, leve balanço",
+"gancho_de_transicao": "retrovisor/lataria entrando no quadro; galho de árvore cruzando o sol em 3-4s cobre a lente"
+},
+{
+"ini": 6.8,
+"fim": 9.8,
+"descricao": "Poça d'água com o sol refletido em cintilância e silhueta das árvores, flare estrelado diagonal. Plano mais bonito da primeira metade.",
+"nota": 7,
+"serve": "V",
+"movimento": "travelling lateral pelo carro",
+"gancho_de_transicao": "água com reflexo brilhante (match com cartão de água/luz)"
+},
+{
+"ini": 15,
+"fim": 20.5,
+"descricao": "Árvores de galhos finos em silhueta e casa de fazenda com sol grande flareando, reflexos verdes de lente.",
+"nota": 7,
+"serve": "V",
+"movimento": "travelling lateral",
+"gancho_de_transicao": "árvore escura enchendo o quadro em 21-22s funciona como cobertura de lente perfeita para corte"
+},
+{
+"ini": 24.5,
+"fim": 29.5,
+"descricao": "Sol enorme e alaranjado na neblina, linha de nuvem baixa, câmera já solta da janela e estável. Plano de cartão postal do sertão.",
+"nota": 8,
+"serve": "V",
+"movimento": "quase estático, sutil deriva, sol sobe/desce no quadro",
+"gancho_de_transicao": "sol estourado vira flash branco para a próxima cena"
+},
+{
+"ini": 30.5,
+"fim": 33.5,
+"descricao": "Mandacaru em silhueta sobe de baixo cruzando o sol, depois galhos de folhagem escura entram e cobrem boa parte do quadro.",
+"nota": 8,
+"serve": "V",
+"movimento": "tilt/pan leve com objeto em primeiro plano passando",
+"gancho_de_transicao": "mandacaru e folhagem passando na frente do sol em 31 a 33,5s (cobre o quadro, ótimo para corte escondido)"
+}
+],
+"problemas": "Janela suja/reflexo e dedo de apoio não aparecem, mas a borda do carro e o retrovisor entram em 0-4s e 34s (cortar ou usar de propósito). Câmera balança bastante em 21-26s ao sair da janela. Sol estoura sem detalhe. Só é útil na vertical; no recorte 16:9 perde o céu e o chão. Sem pessoas, não conta a história sozinho."
+},
+{
+"clip": "c02",
+"lugar": "Dentro do carro na estrada, Marcos dirigindo e Glenda de passageira (GPS -11.624/-39.612), 19/11 às 17h09",
+"descricao": "Câmera apontada de trás/lado do motorista mostrando Marcos de óculos escuros, regata clara e barba dirigindo com as duas mãos, e Glenda ao fundo de vestido estampado azul e laranja, de óculos, mexendo no celular rosa e depois recostando perto dele. Paisagem verde passando pela janela. O início tem a mão do Marcos e a câmera sendo posicionada; o final vira para o rosto dele e despenca para o console.",
+"luz": "Hora dourada, sol baixo entrando pela janela esquerda e iluminando braço, rosto e regata, com contraste forte no teto escuro do carro. Muito bonito em pele; às vezes estoura o céu na janela.",
+"tremor": 1,
+"som": "Motor, vento e estrada (graves fortes, médios audíveis, nível de -13 a -30 dB, com queda para -30 em 6-7s e 19-20s). Transcrição vazia: não há fala clara. Sem música de rádio identificável. Dá para usar como room tone de carro com música por cima.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 1,
+"fim": 5.5,
+"descricao": "Revelação: do celular rosa da Glenda para Marcos de perfil com óculos, barba e cenário correndo atrás. Mostra o casal em um só quadro.",
+"nota": 7,
+"serve": "H",
+"movimento": "câmera presa dentro do carro, leve recomposição, panorâmica curta de Glenda para Marcos",
+"gancho_de_transicao": "mão do Marcos/volante entrando no quadro em 0-1s; saída natural para o céu pela janela"
+},
+{
+"ini": 8,
+"fim": 15,
+"descricao": "Marcos dirigindo, perfil limpo, luz dourada na pele e braço forte no volante, Glenda atrás reagindo. Plano de apresentação do personagem na estrada.",
+"nota": 7,
+"serve": "H",
+"movimento": "quase estático, estabilizado pelo corpo do carro, microvibração",
+"gancho_de_transicao": "árvores e luz piscando pela janela como pulso de luz; dá para cortar em um flash de sol"
+},
+{
+"ini": 16,
+"fim": 21.5,
+"descricao": "Glenda se inclina em direção ao ombro do Marcos, momento carinhoso e espontâneo. Marcos mantém o foco na estrada.",
+"nota": 7,
+"serve": "ambos",
+"movimento": "estático com leve balanço",
+"gancho_de_transicao": ""
+},
+{
+"ini": 36,
+"fim": 41.5,
+"descricao": "Sol baixo atravessando a janela e iluminando o rosto e o braço do Marcos, Glenda coça o cabelo ao fundo. O plano com a luz mais bonita do clipe.",
+"nota": 8,
+"serve": "H",
+"movimento": "estático, vibração suave de estrada",
+"gancho_de_transicao": "flare de sol quente sobre a lente e passagem de poste/árvore claras pela janela"
+},
+{
+"ini": 45,
+"fim": 47.9,
+"descricao": "Câmera vira para perto do rosto do Marcos (ele olha para a lente por um instante) e despenca para o console com as latas, chicote natural.",
+"nota": 6,
+"serve": "H",
+"movimento": "whip tilt de baixo/lateral para o console",
+"gancho_de_transicao": "chicote da câmera descendo ao console (bom ponto de corte para o próximo clipe, combinar com c03)"
+}
+],
+"problemas": "Plano longo de 48s com pouca variação: usar pedaços de 3-6s. Marcos olha a lente por um instante em 45-46s (ok como cumplicidade, não pra cena observacional). Início 0-1s tem mão e câmera sendo ajustada. Janela esquerda estoura. Câmera horizontal de baixo ângulo, braço do Marcos corta parte do quadro. Sem voz utilizável."
+},
+{
+"clip": "c03",
+"lugar": "Dentro do carro na estrada (GPS -11.592/-39.646), 19/11 às 17h15",
+"descricao": "Vertical curto: Glenda de óculos e vestido estampado olha o celular rosa, vista de baixo e de lado, com a perna e o braço do Marcos atravessando o quadro. Termina em chicote da câmera para o console com duas latinhas rosa e a alavanca de marcha.",
+"luz": "Luz suave de fim de tarde entrando por trás, pele de Glenda bem exposta, interior do carro sem estourar, mais equilibrado que o c02.",
+"tremor": 2,
+"som": "Ambiente de carro com motor (nível -11 a -9 dB, subindo nos últimos 3s). Sem fala.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0.6,
+"fim": 2,
+"descricao": "Glenda de óculos concentrada no celular rosa, plano fechado, vestido estampado bem marcado.",
+"nota": 6,
+"serve": "V",
+"movimento": "câmera baixa, handheld, leve aproximação",
+"gancho_de_transicao": "perna/braço do Marcos entrando e cobrindo o quadro em 1,5 a 2,5s"
+},
+{
+"ini": 3.8,
+"fim": 5.9,
+"descricao": "Chicote (whip) da câmera de Glenda direto para o console: latinhas rosa, painel do rádio e câmbio.",
+"nota": 7,
+"serve": "V",
+"movimento": "whip tilt/panorâmica rápida com motion blur forte",
+"gancho_de_transicao": "chicote com borrão: serve de saída para outro clipe (ótimo para transição por chicote de câmera)"
+}
+],
+"problemas": "Braço e perna do Marcos cruzam e tapam a Glenda em 1,5-3,5s (pode ser usado como cobertura de lente, mas não como plano de rosto). Clipe curtíssimo (5,9s). Handheld nervoso, sem estabilizar."
+},
+{
+"clip": "c04",
+"lugar": "Dentro do carro na estrada (GPS -11.533/-39.709), 19/11 às 17h23, clipe longo de 1min57",
+"descricao": "Gravado com o celular deitado: o vídeo vem rotacionado 90 graus no proxy (cabeças viradas para a esquerda), com Glenda em cima (vestido azul e laranja, óculos) e Marcos embaixo (regata clara, barba, óculos) conversando, gesticulando e rindo, com a janela clara entre eles. O braço do Marcos cruza o quadro algumas vezes e há bastante gesto. Plano único, sem variação de enquadramento.",
+"luz": "Dia claro de fim de tarde, janela estourada em branco/verde. Pele bem exposta mas contraste baixo.",
+"tremor": 1,
+"som": "Rumor de carro (graves) e médios fortes que sugerem conversa/música baixa, mas a transcrição veio vazia, então não há fala clara aproveitável. Quedas de nível em 70-95s (carro mais calmo). Sem música dá para ouvir só ambiente.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 19,
+"fim": 23.5,
+"descricao": "Glenda leva a mão ao rosto e Marcos vira a cabeça: gesto natural de interação entre os dois.",
+"nota": 5,
+"serve": "H",
+"movimento": "estático com a câmera deitada, só gestos",
+"gancho_de_transicao": "braço do Marcos atravessando o quadro em 21-22s cobre a lente"
+},
+{
+"ini": 58,
+"fim": 71,
+"descricao": "Marcos gesticula com a mão e braço, Glenda sorri, trecho mais animado do clipe.",
+"nota": 5,
+"serve": "H",
+"movimento": "estático",
+"gancho_de_transicao": "mão/braço do Marcos passando na frente da lente"
+},
+{
+"ini": 72,
+"fim": 78,
+"descricao": "Troca de olhares e mãos do Marcos mexendo, Glenda de óculos olhando para fora.",
+"nota": 4,
+"serve": "H",
+"movimento": "estático",
+"gancho_de_transicao": ""
+}
+],
+"problemas": "Imagem deitada 90 graus (precisa girar 90 graus para ficar na posição certa; ao girar vira 16:9 e some a 4K vertical, usar só como horizontal). Plano parado de quase 2 minutos sem acontecimento, baixo valor de retenção. Mão e braço do Marcos tapam a Glenda em vários momentos. Ambos de óculos, sem contato visual. Sem fala aproveitável. Uso sugerido: no máximo 2-3s como bastidor/respiro."
+},
+{
+"clip": "c05",
+"lugar": "Entrada do Village Serra do Cruzeiro, pousada (GPS -11.342/-40.486), noite de 19/11 às 20h30",
+"descricao": "Chegada noturna: Glenda de vestido estampado em frente à porta de vidro verde com painel de trilhas, olhando de lado para a câmera. Marcos filma e dirige a cena falando ('se ficar desse ângulo', 'virou'). Depois a câmera passeia pela entrada escura com poste de luz azul-turquesa, terra molhada, em ato de girar pelo terreno até a placa 'Village Serra do Cruzeiro' e uma palmeira iluminada, e volta para a Glenda na porta.",
+"luz": "Noite com contraste artístico: luz azulada de poste e iluminação quente/branca da fachada. O verde do painel e o branco das cortinas dão ótima textura. Pele da Glenda bem iluminada na porta; o trecho do terreno é escuro e com ISO alto/ruído.",
+"tremor": 2,
+"som": "Fala do Marcos próxima ao microfone direcionando a Glenda (bastidor), insetos/ambiente noturno ao fundo em nível médio de -26 a -38 dB. Últimos 3s quase silêncio (-53 dB). Nada de música. A fala é bastidor puro.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 5.5,
+"fim": 8,
+"descricao": "Glenda olha por cima do ombro para a câmera, vestido estampado, parede verde com ícones de trilha. Em 7s a cortina branca ocupa o quadro.",
+"nota": 6,
+"serve": "V",
+"movimento": "câmera quase parada, leve aproximação",
+"gancho_de_transicao": "cortina branca da porta de vidro cobrindo a lente em 7-8s (corte escondido)"
+},
+{
+"ini": 10.5,
+"fim": 13.8,
+"descricao": "Glenda de perfil/costas olha para a câmera com leve sorriso, mão na maçaneta da porta de vidro. Plano mais bonito de pessoa.",
+"nota": 7,
+"serve": "V",
+"movimento": "estático, handheld bem leve",
+"gancho_de_transicao": "saída por giro de câmera para a escuridão em 14s"
+},
+{
+"ini": 14,
+"fim": 17.5,
+"descricao": "Giro da câmera para fora da pousada: poste de luz azul e terreno de terra molhada com palmeira, estética noturna.",
+"nota": 6,
+"serve": "V",
+"movimento": "pan rápido com desfoque de movimento",
+"gancho_de_transicao": "chicote lateral (borrão) em 13-15s e em 22s"
+},
+{
+"ini": 22,
+"fim": 28.5,
+"descricao": "Pan rápido chega à fachada branca com o logo 'Village Serra do Cruzeiro' e uma palmeira iluminada; a placa 'Serra do Cruzeiro' lê-se em 23-25s com luz azul-branca. Plano de localização do hospedagem.",
+"nota": 7,
+"serve": "V",
+"movimento": "whip pan com revelação, depois travelling lateral suave",
+"gancho_de_transicao": "chicote em 22s, palmeira em primeiro plano, cortina branca em 30s cobre a lente"
+},
+{
+"ini": 30,
+"fim": 36,
+"descricao": "Volta para a porta: cortina cobre a lente, depois Glenda abre os braços apresentando o ambiente e se vira para a câmera.",
+"nota": 6,
+"serve": "V",
+"movimento": "handheld com recomposição",
+"gancho_de_transicao": "cortina branca cobrindo a lente em 30s"
+}
+],
+"problemas": "Fala de bastidor do Marcos o tempo todo ('amor, apresentação, se ficar desse ângulo', 'virou'): cortar o áudio e usar só imagem. Glenda olha para a câmera por direção (pose), natural mas combinada. Escuridão total e capô de carro entrando em 17-21s (quadro quase preto em 18s). Ruído de ISO nos trechos escuros e foco hunting em 16-17s. Entrada de terreno sem interesse fora da placa. Sem fala útil."
+},
+{
+"clip": "c06",
+"lugar": "Estacionamento do Village Serra do Cruzeiro, noite de 19/11 às 20h33 (GPS -11.342/-40.486), 2min20",
+"descricao": "Plano fixo noturno da fachada da pousada com carro branco de porta-malas aberto em primeiro plano, enquanto Marcos entra e sai carregando sacolas e malas e Glenda aparece dentro do chalé iluminado (cortinas, vidro). Em 2:09 a câmera é reposicionada e a placa e a palmeira ficam à vista. É puro bastidor de descarregar o carro.",
+"luz": "Noite, fachada com spots amarelos no beiral e interior verde-claro bem iluminado, carro com lanterna vermelha acesa. Boa textura, mas muito ruído de ISO nas sombras do chão.",
+"tremor": 0,
+"som": "Quase silêncio de noite (-44 a -58 dB), com insetos e ruídos distantes. Pico de -20 dB em 58-63s (porta-malas/sacolas) e outro pico em 2:13 (-19 dB). Fala entre os dois quase inaudível e a transcrição é inútil (ex.: 'Olha, a quimaça', 'Amo tudo esse tempo' em 2:17-2:20, parece conversa distante). Sem fala útil.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0,
+"fim": 10,
+"descricao": "Marcos sai do chalé com sacolas coloridas pela porta de vidro, passa pela varanda e some; a Glenda não aparece. Ação clara e luz bonita.",
+"nota": 5,
+"serve": "V",
+"movimento": "tripé/apoio, câmera totalmente fixa",
+"gancho_de_transicao": "cortina do chalé cobrindo a porta e Marcos saindo de quadro (saída de quadro limpa)"
+},
+{
+"ini": 54,
+"fim": 72,
+"descricao": "Marcos chega ao carro, tira bolsa/sacola do porta-malas e se agacha; Glenda aparece dentro do chalé de vestido estampado. Cenário da chegada com tudo no quadro.",
+"nota": 5,
+"serve": "V",
+"movimento": "fixo, plano geral",
+"gancho_de_transicao": "Marcos passando na frente da lente de costas (regata clara) ocupa quase o quadro em 1:00 a 1:09"
+},
+{
+"ini": 108,
+"fim": 117,
+"descricao": "Marcos e Glenda juntos na porta do chalé iluminado, ele carrega bagagem, silhueta aconchegante.",
+"nota": 5,
+"serve": "V",
+"movimento": "fixo",
+"gancho_de_transicao": "saída de quadro pela porta"
+},
+{
+"ini": 129,
+"fim": 138.5,
+"descricao": "Câmera é reposicionada: placa 'Village' aparece ao fundo, carro à frente, Marcos levanta o braço e vai ao porta-malas, Glenda na porta; boa localização do lugar.",
+"nota": 5,
+"serve": "V",
+"movimento": "reenquadramento com leve pan",
+"gancho_de_transicao": "palmeira em primeiro plano e lataria do carro cobrindo parte do quadro"
+}
+],
+"problemas": "Clipe de 140s com a mesma ação repetida: baixo valor de retenção, só funciona acelerado (4x a 8x em timelapse de chegada). Placa do carro visível (borrar antes de publicar). Marcos às vezes de costas encobre a cena. Ruído de ISO forte no chão escuro. Fala de bastidor baixa e ininteligível: não usar o áudio. Nenhum momento 8+; é material de apoio para contar 'chegamos e descarregamos'."
+},
+{
+"clip": "c07",
+"lugar": "Itaitu, hospedagem/pousada (GPS -11.342,-40.487), calçada em frente a um prédio de vidro/madeira, com carro branco de portas abertas e palmeira em vaso. Gravado 19/11 às 20h38, noite de chegada.",
+"descricao": "Plano fixo quase o tempo todo, 3 minutos (179 s), vertical 4K. Câmera parada na calçada, olhando de baixo para o carro branco com as portas abertas. Um homem sem camisa, de boné azul e bermuda verde, troca de roupa e mexe nas malas e na mala do carro, entrando e saindo de quadro. A partir de ~2:18 aparece uma mulher (provavelmente a Glenda) junto à porta de vidro à esquerda, quase sempre parada. É bastidor de chegada, sem ação de cinema. Quem filma comenta em voz baixa (frio, a casa, a limpeza).",
+"luz": "Noite fechada. Postes quentes (âmbar) à esquerda e um farol azul/branco ao fundo que dão contraste e um brilho bonito, o resto fica em preto profundo. Cor de cidade pequena à noite, com o branco do carro e o verde da palmeira como pontos de cor.",
+"tremor": 1,
+"som": "Ambiente noturno muito baixo (-45 a -58 dB), sem mata nem água: silêncio de rua, passos, porta do carro, vozes de casal ao longe. Voz do operador em primeiro plano (picos de -25 a -33 dB) falando de forma casual. Sem música. Fraco para sound design, exige limpeza de voz se usar.",
+"fala_util": "Quase nada aproveitável: é conversa de bastidor transcrita com muitos erros. Possível uso só como áudio de ambiente muito baixo, não como fala. Trecho 105.9-109.9 ('788 dias' provavelmente erro) e 137-152 ('cada casal fica com uma [casa]... a gente joga até com a galera depois') parece papo de grupo, nada de filme. Não usar.",
+"problemas": "Clipe longo e quase todo morto: o mesmo enquadramento por 3 min, pessoa sem camisa trocando de roupa (não serve de imagem de marca, avaliar se é a pessoa certa e se pode aparecer assim), fala de bastidor ('tá muito perto, velho', 'vassourinha'), conversa sobre limpeza e reclamação da casa. Imagem escura com grão e ruído de sensor nas áreas pretas. Pessoa na porta quase invisível. Não tem planos para o filme principal. Único uso possível: 1 a 2 s de abertura 'chegamos à noite' com o carro e as luzes.",
+"momentos": [
+{
+"ini": 0,
+"fim": 3.5,
+"descricao": "Abertura do clipe: homem de boné azul ao lado do carro branco de porta aberta, prédio com luzes quentes e palmeira. Enquadramento limpo, bom como plano de estabelecimento 'chegamos, noite em Itaitu'.",
+"nota": 5,
+"serve": "V",
+"movimento": "Fixo, levemente inclinado de baixo para cima",
+"gancho_de_transicao": "Faróis e luzes ao fundo servem para fusão de luz; porta do carro aberta pode servir de máscara"
+},
+{
+"ini": 19.5,
+"fim": 22.5,
+"descricao": "Homem caminha de frente para a câmera pela calçada iluminada pelos postes, silhueta com o carro ao lado. É o plano mais cênico do clipe.",
+"nota": 5,
+"serve": "V",
+"movimento": "Fixo, pessoa vem em direção à lente",
+"gancho_de_transicao": "Saída de quadro / passar rente à lente"
+},
+{
+"ini": 143,
+"fim": 147,
+"descricao": "Carro branco de portas abertas com prédio e luzes, pessoa sem camisa na porta do carro. Enquadramento de 'chegada'.",
+"nota": 4,
+"serve": "V",
+"movimento": "Fixo",
+"gancho_de_transicao": ""
+}
+]
+},
+{
+"clip": "c08",
+"lugar": "Trilha na mata (Chapada Diamantina, caminho para a cachoeira/poço), GPS -11.334,-40.503. Gravado 20/11 às 13h57.",
+"descricao": "Câmera segue Glenda por uma trilha de terra vermelha em meio a mata fechada. Ela (maiô verde-água, short preto, bolsa preta a tiracolo, óculos escuros) caminha na frente. Aos 10-12 s ela olha para trás com óculos escuros, aos 13-15 s sobe um degrau de terra e balança os braços, aos 17 s sorri para a câmera. Aos 21-23 s a câmera se solta dela e varre a vegetação (movimento de câmera livre) e depois volta a segui-la ao fundo da trilha.",
+"luz": "Sol alto de meio-dia filtrado pela copa: pontos de sol duro e sombra azulada, contraste alto, terra vermelha saturada contra verde. Bom, mas queima um pouco nos brancos (tênis e céu).",
+"tremor": 2,
+"som": "Ambiente contínuo da mata (~-22 dB, constante, energia espalhada em médios e agudos, provavelmente insetos/cigarras e folhagem), mais passos na terra. Quase nada de água ou vento forte. Sem música. Voz do operador (Marcos) em volume baixo: bastidor.",
+"fala_util": "Nenhuma boa. 'Olha o que ela está fazendo' (2.8-4.8), 'Mas vamos fazer o que mais?' (8.8-10.8), 'Volta aí para o vídeo' (15.8-17.8) são bastidor: cortar voz do operador (limpeza ou substituir).",
+"problemas": "Tremor médio (andando com o celular na mão, seguindo pelas costas). Resolução menor (1584x2816). Fala de bastidor em 4 trechos ('Volta aí para o vídeo' avisa que está gravando). Câmera cai um pouco do assunto aos 4-6 s e aos 21-23 s. Brancos estourados aos 18-20 s (flare azulado da lente). Só 27 s, nenhum plano de impacto sozinho.",
+"momentos": [
+{
+"ini": 9.8,
+"fim": 12.8,
+"descricao": "Glenda vira o corpo na trilha e olha para a câmera de óculos escuros, em meio à mata com luz recortada. Plano mais bonito do clipe, humano e natural.",
+"nota": 7,
+"serve": "V",
+"movimento": "Seguindo com a câmera na mão, aproximando levemente",
+"gancho_de_transicao": "Folhas passando em primeiro plano e sombras; ótimo para match com folha cobrindo a lente"
+},
+{
+"ini": 12.8,
+"fim": 15.8,
+"descricao": "Glenda sobe a trilha de costas com a bolsa balançando e braços soltos, câmera mais próxima, energia de aventura.",
+"nota": 6,
+"serve": "V",
+"movimento": "Perseguição por trás, câmera na mão mais próxima",
+"gancho_de_transicao": "Costas dela cobrem a lente (objeto cobrindo)"
+},
+{
+"ini": 16.5,
+"fim": 18,
+"descricao": "Glenda olha por cima do ombro e sorri para a câmera, brilho de sol em cima.",
+"nota": 6,
+"serve": "V",
+"movimento": "Seguindo, leve aproximação",
+"gancho_de_transicao": ""
+},
+{
+"ini": 20.8,
+"fim": 23.2,
+"descricao": "Câmera abandona Glenda e varre a mata verde e densa, com um chicote natural que pode servir como transição.",
+"nota": 5,
+"serve": "V",
+"movimento": "Pan/varredura rápida solta, desfocada nas bordas",
+"gancho_de_transicao": "Chicote de câmera / vegetação cobrindo, bom corte de saída"
+}
+]
+},
+{
+"clip": "c09",
+"lugar": "Trilha na mata, mesma região de c08 (GPS -11.334,-40.503). Gravado 20/11 às 13h58, logo depois de c08.",
+"descricao": "Clipe curto de 7,2 s em selfie. Começa com folhagem tapando a lente (0-0.8 s), depois revela Marcos de perfil caminhando (camisa creme de textura, regata branca, alça de bolsa no peito, barba cheia, cabelo crespo jogado para o lado). Aos 6 s ele sai de quadro para a direita e aparece vegetação e palmeiras com céu azul.",
+"luz": "Sol alto, contra-luz suave nos cabelos, pele com sombra de folhas. Boa exposição na pele. Lentes dos óculos escurecem ao longo do clipe (fotocromáticas), de 1 a 4 s.",
+"tremor": 2,
+"som": "Ambiente de mata contínuo (-22 dB), passos e fricção de folhas. Sem fala. Sem água nem música.",
+"fala_util": "",
+"problemas": "Muito curto. Corte começa com folhagem desfocada na lente (serve como transição, mas o primeiro frame é inútil). Marcos olha para o lado/baixo, não para a câmera: não é fala. Câmera um pouco instável e perfil cortado na borda do quadro aos 3-4 s.",
+"momentos": [
+{
+"ini": 0,
+"fim": 1.2,
+"descricao": "Folha grande cobre a lente e se abre revelando o rosto de Marcos de perfil. Pronto para ser transição 'folha que revela'.",
+"nota": 7,
+"serve": "V",
+"movimento": "Câmera sobe da folha para o rosto",
+"gancho_de_transicao": "Folha cobrindo a lente na entrada (ótima para casar com a folha de saída do clipe anterior)"
+},
+{
+"ini": 1.5,
+"fim": 5.5,
+"descricao": "Perfil de Marcos andando na mata, barba e cabelo em destaque, cor do creme com o verde atrás. Pose natural, forte.",
+"nota": 6,
+"serve": "V",
+"movimento": "Selfie caminhando, câmera estável o suficiente",
+"gancho_de_transicao": "Folhas e galhos passam na frente"
+},
+{
+"ini": 5.8,
+"fim": 7.2,
+"descricao": "Marcos sai de quadro pela direita e a câmera mostra palmeiras com céu azul.",
+"nota": 6,
+"serve": "V",
+"movimento": "Varredura para fora do assunto",
+"gancho_de_transicao": "Saída de quadro / céu e palmeiras para match"
+}
+]
+},
+{
+"clip": "c10",
+"lugar": "Trilha na mata, subida (GPS -11.334,-40.504). Gravado 20/11 às 13h59, 17,4 s.",
+"descricao": "Selfie de caminhada com braço estendido: Marcos de óculos escuros, camisa creme e regata, olha em volta para a mata, para o céu e para o chão da trilha. Aos 11-16 s a câmera fica baixa e inclinada para cima, mostrando copa das árvores e céu azul, e termina com a manga da camisa cobrindo a lente.",
+"luz": "Sol de meio-dia, contraste alto, muito verde, céu azul na parte final. Pele boa.",
+"tremor": 2,
+"som": "Ambiente de mata constante (-22 a -24 dB), cai levemente no final (-27 a -29 dB). Sem fala. Passos e roupa roçando.",
+"fala_util": "",
+"problemas": "Sem fala. Selfie em movimento com horizonte inclinado (de propósito?) e variação forte de exposição na transição sombra-sol (1-4 s). Marcos olha para os lados, nunca para a câmera. Aos 0-1 s é só mato.",
+"momentos": [
+{
+"ini": 1,
+"fim": 3.6,
+"descricao": "Marcos olha para cima à direita, óculos escuros, barba, mata e pedra atrás. Plano forte de personagem.",
+"nota": 7,
+"serve": "V",
+"movimento": "Selfie caminhando, câmera levemente oscilando",
+"gancho_de_transicao": "Folhagem passa à esquerda em primeiro plano"
+},
+{
+"ini": 10.5,
+"fim": 14.5,
+"descricao": "Câmera baixa em contra-plongée: Marcos com a copa das árvores e o céu azul atrás, ângulo heroico.",
+"nota": 7,
+"serve": "V",
+"movimento": "Selfie de baixo para cima, pequena subida da câmera",
+"gancho_de_transicao": "Céu e galhos cobrindo"
+},
+{
+"ini": 15,
+"fim": 17.4,
+"descricao": "Câmera olha direto para cima na copa com samambaia e, no final, a manga da camisa de Marcos cobre a lente.",
+"nota": 6,
+"serve": "V",
+"movimento": "Inclinação para cima até cobrir a lente",
+"gancho_de_transicao": "Manga/tecido cobrindo a lente no final: corte perfeito para o próximo plano"
+}
+]
+},
+{
+"clip": "c11",
+"lugar": "Trilha na mata densa (GPS -11.334,-40.504), 20/11 às 14h00, 56 s.",
+"descricao": "Começa com Glenda de pé na trilha (0-9 s), câmera mostra ela de maiô verde-água e short preto olhando para a mata com sol por cima das árvores e flares. Aos 10-19 s a câmera varre mata e céu (flare de sol). A partir de 20 s selfie de Marcos olhando para cima, passando a mão no cabelo, ajeitando os óculos e caminhando na trilha. Aos 36-42 s Glenda aparece caminhando ao fundo e o sol faz estrela atrás das árvores. Final em selfies de baixo para cima com Marcos contemplando a mata.",
+"luz": "Sol alto filtrado: contraluz com flares e estrelas de sol (6-10 s, 38-40 s, 44 s), sombras azuladas, folhagem saturada. É o clipe com a luz mais cinematográfica do lote.",
+"tremor": 2,
+"som": "Mata constante (-21 a -24 dB), passos, roupa. Entre 25 e 32 s o áudio cai de forma estranha até -60 dB e volta de repente em 33 s (queda/mute do microfone), a corrigir com camada de ambiente. Sem fala.",
+"fala_util": "",
+"problemas": "Sem fala. Queda de áudio (25-33 s). Selfie com horizonte inclinado. Arrancada inicial de câmera (0-2 s) em Glenda, enquadramento cortado. Aos 14-19 s a imagem fica azul/desbotada por contra-luz forte (flare lavando). Marcos nunca olha para a câmera.",
+"momentos": [
+{
+"ini": 2,
+"fim": 9,
+"descricao": "Glenda parada na trilha, de pernas à mostra, olhando para o alto da mata com flares de sol e sombra recortada. Câmera abre de baixo para cima.",
+"nota": 7,
+"serve": "V",
+"movimento": "Contra-plongée levemente móvel",
+"gancho_de_transicao": "Flare de sol; folhas na lateral; sol branco no centro para cortar para branco"
+},
+{
+"ini": 9.5,
+"fim": 12.5,
+"descricao": "Câmera varre a copa das árvores com o sol atrás dos troncos, estrela de sol e céu azul.",
+"nota": 7,
+"serve": "V",
+"movimento": "Pan de baixo para cima, solta",
+"gancho_de_transicao": "Sol/flare estourando (corte para branco), troncos passando como cortina"
+},
+{
+"ini": 20,
+"fim": 26,
+"descricao": "Marcos de perfil olhando para cima, passa a mão no cabelo, vento no rosto, com mata verde atrás. Bom retrato de aventura.",
+"nota": 7,
+"serve": "V",
+"movimento": "Selfie com braço estendido, boa estabilidade",
+"gancho_de_transicao": "Mão passando pelo cabelo cobre parte da câmera"
+},
+{
+"ini": 37,
+"fim": 41.5,
+"descricao": "Marcos de baixo para cima olhando para o alto, Glenda ao fundo com a trilha, sol estourando entre as árvores formando estrela na copa. Melhor plano do clipe.",
+"nota": 8,
+"serve": "V",
+"movimento": "Contra-plongée selfie, câmera estável",
+"gancho_de_transicao": "Sol estrela e flare para corte para branco; Glenda passando ao fundo"
+},
+{
+"ini": 43.5,
+"fim": 46,
+"descricao": "Marcos entra em sombra com flare azulado de lente e mata ao fundo.",
+"nota": 6,
+"serve": "V",
+"movimento": "Selfie caminhando",
+"gancho_de_transicao": "Flare azul na lente"
+}
+]
+},
+{
+"clip": "c12",
+"lugar": "Trilha na mata, subida com barranco de terra (GPS -11.334,-40.504), 20/11 às 14h01, 52,6 s.",
+"descricao": "Marcos em selfie caminhando por barranco de terra vermelha e capim, de óculos escuros, camisa creme, regata branca, garrafa rosa na bolsa. Olha para a mata, aponta com o braço aberto (16-24 s e 36-40 s), passa a mão no rosto, vira para a câmera (aos 42-45 s, olhando para a lente). Final olhando para o chão e saindo de quadro.",
+"luz": "Sol alto com sombras duras do barranco; pele bem exposta, fundo em verde escuro. Luz parecida com c11, com menos flare.",
+"tremor": 2,
+"som": "Mata constante (-20 a -25 dB), passos, roupa. Queda de ambiente nos segundos 37-40 (-29 dB). Sem fala.",
+"fala_util": "",
+"problemas": "Sem fala. Selfie em movimento com tremor médio; quando ele estende o braço a câmera balança. Garrafa rosa e bolsa entram feio no quadro em vários trechos (cor chamativa). Aos 0-2 s só terra. Marcos quase não olha para a câmera, só aos 42-45 s.",
+"momentos": [
+{
+"ini": 2,
+"fim": 6.5,
+"descricao": "Marcos de óculos escuros olhando para o alto com o barranco ao fundo, camisa creme contra a terra vermelha. Pose forte, contraste de cor.",
+"nota": 7,
+"serve": "V",
+"movimento": "Selfie estável caminhando",
+"gancho_de_transicao": "Folhas passando na frente"
+},
+{
+"ini": 15.5,
+"fim": 19.5,
+"descricao": "Marcos aponta com o braço aberto para a mata e olha para o alto, gesto de 'olha só isso'.",
+"nota": 6,
+"serve": "V",
+"movimento": "Selfie, braço livre aberto",
+"gancho_de_transicao": "Braço estendido como passagem"
+},
+{
+"ini": 29.5,
+"fim": 34,
+"descricao": "Marcos olha para a copa com flare e contra-luz azulada, mata fechada atrás.",
+"nota": 7,
+"serve": "V",
+"movimento": "Selfie com leve inclinação para cima",
+"gancho_de_transicao": "Flare de lente / sol atrás das árvores"
+},
+{
+"ini": 42,
+"fim": 45.5,
+"descricao": "Marcos vira de frente e olha para a lente de óculos escuros, expressão séria, único momento de contato com a câmera.",
+"nota": 7,
+"serve": "V",
+"movimento": "Selfie, aproximação lenta",
+"gancho_de_transicao": "Saída de quadro seguinte (ele vira para a esquerda aos 46 s)"
+}
+]
+},
+{
+"clip": "c13",
+"lugar": "Mirante na trilha, vale da Chapada com mata verde, bem no início da subida (14h09, 20/11)",
+"descricao": "Panorâmica lenta em 4K/120 fps: vale de serra coberta de mata e céu azul, desce para o paredão de pedra com florzinha amarela, passa por um feixe de luz/neblina e termina com folhas de samambaia/árvore tomando o quadro. Algumas pessoas pequenas aparecem na pedra (6 a 11 s), longe.",
+"luz": "Sol alto, duro e muito saturado no começo; do 18 ao 23 s entra uma faixa de luz difusa/neblina que lava os pretos; fim em sombra verde com folhas contraluz.",
+"tremor": 1,
+"som": "Só ambiente aberto: vento no microfone e ruído de mata, nível alto e constante (-22 a -26 dB), sem fala. Vento no mic deve ser limpo; música por cima resolve.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0,
+"fim": 6,
+"descricao": "Abertura do vale com céu azul e samambaia verde-limão na base; panorâmica lenta para a esquerda. Plano de abertura de lugar, bonito mas não parador.",
+"nota": 6,
+"serve": "ambos",
+"movimento": "pan lateral lento, câmera na mão firme",
+"gancho_de_transicao": ""
+},
+{
+"ini": 8.5,
+"fim": 13.5,
+"descricao": "Desce para o paredão de pedra com flores amarelas, sol batendo e sombra de nuvem; boa textura e profundidade.",
+"nota": 6,
+"serve": "ambos",
+"movimento": "tilt/pan para baixo e para a direita",
+"gancho_de_transicao": ""
+},
+{
+"ini": 18,
+"fim": 23.5,
+"descricao": "Feixe de luz atravessando a neblina sobre a mata e as pedras: atmosfera de cinema, bom para cortar com plano mais escuro.",
+"nota": 7,
+"serve": "H",
+"movimento": "deslize lento sobre o paredão",
+"gancho_de_transicao": "luz/haze atravessando o quadro"
+},
+{
+"ini": 24,
+"fim": 28.5,
+"descricao": "Folhagem verde em contraluz sobe e preenche o quadro: saída natural por folha cobrindo a lente.",
+"nota": 7,
+"serve": "ambos",
+"movimento": "avanço para cima das folhas",
+"gancho_de_transicao": "folha/galho cobrindo o quadro (entrada do próximo plano)"
+}
+],
+"problemas": "Sem desfoque importante. Em 120 fps dá câmera lenta limpa (usar 40 a 50% do ritmo nos trechos 18-23 e 24-28). Pessoas pequenas e de costas na pedra 6 a 11 s (aceitável, mas cortar se for preciso privacidade). Plano horizontal; para vertical recorta 9:16 do centro com perda de panorâmica."
+},
+{
+"clip": "c14",
+"lugar": "Mesma região do mirante/trilha, descida por pedras e árvores com vista do vale (14h11, 20/11)",
+"descricao": "Plano horizontal 4K/30 fps: vale com céu azul, árvore de tronco escuro entrando pela direita, pan descendo para a samambaia amarelo-limão em primeiro plano. Glenda atravessa na borda direita (13 a 23 s) e depois desce pelas pedras ao lado da árvore, de costas, ficando pequena no fundo; no final (37 a 40 s) para e vira olhando para cima/câmera.",
+"luz": "Sol forte e contrastado, verde muito saturado; céu azul só no começo.",
+"tremor": 1,
+"som": "Ambiente de mata e vento (-20 a -27 dB; cai para -32/-36 dB entre 16 e 22 s, quando fica quase silencioso); ruído de passos nas pedras. Sem fala real.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0,
+"fim": 5,
+"descricao": "Vale com céu azul e galho escuro na lateral direita; abertura limpa de lugar.",
+"nota": 6,
+"serve": "H",
+"movimento": "pan lento para a direita",
+"gancho_de_transicao": "tronco de árvore passando na lateral (cobre parte do quadro)"
+},
+{
+"ini": 13,
+"fim": 18.5,
+"descricao": "Samambaia amarelo-limão ocupa o quadro; corpo da Glenda entra pela borda direita (ombro, bolsa preta), efeito de passagem natural.",
+"nota": 6,
+"serve": "ambos",
+"movimento": "câmera parada na folhagem com gente atravessando",
+"gancho_de_transicao": "pessoa/folhagem passando na frente da lente"
+},
+{
+"ini": 21.5,
+"fim": 31,
+"descricao": "Glenda desce de costas pelas pedras ao lado do tronco escuro, de biquíni e bolsa, com a samambaia vibrante em primeiro plano; plano de narrativa 'caminhando para dentro da Chapada'.",
+"nota": 7,
+"serve": "ambos",
+"movimento": "câmera estática, personagem se afasta",
+"gancho_de_transicao": "galho/tronco no quadro"
+},
+{
+"ini": 36,
+"fim": 40.8,
+"descricao": "Glenda para e olha na direção da câmera, pequena no quadro entre árvores; fecho possível, mas ela olha a câmera.",
+"nota": 5,
+"serve": "H",
+"movimento": "quase estático",
+"gancho_de_transicao": ""
+}
+],
+"problemas": "Desfoque de foco entre 19 e 20 s (câmera caçando foco na samambaia). Transcrição 'Não sou de David' é erro do transcritor (sem fala real, só vento). 30 fps: sem câmera lenta. Glenda olha para a câmera no fim. Muito tempo de 'nada acontece' entre 5 e 13 s."
+},
+{
+"clip": "c15",
+"lugar": "Trilha na mata fechada até o riacho/poço de água cor de chá, subindo para clareira com palmeiras (14h46, 20/11)",
+"descricao": "Clipe longo, vertical 1584x2816/60 fps (resolução menor que os outros), câmera apontada para o chão de terra e capim por 76 s (POV caminhando: bambu, pedras, riacho cor de chá em 48-54 s). A partir de 1:20 vira selfie: Marcos de regata branca com a marca da creat.MTT, toalha no ombro, caminhando e olhando para o alto, as palmeiras e o sol entre as árvores; fecha com contraluz do sol estourando (2:44).",
+"luz": "Sombra de mata no começo (escuro, baixo contraste); a partir de 1:20 contraluz verde com céu azul; 2:44 sol direto e flare forte.",
+"tremor": 3,
+"som": "Muito baixo (-42 a -58 dB): passos na terra, folhas, respiração; sem música. Picos de voz perto de 1:19, 1:44, 2:00 e 2:28 e nos últimos segundos (transcrição dá 'Oi! Olha isso! Eu não posso fazer isso!' ao fim, não conferida, possível alucinação). Ganho precisa subir muito e limpar.",
+"fala_util": "Nenhuma confiável. Se confirmar de ouvido, os últimos segundos (2:41 a 2:52) podem ter uma exclamação espontânea de 'Olha isso!', mas está colada em bastidor.",
+"momentos": [
+{
+"ini": 48,
+"fim": 54,
+"descricao": "Poço de água cor de chá/âmbar com pedra no fundo, vista de cima, reflexo dourado: imagem característica da Chapada.",
+"nota": 7,
+"serve": "ambos",
+"movimento": "POV descendo para a água, quase parado",
+"gancho_de_transicao": "água ocupando o quadro"
+},
+{
+"ini": 100,
+"fim": 116,
+"descricao": "Marcos de baixo para cima olhando as palmeiras e as folhas, barba e regata branca contra o céu; plano de personagem em contraluz, o melhor do clipe.",
+"nota": 7,
+"serve": "V",
+"movimento": "selfie baixa andando, leve giro",
+"gancho_de_transicao": "palmeira/galho passando na frente (1:48 a 1:52)"
+},
+{
+"ini": 139,
+"fim": 148,
+"descricao": "Marcos em contra-plongée, cabeça contra a copa das árvores e o céu azul, olha para o alto e para a câmera.",
+"nota": 6,
+"serve": "V",
+"movimento": "selfie baixa estável",
+"gancho_de_transicao": "copa das árvores no quadro"
+},
+{
+"ini": 163,
+"fim": 167,
+"descricao": "Sol atravessa as folhas e estoura em flare, Marcos em silhueta; ótimo gancho de corte para luz.",
+"nota": 8,
+"serve": "V",
+"movimento": "inclina para cima na direção do sol",
+"gancho_de_transicao": "flare/estouro de luz do sol"
+}
+],
+"problemas": "Os primeiros 76 s são POV do chão, tremido (3), repetitivo; só vale aproveitar 48-54 s. Resolução menor (1584x2816), cuidado ao esticar. Marcos olha para a câmera várias vezes (selfie) e a câmera pega em ângulos desfavoráveis (queixo/narinas 2:18-2:22). Dedo/mão na borda entre 20 e 22 s (mão aparece embaixo). Áudio fraquíssimo."
+},
+{
+"clip": "c16",
+"lugar": "Poço de água cor de chá ao pé da cachoeira, pedra à beira (15h35, 20/11)",
+"descricao": "Selfie vertical 4K/60 fps de Marcos sem camisa e short azul sentado na pedra ao lado do poço de água escura com borda âmbar; Glenda de biquíni turquesa em pé na beira do poço (11 a 17 s). Aos 18 s chicote de câmera revela o poço e a cachoeira com pessoa subindo na pedra (19 a 22 s); fecha com a cabeça de Marcos cobrindo a lente.",
+"luz": "Céu nublado/difuso, sem sol direto; água escura e âmbar muito rica, pele bem exposta.",
+"tremor": 2,
+"som": "Baixo (-34 a -41 dB): água ao longe, vento, mata; só duas falas curtas de Marcos aos 9,3 e 10,9 s ('Vamos', 'Vamos lá') sem música.",
+"fala_util": "9.3-11.9 s: 'Vamos... vamos lá' (de bastidor, curta; só serve como corte de 'bora' se o filme pedir).",
+"momentos": [
+{
+"ini": 2,
+"fim": 8,
+"descricao": "Marcos sentado na pedra olhando a mata e a água, relaxado, ar de 'chegamos'; selfie baixo, cenário de pedra e mata. Bom para abertura de chegada.",
+"nota": 6,
+"serve": "V",
+"movimento": "selfie baixa quase estática, pequeno pan",
+"gancho_de_transicao": ""
+},
+{
+"ini": 11,
+"fim": 17,
+"descricao": "Marcos e Glenda no mesmo quadro, ela em pé na borda do poço de água escura/âmbar; a ligação do casal com o lugar.",
+"nota": 7,
+"serve": "V",
+"movimento": "selfie estável, um pouco inclinada (horizonte torto)",
+"gancho_de_transicao": ""
+},
+{
+"ini": 17.8,
+"fim": 22.3,
+"descricao": "Chicote de câmera revelando o poço escuro com reflexo âmbar, depois cachoeira escorrendo entre pedras coloridas, gente subindo na rocha; é o plano que faz parar o feed.",
+"nota": 8,
+"serve": "V",
+"movimento": "whip pan do rosto para a paisagem + reenquadramento",
+"gancho_de_transicao": "chicote de câmera / desfoque de movimento aos 18 s; entra por esse chicote em outro plano"
+},
+{
+"ini": 22.5,
+"fim": 23.5,
+"descricao": "A cabeça/ombro de Marcos tapa a lente no fim: saída natural.",
+"nota": 5,
+"serve": "V",
+"movimento": "câmera cai sobre cabeça",
+"gancho_de_transicao": "objeto cobrindo a lente (pele/cabeça)"
+}
+],
+"problemas": "Começo desajeitado (0 a 1,5 s mão e perna cobrindo a lente). Horizonte torto em 11-17. Marcos olha a câmera/mão no rosto aos 10 s (limpando o rosto). A fala 'Vamos lá' é de bastidor. Mostra o corpo da Glenda de biquíni e Marcos sem camisa, avaliar uso."
+},
+{
+"clip": "c17",
+"lugar": "Rocha grande à beira do poço, com cachoeira de água cor de chá ao fundo (16h16, 20/11)",
+"descricao": "Plano vertical 4K/24 fps, câmera apoiada baixa e fixa por mais de 100 s: Marcos de regata branca sentado descalço na pedra com a mochila ao lado, mexendo nas unhas/num objeto azul, conversando consigo. Aos 1:45 pega uma garrafa azul e a câmera faz um giro (1:47 a 1:49) revelando cachoeira e poço; depois reposiciona e ele bebe e descansa.",
+"luz": "Céu difuso, ambiente verde frio, luz suave e uniforme.",
+"tremor": 0,
+"som": "Ambiente de cachoeira/mata baixo (-38 dB constante); pontos de voz (-22 a -30 dB) por volta de 7-9 s, 45-47 s, 61 s e 1:50; conversa solta sem sentido de filme. Transcrição ('unha', 'mostrar a unha que errou') confusa.",
+"fala_util": "Nada aproveitável; é monólogo de bastidor.",
+"momentos": [
+{
+"ini": 1,
+"fim": 6,
+"descricao": "Abertura: Marcos sentado na pedra, descalço, com a mata atrás; boa composição em vertical, mas ação pequena.",
+"nota": 5,
+"serve": "V",
+"movimento": "câmera fixa baixa (ângulo de baixo para cima)",
+"gancho_de_transicao": ""
+},
+{
+"ini": 105,
+"fim": 108.5,
+"descricao": "Marcos ergue a garrafa azul e a câmera gira revelando a cachoeira e o poço âmbar; é o único movimento forte do clipe.",
+"nota": 7,
+"serve": "V",
+"movimento": "giro/whip rápido de câmera",
+"gancho_de_transicao": "chicote de câmera / desfoque de movimento aos 1:47-1:49"
+},
+{
+"ini": 110,
+"fim": 125,
+"descricao": "Marcos bebendo água na pedra com o paredão e o céu ao fundo, descanso depois do banho; fecha com bom enquadramento largo.",
+"nota": 5,
+"serve": "V",
+"movimento": "câmera fixa",
+"gancho_de_transicao": ""
+}
+],
+"problemas": "Quase tudo (7 a 105 s) é uma pessoa fazendo algo pequeno sem ação, câmera parada, sem história: descartar. Desfoque/tremida aos 18 s (câmera esbarra). Marcos olha a câmera várias vezes e fala com o vazio ('mostrar a unha'). 24 fps com luz difusa, bom para look cinema, mas sem slow-mo. Mochila/objetos de uso pessoal no quadro. Ângulo de baixo para cima favorece pouco."
+},
+{
+"clip": "c18",
+"lugar": "Trilha na mata fechada, caminhada até a cachoeira, com Glenda à frente (16h35, 20/11)",
+"descricao": "Selfie vertical 4K/30 fps em movimento: Marcos sem camisa, boné azul e alça cruzada de bolsa, caminhando na mata. Glenda aparece à frente de camiseta clara e bolsa preta (26 a 38 s), olha para trás aos 36 s. Aos 40 s um borrão de chicote leva a Marcos sorrindo para a câmera (41 a 46 s). Final com ele andando e virando o rosto.",
+"luz": "Mata fechada com céu nublado, luz difusa esverdeada, sem contraste forte; baixa em algumas passagens.",
+"tremor": 3,
+"som": "Muito baixo (-50 a -59 dB) com picos de conversa entre Marcos e Glenda (aos 2-4 s e 30-37 s, 'amor'), passos e folhas; transcrição ('cachorro morreu', 'meu coração está parado') é alucinação do transcritor.",
+"fala_util": "Nenhuma: a conversa dos dois ('amor...') é íntima, sem conteúdo claro e com ruído.",
+"momentos": [
+{
+"ini": 2,
+"fim": 10,
+"descricao": "Marcos com boné azul caminhando na mata, olhando para baixo, selfie lateral; mostra o personagem e o ritmo da trilha.",
+"nota": 5,
+"serve": "V",
+"movimento": "selfie andando, balanço forte",
+"gancho_de_transicao": "folhas/palmeira passando na frente"
+},
+{
+"ini": 26,
+"fim": 38.5,
+"descricao": "Glenda andando à frente na trilha, de costas, com Marcos de lado em primeiro plano; ela vira e olha para trás sorrindo (36 s). Cena do casal, boa para a narrativa.",
+"nota": 7,
+"serve": "V",
+"movimento": "seguindo ela, câmera na mão",
+"gancho_de_transicao": "galho/folhagem passando na frente"
+},
+{
+"ini": 39.5,
+"fim": 41.5,
+"descricao": "Borrão verde de chicote de câmera cobrindo todo o quadro: corte perfeito para entrar ou sair de plano.",
+"nota": 6,
+"serve": "V",
+"movimento": "whip rápido para a mata",
+"gancho_de_transicao": "chicote de câmera para borrão verde (saída/entrada)"
+},
+{
+"ini": 41.5,
+"fim": 46.5,
+"descricao": "Marcos sorrindo para a câmera com o boné azul, rosto aberto contra as palmeiras, olha para cima ao final; o momento mais carismático do clipe.",
+"nota": 7,
+"serve": "V",
+"movimento": "selfie em contra-plongée leve",
+"gancho_de_transicao": "palmeiras cobrindo o céu"
+}
+],
+"problemas": "Tremor forte e desfoque de movimento ao longo do clipe (nota 3), precisa de estabilização; Marcos olha a câmera/para baixo o tempo todo e some do quadro em várias passagens. Fala de bastidor ('amor') por cima, áudio fraco. Mostra peito e short em várias vezes; Glenda aparece de costas, ok. Plano mais útil é 36-46 s."
+},
+{
+"clip": "c19",
+"lugar": "Trilha na mata fechada, descida até um riacho de pedras (Itaitu, Chapada Diamantina), GPS cerca de -11.3254 / -40.5051, 664 m",
+"descricao": "Plano seguimento de 2m09 em vertical: Glenda filma Marcos de costas (boné azul, mochila transversal preta, short azul-marinho, sem camisa) abrindo caminho na mata, entre bambus, palmeiras e folhagem. Aos 0:48-1:08 ele chega a um riacho de pedras com água cor de chá (típica da Chapada), pisa nas rochas, agacha, olha a água e vira o rosto de perfil (barba). Depois volta a trilha, sobe pedra e segue mata adentro. É ensaio/bastidor de um take 'filmar de costas', sem ação nova depois dos 1:10.",
+"luz": "Luz difusa de sombra de mata, verde frio, céu encoberto; clareia nas aberturas (6s, 57s). Sem sol direto, sem contraluz. Boa para cor, pouca profundidade de contraste.",
+"tremor": 2,
+"som": "Mata bem baixa (-47 a -51 dB de fundo), passos e folhagem roçando; voz de Glenda e Marcos conversando e dando direção quase o tempo todo (picos -20 a -25 dB). Riacho: leve aumento de agudos (3k+) por volta de 55s e 70-85s, compatível com fio de água, mas sem água forte nem queda d'água. Sem música, sem motor.",
+"fala_util": "Nenhuma para o filme: tudo é bastidor (ajuste de distância '0,5', 'tem certeza que é aqui?', 'se errar... joga o celular na água?', 'corta o vídeo' ao fim). Só a frase 'Eu preciso me segurar nas coisas' (47.6-51.6) tem graça de documentário, mas com voz cruzada, não vale. Áudio original deve ser descartado e substituído por trilha + ambiente.",
+"momentos": [
+{
+"ini": 57,
+"fim": 66.5,
+"descricao": "Riacho de pedras com água âmbar em primeiro plano; Marcos pisa nas rochas, para na pedra e olha a água (63s: corpo inteiro, perfil com barba, boné, água cor de chá brilhando à esquerda). Melhor plano do clipe, dá sensação de lugar e de aventura.",
+"nota": 7,
+"serve": "V",
+"movimento": "seguimento por trás, depois câmera abre e deixa ele de perfil; leve balanço de passada",
+"gancho_de_transicao": "Água cor de chá no canto inferior esquerdo pode cobrir o quadro (match com cartão de água); pedras e galhos baixos como wipe natural."
+},
+{
+"ini": 47.5,
+"fim": 53.5,
+"descricao": "Primeiro plano de costas e depois perfil de Marcos agachado junto a poça escura entre pedras, de boné azul virado para trás; textura de pele, bolsa, água parada. Plano íntimo, bonito de cor (azul do boné contra verde).",
+"nota": 6,
+"serve": "V",
+"movimento": "câmera muito próxima, quase encostando nele, leve giro para o rosto de perfil aos 51s",
+"gancho_de_transicao": "Corpo ocupa quase todo o quadro (nas 45-49s): vale como 'objeto cobrindo a lente' para cortar para o próximo plano; folha verde aos 36-38s também cruza a frente."
+},
+{
+"ini": 1,
+"fim": 10,
+"descricao": "Abertura em seguimento por trás, Marcos entra na mata verde densa; profundidade boa, bambus e palmeira fecham o quadro. Funciona como plano 'entrando na aventura'.",
+"nota": 5,
+"serve": "V",
+"movimento": "seguimento por trás, câmera na mão, passos visíveis no balanço",
+"gancho_de_transicao": "Folhas grandes de palmeira entram pela esquerda aos 0-3s e podem servir de wipe de entrada."
+},
+{
+"ini": 104,
+"fim": 108,
+"descricao": "Marcos meio fora de quadro à direita (saindo do enquadramento), mata ao fundo. Saída de quadro útil como gancho de corte.",
+"nota": 5,
+"serve": "V",
+"movimento": "câmera fixa na trilha enquanto ele sai pela direita",
+"gancho_de_transicao": "Saída de quadro pela direita (cerca de 1:45-1:46): corta para próximo plano em que ele entra pela direita."
+},
+{
+"ini": 66,
+"fim": 71,
+"descricao": "Marcos de pé na rocha, vira o corpo e se apoia para atravessar; trilha de pedra solta atrás, boa leitura de terreno de Chapada.",
+"nota": 5,
+"serve": "V",
+"movimento": "seguimento lateral baixo",
+"gancho_de_transicao": ""
+}
+],
+"problemas": "Plano de 2m09 sem ação nova: 80% é a mesma imagem de 'costas na mata' (monótono, risco de perder retenção se usado longo). Tremor médio de passada, forte quando a câmera chega muito perto dele (42-47s) com quase encosto e tronco/folhas varrendo o quadro: estabilizar. Áudio inteiro é conversa de bastidor ('grava aí', 'corta o vídeo'), inviável; Glenda aparece só por voz. Sem foco ruim relevante, mas há ar morto em 6-25s e 100-128s. Falta plano aberto/paisagem da Chapada: tudo é fechado em mata. Em corte horizontal (recorte 16:9 de 1584 px de largura = 1584x891) o enquadramento fica apertado no tronco dele, ruim."
+},
+{
+"clip": "c20",
+"lugar": "Trilha em mata de palmeiras e bambus (Itaitu, Chapada Diamantina), sem GPS",
+"descricao": "Marcos vem caminhando de longe na trilha em direção à câmera (0-13s), passa muito perto da lente (14-20s, corpo enche o quadro e sai pela esquerda, 21-22s câmera varre mata vazia), reaparece de pé numa clareira com tronco caído (23-29s), de frente, mãos cruzadas, olhando para baixo, postura de modelo. Último quadro (30s) a câmera cai e mostra o chão de folhas secas. É um ensaio de 'tomada com personagem andando para a câmera'.",
+"luz": "Sombra de mata, difusa, verde saturado, sem sol; mais clara na clareira final (23-29s).",
+"tremor": 2,
+"som": "Mata baixa e voz alta ao fundo de Glenda e Marcos explicando o take ('você vai ter que filmar de costas e fazer no meu takes... se errar o ângulo, já sabe'); picos de voz -31 a -34 dB. Passos de folha seca. Sem música, motor ou água.",
+"fala_util": "Nenhuma útil para o filme (instrução de bastidor: 'filmar de costas', 'eu errei agora', 'vem cá, onde é agora?'). Descartar o áudio original.",
+"momentos": [
+{
+"ini": 9,
+"fim": 19.8,
+"descricao": "Marcos desce a trilha na direção da câmera: começa pequeno no fundo, vai crescendo entre palmeiras (boné azul, peito marcado, mochila transversal) até ocupar o quadro e passar rente à lente (19s, rosto e tronco muito próximos). Boa escala e profundidade, entrada em crescendo.",
+"nota": 7,
+"serve": "V",
+"movimento": "câmera quase parada, personagem anda para a lente (approach); leve balanço",
+"gancho_de_transicao": "Corpo de Marcos cobrindo a lente aos 18.5-19.5s: corte por 'objeto cobrindo a lente' para próximo plano; saída de quadro pela esquerda aos 19.8-21s."
+},
+{
+"ini": 23,
+"fim": 29,
+"descricao": "Marcos parado na clareira, em pé, olhando para baixo, mãos cruzadas, tronco caído ao fundo. Plano de retrato, boa luz, mas postura de 'ensaio', não de viagem.",
+"nota": 5,
+"serve": "V",
+"movimento": "câmera meio baixa, quase fixa",
+"gancho_de_transicao": "Folha larga verde na base do quadro (24-26s) como wipe de baixo."
+},
+{
+"ini": 0,
+"fim": 8,
+"descricao": "Trilha vazia com Marcos minúsculo no fundo entre palmeiras; promessa de profundidade, bom para abertura de cena longa.",
+"nota": 5,
+"serve": "ambos",
+"movimento": "fixo com pequeno balanço",
+"gancho_de_transicao": "Folhas e palmeiras dos lados enquadram (vinheta natural)."
+}
+],
+"problemas": "Marcos olha para baixo e para os lados, não para a câmera (bom), mas em 14-17s olha direto à frente quase para a câmera sem querer. Áudio é só bastidor. Último segundo (30s) é a câmera caindo no chão: cortar. Rosto de Marcos fica pequeno e em penumbra de mata nos primeiros 8s, pouca presença. Autofoco pulsa levemente em 12-14s ao se aproximar."
+},
+{
+"clip": "c21",
+"lugar": "Trilha em mata com palmeira de folhas largas (Itaitu, Chapada Diamantina), GPS cerca de -11.3264 / -40.5052, 726 m",
+"descricao": "Câmera parada embaixo de folhas de palmeira que emolduram o alto do quadro; Marcos desce a trilha de longe, vem crescendo (0-8s), passa rente à câmera (8-9s, rosto de perfil, barba, boné, abaixado olhando para o chão) e segue de costas sumindo na mata (10-12s) com uma folha de palmeira cobrindo a cabeça dele no fim.",
+"luz": "Penumbra de mata, verde profundo, contraste baixo; boné azul e pele são o ponto de cor. Gravação ao fim da tarde (16h40).",
+"tremor": 1,
+"som": "Primeiros 6s com silêncio de mata muito baixo (-55 dB), limpo e usável como ambiente; depois passos e roupa roçando em folha (6-8s, 10-12s, -35 a -41 dB) e voz de bastidor. A transcrição 'e aí' repetida é alucinação, não há fala real.",
+"fala_util": "Nenhuma. Áudio dos primeiros 6s (-55 dB) é o único ambiente limpo, usável como cama de som de mata.",
+"momentos": [
+{
+"ini": 2,
+"fim": 10,
+"descricao": "Entrada em crescendo debaixo de uma moldura natural de folhas de palmeira: Marcos aparece lá no fundo, anda para a lente e passa rente ao quadro (9s, perfil com barba e boné, ombro e costas ocupam metade do quadro). Plano limpo, com profundidade, moldura e escala. Melhor momento deste lote.",
+"nota": 7,
+"serve": "V",
+"movimento": "câmera fixa (na mão firme) com personagem aproximando; no final ele rouba a cena e quase encosta",
+"gancho_de_transicao": "Corpo de Marcos passando cobre a lente aos 8.8-9.8s: excelente para match cut / corte escondido; folhas de palmeira no topo do quadro como moldura de entrada."
+},
+{
+"ini": 10,
+"fim": 13,
+"descricao": "Câmera vira e acompanha Marcos de costas descendo; palmeira larga cai sobre a cabeça dele aos 11-12s e esconde o rosto.",
+"nota": 5,
+"serve": "V",
+"movimento": "seguimento curto por trás, panorâmica leve",
+"gancho_de_transicao": "Folha/palma de palmeira cobrindo o quadro aos 11-12.5s: gancho de folha para o próximo corte."
+}
+],
+"problemas": "Clipe curto e bem aproveitável, mas Marcos sai do foco ao se aproximar (autofoco pulsa em 8-9s). Parte final (10-13s) um pouco tremida e corte abrupto no fim. Marcos olha para baixo, sem olhar a câmera (bom). Transcrição 'e aí' é lixo do transcritor. Plano horizontal pior: recorte 16:9 pega só o centro da trilha e perde a moldura de palmeira."
+},
+{
+"clip": "c22",
+"lugar": "Trilha de terra batida entre capim alto e mata (Itaitu, Chapada Diamantina), GPS cerca de -11.3264 / -40.5053, 724 m",
+"descricao": "Câmera fixa baixa na trilha em curva; Marcos vem de longe, bem pequeno ao fundo à esquerda (0s), caminha em direção à lente com passos largos (peito, mochila transversal, boné azul), cresce até o corpo inteiro (5s) e cruza rente à câmera saindo pela direita (6-7s, só o ombro e o tronco).",
+"luz": "Luz difusa de fim de tarde sob mata, esverdeada, mais aberta que nos outros (céu visível no topo, capim claro). Melhor exposição do lote.",
+"tremor": 1,
+"som": "Ambiente bem baixo de mata, passos em folhas, voz de bastidor ao fundo (-31 a -45 dB). Na transcrição, uma instrução de direção ('depois fazer a tradução... o passo na câmara').",
+"fala_util": "Nenhuma útil.",
+"momentos": [
+{
+"ini": 2,
+"fim": 7,
+"descricao": "Marcos caminha de longe até o quadro cheio: aos 5s corpo inteiro, passada firme, perna levantada, boné azul com logo, expressão séria; aos 6-7s ele passa tão rente que só o ombro e a bolsa ocupam o quadro e saem pela direita. Plano com ritmo, composição diagonal limpa da trilha, ótimo para cena de 'chegada'.",
+"nota": 7,
+"serve": "V",
+"movimento": "câmera fixa baixa; ação em crescendo e corpo passando em primeiro plano",
+"gancho_de_transicao": "Corpo de Marcos tapando o quadro aos 6.2-7.2s e saindo pela direita: gancho clássico de body wipe para o próximo plano, sem precisar de efeito."
+},
+{
+"ini": 0,
+"fim": 2,
+"descricao": "Trilha em curva com Marcos ainda minúsculo no canto esquerdo; bom para abrir a tomada (tensão de aproximação).",
+"nota": 5,
+"serve": "ambos",
+"movimento": "fixo",
+"gancho_de_transicao": ""
+}
+],
+"problemas": "Marcos olha para a câmera no fim (5-6s) olhando para baixo sem querer, ligeiramente rosto sombrio. Clipe curto de 7,7s: cortar em 7s antes da câmera tremer ao fim. Fala de bastidor no áudio. Em horizontal, o recorte 16:9 perde a trilha em curva e deixa só o meio do quadro."
+},
+{
+"clip": "c23",
+"lugar": "Trilha de terra estreita ao lado de riacho na mata (Itaitu, Chapada Diamantina), GPS cerca de -11.3264 / -40.5055, 725 m",
+"descricao": "Câmera de Marcos (fora de quadro) filma Glenda de costas: camiseta cinza larga, bolsa preta transversal, cabelo preto, tênis branco, abre os braços como quem equilibra/voa (0-1.5s), vira o rosto de perfil para trás (3-4s), segue pela trilha entre samambaias e troncos, com riacho no fundo à direita. Ensaio de tomada 'natural'; Marcos fora de quadro dirige.",
+"luz": "Luz difusa de mata, verde frio, boa profundidade: troncos escuros e samambaias claras; céu aberto no topo (4-5s).",
+"tremor": 3,
+"som": "Voz de Marcos muito alta e próxima (-19 a -25 dB) dando direção ('Não, não, não. Ainda não ficou legal... não ficou natural'): áudio inutilizável. Fundo de mata e riacho baixo ao fundo.",
+"fala_util": "Nenhuma para o filme (é bastidor/direção). Poderia valer apenas como extra de making-of.",
+"momentos": [
+{
+"ini": 0,
+"fim": 2,
+"descricao": "Glenda de costas abre os braços e caminha pela trilha: gesto de liberdade, luz boa, folhas de palmeira cruzando o topo esquerdo. Charmoso e cinematográfico, mas o resto do plano é balanço forte.",
+"nota": 6,
+"serve": "V",
+"movimento": "seguimento por trás, câmera na mão com oscilação alta",
+"gancho_de_transicao": "Palma de palmeira cruzando topo esquerdo do quadro aos 0.2-1.2s; folhas verdes de samambaia na parte baixa direita (4-6s) cobrem o quadro e permitem corte."
+},
+{
+"ini": 3,
+"fim": 4.5,
+"descricao": "Glenda olha para trás de perfil e mão toca o tronco, expressão espontânea (meio-sorriso), mas já claramente direcionada.",
+"nota": 5,
+"serve": "V",
+"movimento": "seguimento lateral/traseiro",
+"gancho_de_transicao": "Samambaia brilhante em primeiro plano aos 4-5s como wipe."
+}
+],
+"problemas": "Tremor forte (3) em todo o plano, com giro brusco e desfoque de movimento (3s, 5s): estabilizar e cortar curto. Voz de Marcos por cima, sem como limpar. Glenda olha para a câmera/Marcos por instrução (3-4s), parece 'interpretando', não natural (como o próprio diretor disse). Rosto dela não aparece de frente. Sem verdadeira 'cena', só caminhada. Por ser dela a câmera de Marcos tem lente mais larga e vinheta suave."
+},
+{
+"clip": "c24",
+"lugar": "Trilha em mata fechada, subida, com tronco de árvore em primeiro plano (Itaitu, Chapada Diamantina), sem GPS",
+"descricao": "Glenda de costas (camiseta cinza, bolsa preta, short claro, tênis branco) sobe a trilha entre troncos grossos, mão tocando o tronco, afastando-se da câmera em direção ao fundo da mata (0-6s). A câmera começa com tronco cinza grosso à esquerda e árvore escura à direita enquadrando, depois abre para folhagem baixa (bananeirinha/heliconia) e a vê sumir entre as árvores.",
+"luz": "Mata úmida, difusa e fria, com folha verde-limão brilhando no topo (0-2s, 4s). Clara, saturada, sem sombras duras.",
+"tremor": 2,
+"som": "Quase silêncio (-43 a -48 dB): mata viva, folhagem roçando, agudos de inseto/passarinho (energia acima de 3 kHz 10-11%), passos suaves. Sem voz nem música. Ambiente limpo e utilizável como cama de som de mata.",
+"fala_util": "Nenhuma (não há fala). Áudio limpo e utilizável.",
+"momentos": [
+{
+"ini": 0,
+"fim": 3,
+"descricao": "Tronco cinza gigante à esquerda e tronco escuro à direita formam um 'portal' natural; Glenda passa pelo meio com a mão no tronco. Boa composição, texturas ricas, plano de sensação de descoberta.",
+"nota": 6,
+"serve": "V",
+"movimento": "seguimento por trás, avançando atrás dela, passa por troncos próximos",
+"gancho_de_transicao": "Troncos de árvore passando rente à lente nos primeiros 1.5s: wipe de tronco (corte escondido no tronco)."
+},
+{
+"ini": 3,
+"fim": 6,
+"descricao": "Glenda fica pequena e some entre árvores finas e folhagem; fim natural do plano, sensação de se perder na mata.",
+"nota": 5,
+"serve": "ambos",
+"movimento": "seguimento recuando, câmera fixa no fim",
+"gancho_de_transicao": "Folhagem e troncos finos cruzam o quadro (3-5s) para cortar; saída de quadro por afastamento."
+}
+],
+"problemas": "Plano curtinho (6s) e sem ação marcante; Glenda só de costas sem rosto. Tremor médio de caminhada. Folhagem bem escura em baixo. Em horizontal, recorte 16:9 pega só a faixa central e perde os troncos do portal. Sem problema de áudio (é o mais limpo do lote)."
+},
+{
+"clip": "c25",
+"lugar": "Trilha na mata (Itaitu), subida com riacho seco e tronco caído; GPS ~715 m",
+"descricao": "Câmera na mão, vertical 60 fps, filma Glenda (camiseta bege oversized, bolsa preta a tiracolo, tênis branco) subindo a trilha de costas, equilibrando-se de braços abertos num tronco caído sobre as pedras. Aos 19-20s ela vira, olha para a câmera, sorri, faz joinha e brinca atrás de uma árvore de tronco avermelhado. Fim com ela espiando entre dois troncos. Plano longo e vivo, 'seguindo a Glenda na aventura'.",
+"luz": "Luz difusa de sombra de mata, céu encoberto, verdes naturais; sem sol direto, sem estourar. Contraste baixo.",
+"tremor": 2,
+"som": "Mata bem silenciosa: ruído de ambiente muito baixo (-50 a -53 dB), sem motor, sem música, sem água audível; passos e roupa quase inaudíveis. Só um barulho do toque inicial (0-2s, -21 dB). Precisa de som de ambiente colocado por cima.",
+"fala_util": "Nada aproveitável. 0.9-2.9s é o Marcos dizendo algo como 'vamos gravar no Java/20h a to grava' (bastidor, transcrição duvidosa). Não usar.",
+"momentos": [
+{
+"ini": 9,
+"fim": 14,
+"descricao": "Glenda de costas, de braços abertos, atravessa o tronco caído sobre as pedras no meio da mata (equilíbrio, cor verde rico, árvores finas ao fundo). Plano de aventura, câmera quase firme.",
+"nota": 7,
+"movimento": "Câmera parada/leve follow de trás, enquadramento aberto de baixo para cima",
+"serve": "V",
+"gancho_de_transicao": "Folhagem em primeiro plano na direita (capim) pode servir de cobertura para corte de entrada"
+},
+{
+"ini": 15,
+"fim": 19.5,
+"descricao": "Aproximação por trás: Glenda sobe o tronco em plano mais fechado, braços abertos, pisa no tronco e sobe a pedra; mais corpo e ação.",
+"nota": 7,
+"movimento": "Follow handheld seguindo o personagem, leve push-in",
+"serve": "V",
+"gancho_de_transicao": "Pedra/tronco e capim cruzando a frente da lente; saída dela de quadro à direita"
+},
+{
+"ini": 20,
+"fim": 23.8,
+"descricao": "Glenda se vira para a câmera, sorri espontânea, faz joinha, se encosta na árvore avermelhada; momento humano e simpático. Troncos grossos em primeiro plano formam moldura natural.",
+"nota": 8,
+"movimento": "Câmera na mão, um pouco de balanço, recua enquanto ela vira",
+"serve": "V",
+"gancho_de_transicao": "Tronco de árvore em primeiro plano (obstrução natural) cobre a lente; ela entra e sai atrás do tronco, dá match cut com outra árvore"
+},
+{
+"ini": 28.5,
+"fim": 30.8,
+"descricao": "Glenda espiando entre dois troncos largos, enquadrada pela árvore; final charmoso, quase 'pega-pega'.",
+"nota": 7,
+"movimento": "Quase parado, de lado",
+"serve": "V",
+"gancho_de_transicao": "Os dois troncos fecham o quadro; boa saída por tronco cobrindo a lente"
+},
+{
+"ini": 0,
+"fim": 8,
+"descricao": "Glenda de longe, minúscula, subindo a trilha no meio da mata densa (escala da natureza). Útil como plano de estabelecimento, mas a figura é muito pequena.",
+"nota": 5,
+"movimento": "Parado, leve tilt para cima",
+"serve": "ambos (recorte 16:9 fica bem, personagem vai pequena)",
+"gancho_de_transicao": "Tronco branco e fino à direita do quadro"
+}
+],
+"problemas": "Tremor médio de câmera na mão, estabilizar (60 fps ajuda e dá câmera lenta). Fala de bastidor 'vamos gravar' no início (0.9-2.9s), cortar. Mais de metade do plano (0-8s e 24-28s) é Glenda longe, pequena, ar morto. Foco ok mas autofoco pulsa levemente em 19-20s. No 20-23s ela olha para a câmera (aqui é intencional e simpático). Sem sol, cor um pouco fria e esverdeada; corrigir cor."
+},
+{
+"clip": "c26",
+"lugar": "Trilha de terra vermelha na mata, Itaitu; GPS ~715 m",
+"descricao": "Vertical 30 fps. Câmera firme atrás de um tronco grosso à direita e galhos em primeiro plano. Glenda (camiseta bege, bolsa) desce a trilha de terra vermelha vindo de longe até a câmera; passa quase encostando na lente ao final, olhando para baixo, cuidando do passo. Aos 9s o corpo dela cobre a lente (camisa branca) e depois o quadro fica vazio com a mata verde.",
+"luz": "Luz de sombra, difusa, verdes brilhantes (folhagem iluminada ao fundo), terra vermelha saturada. Bonita.",
+"tremor": 1,
+"som": "Mata muito silenciosa, -52 a -58 dB, sem fala, sem motor, sem água. Passos na terra e folhas quase inaudíveis; precisa de som de passos/mata por cima.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 2,
+"fim": 9.5,
+"descricao": "Glenda surge na curva da trilha vermelha, vem andando na direção da câmera entre galhos e tronco em primeiro plano, se apoia numa árvore, e passa rente à lente, cobrindo o quadro com a camisa. Composição em camadas (tronco, galho, trilha, personagem), cor linda de terra vermelha contra verde.",
+"nota": 8,
+"movimento": "Câmera parada em tripé improvisado/apoiada, personagem se aproxima (move-in). Final: personagem cobre a lente.",
+"serve": "V",
+"gancho_de_transicao": "Ótimo: aos 8.7-9.3s o corpo/camisa branca de Glenda cobre a lente (wipe natural, cor bege clara). Também o tronco em primeiro plano à direita e galho em diagonal."
+},
+{
+"ini": 0,
+"fim": 2.5,
+"descricao": "Trilha vazia, Glenda minúscula ao fundo aparecendo. Tempo de espera, plano de abertura que cria expectativa.",
+"nota": 5,
+"movimento": "Parado",
+"serve": "V",
+"gancho_de_transicao": "Tronco grosso na direita forma moldura"
+},
+{
+"ini": 9.5,
+"fim": 11.2,
+"descricao": "Quadro vazio, trilha vermelha e mata depois que ela passa. Respiro curto, serve de final ou entrada de próximo plano.",
+"nota": 4,
+"movimento": "Parado",
+"serve": "ambos",
+"gancho_de_transicao": "Entrada a partir do corpo cobrindo a lente"
+}
+],
+"problemas": "Plano curto e simples. Glenda olha para baixo (cuidando do passo), não para a câmera, o que é bom. Termina com ela passando muito perto, foco pode perder em 8-9s. Tronco em primeiro plano ocupa 20% do quadro (bom como moldura, mas ele corta o conteúdo no recorte 16:9)."
+},
+{
+"clip": "c27",
+"lugar": "Trilha na mata, Itaitu (rosto do Marcos em plano fechado, câmera apontada para ele, trilha ao fundo); GPS ~711 m",
+"descricao": "Vertical 30 fps, selfie estilo POV/seguindo: close do Marcos de perfil 3/4, boné azul virado para trás, barba grande, regata preta, andando pela mata e olhando para baixo, concentrado no caminho. Fundo de folhagem e palmeira verde passando. Começa e termina com borrão de câmera (whip) cruzando a folhagem. Sem olhar para a câmera na maior parte.",
+"luz": "Luz de mata difusa, pele bem exposta, verdes fortes. Em 16-22s a luz se abre (céu claro ao fundo) e a pele ganha brilho. Bonito.",
+"tremor": 2,
+"som": "Mata silenciosa (-42 a -64 dB), com rumores baixos: respiração, passos e folhas em 0-3s (-34 a -45 dB), e um pico em 23s (-43 dB, galho ou passo). Sem música nem motor. Alguma vegetação roçando.",
+"fala_util": "Só 0.4-1.4s 'Eita.' (reação curta no início, rouba nada). Não há fala boa e espontânea. Pode servir como micro-reação de dificuldade na trilha.",
+"momentos": [
+{
+"ini": 0,
+"fim": 2.2,
+"descricao": "Chicote natural de câmera: borrão verde veloz que revela o rosto do Marcos já no 'Eita' (barba, regata). Entrada dinâmica e pronta como gancho de abertura.",
+"nota": 8,
+"movimento": "Whip pan rápido entrando, depois estabiliza no rosto",
+"serve": "V",
+"gancho_de_transicao": "Chicote de câmera nos primeiros 1.2s (borrão verde/marrom) é uma transição de entrada pronta. Funciona bem com som de whoosh."
+},
+{
+"ini": 10.5,
+"fim": 16,
+"descricao": "Close de perfil do Marcos caminhando concentrado, boné azul contra o verde, barba densa, olhar baixo; luz suave. Plano de personagem forte, cara de 'aventura'.",
+"nota": 7,
+"movimento": "Câmera na mão seguindo o rosto, balanço leve de caminhada",
+"serve": "V",
+"gancho_de_transicao": "Folhagem verde em primeiro plano passa por cima do rosto em alguns instantes"
+},
+{
+"ini": 16.8,
+"fim": 23,
+"descricao": "Marcos em luz mais aberta, boné azul brilhando; ele levanta o olhar em 21.5-22s e quase olha para frente; folhas e palmeira em movimento atrás. Visual mais cinematográfico do clipe.",
+"nota": 8,
+"movimento": "Câmera na mão, ligeiro vai-e-volta, plano médio fechado",
+"serve": "V",
+"gancho_de_transicao": "Em 17-18.5s o rosto sai do quadro para a direita e folhas passam em borrão: dá para cortar nesse movimento"
+},
+{
+"ini": 31.6,
+"fim": 33,
+"descricao": "Final em borrão verde (câmera descendo ou girando). Serve de saída por chicote.",
+"nota": 6,
+"movimento": "Whip/pan rápido de saída",
+"serve": "V",
+"gancho_de_transicao": "Borrão verde final casa com borrão inicial de outro plano (match whip)"
+},
+{
+"ini": 2,
+"fim": 10,
+"descricao": "Close contínuo do Marcos olhando para baixo, andando; bom mas repetitivo (sem evento).",
+"nota": 5,
+"movimento": "Câmera na mão, rosto em 3/4",
+"serve": "V"
+}
+],
+"problemas": "Quadro muito apertado no rosto (corta o topo do boné em vários momentos, 6-8s e 24-25s e a barba sai do quadro). Tremor médio e câmera perde o enquadramento. Marcos quase não fala; é um 'diário mudo', sem texto. Close muito próximo exibe poros, tratar pele. Em 6-8s e 24-25s ele sai de quadro pela esquerda/direita. Boné com inscrição visível de perfil (@v...): conferir se pode aparecer na peça, é marca de terceiro. Não é plano de revelação de paisagem, só personagem."
+},
+{
+"clip": "c28",
+"lugar": "Chão da trilha, Itaitu; GPS ~705 m",
+"descricao": "Vertical 30 fps. Câmera apontada para o chão (POV de quem anda): folhas secas, terra, bota preta e calça azul-marinho com barra marrom (lama ou barra molhada), capim verde em movimento. Plano de caminhada em primeira pessoa, bem rápido e tremido.",
+"luz": "Luz de sombra, fria e fosca; folhas secas em marrom/rosado, bem baixa em contraste.",
+"tremor": 3,
+"som": "Ruído constante e baixo (-48 a -50 dB), passos na folha seca e fricção de roupa/capim; sem fala, sem música, sem motor. Mais 'cru' que os outros.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 5.5,
+"fim": 7.7,
+"descricao": "Bota preta pisa na folhagem ao lado de capim verde brilhante que balança; boa textura de trilha e passo firme.",
+"nota": 5,
+"movimento": "POV descendo, câmera acompanha o pé; tremor alto",
+"serve": "V",
+"gancho_de_transicao": "Folha verde grande cruzando o quadro à direita em 6.5-7.5s serve de cobertura natural"
+},
+{
+"ini": 3,
+"fim": 5.5,
+"descricao": "Pé avança pela folhagem seca, borrão de movimento.",
+"nota": 4,
+"movimento": "POV de passo",
+"serve": "V"
+}
+],
+"problemas": "Tremor forte e desfoque de movimento na maior parte (1-5s); câmera apontada para o chão, pouco informativo e sem identidade de lugar. Plano curto, só serve como inserto de ritmo (passos) de 1-2s, com forte estabilização e cobertura de cor. Possivelmente rodado por engano (câmera ligada andando). Preferir c29, que é bem melhor para o mesmo tipo de plano. Nota máxima 5."
+},
+{
+"clip": "c29",
+"lugar": "Trilha e travessia de riacho, Itaitu; GPS ~707 m",
+"descricao": "POV vertical 60 fps (1584x2816, menor que o resto, vertical a 60 fps), câmera apontada para baixo mostrando os pés e as pernas do Marcos (bermuda azul-marinho, tênis preto) pisando em pedras lisas, travessia de riacho com água corrente entre pedras musgosas (5-10s), depois terra com folhas, raízes, capim e plantas de mata. Aos 29-31s o quadro sobe e mostra a trilha adiante. Plano de passos que vende o 'caminhando pela Chapada'.",
+"luz": "Luz de mata, difusa, verdes e pedras molhadas; boa saturação natural, fria. O riacho dá reflexos.",
+"tremor": 2,
+"som": "Som de ambiente contínuo -38 a -47 dB, mais cheio que os outros: passos nas pedras e folhas, água correndo do riacho (ruído de banda larga, perceptível em 5-11s), roupa roçando. Sem música e sem motor. Tem textura, melhor áudio do bloco de trilha.",
+"fala_util": "0.0-0.5s 'do Hapá' (resto de frase, bastidor). Sem fala útil.",
+"momentos": [
+{
+"ini": 4.8,
+"fim": 10.5,
+"descricao": "Travessia do riacho: tênis pisa em pedras molhadas e musgosas com água correndo, perna e bermuda em cena. Visual de aventura, textura bonita, água em movimento e reflexo; som de água.",
+"nota": 8,
+"movimento": "POV vertical descendo, câmera acompanha os passos, balanço natural de caminhada, 60 fps dá câmera lenta",
+"serve": "V",
+"gancho_de_transicao": "Água e respingo no quadro, pedra grande cobre quadro em 7-8s; saída de passo e pé cobrindo a lente"
+},
+{
+"ini": 13.5,
+"fim": 16,
+"descricao": "Joelho e perna passam perto da câmera ao subir raiz e pedra, em primeiro plano, luz de sol na pele; sensação de esforço físico.",
+"nota": 6,
+"movimento": "POV subindo, câmera chacoalha",
+"serve": "V",
+"gancho_de_transicao": "Perna/joelho enche o quadro em 14s e 19s (objeto cobrindo a lente, wipe de pele)"
+},
+{
+"ini": 17.5,
+"fim": 20,
+"descricao": "Joelho entra em primeiro plano grande, tênis sobe a pedra: ação física, cor quente de pele contra pedra verde.",
+"nota": 6,
+"movimento": "POV, câmera mexe forte",
+"serve": "V",
+"gancho_de_transicao": "Joelho cobrindo toda a tela aos 19s é um wipe natural"
+},
+{
+"ini": 28,
+"fim": 31.3,
+"descricao": "Câmera sobe levemente e revela a trilha de terra com capim adiante, 'o caminho segue'. Boa saída/final de sequência de caminhada.",
+"nota": 6,
+"movimento": "Tilt up lento enquanto caminha",
+"serve": "V",
+"gancho_de_transicao": "Folhas verdes grandes passam pelo quadro em 27-28s"
+},
+{
+"ini": 0,
+"fim": 4.5,
+"descricao": "Pedras e tênis pisando, pegada de trilha; bom ritmo de passos.",
+"nota": 5,
+"movimento": "POV de passos",
+"serve": "V"
+}
+],
+"problemas": "Plano em POV só com pés (sem rosto, sem paisagem) por quase todo o tempo; funciona como inserto/ritmo, não como protagonista. Resolução menor (1584x2816) que as demais: ainda serve em 1080x1920 mas sem margem para zoom. Tremor médio, desfoque de movimento nos instantes de pisada. Pele do joelho fica alaranjada (corrigir cor). Bermuda azul e tênis preto: o dono usa a mesma roupa de c28, mesmo dia. Fala de bastidor no frame 0, cortar."
+},
+{
+"clip": "c30",
+"lugar": "Estrada de terra vermelha com árvores em arco, Itaitu/Chapada, de dentro do carro; GPS ~672 m, 17h45 (final de tarde)",
+"descricao": "Horizontal 4K 30 fps, câmera presa no painel/para-brisa de um carro, dirigindo devagar por uma estrada de terra vermelha com cerca de madeira e árvores formando um túnel natural. Nos primeiros 7s a câmera aparece em movimento dentro do carro (painel, volante e luzes vermelhas do painel, borrão), e do 8s em diante fica fixa no para-brisa com a estrada reta à frente, muito estável, a mesma 'dolly' lenta até 22s. Montanhas azuladas ao fundo e pasto verde à direita.",
+"luz": "Luz de fim de tarde nublada, suave e fria, terra vermelha saturada contra verde profundo; sem sol direto, sem lens flare. Céu claro cinza-azulado em contra-luz fraco.",
+"tremor": 1,
+"som": "Música alta do som do carro dominando todo o clipe (-10 a -12 dB, constante). Energia concentrada nos graves (-12.6 dB abaixo de 150 Hz, -18.7 dB em 150-1000 Hz, e só -35 dB nos médios-agudos): é baixo e meio-grave de música/motor, quase sem agudo, som abafado. Sem fala. Não aproveitável como som direto por causa da música com direitos autorais; tratar como mudo e colocar trilha própria. O motor abafado também aparece nos graves.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 8,
+"fim": 22.8,
+"descricao": "Travelling frontal pela estrada de terra vermelha em túnel de árvores, perspectiva central perfeita, pasto verde e cerca à direita, montanha ao fundo; câmera quase imóvel no para-brisa, movimento constante e hipnótico. É o melhor plano de 'chegando à Chapada'. Lindo na cor, plano de estabelecimento e de transição entre cenas.",
+"nota": 8,
+"movimento": "Câmera fixa no para-brisa, dolly forward constante e lenta (movimento do carro); perspectiva de ponto de fuga",
+"serve": "H (nativo 16:9). Em recorte vertical 9:16 fica forte também, centro é a estrada",
+"gancho_de_transicao": "Chegada de árvores pelos lados, ponto de fuga central: ótimo para match cut com outro travelling de estrada ou zoom-through no ponto de fuga. Árvore passando em 11s (tronco grosso à direita) cobre parte do quadro. Possível speed ramp."
+},
+{
+"ini": 3.8,
+"fim": 6.8,
+"descricao": "Painel do carro (saídas de ar, luz vermelha do painel) entrando e saindo em borrão enquanto a câmera é ajustada; mostra o carro e ambiente interno (rápido, ruim).",
+"nota": 3,
+"movimento": "Câmera sendo posicionada (movimento brusco)",
+"serve": "H",
+"gancho_de_transicao": "O painel escuro cobrindo quase todo o quadro em 4-6s pode servir de cobertura (wipe preto), mas o plano é instável"
+},
+{
+"ini": 0,
+"fim": 3.5,
+"descricao": "Início: câmera ainda sendo apoiada, mão e volante aparecendo no canto esquerdo.",
+"nota": 2,
+"movimento": "Posicionamento",
+"serve": "H"
+}
+],
+"problemas": "Primeiros 7s inúteis (câmera sendo posicionada, painel e mão do motorista). Música do carro altíssima e constante, inutilizando o som direto (e com possível problema de direitos). Reflexo do painel no para-brisa na parte inferior do quadro de 8-18s (borda inferior mostra a ponta do capô/painel, faixa preta), cortar ou recortar um pouco para tirar. Pouco acontece (estrada vazia): bonito mas hipnótico demais, usar curto ou com speed ramp. Sem sol/dourado, cor fria; corrigir para quente."
+},
+{
+"clip": "c31",
+"lugar": "Dentro do carro, estrada na Bahia (GPS -11.34, -40.49, perto da Chapada), 20/11 17:46",
+"descricao": "Câmera presa/apoiada baixo no painel, olhando de baixo para cima, vertical 4K. Marcos dirigindo sem camisa, perfil forte contra o teto do carro e janela com céu azul; Glenda (blusa clara, cinto de segurança) aparece de 13 a 19s olhando pela janela. Plano de bastidor da viagem, 'a estrada até Itaitu'. Termina em close dos botões vermelhos do ar-condicionado (45s).",
+"luz": "Luz do fim de tarde entrando pela janela, rosto de Marcos com contraluz suave e teto escuro; céu estourado nas janelas. Contraste alto, cor neutra.",
+"tremor": 2,
+"som": "Dominado por grave (motor, rodagem e vento, -12 a -14 dB, 80% da energia abaixo de 150 Hz), pouco médio e agudo. Parece rumor de carro, sem música audível nem fala transcrita. Precisa de limpeza (corte de grave) se for usado; melhor trocar por trilha.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 13,
+"fim": 19,
+"descricao": "Glenda de perfil olhando a paisagem pela janela, cinto cruzando a blusa clara, luz lateral; Marcos some do quadro e volta com um giro. Único plano que mostra a dupla, momento de afeto/viagem.",
+"nota": 6,
+"serve": "V",
+"movimento": "Quase parado, a câmera balança com o carro; panorâmica curta de Marcos para Glenda (12 a 14s)",
+"gancho_de_transicao": "Giro com o volante e braço passando na frente da lente em 11s e 30-31s (cobre a câmera, serve para corte escondido)"
+},
+{
+"ini": 20,
+"fim": 27,
+"descricao": "Marcos dirigindo, olhando para a frente, contraluz na janela; plano estável e limpo, o melhor 'herói dirigindo'.",
+"nota": 6,
+"serve": "V",
+"movimento": "Estático, ângulo baixo heroico",
+"gancho_de_transicao": "Volante rodando passa na frente da lente em 28 e 33-35s (corte por objeto cobrindo)"
+},
+{
+"ini": 44,
+"fim": 45.7,
+"descricao": "Câmera desce para os botões vermelhos do ar-condicionado, fecho de cena do carro.",
+"nota": 5,
+"serve": "V",
+"movimento": "Tilt para baixo, saída de quadro",
+"gancho_de_transicao": "Entrada para match cut com botão/círculo vermelho"
+}
+],
+"problemas": "Perfil sem camisa, enquadramento de baixo mostra mais o teto do carro; checar se o Marcos quer essa imagem no filme final. Tremor médio e ângulo baixo ingrato (queixo/papada), sensor aberto demais. Muito tempo de carro sem novidade (45s sem evento): usar no máximo 6 a 8s. Marcos desvia o olhar para a câmera em 24-26s e 36-37s (pode parecer bastidor). Frames 0-1s e 4s e 31s são borrados (volante/mão). Som de motor alto, exige tratamento."
+},
+{
+"clip": "c32",
+"lugar": "Estradinha de terra em mata de eucaliptos, Chapada, 21/11 14:57, carro branco (Gol) estacionado",
+"descricao": "Plano geral fixo horizontal 4K de 2min13: câmera pousada no chão olhando a estrada, o carro e uma mata verde-azulada com vale ao fundo. Nos primeiros 12s a mão do Marcos arruma/posiciona a câmera (dedo cobre a lente 3 a 12s). Depois uma pessoa de regata preta e bermuda (Marcos) vai e vem: abre o porta-malas, mexe no carro, caminha pelo quadro, e no fim passa colado na lente (123-133s). É um plano de bastidor de preparação para a trilha, quase tudo tempo morto.",
+"luz": "Luz de tarde filtrada pelas árvores, tom frio teal/verde já graduado, bonito e cinematográfico; céu estourado ao fundo.",
+"tremor": 0,
+"som": "Muito baixo (-50 a -57 dB): ambiente de mata, vento leve, passos e porta do carro. Picos de toque: 6s (mão na câmera), 89s, 109s e 125s (porta/porta-malas ou passos próximos), sem fala transcrita. Bom som de ambiente de floresta para cama de áudio, após ganho.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 12,
+"fim": 19.5,
+"descricao": "Marcos entra de costas em quadro, caminhando para o carro com a mata verde atrás; composição com carro branco no terço inferior e floresta alta, tom teal bonito.",
+"nota": 6,
+"serve": "H",
+"movimento": "Fixo, entrada de personagem no quadro",
+"gancho_de_transicao": "Entrada pela esquerda; mão cobre a lente até 12s, serve de abertura 'câmera sendo posicionada'"
+},
+{
+"ini": 66,
+"fim": 77,
+"descricao": "Marcos caminha de frente para a câmera, cresce no quadro e passa colado, cobrindo a lente com o corpo em 72-76s.",
+"nota": 7,
+"serve": "H",
+"movimento": "Fixo, personagem se aproximando e cobrindo a lente (aproximação de escala)",
+"gancho_de_transicao": "Corpo cobre a lente em 72-76s: excelente match/corte escondido para o próximo plano"
+},
+{
+"ini": 120,
+"fim": 126.5,
+"descricao": "Marcos volta andando em direção à câmera ao lado do carro e sai por cima da lente; fim natural do plano.",
+"nota": 6,
+"serve": "H",
+"movimento": "Fixo, entrada na câmera",
+"gancho_de_transicao": "Perna/bermuda cobrindo a lente em 126-133s (pano preto/azul total), saída de quadro limpa"
+},
+{
+"ini": 19.5,
+"fim": 24,
+"descricao": "Plano geral limpo: carro branco na estrada, mata verde, Marcos pequeno. Bom como plano de estabelecimento sem ação.",
+"nota": 5,
+"serve": "H",
+"movimento": "Fixo",
+"gancho_de_transicao": ""
+}
+],
+"problemas": "Longo demais e parado (2min de quase nada). Dedo/mão do Marcos tapa a lente de 3 a 12s e a câmera está torta no início (0-3s inclinada). Marcos abaixado atrás do carro em boa parte do tempo, de longe e pequeno. Pode haver Glenda no quadro (vulto em 30-60s?), conferir. Fps variável (44,87): converter para fps constante. Uso máximo de 5 a 8 s de aberta, o resto é bastidor."
+},
+{
+"clip": "c33",
+"lugar": "Trilha na mata de Itaitu, terra vermelha, 21/11 15:15",
+"descricao": "Vertical 4K de 48s, câmera pousada no chão olhando de lado (o conteúdo está girado 90 graus nas folhas de contato: a base da imagem está virada para a esquerda, conferir rotação do arquivo antes de usar). Folhas secas e terra no início (0-7s), depois câmera deitada no barranco com bambu e mata ao fundo; Marcos (sem camisa) e outra pessoa de cinza passam pelo quadro em 22-27s, retornam em 35-41s. Termina com pé/tênis passando em close (44s) e chão.",
+"luz": "Sol baixo de tarde, tom laranja quente na terra e verde no fundo; muito bonito em cor, mas de ponta-cabeça.",
+"tremor": 1,
+"som": "0-21s: ruído de folhas/galhos manipulados (-30 a -45 dB, energia espalhada em médio e agudo, é a mão posicionando a câmera). 22-41s: silêncio quase total (-65 a -75 dB), apenas câmera parada. 43-47s: passos e movimento (-40 a -48 dB). Sem fala.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 22.5,
+"fim": 27.5,
+"descricao": "Duas pessoas passam por cima/perto da câmera deitada, com pernas e meias em primeiro plano, luz laranja rasante e mata ao fundo.",
+"nota": 5,
+"serve": "V",
+"movimento": "Fixo, passagem de pessoas rente à lente",
+"gancho_de_transicao": "Corpos passando na frente da câmera cobrem o quadro (corte escondido); caminhada cruzando"
+},
+{
+"ini": 37,
+"fim": 41,
+"descricao": "Marcos sem camisa e outro vulto de cinza voltam andando pelo mato em direção à câmera.",
+"nota": 5,
+"serve": "V",
+"movimento": "Fixo, entrada de personagem",
+"gancho_de_transicao": "Corpo cobrindo a lente em 39-41s"
+},
+{
+"ini": 43.5,
+"fim": 45.5,
+"descricao": "Tênis cinza pisa na terra vermelha em close, saída da câmera.",
+"nota": 5,
+"serve": "V",
+"movimento": "Passagem de pé, tilt",
+"gancho_de_transicao": "Pé/perna cobrindo a lente, saída de quadro por baixo"
+}
+],
+"problemas": "Orientação errada (frames girados 90 graus nas folhas), corrigir rotação antes de qualquer corte. Câmera deitada no chão, olhar torto, pouca ação. Gente caminhando longe, pequena e de lado. Folhas passando/bambu em primeiro plano atrapalham em 8-13s. Perto de 70% do clipe é descarte; no máximo 8s úteis."
+},
+{
+"clip": "c34",
+"lugar": "Trilha na mata, Chapada, 21/11 15:16",
+"descricao": "Vertical 4K a 53 fps de câmera na mão em POV andando pela trilha. Começa na penumbra verde com sol estourando entre as árvores (flares fortes em 1-2s, 5-6s, 16s, 28s), tronco caído diagonal (6-9s), curva da trilha (10-17s), e desce para o chão de terra vermelha em movimento rápido (18-25s, textura rica). Câmera vira para cima na copa (26-30s). De 31 a 35s a mão cobre a lente (vermelho, preto, creme) e em 36 e 39s aparece o rosto de uma pessoa olhando de baixo para a lente. Fecha com sapato (40s) e trilha (41s).",
+"luz": "Contraluz de fim de tarde com flares reais (raios na copa), verde-azulado frio nas sombras e laranja intenso na terra. Muito cinematográfico.",
+"tremor": 2,
+"som": "Muito baixo (-50 a -58 dB): mata, passos e vento, picos em 3, 11, 21 e 30-31s (mão/roupa na câmera). Sem fala transcrita. Bom ambiente de floresta, precisa de ganho.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0.8,
+"fim": 3.5,
+"descricao": "Entrada na trilha com sol vazando entre as folhas e flares coloridos, névoa verde.",
+"nota": 7,
+"serve": "V",
+"movimento": "POV caminhando, leve tilt para cima",
+"gancho_de_transicao": "Flare/estouro de luz em 1-2s, pode virar branco para corte"
+},
+{
+"ini": 5,
+"fim": 9.5,
+"descricao": "Trilha de terra sinuosa subindo, tronco caído diagonal cortando o quadro e sol atrás, profundidade bonita.",
+"nota": 8,
+"serve": "V",
+"movimento": "Avanço (push in) caminhando pela trilha",
+"gancho_de_transicao": "Tronco diagonal cruzando o quadro como cortina; flare em 6 e 8s"
+},
+{
+"ini": 17.5,
+"fim": 23,
+"descricao": "Câmera rente ao chão de terra vermelha avançando rápido: textura de folhas e terra, cor saturada, sensação de velocidade.",
+"nota": 7,
+"serve": "V",
+"movimento": "Tilt para baixo, avanço veloz rente ao solo",
+"gancho_de_transicao": "Transição por cor vermelha/laranja (corte de textura para textura, whip down)"
+},
+{
+"ini": 27.5,
+"fim": 31,
+"descricao": "Câmera olha para cima e para a copa com o sol em estrela e flare longo, folhas amarelas em primeiro plano, e a mão de alguém passando (29s).",
+"nota": 8,
+"serve": "V",
+"movimento": "Tilt up e giro, sol em flare",
+"gancho_de_transicao": "Mão/pulso passando em 29s e 31s cobre a lente; flare em 28 e 30s"
+},
+{
+"ini": 31,
+"fim": 35.5,
+"descricao": "Mão cobre a lente: vermelho, preto e creme borrados, o clássico corte por objeto na lente.",
+"nota": 7,
+"serve": "V",
+"movimento": "Objeto cobrindo a lente (vermelho para preto para creme)",
+"gancho_de_transicao": "É o próprio gancho: sai em preto/vermelho e entra no plano seguinte (ou entra em 'creme' e abre)"
+},
+{
+"ini": 36,
+"fim": 37.2,
+"descricao": "Rosto de uma pessoa visto de baixo para cima olhando a câmera, copa ao fundo.",
+"nota": 5,
+"serve": "V",
+"movimento": "Pessoa entra em quadro",
+"gancho_de_transicao": "Mão passa em seguida (37s) e leva ao corte"
+}
+],
+"problemas": "Pessoa olha para a câmera (36-39s): pode funcionar como cumplicidade, mas parece bastidor, conferir quem é. Tremor médio ao correr (24-27s, imagem rápida/borrada). 31-35s é só um bloco de vermelho/preto: usar só como transição de 0,3 a 0,6s, não inteiro. Exposição estourada em 1-2s e 16s (flare forte, pode lavar a cor). Tom da cor muda de verde-azul para laranja saturado entre 17 e 25s: cuidar da correção de cor."
+},
+{
+"clip": "c35",
+"lugar": "Trilha na mata, Chapada, 21/11 15:16, horizontal 4K",
+"descricao": "Plano horizontal de 19s, caminhando e olhando para cima: copa das árvores com sol atravessando e flares longos (0-10s), depois a câmera baixa e revela a trilha de terra com mato seco (11-18s). Movimento de tilt suave de cima para baixo (reveal).",
+"luz": "Contraluz de tarde, flares diagonais verde-dourados, sombras frias; céu levemente estourado. Cor graduada e bonita, teal/verde-dourado.",
+"tremor": 1,
+"som": "Muito baixo (-50 a -57 dB): mata e passos. Pico em 10s (-23 dB): voz curta dizendo 'Oi!' (provável Glenda ou Marcos cumprimentando, bastidor). Sem outra fala.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 4.5,
+"fim": 8,
+"descricao": "Sol em estrela atravessando a copa com flare diagonal longo e folhas, a imagem mais luminosa e limpa do conjunto.",
+"nota": 8,
+"serve": "H",
+"movimento": "Tilt up, câmera caminhando e olhando para a copa; avanço lento",
+"gancho_de_transicao": "Flare diagonal cruzando o quadro em 5-7s, serve de corte por luz"
+},
+{
+"ini": 10,
+"fim": 14.5,
+"descricao": "Reveal: da copa com flare a câmera desce e mostra a trilha de terra serpenteando no mato, como se a trilha 'abrisse'.",
+"nota": 7,
+"serve": "H",
+"movimento": "Tilt down com avanço (reveal)",
+"gancho_de_transicao": "Saída do flare em 10s para a trilha, pode ser corte por luz/transição de cor"
+},
+{
+"ini": 15,
+"fim": 19,
+"descricao": "Avanço pela trilha com folhas secas e capim em primeiro plano dobrando o quadro.",
+"nota": 5,
+"serve": "H",
+"movimento": "Avanço (push in) pela trilha",
+"gancho_de_transicao": "Folha/capim cruzando o primeiro plano em 16-18s"
+}
+],
+"problemas": "'Oi!' em 10,2-11,2s é voz de bastidor, cortar ou abafar. Horizontal 16:9: se o filme for 9:16, o recorte central perde o flare diagonal. Planos 1-3s e 8-9s têm folhagem fechada, menos legível."
+},
+{
+"clip": "c36",
+"lugar": "Trilha na mata, Chapada, 21/11 15:17, vertical 60 fps",
+"descricao": "Vertical a 60 fps de 17s: POV caminhando pela trilha de terra vermelha, mato verde e seco, árvores altas, vários toques de luz. Folhas grandes passam na frente da lente em 3-4s (galhos verdes), sol em estrela em 5s, névoa/estouro branco em 8-9s, depois caminhada estável na trilha até o fim.",
+"luz": "Luz de tarde rasante e contraluz com flare, verde-dourado nas folhas, vermelho na terra. Variável: 2s e 9s estourados.",
+"tremor": 1,
+"som": "Muito baixo (-40 a -54 dB): mata, passos, vento. Pico de -40 dB em 11s (toque). Sem fala.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 3,
+"fim": 5.8,
+"descricao": "Folhas grandes verdes passam em primeiro plano e abrem para o sol em estrela atrás das árvores, com raio de luz diagonal.",
+"nota": 8,
+"serve": "V",
+"movimento": "Avanço (push in) com tilt, folha cruzando a lente",
+"gancho_de_transicao": "Folhas passando na frente em 3-4,5s (corte por folha), flare/estouro em 5s e 8-9s (corte por luz)"
+},
+{
+"ini": 7.8,
+"fim": 9.8,
+"descricao": "Imagem se dissolve em névoa branca com raios de luz; ideal para fundir com o próximo plano.",
+"nota": 7,
+"serve": "V",
+"movimento": "Avanço, flare engolindo o quadro",
+"gancho_de_transicao": "Estouro branco total em 8,5-9s: corte por luz perfeito"
+},
+{
+"ini": 10,
+"fim": 16.9,
+"descricao": "Caminhada estável pela trilha sinuosa vermelha entre troncos, perspectiva em curva, a 60 fps (serve para câmera lenta de 50%).",
+"nota": 7,
+"serve": "V",
+"movimento": "Avanço contínuo, caminhando",
+"gancho_de_transicao": "Tronco largo cruzando o quadro em 11-13s; saída para a curva em 16s"
+}
+],
+"problemas": "Curto. Estouro em 2s e 9s (exposição). 0-2s tem queda e arrumação de câmera, balanço mais forte. Sem gente no quadro: bom para ritmo, mas precisa de música. 60 fps, aproveitar em slow-mo."
+},
+{
+"clip": "c37",
+"lugar": "Trilha na serra, Itaitu (Chapada Diamantina), 21/11 ~15h29",
+"descricao": "Contra-luz de tarde: sol atrás do paredão rochoso, capim iluminado em primeiro plano. A câmera baixa vai girando/subindo para a direita e revela o vale aberto com mata baixa e uma trilha de terra no fim. 4K 60 fps horizontal. Plano de paisagem de abertura de capítulo.",
+"luz": "Contra-luz dourado/ciano de fim de tarde, flares de lente (estrela e arco) até ~7s, céu azul com nuvens pequenas depois. Cor já bem saturada (teal/verde-limão).",
+"tremor": 1,
+"som": "Quase silêncio, -53 a -75 dB; só ar/vento fraco de fundo, sem voz, sem música. Pico isolado em 12s (-44 dB, provável sopro de vento no microfone ou toque). Pede trilha e som de ambiente colocado na edição.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0,
+"fim": 7.5,
+"descricao": "Sol estourando atrás do paredão com flare em estrela e raio, capim dourado cortando o quadro embaixo. Em 5-7s o flare passa por dentro do arco/buraco na rocha. É o gancho forte do clipe.",
+"nota": 8,
+"serve": "ambos",
+"movimento": "Câmera baixa, giro lento para a direita com leve subida (tilt up), cobrindo o sol",
+"gancho_de_transicao": "Flare de lente e sol estourando: serve para entrar ou sair em branco/luz. Capim passando na frente da lente na base."
+},
+{
+"ini": 7.5,
+"fim": 13.5,
+"descricao": "Revelação: sai do paredão e abre o vale, céu azul, mata verde-amarelada e horizonte longe.",
+"nota": 7,
+"serve": "H",
+"movimento": "Pan lento para a direita, abrindo o vale",
+"gancho_de_transicao": "Saída pela lateral do quadro continuando o pan para o próximo plano"
+},
+{
+"ini": 13.5,
+"fim": 15.9,
+"descricao": "Trilha de terra aparece no meio da mata, convite para caminhar.",
+"nota": 6,
+"serve": "H",
+"movimento": "Pan terminando em estabilidade",
+"gancho_de_transicao": ""
+}
+],
+"problemas": "Pequena instabilidade de mão perceptível em 4K nos primeiros 2s. Sem áudio aproveitável. Para o filme vertical é preciso recortar 9:16 de dentro do 4K (cabe, mas perde a largura do vale em 7.5-13.5). 60 fps permite câmera lenta de 50% no trecho do flare."
+},
+{
+"clip": "c38",
+"lugar": "Mesma serra/trilha de c37, Itaitu, 21/11 ~15h29 (12 s depois)",
+"descricao": "Segunda tomada do mesmo contra-luz: sol e flare sobre o paredão, capim em primeiro plano, câmera inclinando de baixo para cima e para o lado. 4K 60 fps horizontal, curto (6,7 s).",
+"luz": "Contra-luz dourado, raio de sol longo diagonal e flares com pontos coloridos nos primeiros 4s; no fim céu azul entra pelo canto.",
+"tremor": 1,
+"som": "Quase silêncio (-52 a -68 dB), vento fraco, sem voz nem música.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0,
+"fim": 4.2,
+"descricao": "Raio de sol diagonal cruzando o quadro com flares e folhagem vermelha/rosa de uma árvore no canto superior em 1-3s. Mais cinematográfico que o início do c37 por causa do raio longo.",
+"nota": 7,
+"serve": "ambos",
+"movimento": "Tilt/pan lento sobre o capim em direção ao sol",
+"gancho_de_transicao": "Flare estourado e folha/galho avermelhado entrando por cima: serve para esconder o corte"
+},
+{
+"ini": 4.2,
+"fim": 6.6,
+"descricao": "Sol sai de quadro, capim em close com céu e nuvem entrando.",
+"nota": 5,
+"serve": "ambos",
+"movimento": "Pan para a direita, saindo do sol",
+"gancho_de_transicao": "Capim cruzando a lente"
+}
+],
+"problemas": "Quase redundante com o c37: usar um ou outro (c37 tem a revelação do vale). Quadro um pouco inclinado (horizonte caído) nos primeiros segundos."
+},
+{
+"clip": "c39",
+"lugar": "Porteira de madeira numa estrada de terra no meio da mata, Itaitu (GPS -11.3566, -40.4935), 21/11 ~15h59",
+"descricao": "Glenda de top vermelho e shorts preto escala a porteira de madeira. A câmera começa atrás de um tronco de eucalipto grande em primeiro plano, avança para a esquerda passando o tronco e revela a cena. Mochila preta no chão. Vertical 4K 30 fps, sol de tarde, céu azul com nuvens, estrada de areia clara ao fundo.",
+"luz": "Sol alto-médio de tarde, claro, contraste bom, sombras de eucalipto no chão, céu azul saturado.",
+"tremor": 1,
+"som": "Ambiente constante (-36 a -41 dB): mata, insetos/passarinhos e vento, sem voz, sem música. Uniforme e limpo, bom como cama de som.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0,
+"fim": 3,
+"descricao": "Tronco de eucalipto enorme domina o quadro e deixa a porteira e a Glenda pequenas ao fundo; a câmera passa o tronco e revela a cena (descoberta).",
+"nota": 7,
+"serve": "V",
+"movimento": "Dolly lateral/avanço passando por trás do tronco",
+"gancho_de_transicao": "Tronco passando na frente da lente: serve como cortina de entrada ou de saída. Galhos e folhas por cima no quadro."
+},
+{
+"ini": 6,
+"fim": 10.5,
+"descricao": "Glenda escalando a porteira, cabelo preso, pernas dobradas, céu azul atrás; ação clara e bonita em enquadramento vertical.",
+"nota": 7,
+"serve": "V",
+"movimento": "Câmera mais próxima, estável, leve aproximação",
+"gancho_de_transicao": "Poste da porteira cortando o quadro à direita"
+},
+{
+"ini": 10.5,
+"fim": 15,
+"descricao": "Mais perto, ela de perfil no topo da porteira olhando para baixo, quase terminando de passar.",
+"nota": 6,
+"serve": "V",
+"movimento": "Aproximação lenta",
+"gancho_de_transicao": "Saída pelo corte seco no fim da passada"
+}
+],
+"problemas": "Início tem muita sujeira visual (folhas no chão, tronco) e a Glenda minúscula nos 3 primeiros segundos. Sem rosto de frente em quase todo o clipe (ela de costas/perfil). Em 8-10s ela olha para baixo e fica de lado, sem expressão boa. Plano de enquadramento vertical nativo, não serve para recorte horizontal (perde o contexto). Boa parte parece 'gravando enquanto ela passa', não tem ação bem dirigida."
+},
+{
+"clip": "c40",
+"lugar": "Mesma porteira e estrada, Itaitu (GPS -11.3566, -40.4936), 21/11 ~16h00, continuação de c39",
+"descricao": "Bastidor solto: Glenda pula a porteira e anda pela estrada, fala brincando em tom caipira, e a câmera é girada de um lado para o outro. Aos 25-29s aparece o rosto de Marcos de muito perto, depois árvore, estrada e carro branco. No fim ela se aproxima do carro de braços cruzados. IMPORTANTE: o clipe vem com o vídeo deitado (rotação nos metadados, 2160x3840 mas os quadros aparecem girados 90°); precisa aplicar rotação ao ler da fonte.",
+"luz": "Sol de tarde direto, céu azul. Contraluz leve nas cenas da porteira, luz lateral no fim.",
+"tremor": 3,
+"som": "Ambiente de mata (-37 a -41 dB), vento, passos e voz da Glenda e do Marcos. Voz em tom de brincadeira, rural/caipira. Queda a -48 dB em 33s (pausa).",
+"fala_util": "Glenda (brincando de caipira), 5.3-12.4s: 'aqui é filho do mato... filho do mato... filho da roça'; 15.3-17.3s 'já podei muita seca na minha vida' (transcrição incerta). Espontânea e engraçada, bom para legenda de humor, mas conferir o áudio real antes de usar. A frase 'ó, o pai de mim gravava...' em 0-2s está duvidosa.",
+"momentos": [
+{
+"ini": 2,
+"fim": 4.5,
+"descricao": "Glenda passa a perna alta por cima da porteira, corpo inteiro com céu azul atrás, movimento atlético.",
+"nota": 6,
+"serve": "V",
+"movimento": "Câmera próxima, balançando e girando",
+"gancho_de_transicao": "Madeira da porteira cruzando a lente"
+},
+{
+"ini": 5,
+"fim": 12.5,
+"descricao": "Ela pendurada na porteira falando 'filho do mato', cabelo preso, expressão divertida, fresta entre as tábuas.",
+"nota": 6,
+"serve": "V",
+"movimento": "Câmera atrás das tábuas da porteira, leve movimento",
+"gancho_de_transicao": "Tábuas da porteira passando na frente como grade"
+},
+{
+"ini": 23,
+"fim": 24.5,
+"descricao": "Glenda caminhando pela estrada de terra ao longe vista por entre as tábuas e tronco.",
+"nota": 5,
+"serve": "V",
+"movimento": "Fixo",
+"gancho_de_transicao": "Tronco de árvore entrando pelo lado"
+},
+{
+"ini": 25.5,
+"fim": 29.5,
+"descricao": "Rosto do Marcos de muito perto, barba, olhando para o lado, carro branco ao fundo: momento humano e de bastidor.",
+"nota": 5,
+"serve": "V",
+"movimento": "Câmera virando rápido para ele",
+"gancho_de_transicao": "Tronco de árvore passando em 25s e 27-29s servindo de cortina"
+},
+{
+"ini": 33,
+"fim": 38.5,
+"descricao": "Glenda se aproxima do carro branco entre os mourões da cerca, chega perto da câmera de braços cruzados com biquíni vermelho.",
+"nota": 5,
+"serve": "V",
+"movimento": "Câmera estática com leve zoom ao fim",
+"gancho_de_transicao": "Cerca de mourões cruzando o quadro"
+}
+],
+"problemas": "Tremor forte (câmera girando, movimento brusco) em quase todo o clipe, precisa de estabilização pesada ou só serve como fala de bastidor. Clipe deitado (rotação nos metadados) quebra a leitura se não for corrigido. Muita conversa de bastidor ('grava aí' implícito, gente conversando); Marcos de perto sem querer em 25-29s. Glenda olha para a câmera em 33-38s. Mantém o carro e a cerca na paisagem (poluição visual). Valor cinematográfico baixo; vale como humor/bastidor."
+},
+{
+"clip": "c41",
+"lugar": "Praça/largo histórico com casario colonial, noite, em festa popular (Itaitu), 21/11 ~22h15",
+"descricao": "Marcos (camisa de linho bege) e Glenda (top estampado com azul-turquesa) juntos de pé na praça de paralelepípedo, olhando para cima (espetáculo/fogos ou show), gravado em selfie de braço esticado. Casario iluminado com luz amarela e público ao fundo. Começa com câmera caída/bolso (0-7s), estabiliza a partir de 7s, termina em contra-plongée olhando para o céu com giro rápido no fim. 24 fps (aspecto de cinema), vertical.",
+"luz": "Noite, luz quente de lâmpadas do casario e postes, rostos iluminados por luz lateral colorida em 12-34s (luz de palco/LED). Cena escura com bom contraste.",
+"tremor": 2,
+"som": "Música alta e multidão (-13 a -23 dB), som de palco/evento com graves e vozes ao longe, sem fala útil nítida. Pode servir de cama de ambiente festivo, mas a música é do evento (cuidar de direitos).",
+"fala_util": "",
+"momentos": [
+{
+"ini": 7,
+"fim": 12,
+"descricao": "Entrada do casal olhando para cima, Marcos de perfil, Glenda ao lado, casario aceso ao fundo.",
+"nota": 7,
+"serve": "V",
+"movimento": "Câmera de mão em selfie, balanço leve",
+"gancho_de_transicao": "Chicote vindo da escuridão em 1-6s (lente tampada/bolso): serve como saída escura de plano anterior"
+},
+{
+"ini": 12,
+"fim": 28,
+"descricao": "Casal parado e encantado olhando para cima, expressões espontâneas; luz colorida passando pelos rostos. Plano de emoção.",
+"nota": 8,
+"serve": "V",
+"movimento": "Câmera quase fixa, respiração leve",
+"gancho_de_transicao": ""
+},
+{
+"ini": 35,
+"fim": 36.8,
+"descricao": "Glenda abraça o Marcos, olha para a câmera e sorri, gesto carinhoso; o enquadramento fica mais próximo e a camisa claro do Marcos acende.",
+"nota": 7,
+"serve": "V",
+"movimento": "Câmera se aproximando, cabeça virando",
+"gancho_de_transicao": ""
+},
+{
+"ini": 37,
+"fim": 43.5,
+"descricao": "Contra-plongée: casal de cabeça para trás olhando o céu (fogos/luzes), Marcos barbado em evidência, cabelo e barba recortados contra o escuro.",
+"nota": 8,
+"serve": "V",
+"movimento": "Câmera embaixo apontando para cima, pequena deriva",
+"gancho_de_transicao": "Escuro total no fundo do quadro, bom para cortar para o céu"
+},
+{
+"ini": 45.6,
+"fim": 47,
+"descricao": "Chicote rápido de câmera com borrão de luzes e movimento no último segundo.",
+"nota": 7,
+"serve": "V",
+"movimento": "Whip pan violento no final",
+"gancho_de_transicao": "Chicote de câmera e borrão de luzes: serve de saída para qualquer próximo plano"
+},
+{
+"ini": 1,
+"fim": 2.5,
+"descricao": "Quadro roxo/preto, lente tampada (dedo/tecido) no início.",
+"nota": 5,
+"serve": "V",
+"movimento": "Lente coberta",
+"gancho_de_transicao": "Lente tampada: serve para esconder um corte vindo do plano anterior"
+}
+],
+"problemas": "0-6s inutilizáveis (câmera caída, pés, tecido, tudo escuro e girando), a não ser o escuro em 1-2s como cobertura de transição. Tremor médio em todo o clipe (braço esticado, selfie), a estabilização cuida. Rostos do casal parcialmente em contra-luz do casario e luz colorida artificial no rosto/camisa do Marcos (estourada em rosa em 15-30s). Glenda aparece 'cortada' por trás do ombro dele em boa parte. Ruído alto de multidão sobrepõe qualquer conversa; Glenda olha para a câmera em 14s e 35-36s (neste último, bom). Fim com chicote bom mas desfocado."
+},
+{
+"clip": "c42",
+"lugar": "Mesma praça à noite, 21/11 ~22h15 (17 s depois de c41), multidão assistindo a um show",
+"descricao": "Vista de trás de um casal em primeiro plano (senhor de camisa branca e mulher de vestido preto) e multidão grande assistindo a um show no casario do fundo iluminado em vermelho e verde, com holofote forte e raios coloridos no topo do quadro. Vertical, 24 fps, curto (6,5 s).",
+"luz": "Noite, luz de palco colorida (verde/ciano/rosa) e holofote branco com flare em estrela no alto, fachada iluminada quente.",
+"tremor": 2,
+"som": "Música alta e multidão (-13 a -21 dB), graves de show ao vivo; sem fala útil.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 1.5,
+"fim": 5,
+"descricao": "Multidão vista por cima dos ombros de um senhor de camisa branca e uma mulher de preto, show ao fundo com holofote e flare em feixe azul/verde. Plano de atmosfera de festa popular, bom para ambientação.",
+"nota": 7,
+"serve": "V",
+"movimento": "Câmera de mão fixa, balanço leve",
+"gancho_de_transicao": "Em 0.7-1.3s uma pessoa de boné branco passa colada na lente (cobertura/chicote natural). Flare do holofote."
+},
+{
+"ini": 5,
+"fim": 6.4,
+"descricao": "A mulher de vestido preto vira e olha direto para a câmera.",
+"nota": 3,
+"serve": "V",
+"movimento": "Fixo",
+"gancho_de_transicao": ""
+}
+],
+"problemas": "Pessoa de boné cruza a lente em 1s (pode virar transição, mas sujo se não for aproveitado). Mulher estranha olha para a câmera em 5-6.4s (cortar antes). Tremor médio; baixa luz com ruído de sensor visível. Pessoas desconhecidas e identificáveis em primeiro plano (cuidar de imagem de terceiros)."
+},
+{
+"clip": "c43",
+"lugar": "Topo de morro com capim alto e vale, Chapada Diamantina (trilha), selfie em movimento",
+"descricao": "Selfie vertical de Marcos sem camisa, camiseta preta no ombro, caminhando e subindo por capim verde com o vale e a serra atrás. Ele olha para fora do quadro (contemplação), a câmera gira para mostrar vale e céu, passa por flare de sol e termina em retrato com horizonte aberto. Parece a mesma tomada de c49 (conteúdo quase idêntico, c43 com cerca de 1 s de diferença e mais fps). Metadado de hora (23:13 de 21/11) não bate com a luz de dia: ignorar a hora.",
+"luz": "Sol forte de tarde, lateral e contraluz, pele brilhando de suor, verdes saturados e céu azul-petróleo; flare real aos 25-26 s; highlights da pele chegando perto de estourar",
+"tremor": 2,
+"som": "Quase silêncio de mata: vento leve no microfone, entre -67 e -59 dB. Sem fala. Pico isolado aos 20 s (-43 dB) e 27-28 s (-48 dB), parecem roçar de capim ou mão no aparelho. Sem música, sem água.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 25,
+"fim": 28.5,
+"descricao": "Sol entra em flare sobre o ombro dele, câmera sobe em contra-plongée e ele aparece olhando o céu com a serra atrás. O melhor plano do clipe: o flare serve de transição e o contra-plongée dá herói.",
+"nota": 8,
+"serve": "V",
+"movimento": "Câmera de selfie sobe e gira em baixo-para-cima, saindo de capim para céu",
+"gancho_de_transicao": "Flare do sol cobrindo metade do quadro aos 25.5-26.5 s: ótimo para entrar ou sair em fusão de luz; também sai de quadro pelo céu"
+},
+{
+"ini": 10.5,
+"fim": 13.2,
+"descricao": "Marcos olha para o alto e para o horizonte, céu azul e serra aparecendo atrás, rosto e barba bem iluminados.",
+"nota": 7,
+"serve": "V",
+"movimento": "Câmera sobe levemente enquanto ele vira o rosto",
+"gancho_de_transicao": "Ele sai de quadro pela esquerda aos 13 s e revela só o vale (14-17 s): corte casado pela saída de quadro"
+},
+{
+"ini": 13.3,
+"fim": 17.5,
+"descricao": "Plano sem ele: capim em primeiro plano, vale fundo, céu com nuvens, câmera varrendo para a direita e depois subindo. Respiro de paisagem e plano de localização.",
+"nota": 7,
+"serve": "ambos",
+"movimento": "Pan lateral e tilt para cima, suave",
+"gancho_de_transicao": "Ele entra de volta pela borda esquerda aos 17 s; capim em primeiro plano passando na frente da lente serve de cobertura"
+},
+{
+"ini": 28,
+"fim": 34.5,
+"descricao": "Retrato mais fechado: Marcos de frente, barba, camiseta no ombro, serra e céu ao fundo, olhar sério e firme. Bom para frase de abertura ou fechamento.",
+"nota": 7,
+"serve": "V",
+"movimento": "Quase estático com respiração de selfie, câmera à altura do peito",
+"gancho_de_transicao": ""
+},
+{
+"ini": 35,
+"fim": 40,
+"descricao": "Horizonte amplo atrás dele, ele vira o rosto para o lado, plano final de cena de chegada ao topo.",
+"nota": 6,
+"serve": "V",
+"movimento": "Leve giro da câmera para a esquerda",
+"gancho_de_transicao": ""
+},
+{
+"ini": 0,
+"fim": 10,
+"descricao": "Início: perfil e nuca dele no capim, mão entrando na cena, subida. Serve só como transição curta ou gesto.",
+"nota": 5,
+"serve": "V",
+"movimento": "Selfie andando, tremor médio",
+"gancho_de_transicao": "Mão e ombro cobrem o quadro aos 1.5-2.5 s"
+}
+],
+"problemas": "Tremor médio de caminhada, estabilizar. Plano 100% selfie, ele raramente olha para a lente (parece contemplação, funciona). Perto de 29-33 e 36-38 s o olhar passa pela lente sem fixar, aceitável. Pele muito brilhante e verdes pesados: cuidado na cor. Quase idêntico a c49: usar um só (c43 tem o flare e é mais nítido; c49 não tem o flare)."
+},
+{
+"clip": "c44",
+"lugar": "Porta-malas de carro aberto em estrada de terra, com mato ao fundo (câmera dentro do porta-malas)",
+"descricao": "Plano fixo de dentro do porta-malas, com a moldura da tampa formando uma janela ampla sobre o mato verde. A tampa abre, Marcos se aproxima, troca de roupa sem camisa e de bermuda, depois se afasta caminhando pela estrada até o fundo e volta para fechar a tampa. Câmera parada, só ele se move. A tampa fechando escurece o quadro no final. É igual ao c48 (mesmo conteúdo e mesmo perfil de áudio, c44 com duração e hora diferentes de gravação): usar um só.",
+"luz": "Sol forte de contraluz saindo pela abertura, interior do carro escuro e contraste alto, a janela do porta-malas quase estourada e o corpo em silhueta quente",
+"tremor": 0,
+"som": "Muito baixo, entre -57 e -43 dB no começo (vento, passos); depois mato quase mudo (-65 dB); aos 25 s um estrondo grave de -17 dB, a tampa do porta-malas fechando (energia abaixo de 100 Hz). Sem fala, sem música.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0,
+"fim": 1.5,
+"descricao": "A tampa abre revelando o mato verde, de vidro iluminado para cena aberta: um reveal natural de entrada.",
+"nota": 7,
+"serve": "H",
+"movimento": "Fixo, o movimento é a tampa abrindo",
+"gancho_de_transicao": "Tampa abrindo cobre e revela a lente: entrada perfeita de cena"
+},
+{
+"ini": 10.5,
+"fim": 23.5,
+"descricao": "Marcos de costas caminha pela estrada até o fundo do quadro, pequeno no centro da janela verde, silhueta no meio do mato. Plano limpo, simétrico, emoldurado pelos bancos escuros.",
+"nota": 7,
+"serve": "H",
+"movimento": "Fixo, ele se afasta em profundidade",
+"gancho_de_transicao": "Ele diminui até quase sumir no mato: ponto de corte"
+},
+{
+"ini": 23.5,
+"fim": 26.4,
+"descricao": "Ele volta ao porta-malas e a tampa fecha com estrondo grave, quadro escurece quase todo.",
+"nota": 8,
+"serve": "H",
+"movimento": "Fixo, objeto cobrindo a lente",
+"gancho_de_transicao": "Tampa fechando cobre a lente em escuro com batida de som a -17 dB: cai perfeita como transição de saída com impacto sonoro"
+},
+{
+"ini": 2,
+"fim": 10,
+"descricao": "Marcos aparece sem camisa, troca de roupa e se inclina sobre o porta-malas. Ação de bastidor, corpo cortado pela moldura.",
+"nota": 5,
+"serve": "H",
+"movimento": "Fixo",
+"gancho_de_transicao": "Corpo cobre o quadro aos 8-9 s"
+}
+],
+"problemas": "Corpo parcialmente cortado pela tampa durante a troca de roupa, não mostra ele de forma elegante. Janela superexposta. Duplicata de c48 e de parte do c45."
+},
+{
+"clip": "c45",
+"lugar": "Mirante com carro branco estacionado e mata (0-20 s), serra com sol (22-35 s), porta-malas aberto (36-50 s) e vista pela janela do carro com caixa d'água (52-74 s)",
+"descricao": "Compilado de quatro planos longos. Primeiro, plano aberto fixo do carro branco no mirante com árvores: alguém sai, abre o porta-malas e se prepara. Depois, panorâmica baixa sobre capim com a serra e o sol em flare. Depois, de novo a vista de dentro do porta-malas (mesma ação do c44: Marcos troca de roupa e se afasta). Por fim, pela janela do carro, Marcos de sunga ou short pega uma garrafa de água perto de outro carro branco, com caixa d'água e serra em contraluz, e anda para o fundo.",
+"luz": "Contraluz forte com neblina de calor e flare no final, luz dourada, céu azul-petróleo; primeiro plano mais fresco, em sombra de árvore",
+"tremor": 1,
+"som": "0-20 s: mata baixa (-54 a -47 dB) com vento. 22-35 s: ambiente e pancadas aos 32 e 35-37 s (-41 a -36 dB, vento ou toque no aparelho). 52-74 s: nível constante e chapado de -30 dB, grave em torno de 130 Hz, parece motor ou ar do carro ligado, ou vento fixo: ruim como som direto. Não há música.",
+"fala_util": "Nenhuma. A transcrição aos 0.7-4.7 s ('Do que o chá do cao?') repetida é ruído de transcritor, descartar.",
+"momentos": [
+{
+"ini": 22,
+"fim": 28,
+"descricao": "Câmera baixa passando pelo capim, serra imponente e sol em flare sobre a crista, nuvens em movimento: o plano de paisagem mais cinematográfico do clipe.",
+"nota": 8,
+"serve": "ambos",
+"movimento": "Panorâmica lenta baixo-para-cima, quase rasante no capim",
+"gancho_de_transicao": "Flare do sol aos 23-27 s serve de fusão de luz; capim em primeiro plano passa na frente da lente"
+},
+{
+"ini": 28,
+"fim": 35,
+"descricao": "Continuação da panorâmica revelando o vale e o horizonte aberto, mata amarela e verde.",
+"nota": 7,
+"serve": "ambos",
+"movimento": "Pan suave para a direita",
+"gancho_de_transicao": "Saída pelo horizonte, corte em movimento"
+},
+{
+"ini": 52,
+"fim": 60,
+"descricao": "Pela janela do carro, Marcos bebe água em contraluz com caixa d'água e serra com neblina de sol. Moldura de janela dá profundidade de cinema.",
+"nota": 7,
+"serve": "H",
+"movimento": "Fixo com leve oscilação",
+"gancho_de_transicao": "Moldura do vidro e flare do sol aos 56-58 s; ele cruza a lente"
+},
+{
+"ini": 60,
+"fim": 74.4,
+"descricao": "Ele caminha para a esquerda, depois some atrás da coluna do vidro, plano de espera.",
+"nota": 5,
+"serve": "H",
+"movimento": "Fixo",
+"gancho_de_transicao": "Sai de quadro pela esquerda"
+},
+{
+"ini": 0,
+"fim": 21,
+"descricao": "Plano aberto fixo do mirante com o carro: pessoa abre o porta-malas e anda. Bom como plano de localização curto, parado demais para ficar longo.",
+"nota": 5,
+"serve": "H",
+"movimento": "Fixo, plano geral",
+"gancho_de_transicao": "Pessoa vem até a câmera aos 20 s e cobre a lente"
+},
+{
+"ini": 36,
+"fim": 50,
+"descricao": "Mesma ação do c44 (porta-malas, troca de roupa, ele se afasta).",
+"nota": 5,
+"serve": "H",
+"movimento": "Fixo",
+"gancho_de_transicao": "Tampa abrindo aos 36-37 s"
+}
+],
+"problemas": "Clipe longo e quase todo de espera, vale usar só os melhores trechos. Parte 36-50 s repete c44/c48. Som chapado de -30 dB no final, descartar e usar trilha. Gente caminhando longe, pouco rosto. Possível cor puxada para teal pesada. Qualidade geral boa em 4K."
+},
+{
+"clip": "c46",
+"lugar": "Beira de riacho com pedras e folhas secas no chão, mata de troncos finos",
+"descricao": "Plano fixo e baixo, bem fechado na altura da cintura/pernas. Marcos de short escuro e botas passa pelo quadro e para, aos 22 s se abaixa para tirar as botas, depois fica de costas sem camisa no meio das pedras até o fim. Ao fundo, aos 38-56 s, uma pessoa de roupa clara passa no canto superior direito (provável Glenda). O enquadramento corta a cabeça nos primeiros 20 s.",
+"luz": "Sombra de mata, luz difusa e fria, contraste baixo, cores apagadas em verde-oliva e bege",
+"tremor": 0,
+"som": "Ambiente contínuo entre -47 e -38 dB, chiado de banda larga compatível com folhas e riacho ao longe, sem água nítida. Passos e farfalhar aos 20-24 s. A pessoa filmando e outra voz falam o tempo todo: bastidor.",
+"fala_util": "Nenhuma para o filme. Conversa de bastidor ('Pina, filma!', 'Pera aí!', 'Vamos pegar na boca, eu tenho que gravar, amor!', 'Vou fazer um botinho pra gravar a barulha') entre 3.6 e 55.8 s: cortar ou abafar.",
+"momentos": [
+{
+"ini": 22,
+"fim": 27,
+"descricao": "Marcos se abaixa para soltar a bota e se levanta de costas, sem camisa, pele morena contra pedras claras: ação humana com quase um 'tira a roupa e vai para a água'.",
+"nota": 5,
+"serve": "ambos",
+"movimento": "Fixo",
+"gancho_de_transicao": "Corpo cobre boa parte do quadro aos 22 s ao abaixar"
+},
+{
+"ini": 0,
+"fim": 6,
+"descricao": "Pernas e botas entrando no quadro e pisando em folhas e pedras. Detalhe de passos, ritmo bom como corte curto de caminhada.",
+"nota": 4,
+"serve": "ambos",
+"movimento": "Fixo, baixo",
+"gancho_de_transicao": "Pernas passando cobrem o quadro"
+},
+{
+"ini": 28,
+"fim": 40,
+"descricao": "Ele de costas, sem camisa, imóvel diante do riacho. Plano estático calmo de contemplação, sem destaque.",
+"nota": 4,
+"serve": "ambos",
+"movimento": "Fixo",
+"gancho_de_transicao": "Pessoa clara cruza o fundo aos 38-56 s"
+}
+],
+"problemas": "Cabeça cortada nos primeiros 20 s, rosto nunca aparece, pouca ação, muito tempo parado. Fala de bastidor ao longo de todo o clipe. Pessoa no fundo passa sem querer. Cor apagada. Valor baixo para o filme: usar no máximo um corte curto de 'chegada ao riacho'."
+},
+{
+"clip": "c48",
+"lugar": "Porta-malas de carro aberto em estrada de terra, com mato ao fundo",
+"descricao": "Duplicata exata do c44: plano fixo de dentro do porta-malas, tampa abre, Marcos troca de roupa, vai embora pela estrada e volta, tampa fecha com estrondo. Mesma duração (26.4 s), mesmo perfil de áudio.",
+"luz": "Contraluz forte pela abertura, interior escuro, janela quase estourada",
+"tremor": 0,
+"som": "Igual ao c44: vento e passos baixos (-57 a -43 dB), mato quase mudo, estrondo grave aos 25 s (-17 dB) da tampa fechando. Sem fala.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 0,
+"fim": 1.5,
+"descricao": "Tampa abre e revela o mato.",
+"nota": 7,
+"serve": "H",
+"movimento": "Fixo",
+"gancho_de_transicao": "Tampa abrindo cobre e revela a lente"
+},
+{
+"ini": 10.5,
+"fim": 23.5,
+"descricao": "Marcos caminha de costas pela estrada até o fundo, emoldurado pela janela.",
+"nota": 7,
+"serve": "H",
+"movimento": "Fixo, ele se afasta",
+"gancho_de_transicao": "Some no mato"
+},
+{
+"ini": 23.5,
+"fim": 26.4,
+"descricao": "Ele volta e a tampa fecha com batida grave, escuro no quadro.",
+"nota": 8,
+"serve": "H",
+"movimento": "Fixo, objeto cobre a lente",
+"gancho_de_transicao": "Tampa fechando cobre a lente com batida de som a -17 dB: transição de saída"
+}
+],
+"problemas": "Duplicata do c44, usar só um dos dois. Janela superexposta, corpo cortado durante a troca de roupa."
+},
+{
+"clip": "c49",
+"lugar": "Topo de morro com capim alto e vale, Chapada Diamantina, selfie em movimento",
+"descricao": "Quase a mesma tomada do c43 (selfie vertical, Marcos sem camisa com camiseta preta no ombro, subindo o capim, vale, céu, retrato final). Cerca de 1 s mais curta e sem o flare do sol que o c43 tem. Aos 2 s aparece um retângulo preto sobre a cabeça no quadro da folha de contato, provável artefato da folha e não do vídeo, confirmar antes de usar.",
+"luz": "Sol forte lateral e contraluz, pele brilhando, verdes saturados",
+"tremor": 2,
+"som": "Quase silêncio de mata (-68 a -59 dB), vento leve, pico aos 21 s (-43 dB), sem fala, sem música.",
+"fala_util": "",
+"momentos": [
+{
+"ini": 11,
+"fim": 13.5,
+"descricao": "Marcos olha para cima e para o horizonte, céu e serra atrás.",
+"nota": 7,
+"serve": "V",
+"movimento": "Câmera sobe e gira levemente",
+"gancho_de_transicao": "Sai de quadro à esquerda aos 13.5 s revelando o vale"
+},
+{
+"ini": 13.5,
+"fim": 17.5,
+"descricao": "Paisagem sem ele: capim e vale, pan e tilt.",
+"nota": 7,
+"serve": "ambos",
+"movimento": "Pan e tilt suaves",
+"gancho_de_transicao": "Capim em primeiro plano cobre a lente"
+},
+{
+"ini": 25.5,
+"fim": 27.5,
+"descricao": "Câmera sobe para o céu azul com ele de perfil; sem flare, só o contra-plongée.",
+"nota": 6,
+"serve": "V",
+"movimento": "Tilt para cima",
+"gancho_de_transicao": "Sai pelo céu"
+},
+{
+"ini": 27.5,
+"fim": 34,
+"descricao": "Retrato frontal com serra ao fundo e camiseta no ombro.",
+"nota": 7,
+"serve": "V",
+"movimento": "Quase estático",
+"gancho_de_transicao": ""
+},
+{
+"ini": 34.5,
+"fim": 39.5,
+"descricao": "Horizonte amplo atrás dele, mão no peito aos 36 s, depois vira o rosto.",
+"nota": 6,
+"serve": "V",
+"movimento": "Giro lento",
+"gancho_de_transicao": ""
+}
+],
+"problemas": "Duplicata do c43 sem o flare: preferir c43. Tremor médio. Retângulo preto aos 2 s, checar."
+}
+]

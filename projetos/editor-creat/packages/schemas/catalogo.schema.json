@@ -33,6 +33,12 @@
           "resumo": { "type": "string", "maxLength": 240 },
           "pessoas": { "type": "string", "maxLength": 160 },
           "camera": { "type": "string", "maxLength": 80, "description": "estável | tremido 0-40 s | selfie..." },
+          "movimento": { "type": "object", "additionalProperties": false, "required": ["tremor", "nota", "melhores"], "description": "Resumo de motor/movimento.py (opcional: análise sem movimento medido fica sem).",
+            "properties": { "tremor": { "type": "number", "description": "p90 do tremor em px da saída 9:16 sem zoom (o mesmo critério do resolvedor)." }, "nota": { "type": "number", "description": "Qualidade média 0-1." },
+              "borrado_pct": { "type": "number" }, "falhas": { "type": "number", "description": "Fração de quadros sem fluxo medido; acima de 0,3 o tremor não é confiável." },
+              "nitidez_rel": { "type": "number", "description": "nitidez_ref / mediana do projeto (abaixo de 0,35 = clipe inteiro mole)." }, "ampliacao": { "type": "number", "description": "Quanto o recorte 9:16 sem zoom amplia a fonte (1 = nativo)." },
+              "melhores": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 }, "description": "[t0, t1, nota]." },
+              "tremidos": { "type": "array", "items": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 }, "description": "[t0, t1, px]." } } },
           "ambientes": { "type": "array", "items": { "type": "string" } },
           "momentos": {
             "type": "array",
@@ -61,7 +67,9 @@
                 "falante": { "type": ["string", "null"] },
                 "texto": { "type": "string", "description": "Texto exato (ou truncado com '…' quando o orçamento apertar)." },
                 "truncado": { "type": "boolean", "default": false },
-                "energia": { "type": ["number", "null"], "description": "0-1: quanto a fala é enérgica (para gancho)." }
+                "energia": { "type": ["number", "null"], "description": "0-1: quanto a fala é enérgica (para gancho)." },
+                "voz": { "type": ["string", "null"], "pattern": "^[A-Z]$", "description": "Quem fala, pela assinatura de voz do projeto: A = voz principal (quem repete ditado; sem ditado, mais tempo de fala), B = outra pessoa." },
+                "ditado": { "type": ["string", "null"], "pattern": "^F[0-9]{2,3}\\.[0-9]+$", "description": "Esta fala é um DITADO da equipe; a voz principal repete na fala indicada (use aquela)." }
               }
             }
           }
@@ -71,7 +79,7 @@
     "trilhas": {
       "type": "array",
       "description": "Trilhas disponíveis na biblioteca (id, clima, bpm, duração).",
-      "items": { "type": "object", "additionalProperties": false, "required": ["id", "bpm", "dur"], "properties": { "id": { "type": "string" }, "clima": { "type": "string" }, "bpm": { "type": "number" }, "dur": { "type": "number" } } }
+      "items": { "type": "object", "additionalProperties": false, "required": ["id", "bpm", "dur"], "properties": { "id": { "type": "string" }, "clima": { "type": "string" }, "bpm": { "type": "number" }, "dur": { "type": "number" }, "virada": { "type": "number", "description": "Segundo em que a música estoura (maior subida sustentada de energia), na batida." }, "tom": { "type": "string", "description": "Tonalidade estimada, ex.: lá menor." }, "secoes": { "type": "array", "description": "Partes da música com energia de 1 a 5.", "items": { "type": "object", "additionalProperties": false, "required": ["t0", "t1", "energia"], "properties": { "t0": { "type": "number" }, "t1": { "type": "number" }, "energia": { "type": "integer", "minimum": 1, "maximum": 5 } } } } } }
     },
     "modelos": { "type": "array", "items": { "type": "string" }, "description": "Modelos de vídeo (templates) disponíveis: evento-reel, empresa-institucional, daily-vlog, anuncio-produto..." }
   }

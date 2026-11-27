@@ -1,0 +1,35 @@
+[
+ {
+  "tipo": "instantaneo",
+  "projeto": "p_exemplo01",
+  "dados": {
+   "ligada": true,
+   "gasto_hoje_usd": 0.0528,
+   "teto_usd_dia": 3.0,
+   "turno_rodando": "t_5958147227",
+   "rascunho": {
+    "turno": "t_5958147227",
+    "bloco": 0,
+    "texto": "Escrevendo devagar para o exemplo. Escrevendo devagar para o exemplo. Es",
+    "v": 49
+   }
+  }
+ },
+ {
+  "tipo": "rascunho",
+  "projeto": "p_exemplo01",
+  "dados": {
+   "turno": "t_5958147227",
+   "bloco": 0,
+   "texto": "Escrevendo devagar para o exemplo. Escrevendo devagar para o exemplo. Escrevendo devagar para o exemplo. Escreve",
+   "v": 54
+  }
+ },
+ {
+  "tipo": "ping",
+  "projeto": "p_exemplo01",
+  "dados": {
+   "ts": "2026-11-25T14:00:15Z"
+  }
+ }
+]

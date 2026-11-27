@@ -59,7 +59,7 @@ def main(argv=None) -> int:
 
     cfg = config.carregar()
     tempos = {}
-    real = (DRAKO / "cat.json").exists() and (DRAKO / "trs").exists()
+    real = all((DRAKO / n).exists() for n in ("cat.json", "trs", "seg/indice.json"))
     print(f"== frente B · dados {dados} · material de 17/11: {'sim' if real else 'NÃO (exemplo sintético)'}")
     pid = "p_drako17" if real else "p_demo"
 

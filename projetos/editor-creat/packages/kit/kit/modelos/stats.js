@@ -2,7 +2,7 @@
 export default function stats(ctx, c) {
   const { el, tl, EASE, prog, ease, aba } = ctx;
   const p = c.props, t0 = c.de;
-  const card = el("div", "mk-chip", c.el, { position: "absolute", left: (p.x ?? 60) + "px", top: (p.y ?? 420) + "px", width: (p.w ?? 420) + "px", boxSizing: "border-box", padding: "22px 26px 22px",
+  const card = el("div", "mk-chip", c.el, { position: "absolute", left: Math.max(ctx.ZONA.esquerda, Math.min(p.x ?? 60, ctx.W - ctx.ZONA.direita - 260)) + "px", top: (p.y ?? 420) + "px", width: Math.min(p.w ?? 420, ctx.W - ctx.ZONA.direita - Math.max(ctx.ZONA.esquerda, Math.min(p.x ?? 60, ctx.W - ctx.ZONA.direita - 260))) + "px", boxSizing: "border-box", padding: "22px 26px 22px",
     background: "rgba(14,14,16,0.86)", borderRadius: "10px", borderTop: "5px solid #F5B84D", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" });
   const cab = el("div", "", card, { display: "flex", alignItems: "center", gap: "12px" });
   aba(cab, 36, { position: "relative", flex: "0 0 auto" });

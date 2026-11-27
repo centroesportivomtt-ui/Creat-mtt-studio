@@ -5,21 +5,148 @@
   "description": "O que o dono (ou cliente) pede para um projeto. Texto direto ou áudio transcrito. O motor completa os campos inferidos (tipo_video, duracao_alvo) quando vierem vazios.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["versao", "projeto", "texto"],
+  "required": [
+    "versao",
+    "projeto",
+    "texto"
+  ],
   "properties": {
-    "versao": { "const": "1" },
-    "projeto": { "type": "string", "minLength": 1 },
-    "texto": { "type": "string", "description": "Pedido em texto livre (ou a transcrição do áudio)." },
-    "audio": { "type": ["string", "null"], "description": "Chave de armazenamento do áudio original do pedido, se veio por voz." },
-    "tipo_video": { "enum": ["auto", "evento", "empresa", "daily_vlog", "anuncio", "depoimento", "bastidor"], "default": "auto" },
-    "cliente": { "type": ["string", "null"], "description": "Marca/cliente (chave em memoria/marcas)." },
-    "destino": { "type": "array", "items": { "enum": ["reels", "stories", "tiktok", "shorts", "feed", "youtube"] }, "default": ["reels"] },
-    "formato": { "enum": ["9:16", "1:1", "4:5", "16:9"], "default": "9:16" },
-    "duracao_alvo": { "type": ["number", "null"], "minimum": 5, "maximum": 600 },
-    "obrigatorio": { "type": "array", "items": { "type": "string" }, "description": "Coisas que precisam aparecer/ser ditas (falas, pessoas, logo, arroba)." },
-    "proibido": { "type": "array", "items": { "type": "string" } },
-    "referencias": { "type": "array", "items": { "type": "string" }, "description": "Links ou ids de casos da memória a imitar." },
-    "ajustes_de": { "type": ["string", "null"], "description": "Id da versão anterior quando o pedido é uma correção (o motor usa o EDL anterior como base e só muda o pedido)." },
-    "criado_em": { "type": "string", "format": "date-time" }
+    "versao": {
+      "const": "1"
+    },
+    "projeto": {
+      "type": "string",
+      "minLength": 1
+    },
+    "texto": {
+      "type": "string",
+      "description": "Pedido em texto livre (ou a transcrição do áudio)."
+    },
+    "audio": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Chave de armazenamento do áudio original do pedido, se veio por voz."
+    },
+    "tipo_video": {
+      "enum": [
+        "auto",
+        "evento",
+        "empresa",
+        "daily_vlog",
+        "anuncio",
+        "depoimento",
+        "bastidor"
+      ],
+      "default": "auto"
+    },
+    "modo": {
+      "enum": [
+        "auto",
+        "criativo",
+        "ultra",
+        "cinema",
+        "ia",
+        "clean",
+        "serio",
+        "fala"
+      ],
+      "default": "auto",
+      "description": "Modo de edição (estilo): auto = o editor decide; criativo; ultra (ultra criação, efeitos e motion pesados); cinema (transições cinematográficas e LUT); ia (cenas geradas por IA junto do material humano, sempre rotuladas); clean (limpo e neutro); serio (institucional, sóbrio); fala (fala e apresentação, legenda e cortes discretos)."
+    },
+    "cliente": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Marca/cliente (chave em memoria/marcas)."
+    },
+    "destino": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "reels",
+          "stories",
+          "tiktok",
+          "shorts",
+          "feed",
+          "youtube"
+        ]
+      },
+      "default": [
+        "reels"
+      ]
+    },
+    "formato": {
+      "enum": [
+        "9:16",
+        "1:1",
+        "4:5",
+        "16:9"
+      ],
+      "default": "9:16"
+    },
+    "duracao_alvo": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 5,
+      "maximum": 600
+    },
+    "obrigatorio": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Coisas que precisam aparecer/ser ditas (falas, pessoas, logo, arroba)."
+    },
+    "proibido": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "referencias": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Links ou ids de casos da memória a imitar."
+    },
+    "ajustes_de": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Id da versão anterior quando o pedido é uma correção (o motor usa o EDL anterior como base e só muda o pedido)."
+    },
+    "criado_em": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ambiente": {
+      "enum": [
+        "auto",
+        "loja",
+        "rua_dia",
+        "rua_noite",
+        "academia",
+        "palco",
+        "neutro"
+      ],
+      "default": "auto",
+      "description": "Onde foi gravado, para a cor: auto = o editor mede cada cena e escolhe o look; loja (interno de loja), rua_dia, rua_noite, academia, palco, neutro."
+    },
+    "vozes": {
+      "enum": [
+        "auto",
+        "uma",
+        "varias"
+      ],
+      "default": "auto",
+      "description": "Quem fala na peça: auto = o editor ouve e decide (voz principal com 65% ou mais do tempo: o resto é intruso); uma = só o apresentador (qualquer outra voz segura a entrega); varias = várias pessoas falam de propósito."
+    }
   }
 }

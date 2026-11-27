@@ -19,7 +19,8 @@ def checar(c):
         g = cv2.cvtColor(q, cv2.COLOR_BGR2GRAY)
         lap = cv2.Laplacian(g, cv2.CV_32F)
         m = np.zeros(g.shape, bool)
-        for x0, y0, x1, y1 in p["desfocar"]:
+        for cx in p["desfocar"]:
+            x0, y0, x1, y1 = cx[:4]                        # o 5o valor (opcional) é o sigma do desfoque
             m[int(y0 * c.H):int(y1 * c.H), int(x0 * c.W):int(x1 * c.W)] = True
         if not m.any() or m.all():
             continue

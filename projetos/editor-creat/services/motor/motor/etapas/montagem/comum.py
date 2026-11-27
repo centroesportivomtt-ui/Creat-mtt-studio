@@ -10,6 +10,7 @@ import math
 import os
 import pathlib
 import subprocess
+import time
 from dataclasses import dataclass
 
 W_PADRAO, H_PADRAO, FPS_PADRAO = 1080, 1920, 30
@@ -105,6 +106,12 @@ def meta(arq: pathlib.Path | str) -> Meta:
     return m
 
 
+def _sem_recurso(stderr: bytes) -> bool:
+    """O sistema negou thread/processo por um instante (teto de processos do contêiner): vale tentar de novo."""
+    t = (stderr or b"").lower()
+    return b"resource temporarily unavailable" in t or b"cannot allocate memory" in t
+
+
 def ler_audio(arq: pathlib.Path | str, s0: float = 0.0, dur: float | None = None, *, sr: int = SR, canais: int = 1, cfg=None):
     """Decodifica um trecho de áudio para float32 (n,) ou (n, canais). Trecho fora do arquivo vira silêncio."""
     import numpy as np
@@ -112,8 +119,15 @@ def ler_audio(arq: pathlib.Path | str, s0: float = 0.0, dur: float | None = None
     s0 = max(0.0, s0)
     args = ["-ss", f"{s0:.4f}"] + (["-t", f"{max(0.01, dur - pre):.4f}"] if dur is not None else []) + ["-i", str(arq), "-vn",
             "-f", "f32le", "-ac", str(canais), "-ar", str(sr), "-"]
-    cmd = nice_prefixo(cfg) + ["ffmpeg", "-nostdin", "-v", "error", *args]
-    r = subprocess.run(cmd, capture_output=True)
+    # 27/11 (V4 dos Bastidores): o contêiner tem teto de 1000 processos/threads; com overlay (Chromium) e planos rodando
+    # juntos, o ffmpeg com threads por núcleo recebia EAGAIN ("Resource temporarily unavailable"). Áudio não precisa de
+    # mais de uma thread; e a falta momentânea de thread tenta de novo em vez de derrubar a montagem.
+    cmd = nice_prefixo(cfg) + ["ffmpeg", "-nostdin", "-v", "error", "-threads", "1", "-filter_threads", "1", *args]
+    for tentativa in range(4):
+        r = subprocess.run(cmd, capture_output=True)
+        if r.returncode == 0 or not _sem_recurso(r.stderr) or tentativa == 3:
+            break
+        time.sleep(0.5 * (2 ** tentativa))
     if r.returncode != 0:
         raise RuntimeError(f"ffmpeg não leu o áudio de {arq}: {r.stderr[-400:]!r}")
     x = np.frombuffer(r.stdout, dtype=np.float32).copy()

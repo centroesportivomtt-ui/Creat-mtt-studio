@@ -109,3 +109,20 @@ def test_checagem_que_quebra_reprova(tmp_path, dados, monkeypatch):
     monkeypatch.setattr(lufs, "checar", lambda c: 1 / 0)
     rel = qa.conferir(f, _edl(), config.carregar(), so=["lufs"])
     assert not rel["aprovado"] and "quebrou" in rel["checagens"][0]["detalhe"]
+
+
+@pytest.mark.parametrize("planos,deve_passar", [
+    ([], True),                                                                           # sem plano com som direto: laço é invenção
+    ([{"id": "P1", "fonte": "a", "s0": 0, "t0": 0.0, "t1": 2.0, "vel": 1.0, "som_direto_db": -20}], False),   # laço DENTRO do som direto
+])
+def test_frase_repetida_no_direto_so_conta_onde_ha_som_direto(tmp_path, dados, monkeypatch, planos, deve_passar):
+    """27/11 (V9 dos Bastidores): "e o que" 74x num stem direto com 2,2 s de som; o resto era silêncio normalizado."""
+    from motor.etapas import qa
+    f = _video(tmp_path)
+    monkeypatch.setattr(qa.Conferencia, "transcrever",
+                        lambda self, nome, arq, **k: _Falso({"mix": "pessoal que vai competir aqui", "stem_direto": "e o que e o que e o que"})(nome, arq))
+    edl = _edl(voz=[{"id": "V1", "fonte": "a", "s0": 0, "s1": 1, "t0": 0, "t1": 1, "texto": "pessoal que vai competir aqui"}])
+    if planos:
+        edl["planos"] = planos
+    rel = qa.conferir(f, edl, config.carregar(), stems={"direto": str(f)}, mix=f, so=["frase_repetida"])
+    assert rel["aprovado"] is deve_passar, rel["checagens"]

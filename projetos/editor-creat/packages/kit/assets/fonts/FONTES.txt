@@ -4,3 +4,13 @@ Fontes deste kit (todas sob a SIL Open Font License 1.1; texto da licença em OF
 - static_MontserratBlack.ttf: Copyright 2011 The Montserrat Project Authors (github.com/JulietaUla/Montserrat); usada no "c." da Aba 71 (igual à capa.cjs da estrategia-social). Cópia de ~/.fonts/creat/ (pacote de fontes da casa).
 - JetBrainsMono-Bold.ttf: Copyright 2020 The JetBrains Mono Project Authors (github.com/JetBrains/JetBrainsMono)
 O cabeçalho de copyright dentro de OFL.txt veio do pacote de fontes da casa; vale o texto da licença, que é o mesmo para as quatro.
+
+Linguagem "Em Revelação" (20/11/2026), baixadas de github.com/google/fonts (raw.githubusercontent.com, ramo main):
+- InstrumentSerif-Regular.ttf, InstrumentSerif-Italic.ttf: Copyright 2022 The Instrument Serif Project Authors (github.com/Instrument/instrument-serif). SIL OFL 1.1 (OFL.txt). Papel: voz e emoção (legenda, títulos, cartão).
+- CaveatBrush-Regular.ttf: Copyright 2015 Google Inc. (Pablo Impallari). SIL OFL 1.1 (OFL.txt). Papel: lápis dermatográfico, só marcas à mão.
+- SpecialElite-Regular.ttf: Copyright (c) 2010 Brian J. Bonislawsky DBA Astigmatic (AOETI). Apache License 2.0 (texto em LICENSE-Apache-2.0.txt). Papel: arquivo e máquina de escrever, sempre em minúsculas fora do carimbo.
+  Não tem o glifo "▸" (U+25B8): o código de borda do laboratorio.js desenha esse triângulo em CSS.
+
+Marca Maryna Biscoitos (25/11/2026), baixadas de github.com/google/fonts (raw.githubusercontent.com, ramo main):
+- LilitaOne-Regular.ttf: Copyright 2011 Juan Montoreano. SIL OFL 1.1 (OFL.txt). Papel: legenda adesivo e números da ficha de receita.
+- KaushanScript-Regular.ttf: Copyright 2011 Pablo Impallari. SIL OFL 1.1 (OFL.txt). Papel: assinatura manuscrita da marca.

@@ -3,6 +3,8 @@ PNG RGBA por beginFrame com N workers (`EDITOR_RENDER_WORKERS`). Quadro repetido
 
 Legendas: se o EDL não trouxer camadas `legenda` prontas (filme legado), as palavras [t0, t1, texto, ênfase] viram páginas
 do modelo `legenda` do kit, quebrando em pausa > 0,45 s ou pontuação final (máx. 3 palavras por página). Ênfase 1 = *palavra*.
+Camada de legenda própria no EDL (`legenda` pronta ou `legenda_revelada`, a de frase inteira do kit): o overlay NÃO gera a
+legenda padrão; `legendas.palavras` continua sendo a lista das palavras ditas que o QA confere contra a fala.
 Imagens das camadas (src/imagem/logo) que são chaves do armazenamento ou caminhos absolutos viram `/@abs/<caminho>`.
 """
 from __future__ import annotations
@@ -19,7 +21,8 @@ from motor import config
 from motor.etapas.montagem.comum import Fontes, gravar_json, hash_obj
 
 KIT = config.KIT
-CHAVES_IMG = ("src", "imagem", "logo")
+CHAVES_IMG = ("src", "imagem", "logo", "logo_cliente", "logo_parceiro")
+MODELOS_LEGENDA = ("legenda", "legenda_revelada", "legenda_adesivo")   # camadas que JÁ são a legenda do filme: com uma delas, nada de padrão
 
 
 def _fixa_caminhos(obj, fontes: Fontes | None):
@@ -69,25 +72,36 @@ def camadas_legenda(edl: dict) -> list[dict]:
     return camadas
 
 
-def cena_do_edl(edl: dict, fontes: Fontes | None = None) -> dict:
-    motion = [dict(m) for m in edl.get("motion", [])]
-    if not any(m["modelo"] == "legenda" for m in motion):
+def cena_do_edl(edl: dict, fontes: Fontes | None = None, atras: bool | None = None) -> dict:
+    """atras=None: todas as camadas; True: só as que vão ATRÁS da pessoa; False: só as da frente (a legenda é sempre da frente)."""
+    motion = [dict(m) for m in edl.get("motion", []) if atras is None or bool(m.get("atras")) == atras]
+    if atras is not True and not any(m["modelo"] in MODELOS_LEGENDA for m in edl.get("motion", [])):
         motion += camadas_legenda(edl)
     motion = _fixa_caminhos(motion, fontes)
     for m in motion:
+        m.pop("atras", None)                              # o kit não conhece a marca: quem decide a ordem é a composição
         m["de"] = max(0.0, float(m["de"]))
         m["ate"] = min(float(edl["duracao"]), float(m["ate"]))
     return {"nome": f"overlay-{edl.get('projeto', 'p')}", "formato": edl.get("formato", {"w": 1080, "h": 1920, "fps": 30}),
             "duracao": float(edl["duracao"]), "cor": "transparent", "camadas": [m for m in motion if m["ate"] > m["de"]]}
 
 
+def _versao_kit() -> str:
+    """Impressão do código do kit (nome, tamanho e data de cada .js/.css/.html): mudar um modelo invalida o cache do overlay.
+    Sem isso, um ajuste no kit com o EDL igual reaproveitava o overlay antigo em silêncio (Maryna, 25/11/2026)."""
+    raiz = pathlib.Path(KIT)
+    itens = sorted((str(f.relative_to(raiz)), f.stat().st_size, int(f.stat().st_mtime))
+                   for f in raiz.rglob("*") if f.is_file() and f.suffix in (".js", ".css", ".html"))
+    return hash_obj(itens)
+
+
 def renderizar(edl: dict, fontes: Fontes | None, base: pathlib.Path, *, workers: int = 3, janela: tuple[float, float] | None = None,
-               nice: int = 5, progresso=None) -> dict:
-    """Devolve {'dir', 'stats', 'cena', 'cache'}. Idempotente por hash da cena + janela."""
-    cena = cena_do_edl(edl, fontes)
+               nice: int = 5, progresso=None, atras: bool | None = None) -> dict:
+    """Devolve {'dir', 'stats', 'cena', 'cache'}. Idempotente por hash da cena + janela. `atras` como em cena_do_edl."""
+    cena = cena_do_edl(edl, fontes, atras)
     if not cena["camadas"]:
         return {"dir": None, "stats": {"quadros": 0}, "cena": cena, "cache": False}
-    h = hash_obj(cena, janela, "ov2")
+    h = hash_obj(cena, janela, "ov2", _versao_kit())
     d = base / h
     feito = d / "_feito.json"
     if feito.exists():

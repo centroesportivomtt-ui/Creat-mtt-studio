@@ -43,13 +43,78 @@ def criar():
         elif (request.client.host if request.client else "") not in LOOPBACK:
             raise HTTPException(401, "motor sem MOTOR_TOKEN só atende a própria máquina")
 
-    app = FastAPI(title="Motor do Editor creat.MTT", version="0.1.0", dependencies=[Depends(autorizado)])
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def vida(_app):
+        """Startup: trava de processo único da conversa e reconciliação das conversas interrompidas (nunca derruba o boot)."""
+        try:
+            from motor.conversa import laco as _laco
+            await _laco.ao_subir()
+        except Exception:  # noqa: BLE001
+            import logging
+            logging.getLogger("motor.conversa").exception("startup da conversa falhou")
+            _laco = None
+        yield
+        if _laco is not None:
+            await _laco.ao_descer()
+
+    app = FastAPI(title="Motor do Editor creat.MTT", version="0.1.0", dependencies=[Depends(autorizado)], lifespan=vida)
 
     @app.get("/v1/saude")
-    def saude():
-        return {"ok": True, "provedores": {t: cfg.provedor_efetivo(t) for t in ("armazenamento", "transcricao", "visao", "cerebro", "render", "publicacao")}}
+    def saude(chave: bool = False, direcao: bool = False, olho: bool = False, entregas: bool = False):
+        out = {"ok": True, "provedores": {t: cfg.provedor_efetivo(t) for t in ("armazenamento", "transcricao", "visao", "cerebro", "render", "publicacao")}}
+        if chave:
+            from motor.cerebro.diagnostico import checar_chave
+            out["chave_cerebro"] = checar_chave(cfg)
+        if direcao:
+            from motor.cerebro.diagnostico import testar_direcao
+            out["direcao_real"] = testar_direcao(cfg)
+        if olho:
+            from motor.cerebro.diagnostico import testar_olho
+            out["olho_ia"] = testar_olho(cfg)
+        import pathlib as _pl
+        from motor.etapas import falante as _fal, pessoa as _pes
+        pasta = _pl.Path(cfg.dados) / "modelos"             # só olha o disco: a saúde nunca baixa nada
 
-    for nome in ("projetos", "direcao", "versoes"):
+        def _tem(var, nome):
+            v = os.environ.get(var, "").strip()
+            return _pl.Path(v).is_file() if v else (pasta / nome).is_file()
+        from motor import qualidade_voz as _qv
+        from motor.etapas.montagem import dfn3 as _dfn
+        _pdfn = _pl.Path(os.environ.get("EDITOR_DFN3", "").strip() or (pasta / "dfn3"))
+        out["modelos"] = {"pessoa": _tem("EDITOR_PESSOA", _pes.MODELO_NOME), "voz": _tem("EDITOR_FALANTE", _fal.MODELO_NOME),
+                          "limpeza_voz": all((_pdfn / n).is_file() for n in _dfn.ARQUIVOS),
+                          "medidor_voz": _tem("EDITOR_DNSMOS", _qv.MODELO_NOME)}
+        try:                                                # o boot confere o navegador do kit (motor/modelos.py)
+            import json as _json
+            out["modelos"]["navegador"] = _json.loads((pasta / "navegador.json").read_text()).get("ok")
+        except (OSError, ValueError):
+            out["modelos"]["navegador"] = None
+        from motor import backup as _backup
+        import re as _re
+        _bk = _backup.estado(cfg)
+        out["backup"] = {k: v for k, v in _bk.items() if k in ("destino", "estado", "ultimo_ok", "horas_desde_o_ultimo", "r2", "copias")}
+        if _bk.get("estado") == "falha" and _bk.get("erro"):   # causa da falha, sem caminhos internos (a saúde é pública)
+            out["backup"]["erro"] = _re.sub(r"(/[\w.@-]+)+/?", "<caminho>", str(_bk["erro"]))[:160]
+        try:                                                # espaço no disco dos dados: o material entra e é montado aqui
+            import shutil as _sh
+            _du = _sh.disk_usage(cfg.dados)
+            out["disco"] = {"livre_gb": round(_du.free / 2**30, 1), "total_gb": round(_du.total / 2**30, 1)}
+        except OSError:
+            out["disco"] = None
+        from motor import entregas_r2 as _ent
+        out["entregas"] = _ent.estado_saude(cfg, provar=entregas)    # ?entregas=1 prova a permissão do token (list MaxKeys=1)
+        from motor.etapas import espelho as _esp
+        if _esp.ligado():
+            out["espelho"] = {"ligado": True, "teto_gb": round(_esp.teto_bytes() / (1 << 30), 1)}
+        return out
+
+    if os.environ.get("EDITOR_BACKUP_AGENDAR") == "1":            # só no servidor (iniciar.sh); testes e aceites não agendam
+        from motor import backup as _backup_ag
+        _backup_ag.agendar(cfg)
+    for nome in ("projetos", "direcao", "versoes", "referencias", "backup", "gastos", "biblioteca", "cliente", "conversa",
+                 "refazer", "apagar", "memoria", "marcas"):
         try:
             mod = importlib.import_module(f"motor.api.{nome}")
         except ModuleNotFoundError as e:

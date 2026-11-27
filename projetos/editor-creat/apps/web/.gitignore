@@ -4,3 +4,6 @@ node_modules/
 next-env.d.ts
 *.tsbuildinfo
 .env*.local
+
+# logs do servidor local (teste e verificação visual)
+*.log

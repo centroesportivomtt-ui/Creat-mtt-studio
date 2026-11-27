@@ -10,11 +10,12 @@
     "id": { "type": "integer" },
     "projeto": { "type": "string" },
     "ts": { "type": "string", "format": "date-time" },
-    "tipo": { "enum": ["projeto_criado", "arquivo_recebido", "etapa_inicio", "etapa_progresso", "etapa_fim", "etapa_erro", "estado", "versao_pronta", "qa_reprovado", "entregue"] },
+    "tipo": { "enum": ["projeto_criado", "arquivo_recebido", "etapa_inicio", "etapa_progresso", "etapa_fim", "etapa_erro", "estado", "versao_pronta", "qa_reprovado", "entregue",
+                        "fala_dono", "fala_editor", "ferramenta", "pergunta", "confirmacao", "resposta", "turno_fim", "mostrar", "passo", "decisao", "aviso", "cliente"] },
     "etapa": { "type": ["string", "null"], "enum": [null, "ingest", "analise", "catalogo", "direcao", "montagem", "qa", "entrega"] },
     "alvo": { "type": ["string", "null"], "description": "Id do arquivo ou da versão." },
     "progresso": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
-    "estado": { "type": ["string", "null"], "description": "Estado novo do projeto quando tipo=estado." },
+    "estado": { "type": ["string", "null"], "description": "Estado novo do projeto quando tipo=estado. Nos tipos da conversa e da mesa é sempre nulo (a fase vai em dados.fase)." },
     "mensagem": { "type": ["string", "null"], "description": "Texto curto em pt-BR para a tela." },
     "dados": { "type": ["object", "null"] }
   }

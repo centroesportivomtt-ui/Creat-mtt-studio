@@ -22,6 +22,25 @@ _FORA = {"minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multiple
          "minItems", "maxItems", "uniqueItems", "default", "$schema", "$id", "title", "prefixItems"}
 
 
+def _enxuto(s):
+    """Contrato sem descrições e exemplos (para ir no texto do pedido quando o modo estrito não cabe)."""
+    if isinstance(s, list):
+        return [_enxuto(x) for x in s]
+    if not isinstance(s, dict):
+        return s
+    return {k: _enxuto(v) for k, v in s.items() if k not in ("description", "examples", "title", "$comment")}
+
+
+def _json_do_texto(t: str) -> str:
+    """Tira cercas de código e texto ao redor, se o modelo puser; devolve só o objeto JSON."""
+    t = (t or "").strip()
+    if t.startswith("```"):
+        t = t.split("\n", 1)[1] if "\n" in t else t
+        t = t.rsplit("```", 1)[0]
+    a, b = t.find("{"), t.rfind("}")
+    return t[a:b + 1] if a >= 0 and b > a else t
+
+
 def esquema_para_api(s):
     """Tira do JSON Schema o que os structured outputs não aceitam e troca type:[x,null] por anyOf."""
     if isinstance(s, list):
@@ -61,7 +80,7 @@ class CerebroAnthropic:
         self.cfg = cfg or config.carregar()
         import anthropic  # dependência opcional: pip install 'editor-motor[cerebro]'
         self._anthropic = anthropic
-        self.cli = anthropic.Anthropic()
+        self.cli = config.cliente_anthropic()
 
     # --- montagem da chamada
     def _base(self, sistema: str, catalogo_txt: str, cauda: list[dict]) -> dict:
@@ -71,10 +90,27 @@ class CerebroAnthropic:
                                                       *cauda]}],
         }
 
+    _sem_gramatica = False   # a API recusou o contrato por ser grande demais para o modo estrito: vai pelo texto + validação local
+
     def _chamar(self, modelo: str, esforco: str, corpo: dict, esquema: dict | None, max_tokens: int) -> tuple[str, dict]:
+        if esquema is not None and not self._sem_gramatica:
+            try:
+                return self._chamar_uma(modelo, esforco, corpo, esquema, max_tokens, estrito=True)
+            except self._anthropic.BadRequestError as e:
+                if "grammar" not in str(e).lower() and "too large" not in str(e).lower():
+                    raise
+                type(self)._sem_gramatica = True
+        return self._chamar_uma(modelo, esforco, corpo, esquema, max_tokens, estrito=False)
+
+    def _chamar_uma(self, modelo: str, esforco: str, corpo: dict, esquema: dict | None, max_tokens: int, *, estrito: bool) -> tuple[str, dict]:
         oc = {"effort": esforco}
-        if esquema is not None:
+        if esquema is not None and estrito:
             oc["format"] = {"type": "json_schema", "schema": esquema_para_api(copy.deepcopy(esquema))}
+        elif esquema is not None:
+            corpo = copy.deepcopy(corpo)
+            contrato = json.dumps(_enxuto(esquema_para_api(copy.deepcopy(esquema))), ensure_ascii=False, separators=(",", ":"))
+            corpo["messages"][-1]["content"].append({"type": "text", "text": "Responda SOMENTE com um objeto JSON válido (sem texto antes ou depois, "
+                                                     "sem cercas de código) que siga exatamente este JSON Schema:\n" + contrato})
         extra = {"betas": BETAS, "fallbacks": "default"} if modelo != self.cfg.modelo_leve else {}
         api = self.cli.beta.messages if extra else self.cli.messages
         with api.stream(model=modelo, max_tokens=max_tokens, thinking={"type": "adaptive"}, output_config=oc, **extra, **corpo) as st:
@@ -83,7 +119,7 @@ class CerebroAnthropic:
             raise RuntimeError(f"o modelo recusou a direção ({getattr(msg, 'stop_details', None)})")
         if msg.stop_reason == "max_tokens":
             raise RuntimeError("a direção estourou max_tokens")
-        texto = next((b.text for b in msg.content if getattr(b, "type", "") == "text"), "")
+        texto = _json_do_texto(next((b.text for b in msg.content if getattr(b, "type", "") == "text"), ""))
         u = msg.usage
         uso = orcamento.uso(getattr(msg, "model", modelo), entrada=int(u.input_tokens or 0), saida=int(u.output_tokens or 0),
                             cache_lido=int(getattr(u, "cache_read_input_tokens", 0) or 0), cache_escrito=int(getattr(u, "cache_creation_input_tokens", 0) or 0),
@@ -96,9 +132,50 @@ class CerebroAnthropic:
         return int(self.cli.messages.count_tokens(model=self.cfg.modelo_direcao, **corpo).input_tokens)
 
     # --- interface Cerebro
+    def _validar(self, obj, esquema: dict) -> list[str]:
+        try:
+            import jsonschema
+        except ImportError:
+            return []
+        v = jsonschema.Draft202012Validator(esquema)
+        return [f"{'/'.join(map(str, e.absolute_path)) or '(raiz)'}: {e.message[:160]}" for e in sorted(v.iter_errors(obj), key=lambda e: list(map(str, e.absolute_path)))][:25]
+
+    def _conserta(self, modelo: str, esforco: str, corpo: dict, esquema: dict, texto: str, uso: dict, tentativas: int = 2) -> tuple[dict, dict]:
+        """Sem o modo estrito, o modelo às vezes foge do contrato (id minúsculo, valor acima do máximo, enum fora da lista).
+        Valida local e pede para corrigir SÓ os erros apontados, até 2 vezes. Os usos somam no custo."""
+        from motor.cerebro import orcamento
+        usos = [uso]
+        try:
+            obj = json.loads(texto)
+        except json.JSONDecodeError as e:
+            obj, erros = None, [f"JSON inválido: {e}"]
+        else:
+            erros = self._validar(obj, esquema)
+        for _ in range(tentativas):
+            if not erros:
+                break
+            c2 = copy.deepcopy(corpo)
+            c2["messages"].append({"role": "assistant", "content": [{"type": "text", "text": texto}]})
+            c2["messages"].append({"role": "user", "content": [{"type": "text", "text":
+                "Essa resposta não passou no contrato. Corrija SOMENTE estes erros e devolva o JSON completo, sem texto fora dele:\n- " + "\n- ".join(erros)}]})
+            texto, u = self._chamar_uma(modelo, esforco, c2, esquema, 32000, estrito=False)
+            usos.append(u)
+            try:
+                obj = json.loads(texto)
+                erros = self._validar(obj, esquema)
+            except json.JSONDecodeError as e:
+                obj, erros = None, [f"JSON inválido: {e}"]
+        if obj is None:
+            raise RuntimeError("o cérebro não devolveu JSON válido depois das correções")
+        total = orcamento.somar(usos)
+        uso_final = dict(usos[0], custo_usd=total["custo_usd"], entrada=total["entrada"], saida=total["saida"], correcoes=len(usos) - 1)
+        return obj, uso_final
+
     def dirigir(self, *, sistema: str, catalogo_txt: str, pedido_txt: str, esquema: dict, maximo_saida: int = 4000) -> tuple[dict, dict]:
         corpo = self._base(sistema, catalogo_txt, [{"type": "text", "text": pedido_txt}])
         texto, uso = self._chamar(self.cfg.modelo_direcao, self.cfg.esforco_direcao, corpo, esquema, 32000)
+        if self._sem_gramatica:
+            return self._conserta(self.cfg.modelo_direcao, self.cfg.esforco_direcao, corpo, esquema, texto, uso)
         return json.loads(texto), uso
 
     def criticar(self, *, sistema: str, catalogo_txt: str, direcao: dict, pedido_txt: str, esquema: dict, problemas: list[str] | None = None) -> tuple[dict, dict]:
@@ -107,7 +184,10 @@ class CerebroAnthropic:
                  {"type": "text", "text": "DIREÇÃO PROPOSTA\n" + json.dumps(direcao, ensure_ascii=False)
                   + "\n\nPROBLEMAS DO RESOLVEDOR\n" + ("\n".join(f"- {p}" for p in problemas) if problemas else "- nenhum")
                   + "\n\n" + prompts_texto("critico")}]
-        texto, uso = self._chamar(self.cfg.modelo_direcao, "medium", self._base(sistema, catalogo_txt, cauda), esquema, 32000)
+        corpo = self._base(sistema, catalogo_txt, cauda)
+        texto, uso = self._chamar(self.cfg.modelo_direcao, "medium", corpo, esquema, 32000)
+        if self._sem_gramatica:
+            return self._conserta(self.cfg.modelo_direcao, "medium", corpo, esquema, texto, uso)
         return json.loads(texto), uso
 
     def leve(self, *, tarefa: str, texto: str, esquema: dict | None = None) -> tuple[dict | str, dict]:

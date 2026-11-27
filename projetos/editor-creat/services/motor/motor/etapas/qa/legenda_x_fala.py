@@ -23,7 +23,9 @@ def checar(c):
         return {"ok": False, "bloqueia": True, "valor": val, "detalhe": "; ".join(det)}
     else:
         ouvidas = c.palavras(tr)
-        alvo = [(w[0], normalizar(w[2])) for w in leg if len(normalizar(w[2])) >= 3]
+        # número que a verificação de fatos corrigiu na tela (falou 269, a tela diz 275) não conta contra o recall
+        trocadas = {round(float(t["t"]), 2) for t in ((c.edl.get("qa") or {}).get("fatos") or {}).get("trocas") or [] if t.get("onde") == "legenda"}
+        alvo = [(w[0], normalizar(w[2])) for w in leg if len(normalizar(w[2])) >= 3 and round(float(w[0]), 2) not in trocadas]
         achou = [t for t, n in alvo if any(o[2] == n and abs(o[0] - t) <= 1.0 for o in ouvidas)]
         rec = len(achou) / max(1, len(alvo))
         val.update(recall=round(rec, 2), conferidas=len(alvo))

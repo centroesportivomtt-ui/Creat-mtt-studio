@@ -18,6 +18,7 @@ from motor.memoria.loja import Loja
 
 rotas = APIRouter(tags=["direcao"])
 TipoVideo = Literal["auto", "evento", "empresa", "daily_vlog", "anuncio", "depoimento", "bastidor"]
+Modo = Literal["auto", "criativo", "ultra", "cinema", "ia", "clean", "serio", "fala"]
 Destino = Literal["reels", "stories", "tiktok", "shorts", "feed", "youtube"]
 
 
@@ -49,10 +50,15 @@ class PedidoEntrada(BaseModel):
     texto: Optional[str] = Field(None, max_length=4000)
     audio_chave: Optional[str] = Field(None, max_length=500)
     tipo_video: TipoVideo = "auto"
+    modo: Modo = "auto"
+    ambiente: Literal["auto", "loja", "rua_dia", "rua_noite", "academia", "palco", "neutro"] = "auto"
+    vozes: Literal["auto", "uma", "varias"] = "auto"
     duracao_alvo: Optional[float] = Field(None, ge=5, le=600)
     destino: list[Destino] = Field(default_factory=lambda: ["reels"], max_length=6)
     formato: Literal["9:16", "1:1", "4:5", "16:9"] = "9:16"
-    cliente: Optional[str] = Field(None, max_length=80, pattern=r"^[a-z0-9_-]+$")
+    # para qual cliente é o filme (onda 4, D48): mesmo slug das entregas e das marcas ("Super Kal" e "super_kal" -> "super-kal").
+    # Com logo cadastrada em marcas/<slug>/logo.png, o fecho assina com ela sem o diretor precisar lembrar.
+    cliente: Optional[str] = Field(None, max_length=80)
     obrigatorio: list[str] = Field(default_factory=list, max_length=20)
     proibido: list[str] = Field(default_factory=list, max_length=20)
     ajustes_de: Optional[str] = Field(None, pattern=r"^v[0-9]{1,3}$")
@@ -63,6 +69,17 @@ class PedidoEntrada(BaseModel):
         if any(len(x) > 200 for x in v):
             raise ValueError("cada item tem no máximo 200 caracteres")
         return [x.strip() for x in v if x.strip()]
+
+    @field_validator("cliente")
+    @classmethod
+    def _cliente(cls, v):
+        if v is None or not v.strip():
+            return None
+        from motor import marcas
+        s = marcas.slug(v)
+        if s is None:
+            raise ValueError("nome de cliente inválido")
+        return s
 
     @model_validator(mode="after")
     def _um_dos_dois(self):
@@ -75,6 +92,7 @@ class PedidoEntrada(BaseModel):
 
 class Reprovacao(BaseModel):
     motivo: str = Field(..., min_length=3, max_length=1000)
+    vira_regra: bool = True        # False: refaz só este projeto, sem gravar regra, checagem nem vocabulário da casa
 
 
 def _transcrever_pedido(cfg, arm, chave: str) -> str:
@@ -104,7 +122,7 @@ def gravar_pedido(pid: str, corpo: PedidoEntrada):
             texto = _transcrever_pedido(cfg, arm, corpo.audio_chave)
             if not texto:
                 raise HTTPException(422, "não deu para entender o áudio do pedido; grave de novo ou mande em texto")
-        pedido = {"versao": "1", "projeto": pid, "texto": texto, "audio": corpo.audio_chave, "tipo_video": tipo, "cliente": corpo.cliente,
+        pedido = {"versao": "1", "projeto": pid, "texto": texto, "audio": corpo.audio_chave, "tipo_video": tipo, "modo": corpo.modo, "ambiente": corpo.ambiente, "vozes": corpo.vozes, "cliente": corpo.cliente,
                   "destino": corpo.destino, "formato": corpo.formato, "duracao_alvo": corpo.duracao_alvo, "obrigatorio": corpo.obrigatorio,
                   "proibido": corpo.proibido, "referencias": [], "ajustes_de": corpo.ajustes_de, "criado_em": banco.agora_iso()}
         erros = validar.erros("pedido", pedido)
@@ -113,11 +131,28 @@ def gravar_pedido(pid: str, corpo: PedidoEntrada):
         arm.gravar_json(f"projetos/{pid}/pedido.json", pedido)
         r = con.execute("SELECT dados FROM projetos WHERE id=?", (pid,)).fetchone()
         dados = json.loads(r["dados"] or "{}")
-        dados["pedido"] = {"texto": texto[:200], "tipo_video": tipo}
+        dados["pedido"] = {"texto": texto[:200], "tipo_video": tipo, "modo": corpo.modo, **({"cliente": corpo.cliente} if corpo.cliente else {})}
         con.execute("UPDATE projetos SET dados=?, atualizado=? WHERE id=?", (json.dumps(dados), banco.agora_iso(), pid))
         banco.emitir(con, pid, "estado", mensagem="Pedido recebido.", dados={"pedido": texto[:200]})
         dirigindo = pipeline.tentar_dirigir(con, pid)
         return {"pedido": pedido, "dirigindo": dirigindo}
+
+
+def _retirar_das_entregas(con, pid: str, versao: str) -> None:
+    """Versão reprovada que estava (ou ia) na página de entregas do Cloudflare sai de lá (etapa de fundo, sem esperar a rede)."""
+    from motor import entregas_r2
+    if not entregas_r2.ligado():
+        return
+    marcou = {}
+
+    def mexer(d):
+        e = (d.get("entregas") or {}).get(versao)
+        if e and e.get("estado") in ("no_ar", "pendente", "enviando"):
+            e.update(estado="retirando", acao="retirar", proxima=None, proxima_ts=None)
+            marcou["sim"] = True
+    banco.atualizar_dados(con, pid, mexer)
+    if marcou:
+        banco.enfileirar(con, "entregas", pid, versao, entrada={"acao": "retirar"}, prioridade=6)
 
 
 @rotas.post("/projetos/{pid}/versoes/{versao}/reprovar")
@@ -142,18 +177,48 @@ def reprovar(pid: str, versao: str, corpo: Reprovacao):
             cerebro = provedor("cerebro", cfg)
         except Exception:  # noqa: BLE001 - sem cérebro, a heurística da loja resolve
             cerebro = None
-        r = Loja().registrar_reprovacao(pid, versao, corpo.motivo, cerebro=cerebro)
+        if corpo.vira_regra:
+            r = Loja().registrar_reprovacao(pid, versao, corpo.motivo, cerebro=cerebro)
+        else:
+            r = {"regra": None, "checagem": None, "vocabulario": []}
+        if r.get("uso"):                                   # a nota virou regra pelo Haiku: o gasto vai ao livro
+            from motor.cerebro import gastos
+            gastos.registrar(cfg, "regra", r["uso"], projeto=pid, versao=versao)
         con.execute("UPDATE versoes SET estado='reprovada', reprovacao=? WHERE projeto=? AND id=?", (corpo.motivo, pid, versao))
+        from motor import cliente as _cliente
+        _cliente.revogar_versao(con, pid, versao)          # link do cliente desta versão fecha de vez
+        _retirar_das_entregas(con, pid, versao)
         d = _projeto(con, pid)["dados"]
         d["correcoes_auto"] = 0            # nova rodada pedida pelo dono: o auto-ajuste do QA volta a ter as 2 tentativas
         con.execute("UPDATE projetos SET dados=? WHERE id=?", (json.dumps(d), pid))
         banco.enfileirar(con, "direcao", pid, entrada={"reprovacao": corpo.motivo, "versao_anterior": versao}, prioridade=1)
-        banco.mudar_estado(con, pid, "dirigindo", f"Versão {versao} reprovada: virou regra da casa. Refazendo a direção.")
+        banco.mudar_estado(con, pid, "dirigindo", f"Versão {versao} reprovada: virou regra da casa. Refazendo a direção." if corpo.vira_regra
+                           else f"Versão {versao} reprovada (só neste projeto). Refazendo a direção.")
         return {"regra": r["regra"], "checagem": r["checagem"], "vocabulario": r["vocabulario"], "nova_direcao": True}
 
 
 @rotas.get("/memoria")
 def memoria():
     loja = Loja()
-    return {"regras": loja.regras(), "checagens": loja.checagens(), "vocabulario": loja.vocabulario(), "modelos": loja.nomes_modelos(),
+    from motor.etapas import cor as COR
+    from motor.etapas.direcao import MODOS
+    from motor.etapas.qa import EM_OBSERVACAO
+    # onda 3 (R19): cada item ganha, opcionais, apagavel, de_onde (com o nome do projeto, se ele ainda existe) e ao_apagar;
+    # o vocabulário ganha id. O resto igual
+    cad = loja.itens_caderno()
+    pids = {i["de_onde"]["projeto"] for t in cad.values() for i in t if i.get("de_onde")}
+    nomes = {}
+    if pids:
+        with _con() as (_cfg, con):
+            q = ",".join("?" * len(pids))
+            nomes = {r["id"]: r["nome"] for r in con.execute(f"SELECT id, nome FROM projetos WHERE id IN ({q})", tuple(pids))}
+    for t in cad.values():
+        for i in t:
+            if i.get("de_onde") and i["de_onde"]["projeto"] in nomes:
+                i["de_onde"]["nome"] = nomes[i["de_onde"]["projeto"]]
+    checagens = [dict(c, gravidade="observacao") if c.get("tipo") in EM_OBSERVACAO and c.get("gravidade") == "bloqueia" else c
+                 for c in cad["checagens"]]          # o Caderno diz a verdade: checagem em observação ainda só avisa
+    return {"regras": cad["regras"], "checagens": checagens, "vocabulario": cad["vocabulario"], "modelos": loja.nomes_modelos(),
+            "modos": [m for m in (loja.modo(n) for n in MODOS) if m],
+            "looks": COR.catalogo(),
             "raiz_isolada": bool(os.environ.get("EDITOR_MEMORIA"))}

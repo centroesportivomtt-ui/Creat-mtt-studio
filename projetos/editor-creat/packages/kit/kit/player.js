@@ -17,8 +17,20 @@ import camadas from "./modelos/camadas.js";
 import stats from "./modelos/stats.js";
 import pilha from "./modelos/pilha.js";
 import fecho2 from "./modelos/fecho2.js";
+// linguagem "Em Revelação" (laboratório fotográfico)
+import revelacao from "./modelos/revelacao.js";
+import legenda_revelada from "./modelos/legenda_revelada.js";
+import laboratorio from "./modelos/laboratorio.js";
+import papel from "./modelos/papel.js";
+// agenda da semana (reunião de alinhamento, 24/11)
+import semana from "./modelos/semana.js";
+// Maryna Biscoitos (25/11): legenda adesivo, carimbo do júri, ficha de receita e vitrine de produto
+import legenda_adesivo from "./modelos/legenda_adesivo.js";
+import carimbo from "./modelos/carimbo.js";
+import receita from "./modelos/receita.js";
+import vitrine from "./modelos/vitrine.js";
 
-const modelos = { fundo, gancho, legenda, chip, transicao, hud, fecho, heroi, abas, gancho2, selo, checklist, rotulo, camadas, stats, pilha, fecho2 };
+const modelos = { fundo, gancho, legenda, chip, transicao, hud, fecho, heroi, abas, gancho2, selo, checklist, rotulo, camadas, stats, pilha, fecho2, revelacao, legenda_revelada, laboratorio, papel, semana, legenda_adesivo, carimbo, receita, vitrine };
 
 async function fontes() {
   await Promise.all([
@@ -27,6 +39,12 @@ async function fontes() {
     document.fonts.load('900 40px "Inter"'),
     document.fonts.load('700 40px "JetBrains Mono"'),
     document.fonts.load('900 40px "Montserrat"'),
+    document.fonts.load('400 68px "Instrument Serif"', "çãé"),
+    document.fonts.load('italic 400 68px "Instrument Serif"', "çãé"),
+    document.fonts.load('400 38px "Special Elite"', "çãé"),
+    document.fonts.load('400 60px "Caveat Brush"', "çãé"),
+    document.fonts.load('400 60px "Lilita One"', "çãéÚ"),
+    document.fonts.load('400 60px "Kaushan Script"', "çãé"),
   ]);
   await document.fonts.ready;
 }

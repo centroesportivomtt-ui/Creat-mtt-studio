@@ -1,0 +1,9 @@
+**/node_modules
+**/.next
+**/__pycache__
+**/*.egg-info
+apps/web/.verificacao
+packages/kit/saida
+dados
+**/.env
+**/.env.local

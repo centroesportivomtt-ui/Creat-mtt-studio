@@ -1,0 +1,30 @@
+{
+ "id": "serio",
+ "nome": "Sério",
+ "descricao": "Institucional e sóbrio: sem mascote, sem gíria, sem efeito de impacto.",
+ "ajustes": {
+  "ritmo": {
+   "pausa_max": 0.3,
+   "gap_bloco": 0.35
+  },
+  "trilha": {
+   "ganho_db": -18
+  }
+ },
+ "sem_transicoes": [
+  "whip",
+  "aba71",
+  "impacto",
+  "flash",
+  "mascara"
+ ],
+ "sem_sons": [
+  "gancho",
+  "troca",
+  "chip",
+  "texto_tela",
+  "drop"
+ ],
+ "zoom_max": 1.04,
+ "fx_pico": null
+}

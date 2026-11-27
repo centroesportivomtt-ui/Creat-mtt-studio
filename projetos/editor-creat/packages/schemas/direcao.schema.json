@@ -38,6 +38,10 @@
       "minimum": 5,
       "maximum": 600
     },
+    "sem_fala": {
+      "type": "boolean",
+      "description": "Filme SEM fala, cortado pela música (viagem, natureza, evento sem depoimento): blocos com falas vazias; a cobertura do bloco é opcional (vazia = o editor escolhe os melhores trechos em ordem de gravação). O editor põe a virada da música no bloco de trilha.drop_em, corta na batida pela energia de cada parte da música e usa a trilha cheia. Sem o campo, o modo liga sozinho quando nenhum bloco tem fala; false força o resolvedor com fala."
+    },
     "vel_fala": {
       "type": "number",
       "minimum": 1.0,
@@ -88,6 +92,10 @@
               "type": "string"
             }
           }
+        },
+        "atras_da_pessoa": {
+          "type": "boolean",
+          "description": "O título do gancho fica ATRÁS de quem fala (a pessoa passa na frente do texto). Use quando o gancho abre com a pessoa em quadro, de frente, e o texto é grande."
         }
       }
     },
@@ -284,6 +292,31 @@
               "flash",
               "fade"
             ]
+          },
+          "fundo_desfocado": {
+            "type": "boolean",
+            "description": "Desfoca o fundo atrás da pessoa nos planos de fala deste bloco (fundo poluído de loja; o foco vai para quem fala)."
+          },
+          "destaque_pessoa": {
+            "type": "boolean",
+            "description": "Janela de luz em quem fala neste bloco: o fundo escurece um pouco e perde cor, a pessoa salta da loja sem desfocar o fundo."
+          },
+          "sons": {
+            "type": "array",
+            "maxItems": 3,
+            "description": "Som REAL do banco (gravações Sonniss GDC; nada sintetizado). Só o que a imagem mostra. ambiente = lugar e hora, cobre o bloco (ou os planos do momento m); pontual = objeto e ação, cai no momento m da cobertura. Nunca gente, multidão, voz ou cidade cheia. No máximo 8 no filme.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["desc", "papel"],
+              "properties": {
+                "desc": { "type": "string", "minLength": 2, "maxLength": 60, "description": "O som em português, honesto: 'água de riacho', 'porta-malas abrindo'." },
+                "busca": { "type": "string", "minLength": 2, "maxLength": 60, "description": "Termos em inglês, vocabulário das bibliotecas: 'creek water flowing', 'car trunk open'." },
+                "papel": { "enum": ["ambiente", "pontual"] },
+                "m": { "type": "string", "pattern": "^M[0-9]{2,3}\\.[0-9]+$", "description": "Momento da cobertura (obrigatório no pontual)." },
+                "forca": { "type": "integer", "minimum": 1, "maximum": 3, "default": 2, "description": "Só no pontual: 1 discreto, 2 normal, 3 em destaque." }
+              }
+            }
           }
         }
       }
@@ -320,6 +353,23 @@
             "null"
           ],
           "description": "Id do bloco onde a música explode."
+        },
+        "ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": {
+            "type": "string"
+          },
+          "description": "Opcional: 2 ou 3 trilhas da biblioteca em sequência (a 1a é a principal). O editor troca no fim de uma parte, no 1 do compasso, casando tom e tempo."
+        },
+        "troca_em": {
+          "type": "array",
+          "maxItems": 2,
+          "items": {
+            "type": "string"
+          },
+          "description": "Opcional: id do bloco em que cada música seguinte assume (sem isso, o filme se divide por igual)."
         }
       }
     },

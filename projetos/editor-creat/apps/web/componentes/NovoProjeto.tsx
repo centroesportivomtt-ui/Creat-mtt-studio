@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TIPOS_VIDEO } from '@/lib/estados';
 
@@ -7,6 +7,9 @@ export default function NovoProjeto() {
   const router = useRouter();
   const [erro, setErro] = useState('');
   const [criando, setCriando] = useState(false);
+  // antes de a página ficar pronta, o toque faria o envio comum do navegador (recarrega e perde o nome digitado)
+  const [pronto, setPronto] = useState(false);
+  useEffect(() => setPronto(true), []);
 
   async function criar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,7 +32,7 @@ export default function NovoProjeto() {
   }
 
   return (
-    <form className="form" onSubmit={criar} noValidate>
+    <form className="form" method="post" onSubmit={criar} noValidate data-pronto={pronto ? 'sim' : undefined}>
       <label className="campo">
         <span className="campo__rotulo">Nome do projeto</span>
         <input className="entrada" name="nome" maxLength={120} placeholder="Ex.: Bastidor Mesa de Negócios" autoComplete="off" required />
@@ -47,7 +50,7 @@ export default function NovoProjeto() {
         <p className="aviso" style={{ marginTop: 8 }}>Na dúvida, deixe o editor decidir: ele lê o material e escolhe.</p>
       </fieldset>
       {erro && <p className="erro" role="alert">{erro}</p>}
-      <button className="botao botao--principal" type="submit" disabled={criando}>{criando ? 'Criando…' : 'Criar e subir material'}</button>
+      <button className="botao botao--principal" type="submit" disabled={criando || !pronto}>{criando ? 'Criando…' : 'Criar e subir material'}</button>
     </form>
   );
 }

@@ -1,7 +1,7 @@
 {
   "name": "Editor creat.MTT",
   "short_name": "Editor",
-  "description": "Sobe o material, manda o pedido, recebe o vídeo pronto em até 30 minutos.",
+  "description": "Sobe o material, escolhe o modo de edição, faz o pedido e recebe o filme pronto em até 30 minutos.",
   "lang": "pt-BR",
   "start_url": "/projetos",
   "scope": "/",

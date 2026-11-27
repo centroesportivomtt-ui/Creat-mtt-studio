@@ -20,6 +20,7 @@ def _dados(con, projeto: str) -> dict:
 
 
 ETAPAS_DE_ARQUIVO = ("ingest", "analise")
+FUNDO = ("entregas", "espelho")         # etapas de fundo (motor/etapas/__init__.FUNDO): fora do encadeamento do filme
 ESTADOS_FINAIS = ("entregue", "erro", "reprovado_qa")
 
 
@@ -42,7 +43,7 @@ def pronto_para_dirigir(con, projeto: str) -> bool:
 def tentar_dirigir(con, projeto: str) -> bool:
     if pronto_para_dirigir(con, projeto):
         banco.enfileirar(con, "catalogo", projeto, prioridade=3)
-        banco.mudar_estado(con, projeto, "dirigindo", "Material lido. Montando o catálogo para a direção.")
+        banco.mudar_estado(con, projeto, "dirigindo", "Material lido. Ouvindo as falas de novo e montando o catálogo.")
         return True
     return False
 
@@ -55,6 +56,8 @@ def depois(con, job: dict, saida: dict | None) -> None:
         banco.enfileirar(con, "analise", projeto, alvo, prioridade=4)
     elif etapa == "analise":
         con.execute("UPDATE arquivos SET estado='analisado' WHERE projeto=? AND id=?", (projeto, alvo))
+        from motor.etapas import espelho
+        espelho.enfileirar(con, projeto, alvo)          # cópia no Cloudflare (desligada sem o "pode" do dono); não atrasa a edição
         tentar_dirigir(con, projeto)
     elif etapa == "catalogo":
         banco.enfileirar(con, "direcao", projeto, entrada=saida, prioridade=2)
@@ -90,16 +93,69 @@ def depois(con, job: dict, saida: dict | None) -> None:
         banco.emitir(con, projeto, "entregue", etapa="entrega", alvo=alvo, dados=saida)
 
 
+MOTIVOS_TROCA = ("a música escolhida saiu da biblioteca", "a música nova não encaixou no filme", "pedido de troca de música inválido")
+
+
+def _volta_da_troca(con, job: dict, msg: str) -> bool:
+    """Troca de música que falhou de vez (onda 3): a versão de origem continua entregue e intacta, então o projeto volta para
+    'entregue' com a frase do motivo, em vez de ir a 'erro' (o dono não perde a tela do filme pronto por uma troca opcional).
+    Só quando a versão de origem ainda existe e está entregue; senão segue o caminho de sempre ('erro')."""
+    import re
+    ent = job.get("entrada")
+    if isinstance(ent, str):
+        try:
+            ent = json.loads(ent or "{}")
+        except ValueError:
+            ent = {}
+    tt = (ent or {}).get("trocar_trilha") if isinstance(ent, dict) else None
+    if not isinstance(tt, dict):
+        return False
+    de = str(tt.get("de") or "")
+    if not re.match(r"^v[0-9]{1,3}\Z", de):
+        return False
+    r = con.execute("SELECT estado FROM versoes WHERE projeto=? AND id=?", (job["projeto"], de)).fetchone()
+    if r is None or r["estado"] != "entregue":
+        return False
+    base = (msg or "").split(":", 1)[0].strip()
+    if base in MOTIVOS_TROCA or re.match(r"^a v[0-9]{1,3} não tem direção guardada\Z", base):
+        motivo = base.replace(f"a {de} ", f"a {de.upper()} ")
+    elif base.startswith("a direção da versão de origem ficou fora do schema"):
+        motivo = f"a direção guardada da {de.upper()} não pôde ser reaproveitada"
+    else:
+        from motor.etapas import passos
+        motivo = passos.causa(msg or "")
+    frase = ("A troca de música não deu certo" + (f" ({motivo})" if motivo else "") +
+             f". A {de.upper()} continua pronta e guardada; se quiser, peça outra música na conversa.")
+    banco.mudar_estado(con, job["projeto"], "entregue", frase, dados={"detalhe": (msg or "")[:300]})
+    return True
+
+
 def falha_definitiva(con, job: dict, mensagem: str) -> None:
     """Job que não vai mais ser tentado. Arquivo: fica de fora (com aviso) e o projeto segue com o resto.
     Qualquer outra etapa: o projeto vai para 'erro' com a mensagem (o relógio do site para e o dono vê o motivo)."""
+    from motor.etapas import passos
     etapa, projeto, alvo = job["etapa"], job["projeto"], job.get("alvo")
     msg = (mensagem or "").strip().splitlines()[-1][:300] if mensagem else "falhou"
+    if etapa in FUNDO:                  # entregas/espelho: o filme e o original estão seguros no editor; o projeto não vai a "erro"
+        from motor.backup import sem_segredo     # o detalhe técnico fica no log do servidor; o dono lê uma frase clara
+        print(f"[{etapa}] {projeto}/{alvo}: {sem_segredo(msg)}", flush=True)
+        o_que = "O envio para a página de entregas" if etapa == "entregas" else "A cópia do material no Cloudflare"
+        banco.emitir(con, projeto, "aviso", alvo=None if alvo in (None, "-") else alvo,
+                     mensagem=f"{o_que} não deu certo agora. O material está seguro no editor.")
+        return
+    nums = passos.numeros_do_job(con, job)
     if etapa in ETAPAS_DE_ARQUIVO and alvo not in (None, "-"):
         con.execute("UPDATE arquivos SET estado='falhou' WHERE projeto=? AND id=?", (projeto, alvo))
         nome = con.execute("SELECT nome FROM arquivos WHERE projeto=? AND id=?", (projeto, alvo)).fetchone()
-        banco.emitir(con, projeto, "aviso", etapa=etapa, alvo=alvo,
-                     mensagem=f"O arquivo {nome['nome'] if nome else alvo} não pôde ser lido e ficou de fora: {msg}")
+        # frase para o dono (o nome do arquivo pode aparecer para ele; ao Nimbus só chega como de_fora) e o técnico recolhido
+        quem = f"O vídeo {nums['n']} ({nome['nome'] if nome else alvo})" if nums.get("n") else f"O arquivo {nome['nome'] if nome else alvo}"
+        from motor import importar                            # aqui dentro: importar já puxa o banco, e a mesa não precisa dele no boot
+        if str(msg).startswith(importar.MSG_SEM_ESPACO):      # o disco encheu: o vídeo não tem defeito, e o dono precisa saber
+            resto = str(msg)[len(importar.MSG_SEM_ESPACO) + 2:]
+            frase = f"Nada foi importado: faltou espaço no disco do editor. {resto[:1].upper()}{resto[1:]}"
+        else:
+            frase = f"{quem} não pôde ser lido e ficou de fora. O resto do material segue."
+        banco.emitir(con, projeto, "aviso", etapa=etapa, alvo=alvo, mensagem=frase, dados={"detalhe": msg})
         r = con.execute("SELECT SUM(estado='analisado') lidos, SUM(estado NOT IN ('analisado','falhou')) pendentes "
                         "FROM arquivos WHERE projeto=?", (projeto,)).fetchone()
         if (r["pendentes"] or 0) == 0 and not (r["lidos"] or 0) and _dados(con, projeto).get("envio_fechado"):
@@ -107,9 +163,12 @@ def falha_definitiva(con, job: dict, mensagem: str) -> None:
         else:
             tentar_dirigir(con, projeto)
         return
+    if etapa == "direcao" and _volta_da_troca(con, job, msg):
+        return
     if etapa in ("montagem", "qa", "entrega") and alvo not in (None, "-"):
         con.execute("UPDATE versoes SET estado='erro' WHERE projeto=? AND id=? AND estado!='entregue'", (projeto, alvo))
-    banco.mudar_estado(con, projeto, "erro", f"A etapa {etapa} falhou de vez: {msg}")
+    banco.mudar_estado(con, projeto, "erro", passos.frase_erro(etapa, n=nums.get("n"), versao=nums.get("versao"), e=msg, vai_tentar=False),
+                       dados={"detalhe": msg})
 
 
 def reconciliar(con) -> int:
@@ -120,10 +179,12 @@ def reconciliar(con) -> int:
     abertos = con.execute(f"SELECT id FROM projetos WHERE estado NOT IN ({','.join('?' * len(ESTADOS_FINAIS))})", ESTADOS_FINAIS).fetchall()
     for p in abertos:
         pid = p["id"]
-        ativo = con.execute("SELECT 1 FROM jobs WHERE projeto=? AND estado IN ('pendente','rodando') LIMIT 1", (pid,)).fetchone()
+        ativo = con.execute("SELECT 1 FROM jobs WHERE projeto=? AND estado IN ('pendente','rodando') AND etapa NOT IN (?,?) LIMIT 1",
+                            (pid, *FUNDO)).fetchone()
         if ativo:
             continue
-        j = con.execute("SELECT * FROM jobs WHERE projeto=? AND estado='feito' ORDER BY atualizado DESC LIMIT 1", (pid,)).fetchone()
+        j = con.execute("SELECT * FROM jobs WHERE projeto=? AND estado='feito' AND etapa NOT IN (?,?) ORDER BY atualizado DESC LIMIT 1",
+                        (pid, *FUNDO)).fetchone()
         if j is None:
             continue
         job = dict(j)

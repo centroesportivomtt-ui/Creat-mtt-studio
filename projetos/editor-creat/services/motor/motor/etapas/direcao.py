@@ -15,16 +15,38 @@ import json
 
 from motor import banco
 from motor.cerebro import orcamento, prompts_texto
-from motor.etapas import ErroDefinitivo, armazem_b, etapa
+from motor.etapas import ErroDefinitivo, armazem_b, etapa, passos
 from motor.etapas.resolvedor import ErroResolucao, resolver
 from motor.memoria.loja import Loja
+
+
+# Modos de edição (estilo): o mesmo material pode virar filmes bem diferentes. O dono escolhe no pedido; "auto" deixa o diretor decidir.
+MODOS = {
+    "criativo": "criativo: ritmo vivo, tipografia cinética, transições motivadas pela fala, humor e surpresa na medida",
+    "ultra": "ultra criação: o máximo de invenção (motion pesado, personagens e mascotes da marca, efeitos de impacto, som casado); interpretar além do pedido",
+    "cinema": "cinema: transições cinematográficas, cor por LUT e por ambiente, trilha com curva emocional, poucos textos e bem compostos",
+    "ia": "com IA: cenas geradas por IA entram junto do material humano para mostrar o que a câmera não pegou; toda cena gerada é rotulada como conceito",
+    "clean": "clean: limpo e neutro, cortes secos e precisos, legenda discreta, sem efeitos chamativos, muito respiro",
+    "serio": "sério: institucional e sóbrio, sem mascote, sem gíria, sem efeito de impacto; marca e dados com clareza",
+    "fala": "fala e apresentação: a fala é o filme; cortes só para tirar pausa e erro, legenda fiel, apoio visual apenas quando esclarece",
+}
+
+
+def _referencias_txt() -> str:
+    """Estudos de caso colados pelo dono (links de Reels etc.), medidos pelo editor: ritmo e gancho de referência."""
+    try:
+        from motor import referencias
+        t = referencias.para_prompt()
+    except Exception:  # noqa: BLE001
+        return ""
+    return ("\n- ESTUDOS DE CASO do dono (inspire-se no ritmo e no gancho, sem copiar):\n" + t) if t else ""
 
 
 def montar_prompt(loja: Loja, catalogo_txt: str, pedido: dict, *, correcao: dict | None = None) -> tuple[str, str, str]:
     """Devolve (sistema, catalogo_txt, pedido_txt). Sistema e catálogo são estáveis (cache); o pedido vem por último."""
     tipo = (pedido or {}).get("tipo_video") or "auto"
     sistema = (prompts_texto("diretor").replace("{regras}", loja.regras_para_prompt(tipo)).replace("{modelos}", loja.modelos_para_prompt())
-               .replace("{casos}", loja.casos_para_prompt(tipo) or "- nenhum ainda"))
+               .replace("{casos}", (loja.casos_para_prompt(tipo) or "- nenhum ainda") + _referencias_txt()))
     p = pedido or {}
     linhas = [f"PEDIDO: {p.get('texto', '').strip()}"]
     for campo, rotulo in (("tipo_video", "tipo"), ("duracao_alvo", "duração alvo (s)"), ("destino", "destino"), ("formato", "formato"),
@@ -32,6 +54,12 @@ def montar_prompt(loja: Loja, catalogo_txt: str, pedido: dict, *, correcao: dict
         v = p.get(campo)
         if v not in (None, "", [], "auto"):
             linhas.append(f"{rotulo}: {', '.join(map(str, v)) if isinstance(v, list) else v}")
+    modo = MODOS.get(p.get("modo") or "auto")
+    if modo:
+        linhas.append(f"modo de edição: {modo}")
+        receita = loja.modo(p.get("modo")) if hasattr(loja, "modo") else None
+        if receita and receita.get("sem_transicoes"):
+            linhas.append("neste modo NÃO use as saídas: " + ", ".join(receita["sem_transicoes"]) + " (use corte_batida, match, fade ou as que restarem)")
     if correcao:
         if correcao.get("reprovacao"):
             linhas.append(f"O DONO REPROVOU a versão {correcao.get('versao_anterior')}: «{correcao['reprovacao']}». Corrija isso na nova direção.")
@@ -63,35 +91,157 @@ def _energias(arm: armazem_b.Armazem, analises: dict) -> dict:
     return en
 
 
+def _movimentos(arm: armazem_b.Armazem, analises: dict) -> dict:
+    """Série de movimento de cada arquivo (motor/movimento.py) para o resolvedor escolher o trecho mais nítido e firme e
+    decidir a estabilização. Opcional: sem a série, o resolvedor segue com o tremor dos quadros-chave."""
+    out = {}
+    for aid, a in analises.items():
+        chave = (a["sinais"].get("movimento") or {}).get("chave")
+        if chave:
+            try:
+                out[aid] = arm.ler_json(chave)
+            except (OSError, ValueError):
+                pass
+    return out
+
+
+def ouvinte(arm: armazem_b.Armazem, analises: dict):
+    """A régua física da conferência para o tom de sala (onda 4, D45), do lado de quem escolhe: `ouvir(arquivo_id, s0, s1)`
+    devolve os trechos [(a, b)] (tempo do arquivo) com voz contínua, com a mesma conta de `qa/tom_sala_sem_voz.conversa_na_origem`
+    (`audio_fala.f0_serie` + `voz_externa.voz_continua`, piso = o menor entre o do arquivo e o do trecho). Arquivo sem áudio
+    levanta (o trecho é recusado: a conferência também não o ouviria)."""
+    import numpy as np
+    from motor import audio_fala
+    from motor.etapas.montagem.comum import ler_audio
+    from motor.etapas.qa import voz_externa as VE
+    memo: dict = {}
+
+    def audio(aid: str):
+        if aid not in memo:
+            chave = ((analises.get(aid) or {}).get("derivados") or {}).get("audio_wav")
+            if not chave:
+                raise FileNotFoundError(f"{aid} sem áudio")
+            x = ler_audio(arm.caminho(chave), sr=VE.SR_FALA)
+            _, _, lv = audio_fala.f0_serie(x, VE.SR_FALA)
+            memo[aid] = (x, float(np.percentile(lv, 10)) if len(lv) else -90.0)
+        return memo[aid]
+
+    def ouvir(aid: str, s0: float, s1: float) -> list[tuple[float, float]]:
+        x, piso = audio(aid)
+        t, f, lv = audio_fala.f0_serie(VE._trecho(x, VE.SR_FALA, s0, s1), VE.SR_FALA)
+        if len(lv):
+            piso = min(piso, float(np.percentile(lv, 10)))
+        return [(round(s0 + a, 2), round(s0 + b, 2)) for a, b in VE.voz_continua(t, f, lv, piso)]
+    return ouvir
+
+
+def marca_existe(arm: armazem_b.Armazem):
+    """`existe(slug)`: a logo do cliente está cadastrada em `marcas/<slug>/logo.png` (frente SITE+API grava; aqui só lê)."""
+    def existe(slug: str) -> bool:
+        try:
+            return bool(slug) and arm.existe(f"marcas/{slug}/logo.png")
+        except Exception:  # noqa: BLE001 - armazenamento que não responde: sem logo, nunca uma chave quebrada
+            return False
+    return existe
+
+
+def _ferramenta_cerebro(cerebro) -> str:
+    nome = getattr(cerebro, "nome", "?")
+    return {"anthropic": "Claude (Messages API, JSON estrito, cache do catálogo)", "fixture": "cérebro fixture (direção gravada, sem chamar a API)",
+            "sessao": "sessão do Claude Code (por arquivo)"}.get(nome, f"cérebro {nome}")
+
+
+def _modelo_do_uso(u: dict) -> str | None:
+    return "fixture" if u.get("cerebro") == "fixture" else u.get("modelo")
+
+
+def _encaixe(ps, edl: dict | None, problemas: list, direcao: dict) -> None:
+    """Números e achado do resolvedor em palavras do dono: duração, blocos, planos e onde a música explode."""
+    if edl is None:
+        ps.anotar(resultado="não encaixou").achou("Não encaixou: " + "; ".join(str(x) for x in problemas[:2]))
+        return
+    blocos = len({pl.get("bloco") for pl in edl.get("planos", []) if pl.get("bloco")}) or len(direcao.get("blocos") or [])
+    ps.anotar(dur=round(float(edl.get("duracao") or 0)), blocos=blocos, planos=len(edl.get("planos") or []), falas=len(edl.get("voz") or []))
+    drop = (direcao.get("trilha") or {}).get("drop_em")
+    t_drop = min((float(pl["t0"]) for pl in edl.get("planos", []) if drop and pl.get("bloco") == drop and isinstance(pl.get("t0"), (int, float))), default=None)
+    txt = f"{float(edl.get('duracao') or 0):.0f} s em {blocos} blocos e {len(edl.get('planos') or [])} planos, {len(edl.get('voz') or [])} trechos de fala"
+    if t_drop is not None:
+        ps.anotar(drop_s=round(t_drop))
+        txt += f"; a música explode aos {int(t_drop) // 60}:{int(t_drop) % 60:02d}"
+    ps.achou(txt)
+
+
+def _resolver_uma(d: dict, *, catalogo: dict, analises, loja: Loja, pedido: dict | None, trilhas: list[dict], energias: dict | None = None,
+                  movimentos: dict | None = None, vocabulario: list | None = None,
+                  ferramenta: str = "resolvedor do editor (encaixe por palavra e batida)", ouvinte=None,
+                  marca_existe=None) -> tuple[dict | None, list]:
+    """Uma passada do resolvedor (direção -> EDL) dentro do passo da mesa. Devolve (edl, []) ou (None, problemas).
+    Usada pela direção de sempre (dirigir_e_resolver) e pela troca de música sem cérebro (onda 3, _trocar_trilha)."""
+    voc = loja.vocabulario() if vocabulario is None else vocabulario
+    modelo = loja.modelo_com_modo(d.get("modelo") or "evento-reel", (pedido or {}).get("modo"))
+    with passos.passo("direcao.resolvedor", ferramenta=ferramenta) as pr:
+        try:
+            r = resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, movimentos=movimentos,
+                         projeto=catalogo["projeto"],
+                         ambiente=(pedido or {}).get("ambiente"), vozes=(pedido or {}).get("vozes"), ouvinte=ouvinte,
+                         marca_existe=marca_existe, cliente=(pedido or {}).get("cliente")), []
+        except ErroResolucao as e:
+            r = None, e.problemas
+        _encaixe(pr, r[0], r[1], d)
+        return r
+
+
 def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str, pedido: dict, analises: dict, trilhas: list[dict],
-                       energias: dict | None = None, correcao: dict | None = None, criticar: bool = True, cfg=None) -> dict:
-    """Núcleo testável sem banco: devolve {direcao, edl, usos, prompt_tokens, direcao_tokens, avisos, critica}."""
+                       energias: dict | None = None, correcao: dict | None = None, criticar: bool = True, cfg=None,
+                       movimentos: dict | None = None, ao_usar=None, ouvinte=None, marca_existe=None) -> dict:
+    """Núcleo testável sem banco: devolve {direcao, edl, usos, prompt_tokens, direcao_tokens, avisos, critica}.
+    Mesa ao vivo: diretor, resolvedor e crítico viram passos (sem job, não emitem nada). `ao_usar(uso, i)` é chamado logo
+    depois de cada chamada ao cérebro, para o gasto entrar no livro (e no passo certo) na hora."""
     import validar
     esquema = validar.esquema("direcao")
     sistema, cat_txt, pedido_txt = montar_prompt(loja, catalogo_txt, pedido, correcao=correcao)
     prompt_tokens = orcamento.estimar_tokens(sistema + cat_txt + pedido_txt)
     usos = []
-    direcao, u = cerebro.dirigir(sistema=sistema, catalogo_txt=cat_txt, pedido_txt=pedido_txt, esquema=esquema,
-                                 maximo_saida=getattr(cfg, "orcamento_saida", 4000))
-    usos.append(dict(u, chamada="diretor"))
+    with passos.passo("direcao.diretor", ferramenta=_ferramenta_cerebro(cerebro)) as ps:
+        direcao, u = cerebro.dirigir(sistema=sistema, catalogo_txt=cat_txt, pedido_txt=pedido_txt, esquema=esquema,
+                                     maximo_saida=getattr(cfg, "orcamento_saida", 4000))
+        usos.append(dict(u, chamada="diretor"))
+        ps.modelo = ps.modelo or _modelo_do_uso(u)
+        if ao_usar:
+            ao_usar(usos[-1], len(usos) - 1)
+        ps.anotar(blocos=len(direcao.get("blocos") or []) if isinstance(direcao, dict) else 0)
+        if isinstance(direcao, dict) and direcao.get("conceito"):
+            ps.achou(f"Conceito: {direcao['conceito']}")
+    if isinstance(direcao, dict) and isinstance(direcao.get("riscos"), list):
+        # 27/11 (V10/V11 dos Bastidores): o diretor mandou riscos a mais e a direção inteira (já paga) morria. Riscos são notas:
+        # ficam os 6 primeiros, cada um com até 200 caracteres. O resto do contrato continua exigido como sempre.
+        direcao["riscos"] = [str(r)[:200] for r in direcao["riscos"]][:6]
     erros = validar.erros("direcao", direcao)
     if erros:
         raise ErroDefinitivo("direção fora do schema: " + "; ".join(erros[:5]))
     voc = loja.vocabulario()
 
     def tentar(d):
-        modelo = loja.modelo(d.get("modelo") or "evento-reel")
-        try:
-            return resolver(d, catalogo, analises, modelo, trilhas, vocabulario=voc, energias=energias, projeto=catalogo["projeto"]), []
-        except ErroResolucao as e:
-            return None, e.problemas
+        return _resolver_uma(d, catalogo=catalogo, analises=analises, loja=loja, pedido=pedido, trilhas=trilhas, energias=energias,
+                             movimentos=movimentos, vocabulario=voc, ouvinte=ouvinte, marca_existe=marca_existe)
 
     edl, problemas = tentar(direcao)
     critica = "não rodou"
     if criticar:
         avisos = problemas or (edl["origem"]["avisos"] if edl else [])
-        revisada, u2 = cerebro.criticar(sistema=sistema, catalogo_txt=cat_txt, direcao=direcao, pedido_txt=pedido_txt, esquema=esquema, problemas=avisos)
-        usos.append(dict(u2, chamada="critico"))
+        with passos.passo("direcao.critico", ferramenta=_ferramenta_cerebro(cerebro), avisos=len(avisos)) as pc:
+            revisada, u2 = cerebro.criticar(sistema=sistema, catalogo_txt=cat_txt, direcao=direcao, pedido_txt=pedido_txt, esquema=esquema, problemas=avisos)
+            usos.append(dict(u2, chamada="critico"))
+            pc.modelo = pc.modelo or _modelo_do_uso(u2)
+            if ao_usar:
+                ao_usar(usos[-1], len(usos) - 1)
+            if revisada != direcao and not validar.erros("direcao", revisada):
+                pc.anotar(resultado="mudou a direção")
+                pc.achou(f"Mexeu na direção ({len(avisos)} ponto{'s' if len(avisos) != 1 else ''} para olhar)")
+            else:
+                pc.anotar(resultado="sem mudança")
+                pc.achou(f"Manteve a direção ({len(avisos)} ponto{'s' if len(avisos) != 1 else ''} conferido{'s' if len(avisos) != 1 else ''})"
+                         if avisos else "Manteve a direção")
         if revisada != direcao and not validar.erros("direcao", revisada):
             edl2, prob2 = tentar(revisada)
             if edl2 is not None:
@@ -107,6 +257,13 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
             "avisos": edl["origem"]["avisos"], "critica": critica}
 
 
+def _dirigir(cerebro, loja, catalogo, cat_txt, pedido, analises, arm, ctx, correcao, ao_usar=None):
+    return dirigir_e_resolver(cerebro=cerebro, loja=loja, catalogo=catalogo, catalogo_txt=cat_txt, pedido=pedido, analises=analises,
+                              trilhas=armazem_b.trilhas(ctx.cfg), energias=_energias(arm, analises), correcao=correcao, cfg=ctx.cfg,
+                              movimentos=_movimentos(arm, analises), ao_usar=ao_usar, ouvinte=ouvinte(arm, analises),
+                              marca_existe=marca_existe(arm))
+
+
 @etapa("direcao")
 def rodar(ctx) -> dict:
     from motor.provedores import provedor
@@ -119,12 +276,14 @@ def rodar(ctx) -> dict:
         raise ErroDefinitivo("catálogo ainda não foi montado") from e
     pedido = arm.pedido(p) or {"versao": "1", "projeto": p, "texto": ""}
     entrada = ctx.job.get("entrada") or {}
-    correcao = {k: entrada[k] for k in ("corrigir_qa", "reprovacao", "versao_anterior") if k in entrada} or None
+    correcao = {k: entrada[k] for k in ("corrigir_qa", "reprovacao", "versao_anterior", "trocar_trilha") if k in entrada} or None
     indice = arm.ler_json(f"projetos/{p}/direcoes.json", padrao={"por_entrada": {}, "ultima": 0})
     chave = _hash(orcamento.estimar_tokens(cat_txt), armazem_b_hash(cat_txt), pedido, correcao)
     feito = indice["por_entrada"].get(chave)
     if feito and arm.existe(f"saidas/{p}/{feito}/edl.json"):
-        return {"versao": feito, "reaproveitada": True, "cerebro": ctx.cfg.cerebro}
+        return {"versao": feito, "reaproveitada": True, "cerebro": "sem_cerebro" if (correcao or {}).get("trocar_trilha") else ctx.cfg.cerebro}
+    if correcao and correcao.get("trocar_trilha"):          # onda 3 (D25): troca só a música, sem chamar o cérebro
+        return _trocar_trilha(ctx, arm, indice, chave, correcao, catalogo=catalogo, pedido=pedido)
     if correcao and correcao.get("versao_anterior"):
         n_ant = int(str(correcao["versao_anterior"]).lstrip("v") or 0)
         try:
@@ -142,16 +301,26 @@ def rodar(ctx) -> dict:
             analises[a["arquivo"]["id"]] = a
     ctx.progresso(0.1, "Direção: o diretor está lendo o catálogo.")
     cerebro = provedor("cerebro", ctx.cfg)
-    r = dirigir_e_resolver(cerebro=cerebro, loja=loja, catalogo=catalogo, catalogo_txt=cat_txt, pedido=pedido, analises=analises,
-                           trilhas=armazem_b.trilhas(ctx.cfg), energias=_energias(arm, analises), correcao=correcao, cfg=ctx.cfg)
+    from motor.cerebro.sessao import AguardandoDiretor
+    from motor.cerebro import gastos
     n = int(indice.get("ultima", 0)) + 1
     v = f"v{n}"
+
+    def ao_usar(u, i):   # cada chamada vai ao livro logo depois de feita (mesma linha e mesma ref de antes): o custo aparece no passo
+        gastos.registrar(ctx.cfg, "critico" if u.get("chamada") == "critico" else "direcao", u, projeto=p, versao=v, ref=f"projetos/{p}/uso_{n}.json#{i}")
+    try:
+        r = _dirigir(cerebro, loja, catalogo, cat_txt, pedido, analises, arm, ctx, correcao, ao_usar=ao_usar)
+    except AguardandoDiretor as e:
+        raise ErroDefinitivo(str(e)) from e
     r["edl"]["origem"].update({"versao": v, "cerebro": cerebro.nome, "critica": r["critica"]})
     arm.gravar_json(f"projetos/{p}/direcao_{n}.json", r["direcao"])
+    passos.emitir_decisao(v, r["direcao"], r["critica"])
     total = orcamento.somar(r["usos"])
     arm.gravar_json(f"projetos/{p}/uso_{n}.json", {"versao": v, "chamadas": r["usos"], "total": total, "prompt_tokens_estimados": r["prompt_tokens"],
                                                     "direcao_tokens_estimados": r["direcao_tokens"], "checagens_edl": loja.avaliar_edl(r["edl"])})
     arm.gravar_json(f"saidas/{p}/{v}/edl.json", r["edl"])
+    passos.anotar(versao=v, dur=round(float(r["edl"]["duracao"])), falas=len(r["edl"]["voz"]))
+    passos.achou(f"{v.upper()}: {r['edl']['duracao']:.0f} s, {len(r['edl']['voz'])} trechos de fala; crítica {r['critica']}")
     indice["por_entrada"][chave] = v
     indice["ultima"] = n
     arm.gravar_json(f"projetos/{p}/direcoes.json", indice)
@@ -160,6 +329,68 @@ def rodar(ctx) -> dict:
                  mensagem=f"Direção pronta ({r['edl']['duracao']:.0f} s, {len(r['edl']['voz'])} trechos de fala). Custo: US$ {total['custo_usd']:.2f}.",
                  dados={"tokens": total, "avisos": r["avisos"][:5]})
     return {"versao": v, "duracao": r["edl"]["duracao"], "tokens_saida": total["saida"], "custo_usd": total["custo_usd"], "cerebro": cerebro.nome}
+
+
+def _trocar_trilha(ctx, arm, indice: dict, chave: str, correcao: dict, *, catalogo: dict, pedido: dict) -> dict:
+    """Troca de música sem cérebro (onda 3, seção 5): copia a direção da versão de origem, troca trilha.id e roda SÓ o
+    resolvedor. Mesmos blocos e falas; os cortes andam até uma batida (a grade é da música) e a duração pode mudar. A versão
+    de origem não é tocada (continua entregue e aprovável). Custo da direção: US$ 0."""
+    import copy
+    import re
+    import validar
+    p = ctx.projeto
+    tt = correcao.get("trocar_trilha") or {}
+    de, tid = str(tt.get("de") or ""), str(tt.get("trilha") or "")
+    m = re.fullmatch(r"v([0-9]{1,3})", de)
+    if not m or not re.fullmatch(r"[a-z0-9_-]{2,41}", tid):
+        raise ErroDefinitivo("pedido de troca de música inválido")
+    try:
+        d_ant = arm.ler_json(f"projetos/{p}/direcao_{int(m.group(1))}.json")
+    except FileNotFoundError as e:
+        raise ErroDefinitivo(f"a {de} não tem direção guardada") from e
+    d = copy.deepcopy(d_ant)
+    tr = d.setdefault("trilha", {"clima": "energia"})
+    tr["id"] = tid
+    tr.pop("ids", None)
+    tr.pop("troca_em", None)
+    erros = validar.erros("direcao", d)
+    if erros:
+        raise ErroDefinitivo("a direção da versão de origem ficou fora do schema: " + "; ".join(erros[:3]))
+    trilhas = armazem_b.trilhas(ctx.cfg)
+    if not any(t.get("id") == tid for t in trilhas):
+        raise ErroDefinitivo("a música escolhida saiu da biblioteca")
+    analises = {}
+    for k in arm.listar(f"derivados/{p}/"):
+        if k.endswith("/analise.json"):
+            a = arm.ler_json(k)
+            analises[a["arquivo"]["id"]] = a
+    ctx.progresso(0.2, f"Trocando a música da {de}, sem nova direção.")
+    loja = Loja()
+    edl, problemas = _resolver_uma(d, catalogo=catalogo, analises=analises, loja=loja, pedido=pedido, trilhas=trilhas,
+                                   energias=_energias(arm, analises), movimentos=_movimentos(arm, analises),
+                                   ferramenta="resolvedor do editor (troca de música, sem nova direção)",
+                                   ouvinte=ouvinte(arm, analises), marca_existe=marca_existe(arm))
+    if edl is None:
+        raise ErroDefinitivo("a música nova não encaixou no filme: " + "; ".join(str(x) for x in problemas[:3]))
+    validar.validar("edl", edl)
+    n = int(indice.get("ultima", 0)) + 1
+    v = f"v{n}"
+    edl["origem"].update({"versao": v, "cerebro": "sem_cerebro", "critica": "troca de música, sem crítica", "trocou_trilha_de": de})
+    arm.gravar_json(f"projetos/{p}/direcao_{n}.json", d)
+    passos.emitir_decisao(v, d, f"troca de música da {de}, sem nova direção")
+    total = {"entrada": 0, "saida": 0, "custo_usd": 0.0}
+    arm.gravar_json(f"projetos/{p}/uso_{n}.json", {"versao": v, "chamadas": [], "total": total, "cerebro": "sem_cerebro",
+                                                    "troca_de_trilha": {"de": de, "trilha": tid}})
+    arm.gravar_json(f"saidas/{p}/{v}/edl.json", edl)
+    passos.anotar(versao=v, dur=round(float(edl["duracao"])), falas=len(edl["voz"]))
+    passos.achou(f"{v.upper()}: música trocada, {edl['duracao']:.0f} s, {len(edl['voz'])} trechos de fala; sem nova direção")
+    indice.setdefault("por_entrada", {})[chave] = v
+    indice["ultima"] = n
+    arm.gravar_json(f"projetos/{p}/direcoes.json", indice)
+    ctx.con.execute("INSERT OR REPLACE INTO versoes (id, projeto, estado, criado) VALUES (?,?,?,?)", (v, p, "montando", banco.agora_iso()))
+    banco.emitir(ctx.con, p, "etapa_progresso", etapa="direcao", alvo=v, progresso=1.0,
+                 mensagem=f"Música trocada ({v}, {edl['duracao']:.0f} s). Custo da direção: US$ 0,00.", dados={"tokens": total})
+    return {"versao": v, "duracao": edl["duracao"], "tokens_saida": 0, "custo_usd": 0.0, "cerebro": "sem_cerebro"}
 
 
 def _dirigir_com_edl_fixo(ctx, arm, indice, chave, correcao) -> dict:
