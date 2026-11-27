@@ -212,6 +212,10 @@ def dirigir_e_resolver(*, cerebro, loja: Loja, catalogo: dict, catalogo_txt: str
         ps.anotar(blocos=len(direcao.get("blocos") or []) if isinstance(direcao, dict) else 0)
         if isinstance(direcao, dict) and direcao.get("conceito"):
             ps.achou(f"Conceito: {direcao['conceito']}")
+    if isinstance(direcao, dict) and isinstance(direcao.get("riscos"), list):
+        # 27/11 (V10/V11 dos Bastidores): o diretor mandou riscos a mais e a direção inteira (já paga) morria. Riscos são notas:
+        # ficam os 6 primeiros, cada um com até 200 caracteres. O resto do contrato continua exigido como sempre.
+        direcao["riscos"] = [str(r)[:200] for r in direcao["riscos"]][:6]
     erros = validar.erros("direcao", direcao)
     if erros:
         raise ErroDefinitivo("direção fora do schema: " + "; ".join(erros[:5]))
