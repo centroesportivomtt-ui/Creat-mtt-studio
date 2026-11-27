@@ -281,18 +281,35 @@ async function principal() {
 
   // ---------- 3. status ao vivo até "entregue" e player ----------
   const vistos = [];
+  let corpoPedido = Promise.resolve(null);
   await medir('status_ate_entregue_s', async () => {
     await page.waitForFunction(() => document.querySelector('.arquivo span:last-child')?.textContent?.includes('lido'), null, { timeout: 30000 });
     await page.click('[data-teste=fechar-envio]');
     await page.waitForSelector('[data-teste=estado][data-estado=lendo]', { timeout: 15000 });
     await page.fill('textarea[name=texto]', 'Reels de 45 s do bastidor: abre com a fala mais forte, fecha chamando para o @creat.mtt.');
-    await page.selectOption('select[name=duracao]', '45');
-    const nPerguntas = await page.locator('[data-teste=perguntas] fieldset').count();
-    ok('o editor pergunta o que falta (botões de resposta)', nPerguntas >= 4, `${nPerguntas} perguntas`);
+    await page.check('input[name=duracao][value="45"]');
+    const nPerguntas = await page.locator('[data-teste=perguntas] [data-teste=pergunta]').count();
+    ok('o editor pergunta o que falta (uma linha por pergunta, com a resposta atual)', nPerguntas >= 4, `${nPerguntas} perguntas`);
     await page.check('input[name=modo][value=ultra]');
-    const nUltra = await page.locator('[data-teste=perguntas] fieldset').count();
+    const nUltra = await page.locator('[data-teste=perguntas] [data-teste=pergunta]').count();
     ok('as perguntas mudam com o modo (ultra pergunta do mascote e da IA)', nUltra > nPerguntas, `${nPerguntas} -> ${nUltra}`);
-    await page.check('input[name=q_proibido][value="palavrão"]');
+    // onda 3: "trocar" abre a gaveta da pergunta; a escolha volta à linha e ao formulário (campo escondido q_proibido)
+    await page.click('[data-teste=pergunta][data-id=proibido]');
+    await page.check('[data-teste=gaveta-pergunta] input[value="palavrão"]');
+    await page.click('[data-teste=pergunta-pronto]');
+    await page.waitForSelector('[data-teste=gaveta-pergunta]', { state: 'detached', timeout: 5000 }).catch(() => {});
+    await page.click('[data-teste=pergunta][data-id=vozes]');
+    await page.click('[data-teste=gaveta-pergunta] label:has(input[value=varias])');
+    const fechouSozinha = await page.waitForSelector('[data-teste=gaveta-pergunta]', { state: 'detached', timeout: 5000 }).then(() => true, () => false);
+    const linhas = await page.evaluate(() => ({
+      proibido: document.querySelector('[data-teste=pergunta][data-id=proibido] .pergunta__resposta')?.textContent ?? '',
+      vozes: document.querySelector('[data-teste=pergunta][data-id=vozes] .pergunta__resposta')?.textContent ?? '',
+      escondidos: [...document.querySelectorAll('#form-pedido input[type=hidden][name=q_proibido], #form-pedido input[type=hidden][name=q_vozes]')].map((i) => i.value),
+      duracao: document.querySelector('#form-pedido input[name=duracao]:checked')?.value ?? null,
+    }));
+    ok('onda 3: pergunta em resumo; a gaveta troca a resposta (uma escolha fecha sozinha) e a duração vira botões', /Palavrão/.test(linhas.proibido) && /Várias pessoas/.test(linhas.vozes)
+      && linhas.escondidos.includes('palavrão') && linhas.escondidos.includes('varias') && linhas.duracao === '45' && fechouSozinha, JSON.stringify({ ...linhas, fechouSozinha }));
+    corpoPedido = page.waitForRequest((r) => r.method() === 'POST' && /\/pedido$/.test(r.url()), { timeout: 10000 }).then((r) => r.postData()).catch(() => null);
     // o estado antes do clique entra na lista: com a máquina carregada, a primeira leitura do laço pode já pegar 'dirigindo'
     const antesDoPedido = await page.getAttribute('[data-teste=estado]', 'data-estado');
     if (antesDoPedido) vistos.push(antesDoPedido);
@@ -308,6 +325,19 @@ async function principal() {
   const ordem = ['lendo', 'dirigindo', 'montando', 'conferindo', 'entregue'];
   const seq = vistos.filter((e) => ordem.includes(e));
   ok('status ao vivo: lendo → dirigindo → montando → conferindo → entregue', ordem.every((e, i) => seq[i] === e), `visto: ${vistos.join(' → ')}`);
+  {
+    const corpo = JSON.parse((await corpoPedido) ?? '{}');
+    ok('onda 3: o pedido leva as respostas das gavetas e a duração dos botões', corpo.duracao_alvo === 45 && (corpo.proibido ?? []).includes('palavrão') && corpo.vozes === 'varias' && corpo.modo === 'ultra',
+      JSON.stringify({ duracao: corpo.duracao_alvo, proibido: corpo.proibido, vozes: corpo.vozes, modo: corpo.modo }));
+    const tela = await page.evaluate(() => ({
+      segs: [...document.querySelectorAll('[data-teste=faixa] .faixa__seg')].map((x) => x.dataset.situacao),
+      material: document.querySelector('.bloco-material details.recolhido')?.open ?? null,
+      resumoMaterial: document.querySelector('.bloco-material .recolhido__resumo')?.textContent ?? '',
+      pedido: document.querySelector('.bloco-pedido .recolhido__resumo')?.textContent ?? '',
+    }));
+    ok('onda 3: faixa de 6 segmentos toda feita na entrega; Material e Pedido recolhidos em uma linha', tela.segs.length === 6 && tela.segs.every((x) => x === 'feito')
+      && tela.material === false && /^2 vídeos/.test(tela.resumoMaterial) && /Reels de 45 s/.test(tela.pedido), JSON.stringify(tela));
+  }
   const parou = await page.waitForSelector('.relogio__tc[data-correndo=false]', { timeout: 5000 }).then(() => true, () => false);
   const relogio = await page.textContent('.relogio__tc');
   ok('relógio dos 30 minutos parou na entrega', parou && /^\d{2}:\d{2}$/.test(relogio ?? ''), `marcou ${relogio}`);

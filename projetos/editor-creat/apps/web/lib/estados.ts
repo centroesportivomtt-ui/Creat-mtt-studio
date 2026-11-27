@@ -132,3 +132,45 @@ export type Evento = {
   id: number; projeto: string; ts: string; tipo: string; etapa: string | null; alvo: string | null;
   progresso: number | null; estado: string | null; mensagem: string | null; dados: Record<string, unknown> | null;
 };
+
+// ---------- onda 3: a mensagem do motor na língua do dono (sem mexer no motor) ----------
+// "Envio fechado (2 arquivo(s)). Falta o pedido." com o pedido já feito vira "Envio fechado (2 vídeos).";
+// "Arquivo lido: 48 quadros-chave, 12 s" vira "Vídeo lido: 12 s". Tudo o que não casa passa igual.
+const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
+const TRADUCOES: [RegExp, string | ((...m: string[]) => string)][] = [
+  [/(\d+)\s+arquivo\(s\)/g, (_t, n) => plural(Number(n), 'vídeo', 'vídeos')],
+  [/(\d+)\s+chamada\(s\)\s+paga\(s\)/g, (_t, n) => plural(Number(n), 'chamada paga', 'chamadas pagas')],
+  [/Arquivo lido: \d+ quadros-chave, ([\d.,]+) s/g, (_t, s) => `Vídeo lido: ${s} s`],
+  [/quadros-chave e áudio prontos/g, 'chegou e está pronto para ler'],
+  [/Extraindo quadros-chave e áudio \(sem decodificar o 4K inteiro\)/g, 'Preparando o vídeo para ler'],
+  [/(\d+) ponto\(s\)/g, (_t, n) => plural(Number(n), 'ponto', 'pontos')],
+  [/(\d+) plano\(s\)/g, (_t, n) => plural(Number(n), 'plano', 'planos')],
+  [/(\d+) fonte\(s\)/g, (_t, n) => plural(Number(n), 'vídeo', 'vídeos')],
+  [/\bQA\b/g, 'conferência'],
+];
+export function traduzirMensagem(msg: string | null | undefined, ctx: { temPedido?: boolean } = {}): string {
+  if (!msg) return '';
+  let t = msg;
+  for (const [re, por] of TRADUCOES) t = t.replace(re, por as never);
+  // o pedido já chegou: "Falta o pedido." some (o motor escreveu antes do pedido)
+  if (ctx.temPedido) t = t.replace(/Falta terminar a leitura e o pedido\.?/g, 'Falta terminar a leitura.').replace(/\s*Falta o pedido\.?/g, '');
+  return t.trim();
+}
+
+// ---------- onda 3: selo da lista de projetos (cor + ícone + texto, nunca só cor) ----------
+export type Selo = { tipo: 'espera' | 'editando' | 'pronto' | 'problema' | 'aberto'; texto: string };
+export function seloDoProjeto(p: Pick<ResumoProjeto, 'estado' | 'espera'> & { arquivos?: number }): Selo {
+  if (p.espera) return { tipo: 'espera', texto: p.espera === 'confirmacao' ? 'Esperando você · um toque' : 'Esperando você · uma pergunta' };
+  if (p.estado === 'erro' || p.estado === 'reprovado_qa') return { tipo: 'problema', texto: p.estado === 'erro' ? 'Precisa de você · parou' : 'Precisa de você · conferência' };
+  if (p.estado === 'entregue') return { tipo: 'pronto', texto: 'Pronto para ver' };
+  if (['lendo', 'dirigindo', 'montando', 'conferindo'].includes(p.estado)) return { tipo: 'editando', texto: `Editando · ${ROTULO_ESTADO[p.estado].toLowerCase()}` };
+  return { tipo: 'aberto', texto: p.arquivos ? 'Material chegou · falta o pedido' : 'Aguardando material' };
+}
+/** "AN" de "Aniversário do mercado": a capa do cartão quando o motor ainda não manda o quadro do filme */
+export function monograma(nome: string): string {
+  // só letras e números contam (emoji e pontuação ficam de fora; Array.from não parte caractere fora do BMP)
+  const limpas = nome.normalize('NFC').split(/\s+/).map((w) => Array.from(w).filter((c) => /[\p{L}\p{N}]/u.test(c)).join('')).filter(Boolean);
+  const palavras = limpas.filter((w) => Array.from(w).length > 2 || /^\d+$/.test(w));
+  const base = palavras.length ? palavras : limpas;
+  return (base.slice(0, 2).map((w) => Array.from(w)[0]).join('') || '·').toUpperCase();
+}

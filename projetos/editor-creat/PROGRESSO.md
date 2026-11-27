@@ -698,3 +698,26 @@ O dono reviu as peças e apontou três defeitos. Os três viraram checagem do QA
   - aceite **147/147**.
 - **Limite conhecido:** quando o braço encosta no rosto, a pele vira um componente só e conta como rosto; nesses quadros a letra fica por cima do braço. Caminho medido na revisão: detector de rosto (YuNet) para separar.
 - **Próximo, pedido do dono via sessão principal (27/11):** publicar o redesenho visual "Mesa de corte" inteiro, ondas 2 a 5 de `docs/design-editor-25-11.md`.
+
+## 27/11: redesenho "Mesa de corte", onda 2 no ar (gavetas e avisos) · 3e9ee32
+- **O que entrou:** gaveta (Base UI Drawer 1.9.0) e avisos (sonner 2.0.8), as duas com versão fixa e lockfile conferido com o pnpm 9.15.0 da produção.
+  - "Reprovar com motivo" virou **Pedir ajuste** numa gaveta: texto, "Só neste vídeo" ou "Vale como regra da casa" (campo `vira_regra`, que o motor já aceitava; o padrão continua regra, como antes), a linha de consequência e o erro dentro da gaveta.
+  - A versão ficou com uma linha só ("Passou em 8 de 9 conferências; uma pede seu olho"). Baixar, conferência em detalhes, cor e link do cliente moram em **Mais da Vn**.
+  - **Mandar para o cliente** abre a gaveta do link: WhatsApp principal, Copiar secundário com aviso, Desligar só em texto de perigo. O link novo não some ao fechar a gaveta.
+  - "Mais" da navegação virou gaveta (conversa, Gastos, Clientes e marcas, Trilhas e efeitos, Sistema e backup, Sair por último). O link só navega depois de a gaveta fechar (a trava de rolagem desfazia o salto para a âncora).
+  - Avisos: "Pedido recebido. A edição começou.", "V1 aprovada. Corta!", "Link copiado", "Ajuste pedido…".
+- **Decisão pelo documento:** o padrão do ajuste ficou "vale como regra" (o comportamento de sempre do motor); só o dono muda isso.
+- **Testes:** pytest 903 ok; tipos ok; aceite 149/149 (antes 146): gaveta de ajuste abre e cancela sem pedir nada, avisos de aprovar e copiar, gaveta do cliente e Mais da versão.
+- **Revisão independente:** 8 achados (link sumia ao fechar a gaveta, erro do ajuste escondido atrás da gaveta, salto de âncora desfeito, troca de gaveta sem cancelar, foco no texto, detalhe da conferência sumido, tabela do estudo). Todos corrigidos antes do push, menos o aviso que nasce fora da gaveta aberta (leitor de tela), que ficou anotado.
+- **No ar:** `/api/saude` com `versao: 3e9ee32`; /entrar em celular claro e escuro e desktop sem erro de console nem rolagem lateral; o código dos avisos (`aviso-toast`, `--avisos-baixo`) servido pela produção.
+- **Limite:** as telas logadas não foram vistas no ar (esta sessão não tem a senha nem a sessão do dono); os prints delas são do mesmo código, no servidor local com o motor falso.
+
+## 27/11: redesenho "Mesa de corte", onda 3 (projeto por estado e pedido em resumo)
+- **Pedido:** a duração virou botões logo abaixo do texto; cada pergunta virou uma linha ("Quem fala no vídeo? · O editor ouve e decide · trocar") que abre a gaveta da pergunta. Escolha de um fecha sozinha; a resposta volta ao formulário com o mesmo nome de campo, então o pedido que chega ao motor é o mesmo de antes.
+- **Ilha ao vivo:** a régua dos 30 minutos deu lugar à faixa de 6 segmentos (feito em tinta, atual em âmbar com brilho, parou em coral) e ao passo atual grande, com a mensagem do motor traduzida; a trilha inteira fica em "Ver todas as etapas". Com erro, a faixa marca a etapa do próprio evento de erro.
+- **Material e Pedido** viram uma linha de resumo quando a edição começa ("Material · 2 vídeos, 393 MB · ver"); abre sozinho quando um vídeo fica de fora. O pedido continua à vista enquanto o projeto ainda lê o material.
+- **Mensagens do motor na língua do dono** (`lib/estados.ts`, sem mexer no motor): "arquivo(s)" vira "vídeos", "Falta o pedido" some quando o pedido já chegou, "Falta terminar a leitura e o pedido" vira "Falta terminar a leitura".
+- **Lista de projetos:** capa 9:16 com monograma (o motor ainda não manda o quadro), selo com ícone e texto ("Esperando você", "Editando · montando", "Pronto para ver", "Precisa de você", "Material chegou · falta o pedido") e resumo útil no topo ("2 esperando você · 1 editando"). Lista vazia com a claquete e os 3 passos.
+- **Ícones:** lucide-react 1.79.0 (versão fixa) nos selos, no ✓ das etapas e no "ver todas".
+- **Testes:** pytest 903 ok; tipos ok; aceite 152/152: perguntas em gaveta, duração em botões, corpo do pedido com as respostas, faixa toda feita na entrega e cartões recolhidos.
+- **Revisão independente:** 8 achados; corrigidos os 4 importantes (cartão remontava e perdia as escolhas do pedido, faixa no lugar errado depois de uma entrega antiga, pedido escondido durante a leitura, frase do motor que perdia "falta terminar a leitura") e 4 menores (escolha já marcada não fechava a gaveta, selo da lista, monograma com emoji, CSS morto).

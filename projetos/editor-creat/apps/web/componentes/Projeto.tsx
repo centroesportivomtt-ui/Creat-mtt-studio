@@ -3,6 +3,7 @@
 // A tela segue o estado do projeto (aberto: material; pedido: o pedido; editando: o relógio; entregue: o filme) e a
 // barra de comando, fixa no polegar, mostra sempre o próximo passo. Os data-teste do aceite ficam num elemento só cada.
 import Cor from '@/componentes/Cor';
+import { Check, ChevronDown } from 'lucide-react';
 import LinkCliente from '@/componentes/LinkCliente';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import ApagarProjeto from './ApagarProjeto';
@@ -21,7 +22,7 @@ import { irEntrar } from '@/lib/pendentes';
 import * as Acoes from '@/lib/acoes';
 import {
   bytesLegiveis, classeEstado, ESTADOS, ETAPA_DO_ESTADO, EXPLICA_ESTADO, ROTULO_ESTADO, rotuloTipo,
-  type Evento, type Projeto as TProjeto, type Versao, MODOS, rotuloModo, perguntasDoModo,
+  type Evento, type Projeto as TProjeto, type Versao, MODOS, rotuloModo, perguntasDoModo, PERGUNTAS, traduzirMensagem,
   type ClientesEntregas, type Entregas, type ResumoNuvem, nomeCliente } from '@/lib/estados';
 
 type EstadoImportar = { indo: boolean; pendente: boolean };
@@ -385,18 +386,44 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   };
   // a mesa ao vivo (onda 2) substitui o diário de 12 linhas: tudo o que a mesa fez, com quem, tempo, custo e achado
   const temMesa = conversa.montado.itens.some((it) => it.k === 'mesa');
+  // onda 3: a faixa de 6 segmentos no topo do palco + o passo atual grande; a trilha inteira fica em "ver todas"
+  const parado = ['erro', 'reprovado_qa'].includes(p.estado);
+  // com erro, o segmento que parou é o último que teve notícia (o estado "erro" não é uma etapa da faixa)
+  // (o erro conta pela etapa do próprio evento de erro; a história inteira tem rodadas antigas, até entregas)
+  const ultimoErro = parado ? [...eventos].reverse().find((e) => e.tipo === 'etapa_erro' && e.etapa) : undefined;
+  const indiceErro = ultimoErro?.etapa ? ESTADOS.indexOf(ETAPA_DO_ESTADO[ultimoErro.etapa] as (typeof ESTADOS)[number]) : -1;
+  const indiceFaixa = !parado ? indiceAtual : p.estado === 'reprovado_qa' ? ESTADOS.indexOf('conferindo')
+    : indiceErro >= 0 ? indiceErro : ESTADOS.reduce((m, est, i) => (i < ESTADOS.length - 1 && (ultimaPorEstado[est] || marcas[est]) ? i : m), 0);
+  const situacaoDe = (i: number) => (p.estado === 'entregue' || i < indiceFaixa ? 'feito' : i === indiceFaixa ? (parado ? 'parou' : 'agora') : 'falta');
+  const msgDe = (est: string) => traduzirMensagem(ultimaPorEstado[est]?.mensagem, { temPedido: Boolean(p.dados?.pedido?.texto) });
+  const estAtual = ESTADOS[indiceFaixa];
+  const ultimoAtual = ultimaPorEstado[estAtual];
+  const progressoAtual = !parado && ultimoAtual?.tipo === 'etapa_progresso' ? ultimoAtual.progresso ?? 0 : null;
+  const faixa = (
+    <div className="faixa" role="img" data-teste="faixa"
+      aria-label={p.estado === 'entregue' ? 'As 6 etapas estão feitas' : `Etapa ${indiceFaixa + 1} de ${ESTADOS.length}: ${ROTULO_ESTADO[estAtual]}${parado ? ', parou' : ''}`}>
+      {ESTADOS.map((est, i) => <span key={est} className="faixa__seg" data-situacao={situacaoDe(i)} />)}
+    </div>
+  );
+  const passoAtual = p.estado === 'entregue' ? null : (
+    <div className="passo-atual" data-teste="passo-atual" data-situacao={situacaoDe(indiceFaixa)}>
+      <p className="passo-atual__nome">{parado ? (p.estado === 'erro' ? `Parou em ${ROTULO_ESTADO[estAtual].toLowerCase()}` : 'A conferência segurou') : ROTULO_ESTADO[estAtual]}</p>
+      <p className="passo-atual__msg">{msgDe(estAtual) || EXPLICA_ESTADO[estAtual]}</p>
+      {progressoAtual !== null && <div className="barra"><i style={{ transform: `scaleX(${progressoAtual})` }} /></div>}
+    </div>
+  );
   const trilha = (
-    <ol className="trilha" style={{ marginTop: 20 }}>
+    <ol className="trilha" style={{ marginTop: 12 }}>
       {ESTADOS.map((est, i) => {
-        const situacao = p.estado === 'entregue' || i < indiceAtual ? 'feito' : i === indiceAtual ? 'agora' : 'falta';
+        const situacao = situacaoDe(i);
         const ultimo = ultimaPorEstado[est];
         const progresso = situacao === 'agora' && ultimo?.tipo === 'etapa_progresso' ? ultimo.progresso ?? 0 : null;
         return (
           <li className="passo" key={est} data-situacao={situacao} data-passo={est}>
-            <span className="passo__ponto">{situacao === 'feito' ? '✓' : i + 1}</span>
+            <span className="passo__ponto">{situacao === 'feito' ? <Check size={16} strokeWidth={2.5} aria-label="feito" /> : i + 1}</span>
             <div style={{ minWidth: 0 }}>
               <p className="passo__nome">{ROTULO_ESTADO[est]}</p>
-              <p className="passo__msg">{situacao !== 'falta' && ultimo?.mensagem ? ultimo.mensagem : EXPLICA_ESTADO[est]}</p>
+              <p className="passo__msg">{situacao !== 'falta' && msgDe(est) ? msgDe(est) : EXPLICA_ESTADO[est]}</p>
               {progresso !== null && <div className="barra"><i style={{ transform: `scaleX(${progresso})` }} /></div>}
             </div>
           </li>
@@ -567,9 +594,29 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   // ---------- blocos, já na ordem da fase ----------
   // A ordem do DOM é a ordem que o olho vê (Tab e VoiceOver seguem a tela). Os blocos têm chave: mudar de fase move o
   // cartão sem remontar (um envio em andamento não se perde).
+  // onda 3: depois que a edição começa, Material e Pedido viram uma linha de resumo ("Material · 4 vídeos, 2,3 GB · ver").
+  // O conteúdo continua no DOM (dentro do <details>); abre sozinho quando um vídeo ficou de fora.
+  const comecou = !aberto || (fechado && temPedido);
+  const totalBytes = p.arquivos.reduce((t, a) => t + (a.bytes > 1 ? a.bytes : 0), 0);
+  const resumoMaterial = `${p.arquivos.length} vídeo${p.arquivos.length === 1 ? '' : 's'}${totalBytes ? `, ${bytesLegiveis(totalBytes)}` : ''}`;
+  // o mesmo <details> antes e depois (só muda o "aberto"): trocar de fase não remonta o cartão, nada do pedido se perde
+  const recolher = (id: string, titulo: string, resumo: string, abrir: boolean, corpo: React.ReactNode) => {
+    const fixo = !comecou || abrir;   // antes de começar (ou quando pede atenção) o cartão fica aberto
+    return (
+      <details className="recolhido" data-fixo={!comecou} open={fixo || undefined}>
+        <summary className="recolhido__linha" tabIndex={comecou ? undefined : -1}
+          onClick={(e) => { if (!comecou) e.preventDefault(); }}>
+          <h2 className="cartao__titulo" id={id}>{titulo}</h2>
+          {comecou && <span className="recolhido__resumo">{resumo}</span>}
+          {comecou && <span className="recolhido__ver" aria-hidden="true">ver</span>}
+        </summary>
+        <div className="recolhido__corpo">{corpo}</div>
+      </details>
+    );
+  };
   const blocoMaterial = (
-    <section key="material" className="cartao bloco-material" aria-labelledby="t-material">
-      <h2 className="cartao__titulo" id="t-material">Material</h2>
+    <section key="material" className={`cartao bloco-material${comecou ? ' cartao--resumo' : ''}`} aria-labelledby="t-material">
+      {recolher('t-material', 'Material', resumoMaterial, temFora, <>
       {aberto && !fechado ? (
         <>
           <Envio projeto={p.id} parteMB={parteMB} aberto={aberto} aoConcluir={recarregar} aoMudarAtivos={setEnviando} aoMudarInterrompidos={setInterrompidos} />
@@ -619,17 +666,20 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
           </span>
         </div>
       )}
+      </>)}
     </section>
   );
   const notas = lerNotas(p.dados?.notas);
   const blocoNotas = notas.length ? <Notas key="notas" notas={notas} /> : null;
   const blocoPedido = (
-    <section key="pedido" className="cartao bloco-pedido" aria-labelledby="t-pedido">
-      <h2 className="cartao__titulo" id="t-pedido">Pedido</h2>
+    <section key="pedido" className={`cartao bloco-pedido${comecou ? ' cartao--resumo' : ''}`} aria-labelledby="t-pedido">
+      {/* aberto (ainda lendo): o pedido continua à vista para trocar; recolhe quando a edição começa de fato */}
+      {recolher('t-pedido', 'Pedido', p.dados?.pedido?.texto ? `“${p.dados.pedido.texto}”` : 'ainda sem pedido', aberto, <>
       <Pedido pid={p.id} atual={p.dados?.pedido?.texto ?? null} aberto={aberto} formRef={formPedido}
         aoMudarTexto={setRascunho} aoMandar={enviarPedido} />
       {p.dados?.pedido?.texto && <p className="aviso" data-teste="modo-atual">Modo de edição: {rotuloModo(p.dados.pedido.modo)}
         {(p.dados.pedido as { cliente?: string | null }).cliente ? ` · para ${nomeCliente((p.dados.pedido as { cliente?: string }).cliente)}` : ''}</p>}
+      </>)}
     </section>
   );
   const blocoRelogio = (
@@ -647,22 +697,13 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
             : <>de 30:00<br />{decorrido <= TETO_MS ? `faltam ${tc(TETO_MS - decorrido)}` : `passou ${tc(decorrido - TETO_MS)}`}</>}
         </p>
       </div>
+      {faixa}
+      {passoAtual}
       {fase !== 'entregue' && <AgoraNaMesa agora={conversa.montado.agora} compacto />}
-      <div className="regua" aria-hidden="true">
-        <div className="regua__trilho" />
-        <div className="regua__feito" style={{ width: `${Math.min(100, (decorrido / TETO_MS) * 100)}%` }} />
-        {inicioRelogio !== null && ESTADOS.slice(2).map((est) => marcas[est] ? (
-          <span key={est} className={`regua__marca${est === 'entregue' ? ' regua__marca--entrega' : ''}`} title={ROTULO_ESTADO[est]}
-            style={{ left: `${Math.min(100, Math.max(0, ((marcas[est] - inicioRelogio) / TETO_MS) * 100))}%` }} />
-        ) : null)}
-        <div className="regua__escala"><span>0</span><span>10</span><span>20</span><span>30 min</span></div>
-      </div>
-      {fase === 'entregue' ? (
-        <details className="relogio__etapas">
-          <summary>Ver as {ESTADOS.length} etapas</summary>
-          {trilha}
-        </details>
-      ) : trilha}
+      <details className="relogio__etapas">
+        <summary>Ver todas as etapas<ChevronDown size={18} aria-hidden="true" /></summary>
+        {trilha}
+      </details>
     </section>
   );
   const blocoVersoes = (versoes.length > 0 || !aberto) ? (
@@ -897,6 +938,13 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
   formRef: React.RefObject<HTMLFormElement | null>; aoMudarTexto: (temTexto: boolean) => void;
 }) {
   const [modoSel, setModoSel] = useState('auto');
+  // onda 3: as perguntas viram linhas de resumo ("Quem fala · O editor decide · trocar"); a escolha mora numa gaveta e
+  // volta ao formulário em campos escondidos com o mesmo nome de antes (q_<id>), então o envio não muda.
+  const [respostas, setRespostas] = useState<Record<string, string[]>>(respostasPadrao);
+  const [perguntaAberta, setPerguntaAberta] = useState<string | null>(null);
+  const ultimaPergunta = useRef<string | null>(null);
+  if (perguntaAberta) ultimaPergunta.current = perguntaAberta;
+  const [duracao, setDuracao] = useState('0');
   const chave = `ec-pedido-${pid}`;
   const mostraForm = !(atual && !aberto);
   // Para qual cliente (onda 4, item 5): as marcas cadastradas + os clientes fixos, com a sugestão das entregas para o projeto.
@@ -936,8 +984,7 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
       const radio = f.querySelector<HTMLInputElement>(`input[name=modo][value="${CSS.escape(r.modo)}"]`);
       if (radio) { radio.checked = true; setModoSel(r.modo); }
     }
-    const dur = campo('duracao');
-    if (r.duracao && dur) dur.value = r.duracao;
+    if (r.duracao && DURACOES.some(([v]) => v === r.duracao)) setDuracao(r.duracao);
     const precisa = campo('precisa');
     if (r.precisa && precisa && !precisa.value) precisa.value = r.precisa;
   }, [chave, mostraForm, formRef, aoMudarTexto]);
@@ -978,6 +1025,8 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
       if (await aoMandar({ texto, modo, ...extra, ...(duracao ? { duracao_alvo: duracao } : {}) })) {
         form.reset();
         setModoSel('auto');
+        setDuracao('0');
+        setRespostas(respostasPadrao());
         aoMudarTexto(false);
         try { sessionStorage.removeItem(chave); } catch { /* sem armazenamento */ }
       }
@@ -989,6 +1038,17 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
           onChange={(e) => aoMudarTexto(e.currentTarget.value.trim().length > 0)}
           placeholder="Ex.: Reels de 45 s do bastidor, abre com a minha fala mais forte, fecha chamando para o @creat.mtt." />
       </label>
+      <fieldset className="campo" style={{ border: 0, margin: 0, padding: 0 }} data-teste="duracoes">
+        <legend className="campo__rotulo" style={{ marginBottom: 8 }}>Duração</legend>
+        <div className="opcoes">
+          {DURACOES.map(([v, r]) => (
+            <label className="opcao" key={v}>
+              <input type="radio" name="duracao" value={v} checked={duracao === v} onChange={() => setDuracao(v)} />
+              <span>{r}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <fieldset className="campo" style={{ border: 0, margin: 0, padding: 0 }}>
         <legend className="campo__rotulo" style={{ marginBottom: 8 }}>Modo de edição</legend>
         <div className="opcoes" data-teste="modos">
@@ -1001,20 +1061,21 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
         </div>
       </fieldset>
       <div className="perguntas" data-teste="perguntas">
-        <p className="aviso" style={{ margin: 0 }}>O editor pergunta o que falta. Toque nas respostas; o que ficar sem resposta ele decide.</p>
-        {perguntasDoModo(modoSel).map((q) => (
-          <fieldset className="campo" key={`${modoSel}-${q.id}`} style={{ border: 0, margin: 0, padding: 0 }}>
-            <legend className="campo__rotulo" style={{ marginBottom: 6 }}>{q.texto}</legend>
-            <div className="opcoes">
-              {q.opcoes.map((o, i) => (
-                <label className="opcao" key={o.rotulo}>
-                  <input type={q.tipo === 'um' ? 'radio' : 'checkbox'} name={`q_${q.id}`} value={o.valor} defaultChecked={q.tipo === 'um' && i === 0 && q.campo !== 'formato' ? true : q.id === 'formato' && i === 0} />
-                  <span>{o.rotulo}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        ))}
+        <p className="perguntas__titulo">O editor pergunta o que falta. O que você não trocar, ele decide.</p>
+        <ul className="perguntas__lista">
+          {perguntasDoModo(modoSel).map((q) => (
+            <li key={q.id}>
+              <button type="button" className="pergunta" data-teste="pergunta" data-id={q.id} aria-haspopup="dialog" onClick={() => setPerguntaAberta(q.id)}>
+                <span className="pergunta__texto">{q.texto}</span>
+                <span className="pergunta__resposta">{resumoResposta(q, respostas[q.id] ?? [])}</span>
+                <span className="pergunta__trocar" aria-hidden="true">trocar</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        {perguntasDoModo(modoSel).flatMap((q) => (respostas[q.id] ?? []).filter(Boolean).map((v) => (
+          <input type="hidden" key={`${q.id}-${v}`} name={`q_${q.id}`} value={v} />
+        )))}
         <label className="campo">
           <span className="campo__rotulo">Algo que precisa aparecer? (opcional)</span>
           <input className="entrada" name="precisa" maxLength={200} placeholder="Ex.: a frase da Lavínia sobre calorias" autoComplete="off"
@@ -1032,19 +1093,56 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
           : comLogo(clienteSel) ? `O fim do filme assina com a logo de ${nomeCliente(clienteSel)}.`
             : <>{nomeCliente(clienteSel)} ainda não tem logo cadastrada: o fim sai com a creat.MTT. <a className="ref-link" href="/caderno#marcas">Cadastrar no Caderno</a></>}</span>
       </div>
-      <label className="campo">
-        <span className="campo__rotulo">Duração</span>
-        <select className="entrada" name="duracao" defaultValue="0">
-          <option value="0">O editor decide</option>
-          <option value="15">15 s</option>
-          <option value="30">30 s</option>
-          <option value="45">45 s</option>
-          <option value="60">60 s</option>
-          <option value="90">90 s</option>
-        </select>
-      </label>
       <p className="aviso">Quando estiver pronto, toque em <strong>Começar a edição</strong>, aqui embaixo.</p>
+      <GavetaPergunta id={perguntaAberta} ultima={ultimaPergunta.current} respostas={respostas}
+        aoEscolher={(qid, valores) => setRespostas((r) => ({ ...r, [qid]: valores }))} aoFechar={() => setPerguntaAberta(null)} />
     </form>
+  );
+}
+
+const DURACOES: [string, string][] = [['0', 'O editor decide'], ['15', '15 s'], ['30', '30 s'], ['45', '45 s'], ['60', '60 s'], ['90', '90 s']];
+function respostasPadrao(): Record<string, string[]> {
+  return Object.fromEntries(PERGUNTAS.map((q) => [q.id, q.tipo === 'um' ? [q.opcoes[0].valor] : []]));
+}
+function resumoResposta(q: (typeof PERGUNTAS)[number], valores: string[]): string {
+  const rotulos = q.opcoes.filter((o) => valores.includes(o.valor)).map((o) => o.rotulo);
+  if (!rotulos.length) return q.tipo === 'varios' ? 'Nada marcado' : 'O editor decide';
+  return rotulos.join(', ');
+}
+// A gaveta de UMA pergunta: escolha de um fecha sozinha; de vários, fecha no "Pronto". As opções não têm o nome do
+// formulário (a resposta volta pelos campos escondidos), então nada daqui é enviado em dobro.
+function GavetaPergunta({ id, ultima, respostas, aoEscolher, aoFechar }: {
+  id: string | null; ultima: string | null; respostas: Record<string, string[]>;
+  aoEscolher: (qid: string, valores: string[]) => void; aoFechar: () => void;
+}) {
+  const q = PERGUNTAS.find((x) => x.id === (id ?? ultima)) ?? null;
+  const sel = q ? respostas[q.id] ?? [] : [];
+  return (
+    <Gaveta aberta={Boolean(id)} aoMudar={(a) => { if (!a) aoFechar(); }} titulo={q?.texto ?? ''} teste="gaveta-pergunta">
+      {q && (
+        <>
+          <fieldset className="campo" style={{ border: 0, margin: 0, padding: 0 }}>
+            <legend className="so-leitor">{q.texto}</legend>
+            <div className="opcoes opcoes--gaveta">
+              {q.opcoes.map((o) => (
+                <label className="opcao" key={o.rotulo}>
+                  <input type={q.tipo === 'um' ? 'radio' : 'checkbox'} name={`escolha_${q.id}`} value={o.valor} checked={sel.includes(o.valor)}
+                    // escolha de um fecha sozinha, também ao tocar na que já estava marcada (o clique vem mesmo sem mudança)
+                    onClick={() => { if (q.tipo === 'um') { aoEscolher(q.id, [o.valor]); window.setTimeout(aoFechar, 180); } }}
+                    onChange={(e) => {
+                      if (q.tipo === 'um') return;
+                      aoEscolher(q.id, e.currentTarget.checked ? [...sel, o.valor] : sel.filter((v) => v !== o.valor));
+                    }} />
+                  <span>{o.rotulo}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          {q.tipo === 'varios' && <p className="aviso">Marque quantos quiser.</p>}
+          <button type="button" className="botao botao--principal botao--largo" onClick={aoFechar} data-teste="pergunta-pronto">Pronto</button>
+        </>
+      )}
+    </Gaveta>
   );
 }
 
