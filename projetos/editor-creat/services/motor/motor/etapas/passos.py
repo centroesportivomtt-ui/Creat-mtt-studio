@@ -397,6 +397,8 @@ def causa(e: BaseException | str) -> str | None:
     """A causa em palavras do dono, quando dá para saber pelo tipo do erro."""
     nome = type(e).__name__ if isinstance(e, BaseException) else str(e).split(":", 1)[0]
     txt = str(e).lower()
+    if "credit balance is too low" in txt or "insufficient credit" in txt or "billing" in txt and "anthropic" in txt:
+        return "acabou o crédito da API do Claude; recarregue em console.anthropic.com, em Billing"
     if nome == "MemoryError" or "out of memory" in txt or "cannot allocate memory" in txt:
         return "faltou memória na máquina"
     if nome in ("TimeoutError", "TimeoutExpired", "ReadTimeout", "ConnectTimeout") or "timed out" in txt:

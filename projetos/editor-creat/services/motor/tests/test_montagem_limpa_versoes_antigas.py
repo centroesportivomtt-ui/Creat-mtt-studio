@@ -84,3 +84,9 @@ def test_saidas_substituidas_perdem_mix_e_stems_e_guardam_o_filme(tmp_path):
         assert f"saidas/p_a/{v}/mix.wav" not in arm.arqs and f"saidas/p_a/{v}/stems/voz.flac" not in arm.arqs
     for v in ("v2", "v4"):                                   # entregue/aprovada e a que vai montar ficam inteiras
         assert f"saidas/p_a/{v}/mix.wav" in arm.arqs and f"saidas/p_a/{v}/stems/voz.flac" in arm.arqs
+
+
+def test_falta_de_credito_do_claude_aparece_em_portugues():
+    from motor.etapas import passos
+    e = RuntimeError("Error code: 400 - {'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing'}")
+    assert "crédito da API do Claude" in passos.frase_erro("direcao", e=e, vai_tentar=False)
