@@ -437,7 +437,8 @@ def test_apagar_leva_caches_e_casos_do_projeto_e_conta_respostas(app_conversa):
         r = c.post("/v1/projetos/p_aaaa1111/apagar", json={"nome": "Feira de Natal"})
         assert r.status_code == 200
         esperar(lambda: not any(a.exists() for a in cache_de["p_aaaa1111"]), timeout=15)
-        esperar(lambda: not (mem / "casos" / "p_aaaa1111-v1").exists(), timeout=15)
+        # a limpeza de fundo apaga uma pasta de caso por vez: espera as duas (sob carga a v2 sai depois da v1)
+        esperar(lambda: not (mem / "casos" / "p_aaaa1111-v1").exists() and not (mem / "casos" / "p_aaaa1111-v2").exists(), timeout=15)
         assert not (mem / "casos" / "p_aaaa1111-v2").exists()
         assert (mem / "casos" / "p_aaaa11112-v1" / "caso.json").exists() and (mem / "casos" / "p_bbbb2222-v1" / "caso.json").exists()
         assert all(a.exists() for a in cache_de["p_bbbb2222"]) and outro_cache.exists()
