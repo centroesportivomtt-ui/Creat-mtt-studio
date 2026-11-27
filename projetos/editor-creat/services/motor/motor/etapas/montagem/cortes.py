@@ -45,6 +45,7 @@ PRE = 0.05
 LONGE = 0.6                 # fim da voz a mais que isto do corte: é outra frase colada, corta no vale
 PAUSA_MIN = 0.13            # silêncio em volta do corte a partir disto é pausa entre palavras, não oclusão (oclusão: até ~100 ms)
 NOTAS_MAX = 20
+ESTENDER_MAX = 1.6          # 27/11: "deixa a frase terminar" anda no máximo isto para frente, até uma pausa de verdade
 
 
 # ------------------------------------------------------------------ marca
@@ -131,6 +132,35 @@ def _fim_novo(env: dict, s1: float, teto: float | None) -> tuple[float, str]:
     return max(s1, round(meio, 3)), f"pausa de {f['pausa'] * 1000:.0f} ms antes da palavra seguinte: corte no meio, OUVIR"
 
 
+def _deixar_terminar(env: dict, s1: float, limite: float | None = None) -> float | None:
+    """27/11 (Bastidores Super Kal, V1-V3 seguradas por fala_cortada): quando a palavra seguinte vem colada e não há como
+    cortar sem partir a fala, a frase segue até a primeira PAUSA de verdade (até ESTENDER_MAX s), e o corte vai para dentro
+    dela, desde que passe na mesma régua da conferência. `limite` (tempo do arquivo): não passa daqui (outra peça da mesma
+    fonte começa ali; repetir fala é pior). None = não achou."""
+    e, lim, P = env["db"], env["limiar"], AF.PASSO
+    j = max(0, int(round(s1 / P)))
+    fim = min(len(e), j + int(round(ESTENDER_MAX / P)))
+    k = j
+    while k < fim:
+        if e[k] > lim:
+            k += 1
+            continue
+        a = k
+        while k < len(e) and e[k] <= lim:
+            k += 1
+        if (k - a) * P < PAUSA_MIN + FOLGA_MIN:
+            continue
+        for cand in (a * P + RESPIRO, a * P + FOLGA_MIN + 0.02, (a + k) * P / 2):
+            cand = round(cand, 3)
+            if cand <= s1 or cand > (k * P - SILENCIO_DEPOIS) + 1e-6 or (limite is not None and cand > limite):
+                continue
+            if AF.corte_final_ok(env, cand)[0]:
+                return cand
+        if limite is not None and a * P > limite:
+            return None
+    return None
+
+
 def _inicio_novo(env: dict, s0: float, pal: list) -> tuple[float, str | None]:
     """Começo (tempo do arquivo) para o corte que reprova em corte_inicial_ok (a regra da ferramenta ajustar_cortes)."""
     if AF.comeco_colado(env, s0) is not None and not (AF._pico(env["db"], s0 - 0.06, s0) > env["limiar"]):
@@ -164,6 +194,11 @@ def novos_limites(edl: dict, envs: dict, offs: dict, pals: dict | None = None, f
             prox = next((w[0] for w in pal if w[0] >= fim + 0.02), None)          # começo da palavra seguinte (tempo do arquivo)
             teto = (prox - off - 0.02) if prox is not None else None
             s1n, nota = _fim_novo(env, fim - off, teto)
+            if "OUVIR" in nota:
+                outros = [o["s0"] - off for o in vz if o is not v and o["fonte"] == v["fonte"] and o["s0"] - off > fim - off + 0.05]
+                ext = _deixar_terminar(env, fim - off, (min(outros) - 0.05) if outros else None)
+                if ext is not None and ext > s1n:
+                    s1n, nota = ext, f"frase completa até a pausa: +{ext - (fim - off):.2f} s"
             v["_s1"] = round(s1n + off, 3)
             if abs(v["_s1"] - v["s1"]) > 1e-4:
                 v["_mexeu"].add("fim")

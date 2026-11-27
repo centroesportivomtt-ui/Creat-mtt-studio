@@ -138,13 +138,45 @@ RISCO = {"mostrar": LIVRE, "perguntar": PERGUNTA, "propor_ajuste": CONFIRMA, "pr
 NOMES = sorted(ESQUEMAS)
 
 
+# A API recusa o pedido inteiro quando as ferramentas strict somam mais de 24 parâmetros opcionais (400 "Schemas contains too
+# many optional parameters", 27/11: 31 opcionais, a conversa parou de responder). Strict só nas que mudam algo ou perguntam;
+# as de leitura (LIVRE) vão sem strict, e a entrada delas continua conferida aqui por `validar` contra o esquema completo.
+LIMITE_OPCIONAIS_STRICT = 24
+
+
+def _strict(nome: str) -> bool:
+    return RISCO.get(nome) != LIVRE
+
+
+def opcionais(esquema) -> int:
+    """Parâmetros opcionais de um esquema (recursivo), como a API conta para a gramática do strict."""
+    if not isinstance(esquema, dict):
+        return 0
+    props, req = esquema.get("properties") or {}, set(esquema.get("required") or [])
+    n = sum(1 for k in props if k not in req) + sum(opcionais(p) for p in props.values())
+    return n + opcionais(esquema.get("items"))
+
+
+def ajustar_strict(tools: list[dict]) -> list[dict]:
+    """Lista guardada num capítulo antigo (tudo strict) -> mesma regra de agora; nova lista, sem mexer na original."""
+    out = []
+    for t in tools:
+        t = dict(t)
+        if t.get("strict") and not _strict(t.get("name", "")):
+            t.pop("strict")
+        out.append(t)
+    return out
+
+
 def para_api() -> list[dict]:
-    """Definições que vão à API: ordem alfabética, strict, esquema sem os limites que o strict não aceita."""
+    """Definições que vão à API: ordem alfabética, strict só nas que mudam algo, esquema sem os limites que o strict não aceita."""
     out = []
     for nome in NOMES:
         e = ESQUEMAS[nome]
-        out.append({"name": nome, "description": e["description"], "strict": True,
-                    "input_schema": esquema_para_api(copy.deepcopy(e["input_schema"]))})
+        t = {"name": nome, "description": e["description"], "input_schema": esquema_para_api(copy.deepcopy(e["input_schema"]))}
+        if _strict(nome):
+            t["strict"] = True
+        out.append(t)
     return out
 
 

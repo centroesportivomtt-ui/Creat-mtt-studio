@@ -93,8 +93,11 @@ def test_2_1_duas_rodadas_nao_alongam_mesmo_sem_a_marca(pausa_curta):
         assert r["estado"] == "sem_mudanca", r
     assert edl["duracao"] == d1 and edl["voz"] == voz1 and edl["planos"] == pl1
     v1 = edl["voz"][0]
-    assert v1["s1"] < 1.76 - 0.05, v1                     # nunca come a palavra seguinte (1,76 s)
-    assert any("OUVIR" in n for n in r1["notas"])         # pausa curta demais para passar: dito, não escondido
+    # 27/11: a pausa de 160 ms não cabe folga + silêncio; em vez de largar a fala cortada (OUVIR, versão segurada), a frase
+    # termina até a pausa de verdade depois da palavra colada (2,26 s), antes da outra frase (3,0 s), e a conferência aprova
+    assert 2.26 <= v1["s1"] < 3.0 - 0.12, v1
+    assert any("frase completa" in n for n in r1["notas"])
+    assert ("V1", "fim") not in _reprovadas(edl)
 
 
 # ------------------------------------------------------------------ 2.2
@@ -318,3 +321,26 @@ def test_corte_na_pausa_perto_da_palavra_seguinte_anda_para_dentro_da_pausa(paus
     assert not any("OUVIR" in n for n in r["notas"] if n.startswith("V1")), r["notas"]
     r2 = C.ajustar_edl(edl, Fontes(edl), forcar_marca=True)              # segunda rodada: nada a fazer
     assert r2["estado"] == "sem_mudanca", r2
+
+
+# ------------------------------------------------------------------ 27/11: deixar a frase terminar
+@pytest.fixture()
+def colada(tmp_path):
+    """Bastidores Super Kal (27/11): palavra seguinte COLADA (20 ms) e a pausa só depois dela; outra frase em 3,0 s."""
+    return _fonte(tmp_path, [(1.0, 0.6), (1.62, 0.5), (3.0, 0.6)])
+
+
+def test_palavra_colada_deixa_a_frase_terminar_ate_a_pausa(colada):
+    edl = _edl(colada, _voz2(s1_v1=1.40))
+    assert ("V1", "fim") in _reprovadas(edl)
+    C.ajustar_edl(edl, Fontes(edl))
+    v1 = next(v for v in edl["voz"] if v["id"] == "V1")
+    assert 2.12 <= v1["s1"] < 3.0 - 0.12, v1                # foi até a pausa depois da palavra colada, antes da outra frase
+    assert ("V1", "fim") not in _reprovadas(edl)           # a conferência aprova o fim
+
+
+def test_deixar_terminar_respeita_outra_peca_da_mesma_fonte(colada):
+    x, _ = sf.read(colada, dtype="float32")
+    env = AF.envelope(x[::3], 16000)
+    assert C._deixar_terminar(env, 1.40) is not None
+    assert C._deixar_terminar(env, 1.40, limite=1.9) is None    # outra peça começa antes da pausa: não repete fala

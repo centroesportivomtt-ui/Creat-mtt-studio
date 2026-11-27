@@ -499,6 +499,17 @@ def renderizar(edl: dict, fontes: Fontes, cache: pathlib.Path, *, workers: int =
         finally:
             if ex is not None:
                 ex.shutdown()
+        if erros and ex is not None:
+            # 27/11 (Bastidores Super Kal, .MOV de 640 MB e 1,1 GB em 4K): com 3 leitores de 4K ao mesmo tempo a memória
+            # acaba e o leitor volta vazio ("nenhum quadro decodificado"); a montagem caía e só passava na 2a ou 3a tentativa
+            # do job. Os planos que falharam são refeitos aqui, UM POR VEZ, antes de dar erro.
+            por_id = {t[0]["id"]: t for t in tarefas}
+            de_novo, erros = [por_id[e["id"]] for e in erros if e["id"] in por_id], []
+            for info in map(_trabalho, de_novo):
+                if "erro" in info:
+                    erros.append(info)
+                else:
+                    res[info["id"]]["info"] = info
         if erros:
             raise RuntimeError("planos com erro: " + "; ".join(f"{e['id']}: {e['erro']}" for e in erros[:5]))
     return res

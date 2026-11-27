@@ -726,7 +726,7 @@ class Mesa:
                     if voltas >= MAX_VOLTAS:
                         stop, detalhe = "limite", f"parei depois de {MAX_VOLTAS} chamadas neste turno"
                         break
-                    system, tools = json.loads(cap["system_json"]), json.loads(cap["tools_json"])
+                    system, tools = json.loads(cap["system_json"]), ferramentas.ajustar_strict(json.loads(cap["tools_json"]))
                     contexto = teto.tokens_de(len(cap["system_json"]) + len(cap["tools_json"]) + len(_j(msgs)))
                     novos = teto.tokens_de(len(_j(msgs[-1]))) if msgs else 0
                     recente = time.time() - self.ultima_chamada.get(pid, 0) < CACHE_RECENTE_S
