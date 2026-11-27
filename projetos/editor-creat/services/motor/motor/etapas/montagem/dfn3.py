@@ -6,10 +6,11 @@ do Radar em 21/11; escolha e mistura conferidas com o medidor DNSMOS (motor/qual
 
 Origem e licença:
 - modelo e algoritmo: DeepFilterNet (Hendrik Schröter), MIT ou Apache-2.0, github.com/Rikorose/DeepFilterNet; checkpoint
-  DeepFilterNet3 (época 120) exportado para ONNX com o script oficial (huggingface.co/SayedShaun/DeepFilterNet3-onnx);
+  DeepFilterNet3 exportado para ONNX pelo próprio autor (models/DeepFilterNet3_onnx.tar.gz do repositório oficial, fixado num
+  commit). Até 27/11 vinha de huggingface.co/SayedShaun/DeepFilterNet3-onnx, que saiu do ar (HTTP 401);
 - este arquivo é uma adaptação (lida linha a linha, sem rede) do wrapper numpy desse repositório, MIT: STFT, features ERB,
   normalização, máscara ERB e filtro profundo seguem o libDF original.
-Os 3 ONNX (~8,6 MB) são baixados uma vez para <dados>/modelos/dfn3 e conferidos pelo sha256; sem eles, `disponivel` é False e a
+O pacote (~8 MB) é baixado uma vez para <dados>/modelos/dfn3 e conferidos pelo sha256; sem eles, `disponivel` é False e a
 voz segue só com a cadeia leve (como antes).
 """
 from __future__ import annotations
@@ -25,11 +26,13 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
-BASE_URL = "https://huggingface.co/SayedShaun/DeepFilterNet3-onnx/resolve/main/"
-ARQUIVOS = {                                                     # conferidos em 21/11/2026
-    "enc.onnx": "0e2ff9c82926e92391a2c3997c9bf1d6baf928193ccc5588b01559ba6b99c761",
-    "erb_dec.onnx": "3904877411f20101f38f4fcd1b73f98afdd4257539618c3bb1e51e3f2baf6bd6",
-    "df_dec.onnx": "346076860ef95c49e2e6f853f4e35ed2b4f78d4809191c0cadf74ca886bb2c27",
+PACOTE_URL = ("https://raw.githubusercontent.com/Rikorose/DeepFilterNet/7b14b895fe7fc42cab72b4a4c1e49c982bd6404b/"
+              "models/DeepFilterNet3_onnx.tar.gz")
+PACOTE_SHA = "c94d91f70911001c946e0fabb4aa9adc37045f45a03b56008cb0c8244cb63616"
+ARQUIVOS = {                                                     # conferidos em 27/11/2026 (export oficial)
+    "enc.onnx": "7c5399d3da8a50ebef1c1a0ae421b33376aa5e45d0e92df16da7e83c9c131916",
+    "erb_dec.onnx": "ab669a1d10afe20911728b33053a452071042317a90581092b325da7b2f9d895",
+    "df_dec.onnx": "23114ce3b0f6464b763ee62f7bb8aab6b2a129a21eabd5bcfe59413db05f278a",
 }
 # config.ini do checkpoint (seção [df] e [deepfilternet]), fixo aqui para não baixar texto de configuração
 SR, FFT, HOP, NB_ERB, NB_DF, DF_ORDEM, DF_LOOK, MIN_ERB, CONV_LOOK = 48000, 960, 480, 32, 96, 5, 2, 2, 2
@@ -54,16 +57,23 @@ def _pasta(cfg) -> pathlib.Path | None:
     _TENTOU = time.time()
     try:
         p.mkdir(parents=True, exist_ok=True)
-        for nome, sha in ARQUIVOS.items():
-            if (p / nome).is_file():
-                continue
-            with urllib.request.urlopen(urllib.request.Request(BASE_URL + nome, headers={"User-Agent": "editor-motor/0.1"}), timeout=30) as r:
-                dados = r.read(20_000_000)
-            if hashlib.sha256(dados).hexdigest() != sha:
-                raise OSError(f"sha256 de {nome} não confere")
-            tmp = p / f".{nome}.{os.getpid()}.tmp"
-            tmp.write_bytes(dados)
-            os.replace(tmp, p / nome)
+        with urllib.request.urlopen(urllib.request.Request(PACOTE_URL, headers={"User-Agent": "editor-motor/0.1"}), timeout=60) as r:
+            pacote = r.read(40_000_000)
+        if hashlib.sha256(pacote).hexdigest() != PACOTE_SHA:
+            raise OSError("sha256 do pacote do modelo não confere")
+        import io
+        import tarfile
+        with tarfile.open(fileobj=io.BytesIO(pacote), mode="r:gz") as tar:
+            membros = {pathlib.PurePosixPath(m.name).name: m for m in tar.getmembers() if m.isfile()}
+            for nome, sha in ARQUIVOS.items():
+                if (p / nome).is_file() and hashlib.sha256((p / nome).read_bytes()).hexdigest() == sha:
+                    continue
+                dados = tar.extractfile(membros[nome]).read()
+                if hashlib.sha256(dados).hexdigest() != sha:
+                    raise OSError(f"sha256 de {nome} não confere")
+                tmp = p / f".{nome}.{os.getpid()}.tmp"
+                tmp.write_bytes(dados)
+                os.replace(tmp, p / nome)
         return p
     except Exception as e:  # noqa: BLE001 - sem rede: segue sem limpeza por IA
         log.warning("limpeza de voz por IA indisponível (%s)", e)
@@ -174,7 +184,7 @@ class Limpador:
         sf = np.pad(sf[:, L:], ((0, 0), (0, L), (0, 0)))[None]
         e0, e1, e2, e3, emb, c0, _lsnr = self._enc.run(None, {"feat_erb": erb_in.astype(np.float32), "feat_spec": sf.astype(np.float32)})
         (masc,) = self._erb_dec.run(None, {"emb": emb, "e3": e3, "e2": e2, "e1": e1, "e0": e0})
-        (coefs,) = self._df_dec.run(None, {"emb": emb, "c0": c0})
+        coefs = self._df_dec.run(None, {"emb": emb, "c0": c0})[0]   # export oficial tem 2 saídas; só os coeficientes importam
         return masc[0, 0], coefs[0]
 
     def _aplicar(self, spec, masc, coefs):
