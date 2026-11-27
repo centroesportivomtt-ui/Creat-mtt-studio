@@ -2,9 +2,10 @@
 // Topo de 56 px (marca e saúde: o topo só informa) + navegação no polegar: Projetos · Novo · Caderno · Mais.
 // No celular a navegação é uma barra fixa embaixo; no desktop a mesma navegação fica no topo, à direita (CSS).
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import ChaveConversa from './conversa/ChaveConversa';
+import Gaveta from './Gaveta';
 import { limparAparelho } from '@/lib/pendentes';
 import { chave, EVENTO_CONVERSA, type EstadoChave } from '@/lib/conversa';
 
@@ -34,6 +35,21 @@ const Icone = {
       <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
     </svg>
   ),
+  clientes: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.2" /><path d="M3 20a6 6 0 0 1 12 0M16 4.5a3.2 3.2 0 0 1 0 6.2M18 14.5a6 6 0 0 1 3 5.5" />
+    </svg>
+  ),
+  biblioteca: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" />
+    </svg>
+  ),
+  sistema: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="6" rx="1.5" /><rect x="3" y="14" width="18" height="6" rx="1.5" /><path d="M7 7h.01M7 17h.01" />
+    </svg>
+  ),
   sair: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10" />
@@ -43,7 +59,6 @@ const Icone = {
 
 export default function Topo() {
   const rota = usePathname() ?? '';
-  const mais = useRef<HTMLDetailsElement>(null);
   const noProjeto = /^\/projetos\/p_/.test(rota);
   const atual = (sim: boolean) => (sim ? ('page' as const) : undefined);
   // Ponto de saúde: só fica verde depois de perguntar ao motor (/api/saude). Motor fora do ar ou backup com falha = coral.
@@ -64,7 +79,6 @@ export default function Topo() {
     document.addEventListener('visibilitychange', conferir);
     return () => { vivo = false; window.clearInterval(t); document.removeEventListener('visibilitychange', conferir); };
   }, []);
-  const fecharMais = () => { if (mais.current) mais.current.open = false; };
 
   // Quem espera o dono (pergunta ou cartão da conversa): número no item Projetos e título da aba. Lido ao abrir, ao voltar
   // a página para visível, a cada 30 s com ela visível e sempre que a conversa avisa que mudou (sem push nesta etapa).
@@ -105,33 +119,20 @@ export default function Topo() {
     return () => { mo?.disconnect(); };
   }, [esperando, rota]);
 
-  // "Mais" é um <details> nesta etapa (vira gaveta depois): fecha ao trocar de tela, ao tocar fora e com Esc.
-  useEffect(() => {
-    if (mais.current) mais.current.open = false;
-  }, [rota]);
-  useEffect(() => {
-    const fora = (e: PointerEvent) => {
-      const d = mais.current;
-      if (d?.open && !d.contains(e.target as Node)) d.open = false;
-    };
-    const esc = (e: KeyboardEvent) => {
-      const d = mais.current;
-      if (e.key === 'Escape' && d?.open) { d.open = false; d.querySelector('summary')?.focus(); }
-    };
-    // Tab para fora do menu também fecha (não fica pairando sobre o conteúdo)
-    const focoSaiu = (e: FocusEvent) => {
-      const d = mais.current;
-      if (d?.open && e.relatedTarget instanceof Node && !d.contains(e.relatedTarget)) d.open = false;
-    };
-    document.addEventListener('pointerdown', fora);
-    document.addEventListener('keydown', esc);
-    mais.current?.addEventListener('focusout', focoSaiu);
-    const d = mais.current;
-    return () => {
-      document.removeEventListener('pointerdown', fora); document.removeEventListener('keydown', esc);
-      d?.removeEventListener('focusout', focoSaiu);
-    };
-  }, []);
+  // "Mais" é uma gaveta (onda 2): fecha ao trocar de tela; Esc, toque fora e arrastar para baixo fecham (Base UI).
+  const [maisAberto, setMaisAberto] = useState(false);
+  useEffect(() => { setMaisAberto(false); }, [rota]);
+  const fecharMais = () => setMaisAberto(false);
+  // a gaveta trava a rolagem e devolve a posição antiga quando fecha: o link só navega DEPOIS de ela fechar,
+  // senão o salto para a âncora (#backup) é desfeito
+  const router = useRouter();
+  const destino = useRef<string | null>(null);
+  const irDepois = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    destino.current = e.currentTarget.getAttribute('href');
+    setMaisAberto(false);
+  };
 
   return (
     <header className="topo">
@@ -155,13 +156,18 @@ export default function Topo() {
         <Link className="nav__item" href="/caderno" aria-current={atual(rota.startsWith('/caderno'))}>
           <span className="nav__icone">{Icone.caderno}</span>Caderno
         </Link>
-        <details className="nav__mais" ref={mais}>
-          <summary className="nav__item" aria-current={atual(rota.startsWith('/gastos'))}>
-            <span className="nav__icone">{Icone.mais}</span>Mais
-          </summary>
+        <button type="button" className="nav__item" data-teste="nav-mais" aria-haspopup="dialog" aria-expanded={maisAberto}
+          aria-current={atual(rota.startsWith('/gastos'))} onClick={() => setMaisAberto(true)}>
+          <span className="nav__icone">{Icone.mais}</span>Mais
+        </button>
+        <Gaveta aberta={maisAberto} aoMudar={setMaisAberto} titulo="Mais" teste="gaveta-mais"
+          aoFechar={() => { const d = destino.current; destino.current = null; if (d) router.push(d); }}>
           <div className="nav__menu">
             <ChaveConversa variante="menu" />
-            <Link className="nav__menu-item" href="/gastos" onClick={fecharMais}>{Icone.gastos}Gastos do mês</Link>
+            <Link className="nav__menu-item" href="/gastos" onClick={irDepois}>{Icone.gastos}Gastos do mês</Link>
+            <Link className="nav__menu-item" href="/caderno#marcas" onClick={irDepois}>{Icone.clientes}Clientes e marcas</Link>
+            <Link className="nav__menu-item" href="/caderno#biblioteca" onClick={irDepois}>{Icone.biblioteca}Trilhas e efeitos</Link>
+            <Link className="nav__menu-item" href="/caderno#backup" onClick={irDepois}>{Icone.sistema}Sistema e backup</Link>
             <form action="/api/sair" method="post" onSubmit={(e) => {
               // antes de sair, o aparelho esquece o que a conversa guardou; depois o formulário segue normal
               const f = e.currentTarget;
@@ -172,7 +178,7 @@ export default function Topo() {
               <button className="nav__menu-item nav__menu-item--sair" type="submit">{Icone.sair}Sair</button>
             </form>
           </div>
-        </details>
+        </Gaveta>
       </nav>
     </header>
   );

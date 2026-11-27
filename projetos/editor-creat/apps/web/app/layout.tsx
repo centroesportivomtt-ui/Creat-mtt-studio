@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { Avisos } from '@/componentes/Avisos';
 
 export const metadata: Metadata = {
   title: { default: 'Editor creat.MTT', template: '%s · Editor creat.MTT' },
@@ -23,7 +24,10 @@ export const viewport: Viewport = {
 export default function Raiz({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Avisos />
+      </body>
     </html>
   );
 }

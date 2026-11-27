@@ -6,6 +6,8 @@ import Cor from '@/componentes/Cor';
 import LinkCliente from '@/componentes/LinkCliente';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import ApagarProjeto from './ApagarProjeto';
+import { avisar } from './Avisos';
+import Gaveta from './Gaveta';
 import Envio from './Envio';
 import Notas, { lerNotas } from './Notas';
 import Segurada from './Segurada';
@@ -70,7 +72,9 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   const [importacao, setImportacao] = useState<EstadoImportar>(SEM_IMPORTACAO); // link colado ainda não importado
   const [batendo, setBatendo] = useState(false);         // claquete do Aprovar
   const [corta, setCorta] = useState(false);             // "Corta! Aprovada" na barra logo depois do Aprovar
-  const [ajusteDe, setAjusteDe] = useState<string | null>(null); // versão com o formulário de ajuste aberto
+  const [ajusteDe, setAjusteDe] = useState<string | null>(null); // versão com a gaveta "Pedir ajuste" aberta
+  const [maisDe, setMaisDe] = useState<string | null>(null);       // versão com a gaveta "Mais da versão" aberta
+  const [clienteDe, setClienteDe] = useState<string | null>(null); // versão com a gaveta "Mandar para o cliente" aberta
   // versão segurada pela conferência: qual está no lugar do player e se o dono abriu para assistir (onda 4, item 6)
   const [seguradaSel, setSeguradaSel] = useState<string | null>(null);
   const [seguradaAberta, setSeguradaAberta] = useState(false);
@@ -266,8 +270,9 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
     try {
       if (!(await postar('/pedido', corpo))) return false;
       setRascunho(false);
-      if (!fechado && temMaterial && !(await postar('/fechar-envio'))) return true; // pedido gravado; o erro fica na barra
+      if (!fechado && temMaterial && !(await postar('/fechar-envio'))) { avisar.info('Pedido recebido. Falta fechar o envio.'); return true; } // o erro fica na barra
       navigator.vibrate?.(8);
+      avisar.ok(fechado || temMaterial ? 'Pedido recebido. A edição começou.' : 'Pedido recebido.');
       return true;
     } finally {
       trava.current = false;
@@ -290,15 +295,27 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       if (c) {
         if (c.entregas && typeof c.entregas.estado === 'string') setEntregas((m) => ({ ...m, [vid]: c.entregas as Entregas }));
         setCorta(true);
+        avisar.ok(`${vid.toUpperCase()} aprovada. Corta!`);
         window.setTimeout(() => setCorta(false), 1800);
       }
     } finally { trava.current = false; setBatendo(false); }
   }
-  async function reprovar(vid: string, motivo: string) {
+  // "Pedir ajuste" (antes "Reprovar com motivo"): vira_regra = o dono escolhe se vale só neste vídeo ou como regra da casa
+  async function reprovar(vid: string, motivo: string, viraRegra: boolean) {
     if (trava.current) return null;
     trava.current = true;
-    try { return await postar(`/versoes/${vid}/reprovar`, { motivo }); } finally { trava.current = false; }
+    try {
+      const c = await postar(`/versoes/${vid}/reprovar`, { motivo, vira_regra: viraRegra });
+      if (c) avisar.ok(viraRegra ? 'Ajuste pedido e anotado no Caderno. O editor já está refazendo.' : 'Ajuste pedido. O editor já está refazendo.');
+      return c;
+    } finally { trava.current = false; }
   }
+  // troca de gaveta (Mais → Mandar para o cliente): a primeira fecha e a segunda sobe depois da animação
+  const troca = useRef<number | undefined>(undefined);
+  const trocarGaveta = (abrir: () => void) => { setMaisDe(null); window.clearTimeout(troca.current); troca.current = window.setTimeout(abrir, 380); };
+  // outra gaveta aberta antes da troca terminar cancela a troca (nunca duas gavetas ao mesmo tempo)
+  useEffect(() => { if (ajusteDe) window.clearTimeout(troca.current); }, [ajusteDe]);
+  useEffect(() => () => window.clearTimeout(troca.current), []);
   // "Tentar de novo", "Conferir de novo" e "Ler de novo": a mesma rota e a mesma guarda da conversa (R12). Trava síncrona.
   async function refazerEtapa(o: Acoes.Opcao) {
     if (trava.current) return;
@@ -474,7 +491,7 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
           <span className={`claquete${batendo ? ' claquete--bateu' : ''}`} aria-hidden="true" />{batendo ? 'Batendo…' : `Aprovar a ${assistir.id.toUpperCase()}`}
         </button>
         <button className="botao botao--secundario barra-comando__secundario" type="button"
-          onClick={() => { setAjusteDe(assistir.id); setTimeout(() => irPara(`ajuste-${assistir.id}`, `#ajuste-${assistir.id} textarea`), 30); }}>
+          data-teste="pedir-ajuste-barra" onClick={() => setAjusteDe(assistir.id)}>
           Pedir ajuste
         </button>
         {clientesEnt && clienteEnt && mandarEnt && (
@@ -489,8 +506,8 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
   } else if (fase === 'entregue' && assistir) {
     comando = (
       <>
-        <button className="botao botao--principal barra-comando__principal" type="button"
-          onClick={() => irPara(`cliente-${assistir.id}`, `#cliente-${assistir.id} [data-teste=link-cliente-gerar]`)}>
+        <button className="botao botao--principal barra-comando__principal" type="button" data-teste="mandar-cliente-barra"
+          onClick={() => setClienteDe(assistir.id)}>
           Mandar para o cliente
         </button>
         <a className="botao botao--secundario barra-comando__secundario" href={`/api/motor/v1/arquivos/${assistir.video}`} download>Baixar</a>
@@ -669,10 +686,9 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
       {versoes.length > 0 && (
         <ul className="versoes">
           {versoes.map((v) => <LinhaVersao key={v.id} pid={p.id} v={v} aprovada={Boolean(p.dados?.aprovadas?.[v.id])}
-            naBarra={v.id === assistir?.id} ajusteAberto={ajusteDe === v.id} aoAbrirAjuste={(sim) => setAjusteDe(sim ? v.id : null)}
+            naBarra={v.id === assistir?.id} aoAbrirAjuste={() => setAjusteDe(v.id)} aoAbrirMais={() => setMaisDe(v.id)}
             aoAprovar={() => aprovar(v.id)} batendo={batendo}
             seguradaNaTela={seguradaAberta && seguradaNaTela === v.id} aoAssistirSegurada={() => assistirSegurada(v.id)}
-            aoReprovar={(motivo) => reprovar(v.id, motivo)}
             clientes={clientesEnt} cliente={clienteEnt} aoTrocarCliente={setClienteEnt} mandar={mandarEnt} aoMandar={setMandarEnt}
             aoMudarEntregas={(e) => { setEntregas((m) => ({ ...m, [v.id]: e })); recarregar(); }} />)}
         </ul>
@@ -716,6 +732,12 @@ export default function Projeto({ inicial, parteMB }: { inicial: TProjeto; parte
         <Fio c={conversa} arquivos={p.arquivos.map((a) => a.id)} palco={{ nome: p.nome, estado: p.estado, rotuloEstado: ROTULO_ESTADO[p.estado] ?? p.estado,
           classeEstado: classeEstado(p.estado), tc: tc(decorrido), correndo }} />
       )}
+
+      <GavetasDaVersao pid={p.id} versoes={versoes} aprovadas={p.dados?.aprovadas ?? {}}
+        ajusteDe={ajusteDe} aoFecharAjuste={() => setAjusteDe(null)} aoPedirAjuste={reprovar}
+        maisDe={maisDe} aoFecharMais={() => setMaisDe(null)} erro={erro}
+        aoMandarCliente={(vid) => trocarGaveta(() => setClienteDe(vid))}
+        clienteDe={clienteDe} aoFecharCliente={() => setClienteDe(null)} />
 
       {/* Tocar num botão da barra com um campo de texto em foco: o botão NÃO pode roubar o foco no toque, senão a navegação
           reaparece, a barra sobe debaixo do dedo e o primeiro toque se perde (achado da conferência final, 25/11). O foco só
@@ -1026,23 +1048,34 @@ function Pedido({ pid, atual, aberto, aoMandar, formRef, aoMudarTexto }: {
   );
 }
 
+// Primeira camada da conferência, na língua do dono: "Passou em 8 de 9 conferências; uma pede seu olho."
+export function resumoConferencia(qa: { aprovado?: boolean; checagens: Checagem[] }): string {
+  const total = qa.checagens.length;
+  const ok = qa.checagens.filter((c) => c.ok).length;
+  if (!total) return 'Sem conferência registrada.';
+  if (ok === total) return `Passou nas ${total} conferências.`;
+  const segura = qa.checagens.filter((c) => !c.ok && c.bloqueia !== false).length;
+  const olho = total - ok;
+  const n = segura || olho;
+  return `Passou em ${ok} de ${total} conferências; ${n === 1 ? 'uma pede' : `${n} pedem`} seu olho.`;
+}
+
 // naBarra: é a versão no player; o Aprovar e o "Pedir ajuste" dela moram na barra de comando (data-teste num lugar só).
-function LinhaVersao({ pid, v, aprovada, naBarra, ajusteAberto, aoAbrirAjuste, batendo, aoAprovar, aoReprovar, clientes, cliente, aoTrocarCliente, aoMudarEntregas, mandar, aoMandar, seguradaNaTela, aoAssistirSegurada }: {
-  pid: string; v: Versao; aprovada: boolean; naBarra: boolean; ajusteAberto: boolean; aoAbrirAjuste: (sim: boolean) => void;
+// Onda 2: a linha fica curta (nome, estado, conferência numa frase); Baixar, conferência em detalhes, cor e link do cliente
+// moram na gaveta "Mais da versão", e o ajuste abre a gaveta "Pedir ajuste".
+function LinhaVersao({ pid, v, aprovada, naBarra, aoAbrirAjuste, aoAbrirMais, batendo, aoAprovar, clientes, cliente, aoTrocarCliente, aoMudarEntregas, mandar, aoMandar, seguradaNaTela, aoAssistirSegurada }: {
+  pid: string; v: Versao; aprovada: boolean; naBarra: boolean; aoAbrirAjuste: () => void; aoAbrirMais: () => void;
   /** a segurada desta linha já está aberta no lugar do player; o toque abre a versão segurada lá em cima */
   seguradaNaTela: boolean; aoAssistirSegurada: () => void;
-  batendo: boolean; aoAprovar: () => Promise<unknown>; aoReprovar: (motivo: string) => Promise<unknown>;
+  batendo: boolean; aoAprovar: () => Promise<unknown>;
   clientes: ClientesEntregas | null; cliente: string; aoTrocarCliente: (c: string) => void; aoMudarEntregas: (e: Entregas) => void;
   mandar: boolean; aoMandar: (sim: boolean) => void;
 }) {
-  const aberto = ajusteAberto;
-  const setAberto = aoAbrirAjuste;
-  const [motivo, setMotivo] = useState('');
   const qa = lerQa(v.qa);
-  const ok = qa?.checagens.filter((c) => c.ok).length ?? 0;
   const estado = classeVersao(v.estado);
   const entregue = v.estado === 'entregue';
   const podeReprovar = ['entregue', 'reprovada_qa', 'erro'].includes(v.estado);
+  const temMais = Boolean(qa) || (entregue && Boolean(v.video));
   return (
     <li className="versao" data-versao={v.id}>
       <div className="versao__linha">
@@ -1065,64 +1098,148 @@ function LinhaVersao({ pid, v, aprovada, naBarra, ajusteAberto, aoAbrirAjuste, b
             : 'O filme fica só aqui no editor. Dá para mandar para a página depois, com um toque.'}</span>
         </div>
       )}
-      {qa && (
-        <>
-          <p className="aviso">QA {ok}/{qa.checagens.length} {qa.aprovado ? 'aprovado' : 'com pendência'}</p>
-          <ul className="qa">{qa.checagens.map((c) => <li key={c.id} data-ok={c.ok} title={c.detalhe || undefined}>{c.ok ? '✓' : '✕'} {NOME_CHECAGEM[c.id] ?? c.id}</li>)}</ul>
-          {qa.checagens.filter((c) => !c.ok && c.bloqueia !== false && c.detalhe).slice(0, 3).map((c) => (
-            <p className="aviso" key={`d-${c.id}`} style={{ overflowWrap: 'anywhere' }}>{NOME_CHECAGEM[c.id] ?? c.id}: {c.detalhe}</p>
-          ))}
-          {qa.checagens.filter((c) => !c.ok && c.bloqueia === false && c.detalhe).slice(0, 4).map((c) => (
-            <p className="aviso" key={`a-${c.id}`} data-teste="qa-aviso" style={{ overflowWrap: 'anywhere' }}>Aviso · {NOME_CHECAGEM[c.id] ?? c.id}: {c.detalhe}</p>
-          ))}
-          {qa.checagens.filter((c) => c.ok && c.id === 'olho_ia' && c.detalhe && /custo US\$/.test(c.detalhe)).map((c) => (
-            <p className="aviso" key="olho" data-teste="qa-olho" style={{ overflowWrap: 'anywhere' }}>Olho de IA: {c.detalhe}</p>
-          ))}
-        </>
-      )}
-      {entregue && v.video && <Cor base={v.video.replace(/\/final\.mp4$/, '')} />}
-      {entregue && v.video && <div id={`cliente-${v.id}`}><LinkCliente pid={pid} versao={v.id} /></div>}
-      {v.reprovacao && <p className="aviso">Reprovada: “{v.reprovacao}”</p>}
+      {qa && <p className="versao__conferencia" data-teste="qa-resumo" data-ok={qa.aprovado ? 'true' : 'false'}>{resumoConferencia(qa)}</p>}
+      {v.reprovacao && <p className="aviso">Ajuste pedido: “{v.reprovacao}”</p>}
       {aprovada && <p className="aprovada" data-teste="aprovada"><span className="claquete claquete--bateu" aria-hidden="true" />Corta! Aprovada por você. Bora postar.</p>}
       {(v.entregas || (aprovada && entregue && clientes)) && (
         <NasEntregas pid={pid} v={v} cliente={cliente} aoMudar={aoMudarEntregas} />
       )}
-      {podeReprovar && (
-        aberto ? (
-          <form className="form" id={`ajuste-${v.id}`} style={{ gap: 8, maxWidth: 'none' }} onSubmit={async (e) => {
-            e.preventDefault();
-            if (motivo.trim().length < 3) return;
-            await aoReprovar(motivo.trim());
-            setAberto(false); setMotivo('');
-          }}>
-            <label className="campo">
-              <span className="campo__rotulo">O que ficou errado? Vira regra da casa.</span>
-              <textarea className="entrada" value={motivo} onChange={(e) => setMotivo(e.target.value)} minLength={3} maxLength={1000} required
-                placeholder="Ex.: a logo do cliente ficou serrilhada na abertura" />
-            </label>
-            <div className="linha-acoes" style={{ marginTop: 0 }}>
-              <button className="botao botao--perigo" type="submit">Pedir ajuste da {v.id.toUpperCase()}</button>
-              <button className="botao botao--fantasma" type="button" onClick={() => setAberto(false)}>Cancelar</button>
-            </div>
-          </form>
-        ) : (
-          <div className="linha-acoes" style={{ marginTop: 0 }}>
-            {entregue && v.video && <a className="botao botao--fantasma botao--pequeno" href={`/api/motor/v1/arquivos/${v.video}`} download data-teste="baixar">Baixar</a>}
-            {v.estado === 'reprovada_qa' && v.video && !seguradaNaTela && (
-              <button className="botao botao--secundario botao--pequeno" type="button" data-teste="assistir-segurada-linha" onClick={aoAssistirSegurada}>
-                Assistir a {v.id.toUpperCase()} segurada
-              </button>
-            )}
-            {entregue && !aprovada && !naBarra && (
-              <button className="botao botao--ok botao--pequeno" type="button" disabled={batendo} onClick={() => void aoAprovar()}>
-                <span className={`claquete${batendo ? ' claquete--bateu' : ''}`} aria-hidden="true" />{batendo ? 'Batendo…' : 'Aprovar'}
-              </button>
-            )}
-            {!aprovada && !naBarra && <button className="botao botao--perigo botao--pequeno" type="button" onClick={() => setAberto(true)}>Reprovar com motivo</button>}
-          </div>
-        )
-      )}
+      <div className="linha-acoes versao__acoes" style={{ marginTop: 0 }}>
+        {temMais && (
+          <button className="botao botao--secundario botao--pequeno" type="button" data-teste="mais-versao" aria-haspopup="dialog" onClick={aoAbrirMais}>
+            Mais da {v.id.toUpperCase()}
+          </button>
+        )}
+        {v.estado === 'reprovada_qa' && v.video && !seguradaNaTela && (
+          <button className="botao botao--secundario botao--pequeno" type="button" data-teste="assistir-segurada-linha" onClick={aoAssistirSegurada}>
+            Assistir a {v.id.toUpperCase()} segurada
+          </button>
+        )}
+        {entregue && !aprovada && !naBarra && (
+          <button className="botao botao--ok botao--pequeno" type="button" disabled={batendo} onClick={() => void aoAprovar()}>
+            <span className={`claquete${batendo ? ' claquete--bateu' : ''}`} aria-hidden="true" />{batendo ? 'Batendo…' : 'Aprovar'}
+          </button>
+        )}
+        {podeReprovar && !aprovada && !naBarra && (
+          <button className="botao botao--secundario botao--pequeno" type="button" data-teste="pedir-ajuste-linha" aria-haspopup="dialog" onClick={aoAbrirAjuste}>Pedir ajuste</button>
+        )}
+      </div>
     </li>
+  );
+}
+
+// As três gavetas da versão, uma de cada por tela (o data-teste fica num lugar só): Pedir ajuste, Mais da versão e
+// Mandar para o cliente. Fechadas, saem do DOM.
+function GavetasDaVersao({ pid, versoes, aprovadas, ajusteDe, aoFecharAjuste, aoPedirAjuste, maisDe, aoFecharMais, aoMandarCliente, clienteDe, aoFecharCliente, erro }: {
+  pid: string; versoes: Versao[]; aprovadas: Record<string, unknown>; erro: string;
+  ajusteDe: string | null; aoFecharAjuste: () => void; aoPedirAjuste: (vid: string, motivo: string, viraRegra: boolean) => Promise<unknown>;
+  maisDe: string | null; aoFecharMais: () => void; aoMandarCliente: (vid: string) => void;
+  clienteDe: string | null; aoFecharCliente: () => void;
+}) {
+  // o conteúdo da gaveta segura a última versão aberta enquanto ela desce (sem piscar vazio)
+  const ultAjuste = useRef<string | null>(null);
+  const ultMais = useRef<string | null>(null);
+  const ultCliente = useRef<string | null>(null);
+  if (ajusteDe) ultAjuste.current = ajusteDe;
+  if (maisDe) ultMais.current = maisDe;
+  if (clienteDe) ultCliente.current = clienteDe;
+  const vAjuste = ultAjuste.current;
+  const vMais = versoes.find((v) => v.id === ultMais.current) ?? null;
+  const vCliente = ultCliente.current;
+  const [motivo, setMotivo] = useState('');
+  const [regra, setRegra] = useState(true);
+  const [indo, setIndo] = useState(false);
+  const [tentou, setTentou] = useState(false);   // o erro da página só aparece na gaveta depois de um toque nela
+  const campoAjuste = useRef<HTMLTextAreaElement>(null);
+  const qa = vMais ? lerQa(vMais.qa) : null;
+  const entregueMais = vMais?.estado === 'entregue' && Boolean(vMais.video);
+  return (
+    <>
+      <Gaveta aberta={Boolean(ajusteDe)} aoMudar={(a) => { if (!a) aoFecharAjuste(); }} teste="gaveta-ajuste" focoInicial={campoAjuste}
+        titulo={`Pedir ajuste da ${(vAjuste ?? '').toUpperCase()}`}
+        aoFechar={() => { setTentou(false); if (!indo) { setMotivo(''); setRegra(true); } }}>
+        <form className="form" id={vAjuste ? `ajuste-${vAjuste}` : undefined} style={{ gap: 16, maxWidth: 'none' }} onSubmit={async (e) => {
+          e.preventDefault();
+          if (!vAjuste || motivo.trim().length < 3 || indo) return;
+          setIndo(true);
+          setTentou(true);
+          try {
+            if (await aoPedirAjuste(vAjuste, motivo.trim(), regra)) { aoFecharAjuste(); setMotivo(''); setRegra(true); }
+          } finally { setIndo(false); }
+        }}>
+          <label className="campo">
+            <span className="campo__rotulo">O que precisa mudar?</span>
+            <textarea className="entrada" ref={campoAjuste} value={motivo} onChange={(e) => setMotivo(e.target.value)} minLength={3} maxLength={1000} required
+              data-teste="ajuste-texto" placeholder="Ex.: a logo do cliente ficou serrilhada na abertura" />
+          </label>
+          <fieldset className="campo" style={{ border: 0, margin: 0, padding: 0 }}>
+            <legend className="campo__rotulo" style={{ marginBottom: 8 }}>Vale para</legend>
+            <div className="opcoes">
+              <label className="opcao"><input type="radio" name="vale" checked={!regra} onChange={() => setRegra(false)} data-teste="ajuste-so-este" /><span>Só neste vídeo</span></label>
+              <label className="opcao"><input type="radio" name="vale" checked={regra} onChange={() => setRegra(true)} data-teste="ajuste-regra" /><span>Vale como regra da casa</span></label>
+            </div>
+          </fieldset>
+          <p className="consequencia" data-teste="ajuste-consequencia">
+            {regra
+              ? <>O editor refaz a direção e monta uma versão nova. <b>O motivo entra no Caderno e vale nos próximos filmes.</b></>
+              : <>O editor refaz a direção e monta uma versão nova <b>só deste projeto</b>. Nada entra no Caderno.</>}
+            {' '}Usa uma direção nova (o custo aparece em Gastos) e leva uns minutos.
+          </p>
+          <div className="linha-acoes">
+            <button className="botao botao--principal" type="submit" disabled={indo || motivo.trim().length < 3} data-teste="ajuste-confirmar">
+              {indo ? 'Pedindo…' : `Pedir ajuste da ${(vAjuste ?? '').toUpperCase()}`}
+            </button>
+            <button className="botao botao--fantasma" type="button" onClick={aoFecharAjuste} data-teste="ajuste-cancelar">Cancelar</button>
+          </div>
+          {motivo.trim().length < 3 && <span className="motivo" data-tipo="status">Falta: <b>escrever o que precisa mudar</b></span>}
+          {tentou && !indo && erro && <p className="erro" role="alert" data-teste="ajuste-erro">{erro}</p>}
+        </form>
+      </Gaveta>
+
+      <Gaveta aberta={Boolean(maisDe)} aoMudar={(a) => { if (!a) aoFecharMais(); }} teste="gaveta-mais-versao"
+        titulo={`Mais da ${(vMais?.id ?? '').toUpperCase()}`}>
+        {vMais && (
+          <>
+            {entregueMais && (
+              <div className="lista-acoes">
+                <a className="botao botao--secundario" href={`/api/motor/v1/arquivos/${vMais.video}`} download data-teste="baixar">Baixar o filme</a>
+                <button className="botao botao--secundario" type="button" data-teste="mais-mandar-cliente" onClick={() => aoMandarCliente(vMais.id)}>
+                  Mandar para o cliente aprovar
+                </button>
+              </div>
+            )}
+            {qa && (
+              <section className="gaveta-secao" aria-label="Conferência em detalhes">
+                <h3>Conferência em detalhes</h3>
+                <p className="aviso">{resumoConferencia(qa)}</p>
+                <ul className="qa">{qa.checagens.map((c) => <li key={c.id} data-ok={c.ok} title={c.detalhe || undefined}>{c.ok ? '✓' : '✕'} {NOME_CHECAGEM[c.id] ?? c.id}</li>)}</ul>
+                {qa.checagens.filter((c) => !c.ok && c.bloqueia !== false && c.detalhe).slice(0, 3).map((c) => (
+                  <p className="aviso" key={`d-${c.id}`} style={{ overflowWrap: 'anywhere' }}>{NOME_CHECAGEM[c.id] ?? c.id}: {c.detalhe}</p>
+                ))}
+                {qa.checagens.filter((c) => !c.ok && c.bloqueia === false && c.detalhe).slice(0, 4).map((c) => (
+                  <p className="aviso" key={`a-${c.id}`} data-teste="qa-aviso" style={{ overflowWrap: 'anywhere' }}>Aviso · {NOME_CHECAGEM[c.id] ?? c.id}: {c.detalhe}</p>
+                ))}
+                {qa.checagens.filter((c) => c.ok && c.id === 'olho_ia' && c.detalhe && /custo US\$/.test(c.detalhe)).map((c) => (
+                  <p className="aviso" key="olho" data-teste="qa-olho" style={{ overflowWrap: 'anywhere' }}>Olho de IA: {c.detalhe}</p>
+                ))}
+              </section>
+            )}
+            {entregueMais && vMais.video && (
+              <section className="gaveta-secao" aria-label="Cor, antes e depois">
+                <Cor base={vMais.video.replace(/\/final\.mp4$/, '')} />
+              </section>
+            )}
+            {Boolean(aprovadas[vMais.id]) && <p className="aprovada" style={{ margin: 0 }}>Aprovada por você.</p>}
+          </>
+        )}
+      </Gaveta>
+
+      {/* fica montada depois de aberta: o link novo aparece uma vez só e não pode sumir ao fechar a gaveta */}
+      <Gaveta aberta={Boolean(clienteDe)} aoMudar={(a) => { if (!a) aoFecharCliente(); }} teste="gaveta-cliente" manterMontada
+        titulo="Mandar para o cliente" descricao="O cliente abre no celular, assiste e aprova ou pede ajuste, sem senha. A resposta aparece aqui e no Caderno.">
+        {vCliente && <div id={`cliente-${vCliente}`}><LinkCliente pid={pid} versao={vCliente} /></div>}
+      </Gaveta>
+    </>
   );
 }
 

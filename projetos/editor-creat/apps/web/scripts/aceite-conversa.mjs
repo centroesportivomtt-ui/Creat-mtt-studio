@@ -462,7 +462,7 @@ export async function aceiteConversa({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
 
     // chave no menu Mais: desligar → a barra vira "Conversa desligada · Ligar" → ligar de novo
     await A.goto(`${BASE}/projetos/${pidAudio}`);
-    await A.click('.nav__mais > summary');
+    await A.click('[data-teste=nav-mais]');
     await A.waitForSelector('[data-teste=chave-conversa-menu][aria-checked=true]', { timeout: 8000 });
     await print(A, '22-menu-chave', 'escuro');
     await A.click('[data-teste=chave-conversa-menu]');
@@ -476,7 +476,7 @@ export async function aceiteConversa({ BASE, MOTOR, TOKEN, SENHA, DADOS, ok }) {
     await B.goto(`${BASE}/projetos/${pidAudio}`);
     await B.waitForSelector('[data-teste=conversa-ligar]', { timeout: 10000 });
     await print(B, '23-desligada', 'claro');
-    await B.click('.nav__mais > summary');
+    await B.click('[data-teste=nav-mais]');
     await B.waitForSelector('[data-teste=chave-conversa-menu]', { timeout: 8000 });
     await print(B, '22-menu-chave', 'claro');
     await B.keyboard.press('Escape');

@@ -535,3 +535,11 @@ Conclusão:
 - Única ação barata: conferir se o nosso CAM++ tem o defeito de pooling que o sherpa-onnx corrigiu em 19/11.
 - Rosto (item 4) é função nova, não troca: YuNet (detecção) + SFace (reconhecimento), ambos pelo OpenCV, licença MIT e Apache-2.0.
 - Não deu para confirmar: licença do pyannote community-1, modelo e licença dos Parakeet Ultra/Redux, tamanho em MB do YuNet e do SFace, e qualquer ganho de OCR em português.
+
+## Componentes de interface do editor (27/11/2026, redesenho "Mesa de corte", onda 2)
+| função | escolha | por quê | fonte |
+|---|---|---|---|
+| Gaveta (bottom sheet) | Base UI `@base-ui/react` 1.9.0 (MIT), só o Drawer | gesto de arrastar para fechar, foco preso e Esc prontos, sem estilo próprio (usa os tokens da casa). O Vaul, que era a referência, está sem manutenção desde 12/2024 ("This repo is unmaintained") | https://base-ui.com/react/components/drawer · https://github.com/emilkowalski/vaul · `npm view @base-ui/react` |
+| Avisos (toasts) | sonner 2.0.8 (MIT) | empilha, arrasta no celular, pouco código; o Base UI também tem Toast, que fica como troca possível para zerar uma dependência | `npm view sonner` |
+
+Fonte de verdade do desenho: `projetos/editor-creat/docs/design-editor-25-11.md`, seção (e).

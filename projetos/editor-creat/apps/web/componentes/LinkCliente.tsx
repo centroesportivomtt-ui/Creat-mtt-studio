@@ -1,11 +1,14 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { dataCurta, type LinkCliente as TLink } from '@/lib/cliente';
+import { avisar } from './Avisos';
 
 const DIAS = [3, 7, 15, 30];
 
 // Na versão entregue: o dono gera um link exclusivo para o cliente aprovar ou pedir ajuste. O link aparece uma vez só
 // (o motor guarda só a impressão digital dele); gerar outro desliga o anterior.
+// Onda 2: mora na gaveta "Mandar para o cliente". O principal é "Mandar no WhatsApp"; Copiar é secundário e avisa;
+// "Desligar" é só texto de perigo, nunca do tamanho do principal.
 export default function LinkCliente({ pid, versao }: { pid: string; versao: string }) {
   const [links, setLinks] = useState<TLink[]>([]);
   const [novo, setNovo] = useState<{ url: string; expira: string } | null>(null);
@@ -38,7 +41,7 @@ export default function LinkCliente({ pid, versao }: { pid: string; versao: stri
   }
   async function copiar() {
     if (!novo) return;
-    try { await navigator.clipboard.writeText(novo.url); setCopiado(true); } catch { setErro('Não deu para copiar sozinho: toque e segure o link acima para copiar.'); }
+    try { await navigator.clipboard.writeText(novo.url); setCopiado(true); avisar.ok('Link copiado'); } catch { setErro('Não deu para copiar sozinho: toque e segure o link acima para copiar.'); }
   }
   const ativo = links.find((l) => l.ativo);
   const respondidos = links.filter((l) => l.resposta);
@@ -46,14 +49,13 @@ export default function LinkCliente({ pid, versao }: { pid: string; versao: stri
 
   return (
     <div className="link-cliente" data-teste="link-cliente">
-      <strong style={{ fontSize: 14 }}>Link para o cliente aprovar</strong>
       {novo && (
         <>
           <p className="link-cliente__url" data-teste="link-cliente-url">{novo.url}</p>
-          <p className="aviso">Copie agora: por segurança ele não aparece de novo. Vale até {dataCurta(novo.expira)}.</p>
+          <p className="aviso">Por segurança, o link aparece só agora. Vale até {dataCurta(novo.expira)}.</p>
           <div className="linha-acoes" style={{ marginTop: 0 }}>
-            <button className="botao botao--principal botao--pequeno" type="button" onClick={copiar} data-teste="link-cliente-copiar">{copiado ? 'Copiado ✓' : 'Copiar link'}</button>
-            <a className="botao botao--fantasma botao--pequeno" href={zap} target="_blank" rel="noopener noreferrer">Mandar no WhatsApp</a>
+            <a className="botao botao--principal" href={zap} target="_blank" rel="noopener noreferrer" data-teste="link-cliente-zap">Mandar no WhatsApp</a>
+            <button className="botao botao--secundario" type="button" onClick={copiar} data-teste="link-cliente-copiar">{copiado ? 'Copiado ✓' : 'Copiar link'}</button>
           </div>
         </>
       )}
@@ -70,23 +72,23 @@ export default function LinkCliente({ pid, versao }: { pid: string; versao: stri
         </p>
       ))}
       {respondidos.some((l) => l.resposta === 'ajuste') && (
-        <p className="aviso">Para virar correção, use “Reprovar com motivo” com o que vale para a casa. O pedido do cliente sozinho não vira regra.</p>
+        <p className="aviso">Para virar correção, use “Pedir ajuste” com o que vale para a casa. O pedido do cliente sozinho não vira regra.</p>
       )}
-      <div className="linha-acoes" style={{ marginTop: 0, alignItems: 'center' }}>
-        <label className="aviso" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          Validade
-          <select className="entrada" style={{ minHeight: 44, width: 'auto' }} value={dias} onChange={(e) => setDias(Number(e.target.value))} aria-label="Validade do link">
+      <div className="link-cliente__gerar">
+        <label className="campo" style={{ gap: 4 }}>
+          <span className="campo__rotulo">Validade do link</span>
+          <select className="entrada" value={dias} onChange={(e) => setDias(Number(e.target.value))} aria-label="Validade do link">
             {DIAS.map((d) => <option key={d} value={d}>{d} dias</option>)}
           </select>
         </label>
-        <button className="botao botao--fantasma botao--pequeno" type="button" disabled={indo} onClick={gerar} data-teste="link-cliente-gerar">
-          {ativo || novo ? 'Gerar outro (desliga o atual)' : 'Gerar link'}
+        <button className={`botao ${ativo || novo ? 'botao--secundario' : 'botao--principal'}`} type="button" disabled={indo} onClick={gerar} data-teste="link-cliente-gerar">
+          {indo ? 'Gerando…' : ativo || novo ? 'Gerar outro (desliga o atual)' : 'Gerar o link'}
         </button>
-        {ativo && (
-          <button className="botao botao--perigo botao--pequeno" type="button" disabled={indo} data-teste="link-cliente-desligar"
-            onClick={async () => { if (await postar(`/api/motor/v1/clientes/${ativo.id}/revogar`)) { setNovo(null); carregar(); } }}>Desligar</button>
-        )}
       </div>
+      {ativo && (
+        <button className="botao botao--perigo botao--pequeno" type="button" disabled={indo} data-teste="link-cliente-desligar" style={{ justifySelf: 'start' }}
+          onClick={async () => { if (await postar(`/api/motor/v1/clientes/${ativo.id}/revogar`)) { setNovo(null); carregar(); avisar.info('Link desligado: a página do cliente fechou.'); } }}>Desligar o link</button>
+      )}
       {erro && <p className="erro" role="alert" style={{ overflowWrap: 'anywhere' }}>{erro}</p>}
     </div>
   );

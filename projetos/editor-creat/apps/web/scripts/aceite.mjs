@@ -328,6 +328,24 @@ async function principal() {
   ok('player toca a versão (Range pelo proxy)', !player.erro && player.tempo >= 1 && player.largura > 0, JSON.stringify(player));
   const r206 = await page.evaluate(async (src) => (await fetch(src, { headers: { range: 'bytes=0-1023' } })).status, await page.getAttribute('[data-teste=player]', 'src'));
   ok('Range responde 206 pelo proxy', r206 === 206, `status ${r206}`);
+  // onda 2: "Pedir ajuste" abre a gaveta (texto, só neste vídeo ou regra, consequência) e Cancelar fecha sem pedir nada
+  {
+    const posts = [];
+    const ouvir = (r) => { if (r.method() === 'POST' && /\/reprovar$/.test(r.url())) posts.push(r.url()); };
+    page.on('request', ouvir);
+    await page.click('[data-teste=pedir-ajuste-barra]');
+    const abriu = await page.waitForSelector('[data-teste=gaveta-ajuste] [data-teste=ajuste-texto]', { timeout: 8000 }).then(() => true, () => false);
+    const regraAntes = (await page.textContent('[data-teste=ajuste-consequencia]').catch(() => '')) ?? '';
+    await page.click('[data-teste=gaveta-ajuste] label:has([data-teste=ajuste-so-este])');
+    const soEste = (await page.textContent('[data-teste=ajuste-consequencia]').catch(() => '')) ?? '';
+    const confirmaApagado = await page.isDisabled('[data-teste=ajuste-confirmar]');
+    await page.screenshot({ path: path.join(PRINTS, 'onda2-gaveta-ajuste.png') });
+    await page.click('[data-teste=ajuste-cancelar]');
+    const fechou = await page.waitForSelector('[data-teste=gaveta-ajuste]', { state: 'detached', timeout: 5000 }).then(() => true, () => false);
+    page.off('request', ouvir);
+    ok('onda 2: "Pedir ajuste" abre a gaveta com a consequência (regra ou só neste vídeo) e Cancelar fecha sem pedir', abriu && /Caderno/.test(regraAntes)
+      && /só deste projeto/.test(soEste) && confirmaApagado && fechou && posts.length === 0, JSON.stringify({ abriu, regraAntes: regraAntes.slice(0, 60), soEste: soEste.slice(0, 60), confirmaApagado, fechou, posts }));
+  }
   // Cloudflare desligado (motor sem R2_ENTREGAS_* e sem espelho): nada novo na tela e o aprovar vai exatamente como antes
   const novosAntes = await page.locator('[data-teste=entregas-cliente], [data-teste=entregas-barra], [data-teste=selo-nuvem], [data-teste=nuvem-resumo]').count();
   const corpoAprovar = page.waitForRequest((r) => r.method() === 'POST' && /\/versoes\/[^/]+\/aprovar$/.test(r.url()), { timeout: 10000 }).then((r) => r.postData()).catch(() => null);
@@ -341,10 +359,22 @@ async function principal() {
     JSON.stringify({ novosAntes, novosDepois, corpoAprov }));
 
   // ---------- link de aprovação do cliente (página pública, sem sessão) ----------
+  // onda 2: o aviso "V1 aprovada. Corta!" sobe acima da barra, e o link mora na gaveta "Mandar para o cliente"
+  const toastAprov = await page.waitForSelector('[data-sonner-toast] >> text=aprovada. Corta!', { timeout: 6000 }).then(() => true, () => false);
+  await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE }).catch(() => {});
+  await page.click('[data-teste=mandar-cliente-barra]', { timeout: 10000 });
+  await page.waitForSelector('[data-teste=gaveta-cliente] [data-teste=link-cliente-gerar]', { timeout: 8000 });
   await page.click('[data-teste=link-cliente-gerar]');
   const urlCliente = (await page.locator('[data-teste=link-cliente-url]').textContent({ timeout: 10000 }).catch(() => '')) ?? '';
   const tokCliente = /\/c\/([A-Za-z0-9_-]{43})$/.exec(urlCliente.trim())?.[1] ?? '';
   ok('link do cliente: o dono gera e o link aparece uma vez', Boolean(tokCliente), urlCliente.trim().replace(/[A-Za-z0-9_-]{43}$/, '<token>'));
+  {
+    const zapPrincipal = await page.locator('[data-teste=link-cliente-zap]').evaluate((a) => a.classList.contains('botao--principal')).catch(() => false);
+    await page.click('[data-teste=link-cliente-copiar]');
+    const toastCopiou = await page.waitForSelector('[data-sonner-toast] >> text=Link copiado', { timeout: 6000 }).then(() => true, () => false);
+    await page.screenshot({ path: path.join(PRINTS, 'onda2-gaveta-cliente.png') });
+    ok('onda 2: avisos "V1 aprovada. Corta!" e "Link copiado"; na gaveta do cliente o principal é o WhatsApp', toastAprov && toastCopiou && zapPrincipal, JSON.stringify({ toastAprov, toastCopiou, zapPrincipal }));
+  }
   const cctx = await navegador.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'pt-BR' });
   const cp = await cctx.newPage();
   const errosCli = [];
@@ -383,6 +413,7 @@ async function principal() {
   ok('cliente pede ajuste uma vez só; link falso não abre nada', enviouCli && ficouCli && falso && errosCli.length === 0, JSON.stringify({ enviouCli, ficouCli, falso, errosCli: errosCli.slice(0, 2) }));
   await cctx.close();
   const viuNoProjeto = await page.waitForSelector('[data-teste=link-cliente-resposta] >> text=música do final', { timeout: 20000 }).then(() => true).catch(() => false);
+  await page.keyboard.press('Escape');
   await page.goto(`${BASE}/caderno#clientes`);
   const noCaderno = await page.waitForSelector('[data-teste=pedidos-cliente] >> text=música do final', { timeout: 10000 }).then(() => true).catch(() => false);
   await page.click('[data-teste=pedido-tratar]').catch(() => {});
@@ -390,11 +421,17 @@ async function principal() {
   ok('resposta do cliente chega ao projeto e ao Caderno (o dono marca como resolvido)', viuNoProjeto && noCaderno && tratou, JSON.stringify({ viuNoProjeto, noCaderno, tratou }));
   await page.goto(`${BASE}/projetos/${pid}`);
   await page.waitForSelector('[data-teste=player]', { timeout: 10000 });
+  await page.click('[data-teste=mandar-cliente-barra]');
   await page.click('[data-teste=link-cliente-desligar]');
   await page.waitForSelector('[data-teste=link-cliente-desligar]', { state: 'detached', timeout: 10000 }).catch(() => {});
   const fechou = await fetch(`${BASE}/c/${tokCliente}`).then(async (r) => /Link fechado/.test(await r.text()));
   const videoFechado = await fetch(`${BASE}/api/cliente/${tokCliente}/video`).then((r) => r.status);
   ok('o dono desliga o link e a página do cliente fecha (vídeo também)', fechou && videoFechado === 410, JSON.stringify({ fechou, videoFechado }));
+  // onda 2: conferência em detalhes e cor moram na gaveta "Mais da versão"
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('[data-teste=gaveta-cliente]', { state: 'hidden', timeout: 5000 }).catch(() => {});
+  await page.click('[data-versao] [data-teste=mais-versao]');
+  await page.waitForSelector('[data-teste=gaveta-mais-versao]', { timeout: 8000 }).catch(() => {});
   const avisoQa = await page.locator('[data-teste=qa-aviso]').first().textContent().catch(() => null);
   const olhoQa = await page.locator('[data-teste=qa-olho]').first().textContent().catch(() => null);
   ok('QA mostra os avisos (checagem em observação) e o olho de IA com o custo', /voz de fora/.test(avisoQa ?? '') && /custo US\$/.test(olhoQa ?? ''), `${avisoQa ?? 'sem aviso'} | ${olhoQa ?? 'sem olho'}`.slice(0, 200));
