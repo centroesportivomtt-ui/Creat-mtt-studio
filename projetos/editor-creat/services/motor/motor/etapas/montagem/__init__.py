@@ -70,7 +70,8 @@ def montar(edl: dict, trabalho: pathlib.Path, fontes: Fontes, cfg, *, janela: tu
     trabalho.mkdir(parents=True, exist_ok=True)
     nice = int(getattr(cfg, "nice", 5) or 0)
     workers_ov = max(1, int(getattr(cfg, "render_workers", 3) or 3))
-    workers_pl = max(1, min(3, (os.cpu_count() or 4) // 2))
+    # planos em paralelo: EDITOR_PLANOS_WORKERS manda (com mais memória no servidor, sobe junto); sem ela, até 3
+    workers_pl = max(1, int(os.environ.get("EDITOR_PLANOS_WORKERS") or min(3, (os.cpu_count() or 4) // 2)))
     cache_planos = cache_planos or (pathlib.Path(cfg.dados) / "cache" / "planos")
     tempos: dict = {}
     prog = progresso or (lambda p, m=None: None)
@@ -304,6 +305,31 @@ def limpar_versoes_antigas(dados, p: str, v: str) -> int:
     return apagado
 
 
+PESADOS_DA_VERSAO = ("mix.wav", "stems/")   # o filme, a direção, a conferência e a cor de cada versão ficam
+
+
+def limpar_saidas_substituidas(con, arm, p: str, v: str) -> int:
+    """Versão substituída (nem entregue, nem aprovada, nem a que vai montar agora) perde a mixagem e os stems no
+    armazenamento: só a conferência DESSA versão os ouvia. O filme fica para o dono assistir à segurada."""
+    if arm is None or not hasattr(arm, "listar"):
+        return 0
+    r = con.execute("SELECT dados FROM projetos WHERE id=?", (p,)).fetchone()
+    aprovadas = set((json.loads(r["dados"] or "{}").get("aprovadas") or {}) if r else ())
+    apagado = 0
+    for linha in con.execute("SELECT id, estado FROM versoes WHERE projeto=?", (p,)).fetchall():
+        if linha["id"] == v or linha["estado"] == "entregue" or linha["id"] in aprovadas:
+            continue
+        base = f"saidas/{p}/{linha['id']}/"
+        for chave in list(arm.listar(base)):
+            if any(chave[len(base):].startswith(x) for x in PESADOS_DA_VERSAO):
+                try:
+                    apagado += arm.tamanho(chave)
+                    arm.apagar(chave)
+                except Exception:  # noqa: BLE001 - limpeza nunca derruba a montagem
+                    pass
+    return apagado
+
+
 def limite_cache_planos_mb(dados) -> int:
     """Teto do cache de planos: o da variável (1200 MB) e no máximo 15% do disco (volume de 5 GB -> 750 MB)."""
     teto = int(os.environ.get("EDITOR_CACHE_PLANOS_MB", "1200"))
@@ -321,6 +347,10 @@ def etapa_montagem(ctx) -> dict:
     if arm is None:
         raise ErroDefinitivo("armazenamento indisponível")
     limpar_versoes_antigas(ctx.cfg.dados, p, v)
+    try:
+        limpar_saidas_substituidas(ctx.con, arm, p, v)
+    except Exception:  # noqa: BLE001 - a limpeza nunca derruba a montagem (banco antigo, armazenamento sem listagem)
+        pass
     PL.limpar_cache(pathlib.Path(ctx.cfg.dados) / "cache" / "planos", limite_cache_planos_mb(ctx.cfg.dados))
     chave_edl = f"saidas/{p}/{v}/edl.json"
     if not arm.existe(chave_edl):
