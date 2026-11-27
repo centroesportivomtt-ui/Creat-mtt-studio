@@ -1,0 +1,179 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Painel de Criativos Elite Draco</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra fixa com abas (app) + cartões de cena em linha do tempo; modo gravação = falas em letra grande */
+:root{--bg:#EEF0F2;--surface:#FFFFFF;--ink:#14181F;--muted:#5B6573;--line:#D5DAE0;--accent:#C4122F;--accent-ink:#FFFFFF;--soft:#F7E3E6;--ok:#1F7A4D;
+--display:'Barlow Condensed','Arial Narrow',Impact,sans-serif;--body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1116;--surface:#171B22;--ink:#EDEFF2;--muted:#9AA4B2;--line:#2A303A;--accent:#F0405A;--accent-ink:#14181F;--soft:#2A1A1F;--ok:#4CC38A;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E1116;--surface:#171B22;--ink:#EDEFF2;--muted:#9AA4B2;--line:#2A303A;--accent:#F0405A;--accent-ink:#14181F;--soft:#2A1A1F;--ok:#4CC38A;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:860px;margin:0 auto}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);padding-block:12px 0;border-bottom:1px solid var(--line);margin-inline:-16px;padding-inline:16px}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand b{font:800 28px/1 var(--display);letter-spacing:.04em;text-transform:uppercase}
+.brand span{font:600 13px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+nav{display:flex;gap:4px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+nav button{flex:0 0 auto;border:0;background:none;color:var(--muted);font:700 17px var(--display);letter-spacing:.05em;text-transform:uppercase;padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer}
+nav button[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{padding-top:20px}
+h1{font:800 clamp(34px,7vw,52px)/1 var(--display);text-transform:uppercase;margin:0 0 8px;text-wrap:balance}
+h2{font:700 24px/1.1 var(--display);text-transform:uppercase;letter-spacing:.03em;margin:28px 0 10px}
+p{margin:0 0 10px}
+.lead{color:var(--muted);max-width:62ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 18px}
+.chip{border:1px solid var(--line);background:var(--surface);padding:4px 10px;font:600 13px var(--body);color:var(--muted)}
+.chip b{color:var(--ink)}
+.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;background:var(--surface);border:1px solid var(--line);padding:14px;margin:16px 0}
+.cfg label{font:600 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+.cfg input{width:100%;font:500 16px var(--body);padding:9px 10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px}
+.btn{border:1px solid var(--ink);background:none;color:var(--ink);font:700 15px var(--display);letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.scene{display:grid;grid-template-columns:78px 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);margin-bottom:10px;padding:14px}
+.t{font:800 22px/1 var(--display);color:var(--accent);font-variant-numeric:tabular-nums}
+.t small{display:block;font:600 11px var(--body);letter-spacing:.1em;color:var(--muted);margin-top:4px;text-transform:uppercase}
+.scene h3{font:700 19px/1.1 var(--display);text-transform:uppercase;margin:0 0 8px;letter-spacing:.03em}
+.row{display:grid;grid-template-columns:92px 1fr;gap:8px;padding:6px 0;border-top:1px dashed var(--line);min-width:0}
+.row i{font:600 11px/1.9 var(--body);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.row div{min-width:0;overflow-wrap:anywhere}
+.fala{font-weight:600;font-size:17px}
+.fala::before{content:"“"}.fala::after{content:"”"}
+.tela b{background:var(--soft);padding:1px 7px;font-family:var(--display);font-size:17px;letter-spacing:.04em;text-transform:uppercase}
+.card{background:var(--surface);border:1px solid var(--line);padding:16px;margin-bottom:12px}
+.card h3{font:700 20px var(--display);text-transform:uppercase;margin:0 0 6px}
+ul{margin:0;padding-left:20px}li{margin:4px 0}
+.chk{list-style:none;padding:0}.chk li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}
+.chk input{width:20px;height:20px;margin-top:3px;accent-color:var(--accent);flex:none}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.dica{background:var(--soft);padding:12px 14px;margin:14px 0;border-left:4px solid var(--accent)}
+body.rec .row:not(.rfala),body.rec .scene h3,body.rec .chips,body.rec .dica,body.rec .cfg{display:none}
+body.rec .scene{grid-template-columns:1fr;padding:18px}
+body.rec .rfala{border:0;display:block}body.rec .rfala i{display:none}
+body.rec .fala{font:700 clamp(26px,6.5vw,40px)/1.2 var(--body)}
+@media (max-width:520px){.scene{grid-template-columns:1fr}.t small{display:inline;margin-left:8px}.row{grid-template-columns:1fr;gap:0}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="brand"><b>Elite Draco</b><span>Painel de criativos</span></div>
+  <nav id="nav" role="tablist"></nav>
+</header>
+<main id="view"></main>
+</div>
+
+<script>
+const S=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
+const cfg={oferta:S('ed_oferta')||'uma aula experimental gratuita',contato:S('ed_contato')||'WhatsApp que está no botão'};
+const fill=s=>s.replaceAll('{oferta}',cfg.oferta).replaceAll('{contato}',cfg.contato);
+
+const CRIATIVOS=[
+{id:'convite',aba:'1 · Convite direto',titulo:'Convite direto',obj:'Gerar contatos (oferta)',dur:'35–40 s',dif:'Fácil',quem:'Dono ou professor falando para a câmera',
+resumo:'Uma pessoa, uma câmera, uma oferta. Vai direto na dor de quem já tentou e parou, mostra o acompanhamento de perto e convida para testar.',
+cenas:[
+{t:'0–3',n:'Gancho',filma:'Close no rosto, câmera na altura dos olhos, no meio da academia com equipamentos ao fundo.',fala:'Já começou academia três vezes e parou nas três? Então esse vídeo é pra você.',tela:'COMEÇOU E PAROU?'},
+{t:'3–12',n:'Problema',filma:'Mesmo plano. Corte rápido para B-roll de alguém treinando sozinho, olhando em volta sem saber o que fazer.',fala:'Quase sempre não é falta de vontade. É treino sem direção e ninguém te acompanhando.',tela:'SEM DIREÇÃO = SEM RESULTADO'},
+{t:'12–25',n:'Solução',filma:'B-roll: professor ajustando a postura de um aluno, mostrando o treino na ficha ou no celular, aluno sorrindo.',fala:'Na Elite Draco o professor monta o seu treino, corrige a sua execução e acompanha a sua evolução de perto.',tela:'TREINO MONTADO PRA VOCÊ'},
+{t:'25–32',n:'Oferta',filma:'Volta para você na câmera. Aponte com a mão para baixo (onde ficará o botão).',fala:'E pra você testar sem compromisso, a gente oferece {oferta}.',tela:'{OFERTA}'},
+{t:'32–38',n:'Chamada para ação',filma:'Plano fechado, sorriso, aceno com a cabeça. Logo da academia ao fundo se possível.',fala:'Clica no botão, chama no {contato} e agenda o seu horário. Elite Draco. Treino de verdade.',tela:'CLIQUE E AGENDE'}
+],
+dica:'Grave em uma só tomada, 3 vezes seguidas, e escolha a melhor. Fale como se estivesse convidando um amigo, sem decorar palavra por palavra.'},
+
+{id:'depoimento',aba:'2 · Depoimento do aluno',titulo:'Depoimento do aluno',obj:'Prova social (confiança)',dur:'40–50 s',dif:'Médio',quem:'Aluno real + professor no final',
+resumo:'Um aluno conta a própria história com as suas palavras. Você só faz as perguntas. É o criativo que mais gera confiança, porque quem fala não é a academia.',
+cenas:[
+{t:'0–4',n:'Gancho',filma:'Aluno em close, equipamento ao fundo, olhando um pouco ao lado da câmera (para quem entrevista).',fala:'Eu já tinha desistido de academia. Hoje não consigo ficar sem.',tela:'ELE JÁ TINHA DESISTIDO'},
+{t:'4–16',n:'Antes',filma:'Pergunta feita por você fora da câmera: “Como era antes?”. Corte para B-roll do aluno chegando ou se preparando.',fala:'Resposta livre do aluno. Guia: o que o travava (falta de tempo, vergonha, não saber treinar) e há quanto tempo estava parado.',tela:'{NOME}, {TEMPO} NA ELITE DRACO'},
+{t:'16–32',n:'Mudança',filma:'Pergunta: “O que mudou aqui?”. B-roll do aluno treinando, professor ajudando, ambiente.',fala:'Resposta livre. Guia: o que ele mais gosta (acompanhamento, ambiente, horários) e um resultado que ele sente ou vê.',tela:'palavra-chave que o aluno falar'},
+{t:'32–40',n:'Recomendação',filma:'Aluno de novo em close, sorrindo.',fala:'Se você está pensando em voltar a treinar, vem conhecer. Vale a pena.',tela:'RECOMENDO'},
+{t:'40–48',n:'Chamada para ação',filma:'Você (professor ou dono) ao lado do aluno, os dois na câmera.',fala:'Quer ter o mesmo resultado? Aproveita {oferta}. Chama no {contato}.',tela:'{OFERTA}'}
+],
+dica:'Escolha um aluno animado e que treine em horário calmo. Peça autorização por escrito para usar imagem e nome. Não dê a fala pronta para o aluno: ele vai falar melhor com suas próprias palavras.'},
+
+{id:'erros',aba:'3 · 3 erros que travam',titulo:'3 erros que travam seu resultado',obj:'Autoridade + contatos',dur:'45–55 s',dif:'Fácil',quem:'Professor ensinando',
+resumo:'Conteúdo útil que mostra que a Elite Draco sabe o que faz. A pessoa aprende algo em 40 segundos e, no final, recebe o convite.',
+cenas:[
+{t:'0–4',n:'Gancho',filma:'Professor em plano médio, de frente, com a academia ao fundo.',fala:'Três erros que fazem você treinar meses e não ver resultado.',tela:'3 ERROS QUE TRAVAM SEU RESULTADO'},
+{t:'4–17',n:'Erro 1',filma:'Professor mostra no aparelho. B-roll: aluno trocando de treino toda semana, olhando o celular.',fala:'Erro um: trocar de treino toda hora. O corpo precisa de tempo e de progressão pra responder.',tela:'1 · TROCAR DE TREINO TODA HORA'},
+{t:'17–30',n:'Erro 2',filma:'Demonstre o movimento errado e depois o certo, no mesmo exercício (por exemplo agachamento ou supino).',fala:'Erro dois: carga sem técnica. Peso demais com execução errada rende pouco e ainda pode machucar.',tela:'2 · CARGA SEM TÉCNICA'},
+{t:'30–42',n:'Erro 3',filma:'Professor em plano médio. B-roll: calendário ou aluno entrando na academia.',fala:'Erro três: treinar de vez em quando. Resultado vem de constância, e é mais fácil ser constante com alguém te acompanhando.',tela:'3 · FALTA DE CONSTÂNCIA'},
+{t:'42–52',n:'Chamada para ação',filma:'Plano médio, apontando para baixo.',fala:'Quer que a gente monte o seu treino do jeito certo? Pega {oferta}. Chama no {contato}.',tela:'{OFERTA}'}
+],
+dica:'Mostre cada erro fazendo, não só falando. O olho prende no movimento. Se errar uma palavra, continue: a naturalidade vende mais que a perfeição.'}
+];
+
+const ESTUDO=[
+['Gancho em até 3 segundos','Quem rola o feed decide em 2 a 3 segundos. Os 3 vídeos abrem com uma pergunta ou afirmação forte e texto grande na tela.'],
+['Vertical 9:16, legenda sempre','A maioria assiste sem som. Cada fala também aparece como texto, e o vídeo precisa funcionar mudo.'],
+['Uma pessoa real fala','Rosto de professor ou aluno da própria academia converte mais que imagem genérica. É o que o concorrente não consegue copiar.'],
+['Uma oferta, uma ação','Cada vídeo termina com um único convite (aula experimental, WhatsApp). Mais de uma opção diminui o clique.'],
+['Corte a cada 2 a 3 segundos','Alterne câmera falando e B-roll (treino, aparelhos, aluno sorrindo). Mantém o ritmo sem precisar de edição pesada.'],
+['Teste dos três','Rode os 3 com o mesmo orçamento por 5 a 7 dias. Compare custo por contato e mantenha o melhor. Depois grave variações dele.']
+];
+
+const CHECK={'Antes de gravar':['Limpar a lente do celular','Celular na vertical, 1080p, 30 fps, trava de foco e exposição','Horário calmo na academia, sem música alta no ambiente','Luz de frente para o rosto (janela ou luz do teto), nunca atrás','Abrir o painel no modo gravação e ler as falas em voz alta uma vez'],
+'Durante a gravação':['Apoiar o celular em tripé ou apoio firme','Gravar cada cena 2 a 3 vezes','Gravar B-roll extra: 10 s de cada aparelho, pesos, alunos treinando (com autorização)','Falar um pouco mais devagar e sorrir no começo e no fim'],
+'Edição (CapCut ou similar)':['Legendas automáticas, conferir erros de português','Texto de tela da coluna “Texto na tela”','Música baixa, só para dar ritmo, volume em 10 a 15%','Exportar em 1080×1920, máximo 60 s','Colocar logo da Elite Draco pequena no canto']};
+
+function copyText(txt,btn){const done=()=>{const o=btn.textContent;btn.textContent='Copiado';setTimeout(()=>btn.textContent=o,1500)};
+ (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(done).catch(()=>{const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){}a.remove()})}
+
+const nav=document.getElementById('nav'),view=document.getElementById('view');
+const TABS=[{id:'inicio',aba:'Início'},...CRIATIVOS,{id:'checklist',aba:'Checklist'}];
+nav.innerHTML=TABS.map(t=>`<button role="tab" data-id="${t.id}">${t.aba}</button>`).join('');
+nav.onclick=e=>{const b=e.target.closest('button');if(b)location.hash=b.dataset.id};
+
+function cfgBox(){return `<div class="cfg"><div><label for="of">Oferta (entra nas falas)</label><input id="of" value="${cfg.oferta.replace(/"/g,'&quot;')}"></div><div><label for="ct">Contato</label><input id="ct" value="${cfg.contato.replace(/"/g,'&quot;')}"></div></div>`}
+
+function renderInicio(){
+ view.innerHTML=`<h1>3 vídeos para gravar hoje</h1>
+ <p class="lead">Cada criativo tem o roteiro cena a cena: o que filmar, o que falar e o texto na tela. Escolha um, abra a aba, ligue o <b>Modo gravação</b> e leia as falas direto do celular.</p>
+ ${cfgBox()}
+ <div class="grid3">${CRIATIVOS.map(c=>`<div class="card"><h3>${c.titulo}</h3><p style="color:var(--muted)">${c.resumo}</p><div class="chips" style="margin:8px 0 12px"><span class="chip"><b>${c.dur}</b></span><span class="chip">${c.dif}</span></div><button class="btn pri" data-go="${c.id}">Abrir roteiro</button></div>`).join('')}</div>
+ <h2>Estudo: o que funciona em vídeo de academia</h2>
+ <p class="lead">Resumo das práticas mais usadas em anúncios curtos de academia e fitness (Reels, TikTok, Stories). É uma síntese de padrões conhecidos, não uma medição dos seus números. Os resultados reais saem do seu teste.</p>
+ <div class="grid3">${ESTUDO.map(([a,b])=>`<div class="card"><h3>${a}</h3><p style="margin:0;color:var(--muted)">${b}</p></div>`).join('')}</div>`;
+ bindCfg();view.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>location.hash=b.dataset.go);
+}
+function bindCfg(){const o=document.getElementById('of'),c=document.getElementById('ct');if(o)o.oninput=()=>{cfg.oferta=o.value;S('ed_oferta',o.value)};if(c)c.oninput=()=>{cfg.contato=c.value;S('ed_contato',c.value)}}
+
+function renderCriativo(c){
+ const falas=()=>c.cenas.map(s=>`[${s.t}s] ${fill(s.fala)}`).join('\n');
+ view.innerHTML=`<h1>${c.titulo}</h1><p class="lead">${c.resumo}</p>
+ <div class="chips"><span class="chip">Objetivo <b>${c.obj}</b></span><span class="chip">Duração <b>${c.dur}</b></span><span class="chip">Dificuldade <b>${c.dif}</b></span><span class="chip">Quem grava <b>${c.quem}</b></span></div>
+ ${cfgBox()}
+ <div class="bar"><button class="btn pri" id="rec">Modo gravação</button><button class="btn" id="cp">Copiar falas</button></div>
+ <div id="cenas"></div>
+ <div class="dica"><b>Dica:</b> ${c.dica}</div>`;
+ const draw=()=>{document.getElementById('cenas').innerHTML=c.cenas.map(s=>`<section class="scene"><div class="t">${s.t}<small>segundos</small></div><div><h3>${s.n}</h3>
+  <div class="row"><i>Filmar</i><div>${s.filma}</div></div>
+  <div class="row rfala"><i>Falar</i><div class="fala">${fill(s.fala)}</div></div>
+  <div class="row"><i>Texto na tela</i><div class="tela"><b>${fill(s.tela).replace('{OFERTA}',cfg.oferta.toUpperCase())}</b></div></div></div></section>`).join('')};
+ draw();
+ const of=document.getElementById('of'),ct=document.getElementById('ct');
+ of.addEventListener('input',draw);ct.addEventListener('input',draw);bindCfg();
+ document.getElementById('cp').onclick=e=>copyText(falas(),e.target);
+ const rb=document.getElementById('rec');rb.onclick=()=>{const on=document.body.classList.toggle('rec');rb.textContent=on?'Sair do modo gravação':'Modo gravação';window.scrollTo(0,0)};
+}
+function renderChecklist(){
+ view.innerHTML=`<h1>Checklist de gravação</h1><p class="lead">Marque conforme avança. Fica salvo neste aparelho.</p>`+Object.entries(CHECK).map(([g,items],gi)=>`<div class="card"><h3>${g}</h3><ul class="chk">${items.map((it,i)=>{const k='ed_c'+gi+'_'+i;return `<li><input type="checkbox" id="${k}" ${S(k)==='1'?'checked':''}><label for="${k}">${it}</label></li>`}).join('')}</ul></div>`).join('');
+ view.querySelectorAll('input[type=checkbox]').forEach(x=>x.onchange=()=>S(x.id,x.checked?'1':'0'));
+}
+function route(){
+ document.body.classList.remove('rec');
+ const id=location.hash.slice(1)||'inicio';
+ nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.id===id));
+ const c=CRIATIVOS.find(x=>x.id===id);
+ if(c)renderCriativo(c);else if(id==='checklist')renderChecklist();else renderInicio();
+ window.scrollTo(0,0);
+}
+addEventListener('hashchange',route);route();
+</script>
+
+</body></html>
