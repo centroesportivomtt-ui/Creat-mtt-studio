@@ -14,6 +14,7 @@ import numpy as np
 
 from motor.etapas import pessoa as PESSOA
 from motor.etapas.montagem import fx as FX
+from motor.etapas.montagem import maos as MAOS
 from motor.etapas.montagem.comum import quadro
 
 
@@ -290,7 +291,7 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
     ov = Overlay(dir_overlay)
     ov_atras = Overlay(dir_overlay_atras)
     rec = recortador if (recortador is not None and getattr(recortador, "disponivel", False)) else None
-    pessoa = {"quadros_mascara": 0, "atras_quadros": 0, "atras_oculto_max": 0.0, "atras_oculto_medio": 0.0, "desfoque_quadros": 0, "destaque_quadros": 0, "pele_quadros": 0,
+    pessoa = {"quadros_mascara": 0, "maos_quadros": 0, "atras_quadros": 0, "atras_oculto_max": 0.0, "atras_oculto_medio": 0.0, "desfoque_quadros": 0, "destaque_quadros": 0, "pele_quadros": 0,
               "ms_mascara": 0.0, "sem_modelo": bool(dir_overlay_atras or any((p.get("fundo") or {}).get("desfoque") or (p.get("fundo") or {}).get("destaque")
                                                      for p in edl["planos"]))
               and rec is None,
@@ -383,6 +384,8 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
         desf = float((p.get("fundo") or {}).get("desfoque") or 0.0)
         dest = float((p.get("fundo") or {}).get("destaque") or 0.0)
         pele = float((p.get("pessoa") or {}).get("pele") or 0.0)
+        mao = (p.get("pessoa") or {}).get("maos_na_frente")
+        mao = 1.0 if mao is None else float(mao)          # padrão: a mão passa por cima da legenda (o rosto nunca)
         if rec is not None:
             rec.novo_plano()                                 # a máscara tem memória entre quadros: zera no corte
         while k < min(p1, fb):
@@ -392,6 +395,7 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
             ult = fr
             img = fr.copy()
             atras_val = ov_atras.pegar(k)
+            a = None
             d_at = posicao.get(k, 0.0)
             if atras_val is not None and d_at is None:     # nenhuma posição legível: o texto entra na frente
                 atras_val, atras_frente = None, atras_val
@@ -432,7 +436,16 @@ def compor(edl: dict, planos_res: dict, dir_overlay: str | None, mix_wav: str | 
                     hist.pop(0)
             if atras_frente is not None:
                 img = Overlay.aplicar(img, atras_frente)
-            img = Overlay.aplicar(img, ov.pegar(k))
+            frente_val = ov.pegar(k)
+            if a is not None and mao > 0 and frente_val is not None:   # máscara já calculada neste quadro: sem custo extra
+                antes = img.copy()
+                img = Overlay.aplicar(img, frente_val)
+                peso = MAOS.peso_maos(fr, a, mao)
+                if peso.any():
+                    img = MAOS.por_cima(img, antes, peso)
+                    pessoa["maos_quadros"] += 1
+            else:
+                img = Overlay.aplicar(img, frente_val)
             enc.stdin.write(img.tobytes())
             k += 1
             escritos += 1
